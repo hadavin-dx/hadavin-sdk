@@ -13,6 +13,12 @@ control_env_reference_is_not_a_secret@real-mf-form.json (exit 0, no FAIL) as exp
 control_env_reference_is_not_a_secret@film-mf-form.json (exit 0, no FAIL) as expected
 control_filter_with_one_output@real-mf-form.json (exit 0, no FAIL)       as expected
 control_filter_with_one_output@film-mf-form.json (exit 0, no FAIL)       as expected
+control_webhook_auth_with_credentials@real-mf-form.json (exit 0, no FAIL) as expected
+control_webhook_auth_with_credentials@film-mf-form.json (exit 0, no FAIL) as expected
+control_sticky_note_text_may_quote_a_node_name@real-mf-form.json (exit 0, no FAIL) as expected
+control_sticky_note_text_may_quote_a_node_name@film-mf-form.json (exit 0, no FAIL) as expected
+control_credential_names_as_expected@real-mf-form.json (exit 0, no FAIL) as expected
+control_credential_names_as_expected@film-mf-form.json (exit 0, no FAIL) as expected
 control_known_problems_are_listed (REPLY GAP and no authentication counted) as expected
 orphan_node@real-mf-form.json (FAIL, exit 1)                             as expected
 orphan_node@real-mf-hook.json (FAIL, exit 1)                             as expected
@@ -294,6 +300,81 @@ wrong_count@real-mf-hook.json (FAIL, exit 1)                             as expe
 wrong_count@real-mf-recovery.json (FAIL, exit 1)                         as expected
 wrong_count@real-mf-sub-crm-mail.json (FAIL, exit 1)                     as expected
 wrong_count@film-mf-form.json (FAIL, exit 1)                             as expected
+settings_null@real-mf-form.json (FAIL, exit 1)                           as expected
+settings_null@real-mf-hook.json (FAIL, exit 1)                           as expected
+settings_null@real-mf-recovery.json (FAIL, exit 1)                       as expected
+settings_null@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+settings_null@film-mf-form.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-form.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-hook.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-recovery.json (FAIL, exit 1)                       as expected
+settings_list@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+settings_list@film-mf-form.json (FAIL, exit 1)                           as expected
+webhook_parameters_list_no_crash@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_list_no_crash@real-mf-hook.json (FAIL, exit 1)        as expected
+webhook_parameters_list_no_crash@real-mf-recovery.json                   skipped (not applicable to this file)
+webhook_parameters_list_no_crash@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
+webhook_parameters_list_no_crash@film-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_text_no_crash@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_text_no_crash@real-mf-hook.json (FAIL, exit 1)        as expected
+webhook_parameters_text_no_crash@real-mf-recovery.json                   skipped (not applicable to this file)
+webhook_parameters_text_no_crash@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
+webhook_parameters_text_no_crash@film-mf-form.json (FAIL, exit 1)        as expected
+webhook_id_dict_no_crash@real-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_dict_no_crash@real-mf-hook.json (FAIL, exit 1)                as expected
+webhook_id_dict_no_crash@real-mf-recovery.json                           skipped (not applicable to this file)
+webhook_id_dict_no_crash@real-mf-sub-crm-mail.json                       skipped (not applicable to this file)
+webhook_id_dict_no_crash@film-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_list_no_crash@real-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_list_no_crash@real-mf-hook.json (FAIL, exit 1)                as expected
+webhook_id_list_no_crash@real-mf-recovery.json                           skipped (not applicable to this file)
+webhook_id_list_no_crash@real-mf-sub-crm-mail.json                       skipped (not applicable to this file)
+webhook_id_list_no_crash@film-mf-form.json (FAIL, exit 1)                as expected
+secret_inside_json_expression@real-mf-form.json (FAIL, exit 1)           as expected
+secret_inside_json_expression@real-mf-hook.json (FAIL, exit 1)           as expected
+secret_inside_json_expression@real-mf-recovery.json (FAIL, exit 1)       as expected
+secret_inside_json_expression@real-mf-sub-crm-mail.json (FAIL, exit 1)   as expected
+secret_inside_json_expression@film-mf-form.json (FAIL, exit 1)           as expected
+env_read_bracket_form_strict@real-mf-form.json (FAIL, exit 1)            as expected
+env_read_bracket_form_strict@real-mf-hook.json (FAIL, exit 1)            as expected
+env_read_bracket_form_strict@real-mf-recovery.json (FAIL, exit 1)        as expected
+env_read_bracket_form_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)    as expected
+env_read_bracket_form_strict@film-mf-form.json (FAIL, exit 1)            as expected
+env_read_process_env_strict@real-mf-form.json (FAIL, exit 1)             as expected
+env_read_process_env_strict@real-mf-hook.json (FAIL, exit 1)             as expected
+env_read_process_env_strict@real-mf-recovery.json (FAIL, exit 1)         as expected
+env_read_process_env_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+env_read_process_env_strict@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_auth_without_credentials@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)        as expected
+webhook_auth_without_credentials@real-mf-recovery.json                   skipped (not applicable to this file)
+webhook_auth_without_credentials@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
+webhook_auth_without_credentials@film-mf-form.json (FAIL, exit 1)        as expected
+form_trigger_auth_without_credentials@real-mf-form.json (FAIL, exit 1)   as expected
+form_trigger_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)   as expected
+form_trigger_auth_without_credentials@real-mf-recovery.json              skipped (not applicable to this file)
+form_trigger_auth_without_credentials@real-mf-sub-crm-mail.json          skipped (not applicable to this file)
+form_trigger_auth_without_credentials@film-mf-form.json (FAIL, exit 1)   as expected
+credential_kind_wrong@real-mf-form.json (FAIL, exit 1)                   as expected
+credential_kind_wrong@real-mf-hook.json (FAIL, exit 1)                   as expected
+credential_kind_wrong@real-mf-recovery.json (FAIL, exit 1)               as expected
+credential_kind_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+credential_kind_wrong@film-mf-form.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-form.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-hook.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-recovery.json (FAIL, exit 1)               as expected
+credential_name_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+credential_name_wrong@film-mf-form.json (FAIL, exit 1)                   as expected
+new_external_call_without_retry_is_warn@real-mf-form.json (WARN, exit 0) as expected
+new_external_call_without_retry_is_warn@real-mf-hook.json (WARN, exit 0) as expected
+new_external_call_without_retry_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
+new_external_call_without_retry_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
+new_external_call_without_retry_is_warn@film-mf-form.json (WARN, exit 0) as expected
+write_after_swallowed_error_is_warn@real-mf-form.json (WARN, exit 0)     as expected
+write_after_swallowed_error_is_warn@real-mf-hook.json (WARN, exit 0)     as expected
+write_after_swallowed_error_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
+write_after_swallowed_error_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
+write_after_swallowed_error_is_warn@film-mf-form.json (WARN, exit 0)     as expected
 bad_onerror_value_is_warn@real-mf-form.json (WARN, exit 0)               as expected
 bad_onerror_value_is_warn@real-mf-hook.json (WARN, exit 0)               as expected
 bad_onerror_value_is_warn@real-mf-recovery.json (WARN, exit 0)           as expected
@@ -381,9 +462,40 @@ if_error_output_is_last_output@film-mf-form.json (FAIL, exit 1)          as expe
 reply_after_store_cut@real-mf-form.json (FAIL, exit 1)                   as expected
 reply_after_store_cut@real-mf-hook.json (FAIL, exit 1)                   as expected
 reply_after_store_cut@film-mf-form.json (FAIL, exit 1)                   as expected
+reply_body_names_missing_node@real-mf-form.json (FAIL, exit 1)           as expected
+reply_body_names_missing_node@real-mf-hook.json (FAIL, exit 1)           as expected
+reply_body_names_missing_node@film-mf-form.json (FAIL, exit 1)           as expected
 patched_control (exit 0)                                                 as expected
 patched_wrong_code (exit 1)                                              as expected
 patched_failreply_cut (exit 1)                                           as expected
 patched_errlink_cut (exit 1)                                             as expected
 patched_badkey_reply_cut (exit 1)                                        as expected
-SELFTEST: 368 as expected, 0 not as expected, 20 skipped (not applicable)
+patched_storefail_code_500 (exit 1)                                      as expected
+patched_storefail_body_without_valid_ref (exit 1)                        as expected
+patched_keyok_condition_changed (exit 1)                                 as expected
+patched_claim_onerror_changed (exit 1)                                   as expected
+patched_f002_node_in_recovery_flow (exit 1)                              as expected
+patched_f008_wrong_value_form (exit 1)                                   as expected
+patched_f008_wrong_value_recovery (exit 1)                               as expected
+diff_unexplained_added_node (exit 1)                                     as expected
+diff_unexplained_removed_node (exit 1)                                   as expected
+diff_unexplained_changed_node (exit 1)                                   as expected
+diff_unexplained_settings_change (exit 1)                                as expected
+diff_unexplained_top_level_change (exit 1)                               as expected
+args_unknown_patch_name (exit 2)                                         as expected
+args_allow_unknown_patch_name (exit 2)                                   as expected
+args_allow_without_patch_checks (exit 2)                                 as expected
+args_option_without_value_baseline (exit 2)                              as expected
+args_option_without_value_expect (exit 2)                                as expected
+args_bad_expect_value (exit 2)                                           as expected
+args_unknown_option (exit 2)                                             as expected
+args_no_directory_given (exit 2)                                         as expected
+args_expect_unknown_file_key (exit 2)                                    as expected
+args_files_not_json_names (exit 2)                                       as expected
+args_expect_credential_bad_value (exit 2)                                as expected
+args_expect_json_not_an_object (exit 2)                                  as expected
+files_all_on_empty_folder_is_fail (exit 1)                               as expected
+not_a_directory_is_fail (exit 1)                                         as expected
+duplicate_json_key_is_fail (exit 1)                                      as expected
+SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, silent_error_external_call=1, webhook_auth_without_credentials=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
+SELFTEST: 467 as expected, 0 not as expected, 32 skipped (not applicable)

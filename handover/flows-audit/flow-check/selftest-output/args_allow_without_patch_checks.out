@@ -1,3 +1,3 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py ../../demo/n8n-flows-real-v5 --allow F002
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --allow F002
 usage error: --allow F002 needs --patch-checks to name the same patches (got none)
 exit=2

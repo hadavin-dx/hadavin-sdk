@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-vl7vaxho/empty-dir --files all
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-ec9c4cfm/empty-dir --files all
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
@@ -13,8 +13,8 @@ $ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.
 #   2. Four steps read environment variables ($env): allow that in the take, or change the steps (run with --block-env-access to see the effect).
 #   3. Two yes/no steps (StuckRow, AlertRow in mf-recovery) lack a second branch: project rule says FAIL; --baseline excuses them as WARN only because the unpatched flows already had it.
 # =============================================================================
-### /tmp/fc-selftest-vl7vaxho/empty-dir
-FAIL /tmp/fc-selftest-vl7vaxho/empty-dir --files all: this folder holds no *.json file, so nothing was checked
+### /tmp/fc-selftest-ec9c4cfm/empty-dir
+FAIL /tmp/fc-selftest-ec9c4cfm/empty-dir --files all: this folder holds no *.json file, so nothing was checked
 RESULT: 1 FAIL, 0 WARN
 Known open problems: 0
 Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (retry limits, onError values, position of the error output).
