@@ -1016,7 +1016,7 @@ def main(argv=None) -> int:
                 return do_check(a.dir, a.tokens_only)
             return do_delete(a.out, a.force_hash, a.no_manifest)
     except _Stopped:
-        print("refused: stopped by a signal; what this run created was removed", file=sys.stderr)
+        print("refused: stopped by a signal; the run's own clean-up was done (run the same command again if a folder is left)", file=sys.stderr)
         return EXIT_REFUSED
     except Refused as e:
         print(f"refused: {e}", file=sys.stderr)

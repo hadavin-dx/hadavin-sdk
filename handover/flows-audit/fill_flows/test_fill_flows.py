@@ -153,9 +153,18 @@ class Base(unittest.TestCase):
                 self.assertNotIn(f, so, "a value reached stdout")
                 self.assertNotIn(f, se, "a value reached stderr")
 
+    strict = False  # True: the fill runs as a person types it (no --allow-placeholders added)
+
+    def _lenient(self, args):
+        """Most tests exercise the NOT READY copy, so `fill` gets --allow-placeholders unless the
+        test sets `strict`."""
+        if args and args[0] == "fill" and not self.strict and "--allow-placeholders" not in args:
+            return (*args, "--allow-placeholders")
+        return args
+
     def cli(self, *args):
         """Run the CLI; fail the test if ANY made-up value shows in stdout or stderr."""
-        code, so, se = run_cli(*args)
+        code, so, se = run_cli(*self._lenient(args))
         self.leak_check(so, se)
         return code, so, se
 
@@ -163,7 +172,7 @@ class Base(unittest.TestCase):
         """Same as cli, but in this process (so a test can patch the module)."""
         bo, be = io.StringIO(), io.StringIO()
         with redirect_stdout(bo), redirect_stderr(be):
-            code = ff.main(list(args))
+            code = ff.main(list(self._lenient(args)))
         self.leak_check(bo.getvalue(), be.getvalue())
         return code, bo.getvalue(), be.getvalue()
 
