@@ -1,0 +1,10 @@
+box words: stated 2495, counted 2495
+wrote REPORT-c6t.md (839 lines)
+verify exit 1
+SUMMARY: 199 checks, 1 FAILED: F4 no owner sheet or release note has a version higher than the one named
+neg exit 1
+SUMMARY: 170 copies, 1 wrong
+
+real	0m42.507s
+user	0m38.042s
+sys	0m3.315s

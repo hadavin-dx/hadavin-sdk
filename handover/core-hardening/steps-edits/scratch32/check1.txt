@@ -1,0 +1,121 @@
+C07 info: OWNER-SHEET-v32-A.md 6304, OWNER-CARD-v32-A.md 2067, OWNER-APPENDIX-v32-A.md 5170, OWNER-FILM-PERSON-v32.md 531 total 14072
+C07 info: OWNER-SHEET-v32-B.md 6118, OWNER-CARD-v32-B.md 1984, OWNER-APPENDIX-v32-B.md 5021, OWNER-FILM-PERSON-v32.md 531 total 13654
+check-v32: 118 failure(s)
+FAIL C01 OWNER-SHEET-v32-B.md differs from what its source and facts build
+FAIL C01 OWNER-APPENDIX-v32-B.md differs from what its source and facts build
+FAIL C01 v32-OPEN-FOR-LEAD.md differs from what its source and facts build
+FAIL C02 file missing: v32-CHANGES.md
+FAIL C07 sheet A has 6304 words (target under 6300; v28 had 7473 with the card inside)
+FAIL C07 sheet A with its card, appendix and film pages has 14072 words: more than the v32 figure of 14000 (the sheet alone is capped at 6300; the other pages are linked detail, nothing deleted, lead order L-LEN)
+FAIL C13 A yes pattern has characters {'(', ')'}
+FAIL C13 B yes pattern has characters {'(', ')'}
+FAIL C19 pointer not in the verified list: note| in a real message: no run. |Open 110
+FAIL C19 pointer not in the verified list: note| last-used time can lag, so |6.7
+FAIL C19 pointer not in the verified list: note| the yes binds the owner to |7.11
+FAIL C19 pointer not in the verified list: note|E: every one of them passes |7.11
+FAIL C19 pointer not in the verified list: note|LM-v32.md); rule ids R1 and |R4
+FAIL C19 pointer not in the verified list: note|WNER-FILM-v32.md); rule ids |R1
+FAIL C19 pointer not in the verified list: note|d not cancel the older key, |7.11
+FAIL C19 pointer not in the verified list: note|day is a different time). - |7.11
+FAIL C19 pointer not in the verified list: note|he helper page and paper at |5.8
+FAIL C19 pointer not in the verified list: note|helper is stays OWNER-OPEN (|Open 107
+FAIL C19 pointer not in the verified list: note|led key save skips 6.7, and |7.11
+FAIL C19 pointer not in the verified list: note|n the planned one: whenever |6.7
+FAIL C19 pointer not in the verified list: note|ro: a failed key save skips |6.7
+FAIL C19 pointer not in the verified list: note|s are the builder's number (|Open 111
+FAIL C19 pointer not in the verified list: note|y in A on every route where |6.7
+FAIL C19 pointer not in the verified list: note|your order L-A/B). In both, |7.11
+FAIL C19 pointer not in the verified list: open| proposal in v32-CHANGES.md |section 6
+FAIL C19 pointer not in the verified list: open|). In A the planned cancel (|6.7
+FAIL C19 pointer not in the verified list: open|a failed save skips 6.7 and |7.11
+FAIL C19 pointer not in the verified list: open|ago use B". B is built, and |7.11
+FAIL C19 pointer not in the verified list: open|ed, but a failed save skips |6.7
+FAIL C19 pointer not in the verified list: open|le. WHEN IT FAILS (v32): at |5.6
+FAIL C19 pointer not in the verified list: sheetA| A cancels the older key at |6.7
+FAIL C19 pointer not in the verified list: sheetA| before it (so "restarted", |6.6
+FAIL C19 pointer not in the verified list: sheetA| by the older-key time when |6.7
+FAIL C19 pointer not in the verified list: sheetA| run day because check 2 of |section 3
+FAIL C19 pointer not in the verified list: sheetA| the other channel. ) Step |6.7
+FAIL C19 pointer not in the verified list: sheetA|, or the message says none; |6.7
+FAIL C19 pointer not in the verified list: sheetA|OWNER-FILM-PERSON-v32.md) **|R9
+FAIL C19 pointer not in the verified list: sheetA|P RULE, at the end of sheet |section 1
+FAIL C19 pointer not in the verified list: sheetA|The two sheets end alike if |6.7
+FAIL C19 pointer not in the verified list: sheetA|VERIFIED, tolerated). Step |8.8
+FAIL C19 pointer not in the verified list: sheetA|a replaced numbers message, |R8
+FAIL C19 pointer not in the verified list: sheetA|a sixth phone alarm, set at |5.8
+FAIL C19 pointer not in the verified list: sheetA|did not cancel it; a missed |7.11
+FAIL C19 pointer not in the verified list: sheetA|e room when you make a key (|R1
+FAIL C19 pointer not in the verified list: sheetA|es, which then replaces it; |7.11
+FAIL C19 pointer not in the verified list: sheetA|h the run and cancels it at |7.11
+FAIL C19 pointer not in the verified list: sheetA|hours late (UNVERIFIED), so |6.7
+FAIL C19 pointer not in the verified list: sheetA|ing. The planned cancel: at |6.7
+FAIL C19 pointer not in the verified list: sheetA|or after Mon 23 Nov. Step |5.1
+FAIL C19 pointer not in the verified list: sheetA|r the page and the paper at |5.8
+FAIL C19 pointer not in the verified list: sheetA|r your first reading): then |7.11
+FAIL C19 pointer not in the verified list: sheetA|s the lead's open question (|Open 110
+FAIL C19 pointer not in the verified list: sheetA|t this yes binds me to step |7.11
+FAIL C19 pointer not in the verified list: sheetA|tely, because money safety (|R4
+FAIL C19 pointer not in the verified list: sheetA|the card for your key, then |7.11
+FAIL C19 pointer not in the verified list: sheetB| A cancels the older key at |6.7
+FAIL C19 pointer not in the verified list: sheetB| before it (so "restarted", |6.6
+FAIL C19 pointer not in the verified list: sheetB| run day because check 2 of |section 3
+FAIL C19 pointer not in the verified list: sheetB|OWNER-FILM-PERSON-v32.md) **|R9
+FAIL C19 pointer not in the verified list: sheetB|P RULE, at the end of sheet |section 1
+FAIL C19 pointer not in the verified list: sheetB|The two sheets end alike if |6.7
+FAIL C19 pointer not in the verified list: sheetB|VERIFIED, tolerated). Step |8.8
+FAIL C19 pointer not in the verified list: sheetB|a replaced numbers message, |R8
+FAIL C19 pointer not in the verified list: sheetB|a sixth phone alarm, set at |5.8
+FAIL C19 pointer not in the verified list: sheetB|e room when you make a key (|R1
+FAIL C19 pointer not in the verified list: sheetB|es, which then replaces it; |7.11
+FAIL C19 pointer not in the verified list: sheetB|h the run and cancels it at |7.11
+FAIL C19 pointer not in the verified list: sheetB|hours late (UNVERIFIED), so |6.7
+FAIL C19 pointer not in the verified list: sheetB|ing. The planned cancel: at |7.11
+FAIL C19 pointer not in the verified list: sheetB|or after Mon 23 Nov. Step |5.1
+FAIL C19 pointer not in the verified list: sheetB|r the page and the paper at |5.8
+FAIL C19 pointer not in the verified list: sheetB|r your first reading): then |7.11
+FAIL C19 pointer not in the verified list: sheetB|s the lead's open question (|Open 110
+FAIL C19 pointer not in the verified list: sheetB|t this yes binds me to step |7.11
+FAIL C19 pointer not in the verified list: sheetB|tely, because money safety (|R4
+FAIL C24 A: yes pattern holds a character R8 does not allow
+FAIL C24 B: yes pattern holds a character R8 does not allow
+FAIL C102 A lacks '(no earlier run used it or begins like it)'
+FAIL C102 B lacks '(no earlier run used it or begins like it)'
+FAIL C149 N: A is not named as the money-safe default
+FAIL C149 O: row 71 does not name A as the money-safe default
+FAIL C171 sheet A has 6304 words (limit 6300)
+FAIL C176 A lacks 'if used less than 7 days ago take B'
+FAIL C176 B lacks 'if used less than 7 days ago take B'
+FAIL C185 A lacks the last-used lag sentence
+FAIL C185 B lacks the last-used lag sentence
+FAIL C187 A lacks 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'
+FAIL C187 B lacks 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'
+FAIL C187 A lacks 'cancel helper: a person who may cancel any of your keys'
+FAIL C187 B lacks 'cancel helper: a person who may cancel any of your keys'
+FAIL C189 note: the 7-day warning (Wed 11 Nov 2026 10:30 UTC = 16:00 IST) is not next to the money-safe default A (S M1)
+FAIL C196 B lacks 'the three waits of the message added'
+FAIL C199 appendix A: unbalanced parentheses in 'Step 5.1b, describe the other channel and the back'
+FAIL C199 A: unbalanced parentheses in a line starting 'Step 5.1b, describe the other channel and the back'
+FAIL C210 A lacks 'a key of L1 you find valid is cancelled by the card at once'
+FAIL C210 A lacks 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'
+FAIL C210 B lacks 'a key of L1 you find valid is cancelled by the card at once'
+FAIL C210 B lacks 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'
+FAIL C211 A lacks 'cancel helper: a person who may cancel any of your keys'
+FAIL C211 A lacks 'a role that can only cancel keys'
+FAIL C211 B lacks 'cancel helper: a person who may cancel any of your keys'
+FAIL C211 B lacks 'a role that can only cancel keys'
+FAIL C212 open row 71: the warning is not beside the default A
+FAIL C219 sheet A: 5.1 lacks the run day to use for the first reading
+FAIL C219 sheet A: 5.1 repeats or lacks the sentence "last-used time first" (0)
+FAIL C219 sheet B: 5.1 lacks the run day to use for the first reading
+FAIL C219 sheet B: 5.1 repeats or lacks the sentence "last-used time first" (0)
+FAIL C222 A: heading of section 7 (m6)
+FAIL C222 B: heading of section 7 (m6)
+FAIL C224 A: placeholder with a spelling that is not in the list: '[LEAD FILLS at re-pin: where the raw recording is kept, who deletes it and when]'
+FAIL C224 B: placeholder with a spelling that is not in the list: '[LEAD FILLS at re-pin: where the raw recording is kept, who deletes it and when]'
+FAIL C224 NOTE: placeholder with a spelling that is not in the list: '[LEAD FILLS at re-pin: where the raw recording is kept, who deletes it and when]'
+FAIL C224 NOTE: placeholder with a spelling that is not in the list: '[LEAD FILLS at re-pin: where the raw recording is kept, who deletes it and when]'
+FAIL C224 appendix A sample: placeholder count is not 4 LEAD and 3 OWNER
+FAIL C224 appendix B sample: placeholder count is not 4 LEAD and 3 OWNER
+FAIL C227 OWNER-SHEET-v32-B.md is older than OWNER-SHEET-v32-SOURCE.md (rebuild)
+FAIL C227 OWNER-CARD-v32-B.md is older than OWNER-SHEET-v32-SOURCE.md (rebuild)
+FAIL C227 OWNER-APPENDIX-v32-B.md is older than OWNER-SHEET-v32-SOURCE.md (rebuild)

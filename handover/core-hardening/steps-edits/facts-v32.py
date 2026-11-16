@@ -53,4 +53,17 @@ F = {
  'sevenback': SEVENBACK.strftime('%a %d %b %Y ') + pair(SEVENBACK), 'bs': BS.strftime('%a %d %b %Y ') + pair(BS), 'bm': 'Mon 23 Nov 2026 ' + pair(BM), 'gap_max': str(GAP_MAX),
 
 }
+
+# ---- v32 additions (round 4)
+HW = 30                                            # minutes the cancel helper waits after the owner's own times (builder's number; Open 111)
+LAST_DAY = (DEADLINE.date() - dt.timedelta(days=1))                           # last run day check 2 allows
+A_CUT = dt.datetime.combine(LAST_DAY, EK.time()) - dt.timedelta(hours=168)    # sheet A needs the older key's last use at or before this
+assert LAST_DAY.strftime('%a') == 'Sun' and A_CUT.strftime('%a') == 'Sun'
+BT_END = RV23 + dt.timedelta(minutes=2 + 10 + 10)                              # backstop cancel fails: retry 2 + last resort 10 + 10
+assert BT_END > DEADLINE
+HCB = CB + dt.timedelta(minutes=HW); HOK = OKB + dt.timedelta(minutes=HW)
+assert HOK < LAST
+HELPER_SCOPE = "the keys named on the helper's paper (at most three: the run key `run-<run name>`, the look key `look-<run name>` and the older key with its creation date)"
+F.update({'last_day': LAST_DAY.strftime('%a %d %b %Y'), 'a_cut': A_CUT.strftime('%a %d %b %Y ') + pair(A_CUT), 'hw': str(HW), 'hcb': pair(HCB), 'hok': pair(HOK),
+          'bt_end': pair(BT_END), 'helper_scope': HELPER_SCOPE})
 for k, v in PH.items(): F['ph_' + k] = v
