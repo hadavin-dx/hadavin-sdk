@@ -1084,3 +1084,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 785 L5b r10: stage.journal undefined, history range. FIXED by CURRENT STATE r10.
 - 786 L2c r12: contradictions, purpose, steps. FIXED by STEPS r13; not run.
 - 787 decision-list r13: A2 options, undefined ids, patch stack. FIXED by CURRENT r13; fold TO DO.
+
+- 788 PLAN-002 r20: void too wide, owner meanings, gate. FIXED by RULINGS r20.
+- 789 t19 r14: no usable content, terms. FIXED by FOLDING: page rewritten short, history moved to work/t19-history.md; table all TO DO.
+- 790 L4c r10: who rules, DECISION lines, counts. FIXED by CURRENT r10; markers TO DO.
