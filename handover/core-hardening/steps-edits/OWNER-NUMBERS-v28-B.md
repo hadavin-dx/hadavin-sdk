@@ -19,6 +19,8 @@ The yes sentence: <the lead's exact sentence>
 If you cancel the key during the run or right after `end`, the test program: <lead's answer>; exit code accepted then: <number or none>
 ```
 
+Unknown facts stay placeholder rows (nothing invented): [OWNER FILLS: button words, cancelled word and source, older key last-used time]; [LEAD FILLS before the message: minimum think time, run length, last-resort step]. One left in a real message: no run.
+
 **Your checks, by hand with a calculator** (a failing check: no yes, describe it; an empty slot or one in angle brackets, a missing last-resort step, figure line or think time, or "unknown" in any slot (only the cancelled word may say "from the look key"): no run, checked when the message arrives; a figure line that is not "no": no run):
 1. Call ceiling = the lead's figure for the most model calls one run should cause. Price per call = (tokens in x price in + tokens out x price out) / 1,000,000 = (40,000 x 3.00 + 10,000 x 15.00) / 1,000,000 = 0.27; expected total = call ceiling x that = 3 x 0.27 = 0.81. Both equal the message, the price page shows the same two prices, and every setting equals the message (cents / 100 = USD).
 2. The run day is before Mon 23 Nov 2026 (otherwise no run, no "go"). The earliest key time, latest start, alarm time and cancel-by time are on the run day, and the cancel-by time is at least 10 minutes before the deadline.

@@ -57,3 +57,22 @@ ALTER TABLE
 RESET
 --- cost of the trigger: 20000 lowering UPDATEs inside one DO block, with and without the trigger (local, indicative only)
 SET
+psql:/var/lib/postgresql/hadavin_v14_indep_scratch/pg_m3.sql:45: NOTICE:  00000: without the logging trigger: 2468 ms; with it: 9006 ms (20000 updates each)
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+DO
+RESET
+   ?column?    | count 
+---------------+-------
+ log rows now: | 20001
+(1 row)
+
+                    ?column?                    | pg_total_relation_size 
+------------------------------------------------+------------------------
+ log table + index size (bytes) for those rows: |                2727936
+(1 row)
+
+    ?column?    | round 
+----------------+-------
+ bytes per row: | 136.4
+(1 row)
+

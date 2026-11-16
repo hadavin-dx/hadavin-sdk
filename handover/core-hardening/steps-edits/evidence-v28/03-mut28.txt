@@ -129,3 +129,41 @@ Q13 CAUGHT by C55 | secret-shaped string (built from parts) in the sheet
 Q15 CAUGHT by C56 | sample give-up minutes changed
 Q16 CAUGHT by C56 | sample silence minutes changed
 Q18 CAUGHT by C57 | one delete-domain guard changed
+Q20 CAUGHT by C58 | lead note limit wrong
+Q22 CAUGHT by C59 | accepted exit codes widened
+Q24 CAUGHT by C60 | R8 word count changed
+N01 CAUGHT by C70 | IST offset label wrong (v25 plant N01)
+N05 CAUGHT by C71 | R5 archived turned into deleted (N05)
+N10 CAUGHT by C72 | warning before the start-line step removed (N10)
+N11 CAUGHT by C73 | post-by date moved with a consistent weekday (N11)
+N12 CAUGHT by C74 | R7 second person turned passive (N12)
+N14 CAUGHT by C75 | shortened command date -u to date (N14)
+M4a CAUGHT by C76 | price line swap (security M4)
+M4b CAUGHT by C77 | tokens swap in the sample (security M4)
+M4c CAUGHT by C78 | DEADLINE line wrong (security M4)
+M4d CAUGHT by C79 | yes-line deadline pair changed to another valid pair (security M4)
+M4e CAUGHT by C55 | secret-shaped text with a slash, 47 characters (C55 slash gap)
+R01 CAUGHT by C27,C86 | B older-key cancel time after 18:14 UTC
+R02 CAUGHT by C88 | B 7.11 title loses the irreversible warning
+R03 CAUGHT by C28,C87 | card proof uses N minus K again
+R04 CAUGHT by C89 | A older-key cancel before the key is saved
+R05 CAUGHT by C81 | one of the seven setting names dropped
+R06 CAUGHT by C83 | R7 prep prefix dropped
+R07 CAUGHT by C84 | 8.1 proof of the deleted key file weakened
+R08 CAUGHT by C60,C85 | R8 loses the restarted word (and its count stays six)
+R09 CAUGHT by C92 | backup person no longer a human you can call
+R10 CAUGHT by C93 | post checker valid answer removed
+R11 CAUGHT by C96 | deadline definition changed
+R12 CAUGHT by C94 | 7.10 mismatch action changed
+R13 CAUGHT by C97 | 8.7 profile removal widened
+R14 CAUGHT by C99 | sample numbers message loses the gap slot
+R15 CAUGHT by C100 | create-form scopes widened
+R16 CAUGHT by C28 | W9 older key exposure trigger weakened
+R17 CAUGHT by C101 | laptop sleep value dropped
+R18 CAUGHT by C91 | FREEZE is called a cancel
+R19 CAUGHT by C98 | word key given a second meaning
+R20 CAUGHT by C103 | profile name differs between steps
+R21 CAUGHT by C95 | Chrome profile how-to and ask-the-lead removed
+R22 CAUGHT by C104 | entry to revoke guessed
+TOTAL plants 166 (negative controls ok 1, not counted below):
+TOTAL plants 166: caught by the meant check 165, missed 0 (of them caught only by another check 0), anchor-not-found 0

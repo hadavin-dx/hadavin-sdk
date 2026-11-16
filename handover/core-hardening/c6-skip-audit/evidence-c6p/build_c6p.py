@@ -77,7 +77,7 @@ APPLY ALL DEFAULTS, in three lists.
 TO REVERSE A DEFAULT, the studio lead names a builder who puts back the old text of the affected rows (every old text is in the table).
 
 WORDS (more; one meaning each; used the same way in the whole report):
-""" % dict(N=N, r=len(ready), o=len(onlyq), c=len(withc), cl=lst(withc), NA=C["NA"], SA=C["SA"], BA=C["BA"], TOTA=C["TOTA"], NB=C["NB"], SB=C["SB"], BB=C["BB"], R2=R2, NR2=C["NR2"], W1=W1, w1=C["WA"][0], w2=C["WA"][1], w3=C["WA"][2], w4=C["WA"][3])
+""" % dict(N=N, r=len(ready), o=len(onlyq), c=len(withc), cl=lst(withc), NA=C["NA"], SA=C["SA"], BA=C["BA"], TOTA=C["TOTA"], NB=C["NB"], SB=C["SB"], BB=C["BB"], TOTB=C["TOTB"], R2=R2, NR2=C["NR2"], W1=W1, w1=C["WA"][0], w2=C["WA"][1], w3=C["WA"][2], w4=C["WA"][3])
 # keep the old WORDS block (lines after '- TWO ROLES') verbatim, patched below
 wi = find("- TWO ROLES.")
 old_words = L[wi:e]
