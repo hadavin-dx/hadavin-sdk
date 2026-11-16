@@ -46,7 +46,7 @@ orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
 # a "pgid" field: the old copy has none, and waiting for it would make old-code FAILs timing artefacts, review 4 M1)
 waitplant() { for _ in $(seq 120); do ls "$STATE"/*.planted.json >/dev/null 2>&1 && [ "$(last)" = return2 ] && { sleep 3; return 0; }; sleep 0.5; done; return 1; }
 # exec: $RP must be the python process itself, not a subshell around it
-bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
+bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
 kill_planted() { fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null; }
 keptstate() { [ -n "$(ls "$STATE"/*.planted.json 2>/dev/null)" ] && [ -n "$(ls "$STATE"/*.backup 2>/dev/null)" ]; }
 
@@ -113,7 +113,7 @@ def rmtree(path, *a, **k):
         hit["n"] += 1; os.kill(os.getpid(), signal.SIGTERM)    # a signal while the process is already leaving with exit 5
     return real(path, *a, **k)
 r.shutil.rmtree = rmtree
-sys.argv = ["run.py", "--root", root, "--sha", sha, "--repo", repo, "--prefix", "X", "--no-control", "--raw", raw, "--pythonpath", root + "/src", "--id", "m1", "--file", "src/mod.py", "--old", "return 77", "--new", "return 2", "--", "tests/test_fast.py"]
+sys.argv = ["run.py", "--root", root, "--sha", sha, "--repo", repo, "--prefix", "X", *([__import__("os").environ.get("NCF", "--no-control")] if __import__("os").environ.get("NCF", "--no-control") else []), "--raw", raw, "--pythonpath", root + "/src", "--id", "m1", "--file", "src/mod.py", "--old", "return 77", "--new", "return 2", "--", "tests/test_fast.py"]
 r.main()
 PY
 rc=$?; cut -c1-200 "$S/t78b.out" | tail -3
@@ -173,7 +173,7 @@ spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = import
 root, sha, repo, raw = sys.argv[2:6]
 def boom(*a, **k): raise RuntimeError("simulated bug after the loop")
 r.tree_check = boom
-sys.argv = ["run.py", "--root", root, "--sha", sha, "--repo", repo, "--prefix", "X", "--no-control", "--raw", raw, "--pythonpath", root + "/src", "--id", "m1", "--file", "src/mod.py", "--old", "return 1", "--new", "return 2", "--", "tests/test_fast.py"]
+sys.argv = ["run.py", "--root", root, "--sha", sha, "--repo", repo, "--prefix", "X", *([__import__("os").environ.get("NCF", "--no-control")] if __import__("os").environ.get("NCF", "--no-control") else []), "--raw", raw, "--pythonpath", root + "/src", "--id", "m1", "--file", "src/mod.py", "--old", "return 1", "--new", "return 2", "--", "tests/test_fast.py"]
 r.main()
 PY
 rc=$?; cut -c1-200 "$S/t81f.out" | tail -2
