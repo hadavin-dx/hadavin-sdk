@@ -50,15 +50,15 @@ INTERRUPTED: none
 ## AGENTS
 | Slot | Agent | Job (read only, cold reader of work/ page) | State |
 |---|---|---|---|
-| 1 | reader | fixed decision-list-for-lead.md (a5a12404e8607a763) | running |
-| 2 | reader | L2c.md (a57b278e33a9f8ba3) | running |
-| 3 | reader | L3c.md (a1debe346a60a9613) | running |
-| 4 | reader | L4c.md (a69b9b02dda2c6245) | running |
-| 5 | reader | L5a.md (new) | running |
-| 6 | reader | L5b.md (new) | running |
-| 7 | reader | L5ac.md (new) | running |
-| 8 | reader | critical-path-r1.md (new) | running |
-Closed and digested through 1903 (1903 was my slip: wrong file name L5.md, relaunched). Fix queue (mine): banned-claims collapse, BRIEF-LANE in-force line, one KEY sentence for L1/L2/L3/L4 (no new status word), BRIEF-EVIDENCE-1/2 procedure, L6 coverage, drift/REPORT counts, merged-findings, review-r460-tools, T19 header, GLOSSARY. Held-page findings go to LEAD-NOTICE.
+| 1 | reader | L5a.md (a4708a8d99a280951) | running |
+| 2 | reader | L5b.md (a01eea4d09f257320) | running |
+| 3 | reader | L5ac.md (a09992ec8bd157196) | running |
+| 4 | reader | critical-path-r1.md (a0b2be72d0f367a85) | running |
+| 5 | reader | drift-report.md (new) | running |
+| 6 | reader | premortem-r1.md (new) | running |
+| 7 | reader | rehearsal-passed-limits-draft.md (new) | running |
+| 8 | reader | rehearsal-trim-notes.md (new) | running |
+Closed and digested through 1907. NEXT for me: fix pages while readers run (decision-list rows in plain words, banned-claims collapse, BRIEF-LANE in-force line, one KEY sentence for L1-L4c, BRIEF-EVIDENCE-1/2, drift/REPORT counts, merged-findings, T19 header, GLOSSARY). Held-page findings go to LEAD-NOTICE.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
