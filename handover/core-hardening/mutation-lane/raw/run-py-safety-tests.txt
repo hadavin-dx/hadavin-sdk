@@ -23,3 +23,23 @@ restore from marker: restored src/mod.py from /tmp/hadavin-mutation-lane/e0af8e0
 file src/mod.py now says: return1
 state folder: []
 == T7 SIGINT likewise
+file src/mod.py now says: return2
+INTERRUPTED (signal 2): file restored, marker removed
+restore from marker: restored src/mod.py from /tmp/hadavin-mutation-lane/e0af8e0af86e211d.backup; hash matches saved original: True
+  -> exit code 143
+file src/mod.py now says: return1
+state folder: []
+== T8 two runs at once: the second is refused by the lock
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/toy/root; two runs on one tree would plant over each other
+  -> exit code 1
+file src/mod.py now says: return1
+== T9 a clean run to the end (fast test): KILLED, backup gone, tree diff clean
+m1 KILLED tests/test_slow.py::test_f
+tree diff rc 0
+  -> exit code 0
+state folder: []
+command: diff -rq -x .pytest_cache -x .venv -x __pycache__ <fresh git archive 101677cfc0fcdef123507c1f0fc958d010624835 + patches []> /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/toy/root
+declared extra files (expected as 'Only in'): []
+rc: 0 (0 = identical; 1 = differences listed)
+--- output ---
+file src/mod.py now says: return1

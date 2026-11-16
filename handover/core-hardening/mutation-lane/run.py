@@ -57,7 +57,7 @@ def sha256(b: bytes) -> str:
 
 
 def _term(signum, frame):
-    raise KeyboardInterrupt(f"signal {signum}")  # unwinds through the `finally` that restores the file
+    raise KeyboardInterrupt(signum)  # unwinds through the `finally` that restores the file
 
 
 def tree_files(root: pathlib.Path) -> dict[str, str]:
@@ -287,10 +287,11 @@ def main():
         print("REFUSED:", e, file=sys.stderr)
         sys.exit(2)
     except KeyboardInterrupt as e:
-        print(f"INTERRUPTED ({e}): file restored, marker removed", file=sys.stderr)
+        signum = e.args[0] if e.args and isinstance(e.args[0], int) else signal.SIGINT
+        print(f"INTERRUPTED (signal {signum}): file restored, marker removed", file=sys.stderr)
         if marker.exists():
             print("restore from marker:", restore_from_marker(root), file=sys.stderr)
-        sys.exit(143)
+        sys.exit(128 + int(signum))
     finally:
         shutil.rmtree(tmpref, ignore_errors=True)
 

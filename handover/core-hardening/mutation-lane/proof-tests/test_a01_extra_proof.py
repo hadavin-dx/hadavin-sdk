@@ -8,7 +8,9 @@ from hadavin_sdk.audit.local_dir import LocalDirSink
 from hadavin_sdk.models import AuditEvent
 from hadavin_sdk.runtime import tick
 from hadavin_sdk.runtime.tick import TickStep, run_tick
-from tests.test_p7_tick import app  # noqa: F401  (the existing fixture)
+
+# the existing `app` fixture of the tick tests, registered as a plugin: no import of the name, so no suppression
+pytest_plugins = ["tests.test_p7_tick"]
 
 
 def _event(i=0):
@@ -29,7 +31,7 @@ def test_the_list_entry_runs_audit_reconcile_every_tick():
     assert step.every_s == 0 and step.interval is None
 
 
-def test_two_ticks_in_a_row_both_call_reconcile(app, monkeypatch):  # noqa: F811
+def test_two_ticks_in_a_row_both_call_reconcile(app, monkeypatch):
     calls = []
 
     class Sink:
@@ -120,7 +122,7 @@ def test_local_dir_reconcile_drains_memory_only_events_once(tmp_path):
     assert [e.event_id for e in sink.events()] == [ev.event_id]
 
 
-def test_a_raising_step_does_not_stop_the_next_and_is_recorded(app):  # noqa: F811
+def test_a_raising_step_does_not_stop_the_next_and_is_recorded(app):
     ran = []
 
     def boom(ctx):

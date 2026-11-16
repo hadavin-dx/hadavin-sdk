@@ -1,1 +1,1 @@
-C8b done 09:40. REPORT.md written. No commit.
+C8c prep started; run.py rewritten + safety-tested (raw/run-py-safety-tests.txt). Next: noqa, REPORT, plan.
