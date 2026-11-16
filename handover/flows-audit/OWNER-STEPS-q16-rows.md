@@ -60,7 +60,6 @@ Two different costs (do not mix them): (1) the HubSpot trial account, which the 
 7. L5 run the fill program's own check, then the column check.
 8. L6 first send ("first send" = the first made-up person sent into the flows). L6 is BEFORE Row 4: it goes into the practice run (local stand-in, no live model call, not the real HubSpot trial account). (This is the lead's reading of the older text; confirm at the re-check.)
 9. The practice run passes. Then, at take prep, the lead states the ceiling for up to 3 sends from the ledger (the owner is not asked; no live call before the ceiling is stated). The steps that send to the real HubSpot trial account or make a live model call depend on this statement, not on a reply from the owner.
-
 10. Row 4 (below), parts 1 and 2: one made-up person through the real HubSpot trial account.
 11. Step D message 1 (first made-up contact); the owner deletes by hand. The rehearsal does not wait for this reply, but the lead does not send Step D message 2 before the reply to message 1 has arrived.
 12. Rehearsal (see the words above; by default on the local stand-in, not the real HubSpot trial account: see the end of Row 4).
