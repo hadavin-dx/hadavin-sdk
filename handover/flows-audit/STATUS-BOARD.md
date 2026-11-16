@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:02:03Z
+UPDATED_UTC: 2026-11-16T17:05:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 7
-CAPACITY: 3.02 load of 4 cores, mem 1/15 GB, RAM 1361/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 3.16 load of 4 cores, mem 1/15 GB, RAM 1407/16087 MB, disk 11G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: verify arriving reports; next: Q31 r20, RW/CT r24, plan-files r29 readers, patch-copies r12, F8 evidence
-PUSHED_UTC: 2026-11-16T17:02:03Z
+NEXT: verify arriving reports; next: Q31 r21, RW/CT r25, plan-files r30, patch-copies r12, REVIEW.md r37, F8 evidence
+PUSHED_UTC: 2026-11-16T17:05:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,20 +31,20 @@ PUSHED_UTC: 2026-11-16T17:02:03Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:20Z | running | run_all.sh intermittency work |
-| ae59e2df | REVIEW.md r35 fixer | sonnet | fix design r34 + reader r34 (uncapped) | 16:50Z | 17:20Z | running | edits in progress |
-| aa679f36 | Q31 r20 reader | sonnet | stranger read of Q31 | 16:58Z | 17:08Z | running | reading |
 | a1e95c64 | patch-copies r12 fixer | sonnet | README/DEAD-MAN-CHECK from 2 reviews (uncapped) | 17:00Z | 17:25Z | running | editing |
-| a9f2669b | FINDINGS/LEDGER r14 fixer | sonnet | 9 Majors from reader r13 | 17:00Z | 17:20Z | running | editing |
-| a3f52522 | RW/CT r24 reader | sonnet | stranger read of unread RW/CT parts | 17:01Z | 17:12Z | running | reading |
-| a8b8f169 | plan-files r29 reader | sonnet | stranger read RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 17:02Z | 17:12Z | running | reading |
-(8th slot empty: every independent review target is a file a running fixer is editing; a reviewer now would read a stale version)
+| a07fa885 | FINDINGS/LEDGER r15 reader | sonnet | stranger read of unread rows + r14 edits | 17:03Z | 17:13Z | running | reading |
+| afc328f8 | Q31 r21 fixer | sonnet | 7 Majors from reader r20 | 17:04Z | 17:25Z | running | editing |
+| a4a76fb0 | REVIEW.md r36 design review | sonnet | design review (uncapped) | 17:04Z | 17:15Z | running | reading |
+| a7264848 | REVIEW.md r36 stranger read | sonnet | full read incl. lines 559-644 (uncapped) | 17:04Z | 17:15Z | running | reading |
+| a772f35a | RW/CT r25 fixer | sonnet | 8 Majors from reader r24 | 17:05Z | 17:25Z | running | editing |
+| a0a16684 | plan-files r30 fixer | sonnet | 8 Majors + stray fragment from reader r29 | 17:06Z | 17:25Z | running | editing |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 verify Q31 r20 reader report, launch fixer
-2 verify plan-files r28, launch round 29 reader
-3 verify patch-copies r12, launch citation checker
-4 F8 evidence runner after acf8ab59 reports
-5 REVIEW.md r35 verify, then design + reader + citation reviews
+1 verify Q31 r21, launch round 22 reader
+2 verify RW/CT r25, launch round 26 reader
+3 verify plan-files r30, launch round 31 reader
+4 patch-copies r12: verify, citation checker; REVIEW.md r37 fixer after design+reader reports (plus 3 citation caveats)
+5 F8 evidence runner after acf8ab59 reports
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
