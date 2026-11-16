@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:43:35Z
+UPDATED_UTC: 2026-11-16T13:43:49Z
 PUSHED_UTC: 2026-11-16T13:29:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1216 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1218 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,14 +46,14 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| (see agent list) | cold read crosscheck-ratings-agent.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read decision-list-for-lead.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read end-delete-cases.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read L1c.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read L2c.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read L3c.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read L4c.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
-| (see agent list) | cold read L5ac.md | 2026-11-16T13:43:35Z | +5 min | running | nothing yet |
+| (see agent list) | cold read crosscheck-ratings-agent.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read decision-list-for-lead.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L1c.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L3c.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L4c.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L5ac.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L5b.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read L6.md | 2026-11-16T13:43:49Z | +5 min | running | nothing yet |
 
 Next 5 independent tasks: rewrite GLOSSARY.md as one table; Read-this-first blocks on L1c/L3c/L4c/L5b/L6; move stacked notes into *-history files; rewrite rehearsal-passed-limits-draft.md as one block; add purpose headers to evidence files.
 
