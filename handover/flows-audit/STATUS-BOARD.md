@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:25:41Z
+UPDATED_UTC: 2026-11-16T10:27:26Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 58
-AGENTS_RUNNING: 6
-CAPACITY: 4.52 load of 4 cores, mem 0/15 GB, RAM 980/16087 MB, disk 27G free of 252G, top3 649M /tmp/pytest-of-root 661M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
+PERCENT: 60
+AGENTS_RUNNING: 8
+CAPACITY: 2.02 load of 4 cores, mem 0/15 GB, RAM 886/16087 MB, disk 27G free of 252G, top3 584M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -27,8 +27,9 @@ decisions pass review: 9 Majors (stale 8 files, count readings disagree, F6B ste
 F3 security review 4: 0 Blocker, 4 Majors (check says 0 problems when the manifest is not found; --tokens-only accepts a NOT READY copy; stray .DS_Store blocks check and delete; README claims Python 3.11/3.12 never run) + nits incl 6 noqa vs no-suppression rule; fixer waits for the independent evidence run (still running)
 claims r7 fixer: 6 Majors fixed (own report), F5 checker PASS 157 rows (rerun by me, see rc), counts unchanged 126/69/52/29/51=327; open: Q15 closing card (rows 14-15 tags wait for lead), Q13 contact cleanup; M8 words and 'settings-file figures' (M16) still open; 2 cites were not wrong (evidence script compared claim text to code line); independent re-read of r7 not done
 F8 owner-morning review (reading only): 4 Majors: take check passes with FROM/INTAKE address placeholders still in 2 mail nodes; real-v5 has no table SQL and the nearest one lacks the 4 alert columns so no alert would ever send (Q16 to lead); real-v5 files lack F-002 and F-008 (saved runs off) with no warning; --fail-unverified claim wider than the code. r5 fixer running
-NEXT: F3 r7 fixer after evidence; F8 r5 fixer + ev r4, decisions r2, patches
-PUSHED_UTC: 2026-11-16T10:25:41Z
+F-003/F-004 regenerated (builder: check PASS 5, no 60.1/film-v5/scene 5 in added lines; own numbers); NOT done: scene rows 5-11 and 'Update 17:08Z' caption still in VIDEO-RUNSHEET (lead applies), wording rows held by D1/D2/P2/P4a-c not pasted, 20 s source unconfirmed, F-001 patch line 7 names film-v5; 3 independent checks running
+NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, patch checks
+PUSHED_UTC: 2026-11-16T10:27:26Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -50,8 +51,10 @@ PUSHED_UTC: 2026-11-16T10:25:41Z
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f8ev4 | F8 r4 evidence runner | sonnet | independent rerun, 25 mutants, hostile inputs | 10:33 | 10:55 | 5 | running | flow-check/evidence-r4.md |
 | decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
-| patchre | regenerate F-003/F-004 patches real-v5 only | sonnet | remove scene 5 / 60.1-61.9 s / film-v5 text | 10:37 | 11:05 | 5 | running | patches/REGENERATED-NOTE.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
+| patev | patches r2 evidence runner | sonnet | independent apply, grep, JSON | 10:45 | 11:00 | 5 | running | lanes7/evidence-patches-r2b.txt |
+| patrd | patches wording stranger read | sonnet | read-aloud wording | 10:45 | 11:00 | 5 | running | - |
+| patfc | patches facts review | sonnet | numbers vs flows/decisions | 10:45 | 11:00 | 5 | running | - |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
