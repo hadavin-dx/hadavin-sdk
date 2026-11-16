@@ -29,3 +29,18 @@ Files changed: run_all.sh, selftest.py, test_take_check.sh (574 cases, was 555),
 Evidence quoted so far: new-code take suite `574 of 574 cases as expected, 0 not as expected` (rc=0); stop test `25 of 25` (rc=0).
 
 ## Next (before 19:30Z): ruff format --check, check_secrets, one final run_all.sh. Results are in the final block below if present.
+
+## FINAL block (19:12Z)
+Commands and exit codes (own redirects, no tail pipes):
+- `bash test_take_check.sh` on new code: rc=0, `574 of 574 cases as expected, 0 not as expected`. Same new cases on the old scripts: 543 of 574 passed (31 not as expected, includes README-word cases that fail only because the mirror has no README).
+- `bash test_run_all_stop.sh` new code: rc=0, 25 of 25. Same test on the old run_all.sh: rc=1, `16 of 25 cases as expected, 9 not as expected` (no INTERRUPTED message, SIGINT gives exit 1, helpers left running after SIGHUP, no time limit).
+- `bash run_all.sh` once, alone, at the end: rc=0; `[selftest exit=0] SELFTEST: 725 as expected, 0 not as expected, 62 skipped`; `COUNTS match expected-counts.pin ... take suite 574 of 574`; `[take_check.sh exit=5] missing lines: none` (by design); `run_all exit status ... 0`; tracked raw/ not changed (no --refresh).
+- `ruff format --check .`: rc=0 (60 files already formatted). `python3 -I tools/check_secrets.py`: rc=0 (PASS 0 hits in 2857 files). `bash -n` on every .sh: no error.
+- Two defects found by the new stop test and fixed (both listed under M2).
+
+STILL NOT DONE (said plainly):
+- `test_run_all_raw.sh` (rewritten; refresh run, failing run, disturber) was NOT run on new or old code: about 10 minutes, past the lead's deadline. Next step: run it alone detached, then once on the old mirror to show phases 2 and 3 fail. Until then the m9 and publish-after-pass behaviours are unproven by that test (the take-suite cases M1c/M1d cover the publish destination and manifest).
+- `repeat_run_all.sh` change checked with `bash -n` only.
+- Intermittent exit 1: cause unproven (see top).
+- `zqwv-hook-val` not touched.
+- Not committed. A few of my own /tmp/fc8raw.* scratch folders were removed; older /tmp/fc8* folders belong to other runs and were left.
