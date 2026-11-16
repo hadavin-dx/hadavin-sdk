@@ -1008,3 +1008,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 728 end-delete-cases r10: steps 13-16 unresolved. Recorded in CURRENT r10; card held, wait rule not decided.
 - 729 M17 r7: five status paragraphs. FIXED by HOLD r7.
 - 730 FINAL-CROSSCHECK r12: decisions not stated. FIXED by STATUS r12.
+
+- 731 L1c r10: terms undefined, counts. FIXED by CURRENT r10.
+- 732 decision-list r10: overrides unfolded. FIXED by CURRENT r10; row splits TO DO.
+- 733 L3c r8: five glossaries. FIXED by GLOSSARY r8; severities unrated.
+- 734 merged-findings r8: legend stack. FIXED by CURRENT LEGEND r8; terms unknown.
