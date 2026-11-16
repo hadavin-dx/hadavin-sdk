@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:45Z
-PUSHED_UTC: 2026-11-16T15:45Z
+UPDATED_UTC: 2026-11-16T15:46Z
+PUSHED_UTC: 2026-11-16T15:46Z
 SESSION: system-map
 ORDER: 14:48Z (parallel re-readers while I fix; keep 8 running)
 BOOT_ID: 5cbee216
@@ -18,7 +18,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:45Z (list below; 16 readers closed since 15:44Z)
+AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:46Z (list below)
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: fix my own pages from the board reader's findings (licence question wording, NEEDS_YOU 4 and 5 subjects), work/GLOSSARY.md (heading of the unknown-terms table), decisions/M17-end-never-deletes.md, T19 inline glossary; then 8 fresh readers, one per fixed page
 INTERRUPTED: none
@@ -48,17 +48,17 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-| Slot | Agent id | Job (cold read, edits nothing) | Started UTC | State | Next action |
+| Slot | Agent id | Job (read only) | Started UTC | State | Next action |
 |---|---|---|---|---|---|
-| 1 | a9ac1e04e618f2710 | work/open-items-table.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 2 | a0c296307a19b770a | work/owner-timeline-draft.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 3 | ae300ee39fd3ba1da | work/not-checked-r2.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 4 | a487b67c817da9c8f | work/banned-claims-clean.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 5 | ab3570b95fa891ce0 | work/end-delete-cases.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 6 | a85cb8a89d2cf6357 | work/row-dm-plain.md | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 7 | a36ea7728d84e7d25 | ARCHITECTURE-AUDIT-CHECKLIST.md (hygiene area) | 15:45Z | running | digest, fix page, launch replacement same turn |
-| 8 | a9dfbe2f2bd086958 | TAKE-BLOCKERS.md (held; read only) | 15:45Z | running | digest, fix page, launch replacement same turn |
-Lead answers 15:45Z recorded: item 2 YES (test only; licence copies unchanged; core-hardening applies); item 3 NO, M20 dropped; item 1 laptop lead runs Docker rehearsal; items 4-5 go into work/decision-list-for-lead.md (being rebuilt). Digested through 1863.
+| 1 | a856d48264dc3ccb0 | research D-01, D-02 (recommend A or B, file:line) | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 2 | a0a79e4211d9872d3 | research D-03, D-04 | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 3 | a9cf97ec96cfb05d1 | research D-05, D-06 | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 4 | a608475e73239803f | research D-07, D-08 | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 5 | aee981aeb4d7e0b7e | hygiene read drift/REPORT.md 1-120 | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 6 | aecc2df90e350d290 | hygiene read work/review-r460-tools.md | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 7 | a529387b5dfc8816b | hygiene read LEAD-PAGE.md (held) | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+| 8 | a44bd4335c1c7e347 | hygiene read ONE-PLACE-TABLE.md (held) | 15:46Z | running | digest; D results go into work/decision-list-for-lead.md; launch replacement same turn |
+Closed and digested through 1871: 16 cold readers since 15:44Z. Fix queue (mine): decision-list-for-lead, LEAD-NOTICE, open-items-table, not-checked-r2, end-delete-cases, owner-timeline-draft, row-dm-plain, banned-claims-clean, M17, AUDIT-CHECKLIST, T19 pages, GLOSSARY, this board.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
