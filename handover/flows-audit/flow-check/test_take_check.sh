@@ -6,6 +6,7 @@
 # is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
+# f8-r11: every wall-clock limit inside this suite is 120 s (it was 20 s and 30 s): these calls end in milliseconds when the case holds, so a long limit costs nothing, while a short one fails a good case on a busy machine (4 nested copies of this suite run at once inside run_all.sh; one such unexplained single-case failure was seen in 11 runs).
 # f8-r11: when this suite runs inside a nested run_all.sh (the failure tests) that run left its own hook variables in the environment; none of them is an input of this suite (every case that needs one sets it itself), and run_all.sh now refuses FC_OUT without RUN_ALL_NESTED, so they are removed here, once.
 unset FC_OUT RUN_ALL_NESTED RUN_ALL_PARENT_PID RUN_ALL_RAW RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT
 # f8-r9 (M4): TEST_TAKE_SCRIPT points the whole suite at ANOTHER script, so a leaked variable would test (and pass) the wrong file. It is honoured only with TEST_TAKE_DEV=1, and the path under test is always printed.
@@ -715,7 +716,7 @@ tk shafail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub3:$PATH
 [ "$RC" = 4 ] && has shafail "UNAVAILABLE (sha256sum failed)" && grep -q '^!!! sha256sum FAILED' "$S/shafail.txt"; ok $? "sha256sum failure: exit 4 with a loud line, no empty hash (got exit $RC)"
 # B4 + f8-r4 (M2): run_all.sh locks the raw FOLDER itself (physical path, pwd -P), so the lock does not depend on TMPDIR, on how the path is written (relative, symbolic link) or on the current folder. The test holds a lock on the folder and starts --lock-only runs in other ways
 RA="$HERE/run_all.sh"; mkdir -p "$S/rl-cwd" "$S/rl-raw" "$S/tmpA" "$S/tmpB"; ln -s "$S/rl-raw" "$S/rl-link"
-ra() { local nm=$1 cwd=$2 tmpd=$3 raw=$4; ( cd "$cwd" && TMPDIR="$tmpd" RUN_ALL_NESTED=1 RUN_ALL_RAW="$raw" timeout 20 bash "$RA" --lock-only > "$S/$nm.txt" 2>&1; echo $? > "$S/$nm.rc" ); RC=$(cat "$S/$nm.rc" 2>/dev/null); }
+ra() { local nm=$1 cwd=$2 tmpd=$3 raw=$4; ( cd "$cwd" && TMPDIR="$tmpd" RUN_ALL_NESTED=1 RUN_ALL_RAW="$raw" timeout 120 bash "$RA" --lock-only > "$S/$nm.txt" 2>&1; echo $? > "$S/$nm.rc" ); RC=$(cat "$S/$nm.rc" 2>/dev/null); }
 # nobody holds the lock: acquired, exit 0, and no lock file is left in either TMPDIR
 ra b4free "$S/rl-cwd" "$S/tmpA" "$S/rl-raw"
 [ "$RC" = 0 ] && grep -q "lock acquired" "$S/b4free.txt" && [ -z "$(ls -A "$S/tmpA")" ]; ok $? "B4: with nobody holding the lock, run_all.sh --lock-only takes it, exits 0 and leaves no lock file in TMPDIR (got exit $RC)"
@@ -734,7 +735,7 @@ for pair in "m2a:a second run_all.sh on a locked raw folder is refused, exit 2" 
 done
 [ -z "$(ls -A "$S/tmpA")" ] && [ -z "$(ls -A "$S/tmpB")" ]; ok $? "M2: no lock file was left in either TMPDIR"
 # minor: the run_all.sh test hooks are refused without RUN_ALL_NESTED
-( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 20 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
+( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 120 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
 [ "$(cat "$S/hook.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: RUN_ALL_TAKE_FLOWS is a test hook" "$S/hook.txt"; ok $? "RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook.rc" 2>/dev/null))"
 
 # Q5 (round 10c): a checker exit status above 3 is shown and returned as 3 (also with --write-warn-pin); the real codes of --write-warn-pin are 4 (written), 1 (FAIL), 2 (refused), 3 (checker broke)
@@ -871,19 +872,19 @@ cc_bad pin-missing "$S/cc-st.txt" "$S/cc-tt.txt" "$S/no-such-counts.pin" "the pi
 # F12 / M2: stray hook variables are refused by run_all.sh (exit 2, the name is printed, the value never)
 FAKEVAL="zq""wv""-hook-""val"
 for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY FC_OUT; do
-  ( cd "$S" && "${RAENV[@]}" "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 120 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is " "$S/hook-$v.txt" && ! grep -q -F "$FAKEVAL" "$S/hook-$v.txt"; ok $? "F12: run_all.sh with $v set is refused, exit 2, the value is not printed (got exit $(cat "$S/hook-$v.rc"))"
 done
 for v in RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
-  ( cd "$S" && "${RAENV[@]}" "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 120 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is a test hook" "$S/hook-$v.txt"; ok $? "F12 (minor): run_all.sh with $v and without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook-$v.rc"))"
 done
-( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 30 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
+( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 120 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
 [ "$(cat "$S/nested-stray.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray.txt"; ok $? "F12(c): a stray RUN_ALL_NESTED=1 (no live parent run_all.sh) is refused, exit 2, not a silent skip of the nested tests (got exit $(cat "$S/nested-stray.rc"))"
-( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 30 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
+( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 120 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
 [ "$(cat "$S/nested-stray2.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray2.txt"; ok $? "F12(c): RUN_ALL_NESTED=1 with a parent pid that is not a run_all.sh is refused, exit 2 (got exit $(cat "$S/nested-stray2.rc"))"
 # the environment scrub prints names only (a fake value built from parts)
-( cd "$S" && "${RAENV[@]}" AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 30 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
+( cd "$S" && "${RAENV[@]}" AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 120 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
 [ "$(cat "$S/scrub.rc")" = 0 ] && grep -q "environment variables removed for this run (names only):.*AWS_R11_PROBE" "$S/scrub.txt" && grep -q "PYTHONPATH" "$S/scrub.txt" && ! grep -q -F "$FAKEVAL" "$S/scrub.txt"; ok $? "F12: run_all.sh removes stray cloud and interpreter variables and prints their names, never their values"
 # raw output goes to a scratch folder; the tracked raw folder is published only on request, each file under a temporary name
 mkdir -p "$S/pub-src" "$S/pub-dst"; echo new > "$S/pub-src/a.txt"; echo keep > "$S/pub-dst/other.txt"; echo old > "$S/pub-dst/a.txt"
