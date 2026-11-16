@@ -575,3 +575,42 @@ Blockers: file holds no tables (pointer to FINAL-CROSSCHECK.md sections 2-5); ro
 
 ### 409 banned-claims-review-r1 and 410 plan-review-r3 (mine)
 409 Blockers: replacement text is not in the file ("in this session's transcript"); "lead" has three meanings, decider unnamed. Majors: line 8 says decision 5 bans the claim, but it bans it only until a closed gate exists; "apparent conflict" on `end` deleting is settled by decision 2; undefined terms and unnamed files for "lines 9 and 21"; no person or time. 410 Blockers: findings M1-M4, N1-N2 are fragments with undefined terms; no date, person or PLAN-002 path. Majors: "19 unittest pass" without command and output; "step 4 of the plan" ambiguous; resolve not run; L6/continuation lane vs decision 3 "no new lanes"; two stop rules (cap 3 rounds vs 0 blockers); no link to decisions 1 and 12.
+
+### 411 rehearsal-passed-limits re-read (round 2)
+Blockers: recipient not named (now fixed: owner); item 3 deadline not tied to a rule or file (now says "start check, file not read"). Majors: row DM, "both tries", "loopback re-smoke", "take", "closed gate", INDEX and plan sections undefined; "lead id" vs decision 2 "lead key"; target date no UTC. Applied the glossary and DM wording in the file 12:0xZ; INDEX path and UTC date of the target still open.
+
+### 412 end-delete-cases round 2
+Blockers: step 16 had several actions and no STOP; placeholder times with "studio head"; "contacts may be deleted" timing unclear vs step 15. Majors: verifier and time not set; owner action if `end` deletes anyway missing; v5, OWNER-VIEW, step 7b undefined; release word used for two meanings; clean-up card step 3a may duplicate run-day steps; "digest 380" internal; where the owner sees the lead id in HubSpot. Fixed in file: steps 15-20 split with STOPs, placeholder removed, 3a duplicate warning. Still open: who reads the program and by when; owner step if a contact is missing after `end`.
+
+### 413 open-items-table round 3
+Blockers: no Person column; A4 status UNKNOWN and overdue; two header stamps. Majors: row 1 not yes/no; row 3 "with row 1" is no date; row 4 C1 may be moot (decision 8); rows 5, 8, 9, 12 are pick-one; row 6 two asks in one; no row for who checks the demo HubSpot before the owner's by-hand delete (decision 2); LP-1, D-05, shared form code, crash test, F-002, ORDER 013 not glossed; row 13 crash test vs decision 4; line numbers shift. NOT yet fixed.
+
+### 414 t19-and-stored-data-steps
+Blockers: lines 6-7 pack 7-9 steps each; T1-8 missing; four steps have no actor, command or tool; the pass rule for "no lead key, e-mail or name in Postgres" contradicts itself (mf_leads keeps them; clean-up method C2-4 undecided; SQL delete "not approved" yet offered). Majors: UTC/IST only in T1-9; T19 posts the lead twice vs decision 8 (one lead); count source vs decision 9 unnamed; many terms undefined. NOT yet fixed.
+
+### 415 not-checked-r2 re-read
+Blockers: no UTC/IST on row 1, loopback re-smoke not mentioned. Majors: rows 2, 4, 8 date "in the rehearsal"; core-hardening session not a person; row 5 whose yes; row 6 conflicts with decision 1 (mark = reword/remove); row 7 flowcheck blind spots unexplained; terms. Fixed: glossary, row 1 date, "same time as row 1", yes defined. Open: who is the core-hardening session by name, UTC time of target.
+
+### 416 cleanup-card-held-edits
+Blockers: two competing step 3a versions, line 13 says drop only lines 3-4; remove-vs-keep the "card addition" marker contradicts; step 3a has the owner delete on a message, which is decision 2 only if the lead releases it; add "do not use until the lead writes step 3a approved". Majors: no way to check step 3 finished; lead id vs lead key; vague account naming; loop in step 2; no STOP before the irreversible delete; "N of M" exact string; undefined terms; rm line has no STOP.
+
+### 417 banned-claims round 2
+Blockers: phrases on line 9 have no source and no named checker; terms D-04, D04-D05, closed gate, take, decision 2, v5 step H, OWNER-VIEW row 6, run-day step 27 undefined. Majors: no reply time for "ask the studio lead"; line 28 says v5 step J still allows a spending cap, contradicting this list and decision 5; line 22 bans the "nothing can spend" phrase unconditionally while line 9 says only until a closed gate exists; decision 5 honest sentence (S9-2) missing; rehearsal and watch times have no UTC/IST; line 13 garbled.
+
+### 418 QUEUE round 2
+Blockers: line 2 and line 26 mix take date (Wed 18) and post (Wed 25) with no UTC; decisions 2 and 5 not in the rule list; stage.journal undefined. Majors: M1-M4, M6, M8-M16 lack owner and UTC/IST date; M16 closed but still listed; percent reads as confidence; no glossary; M3 8 Blockers open with no owner; M14 no due date.
+
+### 419 STATUS-BOARD round 2
+Blockers: IST missing on most lines; NEEDS_YOU (the lead's whole job) sits at line 14 under 13 log lines and holds five long asks in one line; ask 3 due Tue 17 Nov 12:00 UTC vs line 39 "no date set"; ask 4 and 5 unexplained. Majors: undefined words (ORDER, digest, refill, take, rehearsal, loopback, heavy lane, R460, S9-x); percent stated three times; FAILED line points to a wall of text; no "blocks the video?" column; NEXT 5 duplicates NEXT. Agent supplied a rewrite of the top 15 lines.
+
+### 420 PLAN-002 round 4
+Blocker: lane L4 reads real-run and owner-only folders; decision 5 says the lead reads only masked take outputs (rewrite: L4 does not open them, verdict NOT-READ). Majors: round count (this is round 4, cap 3); "final flow" vs decision 1 (film-v5 files = NOT-IN-VIDEO); KEEP-AS-IS missing from the verdict list; BRANCH ARTEFACT, DECISION (which file), take, demo, desk, portal undefined; no names; no UTC/IST for lane start and stop.
+
+### 421 decision-list-for-lead round 6
+Blockers: line 108 (A13 moves notice to Mon 23 Nov 11:14:40 UTC / 16:44:40 IST) contradicts lines 19 and 33 (15:14:40 / 20:44:40); defaults like "studio lead starts one session" make no sense when the lead is the answerer; many rows are not one yes/no (A1, A2, A3, A5, A7, A8, A9, C1-C9, E, F, G1). Majors: no answer-by in C and D rows; C5 says decision 5 defers S9-2 (it keeps it as the owner's compare); E3 vs A6 on decision 9; A4 default vs decision 12; answer-by times differ (12:29 vs 13:00 UTC); Route config, patch F-008, film pause, M3/M5/M14 undefined; A5 default is not a default.
+
+### 422 premortem-r1
+Blockers: take, V5, M17, T19, S9 never defined, no author; item 1 "end deletes" conflicts with decision 2 (V5 lines 31, 114, 124, 127-130 still say it deletes; fix owner and time needed); item 7 irreversible HubSpot app delete vs decision 2; "ten concurrent posts" needs runner and deadline. Majors: no owner or UTC/IST on any fix; item 3 conflicts with decision 5 (describe-only); post checker no owner; hook door, notice, journal undefined; a second HubSpot app per function pulls toward the parked roles work (decision 3); port 5690 missing from preflight; "real-v5 only" never stated.
+
+### 423 critical-path-r1 round 2
+Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was fixed at 12:05 UTC (stale by 1 h 35 min; says nothing about whether row 1 or 2a started); line 11 "reachable only if Tue 17" does not follow from lines 8-9 and TAKE-BLOCKERS row 3 has no estimate. Majors: 13:00 vs 14:00 UTC with no reason; "A4/A5" not in the decisions file; decision 8 (not 12) defines the re-smoke; IST missing on 18:00 and 19:00 UTC; reviewer and who declares "rehearsal passed" unnamed; glossary at the end. Arithmetic checks out (UTC/IST pairs, 14 min 20 s gap, offsets).

@@ -8,12 +8,15 @@ Files that still say "end deletes up to 3 contacts" (core-hardening or the studi
 
 Replacement text:
 - Run-day step 9: "Up to 3 made-up contacts are left for you to delete by hand." Heading of steps 13-15: "`end` ONLY CLOSES THE PAUSE (it deletes nothing)".
-- Run-day step 15 (new, STOP step): "`end` has closed the pause. The made-up contacts are still in HubSpot. Do nothing until the studio lead writes 'contacts may be deleted' in chat."
-- Run-day step 16 (new): "The studio lead sends a list in chat: lead id (the number the program gives each made-up test person) and HubSpot contact id for each leftover contact, at most 3, ids only, no names or addresses. The studio lead sends it by <HH:MM> UTC / <HH:MM> IST (time not set; the studio head fills it). Delete only the listed contacts, by hand."
-- Run-day step 17 (new): "Reply in chat: 'contacts deleted: N'."
+- Run-day step 15 (new, STOP step): "STOP. `end` has closed the pause. The made-up contacts are still in HubSpot. Do nothing until the studio lead sends the list (step 16)."
+- Run-day step 16 (new, STOP step): "STOP. Wait for the studio lead's chat message with the list: for each leftover contact, the lead id (the number the program gives each made-up test person) and the HubSpot contact id, at most 3, ids only, no names or addresses. Do nothing else. The list comes within 15 minutes of your `end` (the time the studio lead sends it, in UTC and IST, is written in the message)."
+- Run-day step 17: "Wait for the studio lead's words 'contacts may be deleted'. The studio lead writes them only after sending the list."
+- Run-day step 18: "In the demo HubSpot account, open one listed contact by its contact id. Check the lead id matches the list. If an id is not on the list, do not touch it."
+- Run-day step 19: "Delete that one contact. Repeat steps 18 and 19 for the next listed contact."
+- Run-day step 20: "Reply in chat: 'contacts deleted: N'. If a listed contact is missing or a name on the list is wrong, delete nothing more and tell the studio lead."
 - Release word (the one trigger for contact deletes; step 15 and this line now agree): the owner's contact delete uses the studio lead's words "contacts may be deleted" (new). The existing word "demo mails may be deleted" stays for the Gmail demo mails. Two words, two jobs; the studio lead confirms.
 - OWNER-VIEW row 3: "The one careful moment is the film pause: typing `end` closes it and deletes nothing; afterwards you delete the listed contacts by hand."
-- OWNER-VIEW line 8: add "step 7b: the studio lead sends the contact list; you delete the listed contacts and reply 'contacts deleted: N'."
-- Clean-up card: new step 3a: "STOP. Do this only if the studio lead wrote 'contacts may be deleted'. Delete only the contacts the studio lead listed. Reply 'contacts deleted: N'."
+- OWNER-VIEW (the order-of-messages paragraph): add "step 7b: the studio lead sends the contact list; you delete the listed contacts and reply 'contacts deleted: N'."
+- Clean-up card: new step 3a (only if the run-day steps 15 to 20 were not already done; they are the same deletes, never do them twice): "STOP. Do this only if the studio lead wrote 'contacts may be deleted'. Delete only the contacts the studio lead listed. Reply 'contacts deleted: N'."
 
 Note (digest 380): UNVERIFIED whether the program deletes anything. These texts say `end` deletes nothing only because decision 2 says so; do not put them on a card until someone has read the program. Use 'lead id', not 'lead key' (a key reads as a secret).

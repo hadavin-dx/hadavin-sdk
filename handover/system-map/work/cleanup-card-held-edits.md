@@ -1,3 +1,5 @@
+NOTE (system-map, 2026-11-16): only the replacement of step 3a from the section below that starts with 'Replacement for step 3a' is current. Everything above it is SUPERSEDED, do not apply. Do not use any of it until the studio lead writes 'step 3a approved'. Use one term, 'lead id'.
+
 # Held edits for OWNER-CLEANUP-CARD.md (from an independent naive read, 16 Nov); they wait on QUESTIONS item 8 and the program text fix (M17 line 24)
 - New step 3a (after step 3, before step 4, so the contacts are gone before step 5 removes n8n's saved runs): release by the studio lead's message "delete these contacts: ..." with a list (lead key, contact id). Check you are in the demo HubSpot account; delete only a listed contact whose id matches and whose e-mail is exactly take-<run name>-a@example.com, -b@ or -c@; cannot be undone; any mismatch: stop and ask; do not put the HubSpot account number in the reply; reply "contacts deleted" and the number (0 to 3).
 - Line 2: "Deletes (steps 2, 3a and 6)"; line 4: add the 3a release word; step 5: "do not say 'retire check passed' until step 3a is finished"; step 2: "if any name on the list is not one you made, stop and ask".
