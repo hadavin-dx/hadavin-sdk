@@ -35,3 +35,9 @@ secrets rc=0 (PASS 0 hits in 1803 files); refs rc=0 (PASS 5160 references); coun
 
 ## Files with stale text for the lead's REPORT.md list (ORDER 037)
 Edited here: TAKE-CHECKLIST.md, FIX-PLAN.md. Not mine and may still carry the stand-in or "rehearsal not in real HubSpot" text: QUEUE.md, ORDERS.md (line 20), REPORT.md, STATUS-BOARD.md, OWNER-STEPS-q16-rows.md, PLAN-005.md, fill_flows/README.md, flow-check/README.md.
+
+## Round 9 (TAKE-CHECKLIST.md and FIX-PLAN.md only; static text edits; not committed)
+Inputs checked against files and flow-check/take_check.sh first: tc-r8-commands-findings B1 (true: unanchored `RESULT: 0 FAIL` count is 3 on a correct run; the "two greps" explanation was wrong and is dropped), T21 REVOKE CONNECT (invalid, PUBLIC holds CONNECT), findings-r9-codebase Major 3. Backups in the scratchpad (bak-tc9-*.md).
+Changed: anchored FINAL greps; separate judge blocks R2j/R6j/R7j and R8 decision; chained guarded commits (FP step 3, P1c); R3 with SHA_EVIDENCE check, R3c leftovers check; R4/R4r/R4b-1/R4b-2 with LOG3 and counts files; R5e counts; R7 single command and pass line (same in FP 8b); exit echoes on "prints nothing" greps; T21 method, T19 provisional, T20 extra case; guarded FP step 2; needed-by table; ENVSH, LOG3, FINAL_SHA rows; evidence file list; items 20-23 and item 14 QUESTION; check 1 now says "decision 4" must not be changed alone (F-008 greps the literal).
+Checks, run from this folder: check_secrets exit 0 (0 hits), check_refs exit 0 (5162 refs), ruff check exit 0, ruff format --check exit 0, Clock diff exit 0.
+Not run: none of the commands in the new blocks were executed on a real tree.
