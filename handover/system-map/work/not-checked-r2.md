@@ -1,4 +1,7 @@
-# Not checked: open items before the take (rewritten Mon 16 Nov 2026 by the system-map session)
+# Not checked: open items before the filmed demo run, the take (rewritten Mon 16 Nov 2026 by the system-map session)
+
+## What the demo does
+The demo takes a made-up sales lead, writes it once into a small database, creates or updates one contact in HubSpot (a sales-contact tool) and sends one mail. The steps run in n8n (a tool that runs such steps). The film must show that the same lead sent twice gives one mail and one contact write. The flow files hold placeholders for settings; a script (fill_flows.py, not built) would fill them from the laptop's environment.
 
 ## Source and scope
 Source: an unverified zoom-out read of REPORT.md, flowcheck/REPORT.md, flowset/REPORT.md and inputs/DECISIONS-2026-11-16.md. Items settled by decisions 1 to 12 of that file are removed: patched copy chosen (lead answer 10:20Z), source tree and licence copies (decision 11), S9-1 and S9-4 deferred and no closed-gate claim (decision 5), scenes 5 to 11 cut (decision 1), HubSpot write scope moot because the take never deletes (decision 2), proof screen is a rehearsal capture (decision 9). T19 has not run. Nothing below is verified.
@@ -17,11 +20,11 @@ Source: an unverified zoom-out read of REPORT.md, flowcheck/REPORT.md, flowset/R
 ## Open items
 | # | open item | person | due |
 |---|---|---|---|
-| 0 | Build fill_flows.py (BL-wp6-G1), the script that reads the laptop's settings and writes a copy of the flow files with the `$env` values filled in (the list of values is NOT RECORDED; done when the studio lead names a test: NOT SET). | not chosen yet | before row 1 |
+| 0 | Build fill_flows.py (BL-wp6-G1), the script that reads the laptop's settings and writes a copy of the flow files with the `$env` values filled in (the list of values is NOT RECORDED; done when the studio lead names a test: NOT SET; asked of the studio lead with the other facts by Tue 17 Nov 12:00 UTC / 17:30 IST). | not chosen yet | before row 1 |
 | 1 | Import the filled copy on the laptop, send one made-up lead, reach MarkDone. | studio lead | after the loopback re-smoke passes |
 | 2 | Run T19: send one lead twice. | studio lead | same time as row 1 |
 | 3 | Re-check the regenerated flow folder with flowcheck on the final folder and write its git sha (where it is written: NOT SET). | core-hardening session | after the folder is on a fetchable branch |
-| 4 | Saved runs hold lead id, e-mail and name. Is the n8n executions list kept off camera or cleaned? | studio lead | same time as row 1 |
+| 4 | n8n's saved runs (its executions list) hold lead id, e-mail and name. Is that list kept off camera or cleaned? | studio lead | same time as row 1 |
 | 5 | List the mail sender and the 3 recipients; confirm all are the owner's own inboxes. No program check enforces this (S9-1 deferred). | owner | before the owner sends the written yes |
 | 6 | Mark every scene 1 to 4 sentence in the run sheet that mentions stand-ins, refusal, 60 s or counts. | studio lead | before the film |
 | 7 | flowcheck blind spots (writes without "crm" in the address, `$node[...]`, disabled steps). | core-hardening session | after the rehearsal |
@@ -33,8 +36,8 @@ Goal: settle the open checks before the take. Must pass before filming: rows 0, 
 ## Pass rules
 - Row 1: one lead reached MarkDone (yes/no).
 - Row 2: pass = one mail and one contact write in total, counts recorded.
-- Row 4: the executions page and the Postgres tables hold no real-looking data on camera; record what was seen.
-- Rows 3, 5, 7 and 8: no pass rule is recorded in any file I read (NOT SET).
+- Row 4: the n8n executions list and the database tables hold no real-looking data on camera; record what was seen.
+- Rows 3, 5, 7 and 8: no pass rule is recorded in any file I read (NOT SET); the studio lead is asked to write one for each by Tue 17 Nov 12:00 UTC / 17:30 IST (proposal). Row 5 "3 recipients": the names of the three recipient inboxes are NOT RECORDED here (and must not be written on this page).
 - Row 6: every scene 1 to 4 sentence that mentions stand-ins, refusal, 60 s or counts is marked.
 
 ## Times
