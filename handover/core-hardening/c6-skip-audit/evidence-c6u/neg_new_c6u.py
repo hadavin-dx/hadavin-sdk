@@ -5,7 +5,7 @@ def box_sub(a, b):
     return rep.replace(a, b, 1)
 M["T-E1-first-box-number"] = box_sub("READY (49:", "READY (48:")
 def _allnum(t):
-    for a_, b_ in (("READY (49:", "READY (50:"), ("ON DEFAULT (38:", "ON DEFAULT (39:"), ("WAITS FOR A CHECK (3:", "WAITS FOR A CHECK (4:"), ("6 wait for the owner", "7 wait for the owner"), ("85 wave 1 rows", "86 wave 1 rows")):
+    for a_, b_ in (("READY (49:", "READY (50:"), ("ON DEFAULT (38:", "ON DEFAULT (39:"), ("WAITS FOR A CHECK (3:", "WAITS FOR A CHECK (4:"), ("WAITS FOR THE OWNER (6:", "WAITS FOR THE OWNER (7:"), ("applies the 87 wave 1 rows", "applies the 86 wave 1 rows")):
         t = t.replace(a_, b_, 1)
     return t
 M["T-E2-all-box-numbers"] = _allnum(BOX) + rep[box_end:]
@@ -52,8 +52,8 @@ env_variant("T-E19-sheet-v32-A-newer", _late_file("OWNER-SHEET-v32-A.md"))
 env_variant("T-E19b-sheet-v32-SOURCE-newer", _late_file("OWNER-SHEET-v32-SOURCE.md"))
 env_variant("T-E20-release-note-v16-newer", _late_file("LEAD-RELEASE-NOTE-v16.md"))
 env_variant("T-E20b-release-note-v16-SOURCE-newer", _late_file("LEAD-RELEASE-NOTE-v16-SOURCE.md"))
-env_variant("T-E21-release-note-v16-exists", lambda d: open(d + "/LEAD-RELEASE-NOTE-v16.md", "w").write("x"))
-env_variant("T-E22-sheet-v32-exists", lambda d: open(d + "/OWNER-SHEET-v32-A.md", "w").write("x"))
+env_variant("T-E21-release-note-v17-exists", lambda d: open(d + "/LEAD-RELEASE-NOTE-v17.md", "w").write("x"))
+env_variant("T-E22-sheet-v33-exists", lambda d: open(d + "/OWNER-SHEET-v33-A.md", "w").write("x"))
 env_variant("T-E23-sheet-v32-B-missing", lambda d: os.remove(d + "/OWNER-SHEET-v32-B.md"))
 for _n in ENV:
     if _n.startswith("T-"):
@@ -62,3 +62,39 @@ M["T-E17b-sheet-v32-time-wrong"] = re.sub(r"(OWNER-SHEET-v32-A\.md \(written )\d
 M["T-E24-EGM-undefined-1c"] = rep_once("EGM = the studio's review method", "EGM is the studio's review method")
 M["T-E25-assumption-label-gone-box"] = box_sub("MY ASSUMPTION", "THE RULE")
 M["T-E26-own-reading-gone-box"] = box_sub("this report's own reading", "a fact")
+
+# ---- c6u: the 14 changes the c6t verifier missed (c6t independent evidence), each as FIRST copy only and as ALL copies; the check must fail on both
+def _fa(tag, a, b):
+    assert rep.count(a) >= 2, (tag, a, rep.count(a))
+    M["U-" + tag + "-first"] = rep.replace(a, b, 1)
+    M["U-" + tag + "-all"] = rep.replace(a, b)
+_fa("rows-23-58-59", "23, 58, 59", "23, 58, 60")
+_fa("rows-90-91", "90, 91", "90, 92")
+_fa("card-words-90", "90 words", "91 words")
+_fa("card-seconds-36", "about 36 s", "about 38 s")
+_fa("option-b-74-word", "74-word", "144-word")
+_fa("budget-40", "budget 40 s", "budget 45 s")
+_fa("lease-45-second", "45-second", "55-second")
+_fa("wakes-30", "every 30 seconds", "every 20 seconds")
+_fa("lrn14-149", "LRN14:149", "LRN14:148")
+_fa("ord-150", "ORD:150", "ORD:151")
+_fa("runs-18", "18 stand-in crash runs", "17 stand-in crash runs")
+_fa("delay-13", "13-minute", "12-minute")
+M["U-relayed-2-first"] = rep_once("(2 relayed runs)", "(3 relayed runs)")
+M["U-lease-within-45"] = rep.replace("second send comes within 45 seconds", "second send comes within 55 seconds", 1)
+M["U-kept-18-first"] = rep.replace("the 18 kept runs", "the 17 kept runs", 1)
+# ---- c6u: the rules new in c6u
+M["U-row95-gone"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| 95 | NOT APPLIED"))
+M["U-row96-gone"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| 96 | NOT APPLIED"))
+M["U-row53-chain-broken"] = line_sub("| 53 | NOT APPLIED", "n8n stores no run data for runs that fail.", "n8n stores nothing for runs that fail.")
+M["U-row76-audited-sentence-back"] = rep + "\n- the program is not among the audited files.\n"
+M["U-box-count-96-to-95"] = box_sub("holds 96 proposed text changes", "holds 95 proposed text changes")
+M["U-box-too-long"] = rep[:box_end] + ("filler words here " * 130) + rep[box_end:]
+M["U-two-statuses-L-SAVEERR-sec3-default-no"] = rep_once("| OPEN (OWNER ONLY). Until he answers, failed runs stay unsaved", "| No (the lowest-data choice); failed runs stay unsaved")
+M["U-B4-unverified-gone"] = box_sub("equality with the real files is UNVERIFIED", "all is fine")
+M["U-B5-defaults-leave-gone"] = box_sub("WHAT THE DEFAULTS LEAVE", "NOTE")
+M["U-part2-card-words-wrong"] = rep_once("line 2 (35 words)", "line 2 (36 words)")
+M["U-L-SHEET-v32-time-missing"] = re.sub(r"(OWNER-SHEET-v32-B\.md) \(written [^)]*\)", r"\1", rep, count=1)
+M["U-steps-5-to-9-back"] = rep_once("after TASKS (5) to (9) of the list", "after steps 5 to 9 of the list")
+M["U-example-time-before-check"] = rep_once("2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST", "2026-11-16T16:40:00Z = 22:10:00 IST")
+M["U-row96-old-text-not-once"] = line_sub("| 96 | NOT APPLIED", "`30 s EST`", "`30 s`")

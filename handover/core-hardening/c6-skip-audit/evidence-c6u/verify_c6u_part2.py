@@ -459,11 +459,11 @@ def _tie(name, pattern, expected, text=None, flags=0):
 _total_w = sum(_cw)
 _secs = round(_total_w / 150.0 * 60)
 _bud = -(-_secs // 5) * 5
-_tie("card total words, seconds, budget (recomputed from the four quoted lines)", r"(\d+) words, about (\d+) s, budget (\d+) s", (_total_w, _secs, _bud))
+_tie("card total words, seconds, budget (recomputed from the four quoted lines)", r"(?:Total|below the box:) (\d+) words, about (\d+) s, budget (\d+) s", (_total_w, _secs, _bud))
 _tie("card total words 'spoken card holds'", r"the spoken card holds (\d+) words", (_total_w,))
 _tie("card seconds 'at 150 words a minute'", r"about (\d+) s at 150 words", (_secs,))
 _ob = part2[part2.index("OPTION (b) OF L-CARDLEN"):part2.index("THE CLOSING CARD UNDER THE DEFAULTS")]
-_obw = sum(len(q_.split()) for q_ in re.findall(r"line \d '(.*?)'(?= line \d '|\s*$)", _ob.split("): line 1", 1)[1] if "): line 1" in _ob else "", re.S)) if "): line 1" in _ob else -1
+_obw = sum(len(q_.strip().rstrip("'").split()) for q_ in re.split(r"\bline \d '", _ob)[1:])
 _obs = round(_obw / 150.0 * 60)
 _tie("option (b) words (recomputed from its four quoted lines)", r"the (\d+)-word text", (_obw,))
 _tie("option (b) title words", r"OPTION \(b\) OF L-CARDLEN, (\d+) words", (_obw,))
@@ -471,14 +471,13 @@ _tie("option (b) seconds and budget", r"the \d+-word text in part 2: about (\d+)
 _ord = rd(H + "/handover/core-hardening/ORDERS.md").split("\n")
 _lease = int(re.search(r"lease (\d+) s", _ord[150]).group(1))      # ORDERS.md line 151 (Q21.2): the one source of the lease setting
 _tie("lease seconds in '<n>-second limit/setting/sentence/window/lease/check'", r"(\d+)-second (?:limit|setting|sentence|window|lease|check)", (_lease,))
-_tie("lease seconds in 'within <n> seconds' (a gap that counts for the claim)", r"within (45|\d+) seconds of the first send", (_lease,))
+_tie("lease seconds in 'within <n> seconds' (a gap that counts for the claim)", r"second send comes within (\d+) seconds of the first send", (_lease,))
 _tie("lease seconds in 'lease <n> s' for the take's series (the 20 and 120 s lines are older series: only the 45 s lines are compared)", r"lease (45) s", (_lease,))
-_rec = json.load(open(T + "/demo/n8n-flows/mf-recovery.json"))
 _every = re.search(r'"secondsInterval":\s*(\d+)', rd(T + "/demo/n8n-flows/mf-recovery.json")).group(1)
 _tie("recovery interval 'every <n> seconds' (the file mf-recovery.json says secondsInterval)", r"every (\d+) seconds", (_every,))
 _kept = 5 + 5 + 5 + 3      # K1, K2, K3B, K3 (the table of kept runs in section 1b; checked above)
 _tie("kept stand-in crash runs", r"(\d+) stand-in crash runs", (_kept,))
-_tie("kept runs", r"(\d+) kept (?:crash )?runs", (_kept,))
+_tie("kept runs", r"(?:the|same) (\d+) kept (?:crash )?runs(?! that overlapped)", (_kept,))
 _cl = rd(T + "/flows-audit/lanes13/claims-A.md")
 _dl_s = int(re.search(r"\((\d+) s, RELAYED", _cl).group(1)); _dl_n = int(re.search(r"up to 13 min late \(n=(\d+)\)", _cl).group(1))
 _tie("alert delay minutes (claims-A.md says %d s)" % _dl_s, r"(\d+)-minute alert delay", (_dl_s // 60,))
@@ -508,5 +507,5 @@ _runs_ = []
 for _m in re.finditer(r"\b\d+(?:, \d+)+(?: and \d+)?\b", raw):
     _nums = [int(x) for x in re.findall(r"\d+", _m.group(0))]
     _runs_.append(_nums)
-_near = [(g, n_) for g, v in _grp.items() if len(v) >= 2 for n_ in _runs_ if len(n_) == len(v) and n_[0] == v[0] and n_ != v]
+_near = [(g, n_) for g, v in _grp.items() if len(v) >= 2 for n_ in _runs_ if len(n_) == len(v) and n_[0] == v[0] and n_ != v and len(set(n_) & set(v)) >= max(1, len(v) - 1)]
 check("c6u TIE row lists: no written list of row numbers is a near copy (same length, same first row, other rows) of the rows that wait for a check %s, wait for the owner, belong to L-ONEDB %s or to C-8 %s" % (_grp["rows that wait for a check"], _grp["rows of L-ONEDB"], _grp["rows of check C-8"]), not _near and all(sum(1 for n_ in _runs_ if n_ == v) >= 1 for v in _grp.values() if len(v) >= 2), _near[:4])

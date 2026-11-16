@@ -59,7 +59,7 @@ Run in the steps-edits folder, with python3 and `-B` (no cache files):
 - `python3 -B build-v32.py`: builds the pages (sheet A 6,290 words, sheet B 6,091).
 - `python3 -B check-v32.py`: "check-v32: 0 failure(s)".
 - `python3 -B -I v32-fail-proof.py`: Part 9 has 18 checks (C228 to C245). On the built v31 pages 12 fail: C228, C229, C230, C231, C232, C233, C234, C238, C239, C243, C244, C245. Six do not fail on v31 because v31's text was correct: C235, C236, C237, C240, C241, C242 are guards against a later mistake; each is proven by a plant instead (Z01, Z04 to Z06, Z02, Z08 to Z10, Z11, Z12). C238 and C239 fail on v31 only because their ledgers belong to v32. On the built v32 pages: none fail.
-- `python3 -B mut32.py`: PLANTS_LINE
+- `python3 -B mut32.py`: 260 plants (the 230 of v31 re-anchored where my text changed, plus 30 new plants Z01 to Z30; one of the 260 is a negative control that must print MISSED and does). Result: caught by the meant check 259, missed 0, anchor-not-found 0, baseline failures 0. The first run of this batch had 255 caught, 3 missed (Z07, Z19, Z29: a warning count, an alarm sentence present in two places, and a trigger text present twice) and 1 anchor not found (M48): I tightened the three checks to count the copies and re-anchored M48, then reran. 10 plants of v31 lost their anchor when I changed the text; all 10 were re-anchored (P15, V13, W07, W16, X01, X03, X05, Y03, Y11, M48), which is a change of the test, not of the product. Plants prove that a check fires on a one-place change; they do not prove the pages are clear
 
 ## 6. Lead question L-LEN: one concrete proposal
 
