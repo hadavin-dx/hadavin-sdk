@@ -1,3 +1,0 @@
-rc=1
-FAIL line 30: 18:19 UTC is not 23:48 IST
-RESULT FAIL 1

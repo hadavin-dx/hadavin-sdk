@@ -1,4 +1,0 @@
-cmd: new A-01 tests on old code (b4cce5b)
-17 failed, 2 passed in 0.53s
-cmd: new C-01 tests on old code (import of _price_ok and one test removed by sed)
-20 failed, 22 passed in 0.66s

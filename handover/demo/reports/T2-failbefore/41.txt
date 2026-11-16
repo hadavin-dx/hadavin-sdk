@@ -1,1 +1,0 @@
-mutant 41: old text occurs 0 times in A4r4; mutation not applicable

@@ -1,2 +1,0 @@
-usage: secdef_mutants_v19.py <held-sql folder> <product migrations folder> (both must be existing folders)
-rc=2

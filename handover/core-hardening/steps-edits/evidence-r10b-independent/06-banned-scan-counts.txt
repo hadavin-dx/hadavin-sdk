@@ -1,5 +1,0 @@
-banned list size 10
-files scanned 600
-files with a hit 0
-hit files (name, distinct strings): []
-total occurrences per banned index: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]

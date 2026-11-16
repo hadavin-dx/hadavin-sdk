@@ -1,4 +1,0 @@
-INVOICE INV-1001
-Supplier: Acme Widgets Ltd
-Your PO PO-77 USD
-Routing 111222333 Account 999999999

@@ -1,2 +1,0 @@
-1 file already formatted
-exit=0

@@ -1,4 +1,0 @@
-ruff check rc=0
-ruff format --check rc=0
-bandit rc=0
-scan_repo rc=1

@@ -1,4 +1,0 @@
-INVOICE INV-1001
-Supplier: Acme Widgets Ltd
-Your PO PO-77 USD
-Bank: HSBC Tel 02079460958 Account No 87654321

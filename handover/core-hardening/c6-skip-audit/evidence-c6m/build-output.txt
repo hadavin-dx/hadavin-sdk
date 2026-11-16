@@ -1,2 +1,0 @@
-edits 72
-report lines 480 rows 72 ready 35 defaults-only 34 with-check 3

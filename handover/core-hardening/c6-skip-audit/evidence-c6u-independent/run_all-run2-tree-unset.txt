@@ -1,3 +1,0 @@
-MISSING INPUT: C6U_TREE is not set (the 'handover' folder of the copied demo tree)
-run_all.sh stopped: fix the missing input(s) above
-rc=2

@@ -1,2 +1,0 @@
-BANNED entries read: 10
-files scanned: 31 hits: 0

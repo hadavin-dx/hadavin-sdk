@@ -1,2 +1,0 @@
-check-v25: 0 failure(s)
-exit 0

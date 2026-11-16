@@ -1,3 +1,0 @@
-no-year weekday-date 26 bad 0
-2026-11-16 weekday Mon
-IST-first pairs 0

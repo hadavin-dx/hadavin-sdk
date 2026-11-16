@@ -1,3 +1,0 @@
-rc=1
-FAIL Counts sentence differs from computed status counts
-RESULT FAIL 1

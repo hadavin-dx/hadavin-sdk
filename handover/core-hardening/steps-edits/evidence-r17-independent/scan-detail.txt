@@ -1,3 +1,0 @@
-pw 111 ['xxxxxxxx: xxxxxx', 'xxxxxxxx: xxxxxx);', 'xxxxxxxx: xxxxxxx', 'xxxxxxxx: xxxxxxx/xxxxxxx', 'xxxxxxxx: xxxxxxxx']
-email 73 ['corp.test', 'gmail.com', 'xxxxxxx.xxx']
-akia 16 ['xxxxxxxxxxxxxxxxxxxx']

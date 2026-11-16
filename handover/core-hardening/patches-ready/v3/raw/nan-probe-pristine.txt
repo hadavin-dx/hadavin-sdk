@@ -1,6 +1,0 @@
-pydantic 2.14.1 python 3.13.18
-'NaN' -> ValidationError | 1 validation error for Route / input_usd_per_mtok /   Input should be a finite number [type=finite_number] /     For further information visit https://errors.pydantic.dev/2.14/v/finite_number
-'sNaN' -> ValidationError | 1 validation error for Route / input_usd_per_mtok /   Input should be a finite number [type=finite_number] /     For further information visit https://errors.pydantic.dev/2.14/v/finite_number
-'Infinity' -> ValidationError | 1 validation error for Route / input_usd_per_mtok /   Input should be a finite number [type=finite_number] /     For further information visit https://errors.pydantic.dev/2.14/v/finite_number
-'-Infinity' -> ValidationError | 1 validation error for Route / input_usd_per_mtok /   Input should be a finite number [type=finite_number] /     For further information visit https://errors.pydantic.dev/2.14/v/finite_number
-'1' -> ACCEPTED Decimal('1')

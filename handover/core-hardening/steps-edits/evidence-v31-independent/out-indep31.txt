@@ -1,7 +1,0 @@
-FINDING I09 OWNER-APPENDIX-v31-A.md: email-shaped text -x@xxxxxxx.xxx
-FINDING I09 OWNER-APPENDIX-v31-A.md: email-shaped text -x@xxxxxxx.xxx
-FINDING I09 OWNER-APPENDIX-v31-B.md: email-shaped text -x@xxxxxxx.xxx
-FINDING I09 OWNER-APPENDIX-v31-B.md: email-shaped text -x@xxxxxxx.xxx
-FINDING I09 OWNER-FILM-PERSON-v31.md: email-shaped text -x@xxxxxxx.xxx
-FINDING I09 LEAD-RELEASE-NOTE-v15.md: email-shaped text -x@xxxxxxx.xxx
-indep31: 6 finding(s)

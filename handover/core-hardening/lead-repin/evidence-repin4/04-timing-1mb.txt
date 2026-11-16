@@ -1,4 +1,0 @@
-long1.txt 980003bytes dash rc=0 secs=.566501689
-long1.txt 980003bytes bash rc=0 secs=.625764204
-long2.txt 1080003bytes dash rc=0 secs=.611859257
-long2.txt 1080003bytes bash rc=0 secs=.696823368

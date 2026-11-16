@@ -1,4 +1,0 @@
-check-v26: 2 failure(s)
-FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
-FAIL C55 B holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
-build=0 exit=1

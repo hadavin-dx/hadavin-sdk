@@ -1,2 +1,0 @@
-check-v26: 0 failure(s)
-exit=0 secs=0

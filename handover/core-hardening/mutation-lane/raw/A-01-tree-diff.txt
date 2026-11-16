@@ -1,3 +1,0 @@
-TREE CHECK of the round-2 scratch tree /tmp/c8/wA after the loop (run by hand once, after the loop; run.py now does this itself)
-command: diff -rq -x .venv -x __pycache__ -x .pytest_cache <fresh git archive b4cce5b + patches-ready/A-01.patch> /tmp/c8/wA
-rc: 0  (0 = identical)

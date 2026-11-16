@@ -1,3 +1,0 @@
-warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
-error: Failed to spawn: `bandit`
-  Caused by: No such file or directory (os error 2)

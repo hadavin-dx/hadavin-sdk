@@ -1,4 +1,0 @@
-# C5 v5 final check (egm design, blockers/majors only), condensed copy, 2026-11-16
-Verdict: no Blocker, no Major. Round 1 majors closed (dead-man note lists 4 steps, audit-outbox gap UNCOVERED while A-01 deferred; headline 19 failed/4 passed, 11 prove rule missing, 8 prod fail on key-file refusal; one shared predicate route_prices_above_zero in config.py used by replay.py). Negative price now refused in replay: fails closed, safe. Evidence matches raw (19/4; replay 4 failed; 12/12 mutants; 9418 passed 455 skipped rc 0; sha256 8 OK; apply both orders rc 0).
-Nits: README listed REPORT-v4.md (lead fixed to v5); C-01-MINIMAL.patch:149 loose substring assert; fake exemption tested only with zero price.
-Not checked: reran nothing; import graph replay->config not traced; 455 Postgres tests skipped; no prod config end to end; 200_000 ceiling unverified; pristine 9391 not re-verified.

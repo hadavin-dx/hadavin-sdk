@@ -1,3 +1,0 @@
-test-helper: 0 of 0 killed
-not killed: []
-88 of 88 killed

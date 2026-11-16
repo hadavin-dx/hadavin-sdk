@@ -1,2 +1,0 @@
-patching file inputs/AGENT-SCOPE-DO-AND-DONT.md
-patching file inputs/DECISIONS-2026-11-16.md

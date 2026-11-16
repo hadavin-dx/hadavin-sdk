@@ -1,1 +1,0 @@
-banned-string count over 39 v18 files and 10 banned strings (list read at run time from tests/test_no_reference_material.py, exact substring like the repo test): 0 hits

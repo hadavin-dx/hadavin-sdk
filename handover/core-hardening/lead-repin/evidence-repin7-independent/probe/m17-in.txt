@@ -1,2 +1,0 @@
-http -a alice:qzvxmrtkzz example.test
-http --auth=bob:qzvxmrtkzy example.test

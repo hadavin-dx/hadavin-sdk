@@ -1,2 +1,0 @@
-A bash -n rc 0 
-B bash -n rc 0 

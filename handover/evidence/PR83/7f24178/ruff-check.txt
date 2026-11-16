@@ -1,3 +1,0 @@
-$ /home/user/build/venv-pr83-313/bin/ruff check src tests demos
-All checks passed!
-exit=0

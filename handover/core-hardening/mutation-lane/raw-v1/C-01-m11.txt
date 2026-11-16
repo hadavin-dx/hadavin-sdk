@@ -1,7 +1,0 @@
-src/hadavin_sdk/config.py
-max_tokens gt=0 -> gt=1 (1 refused)
-OLD: max_tokens: int = Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)
-NEW: max_tokens: int = Field(gt=1, le=defaults.MAX_ROUTE_TOKENS)
-
-..........                                                               [100%]
-10 passed in 0.14s

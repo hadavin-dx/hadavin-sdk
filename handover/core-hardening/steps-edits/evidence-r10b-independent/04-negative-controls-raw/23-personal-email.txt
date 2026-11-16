@@ -1,3 +1,0 @@
-rc=1
-FAIL secret-shaped string: pattern \b[A-Za-z0-9._%+-]+@(?!ex
-RESULT FAIL 1

@@ -1,7 +1,0 @@
-PG-ACCEPTED R01 DELETE FROM spend
-   effect: rows left in spend = 0
-PG-ACCEPTED R14 CTE delete
-   effect: rows left in spend = 0
-PG-REFUSED R15 TRUNCATE 0A000 TRUNCATE TABLE is not yet supported in unquoted SQL function body
-PG-REFUSED R10 LEAKPROOF by non-superuser 42501 only superuser can define a leakproof function
-rc=0

@@ -1,5 +1,0 @@
-CHANGELOG.md
-handover/evidence/PR89/r29/NOTES.md
-handover/evidence/PR89/r29/gates.txt
-tests/mutation_runner_mutants.py
-tests/test_mutation_runner_meta.py

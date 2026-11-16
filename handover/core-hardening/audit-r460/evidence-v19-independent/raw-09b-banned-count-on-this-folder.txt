@@ -1,1 +1,0 @@
-files scanned 57; strings checked 10; hits 0

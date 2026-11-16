@@ -1,3 +1,0 @@
-rc=1
-FAIL banned vendor string present (1)
-RESULT FAIL 1

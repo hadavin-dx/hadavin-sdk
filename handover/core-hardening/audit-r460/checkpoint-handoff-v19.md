@@ -1,8 +1,0 @@
-# Checkpoint, hand-off v19 (UTC 2026-11-16 18:05)
-Start. v18 evidence copied to evidence-handoff-v19/ (v18 files untouched). Next: guard v19 allow-list + mutants, then DB-3/DB-2 SQL minors (m1, m2, m7), pg_v19, text patch v19, CHANGES, resolve. No commit.
-
-## 18:15 UTC (clock of this machine; start was 18:01; an earlier draft of this line said 18:40 by mistake)
-Done: guard v19 (real allow-list, 152 mutant checks 0 failed, runner's 30 spellings 30 of 30), DB-2 and DB-3 files v19 (m1 INSERT record, m2 settle needs the day row, m7 statement_timeout, day window, agent-name rule, reserve of 0), pg_v19.py 120 safety checks + 24 controls + 3 stated, twice; v16 regress 175 of 175 twice; secrets 12 of 12 + one-line precheck. Next: text patch of the main file (readiness Ma1 to Ma4 and minors), CHANGES, OPEN-FOR-LEAD, resolve, sha256. Blockers: none. No commit.
-
-## 18:27 UTC (end of build; time box ends 19:01)
-Done: CORE-PR-HANDOFF-v19.md (built by evidence-handoff-v19/patch_v19_main.py from v18: section 0 rewritten failures first, guard text 5.6 (j) as the allow-list, DB-2 and DB-3 text and hashes, gate4 one command plus compare_gate4.py (tested on 4 cases, gate4_v19.sh itself not run), L18 one default, L21 and L23 rows, G-5, v19 paths, app.py cites 162 and 165 opened), other-tracks v19 (title and companion name only), v19-CHANGES.md (history blocks moved there), v19-OPEN-FOR-LEAD.md, resolve-handoff-v19.md, INVENTORY.md, sha256-v19.txt, banned count 0 hits over 62 files. Open: nothing built beyond text and reference code; no independent run; no EGM skill run; PG 16.15 only. Repo guard test run once (read-only): 1 failed, 2 passed; the failing one is the known lead-repin folder of another session, 0 hits under audit-r460. No commit.

@@ -1,9 +1,0 @@
-{
-  "prices_micro_usd_per_million_tokens": {
-    "read": {"in": 500000, "out": 2500000},
-    "fallback": {"in": 2000000, "out": 10000000}
-  },
-  "model_ids": {"read": "claude-haiku-5-5", "fallback": "claude-sonnet-5-5"},
-  "prices_as_of": "2026-11-03",
-  "anthropic_version": "2026-10-21"
-}

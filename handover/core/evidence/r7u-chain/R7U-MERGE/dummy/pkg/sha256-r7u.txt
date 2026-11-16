@@ -1,6 +1,0 @@
-bbb05940559b57ddc93505c8ca682cac9caee9016f52db523b52b1ffbff18d8a  core-fix-on-frozen-r7u-crlf.patch.gz
-6603a2da421fffc6fb6f5805e26772fc81d103feeb288426fef27d7268c4284c  core-fix-on-frozen-r7u-lf.patch
-cfd6a7f8077ec6b30a42a3fa3243753d4b793cc831aa8ad08ddf6d1476187815  core-fix-r7t-to-r7u-delta-crlf.patch.gz
-unpacked:
-d54bfdfdc75baae37c074d4d8bf9ee4f0e8da62ed1c1f036fda43910621dbae2  core-fix-on-frozen-r7u-crlf.patch (unpacked)
-ab5c794f89007295d1c24a40b59775a8d5e7913791f3c0a15aa188cd4f47374f  core-fix-r7t-to-r7u-delta-crlf.patch (unpacked)

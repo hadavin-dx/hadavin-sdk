@@ -1,3 +1,0 @@
-# checkpoint v24b (builder), final, Mon 16 Nov 2026 about 14:30 UTC = 20:00 IST
-Done (with the command output in evidence-v24b/): word cut (A 6,489, B 6,445; limit 6,500); check-v24.py 0 failures incl. C07; new checks C16 to C25; mut24b.py = 42 v24 plants + the 54 v23 plants ported: 96 planted, 96 caught, 0 missed (plants-final.txt; first run before the checker fixes: 57 caught, 37 missed, plants-before-fixes.txt); mapping table in v24-CHANGES.md; stale note and open-list items fixed (G5, `ps` item, row 67).
-Not done: independent review; M2/M3 decisions (rows 72, 73, for the lead); stranger M4 (yes sentence length) not shortened; all vendor behaviour UNVERIFIED. No commit (lead commits).

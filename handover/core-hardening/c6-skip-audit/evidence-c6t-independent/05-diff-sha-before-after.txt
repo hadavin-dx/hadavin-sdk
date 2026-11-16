@@ -1,2 +1,0 @@
-1082a1083
-> e944b5590daa63474b0f03eef553a4ed3b0c86a38bba1c05cd797576f021681f  ./review-c6t-naive.md

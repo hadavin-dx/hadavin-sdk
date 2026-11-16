@@ -1,8 +1,0 @@
-UNMUTATED BASELINE
-base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c (+ the patch under test)   root: /tmp/c8/wC
-command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wC/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_c01_route_limits.py
-rc: 0
-summary: 10 passed in 0.50s
-
-..........                                                               [100%]
-10 passed in 0.50s

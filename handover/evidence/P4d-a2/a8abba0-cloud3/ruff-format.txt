@@ -1,2 +1,0 @@
-325 files already formatted
-rc=0

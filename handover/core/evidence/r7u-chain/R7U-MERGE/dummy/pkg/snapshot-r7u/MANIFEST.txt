@@ -1,7 +1,0 @@
-ba6d45b93f25ff3b29cd0624280a3983de4aceada79b0fa198fb85768dd477d7  ./apply-matrix-r7u.txt
-276062342da7e336bf27a4acce709d8798f4b610340afe0c98197ef7d5182e29  ./changed-files.txt
-21442c87e7eb749800a159e1805a1cb51db080aa844b1a39569c448ba756db60  ./delta-r7t-to-r7u.diff
-ecebeacb1d2eefa240bde786dac6b5f45c54a6a85e221a2e275ee1aeb5f49e3b  ./files/CHANGELOG.md
-ce78ad369f4eebc8d79b0d06f3057f6be3ad43c1ff4fd691e0b14a2969842739  ./files/README.md
-6f04ead890f04672805c429afcfe95286ed4a7a58814d8f1d5af6dbb0887a034  ./files/docs/rehearsal-a.txt
-50897cae833cce11fadacdbb8bf0267da303983f2a07e3400758efb70122e168  ./sha256-r7u.txt

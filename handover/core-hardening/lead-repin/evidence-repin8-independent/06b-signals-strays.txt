@@ -1,8 +1,0 @@
-dash SIGHUP 0.4 exit 129 after0s: ['[dash] <defunct>', '[dash] <defunct>', '[sed] <defunct>', '[awk] <defunct>'] after3s: 0 workdirs 0
-dash SIGHUP 1.5 exit 129 after0s: ['[grep] <defunct>'] after3s: 0 workdirs 0
-dash SIGTERM 0.4 exit 143 after0s: ['[dash] <defunct>', '[sed] <defunct>'] after3s: 0 workdirs 0
-dash SIGTERM 1.5 exit 143 after0s: ['[grep] <defunct>'] after3s: 0 workdirs 0
-bash SIGHUP 0.4 exit 129 after0s: ['[bash] <defunct>'] after3s: 0 workdirs 0
-bash SIGHUP 1.5 exit 129 after0s: ['[grep] <defunct>'] after3s: 0 workdirs 0
-bash SIGTERM 0.4 exit 143 after0s: ['[bash] <defunct>'] after3s: 0 workdirs 0
-bash SIGTERM 1.5 exit 143 after0s: [] after3s: 0 workdirs 0

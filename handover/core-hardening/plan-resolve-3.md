@@ -1,1 +1,0 @@
-# Plan resolve round 3: status resolved. Findings of plan-review-3.md judged PROPOSE FIX; written as AUDIT-PLAN.md section 'Rulings v4' (R1-R10). Cap reached; no round 4; no re-review of v4 (stated gap: v4 rulings were not reviewed by a fresh egm pass; the result review in step 5 will also judge the plan's fitness).

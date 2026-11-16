@@ -1,3 +1,0 @@
-rc=1
-FAIL confirmation letters defined: abcdefghik
-RESULT FAIL 1

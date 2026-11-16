@@ -1,9 +1,0 @@
-# Inventory, evidence-handoff-v18
-Held SQL (`held-sql/`): spend_nonneg.sql, spend_nonneg_finite.sql, spend_nonneg_upgrade.sql (unchanged from v17); spend_decrease_log.sql (changed: the kill-switch record handler also catches a cancelled statement, 57014); spend_guarded_writes.sql (rewritten DB-3: the month is derived from the day, ceiling 1000000000000, agent name length 1 to 200, engage creates a missing row and leaves an ON switch alone, release only when ON, function names with the new signatures).
-Guard: secdef_guard_v18.py (deny by default, one tokenizer), allow_v18.py (per-file list of allowed functions), chk.py (runs the guard over held-sql and the migrations), secdef_mutants_v18.py (96 checks; needs TWO folder arguments and exits 2 with a usage line without them), spellings.json and spellings2.json (the independent runner's 25 + 2 spellings, copied), secdef_guard_v16.py and secdef_guard_v17.py (kept only so the mutants script can compare).
-Start-up audit: secdef_audit_v18.py (the query over pg_proc, pg_roles, aclexplode, pg_depend, plus the prototype of the `function` kind of grants).
-Postgres: run_pg_v18.sh, pg_v18.py (114 checks incl. 19 CONTROL lines), pg_v16_regress.py (175 v16 checks on the v18 files).
-Secrets: run_secrets_v18.sh (12 checks), agent_probe_v18.py. gate4_v18.sh (copy; NOT run).
-Builder of the main text: patch_v18_main.py (read-only on v17, writes CORE-PR-HANDOFF-v18.md).
-Raw: raw/ (banned-string count 0 hits; pg v18 run1/run2 114 of 114; v16 checks run1/run2 175 of 175; secdef mutants 96 checks 0 failed; secrets 12 of 12; PG version lines). The one line that differs between runs is the timing line (+0.072 ms and +0.061 ms per lowering).
-sha256-v18.txt lists every file here (raw/ included) except itself. Not run: PG 14 and 17.10, gate4, product tests, mutation scripts of the repo.

@@ -1,3 +1,0 @@
-main lines: 496 other lines: 207
-mentions of 'v12' in main: 33 in other: 4
-evidence names cited: 34 missing from evidence-handoff-v14: 0

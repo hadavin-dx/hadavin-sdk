@@ -1,1 +1,0 @@
-tests/test_r7t_findings.py::test_t6b_every_def_with_a_host_parameter_is_in_the_table

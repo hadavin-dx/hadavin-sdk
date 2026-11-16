@@ -1,3 +1,0 @@
-rc=1
-FAIL secret-shaped string: pattern AKIA[0-9A-Z]{16}
-RESULT FAIL 1

@@ -1,3 +1,0 @@
-../CORE-PR-HANDOFF-v12.md:132 python fence parses (22 lines)
-../CORE-PR-HANDOFF-v12.md:176 python fence parses (20 lines)
-python fences=2 syntax_errors=0

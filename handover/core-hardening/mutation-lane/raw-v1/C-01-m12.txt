@@ -1,7 +1,0 @@
-src/hadavin_sdk/defaults.py
-ceiling constant +1
-OLD: MAX_ROUTE_TOKENS = 200_000
-NEW: MAX_ROUTE_TOKENS = 200_001
-
-..........                                                               [100%]
-10 passed in 0.19s
