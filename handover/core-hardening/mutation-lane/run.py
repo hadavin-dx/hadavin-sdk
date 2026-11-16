@@ -40,7 +40,8 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     --noconftest, --ignore, -p with anything but `no:`, -c, -o, --rootdir, --basetemp, ...
   * Every signal that can be sent and that ends a process by default is handled (all of signal.valid_signals() except
     SIGKILL, SIGSTOP, SIGCHLD, SIGCONT, SIGWINCH, SIGURG, SIGTSTP, SIGTTIN, SIGTTOU, SIGPIPE, SIGXFSZ; review r4 M1),
-    in every window: planting, tests awaited, restore (T47). A real memory fault inside this very process (SIGSEGV,
+    in every window: planting, tests awaited, restore (T47), also `--restore` itself and the exit after exit code 3, 4 or 5
+    (a signal there is remembered and cannot change the result). A real memory fault inside this very process (SIGSEGV,
     SIGBUS, SIGFPE, SIGILL raised by the CPU, not sent by kill) is NOT recovered by that handler: the handler returns
     to the faulting instruction, the process spins at full speed and keeps the lock and the planted file until it is
     killed by hand (it does NOT act like SIGKILL; measured, T64). Then: `kill -9` it and run `--restore`.
@@ -86,33 +87,49 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     the expected full command: the group is found by that command, in root, started after the run; with no
     command recorded nothing is stopped.
   * SIGKILL and SIGSTOP cannot be caught: use `--restore`.
+Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --root (they would dirty the tree), an
+output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
+checked before anything is planted. The folder --root is identified by device and inode when the run starts and
+recorded in the marker: a folder that has been renamed away and replaced by another one with the same name is refused
+(plant and restore, exit 3), so a decoy cannot receive a restore. The mode of the file under test is set back on restore.
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
-scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. Paths inside --root
+scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. The modes (chmod) of the
+other files in the tree are not compared; the tree is compared by content. Paths inside --root
 are trusted as a whole: `.venv` (directly under the root) and the cache folders are NOT compared, so a mutant
 planted into, or a test that changes, files in them is not detected; other test files in --root run too.
-Exit codes (round 6, review r5 M2):
-  0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag) and the tree is clean
-  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable)
-  3    restore failed (marker and backup kept; run --restore); also --restore could not settle a control run
+Exit codes (round 7, review r6 M1/M2):
+  0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag), a baseline of the unmutated tree
+       ran and passed, and the tree is clean
+  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable). With
+       --restore: 2 ONLY when the marker or the backup is forged or does not belong to this root (nothing is written)
+  3    restore failed (marker and backup kept; run --restore): after a VALID marker has been loaded every failure to
+       write the original back (unwritable file, symbolic link or swapped folder on the way, FIFO, two names, a root
+       folder that is no longer the one the mutant was planted in) exits 3 and leaves the mutant planted and the marker
+       kept, never 2; also --restore could not settle a control run
   4    tree not clean (before the first mutant, after a mutant, or after the loop) or marker left behind
   5    INCOMPLETE: at least one mutant has no clean verdict (COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED,
-       or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran
+       or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran, or
+       `--no-control` was given (no baseline ran, so no result can be called complete)
   128+N interrupted by signal N
 A line `SUMMARY: ...` (also in raw/<prefix>-summary.txt) counts every verdict; exit 0 means that line shows no
-COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED, flagged or not-run mutant. Exit 4 wins over exit 5.
+COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED, flagged or not-run mutant and says COMPLETE. Exit 4 wins over exit 5.
+An unexpected failure inside this tool (a bug, not a planned refusal) prints INTERNAL ERROR with the traceback and
+exits 2 when nothing is planted (a planted mutant is always restored first, exit 3 if that fails); it never ends with
+Python's own exit 1.
 Verdict per mutant from the pytest exit code: 0 SURVIVED (NO-TEST-PASSED when no test passed: all skipped), 1 KILLED,
 None TIMEOUT, anything else ERROR. The mutant ids `baseline`, `tree-diff` and `summary` are reserved (they name
 other raw files).
-Baseline (review r5 M1): with `--control` the unmutated tree is run first; the mutants are REFUSED (exit 2) unless that run
-exits 0 and at least one test passed. A KILLED mutant whose failing tests equal the baseline's failing tests is flagged
-(exit 5). Without `--control` there is no baseline: an already failing tree would make every mutant KILLED, and
-every raw file says `baseline: NOT RUN`; use --control for a result you want to rely on.
+Baseline (review r5 M1, r6 M2): the unmutated tree is run first (`--control` is the DEFAULT); the mutants are REFUSED
+(exit 2) unless that run exits 0 and at least one test passed. A KILLED mutant whose failing tests equal the baseline's
+failing tests is flagged (exit 5). `--no-control` skips the baseline (the last of --control and --no-control wins):
+an already failing tree would then make every mutant KILLED, so every raw file says `baseline: NOT RUN`, the SUMMARY
+line says `NO BASELINE ... INCOMPLETE` (never COMPLETE) and the exit code is 5 even when every verdict is clean.
 
 Usage:
   run.py --root /tmp/c8/wC --sha b4cce5b --prefix C-01 --raw DIR --list mutants.json -- TESTS...
   run.py --root ... --sha ... --prefix C-01 --raw DIR --id m01 --file src/x.py --old "a" --new "b" -- TESTS...
 mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": "..."}, ...]
-`--control` runs the unmutated tree once first and records it as <prefix>-baseline.txt.
+The unmutated tree is run once first (default; `--no-control` turns it off) and recorded as <prefix>-baseline.txt.
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:
   <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --rootdir=<root> --confcutdir=<root> --tb=line -rf TESTS
 """
@@ -153,8 +170,9 @@ SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
 # turned into ordinary errors by Python. All the rest (including SIGTRAP, SIGSYS, SIGSTKFLT, all real-time
 # signals and SIGSEGV/SIGBUS/SIGFPE/SIGILL when another process sends them with kill()) end the process by
 # default, so each one is caught: the file is restored first. A real memory fault inside this very process
-# cannot be handled in Python (the faulting instruction would run again); that case is the SIGKILL case:
-# the marker stays and `--restore` recovers.
+# cannot be handled in Python (the faulting instruction would run again and again): the process then spins and
+# keeps the lock and the planted file until it is killed by hand with `kill -9`; only after that does
+# `--restore` work (the lock is free, the marker stays).
 _NOT_HANDLED = frozenset(
     getattr(signal, n)
     for n in (
@@ -191,6 +209,10 @@ MIN_PYTHON = (3, 11, 4)  # tomllib (3.11) and tarfile's `filter="data"` (3.11.4)
 # raw files named after a fixed word: a mutant may not take one of these as its id (review r5 nit 7)
 RESERVED_IDS = frozenset({"baseline", "tree-diff", "summary"})
 FULL_SHA_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
+# (path, device, inode) of --root as found when the run started; None in unit tests that call the writers directly.
+# Every open of the root folder checks it (review r6 nit 8: a root renamed away and replaced by a decoy folder).
+ROOT_IDENT: tuple[str, int, int] | None = None
+CLK_TCK = os.sysconf("SC_CLK_TCK")
 
 
 class Refused(Exception):
@@ -313,6 +335,13 @@ def _open_parent(
     dflags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     fd = os.open(base, os.O_RDONLY | os.O_DIRECTORY)
     try:
+        if root is not None and ROOT_IDENT is not None and str(root) == ROOT_IDENT[0]:
+            st = os.fstat(fd)
+            if (st.st_dev, st.st_ino) != ROOT_IDENT[1:]:
+                raise Refused(
+                    f"the folder now at {root} is not the folder this run started in (it was renamed or replaced): "
+                    f"nothing is written there"
+                )
         for part in parts:
             try:
                 nxt = os.open(part, dflags, dir_fd=fd)
@@ -389,7 +418,7 @@ def restore_target(
     saved: bytes,
     root: pathlib.Path,
     create: bool = False,
-    mode: int = 0o644,
+    mode: int | None = None,
 ) -> tuple[bool, bytes]:
     """Put `saved` into the file under test: COMPARE, WRITE and VERIFY on ONE open file (review r5 M3). The folders are
     opened one at a time with O_NOFOLLOW from `root` (as in write_target), the file is opened ONCE from its parent's
@@ -398,7 +427,8 @@ def restore_target(
     skipped the write and cleared the marker) nor receive the write. Returns (already_original, bytes read back from
     the same open file). The write is skipped when the open file already holds `saved` (a read-only file that was never
     changed is not an error); a file with more than one name, or that is not a regular file, is never written.
-    `create=True` (restore only) re-creates a deleted file and missing folders with O_EXCL and exactly `mode`."""
+    `create=True` (restore only) re-creates a deleted file and missing folders with O_EXCL and exactly `mode`. With a
+    `mode` given, the mode of the open file is set back to it when a test changed it (review r6 nit 8)."""
     pfd, name = _open_parent(root, path, create)
     try:
         base = os.O_NOFOLLOW | os.O_NONBLOCK  # NONBLOCK: a FIFO must not hang the open
@@ -409,7 +439,7 @@ def restore_target(
         except FileNotFoundError:
             if not create:
                 raise
-            fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode, dir_fd=pfd)
+            fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode or 0o644, dir_fd=pfd)
             created = writable = True
         except PermissionError:  # a read-only file: it can still be compared
             fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
@@ -427,8 +457,10 @@ def restore_target(
     with os.fdopen(fd, "r+b" if writable else "rb") as fh:
         if created:
             os.fchmod(
-                fh.fileno(), mode
+                fh.fileno(), mode or 0o644
             )  # the umask of the caller must not change the recorded mode
+        elif mode is not None and writable and stat.S_IMODE(st.st_mode) != mode:
+            os.fchmod(fh.fileno(), mode)  # a test changed the mode of the file under test
         already = fh.read() == saved
         if not already:
             if not writable:
@@ -468,16 +500,27 @@ def write_out(path: pathlib.Path, text: str) -> None:
     except OSError as e:
         raise Refused(f"output file {path} cannot be written safely ({e.strerror}): refused") from e
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
-            raise Refused(f"output file {path} is not a regular file: refused")
+        st = os.fstat(fh.fileno())
+        if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+            raise Refused(
+                f"output file {path} is not a regular file with exactly one name (links: {st.st_nlink}): refused"
+            )
         fh.truncate(0)
         fh.write(text)
 
 
-def check_out_path(path: pathlib.Path) -> None:
-    """Before anything is planted: an output path must not be a symbolic link or a special file."""
+def check_out_path(path: pathlib.Path, root: pathlib.Path | None = None) -> None:
+    """Before anything is planted (review r4 nit 11, r6 nit 4): an output path must not be a symbolic link or a special
+    file, must have an existing folder, must not have two names (writing it would change the other name too) and, with
+    `root`, must not lie inside the scratch tree (it would be overwritten by or dirty the tree)."""
     if path.is_symlink() or (path.exists() and not path.is_file()):
         raise Refused(f"output path {path} is a symbolic link or not a regular file: refused")
+    if not path.parent.is_dir():
+        raise Refused(f"the folder of output path {path} does not exist: refused (nothing is created for you)")
+    if path.exists() and os.lstat(path).st_nlink != 1:
+        raise Refused(f"output path {path} has more than one name (hard link): refused")
+    if root is not None and (path.parent.resolve() / path.name).is_relative_to(root.resolve()):
+        raise Refused(f"output path {path} lies inside --root {root}: refused (it would change the scratch tree)")
 
 
 def decode_text(b: bytes, rel: str) -> str:
@@ -513,6 +556,7 @@ def run_cmd(
     return subprocess.run(
         argv,
         input=input_bytes,
+        stdin=None if input_bytes is not None else subprocess.DEVNULL,  # no helper may read the caller's input
         capture_output=True,
         check=False,
         cwd=cwd,
@@ -642,9 +686,11 @@ def resolve_commit(repo: str, sha: str) -> str:
         [tool("git"), "-C", str(top), "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}"]
     )
     full = cp.stdout.decode(errors="replace").strip()
-    if cp.returncode != 0 or not FULL_SHA_RE.fullmatch(full):
+    # review r6 nit 7: a short hex that is also the name of a branch or tag resolves to the REF; the id must start with
+    # exactly the hex that was typed, or the commit is not the one the user named
+    if cp.returncode != 0 or not FULL_SHA_RE.fullmatch(full) or not full.startswith(sha.lower()):
         raise Refused(
-            f"--sha {sha!r} does not name exactly one commit in {top} (unknown, ambiguous, or not a commit): "
+            f"--sha {sha!r} does not name exactly one commit in {top} (unknown, ambiguous, not a commit, or the name of a branch or tag): "
             f"{text_of(cp)[:200]}"
         )
     return full
@@ -658,11 +704,27 @@ def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path)
     arc = run_cmd([tool("git"), "-C", str(top), "archive", sha])
     if arc.returncode != 0:
         raise Refused(f"git archive {sha} failed in {repo}: {text_of(arc)[:200]}")
-    with tarfile.open(fileobj=io.BytesIO(arc.stdout), mode="r:") as tf:
-        tf.extractall(dest, filter="data")
+    try:
+        with tarfile.open(fileobj=io.BytesIO(arc.stdout), mode="r:") as tf:
+            tf.extractall(dest, filter="data")
+    except (tarfile.TarError, OSError) as e:  # FilterError is a TarError: a member the data filter refuses
+        raise Refused(f"the archive of {sha} cannot be extracted safely ({type(e).__name__}: {e}): refused") from e
     for pf in patches:
+        # --batch: never ask a question (stdin is /dev/null as well); --forward: a patch that looks reversed or already
+        # applied is skipped and fails, never applied reversed; --no-backup-if-mismatch: no `.orig` file in the reference
         r = run_cmd(
-            [tool("patch"), "-p1", "-s", "-d", str(dest), "-i", str(pathlib.Path(pf).resolve())]
+            [
+                tool("patch"),
+                "-p1",
+                "-s",
+                "--batch",
+                "--forward",
+                "--no-backup-if-mismatch",
+                "-d",
+                str(dest),
+                "-i",
+                str(pathlib.Path(pf).resolve()),
+            ]
         )
         if r.returncode != 0:
             raise Refused(f"patch {pf} does not apply to {sha}: {text_of(r)[:300]}")
@@ -1206,11 +1268,25 @@ def stop_or_kill(proc: subprocess.Popen) -> None:
             pass
 
 
-def sweep_group(pgid: int) -> str:
+def boot_ticks() -> int:
+    """Now, in the unit of the start times in /proc/<pid>/stat (clock ticks since boot)."""
+    return int(time.clock_gettime(time.CLOCK_BOOTTIME) * CLK_TCK)
+
+
+def sweep_group(pgid: int, started_ticks: int | None = None, ended_ticks: int | None = None) -> str:
     """After the leader has ended: stop what is still alive in its process group (a test may have started a
     background process). While any member lives the number cannot be given to another group, so the members are
-    this run's own (review r4 nit 5). Returns a line for the raw file."""
+    this run's own (review r4 nit 5); but once the leader has been waited for and the group was empty, a stranger may
+    have been given the number (review r6 nit 3): when the start time of the leader and the time it ended are known,
+    only members that started in between are ours. Returns a line for the raw file."""
     left = group_members(pgid)
+    if started_ticks is not None and ended_ticks is not None:
+        ours = [
+            q for q in left if (qs := proc_stat(q)) and started_ticks <= qs["start"] <= ended_ticks
+        ]
+        if left and not ours:
+            return f"process(es) {left} now hold the number of the test group but started outside this run: left alone"
+        left = ours
     if not left:
         return "no process of the test group left after the leader ended"
     stop_group(pgid)
