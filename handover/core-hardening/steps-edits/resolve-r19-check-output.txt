@@ -305,3 +305,22 @@ NEG r16banned caught | FAIL banned strings
 NEG r16pair caught | FAIL r13 time arithmetic: 17:49 UTC = 23:29 IST
 NEG r16wd caught | FAIL r14 wrong weekday: Tue 23 Nov 2026
 NEG r16code caught | FAIL E-48 owner NEW text contains E-nn
+NEG r17pin-m18D.4 caught | FAIL r17 pin m18 D.4 appendix ref lacks 'Detail with the full costs of both routes: append
+NEG r17pin-m34wor caught | FAIL r17 pin m34 word list lacks '| `key gone, no more decisions` | THREE events at once, 
+NEG r17pin-m37win caught | FAIL r17 spending window end is wrong: spending window ends at 18:19 UTC = 23:49 IST
+NEG r17pin-m40not caught | FAIL r17 pin m40 not sure lacks 'Reply `yes`, `no, other things use it` or `not sure`'
+NEG r17pin-m41onl caught | FAIL r17 pin m41 only yes lacks 'Only `yes` together with `different key` means that nothi
+NEG r17pin-m43sto caught | FAIL r16 stop-looking without the wait for `not looking` in E-48: '` | you are about to ty
+NEG r17pin-m45C caught | FAIL r17 F-4 the new-key rule has numbers ['2', '30']
+NEG r17pin-m45H caught | FAIL r17 F-4 the new-key rule has numbers ['20', '30']
+NEG r17pin-m48G caught | FAIL r17 pin m48 G lacks 'Do not shred part (a) while a take is running'
+NEG r17pin-m51why caught | FAIL r17 pin m51 why lacks 'Security F2 of round 15: input line 112'
+NEG r17pin-m53unv caught | FAIL r17 pin m53 unverified lacks 'is not proven (UNVERIFIED)'
+NEG r17pin-m54typ caught | FAIL r17 pin m54 typed lacks 'Only your own typed messages count (key step B)'
+NEG r17pin-m60car caught | FAIL r14 E-48 revoke sentence with 18:29 only: make sure that you have confirmed your last
+NEG r17pin-B03no caught | FAIL r17 pin B03 no space lacks 'It contains no `..`, no space, no quote sign'
+NEG r17pin-B04ten caught | FAIL r17 F-8 D.5 lacks 'The key is revoked by 18:19 UTC = 23:49 IST; the last 10 minutes (
+NEG r17pin-B05ste caught | FAIL r17 pin B05 step 21 heading lacks '### Step 21. Watch the cut by Mon 23 Nov 2026 18:1
+NEG r17pin-B08nev caught | FAIL r17 pin B08 never opens lacks 'The assistant never opens the key file (this is a proc
+NEG r17pin-B09def caught | FAIL r17 F-8 D.3 lacks 'no reply counts as `another take`'
+NEG r17pin-B10for caught | FAIL r17 pin B10 forced revoke lacks 'revoke the key at that time anyway (key step I)'

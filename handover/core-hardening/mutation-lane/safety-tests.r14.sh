@@ -1202,9 +1202,9 @@ echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mo
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
   NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
-    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
+    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101 T102 T103}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"
-    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
+    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101 T102 T103} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
   else
     echo "  (cannot switch to an unprivileged user here: the permission checks are UNVERIFIED)"; SKIPPED="$SKIPPED T88"
   fi
@@ -1970,7 +1970,7 @@ expect("start_new_session=False", outcome(GV, {"env": E, "start_new_session": Fa
 expect("shell=1", outcome(GV, {"env": E, "shell": 1}), "refused", "a shell is never used")
 expect("an absolute program named sh in another folder", outcome(["/tmp/notgit/sh"], {"env": E}), "refused", "is not the git or patch this run found")
 # r13 M1: the file must be the one found at start, not any file with the right name. Another folder's `git` (a script, a copy)
-# is refused; a link to the real git is the same file and is accepted; so are start-ups of the scratch tree's own python only.
+# is refused; a link to the real git in another folder is refused too (its real path is what counts, and it must be a system folder); so are start-ups of the scratch tree's own python only.
 fake = X / "git"; fake.write_text("#!/bin/sh\nexit 0\n"); fake.chmod(0o755)
 expect("M1 /tmp/x/git (a different file named git)", outcome([str(fake)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
 copy = X / "git-copy" ; copy.mkdir(); cp = copy / "git"; shutil.copy2(G, cp)
@@ -2289,6 +2289,29 @@ except r.Refused:
 os.environ["PATH"] = oldpath
 res.setdefault("seal-missing", []).append((missing == ["git", "patch"] and later is None and toolref, "git and patch missing at start: a patch that appears later is never trusted", (missing, later, toolref)))
 r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1]); r._MISSING.clear(); r._MISSING.update(saved[2])
+# a hostile git FIRST on PATH at the start is refused by its place (r14, late evidence item 2); also a link to the real git
+r._TRUSTED.clear(); r._FOUND.clear(); r._MISSING.clear()
+fb3 = X / "hostilebin"; fb3.mkdir(); (fb3 / "git").write_text("#!/bin/sh\nexit 0\n"); (fb3 / "git").chmod(0o755)
+(fb3 / "patch").symlink_to(shutil.which("patch") or "/usr/bin/patch")
+os.environ["PATH"] = str(fb3) + ":" + oldpath
+try:
+    miss3 = r.seal_tools()
+except AttributeError:
+    miss3 = "no seal_tools"
+try:
+    r.tool("git"); ran3 = True
+except r.Refused as e3:
+    ran3 = False
+os.environ["PATH"] = oldpath
+res.setdefault("tool-location", []).append((ran3 is False and isinstance(miss3, list) and "git" in miss3, "a planted git first on PATH at the start is refused (not in a system folder)", (miss3, ran3)))
+res.setdefault("tool-location", []).append((r.tool_location_ok(os.path.realpath(shutil.which("git"))) if hasattr(r, "tool_location_ok") else False, "the real system git passes the place check", None))
+res.setdefault("tool-location", []).append((hasattr(r, "tool_location_ok") and not r.tool_location_ok(str(fb3 / "git")), "a file in a user-made folder fails the place check", None))
+if hasattr(r, "TOOL_FOLDERS"):
+    keep_tf = r.TOOL_FOLDERS; r.TOOL_FOLDERS = (str(X),)
+    (fb3).chmod(0o777)
+    res.setdefault("tool-location", []).append((not r.tool_location_ok(str(fb3 / "git")), "inside a listed folder, a file whose folders anyone may write to is still refused", None))
+    r.TOOL_FOLDERS = keep_tf
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1]); r._MISSING.clear(); r._MISSING.update(saved[2])
 # --- text and keyword arguments
 no_start("nul-arg", "a NUL in an argument", [G, "-C", "/", "rev-parse", "--verify", "--quiet", "a\0b"], "NUL character")
 no_start("shell", "shell=True", GV, "a shell is never used", shell=True)
@@ -2378,7 +2401,7 @@ for gid, cs in res.items():
     print(f"GUARD {gid} {'PASS' if not bad else 'FAIL'} ({len(cs)} cases) {' | '.join(bad)[:400]}")
 PY
 cut -c1-300 "$S/t102.out" | grep -v "^GUARD .* PASS" | head -20
-for GID in args-type abs-program program-file program-pathtext identity-compare identity-fields identity-ctime trust-first-find seal-missing nul-arg shell kw-allowed env-none env-type env-allowlist env-value-nul cwd-abs cwd-real start-new-session git-show-toplevel git-is-inside git-verify git-archive git-C git-subcommand patch-shape python-root-none python-other-root python-path-text python-shape-probe python-shape-pytest python-pin python-pin-ctime; do
+for GID in args-type abs-program program-file program-pathtext identity-compare identity-fields identity-ctime trust-first-find seal-missing tool-location nul-arg shell kw-allowed env-none env-type env-allowlist env-value-nul cwd-abs cwd-real start-new-session git-show-toplevel git-is-inside git-verify git-archive git-C git-subcommand patch-shape python-root-none python-other-root python-path-text python-shape-probe python-shape-pytest python-pin python-pin-ctime; do
   chk "T102.$GID Child guard '$GID' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)" "grep -q '^GUARD $GID PASS' '$S/t102.out'"
 done
 echo "== T103 (r14, review r13 M2 output paths, M3 forged-marker kill, m4 text, m5 short NOTE; each says whether it fails on r13)"

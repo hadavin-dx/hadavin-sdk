@@ -13,6 +13,8 @@ MUT = [
  ("child-identity-compare", C, 'return _identity(prog) == _TRUSTED[name]', 'return True', {"T102.identity-compare", "T102.identity-fields", "T102.identity-ctime"}),
  ("child-pathtext", C, 'prog != _FOUND[name]', 'False', {"T102.program-pathtext"}),
  ("child-trust-first-find", C, 'if name not in _TRUSTED:', 'if True:', {"T102.trust-first-find"}),
+ ("child-tool-location-skip", C, 'elif name in _TRUSTED and not tool_location_ok(_TRUSTED[name][0]):', 'elif False:', {"T102.tool-location"}),
+ ("child-tool-location-owner", C, 'if st.st_uid != 0 or st.st_mode & 0o022:', 'if False:', {"T102.tool-location"}),
  ("child-seal-missing", C, '_MISSING.add(name)', 'pass', {"T102.seal-missing"}),
  ("child-nul", C, 'if any("\\0" in a for a in args):', 'if False:', {"T102.nul-arg"}),
  ("child-shell", C, 'if kwargs.get("shell"):', 'if False:', {"T102.shell"}),

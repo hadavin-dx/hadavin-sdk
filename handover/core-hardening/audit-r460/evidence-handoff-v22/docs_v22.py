@@ -2,7 +2,7 @@
 import re, hashlib, sys
 def rd(p): return open(p, encoding="utf-8", errors="replace").read()
 m = re.search(r"SUMMARY safety checks (\d+) of (\d+) passed; controls (\d+) of (\d+) showed the old behaviour; stated exploits shown (\d+) of (\d+)", rd(sys.argv[1])); SF, ST, CF, CT, XF, XT = m.groups()
-rg = [l for l in rd(sys.argv[2]).splitlines() if l.startswith("SUMMARY")][-1]; RG = re.search(r"(\d+) of (\d+)", rg); RG = f"{RG.group(1)} of {RG.group(2)}"
+RG = re.search(r"(\d+) of (\d+) checks passed", rd(sys.argv[2])); RG = f"{RG.group(1)} of {RG.group(2)}"
 SHA = hashlib.sha256(open("held-sql/spend_guarded_writes.sql", "rb").read()).hexdigest()
 CNT = f"{SF} of {ST} safety checks, {CF} of {CT} controls, {XF} of {XT} stated exploits"
 ch = f"""# v22 changes (round 9): finding, fix, place, test

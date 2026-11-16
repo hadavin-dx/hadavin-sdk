@@ -425,7 +425,35 @@ def seal_tools() -> list[str]:
     for name in CHILD_PROGRAMS:
         if name not in _TRUSTED and trust_tool(name) is None:
             _MISSING.add(name)
+        elif name in _TRUSTED and not tool_location_ok(_TRUSTED[name][0]):
+            # r14 (late evidence, item 2): the first `git` on PATH was run even when it was a planted file; a program
+            # outside the system program folders, or in a folder anyone else can write to, is refused for the whole run
+            del _TRUSTED[name]
+            _FOUND.pop(name, None)
+            _MISSING.add(name)
     return sorted(_MISSING)
+
+
+TOOL_FOLDERS = tuple(os.sep + part for part in ("usr", "bin", "sbin", "opt", "nix", "snap"))
+
+
+def tool_location_ok(real: str) -> bool:
+    """A program may be run only when its real path is under a system program folder and the file and every folder above it
+    is owned by root and not writable by the group or by others (a planted `git` first on PATH fails this)."""
+    if not any(real == f or real.startswith(f + os.sep) for f in TOOL_FOLDERS):
+        return False
+    path = real
+    while True:
+        try:
+            st = os.lstat(path)
+        except OSError:
+            return False
+        if st.st_uid != 0 or st.st_mode & 0o022:
+            return False
+        parent = os.path.dirname(path)
+        if parent == path:
+            return True
+        path = parent
 
 
 def set_child_root(root: pathlib.Path | str | None) -> None:
