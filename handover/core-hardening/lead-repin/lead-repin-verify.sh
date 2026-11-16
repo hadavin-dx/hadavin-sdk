@@ -69,6 +69,7 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/lead-repin.XXXXXX") || { echo "cannot make the
 MASKSED=$WORK/mask.sed        # full filter: line rules AND multi-line rules (used on every search result)
 MASKLINE=$WORK/mask-line.sed  # line rules only (the final belt over the whole output: it can never hide a following line)
 MASKAWK=$WORK/mask.awk        # second stage: opaque strings, containers, pairs of lines, cutting long lines
+SHAOK=$WORK/sha-ok.txt        # the checksum lines THIS script printed itself (block R00): only these may stay unmasked
 OUT=$WORK/lead-repin-verify-out.txt
 NL=$(printf '\n_'); NL=${NL%_}
 CLEAN=1                       # 1 = remove the work folder on exit; set to 0 only after the canary passed in a normal run
@@ -140,14 +141,24 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 # Stage 2 (mask.awk), see the comments in that file.
 SOH=$(printf '\001')
 write_mask_sed() {
-  W='(keys?|tokens?|secrets?|passw(or)?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private)'
+  # NAME RULE (one general rule, not a list of names): an identifier is secret when
+  #  (a) a STRONG word is anywhere inside it (secretValue, tokenString, passwordHash, authTokenValue, secretdata),
+  #  (b) it holds a WEAK whole word (key, pass, pat, auth, cookie, session, signature, hmac, dsn, webhook, salt, otp,
+  #      cert, ...) at a separator or at the start, also followed by value, string, data, text, hash, bytes or material
+  #      (keyValue, saltHash), or
+  #  (c) it ENDS in key, token, secret, password, pwd, credential (apiKey, accessToken).
+  STRONG='(secret|passw(or)?d|passphrase|credential|token|apikey)'
+  W='(keys?|tokens?|secrets?|passw(or)?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
+  WS='(value|string|data|text|hash|bytes|material)'
   SUF='(keys?|tokens?|secrets?|passw(or)?ds?|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
-  IDB="((([A-Za-z0-9_.-]*[_.-])?$W)|([A-Za-z0-9_.-]*$SUF))([_.-][A-Za-z0-9_.-]*)?"
-  IDQ="((([A-Za-z0-9_. -]*[_. -])?$W)|([A-Za-z0-9_. -]*$SUF))([_. -][A-Za-z0-9_. -]*)?"
+  IDB="(([A-Za-z0-9_.-]*$STRONG[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?$W)(([_.-]|$WS)[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*$SUF([_.-][A-Za-z0-9_.-]*)?))"
+  IDQ="(([A-Za-z0-9_. -]*$STRONG[A-Za-z0-9_. -]*)|((([A-Za-z0-9_. -]*[_. -])?$W)(([_. -]|$WS)[A-Za-z0-9_. -]*)?)|([A-Za-z0-9_. -]*$SUF([_. -][A-Za-z0-9_. -]*)?))"
   ID="(^|[^A-Za-z0-9])$IDB"          # IDB with a left edge (the edge character is part of the match)
   PRE="[\"']?[]]?[[:space:]]*="       # what may stand between the name and  =   ( name"]  = )
-  PFX0='(([^:[:space:]]+[:-])?[0-9]+[-:])?'   # optional grep prefix: NN:  NN-  path:NN:  path-NN-
+  # optional grep prefix: NN:  NN-  path:NN:  path-NN-   (a path before a matching line may hold spaces and dashes
+  # but no colon; before a context line it may hold dashes but no spaces; a path with a colon is not recognised)
+  PFX0='(([^:]+:|[^:[:space:]]+-)?[0-9]+[-:])?'
   YPRE="^${PFX0}[[:space:]]*(- +)?[\"']?"      # start of a line: optional grep prefix, indent, list dash, quote
   DQ='"([^"\\]|\\.)*"'                         # a double-quoted string that may hold \" inside
   SQ="'([^'\\\\]|\\\\.)*'"                     # the same with single quotes
@@ -156,7 +167,7 @@ write_mask_sed() {
   {
     cat <<EOF
 :top
-/${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*([|>][-+]?)?[[:space:]]*\$/I{
+/${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*((&[^[:space:]]+|![^[:space:]]*)[[:space:]]+)*([|>][-+0-9]*)?[[:space:]]*(#.*)?\$/I{
 n
 /^${PFX0}[[:space:]]+[^[:space:]]|^${PFX0}- /{
 s/^${PFX0}.*/\1<masked>/
@@ -216,6 +227,7 @@ EOF
 line_rules() {
   cat <<EOF
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
+s/(tok)(eniz|enis)/\1${SOH}\2/Ig
 s/((${ID})${PRE}[[:space:]]*)(""")([^"]|"[^"]|""[^"])*"""/\1<masked>"""/Ig
 s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*""".*"""/I!s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
@@ -224,7 +236,7 @@ s/(-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----).*/\1<masked>/
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/(["'](name|key|var|variable|env)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z_]*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/([{,][[:space:]]*(${IDB})[[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1<masked>/Ig
-s#(://[^:/@[:space:]]+:)[^@[:space:]]+@#\1<masked>@#g
+s#(://[^:/@[:space:]]+:)[^[:space:]]*@#\1<masked>@#g
 s#(Bearer)[[:space:]]+[A-Za-z0-9._~+/=-]{6,}#\1 <masked>#Ig
 s#(Basic)[[:space:]]+[A-Za-z0-9+/=]{16,}#\1 <masked>#Ig
 s/((authorization|proxy-authorization)["']?[[:space:]]*:[[:space:]]*[A-Za-z][A-Za-z0-9-]*[[:space:]]+)[^[:space:]"'<]+/\1<masked>/Ig
@@ -249,8 +261,8 @@ s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)["'].*/\1<masked>/I
 s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)[^][{[:space:]<"'|>].*/\1<masked>/I
 s/((${ID})["']?[[:space:]]*,[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+)(${STR})/\1<masked>/Ig
-s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
-s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{},;[:space:]<"'][^,;}[:space:]"']*)/\1<masked>/Ig
+s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"'][^]"')}]*/\1<masked>/Ig
+s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"'][^]"')}]*)/\1<masked>/Ig
 s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw(or)?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
 EOF
@@ -331,17 +343,37 @@ function genmask(s,   out, st, ln, tok) {
   }
   return out s
 }
-function secret_name(k,   n, w, i, x) {
+# camel_split: put a space before each upper case letter that follows a lower case letter or a digit (accessToken -> access Token)
+function camel_split(k,   i, n, c, p, o) {
+  o = ""; n = length(k); p = ""
+  for (i = 1; i <= n; i++) {
+    c = substr(k, i, 1)
+    if (c ~ /[A-Z]/ && p ~ /[a-z0-9]/) o = o " "
+    o = o c; p = c
+  }
+  return o
+}
+# secret_name: ONE general rule. A name is secret when a STRONG word (secret, password, passwd, passphrase, credential,
+# token, apikey) is anywhere in it, or it holds a WEAK whole word (key, pass, pat, auth, cookie, session, signature, hmac,
+# dsn, webhook, salt, otp, cert, ...) alone or followed by value / string / data / text / hash / bytes / material, or a
+# word ends in key, token, secret, password, pwd or credential. Token counters (max_tokens ...) and tokenizer are not secret.
+function secret_name(k,   n, w, i, x, joined) {
+  k = camel_split(k)
   k = tolower(k)
   gsub(/[^a-z0-9]+/, " ", k)
   n = split(k, w, " ")
+  joined = ""
   for (i = 1; i <= n; i++) {
     x = w[i]
     if (x ~ /^(max|num|total|prompt|completion|input|output|cached|reserved)tokens$/) continue
     if (x == "tokens" && i > 1 && w[i - 1] ~ /^(max|num|n|total|prompt|completion|input|output|cached|reserved|cache)$/) continue
+    if (x ~ /^tokeniz|^tokenis/) continue
+    joined = joined x
     if (x in SW) return 1
     if (x ~ /(key|keys|token|tokens|secret|secrets|password|passwords|passwd|passwds|pwd|credential|credentials)$/) return 1
+    if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material)$/) return 1
   }
+  if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey)/) return 1
   return 0
 }
 # find the bracket that closes a container; CD/CQ keep the depth and quote when the line ends first
@@ -364,11 +396,10 @@ function find_close(s, i, depth, inq,   c, n) {
 function hide_containers(s,   out, key, kk, open, j, st, ln) {
   out = ""
   if (CD > 0) {
-    CARRYN++
-    if (CARRYN > 100) { CD = 0; CQ = ""; CARRYN = 0; return s }
+    # a secret container that is still open: hide every line until it closes (or a "--" separator or the end of the
+    # input). It never prints the rest raw, however many lines it takes (fail closed).
     j = find_close(s, 1, CD, CQ)
     if (j == 0) return "<masked>"
-    CARRYN = 0
     return "<masked>" substr(s, j)
   }
   while (match(s, /(["'][^"']*["']|[A-Za-z0-9_.-]+)[ \t]*:[ \t]*[[{]/)) {
@@ -379,7 +410,6 @@ function hide_containers(s,   out, key, kk, open, j, st, ln) {
     open = st + ln - 1
     out = out substr(s, 1, open)
     if (secret_name(kk)) {
-      CARRYN = 0
       j = find_close(s, open + 1, 1, "")
       out = out "<masked>"
       if (j == 0) return out
@@ -420,6 +450,25 @@ function mask_after_colon(b,   p, head, rest, c, q, i, n, ch, j) {
   match(rest, /^[^]},]*/)
   return head " <masked>" substr(rest, RLENGTH + 1)
 }
+# yaml_continue: a line that names a secret as a YAML key keeps hiding the lines under it that are indented deeper
+# (a multi-line quoted or plain value, or a block value whose header the sed stage did not see)
+function indent_of(b,   t) { t = b; sub(/^[ \t]*/, "", t); return length(b) - length(t) }
+function yaml_continue(b,   t, ind, nm) {
+  if (b ~ /^[ \t]*$/) return b
+  ind = indent_of(b)
+  if (YIND >= 0) {
+    if (ind > YIND) return "<masked>"
+    YIND = -1
+  }
+  t = b
+  while (match(t, /^[ \t]*- +/)) t = substr(t, RLENGTH + 1)
+  if (match(t, /^[ \t]*["']?[A-Za-z0-9_.-]+["']?[ \t]*:/)) {
+    nm = substr(t, 1, RLENGTH)
+    sub(/^[ \t]*["']?/, "", nm); sub(/["']?[ \t]*:$/, "", nm)
+    if (secret_name(nm)) YIND = length(b) - length(t) + indent_of(t)
+  }
+  return b
+}
 function emit(k,   o, n) {
   o = PFXS[k] BODYS[k]
   n = LEN[k]
@@ -430,10 +479,10 @@ function emit(k,   o, n) {
   print o
 }
 BEGIN {
-  nsw = split("key keys token tokens secret secrets password passwords passwd passwds passphrase passphrases pass pwd pw pws psw pswd pat credential credentials authorization auth bearer private apikey apikeys", sw, " ")
+  nsw = split("key keys token tokens secret secrets password passwords passwd passwds passphrase passphrases pass pwd pw pws psw pswd pat credential credentials authorization auth bearer private apikey apikeys cookie cookies session sessions signature signatures hmac dsn webhook webhooks salt otp cert certs certificate certificates", sw, " ")
   for (i = 1; i <= nsw; i++) SW[sw[i]] = 1
   WIN = (CUT > 0) ? CUT + 360 : 100000
-  head = 1; tail = 0; pend = 0; CD = 0; CQ = ""; CARRYN = 0
+  head = 1; tail = 0; pend = 0; CD = 0; CQ = ""; YIND = -1
 }
 {
   line = $0
@@ -441,14 +490,18 @@ BEGIN {
   n0 = length(line)
   if (n0 > WIN) line = substr(line, 1, WIN)
   pfx = ""; body = line
-  if (match(line, /^([^: \t]+[:-])?[0-9]+[-:]/)) { pfx = substr(line, 1, RLENGTH); body = substr(line, RLENGTH + 1) }
+  if (match(line, /^(([^:]+:|[^: \t]+-)?[0-9]+[-:])/)) { pfx = substr(line, 1, RLENGTH); body = substr(line, RLENGTH + 1) }
   keep = 0
-  if (pfx == "" && (body ~ /^[0-9a-f]+  / || body ~ /^HEAD: [0-9a-f]+$/)) {
-    n = index(body, " ") - 1
-    if (body ~ /^HEAD: /) n = length(body) - 6
-    if (n == 40 || n == 64 || n == 128) keep = 1
+  # a checksum line that THIS script printed itself (R00) stays readable: it must equal, character for character, a line
+  # the script wrote to the file OKF. A line that only LOOKS like a checksum line (a hex string and two spaces, from a
+  # searched file) is not in that file and is masked like any other text.
+  if (OKF != "" && pfx == "" && (body ~ /^[0-9a-f]+  / || body ~ /^HEAD: [0-9a-f]+$/)) {
+    while ((getline okl < OKF) > 0) if (okl == body) { keep = 1; break }
+    close(OKF)
   }
+  if (body == "--") { CD = 0; CQ = ""; YIND = -1 }
   if (!keep) {
+    body = yaml_continue(body)
     body = hide_containers(body)
     namel = is_nameline(body)
     if (pend > 0) {
@@ -489,7 +542,7 @@ mask() {
   tr '\000' '?' | sed -E -f "$MASKSED" | awk -v CUT=240 -f "$MASKAWK"
 }
 # mask_line: the line rules only plus the awk stage: the final belt over the whole output
-mask_line() { sed -E -f "$MASKLINE" | awk -v CUT=1000 -f "$MASKAWK"; }
+mask_line() { sed -E -f "$MASKLINE" | awk -v CUT=1000 -v OKF="$SHAOK" -f "$MASKAWK"; }
 # ---------------------------------------------------------------- self-test (also the canary that runs first in every run)
 # Four views of every case: (full) the whole filter = what a search prints; (L) the line rules plus awk = the
 # final belt over the whole output; (S) the sed stage alone, so a rule of the sed stage cannot hide behind the awk
@@ -515,6 +568,8 @@ self_test() {
   m1=Vq7L; m2=m2Xp; m3=9Rt4; m4=Z1; mixed=$m1$m2$m3$m4
   u1=123e4567; u2=e89b; u3=12d3; u4=a456; u5=426614174000; uuid=$u1-$u2-$u3-$u4-$u5
   h4=ab12; h16=$h4$h4$h4$h4; sha64=$h16$h16$h16$h16; sha40=$h16$h16$h4$h4
+  g4=cd34; g16=$g4$g4$g4$g4; hex64=$g16$g16$g16$g16
+  printf '%s  some_file.py\nHEAD: %s\n' "$sha64" "$sha40" > "$SHAOK"
   {
     printf 'API_KEY=%s_1_\n' "$base"
     printf 'export MY_TOKEN=%s_2_\n' "$base"
@@ -621,6 +676,7 @@ self_test() {
     printf 'calls getOauth2AccessTokenForHubspotUser kept_camel\n'
     printf '%s  some_file.py\n' "$sha64"
     printf 'HEAD: %s\n' "$sha40"
+    printf '%s  trailing words\n' "$hex64"
     printf 'max_tokens = 100\nprompt_tokens: 12\ncompletion_tokens=4\ntotal_tokens = 9\nnum_tokens=3\ninput_tokens: 5\noutput_tokens = 6\nmax_output_tokens = 7\n'
     printf 'name: kept_name_line\nvalue: kept_value_line_alone\n'
 
@@ -777,8 +833,14 @@ self_test() {
   chk_hidden 'JSON after a label' "${base}_59_" LS
   chk_kept 'snake_case test name is not hidden' 'test_qs_37_refuses_after_window_end'
   chk_kept 'CamelCase name is not hidden' 'getOauth2AccessTokenForHubspotUser'
-  chk_kept 'sha256 line stays' "$sha64  some_file.py"
-  chk_kept 'HEAD line stays' "HEAD: $sha40"
+  if [ -z "${SELFTEST_FILTER:-}" ]; then
+    # the checksum lines the script printed itself stay readable in the final pass (res2); the same lines coming from a
+    # search (res) are masked, and a hex string with two spaces that the script did NOT print is masked in both
+    if grep -a -q -F -- "$sha64  some_file.py" "$res2" && grep -a -q -F -- "HEAD: $sha40" "$res2"; then pass=$((pass + 2)); say "PASS (kept): checksum and HEAD lines the script printed itself stay (final pass)"
+    else fail=$((fail + 1)); printf 'FAIL (evidence was hidden): checksum or HEAD line the script printed itself\n'; fi
+    chk_hidden 'a checksum-shaped line that came from a searched file is masked (search view)' "$sha64" ""
+  fi
+  chk_hidden 'hex string + two spaces from a searched file is not a checksum line' "$g16$g16" LA
   chk_kept 'max_tokens counter stays' 'max_tokens = 100'
   chk_kept 'prompt_tokens counter stays' 'prompt_tokens: 12'
   chk_kept 'completion_tokens counter stays' 'completion_tokens=4'
@@ -797,7 +859,7 @@ self_test() {
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
   [ "$st_leak" -eq 0 ] || printf 'FAIL (the secret base string is still visible somewhere in the output)\n'
-  rm -f "$in" "$res" "$res2" "$res3" "$res4"
+  rm -f "$in" "$res" "$res2" "$res3" "$res4" "$SHAOK"
   # ---- tests of the test machinery itself (explicit --self-test only; the quick canary does not run them)
   if [ "$st_quiet" = 0 ] && [ -z "${SELFTEST_FILTER:-}" ] && [ -z "${LEAD_REPIN_NO_META:-}" ]; then
     self_test_meta

@@ -1,0 +1,48 @@
+# greps run 2026-11-16 (UTC) from /home/user/hadavin-sdk; each line: command, then match count and first lines
+$ grep -rn window_end src
+matches: 0
+
+
+$ grep -rniE thinking|cache_control|cachedContent|reasoning src/hadavin_sdk/llm
+matches: 2
+src/hadavin_sdk/llm/anthropic.py:136:        # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+src/hadavin_sdk/llm/gemini.py:98:        # Thinking is billed as output; candidatesTokenCount leaves it out.
+
+$ grep -rn \.chat( src
+matches: 6
+src/hadavin_sdk/k1b/loop.py:94:            box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+src/hadavin_sdk/runtime/agent_loop.py:425:                reply = self.llm.chat(
+src/hadavin_sdk/extract.py:47:        reply = llm.chat(
+src/hadavin_sdk/evals.py:73:            reply = llm.chat(
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/judge.py:72:        reply = self.llm.chat(
+
+$ grep -rn apply_guardrail src
+matches: 2
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/bedrock_guardrail.py:101:        resp = self._client.apply_guardrail(
+
+$ grep -rn fileguard src tests
+matches: 0
+
+
+$ grep -rniE NOT-NEEDED|DUPLICATE handover/core-hardening/ORDERS.md handover/core-hardening/MASTER-MAP.md
+matches: 0
+
+
+$ grep -rn self._retry( src/hadavin_sdk/llm
+matches: 4
+src/hadavin_sdk/llm/anthropic.py:122:        got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+src/hadavin_sdk/llm/bedrock.py:156:        got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+src/hadavin_sdk/llm/gemini.py:86:        got = self._retry(
+src/hadavin_sdk/llm/openai_compat.py:119:            got = self._retry(
+
+$ grep -rn Limits( src tests --include=*.py -c
+matches: 260
+src/hadavin_sdk/cli.py:1
+src/hadavin_sdk/deferred.py:0
+src/hadavin_sdk/k1b/causelist.py:0
+src/hadavin_sdk/k1b/replay.py:0
+src/hadavin_sdk/k1b/report.py:0
+src/hadavin_sdk/k1b/audit_sink.py:0
+
