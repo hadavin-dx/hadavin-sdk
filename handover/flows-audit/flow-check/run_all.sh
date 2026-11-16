@@ -41,6 +41,7 @@ count_check() {
   for v in "$e_ok" "$e_bad" "$e_skip" "$e_tt" "$e_ttbad"; do [[ $v =~ ^[0-9]+$ ]] || { echo "COUNT DRIFT: $pin does not hold all five numbers"; return 1; }; done
   n=$(grep -c -E '^SELFTEST: [0-9]+ as expected, [0-9]+ not as expected, [0-9]+ skipped \(not applicable\)$' "$st" 2>/dev/null)
   if [ "$n" != 1 ]; then msg="$msg [self-test summary line found $n times (want 1) in $st]"
+  elif [ "$(grep -c '^SELFTEST: ' "$st" 2>/dev/null)" != 1 ]; then msg="$msg [$(grep -c '^SELFTEST: ' "$st") lines start with 'SELFTEST: ' in $st (want exactly 1: the summary line)]"   # f8-r12 (m1)
   else
     local l; l=$(grep -m 1 -E '^SELFTEST: [0-9]+ as expected, [0-9]+ not as expected, [0-9]+ skipped \(not applicable\)$' "$st")   # f8-r12 (m1): the SAME line that was counted above
     [[ $l =~ ^SELFTEST:\ ([0-9]+)\ as\ expected,\ ([0-9]+)\ not\ as\ expected,\ ([0-9]+)\ skipped ]]
@@ -50,6 +51,7 @@ count_check() {
   fi
   n=$(grep -c -E '^test_take_check: [0-9]+ of [0-9]+ cases as expected, [0-9]+ not as expected$' "$tt" 2>/dev/null)
   if [ "$n" != 1 ]; then msg="$msg [take-suite summary line found $n times (want 1) in $tt]"
+  elif [ "$(grep -c '^test_take_check: ' "$tt" 2>/dev/null)" != 1 ]; then msg="$msg [$(grep -c '^test_take_check: ' "$tt") lines start with 'test_take_check: ' in $tt (want exactly 1: the summary line)]"
   else
     local l; l=$(grep -m 1 -E '^test_take_check: [0-9]+ of [0-9]+ cases as expected, [0-9]+ not as expected$' "$tt")
     [[ $l =~ ^test_take_check:\ ([0-9]+)\ of\ ([0-9]+)\ cases\ as\ expected,\ ([0-9]+)\ not ]]

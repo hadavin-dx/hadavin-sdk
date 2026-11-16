@@ -716,7 +716,7 @@ tk shafail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub3:$PATH
 [ "$RC" = 4 ] && has shafail "UNAVAILABLE (sha256sum failed)" && grep -q '^!!! sha256sum FAILED' "$S/shafail.txt"; ok $? "sha256sum failure: exit 4 with a loud line, no empty hash (got exit $RC)"
 # B4 + f8-r4 (M2): run_all.sh locks the raw FOLDER itself (physical path, pwd -P), so the lock does not depend on TMPDIR, on how the path is written (relative, symbolic link) or on the current folder. The test holds a lock on the folder and starts --lock-only runs in other ways
 RA="$HERE/run_all.sh"; mkdir -p "$S/rl-cwd" "$S/rl-raw" "$S/tmpA" "$S/tmpB"; ln -s "$S/rl-raw" "$S/rl-link"
-ra() { local nm=$1 cwd=$2 tmpd=$3 raw=$4; ( cd "$cwd" && TMPDIR="$tmpd" RUN_ALL_NESTED=1 RUN_ALL_RAW="$raw" timeout 120 bash "$RA" --lock-only > "$S/$nm.txt" 2>&1; echo $? > "$S/$nm.rc" ); RC=$(cat "$S/$nm.rc" 2>/dev/null); }
+ra() { local nm=$1 cwd=$2 tmpd=$3 raw=$4; ( cd "$cwd" && TMPDIR="$tmpd" timeout 120 bash "$RA" --raw-dir "$raw" --lock-only > "$S/$nm.txt" 2>&1; echo $? > "$S/$nm.rc" ); RC=$(cat "$S/$nm.rc" 2>/dev/null); }
 # nobody holds the lock: acquired, exit 0, and no lock file is left in either TMPDIR
 ra b4free "$S/rl-cwd" "$S/tmpA" "$S/rl-raw"
 [ "$RC" = 0 ] && grep -q "lock acquired" "$S/b4free.txt" && [ -z "$(ls -A "$S/tmpA")" ]; ok $? "B4: with nobody holding the lock, run_all.sh --lock-only takes it, exits 0 and leaves no lock file in TMPDIR (got exit $RC)"
@@ -735,7 +735,7 @@ for pair in "m2a:a second run_all.sh on a locked raw folder is refused, exit 2" 
 done
 [ -z "$(ls -A "$S/tmpA")" ] && [ -z "$(ls -A "$S/tmpB")" ]; ok $? "M2: no lock file was left in either TMPDIR"
 # minor: the run_all.sh test hooks are refused without RUN_ALL_NESTED
-( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 120 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
+( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" timeout 120 bash "$RA" --raw-dir "$S/rl-raw2" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
 [ "$(cat "$S/hook.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: RUN_ALL_TAKE_FLOWS is a test hook" "$S/hook.txt"; ok $? "RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook.rc" 2>/dev/null))"
 
 # Q5 (round 10c): a checker exit status above 3 is shown and returned as 3 (also with --write-warn-pin); the real codes of --write-warn-pin are 4 (written), 1 (FAIL), 2 (refused), 3 (checker broke)
@@ -872,11 +872,11 @@ cc_bad pin-missing "$S/cc-st.txt" "$S/cc-tt.txt" "$S/no-such-counts.pin" "the pi
 # F12 / M2: stray hook variables are refused by run_all.sh (exit 2, the name is printed, the value never)
 FAKEVAL="zq""wv""-hook-""val"
 for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY FC_OUT; do
-  ( cd "$S" && "${RAENV[@]}" "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 120 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=$FAKEVAL" timeout 120 bash "$RAS" --raw-dir "$S/raw-hook-$v" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is " "$S/hook-$v.txt" && ! grep -q -F "$FAKEVAL" "$S/hook-$v.txt"; ok $? "F12: run_all.sh with $v set is refused, exit 2, the value is not printed (got exit $(cat "$S/hook-$v.rc"))"
 done
 for v in RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
-  ( cd "$S" && "${RAENV[@]}" "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 120 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=x" timeout 120 bash "$RAS" --raw-dir "$S/raw-hook-$v" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is a test hook" "$S/hook-$v.txt"; ok $? "F12 (minor): run_all.sh with $v and without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook-$v.rc"))"
 done
 ( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 120 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
@@ -884,12 +884,13 @@ done
 ( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 120 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
 [ "$(cat "$S/nested-stray2.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray2.txt"; ok $? "F12(c): RUN_ALL_NESTED=1 with a parent pid that is not a run_all.sh is refused, exit 2 (got exit $(cat "$S/nested-stray2.rc"))"
 # the environment scrub prints names only (a fake value built from parts)
-( cd "$S" && "${RAENV[@]}" AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 120 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
+( cd "$S" && "${RAENV[@]}" AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" timeout 120 bash "$RAS" --raw-dir "$S/raw-scrub" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
 [ "$(cat "$S/scrub.rc")" = 0 ] && grep -q "environment variables removed for this run (names only):.*AWS_R11_PROBE" "$S/scrub.txt" && grep -q "PYTHONPATH" "$S/scrub.txt" && ! grep -q -F "$FAKEVAL" "$S/scrub.txt"; ok $? "F12: run_all.sh removes stray cloud and interpreter variables and prints their names, never their values"
 # raw output goes to a scratch folder; the tracked raw folder is published only on request, each file under a temporary name
-mkdir -p "$S/pub-src" "$S/pub-dst"; echo new > "$S/pub-src/a.txt"; echo keep > "$S/pub-dst/other.txt"; echo old > "$S/pub-dst/a.txt"
-PUBOUT=$(bash "$RAS" --publish-raw "$S/pub-src" "$S/pub-dst" 2>&1); PUBRC=$?
-[ "$PUBRC" = 0 ] && [ "$PUBOUT" = 1 ] && [ "$(cat "$S/pub-dst/a.txt")" = new ] && [ "$(cat "$S/pub-dst/other.txt")" = keep ] && [ -z "$(ls -A "$S/pub-dst" | grep '\.tmp\.')" ]; ok $? "raw publish: a file is replaced whole, a file of the destination that the run did not make is left alone, no temporary file stays (got '$PUBOUT')"
+# f8-r12 (M1): publishing is allowed only into raw/ next to the script itself, so the test uses a copy of the script in its own folder (its raw/ is the destination)
+mkdir -p "$S/pub-src" "$S/pubm/raw"; cp -- "$RAS" "$S/pubm/run_all.sh"; echo new > "$S/pub-src/a.txt"; echo keep > "$S/pubm/raw/other.txt"; echo old > "$S/pubm/raw/a.txt"
+PUBOUT=$(bash "$S/pubm/run_all.sh" --publish-raw "$S/pub-src" "$S/pubm/raw" 2>&1); PUBRC=$?
+[ "$PUBRC" = 0 ] && [ "$PUBOUT" = 1 ] && [ "$(cat "$S/pubm/raw/a.txt")" = new ] && [ "$(cat "$S/pubm/raw/other.txt")" = keep ] && [ -z "$(ls -A "$S/pubm/raw" | grep '\.tmp\.')" ]; ok $? "raw publish: a file is replaced whole, a file of the destination that the run did not make is left alone, no temporary file stays (got '$PUBOUT')"
 grep -q 'RAW=$(mktemp -d' "$RAS" && ! grep -q 'RAW="${RUN_ALL_RAW' "$RAS"; ok $? "raw scratch: run_all.sh writes its raw output into its own mktemp folder (the tracked raw folder is RAWFINAL, locked and written only with --refresh)"
 # F6: RV_DUMP / RV_ONLY without TEST_TAKE_DEV are refused by this suite itself
 for v in RV_DUMP RV_ONLY; do
@@ -979,5 +980,69 @@ for n in j["nodes"]:
 json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
 mrun f10c "$S/f10c"; [ "$RC" = 1 ] && grep -q "^FAIL .*credential 'smtp' has name 'some-other-mail-login'" "$S/f10c.txt"; ok $? "F10: the take holds the expected credential names (--expect-credential) (got exit $RC)"
+# ---- f8-r12 (review f8-r12 M1, M3 and the minors m1, m2, m3c, m5, m6): each case below fails on the f8-r11 scripts ----
+r12run() { local nm=$1; shift; ( cd "$S" && "${RAENV[@]}" "$@" > "$S/r12-$nm.txt" 2>&1; echo $? > "$S/r12-$nm.rc" ); RC=$(cat "$S/r12-$nm.rc" 2>/dev/null); }
+r12has() { grep -q -F -- "$2" "$S/r12-$1.txt"; }
+# M1: RUN_ALL_RAW is a test hook of the nested runs; a plain run refuses it and makes no folder
+r12run m1a RUN_ALL_RAW="$S/r12-rawA" timeout 120 bash "$RAS" --lock-only
+[ "$RC" = 2 ] && r12has m1a "REFUSED: RUN_ALL_RAW is a test hook" && [ ! -e "$S/r12-rawA" ]; ok $? "M1: RUN_ALL_RAW without RUN_ALL_NESTED is refused (exit 2) and no folder is made (got exit $RC)"
+# M1: --refresh writes only into raw/ next to the script, whatever --raw-dir says; nothing is created
+r12run m1b timeout 120 bash "$RAS" --refresh --raw-dir "$S/r12-rawB" --lock-only
+[ "$RC" = 2 ] && r12has m1b "REFUSED: --refresh publishes only into" && [ ! -e "$S/r12-rawB" ]; ok $? "M1: --refresh with another raw folder is refused (exit 2) before anything is made (got exit $RC)"
+# M1: the publish step itself refuses any folder that is not raw/ next to the script (also one that is merely named raw)
+mkdir -p "$S/r12-elsewhere/raw"; echo data > "$S/r12-src-file.txt"; mkdir -p "$S/r12-src"; cp -- "$S/r12-src-file.txt" "$S/r12-src/f.txt"
+r12run m1c timeout 120 bash "$S/pubm/run_all.sh" --publish-raw "$S/r12-src" "$S/r12-elsewhere/raw"
+[ "$RC" = 2 ] && r12has m1c "REFUSED: publishing is only allowed into the raw/ folder next to this script" && [ -z "$(ls -A "$S/r12-elsewhere/raw")" ]; ok $? "M1: --publish-raw into a folder that is not raw/ next to the script is refused (exit 2) and writes nothing (got exit $RC)"
+# M1: a link to the real destination is the same folder (compared as physical paths); the manifest lists what this publish made, with sha256, and not the older file
+ln -s "$S/pubm/raw" "$S/r12-link-raw"; echo second > "$S/r12-src/g.txt"
+r12run m1d timeout 120 bash "$S/pubm/run_all.sh" --publish-raw "$S/r12-src" "$S/r12-link-raw"
+MFS="$S/pubm/raw/refresh-manifest.txt"
+[ "$RC" = 0 ] && [ -f "$MFS" ] && grep -q "^$(sha256sum < "$S/pubm/raw/g.txt" | cut -c1-64)  g.txt$" "$MFS" && ! grep -q 'other.txt' "$MFS" && [ "$(stat -c %a "$MFS")" = 644 ] && [ -z "$(ls -A "$S/pubm/raw" | grep '\.tmp\.')" ]; ok $? "M1: publishing through a link to raw/ works and writes refresh-manifest.txt (sha256 of each file this run made, not the older ones, mode 644, no temporary file) (got exit $RC)"
+# M3: RUN_ALL_NESTED needs RUN_ALL_PARENT_PID to name an ANCESTOR run_all.sh, not just any live process whose command line holds the word
+bash -c 'sleep 60' "$RAS" & R12SP=$!
+r12run m3a RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$R12SP timeout 120 bash "$RAS" --raw-dir "$S/r12-rawC" --lock-only
+kill "$R12SP" 2>/dev/null; wait "$R12SP" 2>/dev/null
+[ "$RC" = 2 ] && r12has m3a "does not name a running run_all.sh that started this run" && [ ! -e "$S/r12-rawC" ]; ok $? "M3: a live process that is not an ancestor, whose command line holds run_all.sh, is not accepted as the parent of a nested run (exit 2) (got exit $RC)"
+r12run m3b timeout 120 bash -c 'RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$$ bash "$0" --raw-dir "$1" --lock-only' "$RAS" "$S/r12-rawD"
+[ "$RC" = 0 ] && r12has m3b "lock acquired"; ok $? "M3: a nested run whose parent is a real ancestor run_all.sh is accepted (got exit $RC)"
+# M3: SHELLOPTS / BASHOPTS in the environment (can switch tracing on, cannot be removed): refused at once, the name only
+r12run m3c env SHELLOPTS=braceexpand:hashall timeout 120 bash "$RAS" --raw-dir "$S/r12-rawE" --lock-only
+[ "$RC" = 2 ] && r12has m3c "REFUSED: the environment variable SHELLOPTS is exported" && ! r12has m3c "removed for this run" && [ ! -e "$S/r12-rawE" ]; ok $? "M3: SHELLOPTS in the environment is refused (exit 2), not printed as removed (got exit $RC)"
+# M3: GIT_* variables (a repository, work tree, index or config chosen from outside) are removed before git runs; the names are printed, never the values
+r12run m3d env GIT_DIR="$S/r12-no-such-git-dir" GIT_WORK_TREE="$S/r12-no-such-tree" GIT_INDEX_FILE="$S/r12-no-index" timeout 120 bash "$RAS" --raw-dir "$S/r12-rawF" --lock-only
+[ "$RC" = 0 ] && grep -q "environment variables removed for this run (names only):.*GIT_DIR" "$S/r12-m3d.txt" && grep -q "GIT_WORK_TREE" "$S/r12-m3d.txt" && grep -q "GIT_INDEX_FILE" "$S/r12-m3d.txt" && ! r12has m3d "r12-no-such"; ok $? "M3: GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE are removed and named (never their values) (got exit $RC)"
+grep -q 'GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_NOSYSTEM=1' "$RAS" && [ "$(grep -o '"${GITENV\[@\]}" git ' "$RAS" | wc -l)" = 3 ] && ! grep -v '^ *#' "$RAS" | grep -E '(^|[;&|( ])git (init|apply)' | grep -v 'GITENV' | grep -q .; ok $? "M3: every git call of run_all.sh (init, apply --check, apply: 3 places) runs with the user and system git settings switched off"
+# m6: an unknown option and a second work folder are refused (an option used to be taken as the work folder)
+r12run m6a timeout 120 bash "$RAS" --no-such-option
+[ "$RC" = 2 ] && r12has m6a "REFUSED: unknown option --no-such-option"; ok $? "m6: an unknown option is refused (exit 2) (got exit $RC)"
+r12run m6b timeout 120 bash "$RAS" "$S/r12-w1" "$S/r12-w2"
+[ "$RC" = 2 ] && r12has m6b "REFUSED: more than one work folder" && [ ! -e "$S/r12-w1" ]; ok $? "m6: two work folders are refused (exit 2), nothing made (got exit $RC)"
+# m5: a relative work folder is made absolute (the message names the full path); a relative TMPDIR is refused
+mkdir -p "$S/r12-relw"; echo x > "$S/r12-relw/x"
+r12run m5a timeout 120 bash "$RAS" --raw-dir "$S/r12-rawG" r12-relw
+[ "$RC" = 2 ] && r12has m5a "REFUSED: $S/r12-relw exists and is not empty"; ok $? "m5: a relative work folder is turned into its full path before use (got exit $RC)"
+r12run m5b TMPDIR=r12-relative-tmp timeout 120 bash "$RAS" --raw-dir "$S/r12-rawH" --lock-only
+[ "$RC" = 2 ] && r12has m5b "REFUSED: TMPDIR must be an absolute path" && [ ! -e "$S/r12-rawH" ]; ok $? "m5: a relative TMPDIR is refused (exit 2) (got exit $RC)"
+# m3c: with flock missing the refusal is printed (it used to name a variable that was not set yet and crash with 'unbound variable')
+mkdir -p "$S/r12-nobin"; for t in dirname pgrep timeout realpath; do ln -sf "$(command -v $t)" "$S/r12-nobin/$t"; done
+r12run m3cf env PATH="$S/r12-nobin" "$(command -v bash)" "$RAS" --raw-dir "$S/r12-rawI" --lock-only
+[ "$RC" = 2 ] && r12has m3cf "REFUSED: flock is not installed" && ! r12has m3cf "unbound variable"; ok $? "m3c: with flock missing the script prints its refusal (exit 2), no 'unbound variable' (got exit $RC)"
+# m2 / m1: the pin file and the summary lines of the two programs
+printf 'selftest_as_expected=999\n' | cat "$S/cc.pin" - > "$S/r12-dup.pin"
+bash "$RAS" --check-counts "$S/cc-st.txt" "$S/cc-tt.txt" "$S/r12-dup.pin" > "$S/r12-dup.txt" 2>&1; x=$?
+[ "$x" = 1 ] && grep -q "names selftest_as_expected twice" "$S/r12-dup.txt"; ok $? "m2: a key written twice in expected-counts.pin is a failure (exit 1), not 'the last one wins' (got exit $x)"
+printf 'selftest_skiped=62\n' | cat "$S/cc.pin" - > "$S/r12-unk.pin"
+bash "$RAS" --check-counts "$S/cc-st.txt" "$S/cc-tt.txt" "$S/r12-unk.pin" > "$S/r12-unk.txt" 2>&1; x=$?
+[ "$x" = 1 ] && grep -q "not one of the five (selftest_skiped)" "$S/r12-unk.txt"; ok $? "m2: a key of another name in expected-counts.pin (a typing slip) is a failure (exit 1), not ignored (got exit $x)"
+{ cat "$S/cc-st.txt"; echo 'SELFTEST: 1 as expected (a second line that is not the summary)'; } > "$S/r12-st2.txt"
+bash "$RAS" --check-counts "$S/r12-st2.txt" "$S/cc-tt.txt" "$S/cc.pin" > "$S/r12-st2.out" 2>&1; x=$?
+[ "$x" = 1 ] && grep -q "2 lines start with 'SELFTEST: '" "$S/r12-st2.out"; ok $? "m1: a second line that starts with 'SELFTEST: ' makes the count check fail (the printed line and the checked line must be one line) (got exit $x)"
+{ echo 'test_take_check: 7 of 7 cases as expected, 0 not as expected (an earlier partial line)'; cat "$S/cc-tt.txt"; } > "$S/r12-tt2.txt"
+bash "$RAS" --check-counts "$S/cc-st.txt" "$S/r12-tt2.txt" "$S/cc.pin" > "$S/r12-tt2.out" 2>&1; x=$?
+[ "$x" = 1 ] && grep -q "2 lines start with 'test_take_check: '" "$S/r12-tt2.out"; ok $? "m1: a second line that starts with 'test_take_check: ' makes the count check fail (got exit $x)"
+# m6: selftest.py empties its output folder only when it is an earlier output folder (marker file plus plain *.out files, nothing else)
+mkdir -p "$S/r12-fcout"; : > "$S/r12-fcout/CHECK-COMMAND.txt"; echo mine > "$S/r12-fcout/notes.docx"
+( cd "$S" && FC_OUT="$S/r12-fcout" timeout 120 python3 -I "$HERE/selftest.py" "$P" > "$S/r12-fcout.txt" 2>&1; echo $? > "$S/r12-fcout.rc" )
+[ "$(cat "$S/r12-fcout.rc")" = 2 ] && grep -q "^REFUSED: .* is not an earlier self-test output folder" "$S/r12-fcout.txt" && [ "$(cat "$S/r12-fcout/notes.docx")" = mine ]; ok $? "m6: selftest.py does not empty a folder that holds the marker file CHECK-COMMAND.txt beside a file of another kind (exit 2, the file is still there)"
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]

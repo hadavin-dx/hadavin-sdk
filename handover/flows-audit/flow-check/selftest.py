@@ -1583,13 +1583,30 @@ def lines_of(out, level):
     ]
 
 
+def earlier_selftest_output(folder):
+    """f8-r12 (m6): True only for a folder this self-test wrote earlier: the marker file CHECK-COMMAND.txt plus plain files named *.out, nothing else
+    (no sub-folder, no link, no other name). The folder is emptied afterwards, so one marker file among a person's own files is not enough."""
+    if os.path.islink(folder):
+        return False
+    names = os.listdir(folder)
+    if "CHECK-COMMAND.txt" not in names:
+        return False
+    for n in names:
+        path = os.path.join(folder, n)
+        if os.path.islink(path) or not os.path.isfile(path):
+            return False
+        if n != "CHECK-COMMAND.txt" and not n.endswith(".out"):
+            return False
+    return True
+
+
 def main():
     global OUT
     if not OUT:
         OUT = tempfile.mkdtemp(prefix="fc-selftest-out-")
-    if os.path.isdir(OUT) and os.listdir(OUT) and not os.path.isfile(OUT + "/CHECK-COMMAND.txt"):
+    if os.path.isdir(OUT) and os.listdir(OUT) and not earlier_selftest_output(OUT):
         print(
-            f"REFUSED: {OUT} is not empty and is not an earlier self-test output folder; set FC_OUT to a new or empty folder"
+            f"REFUSED: {OUT} is not empty and is not an earlier self-test output folder (it must hold CHECK-COMMAND.txt and only plain files named *.out beside it); set FC_OUT to a new or empty folder"
         )
         return 2
     shutil.rmtree(OUT, ignore_errors=True)
