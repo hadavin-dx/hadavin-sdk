@@ -42,14 +42,14 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS
-| agent id | purpose | started (UTC) | expected end | state | what it produced so far |
-|---|---|---|---|---|---|
-| (new) | re-read v5-edits-for-M17 | 2026-11-16T14:26Z | +5 min | running | nothing yet |
-| (new) | cold read L1c | 2026-11-16T14:26Z | +5 min | running | nothing yet |
+## AGENTS (UPDATED_UTC 2026-11-16T14:28:45Z; PUSHED_UTC 2026-11-16T14:28:45Z)
+| id | task | state |
+|---|---|---|
+| af9c2dce8b639d707 | re-read L1c | running |
+| a2d1f1c1fc7b72d48 | cold read L3c | running |
 
-CAPACITY: 2 running. Reason for the 6 missing slots: my pages have had three to six reads each, the remaining findings need facts only the studio lead has, and I apply fixes myself because fixer agents would collide with my edits. Digested through 1473.
-NEXT 5: merged-findings legend, decision-list row splits and options, evidence-1/2 reruns (blocked until work/OWNER-ONLY.txt exists), lane pages L2c-L5b, M17 page.
+CAPACITY: 2 of 8 slots used. Missing 6: each needs a page that is edited by me right now (L2c, M17 page, v5-edits-for-M17, decision list) or is blocked by the missing work/OWNER-ONLY.txt (evidence-1, evidence-2, partition); held pages are not mine to read-edit. This is a reason per group, not a target met.
+NEXT 5: fix L2c; fix M17 page; fix v5-edits-for-M17; fix L1c cells FD-016 and FD-021; read L4c.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

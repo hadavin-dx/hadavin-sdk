@@ -1,14 +1,20 @@
-Folded 16 Nov 2026 (system-map): 11 stacked notes moved to work/merged-findings-history.md; 1 labelled note(s) kept at the bottom are live. Line numbers in older text are void; cite finding ids or section names.
+# Merged findings of the six review lanes (record, not a to-do list)
+Older legends (eleven stacked notes, r9 to r13) are in work/merged-findings-history.md and work/merged-findings-history-2.md (ignore them). Cite finding ids or section names, not line numbers.
 
-DECISION source: the row evidence cells quote DECISION-one-store.md (line 5 legend); earlier lines 1 and 3 named inputs/DECISIONS-2026-11-16.md. Read as DECISION-one-store.md until the lead confirms (UNVERIFIED).
-
-
-LEGEND r13 (the only one; lines 319-339 are history). Source of 'DECISION line N' = inputs/DECISIONS-2026-11-16.md. Lead = the Claude session; owner = the person at the laptop. Severity: only rows 14 and 15 are settled (Nit); all other severity cells read Unrated until the lead rates them. The 18 claimed Blockers are not confirmed. Terms GREP, PRUNE, GO-1, k1b, stage.journal, mf_leads, money file: meaning not recorded. Rows 8-9 and 19-23 are duplicates; counts are inflated.
-
-LEGEND (added 16 Nov 2026 by the system-map session after a cold read; the table below is a record, not a to-do list). Lane prefixes L1 to L6 = the six read-only review lanes of PLAN-002.md. FD = finding. "DECISION line N" = DECISION-one-store.md line N, NOT inputs/DECISIONS-2026-11-16.md. "The take" = the one filmed run. Rows about the retired desk and portal (L1-FD-028, L3-FD-001, L3c-FD-009, L4c-FD-014, L6-FD-009, L4-FD-018) are archived, not to be fixed. Duplicate groups (merge when reading): L2-FD-001/002 with L6-FD-001; L2-FD-003 with L6-FD-002; L2-FD-008 with L6-FD-005; L2-FD-015 with L6-FD-004; L2-FD-004/019 with L6-FD-007; L2-FD-005 with L6-FD-008; L2-FD-007 with L6-FD-017; L2-FD-014 with L6-FD-012; L1-FD-006 with L6-FD-011; L1-FD-009 with L6-FD-022; L4-FD-004 with L6-FD-019. Rows citing L2-D-007, L1-W-006 and L5a-C-015 point to ids that are not in this file. This file has no owner or date column; owners and dates for open rows are in work/open-items-table.md.
+## Legend (the only one)
+- Lanes L1 to L6 = the six read-only review lanes of PLAN-002.md (meaning from the lane pages; see work/GLOSSARY.md). FD = finding. A row id is `<lane>-FD-<n>`.
+- Severity cell = the lane's own label (Blocker, Major, Nit); the studio lead has confirmed none, so the count of Blockers is not confirmed. Rows 14 and 15 may be Nit or Blocker depending on the lane label; the cell shown wins.
+- The take = the one filmed run of the lead-intake demo on made-up data. lead = the studio lead = the Claude session doing the technical steps; owner = the human at the laptop.
+- "DECISION line N" = line N of DECISION-one-store.md (UNVERIFIED which of its two copies; the earlier text named inputs/DECISIONS-2026-11-16.md, which is a different file). DECISION lines 7, 14, 15, 16 and 17 are not quoted here yet (TO DO).
+- Job key (last column) = what job the lane says the part does: STORE (keeps data), RETRY (repeats a failed step), NOTICE (tells someone), FILTER (drops or blocks input), COUNTER (counts), LOG (writes a record), OTHER. Type words: dead = unused, idle = runs but does nothing, ops = operations. L6 verdict words (OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED, CODE-LAST) are explained in the lane page work/L6.md if present, otherwise meaning NOT RECORDED. These meanings are the system-map session's reading of the lane pages, UNVERIFIED.
+- GREP, PRUNE, GO-1, k1b, stage.journal, mf_leads, money file: meaning NOT RECORDED (ask the lead session).
+- Rows about the retired desk and portal (L1-FD-028, L3-FD-001, L3c-FD-009, L4c-FD-014, L6-FD-009, L4-FD-018) are archived, not to be fixed.
+- Duplicate groups (merge when reading): L2-FD-001/002 with L6-FD-001; L2-FD-003 with L6-FD-002; L2-FD-008 with L6-FD-005; L2-FD-015 with L6-FD-004; L2-FD-004/019 with L6-FD-007; L2-FD-005 with L6-FD-008; L2-FD-007 with L6-FD-017; L2-FD-014 with L6-FD-012; L1-FD-006 with L6-FD-011; L1-FD-009 with L6-FD-022; L4-FD-004 with L6-FD-019. Rows citing L2-D-007, L1-W-006 and L5a-C-015 point to ids that are not in this file.
+- Rows 8-9 and 19-23 duplicate each other; counts are inflated.
+- Ids L2-D-007, L1-W-006 and L5a-C-015 are cited by some rows but are not in this file.
+- Rows with a bare quote and no claim (L3-FD-001 to L3-FD-042 and L3-FD-040): the claim sentence is TO DO; the lane page L3 holds the context.
 
 ## Findings
-
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
 | L1c-FD-021 | inconsistent | Blocker | Extends L1-FD-023: all three live pull request bodies (2, 3 and 4), not only 4, carry the false sentence that the final tree is identical to pull request 1; the measured difference is 95 files. By the severity table a false claim is a Blocker (L1 rated it Major). Whether the corrected v5 texts were pasted is UNVERIFIED. `handover/demo/pr-text/github-current/pr3-body.md:5 "(checked: the final tree is identical)"`; `handover/demo/pr-text/github-current/pr2-body.md:5 "(checked: the final tree is identical)"`; `handover/demo/pr-text/proposed/VERIFY.md:25 "95 files changed, 5513 insertions(+), 271 deletions(-)"`; `handover/demo/pr-text/REVIEW-pr2-4.md:3 "is FALSE now"` | none | NOTICE |
@@ -322,5 +328,3 @@ LEGEND (added 16 Nov 2026 by the system-map session after a cold read; the table
 | L5b-FD-011 | unverified | Nit | MASTER-MAP wiring claim: which store kind is the core default and whether any take step imports core at all is UNVERIFIED (take repo NOT VISIBLE; no runtime). Not NOT-FOUND: grep for an n8n or workflow reference in src/ found none | none | STORE |
 | L6-FD-023 | idle | Nit | Three log files per run folder (crm.log, smtp.log, stage.log) are empty in all 126 runs; the fakes write to events.jsonl. `handover/demo3/kill/harness.py:72 "lg = open"`; `handover/demo3/kill/fakes.py:18 "events.jsonl"` | none | LOG |
 | L6-FD-024 | idle | Nit | The weekly CI and Dependabot have no notice target in the files; a red weekly run is seen only if someone looks. `.github/workflows/ci.yml:16 "- cron:"`; `.github/dependabot.yml:17 "open-pull-requests-limit: 5"` | none | NOTICE |
-
-LEGEND r12 16 Nov 2026 (wins; merges r9, r10, r11 and line 1). One severity per row: rows 14 and 15 are Nit (cells TO DO). Row 7 severity: Blocker per its cell, though L1 rated it Major (reason column TO DO). Lines 8-9 and 19-23 duplicate each other; folding TO DO. 'lead' = the Claude session; 'owner' = the person at the laptop; only the lead may force-push: UNVERIFIED. Ids L2-D-007, L1-W-006, L5a-C-015: rows missing; row 56 depends on L1-W-006, UNVERIFIED. 'TO DO' cells are open; the file is a record, not a to-do list. GREP, PRUNE, GO-1, k1b, stage.journal, mf_leads, money file: meaning NOT RECORDED; DECISION lines 7, 14, 16, 17 of DECISION-one-store.md not yet quoted.
