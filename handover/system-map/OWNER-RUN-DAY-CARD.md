@@ -2,7 +2,7 @@
 Status: APPLIED 16 Nov 2026 after the studio lead's answer 10:23Z (the film pause stays; `end` stops the run and lists leftover contacts, it never deletes). Not run yet. The program's own notice and prompt text may still say "delete" or "archive": see step 12. "[studio lead fills: ...]" marks a fact this page does not have. Previous card kept in work/OWNER-RUN-DAY-CARD-before-v2.md.
 
 ## Page 1: ten words
-1. Studio lead: the Claude session that works with you. Software. It never sees your screen and never posts.
+1. Studio lead: the Claude session that works with you. Software. n8n = the tool on the laptop that carries the contacts and mails; HubSpot = the contact list website; a model call = one paid question to the AI service; masked = with addresses and names hidden. It never sees your screen and never posts.
 2. Run: one recorded run of the demo on made-up data (the program's screens call it a "take").
 3. Run name: the one word you invent for a run and never use again (the screens call it the "take id").
 4. Terminal: the Ubuntu (WSL) text screen. A line ending in `$` means it waits for you.
@@ -34,11 +34,11 @@ Lines ending "(card addition, not in v5)" add a check that v5 does not have.
 6. The film may show test addresses only (`take-<run name>-a@example.com`, `-b@`, `-c@`). Do not open mails, do not film the sender mailbox or the detail of n8n's mail-sending step, keep addresses out of the terminal prompt, tab titles and notifications. Check again on the finished footage.
 7. Proof screen: [studio lead fills: candidate screens]. You pick one. It may show test addresses and counts only; the video must not show or claim any portal, approval step or audit trail. Who films: [studio lead fills].
 
-## Start (STOP unless you have sent your written yes AND the studio lead wrote "start now")
+## Start (STOP unless (a) the studio lead has sent the figures message, (b) you have replied with your written yes, and (c) the studio lead has then written exactly "start now")
 8. The run name is the one in your written yes, and must be NEW. Used names are kept in `~/.hadavin-take-tags/`; never delete files there. A different name needs a new written yes first.
-9. Open the terminal. Type the `cd` line the studio lead sends. Press Enter. Type `PS1='$ '`, Enter, then `clear`. (card addition)
-10. Type the start line the studio lead sends. Two login lines appear. Both must say "still works"; here that is GOOD. Otherwise nothing was sent: do not start again until the studio lead says so.
-11. A notice shows the money figures and a random 6-digit number. Compare the figures with your written yes AND the studio lead's message. The notice shows the worst case of ONE call; your yes holds 3 times that. Check: one call times 3 equals your total; money spent so far plus your total stays at or below the spending backstop (card addition). Open `stage.env` in the run folder: the program does not print the backstop or stop time. If one figure differs or you cannot check, type nothing and tell the studio lead.
+9. Open the terminal. Type the `cd` line the studio lead sends (it comes in the same message as the figures). Press Enter. Type `PS1='$ '`, Enter, then `clear`. (card addition)
+10. Type the start line the studio lead sends. Two login lines appear. Both must say "still works"; here that is GOOD (at clean-up, on the other card, you want "refused as expected"). Otherwise nothing was sent: do not start again until the studio lead says so.
+11. A notice shows the money figures and a random 6-digit number. Compare the figures with your written yes AND the studio lead's message. The notice shows the worst case of ONE call; your yes holds 3 times that. Check: one call times 3 equals your total; money spent so far plus your total stays at or below the spending backstop (card addition). Open the file `stage.env` (the studio lead sends its full path and the command to show it): the program does not print the backstop or stop time. If one figure differs or you cannot check, type nothing and tell the studio lead.
 12. The notice should not say contacts are deleted at the end (the take never deletes). If it does, type nothing and tell the studio lead; the notice text is being fixed.
 13. WARNING: typing `y` starts real spending, up to 3 paid model calls. It cannot be taken back. If all figures agree, type `y` and Enter yourself.
 14. At the second prompt type `<6 digits> <your run name>` and Enter (your real number and name). A pasted answer or one typed in under 2 seconds is refused; a wrong line sends nothing: tell the studio lead and wait.
@@ -46,12 +46,12 @@ Lines ending "(card addition, not in v5)" add a check that v5 does not have.
 16. While the run sends, the studio lead stops and restarts n8n: YOU TOUCH NOTHING. You should then see 3 contacts in HubSpot and one mail each in the label `demo`. If a count looks wrong or the laptop sleeps, stop and tell the studio lead.
 
 ## The pause (v5 step F)
-17. The program prints "Film the contact list now: type `end` and press Enter" and waits; no `$` prompt comes back. The studio lead writes "program paused" when the figures agree (card addition).
+17. The program prints "Film the contact list now: type `end` and press Enter" and waits; no `$` prompt comes back. The studio lead writes "program paused" in the chat once the studio lead sees the pause. Do not film before that (card addition).
 18. `end` only stops the run. It deletes nothing. The 3 contacts stay in HubSpot.
 19. Do NOT close the terminal, press Ctrl-C or Ctrl-D, or type anything except `end`. Closing, Ctrl-C, closed input at the first prompt or two wrong words in a row end the pause before filming. One wrong line only asks again. Keep the laptop awake.
 20. The person who films films the contact list in HubSpot. Start the recorder with the mouse, never a key in the terminal (card addition). Check the file exists and plays, then say "film done".
 21. Wait for the studio lead's NEW message that begins exactly "film done, type end" (card addition). Only then type `end` and Enter. If the screen asks for any other word, or says "archive" or "delete", type nothing and tell the studio lead.
-22. After `end` the program lists any leftover made-up contacts by lead key and contact id. Wait for the studio lead's count. Then delete them by hand in HubSpot under the delete rules below. Reply "contacts deleted" and the number.
+22. After `end` the program lists any leftover made-up contacts by lead key and contact id. Tell the studio lead the count and ids only (addresses replaced by X). The studio lead then names the three test addresses and writes "demo mails may be deleted". Only then delete them by hand in HubSpot under the delete rules below. Reply "contacts deleted" and the number.
 
 ## If the run failed (v5 step G) and for the by-hand deletes
 23. WARNING: emptying Gmail Trash cannot be undone; deleting HubSpot contacts cannot be undone either (HubSpot may keep a recoverable copy, not checked). Do nothing here until the studio lead writes "demo mails may be deleted" (card addition).
