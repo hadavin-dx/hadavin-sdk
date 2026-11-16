@@ -1,0 +1,5 @@
+Status: resolved (round 1 of 2). Resolve run inline by flows-audit (not through the egm-resolve Skill; lead order was auto accept). 
+Inputs: review-design-r1.md (9 Major, 6 Nit), review-codebase-r1.md (6 Major, 12 Nit), evidence-f3.md (27 tests OK, mutant M2 survived).
+Decision: PROPOSE FIX for every Major (15) and for every Nit that is a one-line change; DECLINE: codebase R1-09 bare repo detection (document only), R1-13/R1-14 TOCTOU needs a local attacker with write access to the parent and a 0700 folder (document in README; dir_fd unlink done only if cheap), design R1-10 sibling manifest (document "do not move the folder"). CONTEST: none. ESCALATE: none.
+Order: fixes in ONE batch by one fixer, then one round 2 review.
+Design call on the F-029 gap (design R1-05): fill replaces the six placeholder names only when the values file carries them, whole JSON string value equal to the name, raw text; fill always ends with "NOT READY TO IMPORT: N placeholders left" while any remain; README gives the order (create credentials, import sub-flow, fill again, export, check).
