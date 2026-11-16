@@ -21,3 +21,10 @@ Row 1 "done" at 14:30 UTC is my estimate; the lead's own "row 1 done" message ti
 Words: "lead" in this file always means the studio lead (a Claude session); a sales request is called a request; the person who gives orders is called the studio head. Loopback self-check = loopback re-smoke of decision 12 = a technical check on the studio lead's own machine. TAKE-BLOCKERS = the file of open take blockers in this folder. Earliest take: not before the end of row 2c plus 3 h (22:30 UTC Mon / 04:00 IST Tue at the best case), and it depends on the owner being awake and on TAKE-BLOCKERS row 3. The cut, check and clean-up have no times because no file gives one.
 TAKE-BLOCKERS row 3 (core-hardening's edits) has no estimate in any file I hold, so whether Wed 18 Nov is reachable is UNKNOWN until core-hardening gives one.
 TAKE-BLOCKERS has 3 rows: its row 1 = row 1 here; its row 2 = rows 2a to 2c here; its row 3 is not scheduled here. Rows run in parallel only where files differ; row 1 and row 2a can start together, and row 2b waits for both.
+
+## Added 16 Nov 2026 after r6 read
+- Row 1 needs scripts/n8n_api.py (decision 7: the studio lead imports flows with it; it is not in this checkout). Who supplies it: the studio lead, by Mon 16 Nov 12:00 UTC / 17:30 IST; if it is still missing then, row 1 does not start and the take date moves day for day.
+- Row 2a start: when decision A4 is answered; if no answer by 13:00 UTC / 18:30 IST on Mon 16 Nov, the 14:00 UTC / 19:30 IST proposal applies. Later start = later finish, same durations.
+- "Rehearsal passed" means the end of row 2c (reviewer sign-off); row 2b is the rehearsal run itself. The rehearsal runs on the studio lead's laptop test setup; the owner is not needed.
+- Earliest start range: 00:30 to 01:30 UTC / 06:00 to 07:00 IST (best to worst case). Wed 18 Nov is only a target, not confirmed. The take's own length is not in any file I hold; the latest start leaves 14 min 20 s before the 18:29 UTC stop time.
+- Core-hardening edits (TAKE-BLOCKERS row 3) are not a row in this table: UNKNOWN who finishes them and when; asked in the decision list.
