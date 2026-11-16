@@ -33,6 +33,7 @@
     neg('r17n1', 'I accept that until I revoke the secret key for the model it can spend', 'I accept that it can spend', 'r17 N1 ND16')
     neg('r17alarm3', 'if a take is running, let it finish (key step K), then revoke the key at once', 'stop everything else and do key step I now', 'r17 F-3 C')
     neg('r17routeb', 'Route A is the safer one for keeping secrets safe;', 'Route B is fine;', 'r17 F-2 route B price')
-    neg('r17appx', 'This appendix is the last page of the same sheet', 'This appendix is a separate file', 'r17 F-2 appendix landing')
+    neg('r17appx', 'This appendix is a separate page, not part of the sheet', 'This appendix is a page', 'r17 F-2 appendix landing')
+    neg('r17applink', 'which is linked from this step; you do not need it', 'which you do not need', 'r17 F-2 link in owner text')
     neg('r17thirty', 'Make no new key now unless at least 30 minutes remain', 'Make no new key now unless at least 20 minutes remain', 'r17 F-4')
     neg('r17last', 'by Mon 23 Nov 2026 18:19 UTC = 23:49 IST at the latest (the last time to revoke)', 'by Mon 23 Nov 2026 18:20 UTC = 23:50 IST at the latest (the last time to revoke)', 'r17 last time to revoke is wrong')

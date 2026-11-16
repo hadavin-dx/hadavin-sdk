@@ -1,4 +1,4 @@
--- HELD FILE 3 (v18) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
+-- HELD FILE 3 (v19) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
 -- (security major M1 of the v16 review). Needs Postgres 14 or newer: the function bodies use BEGIN ATOMIC, which Postgres
 -- parses AND binds at creation time, so a SECURITY DEFINER body names its tables by object, never by a name searched at
 -- call time (no search_path or temporary-table lookup is possible, and no schema name is written into this file). The
@@ -21,6 +21,9 @@
 -- only on spend, spend_month and kill_switch and EXECUTE on spend_reserve, spend_settle and kill_switch_engage; the operator
 -- role has EXECUTE on kill_switch_release and nothing else; PUBLIC has none (5.6 item 1(o2) says how migrate() re-applies them).
 SET LOCAL lock_timeout = '5s';
+-- v19 (security minor m7): the ADD CONSTRAINT ... CHECK lines below scan each table under an exclusive lock; lock_timeout bounds only the wait for the lock, so this
+-- second line bounds the scan itself (60 seconds is my number; the file fails and rolls back instead of holding the lock for ever).
+SET LOCAL statement_timeout = '60s';
 ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend ADD CONSTRAINT spend_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
 ALTER TABLE spend ADD CONSTRAINT spend_guarded_ok CHECK (usd >= 0 AND usd < 1000000000000::numeric);
@@ -45,7 +48,9 @@ BEGIN ATOMIC
 END;
 -- Settle: replaces one earlier reserve of p_worst by the actual cost (a give-back is p_actual = 0). It refuses
 -- (23514) when p_worst is larger than what is open for that agent-day or month, so the total can fall by at most
--- the open reservation and never below the money already settled.
+-- the open reservation and never below the money already settled. v19 (security minor m2): the month row is changed only when the DAY row exists, so a
+-- settle for a day that has no row changes nothing at all (v18 changed the month row, which let a login lower a month by up to its open amount); the
+-- function then returns no row, and the store code (L-2) must treat an empty result as an error.
 CREATE OR REPLACE FUNCTION spend_settle(p_agent text, p_day date, p_worst numeric, p_actual numeric)
 RETURNS TABLE (day_usd numeric, month_usd numeric)
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -53,7 +58,8 @@ BEGIN ATOMIC
   UPDATE spend SET usd = usd - p_worst + p_actual, open_usd = open_usd - p_worst
     WHERE agent_id = p_agent AND day = p_day AND p_worst >= 0 AND p_actual >= 0;
   UPDATE spend_month SET usd = usd - p_worst + p_actual, open_usd = open_usd - p_worst
-    WHERE agent_id = p_agent AND month = date_trunc('month', p_day)::date AND p_worst >= 0 AND p_actual >= 0;
+    WHERE agent_id = p_agent AND month = date_trunc('month', p_day)::date AND p_worst >= 0 AND p_actual >= 0
+      AND EXISTS (SELECT 1 FROM spend x WHERE x.agent_id = p_agent AND x.day = p_day);
   SELECT d.usd, m.usd FROM spend d, spend_month m
     WHERE d.agent_id = p_agent AND d.day = p_day AND m.agent_id = p_agent AND m.month = date_trunc('month', p_day)::date;
 END;

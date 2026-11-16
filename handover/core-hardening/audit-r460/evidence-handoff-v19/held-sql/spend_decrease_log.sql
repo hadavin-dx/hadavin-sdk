@@ -1,4 +1,4 @@
--- HELD FILE 2 (v17) = PR DB-2 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L9). The lead gives it
+-- HELD FILE 2 (v19) = PR DB-2 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L9). The lead gives it
 -- the next free number at the move and adds the GRANTS entries for spend_decrease_log AND kill_switch_log in the same
 -- move PR: an EMPTY runtime list and the audit-reader flag, Grant("table", "", audit_read=True) (question L12; NOT
 -- portal=True). v16 adds to v15: (c) a record of every kill-switch change, (d) append-only triggers on both records.
@@ -104,6 +104,27 @@ REVOKE ALL ON FUNCTION kill_switch_log_change() FROM PUBLIC;
 CREATE TRIGGER kill_switch_log_change AFTER UPDATE ON kill_switch FOR EACH ROW
   WHEN (NEW."on" IS DISTINCT FROM OLD."on")
   EXECUTE FUNCTION kill_switch_log_change();
+-- v19 (security minor m1): the same record for a row that is INSERTED (the switch row was missing and kill_switch_engage() or a hand-written INSERT made it).
+-- A missing row is read as "stopped" (ON), so the state before is written as old_on = true and old_by = NULL. Same failure rule: never stops a switch ON.
+-- A DELETE of the switch row is not recorded: a missing row reads as ON, which is the safe direction (stated, not closed).
+CREATE OR REPLACE FUNCTION kill_switch_log_insert() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp AS $f$
+BEGIN
+  BEGIN
+    EXECUTE format('INSERT INTO %I.kill_switch_log (old_on, new_on, old_by, new_by) VALUES ($1, $2, $3, $4)', TG_TABLE_SCHEMA)
+      USING true, NEW."on", NULL::text, NEW."by";
+  EXCEPTION WHEN OTHERS OR QUERY_CANCELED THEN
+    IF NEW."on" THEN
+      RAISE WARNING 'kill_switch_log not written (%): the switch ON is kept', SQLSTATE;
+    ELSE
+      RAISE;
+    END IF;
+  END;
+  RETURN NULL;
+END $f$;
+REVOKE ALL ON FUNCTION kill_switch_log_insert() FROM PUBLIC;
+CREATE TRIGGER kill_switch_log_insert AFTER INSERT ON kill_switch FOR EACH ROW
+  EXECUTE FUNCTION kill_switch_log_insert();
 
 -- (d) v16, security minor 4: both records are append-only for EVERY role, the owner included: UPDATE, DELETE and
 -- TRUNCATE are refused with 42501. The owner can still DROP the trigger or DISABLE it and a superuser can bypass

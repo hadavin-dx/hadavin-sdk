@@ -40,7 +40,7 @@ M["S-F4c-LRN14-cite-gone-from-box"] = rep_once("LRN14:33", "LRN:33")
 M["S-F4d-own-reading-label-gone"] = rep_once("that G12 is about 'processed once' beside a crash scene is this report's own reading", "G12 is about processed once")
 M["S-F4e-v30-file-unnamed"] = rep_once("OWNER-SHEET-v30-SOURCE.md (the template", "OWNER-SHEET-v30-X.md (the template")
 # environment copies of the steps-edits folder: a higher version, a newer release note, a sheet written after the check time
-SNAP = os.environ.get("C6T_SNAPSHOT") or (D + "../steps-edits")
+SNAP = os.environ.get("C6U_SNAPSHOT") or (D + "../steps-edits")
 def env_variant(name, fn):
     d = tempfile.mkdtemp()
     src = SNAP

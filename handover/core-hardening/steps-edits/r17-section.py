@@ -45,8 +45,9 @@ need17('F-3 E-12', newtxt['E-12'], 'if a take is running when it rings, you let 
 # F-2: route B price in D.1 and in step 21 (E-57); Appendix K lands on the owner sheet
 for _lab, _tx in (('D.1', ks('D')), ('E-57', newtxt['E-57'])):
     need17('F-2 route B price in ' + _lab, _tx, 'up to five days', 'Route A is the safer one')
-need17('F-2 appendix landing', APPX_TEXT, 'last page of the same sheet', 'appends it unchanged')
-need17('F-2 header', txt, 'Appendix K (after the last row) is part of the owner sheet')
+need17('F-2 appendix landing', APPX_TEXT, 'a separate page, not part of the sheet', 'links it from step 22 item 3')
+need17('F-2 link in owner text', _E48, 'the detail is on a separate page, Appendix K, which is linked from this step')
+need17('F-2 header', txt, 'Appendix K (after the last row) is not a row and not part of the sheet')
 # F-5: D.4 and key step E follow the order of the actions
 need17('F-5 D.4', ks('D'), 'you follow the one order (the card) at once, from card step 1')
 need17('F-5 E', ks('E'), "(4) the one order (the card above)", "copies the take's result file and counts out of the take folder first")
@@ -77,7 +78,7 @@ for _m in re.finditer(r'spending window ends(?: later,)? at (\d\d:\d\d) UTC = (\
 for _m in re.finditer(r'\bby (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST at the latest', _own17):
     if (_m.group(1), _m.group(2)) != ('18:19', '23:49'): F('r17 last time to revoke is wrong: ' + _m.group(0))
 # the pins: one exact sentence per safety rule that a mutation was able to delete or reverse without a failure in round 16
-_SC = {'A': ks('A'), 'B': ks('B'), 'C': ks('C'), 'D': ks('D'), 'E': ks('E'), 'F': ks('F'), 'G': _G17, 'H': ks('H'), 'I': ks('I'), 'K': ks('K'), 'CARD': _card17, 'E48': _E48, 'APPX': APPX_TEXT, 'E-57': newtxt['E-57'], 'WHY62': why_of('E-62')}
+_SC = {'A': ks('A'), 'B': ks('B'), 'C': ks('C'), 'D': ks('D'), 'E': ks('E'), 'F': ks('F'), 'G': _G17, 'H': ks('H'), 'I': ks('I'), 'K': ks('K'), 'CARD': _card17, 'CARD7': _card17[:_card17.index('Key step J')], 'E48': _E48, 'APPX': APPX_TEXT, 'E-57': newtxt['E-57'], 'WHY62': why_of('E-62')}
 PINS17 = [
  ('m18 D.4 appendix ref', 'D', 'Detail with the full costs of both routes: appendix K-D'),
  ('m34 word list', 'B', '`key revoked`, `key not revoked`, `key gone, no more decisions`, `shred done key copies`'),
@@ -94,6 +95,7 @@ PINS17 = [
  ('m51 why', 'WHY62', 'Security F2 of round 15: input line 112'),
  ('m53 unverified', 'K', 'is not proven (UNVERIFIED)'),
  ('m54 typed', 'E48', 'Only your own typed messages count (key step B)'),
+ ('r17 card 7', 'CARD7', '7. Then the assistant does its item 1 (the clean-up). It never starts while a copy of the key exists and the key is not revoked.'),
  ('m60 card 1', 'CARD', 'on Mon 23 Nov 2026 it is at 18:19 UTC = 23:49 IST at the latest'),
  ('B03 no space', 'G', 'It contains no `..`, no space, no quote sign'),
  ('B04 ten minutes', 'APPX', 'the 10 minutes between are only for the shred of the key copies'),
@@ -108,6 +110,11 @@ for _lab, _sc, _ph in PINS17:
     need17('pin ' + _lab, _SC[_sc], _ph)
 absent17('B09 reversed', ks('D'), 'no reply counts as `no more takes`')
 absent17('B10 reversed', ks('K'), 'wait for the take')
+# word counts: ONE method, stated here: runs of non-space characters (str.split) inside the ~~~~ fences of the NEW blocks; the label line and the fence lines are not counted
+_wc = lambda s_: len(s_.split())
+_wo = sum(_wc(b_) for r_ in rows if r_['file'].startswith('OWNER-STEPS') for b_ in r_['new'])
+_wa = sum(_wc(b_) for r_ in rows for b_ in r_['new'])
+print('WORDS (non-space runs inside the NEW fences): E-48 NEW', _wc(newtxt['E-48']), '; Appendix K (whole section)', _wc(APPX_TEXT), '; OWNER-STEPS rows NEW', _wo, '; NEW of all rows', _wa, '; whole EDITS file', _wc(txt))
 print('r17 checks:', _r17n, 'phrase checks;', len(PINS17), 'pins')
 print('round 17 checks done')
 

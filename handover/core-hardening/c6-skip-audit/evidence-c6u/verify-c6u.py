@@ -9,8 +9,8 @@ import re, os, shutil, tempfile, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 H = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-STEPS = os.environ.get("C6T_STEPS", H + "/handover/core-hardening/steps-edits")  # the negative controls point this at a changed copy
-T = os.environ.get("C6T_TREE") or sys.exit("set C6T_TREE to the folder of the copied demo tree (the audited demo files; an input of this check)")
+STEPS = os.environ.get("C6U_STEPS", H + "/handover/core-hardening/steps-edits")  # the negative controls point this at a changed copy
+T = os.environ.get("C6U_TREE") or sys.exit("set C6U_TREE to the folder of the copied demo tree (the audited demo files; an input of this check)")
 R = sys.argv[1] if len(sys.argv) > 1 else H + "/handover/core-hardening/c6-skip-audit/REPORT-c6u.md"
 raw = open(R, encoding="utf-8").read()
 txt = raw.split("\n")
@@ -56,7 +56,10 @@ for r in rows:
     k = r["old"].count("\n") + 1
     seg = "\n".join(fl[r["ln"] - 1:r["ln"] - 1 + k])
     if seg.count(r["old"]) != 1:
-        bad.append(r["i"])
+        # c6u: a chained row (old text = the new text of an earlier row on the same file and line) is allowed only if that earlier row's old text occurs once
+        prev = [q for q in rows[:rows.index(r)] if q["f"] == r["f"] and q["ln"] == r["ln"] and q["new"] == r["old"] and seg.count(q["old"]) == 1 and seg.count(r["old"]) == 0]
+        if not prev:
+            bad.append(r["i"])
 check("C-1 old text occurs once on its stated line (%d rows)" % N, not bad, bad)
 ids = sorted(r["i"] for r in rows)
 check("ids are exactly 1..N, no duplicate", ids == list(range(1, N + 1)), "N=%d" % N)
@@ -167,7 +170,7 @@ withc = [r["i"] for r in rows if any(t.startswith("C-") for t in TOK.findall(r["
 waits = [r["i"] for r in rows if "waits for the answer of L-SAVEERR" in r["st"]]
 onlyq = [r["i"] for r in rows if r["i"] not in nofilm and r["i"] not in waits and TOK.findall(r["st"]) and all(t.startswith("L-") for t in TOK.findall(r["st"]))]
 withc = [i for i in withc if i not in waits]
-check("recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68", len(ready) + len(onlyq) + len(withc) + len(waits) + len(nofilm) == N and waits == [53, 55, 62, 64, 66, 68] and (len(ready), len(onlyq), len(withc)) == (49, 36, 3), (len(ready), len(onlyq), len(withc), len(waits), len(nofilm), N))
+check("recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68", len(ready) + len(onlyq) + len(withc) + len(waits) + len(nofilm) == N and waits == [53, 55, 62, 64, 66, 68] and (len(ready), len(onlyq), len(withc)) == (49, 38, 3), (len(ready), len(onlyq), len(withc), len(waits), len(nofilm), N))
 sec3 = [l for l in txt if re.match(r"^\| (L-[A-Z]+|C-\d+) \| [\d, ]+ \| \d+ \|", l)]
 okc = True
 for l in sec3:

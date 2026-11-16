@@ -63,12 +63,13 @@ def tn(x, v=None):
 V30 = ("At %s the folder holds OWNER-SHEET-v%d-A.md (written %s) and OWNER-SHEET-v%d-B.md (written %s), both rendered sheets, and "
        "OWNER-SHEET-v%d-SOURCE.md (the template; written %s)." % (hh(CT), NEWV, hh(tn("A")), NEWV, hh(tn("B")), NEWV, hh(tn("SOURCE"))))
 NROWS, NREADY, NDEF, NW1, NUNREAD, TIMEROW = 96, 49, 38, 87, 91, 96
-LSHEET_SHORT = "| L-SHEET | Which ONE owner sheet (the checklist the owner reads) is final? %s | OPEN (OWNER ONLY). Until he answers, the builder uses none and applies no row to a sheet. NOT covered by 'apply all defaults'. |" % V30
-LLEASE_SHORT = ("| L-LEASE | Which sentence about the 45-second setting goes on the card (line 1) and in the scene 3 caption? It counts only if L-POST is 'no' (if L-POST is 'yes', the default, answers 1 and 2 are ignored and 'none' applies), and any answer other than none needs the G12 approval first. "
-                "none = the plain statement only; 1 = 'We make this claim only when the second send comes within 45 seconds of the first send; for a longer gap we make no claim.' (25 words, your earlier answer Q22 (c)); "
-                "2 = 'The 45 seconds is a setting called the lease. It only sets when a second program, checking every 30 seconds, may claim a stopped contact again. A second send of the same contact is not processed again, whenever it arrives.' (40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). "
+LSHEET_SHORT = ("| L-SHEET | Which ONE owner sheet (the checklist the owner reads) is final? The newest on disk is v%d. " % NEWV + V30 + " | OPEN (OWNER ONLY). Until he answers, the builder uses none and applies no row to a sheet. NOT covered by 'apply all defaults'. |")
+LLEASE_FULL = ("1 = 'We make this claim only when the second send comes within 45 seconds of the first send; for a longer gap we make no claim.' (25 words, your earlier answer Q22 (c)); "
+               "2 = 'The 45 seconds is a setting called the lease. It only sets when a second program, checking every 30 seconds, may claim a stopped contact again. A second send of the same contact is not processed again, whenever it arrives.' (40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2).")
+LLEASE_SHORT = ("| L-LEASE | Which sentence about the 45-second setting goes on the card (line 1) and in the scene 3 caption? none = the plain statement only; 1 or 2 = a sentence printed in part 2 (1: the 25-word limit sentence of your earlier answer; 2: a 40-word explanation). "
+                "1 and 2 count only if L-POST is 'no' (if L-POST is 'yes', the default, they are ignored and 'none' applies) and need the G12 approval first. "
                 "| none. No row puts the 45-second limit sentence on the card, in the caption, or in any other document; whether you want it in the owner sheet and the release note is your question TASK (9). |")
-CARD_SHORT = oldl("THE CLOSING CARD UNDER THE DEFAULTS").replace("THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet)", "THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet; the table of lengths is in section 1c)")
+CARD_SHORT = oldl("THE CLOSING CARD UNDER THE DEFAULTS").replace(" Card line 1 and the scene 3 caption stay blocked on the run sheet until you have approved the lease wording in writing (risks list item 12). Card line 2 states what the system does; the stand-in tests showed one alert mail, and no run exists on the flows of the take, so card line 2 stays blocked until the loopback re-smoke on the edited flows has shown an alert mail (risks list item 12).", " Card line 1 and the scene 3 caption are blocked until you approve G12; card line 2 until the loopback re-smoke has shown an alert mail (risks list item 12).").replace("THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet)", "THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet; the table of lengths is in section 1c)")
 ANSWER_SHORT = ("TO ANSWER: add after the names in step 2 one 'except' per label, for example `; except L-KILL: b; except L-APPROX: yes`. The two OPEN (OWNER ONLY) questions are two separate lines, each after you have asked the owner (the form is in section 1c). "
                 "Answer forms: L-CARD, L-CARDCUT, L-CARDTEXT, L-POST, L-APPROX, L-SAVE, L-PAGE, L-ONEDB, L-CUT yes or no; L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply.")
 
@@ -85,6 +86,8 @@ def make_box(words):
             l = LSHEET_SHORT
         elif l == "{{CARD}}":
             l = CARD_SHORT
+        elif l.startswith("L-LEASE ANSWERS, in full"):
+            l = l.replace("{{LLEASEFULL}}", LLEASE_FULL)
         elif l == "{{ANSWERFORM}}":
             l = ANSWER_SHORT
         out.append(l.replace("{BOXWORDS}", str(words)).replace("{NROWS}", str(NROWS)).replace("{NREADY}", str(NREADY)).replace("{NDEF}", str(NDEF)).replace("{NW1}", str(NW1)).replace("{NUNREAD}", str(NUNREAD)).replace("{TIMEROW}", str(TIMEROW)).replace("{SHEETA}", "OWNER-SHEET-v%d-A.md" % NEWV).replace("{SHEETB}", "OWNER-SHEET-v%d-B.md" % NEWV).replace("{RNN}", RNN))
@@ -365,7 +368,6 @@ def c6u_stage(L, find, patch):
     L[i] = "- [done in c6u] The card row's own Time cell on run sheet line 41 ('30 s EST') is edited by row 96 under the defaults ('40 s EST'); the cut cases (35 s EST and the values of Table B in section 1c) are hand edits by the builder of step 2 when the studio lead tells him which cut case applies (box, step 6)."
     patch("- [needs-lead] PROPOSED ROW 95", "- [needs-lead] PROPOSED ROW 95", "- [done in c6u] ROW 95 IS ADDED (it was only proposed here before): the old proposal text")
     patch("| Design m1 (rows 53, 54, line 24) |", "NOT FIXED: a new row 95 is needed; proposed text in section 9; stated first in section 0", "FIXED IN c6u: row 95 added (see c6u-CHANGES.md)")
-    patch("| Design m1 (rows 53, 54, line 24) |", "NOT FIXED: a new row 95 is needed; proposed text in section 9; stated first in section 0", "FIXED IN c6u: row 95 added (see c6u-CHANGES.md)") if False else None
     # ---- section 0 item (5): rewritten
     i = find("- FAILURES FIRST IN c6t")
     L[i] = L[i].replace("FAILURES FIRST IN c6t (my own, still open when I wrote this)", "FAILURES FIRST IN c6u (the c6t failures in 1b are fixed or restated here; still open when I wrote this)")
@@ -384,12 +386,54 @@ def c6u_stage(L, find, patch):
     rep_all("after steps 5 to 9 of the list in the box are written (the loopback re-smoke has passed", "after TASKS (5) to (9) of the list in the box are done and written (the loopback re-smoke has passed", 1)
     rep_all("comes after steps 5 to 9 of the box list)", "comes after TASKS (5) to (9) of the box list)", 1)
     rep_all("the first rehearsal comes after steps 5 to 9 everywhere", "the first rehearsal comes after TASKS (5) to (9) everywhere (c6u: the c6t text said 'steps 5 to 9', which are the wrong list)", 1)
+    # ---- counts and per-question lists after rows 95 and 96 (class: a number printed in several places is set from one recount)
+    import re as _re
+    def addrow(label_prefix, rows_new, section3=True):
+        for j, ln in enumerate(L):
+            if ln.startswith("| " + label_prefix + " |") or ln.startswith("| " + label_prefix + " ("):
+                m = _re.search(r"\| ([0-9, ]+) \|\s*$", ln)
+                if section3 and m and ln.count("|") > 6:
+                    nums = sorted(set(int(x) for x in m.group(1).replace(" ", "").split(",")) | set(rows_new))
+                    L[j] = ln[:m.start()] + "| " + ", ".join(map(str, nums)) + " |"
+                    return
+        FAILS.append("c6u: no section 3 row for " + label_prefix)
+    for lab, rr in (("L-CARD", [96]), ("L-CARDLEN", [96]), ("L-LEASE", [96]), ("L-POST", [96]), ("L-SAVE", [95])):
+        addrow(lab, rr)
+    def fix3b(label, rows_new, col):
+        for j, ln in enumerate(L):
+            if ln.startswith("| " + label + " | ") and ln.count("|") == 6 and _re.match(r"\| [A-Z\-]+ \| [0-9, ]+ \| \d+ \|", ln):
+                cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+                allr = sorted(set(int(x) for x in cells[1].replace(" ", "").split(",")) | set(rows_new))
+                cells[1] = ", ".join(map(str, allr)); cells[2] = str(len(allr))
+                ci = 3 if col == "def" else 4
+                part = cells[ci]
+                inner = _re.match(r"(\d+) \((.*)\)", part)
+                lst = [] if inner is None or inner.group(2) == "none" else [int(x) for x in inner.group(2).replace(" ", "").split(",")]
+                lst = sorted(set(lst) | set(rows_new))
+                cells[ci] = "%d (%s)" % (len(lst), ", ".join(map(str, lst)))
+                L[j] = "| " + " | ".join(cells) + " |"
+                return
+        FAILS.append("c6u: no 3b row for " + label)
+    for lab, rr in (("L-CARD", [96]), ("L-CARDLEN", [96]), ("L-LEASE", [96]), ("L-POST", [96])):
+        fix3b(lab, rr, "chk")
+    fix3b("L-SAVE", [95], "def")
+    rep_all("| TOTAL | all rows | 94 | ready 49, on defaults only 36,", "| TOTAL | all rows | 96 | ready 49, on defaults only 38,", 1)
+    rep_all("Of the 94 rows, 49 are ready, 36 apply on the default", "Of the 96 rows, 49 are ready, 38 apply on the default", 1)
+    rep_all("85 wave 1 rows, applied first", "87 wave 1 rows, applied first", 1)
+    rep_all("applies wave 1 (85 rows,", "applies wave 1 (87 rows,", 1)
+    rep_all("Of the 94 rows (rows 1 to 72 keep the numbers of REPORT-c6n.md; rows 73 and up are new in c6o,", "Of the 96 rows (rows 1 to 72 keep the numbers of REPORT-c6n.md; rows 73 to 94 are new in c6o, rows 95 and 96 are new in c6u,", 1)
+    rep_all("; 36 apply on the default of a question you have not answered (section 3);", "; 38 apply on the default of a question you have not answered (section 3);", 1)
+    rep_all("89 of 94 rows cannot be read in the repository", "91 of 96 rows cannot be read in the repository", 1)
+    rep_all("and the 36 rows that wait only for a question (3, 4, 11, 12, 13, 14, 15, 20, 21, 24, 29, 31, 33, 39, 41, 43, 44, 49, 50, 51, 52, 54, 56, 57, 63, 65, 67, 69, 73, 74, 81, 86, 87, 90, 91, 92), 85 rows in all,",
+            "and the 38 rows that wait only for a question (3, 4, 11, 12, 13, 14, 15, 20, 21, 24, 29, 31, 33, 39, 41, 43, 44, 49, 50, 51, 52, 54, 56, 57, 63, 65, 67, 69, 73, 74, 81, 86, 87, 90, 91, 92, 95, 96), 87 rows in all,", 1)
+    rep_all("| No (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only). Say yes only if a failed run must be filmed;",
+            "| OPEN (OWNER ONLY). Until he answers, failed runs stay unsaved (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only); this is what is done meanwhile, not an answer for him. Say yes only if a failed run must be filmed;", 1)
     return L
 
 
 def box_words(L):
     t = "\n".join(L)
-    return len(t[t.index("## Start here"):t.index("## 0. Failures")].split())
+    return len(t[t.index("## Start here: what"):t.index("## Start here, part 2")].split())
 
 
 if __name__ == "__main__":

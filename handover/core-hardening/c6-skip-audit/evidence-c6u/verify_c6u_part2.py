@@ -2,7 +2,7 @@
 # 14 c6q content checks
 import glob
 bylead = {r["i"]: r for r in rows}
-boxs = full[full.index("## Start here"):full.index("## 0. Failures")]   # the short start box (order, words, labels)
+boxs = full[full.index("## Start here"):full.index("## Start here, part 2")]   # the start box proper (part 2 holds the printed words and is counted apart)
 sec1c = full[full.index("## 1c."):full.index("## 2. Numbers")]   # the detail moved out of it
 box = boxs + "\n" + sec1c   # the presence checks of c6s look in both
 intro = box[:box.index("WORDS YOU NEED (")]
@@ -239,9 +239,9 @@ check("the real v%d files on disk are %s and the report names every one of them"
 for f in sorted(sw):
     t_ = datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc)
     print("INFO %s last written %s UTC; check time of the report %s" % (os.path.basename(f), t_.strftime("%H:%M:%S"), ct))
-check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository", "scratchpad/c6/tree/handover" in raw.split("## 1.")[0] and "UNVERIFIED" in raw.split("## 1.")[0] and "89 of the 94 rows" in raw.split("## 1.")[0], "")
+check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 91 of the 96 rows cannot be read in the repository", "scratchpad/c6/tree/handover" in raw.split("## 1.")[0] and "UNVERIFIED" in raw.split("## 1.")[0] and "91 of 96 rows" in raw.split("## 1.")[0], "")
 nrepo = sum(1 for r in rows if os.path.exists(H + "/" + r["f"]))
-check("89 rows of 94 name a file that is not in the repository (recounted: %d rows readable in the repo)" % nrepo, nrepo == 5 and N - nrepo == 89, nrepo)
+check("91 rows of 96 name a file that is not in the repository (recounted: %d rows readable in the repo)" % nrepo, nrepo == 5 and N - nrepo == 91, nrepo)
 # no pipe-in-cell: no row text holds a raw table border
 check("no row old or new text holds a raw '|' (it would break its table cell)", all("|" not in r["rawold"] and "|" not in r["rawnew"] for r in rows), [r["i"] for r in rows if "|" in r["rawold"] or "|" in r["rawnew"]])
 # untouched files
@@ -399,7 +399,7 @@ _rst = datetime.datetime.fromtimestamp(os.path.getmtime(_rnsrc), datetime.timezo
 check("E-mtime: the report names the SOURCE file of the newest release note with its real written time", _rst is not None and re.search(re.escape(os.path.basename(_rnsrc)) + r"[^.]{0,25}" + _rst + " UTC", raw) is not None, _rst)
 # E-paths: the run files use relative paths only
 _rp = [n for n in ("run_all.sh", "static-checks.sh", "neg_controls_c6u.py", "build_c6u.py", "verify-c6u.py", "verify_c6u_part2.py") if re.search("/ho" + "me/user|/tm" + "p/claude|/ro" + "ot/", rd(os.path.dirname(os.path.abspath(__file__)) + "/" + n))]
-check("E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE)", not _rp, _rp)
+check("E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6U_TREE)", not _rp, _rp)
 # E-lrn: release note lines cited are the same in v14 and in the newest note (the check script compares whole lines)
 check("E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold", cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "")
 # M1/M2 (design): the 45-second sentence is not claimed to be carried by the sheets; LRN14:149 and :150 are the evidence; lease words on the video are held under G12

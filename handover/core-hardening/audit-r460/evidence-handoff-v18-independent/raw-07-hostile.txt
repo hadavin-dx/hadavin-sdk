@@ -105,10 +105,12 @@ EXPECT PASS B4b second settle of the same reservation refused 23514  [sqlstate=2
 EXPECT PASS B4c settle with worst larger than open refused 23514  [sqlstate=23514]
 OBS B5 settle for an agent with no row: returns None, rows created=0
 OBS B5b settle worst 0 actual 5 (cost added without a reservation): (Decimal('12'), Decimal('12')) -> raises total, safe direction
-OBS B6 reserve for day 1999-01-01: sqlstate=None; month rows for agent: [(datetime.date(1999, 1, 1),)]
-OBS B6 reserve for day infinity: sqlstate=None; month rows for agent: [(datetime.date(1999, 1, 1),), (datetime.date(9999, 12, 1),)]
-OBS B6 reserve for day 0001-01-01: sqlstate=None; month rows for agent: [(datetime.date(1, 1, 1),), (datetime.date(1999, 1, 1),), (datetime.date(9999, 12, 1),)]
-OBS B6 reserve for day 2026-02-30 n/a, leap day 2024-02-29: sqlstate=None; month rows for agent: [(datetime.date(1, 1, 1),), (datetime.date(1999, 1, 1),), (datetime.date(2024, 2, 1),), (datetime.date(9999, 12, 1),)]
+OBS B6 reserve for day 1999-01-01: sqlstate=None; month rows for agent: [('1999-01-01',)]
+OBS B6 reserve for day 9999-12-31 (Python date.max; NOT the Postgres infinity): sqlstate=None; month rows for agent: [('1999-01-01',), ('9999-12-01',)]
+OBS B6 reserve for day 0001-01-01: sqlstate=None; month rows for agent: [('0001-01-01',), ('1999-01-01',), ('9999-12-01',)]
+OBS B6 reserve for day 2026-02-30 n/a, leap day 2024-02-29: sqlstate=None; month rows for agent: [('0001-01-01',), ('1999-01-01',), ('2024-02-01',), ('9999-12-01',)]
+OBS B6 reserve for the Postgres date 'infinity': sqlstate=None; month rows: [('infinity',)]
+OBS B6 reserve for the Postgres date '-infinity': sqlstate=None; month rows: [('infinity',), ('-infinity',)]
 EXPECT PASS B6 NULL day refused  [sqlstate=23502]
 EXPECT PASS B6b the v17 four-argument call (a caller-chosen month) no longer exists  [sqlstate=42883]
 OBS B6c extra argument -> 42883
@@ -125,7 +127,7 @@ EXPECT PASS B8 runtime role: set_config session_authorization refused  [sqlstate
 EXPECT PASS B8 runtime role: SET ROLE op_i refused  [sqlstate=42501]
 EXPECT PASS B8 runtime role: SET SESSION AUTHORIZATION op_i refused  [sqlstate=42501]
 EXPECT PASS B9 runtime engage works and records by=session login  [(True, 'rt_i')]
-EXPECT PASS B9b engage again on an ON switch leaves by and ts alone  [(True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 2, 20, 429786, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) vs (True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 2, 20, 429786, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))]
+EXPECT PASS B9b engage again on an ON switch leaves by and ts alone  [(True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 4, 39, 503596, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) vs (True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 4, 39, 503596, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))]
 EXPECT PASS B10 operator release works, by=op_i  [(False, 'op_i')]
 EXPECT PASS B10b release on an OFF switch changes nothing
 EXPECT PASS B11 row missing: engage creates it ON
@@ -207,24 +209,43 @@ OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.
 EXPECT PASS D spend_nonneg.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
 OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
 EXPECT PASS D spend_nonneg.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
-OBS D spend_nonneg.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.03s; schema unchanged=False; ledger rows now=6
+OBS D spend_nonneg.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=6
 OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg.sql: sqlstate=None
 OBS D spend_nonneg.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
 OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
 EXPECT PASS D spend_nonneg_finite.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
 OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
 EXPECT PASS D spend_nonneg_finite.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
-OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.04s; schema unchanged=False; ledger rows now=6
+OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=6
 OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg_finite.sql: sqlstate=None
 OBS D spend_nonneg_finite.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
 OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
 EXPECT PASS D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
-OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
-EXPECT PASS D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
-OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.03s; schema unchanged=False; ledger rows now=7
+OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=6
+EXPECT PASS D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]
+OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=7
 OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg_upgrade.sql: sqlstate=None
 OBS D spend_nonneg_upgrade.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
-OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=5
-EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]
+OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
 OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=5
 EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]
+OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on kill_switch: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_decrease_log.sql with ACCESS SHARE held on spend: sqlstate=None after 0.06s; schema unchanged=False; ledger rows now=6
+OBS D spend_guarded_writes.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_guarded_writes.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_guarded_writes.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_guarded_writes.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]
+OBS D spend_guarded_writes.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=6
+OBS D (no lock conflict expected: the file does not touch kill_switch) spend_guarded_writes.sql: sqlstate=None
+OBS D spend_guarded_writes.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+==== T. DB-2 trigger cost per lowering, 5 runs (runtime role, 20000 lowering UPDATEs, grants as migrate() gives them)
+OBS T run 1 (order without,with): without 589 ms, with 1940 ms, +0.068 ms per lowering, log rows 20000, relation size 2211840 bytes (110.6 per row)
+OBS T run 2 (order with,without): without 531 ms, with 1478 ms, +0.047 ms per lowering, log rows 20000, relation size 2211840 bytes (110.6 per row)
+OBS T run 3 (order without,with): without 915 ms, with 1787 ms, +0.044 ms per lowering, log rows 20000, relation size 2211840 bytes (110.6 per row)
+OBS T run 4 (order with,without): without 916 ms, with 2173 ms, +0.063 ms per lowering, log rows 20000, relation size 2211840 bytes (110.6 per row)
+OBS T run 5 (order without,with): without 652 ms, with 2067 ms, +0.071 ms per lowering, log rows 20000, relation size 2211840 bytes (110.6 per row)
+OBS T per-lowering cost over 5 runs: min 0.044, median 0.063, max 0.071 ms
+SUMMARY expect lines: 114 passed of 114
+rc=0

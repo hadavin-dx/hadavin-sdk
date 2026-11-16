@@ -4,7 +4,12 @@
 # folder (c6-skip-audit/evidence-c6u -> ../../steps-edits), so the script runs on a copy of the whole c6-skip-audit and core-hardening layout.
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 H="$(cd "$HERE/../.." && pwd)"
-S=${C6T_STEPS:-$H/steps-edits}
+S=${C6U_STEPS:-$H/steps-edits}
+[ -d "$S" ] || { echo "FATAL: steps-edits folder not found"; exit 2; }
+NEWOS=$(ls $S | grep -E '^OWNER-SHEET-v[0-9]+-[AB]\.md$' | sed -E 's/OWNER-SHEET-v([0-9]+)-.*/\1/' | sort -n | tail -1)
+NEWRNV=$(ls $S | grep -E '^LEAD-RELEASE-NOTE-v[0-9]+\.md$' | sed -E 's/LEAD-RELEASE-NOTE-v([0-9]+)\.md/\1/' | sort -n | tail -1)
+echo "## NEWEST VERSIONS FOUND: owner sheet v$NEWOS (A and B), release note v$NEWRNV"
+[ -f "$S/OWNER-SHEET-v$NEWOS-A.md" ] && [ -f "$S/OWNER-SHEET-v$NEWOS-B.md" ] && [ -f "$S/LEAD-RELEASE-NOTE-v$NEWRNV.md" ] || { echo "FATAL: the newest rendered files are missing"; exit 2; }
 echo "## check time (UTC): $(date -u +%FT%TZ)"
 echo "## C-10c: owner sheets, hits per phrase (grep -c -i: never deletes / read, create and change only / does not delete / read-only or read only any mention)"
 for f in $(ls $S/OWNER-SHEET-v19.md $S/OWNER-SHEET-v[2-9][0-9]*.md 2>/dev/null); do

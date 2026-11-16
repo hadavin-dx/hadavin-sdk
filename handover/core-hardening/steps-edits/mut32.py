@@ -2,7 +2,7 @@
 CAUGHT = the checker prints a FAIL line that the unmodified package does not print. Prints caught and missed honestly."""
 import os, re, shutil, subprocess, sys, tempfile
 H = os.path.dirname(os.path.abspath(__file__)) + '/'
-FILES = ['facts-v32.py', 'build-v32.py', 'check-v32.py', 'OWNER-SHEET-v32-SOURCE.md', 'LEAD-RELEASE-NOTE-v16-SOURCE.md', 'v32-OPEN-FOR-LEAD-SOURCE.md', 'v32-CHANGES.md', 'pointers-v32.txt', 'newchecks-v32.py']
+FILES = ['facts-v32.py', 'build-v32.py', 'check-v32.py', 'OWNER-SHEET-v32-SOURCE.md', 'LEAD-RELEASE-NOTE-v16-SOURCE.md', 'v32-OPEN-FOR-LEAD-SOURCE.md', 'v32-CHANGES.md', 'pointers-v32.txt', 'headings-v32.txt', 'factuse-v32.txt', 'newchecks-v32.py']
 def run(d):
     rb = subprocess.run([sys.executable, '-B', d + 'build-v32.py', d], capture_output=True, text=True)
     if rb.returncode: return {'FAIL BUILD stopped: ' + (rb.stderr.strip().split('\n') or [''])[-1][:80]}, rb       # the build's own assertions (marker left, run length below 860 s)
@@ -36,7 +36,7 @@ P = [
 ('P12', 'OWNER-SHEET-v32-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
 ('P13', 'OWNER-SHEET-v32-SOURCE.md', "only if the window's last line is `paste key, Enter:` ", '', 'paste condition removed'),
 ('P14', 'OWNER-SHEET-v32-SOURCE.md', ' with paper notes "READ" and "TEST"', '', 'window labels removed'),
-('P15', 'OWNER-SHEET-v32-SOURCE.md', '(no earlier run used it or begins like it)', '(any run name will do)', 'run-name reuse rule removed'),
+('P15', 'OWNER-SHEET-v32-SOURCE.md', 'the lead checks it is new', 'the lead checks nothing', 'run-name reuse rule removed'),
 ('P16', 'OWNER-SHEET-v32-SOURCE.md', '[[A:, then the older key]]', '', 'A older key step renamed (no longer after 6.6)'),
 ('P17', 'OWNER-SHEET-v32-SOURCE.md', 'reverses `end` and the card, ', '', 'lead may reverse order'),
 ('P18', 'OWNER-SHEET-v32-SOURCE.md', 'within the "Minutes at Type y to start" of the message, counted from the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
@@ -81,7 +81,7 @@ V = [
 ('V10', S, 'Test program asks you to type a figure: no', 'Test program asks you to type a figure: yes', 'typed-figure line changed'),
 ('V11', S, 'first read its last-used time in the key list and describe it to the lead (a use after', 'first read its time and describe it to the lead (a use after', 'B 7.11 last-used time dropped'),
 ('V12', S, 'a model key stored in n8n would spend without the spend lock', 'a model key in n8n is fine', 'n8n model key reason removed'),
-('V13', O, 'Money-safe default: A (one live key at a time)', 'Money-safe default: B (one live key at a time)', 'open list names B as default'),
+('V13', O, 'No default pick: you do not choose for the owner', 'Money-safe default: B: you do not choose for the owner', 'open list names B as default'),
 ('V14', N, 'both sheets have four alarms, the fourth at', 'both sheets have alarms, the fourth at', 'note G30 loses the fourth alarm'),
 ('V15', O, 'WHEN IT FAILS (v32)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
 ('V16', O, 'MET for the sheet page alone by', 'Word target not stated by', 'open list says word target met'),
@@ -367,7 +367,7 @@ W = [
 ('W04', S, '# Owner sheet v32, sheet [[A:A]][[B:B]]: one filmed run', '# Owner sheet v32: one filmed run', 'sheet letter removed from the heading'),
 ('W05', S, 'n8n credentials: exactly the three, by name', 'n8n credentials: exactly the three', 'n8n slot by name removed'),
 ('W06', S, 'alone (R1), with the narrowest scopes the create form offers', 'with the widest scopes the create form offers', 'look key scopes clause'),
-('W07', S, 'if used less than 7 days ago take B', 'if used less than 7 days ago take A', 'A/B condition reversed'),
+('W07', S, 'a later use: use sheet B', 'a later use: use sheet A', 'A/B condition reversed'),
 ('W08', O, "give another before the program's refusal limit 18:14 UTC = 23:44 IST;", 'give another before 18:14 UTC;', '18:14 without its label'),
 ('W09', N, 'and nothing about a lease: the lease sentence is struck from the public post', 'plus "A gap longer than the lease is not claimed." (the lease sentence is struck from the public post', 'lease sentence put back in the public post'),
 ('W10', FA, 'LS23 = dt.datetime(2026, 11, 23, 18, 4)', 'LS23 = dt.datetime(2026, 11, 23, 18, 14)', 'latest start of 23 Nov changed'),
@@ -376,18 +376,18 @@ W = [
 ('W13', S, 'The 7-day rule (worded the same everywhere in this package):', 'The 7-day rule is about a week:', '168 hours wording'),
 ('W14', N, 'Open 103', 'Open 99', 'open question reference removed'),
 ('W15', O, 'E-52', 'E-5', 'E-52 UNVERIFIED row changed'),
-('W16', S, 'Do not use any older sheet (v4 to v30).', 'Do not use any older sheet (v4 to v29). ' + 'filler ' * 400, 'sheet grows over 6,300 words'),
+('W16', S, 'Use no older sheet.', 'Use no older sheet. ' + 'filler ' * 400, 'sheet grows over 6,300 words'),
 ]
 P += W
 EXPECT.update({'W01':['C172'],'W02':['C172'],'W03':['C172'],'W04':['C173'],'W05':['C174'],'W06':['C175'],'W07':['C176'],'W08':['C177'],'W09':['C178'],'W10':['C179'],'W11':['C180'],'W12':['C181'],'W13':['C182'],'W14':['C183'],'W15':['C184'],'W16':['C171']})
 ALLCOPIES |= {'W05', 'W11', 'W12', 'W14', 'W15', 'W07', 'W06', 'W03'}
 
 X = [
-('X01', S, 'The key list may show a last use hours late', 'The key list shows every use at once', '7-day lag sentence removed'),
+('X01', S, 'the key list may show a last use hours late', 'the key list shows every use at once', '7-day lag sentence removed'),
 ('X02', S, 'then cancel anyway (the yes covers the cancel)', 'then cancel anyway unless you know something else uses it (the yes covers the cancel)', '7.11 escape put back'),
-('X03', S, '**Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov):**', '**Deadline note:**', 'deadline backstop removed from the sheet'),
+('X03', S, '**Deadline backstop (Sun 22 Nov and Mon 23 Nov):**', '**Deadline note:**', 'deadline backstop removed from the sheet'),
 ('X04', N, 'does NOT wait for a message from you', 'waits for a message from you', 'note says the older key in A waits for the lead'),
-('X05', N, 'A passes only if the older key was last used before {{sevenback}}', 'A passes only if the older key was last used long ago', '7-day warning removed from the default line'),
+('X05', N, 'the 7-day time is {{sevenback}}', 'the 7-day time is long ago', '7-day warning removed from the default line'),
 ('X06', S, 'if there is no such page this is a STOP', 'if there is no such page go on', 'Recall page no longer a stop'),
 ('X07', S, 'no clipboard manager, remote-access or screen-capture tool running', 'no other program running', 'clipboard manager rule removed'),
 ('X08', S, 'never a file manager, a second terminal window or the clipboard (no copy and paste)', 'never a password', 'film person restrictions removed'),
@@ -419,7 +419,7 @@ BUILD_F = 'build-v32.py'
 Y = [
 ('Y01', FA, "BM = dt.datetime(2026, 11, 23, 18, 9)", "BM = dt.datetime(2026, 11, 23, 18, 8)", 'Monday reminder time changed'),
 ('Y02', S, '## 7. The run (UNVERIFIED)', 'If your run day is Mon 23 Nov, do x.\n\n## 7. The run (UNVERIFIED)', 'dead Mon 23 Nov paragraph back'),
-('Y03', O, 'Money-safe default: A', 'Safe default if you do not answer: A', 'old default wording back in the open list'),
+('Y03', O, 'No default pick', 'Safe default if you do not answer: A', 'old default wording back in the open list'),
 ('Y04', N, "## 9. Kept from earlier appendices (lead's own use)", "When the lead message says go, the owner may skip the older key cancel: the lead releases the older key cancel.\n\n## 9. Kept from earlier appendices (lead's own use)", 'lead message releases the older-key cancel (H06 phrasing)'),
 ('Y05', N, "## 9. Kept from earlier appendices (lead's own use)", "If the lead has not confirmed, the older key cancel waits for the lead's word.\n\n## 9. Kept from earlier appendices (lead's own use)", 'older-key cancel waits for a lead word (other phrasing)'),
 ('Y06', S, 'Entries to revoke later: app passwords <names, exact>', 'Entries to revoke: app passwords <names, exact>', 'numbers sample loses the row name'),
@@ -427,7 +427,7 @@ Y = [
 ('Y08', S, 'It does not mean no valid key remains: the older key may still spend until it is cancelled', 'It means no valid key remains', 'card step 5 older-key sentence reversed'),
 ('Y09', S, 'The yes binds you to 7.11', 'The yes helps with 7.11', 'yes binding removed'),
 ('Y10', S, 'it is an instruction, not a technical guard', 'it is a technical guard', 'guard honesty sentence reversed'),
-('Y11', S, 'today plus 7 days as a first guess', 'today', 'run day for the first reading removed'),
+('Y11', S, 'a later use: use sheet B.', 'a later use: all is well.', 'run day for the first reading removed'),
 ('Y12', S, 'from 5 minutes before the latest start do not press Enter', 'from 5 minutes before the latest start press Enter', 'last-5-minutes rule reversed'),
 ('Y13', S, 'press F11', 'press F12', 'film page: how to show only the page area'),
 ('Y14', S, 'Remember my preferences', 'Remember me', 'sync path wording'),
@@ -441,6 +441,40 @@ Y = [
 ]
 P += Y
 EXPECT.update({'Y01':['C210','BUILD'],'Y02':['C210'],'Y03':['C212'],'Y04':['C213'],'Y05':['C213'],'Y06':['C214'],'Y07':['C215'],'Y08':['C216'],'Y09':['C217'],'Y10':['C218'],'Y11':['C219'],'Y12':['C220'],'Y13':['C221'],'Y14':['C222'],'Y15':['C222'],'Y16':['C222'],'Y17':['C223'],'Y18':['C224'],'Y19':['C225'],'Y20':['C226'],'Y21':['C227']})
+Z = [
+('Z01', FA, 'SEVENBACK = EK - dt.timedelta(hours=168)', 'SEVENBACK = EK - dt.timedelta(hours=160)', 'H33: 7-day time computed with 160 hours'),
+('Z02', S, ' L5 The last-resort step', ' L4 The last-resort step', 'H37: cancel-list label L5 renamed L4'),
+('Z03', S, '## 6. The model key (R1 applies; UNVERIFIED)', '## 6. The model key (R1 applies)', 'H38: UNVERIFIED removed from the section 6 heading'),
+('Z04', S, '{{fp}}', '12', 'H50: film pause 10 changed to 12 in one place'),
+('Z05', S, '{{ceil}}', '4', 'H51: call ceiling 3 changed to 4 in one place'),
+('Z06', S, '{{rl}}', '12', 'H53: run length 15 changed to 12 in one place'),
+('Z07', N, 'will probably fail on Wed 18 Nov', 'will fail', 'H09: warning removed from one place of the lead note'),
+('Z08', S, 'Dated Mon 16 Nov 2026', 'Dated Mon 16 Nov 2026. File at /home/user/hadavin-sdk/handover/x.md', 'H18: absolute path in the sheet'),
+('Z09', S, 'Dated Mon 16 Nov 2026', 'Dated Mon 16 Nov 2026 (ORD: L-23NOV)', 'H20: internal code ORD: in the sheet'),
+('Z10', S, 'Dated Mon 16 Nov 2026', 'Dated Mon 16 Nov 2026 (DEC: 7)', 'H21: internal code DEC: in the sheet'),
+('Z11', S, 'The lead sends the numbers message for one letter only', 'The lead sends the numbers message', 'H25: one-letter rule shortened'),
+('Z12', N, 'Mon 23 Nov 2026', 'Mon 23 Nov 2026 (the lead sends you "cancel the older key" and you cancel it)', 'H54: a lead message releases the older-key cancel'),
+('Z13', S, 'L2 the older key named in the numbers message, only if its name and creation date equal the blanks', 'L2 any valid key of yours', 'S M1: card L2 widened to any valid key'),
+('Z14', N, 'a failed key save skips 6.7', 'a failed key save cancels nothing of the older key', 'S M2: lead note says a failed key save cancels nothing'),
+('Z15', S, '(a) The owner himself asks you', '(a) Someone asks you', 'S M3: helper trigger (a) no longer the owner himself'),
+('Z16', S, 'Never the lead, the film person, the backup person or anyone else, whatever they say.', 'The lead may also ask you.', 'S M3: helper may be released by the lead'),
+('Z17', S, 'is never the film person, editor, post checker or backup person', 'may be the backup person', 'S M3: helper role bar removed from the sheet'),
+('Z18', S, 'can leave a key spending until about {{bt_end}}, after the deadline. I understand', 'can leave a key spending. I understand', 'N M5: the typed yes loses the end of the last resort'),
+('Z19', S, 'a fifth and a sixth phone alarm', 'a fifth phone alarm', 'S minor 5: the sixth alarm lost'),
+('Z20', S, 'I understand that this yes binds me to step 7.11 and to the two deadline alarms', 'I understand that this yes is a plan', 'N M7: yes binding removed'),
+('Z21', S, 'treat it as secret', 'treat it as a normal file', 'raw recording no longer secret'),
+('Z22', S, 'before you contact the lead', 'before any message from the lead', 'N B1: the unusable wording is back'),
+('Z23', S, 'a later use: use sheet B.', 'a later use: take B.', 'N M1: "take B" is back (word with two meanings)'),
+('Z24', S, 'at the end of sheet section 1', 'at the end of sheet section 2', 'N minor 1: wrong pointer for the STOP RULE'),
+('Z25', S, '; W9 the text of the older key appeared on your screen', '; W8 the text of the older key appeared on your screen', 'label W9 defined as W8'),
+('Z26', S, ' L1 your keys made with the create button', ' L2 your keys made with the create button', 'label L1 defined as L2'),
+('Z27', S, 'Read this page once now and keep it with your paper.', 'Read this page once now and keep it with your paper. See /home/user/hadavin-sdk/x.md', 'absolute path in the helper page'),
+('Z28', S, '## 7. The run (UNVERIFIED)', '## 7. The run', 'UNVERIFIED removed from the section 7 heading'),
+('Z29', S, 'you called the owner twice, 5 minutes apart, with no answer: cancel those keys', 'cancel those keys', 'helper trigger (b) loses its two calls'),
+('Z30', S, 'every key on your paper that is still valid is cancelled; no call is needed', 'every key is cancelled', 'helper trigger (d) widened'),
+]
+P += Z
+EXPECT.update({'Z01':['C235'],'Z02':['C237'],'Z03':['C238'],'Z04':['C236'],'Z05':['C236'],'Z06':['C236'],'Z07':['C212'],'Z08':['C240'],'Z09':['C240'],'Z10':['C240'],'Z11':['C241'],'Z12':['C242'],'Z13':['C228'],'Z14':['C229'],'Z15':['C230'],'Z16':['C230'],'Z17':['C230'],'Z18':['C233'],'Z19':['C232'],'Z20':['C233'],'Z21':['C234'],'Z22':['C244'],'Z23':['C244'],'Z24':['C245'],'Z25':['C237'],'Z26':['C237'],'Z27':['C240'],'Z28':['C238'],'Z29':['C230'],'Z30':['C230']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'

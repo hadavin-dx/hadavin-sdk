@@ -523,6 +523,8 @@ for _n, _t in (('A', A), ('B', B)):
     if _FF['bs'] not in _t or _FF['bm'] not in _t: fail('C232', '%s lacks a deadline reminder time' % _n)
 # C233 (N M7; class: one statement with two sources): the yes is typed from one pattern, and it binds the owner
 for _n, _t in (('A', A), ('B', B)):
+    _ym = re.search(r'[Ii]n this pattern: "(Yes, run.*?IST\.)"', _t, re.S)
+    if not _ym or _FF['bt_end'] not in _ym[1]: fail('C233', '%s: the typed yes does not carry the end of the last resort %s (stranger M5)' % (_n, _FF['bt_end']))
     for _s in ('this yes binds me to step 7.11 and to the two deadline alarms', 'cancel helper <name or none>', 'Two sources: the lead\'s sentence and this pattern must b', 'a later yes replaces this one'):
         if _s not in _t: fail('C233', '%s lacks %r' % (_n, _s))
 # C234 (N: raw recording; S: owner-open row): the raw recording is a secret file with an owner for deleting

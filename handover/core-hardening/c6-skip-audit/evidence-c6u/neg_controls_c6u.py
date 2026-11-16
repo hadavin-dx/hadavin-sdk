@@ -71,7 +71,7 @@ for name, text in M.items():
         continue
     p = os.path.join(tempfile.mkdtemp(), "REPORT-copy.md")
     open(p, "w", encoding="utf-8").write(text)
-    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6u.py", p], capture_output=True, text=True, env=(dict(os.environ, C6T_STEPS=envd) if envd else None))
+    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6u.py", p], capture_output=True, text=True, env=(dict(os.environ, C6U_STEPS=envd) if envd else None))
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)
     failed = [l for l in r.stdout.split("\n") if l.startswith("FAIL")]
     want_zero = name.startswith("V0")
