@@ -189,7 +189,7 @@ keep_logs() {
   K=$(mktemp -d) || { echo "STOP: mktemp failed"; return 1; }
   : > "$K/keep.mark" || { echo "STOP: cannot write in $K"; rmdir "$K" 2> /dev/null; unset K; return 1; }   # K is unset again, so the next keep_logs is not refused
   : | scrub   # one call with no input, so the warnings of scrub (a skipped name) are printed once here and not once per file
-  for f in "$W"/setup.log "$W"/git-error.txt "$W"/gate-*.log "$W"/gates.txt "$W"/baseline.log "$W"/baseline.rc "$W"/baseline-failed.txt "$W"/patched.log "$W"/patched.rc "$W"/patched-failed.txt "$W"/verdict-clauses.txt "$W"/verdict.txt "$W"/verdict.stamp "$W"/o-base.txt "$W"/o-pat.txt "$W"/proof.log "$W"/proof.txt "$W"/final.txt; do
+  for f in "$W"/setup.log "$W"/git-error.txt "$W"/gate-*.log "$W"/gates.txt "$W"/baseline.log "$W"/baseline.rc "$W"/baseline-failed.txt "$W"/patched.log "$W"/patched.rc "$W"/patched-failed.txt "$W"/verdict-clauses.txt "$W"/verdict.txt "$W"/verdict.stamp "$W"/o-base.txt "$W"/o-pat.txt "$W"/proof.log "$W"/proof.rc "$W"/proof-failed.txt "$W"/proof.txt "$W"/final.txt; do
     if [ -f "$f" ]; then scrub quiet < "$f" > "$K/${f##*/}" || { echo "WARNING: could not copy $f"; rm -f -- "$K/${f##*/}"; bad=$((bad + 1)); }; fi
   done
   if [ "$bad" -ne 0 ]; then rm -f -- "$K"/*; rmdir "$K" 2> /dev/null; echo "STOP: $bad file(s) could not be copied (is the disk full?); the partial copies were removed and nothing is kept, so cleanup will refuse; fix the cause and run keep_logs again"; unset K; return 1; fi
@@ -250,6 +250,7 @@ setup() {   # every command that can fail has a `|| ... return 1` after it (chec
   [ ! -e "${HOME:-/nonexistent}/.netrc" ] && [ ! -e "${HOME:-/nonexistent}/_netrc" ] || { echo "STOP: your home folder holds a .netrc file (web passwords that git would read over https, and the git wrapper does not stop that): use a throwaway user without it"; return 1; }
   read -r gmaj gmin <<< "$(git --version 2> /dev/null | sed -E 's/^git version ([0-9]+)\.([0-9]+).*/\1 \2/')"
   { [ "${gmaj:-0}" -gt 2 ] 2> /dev/null || { [ "${gmaj:-0}" -eq 2 ] && [ "${gmin:-0}" -ge 32 ]; } 2> /dev/null; } || { echo "STOP: git is missing or older than 2.32 (the wrapper needs GIT_CONFIG_GLOBAL, which older versions ignore); update git"; return 1; }
+  printf '' | git patch-id --verbatim > /dev/null 2>&1 || { echo "STOP: this git has no working 'git patch-id --verbatim' (clause (e) of the verdict needs it; the one version where it was seen to work is 2.43.0); update git before anything is cloned"; return 1; }   # tried now, in seconds, so the run cannot end 15 to 30 minutes later with "(e) FAILED" for a tool reason
   [ -n "$PY" ] || { echo "STOP: PY is empty"; return 1; }
   mkdir -p "$W/home" "$W/tmp" "$W/uv-cache" "$W/uv-python" "$W/patches" || { echo "STOP: cannot make the folders in $W"; return 1; }
   : > "$W/recipe.mark" || { echo "STOP: cannot write in $W"; return 1; }   # the mark that the part `cleanup` looks for before it removes anything
@@ -333,8 +334,15 @@ Then the function `verdict` (same window; it needs `$W`, `$C` and `$SHA` and the
 gd() { git -C "$1" -c diff.noprefix=false -c diff.mnemonicPrefix=false -c diff.srcPrefix=a/ -c diff.dstPrefix=b/ -c diff.renames=false -c diff.context=3 -c diff.algorithm=default diff --no-ext-diff --no-renames HEAD "${@:2}"; }   # git diff against the commit, whatever your own git settings say (no prefixes, renames, external diff program)
 ut() { git -C "$1" status --porcelain --untracked-files=all | grep '^?? ' | grep -v '^?? \.hypothesis/' | sort; }   # the list of UNTRACKED files of a clone (empty is good): files that are ignored by .gitignore (.venv, caches) are not listed, and the folder .hypothesis/ (the example store that the test library hypothesis makes in a test run) is allowed; anything else, for example a stray conftest.py, is listed
 sg() { local f; { gd "$1"; ut "$1"; for f in gates.txt baseline.rc patched.rc baseline.log patched.log baseline-failed.txt patched-failed.txt; do printf '== %s\n' "$f"; cat "$W/$f" 2> /dev/null || echo MISSING; done; } | git hash-object --stdin; }   # the fingerprint of the patched clone AND of the files that the verdict read; verdict.stamp holds it, proof and final compare it again
+hf() { git hash-object --stdin < "$1"; }   # the fingerprint of the content of ONE file (the same hash function as in sg; the file must exist, else nothing is printed and every comparison below fails)
+vs_ok() {   # $1 = the patched clone; returns 0 only when verdict.stamp has exactly two lines, line 1 is the fingerprint of the clone and of the files the verdict read (sg), and line 2 is "verdict.txt <fingerprint>" of the verdict.txt that is on the disk NOW (so a hand edit of verdict.txt, or of any file that sg covers, makes proof and final refuse; it does not stop a person who also recomputes the stamp by hand: there is no secret key, it is a guard against slips and quiet edits, not against a forger)
+  [ -s "$W/verdict.txt" ] && [ -s "$W/verdict.stamp" ] || return 1
+  [ "$(wc -l < "$W/verdict.stamp" | tr -d ' ')" = 2 ] || return 1
+  [ "$(sed -n 1p "$W/verdict.stamp")" = "$(sg "$1")" ] || return 1
+  [ "$(sed -n 2p "$W/verdict.stamp")" = "verdict.txt $(hf "$W/verdict.txt")" ]
+}
 verdict_run() {
-[ -n "${W:-}" ] && [ -d "$W" ] && rm -f "$W/verdict.txt" "$W/verdict.stamp" "$W/proof.txt" "$W/final.txt"   # the first thing the function does (before need_w and every other guard below, but only when W names a folder; an unset W removes nothing): an old verdict and an old proof result must never be paired with this verdict. A `final.txt` counts only if `final` printed it in THIS window just now
+[ -n "${W:-}" ] && [ -d "$W" ] && rm -f "$W/verdict.txt" "$W/verdict.stamp" "$W/proof.txt" "$W/proof.log" "$W/proof.rc" "$W/proof-failed.txt" "$W/final.txt"   # the first thing the function does (before need_w and every other guard below, but only when W names a folder; an unset W removes nothing): an old verdict and an old proof result must never be paired with this verdict. A `final.txt` counts only if `final` printed it in THIS window just now; the same holds for the proof files
 need_w || return 1
 [ -d "$W/patches" ] && [ -n "$SHA" ] || { echo "STOP: the folder $W/patches (made by setup) or SHA is missing; start again from the top of the recipe"; return 1; }
 case "${C:-}" in C-01-price-only.patch|C-01.patch) ;; *) echo "STOP: C must be C-01-price-only.patch or C-01.patch"; return 1 ;; esac
@@ -373,12 +381,13 @@ else
   offenders "$W/baseline.log" > "$W/o-base.txt"; offenders "$W/patched.log" > "$W/o-pat.txt"
   if [ -s "$W/o-base.txt" ] && diff "$W/o-base.txt" "$W/o-pat.txt" > /dev/null; then echo "(d2) ok"; else echo "(d2) FAILED"; ok=0; fi
 fi
-scope="[scope: commit $SHA; $C and A-01.patch applied in a throwaway clone; tests that need a database or the secrets store probably skipped (skip reasons not read); CI and the A-01 database path not run; proof failures compared by count only, not by reason; known missing test: self-hosted model price (section C-01); A-01 stays deferred; NOT a merge clearance]"   # ends every verdict that can be quoted, so final.txt alone says what the result covers
+scope="[scope: commit $SHA; $C and A-01.patch applied in a throwaway clone; tests that need a database or the secrets store probably skipped (skip reasons not read); CI and the A-01 database path not run; proof failures compared by count and by test name, not by reason; known missing test: self-hosted model price (section C-01); A-01 stays deferred; NOT a merge clearance]"   # ends every verdict that can be quoted, so final.txt alone says what the result covers
 {
 if [ "$ok" = 1 ] && [ "$wp" = 0 ]; then echo "VERDICT-PENDING-PROOF: PASSED (non-database verdict: the tests that need a database or the secrets store were probably skipped, reasons not read) $scope"
 elif [ "$ok" = 1 ]; then echo "VERDICT-PENDING-PROOF: ADDS NO NEW FAILURE (the baseline failures still exist; the repository gate is still red) $scope"
 else echo "VERDICT-PENDING-PROOF: NOT PASSED $scope"; fi
 } > "$W/verdict.txt"   # the file holds ONLY the verdict before the proof; the result is written by the function final into final.txt
+echo "verdict.txt $(hf "$W/verdict.txt")" >> "$W/verdict.stamp" || echo "(stamp) FAILED: could not write the fingerprint of verdict.txt into verdict.stamp (proof and final will refuse)"   # line 2 of verdict.stamp: the verdict text itself is now covered, so a hand edit of verdict.txt (for example NOT PASSED changed to ADDS NO NEW FAILURE) is caught
 sed 's/^/PART 1 OF 2 (not the result yet) - /' "$W/verdict.txt"   # the screen shows the line with this prefix; the file keeps the line VERDICT-PENDING-PROOF that the function final reads
 echo "(NOT the result yet, part 1 of 2: the result counts only after the proof section has run and the function final has printed a line that starts FINAL:. Do NOT run verdict again after proof: it would print (e) FAILED and NOT PASSED with nothing wrong, and it deletes the old proof result.)"
 if [ "$ok" = 1 ]; then st=0; else st=1; fi; echo "verdict exit status=$st   (part 1 of 2 only, NOT a result: 0 = no clause failed so far, 1 = a clause failed; the result is the FINAL: line of the proof block)"; return $st
@@ -395,7 +404,7 @@ verdict
 (f) the proof section ran and the function `proof` printed `PROOF OK`, and then the function `final` printed the VERDICT; without `PROOF OK` the result is NOT PASSED, so an `ADDS NO NEW FAILURE` can no longer be printed while the proof was never run or broke. A verdict counts only when `final` has printed it. `proof` and `final` also refuse when the patched clone, or a log, exit-code file or gate line that `verdict` read, has changed since (the fingerprint in `$W/verdict.stamp`) and `proof` refuses when the unpatched clone holds anything but the two new test files. Running `verdict` again deletes the old `proof.txt` and `final.txt`, so a new verdict can never be paired with an old proof. Do NOT run `verdict` after `proof` (the unpatched clone then holds the two new test files and `verdict` prints (e) FAILED); to get a second verdict, keep the logs, clean up and start again from the top with a new folder (see the warning in the proof section).
 The **guard tests** are the 99 tests in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` and `tests/test_lockin_guard.py` (counted in the sixth pass with `pytest --collect-only`: 99 tests collected; `CLAUDE.md` says "the repo guard tests" without a list; this is this folder's definition). Today exactly two of them are red: `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` and `tests/test_repo_rules.py::test_licences_are_proprietary`.
 The three **verdicts** (use exactly these names; the script prints each name, and after PASSED it adds the words "non-database verdict ..."):
-- Every line `FINAL: VERDICT: ...` that `final` prints ends with the scope in brackets (it also says that the failures of the proof are compared by count only): `[scope: commit <the commit>; <the C-01 file> and A-01.patch applied in a throwaway clone; tests that need a database or the secrets store probably skipped (skip reasons not read); CI and the A-01 database path not run; proof failures compared by count only, not by reason; known missing test: self-hosted model price (section C-01); A-01 stays deferred; NOT a merge clearance]`. Quote the whole line from `final.txt`, never the first words alone. The lines `FINAL: NOT PASSED (...)` that `final` prints when the verdict or the proof failed or is missing carry NO scope: they are not a verdict about a patch, they say the recipe did not finish; report them together with the logs.
+- Every line `FINAL: VERDICT: ...` that `final` prints ends with the scope in brackets (it also says that the failures of the proof are compared by count only): `[scope: commit <the commit>; <the C-01 file> and A-01.patch applied in a throwaway clone; tests that need a database or the secrets store probably skipped (skip reasons not read); CI and the A-01 database path not run; proof failures compared by count and by test name, not by reason; known missing test: self-hosted model price (section C-01); A-01 stays deferred; NOT a merge clearance]`. Quote the whole line from `final.txt`, never the first words alone. The lines `FINAL: NOT PASSED (...)` that `final` prints when the verdict or the proof failed or is missing carry NO scope: they are not a verdict about a patch, they say the recipe did not finish; report them together with the logs.
 - **PASSED**: (a), (b), (c), (e) and (f) hold, and the full run of the patched copy has no failed test at all (so the two baseline failures are fixed, decision table row 9, both exit codes are 0, and (d) does not apply).
 - **ADDS NO NEW FAILURE**: (a) to (f) hold ((d) only while a run has a failed test or an error), but the baseline failures still exist, so the repository gate is still red. It means only: no new failure was seen in the local run without the database tests, for the commit and the patch pair named in the scope. It does NOT mean the patch is cleared: `A-01.patch` is deferred (see the first paragraphs), its database path was not run, CI and the review checks were not run, and no pull request with it may be merged until row 9 is done. **This is the verdict EXPECTED today, derived by hand from the numbers of the fifth pass and the round-10 runs: the function `verdict` ran once on the real logs of the round-10 runs (eleventh pass, see above) but never as part of one complete run of the recipe** (its clauses were also tested on made-up logs in the seventh pass).
 - **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test or an error the baseline does not have, a wrong count, a (d) or (e) check that prints FAILED.
@@ -416,12 +425,33 @@ Who must fix both: the lead (change or remove those studio copies, or tell the t
 The block below uses functions defined earlier in the same window: `E`, `need_w` and `setup` (second block), `gd`, `ut` and `sg` (the verdict block, which defines them BEFORE `verdict_run`) and the variables `W`, `C`, `PY`. If you opened a new window since, start again from the top; a missing function prints `command not found` and the proof does not run.
 (What this section shows, by count: 12 of the 30 new tests, 13 of the 32 with `C-01.patch`, fail on the old code; the other 18, or 19, are controls that also pass there. It does not show that the patch is correct.) Run this section only AFTER the baseline run and the verdict script: it adds the two new test files to `$W/unpatched` and stages them, so a baseline run made afterwards in that folder would no longer be a baseline (to repeat the baseline, make a third fresh clone). **The same holds for the verdict:** once `proof` has run, the unpatched clone has changed tracked files, so a second run of `verdict` prints "(e) FAILED" and NOT PASSED although nothing is wrong (it fails safe, but it misleads). Do not run `verdict` again after `proof`; to get a second verdict, run `cleanup` (after keeping the logs) and start again from the top of the recipe. Run on the unpatched copy with only the two new test files copied in (copied from the patched copy; `git add -A` so the repository rule tests see them):
 ```
+pwant() {   # the failures that the two new test files must show on the OLD code, one line "<number> <test file>::<test function>", sorted by name. Derived from the test names in the patch files and from the list "The failures on old code" below; NEVER seen in a real pytest summary (UNVERIFIED). The parameter ids in [...] are cut off, so the six price cases are one name with the number 6
+  { printf '%s\n' \
+      "6 tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model" \
+      "1 tests/test_a01_audit_reconcile.py::test_the_step_is_in_the_tick_list" \
+      "1 tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_count" \
+      "1 tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_fails_the_step_instead_of_recording_a_success" \
+      "1 tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body" \
+      "1 tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged" \
+      "1 tests/test_a01_audit_reconcile.py::test_local_dir_sink_logs_a_warning_and_then_an_error_when_the_outbox_fails_too"
+    if [ "$C" = C-01.patch ]; then echo "1 tests/test_c01_route_limits.py::test_max_tokens_above_the_ceiling_is_refused"; fi
+  } | LC_ALL=C sort -k2
+}
+pnames() {   # the failed tests of $W/proof.log in the same form as pwant: the word FAILED, the reason and the parameter ids cut off, counted per test function, sorted by name
+  grep -E '^FAILED ' "$W/proof.log" 2> /dev/null | sed -E -e 's/^FAILED //' -e 's/ - .*$//' -e 's/\[.*$//' | LC_ALL=C sort | uniq -c | sed -E 's/^ +//' | LC_ALL=C sort -k2
+}
+pcheck() {   # returns 0 only when the exit code stored in proof.rc is 1, the last line of proof.log (without the time and a count of warnings) is exactly the wanted counts, AND the failed test names are exactly the list of pwant. `proof` and `final` both call it, so `final` does not trust the text of proof.txt
+  local rc last want
+  rc=$(cat "$W/proof.rc" 2> /dev/null)
+  last=$(tail -n 1 "$W/proof.log" 2> /dev/null | sed -E -e 's/ in [0-9.]+s.*$//' -e 's/, [0-9]+ warnings?$//')   # a count of warnings that pytest may add (", 3 warnings") is dropped, so it cannot turn a good proof into PROOF FAILED
+  want="12 failed, 18 passed"; [ "$C" = C-01.patch ] && want="13 failed, 19 passed"
+  [ "$rc" = 1 ] && [ "$last" = "$want" ] && [ -n "$(pnames)" ] && [ "$(pnames)" = "$(pwant)" ]
+}
 proof() {   # needs the verdict to have run first (see the text above); prints PROOF OK or PROOF FAILED
-  [ -n "${W:-}" ] && [ -d "$W" ] && rm -f "$W/proof.txt" "$W/proof.log" "$W/final.txt"   # the first thing the function does, before every guard below (only when W names a folder): a refused proof must never leave an old PROOF OK or an old final.txt that `final` could trust
+  [ -n "${W:-}" ] && [ -d "$W" ] && rm -f "$W/proof.txt" "$W/proof.log" "$W/proof.rc" "$W/proof-failed.txt" "$W/final.txt"   # the first thing the function does, before every guard below (only when W names a folder): a refused proof must never leave an old PROOF OK or an old final.txt that `final` could trust
   need_w || return 1
   case "${C:-}" in C-01-price-only.patch|C-01.patch) ;; *) echo "STOP: C must be C-01-price-only.patch or C-01.patch"; return 1 ;; esac
-  [ -s "$W/verdict.txt" ] && [ -s "$W/verdict.stamp" ] || { echo "STOP: run the function verdict first"; return 1; }
-  [ "$(sg "$W/patched")" = "$(cat "$W/verdict.stamp")" ] || { echo "STOP: the patched clone or one of the logs is not what verdict looked at (it changed after verdict); keep the logs, clean up and start again with a new folder"; return 1; }
+  vs_ok "$W/patched" || { echo "STOP: the patched clone, a log, an exit-code file, a gate line or the file verdict.txt is not what verdict looked at (or verdict was not run, or verdict.stamp is incomplete); keep the logs, clean up and start again with a new folder"; return 1; }
   local st want_st rc last want; st=$(git -C "$W/unpatched" status --porcelain --untracked-files=all | sed 's/^...//' | sort); want_st=$(printf '%s\n' tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py)
   { [ -z "$st" ] || [ "$st" = "$want_st" ]; } || { echo "STOP: the unpatched clone holds changes other than the two new test files (a hand edit, or a file that the gate commands left behind that .gitignore does not cover: read the list with git -C \"$W/unpatched\" status); nothing was run"; return 1; }   # empty = first run of proof; the two files = proof ran before
   cp "$W/patched/tests/test_a01_audit_reconcile.py" "$W/patched/tests/test_c01_route_limits.py" "$W/unpatched/tests/" || { echo "STOP: the copy of the two test files failed"; return 1; }
@@ -429,20 +459,28 @@ proof() {   # needs the verdict to have run first (see the text above); prints P
     E uv run --python "$PY" --locked --all-extras --group test pytest -q -p no:cacheprovider \
       tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rfE > "$W/proof.log" 2>&1 )
   rc=$?
-  last=$(tail -n 1 "$W/proof.log" 2>/dev/null | sed -E -e 's/ in [0-9.]+s.*$//' -e 's/, [0-9]+ warnings?$//')   # a count of warnings that pytest may add (", 3 warnings") is dropped, so it cannot turn a good proof into PROOF FAILED
+  echo "$rc" > "$W/proof.rc" || { echo "PROOF FAILED (cannot write proof.rc)"; return 1; }
+  pnames > "$W/proof-failed.txt"   # the failed test names (parameter ids cut off, counted per test function), kept for the report
+  last=$(tail -n 1 "$W/proof.log" 2>/dev/null | sed -E -e 's/ in [0-9.]+s.*$//' -e 's/, [0-9]+ warnings?$//')
   want="12 failed, 18 passed"; [ "$C" = C-01.patch ] && want="13 failed, 19 passed"
   echo "exit=$rc (expected 1)   last line=[$last] (expected [$want])"
-  if [ "$rc" = 1 ] && [ "$last" = "$want" ]; then echo "PROOF OK (counts only; read proof.log against the list of failures)" | tee "$W/proof.txt"; echo "info, not a gate: $(grep -cE '^FAILED .*DID NOT RAISE' "$W/proof.log") summary lines say DID NOT RAISE (expected 6, or 7 with C-01.patch; the exact line form of pytest is UNVERIFIED); compare the other failures with the list The failures on old code"
-  else echo "PROOF FAILED (exit 99 = no folder, 98 = git add failed, anything else with another last line = a broken run, not the proof)" | tee "$W/proof.txt"; return 1; fi
+  if pcheck; then
+    { echo "PROOF OK (the exit code, the counts AND the names of the failed tests match; the REASON of each failure is not compared: read proof.log against the list of failures)"; echo "proof.log $(hf "$W/proof.log") proof.rc $(hf "$W/proof.rc")"; } | tee "$W/proof.txt"   # line 2 is the fingerprint of the two files; `final` checks it again
+    echo "info, not a gate: $(grep -cE '^FAILED .*DID NOT RAISE' "$W/proof.log") summary lines say DID NOT RAISE (expected 6, or 7 with C-01.patch; the exact line form of pytest is UNVERIFIED)"
+  else
+    if [ "$rc" = 1 ] && [ "$last" = "$want" ]; then echo "the counts are right but the failed test names differ from the recorded list (left = recorded, right = seen):"; diff <(pwant) <(pnames) | head -n 20; fi
+    echo "PROOF FAILED (exit 99 = no folder, 98 = git add failed, anything else with another last line = a broken run, not the proof; or the failed test names differ from the recorded list)" | tee "$W/proof.txt"; return 1
+  fi
 }
 final() {   # the verdict counts only when this function prints it; it writes the same line to $W/final.txt, the only file that holds the result
   need_w || return 1
   rm -f "$W/final.txt"
+  case "${C:-}" in C-01-price-only.patch|C-01.patch) ;; *) echo "FINAL: NOT PASSED (C is not one of the two C-01 file names)" | tee "$W/final.txt"; return 1 ;; esac
   if [ ! -s "$W/verdict.txt" ] || [ ! -s "$W/proof.txt" ]; then echo "FINAL: NOT PASSED (run the functions verdict and proof first)" | tee "$W/final.txt"; return 1; fi
-  if [ "$(sg "$W/patched")" != "$(cat "$W/verdict.stamp" 2> /dev/null)" ]; then echo "FINAL: NOT PASSED (the patched clone or a log changed after verdict, or verdict.stamp is missing)" | tee "$W/final.txt"; return 1; fi
-  if grep -q '^PROOF OK' "$W/proof.txt" && grep -q '^VERDICT-PENDING-PROOF: ' "$W/verdict.txt" && ! grep -q 'NOT PASSED' "$W/verdict.txt"
+  if ! vs_ok "$W/patched"; then echo "FINAL: NOT PASSED (the patched clone, a log, verdict.txt or a gate line changed after verdict, or verdict.stamp is missing or incomplete)" | tee "$W/final.txt"; return 1; fi
+  if grep -q '^PROOF OK' "$W/proof.txt" && [ "$(sed -n 2p "$W/proof.txt")" = "proof.log $(hf "$W/proof.log") proof.rc $(hf "$W/proof.rc")" ] && pcheck && grep -q '^VERDICT-PENDING-PROOF: ' "$W/verdict.txt" && ! grep -q 'NOT PASSED' "$W/verdict.txt"   # the proof is checked again from proof.log and proof.rc themselves (pcheck), not from the words in proof.txt
   then echo "FINAL: VERDICT: $(sed -n 's/^VERDICT-PENDING-PROOF: //p' "$W/verdict.txt")" | tee "$W/final.txt"
-  else echo "FINAL: NOT PASSED (the verdict or the proof failed, or one of them is missing)" | tee "$W/final.txt"; return 1; fi
+  else echo "FINAL: NOT PASSED (the verdict or the proof failed, or one of them is missing or was changed)" | tee "$W/final.txt"; return 1; fi
 }
 proof; final      # a semicolon, not &&: when the proof fails, final still runs and writes final.txt ("FINAL: NOT PASSED"), so that file always exists
 ```

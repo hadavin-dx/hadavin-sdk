@@ -1,0 +1,15 @@
+# QUESTIONS.md 420-end round 1 stranger read (agent a107c0f0, egm-comprehension), Blockers/Majors only, non-security
+Saved by flows-audit, condensed. Reviewer words unverified; static. STATUS INCOMPLETE: NOT read 500-579 (items 3 to about 31, front of item 66 index) and 660-739 (items 69-130); four reads failed on token limit. Read 420-499, 580-659, 740-812. Lines 1-419 frozen, not read. 134 numbered items (1-39, 47-141).
+1 Major :422 nothing wakes the lead at a clock time (UNVERIFIED), so answer-by times and "default from that minute" are plans. Fix: state who/what starts the lead at Mon 20:00Z, Tue 14:00Z/15:00Z, Wed 06:00Z or say only the written silence results happen.
+2 Major :422, :601 item 3 default (ceiling 3 sends, plan holds 4) guarantees a SLIP daily, ends NO TAKE Mon 23 Nov; fix needs owner's new yes with numbers; Monday owner asks (:422, :449) list 2, 10(b), 15, 27, 33 with no such ask in lines read. Fix: schedule the ask or state default accepted.
+3 Major :498 vs :604/:743 item 1 judges "no reply" at clean-up message (13:30Z) and post (15:00Z); item 134 sets reply-by Wed 09:00Z (message 1) and 14:30Z (message 2); item 134 answered first (06:55Z), item 1 (due 08:00Z) does not use it. Fix: item 1 (a)/(b) use item 134 times.
+4 Major :761, :741, :608 same export command three due times: item 140 03:30Z, item 132 target 04:54Z [step clock], item 47 06:59Z [step clock]. Fix: say 03:30Z answer answers 47 or why they differ.
+5 Major :580 vs :582-583 items 34/59/38(b): no default so step 1 cannot start, no wait vs step 1 waits like item 59 (24-minute cap) then does not start. Fix: state once for the group.
+6 Major :497 vs :442/:748 "130 numbered items" stale; 134. Fix line 497.
+7 Major :421-427 first screens use L32, GO row N, Block R3, RUNBOOK step 4b, item 51(c), F-0xx, T19-T21, review-tag ids before definition; glossary spread over 7+ paragraphs (:450-467); undefined labels 580-760 (K3/K3B, S9-2, V17/V18, N-5a, A-012, WL-3, P4a). Fix: about 15-label read-me glossary before 421; mark reader/fix tags as provenance.
+8 Major :498, :499, :741, :745, :746, :762, :758 items are not single questions (item 1 about 10 sub-defaults; item 2 parts a-e; item 132 six inputs under one 03:30Z; 136, 137, 141, 15A hold 2+ decisions; 15A written to a "you" who is a program). Fix: split or give each part own owner and `HH:MMZ (HH:MM IST)`.
+9 Major :744 item 135 default says fixes applied and steps run as written until then. Fix: say which first.
+10 Major :449, :493, :586 item 33 (who judges) due 04:00Z; Monday 21:00Z ask and owner 01:00Z reply-by only in :449, not in index row; default NO-GO; item 137 depends on same person. Fix: put in item 33 index line.
+11 Major :449 item 27 answer-by Mon 21:00Z before owner's reply-by Tue 01:00Z. Fix: move after 01:00Z or confirm-only.
+Smaller: table :469-491 bare times without Z; item 45 :756 "08:25 to 08:40Z" no IST; items 18, 21, 26 all 07:00Z but :486 orders 21 then 26 and :642 orders 18 then 26.
+Held: arithmetic (307, 269, 171, 74/85/321 min, 12:00Z/12:07Z/12:14Z), Z-to-IST checked.

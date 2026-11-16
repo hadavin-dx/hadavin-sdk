@@ -158,3 +158,21 @@ row 215 history	; round 33: this row used to say LEAD FILLS for the path, which 
 1x the receipt part was added in round 33 and run once```
 
 Kept on purpose: references to code rounds 23 and 24 (they name code changes, not review rounds). Tags still inside the shared clock block (lines 32-79) were not touched because that block must stay byte-identical with FIX-PLAN.md.
+
+## Stranger-read round 63 (lines 80 to end), fixed 2026-11-16 20:45Z (Tue 02:15 IST)
+Review file: reviews/take-checklist-reader-r63.md (15 Majors). Fix report: reviews/fix-takechecklist63.md. Labels kept here, not in TAKE-CHECKLIST.md.
+1x Major 1: Block R5f and check 6 no longer compare the attempts value on Tuesday (Wednesday only).
+1x Major 2: item 2 now lists NEW, BRANCH, PATCH_BRANCH and SHA_R20 to SHA_R23; the four RUNBOOK shas are MADE BY COMMAND.
+1x Major 3: SHA_R20 to SHA_R23 answer-by moved to 04:00Z (09:30 IST); Block R1 runs after the last merge.
+1x Major 4: item 13 got input, default and times; the Wednesday time was removed.
+1x Major 5: WAIT_S named as a Tuesday and a Wednesday value, each with Q31 item and answer-by before first use.
+1x Major 6: the Tuesday and Wednesday mailbox count commands named separately.
+1x Major 7: Row 4 check (d) is due before rehearsal 2.
+1x Major 8: the mutation command is due Mon 22:00Z (Tue 03:30 IST).
+1x Major 9: rows 2 and 6 got a named-reviewer LEAD DECIDES and an AUDIT PROPOSAL slot in item 21.
+1x Major 10: per-run paths are "typed per call"; the other LEAD FILLS cells got UTC (IST) times.
+1x Major 11: NEW_PIN and EXPORT_PIN times deleted from the Needed-by paragraph.
+1x Major 12: post-twice script time 09:00Z (14:30 IST) in item 7 and in "Still open" 1.
+1x Major 13: item 20 has one default and one LEAD DECIDES; item references written in full.
+1x Major 14: missing IST pairs added outside the frozen block.
+1x Major 15: ACCEPTED count rule written: PASS if 1 or 2.
