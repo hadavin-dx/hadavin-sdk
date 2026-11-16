@@ -1,0 +1,27 @@
+tests/test_k3_leftovers.py:108 in test_k3_failed_approval_send_is_retried_not_terminal | llm=ScriptedLLM(reply(propose)) | -
+tests/test_k3_pilot.py:643 in test_k3_card_too_long_uses_channel_limit | llm=llm | L642 ScriptedLLM(reply(PROPOSE), reply(propose))
+tests/test_k3_pilot.py:655 in test_k3_dev_app_wires_cards_and_keeps_executor | llm=ScriptedLLM(reply(PROPOSE)) | -
+tests/test_k3_pilot_env.py:185 in test_k3_pilot_app_has_no_executor | llm=ScriptedLLM(reply(PROPOSE), reply()) | -
+tests/test_k3_review_fixes.py:51 in test_k3_build_passes_tools_to_hooks | llm=ScriptedLLM(reply(echo), reply()) | -
+tests/test_k5_fixes1.py:80 in test_the_app_factory_always_supplies_the_validator | llm=ScriptLLM([]) | -
+tests/test_k5_review.py:464 in test_review_a_tool_secret_needs_a_scope_inventory_reference | llm=ScriptLLM([]) | -
+tests/test_k5_review.py:472 in test_review_a_tool_secret_needs_a_scope_inventory_reference | llm=ScriptLLM([]) | -
+tests/test_k5_review.py:520 in test_review_purge_evidence_applies_the_ceiling_to_open_runs | llm=ScriptLLM([{'tool': 'app'}] * 6) | -
+tests/test_k5_round10.py:80 in test_a_live_postgres_deployment_without_a_purge_dsn_does_not_start | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:117 in test_m1_a_configured_source_is_probed_by_build | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:135 in test_m1_a_write_capable_service_account_stops_start_up | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:207 in test_m1_a_tool_that_reads_a_cluster_needs_a_probe_or_an_inventory_entry | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:215 in test_m1_a_tool_that_reads_a_cluster_needs_a_probe_or_an_inventory_entry | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:568 in test_r1_hold_run_ids_is_wired_by_build_and_a_raising_hook_halts_purging | llm=ScriptLLM([{'tool': 'app'}, {'noaction': True}] * 3) | -
+tests/test_k5_round5.py:745 in test_the_executor_timeout_comes_from_config | llm=ScriptLLM([]) | -
+tests/test_k5_round5.py:747 in test_the_executor_timeout_comes_from_config | llm=ScriptLLM([]) | -
+tests/test_k5_round8_postgres.py:40 in test_the_app_deletes_evidence_only_through_the_purge_identity | llm=ScriptedLLM() | -
+tests/test_k5_round9b.py:370 in test_a_live_deployment_without_the_key_does_not_start | llm=ScriptLLM([]) | -
+tests/test_k5_tools.py:750 in _purge_app | llm=ScriptLLM([{'tool': 'app'}, {'noaction': True}] * 4) | -
+tests/test_k5_tools.py:848 in test_k5_app_build_wires_the_toolbox_and_the_validator | llm=llm | L847 ScriptLLM([{'tool': 'app'}, {'propose': {'host': '<IPV4_1>', 'revision
+tests/test_k5_tools.py:857 in test_k5_tool_secret_must_not_be_a_backend_or_executor_secret | llm=ScriptLLM([]) | -
+tests/test_k5_tools.py:863 in test_k5_tool_secret_must_resolve_at_startup | llm=ScriptLLM([]) | -
+tests/test_k5_tools.py:888 in test_k5_unresolvable_tool_function_fails_at_build | llm=ScriptLLM([]) | -
+tests/test_k5_tools.py:1031 in test_k5_scope_probe_refuses_write | llm=ScriptLLM([]) | -
+tests/test_k5_tools.py:1033 in test_k5_scope_probe_refuses_write | llm=ScriptLLM([]) | -
+TOTAL calls of build(...) with an llm keyword: 26

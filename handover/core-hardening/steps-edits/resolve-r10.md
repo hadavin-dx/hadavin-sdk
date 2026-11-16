@@ -29,3 +29,22 @@ These findings were not applied in this round (builder ran out of its time box; 
 4. (j) Is the E-56 flag bullet placement acceptable?
 
 sha256 of EDITS.md: see report.
+
+# r10b (second pass of round 10; builder; result NOT reviewed)
+Files: `EDITS.md` (r10b; the first pass is kept as `EDITS.round10a.md`), `build-r10b.py` (anchored patches, each old string asserted), `verify10b.py` (same checks as `verify10.py` plus checks for every r10b change and 24 negative controls), `resolve-r10b-check-output.txt` (raw output: FAILURES 0, rc 0; every negative control printed "caught"). No spend, `inputs/` untouched, banned-list hits 0 of 10 (counts only).
+
+## NOT DONE or only partly done (read first)
+- Negative controls exist for each NEW r10b check (22) and for 2 older checks (row ids, confirmation letters). They do NOT exist for most older checks (old-text-once, overlaps, banned and secret scans, UTC pairing, fence parity, gate consistency, scratch-copy presence, E-09/E-11/E-16/E-48 round-10 row checks). Stated plainly: "a negative control for each check" is met for the r10b checks only.
+- Naive minors "app / window / screen / post / address / round": defined once in E-52 (new bullets) and convention-fixed for the edited texts; old uses inside unedited v3 lines are not touched (NOT DECIDED 13 covers words no row touches).
+- E-14 (who decides the footage) was already stated in round 10 ("You decide what is filmed"); r10b only replaced "post" by "publishes". E-20 has no "saved passwords" in its owner text (the phrase occurs only in the Why of E-03 that explains the change).
+- Design m4 (take still running at 18:19 UTC = 23:49 IST): the assistant now says in writing what happens next (E-12, E-48); the latest start for 23 Nov stays 18:04 UTC = 23:34 IST (builder choice, confirmation h). That a take stops safely when its key is revoked is flagged UNVERIFIED, not proven.
+- Not independently reviewed; no EGM step run by this builder (the studio lead runs egm:* reviewers).
+
+## FIXED in r10b
+E-36 (labels `NEW (exact; TEXT W ...)` and `NEW [HOLD Cb: DO NOT APPLY]`, the E-17 clause quoted, circular sentence removed; line 20 explains `Cb`); E-17 (circular Why replaced; lease sentence NOT added, new NOT DECIDED 14); E-22 (same words "crash check untested" as E-12 and E-17); E-43 (ONE Postgres server kept, two databases, `stage.journal` exception, never "one store"); E-49/E-50/E-53 (`Wed 18 Nov 2026` example, yes only after the assistant's message that states (a) to (d), E-53 says section 4b overrides line 27 only for that case); E-51 ("spending window", only two lines shown, decision's statement not checked in code); E-52 (7 new bullets); E-04 full stop; E-07/E-08 "nobody on this branch has read that evidence"; record format of line 48 equals the ND "Record:" lines (ND8, ND12, R7 aligned); "flow rehearsal" always with its first word (line 3, line 27, E-19 Why, line 863); Q19.5 stated in E-48 ("every key except the one made for this take") and in its Why; E-31 (unproven safety claim removed, search path explained); line 14 (first smoke, stage settings file, search path); ND6 "same spending window".
+
+## needs-lead (exact questions)
+1. ND14: does a lease sentence belong in the public post of E-17? (default: no; Q22(c) is about the v19 hand-off item 8).
+2. E-36 text N label uses `Cb` (confirmation b) instead of a gate letter: acceptable, or define gate G6?
+3. E-52 says app 1 is the read-only app and app 2 "the second app": what is app 2 for? (no input says).
+4. Confirmation h (latest start 18:04 UTC = 23:34 IST on 23 Nov) still the builder's choice.

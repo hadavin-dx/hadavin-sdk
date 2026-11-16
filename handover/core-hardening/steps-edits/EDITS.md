@@ -783,7 +783,7 @@ never under `/mnt/c/...` (that is the Windows disk; the program refuses it).
 - **Saved runs**: the past runs that n8n keeps and lists (n8n itself calls them "executions").
 - **A smoke test**: a short first run of a whole chain, only to see whether it works at all.
 - **The spending window**: the last day and time the model stage may spend money: 2026-11-23 18:29 UTC = 23:59 IST (the older text calls it "the window end"). It has nothing to do with a screen window.
-- **The request for your yes**: the one message the assistant sends you before the take (step 16). **Your reply**: the one line you type back. The older text uses "yes message" for both; the edited texts never do.
+- **The request for your yes**: the one message the assistant sends you before the take (step 16). **Your reply**: the one line you type back. The older text used one name for both; the edited texts never do.
 - **To revoke** a secret key: to delete it at the company that issued it, so that it stops working (the older text may say "cancel"). **The last time to revoke** the secret key for the model: 2026-11-23 18:19 UTC = 23:49 IST, ten minutes before the spending window ends.
 - **WSL**: the Linux part of your laptop. **A WSL terminal**: the program in which you type commands to that Linux part.
 - **A web address**: what you type into a browser, for example `http://localhost:5678`. **A mail address**: what a mailbox has, for example `name@example.com`. The edited texts never say "address" alone.

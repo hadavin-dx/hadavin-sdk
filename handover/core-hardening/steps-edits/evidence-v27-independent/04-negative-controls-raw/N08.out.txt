@@ -1,0 +1,9 @@
+desc: source: minimum think-time slot removed from the numbers-message slots
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7468 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7511 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C129 A lacks 'Minimum think time: 20 seconds'
+FAIL C129 B lacks 'Minimum think time: 20 seconds'

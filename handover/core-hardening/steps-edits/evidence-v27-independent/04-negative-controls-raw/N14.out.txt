@@ -1,0 +1,11 @@
+desc: facts: think 20 -> 10
+file: facts-v27.py occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 4 failure(s)
+FAIL C129 A lacks 'Minimum think time: 20 seconds'
+FAIL C129 B lacks 'Minimum think time: 20 seconds'
+FAIL C140 A lacks 'Wait at least 20 seconds (the minimum think time of the message; the p'
+FAIL C140 B lacks 'Wait at least 20 seconds (the minimum think time of the message; the p'

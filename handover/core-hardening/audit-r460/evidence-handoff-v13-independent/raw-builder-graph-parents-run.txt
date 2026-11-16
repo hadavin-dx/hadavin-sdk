@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v13/import_graph_v13.py", line 34, in <module>
+    table = table_of(args[args.index("--table") + 1])
+                          ~~~~~~~~~~^^^^^^^^^^^
+ValueError: '--table' is not in list

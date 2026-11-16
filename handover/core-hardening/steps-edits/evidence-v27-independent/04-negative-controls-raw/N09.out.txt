@@ -1,0 +1,9 @@
+desc: source: typed-figure line removed
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7464 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7507 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C141 A lacks 'Test program asks you to type a figure: no'
+FAIL C141 B lacks 'Test program asks you to type a figure: no'

@@ -1,0 +1,11 @@
+desc: source: key-shaped string (built from parts) inserted in sheet
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7476 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7519 words (target 6300: NOT met)
+check-v27: 4 failure(s)
+FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+FAIL C55 A holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+FAIL C55 B holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+FAIL C55 B holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})

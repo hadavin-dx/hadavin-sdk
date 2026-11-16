@@ -104,9 +104,9 @@ def apply(statuses, outdir):
         open(os.path.join(outdir, fn), 'w', encoding='utf-8').write(t)
     return n, cp
 sd = '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/'
-n1, cp1 = apply({'Apply now'}, sd + 'scratch-apply10')
+n1, cp1 = apply({'Apply now'}, sd + 'scratch-apply10b')
 print('apply-now rows applied to scratch copies', n1)
-n2, cp2 = apply({'Apply now', 'Hold'}, sd + 'scratch-all10')
+n2, cp2 = apply({'Apply now', 'Hold'}, sd + 'scratch-all10b')
 print('apply-now + hold rows with text applied to scratch copies', n2)
 
 # ---- statuses and counts
@@ -141,7 +141,7 @@ banned = ast.literal_eval('(' + m.group(1) + ')')
 hits = [i for i, b in enumerate(banned) if b in txt]
 print('banned vendor strings found (indexes):', hits, 'of', len(banned))
 if hits: F('banned strings')
-for p in ('resolve-r10.md', 'checkpoint-r10.md', 'resolve-r10-check-output.txt', 'build-r10-rows.py', 'build-r10.py', 'verify10.py'):
+for p in ('resolve-r10.md', 'checkpoint-r10.md', 'checkpoint-r10b.md', 'resolve-r10b-check-output.txt', 'build-r10-rows.py', 'build-r10.py', 'build-r10b.py', 'verify10b.py'):
     pp = D + 'steps-edits/' + p
     if os.path.exists(pp):
         t = open(pp, encoding='utf-8').read()
@@ -209,8 +209,8 @@ for g in sorted(defd):
 ndsec = txt[txt.index('## NOT DECIDED'):txt.index('## FOR THE STUDIO LEAD TO CONFIRM')]
 nums = [int(x) for x in re.findall(r'(?m)^(\d+)\. \*\*', ndsec)]
 print('ND numbers', nums)
-if nums != list(range(1, 14)): F('ND numbers')
-if 'items 1 to 13' not in ndsec: F('ND header count')
+if nums != list(range(1, 15)): F('ND numbers')
+if 'items 1 to 14' not in ndsec: F('ND header count')
 # (5) confirmations a..f without gaps and no g
 csec = txt[txt.index('## FOR THE STUDIO LEAD TO CONFIRM'):txt.index('Removed in round 3')]
 letters = re.findall(r'(?m)^([a-z])\. ', csec)
@@ -227,7 +227,7 @@ if missing: F('named ids missing ' + str(missing))
 # every ND n named in the text is 1..11
 nn = sorted(set(int(x) for x in re.findall(r'(?:NOT DECIDED|\bND) ?(\d+)', txt)))
 print('ND numbers named', nn)
-if any(x < 1 or x > 13 for x in nn): F('ND number out of range')
+if any(x < 1 or x > 14 for x in nn): F('ND number out of range')
 # (8) split of E-11: apply-now scratch must hold the tests paragraph but not the preparation enquiry
 s_ap = cp1['OWNER-STEPS-realrun-v3.md']; s_all = cp2['OWNER-STEPS-realrun-v3.md']
 checks = [('Then comes the preparation', False, True), ('a fifth fact', False, True), ('a paid call can happen', None, None),
@@ -391,4 +391,125 @@ for rid_ in ('E-55', 'E-56'):
     if rid_ not in pairs: F('missing ' + rid_)
 # banned counts only
 print('banned list size', len(banned), 'hits in EDITS.md', len([b for b in banned if b in txt]))
+
+# ================= round 10b additions =================
+def rowtext(rid, which='new'):
+    return '\n'.join(pairs[rid][which])
+def why_of(rid):
+    i = txt.index('### %s:' % rid)
+    j = txt.index('\n### ', i + 5) if '\n### ' in txt[i+5:] else len(txt)
+    k = txt.find('\n## ', i + 5)
+    if k != -1 and k < j: j = k
+    seg = txt[i:j]
+    return '\n'.join(l_ for l_ in seg.split('\n') if l_.startswith('Why:'))
+# c1 E-36 labels
+l36 = pairs['E-36']['newlabels']
+if not (len(l36) == 2 and l36[0].startswith('NEW (exact; TEXT W') and '[HOLD' not in l36[0]): F('E-36 label W')
+if not re.match(r'^NEW \[HOLD \w+: DO NOT APPLY\] \(exact; TEXT N', l36[1]): F('E-36 label N')
+if 'circular' in why_of('E-36') and 'removed' not in why_of('E-36'): F('E-36 why circular')
+if 'are "table of enquiries" (the post itself' in why_of('E-36'): F('E-36 circular sentence still there')
+if 'a crash at exactly the moment between sending the mail and recording in the take\'s database that it was sent may send the mail twice' not in why_of('E-36'): F('E-36 lacks E-17 clause quote')
+# c2 ND14
+if not re.search(r'(?m)^14\. \*\*Does the lease sentence of Q22\(c\)', ndsec): F('ND14 missing')
+if 'lease' in rowtext('E-17'): F('E-17 lease sentence added')
+if 'becomes "recording in the take\'s database that it was sent", in every text' in why_of('E-17'): F('E-17 circular why')
+if 'NOT DECIDED 14' not in why_of('E-17'): F('E-17 why lacks ND14')
+# c3 crash check untested: one phrasing in E-12, E-22, E-17 why
+for rid_, src in (('E-12', rowtext('E-12')), ('E-22', rowtext('E-22')), ('E-17', why_of('E-17'))):
+    if 'crash check untested' not in src: F('crash check untested missing in ' + rid_)
+# c4 E-43
+t43 = rowtext('E-43')
+for need in ('ONE Postgres server for everything we own', 'two databases', 'stage.journal'):
+    if need not in t43: F('E-43 lacks ' + need)
+if re.search(r'(?i)postgres is the one store|one store', t43): F('E-43 says one store')
+# c5 consent
+for rid_ in ('E-49', 'E-50', 'E-53'):
+    if "(a) to (d)" not in rowtext(rid_): F(rid_ + ' consent not tied to message (a) to (d)')
+for rid_ in ('E-49', 'E-53'):
+    if 'Wed 18 Nov 2026' not in rowtext(rid_): F(rid_ + ' lacks day format example')
+if 'overrides line 27' not in rowtext('E-53'): F('E-53 lacks override of line 27')
+# c6 E-51
+t51 = rowtext('E-51')
+if 'window end' in t51 or 'spending window' not in t51 or 'only the two lines' not in t51 or 'states that' not in t51: F('E-51 wording')
+# c7 E-52 bullets once
+for w in ('The request for your yes', 'Your reply', 'To revoke', 'The last time to revoke', 'WSL', 'A WSL terminal', 'A web address', 'A mail address', 'App 1', 'app 2', 'The post', 'A review round', 'A fix round', 'Screen'):
+    if r52.count('**' + w + '**') != 1: F('E-52 new word not once: ' + w)
+if r52.count('**The assistant**') != 1: F('E-52 assistant')
+# c8 E-04, E-07, E-08
+if not rowtext('E-04').rstrip().endswith('.'): F('E-04 no final full stop')
+for rid_ in ('E-07', 'E-08'):
+    if 'nobody on this branch has read that evidence' not in rowtext(rid_): F(rid_ + ' lacks "nobody on this branch"')
+# c9 record format
+if '<answer>, <who>' in txt: F('old record format')
+if 'The line has the form shown after "Record:"' not in txt: F('record format sentence')
+for m_ in re.finditer(r'Record: `(ND\d+[^`]*)`', ndsec):
+    if 'date and time' in m_.group(1): F('ND record carries a date: ' + m_.group(1))
+if '`ND7a-late: <answer>; <who>; <date and time in UTC and IST>`' not in txt: F('R7 record format')
+# c10 "rehearsal" always with its first word
+for m_ in re.finditer(r'(?i)(?<!flow )rehearsal', txt):
+    F('rehearsal alone: ' + txt[max(0, m_.start()-30):m_.end()+10].replace('\n', ' '))
+# c11 Q19.5 and m4
+if 'except the one made for this take' not in rowtext('E-48'): F('E-48 Q19.5 wording')
+for rid_ in ('E-12', 'E-48'):
+    if 'in writing what happens next' not in rowtext(rid_): F(rid_ + ' lacks what happens next')
+# c12 E-31, line 14 terms, E-14, E-22 text
+t31 = rowtext('E-31')
+if re.search(r'(?<!nothing here says that )(it|the take) stops (the take )?safely', t31): F('E-31 unproven claim')
+if 'search path (the list of schemas' not in t31: F('E-31 search path undefined')
+l14 = lines[13]
+for need in ('first smoke =', 'stage settings file =', 'search path ='):
+    if need not in l14: F('line 14 lacks ' + need)
+if 'rule 5: you post' in rowtext('E-14'): F('E-14 post meaning')
+# c13 no "cancel" in owner NEW texts of rows E-48, E-12, E-52 except as quoted older word
+for rid_ in ('E-12', 'E-48'):
+    if re.search(r'(?i)\bcancel', rowtext(rid_)): F(rid_ + ' uses cancel')
+# c14 stale phrases
+for bad in ('yes message',):
+    for rid_, r_ in pairs.items():
+        if bad in rowtext(rid_) and rid_ != 'E-52': F(rid_ + ' uses ' + bad)
+
+# ================= negative controls (each check must fail on a planted defect) =================
+import subprocess
+def neg(name, old, new, expect, count=1):
+    src = open(E, encoding='utf-8').read()
+    if src.count(old) < 1:
+        F('negative control anchor missing: ' + name); return
+    mut = src.replace(old, new, 1) if count == 1 else src.replace(old, new)
+    mp = sd + 'neg-' + name + '.md'
+    open(mp, 'w', encoding='utf-8').write(mut)
+    env = dict(os.environ); env['EDITS_PATH'] = mp; env['NO_NEG'] = '1'
+    out = subprocess.run([sys.executable, '-I', os.path.abspath(__file__)], env=env, capture_output=True, text=True).stdout
+    fails = [l_ for l_ in out.split('\n') if l_.startswith('FAIL')]
+    ok = any(expect in l_ for l_ in fails)
+    print('NEG', name, 'caught' if ok else 'NOT CAUGHT', '|', (fails[0][:90] if fails else 'no FAIL line'))
+    if not ok: F('negative control not caught: ' + name)
+if not os.environ.get('NO_NEG'):
+    print('---- negative controls')
+    neg('e36label', 'NEW [HOLD Cb: DO NOT APPLY] (exact; TEXT N', 'NEW, TEXT N (exact; TEXT N', 'E-36 label N')
+    neg('e36w', 'NEW (exact; TEXT W,', 'NEW [HOLD Cb: DO NOT APPLY] (exact; TEXT W,', 'E-36 label W')
+    neg('nd14', '14. **Does the lease sentence of Q22(c)', '14. **Something else', 'ND14 missing')
+    neg('e17lease', '**a lead sent twice with the same id is processed once; a crash', '**a lead sent twice with the same id (see the lease) is processed once; a crash', 'E-17 lease sentence added')
+    neg('e17why', 'the clause says "the take\'s database" (the database that holds the table of enquiries) in every text of this file', 'becomes "recording in the take\'s database that it was sent", in every text', 'E-17 circular why')
+    neg('e22', 'the case counts as "crash check untested", the same words', 'the case counts as untested, the same words', 'crash check untested missing in E-22')
+    neg('e43', "except the model stage's journal file `stage.journal`", 'and nothing else', 'E-43 lacks stage.journal', 2)
+    neg('e49', "AFTER the assistant's message that states (a) to (d)", 'after something', 'E-49 consent not tied')
+    neg('e49day', 'written like this: `Wed 18 Nov 2026`', 'written as a day', 'E-49 lacks day format example')
+    neg('e53', 'Section 4b overrides line 27', 'Section 4b follows line 27', 'E-53 lacks override')
+    neg('e51', 'the end of the spending window), and that statement', 'the window end), and that statement', 'E-51 wording')
+    neg('e52', '**A mail address**', '**A postal address**', 'E-52 new word not once: A mail address')
+    neg('e04', 'otherwise the made-up names to look for.\n~~~~', 'otherwise the made-up names to look for\n~~~~', 'E-04 no final full stop')
+    neg('e07', 'nobody on this branch has read that evidence. The assistant checks', 'nobody has read that evidence. The assistant checks', 'E-07 lacks')
+    neg('e08', 'nobody on this branch has read that evidence yet.\n~~~~', 'nobody has read that evidence yet.\n~~~~', 'E-08 lacks')
+    neg('record', 'The line has the form shown after "Record:"', 'The line is `ND<number>: <answer>, <who>`; it has the form shown after Record', 'old record format')
+    neg('nd8date', 'Record: `ND8: A|B`.', 'Record: `ND8: A|B <date and time in UTC and IST>`.', 'ND record carries a date')
+    neg('rehearsal', 'The flow rehearsal comes after', 'The rehearsal comes after', 'rehearsal alone')
+    neg('q195', 'every key except the one made for this take (the key the take runs on)', 'every key', 'E-48 Q19.5 wording')
+    neg('m4', 'the assistant tells you in writing what happens next (step 22', 'the assistant tells you (step 22', 'E-12 lacks what happens next')
+    neg('e31', 'nothing here says that it stops safely (UNVERIFIED)', 'it stops safely (UNVERIFIED)', 'E-31 unproven claim')
+    neg('line14', 'search path = the list of schemas', 'search path is a list of schemas', 'line 14 lacks')
+    neg('e14', '(rule 5 of this sheet: you are the one who publishes)', '(rule 5: you post)', 'E-14 post meaning')
+    # negative controls for older checks (selected: row count, old text, ND range, confirmation letters, UTC pairing, banned scan not tested)
+    neg('rowcount', '### E-56: AGENT-SCOPE', '### E-57: AGENT-SCOPE', 'ids differ')
+    neg('conf', '\nj. E-56 puts', '\nk. E-56 puts', 'confirmation letters')
 print('FAILURES', fail)
+sys.exit(1 if fail else 0)

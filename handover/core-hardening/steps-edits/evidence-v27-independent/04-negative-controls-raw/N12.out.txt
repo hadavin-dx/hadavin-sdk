@@ -1,0 +1,8 @@
+desc: lead note source: "never deletes" replaced by a delete instruction
+file: LEAD-RELEASE-NOTE-v11-SOURCE.md occurrences replaced: 2
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 1 failure(s)
+FAIL C19 pointer not in the verified list: note|he account now (lead answer |Q23
