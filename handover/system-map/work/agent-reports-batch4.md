@@ -1063,3 +1063,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 771 (premortem and L3c duplicates counted above; no 771 content)
 
 - 771 L1c r12: job-keys circular cite, reaper/desk, history marker, row warnings. FIXED by CURRENT r12; cells TO DO.
+
+- 772 ARCHIVE-CUT-LIST r11: silent on rows D-M, row A/B/H, laptop lead. FIXED by VERDICT r12.
+- 773 M17 r9: replacement text, supersession range, terms. FIXED by HOLD r9; page edits TO DO.
