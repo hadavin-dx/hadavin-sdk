@@ -1189,3 +1189,4 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 882 open-items r21 (after fold): live range contradicts (lines 1-40 vs three labelled notes at bottom); bare "row N" still two meanings; column 6 cells not yes/no/unknown. TO DO.
 - 883 L5ac r14: eight stacked glossary paragraphs at lines 111-125. FOLDED for real (history in work/L5ac-history.md); undefined terms listed in the top block; FD-001 table still not built.
 - 884 decision-list r18 (after fold): D-04, D-05, LP-n, F-008 meanings not recorded so B1, B2, A12, F3, F6 unanswerable; r13/r14 override table rows A2, A3, A9, E9, A13 but are not applied; A3, A9, E9 hold several questions; F rows are instructions; "Route config" unexplained. TO DO, needs the lead.
+- 885 critical-path read: NOT A REVIEW. I gave the agent a wrong path (work/critical-path.md does not exist). Live page is work/critical-path-r1.md; re-read launched.
