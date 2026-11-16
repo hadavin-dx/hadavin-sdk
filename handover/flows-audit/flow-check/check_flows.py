@@ -29,10 +29,10 @@ ending in 'Trigger'. respondToWebhook is NOT a trigger.
 F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
 Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error."""
 import json, os, re, sys, collections
-OPTS = {"webhook_auth": False, "table": False, "block_env": False}
+OPTS = {"webhook_auth": False, "table": False, "block_env": False, "cred_names": {}}
 
 FILES_DEFAULT = ["mf-form.json", "mf-hook.json", "mf-recovery.json", "mf-sub-crm-mail.json"]
-TRIGGER_EXACT = {"n8n-nodes-base.webhook", "n8n-nodes-base.executeWorkflowTrigger", "n8n-nodes-base.formTrigger"}
+TRIGGER_EXACT = {"n8n-nodes-base.webhook", "n8n-nodes-base.executeWorkflowTrigger", "n8n-nodes-base.formTrigger", "n8n-nodes-base.cron"}
 PLACEHOLDERS = ["PLACEHOLDER", "PG_CREDENTIAL_ID", "SMTP_CREDENTIAL_ID", "SUB_WORKFLOW_ID", "HS_CRED", "HUBSPOT_CREDENTIAL_ID"]
 REF = re.compile(r"""\$\(\s*['"]([^'"]+)['"]\s*\)|\$node\[\s*['"]([^'"]+)['"]\s*\]|\$items\(\s*['"]([^'"]+)['"]|\$node\.([A-Za-z_][A-Za-z0-9_]*)""")
 PREV = re.compile(r"\$prevNode\b")
@@ -44,7 +44,7 @@ WANT_CONN = {
     "Claim": {"main": [[{"node": "Claimed", "type": "main", "index": 0}], [{"node": "ReplyStoreFail", "type": "main", "index": 0}]]},
 }
 F002_UNPROVEN = "F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)"
-ENVTOK = re.compile(r"\$env\.[A-Za-z0-9_]+")
+ENVTOK = re.compile(r"\$env\.[A-Za-z0-9_]+|\$env\s*\[[^\]]*\]|\bprocess\.env\b(?:\.[A-Za-z0-9_]+|\s*\[[^\]]*\])?")  # $env.X, $env["X"], process.env.X, process.env["X"]
 FAILS, WARNS, KNOWN = [], [], []
 UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs; they never FAIL a file, they only WARN
 
@@ -86,9 +86,17 @@ def strings(o):
     elif isinstance(o, list):
         for v in o: yield from strings(v)
 
+class DupKey(Exception): pass
+def _no_dups(pairs):
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)): raise DupKey(sorted({k for k in keys if keys.count(k) > 1})[0])
+    return dict(pairs)
+
 def load(path, tag):
     try:
-        with open(path, encoding="utf-8") as f: return json.load(f)
+        with open(path, encoding="utf-8") as f: return json.load(f, object_pairs_hook=_no_dups)
+    except DupKey as e:
+        fail(tag, "parse failure: duplicate JSON key %r (n8n keeps only the last one, so the file says two different things)" % str(e)); return None
     except Exception as e:
         fail(tag, "parse failure %s" % type(e).__name__); return None
 
@@ -106,6 +114,9 @@ def shape_ok(d, tag):
         if not isinstance(n, dict): fail(tag, "node at index %d is not an object" % i); ok = False
         elif not isinstance(n.get("name"), str) or not n.get("name") or not isinstance(n.get("type"), str) or not n.get("type"): fail(tag, "node at index %d lacks a text name or type" % i); ok = False
         elif "parameters" in n and not isinstance(n["parameters"], dict): fail(tag, "node %s: parameters is not an object" % n["name"]); ok = False
+    if "settings" in d and not isinstance(d["settings"], dict): fail(tag, "settings is not an object"); ok = False
+    for i, n in enumerate(nodes):
+        if isinstance(n, dict) and n.get("type") == "n8n-nodes-base.webhook" and "webhookId" in n and not isinstance(n["webhookId"], str): fail(tag, "node %s: webhookId is not text" % n.get("name")); ok = False
     if not isinstance(conns, dict): fail(tag, "connections is not an object"); return False
     for src, outs in conns.items():
         if not isinstance(outs, dict): fail(tag, "connections of %r are not an object" % src); ok = False; continue
@@ -141,6 +152,9 @@ def value_is_safe(v):
     body = v[1:] if v.startswith("=") else v
     blocks = EXPR_BLOCK.findall(body)
     if not blocks or not all(re.match(r"\s*\$(env|credentials|secrets|vars|json|node|\(|items)", b) for b in blocks): return False
+    for b in blocks:   # a quoted text of 6+ characters inside the expression (other than a node or variable name in $('..') or [".."]) is a literal value
+        b2 = re.sub(r"""\$\(\s*['"][^'"]*['"]\s*\)|\[\s*['"][^'"]*['"]\s*\]|\$items\(\s*['"][^'"]*['"]""", " ", b)
+        if re.search(r"""['"`][^'"`]{6,}['"`]""", b2): return False
     rest = EXPR_BLOCK.sub(" ", body)
     return all(w.lower() in OK_WORDS for w in re.findall(r"[A-Za-z0-9+/_-]{6,}", rest))
 

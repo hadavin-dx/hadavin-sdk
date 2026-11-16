@@ -1167,7 +1167,7 @@ class Hardening(Base):
         self.assertIn("\\x1b[31mred.json", so)
 
     def test_two_keys_that_become_one_are_refused(self):
-        self.refuse({"MF_STAGE_URL": 1, "$env.MF_STAGE_URL": 2}, "same key")
+        self.refuse({VALS["MF_STAGE_URL"]: 1, "$env.MF_STAGE_URL": 2}, "same key")
 
     def test_placeholder_name_inside_a_code_field_is_refused(self):
         write_values(self.vf, {**VALS, "SMTP_CREDENTIAL_ID": "phv-smtp-2"})
