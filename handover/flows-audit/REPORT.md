@@ -1,14 +1,17 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
-## STATUS 06:50 UTC / 12:20 IST: ORDER 002, plan round 2 under review
-Done: plan round 1 reviewed (design 4B/7M/5N, readiness 7B/7M/4N), resolved (reviews/plan-r1-resolve.md), PLAN-002.md rewritten as round 2 (54 flow files, 655 nodes; Tier A 130 nodes full tables, Tier B 525 nodes one row each).
-Agents running: 2 language-model agents (plan round 2 reviewers, sonnet), 0 script lanes. Next: resolve round 2, then L0 script, then builders L1/L2/L3.
-Uncertain / not checked: node counts come from a json.load run by me, raw output not yet in evidence-1.md; DECISION-one-store.md absent (searched handover/).
+## STATUS 06:59 UTC / 12:29 IST: ORDER 002 build phase starting. START SHA 3bf5ae299cebac78963780895af5c585cab8473c
+Done: plan v3.1 final (3 EGM rounds, round 3 = 0 Blockers). L0 done: tools + 52 machine tables + 44 diffs; tools/test_dump_nodes.py PASS 8/8; check_counts/check_secrets pass on the tree (check_counts correctly FAILs for missing lanes). Extra tool added after plan freeze: tools/assemble_lane.py (builders write judgement cells to lanes/<lane>.judge.jsonl, the script builds the lane table, so machine columns are never retyped). Allowlist additions: tools/assemble_lane.py, lanes/<lane>.judge.jsonl, lanes/<lane>.header.md, lanes/<lane>.findings.md.
+Admitted slips so far: plan said 54 flow files (truth 52); my first fixture test passed a mutant (equal fixtures) and check_secrets skipped a file with a name prefix: both found and fixed with evidence.
+Agents running: 6 language-model agents (sonnet builders, see register), 0 script lanes. Open: QUESTIONS.md Q1 (Tier B scope), no answer yet; proceeding as written.
 ## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
-| P1d | plan r1 design reviewer | 06:48/12:18 | 06:51 | done | closed | resolved |
-| P1r | plan r1 readiness reviewer | 06:48/12:18 | 06:51 | done | closed | resolved |
-| P2d | plan r2 design reviewer (a3fe7bb86981f0ae3) | 06:50/12:20 | +5 min | 06:50 | running | read report, resolve |
-| P2r | plan r2 readiness reviewer (a95baa9ffe5703636) | 06:50/12:20 | +5 min | 06:50 | running | read report, resolve |
+| L1 | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint 30 min |
+| L2a | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+| L2b-1 | real family Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+| L2b-2 | film family Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+| L2b-3 | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+| L3 | claims + store table | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+(plan reviewers P1d P1r P2d P2r P3d P3r: all closed)
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
 Agents running: 0 language-model agents, 0 script lanes. Next: egm:egm-review-loop on PLAN-002.md.
