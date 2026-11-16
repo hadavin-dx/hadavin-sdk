@@ -14,3 +14,5 @@ F3 [RUNNING: built 09:04Z, evidence and 2 reviewers running] TAKE-PREP LITERAL S
 F4 [RUNNING: 2 reviews found Majors, fixer running 09:03Z] PATCH APPLY CHECK: apply your own patches/ to a scratch copy of the flows and verify the patched JSON parses, every connection names an existing node, no orphan node; report in handover/flows-audit/patch-apply/REPORT.md.
 F5 RUN-SHEET WORDING: paste-ready safe sentences for every claim the CLAIMS TABLE marks UNSUPPORTED or OVERSTATED, plus the on-screen 'stand-in CRM' label text; short, plain words.
 F6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
+
+F7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: never write an owner step for anything listed there; the claims table and run sheet must not ask the owner for accounts or keys.
