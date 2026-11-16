@@ -122,7 +122,7 @@ M6 and M7 are not hard mismatches; counted in the MATCH column below as noted. H
 
 ## Counts
 
-Rows in the three tables above (grouped by cite): MATCH 87 rows (including 3 with a note), MISMATCH 5 (M1 to M5), MATCH-WEAK 1 (M7), CANNOT-CHECK 12 (list below).
+Counted with grep on this file (rows whose verdict cell starts with the word; approximate because a few rows group several cites): MATCH 87 rows (some "MATCH with note"), MISMATCH 6 rows = 5 distinct findings M1 to M5 (M1 appears twice), MATCH-WEAK 1 (M7; M6 is a MATCH with a note), CANNOT-CHECK 12 groups (list below).
 
 | CANNOT-CHECK | reason |
 |---|---|
