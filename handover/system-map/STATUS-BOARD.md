@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:29:00Z (14:59 IST)
+UPDATED_UTC: 2026-11-16T09:32:00Z (15:02 IST)
 SESSION: system-map
 ORDER: 017 and 018 (fails and guidance; second reviewer lane per deliverable) on top of 016
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 9
 ITEMS_OPEN: 5
 PERCENT: 85
-AGENTS_RUNNING: 2
+AGENTS_RUNNING: 1
 INTERRUPTED: none
-NEXT: OS v5 drift result into drift/REPORT.md (date places, n8n storage, Docker, HubSpot probe); OWNER-VIEW to owner-only items; heavy C-01, D2-01, D2-11-12 evidence; refill lanes
-CAPACITY: cores about 3.1 of 4 busy (load 3.09; 77 percent), memory 1 of 15 GB, disk free 26 GB, 2 light + 3 heavy agents (09:29 UTC / 14:59 IST)
+NEXT: fact check of the new owner view vs v5 (adcc09ac); D2-11-12 result; apply owner-view and drift section 8 follow-ups; refill lanes (second reviewer per deliverable)
+CAPACITY: cores about 1.5 of 4 busy (below the 70 percent target: refilling now), memory 1 of 15 GB, disk free 26 GB, 1 light + 1 heavy agents (09:32 UTC / 15:02 IST)
 FAILED: (1) write_outputs.py overwrote hand-edited SWEEP.md and ONE-PLACE-TABLE.md twice (flag name clash); fixed, tests added, restored from git. (2) heavy baseline run 1 stopped at first failure (-x); re-ran without -x. (3) baseline and patch runs fail the same 2 tests in the scratch copy (vendor-word test, licence test): not confirmed in a real clone. (4) my drift check ran on OS v3 while core-hardening already has OS v5: re-checking now. (5) round 1 reviews found R460 defects in my own tools: fixed, round 2 Majors fixed
-PUSHED_UTC: 2026-11-16T09:29:00Z
+PUSHED_UTC: 2026-11-16T09:32:00Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
