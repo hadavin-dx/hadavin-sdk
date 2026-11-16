@@ -96,13 +96,13 @@ PASS H1 the runtime role cannot delete log rows (42501)  [InsufficientPrivilege/
 PASS H2 the OWNER (migration role) is also refused by the append-only trigger: DELETE FROM spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
 PASS H2 the OWNER (migration role) is also refused by the append-only trigger: UPDATE spend_decrease_log SET new_usd =  -> 42501  [InsufficientPrivilege/42501]
 PASS H2 the OWNER (migration role) is also refused by the append-only trigger: TRUNCATE spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
-FAIL H2 the OWNER (migration role) is also refused by the append-only trigger: DELETE FROM kill_switch_log -> 42501  [None]
-FAIL H2 the OWNER (migration role) is also refused by the append-only trigger: UPDATE kill_switch_log SET new_on = fals -> 42501  [None]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: DELETE FROM kill_switch_log -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: UPDATE kill_switch_log SET new_on = fals -> 42501  [InsufficientPrivilege/42501]
 PASS H2 the OWNER (migration role) is also refused by the append-only trigger: TRUNCATE kill_switch_log -> 42501  [InsufficientPrivilege/42501]
 PASS H3 the refused statements changed nothing
 PASS H4 LIMIT STATED, not hidden: the database owner can DISABLE the trigger (tgenabled = D while off) and delete; an append-only trigger shows edits, it does not stop the owner
 PASS H5 the trigger is back on afterwards
-INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1200 ms, with trigger 2483 ms, +0.064 ms per lowering
+INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1635 ms, with trigger 3011 ms, +0.069 ms per lowering
 INFO I size: log 2211840 bytes, 20000 rows, 110.6 bytes per row, who = rtr_v16/rtr_v16
 PASS I1 the timing run's log rows record the RUNTIME login role, not postgres  [rtr_v16,rtr_v16]
 PASS I2 the log has one row per lowering (20000 rows)  [20000]
@@ -111,8 +111,8 @@ PASS J2 S-2b detection: where DB-2 is applied (database exp_a) the audit reader 
 PASS Q1 every pg_hba rule of the throwaway cluster uses scram-sha-256 (no trust)  [[('scram-sha-256', 6)]]
 PASS Q2 password_encryption is scram-sha-256 and the stored role passwords are SCRAM verifiers
 PASS Q3 a right password logs in
-FAIL Q4 a wrong password is refused (28P01)  [none/no-password-message]
-PASS Q5 no password is refused (the server asks for one; libpq reports it)  [none/no-password-message]
+PASS Q4 a wrong password is refused (server says password authentication failed)  [none/password-auth-failed]
+PASS Q5 no password is refused (libpq reports that a password was requested)  [none/no-password-supplied]
 PASS Q6 the earlier v15 runs used trust (security review m3): this run proves the migration, store and grants code works with password logins
 PASS K0 database with ONLY the real 0001-0005 (no held file, no CHECK on the spend tables)  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']]
 PASS K0b no constraint spend_usd_ok exists here
@@ -149,19 +149,30 @@ PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: TRUNCATE -> 42
 INFO M4 INFO runtime role DELETE FROM kill_switch -> InsufficientPrivilege/42501 (if allowed, a delete-and-reinsert is a state change the update trigger does not see)
 PASS M5 (TEMP still granted in this database) runtime role created a temporary table named like the log  [None]
 PASS M6 temporary-table attack on the kill-switch log: the REAL log gets the 3rd row, the temporary table none  [real=3 temp=0]
+PASS M7 NEGATIVE CONTROL: with the unsafe function shape (public in the path, bare table name) the same attack DIVERTS the row to the temporary table (real log stays 3, temporary table 1)
+PASS M8 the safe function restored: the REAL log gets the 4th row
+PASS M9 audit reader can read the kill-switch log and effective_problems is empty  [[]]
+PASS N1 the upgrade over a stored NaN row fails (23514) and rolls back: the old rule stays  [CheckViolation/23514]
+PASS N2 after the repair, real migrate() applies the upgrade file as 0007  [['0007_spend_nonneg_upgrade']]
+PASS N3 both constraints now carry the Infinity clause, same names, no second constraint  [["CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))", "CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))"]]
+PASS N4 the runtime role is now refused NaN (23514)
+PASS O1 the guard finds no problem in the 5 real migrations and the 4 held files
+FAIL O2 mutant 'pg_temp not last' differs from the file and the guard reports it
+FAIL O2 mutant 'public in path' differs from the file and the guard reports it
+FAIL O2 mutant 'no pg_temp' differs from the file and the guard reports it
+FAIL O2 mutant 'no SET search_path' differs from the file and the guard reports it
+PASS O2 mutant 'bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change changes a table without a %I schema]
+PASS O2 mutant 'no REVOKE' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'undeclared SECURITY DEFINER' differs from the file and the guard reports it  [mutant.sql: SECURITY DEFINER function sneaky is not on the declared list]
+PASS O3 the held-file head spend_log_decrease search_path text is what the guard read (sanity)
 Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/pg_v16.py", line 493, in <module>
-    sm2.set_kill_switch(KillSwitch(on=False, by="op:t5"))
-    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/src/hadavin_sdk/store/postgres.py", line 464, in set_kill_switch
-    self._exec(query, list(row.values()))
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/src/hadavin_sdk/store/postgres.py", line 202, in _exec
-    return self._db.cursor(row_factory=dict_row).execute(query, params)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/.venv/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
-    raise ex.with_traceback(None)
-psycopg.errors.InsufficientPrivilege: permission denied for table kill_switch_log
-CONTEXT:  SQL statement "INSERT INTO kill_switch_log (old_on, new_on, old_by, new_by) VALUES ( OLD."on", NEW."on", OLD."by", NEW."by")"
-PL/pgSQL function kill_switch_log_change() line 3 at SQL statement
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/pg_v16.py", line 557, in <module>
+    pr = reader_problems(mp, "reader_v16")
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/pg_v16.py", line 553, in reader_problems
+    f = db.execute("SELECT rolsuper OR rolcreaterole OR rolcreatedb OR rolbypassrls OR rolreplication, rolvaliduntil FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
+  File "/home/user/hadavin-sdk/.venv/lib/python3.13/site-packages/psycopg/cursor.py", line 250, in fetchone
+    record = self._tx.load_row(self._pos, self._make_row)
+  File "psycopg_binary/_psycopg/transform.pyx", line 515, in psycopg_binary._psycopg.Transformer.load_row
+  File "psycopg_binary/types/datetime.pyx", line 796, in psycopg_binary._psycopg.TimestamptzLoader.cload
+psycopg.DataError: timestamp too large (after year 10K): 'infinity'
 rc=1

@@ -294,6 +294,7 @@ check("G8 negative: a would-be audit reader that is also a member of the runtime
 
 # ---------------------------------------------------------------- H. append-only logs (security minor 4); replaces v15's retention delete
 mig.execute("INSERT INTO spend_decrease_log (agent_id, period, scope, old_usd, new_usd, at) VALUES ('old', %s, 'spend', 2, 1, now() - interval '500 days')", (DAY,))
+mig.execute("INSERT INTO kill_switch_log (old_on, new_on, old_by, new_by) VALUES (false, true, NULL, 'h')")  # a row, so row-level triggers have something to refuse
 n_before = mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
 for who_, c_ in (("audit reader", ar), ("runtime role", connect(dsn("rtr_v16", "exp_a")))):
     st = sqlstate(lambda: c_.execute("DELETE FROM spend_decrease_log WHERE at < now() - interval '400 days'"))
@@ -301,7 +302,7 @@ for who_, c_ in (("audit reader", ar), ("runtime role", connect(dsn("rtr_v16", "
 for stmt in ("DELETE FROM spend_decrease_log", "UPDATE spend_decrease_log SET new_usd = 9", "TRUNCATE spend_decrease_log", "DELETE FROM kill_switch_log", "UPDATE kill_switch_log SET new_on = false", "TRUNCATE kill_switch_log"):
     st = sqlstate(lambda: mig.execute(stmt))
     check(f"H2 the OWNER (migration role) is also refused by the append-only trigger: {stmt[:40]} -> 42501", st == "InsufficientPrivilege/42501", str(st))
-check("H3 the refused statements changed nothing", mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0] == n_before)
+check("H3 the refused statements changed nothing", mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0] == n_before and mig.execute("SELECT count(*) FROM kill_switch_log").fetchone()[0] == 1)
 # honest limit: the owner can still switch the trigger off (visible in the catalogue) and a superuser bypasses triggers
 with mig.transaction():
     mig.execute("ALTER TABLE spend_decrease_log DISABLE TRIGGER spend_decrease_log_append_only")
@@ -374,12 +375,13 @@ def login_state(user, pw):
     try:
         c = psycopg.connect(f"host={sock} dbname=exp_a user={user}" + (f" password={pw}" if pw is not None else "")); c.close(); return "OK"
     except psycopg.Error as e:
-        return (e.sqlstate or "none") + "/" + ("no-password-message" if "no password" in str(e).lower() or "password" in str(e).lower() else "other")
+        msg = str(e).lower()
+        return (e.sqlstate or "none") + "/" + ("password-auth-failed" if "password authentication failed" in msg else "no-password-supplied" if "no password" in msg else "other:" + msg[:60].replace(chr(10), " "))
 check("Q3 a right password logs in", login_state("rtr_v16", PW["rtr_v16"]) == "OK")
 st = login_state("rtr_v16", "wrong" + secrets.token_hex(4))
-check("Q4 a wrong password is refused (28P01)", st.startswith("28P01"), st)
+check("Q4 a wrong password is refused (server says password authentication failed)", st.endswith("password-auth-failed"), st)
 st = login_state("rtr_v16", None)
-check("Q5 no password is refused (the server asks for one; libpq reports it)", st != "OK", st)
+check("Q5 no password is refused (libpq reports that a password was requested)", st.endswith("no-password-supplied"), st)
 check("Q6 the earlier v15 runs used trust (security review m3): this run proves the migration, store and grants code works with password logins", True)
 
 # ---------------------------------------------------------------- K. security majors 1 and 2: NO held file applied at all
@@ -482,6 +484,7 @@ st = sqlstate(lambda: rm_.execute("DELETE FROM kill_switch"))
 info(f"M4 INFO runtime role DELETE FROM kill_switch -> {st} (if allowed, a delete-and-reinsert is a state change the update trigger does not see)")
 rtm = connect(dsn("rtr_v16", "exp_m"))
 temp_ok = sqlstate(lambda: rtm.execute("CREATE TEMP TABLE kill_switch_log (old_on boolean, new_on boolean, old_by text, new_by text, at timestamptz, who text)"))
+rtm.execute("GRANT ALL ON pg_temp.kill_switch_log TO PUBLIC")
 check("M5 (TEMP still granted in this database) runtime role created a temporary table named like the log", temp_ok is None, str(temp_ok))
 sm2 = PostgresStore(rtm)
 sm2.set_kill_switch(KillSwitch(on=True, by="op:t4"))
@@ -520,15 +523,21 @@ real_sql = sorted(m.MIGRATIONS.glob("*.sql")); held_sql = sorted(HELD.glob("*.sq
 probs = [p for f in real_sql + held_sql for p in sg.check_sql_text(f.name, f.read_text(), ALLOWED)]
 check(f"O1 the guard finds no problem in the {len(real_sql)} real migrations and the {len(held_sql)} held files", probs == [], "; ".join(probs)[:200])
 base = (HELD / "spend_decrease_log.sql").read_text()
-mutants = {
-    "pg_temp not last": base.replace("SET search_path = pg_catalog, pg_temp AS $f$\nBEGIN\n  IF", "SET search_path = pg_temp, pg_catalog AS $f$\nBEGIN\n  IF", 1),
-    "public in path": base.replace("SET search_path = pg_catalog, pg_temp AS $f$\nBEGIN\n  IF", "SET search_path = pg_catalog, public, pg_temp AS $f$\nBEGIN\n  IF", 1),
-    "no pg_temp": base.replace("SET search_path = pg_catalog, pg_temp AS $f$\nBEGIN\n  IF", "SET search_path = pg_catalog AS $f$\nBEGIN\n  IF", 1),
-    "no SET search_path": base.replace("SET search_path = pg_catalog, pg_temp AS $f$\nBEGIN\n  IF", "AS $f$\nBEGIN\n  IF", 1),
-    "bare table (no %I)": base.replace("%I.kill_switch_log", "kill_switch_log"),
-    "no REVOKE": base.replace("REVOKE ALL ON FUNCTION kill_switch_log_change() FROM PUBLIC;", ""),
-    "undeclared SECURITY DEFINER": base + "\nCREATE OR REPLACE FUNCTION sneaky() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$;\nREVOKE ALL ON FUNCTION sneaky() FROM PUBLIC;\n",
-}
+SP = "SECURITY DEFINER\nSET search_path = pg_catalog, pg_temp AS $f$"
+def nth_replace(text, old, new_, n):
+    pos = -1
+    for _ in range(n + 1): pos = text.index(old, pos + 1)
+    return text[:pos] + new_ + text[pos + len(old):]
+mutants = {}
+for n, fn in ((0, "spend_log_decrease"), (1, "kill_switch_log_change")):
+    mutants[f"{fn}: pg_temp not last"] = nth_replace(base, SP, SP.replace("pg_catalog, pg_temp", "pg_temp, pg_catalog"), n)
+    mutants[f"{fn}: public in path"] = nth_replace(base, SP, SP.replace("pg_catalog, pg_temp", "pg_catalog, public, pg_temp"), n)
+    mutants[f"{fn}: no pg_temp"] = nth_replace(base, SP, SP.replace("pg_catalog, pg_temp", "pg_catalog"), n)
+    mutants[f"{fn}: no SET search_path"] = nth_replace(base, SP, "SECURITY DEFINER\nAS $f$", n)
+    mutants[f"{fn}: no REVOKE"] = base.replace(f"REVOKE ALL ON FUNCTION {fn}() FROM PUBLIC;", "")
+mutants["kill_switch_log_change: bare table (no %I)"] = base.replace("%I.kill_switch_log", "kill_switch_log")
+mutants["spend_log_decrease: bare table (no %I)"] = base.replace("%I.spend_decrease_log", "spend_decrease_log")
+mutants["undeclared SECURITY DEFINER"] = base + "\nCREATE OR REPLACE FUNCTION sneaky() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$;\nREVOKE ALL ON FUNCTION sneaky() FROM PUBLIC;\n"
 for label, text in mutants.items():
     differs = text != base
     found = sg.check_sql_text("mutant.sql", text, ALLOWED)
@@ -538,7 +547,8 @@ check("O3 the held-file head spend_log_decrease search_path text is what the gua
 # ---------------------------------------------------------------- P. audit reader role checks (security major 4)
 admin.execute("CREATE DATABASE exp_p OWNER migr_v16")
 mp = connect(dsn("migr_v16", "exp_p"))
-mkrole("reader_v16", "VALID UNTIL 'infinity'")
+from datetime import timedelta
+mkrole("reader_v16", f"VALID UNTIL '{(date.today() + timedelta(days=30)).isoformat()}'")
 def reader_problems(db, role):
     """Prototype of DB-2's reader_problems: the reader must not be able to create temporary tables or objects, must not be a
     member of any role, must not be superuser/createrole/createdb/bypassrls/replication, must have an expiry (VALID UNTIL) in the future."""
@@ -563,11 +573,11 @@ check("P4 NEGATIVE: a reader that is a member of the runtime role is reported", 
 admin.execute("REVOKE rtr_v16 FROM reader_v16")
 mkrole("expired_v16", "VALID UNTIL '2020-01-01'")
 st = login_state("expired_v16", PW["expired_v16"])
-check("P5 a role whose VALID UNTIL is in the past cannot log in (28P01)", st.startswith("28P01"), st)
+check("P5 a role whose VALID UNTIL is in the past cannot log in (password authentication failed)", st.endswith("password-auth-failed"), st)
 mkrole("nolimit_v16")
 check("P6 NEGATIVE: a reader role created without VALID UNTIL is reported ('has no VALID UNTIL')", "has no VALID UNTIL" in reader_problems(mp, "nolimit_v16"))
 admin.execute("ALTER ROLE reader_v16 NOLOGIN")
-check("P7 revoking by NOLOGIN stops new logins (SQLSTATE 28000 or 28P01)", login_state("reader_v16", PW["reader_v16"])[:5] in ("28000", "28P01"), login_state("reader_v16", PW["reader_v16"]))
+check("P7 revoking by NOLOGIN stops new logins", login_state("reader_v16", PW["reader_v16"]) != "OK", login_state("reader_v16", PW["reader_v16"]))
 
 m._migration_files = real_files
 for t in (tmpA, tmpB, tmpC, tmpD, tmpK, tmpM, tmpN): shutil.rmtree(t, ignore_errors=True)
