@@ -8,18 +8,19 @@ VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
 GIT=$(command -v git)
 T=$S/toy; export TMPDIR=$S/tmpstate; STATE=$TMPDIR/${STATEDIR:-hadavin-mutation-lane-$(id -u)}; NEWTESTS=${NEWTESTS:-1}
 rm -rf "$T" "$TMPDIR"; mkdir -p "$T/repo/src" "$T/repo/tests" "$TMPDIR" "$S/wrap"
+SL=$S/sleepbin; ln -sf "$(command -v sleep)" "$SL"   # a private name for sleep: pgrep/pkill on it never touch another run (parallel runs)
 cd "$T/repo" || exit 9; git init -q
 printf 'def f():\n    return 1\n' > src/mod.py
 printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    time.sleep(20)\n    assert f() == 1\n' > tests/test_slow.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    assert f() == 1\n' > tests/test_fast.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    open("junk.txt", "w").write("x")\n    assert f() == 1\n' > tests/test_junk.py
 mkdir docs; printf 'alpha\n' > docs/note.txt
-printf 'import subprocess, sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_spawn():\n    subprocess.Popen(["sleep", "3137"])\n    time.sleep(30)\n' > tests/test_spawn.py
+printf 'import subprocess, sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_spawn():\n    subprocess.Popen(["'"$SL"'", "3137"])\n    time.sleep(30)\n' > tests/test_spawn.py
 printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_a():\n    print("before-timeout-marker", flush=True)\n\ndef test_b():\n    time.sleep(30)\n' > tests/test_partial.py
 printf 'import os\nBAD = [k for k in os.environ if (k.startswith("PYTEST_") and k not in ("PYTEST_CURRENT_TEST", "PYTEST_VERSION")) or k in ("PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONWARNINGS", "PYTHONUSERBASE")]\ndef test_env_clean():\n    assert BAD == [], BAD\n' > tests/test_env.py
 printf 'def test_w():\n    open("conftest.py", "w").write("# written by a test\\n")\n' > tests/test_writeconf.py
 printf 'def test_w():\n    open("data.bin", "w").write("x")\n' > tests/test_writedata.py
-printf 'import subprocess\ndef test_bg():\n    subprocess.Popen(["sleep", "3141"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n' > tests/test_bg.py
+printf 'import subprocess\ndef test_bg():\n    subprocess.Popen(["'"$SL"'", "3141"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n' > tests/test_bg.py
 git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD); REALREPO=$T/repo   # the toy repository stands in for "the real repository" (this folder is not inside a git repository)
 reset_state() { pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; rm -rf "$STATE"; }
 # every scenario starts from a fresh state folder, so a crash in one cannot make the next ones fail (review r2 safety M2)
@@ -354,9 +355,9 @@ echo "== T44 the leader is dead but a member of the test group still runs: --res
 fresh_root; ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) >/dev/null 2>&1 & RP=$!
 waitplant; sleep 2
 LEADER=$(pgrep -f "$T/root/.venv/bin/python -m pytest" | head -1); kill -9 $RP; kill -9 $LEADER; sleep 1; wait $RP 2>/dev/null
-chk "T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs" "pgrep -f 'sleep 3137' >/dev/null && ! pgrep -f '$T/root/.venv/bin/python -m pytest' >/dev/null"
+chk "T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs" "pgrep -f '$SL 3137' >/dev/null && ! pgrep -f '$T/root/.venv/bin/python -m pytest' >/dev/null"
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-220; sleep 1
-chk "T44 restore exit 0, file back (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T44 the surviving member was stopped" "! pgrep -f 'sleep 3137' >/dev/null"; pkill -9 -f 'sleep 3137' 2>/dev/null
+chk "T44 restore exit 0, file back (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T44 the surviving member was stopped" "! pgrep -f '$SL 3137' >/dev/null"; pkill -9 -f "$SL 3137" 2>/dev/null
 echo "== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)"
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
 setmarker pgid= start_ticks= argv=
@@ -515,16 +516,16 @@ for variant in different equal; do
 done
 # b) the leader is dead, a member of its group lives on: stopped only if it started after the recorded start AND works in root
 member() { # $1 = folder the member works in
-  ( cd "$1" && exec setsid sh -c 'sleep 3142 & exec sleep 3143' >/dev/null 2>&1 ) & DP=$!; sleep 1; kill -9 $DP 2>/dev/null; wait $DP 2>/dev/null; sleep 0.5; }
+  ( cd "$1" && exec setsid sh -c "$SL 3142 & exec $SL 3143" >/dev/null 2>&1 ) & DP=$!; sleep 1; kill -9 $DP 2>/dev/null; wait $DP 2>/dev/null; sleep 0.5; }
 for variant in outside-root early-start control; do
   fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
   if [ $variant = outside-root ]; then member /; else member "$T/root"; fi
   if [ $variant = early-start ]; then setmarker pgid=$DP start_ticks=99999999999; else setmarker pgid=$DP start_ticks=1; fi
-  chk "T51b $variant setup: the member of the dead leader's group runs" "pgrep -f 'sleep 3142' >/dev/null"
+  chk "T51b $variant setup: the member of the dead leader's group runs" "pgrep -f '$SL 3142' >/dev/null"
   out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200; sleep 1
-  if [ $variant = control ]; then chk "T51b control (member works in root, started after the recorded start): stopped (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && ! pgrep -f 'sleep 3142' >/dev/null"
-  else chk "T51b $variant: member left alone, file restored (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && pgrep -f 'sleep 3142' >/dev/null"; fi
-  pkill -9 -f 'sleep 314[23]' 2>/dev/null
+  if [ $variant = control ]; then chk "T51b control (member works in root, started after the recorded start): stopped (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && ! pgrep -f '$SL 3142' >/dev/null"
+  else chk "T51b $variant: member left alone, file restored (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && pgrep -f '$SL 3142' >/dev/null"; fi
+  pkill -9 -f "$SL 314[23]" 2>/dev/null
 done
 # c) works_in matches whole path parts
 python3 - "$RUN" "$T" <<'PY'
@@ -570,7 +571,7 @@ out=$(mut -- tests/test_fast.py 2>&1); rc=$?; echo "$out" | cut -c1-200; hit=$(p
 chk "T54 hard-linked docs/note.txt refused naming the file (rc $rc, hits $hit); target untouched" "[ $rc -eq 2 -a $hit -ge 1 ] && [ '$(last)' = return1 -a -z '$(state_files)' ]"
 echo "== T55 (review r4 nit 5) a background process that outlives the test leader is stopped and recorded"
 fresh_root; base --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_bg.py >/dev/null 2>&1; rc=$?; sleep 1
-chk "T55a leftover 'sleep 3141' stopped (rc $rc), the raw file says so" "! pgrep -f 'sleep 3141' >/dev/null && grep -q 'STOPPED 1 process' '$S/rawT/X-m1.txt'"; pkill -9 -f 'sleep 3141' 2>/dev/null
+chk "T55a leftover 'sleep 3141' stopped (rc $rc), the raw file says so" "! pgrep -f '$SL 3141' >/dev/null && grep -q 'STOPPED 1 process' '$S/rawT/X-m1.txt'"; pkill -9 -f "$SL 3141" 2>/dev/null
 echo "  T55b control run killed with SIGKILL: --restore stops its test group"
 fresh_root; ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --control --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!
 for _ in $(seq 60); do orphan_alive && break; sleep 0.5; done; sleep 3
@@ -642,6 +643,30 @@ PY
 cut -c1-220 "$S/t60.out"
 chk "T60 the file behind the swapped link was not written" "[ \"\$(tail -1 $S/evil/mod.py | tr -d ' ')\" = return424242 ]"
 rm -rf "$S/evil"
+echo "== T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused"
+fresh_root; mkdir -p "$S/mntsrc"; echo beta > "$S/mntsrc/other.txt"
+if mount --bind "$S/mntsrc" "$T/root/docs" 2>/dev/null; then
+  out=$(mut -- tests/test_fast.py 2>&1); rc=$?; umount "$T/root/docs"; echo "$out" | cut -c1-200
+  chk "T62 mount point docs/ refused for that reason (rc $rc)" "[ $rc -eq 2 ] && printf %s '$out' | grep -q 'mount point'"
+  chk "T62 nothing planted, bind source untouched" "[ '$(last)' = return1 -a -z '$(state_files)' ] && [ \"\$(cat $S/mntsrc/other.txt)\" = beta ]"
+else echo "  (mount --bind not permitted here: T62 skipped)"; SKIPPED="$SKIPPED T62"; fi
+rm -rf "$S/mntsrc"
+python3 - "$RUN" <<'PY'
+import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+r.mount_points = lambda: [pathlib.Path("/"), pathlib.Path("/a/root"), pathlib.Path("/a/root/.venv"), pathlib.Path("/a/root/with space/m"), pathlib.Path("/a/root2/x")]
+root = pathlib.Path("/a/root")
+ok = True
+try: r.refuse_mounts(root); ok = False; print("no refusal for a mount inside")
+except r.Refused as e: print("refused:", str(e)[:80])
+r.mount_points = lambda: [pathlib.Path("/"), pathlib.Path("/a/root"), pathlib.Path("/a/root/.venv"), pathlib.Path("/a/root2/x")]
+r.refuse_mounts(root); print("root itself, .venv and a sibling prefix (/a/root2) are no refusal")
+import re
+raw = "36 25 0:31 / /a/root/with\\040space/m rw - tmpfs tmpfs rw"
+print("parsed:", re.sub(r"\\\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), raw.split(" ")[4]))
+sys.exit(0 if ok else 1)
+PY
+chk "T62b refuse_mounts logic: a mount inside is refused; the root, .venv and a sibling prefix are not" "[ $? -eq 0 ]"
 echo "== T61 (review r4 evidence) PYTEST_ADDOPTS, PYTEST_PLUGINS and other steering variables of the caller never reach the tests"
 fresh_root; PYTEST_ADDOPTS="--collect-only" PYTEST_PLUGINS="no_such_plugin_xyz" PYTHONSTARTUP=/nonexistent PYTEST_DEBUG=1 mut -- tests/test_env.py >/dev/null 2>&1; rc=$?
 chk "T61 with those set in the caller's environment the tests run and see none of them (rc $rc, verdict SURVIVED, '1 passed')" "[ $rc -eq 0 ] && grep -q 'VERDICT: SURVIVED' '$S/rawT/X-m1.txt' && grep -q 'pytest summary line: 1 passed' '$S/rawT/X-m1.txt'"

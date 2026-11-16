@@ -469,6 +469,30 @@ def tree_files(root: pathlib.Path) -> dict[str, str]:
     return out
 
 
+def mount_points() -> list[pathlib.Path]:
+    """Mount points from /proc/self/mountinfo (field 5; space, tab, newline and backslash are written as octal)."""
+    out = []
+    for line in pathlib.Path("/proc/self/mountinfo").read_text(errors="replace").splitlines():
+        parts = line.split(" ")
+        if len(parts) > 4:
+            out.append(
+                pathlib.Path(re.sub(r"\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), parts[4]))
+            )
+    return out
+
+
+def refuse_mounts(root: pathlib.Path) -> None:
+    """Nothing may be mounted INSIDE the scratch tree (a bind mount of another tree would show another tree's
+    files under a name with one link; review r4 nit 4). The root itself may be a mount point; `.venv` directly
+    under the root is skipped as everywhere else."""
+    for mp in mount_points():
+        if mp != root and mp.is_relative_to(root) and mp.relative_to(root).parts[0] not in SKIP_TOP:
+            raise Refused(
+                f"{mp.relative_to(root)} is a mount point inside --root {root}: it shows another tree's files "
+                f"inside the scratch tree: refused"
+            )
+
+
 def refuse_hard_links(root: pathlib.Path) -> None:
     """Every regular file in the tree (not just the target) must have exactly one name: a tree built with
     `cp -al` or a bind mount of another tree shares files that a test or a mutant could change in place
@@ -1445,6 +1469,7 @@ def main():
             check_test_args(tests, root)
             check_pytest_config(root, tests)
             refuse_hard_links(root)
+            refuse_mounts(root)
             if not NAME_RE.fullmatch(a.prefix):
                 raise Refused(f"--prefix is not a plain name: {a.prefix!r}")
             for x in a.extra:
