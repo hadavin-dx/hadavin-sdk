@@ -270,7 +270,7 @@ G = [
  ("write_node_continues_on_error", g_write_silent, "WARN", "write node", (), []),
  ("always_output_with_error_output", g_aod_err, "WARN", "alwaysOutputData together with continueErrorOutput", (), []),
  ("switch_unwired_output_is_warn", g_switch_gap, "WARN", "SWITCH node Sw has unwired output(s)", (), []),
- ("env_read_default_is_warn", g_env_read, "WARN", "reads $env.SOME_NAME", (), []),
+ ("env_read_default_is_warn", g_env_read, "WARN", "$env.SOME_NAME", (), []),
  ("webhook_without_auth_default", None, "WARN", "has no authentication", (), []),
  ("form_trigger_without_auth_default", g_formtrig, "WARN", "has no authentication setting", (), []),
 ]
