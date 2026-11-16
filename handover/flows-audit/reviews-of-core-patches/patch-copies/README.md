@@ -49,10 +49,10 @@ Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database w
 | 3 | The `max_tokens` ceiling (`200_000` in `defaults.py`) | studio head; the number is my placeholder, not from a provider page | only if the ceiling comes back; it is cut today | ceiling cut; use `C-01-price-only.patch`, which has no ceiling |
 | 4 | Self-hosted model price: the RECORDED decision (`REVIEW.md` row C-8) is: the only exemption is the kind `fake`; a self-hosted model sets a positive stand-in price. The number of that price | studio head (Decision 19) | no (the rule is recorded); each config that has price 0 must be changed first (see "Rollout note") | none: a config with price 0 refuses to start |
 | 5 | Which database login the tick runs under, and whether the drain gets its own login (`REVIEW.md` rows X-2, X-5, X-6) | studio head | yes for A-01 (rating "Major, conditional") | one runtime login, accepted in writing by the studio head |
-| 6 | Per-row guard in the chain drain (`REVIEW.md` row A-6) before A-01 goes live | studio head decides; a builder writes it | yes for A-01 (see "A-01 precondition") | not applied: one bad row turns the step red on every tick |
+| 6 | Per-row guard in the chain drain (`REVIEW.md` row A-6) before A-01 is turned on | studio head decides; a builder writes it | yes for A-01 (see "A-01 precondition") | not applied: one bad row turns the step red on every tick |
 | 7 | G5 wording: approve the new sentences | studio head | no (text only) | not applied |
-| 8 | Dead-man check: the limit in seconds, the second alert channel, who is the database administrator who creates the login | studio head names the person; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | not set up |
-| 9 | Two baseline failures caused by files under `handover/`: a banned vendor name in two studio notes, and non-proprietary licence files in copies of seven other projects (see the two baseline failures under the gate recipe) | the lead fixes them in a separate change; I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
+| 8 | Dead-man check: D2 the limit in seconds, D3 who is the database administrator, D4 the second alert channel, D6 who is the scheduler operator. Written defaults are in `DEAD-MAN-CHECK.md` (AUDIT PROPOSAL, lead to confirm) | studio head names the persons; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | the written proposals in `DEAD-MAN-CHECK.md` (marked AUDIT PROPOSAL, lead to confirm); nothing is set up until the studio head says yes |
+| 9 | Two baseline failures caused by files under `handover/`: (1) THREE offending files in the vendor-name test (a banned vendor name in two studio notes, and one file that is not text, so the test cannot scan it); (2) non-proprietary licence files in copies of seven other projects (see the two baseline failures under the gate recipe) | the lead fixes them in a separate change; I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
 
 ## Who runs each step
 | Step | Who | What they hold |
@@ -60,7 +60,7 @@ Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database w
 | Clone, apply, run the gates (recipe below) | any person or session; it writes only into a new temporary folder | no credential, no cloud setting (the commands run with `env -i`) |
 | Open the pull request with a patch | a builder session | no approver credential, no executor credential; opens the pull request and never merges (`CLAUDE.md`: cloud sessions never merge) |
 | Merge | the lead (`handover/BRIEF-PREAMBLE.md` rule 9), after the gates and reviews | a normal merge right; nothing here changes branch protection |
-| Create the dead-man login, run its grants | the database administrator (a named human; the studio head names him or her) | the migrations login; not an agent |
+| Create the dead-man login, run its grants | the database administrator (a named human; the studio head names him or her) | the logins named in `DEAD-MAN-CHECK.md`, section "Which login runs each statement" (an administrator login for the role, the table-owning login for the table right); not an agent |
 | Everything marked "run on the real store" | the lead asks the studio head for a test database | not available to this static review |
 
 ## Where the files are
@@ -108,9 +108,21 @@ git add -A                         # new test files must appear in `git ls-files
 and 32 with `C-01.patch`. (`git apply` writes the files; nothing is committed. Add `--offline` after `uv run` below only if the machine has no network and a warm `uv` cache; add
 `HTTPS_PROXY="$HTTPS_PROXY"` after `env -i` if the network needs a proxy.)
 
-### Expected exit codes (ONE table; the gate commands, run with no cloud settings in the environment as `.claude/rules/verify-tests-and-evals.md` asks, which `env -i` gives)
-Gate on the exit code of the command itself, never on a `| tail` pipe. `E="env -i PATH=$PATH HOME=$HOME"`; run each command in the folder named in the column @@HEAD@@.
-| Command (all start with `$E uv run --all-extras --group test`) | unpatched copy | patched copy |
+### The four gate commands (run in the same terminal, so `$W` and `$C` are still set; `ruff check`, `ruff format --check` and `bandit` here, `pytest` in the next section)
+Gate on the exit code of the command itself, never on a `| tail` pipe. `E` runs a command with no cloud settings in the environment, as `.claude/rules/verify-tests-and-evals.md` asks. Each line stores the command's own exit code in `rc` and appends it to `$W/gates.txt`. The folders are `$W/unpatched` (a clone at `b4cce5b`, nothing applied) and `$W/patched` (the same with the patches applied).
+```
+E() { env -i PATH="$PATH" HOME="$HOME" "$@"; }   # add HTTPS_PROXY="$HTTPS_PROXY" after HOME="$HOME" if the network needs a proxy
+: > "$W/gates.txt"
+for t in unpatched patched; do
+  cd "$W/$t" || break
+  E uv run --all-extras --group test ruff check;                  rc=$?; echo "$t ruff-check $rc" >> "$W/gates.txt"
+  E uv run --all-extras --group test ruff format --check;         rc=$?; echo "$t ruff-format-check $rc" >> "$W/gates.txt"
+  E uv run --all-extras --group test bandit -q -r src demos -ll;  rc=$?; echo "$t bandit $rc" >> "$W/gates.txt"
+done
+cat "$W/gates.txt"      # six lines (three per folder); expected: the last number of every line is 0
+```
+Expected exit codes (ONE table; the `pytest` row is run by the next section):
+| Command (all start with `E uv run --all-extras --group test`) | unpatched copy (`$W/unpatched`) | patched copy (`$W/patched`) |
 |---|---|---|
 | `ruff check` | 0 | 0 |
 | `ruff format --check` | 0 | 0 |
@@ -118,36 +130,59 @@ Gate on the exit code of the command itself, never on a `| tail` pipe. `E="env -
 | `pytest -q -p no:cacheprovider -m "not live and not perf" -rf` (the full run, below) | **1** while the two baseline failures exist, 0 after they are fixed | **1** while the two baseline failures exist, 0 after they are fixed |
 | `pytest` on the two new test files copied onto the unpatched copy (proof section) | 1 (the new tests fail on old code) | not run |
 
-### Baseline, then the patched run (the full test run)
-The markers `live` and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at the newest commit) and runs `perf` in its own step
+### Baseline, then the patched run (the full test run), then the verdict script
+The markers `live` (tests that call a real model) and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at the newest commit) and runs `perf` in its own step
 (`:94`, newest commit `:100`), which is not part of this recipe.
 ```
-run() {  # $1 = folder, $2 = tag
-  ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rf > "$W/$2.log" 2>&1; echo "$2 exit=$?" )
-  tail -n 1 "$W/$2.log"
+run() {  # $1 = folder, $2 = tag; writes $W/$2.log, $W/$2.rc (the exit code of pytest) and $W/$2-failed.txt
+  ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rf > "$W/$2.log" 2>&1; echo $? > "$W/$2.rc" )
+  echo "$2 exit=$(cat "$W/$2.rc")"; tail -n 1 "$W/$2.log"
   grep '^FAILED' "$W/$2.log" | sed 's/ - .*//' | sort > "$W/$2-failed.txt"
 }
 run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched copy; exit 1 is expected while the two baseline failures below exist
 run "$W/patched"   patched         # 2. the patched copy
-diff "$W/baseline-failed.txt" "$W/patched-failed.txt" && echo "(a) same failed tests"
-# (d1) the number of licence problems, from both logs; each must print a number, and the two must be equal
-n1=$(grep -o 'Left contains [0-9]* more items' "$W/baseline.log"); n2=$(grep -o 'Left contains [0-9]* more items' "$W/patched.log")
-echo "baseline: [$n1]  patched: [$n2]"; [ -n "$n1" ] && [ "$n1" = "$n2" ] && echo "(d1) ok" || echo "(d1) FAILED"
-# (d2) the files the vendor-name test lists (paths only; the banned strings are cut off and never printed)
-offenders() { grep -m1 '^E *AssertionError: vendor brand strings' "$1" | sed 's/^E *AssertionError: [^:]*: //' | tr ';' '\n' | sed -E 's/^ *//; s/: .*//' | sort; }
-offenders "$W/baseline.log" > "$W/o-base.txt"; offenders "$W/patched.log" > "$W/o-pat.txt"
-[ -s "$W/o-base.txt" ] && diff "$W/o-base.txt" "$W/o-pat.txt" && echo "(d2) ok" || echo "(d2) FAILED"
+```
+Then the verdict script (it reads only the files written above and prints one line per clause, then the verdict). It computes every number from YOUR two logs; the figures 9364, 9394 and 9396 in this file are examples from the one run of the fifth pass, not values to compare with.
+```
+count() { tail -n 1 "$1" | grep -o "[0-9]* $2" | grep -o '^[0-9]*'; }   # the number before the word $2 on the last line of log $1; empty if the word is absent
+ADD=30; [ "$C" = C-01.patch ] && ADD=32
+bp=$(count "$W/baseline.log" passed);   pp=$(count "$W/patched.log" passed)
+bf=$(count "$W/baseline.log" failed);   pf=$(count "$W/patched.log" failed)
+bs=$(count "$W/baseline.log" skipped);  ps=$(count "$W/patched.log" skipped)
+bd=$(count "$W/baseline.log" deselected); pd=$(count "$W/patched.log" deselected)
+ok=1
+# (a) the patched run fails exactly the tests the baseline fails
+if diff "$W/baseline-failed.txt" "$W/patched-failed.txt" > /dev/null; then echo "(a) ok"; else echo "(a) FAILED"; ok=0; fi
+# (b) passed = baseline passed + 30 (or + 32), same skipped, same deselected, same failed
+if [ -n "$bp" ] && [ "$pp" = "$((bp + ADD))" ] && [ "${bs:-0}" = "${ps:-0}" ] && [ "${bd:-0}" = "${pd:-0}" ] && [ "${bf:-0}" = "${pf:-0}" ]
+then echo "(b) ok (baseline passed $bp + $ADD = $pp)"; else echo "(b) FAILED (baseline passed [$bp] + $ADD, patched passed [$pp])"; ok=0; fi
+# (c) six gate lines all 0, and the two pytest exit codes equal: 1 if any test failed, otherwise 0
+want=0; [ "${pf:-0}" -gt 0 ] && want=1
+if [ "$(wc -l < "$W/gates.txt")" = 6 ] && [ -z "$(awk '$3 != 0' "$W/gates.txt")" ] && [ "$(cat "$W/baseline.rc")" = "$want" ] && [ "$(cat "$W/patched.rc")" = "$want" ]
+then echo "(c) ok"; else echo "(c) FAILED"; ok=0; fi
+# (d) only while a test fails: the two red guard tests must not hide a new problem
+if [ "${bf:-0}" -eq 0 ] && [ "${pf:-0}" -eq 0 ]; then echo "(d) not needed: neither run has a failed test"
+else
+  n1=$(grep -o 'Left contains [0-9]* more items' "$W/baseline.log"); n2=$(grep -o 'Left contains [0-9]* more items' "$W/patched.log")
+  echo "baseline: [$n1]  patched: [$n2]"; if [ -n "$n1" ] && [ "$n1" = "$n2" ]; then echo "(d1) ok"; else echo "(d1) FAILED"; ok=0; fi
+  offenders() { grep -m1 '^E *AssertionError: vendor brand strings' "$1" | sed 's/^E *AssertionError: [^:]*: //' | tr ';' '\n' | sed -E 's/^ *//; s/: .*//' | sort; }
+  offenders "$W/baseline.log" > "$W/o-base.txt"; offenders "$W/patched.log" > "$W/o-pat.txt"
+  if [ -s "$W/o-base.txt" ] && diff "$W/o-base.txt" "$W/o-pat.txt" > /dev/null; then echo "(d2) ok"; else echo "(d2) FAILED"; ok=0; fi
+fi
+if [ "$ok" = 1 ] && [ "${pf:-0}" -eq 0 ]; then echo "VERDICT: PASSED"
+elif [ "$ok" = 1 ]; then echo "VERDICT: ADDS NO NEW FAILURE (the baseline failures still exist; the repository gate is still red)"
+else echo "VERDICT: NOT PASSED"; fi
 ```
 **Pass rule.** Clauses (a) to (d) say "this patch adds no new failure"; they are all needed because the two guard tests that are already red can hide a new problem inside them.
 (a) the `diff` prints nothing: the patched run fails exactly the tests the baseline fails, no others.
-(b) the patched count line shows the baseline's `passed` plus 30 (default `C-01-price-only.patch` with `A-01.patch`) or plus 32 (`C-01.patch` with `A-01.patch`), the same `skipped` and `deselected`, and the same number of `failed`.
-(c) the exit codes of all four gate commands are the ones in the table above, and the two `pytest` exit codes are equal.
-(d) the two red guard tests do not hide a new problem: (d1) both logs print a NUMBER after "Left contains" (an empty result is a failure, not a match) and the two numbers are equal (10 at `b4cce5b`), for `test_licences_are_proprietary`; (d2) the list of offending files in the message of `test_no_vendor_brand_string_is_tracked` is not empty and is the same in both logs (3 files at `b4cce5b`, see the baseline failures below), because that test scans untracked files too, so a banned string inside a patch or a new test file would add an entry while (a) to (c) stay silent.
-The **guard tests** are the 99 tests in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` and `tests/test_lockin_guard.py` (`CLAUDE.md` says "the repo guard tests" without a list; this is this folder's definition). Today exactly two of them are red: `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` and `tests/test_repo_rules.py::test_licences_are_proprietary`.
-The three **verdicts** (use exactly these names):
-- **PASSED**: (a) to (d) hold, and the full run of the patched copy has no failed test at all (so the two baseline failures are fixed, decision table row 9, and its exit code is 0).
+(b) the patched count line shows the baseline's `passed` plus 30 (default `C-01-price-only.patch` with `A-01.patch`) or plus 32 (`C-01.patch` with `A-01.patch`), the same `skipped` and `deselected`, and the same number of `failed`. The script prints "(b) ok" or "(b) FAILED" from the numbers.
+(c) the six lint and bandit exit codes are the ones in the table above (all 0), and the two `pytest` exit codes are equal (1 while any test fails, 0 when none fails).
+(d) applies ONLY while the runs contain failed tests (today: the two red guard tests), so that those two do not hide a new problem: (d1) both logs print a NUMBER after "Left contains" (an empty result is a failure, not a match) and the two numbers are equal (10 at `b4cce5b`), for `test_licences_are_proprietary`; (d2) the list of offending files in the message of `test_no_vendor_brand_string_is_tracked` is not empty and is the same in both logs (3 files at `b4cce5b`, see the baseline failures below), because that test scans untracked files too, so a banned string inside a patch or a new test file would add an entry while (a) to (c) stay silent. **Branch "no failures at all":** once decision row 9 is done and neither run has a failed test, those two log lines no longer exist; the script then prints "(d) not needed" and the verdict rests on (a), (b) and (c), with every exit code 0.
+The **guard tests** are the 99 tests in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` and `tests/test_lockin_guard.py` (counted in the sixth pass with `pytest --collect-only`: 99 tests collected; `CLAUDE.md` says "the repo guard tests" without a list; this is this folder's definition). Today exactly two of them are red: `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` and `tests/test_repo_rules.py::test_licences_are_proprietary`.
+The three **verdicts** (use exactly these names; the script prints them):
+- **PASSED**: (a), (b) and (c) hold, and the full run of the patched copy has no failed test at all (so the two baseline failures are fixed, decision table row 9, both exit codes are 0, and (d) does not apply).
 - **ADDS NO NEW FAILURE**: (a) to (d) hold, but the baseline failures still exist, so the repository gate is still red. The patch is clean; no pull request with it may be merged until row 9 is done. **This is the verdict today.**
-- **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test the baseline does not have, a wrong count, a (d) check that prints nothing or differs.
+- **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test the baseline does not have, a wrong count, a (d) check that prints FAILED while failed tests exist.
 Only the four local gate commands count here. CodeQL, SonarCloud and CodeRabbit (named in `CLAUDE.md`) run on the pull request on GitHub, cannot be run in this recipe, and are not part of any verdict above.
 
 Known baseline failures at `b4cce5b` (seen in this pass in a repository with one commit made from a fresh `git archive b4cce5b`; the earlier passes also saw them in real clones). Both are caused by files under `handover/` and neither is touched by the patches:
@@ -170,7 +205,7 @@ Seen in this pass (fifth), same recipe: with `C-01-price-only.patch`: exit 1, `1
 **Count of new tests (re-counted in this pass with `pytest --collect-only`; one table, the sums add up):**
 | Test file | `C-01-price-only.patch` | `C-01.patch` | what the cases are |
 |---|---|---|---|
-| `tests/test_c01_route_limits.py` | 24 | 26 | 6 zero or negative price (2 fields x 3 prices); 1 priced live route loads; 16 NaN or Infinity price (2 kinds x 2 fields x 4 values); 1 fake model at price 0 loads; and only in `C-01.patch` 2 `max_tokens` tests: `test_max_tokens_above_the_ceiling_is_refused` (1 case) and `test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused` (1 case holding two assertions: 200_000 loads, 0 is refused) |
+| `tests/test_c01_route_limits.py` | 24 | 26 | 6 zero or negative price (2 fields x 3 prices); 1 priced paid-model route loads; 16 NaN or Infinity price (2 kinds x 2 fields x 4 values); 1 fake model at price 0 loads; and only in `C-01.patch` 2 `max_tokens` tests: `test_max_tokens_above_the_ceiling_is_refused` (1 case) and `test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused` (1 case holding two assertions: 200_000 loads, 0 is refused) |
 | `tests/test_a01_audit_reconcile.py` | 6 | 6 | step in the tick list; step drains the outbox and logs the count; kind without `reconcile` fails the step; 3 log tests |
 | total new test cases | **30** | **32** | |
 | fail on old code | 12 (6 price + 6 A-01) | 13 (6 price + 1 ceiling + 6 A-01) | |
@@ -183,7 +218,7 @@ The failures on old code:
 - `test_the_step_drains_the_outbox_and_logs_the_count`: the real tick loop ran and logged only `tick ok=True failed=-`; nothing drained.
 - `test_a_kind_without_reconcile_fails_the_step_instead_of_recording_a_success`: `assert 0 == 1` (no step ran, so no failure was recorded).
 - 3 log tests (`..._never_the_body`, `..._an_error_line_is_logged`, `local_dir_sink_logs...`): the captured log text is empty.
-The passing controls: the priced live route and the fake model still load, the at-the-ceiling test (`max_tokens=200_000` loads and `0` is refused, both true on old code), and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
+The passing controls: the priced paid-model route and the fake model still load, the at-the-ceiling test (`max_tokens=200_000` loads and `0` is refused, both true on old code), and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
 ### Results of the fifth pass (2026-11-16): what was seen
@@ -209,9 +244,9 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
 ## C-01: price above 0 at load (and, in the file as written, a ceiling on `max_tokens`)
 - Price: for every route, `min(input, output) <= 0` is refused when `backends.llm.kind != "fake"` (the recorded fake never spends). Before: `Money` rejects floats only
   (`config.py` `Money` annotation at `b4cce5b`), nothing refused 0 or a negative price. The replay path already had its own refusal (`k1b/replay.py:85-90`, called at
-  `:118`); this closes the live path at the choke point.
+  `:118`); this closes the load path for paid models at the choke point.
 - Stage rule behind the exemption (decision table, row 4, recorded in `REVIEW.md` row C-8): the only kind with no price rule is `fake`, and `fake` is itself a
-  demo-only kind (`DEV_ONLY` at `backends/table.py:593`, newest commit `DEMO_ONLY`) refused in live stages (`config.py:366-368` at `b4cce5b`, `:394-396` at the newest commit). So in a live
+  demo-only kind (`DEV_ONLY` at `backends/table.py:593`, newest commit `DEMO_ONLY`) refused in real-use stages (`config.py:366-368` at `b4cce5b`, `:394-396` at the newest commit). So in a real-use
   stage nothing is exempt. There is no exemption for a keyless loopback address or for the kind `openai_compat`, because that kind also points at paid hosted endpoints and an
   address test would reopen the bug for them.
 - **Rollout note (exact text, C-6 and C-8):** "Any pilot or production config with a price of 0 or a negative price now refuses to start. A model you run yourself
@@ -228,11 +263,11 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
   finite number") and `load_config` turns that into a `ConfigError` (16 cases in the test file; pydantic 2.14.1).
 - `max_tokens`: `Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)`; ceiling `200_000` in `defaults.py`: this part is CUT today (decision table, row 3) and exists only in `C-01.patch`, not in `C-01-price-only.patch`. If it returns, the studio head
   confirms the number; change that one line and the two test lines that write 200_000 and 200_001. Existing fixtures use 64 and 1024; `demos/` has no route config.
-- The test config for a live model is `{kind: anthropic, platform: api, api_key_secret_name: <name>}` (matches `AnthropicSettings`, `backends/table.py:43-61`).
+- The test config for a paid model is `{kind: anthropic, platform: api, api_key_secret_name: <name>}` (matches `AnthropicSettings`, `backends/table.py:43-61`).
   `test_a_priced_live_route_still_loads` asserts those settings parsed. The fixture environment is `dev` at `b4cce5b` (`demo` at the newest commit), which the environment table does not refuse.
 - Which `llm.kind` values exist at `b4cce5b` (`backends/table.py:512-541`): `fake`, `anthropic`, `bedrock`, `openai_compat`, `gemini`. Only `fake` spends nothing; the
   recorded replay is not a kind but `fake` with `recorded_dir`. The one config in the tree that names an llm kind is `tests/fixtures/config/config.yaml` (kind `fake`).
-- Negative tests: price 0, 0.00 and -1 on input and on output are each refused for a live kind (6 cases, `match="zero or negative price"`); a priced live route loads; the fake kind with
+- Negative tests: price 0, 0.00 and -1 on input and on output are each refused for a paid-model kind (6 cases, `match="zero or negative price"`); a priced paid-model route loads; the fake kind with
   price 0 still loads; `max_tokens` 200_001 is refused (`match="less than or equal to 200000"`; one test), and in a second test 200_000 loads and 0 is refused (`match="greater than 0"`). The count table is under "Proof that the new tests fail on the old code".
 - Cites at `b4cce5b`: `config.py:55-60` (Route), `:316` (Config), `:365` (`refused = []`, where the check goes), `defaults.py:104`.
 
@@ -246,7 +281,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
   (`k1b/audit_sink.py:26`) has none, but it is built only for the `k1b` commands (`cli.py:213`), never as the `app.audit` the tick uses (`app.py:161`).
 - `ChainAudit.write_outcome` and `LocalDirSink.write_outcome` log a WARNING when an outcome goes to the outbox (error type and event id only, never the body) and an ERROR when even the outbox
   write fails.
-- **A-01 precondition (REVIEW.md row A-6, must be in place before this goes live):** in the chain kind, `audit/chain.py:243` calls `AuditEvent.model_validate_json(body)` with no guard, so one
+- **A-01 precondition (REVIEW.md row A-6, must be in place before this is turned on):** in the chain kind, `audit/chain.py:243` calls `AuditEvent.model_validate_json(body)` with no guard, so one
   bad outbox row raises before the `DELETE` on `:244`; the row stays (nothing is lost), but every row after it (ordered by `event_id`, `:239`) is never drained on any later tick, and the
   step goes red on every tick. A-01.patch does not change `reconcile`. Without the per-row guard, turning A-01 on can turn a healthy-looking system red and block draining. (The local
   directory kind moves an unreadable file to `outbox/corrupt/` and carries on, but silently.) The guard is decision-table row 6.
@@ -288,7 +323,7 @@ Check after the hand edit: `ruff format --check` and `ruff check` on the three f
 Risk: sentences 2-4 touch a docstring that `REVIEW.md` row G-1 said might understate existing protection; the strength of the redaction patterns that exist was not compared. UNVERIFIED.
 
 ## Not checked
-No live model or network call to a model. No database was started (standing order of this review). `K1bAudit` was not changed. The patches were not rebuilt for commits after
+No call to a real model and no network call to a model. No database was started (standing order of this review). `K1bAudit` was not changed. The patches were not rebuilt for commits after
 `b4cce5b` (`C-01.patch` and `C-01-price-only.patch` do not apply at the newest commit; `A-01.patch` applies at the newest commit but its tests were not run there). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline).
 The full test runs were made in single-commit repositories built from `git archive`, not in clones (the clone and apply steps were run separately). `ruff` and `bandit` were not run on a copy patched with `C-01.patch`.
 `../REVIEW.md` is not edited by this pass (another session edits it); it may still quote older figures (for example "13 new tests fail on old code" belongs to an earlier version of the patch set); this folder's tables are the current ones. Nothing was committed or pushed.
