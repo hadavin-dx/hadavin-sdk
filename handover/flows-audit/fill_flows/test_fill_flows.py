@@ -1369,7 +1369,8 @@ class Hardening(Base):
                 self.reply = reply
 
             def fcntl(self, fd, op, buf):
-                assert op == self.F_GETPATH
+                if op != self.F_GETPATH:
+                    raise OSError
                 return self.reply
 
         def no_proc(_):
@@ -1554,9 +1555,8 @@ class Hardening(Base):
                 raise KeyboardInterrupt
             return real(name, *a, **k)
 
-        with mock.patch.object(ff.os, "unlink", stop):
-            with self.assertRaises(KeyboardInterrupt):
-                self.inproc("delete", "--out", out)
+        with mock.patch.object(ff.os, "unlink", stop), self.assertRaises(KeyboardInterrupt):
+            self.inproc("delete", "--out", out)
         self.assertIn(ff.MARKER_NAME, os.listdir(out))  # still marked: a re-run finds it
         self.assertEqual(self.cli("delete", "--out", out)[0], 0)
         self.assertFalse(os.path.exists(out))
