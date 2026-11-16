@@ -1,5 +1,8 @@
 #!/bin/bash
-# F8 runner (round 6). Usage: bash run_all.sh [--strict] [WORKDIR]
+# F8 runner (round 6; f8-r11: scratch raw folder). Usage: bash run_all.sh [--strict] [--refresh] [--keep] [WORKDIR]
+#   --refresh : at the very end, and only when the run got that far, copy this run's raw files into the tracked folder raw/ (each file is written under a temporary name and then renamed, so a reader never sees half a file). Without --refresh the tracked raw/ folder is NOT touched (git status stays clean).
+#   --keep    : do not delete this run's scratch raw folder at the end (its path is printed). A run that fails keeps it anyway (except the nested test runs), so the raw output of a failure is never lost.
+# f8-r11 (the intermittent exit 1 'SELFTEST summary line missing'): every run writes ALL its raw output into its own new scratch folder (mktemp), never into a folder another run, another script or a reader can also touch. Before f8-r11 every run wrote into the one tracked raw/ folder; the lock made a second run refuse, but any other writer of those files (a person's or an agent's second run through another copy of the script, a reader that opens the file while it is rewritten) could mix with this run, and the run could only report 'line missing' without its raw output.
 # THE TAKE USES real-v5 ONLY (lead decision 2026-11-16). This script's exit status and its last line are about real-v5 only.
 # film-v5 is NOT FOR THE TAKE: it is run and shown in its own block, it never changes the exit status and its numbers are never added to the real-v5 numbers.
 #   --strict : also pass --require-real-credential-ids to the default-mode runs, so a credential id or sub-workflow id that is still a placeholder makes this script exit 1.
@@ -15,10 +18,26 @@
 # Raw output of every step goes to ./raw/ (files without a suffix = real-v5, files ending -film = film-v5).
 # Exit status: 0 only if every real-v5 default-mode run and the self-test exit 0 and no step aborted. Exit 3 = a build step aborted, 2 = usage/bad folder.
 set -u
-HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAW="${RUN_ALL_RAW:-$HERE/raw}"   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
+HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAWFINAL="${RUN_ALL_RAW:-$HERE/raw}"   # RAWFINAL = the tracked raw folder (locked; written only with --refresh); RAW (the scratch folder of this run) is made below   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
 TCUNSET=(-u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT)   # round 10c (Q4): every take_check.sh call below starts from a clean TAKE_CHECK_* environment, whatever the caller exported
-STRICT_IDS=""; ARGS=(); LOCKONLY=""
-for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; *) ARGS+=("$a");; esac; done
+STRICT_IDS=""; ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
+for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; --refresh) REFRESH=1;; --keep) KEEP=1;; *) ARGS+=("$a");; esac; done
+# f8-r11 (review f8-r10 M2, F12): the variables that change WHAT is checked or HOW MANY cases run are refused (exit 2) when they are set, whatever the caller meant: a stray one must never make this script pass without the whole suite. The names only are printed, never a value.
+# The test hooks of the nested failure tests are listed in the next block; these are the hooks of the other scripts.
+for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY; do
+  [ -z "${!v:-}" ] || { echo "REFUSED: $v is set. It is a test hook of selftest.py / test_take_check.sh and would change what this script checks; unset it (env -u $v bash run_all.sh)."; exit 2; }
+done
+[ -z "${FC_OUT:-}" ] || [ -n "${RUN_ALL_NESTED:-}" ] || { echo "REFUSED: FC_OUT is set. This script chooses the self-test output folder itself (only the nested failure tests set it); unset it."; exit 2; }
+# f8-r11: names (never values) of environment variables that are removed so that a stray cloud, vendor, interpreter or shell-startup variable cannot reach the checks. One list, here.
+SCRUBBED=""
+for v in $(compgen -e); do
+  case $v in
+    AWS_*|AZURE_*|ARM_*|GOOGLE_*|GCP_*|GCLOUD_*|CLOUDSDK_*|ANTHROPIC_*|OPENAI_*|N8N_*|HUBSPOT_*|SLACK_*|GITHUB_*|GH_*|SMTP_*|PG[A-Z]*|POSTGRES*|DATABASE_URL|PYTHON[A-Z]*|LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|BASH_ENV|ENV|CDPATH|GLOBIGNORE|SHELLOPTS|BASHOPTS|PS4|IFS_DEBUG|*_API_KEY|*_TOKEN|*_SECRET|*_PASSWORD|*_CREDENTIALS)
+      case $v in PYTHONDONTWRITEBYTECODE|PYTHONHASHSEED) continue;; esac
+      SCRUBBED="$SCRUBBED $v"; unset "$v";;
+  esac
+done
+[ -z "$SCRUBBED" ] || echo "environment variables removed for this run (names only):$SCRUBBED"
 # round 10d (Q: review f8-r10c): the test hooks are refused (not silently ignored) when RUN_ALL_NESTED is not set, so a stray variable in a person's shell can never change what is checked
 if [ -z "${RUN_ALL_NESTED:-}" ]; then
   for v in RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
@@ -27,17 +46,32 @@ if [ -z "${RUN_ALL_NESTED:-}" ]; then
 fi
 # round 10d (B4) + f8-r4 (M2): one run at a time per raw folder. The raw folder is shared, so two runs at once would overwrite each other's files and mix their results. The lock (flock) is taken on the raw FOLDER ITSELF (opened read-only; Linux allows a lock on a folder), after mkdir -p, and is held until this script ends. So the lock belongs to the physical folder: it does not depend on TMPDIR, on how the path is written (relative, absolute, through a symbolic link, with .. or a double slash) or on the current folder, and no lock file is left anywhere. A second run on the same raw folder is refused (exit 2).
 command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed, so this script cannot make sure that no second run uses the raw folder $RAW at the same time"; exit 2; }
-mkdir -p -- "$RAW" || { echo "REFUSED: cannot make the raw folder $RAW"; exit 2; }
-RAWABS=$(cd -- "$RAW" && pwd -P) || { echo "REFUSED: cannot enter the raw folder $RAW"; exit 2; }
+mkdir -p -- "$RAWFINAL" || { echo "REFUSED: cannot make the raw folder $RAWFINAL"; exit 2; }
+RAWABS=$(cd -- "$RAWFINAL" && pwd -P) || { echo "REFUSED: cannot enter the raw folder $RAWFINAL"; exit 2; }
 exec 9< "$RAWABS" || { echo "REFUSED: cannot open the raw folder $RAWABS to lock it"; exit 2; }
 flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for the raw folder $RAWABS; wait for it to end, or use another raw folder (RUN_ALL_RAW is for the nested tests only)"; exit 2; }
 [ -z "$LOCKONLY" ] || { echo "lock acquired: $RAWABS (--lock-only: nothing else was run)"; exit 0; }
+# f8-r11: RUN_ALL_NESTED is honoured only when it comes from a run of this script that is still alive (RUN_ALL_PARENT_PID names it and its command line says run_all.sh). A stray RUN_ALL_NESTED=1 left in a shell used to skip the four nested failure tests without a word.
+if [ -n "${RUN_ALL_NESTED:-}" ]; then
+  if [ -z "${RUN_ALL_PARENT_PID:-}" ] || ! tr '\0' ' ' < "/proc/${RUN_ALL_PARENT_PID}/cmdline" 2>/dev/null | grep -q -F 'run_all.sh'; then
+    echo "REFUSED: RUN_ALL_NESTED is set but RUN_ALL_PARENT_PID does not name a running run_all.sh. RUN_ALL_NESTED belongs to the nested test runs this script starts itself; unset it (env -u RUN_ALL_NESTED bash run_all.sh)."; exit 2
+  fi
+fi
+RUN_ALL_SELF=$$   # the nested runs started below get this as RUN_ALL_PARENT_PID
+# f8-r11: this run's own scratch folder for ALL raw output; never shared, removed at the end unless the run failed or --keep (never in the nested test runs)
+RAW=$(mktemp -d "${TMPDIR:-/tmp}/fc8raw.XXXXXX") || { echo "REFUSED: cannot make the scratch raw folder"; exit 2; }
+W=""; MADE_W=""
+cleanup() {
+  [ -z "$MADE_W" ] || rm -rf -- "$W"   # only a folder this script made itself (mktemp below)
+  if [ -n "${RAW:-}" ] && [ -d "$RAW" ] && [ -z "$KEEP" ] && { [ -n "${RUN_ALL_NESTED:-}" ] || [ "${RUN_ALL_RC:-1}" = 0 ]; }; then rm -rf -- "$RAW"; elif [ -n "${RAW:-}" ] && [ -d "$RAW" ]; then echo "raw output of this run is kept in: $RAW"; fi
+}
+trap cleanup EXIT
 if [ -n "${ARGS[0]:-}" ]; then
   W=${ARGS[0]}
   if [ -e "$W" ] && [ -n "$(ls -A -- "$W" 2>/dev/null)" ]; then echo "REFUSED: $W exists and is not empty; this script never deletes a folder it did not make"; exit 2; fi
 else
   W=$(mktemp -d /tmp/fc8.XXXXXX) || exit 2
-  trap 'rm -rf -- "$W"' EXIT   # only the folder made just above
+  MADE_W=1
 fi
 mkdir -p -- "$W/c/handover/demo/n8n-flows" "$W/c/handover/demo/n8n-mainframe" "$W/g" "$RAW" || exit 2
 cp -- "$D"/n8n-flows/*.json "$D/n8n-flows/mf_leads.sql" "$D/n8n-flows/PAGE-STATEMENTS-V4.md" "$W/c/handover/demo/n8n-flows/" || exit 2
@@ -239,11 +273,11 @@ tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
 # (Q4) a caller that exported TAKE_CHECK_* variables must not change any result, and a take case that goes wrong must print its first FAIL or !!! line: RUN_ALL_PLANT_TCFAIL_FLOWS points one extra case at a folder with a disabled mail step (exit 1, a FAIL line).
 if [ -z "${RUN_ALL_NESTED:-}" ]; then
   mkdir -p "$W/tc/nested-raw" "$W/tc/nested-raw-b" "$W/tc/nested-raw-c" "$W/tc/nested-raw-d"
-  RUN_ALL_NESTED=1 RUN_ALL_RAW="$W/tc/nested-raw" RUN_ALL_TAKE_FLOWS="$W/tc/form-off" FC_OUT="$W/tc/nested-selftest-out" bash "$HERE/run_all.sh" "$W/tc/nested-work" 9<&- > "$W/tc/nested.txt" 2>&1 & NPID=$!
-  RUN_ALL_NESTED=1 RUN_ALL_DROP_LEAD=1 RUN_ALL_RAW="$W/tc/nested-raw-b" FC_OUT="$W/tc/nested-selftest-out-b" bash "$HERE/run_all.sh" "$W/tc/nested-work-b" 9<&- > "$W/tc/nested-b.txt" 2>&1 & NPIDB=$!
-  TAKE_CHECK_TEST=1 TAKE_CHECK_DDL="$W/tc/does-not-exist.sql" TAKE_CHECK_WARN_PIN="$W/tc/does-not-exist.pin" TAKE_CHECK_FLOWS="$W/tc/does-not-exist" RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/disabled-send" RUN_ALL_RAW="$W/tc/nested-raw-c" FC_OUT="$W/tc/nested-selftest-out-c" bash "$HERE/run_all.sh" "$W/tc/nested-work-c" 9<&- > "$W/tc/nested-c.txt" 2>&1 & NPIDC=$!
+  RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$RUN_ALL_SELF RUN_ALL_RAW="$W/tc/nested-raw" RUN_ALL_TAKE_FLOWS="$W/tc/form-off" FC_OUT="$W/tc/nested-selftest-out" bash "$HERE/run_all.sh" "$W/tc/nested-work" 9<&- > "$W/tc/nested.txt" 2>&1 & NPID=$!
+  RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$RUN_ALL_SELF RUN_ALL_DROP_LEAD=1 RUN_ALL_RAW="$W/tc/nested-raw-b" FC_OUT="$W/tc/nested-selftest-out-b" bash "$HERE/run_all.sh" "$W/tc/nested-work-b" 9<&- > "$W/tc/nested-b.txt" 2>&1 & NPIDB=$!
+  TAKE_CHECK_TEST=1 TAKE_CHECK_DDL="$W/tc/does-not-exist.sql" TAKE_CHECK_WARN_PIN="$W/tc/does-not-exist.pin" TAKE_CHECK_FLOWS="$W/tc/does-not-exist" RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$RUN_ALL_SELF RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/disabled-send" RUN_ALL_RAW="$W/tc/nested-raw-c" FC_OUT="$W/tc/nested-selftest-out-c" bash "$HERE/run_all.sh" "$W/tc/nested-work-c" 9<&- > "$W/tc/nested-c.txt" 2>&1 & NPIDC=$!
   # round 10d (A2): the planted case wants a text that IS printed (the title line of the take) but not on a !!! or FAIL line, in a take that exits 4 for another reason: tcfail must still report it
-  RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/form-off" RUN_ALL_PLANT_TCFAIL_WANT="NOTHING RAN IN n8n" RUN_ALL_RAW="$W/tc/nested-raw-d" FC_OUT="$W/tc/nested-selftest-out-d" bash "$HERE/run_all.sh" "$W/tc/nested-work-d" 9<&- > "$W/tc/nested-d.txt" 2>&1 & NPIDD=$!
+  RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$RUN_ALL_SELF RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/form-off" RUN_ALL_PLANT_TCFAIL_WANT="NOTHING RAN IN n8n" RUN_ALL_RAW="$W/tc/nested-raw-d" FC_OUT="$W/tc/nested-selftest-out-d" bash "$HERE/run_all.sh" "$W/tc/nested-work-d" 9<&- > "$W/tc/nested-d.txt" 2>&1 & NPIDD=$!
   wait "$NPID"; NX=$?; wait "$NPIDB"; NXB=$?; wait "$NPIDC"; NXC=$?; wait "$NPIDD"; NXD=$?
   for nf in nested nested-b nested-c nested-d; do nr=$(grep -m 1 '^REFUSED' "$W/tc/$nf.txt" 2>/dev/null | cut -c1-200); [ -z "$nr" ] || TCMISS="$TCMISS [nested run $nf was REFUSED: $nr (its raw folder: $W/tc/nested-raw*; a refusal there exits 2, not the exit the checks below want)]"; done   # f8-r9 (second angle M2): say so, do not only fail the exit-status check
   [ "$NX" = 1 ] && grep -q -F "[take_check.sh exit=4] missing lines:" "$W/tc/nested.txt" && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested.txt" && ! grep -q -i "unbound variable" "$W/tc/nested.txt" || TCMISS="$TCMISS [nested run with a failing take check: want exit 1, a clean 'take_check.sh exit=4' report and no crash, got exit $NX]"

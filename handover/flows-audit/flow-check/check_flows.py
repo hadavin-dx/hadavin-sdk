@@ -44,6 +44,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 
 if sys.hexversion < 0x030A0000:  # Python 3.10 = 0x030A0000
     print("check_flows.py needs Python 3.10 or newer; found " + sys.version.split()[0])
@@ -338,9 +339,7 @@ TABLE_AFTER = {"from", "update", "into", "join"}
 MAIL_SHAPE = re.compile(
     r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}"
 )  # one plain e-mail address; the shape only, a filled-in wrong address still passes
-PH_WORD = re.compile(
-    r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*"
-)
+PH_WORD = re.compile("|".join(re.escape(x) for x in PLACEHOLDERS))  # f8-r11 (M4): only the placeholder word itself is ever printed, never the text around it (it may be a real value)
 
 
 def parse_ddl(text):
@@ -382,6 +381,7 @@ def parse_ddl(text):
 def sql_use(query):
     """(tables, words) used by one query text: words = names that are neither SQL words, functions, parameters nor text values."""
     q = re.sub(r"\{\{.*?\}\}", " ", query.lstrip("="), flags=re.DOTALL)
+    q = re.sub(r"\$([A-Za-z_]*)\$.*?\$\1\$", " ", q, flags=re.DOTALL)  # f8-r11 (M4): dollar-quoted text ($$...$$, $tag$...$tag$) is a text value, like '...'
     q = re.sub(r"'(?:[^']|'')*'", " ", q)
     q = re.sub(r"--[^\n]*", " ", q)
     q = re.sub(r"\$\d+|::\s*[A-Za-z_][A-Za-z0-9_]*", " ", q)
@@ -447,6 +447,34 @@ def sql_check(n, tag):
 
 def is_trigger(t):
     return t in TRIGGER_EXACT or t.endswith("Trigger")
+
+
+def fold_name(name):
+    """Node name as compared for duplicates: case-folded, accents and width folded (NFKD without marks), spaces squeezed."""
+    t = unicodedata.normalize("NFKD", name.strip())
+    t = "".join(c for c in t if unicodedata.category(c)[0] != "M").casefold()
+    return re.sub(r"\s+", " ", t)
+
+
+def mixes_alphabets(name):
+    """True when one word holds letters of two alphabets (the first word of each letter's Unicode name: LATIN, CYRILLIC, GREEK, ...)."""
+    for w in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFKD", name)):
+        if len({unicodedata.name(c, "?").split()[0] for c in w if unicodedata.category(c)[0] == "L"}) > 1:
+            return True
+    return False
+
+
+def mail_fields(o):
+    """(key, text value) of every setting named in MAIL_KEYS, at any depth of a node's parameters (dicts and lists)."""
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k in MAIL_KEYS and isinstance(v, str):
+                yield k, v
+            else:
+                yield from mail_fields(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from mail_fields(v)
 
 
 def strings(o):
@@ -594,14 +622,23 @@ SECRET_RX = [
 SECRET_KEY_ENDS = (
     "password",
     "passwd",
+    "passphrase",
+    "pwd",
     "secret",
+    "secretkey",
     "token",
     "apikey",
     "authorization",
     "privatekey",
     "accesskey",
     "clientsecret",
+    "signingkey",
+    "signkey",
+    "sharedkey",
+    "encryptionkey",
+    "sessionkey",
 )
+SECRET_MIN_LEN = 1  # f8-r11 (M3): a short value (even 3 characters) under a secret-looking key is still a literal secret; only an empty value is skipped
 EXPR_BLOCK = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
 OK_WORDS = {"bearer", "basic", "token"}
 
@@ -656,7 +693,7 @@ def secret_scan(n, tag):
     for k, v, _p in kv_items({x: y for x, y in n.items() if x != "credentials"}):
         if (
             key_is_secretish(k)
-            and len(v) >= 6
+            and len(v) >= SECRET_MIN_LEN
             and not value_is_safe(v)
             and str(k).lower() not in ("authentication", "genericauthtype", "nodecredentialtype")
         ):
@@ -679,7 +716,7 @@ def secret_scan_top(d, tag):
             if rx.search(s.replace(AWS_EXAMPLE, "")):
                 hits.add(label)
     for k, v, _p in kv_items(top):
-        if key_is_secretish(k) and len(v) >= 6 and not value_is_safe(v):
+        if key_is_secretish(k) and len(v) >= SECRET_MIN_LEN and not value_is_safe(v):
             hits.add(f"literal value under key {k!r}")
     for h in sorted(hits):
         fail(tag, f"top-level data (not a node): secret-looking value ({h})")
@@ -819,10 +856,13 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         fail(tag, f"duplicate node ids {di}")
     norm = collections.defaultdict(set)
     for n in nodes:
-        norm[re.sub(r"\s+", " ", n["name"].strip().lower())].add(n["name"])
+        norm[fold_name(n["name"])].add(n["name"])
     near = sorted(k for k, v in norm.items() if len(v) > 1)
     if near:
-        fail(tag, f"names that differ only by case or spaces {near}")
+        fail(tag, f"names that differ only by case, spaces, accents or width {near}")
+    for n in nodes:
+        if mixes_alphabets(n["name"]):  # f8-r11 (M5): a node name with Latin and Cyrillic/Greek/Armenian letters in ONE word looks like another name
+            fail(tag, f"node name {n['name']!r} mixes letters of two alphabets in one word (a look-alike of another name)")
     # per node settings
     noretry, silent, phs, pph = [], [], [], []
     for n in real:
@@ -926,8 +966,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         for k, v in (cr or {}).items():
             idv = str((v or {}).get("id") or "") if isinstance(v, dict) else ""
             if idv and any(p in idv for p in PLACEHOLDERS):
-                phs.append(f"{nm} credential {k} id {idv}")
-                CRED_PH.append(f"{tag} node {nm} credential {k} id: {idv}")
+                phw = PH_WORD.search(idv).group(0)  # f8-r11 (M4): the placeholder word only, never the rest of the id
+                phs.append(f"{nm} credential {k} id {phw}")
+                CRED_PH.append(f"{tag} node {nm} credential {k} id: {phw}")
         wf = (
             (n.get("parameters") or {}).get("workflowId")
             if isinstance(n.get("parameters"), dict)
@@ -935,8 +976,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         )
         for wv in list(strings(wf)) if wf is not None else []:
             if any(p in wv for p in PLACEHOLDERS):
-                phs.append(f"{nm} sub-workflow id {wv}")
-                CRED_PH.append(f"{tag} node {nm} sub-workflow id: {wv}")
+                phw = PH_WORD.search(wv).group(0)  # f8-r11 (M4)
+                phs.append(f"{nm} sub-workflow id {phw}")
+                CRED_PH.append(f"{tag} node {nm} sub-workflow id: {phw}")
         secret_scan(n, tag)
         prm_ = n.get("parameters")
         if isinstance(prm_, dict):
@@ -946,10 +988,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                         for w_ in PH_WORD.findall(s_):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
+            for k_, v_ in mail_fields(prm_):  # f8-r11 (M5): at any depth (parameters.options.ccEmail, replyTo, ...), not only the top level
                 if (
-                    k_ in MAIL_KEYS
-                    and isinstance(v_, str)
-                    and not v_.startswith("=")
+                    not v_.startswith("=")
                     and not MAIL_SHAPE.fullmatch(v_.strip())
                     and not PH_WORD.search(v_)
                 ):

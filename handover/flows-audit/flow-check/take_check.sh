@@ -310,6 +310,9 @@ try:
     for ch in name:
         if unicodedata.category(ch) == "Lm" and script_of(ch) != "CJK":
             refuse("modifier letter", "the name holds the modifier letter U+%04X; write plain letters and the plain apostrophe '" % ord(ch))
+        if unicodedata.name(ch, "").startswith("LATIN LETTER ") and not unicodedata.name(ch, "").startswith("LATIN LETTER SMALL CAPITAL"):
+            # f8-r11 (M1): Unicode calls a Latin sign that is no letter of any ordinary alphabet "LATIN LETTER ..." (clicks, glottal stops, a two with a stroke: U+01C0 looks like l or I). A real name is written with LATIN SMALL / CAPITAL LETTER characters; the small capitals have their own fold above.
+            refuse("non-alphabet letter", "the name holds the sign U+%04X (%s), a Latin sign that looks like a letter but is not one of an ordinary alphabet; write plain letters" % (ord(ch), unicodedata.name(ch, "?").lower()))
         if ch not in " .'-" and unicodedata.category(ch)[0] not in "LM":
             refuse("name characters", "the name may hold only letters, spaces, dots, apostrophes and hyphens (no digits or other signs)")
     letters = [ch for ch in name if unicodedata.category(ch)[0] == "L"]
