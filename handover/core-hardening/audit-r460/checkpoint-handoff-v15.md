@@ -1,1 +1,3 @@
-# checkpoint v15 (about 30 min in): done: held SQL v15 (default Q34-exact file, finite variant, DB-2 header), pg_v15.py 93 of 93 PASS on 16.15 twice (raw-pg-v15-run1/run2.txt), non-superuser migration role, audit-reader role prototype and negative tests, pre-flight +Infinity, retention delete path, timing. Not done yet: CORE-PR-HANDOFF-v15.md, other-tracks-v15, v15-CHANGES, v15-OPEN-FOR-LEAD, resolve-handoff-v15, citation fixes. Next: write v15 docs by patch script. (first pg run had 94 checks with one meaningless probe; removed, rerun).
+
+## 16:30 UTC / 22:00 IST (final)
+Done: v15 main, other-tracks, CHANGES, OPEN-FOR-LEAD, resolve, INVENTORY, banned count 0, cite numbers refreshed (402 cites, 55 MOVED). Not done: unit tests, gate4, EGM skills, reading 40 MOVED cites, reader-role code. No commit.
