@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:25:22Z
+UPDATED_UTC: 2026-11-16T11:30:43Z
 SESSION: core-hardening
 ORDER: 021 + decisions 10:02Z; 024; 027, 028 (refill to 8: started v14 reviews, lane b/c, run.py r4 builder, contradiction re-read)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 9
 PERCENT: 95
-AGENTS_RUNNING: 7
-CAPACITY: load 0.3 of 4 cores, mem 1.0 of 15.7 GB used (15.1 GB available), disk 8.9 GB free of 252 GB (78% used, limit 90%), top disk /tmp/claude-0 10G, /tmp/c8b 2.1G, /tmp/c5v2 2.0G (all my scratch, nothing removed)
+AGENTS_RUNNING: 6
+CAPACITY: load 0.65 of 4 cores, mem 1.0 of 15.7 GB used (15.1 GB available), disk 8.9 GB free of 252 GB (78% used, limit 90%), top disk /tmp/claude-0 10G, /tmp/c8b 2.1G, /tmp/c5v2 2.0G (all my scratch, nothing removed)
 INTERRUPTED: none
-FAILED: (1) v15 owner sheet written but NOT handover-ready: lead blanks B1-B29 and 50 card rows empty, sheet larger than v14, check-v15.py is static text only; 4 reviews running. (2) lead checklist v8 failed stranger read (2 blockers, 12 majors), adversarial read (12) and citation check (2 false statements); v9 builder running. (3) run.py r3 4 majors (2 security, 2 evidence), S603 needs lead decision; r4 builder running. (4) one-place sweep: plan chain has 4 layers but checklist names 2 (PLAN-CHAIN.md builder running); superseded banners missing. (5) lease wording A/B and take port undecided; run.py r3/r4 not approved in ORDERS (Q18). (6) Nothing run with n8n, Postgres, PowerShell, WSL.
-NEXT: v15 four reviews + security; run.py r4 hand-back then security and evidence re-review; checklist v9 hand-back then two reviewers; PLAN-CHAIN and banners hand-back then review; fix board/REPORT stale rows (sweep items 2, 3).
-PUSHED_UTC: 2026-11-16T11:25:22Z
+FAILED: (1) v15 owner sheet failed 3 of 5 reviews so far: security 7 majors, stranger 5 blockers + 12 majors, adversarial/contradiction (key cancel rules conflict, lease sentence, step 0 vs decisions 2/8, no clock rule at 18:29 UTC); citation check running; lead blanks B1-B29 still empty; v16 builder starts after the citation check. (2) lead checklist v8 failed 4 reviews; v9 builder running. (3) run.py r4 written (220 PASS, 0 fail on its own script; 73 fail on r3 code) but NOT yet reviewed; S603 needs lead decision; open nits: marker self-attestation, symlinks, reap. (4) PLAN-CHAIN: v10 edit list does not apply after the 3-patch chain (5 of 29 edits find no old text); corrected list written, not yet reviewed; lead decides if gate-rows and v10 are in the run. (5) lease wording A/B, take port, Q18 approval of run.py r3/r4 undecided. (6) Nothing run with n8n, Postgres, PowerShell, WSL.
+NEXT: v15 citation check then ONE v16 builder; run.py r4 security + evidence review (running); PLAN-CHAIN evidence + review (running); checklist v9 hand-back then two reviewers; fix stale board/REPORT rows (C3b, C8 counts).
+PUSHED_UTC: 2026-11-16T11:30:43Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -31,15 +31,14 @@ PUSHED_UTC: 2026-11-16T11:25:22Z
 | C11 | HubSpot probe step | in v14 (separate secrets procedure) | 86 | steps-edits/ | |
 | edit list v10 | real-v5 edits | round 6 clean; primary-source git show check done: all claims confirmed, no table file in real-v5 | 99 | paste-check/review-v10-r6.md | decision 6 is the lead's |
 
-## AGENTS (7 running; ORDER 029: 8th not started, reason below)
+## AGENTS (6 running; ORDER 029: 2 short of 8, reason below)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
-| afb2b36ffa3a5194c | builder run.py r4 | sonnet | 2 majors + minors, tests fail on r3 code | 11:09Z | 12:10Z | running |
-| a4101cc7709ca80c9 | builder lead checklist v9 | sonnet | 14 stranger + 12 adversarial + 3 citation + contradiction findings | 11:22Z | 12:10Z | running |
-| a3eecd6c99316f634 | builder PLAN-CHAIN + superseded banners | sonnet | sweep findings 1, 4, 5 | 11:24Z | 12:10Z | running |
-| a88ba3871dd62cf0e | reviewer v15 security (egm-implementation-readiness) | sonnet | owner sheet v15 money/secret path | 11:25Z | 11:50Z | running |
-| ac9e53573bec26f68 | reviewer v15 stranger (egm-comprehension) | sonnet | owner sheet v15 cold read | 11:25Z | 11:50Z | running |
+| a4101cc7709ca80c9 | builder lead checklist v9 | sonnet | stranger, adversarial, citation, contradiction findings | 11:22Z | 12:10Z | running |
 | ab309fc52e4fb34b5 | citation checker v15 | sonnet | steps-edits/citation-check-v15.md | 11:25Z | 11:45Z | running |
-| a60bc8139057d7b07 | adversarial + contradiction v15 | sonnet | cross-read/adversarial-contradiction-v15.md | 11:25Z | 11:50Z | running |
-Finished since last board: lead-checklist stranger read, adversarial read, contradiction check, citation check, one-place sweep r2, v15 builder (all saved, 0 banned-word hits).
-ORDER 029 reason for 7 not 8: run.py r4 and checklist v9 are one writer per file; the 8th (second reviewer of checklist v9 and of run.py r4) waits for their hand-backs; claim wording A/B, exit-code rule, run-card blanks B1-B29, take port, Q18 approval of run.py r3/r4 wait on the lead (QUESTIONS.md).
+| a07fd823e90afdc1d | EVIDENCE RUNNER plan chain | sonnet | re-applies 3 patches + v10 corrections on scratch copies | 11:29Z | 11:50Z | running |
+| acf639dc955251160 | reviewer plan chain + banners (egm-codebase-details) | sonnet | PLAN-CHAIN, corrections, banners, C7b gap list | 11:29Z | 11:50Z | running |
+| ae56d8713a9a9c8ea | reviewer run.py r4 security (egm-codebase-details) | sonnet | run.py r4 + safety-tests.sh, uncapped | 11:32Z | 11:55Z | running |
+| a085bc3af41f32926 | EVIDENCE RUNNER run.py r4 | sonnet | re-runs 220-check script, r3 code, hostile inputs | 11:32Z | 11:55Z | running |
+Finished since last board: v15 security, stranger, adversarial+contradiction reviews (saved); plan-chain builder; run.py r4 builder; checklist v8 adversarial, contradiction, citation, stranger reviews.
+ORDER 029 reason for 6 not 8: the v16 builder cannot start before the v15 citation check lands (one writer per sheet, all five reviews go into one fix pass); the second reviewers of checklist v9 wait for its hand-back; no independent queue item remains otherwise. Waiting on the lead: lease wording A/B, exit-code rule, blanks B1-B29, take port, whether gate-rows-v3 and v10 edits are in the run, S603 decision, Q18 approval of run.py r3/r4.
