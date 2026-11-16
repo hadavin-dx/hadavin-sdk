@@ -1,0 +1,12 @@
+src/hadavin_sdk/audit/chain.py
+(no-op control)
+OLD:                 "audit outcome not appended (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.event_id,
+NEW:                 "audit outcome not appended (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.event_id,
+
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 17.48s

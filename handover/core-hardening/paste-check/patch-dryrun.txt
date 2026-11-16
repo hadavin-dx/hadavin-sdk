@@ -1,1 +1,3 @@
+$ patch -p1 --dry-run < plan-v5-fixes.patch
 checking file inputs/plan-wp6-resmoke-v5.md
+rc=0
