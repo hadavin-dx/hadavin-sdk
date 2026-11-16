@@ -104,7 +104,7 @@ Span from the worst-case end to the post: Mon 23 Nov 18:29 to Wed 25 Nov 15:00 =
 - owner watches the edited video twice, says "accepted" (row 12): NOT STATED
 - clean-up rows 13 to 19 (leftover contacts, delete HubSpot apps, retire check, n8n removal, secret files, revoke the model key): each NOT STATED; the card OWNER-CLEANUP-CARD.md is not among my inputs and I did not read it
 - failed-run repeat steps (rows 10 and 11: delete leftover contacts, demo mails): NOT STATED
-- post wording (row 20 "[studio lead fills]") and second-person check: owner of the check NOT NAMED, duration NOT STATED
+- post wording (row 20 "[studio lead fills]") and second-person check: owner of the check UNASSIGNED, duration NOT STATED
 
 Backward arithmetic is impossible past 15:00 on Wed 25 Nov because no duration is stated; the only number is the 44 h 31 min span. If the rerun is used, the rerun's last end is still 18:29 on Mon 23 Nov, so the span is the same.
 
