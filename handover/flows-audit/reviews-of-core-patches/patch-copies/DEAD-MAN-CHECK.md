@@ -78,7 +78,7 @@ The tick, the agent and this check never create the role. Each statement and its
 | `ALTER ROLE deadman_reader CONNECTION LIMIT 2;` | a stuck or abused check cannot use up the database's connections |
 | `ALTER ROLE deadman_reader SET statement_timeout = '5s';` | a slow query is cancelled; the check then exits non-zero and alerts |
 
-Seen once on the throwaway Postgres (rows 1 and 4-6 only; the grant lines of the first pass): with this identity the query above returns the
+Seen once on the throwaway Postgres (rows 1, 4, 5 and 6 only: the first pass): with this identity the query above returns the
 unhealthy rows. Refused (each `permission denied`): `SELECT last_error FROM tick_state`, `SELECT * FROM tick_state`, `INSERT`, `UPDATE`, `DELETE` on
 `tick_state`, `SELECT` on another table, `CREATE TABLE` in schema `public`. After `REVOKE SELECT ON tick_state FROM deadman_reader` the check exits
 3 with `permission denied`. To run on the real store (needs the lead): the same list, plus `SHOW default_transaction_read_only;` and

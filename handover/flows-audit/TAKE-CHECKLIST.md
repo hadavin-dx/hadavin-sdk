@@ -26,7 +26,7 @@ The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 
 |---|---|---|
 | 05:45 (latest 06:00) | 11:15 | F-031 and F-007 text fixes re-read |
 | 06:00 to 07:00 | 11:30 to 12:30 | practice run; T19 to T21 at its end |
-| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (what the HubSpot key may do, and whether a retake is allowed) goes out at its start (Wednesday reading; if the lead answers Q31 item 30 with the Monday-night reading, the scope question went out Monday night instead and only the retake question goes out here) |
+| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (what the HubSpot key may do, and whether a retake is allowed) goes out at its start |
 | 07:30 | 13:00 | F-002 rule check |
 | 07:30 to 07:40 | 13:00 to 13:10 | positive control; Step D message 1 (Step D: the owner deletes the made-up test contacts in HubSpot by hand) is sent after the two sends of RUNBOOK step 19a, during its mailbox wait |
 | 07:40 to 08:25 | 13:10 to 13:55 | rehearsal 1 (45 min) |
