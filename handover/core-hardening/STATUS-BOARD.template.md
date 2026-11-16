@@ -9,6 +9,7 @@ PERCENT: <0-100, whole backlog>
 AGENTS_RUNNING: <n, counted from the real agent list, not assumed>
 CAPACITY: <cores busy/total, mem used/total GB, disk free GB, light+heavy agents>
 INTERRUPTED: none
+FAILED: none
 NEXT: <one line: what starts next>
 PUSHED_UTC: <time of your last push>
 
