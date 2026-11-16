@@ -61,8 +61,8 @@ Closing block on every run: "Known open problems: N" (WARN lines that are real o
 | pristine, strict (`--require-webhook-auth --block-env-access`) | each exit 1, 4 FAIL | `raw/pristine-strict.txt` |
 | patched, strict | each exit 1, 4 FAIL | `raw/patched-strict.txt` |
 | pristine real without `--baseline` | exit 1, 2 FAIL | `raw/pristine-no-baseline.txt` |
-| self-test, new checker | exit 0: 467 as expected, 0 not, 32 skipped (case does not apply to that file) | `raw/selftest-new.txt`, cases in `selftest-output/` |
-| same cases, OLD checker | exit 1: 68 as expected, 300 not. Caution: many fail only because the old checker does not know the new options; this shows the new cases do not pass on old code, not 300 separate bugs | `raw/selftest-oldchecker.txt` |
+| self-test, new checker | exit 0: 469 as expected, 0 not, 32 skipped (case needs a node type the file lacks; the list by case name is printed above the last line of `raw/selftest-new.txt`) | `raw/selftest-new.txt`, cases in `selftest-output/` |
+| same cases, OLD checker | exit 1: 91 as expected, 378 not. Caution: many fail only because the old checker does not know the new options; this shows the new cases do not pass on old code, not 300 separate bugs | `raw/selftest-oldchecker.txt` |
 | patch and generator steps | logs and a list of generated flow files with short hashes | `raw/apply.log`, `raw/gen-real.log`, `raw/gen-film.log`, `raw/patched-flows-list.txt` |
 | what the patches change | no unexplained change (patched runs exit 0) | `raw/diff-real.txt`, `raw/diff-film.txt` |
 | M1 comparison | counts 16 of 16 same; reply-gap steps same in 8 of 8 | `raw/compare-m1-vs-f8.txt`, `raw/compare-reply-gap.txt` |
@@ -71,3 +71,6 @@ Closing block on every run: "Known open problems: N" (WARN lines that are real o
 Self-test (a second program, `selftest.py`, that plants one fault at a time in a copy of a flow file and checks the checker reports it). Rules: each case plants ONE fault in a copy and requires the exit code, a line that STARTS with FAIL (or WARN) holding the named text, and no unrelated FAIL line. Cases run on 4 real files and 1 film file. Optional settings `FC_CK` (another checker) and `FC_OUT` (output folder) are described at the top of the file. Counts are recomputed so a count mismatch is not a hidden second cause.
 
 M1 versus this checker: webhook without password: M1 FAIL, here WARN by default (item 2); `alwaysOutputData` with failure output: M1 FAIL, here WARN with the F-002 reason (neither fires in the 16 files); only here: IF steps with one branch, retry, env reads, credential blocks, patch content, diff against pristine, expected counts, secrets, sticky notes; only in M1: its per-file markdown tables.
+
+
+Mutation check by hand (remove one check of `check_flows.py` at a time, run the whole self-test): 42 removals tried, 39 caught (self-test fails). 3 not caught and not catchable: the `try` around the cross-file check (cannot be reached any more because that check guards every shape itself), the explicit missing-value test (Python raises the same error anyway) and the explicit `--expect-json` object test (Python raises the same error anyway). Three further removals first survived and were then caught after two self-test cases were added. This was my own run, not an independent one.
