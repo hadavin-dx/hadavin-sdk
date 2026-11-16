@@ -156,3 +156,21 @@ Checkpoint: the 20-minute checkpoint line was NOT written at 20 minutes (the con
 
 ## Changes
 One severity scale and the hold sentence defined once at the top; rating rule applied evenly (3 live Major X-4, X-5, X-6; 2 conditional C-3, X-2); round numbers, reviewer ids and correction layers moved to History; X-5 split into X-5.1 to X-5.6 and X-6 parts mapped to the old paragraph labels; choices (4) and (5) split into 20 numbered decisions with cost of accepting and recommended default; DEAD-MAN-CHECK added to summary and index; edit-list pointers fixed; per-process secret scoping prerequisite and the purge_store precedent caveat added to X-6; project terms defined; one decider name (studio head).
+
+## Round 18 (fixer, security and money path, no round cap; backup /tmp/REVIEW.md.r18.bak)
+Inputs: reviews/review-reader-r18.md, review-design-r18.md, review-facts-r18.md (all three present; facts review fixed in the same round). Reviewer words were confirmed against source or evidence before editing where I could: blank-line counts (53-16=37, 74-19=55, read from the patched scratch tree), `evidence-guards-after-fix.md` (rc=0, "2 passed, 10551 deselected", `-k` selection), the file name `tests/test_review_pr3_round2.py`, `0002_audit_chain.sql:15-17`, `store/migrate.py` grants, `agent_loop.py:260-282`, `app.py:80-90,250-264`, `secrets_env.py`, `store/auth_aws.py`.
+
+Not done or uncertain, first:
+- Nothing was applied; no Postgres was run; every Postgres statement in REVIEW.md stays UNVERIFIED. The facts reviewer's "cannot check" items (git apply exit codes, commit ids) were not re-run by me.
+- BLOCKED: rotation owner and date for each login secret (needs the studio head); breakglass, CI deploy and human identities need the studio head's decision whether ROLES-PROPOSAL.md is un-parked; G5-wording.patch not copied into the repository because its context lines carry a personal repository handle (studio head decides on a cleaned copy).
+- `python3 -I tools/check_secrets.py` FAILS with 1 hit in `flow-check/evidence-f8-r8.md:55` (token-like, not in a file I edited; value not printed). Not fixed: not my file; needs the lead.
+- Heavy lane `SUMMARY.md` line 31 is stale (says the guard tests were not re-run); I did not edit it (not my file). REVIEW.md now quotes the evidence file.
+- A personal repository handle also remains in `G5-wording.patch` (in /tmp, outside the repository); it is not in REVIEW.md or `patch-copies/` (grep count 0).
+
+Changes (all in REVIEW.md): old row letters replaced by X-5.n/X-6.n ids; hold sentence and Decision 1 with exact exit criteria and "Blocker-equivalent"; Decision 7 and summary: per-process secret scoping first, size large, owner split, real isolation via separate processes; C-3 one placement merged with C-7 (llm/common.py, llm/fake.py, Limits.charge); C-3 re-rated Minor so C-3, C-7, X-2 follow one rule (counts now 28 rows, 4 Major, 13 Minor, 11 Nit); one 'Not checked' list; guard tests quoted with the -k caveat; +37/+55 explained by blank lines; cite fixed to test_review_pr3_round2.py:321; new part X-6.8 (reading redaction_maps and tool_calls); HMAC against SHA-256 digest threat model in X-6.4; identity table gaps (exact rights list, credential lifetime, breakglass/CI/human, audit-writer departure); extra over-breadth checks; per-part ratings for X-5 and X-6; undefined terms and double-sense words defined; costs added to Decisions 9, 11, 13; round leftovers removed outside History; DEAD-MAN liveness sentence; SUMMARY option A conflict with DECISIONS item 11 noted; soft facts items (README.md:23-24 wording, 0002 columns, test counts 41 and 14) fixed; patch copies kept in `patch-copies/`.
+
+Commands (from handover/flows-audit):
+- `python3 -I reviews-of-core-patches/count_review.py reviews-of-core-patches/REVIEW.md`: rows 28; Nit 11, Minor 13, Major 4; DECLINE 3, PROPOSE FIX 25.
+- `python3 tools/check_refs.py`: PASS 5166 references.
+- `python3 -I tools/check_secrets.py`: FAIL 1 hit (not my file, above).
+- `ruff check .`: All checks passed. `ruff format --check .`: 613 files already formatted.
