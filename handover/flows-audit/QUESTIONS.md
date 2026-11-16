@@ -160,3 +160,5 @@ Failure first: a fresh reader says the lead could not run the plan today without
 1. F-002 check is "Wed 07:30Z" but the rehearsal starts about 07:30Z after practice run (1 h) and Row 4 (0.5 h). Is the F-002 test at the end of the practice run, and does the practice run start about 06:00Z?
 2. F-031 and F-007 are rated Blocker but are text fixes: are they part of Tuesday's GO test (take-path code only), or do they close with the caption changes?
 3. n8n_drive.py: on a take branch, or provided by you at re-pin?
+
+## Q30 ANSWERED (lead, ORDERS.md line 169-171): practice run about 06:00Z Wed; F-002 test at its end about 07:00Z; Row 4 after; rehearsal about 07:30Z. F-031/F-007 text fixes not in Tuesday GO, applied and re-read by Wed 06:00Z. n8n_drive.py: lead provides at re-pin (existence at final head UNVERIFIED). Lead time stamps 13:00-15:00Z in ORDERS blocks are wrong; dated schedule stands.
