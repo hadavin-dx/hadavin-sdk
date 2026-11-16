@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:24:52Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:25:07Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 4
 PERCENT: 85
-AGENTS_RUNNING: 6 (numbering clash check; ONE-PLACE stale gates; merged rehearsal rows; post-claim wording check; board and queue fact check; cold read of new run-day card). Done this beat: run-day card v2 applied (old kept in work/), QUESTIONS item 8 marked answered.
+AGENTS_RUNNING: 5 (numbering clash; ONE-PLACE stale gates; merged rehearsal rows; board and queue fact check; round-2 read of OWNER-VIEW and card). Refilling to 6 next. Applied: claim narrowing in OWNER-VIEW, card step wording.
 INTERRUPTED: none
 NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.51, RAM 0 GB used of 15, DISK / 24 GB free of 252 GB (40 percent used); top 3 disk users: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G (nothing removed; free space is above the limits)

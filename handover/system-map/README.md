@@ -1,5 +1,5 @@
 # START HERE (system-map folder)
-STATE AS OF Mon 16 Nov 2026 2026-11-16T10:20:53Z (IST = UTC+5:30). Goal: one safe filmed take, made-up data only, by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time). Wed 18 Nov is only a target and is NOT confirmed. Dates: TAKE-BLOCKERS.md (Dates paragraph) is the one source.
+STATE AS OF Mon 16 Nov 2026 2026-11-16T10:20:53Z (IST = UTC+5:30). Goal: one filmed take, made-up data only, by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time). Wed 18 Nov is only a target and is NOT confirmed. Dates: TAKE-BLOCKERS.md (Dates paragraph) is the one source.
 WARNING: the CURRENT owner steps are inputs/OWNER-STEPS-realrun-v5-core-hardening.md (letters A to J, written Mon 16 Nov); the older inputs/OWNER-STEPS-realrun-v3.md (OS) is superseded and stale at steps 7 and 8 (wrong n8n port, database password model, HubSpot key rights; drift/REPORT.md D-01, D-02, D-03) and in its schedule (D-10, 'Wed to Sun'). Steps 1 to 9 are already done by the studio head (= v3 Phase 0; inputs/FACTS-ALREADY-DONE.md lines 3 and 5). Follow only the owner steps the studio lead re-issues in the chat.
 
 ## BEFORE THE TAKE: where each job lives (one place per job)
