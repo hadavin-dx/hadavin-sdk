@@ -295,3 +295,73 @@ print("SUMMARY-LINES (id, guard clean, applied by real migrate(), weakened by pr
 gaps = [c for c in SUMMARY if c[1] and c[2] and c[3]]
 print(f"  total={len(SUMMARY)} guard_clean={sum(1 for c in SUMMARY if c[1])} applied={sum(1 for c in SUMMARY if c[2])} weakened={sum(1 for c in SUMMARY if c[3])} CLEAN+APPLIED+WEAKENED={len(gaps)} {[c[0] for c in gaps]}", flush=True)
 print("  guard clean AND applied (any): " + str([c[0] for c in SUMMARY if c[1] and c[2]]), flush=True)
+
+# ======================================================================= data cases (DB-3 original file, real migrate())
+print("DATA CASES (unmodified DB-3 file)", flush=True)
+def fresh3(tag, pre_sql=None):
+    db = f"dat_{tag}_{secrets.token_hex(2)}"
+    tmp = mkdb(db, [(TXT[F2], "0006_dec"), (T3, "0007_x")], template="tpla" if pre_sql else "tplb")
+    return db, tmp
+def conns(db):
+    return psycopg.connect(dsn("migr17", db), autocommit=True), psycopg.connect(dsn("rt17", db), autocommit=True)
+def snap(mg): return (mg.execute("SELECT agent_id, day, usd, open_usd FROM spend ORDER BY 1,2").fetchall(), mg.execute("SELECT agent_id, month, usd, open_usd FROM spend_month ORDER BY 1,2").fetchall())
+def call(rt, mg, label, q, args):
+    before = snap(mg)
+    try: rows = rt.execute(q, args).fetchall(); res = f"rows={len(rows)} {[tuple(str(x) for x in r) for r in rows][:1]}"; e = None
+    except psycopg.Error as ex: res = "sqlstate=" + str(ex.sqlstate); e = ex.sqlstate
+    print(f"DATA {label} | {res} | state_changed={snap(mg) != before}", flush=True)
+    return e
+grants_select_only(); m.GRANTS["spend_decrease_log"] = m.Grant("table", ""); m.GRANTS["kill_switch_log"] = m.Grant("table", "")
+db, tmp = fresh3("a"); r = run_migrate(db, tmp); print("DATA setup DB-3 on tplb ->", r, flush=True)
+mg, rt = conns(db); au.apply_function_grants(mg, roles=ROLES)
+RES = "SELECT * FROM spend_reserve(%s,%s,%s)"; SET = "SELECT * FROM spend_settle(%s,%s,%s,%s)"
+for lbl, ag in (("-cli", "-cli"), ("-unattributed:foo", "-unattributed:foo"), ("-", "-"), ("200 chars", "a" * 200), ("201 chars", "a" * 201), ("e-acute NFC", "café"), ("Cyrillic lookalike", "аbc"),
+                ("trailing newline", "abc\n"), ("leading space", " abc"), ("trailing space", "abc "), ("inner space", "a b"), ("tab", "a\tb"), ("zero-width space", "a​b"), ("fullwidth a", "ａbc"), ("NUL-free empty string", ""), ("NULL agent", None)):
+    call(rt, mg, f"reserve agent {lbl}", RES, (ag, D, 1))
+for lbl, day, w in (("NULL day", None, 1), ("NULL worst", D, None), ("NaN", D, "NaN"), ("Infinity", D, "Infinity"), ("-Infinity", D, "-Infinity"), ("negative -1", D, -1), ("zero", D, 0), ("1e12 (ceiling)", D, Decimal("1e12")),
+                    ("999999999999.99", D, Decimal("999999999999.99")), ("1e20", D, Decimal("1e20")), ("1e30", D, Decimal("1e30")), ("day infinity", "infinity", 1), ("day -infinity", "-infinity", 1), ("day 2100-01-01", date(2100, 1, 1), 1), ("day 2020-01-01", date(2020, 1, 1), 1), ("day 2019-12-31", date(2019, 12, 31), 1)):
+    call(rt, mg, f"reserve {lbl}", RES, (f"r_{secrets.token_hex(2)}", day, w))
+call(rt, mg, "reserve 6e11 first (agent cum)", RES, ("cum", D, Decimal("6e11"))); call(rt, mg, "reserve 6e11 second (cumulative 1.2e12 over the ceiling)", RES, ("cum", D, Decimal("6e11")))
+# settle
+call(rt, mg, "setup reserve sa 10", RES, ("sa", D, 10)); call(rt, mg, "setup reserve sb 7 (other agent)", RES, ("sb", D, 7))
+for lbl, args in (("NULL agent", (None, D, 10, 4)), ("NULL day", ("sa", None, 10, 4)), ("NULL worst", ("sa", D, None, 4)), ("NULL actual", ("sa", D, 10, None)), ("worst -1", ("sa", D, -1, 4)), ("actual -1", ("sa", D, 10, -1)),
+                  ("unknown agent", ("nobody_x", D, 1, 0)), ("day without a row", ("sa", date(2026, 11, 17), 10, 4)), ("worst 11 > open 10", ("sa", D, 11, 4)), ("actual NaN", ("sa", D, 10, "NaN")), ("worst NaN", ("sa", D, "NaN", 1)),
+                  ("worst Infinity", ("sa", D, "Infinity", 1)), ("actual 1e20", ("sa", D, 10, Decimal("1e20"))), ("actual 1e12", ("sa", D, 10, Decimal("1e12"))), ("settle agent sa for agent sb money (other agent's open 7, worst 7)", ("sb", D, 7, 0)), ("valid settle sa 10 -> 4", ("sa", D, 10, 4)),
+                  ("repeat of the valid settle (open is 0 now)", ("sa", D, 10, 4)), ("settle worst 0 actual 3 (adds spend with no reservation)", ("sa", D, 0, 3)), ("settle worst 0 actual 0 (no-op)", ("sa", D, 0, 0))):
+    call(rt, mg, f"settle {lbl}", SET, args)
+call(rt, mg, "setup reserve sc 5", RES, ("sc", D, 5)); mg.execute("DELETE FROM spend_month WHERE agent_id='sc'")
+call(rt, mg, "settle with the MONTH row missing", SET, ("sc", D, 5, 0))
+call(rt, mg, "setup reserve sd 5", RES, ("sd", D, 5)); mg.execute("DELETE FROM spend WHERE agent_id='sd'")
+call(rt, mg, "settle with the DAY row missing", SET, ("sd", D, 5, 0))
+# kill switch and roles
+op = psycopg.connect(dsn("op17", db), autocommit=True)
+for who, c in (("runtime", rt), ("operator", op)):
+    for f in ("kill_switch_engage()", "kill_switch_release()"):
+        e = st(lambda: c.execute(f"SELECT {f}")); print(f"DATA {who} calls {f} | sqlstate={e}", flush=True)
+for lbl, q in (("direct INSERT into spend", "INSERT INTO spend (agent_id, day, usd) VALUES ('z', '2026-11-16', 1)"), ("direct UPDATE spend", "UPDATE spend SET usd = 0"), ("direct UPDATE kill_switch", "UPDATE kill_switch SET \"on\" = false"), ("DELETE spend", "DELETE FROM spend"), ("TRUNCATE spend", "TRUNCATE spend")):
+    print(f"DATA runtime {lbl} | sqlstate={st(lambda: rt.execute(q))}", flush=True)
+rt.close(); op.close(); mg.close(); drop(db)
+# pseudo ids already stored before DB-3 (the apply must refuse and roll back)
+for lbl, ins in (("spend row '-cli'", "INSERT INTO spend (agent_id, day, usd) VALUES ('-cli', %s, 2)"), ("spend_month row '-unattributed:x'", "INSERT INTO spend_month (agent_id, month, usd) VALUES ('-unattributed:x', %s, 2)"),
+                 ("spend row with a trailing space 'a '", "INSERT INTO spend (agent_id, day, usd) VALUES ('a ', %s, 2)"), ("spend row usd 2e12 over the ceiling", "INSERT INTO spend (agent_id, day, usd) VALUES ('big', %s, 2000000000000)"),
+                 ("spend row day 1999-01-01", "INSERT INTO spend (agent_id, day, usd) VALUES ('old', '1999-01-01', 2)"), ("spend row NaN total", "INSERT INTO spend (agent_id, day, usd) VALUES ('nan', %s, 'NaN')")):
+    db, tmp = fresh3("p", pre_sql=True)
+    # tpa: base only (DB-2 not applied); the file list above names DB-2 and DB-3, both pending
+    mg = psycopg.connect(dsn("migr17", db), autocommit=True)
+    try: mg.execute(ins, (D,)) if "%s" in ins else mg.execute(ins)
+    except psycopg.Error as e: print(f"DATA pre-existing {lbl} | could not be inserted before DB-3: {e.sqlstate}", flush=True); drop(db); continue
+    res = run_migrate(db, tmp)
+    col = mg.execute("SELECT count(*) FROM information_schema.columns WHERE table_name='spend' AND column_name='open_usd'").fetchone()[0]
+    led = mg.execute("SELECT count(*) FROM schema_migrations").fetchone()[0]
+    print(f"DATA pre-existing {lbl} | apply={res} | open_usd column present={col} | ledger rows={led}", flush=True)
+    mg.close(); drop(db)
+# cutover with an open reservation: the rows exist BEFORE DB-3, DB-3 then sets open_usd = 0
+db, tmp = fresh3("c", pre_sql=True); mg = psycopg.connect(dsn("migr17", db), autocommit=True)
+mg.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('cut', %s, 5)", (D,)); mg.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('cut', %s, 5)", (MO := date(2026, 11, 1),))
+print("DATA cutover apply:", run_migrate(db, tmp), flush=True)
+au.apply_function_grants(mg, roles=ROLES); rt = psycopg.connect(dsn("rt17", db), autocommit=True)
+call(rt, mg, "cutover: settle the pre-existing reservation worst 5 actual 0 (open_usd is 0 after the file)", SET, ("cut", D, 5, 0))
+call(rt, mg, "cutover: reserve 3 more on the same agent-day", RES, ("cut", D, 3)); call(rt, mg, "cutover: settle worst 3 actual 0", SET, ("cut", D, 3, 0)); call(rt, mg, "cutover: settle worst 3 again (nothing open)", SET, ("cut", D, 3, 0))
+print("DATA cutover final rows:", snap(mg), flush=True)
+rt.close(); mg.close(); drop(db)
+print("DATA DONE", flush=True)
