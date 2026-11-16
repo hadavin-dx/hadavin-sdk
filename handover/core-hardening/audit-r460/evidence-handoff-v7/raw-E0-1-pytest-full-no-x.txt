@@ -115,4 +115,67 @@ sssssssssssssssssss..................................................... [ 13%]
 ........................................................................ [ 84%]
 ..................ssssssss.............................................. [ 84%]
 ........................................................................ [ 85%]
-...............................
+........................................................................ [ 86%]
+..................................s..................................... [ 87%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+...........................................................F............ [ 89%]
+..................................sss.ss................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+.............................................ssss....................... [ 92%]
+....................F................................................... [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 95%]
+.......sss.............................................................. [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+......................................................                   [100%]
+=================================== FAILURES ===================================
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/core-hardening/steps-edits/evidence-v23/plant-v23.py: '[banned-string-removed]'
+E       assert not ["handover/core-hardening/steps-edits/evidence-v23/plant-v23.py: '[banned-string-removed]'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+________________________ test_licences_are_proprietary _________________________
+
+    def test_licences_are_proprietary():
+        files = tracked_files(ROOT)
+        assert {"LICENSE", "pyproject.toml"} <= set(files)
+>       assert licence_problems(ROOT, files) == []
+E       AssertionError: assert ['handover/pr...Hadavin', ...] == []
+E         
+E         Left contains 10 more items, first extra item: 'handover/promotion-inputs/apexc/LICENSE: not the proprietary licence text'
+E         Use -v to get more diff
+
+tests/test_repo_rules.py:120: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - AssertionErr...
+2 failed, 9389 passed, 455 skipped in 251.04s (0:04:11)
+rc=1

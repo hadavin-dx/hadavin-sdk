@@ -87,25 +87,44 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     the expected full command: the group is found by that command, in root, started after the run; with no
     command recorded nothing is stopped.
   * SIGKILL and SIGSTOP cannot be caught: use `--restore`.
+  * PROCESS GROUP ONLY (review r7 N5): what a test starts is stopped only while it stays in the test's process group. A
+    background process that leaves it (`setsid`, `setpgid`, a double fork into a new session) is NOT found and NOT
+    stopped, by the sweep after the leader ends or by `--restore`; it can keep writing into the tree later. The tree
+    comparison after each mutant and after the loop may catch such a write (exit 4), but only if it lands before that
+    comparison. Closing this needs a kernel boundary (a cgroup or a PID namespace) that a normal user cannot set up;
+    run the tests in one if that matters (T89).
+  * Two runs on one root with DIFFERENT TMPDIR do not share a lock folder: a normal run looks in the usual other places
+    (/tmp, /var/tmp, /dev/shm, TMP, TEMP) at the start and refuses when another run holds its lock there or left a
+    planted file (r7 N6); two runs started within the same instant, before either has taken its lock, can still race
+    (T91).
 Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --root (they would dirty the tree), an
 output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
 checked before anything is planted. The folder --root is identified by device and inode when the run starts and
 recorded in the marker: a folder that has been renamed away and replaced by another one with the same name is refused
-(plant and restore, exit 3), so a decoy cannot receive a restore. The mode of the file under test is set back on restore.
+(plant and restore, exit 3), so a decoy cannot receive a restore. The mode of the file under test is set back on restore, also when a test made it read-only (444): the owner's own
+write permission is given back on the open file, the same inode is opened for writing, the original text and mode are
+written back (r7 N7; as root a mode bit never blocks a write, so this path is only proven as a normal user, T88).
+`--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. The modes (chmod) of the
 other files in the tree are not compared; the tree is compared by content. Paths inside --root
 are trusted as a whole: `.venv` (directly under the root) and the cache folders are NOT compared, so a mutant
 planted into, or a test that changes, files in them is not detected; other test files in --root run too.
-Exit codes (round 7, review r6 M1/M2):
+Exit codes (round 8, reviews r6 M1/M2 and r7 M1):
   0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag), a baseline of the unmutated tree
        ran and passed, and the tree is clean
-  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable). With
-       --restore: 2 ONLY when the marker or the backup is forged or does not belong to this root (nothing is written)
-  3    restore failed (marker and backup kept; run --restore): after a VALID marker has been loaded every failure to
-       write the original back (unwritable file, symbolic link or swapped folder on the way, FIFO, two names, a root
-       folder that is no longer the one the mutant was planted in) exits 3 and leaves the mutant planted and the marker
-       kept, never 2; also --restore could not settle a control run
+  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable; a normal run
+       that finds the marker of an EARLIER killed run refuses with 2, this run planted nothing). With --restore: 2 ONLY
+       when the marker names another root or another backup path (it is not this run's marker; nothing is written), or
+       when no marker for this root exists at all (then nothing is recorded as planted)
+  3    restore failed (marker and backup kept; run --restore): the class is "an exit code that says nothing is planted
+       while the mutant is planted", fixed in ONE place (may_be_planted in main): with --restore, EVERY failure once a
+       planted or control marker for this root exists exits 3: invalid or damaged marker, missing, linked, FIFO or
+       damaged backup (hash differs: nothing is written), unusable state folder, refused real-repository check, a lock
+       held by a live run, an unwritable file, a link or swapped folder on the way, two names, a root folder that is no
+       longer the one the mutant was planted in, an internal bug; in a normal run, any exit while this run's own marker
+       still exists. Also: --restore could not settle a control run, a control marker that cannot be read, or an
+       orphaned test group that could not be stopped (the file is still written back; marker and backup are kept)
   4    tree not clean (before the first mutant, after a mutant, or after the loop) or marker left behind
   5    INCOMPLETE: at least one mutant has no clean verdict (COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED,
        or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran, or
@@ -220,6 +239,11 @@ class Refused(Exception):
     pass
 
 
+class Forged(Refused):
+    """A marker that names another root or another backup path: it does not belong to this run, so nothing is written
+    and `--restore` exits 2. Every OTHER refusal after a marker for this root exists is a failed restore (exit 3)."""
+
+
 def sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
@@ -234,6 +258,7 @@ class SigState:
     fired = False
     first: int | None = None
     exiting = False  # the result is decided and the process is leaving: a signal can no longer change it (r6 nit 2)
+    own_marker = False  # this run wrote its planted marker and has not yet verified the restore (r7 review M1)
 
 
 SIG = SigState()
@@ -422,6 +447,30 @@ def write_target(
         fh.write(data)
 
 
+def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tuple[int, bool]:
+    """r7 review N7: a test of the mutant may have run chmod on the file under test (mode 444); then the planted text
+    could never be written back. The owner may always change the mode of an own file: on the OPEN read-only file (a
+    regular file, our own, exactly one name) give the owner write permission, then open the SAME inode for writing from
+    the same folder descriptor. The recorded mode is set back by the caller. Anything else stays read-only (compared only)."""
+    st = os.fstat(fd)
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid() or st.st_nlink != 1:
+        return fd, False
+    with os.fdopen(os.dup(fd), "rb") as probe:
+        if probe.read() == saved:  # nothing to write: a read-only file that holds the original is left alone
+            return fd, False
+    os.fchmod(fd, stat.S_IMODE(st.st_mode) | 0o200)
+    try:
+        fd2 = os.open(name, base | os.O_RDWR, dir_fd=pfd)
+    except OSError:
+        return fd, False
+    st2 = os.fstat(fd2)
+    if (st2.st_dev, st2.st_ino) != (st.st_dev, st.st_ino):  # swapped meanwhile: not the file we changed
+        os.close(fd2)
+        return fd, False
+    os.close(fd)
+    return fd2, True
+
+
 def restore_target(
     path: pathlib.Path,
     saved: bytes,
@@ -452,6 +501,8 @@ def restore_target(
             created = writable = True
         except PermissionError:  # a read-only file: it can still be compared
             fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
+            if mode is not None:
+                fd, writable = _make_writable(fd, name, pfd, base, saved)
         except OSError as e:
             if e.errno == errno.ELOOP:
                 raise Refused(f"{path} is a symbolic link: not written") from e
@@ -1044,32 +1095,46 @@ def restore_control(root: pathlib.Path, key: str) -> tuple[bool, str]:
     )
 
 
+def settle_control(root: pathlib.Path, key: str) -> tuple[bool, str | None]:
+    """r7 review N1: a control marker that cannot be read, is not valid JSON or does not belong to this root must not
+    block the restore of a PLANTED file: the problem is recorded and makes the final answer exit 3, nothing more."""
+    if not os.path.lexists(control_marker_path(key)):
+        return True, None
+    try:
+        return restore_control(root, key)
+    except (Refused, OSError) as e:
+        why = e.strerror or e if isinstance(e, OSError) else e
+        return False, (
+            f"control run: RESTORE FAILED: {why}; its test group may still run; the control marker "
+            f"{control_marker_path(key)} is KEPT (check it by hand)"
+        )
+
+
 def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
-    control_ok, control = (
-        restore_control(root, key) if os.path.lexists(control_marker_path(key)) else (True, None)
-    )
+    control_ok, control = settle_control(root, key)
     if not os.path.lexists(marker):
         ok, text = other_state_check(root, key)
         return ok and control_ok, f"{control}; {text}" if control else text
     m = load_marker(marker)
+    # Class (r6 M1, r7 M1): an exit code that says "nothing planted" while the mutant is planted. Only a marker that names
+    # another root or another backup path is a refusal (Forged, exit 2, nothing written). Everything else that goes wrong
+    # once a marker for this root exists (unreadable or damaged marker, missing, linked or damaged backup, state folder,
+    # real-repository check, lock) is raised as Refused or fails otherwise and main() maps it to exit 3.
     if m.get("root") != str(root):
-        raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
+        raise Forged(f"marker is for another root ({m.get('root')!r}): refused")
     bk = STATE / f"{key}.backup"
     if m.get("backup") != str(bk):
-        raise Refused(f"marker names a backup other than {bk}: refused")
+        raise Forged(f"marker names a backup other than {bk}: refused")
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
-        raise Refused("the saved backup does not match the hash recorded in the marker: refused")
-    # From here the marker, the backup and its hash are VALID: whatever fails now is a failed restore (exit 3, the mutant
-    # may still be planted, marker and backup kept), never a refusal (exit 2 means: nothing was written; review r6 M1).
-    # Class: an exit code that says "nothing changed" while the file is still mutated.
+        raise Refused("the saved backup does not match the hash recorded in the marker: nothing written")
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
-        orphan, _ = stop_orphan(m, root)
+        orphan, settled = stop_orphan(m, root)  # r7 review N2: an orphan that could not be stopped is reported, not hidden
         mode = (
             m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
         )
@@ -1087,12 +1152,17 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
         why = e.strerror or e if isinstance(e, OSError) else e
         text = f"RESTORE FAILED: cannot write {m['file']} back: {why}; the mutant may still be planted; marker and backup kept"
         return False, f"{control}; {text}" if control else text
-    if ok:
-        marker.unlink()
-        bk.unlink(missing_ok=True)
     note = " (it already held the original)" if already else ""
     text = f"{orphan}; restored {m['file']} from {bk}{note}; hash matches saved original: {ok}"
-    return ok and control_ok, f"{control}; {text}" if control else text
+    if ok and not settled:
+        text += (
+            "; the test group may STILL RUN (it could not be stopped or verified): marker and backup KEPT, stop it by "
+            "hand, then run --restore again"
+        )
+    elif ok:
+        marker.unlink()
+        bk.unlink(missing_ok=True)
+    return ok and settled and control_ok, f"{control}; {text}" if control else text
 
 
 def test_env(pythonpath: str | None) -> dict:
@@ -1577,6 +1647,7 @@ def one(a, tests, m, results, ref) -> list[str]:
         try:
             try:
                 write_state(backup, orig)
+                SIG.own_marker = True  # from here this run owns a marker: any exit while it exists is exit 3 (r7 review M1)
                 write_state(marker, json.dumps(info).encode())
                 planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
                 try:
@@ -1593,7 +1664,7 @@ def one(a, tests, m, results, ref) -> list[str]:
                     # written again) and verify on ONE open file (review r5 M3), never by path
                     _, back = restore_target(p2, orig, root, mode=stat.S_IMODE(sp.st_mode))
                     same_hash = back == orig and back == ref_bytes
-                except (Refused, OSError) as e:
+                except Exception as e:  # any failure (also a bug) to write the original back is a failed restore
                     print("RESTORE ERROR:", e, file=sys.stderr)
                     same_hash = False
                 if not same_hash:
@@ -1607,6 +1678,7 @@ def one(a, tests, m, results, ref) -> list[str]:
                 # verified identical: no marker may stay, even on an error
                 marker.unlink(missing_ok=True)
                 backup.unlink(missing_ok=True)
+                SIG.own_marker = False
         finally:
             SIG.critical = False
         deliver_pending()  # a signal that arrived during the plant is delivered now, after the restore
@@ -1781,6 +1853,67 @@ def summarize(results: list[dict], planned: int, baseline_ran: bool = True) -> t
     return line, complete
 
 
+def may_be_planted(restore: bool, root: pathlib.Path, marker: pathlib.Path, e: BaseException) -> bool:
+    """The ONE choke point for the exit code (r7 review M1; class: an exit code that says "nothing planted" while the mutant
+    is planted). True when a mutant, or a test group of a control run, may still be in place: with `--restore` whenever a
+    planted or control marker for this root exists (unless the marker is Forged: it names another root or backup, nothing is
+    written, exit 2); in a normal run when THIS run wrote its marker and has not verified the restore. Then the exit code is
+    3 (restore failed, marker and backup kept), never 2 and never Python's own 1."""
+    if isinstance(e, Forged):
+        return False
+    if os.path.lexists(marker) and (restore or SIG.own_marker):
+        return True
+    return restore and os.path.lexists(control_marker_path(key_for(root)))
+
+
+def reject_output_inputs(paths: list[pathlib.Path], inputs: list[pathlib.Path]) -> None:
+    """r7 review N4: an output file (--out-json, raw files) must not be one of the files this run reads: run.py itself,
+    --list, --patch. Compared by device and inode, so a different spelling or a hard link is caught too."""
+    for o in paths:
+        if not os.path.lexists(o):
+            continue
+        for i in inputs:
+            try:
+                if os.path.samefile(o, i):
+                    raise Refused(f"output path {o} is the same file as the input {i}: refused (it would be overwritten)")
+            except OSError:
+                continue
+
+
+def other_run_check(root: pathlib.Path, key: str) -> None:
+    """r7 review N6: state and lock live in a folder named after TMPDIR. A run with ANOTHER TMPDIR on the same root holds
+    its lock and keeps its marker THERE: before this run starts, look in the usual places (the same list as `--restore`):
+    a still planted file or a lock that is held now refuses this run. (A run that has not yet taken its lock cannot be
+    seen: two runs started in the same instant with different TMPDIR remain a race, named in the docstring.)"""
+    ok, text = other_state_check(root, key)
+    if not ok:
+        raise Refused(text)
+    here = STATE.parent.resolve()
+    spots = {p.resolve() for p in STATE_PARENTS}
+    spots |= {pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v}
+    for parent in sorted(spots - {here}):
+        folder = parent / STATE.name
+        lock = folder / f"{key}.lock"
+        try:
+            fst = os.lstat(folder)
+            if not stat.S_ISDIR(fst.st_mode) or fst.st_uid != os.geteuid() or fst.st_mode & 0o077:
+                continue
+            fd = os.open(lock, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        except OSError:
+            continue
+        with os.fdopen(fd, "r") as fh:
+            lst = os.fstat(fh.fileno())
+            if not stat.S_ISREG(lst.st_mode) or lst.st_uid != os.geteuid():
+                continue
+            try:
+                fcntl.flock(fh, fcntl.LOCK_SH | fcntl.LOCK_NB)
+            except OSError as e:
+                raise Refused(
+                    f"another run holds the lock for {root} in {folder} (it uses another TMPDIR): two runs on one "
+                    f"tree would plant over each other"
+                ) from e
+
+
 def restore_args(a, repo_given: bool) -> str:
     """The extra words of the restore command that make it equal to this run's own checks (--repo and
     --real-repo are what refuse a root inside the real repository), review r4 nit 10."""
@@ -1923,6 +2056,7 @@ def main():
                         file=sys.stderr,
                     )
                 leave(0 if ok else EXIT_RESTORE_FAILED)
+            other_run_check(root, key_for(root))
             check_test_args(tests, root)
             check_pytest_config(root, tests)
             refuse_hard_links(root)
@@ -1981,6 +2115,12 @@ def main():
             outs += [pathlib.Path(a.out_json)] if a.out_json else []
             for o in outs:  # before anything is planted (review r4 nit 11, r6 nit 4)
                 check_out_path(o, root)
+            if len({os.path.abspath(o) for o in outs}) != len(outs):
+                raise Refused("two output files have the same path (--out-json is also a raw file): refused")
+            reject_output_inputs(
+                outs,
+                [pathlib.Path(__file__), *([pathlib.Path(a.list)] if a.list else []), *map(pathlib.Path, a.patch)],
+            )
             results = []
             a.ref_files = tree_files(ref)
             # review r5 nit 6: the tree must still equal the archive after the import check (it runs the target module)
@@ -2063,8 +2203,16 @@ def main():
                     file=sys.stderr,
                 )
                 leave(EXIT_INCOMPLETE)
+            SIG.exiting = True  # exit 0 is decided: a late signal (while the folders are removed) cannot change it (r7 N3)
     except Refused as e:
         SIG.exiting = True
+        if may_be_planted(a.restore, root, marker, e):
+            print(
+                f"RESTORE FAILED: {e}; the mutant may still be planted; marker and backup kept "
+                f"(run --restore again when the cause is fixed)",
+                file=sys.stderr,
+            )
+            sys.exit(EXIT_RESTORE_FAILED)
         print("REFUSED:", e, file=sys.stderr)
         sys.exit(EXIT_REFUSED)
     except KeyboardInterrupt as e:
@@ -2090,7 +2238,9 @@ def main():
             else "no marker: nothing is planted by this run"
         )
         print(f"INTERNAL ERROR ({type(e).__name__}: {e}); {state}", file=sys.stderr)
-        raise SystemExit(EXIT_REFUSED) from e
+        raise SystemExit(
+            EXIT_RESTORE_FAILED if may_be_planted(a.restore, root, marker, e) else EXIT_REFUSED
+        ) from e
     finally:
         shutil.rmtree(tmpref, ignore_errors=True)
 

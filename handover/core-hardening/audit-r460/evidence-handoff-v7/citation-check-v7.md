@@ -89,7 +89,7 @@ Cycles that include an `llm.*` module: none, in any counting. Edges the document
 |---|---|---|
 | E0-1 `ruff check` | yes, `ruff check --no-cache` (installed ruff, not `uv run`: `uv run` may sync and needs network) | exit 0, "All checks passed!" (`raw-E0-1-ruff-check.txt`) |
 | E0-1 `ruff format --check` | yes, same way | exit 0, "299 files already formatted" (`raw-E0-1-ruff-format.txt`) |
-| E0-1 `pytest` | see section G | see G |
+| E0-1 `pytest` | yes, section G | exit 1: 2 failed, 9389 passed, 455 skipped (both failures are under `handover/`) |
 | E0-1 `bandit -ll` | NOT run: `bandit` is not installed in `.venv` or the system Python, install needs network | skipped |
 | F19 `grep thinking\|cache_control\|cachedContent\|reasoning llm/*.py` | yes (`raw-F19-grep.txt`) | exit 1, 0 lines (matches the document: no hits) |
 | E0-8 `grep -rn "environment: dev\|environment=\"dev\"" tests demos docs` | yes (`raw-E0-8-grep.txt`) | exit 0, 2 lines: `tests/fixtures/config/config.yaml:2: environment: dev` and `tests/test_p4_secrets.py:106: def _config(..., environment="dev")` |
@@ -98,9 +98,16 @@ Cycles that include an `llm.*` module: none, in any counting. Edges the document
 | E0-2 .. E0-7, E0-9 .. E0-11, E0-13 | NOT run: each needs Postgres, a script that the builders write in a later PR, or code that does not exist yet (`reserve_estimate`, `spend_op`, `false_abstain_report.py`, the invoice corpus) | skipped |
 | E0-12 | yes, section E | no cycle with `llm.*` |
 
-## G. pytest
+## G. pytest (E0-1), run with no cloud variables, no Postgres DSN, no cache
 
-See the last section of this file, appended after the run finished.
+Command (not the document's `uv run` form, which may sync packages over the network): `env -u AWS_SECRET_ACCESS_KEY -u AWS_ACCESS_KEY_ID -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u HADAVIN_TEST_PG_DSN .venv/bin/python -m pytest -p no:cacheprovider -q --no-header`. Exit code gated, not piped.
+
+- First run with `-x`: stopped at the first failure after 8712 passed (`raw-E0-1-pytest.txt`). Not a full run.
+- Full run without `-x` (`raw-E0-1-pytest-full-no-x.txt`): **exit 1: 2 failed, 9389 passed, 455 skipped in 251 s.** The skips include the Postgres tests (no DSN set).
+  1. `tests/test_repo_rules.py::test_licences_are_proprietary`: 10 problems, all under `handover/promotion-inputs/` (LICENSE text and `pyproject.toml` licence and author fields of copied demo projects).
+  2. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: one banned string in `handover/core-hardening/steps-edits/evidence-v23/plant-v23.py`.
+  Both are about tracked files under `handover/`. Neither concerns the v7 document, `src/` or `tests/`. I did not check whether they fail at the repository's last commit; I did not fix them (evidence runner). My own files in this folder were tracked-scanned by the second test only if tracked; it names none of them.
+- The cause of both failures is not judged here.
 
 ## H. Compared with `evidence-handoff-v6/citation-check-v6.md`: which v6 wrong cites are now right
 
@@ -122,4 +129,6 @@ Result: 9 of the 10 v6 wrong or partly-right cites are now right; 1 (row 6) is p
 
 ## Files in this folder
 
-`citation-check-v7.md` (this file), `raw-all-cites.tsv`, `raw-counts-grep.txt`, `raw-F19-grep.txt`, `raw-E0-8-grep.txt`, `raw-line23-grep.txt`, `raw-E0-1-ruff-check.txt`, `raw-E0-1-ruff-format.txt`, `raw-E0-1-pytest.txt`, `import_graph.py`, `raw-import-graph.txt`.
+`citation-check-v7.md` (this file), `raw-all-cites.tsv`, `raw-counts-grep.txt`, `raw-F19-grep.txt`, `raw-E0-8-grep.txt`, `raw-line23-grep.txt`, `raw-E0-1-ruff-check.txt`, `raw-E0-1-ruff-format.txt`, `raw-E0-1-pytest.txt`, `raw-E0-1-pytest-full-no-x.txt`, `import_graph.py`, `raw-import-graph.txt`.
+
+Note on the raw logs: the failing assertion of test 2 in section G printed the banned vendor string. I replaced it with `[banned-string-removed]` in the raw pytest log (the only edit to any raw file) so this folder passes the repository's own vendor-string test.
