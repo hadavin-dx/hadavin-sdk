@@ -324,3 +324,15 @@ stop_group calls: []
   PASS: T42 PWR no orphan pytest
 == T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
 safety-tests.r14.sh: line 2544: 11690 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
+process 11902 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/fullF/tmpstate/hadav
+  PASS: T43a restore exit 0 and the file is back (rc 0)
+  PASS: T43a the stranger was left alone
+safety-tests.r14.sh: line 2544: 11902 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+safety-tests.r14.sh: line 2544: 12102 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 12117; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/fullF/tmpstate/hadavin-mutation-lane-0/b30ecda48678fba4.backu
+  PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+safety-tests.r14.sh: line 2544: 12276 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 12290 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/fullF/tmpstate/hadav
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 3), nothing stopped on a guess, exit 3 because the group is unsettled (r8 N2)
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
