@@ -17,7 +17,7 @@ One word keeps one meaning. The owner texts define their words at first use in E
 - **database server** = the one Postgres program in one **container**; **n8n's own database** and **the take's database** = the two databases on it; **database user** = a Postgres account. **login** = only a mailbox or HubSpot sign-in. (The decision file calls the parked proposal "four logins"; this file says "the proposal of four database users".)
 
 ## Gates (a row marked Hold is NOT applied until its gate is open)
-- **G1, code change (E-04, E-05, E-40, E-41, E-42, E-44, E-45)**: D2 says the take never deletes contacts; today's code removes them (`run_real_check_n8n.py:1051`, `crm_hubspot.py:504-509`, per `review-codebase-1.md` F-01). The gate is opened by the STUDIO LEAD (never by the builder and never by the owner) by writing the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>` into the newest checkpoint note, and only when all three hold: (1) the commit that removes the delete call from the take's end-of-take step is on the take branch; (2) a saved raw test output shows that the end-of-take step makes no delete call to HubSpot and prints the notice and list the rows describe (a test that fails on the old code and passes on the new); (3) independent `egm:*` reviewers have read the diff and that output and their saved report lists no open Blocker or Major (delete and money path: no round cap). If OWNER-STEPS v3 or v4 is issued before the line exists, these rows stay unapplied and no paid take starts. E-12 (fact 4 of the yes message) and E-37 carry this gate into text that is applied now: the assistant cannot state fact 4 until the line exists, so it cannot send the message. Whether the code already prints the list of leftover contacts by lead key and contact id is UNVERIFIED.
+- **G1, code change (E-04, E-05, E-40, E-41, E-42, E-44, E-45; carried into E-12 and E-37)**: D2 says the take never deletes contacts; today's code removes them (`run_real_check_n8n.py:1051`, `crm_hubspot.py:504-509`, per `review-codebase-1.md` F-01). The gate is opened by the STUDIO LEAD (never by the builder and never by the owner) by writing the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>` into the newest checkpoint note, and only when all three hold: (1) the commit that removes the delete call from the take's end-of-take step is on the take branch; (2) a saved raw test output shows that the end-of-take step makes no delete call to HubSpot and prints the notice and list the rows describe (a test that fails on the old code and passes on the new); (3) independent `egm:*` reviewers have read the diff and that output and their saved report lists no open Blocker or Major (delete and money path: no round cap). If OWNER-STEPS v3 or v4 is issued before the line exists, these rows stay unapplied and no paid take starts. E-12 (fact 4 of the yes message) and E-37 carry this gate into text that is applied now: the assistant cannot state fact 4 until the line exists, so it cannot send the message. Whether the code already prints the list of leftover contacts by lead key and contact id is UNVERIFIED.
 - **G2, later wording only, Windows reaching n8n in WSL (E-07, E-08)**: E-07 and E-08 are applied now with neutral words (round 7). G2 only decides a second wording: opened by the studio lead after reading the first-smoke evidence for plan item P14; the studio lead writes `ND5: proven <file>` or `ND5: not proven <file>`; if proven, the second wording in the Why of E-07 and E-08 replaces the neutral one.
 - **G3, second edit pass (E-13)**: opened by the studio lead when the stand-in test result file (in `evidence-2`, its INDEX) exists and independent reviewers have read it; the lead writes the report name.
 - **G4, saved-runs method (E-39)**: opened when NOT DECIDED 3 is answered (the answer decides the text).
@@ -68,8 +68,8 @@ Where the evidence is: the stand-in test's results are written into the INDEX of
 | E-04 | OWNER-STEPS-realrun-v3.md | 69 | Hold | G1 | CONTRADICTION (code-change gate) |
 | E-05 | OWNER-STEPS-realrun-v3.md | 95 | Hold | G1 | CONTRADICTION (code-change gate) |
 | E-06 | OWNER-STEPS-realrun-v3.md | 75 | Apply now | - | CONTRADICTION |
-| E-07 | OWNER-STEPS-realrun-v3.md | 75 | Hold | G2 | DEFERRED |
-| E-08 | OWNER-STEPS-realrun-v3.md | 187 | Hold | G2 | DEFERRED |
+| E-07 | OWNER-STEPS-realrun-v3.md | 75 | Apply now | - (second wording: G2) | UNCLEAR WORD |
+| E-08 | OWNER-STEPS-realrun-v3.md | 187 | Apply now | - (second wording: G2) | UNCLEAR WORD |
 | E-09 | OWNER-STEPS-realrun-v3.md | 78 | Apply now | - | UNCLEAR WORD |
 | E-11 | OWNER-STEPS-realrun-v3.md | 87 | Apply now | - | CONTRADICTION |
 | E-12 | OWNER-STEPS-realrun-v3.md | 92 | Apply now | - | MISSING STEP |
@@ -107,7 +107,7 @@ Where the evidence is: the stand-in test's results are written into the INDEX of
 | E-45 | AGENT-SCOPE-DO-AND-DONT.md | 23 | Hold | G1 | STALE |
 | E-46 | DECISION-one-store.md | 14 | Apply now | - | STALE |
 | E-47 | DECISION-one-store.md | 1 | Apply now | - | UNCLEAR WORD |
-| E-48 | OWNER-STEPS-realrun-v3.md | 123 | Conditional | ND 7a answered "made only for this take" | MISSING STEP |
+| E-48 | OWNER-STEPS-realrun-v3.md | 123 | Apply now | - | MISSING STEP |
 
 ## The row blocks
 ### E-01: OWNER-STEPS-realrun-v3.md, line 3, status Apply now, type STALE
@@ -117,31 +117,39 @@ wt\nlite-int`).
 ~~~~
 NEW (exact):
 ~~~~
-wt\nlite-int`). Edited on Mon 16 Nov 2026 to follow the plan for the stand-in test (version 5) and the decisions of 2026-11-16; this edit is still to be checked by a second person, and what is still to be checked in the facts is listed at the end of this file under UNVERIFIED. In this sheet "the lead" means the assistant (Claude) who works with you; "a lead" means a made-up enquiry sent through the flows.
+wt\nlite-int`). Edited on Mon 16 Nov 2026 to follow the plan for the stand-in test (version 5) and the decisions of 2026-11-16; this edit is still to be checked by a second person, and what is still to be checked in the facts is listed at the end of this file under UNVERIFIED. Words used in the edited parts, each with one meaning: "the lead" in this sheet means the assistant (Claude) who works with you (new texts say "the assistant"); the stand-in test is a test of the take run on this laptop only, with stand-in programs (small fake versions of Gmail, HubSpot and the model) and made-up data; the take is one real recorded run on your own test accounts (see Words used below); the flows are the automatic step chains that n8n runs; the model stage is our small program that asks the AI model and enforces the money cap; an enquiry is one made-up sales message sent through the flows (the public post on line 131 keeps its own word, "lead", for the same thing); a contact is the made-up person that an enquiry creates in HubSpot; a lead key is the made-up identifier the program gives to an enquiry; a secret key is a long text that works like a password for a service (HubSpot, the AI model provider), which this sheet also calls a token; saved runs are the past runs that n8n keeps and lists (n8n itself calls them executions); the preparation is the last checks the assistant makes before it asks for your yes (see Phase 1).
 ~~~~
-Why: Plan v5 header (pinned head is a temporary choice; later fix rounds in progress). Round 6: "Re-checked" is replaced by "Edited ... still to be checked" because E-07, E-08, E-13 and E-36 are not verified against code (naive M8, design m3); one sentence now fixes who "the lead" is, so no sentence has to use it for an assistant and a sales enquiry at once (naive M5). E-02 carries the branch names; E-01 and E-02 do not overlap (E-01 ends with a full stop).
+Why: Plan v5 header (pinned head is a temporary choice; later fix rounds in progress). Round 7 (naive glossary major, design order 7): the sheet's first edited place now defines, once, the words that the owner texts use: assistant versus "the lead", stand-in test, take, flows, model stage, enquiry, contact, lead key, secret key (and "token"), saved runs, preparation. "Flow rehearsal" and the "counting check" are defined where they are first used (E-03, E-15). "Edited ... still to be checked" stays (round 6: E-07, E-08, E-13 and E-36 are not verified against code). The personal folder path is not copied: the old text stops at the closing bracket. E-02 follows in the same line and does not overlap.
 
 ### E-02: OWNER-STEPS-realrun-v3.md, line 3, status Apply now, type UNCLEAR WORD
 OLD (exact):
 ~~~~
-Independent review rounds 3 to 9 of the code are done
+Independent review rounds 3 to 9 of the code are done; this file itself got a drift review (drift-report-1) and is corrected to it.
 ~~~~
 NEW (exact):
 ~~~~
-Independent reviews of the code (review rounds 3 to 9) are done, and later fix rounds 3 to 5 (batches of code changes made after the reviews) sit on the branches `take/nlite-int-r3` to `-r5` (a branch is a named copy of the code; which code is under test is named in one place at the top of the plan for the stand-in test, and that choice is not final)
+Independent reviews of the code (review rounds 3 to 9) are done. Later fix rounds 3 to 5 (batches of code changes made after the reviews) sit on the branches `take/nlite-int-r3` to `-r5` (a branch is a named copy of the code). Which code is under test is named in one place, at the top of the plan for the stand-in test, and that choice is not final. This file itself got a drift review (drift-report-1) and is corrected to it.
 ~~~~
-Why: Plan v5 header and line 76 use "round" for review rounds and for fix rounds; one word keeps one meaning. The new text has NO full stop at its end because the file continues with `; this file itself got a drift review`. AGENT-SCOPE lines 16 and 22 keep their own dates and are read as review rounds.
+Why: Plan v5 header and line 76 use "round" for review rounds and for fix rounds; one word keeps one meaning. Round 7 (naive minor): the old text now runs to the full stop of the sentence, so the new text ends with a full stop too (round 6 left the stop out on purpose and that was easy to paste wrongly); the nested brackets are split into short sentences. The old text was read in `OWNER-STEPS-realrun-v3.md` line 3 by eye: after it comes " Replaces `OWNER-STEPS-realrun.md` (v2" (checked by script that the old text occurs once). AGENT-SCOPE lines 16 and 22 keep their own dates and are read as review rounds.
 
 ### E-03: OWNER-STEPS-realrun-v3.md, line 5, status Apply now, type MISSING STEP
 OLD (exact):
 ~~~~
-The lead does everything else (start the database, the model stage and n8n, import the flows, run the checks).
+The lead does everything else (start the database, the model stage and n8n, import the flows, run the checks). The exact commands for the lead are in `egm\duplicate-proof-lead-desk\nlite\WP6-RUNBOOK.md`.
 ~~~~
 NEW (exact):
 ~~~~
-The lead does everything else (start the database server, the model stage and n8n, import the flows, run the checks). Before any real take the assistant first runs two tests on this laptop. The first is the stand-in test: it uses stand-in programs (small fake versions of Gmail, HubSpot and the model) and made-up data only, no real account, no real key and no paid model call, so it costs US$0. In the stand-in test what n8n sends over the network is watched, not blocked, so we do not claim that nothing leaves the laptop. When the stand-in test has passed, the assistant runs the second test, the flow rehearsal: the changed flows are run once on this laptop with made-up data, also at US$0. The take keeps its data in Postgres (a free database program). One Postgres program (the database server) runs in one container (a sealed box in which a program runs) and holds two separate databases: n8n's own database (flows, saved passwords, saved runs) and the take's database (our table of leads). You do nothing for the two tests unless the assistant asks you, for example to start Docker Desktop (the program that runs containers). Blocking the network would need a Windows firewall rule (a setting that stops a program from using the network), which only you could set; none is planned.
+The assistant does everything else (start the database server, the model stage and n8n, import the flows, run the checks). The exact commands for the assistant are in `egm\duplicate-proof-lead-desk\nlite\WP6-RUNBOOK.md`.
+
+Before any real take the assistant runs two tests on this laptop. Both are planned at US$0, and nothing about them is proven yet:
+- The stand-in test uses stand-in programs and made-up data only. No real account, no real secret key and no paid model call are planned. What n8n sends over the network is watched, not blocked, so we do not claim that nothing leaves the laptop.
+- The flow rehearsal comes after the stand-in test has passed: the changed flows are run once on this laptop with made-up data, also planned at US$0.
+
+The take is planned to keep its data in Postgres (a free database program). This is planned, not yet proven: in the first trial n8n kept its data in a simpler one-file database. One Postgres program, called the database server, is planned to run in one container (a sealed box in which a program runs) and to hold two separate databases: n8n's own database (flows, saved passwords, saved runs) and the take's database (our table of leads).
+
+You do nothing for the two tests unless the assistant asks you, for example to start Docker Desktop (the program that runs containers). Blocking the network would need a Windows firewall rule (a setting that stops a program from using the network), which only you could set; none is planned.
 ~~~~
-Why: EL-5 (the tests cost US$0 and come before any real take), D8 and D12. Round 6 (naive M4): the word "rehearsal" meant two events; they now have two names: the stand-in test (D8, the loopback re-smoke, plan v5) and the flow rehearsal (D12, first run of the changed flows after it passes); every later row uses these two names only. Plan line 102: network use is OBSERVED, not ENFORCED, so that sentence is limited to the stand-in test (what the flow rehearsal watches is not stated in any input). Plan P-4 and line 506: Docker Desktop is started by the assistant or the owner; a firewall rule is only option (c) of line 506 and none is planned (design m2): the former flat claim that the test "is set up to talk only to programs on this laptop" is gone. Container, firewall rule and Docker Desktop are explained in their own sentences (naive m6). Whether the flow rehearsal also uses only stand-in programs is UNVERIFIED in the inputs; EL-5 gives only its cost.
+Why: EL-5 (the tests cost US$0 and come before any real take), D8 and D12. Round 7 (design M-A, design m6, naive minors): the Postgres design is stated as "planned, not yet proven" (E-25 item 15, E-27, E-28 and ND1 say the same; smoke-1 ran SQLite), and the flow rehearsal is "planned at US$0" (no input proves the cost; EL-5 gives it as a decision). The one long paragraph is split into short parts; the old text now runs to the end of line 5 so that the new text can end with its own line. The glossary words "take", "flows" and "model stage" are defined in E-01 on line 3, before this line. "the lead" becomes "the assistant" in the two places of the old text (E-01 says why). Plan line 102: network use is OBSERVED, not ENFORCED, so that sentence is limited to the stand-in test (what the flow rehearsal watches is not stated in any input). Plan P-4 and line 506: Docker Desktop is started by the assistant or the owner; a firewall rule is only option (c) of line 506 and none is planned. Whether the flow rehearsal also uses only stand-in programs is UNVERIFIED in the inputs; EL-5 gives only its cost. The file name `WP6-RUNBOOK.md` was already in the old text (it is a file name, not a code word in a sentence); the studio lead may replace it when v4 is written.
 
 ### E-04: OWNER-STEPS-realrun-v3.md, line 69, status Hold (gate G1), type CONTRADICTION (code-change gate)
 OLD (exact):
@@ -150,9 +158,9 @@ App 1 for the take program, scope contacts **read** only.
 ~~~~
 NEW (exact):
 ~~~~
-App 1 for the take program, scope contacts **read** only. Keep it read only: the take program never removes contacts (decision of 16 Nov 2026). Before the take the assistant confirms with you that the key the take uses is this read-only one and that app 2 exists. After the take you delete by hand in HubSpot the made-up contacts of this take (the assistant gives you the list with the lead key of each one, which is the made-up identifier the program gave it, and its HubSpot contact id, if the program printed it; otherwise the made-up names to look for). The one made-up contact of the assistant's preparation test is deleted by you before the take (see the preparation sentence in Phase 1).
+App 1 for the take program, scope contacts **read** only. Keep it read only: the take program never removes contacts (decision of 16 Nov 2026). Before the take the assistant confirms with you that the secret key the take uses is this read-only one and that app 2 exists. After the take you delete by hand in HubSpot the contacts of this take (the assistant gives you the list: the lead key of each contact and its HubSpot contact id, if the program printed it; otherwise the made-up names to look for). The one contact of the assistant's preparation enquiry is deleted by you before the take (see the paragraph in Phase 1 that begins "The assistant first runs the stand-in test").
 ~~~~
-Why: D2: the take key is read-only and the take never deletes contacts; the owner deletes leftovers by hand. FACTS-ALREADY-DONE.md line 3 says only "HubSpot test account, users created, key given": it does not say that app 1 or app 2 exist or what the saved key can do, so the assistant confirms (NOT DECIDED 7b). Round 6 (design m1): the preparation contact is deleted BEFORE the take, as E-11 says; this row no longer says "after". "Token" is now "key" (one word). GATE G1: the text is true only after the code change; today's code still removes contacts (see E-40, E-44).
+Why: D2: the take's secret key is read-only and the take never deletes contacts; the owner deletes leftovers by hand. FACTS-ALREADY-DONE.md line 3 says only "HubSpot test account, users created, key given": it does not say that app 1 or app 2 exist or what the saved key can do, so the assistant confirms (NOT DECIDED 7b). Round 7: the pointer to the preparation paragraph now names its first words (naive: it was never labelled); "key" is "secret key" and "lead key" is explained by E-01. Missing input (exact), why the row is held: the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>` (gate G1). GATE G1: the text is true only after the code change; today's code still removes contacts (see E-40, E-44).
 
 ### E-05: OWNER-STEPS-realrun-v3.md, line 95, status Hold (gate G1), type CONTRADICTION (code-change gate)
 OLD (exact):
@@ -161,9 +169,9 @@ up to 3 contacts archived at the end
 ~~~~
 NEW (exact):
 ~~~~
-up to 3 made-up contacts created in HubSpot and left there (the take program removes none; you delete them by hand afterwards)
+up to 3 contacts created in HubSpot and left there (the take program removes none; you delete them by hand afterwards)
 ~~~~
-Why: D2: the take never deletes contacts. The old words "archived at the end" are a delete call in today's code (AGENT-SCOPE line 20). GATE G1: the notice the program prints must change with the code. The same word on OWNER-STEPS lines 103 and 104 is handled in E-41 and E-42; Gmail's "Archive it" on line 50 is a different thing and stays.
+Why: D2: the take never deletes contacts. The old words "archived at the end" are a delete call in today's code (AGENT-SCOPE line 20). GATE G1: the notice the program prints must change with the code. Missing input (exact), why the row is held: the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>`; the exact words of the changed notice are UNVERIFIED (apply this text only if the notice says the same). The same word on OWNER-STEPS lines 103 and 104 is handled in E-41 and E-42; Gmail's "Archive it" on line 50 is a different thing and stays. Round 7: "made-up" is dropped because "contacts" is now defined (E-01) as made-up people.
 
 ### E-06: OWNER-STEPS-realrun-v3.md, line 75, status Apply now, type CONTRADICTION
 OLD (exact):
@@ -174,34 +182,40 @@ NEW (exact):
 ~~~~
 (it is NOT `http://localhost:5678`, which is your own n8n and which the take does not touch;
 ~~~~
-Why: Plan v5 section 2 ports and D6: the take n8n uses its own free port, 5678 and 5679 are the owner's own n8n. The number is in no document (NOT DECIDED 2). Round 6: the words "the assistant gives you the address" are not repeated because the line already says "the address the lead gives"; the old and new texts both stop at the semicolon; the one space that follows it in the file stays in the file, so the next words (E-07's text) read on correctly. If v4 drops step 8 this row falls away.
+Why: Plan v5 section 2 ports and D6: the take n8n uses its own free port, 5678 and 5679 are the owner's own n8n. The number is in no document (NOT DECIDED 2). The old and new texts both stop at the semicolon; the one space that follows it in the file stays, so the next words (now E-07's applied text) read on correctly: "(it is NOT `http://localhost:5678`, which is your own n8n and which the take does not touch; it is not yet confirmed that your Windows browser can open that address ...". Round 7 (naive major): E-07 is applied now with neutral words, so no "there", "WP6", "WSL" code or "UNVERIFIED" label is left dangling in the owner text. The words "the address the lead gives" stay in the file and, by E-01, mean the assistant. If v4 drops step 8 this row falls away.
 
-### E-07: OWNER-STEPS-realrun-v3.md, line 75, status Hold (gate G2), type DEFERRED
+### E-07: OWNER-STEPS-realrun-v3.md, line 75, status Apply now (neutral text; a second text follows gate G2), type UNCLEAR WORD
 OLD (exact):
 ~~~~
 UNVERIFIED that Windows reaches WSL there, WP6 check (e))
 ~~~~
-NEW: (no change now)
-Why: HELD with E-08. Plan v5 section 0 says the Windows reach to n8n in WSL was proven in the first smoke (plan item P14); nobody on this branch read that evidence (NOT DECIDED 5). When the lead reads it and says "proven", apply "the first smoke showed Windows reaching n8n in WSL; the assistant re-checks it at the take".
+NEW (exact):
+~~~~
+it is not yet confirmed that your Windows browser can open that address (n8n runs inside WSL, the Linux window of your laptop); the assistant checks this with you before you type anything)
+~~~~
+Why: Round 7 (naive major: E-06 plus a held E-07 left "there" without a referent and shipped "WP6", "WSL" and "UNVERIFIED" to the owner). The neutral text says only what is true today: not yet confirmed. Plan v5 section 0 says the Windows reach to n8n in WSL was proven in the first smoke (plan item P14); nobody on this branch read that evidence (NOT DECIDED 5). Second text (apply only when the studio lead writes `ND5: proven <file>`, gate G2): "the first smoke showed that your Windows browser can open that address; the assistant checks it again with you before you type anything)". If `not proven`, keep the neutral text. The old text begins right after E-06's semicolon-and-space and ends the sentence's bracket; E-06 and E-07 do not overlap (checked by script).
 
-### E-08: OWNER-STEPS-realrun-v3.md, line 187, status Hold (gate G2), type DEFERRED
+### E-08: OWNER-STEPS-realrun-v3.md, line 187, status Apply now (neutral text; a second text follows gate G2), type UNCLEAR WORD
 OLD (exact):
 ~~~~
 8. The Windows browser reaching n8n in WSL at localhost.
 ~~~~
-NEW: (no change now)
-Why: HELD with E-07: the item stays in the UNVERIFIED list until NOT DECIDED 5 is answered; if "proven", keep the item and add after it the words "shown once in the first smoke; re-check at the take".
+NEW (exact):
+~~~~
+8. Whether the Windows browser can open the address that the assistant gives for n8n (n8n runs inside WSL, the Linux window of the laptop; the plan says the first smoke showed it, and nobody has read that evidence yet).
+~~~~
+Why: Round 7 (naive: the row was not applicable without guessing). The old item is a bare label; the new text says what is unverified and why, without guessing the answer. Second text (only after `ND5: proven <file>`, gate G2): the same item with the end "(the first smoke showed it once; the assistant checks it again at the take)". If v4 drops step 8, the item is dropped there.
 
 ### E-09: OWNER-STEPS-realrun-v3.md, line 78, status Apply now, type UNCLEAR WORD
 OLD (exact):
 ~~~~
-host, database, user as the lead names them; password = the one you set in WSL when you start the database
+host, database, user as the lead names them; password = the one you set in WSL when you start the database (the lead gives the start command; you type the password).
 ~~~~
 NEW (exact):
 ~~~~
-host, database and user as the assistant names them (planned and not yet proven: this database user is a restricted one that may only read, add and change the rows of the table of leads and is not the administrator of the database server); password = the one you set in WSL for THAT database user when you start the database server (the assistant gives the start command and names the database user, never the password; you type the password)
+host, database and user as the assistant names them (planned and not yet proven: this database user is a restricted one that may only read, add and change the rows of the table of leads, and it is not the administrator of the database server); password = the one you set in WSL for THAT database user when you start the database server (it is the password of a database user, not an app password and not a secret key). The assistant gives the start command and names the database user, never the password. You type the password yourself where the assistant tells you (a file you create in WSL, or a prompt of the start program), never as a word inside a command line, because a command line is saved in your shell's history list.
 ~~~~
-Why: EL-1 and DECISION-one-store decision 1 (D10 wording). The owner types and keeps the password (OWNER-STEPS rule 2); the assistant names only the database user (NOT DECIDED 4); where n8n's own database user's password is kept is NOT DECIDED 1. D3 parks the four-login proposal, so the privileges stay "planned and not yet proven". "login" means a mailbox or HubSpot sign-in only; Postgres accounts are "database users".
+Why: EL-1 and DECISION-one-store decision 1 (D10 wording). The owner types and keeps the password (OWNER-STEPS rule 2); the assistant names only the database user (NOT DECIDED 4: one allowed option, the app user); where n8n's own database user's password is kept is NOT DECIDED 1. D3 parks the proposal of four database users, so the privileges stay "planned and not yet proven". Round 7 (design m1, m3): the old text now runs through the full stop, so the old tail "(the lead gives the start command; you type the password)." is replaced and no duplicated sentence or "the lead" is left; "not on a command line" is added because a typed command is saved in the shell history. "login" means a mailbox or HubSpot sign-in only; Postgres accounts are "database users" and the three kinds of "password" are told apart.
 
 ### E-11: OWNER-STEPS-realrun-v3.md, line 87, status Apply now, type CONTRADICTION
 OLD (exact):
@@ -210,9 +224,9 @@ The lead runs the checks (a) to (f) of the smoke (WP6-RUNBOOK) with NO paid call
 ~~~~
 NEW (exact):
 ~~~~
-The assistant first runs the stand-in test and then the flow rehearsal on this laptop (made-up data, no real account, no paid model call, US$0). In the preparation for the real run (the last checks before the assistant asks for your yes) the assistant then sends ONE made-up test contact through your throwaway accounts, with no paid model call. If the assistant finds that this test contact cannot pass through without a paid model call, it stops and asks you; a paid call needs your separate written yes with a number first. This test contact leaves one made-up contact in HubSpot and one mail in the label `demo`: the assistant tells you so, you delete both by hand, and you tell the assistant "label and inbox empty" before the take. This one test contact is the only run through real accounts before the take; there is no other real-account smoke test. If any of these checks fails, the assistant tells you what to change.
+The assistant first runs the stand-in test and then the flow rehearsal on this laptop (made-up data, no real account, planned at US$0 and with no paid model call). Then comes the preparation (the last checks before the assistant asks for your yes): the assistant sends ONE made-up enquiry through your throwaway accounts. Before it sends the enquiry, the assistant tells you which way it goes in (through the take program, where you type the answers yourself, or straight into the take's own n8n) and whether it counts against the 3 model calls of the take, and it does not send it before you have read that. No paid model call is planned for this enquiry. If the assistant finds that the enquiry cannot pass through without a paid model call, it stops and asks you; a paid call needs your separate written yes with a number first. The enquiry leaves one contact in HubSpot and one mail in the label `demo`: the assistant tells you so, you delete both by hand, and you tell the assistant "label and inbox empty" before the take. Pass: HubSpot shows exactly one new made-up contact, the label `demo` holds exactly one mail from this enquiry, and the assistant reports no error. Fail: none, more than one of either, or an error; then the assistant stops and tells you what to change. This one enquiry is the only run through real accounts before the take; there is no other real-account smoke test.
 ~~~~
-Why: D8: the real-account smoke (checks a to f) is replaced by the tests on this laptop plus ONE made-up test contact in take preparation; D12: that contact is sent right after the tests pass. EL-5: the tests cost US$0. Round 6 (design M4): the text no longer promises "no paid model call" as a fact: the real flow calls the model stage, and no input shows that a test contact can pass without a call (AGENT-SCOPE lines 14 to 16 allow only a capped paid call; the assistant's own stand-in model is for the stand-in test). So the mechanism is UNVERIFIED and the text says what happens if it fails: stop and ask; whether to allow one paid call is NOT DECIDED 6. (naive M5, m1) "lead" for the sales enquiry is "test contact"; the old following sentence about a failed check is now inside the old text so it keeps its antecedent. (naive M8) the one real-account run is named plainly. Preparation contact and mail are deleted by the owner BEFORE the take because step 4 needs the label and the inbox empty (design m1).
+Why: D8: the real-account smoke (checks a to f) is replaced by the tests on this laptop plus ONE made-up enquiry in take preparation; D12: it is sent right after the tests pass. EL-5: the tests cost US$0, so the text says "planned at US$0" (design m6; the cost is a decision, not proven). Round 7 (design M-D, naive: "no pass or fail, hidden mechanism, three names for the preparation"): (1) how the enquiry reaches the accounts is UNVERIFIED and is the studio lead's NOT DECIDED 8 (two options, an AGENT-SCOPE MAY and MUST NOT row text for the second); the owner text promises only that the assistant tells him the way and whether it counts against the 3 calls before it sends; (2) pass and fail are written; (3) the one word is "preparation" for the last checks and "enquiry" for the thing sent; (4) the preparation enquiry is added to E-12 as fact 5. The mechanism for "no paid model call" stays UNVERIFIED (round 6 M4): the real flow calls the model stage and no input shows that an enquiry can pass without a call (AGENT-SCOPE lines 14 to 16 allow only a capped paid call; the assistant's own stand-in model belongs to the stand-in test); whether to allow one paid call is NOT DECIDED 6. The contact and mail are deleted by the owner BEFORE the take because step 4 needs the label and the inbox empty.
 
 ### E-12: OWNER-STEPS-realrun-v3.md, line 92, status Apply now, type MISSING STEP
 OLD (exact):
@@ -221,9 +235,9 @@ A yes covers ONE take.
 ~~~~
 NEW (exact):
 ~~~~
-A yes covers ONE take. Your yes message must also say three things: (1) the stand-in test and the flow rehearsal have been run; (2) where their written result is saved (a file name); (3) that reviewers who are not the assistant have read that result, and where their report is saved. "Passed" means: every check the plan lists ended "pass"; a check that ended "missed" (it could not see what it was looking for) or "not run", or a finding the reviewers left open, is NOT a pass. The one exception is the crash check: it may end "missed" or "not tested" if the message says so in words, and then you must not post that the take is crash-safe. If the message does not say these three things, or says that anything did not pass, answer no.
+A yes covers ONE take. Before you say yes, the assistant's message must state these five facts, each with the name of the file that shows it, and your yes repeats them in one line each: (1) the stand-in test and the flow rehearsal have been run, and how their checks ended, in numbers (for example "41 pass, 0 missed, 0 not run"; "missed" means the check could not see what it was looking for); (2) the file where their written result is saved; (3) reviewers who are not the assistant (separate review programs, named in their report) have read that result, and the file where their report is saved; (4) the last step of the take program no longer removes any contact from HubSpot: the assistant names the code change (a commit id, which is the name of one saved version of the code), the saved test output that shows it, and the reviewers' report that read both; (5) the one made-up enquiry of the preparation has been sent, and you have deleted its contact and its mail. "Passed" means: every check the plan lists ended "pass"; a check that ended "missed" or "not run", or a finding the reviewers left open, is NOT a pass. The one exception is the crash check: it may end "missed" or "not tested" if the message says so in words, and then you must not post that the take is crash-safe (crash-safe means: the take survives a crash at any moment without a double mail or a lost enquiry). You, the owner, are the one who answers no: answer no if the message leaves out any of the five facts or a file name, or says that anything did not pass. The assistant does not start the take on anything but your written yes, and you may ask it to show any named file on screen.
 ~~~~
-Why: EL-5 and D12: the tests come before any real take; plan line 505 requires independent egm:* reviewers to read the result before any owner-facing claim (design M2: the assistant must not certify its own test to the owner). Round 6: "passed" is defined from plan lines 14 and 505 (a MISSED E or E2 is not a pass and limits the claim); the owner checks a written statement, not a technical judgement (naive M8). This is gating wording that follows EL-5, D12 and plan line 505 but is not literal in them; the lead confirms it (FOR THE LEAD TO CONFIRM d). "crash-safe" is explained in E-18.
+Why: EL-5 and D12: the tests come before any real take; plan line 505 requires independent egm:* reviewers to read the result before any owner-facing claim (design M2: the assistant must not certify its own test to the owner). Round 7 (naive major: nobody was named who answers no; the owner could not check "every check ended pass" without the plan; circular): (a) the owner is named as the one who answers no; (b) the assistant must supply the facts in numbers and with file names, and the owner only repeats them, so he does not judge a technical result; (c) the reviewers are separate programs named in their own report, so the assistant does not certify itself; before the message is sent, the studio lead checks the files exist (rule R6), which does not replace the owner's no. Design M-B: gate G1 is carried in as fact 4 (v3 lines 69 and 95 still say "archived at the end" and today's code deletes, AGENT-SCOPE line 20), so a take cannot start before the code change, its test output and the reviewers' report exist; fact 5 is design m7 (the preparation enquiry of E-11). "Passed" is defined from plan lines 14 and 505 (a MISSED E or E2 is not a pass and limits the claim). This is gating wording that follows EL-5, D12 and plan line 505 but is not literal in them; the studio lead confirms it (FOR THE LEAD TO CONFIRM d). The old text ends with a full stop and the new text starts with the same sentence, so the file's next sentence ("No numbers in the message means answer no.") still follows.
 
 ### E-13: OWNER-STEPS-realrun-v3.md, line 99 (and 11), status Hold (gate G3), type DEFERRED
 OLD 1 (exact):
@@ -235,7 +249,7 @@ OLD 2 (exact):
 C is sent once while the lead stops and restarts n8n by hand.
 ~~~~
 NEW: (no change now)
-Why: DEFERRED to a second edit pass after the stand-in test. Plan v5 section 10 says OWNER-STEPS lines 75, 99 and 164 to 166 and AGENT-SCOPE lines 7 to 10 are edited again after the test to match its results; the same "by hand" wording on line 11 goes into that pass. The test kills n8n with a held reply, not "by hand". Both old strings occur exactly once, on lines 99 and 11 (checked by script).
+Why: DEFERRED to a second edit pass after the stand-in test. Plan v5 section 10 says OWNER-STEPS lines 75, 99 and 164 to 166 and AGENT-SCOPE lines 7 to 10 are edited again after the test to match its results; the same "by hand" wording on line 11 goes into that pass. The test kills n8n with a held reply, not "by hand". Both old strings occur exactly once, on lines 99 and 11 (checked by script). Round 7 (naive: not applicable without guessing): MISSING INPUT (exact), no text is written until it exists: the stand-in test result (its INDEX in `evidence-2`) that says how n8n is stopped at the real take (by the assistant by hand, or by the program with a held reply); then the new text is "... the assistant stops and restarts n8n <the method named in that result> while person C is posted; you do not touch anything." Gate G3 is opened by the studio lead (above).
 
 ### E-14: OWNER-STEPS-realrun-v3.md, line 107, status Apply now, type UNCLEAR WORD
 OLD (exact):
@@ -244,9 +258,9 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-(4) the n8n list of saved runs: only made-up names and the `take-<id>-a/b/c@example.com` addresses, and not an old run; do not open or film the detail of the mail step of a run (n8n now keeps its saved runs, and that detail may show the company address and the sender address; the assistant checks in the stand-in test what the mail step shows, with stand-in programs so real addresses may differ, and tells you)
+(4) the n8n list of saved runs: only made-up names and the `take-<id>-a/b/c@example.com` addresses, and not an old run; do not open or film the detail of the mail step of a run (n8n now keeps its saved runs, and that detail may show the company address and the sender address; the assistant checks in the stand-in test what the mail step shows, with stand-in programs so real addresses may differ, and tells you; you may overrule this in your yes message and say the mail step may be filmed, and then the assistant first reads what the mail step shows)
 ~~~~
-Why: Executions saved ON (EL-2; DECISION-one-store OWNER CONFIRMATION) and step 19: only made-up addresses may be visible. What the saved mail step shows is a guess the stand-in test can check; the text says so. The owner may overrule it in his yes message (rule R5). Same cell covers all of item (4) of line 107, so there is no separate row.
+Why: Saved runs ON (EL-2; DECISION-one-store OWNER CONFIRMATION) and step 19: only made-up addresses may be visible. What the saved mail step shows is a guess the stand-in test can check; the text says so. Round 7 (naive minor): the owner is told in the text that he may overrule it (rule R5); "saved runs" is defined in E-01. Same cell covers all of item (4) of line 107, so there is no separate row. The new text ends without a full stop because the file continues with "; (5) ..." (E-15).
 
 ### E-15: OWNER-STEPS-realrun-v3.md, line 107, status Apply now, type CONTRADICTION
 OLD (exact):
@@ -255,9 +269,9 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-(5) the count screen: lead keys only. It is a screenshot taken in the stand-in test or the row preview of n8n's table step, not a live view of the table and not a count made by a different database user
+(5) the count screen (it shows how many rows the table of leads holds, with lead keys only): a test screenshot that the assistant takes in the stand-in test, or the row preview of n8n's table step, labelled "test screenshot" on screen; it is not a live view of the table and not the result of the counting check (the counting check is a small program of ours, not part of n8n, that counts mails, contacts and table rows); pass = only lead keys and made-up addresses are visible, fail = any other text is visible, and then you do not film it
 ~~~~
-Why: D9: the counts proof screen is a stand-in-test screenshot or the Postgres node preview, not a live table screen. DECISION-one-store line 15 (no portal claim in the video) still holds (EL-3, D1). It is test footage, not an independent count (DECISION-one-store CORRECTIONS (c): the count runs as one database user), so the text says "a different database user", the one phrase used for this in E-31, E-36 and E-18.
+Why: D9: the counts proof screen is a stand-in-test screenshot or the Postgres node preview, not a live table screen. DECISION-one-store line 15 (no portal claim in the video) still holds (EL-3, D1). Round 7 (design m5, naive major): the screenshot is labelled as a test screenshot; who takes it (the assistant), when (in the stand-in test), what "count screen" is, and pass and fail are written; "the counting check" is the one phrase for the counts check in E-15, E-18, E-31 and E-36 and its meaning is inside this text. The new text ends without a full stop because the file continues with "; (6) ...". Whether the row preview shows lead keys only is UNVERIFIED (it is the assistant's job to look before the owner films).
 
 ### E-16: OWNER-STEPS-realrun-v3.md, line 121, status Apply now, type STALE
 OLD (exact):
@@ -266,9 +280,9 @@ turns "save successful production executions" back off in each workflow, stops n
 ~~~~
 NEW (exact):
 ~~~~
-turns off the setting that saves successful runs (a setting of the take's own n8n, not of each workflow), stops n8n, removes the take folder and the container of the database server (Postgres) (this is the assistant's job, nothing for you to do; the stand-in test is planned to test only whether removing the container also removes the saved runs; the method at the real take is not decided yet)
+turns off the setting that saves successful runs (a setting of the take's own n8n, not of each workflow), stops n8n, removes the take folder and the container of the database server (Postgres) (this is the assistant's job, nothing for you to do; the stand-in test is planned to test only whether removing the container also removes the saved runs; the method at the real take is not decided yet, and you may be asked one yes or no question about it)
 ~~~~
-Why: EL-2: saved runs ON for the take, deleted at clean-up. Plan v5 section 2 and step 1.2 set saving through settings of the take's own n8n. The approved step "turn saving off" stays; container removal is the method of the stand-in test only, because plan line 81 says the real-take method is undecided and line 502 says it is not proven (NOT DECIDED 3; follow-on texts per answer are in E-39). Step 22 item 1 is the assistant's job.
+Why: EL-2: saved runs ON for the take, deleted at clean-up. Plan v5 section 2 and step 1.2 set saving through settings of the take's own n8n. The approved step "turn saving off" stays; container removal is the method of the stand-in test only, because plan line 81 says the real-take method is undecided and line 502 says it is not proven (NOT DECIDED 3; follow-on texts per answer are in E-39). Round 7 (naive minor): the owner is told that part of the open decision is his (NOT DECIDED 3, option b needs his one-line yes). Step 22 item 1 is the assistant's job.
 
 ### E-17: OWNER-STEPS-realrun-v3.md, line 131, status Apply now, type CONTRADICTION
 OLD (exact):
@@ -288,9 +302,9 @@ recovery within 60 s; alert within 30 s.
 ~~~~
 NEW (exact):
 ~~~~
-recovery within 60 s; alert within 30 s. It must also NOT say: that a portal, an approval step or an audit trail exists or shows these rows; that n8n cannot reach the internet (its outgoing traffic is meant to be switched off by settings, which is not yet shown to work, and is only watched, not blocked); that the take is crash-safe (a crash at some moments, listed in plan row NC, is not tested); that the count is made by a different database user.
+recovery within 60 s; alert within 30 s. It must also NOT say: that a portal, an approval step or an audit trail exists or shows these rows; that n8n cannot reach the internet (its outgoing traffic is meant to be switched off by settings, which is not yet shown to work, and is only watched, not blocked); that the take is crash-safe (a crash at some moments, listed in the plan for the stand-in test, is not tested); that the counting check is independent (the counting check is a small program of ours, not part of n8n, that counts mails, contacts and table rows; it has no read-only database user of its own, because that user is not built).
 ~~~~
-Why: EL-3, EL-4, D1, plan v5 section 0 ("Loopback only is OBSERVED, not ENFORCED") and section 10 (row DM, row NC); DECISION-one-store lines 23 and 28 (read-only count user not built; D3 parks it). The two lead-side conditions for dropping items are in rules R2. "crash-safe" is explained in the text itself (design M1).
+Why: EL-3, EL-4, D1, plan v5 section 0 ("Loopback only is OBSERVED, not ENFORCED") and section 10 (row DM, row NC); DECISION-one-store lines 23 and 28 (read-only count user not built; D3 parks it). Round 7 (naive major, order 6): the forbidden phrase "a different database user" is replaced by the one phrase "the counting check" with its meaning inside the text; "crash-safe" is explained in E-12 (line 92, earlier in the sheet) and "plan row NC" is no longer a code in owner text. The two studio-lead-side conditions for dropping items are in rule R2.
 
 ### E-19: OWNER-STEPS-realrun-v3.md, line 159, status Apply now, type STALE
 OLD (exact):
@@ -310,9 +324,9 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-- The stand-in test has NOT been run. It is planned to test, on this laptop only, with stand-in programs and made-up data: (1) real n8n (version 2.46.6) keeping its data in Postgres (a free database program); (2) whether the secret key can be read from inside n8n, with a check that the test itself would notice a leak; (3) n8n keeping its saved runs; (4) a watch on whether n8n sends anything out of the laptop. A first smoke test (an earlier trial) did run real n8n on this laptop and left four things open: n8n used a simpler one-file database (SQLite); the key test had no check that it could notice a leak; no request was being handled at the moment n8n was stopped; and the time n8n needed to come back after a restart was measured against the wrong waiting time.
+- The stand-in test has NOT been run. It is planned to test, on this laptop only, with stand-in programs and made-up data: (1) real n8n (release number 2.46.6) keeping its data in Postgres (a free database program); (2) whether a program step inside n8n can read the secret key that locks n8n's saved passwords, with a check that the test itself would notice a leak; (3) n8n keeping its saved runs; (4) a watch on whether n8n sends anything out of the laptop. A first smoke test (an earlier trial) did run real n8n on this laptop and left four things open: n8n used a simpler one-file database (SQLite); the key test had no check that it could notice a leak; no request was being handled at the moment n8n was stopped; and the time n8n needed to come back after a restart was measured against the wrong waiting time.
 ~~~~
-Why: Plan v5 section 0 table (open items M2 to M5 and "smoke-1 n8n ran on SQLite") and EL-1. Planned, not proven (naive M8): the text says "planned to test" and "has NOT been run". The first smoke is explained as an earlier trial.
+Why: Plan v5 section 0 table (open items M2 to M5 and "smoke-1 n8n ran on SQLite") and EL-1. Planned, not proven (naive M8): the text says "planned to test" and "has NOT been run". The first smoke is explained as an earlier trial. Round 7 (naive minor): "2.46.6" is called a release number, and item (2) says in words which secret key and what is tested.
 
 ### E-21: OWNER-STEPS-realrun-v3.md, line 164, status Apply now, type STALE
 OLD (exact):
@@ -332,9 +346,9 @@ and the second door (the hook door).
 ~~~~
 NEW (exact):
 ~~~~
-the second door (the hook door), and a crash between sending the mail and noting it in the table (the stand-in test is planned to test this once, and once more if the first try missed; until it has run and passed, it is untested).
+the second door (the hook door), and a crash between sending the mail and noting it in the table (the stand-in test is planned to test this once, and once more if the first try missed, which means it could not see what it was looking for; until it has run and passed, it is untested).
 ~~~~
-Why: Plan v5 section 10 row DM and section 9 (crash windows not proven). This row changes the status list on line 166 only; the post text is E-17. After the stand-in test the lead updates this sentence to the result (rule R1 evidence).
+Why: Plan v5 section 10 row DM and section 9 (crash windows not proven). This row changes the status list on line 166 only; the post text is E-17. After the stand-in test the studio lead updates this sentence to the result (rule R1 evidence). Round 7 (naive minor): "missed" is explained in the text.
 
 ### E-23: OWNER-STEPS-realrun-v3.md, line 151, status Apply now, type STALE
 OLD (exact):
@@ -366,12 +380,12 @@ OLD (exact):
 NEW (exact, several lines):
 ~~~~
 14. Whether Gmail's IMAP shows the label `demo` as a folder named `demo` for the take program.
-15. That n8n (version 2.46.6) runs on Postgres (a free database program), with its data kept in its own database apart from the take's database (our table of leads), owned by a database user that has no other right (decision of 2026-11-16; in the first smoke test it kept its data in a simpler one-file database).
+15. That n8n (release number 2.46.6) runs on Postgres (a free database program), with its data kept in its own database apart from the take's database (our table of leads), owned by a database user that is planned to have no other right (the studio lead's instruction of 2026-11-16, not proven; in the first smoke test n8n kept its data in a simpler one-file database).
 16. That the saved runs are kept in Postgres and that deleting them at clean-up works at the real take (the stand-in test is planned to delete them by removing the container).
 17. That n8n sends nothing out: its outgoing traffic is meant to be switched off by settings (not yet shown to work) and is only watched in samples taken every half second, never blocked; lookups of names cannot be watched.
-18. Whether a crash between sending the mail and noting it in the table sends the mail twice (the stand-in test is planned to test it once, and once more if the first try missed).
+18. Whether a crash between sending the mail and noting it in the table sends the mail twice (the stand-in test is planned to test it once, and once more if the first try missed, which means it could not see what it was looking for).
 ~~~~
-Why: EL-1, EL-2, EL-4 and plan v5 section 10. The new text is the whole of line 193 followed by four new lines; each line in the fence is its own line of the file, and the file ends after item 18. The count line becomes 17 live items (E-24).
+Why: EL-1, EL-2, EL-4 and plan v5 section 10. The new text is the whole of line 193 followed by four new lines; each line in the fence is its own line of the file, and the file ends after item 18. The count line becomes 17 live items (E-24; checked in round 7 against v3 lines 178 to 193: items 1 to 9 and 11 to 14 are live, 13 items, item 10 is the "(Removed ...)" line). Round 7 (design m4): item 15 no longer cites "decision of 2026-11-16" for the database user with no other right: D3 parks the role split, so the source is the studio lead's instruction (DECISION-one-store CORRECTIONS (a)) and "no other right" is "planned", not proven.
 
 ### E-26: AGENT-SCOPE-DO-AND-DONT.md, line 2, status Apply now, type STALE
 OLD (exact):
@@ -424,9 +438,9 @@ the encryption key itself is in n8n's environment;
 ~~~~
 NEW (exact):
 ~~~~
-the encryption key itself is in n8n's environment (and n8n 2.46.6 is expected to copy it into `<take>/n8n/.n8n/config`, a file readable only by its owner (mode 600), removed together with the take folder by a plain `rm` (an ordinary delete, not `shred`); stand-in test step 12.5 checks this) and, once n8n runs on Postgres (planned, proven only by the stand-in test), the password of n8n's database user is a value in `n8n.env`;
+the encryption key itself is in n8n's environment (and n8n 2.46.6 is expected to copy it into `<take>/n8n/.n8n/config`, a file readable only by its owner (mode 600), that is planned to be removed together with the take folder by a plain `rm` (an ordinary delete, not `shred`); stand-in test step 12.5 is planned to check both) and, once n8n runs on Postgres (planned, proven only by the stand-in test), the password of n8n's database user is a value in `n8n.env`;
 ~~~~
-Why: Plan v5 step 12.5 says the scope sheet must list it; EL-1 puts a database user's password into n8n.env (step 1.2b). Stated as a plan. Who may open that file is NOT DECIDED 1. Why `rm` and not `shred`: the file lies inside the take folder that the assistant removes; the plan gives no further reason, so the reason is UNVERIFIED (design m, E-48 conflict): `shred -u` of step 22 item 6 applies only to the two secret files in `~/take-secrets`, which the owner deletes.
+Why: Plan v5 step 12.5 says the scope sheet must list it; EL-1 puts a database user's password into n8n.env (step 1.2b). Stated as a plan. Who may open that file is NOT DECIDED 1. Round 7 (design m8): the removal by `rm` is "planned" and "expected", not a fact. Why `rm` and not `shred`: the file lies inside the take folder that the assistant removes; the plan gives no further reason, so the reason is UNVERIFIED (see E-48): `shred -u` of step 22 item 6 applies only to the secret files in `~/take-secrets`, which the owner deletes.
 
 ### E-31: AGENT-SCOPE-DO-AND-DONT.md, line 20, status Apply now, type MISSING STEP
 OLD (exact):
@@ -435,9 +449,9 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-`n8n_drive.py:40-41`; open, finding M-1 of `review-codebase-1.md`: the read uses a table name without its schema name (`app`, a named section inside a database) as one database user while the table is in the schema `app` of the take's database, and the separate read-only count user is not built, so this count is not yet a check by a different database user; the stand-in test's grant check (plan v5, the step on database users) is planned to prove the grants only, and the four-login proposal was parked on 2026-11-16)
+`n8n_drive.py:40-41`; open, finding M-1 of `review-codebase-1.md` (that file is not in `inputs/`, so the finding is taken as the earlier drafts quoted it, UNVERIFIED here): the read uses a table name without its schema name (`app`, a named section inside a database) as one database user while the table is in the schema `app` of the take's database, and the read-only database user of its own for the counting check is not built, so this count is not yet an independent counting check; the stand-in test's grant check (plan v5, the step on database users) is planned to prove the grants only, and the proposal of four database users was parked on 2026-11-16)
 ~~~~
-Why: DECISION-one-store OWNER CONFIRMATION (b), (c) and CORRECTIONS (c) name this finding "M-1"; the same line of AGENT-SCOPE (line 20) cites "F-01" for the contact delete (E-40, E-44). Round 6 (naive M2): round 5 called this one "the first finding" and clashed with E-40 and E-44; now M-1 is the table-name finding and F-01 is the contact delete, as DECISION-one-store and AGENT-SCOPE line 20 name them. "Schema" is explained in the text. "is planned to prove" (design m4).
+Why: DECISION-one-store OWNER CONFIRMATION (b), (c) and CORRECTIONS (c) name this finding "M-1"; the same line of AGENT-SCOPE (line 20) cites "F-01" for the contact delete (E-40, E-44). M-1 is the table-name finding and F-01 is the contact delete. "Schema" is explained in the text. "is planned to prove" (design m4). Round 7: "counting check" is the one phrase (E-15, E-18, E-36); `review-codebase-1.md` is not in `inputs/`: NEEDS-LEAD, the studio lead checks M-1 against that file (next step: read it, or drop the quoted words if it differs). The old text is only the closing of the sentence that contains `n8n_drive.py:40-41`; the new text keeps that closing bracket.
 
 ### E-32: AGENT-SCOPE-DO-AND-DONT.md, line 23, status Apply now, type STALE
 OLD (exact):
@@ -479,13 +493,13 @@ counts the mails and contacts on its own credentials
 ~~~~
 NEW, TEXT W (default; applied unless confirmation b says otherwise):
 ~~~~
-counts the mails and contacts with a separate check of ours
+counts the mails and contacts with a small counting program of ours (not part of n8n)
 ~~~~
 NEW, TEXT N (replaces text W only if confirmation b says the mail count and the contact count run on credentials of their own):
 ~~~~
-counts the mails and contacts on its own credentials, and the table of leads with a separate check of ours
+counts the mails and contacts on its own credentials, and the table of leads with a small counting program of ours (not part of n8n)
 ~~~~
-Why: D-M1 of round 1: the old words claim an independent login for everything. DECISION-one-store lines 23 and 28: the table count runs as one database user through `docker exec psql`; the read-only count user is not built; plan v5 section 9 says its password is never exercised. A claim in a public post must not outrun that (D1, EL-3). Round 6 (naive B1, M6): both texts now exist; default W (the smaller claim) so that nothing depends on an unanswered question; "separate check of ours" means a counting program that is not one of the n8n flows. The post says nothing about "logins".
+Why: D-M1 of round 1: the old words claim an independent login for everything. DECISION-one-store lines 23 and 28: the table count runs as one database user through `docker exec psql`; the read-only count user is not built; plan v5 section 9 says its password is never exercised. A claim in a public post must not outrun that (D1, EL-3). Round 7 (naive major, order 6): the post says "a small counting program of ours (not part of n8n)", which is the public wording of "the counting check" (E-15, E-18); "separate" is dropped because it reads as "independent". Default W (the smaller claim) so that nothing depends on an unanswered question. Whether the counting program really counts the mails and contacts is UNVERIFIED (confirmation b); the owner has no way to verify the post alone, so fact 1 of E-12 (the stand-in test result with counts) is what he relies on, and the assistant says in the yes message which counts the test ran. The post says nothing about "logins".
 
 ### E-37: OWNER-STEPS-realrun-v3.md, line 27, status Apply now, type STALE
 OLD (exact):
@@ -494,10 +508,11 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-## Phase 0: set-up, by Mon 16 Nov 18:29 UTC (23:59 IST); Sun evening is ideal. About 60 to 90 minutes. Status on 2026-11-16, from your own statement of that day: the throwaway Gmail mailbox (2-step on, settings done, app passwords saved in files), the HubSpot test account (users created, key given), your own n8n account (it holds credentials for HubSpot, the model and Gmail in n8n's own credential store; the take uses a fresh n8n, so these are not the take's) and a saved model key are DONE. Not yet confirmed: whether that model key was made for this take only, and what the saved HubSpot key is allowed to do. Do not redo a step whose result already exists. That statement does NOT cover the two HubSpot private apps or the property `hadavin_label`, so before the take the assistant confirms with you that the key the take uses is the read-only one (step 7, app 1) and that app 2 exists. Do NOT do step 8 until the assistant asks you in a message; the assistant tells you before the take which of steps 1 to 9 still need you. The deadline in the heading above applies only to steps the assistant names to you. At the take you type `y`, the confirmation number and `end`, plus the take-day items.
-~~~~
-Why: FACTS-ALREADY-DONE.md names only what the owner did; line 3 says "HubSpot test account, users created, key given" and "Anthropic key saved" and nothing about key scope or about the apps. Round 6 (design m7, naive M8): the model key is now "a saved model key" and the open question is named in the text itself, matching NOT DECIDED 7; the earlier wording listed it as DONE without the open question. D7: first-visit n8n setup is done; the owner only types y, the challenge and end. The full rewrite of Phase 0 is OWNER-STEPS v4 (queue item C4b); this row is the fallback note if v3 is read before v4 exists (the only row to apply to v3 then).
+## Phase 0: set-up, by Mon 16 Nov 18:29 UTC (23:59 IST); Sun evening is ideal. About 60 to 90 minutes.
 
+Most of Phase 0 is already done (status below). The deadline in the heading above applies only to the steps the assistant names to you, and this sentence wins over the heading. Status on 2026-11-16, from your own statement of that day: the throwaway Gmail mailbox (2-step on, settings done, app passwords saved in files; the assistant asks you where, so that the clean-up deletes them), the HubSpot test account (users created, secret key given), your own n8n account (it holds credentials for HubSpot, the model and Gmail in n8n's own credential store; the take uses a fresh n8n, so these are not the take's) and a saved secret key for the model are DONE. Not yet confirmed: whether that secret key for the model was made for this take only, and what the saved HubSpot secret key is allowed to do. Do not redo a step whose result already exists. That statement does NOT cover the two HubSpot private apps or the property `hadavin_label`, so before the take the assistant confirms with you that the secret key the take uses is the read-only one (step 7, app 1) and that app 2 exists. Do NOT do step 8 until the assistant asks you in a message (the take uses a fresh n8n that the assistant starts; the assistant tells you when and where to type the three credentials into it). The assistant tells you before the take which of steps 1 to 9 still need you. One more thing before any take: the take program as it is today still removes the contacts at its last step (steps 16 and 18 below say "archived", which is that old behaviour), and with the read-only secret key a take would fail after the enquiries were sent and money was spent. So do not say yes to a take, and the assistant does not start one, until the assistant's message names the code change that stops this (see the yes message in step 16). At the take you type `y`, the confirmation number and `end`, plus the take-day items.
+~~~~
+Why: FACTS-ALREADY-DONE.md names only what the owner did; line 3 says "HubSpot test account, users created, key given" and "Anthropic key saved" and nothing about key scope or about the apps. D7: first-visit n8n setup is done; the owner only types y, the challenge and end. The full rewrite of Phase 0 is OWNER-STEPS v4 (queue item C4b); this row is the fallback note if v3 is read before v4 exists (the only row to apply to v3 then). Round 7: design M-B (gate G1 carried into this note: v3 lines 69 and 95 and steps 16 and 18 still say "archive" until G1 opens, and today's code deletes, so the take would fail after the sends); naive major (which wins, heading or body: the sentence says the body wins; "app passwords saved in files" no longer implies a path that E-48 might contradict: the assistant asks where; the step 8 prohibition is explained in the text, and it still rests on FOR THE LEAD TO CONFIRM e). The new text is the heading line, a blank line and one paragraph, so the paragraph is not a heading.
 ### E-38: AGENT-SCOPE-DO-AND-DONT.md, line 9, status Apply now, type STALE
 OLD (exact):
 ~~~~
@@ -544,7 +559,7 @@ NEW (exact):
 ~~~~
 NEEDS-OWNER. When the script pauses so that the assistant can film the contact list (the assistant tells you the exact words that appear on screen once the code is changed), the assistant films the contact list first. Type `end` and Enter yourself only when the assistant says so. The script then ends the take; it removes no contact (you delete this take's contacts by hand afterwards, see the next line). Only the exact word `end` ends the pause: a bare Enter or any other line makes the script print "type exactly: end" and ask once more; the second wrong line also prints "type exactly: end" and then the script goes ahead and ends the take anyway; a closed input on the first prompt ends the pause at once. Ctrl-C or closing the window also ends the take and removes no contact.
 ~~~~
-Why: D2: the word "archive" (a delete call in today's code) leaves this line. GATE G1: the pause prompt and the behaviour on a second wrong line, Ctrl-C and a closed input are today's code with "archive" in them, so the new text is true only after the code change, and the program's prompt wording after the change is UNVERIFIED (hence "the assistant tells you the exact words"). The old text is one whole line (103); no quoted prompt is invented.
+Why: D2: the word "archive" (a delete call in today's code) leaves this line. GATE G1: the pause prompt and the behaviour on a second wrong line, Ctrl-C and a closed input are today's code with "archive" in them, so the new text is true only after the code change, and the program's prompt wording after the change is UNVERIFIED (hence "the assistant tells you the exact words"). The old text is one whole line (103); no quoted prompt is invented. Missing input (exact), why the row is held: the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>` and the evidence file's quote of the changed pause prompt; when both exist, put the quoted prompt in place of the words in the first bracket.
 
 ### E-42: OWNER-STEPS-realrun-v3.md, line 104, status Hold (gate G1), type CONTRADICTION (code-change gate)
 OLD (exact):
@@ -555,7 +570,7 @@ NEW (exact):
 ~~~~
 - STOP and tell the assistant: closing the window or Ctrl-C early also ends the take and removes no contact, but tell the assistant; you delete this take's contacts by hand in the HubSpot UI, and the assistant gives you the count and, if the program printed them, the list (lead key and contact id).
 ~~~~
-Why: D2: the owner deletes the contacts by hand, from a list by lead key and contact id (the old line gave only the count). GATE G1 as in E-41; after Ctrl-C or a closed window the list exists only "if the program printed it" (UNVERIFIED).
+Why: D2: the owner deletes the contacts by hand, from a list by lead key and contact id (the old line gave only the count). GATE G1 as in E-41; after Ctrl-C or a closed window the list exists only "if the program printed it" (UNVERIFIED). Missing input (exact), why the row is held: the line `CODE-GATE G1 OPEN: <commit id>, <evidence file name>`, and the evidence file's statement whether the program prints the list on Ctrl-C.
 
 ### E-43: DECISION-one-store.md, line 14, status Apply now, type UNCLEAR WORD
 OLD (exact):
@@ -566,7 +581,7 @@ NEW (exact):
 ~~~~
 **ONE Postgres server for everything we own: the single Postgres instance of the take** (one container, one engine) with two databases (n8n's own and the take's). n8n's internal data lives in its own database, our claim table `mf_leads` in an `app` schema of the take's database,
 ~~~~
-Why: Decision 10: wording "one Postgres server with two databases (n8n's own and the take's)". The lead applies the row (the file is in `inputs/`, which the builder does not edit). The three roles in the same sentence are not changed: D3 parks the four-login proposal and line 20 keeps "three roles or one" as UNVERIFIED. Apply order on DECISION-one-store: E-43 (line 14), then E-46 (line 14, no overlap), then E-47 (line 1).
+Why: Decision 10: wording "one Postgres server with two databases (n8n's own and the take's)". The studio lead applies the row (the file is in `inputs/`, which the builder does not edit). The three roles in the same sentence are not changed: D3 parks the proposal of four database users and line 20 keeps "three roles or one" as UNVERIFIED. Apply order on DECISION-one-store: E-43 (line 14), then E-46 (line 14, no overlap), then E-47 (line 1). Round 7 (naive minor): the sentence after E-43 reads "1. **ONE Postgres server for everything we own: the single Postgres instance of the take** (one container, one engine) with two databases (n8n's own and the take's). n8n's internal data lives in its own database, our claim table `mf_leads` in an `app` schema of the take's database, three least-privilege roles (n8n, the app role ...". The join after the last comma is the file's own " three least-privilege roles" (read from line 14).
 
 ### E-44: AGENT-SCOPE-DO-AND-DONT.md, line 20, status Hold (gate G1), type CONTRADICTION
 OLD (exact):
@@ -599,7 +614,7 @@ NEW (exact):
 ~~~~
 tables in the separate database n8n,
 ~~~~
-Why: DECISION-one-store CORRECTIONS (a): n8n's own state lives in a SEPARATE database `n8n` owned by the role `smk_n8n`, not a schema; decision 10 wording. Same line as E-43; the old texts do not overlap.
+Why: DECISION-one-store CORRECTIONS (a): n8n's own state lives in a SEPARATE database `n8n` owned by the role `smk_n8n`, not a schema; decision 10 wording. Same line as E-43; the old texts do not overlap. Round 7 (naive minor): the phrase after E-46 reads "(no sqlite file, tables in the separate database n8n, DB_* names in n8n's process environment)" (the file's own text on either side, read from line 14).
 
 ### E-47: DECISION-one-store.md, line 1, status Apply now, type UNCLEAR WORD
 OLD (exact):
@@ -612,16 +627,16 @@ NEW (exact):
 ~~~~
 Why: Decision 10 wording; the title says "one database" while the text (after E-43) has two databases on one server.
 
-### E-48: OWNER-STEPS-realrun-v3.md, line 123, status Conditional (gate ND 7a answered "made only for this take"), type MISSING STEP
+### E-48: OWNER-STEPS-realrun-v3.md, line 123, status Apply now (safe default text), type MISSING STEP
 OLD (exact):
 ~~~~
 3. You: delete BOTH HubSpot private apps (Settings, Integrations, Private Apps, Delete). Screenshot.
 ~~~~
 NEW (exact):
 ~~~~
-3. You: delete BOTH HubSpot private apps (Settings, Integrations, Private Apps, Delete). Screenshot; crop it so that it shows no key text, no account name and no address. Also revoke the model key that you made for this take, but only if nothing else uses it: if you are not sure, tell the assistant first and do not revoke it. Where to revoke it in the model provider's website is UNVERIFIED (the assistant tells you if it has read it). Screenshot the key list showing that key gone, cropped the same way. The screenshot is only a record: no check in item 5 tests the model key. The assistant's copy of the model key is deleted together with the take folder in item 1, so it is already gone before your revoke; the assistant's removing of the take folder is not a revoke. If you saved your own copy of the key in `~/take-secrets`, delete it in item 6 with the two other secret files, the same way; if you saved it anywhere else, delete that file the same way after the revoke.
+3. You: delete BOTH HubSpot private apps (Settings, Integrations, Private Apps, Delete). Screenshot; crop it so that it shows no secret key text, no account name and no address. Then the assistant asks you: "Did you make the secret key for the model only for this take, and does nothing else use it?" If you answer yes, revoke that secret key in the website of the model provider (the assistant tells you the exact place before the clean-up; that click path is not checked) and screenshot the key list showing it gone, cropped the same way. If you answer no or you are not sure, do NOT revoke it and tell the assistant, who writes down that it stays. The screenshot is only a record: no check in item 5 tests the secret key for the model. The assistant's copy of that secret key is planned to be deleted together with the take folder in item 1, which is not a revoke. If you saved your own copy of it in `~/take-secrets`, delete it in item 6 with the two other secret files, the same way; if you saved it anywhere else, delete that file the same way after the revoke.
 ~~~~
-Why: DECISIONS-2026-11-16.md item 5, part S9-3 (the lead's own numbering calls it D5; the file numbers its items 1 to 12 and names the part S9-3): the owner revokes the model key at clean-up, owner-only; FACTS-ALREADY-DONE.md lists the clean-up revoke as owner-only. Step 22 names only app passwords and HubSpot apps. Round 6 (design M3, naive M11): no file path is guessed; the assistant's copy of the key lies in the take folder that item 1 removes first (AGENT-SCOPE line 13: the key file sits in the take folder by procedure), so the owner deletes only his own copy, using the method item 6 already gives (`shred -u`, else `rm`), which removes the conflict with "rm not shred"; no technical words ("rm", "is not a revoke") are left unexplained. CONDITIONAL on NOT DECIDED 7a: do not apply while it is unanswered or answered "not sure"/"others use it"; if v4 is written, use this row there.
+Why: DECISIONS-2026-11-16.md item 5, part S9-3 (the decision file numbers its items 1 to 12; the studio lead's own short name for the part is D5 S9-3): the owner revokes the model key at clean-up, owner-only; FACTS-ALREADY-DONE.md lists the clean-up revoke as owner-only. Step 22 names only app passwords and HubSpot apps. Round 7 (design M-C, order 3): the row ALWAYS applies; the former condition on NOT DECIDED 7a silently dropped S9-3 when the answer was "not sure". The safe default is in the text: the assistant asks at clean-up, the owner revokes only after a clear yes, and S9-3 stays the rule. If ND7a is answered "yes, made only for this take" the question can be dropped and the text says "revoke". The place to revoke is UNVERIFIED (not read), so the assistant names it before clean-up; step numbers are named in the text (item 1, item 5, item 6 of step 22). The assistant's copy lies in the take folder that item 1 removes first (AGENT-SCOPE line 13: the key file sits in the take folder by procedure), so the owner deletes only his own copy by the method item 6 already gives (`shred -u`, else `rm`). If v4 is written, use this row there.
 
 ## Lines checked and found consistent
 Numbers in brackets such as (EL-7) name the earlier-list item the line was checked against (EL-n and D-n are explained at the top). Covered means read line by line.

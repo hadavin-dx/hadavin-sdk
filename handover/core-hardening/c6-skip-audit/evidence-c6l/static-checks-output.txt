@@ -1,0 +1,30 @@
+## C-7: diff of the two flow folders (names only)
+Only in demo/n8n-flows-real-v5: V5-NODE-DIFF.txt
+Files demo/n8n-flows-real-v5/mf-recovery.json and demo/n8n-flows-film-v5/mf-recovery.json differ
+Files demo/n8n-flows-real-v5/mf-sub-crm-mail.json and demo/n8n-flows-film-v5/mf-sub-crm-mail.json differ
+## C-9 static: claim table definition and insert
+demo/n8n-mainframe/mf.py:45:    psql("CREATE TABLE mf_leads(lead_key text PRIMARY KEY, email text, name text, state text
+demo/n8n-mainframe/build_mainframe.py:83:            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token,
+mf-form ON CONFLICT hits: 1
+mf-hook ON CONFLICT hits: 1
+mf-recovery ON CONFLICT hits: 0
+mf-sub-crm-mail ON CONFLICT hits: 0
+## C-11a static: the plan row for the take's saving settings
+125:| executions (take) | `EXECUTIONS_DATA_SAVE_ON_SUCCESS=all`, `EXECUTIONS_DATA_SAVE_ON_ERROR=all`, `EXECUTIONS_DATA_SAVE_ON_PROGRESS=false`, `EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=false` (owner 2026-11-16; made-up data only) |
+271:- **1.2** `. $HOME/hadavin-smoke/env.sh; printf '%s\n' N8N_LISTEN_ADDRESS=127.0.0.1 N8N_PORT=5690 N8N_RUNNERS_BROKER_PORT=5691 $EG "N8N_DISABLED_MODULES=$MODS" EXECUTIONS_DATA_SAVE_ON_SUCCESS=all EXECUTIONS_DATA_SAVE_ON_ERROR=all EXECUTIONS_DATA_SAVE_ON_PR
+## DECISIONS file line of 'never deletes'
+3:2. TAKE IDENTITY is read-only: the take never deletes contacts; leftover made-
+## QUEUE header rule 6 present
+1
+## R460 in the bible folder (hits)
+0
+## files named in reports but absent from the copy
+scripts/run_real_check.py: 0 found
+scripts/run_real_check_n8n.py: 0 found
+scripts/hubspot_probe.py: 0 found
+report file for HB171: 0 found
+report file for HB180: 0 found
+report file for HB186: 0 found
+report file for HB189: 0 found
+report file for HB194: 0 found
+owner sheets steps-edits/ (v9..v19): 376

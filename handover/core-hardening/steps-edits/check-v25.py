@@ -268,6 +268,7 @@ else: fail('C24', 'R8 character list not found')
 # C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)
 for n, t in (('A', A), ('B', B)):
     if t.count('one of the three alarms of 6.2') != 1 or 'Three phone alarms' not in t: fail('C25', n + ' alarm count wording')
+exec(open(HERE + 'newchecks-v25.py', encoding='utf-8').read())
 print('check-v25: %d failure(s)' % len(FAILS))
 for f in FAILS: print('FAIL', f)
 sys.exit(1 if FAILS else 0)
