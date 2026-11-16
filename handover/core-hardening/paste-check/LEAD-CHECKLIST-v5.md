@@ -61,7 +61,7 @@ ls "$W/inputs"
 ```
 A6. The four counts, compared by the command (`ok` or STOP). The counts only show the right KIND of plan; the checksums of A3 to A5b are what prove the right text:
 ```bash
-if [ "$(grep -c '<FINAL[-]' "$PT")" = 24 ] && [ "$(grep -c 'LEAD-FILL [0-9]' "$PT")" = 10 ] && [ "$(grep -c -E '^[*][*]HEAD_PIN = |^[$]HEAD_PIN = ' "$PT")" = 2 ] && [ "$(grep -c -E '^[*][*]RE-PIN [(]lead only[)]. FOUR places hold' "$PT")" = 1 ]; then echo "ok counts 24 10 2 1"; case "$CHAIN" in 2) e=39af84aec78b650f;; 3) e=515cf4704ebba5bd;; 4) e=b0caeb84c5a28a9d;; *) e=none;; esac; [ "$(sha256sum "$PT" | cut -c1-16)" = "$e" ] && echo "ok plan checksum for CHAIN=$CHAIN ($e)" || echo "STOP: plan checksum is not the one of CHAIN=$CHAIN ($e)"; else echo "STOP: counts differ (mv \"$W\" \"$W.old\", A1 again)"; fi
+if [ "$(grep -c '<FINAL[-]' "$PT")" = 24 ] && [ "$(grep -c 'LEAD-FILL [0-9]' "$PT")" = 10 ] && [ "$(grep -c -E '^[*][*]HEAD_PIN = |^[$]HEAD_PIN = ' "$PT")" = 2 ] && [ "$(grep -c -E '^[*][*]RE-PIN [(]lead only[)]. FOUR places hold' "$PT")" = 1 ]; then echo "ok counts 24 10 2 1"; case "$CHAIN" in 2) e=39af84aec78b650f;; 3) e=515cf4704ebba5bd;; 4) e=b0caeb84c5a28a94;; *) e=none;; esac; [ "$(sha256sum "$PT" | cut -c1-16)" = "$e" ] && echo "ok plan checksum for CHAIN=$CHAIN ($e)" || echo "STOP: plan checksum is not the one of CHAIN=$CHAIN ($e)"; else echo "STOP: counts differ (mv \"$W\" \"$W.old\", A1 again)"; fi
 ```
 A7. List every marker left (17 markers on 10 lines in the patched plan; the expected lines are for `CHAIN=2`: 2, 3, 4, 125, 258, 275, 433, 434, 585, 586; for `CHAIN=3`: 2, 3, 4, 125, 258, 275, 466, 467, 620, 621; for `CHAIN=4`: 2, 3, 4, 137, 270, 287, 509, 510, 777, 778; the list must get shorter and be empty before C7):
 ```bash
