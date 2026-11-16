@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:04:05Z
+UPDATED_UTC: 2026-11-16T11:04:53Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 5
 PERCENT: 94
-AGENTS_RUNNING: 8
-CAPACITY: 1.38 load of 4 cores, mem 0/15 GB, RAM 897/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 0.65 load of 4 cores, mem 0/15 GB, RAM 877/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -51,8 +51,9 @@ Q20 applied to q16 rows (6 places); every fact is 'the lead verifies', none conf
 Q18 applied; I reproduced run_all rc 0 (659/0/62) and check_patches PASS 4. NOTE: take_check.sh on the committed UNPATCHED real-v5 now exits 4 by design: the take must run on the patched copy. n8n saving of manual runs unverified. No independent evidence run on the final F8 head yet.
 ORDER 027: started 4 lanes (stranger+adversarial read of owner sheet, citation checker of new counts, one-place sweep of own outputs, contradiction re-read vs DECISIONS)
 F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB cap untested); --out via symlinked parent writes into target (unjudged): give to r8 fixer after a54491a8 reports
-NEXT: Q21 asked (env route, saved runs). Contra fixer running; after cite checker: fixer for FINDINGS/FIX-PLAN/CUT-LIST/EXCEPTIONS/REPORT/QUESTIONS pointers
-PUSHED_UTC: 2026-11-16T11:04:05Z
+FAILED: F8 evidence q18: ruff format --check rc=1 on check_flows.py+selftest.py; run_all.sh TCMISS unbound crash (line 76); mutants M2 M3 M7 M12 survive (fixer f8fix7 running)
+NEXT: F8 fixer, F3 test gaps, pointer fixer, contra fixer, 2 readers running; F3 r8 and owner sheet r4 landed
+PUSHED_UTC: 2026-11-16T11:04:53Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -71,16 +72,12 @@ PUSHED_UTC: 2026-11-16T11:04:05Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
-| f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
-| f3fix8 | F3 last fix batch (frozen) | sonnet | F1 F2 Majors + small nits, no new round | 11:10 | 11:35 | 5 | running | fill_flows/fix-f3-r8.md |
-| q19fix | Q19 wording decisions fixer | sonnet | 5 answers applied to CT and RW | 11:00 | 11:20 | 5 | running | fix-q19.md |
-| f8ev7 | F8 final-head evidence (take_check) | sonnet | delta evidence after Q18 | 11:05 | 11:25 | 5 | running | flow-check/evidence-q18.md |
-| cite2 | citation checker, new counts and dates | sonnet | FINDINGS/FIX-PLAN/LEDGER/REPORT vs sources | 11:08 | 11:25 | 5 | running | (inline) |
-| a20a979e | owner-sheet fixer r4 | sonnet | Blockers 1-2 + Majors in OWNER-STEPS-q16-rows | 11:04 | 11:20 | 5 | running | fix-ownersteps-r4.md |
 | ad957e77 | adversarial take-day reader | sonnet | wrong-step scenarios (lane d) | 11:04 | 11:20 | 5 | running | (inline) |
 | a83c30f5 | cross-read other sessions | sonnet | contradictions with other sessions' files (lane e) | 11:04 | 11:20 | 5 | running | (inline) |
 | a2f2b789 | claims/readme contra fixer | sonnet | apply contra re-read items to CT, RW, flow-check README, F-008 patch comment | 11:12 | 11:30 | 5 | running | fix-contra2.md |
+| sweepfix2 | pointer+citation fixer | sonnet | apply sweep2, contra, citation items to FINDINGS..LEDGER | 11:16 | 11:35 | 5 | running | fix-sweep2.md |
+| f3tests9 | F3 test-gap fixer | sonnet | kill mutants 9,12,17; symlink-parent case (tests only) | 11:16 | 11:35 | 5 | running | fill_flows/fix-f3-r9.md |
+| f8fix7 | F8 fixer r7 | sonnet | format, TCMISS crash, mutants M2 M3 M7 M12 | 11:19 | 11:35 | 5 | running | flow-check/fix-f8-r7.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
