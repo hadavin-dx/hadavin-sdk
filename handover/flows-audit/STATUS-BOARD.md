@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:56:04Z
+UPDATED_UTC: 2026-11-16T19:59:38Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 3.87 load of 4 cores, mem 1/15 GB, RAM 1138/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 1.72 load of 4 cores, mem 1/15 GB, RAM 1110/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T19:56:04Z
+PUSHED_UTC: 2026-11-16T19:59:38Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,19 +32,19 @@ PUSHED_UTC: 2026-11-16T19:56:04Z
 |---|---|---|---|---|---|---|---|
 | a7636841 | F8 fixer r13 (HEAVY only while it runs tests; one at a time) | sonnet | fix F8 review findings | 19:50Z | 20:50Z | running | checkpoint-f8-r13.md |
 | a8200900 | FINDINGS/LEDGER r32 fixer | sonnet | fix 28 Majors, cell diff | 19:54Z | 20:34Z | running | none yet |
-| a921f079 | patch-copies README 31-329 reader (uncapped) | sonnet | stranger read | 19:54Z | 20:09Z | running | none yet |
-| a3210afe | TAKE-CHECKLIST 200-514 reader | sonnet | stranger read | 19:54Z | 20:09Z | running | none yet |
-| a03377cd | CLAIMS-TABLE 21-300 reader | sonnet | stranger read | 19:57Z | 20:12Z | running | none yet |
 | aaf24a7e | REVIEW.md uncapped fixer r50-r53 | sonnet | fix 5 reader reports | 19:59Z | 20:49Z | running | none yet |
 | a4cb7929 | RUNBOOK fixer r50-r54 (guard/wording only) | sonnet | fix 5 reader reports | 19:59Z | 20:49Z | running | none yet |
-| a490e77f | FIX-PLAN stranger reader | sonnet | stranger read | 19:59Z | 20:14Z | running | none yet |
+| ad9f2b55 | TAKE-CHECKLIST fixer r56+r58 | sonnet | fix 2 reader reports | 20:01Z | 20:51Z | running | none yet |
+| a3c5bd18 | patch-copies README+DEAD-MAN-CHECK uncapped fixer | sonnet | fix 4 reader reports | 20:01Z | 20:51Z | running | none yet |
+| a67311a6 | CLAIMS-TABLE fixer r45,r57,r59 (no grade changes) | sonnet | fix 3 reader reports | 20:02Z | 20:52Z | running | none yet |
+| a71e490b | FIX-PLAN fixer r60 (clock block frozen) | sonnet | fix reader report | 20:03Z | 20:53Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. patch-copies README+DEAD-MAN-CHECK uncapped fixer (after README 31-329 reader)
-2. TAKE-CHECKLIST fixer (r56 + 200-514 reader) and CLAIMS-TABLE fixer (r45, r57, 21-300 reader)
-3. RUNBOOK 433+ I-table reader (I7-I58 unread) and RUNBOOK 1-220 re-read after fix
-4. F8 independent reviewers and evidence runner (heavy; only when load under 6)
-5. Fresh reader on new Q31 text (QUESTIONS lines 420-812) and RUNSHEET-WORDING round 2
+1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
+2. Independent checks on each fixer's output (my own commands), then fresh uncapped reviewers on the fixed files
+3. F8 independent reviewers and evidence runner (heavy; only when load under 6)
+4. Fresh reader on new Q31 text (QUESTIONS 420-812) and RUNSHEET-WORDING round 2; FIX-PLAN 181-228
+5. drift-007 r3 refresh and trigger-word grep before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
