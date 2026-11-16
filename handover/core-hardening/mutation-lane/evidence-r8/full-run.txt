@@ -541,3 +541,19 @@ control run: stopped orphaned test group 4799; no marker in /tmp/claude-0/-home-
 REFUSED: this tool works on Linux only (it reads /proc to identify and stop an orphaned test run and uses waitid); on this system a --restore could not stop a leftover test run: refused
   PASS: T56 non-Linux: exit 2 (got 2) with 'Linux only'
 == T57 (review r4 nit 10) the restore command in the refusal carries --repo; --restore needs no git repository
+safety-tests.sh: line 1331:  5522 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
+  PASS: T57a the printed command contains --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/toy/repo
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; hash matche
+  PASS: T57b --restore from a copy of the script in a folder that is no git repository: exit 0 (got 0), file back
+  PASS: T57c a restore on the real repository is still refused without --repo (rc 2)
+== T58 (review r4 nit 11) output files never follow a link; reap waits for the leader it killed
+  PASS: T58a --raw file is a link: exit 2 (got 2), the victim is untouched, nothing planted
+  PASS: T58b --out-json is a link: exit 2 (got 2), victim untouched, nothing planted
+  PASS: T58c --raw is a symbolic link to a folder: exit 2 (got 2), nothing written into it
+returncode after reap: -9 still unreaped child: False
+  PASS: T58d reap kills AND waits: no zombie, returncode set
+== T59 (review r4 nit 12) the restored mode does not depend on the umask
+safety-tests.sh: line 1331:  7236 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T59 mode 640 after a restore under umask 077 (got 640)
+== T60 (review r4 nit 3) a folder swapped for a link between the path check and the write is not followed
