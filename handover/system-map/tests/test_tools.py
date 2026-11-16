@@ -22,7 +22,7 @@ class Cit(unittest.TestCase):
 class Part(unittest.TestCase):
     def test_no_rule_none(self): self.assertEqual(pt.lanes_for("handover/unknown/x"), set())
     def test_one_lane(self):
-        for p, lane in [("src/a.py", "L5"), ("handover/README.md", "L1"), ("handover/demo3/REPORT.md", "L2"),
+        for p, lane in [("src/a.py", "L5b"), ("docs/a.md", "L5a"), ("handover/README.md", "L1"), ("handover/demo3/REPORT.md", "L2"),
                         ("handover/demo3/evidence/x.md", "L3"), ("handover/demo/sonar/x", "L4"),
                         ("handover/demo/pr-text/x", "L1"), ("handover/demo/REPORT.md", "L1")]:
             self.assertEqual(pt.lanes_for(p), {lane}, p)

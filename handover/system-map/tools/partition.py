@@ -24,7 +24,7 @@ def lanes_for(path):
     if path.startswith("handover/demo/") and not hits:
         hits.add("L4")  # remainder of handover/demo, by design
     if not path.startswith("handover/"):
-        hits.add("L5")
+        hits.add("L5b" if path.startswith(("src/", "tests/")) else "L5a")
     return hits
 
 

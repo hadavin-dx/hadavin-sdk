@@ -1,5 +1,18 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 06:53 UTC / 12:23 IST - ORDER 002 plan v3 done, lanes L1..L5b launched
+Agents running: 6 language-model agents (sonnet, read-only auditors, one lane file each); 0 script lanes. Plan review: round 1 and 2 done and resolved (opus). Round 3 of the plan review runs when the first lane finishes (max 6 agents at once). Scripts built and tested by me: tools/partition.py (4470 files, 6 lanes, 0 problems), tools/check_citations.py (9 unittest pass). Still mine: tools/scan_outputs.py.
+Deviation to note: the lane briefs start with the markers `STUDIO-PREAMBLE v1` and `EGM-GATE v1` and tell the lane to read work/BRIEF-LANE.md, which holds the full preamble text plus the MUST-NOT list, instead of pasting 4 KB into six prompts.
+Agent register (id, purpose, start, expected end, state):
+| PR1-impl, PR1-zoom, PR2-impl | plan reviews r1, r2 | 06:47-06:55 | done | closed (reported) |
+| LANE-L1 | audit handover top files, tools, demo ORDERS/REPORT/APPLY-LIST, pr-text etc (148 files) | 06:53 | +60 min | running |
+| LANE-L2 | audit demo3 kill (flows, SQL, harness, runs) and demo3 top docs (756 files) | 06:53 | +60 min | running |
+| LANE-L3 | audit demo3 evidence, tools, scratch (1420 files, mostly skimmable patch chains) | 06:53 | +60 min | running |
+| LANE-L4 | audit rest of handover/demo (1659 files, mostly scan outputs) | 06:53 | +60 min | running |
+| LANE-L5a | audit .claude, .github, demos, docs, tools, root files (111 files) | 06:53 | +60 min | running |
+| LANE-L5b | audit src and tests (core, out of take scope; job-key grep) (376 files) | 06:53 | +60 min | running |
+Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
+
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
 Agents running: 1 language-model agent (PR2-impl, plan review round 2); 0 script lanes. Round 1 done: zoom-out 0 Blocker / 3 Major, readiness 5 Blocker / 7 Major; all fixed by egm-resolve (opus), PLAN-002.md is now v2. Lead (me) is writing tools/partition.py and tools/check_citations.py in parallel. Next: lanes L1..L5 as soon as round 2 shows no Blocker.
 Agent register (id, purpose, start, expected end, state):
