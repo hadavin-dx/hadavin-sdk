@@ -198,7 +198,7 @@ ok|Pat Possession, {TODAY}
 ok|Jane Q. Roe, {TODAY}
 ok|Pat Smith, {TODAY}, read-only copy and me@home.net
 ok|Pat Smith, {TODAY}, the owner and the team read it
-ok|Pat Smith, {TODAY}, checked all lines, none missing words
+ok|Pat Smith, {TODAY}, checked all lines, nothing missing
 ok|Pat Smith, {TODAY}, 11111111111111111111 lines
 ok|Jose{MN} Mu{MN}ller, {TODAY}
 no|Pat Q Roe, {TODAY}|rule: name word too short
