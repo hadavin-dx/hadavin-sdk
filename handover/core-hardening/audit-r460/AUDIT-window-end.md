@@ -49,3 +49,6 @@ Choke point recommendation: a thin wrapper around the LLM that checks the window
 - Test files other than by grep; no test was run.
 - Config YAML/JSON samples under `config/` or elsewhere in the repo.
 - `__pycache__` binary hits ignored.
+
+## CORRECTIONS after independent review (review-window-end.md, 2026-11-16)
+The recommended choke point "wrap at app.py:162" is NOT enough: cli.py:150 (gate) and cli.py:221-222 (replay) build their own llm and bypass it; the true choke point is NetworkLLM.chat (llm/common.py:208), which all four real kinds inherit, checked per retry attempt (_retry, common.py:233). Also: a stage field exists (config.py:317 environment dev/pilot/prod; no "demo" yet), Limits has no clock (models.py:19; app.py:73 clock goes only to Approvals), guard/bedrock_guardrail.py:101 and demos/ask-your-data/askdata/pipeline.py:155 are further paid-call sites, and app.py:90-98 does not refuse llm= in pilot/prod. Details and file:line in review-window-end.md.
