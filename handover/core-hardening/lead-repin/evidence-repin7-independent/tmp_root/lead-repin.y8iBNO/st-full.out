@@ -1,0 +1,1391 @@
+PASS (hidden): KEY= form
+PASS (hidden, line-only final filter): KEY= form
+PASS (hidden, sed stage alone): KEY= form
+PASS (hidden): export TOKEN= form
+PASS (hidden, line-only final filter): export TOKEN= form
+PASS (hidden, sed stage alone): export TOKEN= form
+PASS (hidden): password = "..." form
+PASS (hidden, line-only final filter): password = "..." form
+PASS (hidden, sed stage alone): password = "..." form
+PASS (hidden): JSON quoted key
+PASS (hidden, line-only final filter): JSON quoted key
+PASS (hidden, sed stage alone): JSON quoted key
+PASS (hidden): JSON client_secret no spaces
+PASS (hidden, line-only final filter): JSON client_secret no spaces
+PASS (hidden, sed stage alone): JSON client_secret no spaces
+PASS (hidden): Authorization Bearer
+PASS (hidden, line-only final filter): Authorization Bearer
+PASS (hidden, sed stage alone): Authorization Bearer
+PASS (hidden): bare Bearer value
+PASS (hidden, line-only final filter): bare Bearer value
+PASS (hidden, sed stage alone): bare Bearer value
+PASS (hidden): sk- value
+PASS (hidden, line-only final filter): sk- value
+PASS (hidden, sed stage alone): sk- value
+PASS (hidden): pat- value
+PASS (hidden, line-only final filter): pat- value
+PASS (hidden, sed stage alone): pat- value
+PASS (hidden): github token shape
+PASS (hidden, line-only final filter): github token shape
+FAIL (secret still visible after the sed stage alone): github token shape
+PASS (hidden): YAML next line after grep prefix
+PASS (hidden, sed stage alone): YAML next line after grep prefix
+PASS (hidden): YAML block line a
+PASS (hidden, sed stage alone): YAML block line a
+PASS (hidden): YAML block line b
+PASS (hidden, sed stage alone): YAML block line b
+PASS (hidden): web address with user:password
+PASS (hidden, line-only final filter): web address with user:password
+PASS (hidden, sed stage alone): web address with user:password
+PASS (hidden): AKIA-shaped id
+PASS (hidden, line-only final filter): AKIA-shaped id
+PASS (hidden, sed stage alone): AKIA-shaped id
+PASS (hidden): passwd: form
+PASS (hidden, line-only final filter): passwd: form
+PASS (hidden, sed stage alone): passwd: form
+PASS (hidden): pwd= form
+PASS (hidden, line-only final filter): pwd= form
+PASS (hidden, sed stage alone): pwd= form
+PASS (hidden): credential = form
+PASS (hidden, line-only final filter): credential = form
+PASS (hidden, sed stage alone): credential = form
+PASS (hidden): secret at column 200 of a long line
+PASS (hidden, line-only final filter): secret at column 200 of a long line
+PASS (hidden, sed stage alone): secret at column 200 of a long line
+PASS (hidden): JSON secret followed by more JSON
+PASS (hidden, line-only final filter): JSON secret followed by more JSON
+PASS (hidden, sed stage alone): JSON secret followed by more JSON
+PASS (hidden): quoted secret inside a call
+PASS (hidden, line-only final filter): quoted secret inside a call
+PASS (hidden, sed stage alone): quoted secret inside a call
+PASS (hidden): bare PASS= name
+PASS (hidden, line-only final filter): bare PASS= name
+PASS (hidden, sed stage alone): bare PASS= name
+PASS (hidden): passphrase: name
+PASS (hidden, line-only final filter): passphrase: name
+PASS (hidden, sed stage alone): passphrase: name
+PASS (hidden): pat = name (personal access token)
+PASS (hidden, line-only final filter): pat = name (personal access token)
+PASS (hidden, sed stage alone): pat = name (personal access token)
+PASS (hidden): os.environ["X_TOKEN"] = "v"
+PASS (hidden, line-only final filter): os.environ["X_TOKEN"] = "v"
+PASS (hidden, sed stage alone): os.environ["X_TOKEN"] = "v"
+PASS (hidden): .get("API_KEY", "default")
+PASS (hidden, line-only final filter): .get("API_KEY", "default")
+PASS (hidden, sed stage alone): .get("API_KEY", "default")
+PASS (hidden): ("API_KEY", "value") tuple
+PASS (hidden, line-only final filter): ("API_KEY", "value") tuple
+PASS (hidden, sed stage alone): ("API_KEY", "value") tuple
+PASS (hidden): --token value flag
+PASS (hidden, line-only final filter): --token value flag
+PASS (hidden, sed stage alone): --token value flag
+PASS (hidden): --password value flag
+PASS (hidden, line-only final filter): --password value flag
+PASS (hidden, sed stage alone): --password value flag
+PASS (hidden): --api-key=value flag
+PASS (hidden, line-only final filter): --api-key=value flag
+PASS (hidden, sed stage alone): --api-key=value flag
+PASS (hidden): triple-quoted value on one line
+PASS (hidden, line-only final filter): triple-quoted value on one line
+PASS (hidden, sed stage alone): triple-quoted value on one line
+PASS (hidden): triple-quoted value over several lines, line 1
+PASS (hidden, sed stage alone): triple-quoted value over several lines, line 1
+PASS (hidden): triple-quoted value over several lines, line 2
+PASS (hidden, sed stage alone): triple-quoted value over several lines, line 2
+PASS (hidden): unterminated quote
+PASS (hidden, line-only final filter): unterminated quote
+PASS (hidden, sed stage alone): unterminated quote
+PASS (hidden): e-mail address
+PASS (hidden, line-only final filter): e-mail address
+PASS (hidden, sed stage alone): e-mail address
+PASS (hidden): JSON name/value pair
+PASS (hidden, line-only final filter): JSON name/value pair
+PASS (hidden, sed stage alone): JSON name/value pair
+PASS (hidden): single-quoted dict key 'api_key'
+PASS (hidden, line-only final filter): single-quoted dict key 'api_key'
+PASS (hidden, sed stage alone): single-quoted dict key 'api_key'
+PASS (hidden): self.token = value
+PASS (hidden, line-only final filter): self.token = value
+PASS (hidden, sed stage alone): self.token = value
+PASS (hidden): accessToken: value (camel case)
+PASS (hidden, line-only final filter): accessToken: value (camel case)
+PASS (hidden, sed stage alone): accessToken: value (camel case)
+PASS (hidden): apiKey = value (camel case)
+PASS (hidden, line-only final filter): apiKey = value (camel case)
+PASS (hidden, sed stage alone): apiKey = value (camel case)
+PASS (hidden): X-Api-Key: header
+PASS (hidden, line-only final filter): X-Api-Key: header
+PASS (hidden, sed stage alone): X-Api-Key: header
+PASS (hidden): JS object {token: value}
+PASS (hidden, line-only final filter): JS object {token: value}
+PASS (hidden, sed stage alone): JS object {token: value}
+PASS (hidden): export X_PASSWORD=
+PASS (hidden, line-only final filter): export X_PASSWORD=
+PASS (hidden, sed stage alone): export X_PASSWORD=
+PASS (hidden): pw name, triple-quoted over several lines, line 1
+PASS (hidden, sed stage alone): pw name, triple-quoted over several lines, line 1
+PASS (hidden): pw name, triple-quoted over several lines, line 2
+PASS (hidden, sed stage alone): pw name, triple-quoted over several lines, line 2
+PASS (hidden): pswd: name
+PASS (hidden, line-only final filter): pswd: name
+PASS (hidden, sed stage alone): pswd: name
+PASS (kept): text after a multi-line value closes
+PASS (hidden): single triple quotes over several lines, line 1
+PASS (hidden, sed stage alone): single triple quotes over several lines, line 1
+PASS (hidden): single triple quotes over several lines, line 2
+PASS (hidden, sed stage alone): single triple quotes over several lines, line 2
+PASS (kept): text after a quoted JSON secret stays readable (DELETE)
+PASS (kept): text after a quoted secret in a call stays readable
+PASS (kept): comparison key == "end" is not hidden
+PASS (kept): plain answer = "end" is not hidden
+PASS (kept): the one allowed example key shows
+PASS (kept): a quoted value at the start of a line hides the string, not the words after it
+PASS (kept): ordinary line with the word end
+PASS (kept): unrelated YAML line after a hidden block
+PASS (kept): unrelated grep line after hidden YAML value
+PASS (kept): long line carries a cut notice
+PASS (kept): text after a hidden --token flag
+PASS (kept): text after a hidden triple-quoted value
+PASS (kept): line after a multi-line triple-quoted value
+PASS (kept): line after a multi-line single-triple-quoted value
+PASS (kept): text after a JSON name/value pair secret: the name stays
+PASS (kept): text after a single-quoted dict secret
+PASS (kept): text after a JS object secret
+PASS (kept): if token: is not a secret line (the line)
+PASS (kept): if token: does not hide the next line
+PASS (kept): author: is not a secret name (the line)
+PASS (kept): author: does not hide the next line
+PASS (kept): if not key_file: is not a YAML name (the line after it stays)
+PASS (kept): author = value is not hidden
+PASS (kept): desk- word is not mangled
+PASS (kept): task- word is not mangled
+PASS (kept): risk- word is not mangled
+PASS (kept): mask- word is not mangled
+PASS (kept): compat- word is not mangled
+PASS (kept): max_tokens is not a secret name
+PASS (kept): tokenizer is not a secret name
+PASS (kept): if token == "end": is not hidden
+PASS (kept): bypass is not a secret name
+PASS (hidden): secret that starts before column 240 (mask first, then cut)
+PASS (hidden, line-only final filter): secret that starts before column 240 (mask first, then cut)
+PASS (hidden, sed stage alone): secret that starts before column 240 (mask first, then cut)
+PASS (hidden): opaque blob in quotes
+PASS (hidden, awk stage alone): opaque blob in quotes
+PASS (hidden): opaque blob after a label
+PASS (hidden, awk stage alone): opaque blob after a label
+PASS (hidden): mixed word in a trailing comment
+PASS (hidden, awk stage alone): mixed word in a trailing comment
+PASS (hidden): mixed word in a sentence
+PASS (hidden, awk stage alone): mixed word in a sentence
+PASS (hidden): UUID
+PASS (hidden, awk stage alone): UUID
+PASS (hidden): curl -H "X-Auth-Token: v"
+PASS (hidden, line-only final filter): curl -H "X-Auth-Token: v"
+PASS (hidden, sed stage alone): curl -H "X-Auth-Token: v"
+PASS (hidden): curl -H 'Authorization: token v'
+PASS (hidden, line-only final filter): curl -H 'Authorization: token v'
+PASS (hidden, sed stage alone): curl -H 'Authorization: token v'
+PASS (hidden): ENV TOKEN v (no equals sign)
+PASS (hidden, line-only final filter): ENV TOKEN v (no equals sign)
+PASS (hidden, sed stage alone): ENV TOKEN v (no equals sign)
+PASS (hidden): passwd "v" (no equals sign)
+PASS (hidden, line-only final filter): passwd "v" (no equals sign)
+PASS (hidden, sed stage alone): passwd "v" (no equals sign)
+PASS (hidden): plural API_KEYS=
+PASS (hidden, line-only final filter): plural API_KEYS=
+PASS (hidden, sed stage alone): plural API_KEYS=
+PASS (hidden): plural PASSWORDS:
+PASS (hidden, line-only final filter): plural PASSWORDS:
+PASS (hidden, sed stage alone): plural PASSWORDS:
+PASS (hidden): plural AUTH_TOKENS =
+PASS (hidden, line-only final filter): plural AUTH_TOKENS =
+PASS (hidden, sed stage alone): plural AUTH_TOKENS =
+PASS (hidden): plural ALLOWED_API_KEYS=
+PASS (hidden, line-only final filter): plural ALLOWED_API_KEYS=
+PASS (hidden, sed stage alone): plural ALLOWED_API_KEYS=
+PASS (hidden): tokens = (not a counter)
+PASS (hidden, line-only final filter): tokens = (not a counter)
+PASS (hidden, sed stage alone): tokens = (not a counter)
+PASS (hidden): Name: value in the middle of a line
+PASS (hidden, line-only final filter): Name: value in the middle of a line
+PASS (hidden, sed stage alone): Name: value in the middle of a line
+PASS (hidden): Name: value inside quotes (echo)
+PASS (hidden, line-only final filter): Name: value inside quotes (echo)
+PASS (hidden, sed stage alone): Name: value inside quotes (echo)
+PASS (hidden): YAML next line with path:NN: prefix
+PASS (hidden, sed stage alone): YAML next line with path:NN: prefix
+PASS (hidden): YAML name: value with path:NN: prefix
+PASS (hidden, line-only final filter): YAML name: value with path:NN: prefix
+PASS (hidden, sed stage alone): YAML name: value with path:NN: prefix
+PASS (hidden): pretty JSON: name line then value line
+PASS (hidden): pretty JSON: value line then name line
+PASS (hidden): YAML list: - name then value
+PASS (hidden): JSON array on one line, item 1
+PASS (hidden): JSON array on one line, item 2
+PASS (hidden): JSON array over several lines, item 1
+PASS (hidden): JSON array over several lines, item 2
+PASS (hidden): nested JSON object, inner
+PASS (hidden): nested JSON object, later key
+PASS (hidden): escaped quote inside a value, first part
+PASS (hidden, line-only final filter): escaped quote inside a value, first part
+PASS (hidden, sed stage alone): escaped quote inside a value, first part
+PASS (hidden): escaped quote inside a value, second part
+PASS (hidden, line-only final filter): escaped quote inside a value, second part
+PASS (hidden, sed stage alone): escaped quote inside a value, second part
+PASS (hidden): two strings in a row, first
+PASS (hidden, line-only final filter): two strings in a row, first
+PASS (hidden, sed stage alone): two strings in a row, first
+PASS (hidden): two strings in a row, second
+PASS (hidden, line-only final filter): two strings in a row, second
+PASS (hidden, sed stage alone): two strings in a row, second
+PASS (hidden): string + string, first
+PASS (hidden, line-only final filter): string + string, first
+PASS (hidden, sed stage alone): string + string, first
+PASS (hidden): string + string, second
+PASS (hidden, line-only final filter): string + string, second
+PASS (hidden, sed stage alone): string + string, second
+PASS (hidden): private key block line 1
+PASS (hidden, sed stage alone): private key block line 1
+PASS (hidden): private key block line 2
+PASS (hidden, sed stage alone): private key block line 2
+PASS (hidden): sk_live_ value
+PASS (hidden, line-only final filter): sk_live_ value
+PASS (hidden, sed stage alone): sk_live_ value
+PASS (hidden): curl -u user:password
+PASS (hidden, line-only final filter): curl -u user:password
+PASS (hidden, sed stage alone): curl -u user:password
+PASS (hidden): the password is v (prose)
+PASS (hidden, line-only final filter): the password is v (prose)
+PASS (hidden, sed stage alone): the password is v (prose)
+PASS (hidden): JWT-shaped value
+PASS (hidden, line-only final filter): JWT-shaped value
+PASS (hidden, sed stage alone): JWT-shaped value
+PASS (hidden): line with a 0xE9 byte
+PASS (hidden, line-only final filter): line with a 0xE9 byte
+PASS (hidden, sed stage alone): line with a 0xE9 byte
+PASS (hidden): line with a NUL byte
+PASS (hidden, sed stage alone): line with a NUL byte
+PASS (hidden): JSON after a label
+PASS (hidden, line-only final filter): JSON after a label
+PASS (hidden, sed stage alone): JSON after a label
+PASS (kept): snake_case test name is not hidden
+PASS (kept): CamelCase name is not hidden
+PASS (kept): checksum and HEAD lines the script printed itself stay (final pass)
+PASS (hidden): a checksum-shaped line that came from a searched file is masked (search view)
+PASS (hidden): hex string + two spaces from a searched file is not a checksum line
+PASS (hidden, line-only final filter): hex string + two spaces from a searched file is not a checksum line
+PASS (hidden, awk stage alone): hex string + two spaces from a searched file is not a checksum line
+PASS (kept): max_tokens counter stays
+PASS (kept): prompt_tokens counter stays
+PASS (kept): completion_tokens counter stays
+PASS (kept): total_tokens counter stays
+PASS (kept): num_tokens counter stays
+PASS (kept): input_tokens counter stays
+PASS (kept): output_tokens counter stays
+PASS (kept): max_output_tokens counter stays
+PASS (kept): line after YAML path prefix stays
+PASS (kept): line after a hidden JSON array stays
+PASS (kept): key after a hidden JSON object stays
+PASS (kept): line after a private key block stays
+PASS (kept): name: alone is not a pair
+PASS (kept): value: alone is not hidden
+PASS (kept): private key block markers stay
+PASS (hidden): at1 (first 6 characters)
+PASS (hidden, line-only final filter): at1 (first 6 characters)
+PASS (hidden, sed stage alone): at1 (first 6 characters)
+PASS (hidden): at1 (last 6 characters)
+PASS (hidden, line-only final filter): at1 (last 6 characters)
+PASS (hidden, sed stage alone): at1 (last 6 characters)
+PASS (hidden): at2 (first 6 characters)
+PASS (hidden, line-only final filter): at2 (first 6 characters)
+PASS (hidden, sed stage alone): at2 (first 6 characters)
+PASS (hidden): at2 (last 6 characters)
+PASS (hidden, line-only final filter): at2 (last 6 characters)
+PASS (hidden, sed stage alone): at2 (last 6 characters)
+PASS (hidden): at3 (first 6 characters)
+PASS (hidden, line-only final filter): at3 (first 6 characters)
+PASS (hidden, sed stage alone): at3 (first 6 characters)
+PASS (hidden): at3 (last 6 characters)
+PASS (hidden, line-only final filter): at3 (last 6 characters)
+PASS (hidden, sed stage alone): at3 (last 6 characters)
+PASS (hidden): at4 (first 6 characters)
+PASS (hidden, line-only final filter): at4 (first 6 characters)
+PASS (hidden, sed stage alone): at4 (first 6 characters)
+PASS (hidden): at4 (last 6 characters)
+PASS (hidden, line-only final filter): at4 (last 6 characters)
+PASS (hidden, sed stage alone): at4 (last 6 characters)
+PASS (hidden): at5 (first 6 characters)
+PASS (hidden, line-only final filter): at5 (first 6 characters)
+PASS (hidden, sed stage alone): at5 (first 6 characters)
+PASS (hidden): at5 (last 6 characters)
+PASS (hidden, line-only final filter): at5 (last 6 characters)
+PASS (hidden, sed stage alone): at5 (last 6 characters)
+PASS (hidden): at6 (first 6 characters)
+PASS (hidden, line-only final filter): at6 (first 6 characters)
+PASS (hidden, sed stage alone): at6 (first 6 characters)
+PASS (hidden): at6 (last 6 characters)
+PASS (hidden, line-only final filter): at6 (last 6 characters)
+PASS (hidden, sed stage alone): at6 (last 6 characters)
+PASS (hidden): at7 (first 6 characters)
+PASS (hidden, line-only final filter): at7 (first 6 characters)
+PASS (hidden, sed stage alone): at7 (first 6 characters)
+PASS (hidden): at7 (last 6 characters)
+PASS (hidden, line-only final filter): at7 (last 6 characters)
+PASS (hidden, sed stage alone): at7 (last 6 characters)
+PASS (hidden): sl1 (first 6 characters)
+PASS (hidden, line-only final filter): sl1 (first 6 characters)
+PASS (hidden, sed stage alone): sl1 (first 6 characters)
+PASS (hidden): sl1 (last 6 characters)
+PASS (hidden, line-only final filter): sl1 (last 6 characters)
+PASS (hidden, sed stage alone): sl1 (last 6 characters)
+PASS (hidden): sl2 (first 6 characters)
+PASS (hidden, line-only final filter): sl2 (first 6 characters)
+PASS (hidden, sed stage alone): sl2 (first 6 characters)
+PASS (hidden): sl2 (last 6 characters)
+PASS (hidden, line-only final filter): sl2 (last 6 characters)
+PASS (hidden, sed stage alone): sl2 (last 6 characters)
+PASS (hidden): sl3 (first 6 characters)
+PASS (hidden, line-only final filter): sl3 (first 6 characters)
+PASS (hidden, sed stage alone): sl3 (first 6 characters)
+PASS (hidden): sl3 (last 6 characters)
+PASS (hidden, line-only final filter): sl3 (last 6 characters)
+PASS (hidden, sed stage alone): sl3 (last 6 characters)
+PASS (hidden): sl4 (first 6 characters)
+PASS (hidden, line-only final filter): sl4 (first 6 characters)
+PASS (hidden, sed stage alone): sl4 (first 6 characters)
+PASS (hidden): sl4 (last 6 characters)
+PASS (hidden, line-only final filter): sl4 (last 6 characters)
+PASS (hidden, sed stage alone): sl4 (last 6 characters)
+PASS (hidden): sl5 (first 6 characters)
+PASS (hidden, line-only final filter): sl5 (first 6 characters)
+PASS (hidden, sed stage alone): sl5 (first 6 characters)
+PASS (hidden): sl5 (last 6 characters)
+PASS (hidden, line-only final filter): sl5 (last 6 characters)
+PASS (hidden, sed stage alone): sl5 (last 6 characters)
+PASS (hidden): sl6 (first 6 characters)
+PASS (hidden, line-only final filter): sl6 (first 6 characters)
+PASS (hidden, sed stage alone): sl6 (first 6 characters)
+PASS (hidden): sl6 (last 6 characters)
+PASS (hidden, line-only final filter): sl6 (last 6 characters)
+PASS (hidden, sed stage alone): sl6 (last 6 characters)
+PASS (hidden): sl7 (first 6 characters)
+PASS (hidden, line-only final filter): sl7 (first 6 characters)
+PASS (hidden, sed stage alone): sl7 (first 6 characters)
+PASS (hidden): sl7 (last 6 characters)
+PASS (hidden, line-only final filter): sl7 (last 6 characters)
+PASS (hidden, sed stage alone): sl7 (last 6 characters)
+PASS (hidden): sc1 (first 6 characters)
+PASS (hidden, line-only final filter): sc1 (first 6 characters)
+PASS (hidden, sed stage alone): sc1 (first 6 characters)
+PASS (hidden): sc1 (last 6 characters)
+PASS (hidden, line-only final filter): sc1 (last 6 characters)
+PASS (hidden, sed stage alone): sc1 (last 6 characters)
+PASS (hidden): sc2 (first 6 characters)
+PASS (hidden, line-only final filter): sc2 (first 6 characters)
+PASS (hidden, sed stage alone): sc2 (first 6 characters)
+PASS (hidden): sc2 (last 6 characters)
+PASS (hidden, line-only final filter): sc2 (last 6 characters)
+PASS (hidden, sed stage alone): sc2 (last 6 characters)
+PASS (hidden): sc3 (first 6 characters)
+PASS (hidden, line-only final filter): sc3 (first 6 characters)
+PASS (hidden, sed stage alone): sc3 (first 6 characters)
+PASS (hidden): sc3 (last 6 characters)
+PASS (hidden, line-only final filter): sc3 (last 6 characters)
+PASS (hidden, sed stage alone): sc3 (last 6 characters)
+PASS (hidden): sc4 (first 6 characters)
+PASS (hidden, line-only final filter): sc4 (first 6 characters)
+PASS (hidden, sed stage alone): sc4 (first 6 characters)
+PASS (hidden): sc4 (last 6 characters)
+PASS (hidden, line-only final filter): sc4 (last 6 characters)
+PASS (hidden, sed stage alone): sc4 (last 6 characters)
+PASS (hidden): sc5 (first 6 characters)
+PASS (hidden, line-only final filter): sc5 (first 6 characters)
+PASS (hidden, sed stage alone): sc5 (first 6 characters)
+PASS (hidden): sc5 (last 6 characters)
+PASS (hidden, line-only final filter): sc5 (last 6 characters)
+PASS (hidden, sed stage alone): sc5 (last 6 characters)
+PASS (hidden): sc6 (first 6 characters)
+PASS (hidden, line-only final filter): sc6 (first 6 characters)
+PASS (hidden, sed stage alone): sc6 (first 6 characters)
+PASS (hidden): sc6 (last 6 characters)
+PASS (hidden, line-only final filter): sc6 (last 6 characters)
+PASS (hidden, sed stage alone): sc6 (last 6 characters)
+PASS (hidden): sc7 (first 6 characters)
+PASS (hidden, line-only final filter): sc7 (first 6 characters)
+PASS (hidden, sed stage alone): sc7 (first 6 characters)
+PASS (hidden): sc7 (last 6 characters)
+PASS (hidden, line-only final filter): sc7 (last 6 characters)
+PASS (hidden, sed stage alone): sc7 (last 6 characters)
+PASS (hidden): cm1 (first 6 characters)
+PASS (hidden, line-only final filter): cm1 (first 6 characters)
+PASS (hidden, sed stage alone): cm1 (first 6 characters)
+PASS (hidden): cm1 (last 6 characters)
+PASS (hidden, line-only final filter): cm1 (last 6 characters)
+PASS (hidden, sed stage alone): cm1 (last 6 characters)
+PASS (hidden): cm2 (first 6 characters)
+PASS (hidden, line-only final filter): cm2 (first 6 characters)
+PASS (hidden, sed stage alone): cm2 (first 6 characters)
+PASS (hidden): cm2 (last 6 characters)
+PASS (hidden, line-only final filter): cm2 (last 6 characters)
+PASS (hidden, sed stage alone): cm2 (last 6 characters)
+PASS (hidden): cm3 (first 6 characters)
+PASS (hidden, line-only final filter): cm3 (first 6 characters)
+PASS (hidden, sed stage alone): cm3 (first 6 characters)
+PASS (hidden): cm3 (last 6 characters)
+PASS (hidden, line-only final filter): cm3 (last 6 characters)
+PASS (hidden, sed stage alone): cm3 (last 6 characters)
+PASS (hidden): cm4 (first 6 characters)
+PASS (hidden, line-only final filter): cm4 (first 6 characters)
+PASS (hidden, sed stage alone): cm4 (first 6 characters)
+PASS (hidden): cm4 (last 6 characters)
+PASS (hidden, line-only final filter): cm4 (last 6 characters)
+PASS (hidden, sed stage alone): cm4 (last 6 characters)
+PASS (hidden): cm5 (first 6 characters)
+PASS (hidden, line-only final filter): cm5 (first 6 characters)
+PASS (hidden, sed stage alone): cm5 (first 6 characters)
+PASS (hidden): cm5 (last 6 characters)
+PASS (hidden, line-only final filter): cm5 (last 6 characters)
+PASS (hidden, sed stage alone): cm5 (last 6 characters)
+PASS (hidden): cm6 (first 6 characters)
+PASS (hidden, line-only final filter): cm6 (first 6 characters)
+PASS (hidden, sed stage alone): cm6 (first 6 characters)
+PASS (hidden): cm6 (last 6 characters)
+PASS (hidden, line-only final filter): cm6 (last 6 characters)
+PASS (hidden, sed stage alone): cm6 (last 6 characters)
+PASS (hidden): cm7 (first 6 characters)
+PASS (hidden, line-only final filter): cm7 (first 6 characters)
+PASS (hidden, sed stage alone): cm7 (first 6 characters)
+PASS (hidden): cm7 (last 6 characters)
+PASS (hidden, line-only final filter): cm7 (last 6 characters)
+PASS (hidden, sed stage alone): cm7 (last 6 characters)
+PASS (hidden): sp1 (first 6 characters)
+PASS (hidden, line-only final filter): sp1 (first 6 characters)
+PASS (hidden, sed stage alone): sp1 (first 6 characters)
+PASS (hidden): sp1 (last 6 characters)
+PASS (hidden, line-only final filter): sp1 (last 6 characters)
+PASS (hidden, sed stage alone): sp1 (last 6 characters)
+PASS (hidden): sp2 (first 6 characters)
+PASS (hidden, line-only final filter): sp2 (first 6 characters)
+PASS (hidden, sed stage alone): sp2 (first 6 characters)
+PASS (hidden): sp2 (last 6 characters)
+PASS (hidden, line-only final filter): sp2 (last 6 characters)
+PASS (hidden, sed stage alone): sp2 (last 6 characters)
+PASS (hidden): sp3 (first 6 characters)
+PASS (hidden, line-only final filter): sp3 (first 6 characters)
+PASS (hidden, sed stage alone): sp3 (first 6 characters)
+PASS (hidden): sp3 (last 6 characters)
+PASS (hidden, line-only final filter): sp3 (last 6 characters)
+PASS (hidden, sed stage alone): sp3 (last 6 characters)
+PASS (hidden): sp4 (first 6 characters)
+PASS (hidden, line-only final filter): sp4 (first 6 characters)
+PASS (hidden, sed stage alone): sp4 (first 6 characters)
+PASS (hidden): sp4 (last 6 characters)
+PASS (hidden, line-only final filter): sp4 (last 6 characters)
+PASS (hidden, sed stage alone): sp4 (last 6 characters)
+PASS (hidden): sp5 (first 6 characters)
+PASS (hidden, line-only final filter): sp5 (first 6 characters)
+PASS (hidden, sed stage alone): sp5 (first 6 characters)
+PASS (hidden): sp5 (last 6 characters)
+PASS (hidden, line-only final filter): sp5 (last 6 characters)
+PASS (hidden, sed stage alone): sp5 (last 6 characters)
+PASS (hidden): sp7 (first 6 characters)
+PASS (hidden, line-only final filter): sp7 (first 6 characters)
+PASS (hidden, sed stage alone): sp7 (first 6 characters)
+PASS (hidden): sp7 (last 6 characters)
+PASS (hidden, line-only final filter): sp7 (last 6 characters)
+PASS (hidden, sed stage alone): sp7 (last 6 characters)
+PASS (hidden): up1 (first 6 characters)
+PASS (hidden, line-only final filter): up1 (first 6 characters)
+PASS (hidden, sed stage alone): up1 (first 6 characters)
+PASS (hidden): up1 (last 6 characters)
+PASS (hidden, line-only final filter): up1 (last 6 characters)
+PASS (hidden, sed stage alone): up1 (last 6 characters)
+PASS (hidden): up2 (first 6 characters)
+PASS (hidden, line-only final filter): up2 (first 6 characters)
+PASS (hidden, sed stage alone): up2 (first 6 characters)
+PASS (hidden): up2 (last 6 characters)
+PASS (hidden, line-only final filter): up2 (last 6 characters)
+PASS (hidden, sed stage alone): up2 (last 6 characters)
+PASS (hidden): up3 (first 6 characters)
+PASS (hidden, line-only final filter): up3 (first 6 characters)
+PASS (hidden, sed stage alone): up3 (first 6 characters)
+PASS (hidden): up3 (last 6 characters)
+PASS (hidden, line-only final filter): up3 (last 6 characters)
+PASS (hidden, sed stage alone): up3 (last 6 characters)
+PASS (hidden): up4 (first 6 characters)
+PASS (hidden, line-only final filter): up4 (first 6 characters)
+PASS (hidden, sed stage alone): up4 (first 6 characters)
+PASS (hidden): up4 (last 6 characters)
+PASS (hidden, line-only final filter): up4 (last 6 characters)
+PASS (hidden, sed stage alone): up4 (last 6 characters)
+PASS (hidden): up5 (first 6 characters)
+PASS (hidden, line-only final filter): up5 (first 6 characters)
+PASS (hidden, sed stage alone): up5 (first 6 characters)
+PASS (hidden): up5 (last 6 characters)
+PASS (hidden, line-only final filter): up5 (last 6 characters)
+PASS (hidden, sed stage alone): up5 (last 6 characters)
+PASS (hidden): up6 (first 6 characters)
+PASS (hidden, line-only final filter): up6 (first 6 characters)
+PASS (hidden, sed stage alone): up6 (first 6 characters)
+PASS (hidden): up6 (last 6 characters)
+PASS (hidden, line-only final filter): up6 (last 6 characters)
+PASS (hidden, sed stage alone): up6 (last 6 characters)
+PASS (hidden): up7 (first 6 characters)
+PASS (hidden, line-only final filter): up7 (first 6 characters)
+PASS (hidden, sed stage alone): up7 (first 6 characters)
+PASS (hidden): up7 (last 6 characters)
+PASS (hidden, line-only final filter): up7 (last 6 characters)
+PASS (hidden, sed stage alone): up7 (last 6 characters)
+PASS (hidden): dg1 (first 6 characters)
+PASS (hidden, line-only final filter): dg1 (first 6 characters)
+PASS (hidden, sed stage alone): dg1 (first 6 characters)
+PASS (hidden): dg1 (last 6 characters)
+PASS (hidden, line-only final filter): dg1 (last 6 characters)
+PASS (hidden, sed stage alone): dg1 (last 6 characters)
+PASS (hidden): dg2 (first 6 characters)
+PASS (hidden, line-only final filter): dg2 (first 6 characters)
+PASS (hidden, sed stage alone): dg2 (first 6 characters)
+PASS (hidden): dg2 (last 6 characters)
+PASS (hidden, line-only final filter): dg2 (last 6 characters)
+PASS (hidden, sed stage alone): dg2 (last 6 characters)
+PASS (hidden): dg3 (first 6 characters)
+PASS (hidden, line-only final filter): dg3 (first 6 characters)
+PASS (hidden, sed stage alone): dg3 (first 6 characters)
+PASS (hidden): dg3 (last 6 characters)
+PASS (hidden, line-only final filter): dg3 (last 6 characters)
+PASS (hidden, sed stage alone): dg3 (last 6 characters)
+PASS (hidden): dg4 (first 6 characters)
+PASS (hidden, line-only final filter): dg4 (first 6 characters)
+PASS (hidden, sed stage alone): dg4 (first 6 characters)
+PASS (hidden): dg4 (last 6 characters)
+PASS (hidden, line-only final filter): dg4 (last 6 characters)
+PASS (hidden, sed stage alone): dg4 (last 6 characters)
+PASS (hidden): dg5 (first 6 characters)
+PASS (hidden, line-only final filter): dg5 (first 6 characters)
+PASS (hidden, sed stage alone): dg5 (first 6 characters)
+PASS (hidden): dg5 (last 6 characters)
+PASS (hidden, line-only final filter): dg5 (last 6 characters)
+PASS (hidden, sed stage alone): dg5 (last 6 characters)
+PASS (hidden): dg6 (first 6 characters)
+PASS (hidden, line-only final filter): dg6 (first 6 characters)
+PASS (hidden, sed stage alone): dg6 (first 6 characters)
+PASS (hidden): dg6 (last 6 characters)
+PASS (hidden, line-only final filter): dg6 (last 6 characters)
+PASS (hidden, sed stage alone): dg6 (last 6 characters)
+PASS (hidden): dg7 (first 6 characters)
+PASS (hidden, line-only final filter): dg7 (first 6 characters)
+PASS (hidden, sed stage alone): dg7 (first 6 characters)
+PASS (hidden): dg7 (last 6 characters)
+PASS (hidden, line-only final filter): dg7 (last 6 characters)
+PASS (hidden, sed stage alone): dg7 (last 6 characters)
+PASS (hidden): name secretValue 1 (first 6 characters)
+PASS (hidden, line-only final filter): name secretValue 1 (first 6 characters)
+PASS (hidden, sed stage alone): name secretValue 1 (first 6 characters)
+PASS (hidden): name secretValue 1 (last 6 characters)
+PASS (hidden, line-only final filter): name secretValue 1 (last 6 characters)
+PASS (hidden, sed stage alone): name secretValue 1 (last 6 characters)
+PASS (hidden): name secretValue 2 (first 6 characters)
+PASS (hidden, line-only final filter): name secretValue 2 (first 6 characters)
+PASS (hidden, sed stage alone): name secretValue 2 (first 6 characters)
+PASS (hidden): name secretValue 2 (last 6 characters)
+PASS (hidden, line-only final filter): name secretValue 2 (last 6 characters)
+PASS (hidden, sed stage alone): name secretValue 2 (last 6 characters)
+PASS (hidden): name secretValue 3 (first 6 characters)
+PASS (hidden, line-only final filter): name secretValue 3 (first 6 characters)
+PASS (hidden, sed stage alone): name secretValue 3 (first 6 characters)
+PASS (hidden): name secretValue 3 (last 6 characters)
+PASS (hidden, line-only final filter): name secretValue 3 (last 6 characters)
+PASS (hidden, sed stage alone): name secretValue 3 (last 6 characters)
+PASS (hidden): name tokenString 1 (first 6 characters)
+PASS (hidden, line-only final filter): name tokenString 1 (first 6 characters)
+PASS (hidden, sed stage alone): name tokenString 1 (first 6 characters)
+PASS (hidden): name tokenString 1 (last 6 characters)
+PASS (hidden, line-only final filter): name tokenString 1 (last 6 characters)
+PASS (hidden, sed stage alone): name tokenString 1 (last 6 characters)
+PASS (hidden): name tokenString 2 (first 6 characters)
+PASS (hidden, line-only final filter): name tokenString 2 (first 6 characters)
+PASS (hidden, sed stage alone): name tokenString 2 (first 6 characters)
+PASS (hidden): name tokenString 2 (last 6 characters)
+PASS (hidden, line-only final filter): name tokenString 2 (last 6 characters)
+PASS (hidden, sed stage alone): name tokenString 2 (last 6 characters)
+PASS (hidden): name tokenString 3 (first 6 characters)
+PASS (hidden, line-only final filter): name tokenString 3 (first 6 characters)
+PASS (hidden, sed stage alone): name tokenString 3 (first 6 characters)
+PASS (hidden): name tokenString 3 (last 6 characters)
+PASS (hidden, line-only final filter): name tokenString 3 (last 6 characters)
+PASS (hidden, sed stage alone): name tokenString 3 (last 6 characters)
+PASS (hidden): name passwordHash 1 (first 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 1 (first 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 1 (first 6 characters)
+PASS (hidden): name passwordHash 1 (last 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 1 (last 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 1 (last 6 characters)
+PASS (hidden): name passwordHash 2 (first 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 2 (first 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 2 (first 6 characters)
+PASS (hidden): name passwordHash 2 (last 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 2 (last 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 2 (last 6 characters)
+PASS (hidden): name passwordHash 3 (first 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 3 (first 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 3 (first 6 characters)
+PASS (hidden): name passwordHash 3 (last 6 characters)
+PASS (hidden, line-only final filter): name passwordHash 3 (last 6 characters)
+PASS (hidden, sed stage alone): name passwordHash 3 (last 6 characters)
+PASS (hidden): name authTokenValue 1 (first 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 1 (first 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 1 (first 6 characters)
+PASS (hidden): name authTokenValue 1 (last 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 1 (last 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 1 (last 6 characters)
+PASS (hidden): name authTokenValue 2 (first 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 2 (first 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 2 (first 6 characters)
+PASS (hidden): name authTokenValue 2 (last 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 2 (last 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 2 (last 6 characters)
+PASS (hidden): name authTokenValue 3 (first 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 3 (first 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 3 (first 6 characters)
+PASS (hidden): name authTokenValue 3 (last 6 characters)
+PASS (hidden, line-only final filter): name authTokenValue 3 (last 6 characters)
+PASS (hidden, sed stage alone): name authTokenValue 3 (last 6 characters)
+PASS (hidden): name keyValue 1 (first 6 characters)
+PASS (hidden, line-only final filter): name keyValue 1 (first 6 characters)
+PASS (hidden, sed stage alone): name keyValue 1 (first 6 characters)
+PASS (hidden): name keyValue 1 (last 6 characters)
+PASS (hidden, line-only final filter): name keyValue 1 (last 6 characters)
+PASS (hidden, sed stage alone): name keyValue 1 (last 6 characters)
+PASS (hidden): name keyValue 2 (first 6 characters)
+PASS (hidden, line-only final filter): name keyValue 2 (first 6 characters)
+PASS (hidden, sed stage alone): name keyValue 2 (first 6 characters)
+PASS (hidden): name keyValue 2 (last 6 characters)
+PASS (hidden, line-only final filter): name keyValue 2 (last 6 characters)
+PASS (hidden, sed stage alone): name keyValue 2 (last 6 characters)
+PASS (hidden): name keyValue 3 (first 6 characters)
+PASS (hidden, line-only final filter): name keyValue 3 (first 6 characters)
+PASS (hidden, sed stage alone): name keyValue 3 (first 6 characters)
+PASS (hidden): name keyValue 3 (last 6 characters)
+PASS (hidden, line-only final filter): name keyValue 3 (last 6 characters)
+PASS (hidden, sed stage alone): name keyValue 3 (last 6 characters)
+PASS (hidden): name secretdata 1 (first 6 characters)
+PASS (hidden, line-only final filter): name secretdata 1 (first 6 characters)
+PASS (hidden, sed stage alone): name secretdata 1 (first 6 characters)
+PASS (hidden): name secretdata 1 (last 6 characters)
+PASS (hidden, line-only final filter): name secretdata 1 (last 6 characters)
+PASS (hidden, sed stage alone): name secretdata 1 (last 6 characters)
+PASS (hidden): name secretdata 2 (first 6 characters)
+PASS (hidden, line-only final filter): name secretdata 2 (first 6 characters)
+PASS (hidden, sed stage alone): name secretdata 2 (first 6 characters)
+PASS (hidden): name secretdata 2 (last 6 characters)
+PASS (hidden, line-only final filter): name secretdata 2 (last 6 characters)
+PASS (hidden, sed stage alone): name secretdata 2 (last 6 characters)
+PASS (hidden): name secretdata 3 (first 6 characters)
+PASS (hidden, line-only final filter): name secretdata 3 (first 6 characters)
+PASS (hidden, sed stage alone): name secretdata 3 (first 6 characters)
+PASS (hidden): name secretdata 3 (last 6 characters)
+PASS (hidden, line-only final filter): name secretdata 3 (last 6 characters)
+PASS (hidden, sed stage alone): name secretdata 3 (last 6 characters)
+PASS (hidden): name cookie 1 (first 6 characters)
+PASS (hidden, line-only final filter): name cookie 1 (first 6 characters)
+PASS (hidden, sed stage alone): name cookie 1 (first 6 characters)
+PASS (hidden): name cookie 1 (last 6 characters)
+PASS (hidden, line-only final filter): name cookie 1 (last 6 characters)
+PASS (hidden, sed stage alone): name cookie 1 (last 6 characters)
+PASS (hidden): name cookie 2 (first 6 characters)
+PASS (hidden, line-only final filter): name cookie 2 (first 6 characters)
+PASS (hidden, sed stage alone): name cookie 2 (first 6 characters)
+PASS (hidden): name cookie 2 (last 6 characters)
+PASS (hidden, line-only final filter): name cookie 2 (last 6 characters)
+PASS (hidden, sed stage alone): name cookie 2 (last 6 characters)
+PASS (hidden): name cookie 3 (first 6 characters)
+PASS (hidden, line-only final filter): name cookie 3 (first 6 characters)
+PASS (hidden, sed stage alone): name cookie 3 (first 6 characters)
+PASS (hidden): name cookie 3 (last 6 characters)
+PASS (hidden, line-only final filter): name cookie 3 (last 6 characters)
+PASS (hidden, sed stage alone): name cookie 3 (last 6 characters)
+PASS (hidden): name session_id 1 (first 6 characters)
+PASS (hidden, line-only final filter): name session_id 1 (first 6 characters)
+PASS (hidden, sed stage alone): name session_id 1 (first 6 characters)
+PASS (hidden): name session_id 1 (last 6 characters)
+PASS (hidden, line-only final filter): name session_id 1 (last 6 characters)
+PASS (hidden, sed stage alone): name session_id 1 (last 6 characters)
+PASS (hidden): name session_id 2 (first 6 characters)
+PASS (hidden, line-only final filter): name session_id 2 (first 6 characters)
+PASS (hidden, sed stage alone): name session_id 2 (first 6 characters)
+PASS (hidden): name session_id 2 (last 6 characters)
+PASS (hidden, line-only final filter): name session_id 2 (last 6 characters)
+PASS (hidden, sed stage alone): name session_id 2 (last 6 characters)
+PASS (hidden): name session_id 3 (first 6 characters)
+PASS (hidden, line-only final filter): name session_id 3 (first 6 characters)
+PASS (hidden, sed stage alone): name session_id 3 (first 6 characters)
+PASS (hidden): name session_id 3 (last 6 characters)
+PASS (hidden, line-only final filter): name session_id 3 (last 6 characters)
+PASS (hidden, sed stage alone): name session_id 3 (last 6 characters)
+PASS (hidden): name sessionId 1 (first 6 characters)
+PASS (hidden, line-only final filter): name sessionId 1 (first 6 characters)
+PASS (hidden, sed stage alone): name sessionId 1 (first 6 characters)
+PASS (hidden): name sessionId 1 (last 6 characters)
+PASS (hidden, line-only final filter): name sessionId 1 (last 6 characters)
+PASS (hidden, sed stage alone): name sessionId 1 (last 6 characters)
+PASS (hidden): name sessionId 2 (first 6 characters)
+PASS (hidden, line-only final filter): name sessionId 2 (first 6 characters)
+PASS (hidden, sed stage alone): name sessionId 2 (first 6 characters)
+PASS (hidden): name sessionId 2 (last 6 characters)
+PASS (hidden, line-only final filter): name sessionId 2 (last 6 characters)
+PASS (hidden, sed stage alone): name sessionId 2 (last 6 characters)
+PASS (hidden): name sessionId 3 (first 6 characters)
+PASS (hidden, line-only final filter): name sessionId 3 (first 6 characters)
+PASS (hidden, sed stage alone): name sessionId 3 (first 6 characters)
+PASS (hidden): name sessionId 3 (last 6 characters)
+PASS (hidden, line-only final filter): name sessionId 3 (last 6 characters)
+PASS (hidden, sed stage alone): name sessionId 3 (last 6 characters)
+PASS (hidden): name signature 1 (first 6 characters)
+PASS (hidden, line-only final filter): name signature 1 (first 6 characters)
+PASS (hidden, sed stage alone): name signature 1 (first 6 characters)
+PASS (hidden): name signature 1 (last 6 characters)
+PASS (hidden, line-only final filter): name signature 1 (last 6 characters)
+PASS (hidden, sed stage alone): name signature 1 (last 6 characters)
+PASS (hidden): name signature 2 (first 6 characters)
+PASS (hidden, line-only final filter): name signature 2 (first 6 characters)
+PASS (hidden, sed stage alone): name signature 2 (first 6 characters)
+PASS (hidden): name signature 2 (last 6 characters)
+PASS (hidden, line-only final filter): name signature 2 (last 6 characters)
+PASS (hidden, sed stage alone): name signature 2 (last 6 characters)
+PASS (hidden): name signature 3 (first 6 characters)
+PASS (hidden, line-only final filter): name signature 3 (first 6 characters)
+PASS (hidden, sed stage alone): name signature 3 (first 6 characters)
+PASS (hidden): name signature 3 (last 6 characters)
+PASS (hidden, line-only final filter): name signature 3 (last 6 characters)
+PASS (hidden, sed stage alone): name signature 3 (last 6 characters)
+PASS (hidden): name hmac 1 (first 6 characters)
+PASS (hidden, line-only final filter): name hmac 1 (first 6 characters)
+PASS (hidden, sed stage alone): name hmac 1 (first 6 characters)
+PASS (hidden): name hmac 1 (last 6 characters)
+PASS (hidden, line-only final filter): name hmac 1 (last 6 characters)
+PASS (hidden, sed stage alone): name hmac 1 (last 6 characters)
+PASS (hidden): name hmac 2 (first 6 characters)
+PASS (hidden, line-only final filter): name hmac 2 (first 6 characters)
+PASS (hidden, sed stage alone): name hmac 2 (first 6 characters)
+PASS (hidden): name hmac 2 (last 6 characters)
+PASS (hidden, line-only final filter): name hmac 2 (last 6 characters)
+PASS (hidden, sed stage alone): name hmac 2 (last 6 characters)
+PASS (hidden): name hmac 3 (first 6 characters)
+PASS (hidden, line-only final filter): name hmac 3 (first 6 characters)
+PASS (hidden, sed stage alone): name hmac 3 (first 6 characters)
+PASS (hidden): name hmac 3 (last 6 characters)
+PASS (hidden, line-only final filter): name hmac 3 (last 6 characters)
+PASS (hidden, sed stage alone): name hmac 3 (last 6 characters)
+PASS (hidden): name dsn 1 (first 6 characters)
+PASS (hidden, line-only final filter): name dsn 1 (first 6 characters)
+PASS (hidden, sed stage alone): name dsn 1 (first 6 characters)
+PASS (hidden): name dsn 1 (last 6 characters)
+PASS (hidden, line-only final filter): name dsn 1 (last 6 characters)
+PASS (hidden, sed stage alone): name dsn 1 (last 6 characters)
+PASS (hidden): name dsn 2 (first 6 characters)
+PASS (hidden, line-only final filter): name dsn 2 (first 6 characters)
+PASS (hidden, sed stage alone): name dsn 2 (first 6 characters)
+PASS (hidden): name dsn 2 (last 6 characters)
+PASS (hidden, line-only final filter): name dsn 2 (last 6 characters)
+PASS (hidden, sed stage alone): name dsn 2 (last 6 characters)
+PASS (hidden): name dsn 3 (first 6 characters)
+PASS (hidden, line-only final filter): name dsn 3 (first 6 characters)
+PASS (hidden, sed stage alone): name dsn 3 (first 6 characters)
+PASS (hidden): name dsn 3 (last 6 characters)
+PASS (hidden, line-only final filter): name dsn 3 (last 6 characters)
+PASS (hidden, sed stage alone): name dsn 3 (last 6 characters)
+PASS (hidden): name webhookUrl 1 (first 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 1 (first 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 1 (first 6 characters)
+PASS (hidden): name webhookUrl 1 (last 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 1 (last 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 1 (last 6 characters)
+PASS (hidden): name webhookUrl 2 (first 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 2 (first 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 2 (first 6 characters)
+PASS (hidden): name webhookUrl 2 (last 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 2 (last 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 2 (last 6 characters)
+PASS (hidden): name webhookUrl 3 (first 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 3 (first 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 3 (first 6 characters)
+PASS (hidden): name webhookUrl 3 (last 6 characters)
+PASS (hidden, line-only final filter): name webhookUrl 3 (last 6 characters)
+PASS (hidden, sed stage alone): name webhookUrl 3 (last 6 characters)
+PASS (hidden): name salt 1 (first 6 characters)
+PASS (hidden, line-only final filter): name salt 1 (first 6 characters)
+PASS (hidden, sed stage alone): name salt 1 (first 6 characters)
+PASS (hidden): name salt 1 (last 6 characters)
+PASS (hidden, line-only final filter): name salt 1 (last 6 characters)
+PASS (hidden, sed stage alone): name salt 1 (last 6 characters)
+PASS (hidden): name salt 2 (first 6 characters)
+PASS (hidden, line-only final filter): name salt 2 (first 6 characters)
+PASS (hidden, sed stage alone): name salt 2 (first 6 characters)
+PASS (hidden): name salt 2 (last 6 characters)
+PASS (hidden, line-only final filter): name salt 2 (last 6 characters)
+PASS (hidden, sed stage alone): name salt 2 (last 6 characters)
+PASS (hidden): name salt 3 (first 6 characters)
+PASS (hidden, line-only final filter): name salt 3 (first 6 characters)
+PASS (hidden, sed stage alone): name salt 3 (first 6 characters)
+PASS (hidden): name salt 3 (last 6 characters)
+PASS (hidden, line-only final filter): name salt 3 (last 6 characters)
+PASS (hidden, sed stage alone): name salt 3 (last 6 characters)
+PASS (hidden): name otp 1 (first 6 characters)
+PASS (hidden, line-only final filter): name otp 1 (first 6 characters)
+PASS (hidden, sed stage alone): name otp 1 (first 6 characters)
+PASS (hidden): name otp 1 (last 6 characters)
+PASS (hidden, line-only final filter): name otp 1 (last 6 characters)
+PASS (hidden, sed stage alone): name otp 1 (last 6 characters)
+PASS (hidden): name otp 2 (first 6 characters)
+PASS (hidden, line-only final filter): name otp 2 (first 6 characters)
+PASS (hidden, sed stage alone): name otp 2 (first 6 characters)
+PASS (hidden): name otp 2 (last 6 characters)
+PASS (hidden, line-only final filter): name otp 2 (last 6 characters)
+PASS (hidden, sed stage alone): name otp 2 (last 6 characters)
+PASS (hidden): name otp 3 (first 6 characters)
+PASS (hidden, line-only final filter): name otp 3 (first 6 characters)
+PASS (hidden, sed stage alone): name otp 3 (first 6 characters)
+PASS (hidden): name otp 3 (last 6 characters)
+PASS (hidden, line-only final filter): name otp 3 (last 6 characters)
+PASS (hidden, sed stage alone): name otp 3 (last 6 characters)
+PASS (hidden): name certFile 1 (first 6 characters)
+PASS (hidden, line-only final filter): name certFile 1 (first 6 characters)
+PASS (hidden, sed stage alone): name certFile 1 (first 6 characters)
+PASS (hidden): name certFile 1 (last 6 characters)
+PASS (hidden, line-only final filter): name certFile 1 (last 6 characters)
+PASS (hidden, sed stage alone): name certFile 1 (last 6 characters)
+PASS (hidden): name certFile 2 (first 6 characters)
+PASS (hidden, line-only final filter): name certFile 2 (first 6 characters)
+PASS (hidden, sed stage alone): name certFile 2 (first 6 characters)
+PASS (hidden): name certFile 2 (last 6 characters)
+PASS (hidden, line-only final filter): name certFile 2 (last 6 characters)
+PASS (hidden, sed stage alone): name certFile 2 (last 6 characters)
+PASS (hidden): name certFile 3 (first 6 characters)
+PASS (hidden, line-only final filter): name certFile 3 (first 6 characters)
+PASS (hidden, sed stage alone): name certFile 3 (first 6 characters)
+PASS (hidden): name certFile 3 (last 6 characters)
+PASS (hidden, line-only final filter): name certFile 3 (last 6 characters)
+PASS (hidden, sed stage alone): name certFile 3 (last 6 characters)
+PASS (hidden): name Passw0rd 1 (first 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 1 (first 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 1 (first 6 characters)
+PASS (hidden): name Passw0rd 1 (last 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 1 (last 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 1 (last 6 characters)
+PASS (hidden): name Passw0rd 2 (first 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 2 (first 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 2 (first 6 characters)
+PASS (hidden): name Passw0rd 2 (last 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 2 (last 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 2 (last 6 characters)
+PASS (hidden): name Passw0rd 3 (first 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 3 (first 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 3 (first 6 characters)
+PASS (hidden): name Passw0rd 3 (last 6 characters)
+PASS (hidden, line-only final filter): name Passw0rd 3 (last 6 characters)
+PASS (hidden, sed stage alone): name Passw0rd 3 (last 6 characters)
+PASS (hidden): yaml header 1 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 1 (first 6 characters)
+PASS (hidden): yaml header 1 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 1 (last 6 characters)
+PASS (hidden): yaml header 2 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 2 (first 6 characters)
+PASS (hidden): yaml header 2 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 2 (last 6 characters)
+PASS (hidden): yaml header 3 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 3 (first 6 characters)
+PASS (hidden): yaml header 3 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 3 (last 6 characters)
+PASS (hidden): yaml header 4 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 4 (first 6 characters)
+PASS (hidden): yaml header 4 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 4 (last 6 characters)
+PASS (hidden): yaml header 5 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 5 (first 6 characters)
+PASS (hidden): yaml header 5 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 5 (last 6 characters)
+PASS (hidden): yaml header 6 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 6 (first 6 characters)
+PASS (hidden): yaml header 6 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 6 (last 6 characters)
+PASS (hidden): yaml header 7 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 7 (first 6 characters)
+PASS (hidden): yaml header 7 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 7 (last 6 characters)
+PASS (hidden): yaml header 8 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 8 (first 6 characters)
+PASS (hidden): yaml header 8 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 8 (last 6 characters)
+PASS (hidden): yaml header 9 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 9 (first 6 characters)
+PASS (hidden): yaml header 9 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 9 (last 6 characters)
+PASS (hidden): yaml header 10 (first 6 characters)
+PASS (hidden, sed stage alone): yaml header 10 (first 6 characters)
+PASS (hidden): yaml header 10 (last 6 characters)
+PASS (hidden, sed stage alone): yaml header 10 (last 6 characters)
+PASS (hidden): yaml multi-line quoted (first 6 characters)
+PASS (hidden): yaml multi-line quoted (last 6 characters)
+PASS (hidden): yaml multi-line plain (first 6 characters)
+PASS (hidden): yaml multi-line plain (last 6 characters)
+PASS (hidden): big container line 120 (first 6 characters)
+PASS (hidden, awk stage alone): big container line 120 (first 6 characters)
+PASS (hidden): big container line 120 (last 6 characters)
+PASS (hidden, awk stage alone): big container line 120 (last 6 characters)
+PASS (hidden): mysql (first 6 characters)
+PASS (hidden, line-only final filter): mysql (first 6 characters)
+PASS (hidden, sed stage alone): mysql (first 6 characters)
+PASS (hidden): mysql (last 6 characters)
+PASS (hidden, line-only final filter): mysql (last 6 characters)
+PASS (hidden, sed stage alone): mysql (last 6 characters)
+PASS (hidden): sshpass (first 6 characters)
+PASS (hidden, line-only final filter): sshpass (first 6 characters)
+PASS (hidden, sed stage alone): sshpass (first 6 characters)
+PASS (hidden): sshpass (last 6 characters)
+PASS (hidden, line-only final filter): sshpass (last 6 characters)
+PASS (hidden, sed stage alone): sshpass (last 6 characters)
+PASS (hidden): xml attribute pair (first 6 characters)
+PASS (hidden, line-only final filter): xml attribute pair (first 6 characters)
+PASS (hidden, sed stage alone): xml attribute pair (first 6 characters)
+PASS (hidden): xml attribute pair (last 6 characters)
+PASS (hidden, line-only final filter): xml attribute pair (last 6 characters)
+PASS (hidden, sed stage alone): xml attribute pair (last 6 characters)
+PASS (hidden): netrc (first 6 characters)
+PASS (hidden, line-only final filter): netrc (first 6 characters)
+PASS (hidden, sed stage alone): netrc (first 6 characters)
+PASS (hidden): netrc (last 6 characters)
+PASS (hidden, line-only final filter): netrc (last 6 characters)
+PASS (hidden, sed stage alone): netrc (last 6 characters)
+PASS (hidden): Passw0rd list (first 6 characters)
+PASS (hidden, line-only final filter): Passw0rd list (first 6 characters)
+PASS (hidden, sed stage alone): Passw0rd list (first 6 characters)
+PASS (hidden): Passw0rd list (last 6 characters)
+PASS (hidden, line-only final filter): Passw0rd list (last 6 characters)
+PASS (hidden, sed stage alone): Passw0rd list (last 6 characters)
+PASS (hidden): 20 hex characters in a triple-quote body (first 6 characters)
+PASS (hidden, line-only final filter): 20 hex characters in a triple-quote body (first 6 characters)
+PASS (hidden, awk stage alone): 20 hex characters in a triple-quote body (first 6 characters)
+PASS (hidden): 20 hex characters in a triple-quote body (last 6 characters)
+PASS (hidden, line-only final filter): 20 hex characters in a triple-quote body (last 6 characters)
+PASS (hidden, awk stage alone): 20 hex characters in a triple-quote body (last 6 characters)
+PASS (hidden): web address only (first 6 characters)
+PASS (hidden, line-only final filter): web address only (first 6 characters)
+PASS (hidden, sed stage alone): web address only (first 6 characters)
+PASS (hidden): web address only (last 6 characters)
+PASS (hidden, line-only final filter): web address only (last 6 characters)
+PASS (hidden, sed stage alone): web address only (last 6 characters)
+PASS (hidden): web address password with an at sign (first 6 characters)
+PASS (hidden, line-only final filter): web address password with an at sign (first 6 characters)
+PASS (hidden, sed stage alone): web address password with an at sign (first 6 characters)
+PASS (hidden): web address password with an at sign (last 6 characters)
+PASS (hidden, line-only final filter): web address password with an at sign (last 6 characters)
+PASS (hidden, sed stage alone): web address password with an at sign (last 6 characters)
+PASS (hidden): private key block opener with the body on the same line (first 6 characters)
+PASS (hidden, sed stage alone): private key block opener with the body on the same line (first 6 characters)
+PASS (hidden): private key block opener with the body on the same line (last 6 characters)
+PASS (hidden, sed stage alone): private key block opener with the body on the same line (last 6 characters)
+PASS (hidden): yaml name at the start of a line hides the whole rest (first 6 characters)
+PASS (hidden, sed stage alone): yaml name at the start of a line hides the whole rest (first 6 characters)
+PASS (hidden): yaml name at the start of a line hides the whole rest (last 6 characters)
+PASS (hidden, sed stage alone): yaml name at the start of a line hides the whole rest (last 6 characters)
+PASS (hidden): yaml quoted value at the start of a line (first 6 characters)
+PASS (hidden, sed stage alone): yaml quoted value at the start of a line (first 6 characters)
+PASS (hidden): yaml quoted value at the start of a line (last 6 characters)
+PASS (hidden, sed stage alone): yaml quoted value at the start of a line (last 6 characters)
+PASS (hidden): web address with an empty user part and a host without a dot (first 6 characters)
+PASS (hidden, line-only final filter): web address with an empty user part and a host without a dot (first 6 characters)
+PASS (hidden, sed stage alone): web address with an empty user part and a host without a dot (first 6 characters)
+PASS (hidden): web address with an empty user part and a host without a dot (last 6 characters)
+PASS (hidden, line-only final filter): web address with an empty user part and a host without a dot (last 6 characters)
+PASS (hidden, sed stage alone): web address with an empty user part and a host without a dot (last 6 characters)
+PASS (hidden): web address amqp, empty user part (first 6 characters)
+PASS (hidden, line-only final filter): web address amqp, empty user part (first 6 characters)
+PASS (hidden, sed stage alone): web address amqp, empty user part (first 6 characters)
+PASS (hidden): web address amqp, empty user part (last 6 characters)
+PASS (hidden, line-only final filter): web address amqp, empty user part (last 6 characters)
+PASS (hidden, sed stage alone): web address amqp, empty user part (last 6 characters)
+PASS (hidden): web address without a scheme, empty user part (first 6 characters)
+PASS (hidden, line-only final filter): web address without a scheme, empty user part (first 6 characters)
+PASS (hidden, sed stage alone): web address without a scheme, empty user part (first 6 characters)
+PASS (hidden): web address without a scheme, empty user part (last 6 characters)
+PASS (hidden, line-only final filter): web address without a scheme, empty user part (last 6 characters)
+PASS (hidden, sed stage alone): web address without a scheme, empty user part (last 6 characters)
+PASS (hidden): web address, password holding a slash (first 6 characters)
+PASS (hidden, line-only final filter): web address, password holding a slash (first 6 characters)
+PASS (hidden, sed stage alone): web address, password holding a slash (first 6 characters)
+PASS (hidden): web address, password holding a slash (last 6 characters)
+PASS (hidden, line-only final filter): web address, password holding a slash (last 6 characters)
+PASS (hidden, sed stage alone): web address, password holding a slash (last 6 characters)
+PASS (hidden): web address whose user part is the token (no colon) (first 6 characters)
+PASS (hidden, line-only final filter): web address whose user part is the token (no colon) (first 6 characters)
+PASS (hidden, sed stage alone): web address whose user part is the token (no colon) (first 6 characters)
+PASS (hidden): web address whose user part is the token (no colon) (last 6 characters)
+PASS (hidden, line-only final filter): web address whose user part is the token (no colon) (last 6 characters)
+PASS (hidden, sed stage alone): web address whose user part is the token (no colon) (last 6 characters)
+PASS (hidden): web address ssh, empty user part (first 6 characters)
+PASS (hidden, line-only final filter): web address ssh, empty user part (first 6 characters)
+PASS (hidden, sed stage alone): web address ssh, empty user part (first 6 characters)
+PASS (hidden): web address ssh, empty user part (last 6 characters)
+PASS (hidden, line-only final filter): web address ssh, empty user part (last 6 characters)
+PASS (hidden, sed stage alone): web address ssh, empty user part (last 6 characters)
+PASS (hidden): docker login -p (first 6 characters)
+PASS (hidden, line-only final filter): docker login -p (first 6 characters)
+PASS (hidden, sed stage alone): docker login -p (first 6 characters)
+PASS (hidden): docker login -p (last 6 characters)
+PASS (hidden, line-only final filter): docker login -p (last 6 characters)
+PASS (hidden, sed stage alone): docker login -p (last 6 characters)
+PASS (hidden): redis-cli -a (first 6 characters)
+PASS (hidden, line-only final filter): redis-cli -a (first 6 characters)
+PASS (hidden, sed stage alone): redis-cli -a (first 6 characters)
+PASS (hidden): redis-cli -a (last 6 characters)
+PASS (hidden, line-only final filter): redis-cli -a (last 6 characters)
+PASS (hidden, sed stage alone): redis-cli -a (last 6 characters)
+PASS (hidden): ldapsearch -w (first 6 characters)
+PASS (hidden, line-only final filter): ldapsearch -w (first 6 characters)
+PASS (hidden, sed stage alone): ldapsearch -w (first 6 characters)
+PASS (hidden): ldapsearch -w (last 6 characters)
+PASS (hidden, line-only final filter): ldapsearch -w (last 6 characters)
+PASS (hidden, sed stage alone): ldapsearch -w (last 6 characters)
+PASS (hidden): zip -P (first 6 characters)
+PASS (hidden, line-only final filter): zip -P (first 6 characters)
+PASS (hidden, sed stage alone): zip -P (first 6 characters)
+PASS (hidden): zip -P (last 6 characters)
+PASS (hidden, line-only final filter): zip -P (last 6 characters)
+PASS (hidden, sed stage alone): zip -P (last 6 characters)
+PASS (hidden): 7z -pVALUE (first 6 characters)
+PASS (hidden, line-only final filter): 7z -pVALUE (first 6 characters)
+PASS (hidden, sed stage alone): 7z -pVALUE (first 6 characters)
+PASS (hidden): 7z -pVALUE (last 6 characters)
+PASS (hidden, line-only final filter): 7z -pVALUE (last 6 characters)
+PASS (hidden, sed stage alone): 7z -pVALUE (last 6 characters)
+PASS (hidden): unrar -pVALUE (first 6 characters)
+PASS (hidden, line-only final filter): unrar -pVALUE (first 6 characters)
+PASS (hidden, sed stage alone): unrar -pVALUE (first 6 characters)
+PASS (hidden): unrar -pVALUE (last 6 characters)
+PASS (hidden, line-only final filter): unrar -pVALUE (last 6 characters)
+PASS (hidden, sed stage alone): unrar -pVALUE (last 6 characters)
+PASS (hidden): htpasswd -b (first 6 characters)
+PASS (hidden, line-only final filter): htpasswd -b (first 6 characters)
+PASS (hidden, sed stage alone): htpasswd -b (first 6 characters)
+PASS (hidden): htpasswd -b (last 6 characters)
+PASS (hidden, line-only final filter): htpasswd -b (last 6 characters)
+PASS (hidden, sed stage alone): htpasswd -b (last 6 characters)
+PASS (hidden): htpasswd -nb (first 6 characters)
+PASS (hidden, line-only final filter): htpasswd -nb (first 6 characters)
+PASS (hidden, sed stage alone): htpasswd -nb (first 6 characters)
+PASS (hidden): htpasswd -nb (last 6 characters)
+PASS (hidden, line-only final filter): htpasswd -nb (last 6 characters)
+PASS (hidden, sed stage alone): htpasswd -nb (last 6 characters)
+PASS (hidden): smbclient -U user%password (first 6 characters)
+PASS (hidden, line-only final filter): smbclient -U user%password (first 6 characters)
+PASS (hidden, sed stage alone): smbclient -U user%password (first 6 characters)
+PASS (hidden): smbclient -U user%password (last 6 characters)
+PASS (hidden, line-only final filter): smbclient -U user%password (last 6 characters)
+PASS (hidden, sed stage alone): smbclient -U user%password (last 6 characters)
+PASS (hidden): openssl -k (first 6 characters)
+PASS (hidden, line-only final filter): openssl -k (first 6 characters)
+PASS (hidden, sed stage alone): openssl -k (first 6 characters)
+PASS (hidden): openssl -k (last 6 characters)
+PASS (hidden, line-only final filter): openssl -k (last 6 characters)
+PASS (hidden, sed stage alone): openssl -k (last 6 characters)
+PASS (hidden): echo value piped into a login (first 6 characters)
+PASS (hidden, line-only final filter): echo value piped into a login (first 6 characters)
+PASS (hidden, sed stage alone): echo value piped into a login (first 6 characters)
+PASS (hidden): echo value piped into a login (last 6 characters)
+PASS (hidden, line-only final filter): echo value piped into a login (last 6 characters)
+PASS (hidden, sed stage alone): echo value piped into a login (last 6 characters)
+PASS (hidden): skopeo --src-creds (first 6 characters)
+PASS (hidden, line-only final filter): skopeo --src-creds (first 6 characters)
+PASS (hidden, sed stage alone): skopeo --src-creds (first 6 characters)
+PASS (hidden): skopeo --src-creds (last 6 characters)
+PASS (hidden, line-only final filter): skopeo --src-creds (last 6 characters)
+PASS (hidden, sed stage alone): skopeo --src-creds (last 6 characters)
+PASS (hidden): sudo docker login -p, more after it (first 6 characters)
+PASS (hidden, line-only final filter): sudo docker login -p, more after it (first 6 characters)
+PASS (hidden, sed stage alone): sudo docker login -p, more after it (first 6 characters)
+PASS (hidden): sudo docker login -p, more after it (last 6 characters)
+PASS (hidden, line-only final filter): sudo docker login -p, more after it (last 6 characters)
+PASS (hidden, sed stage alone): sudo docker login -p, more after it (last 6 characters)
+PASS (hidden): unknown command, shape rule -p (first 6 characters)
+PASS (hidden, line-only final filter): unknown command, shape rule -p (first 6 characters)
+PASS (hidden, sed stage alone): unknown command, shape rule -p (first 6 characters)
+PASS (hidden): unknown command, shape rule -p (last 6 characters)
+PASS (hidden, line-only final filter): unknown command, shape rule -p (last 6 characters)
+PASS (hidden, sed stage alone): unknown command, shape rule -p (last 6 characters)
+PASS (hidden): wrapped assignment, bracket opened and closed (first 6 characters)
+PASS (hidden): wrapped assignment, bracket opened and closed (last 6 characters)
+PASS (hidden): assignment continued with a backslash (first 6 characters)
+PASS (hidden): assignment continued with a backslash (last 6 characters)
+PASS (hidden): list opened after a secret name (first 6 characters)
+PASS (hidden): list opened after a secret name (last 6 characters)
+PASS (hidden): command substitution opened after a secret name (first 6 characters)
+PASS (hidden): command substitution opened after a secret name (last 6 characters)
+PASS (hidden): call opened on the line and closed two lines later (first 6 characters)
+PASS (hidden): call opened on the line and closed two lines later (last 6 characters)
+PASS (hidden): secret inside a wrapped call (first 6 characters)
+PASS (hidden): secret inside a wrapped call (last 6 characters)
+PASS (hidden): wrapped assignment with a grep prefix (first 6 characters)
+PASS (hidden): wrapped assignment with a grep prefix (last 6 characters)
+PASS (hidden): zero-width space inside a name (assignment) (first 6 characters)
+PASS (hidden): zero-width space inside a name (assignment) (last 6 characters)
+PASS (hidden): zero-width space inside a quoted JSON name (first 6 characters)
+PASS (hidden): zero-width space inside a quoted JSON name (last 6 characters)
+PASS (hidden): letter with an accent inside a name (first 6 characters)
+PASS (hidden): letter with an accent inside a name (last 6 characters)
+PASS (hidden): name made only of non-ASCII letters (first 6 characters)
+PASS (hidden): name made only of non-ASCII letters (last 6 characters)
+PASS (hidden): secret at the start of a 30000-character line (first 6 characters)
+PASS (hidden): secret at the start of a 30000-character line (last 6 characters)
+PASS (hidden): opaque string cut by dots (first 6 characters)
+PASS (hidden, awk stage alone): opaque string cut by dots (first 6 characters)
+PASS (hidden): opaque string cut by dots (last 6 characters)
+PASS (hidden, awk stage alone): opaque string cut by dots (last 6 characters)
+PASS (hidden): opaque string cut by slashes (25 characters) (first 6 characters)
+PASS (hidden, awk stage alone): opaque string cut by slashes (25 characters) (first 6 characters)
+PASS (hidden): opaque string cut by slashes (25 characters) (last 6 characters)
+PASS (hidden, awk stage alone): opaque string cut by slashes (25 characters) (last 6 characters)
+PASS (hidden): escaped quotes: name and string value (first 6 characters)
+PASS (hidden, line-only final filter): escaped quotes: name and string value (first 6 characters)
+PASS (hidden, sed stage alone): escaped quotes: name and string value (first 6 characters)
+PASS (hidden): escaped quotes: name and string value (last 6 characters)
+PASS (hidden, line-only final filter): escaped quotes: name and string value (last 6 characters)
+PASS (hidden, sed stage alone): escaped quotes: name and string value (last 6 characters)
+PASS (hidden): escaped quotes: name and plain value (first 6 characters)
+PASS (hidden, line-only final filter): escaped quotes: name and plain value (first 6 characters)
+PASS (hidden, sed stage alone): escaped quotes: name and plain value (first 6 characters)
+PASS (hidden): escaped quotes: name and plain value (last 6 characters)
+PASS (hidden, line-only final filter): escaped quotes: name and plain value (last 6 characters)
+PASS (hidden, sed stage alone): escaped quotes: name and plain value (last 6 characters)
+PASS (hidden): escaped single quotes: name and value (first 6 characters)
+PASS (hidden, line-only final filter): escaped single quotes: name and value (first 6 characters)
+PASS (hidden, sed stage alone): escaped single quotes: name and value (first 6 characters)
+PASS (hidden): escaped single quotes: name and value (last 6 characters)
+PASS (hidden, line-only final filter): escaped single quotes: name and value (last 6 characters)
+PASS (hidden, sed stage alone): escaped single quotes: name and value (last 6 characters)
+PASS (hidden): JSON key written with a unicode escape (first 6 characters)
+PASS (hidden, line-only final filter): JSON key written with a unicode escape (first 6 characters)
+PASS (hidden, sed stage alone): JSON key written with a unicode escape (first 6 characters)
+PASS (hidden): JSON key written with a unicode escape (last 6 characters)
+PASS (hidden, line-only final filter): JSON key written with a unicode escape (last 6 characters)
+PASS (hidden, sed stage alone): JSON key written with a unicode escape (last 6 characters)
+PASS (hidden): password flag after && (first 6 characters)
+PASS (hidden, line-only final filter): password flag after && (first 6 characters)
+PASS (hidden, sed stage alone): password flag after && (first 6 characters)
+PASS (hidden): password flag after && (last 6 characters)
+PASS (hidden, line-only final filter): password flag after && (last 6 characters)
+PASS (hidden, sed stage alone): password flag after && (last 6 characters)
+PASS (hidden): password flag after a pipe (first 6 characters)
+PASS (hidden, line-only final filter): password flag after a pipe (first 6 characters)
+PASS (hidden, sed stage alone): password flag after a pipe (first 6 characters)
+PASS (hidden): password flag after a pipe (last 6 characters)
+PASS (hidden, line-only final filter): password flag after a pipe (last 6 characters)
+PASS (hidden, sed stage alone): password flag after a pipe (last 6 characters)
+PASS (hidden): password flag inside $( ) (first 6 characters)
+PASS (hidden, line-only final filter): password flag inside $( ) (first 6 characters)
+PASS (hidden, sed stage alone): password flag inside $( ) (first 6 characters)
+PASS (hidden): password flag inside $( ) (last 6 characters)
+PASS (hidden, line-only final filter): password flag inside $( ) (last 6 characters)
+PASS (hidden, sed stage alone): password flag inside $( ) (last 6 characters)
+PASS (hidden): password flag, command given with a path (first 6 characters)
+PASS (hidden, line-only final filter): password flag, command given with a path (first 6 characters)
+PASS (hidden, sed stage alone): password flag, command given with a path (first 6 characters)
+PASS (hidden): password flag, command given with a path (last 6 characters)
+PASS (hidden, line-only final filter): password flag, command given with a path (last 6 characters)
+PASS (hidden, sed stage alone): password flag, command given with a path (last 6 characters)
+PASS (hidden): password flag after a variable assignment (first 6 characters)
+PASS (hidden, line-only final filter): password flag after a variable assignment (first 6 characters)
+PASS (hidden, sed stage alone): password flag after a variable assignment (first 6 characters)
+PASS (hidden): password flag after a variable assignment (last 6 characters)
+PASS (hidden, line-only final filter): password flag after a variable assignment (last 6 characters)
+PASS (hidden, sed stage alone): password flag after a variable assignment (last 6 characters)
+PASS (hidden): password flag on a continuation line (first 6 characters)
+PASS (hidden, line-only final filter): password flag on a continuation line (first 6 characters)
+PASS (hidden, sed stage alone): password flag on a continuation line (first 6 characters)
+PASS (hidden): password flag on a continuation line (last 6 characters)
+PASS (hidden, line-only final filter): password flag on a continuation line (last 6 characters)
+PASS (hidden, sed stage alone): password flag on a continuation line (last 6 characters)
+PASS (hidden): password flag, quoted value with a space (first 6 characters)
+PASS (hidden, line-only final filter): password flag, quoted value with a space (first 6 characters)
+PASS (hidden, sed stage alone): password flag, quoted value with a space (first 6 characters)
+PASS (hidden): password flag, quoted value with a space (last 6 characters)
+PASS (hidden, line-only final filter): password flag, quoted value with a space (last 6 characters)
+PASS (hidden, sed stage alone): password flag, quoted value with a space (last 6 characters)
+PASS (hidden): glued name DBPASS (first 6 characters)
+PASS (hidden, line-only final filter): glued name DBPASS (first 6 characters)
+PASS (hidden, sed stage alone): glued name DBPASS (first 6 characters)
+PASS (hidden): glued name DBPASS (last 6 characters)
+PASS (hidden, line-only final filter): glued name DBPASS (last 6 characters)
+PASS (hidden, sed stage alone): glued name DBPASS (last 6 characters)
+PASS (hidden): glued name ROOTPW (first 6 characters)
+PASS (hidden, line-only final filter): glued name ROOTPW (first 6 characters)
+PASS (hidden, sed stage alone): glued name ROOTPW (first 6 characters)
+PASS (hidden): glued name ROOTPW (last 6 characters)
+PASS (hidden, line-only final filter): glued name ROOTPW (last 6 characters)
+PASS (hidden, sed stage alone): glued name ROOTPW (last 6 characters)
+PASS (hidden): config line requirepass (first 6 characters)
+PASS (hidden, line-only final filter): config line requirepass (first 6 characters)
+PASS (hidden, sed stage alone): config line requirepass (first 6 characters)
+PASS (hidden): config line requirepass (last 6 characters)
+PASS (hidden, line-only final filter): config line requirepass (last 6 characters)
+PASS (hidden, sed stage alone): config line requirepass (last 6 characters)
+PASS (hidden): config line masterauth (first 6 characters)
+PASS (hidden, line-only final filter): config line masterauth (first 6 characters)
+PASS (hidden, sed stage alone): config line masterauth (first 6 characters)
+PASS (hidden): config line masterauth (last 6 characters)
+PASS (hidden, line-only final filter): config line masterauth (last 6 characters)
+PASS (hidden, sed stage alone): config line masterauth (last 6 characters)
+PASS (hidden): session id name jsessionid (first 6 characters)
+PASS (hidden, line-only final filter): session id name jsessionid (first 6 characters)
+PASS (hidden, sed stage alone): session id name jsessionid (first 6 characters)
+PASS (hidden): session id name jsessionid (last 6 characters)
+PASS (hidden, line-only final filter): session id name jsessionid (last 6 characters)
+PASS (hidden, sed stage alone): session id name jsessionid (last 6 characters)
+PASS (hidden): XML element text (first 6 characters)
+PASS (hidden, line-only final filter): XML element text (first 6 characters)
+PASS (hidden, sed stage alone): XML element text (first 6 characters)
+PASS (hidden): XML element text (last 6 characters)
+PASS (hidden, line-only final filter): XML element text (last 6 characters)
+PASS (hidden, sed stage alone): XML element text (last 6 characters)
+PASS (hidden): value that starts with an angle bracket (first 6 characters)
+PASS (hidden, line-only final filter): value that starts with an angle bracket (first 6 characters)
+PASS (hidden, sed stage alone): value that starts with an angle bracket (first 6 characters)
+PASS (hidden): value that starts with an angle bracket (last 6 characters)
+PASS (hidden, line-only final filter): value that starts with an angle bracket (last 6 characters)
+PASS (hidden, sed stage alone): value that starts with an angle bracket (last 6 characters)
+PASS (hidden): comparison of a password with a text (first 6 characters)
+PASS (hidden, line-only final filter): comparison of a password with a text (first 6 characters)
+PASS (hidden, sed stage alone): comparison of a password with a text (first 6 characters)
+PASS (hidden): comparison of a password with a text (last 6 characters)
+PASS (hidden, line-only final filter): comparison of a password with a text (last 6 characters)
+PASS (hidden, sed stage alone): comparison of a password with a text (last 6 characters)
+PASS (hidden): name := value in the middle of a line (first 6 characters)
+PASS (hidden, line-only final filter): name := value in the middle of a line (first 6 characters)
+PASS (hidden, sed stage alone): name := value in the middle of a line (first 6 characters)
+PASS (hidden): name := value in the middle of a line (last 6 characters)
+PASS (hidden, line-only final filter): name := value in the middle of a line (last 6 characters)
+PASS (hidden, sed stage alone): name := value in the middle of a line (last 6 characters)
+PASS (hidden): name := value inside braces (first 6 characters)
+PASS (hidden, line-only final filter): name := value inside braces (first 6 characters)
+PASS (hidden, sed stage alone): name := value inside braces (first 6 characters)
+PASS (hidden): name := value inside braces (last 6 characters)
+PASS (hidden, line-only final filter): name := value inside braces (last 6 characters)
+PASS (hidden, sed stage alone): name := value inside braces (last 6 characters)
+PASS (hidden): name := unquoted value (first 6 characters)
+PASS (hidden, line-only final filter): name := unquoted value (first 6 characters)
+PASS (hidden, sed stage alone): name := unquoted value (first 6 characters)
+PASS (hidden): name := unquoted value (last 6 characters)
+PASS (hidden, line-only final filter): name := unquoted value (last 6 characters)
+PASS (hidden, sed stage alone): name := unquoted value (last 6 characters)
+PASS (hidden): SQL IDENTIFIED BY (first 6 characters)
+PASS (hidden, line-only final filter): SQL IDENTIFIED BY (first 6 characters)
+PASS (hidden, sed stage alone): SQL IDENTIFIED BY (first 6 characters)
+PASS (hidden): SQL IDENTIFIED BY (last 6 characters)
+PASS (hidden, line-only final filter): SQL IDENTIFIED BY (last 6 characters)
+PASS (hidden, sed stage alone): SQL IDENTIFIED BY (last 6 characters)
+PASS (hidden): second text after a hidden one (first 6 characters)
+PASS (hidden, line-only final filter): second text after a hidden one (first 6 characters)
+PASS (hidden, sed stage alone): second text after a hidden one (first 6 characters)
+PASS (hidden): second text after a hidden one (last 6 characters)
+PASS (hidden, line-only final filter): second text after a hidden one (last 6 characters)
+PASS (hidden, sed stage alone): second text after a hidden one (last 6 characters)
+PASS (hidden): closing bracket inside a mid-line value (first 6 characters)
+PASS (hidden, line-only final filter): closing bracket inside a mid-line value (first 6 characters)
+PASS (hidden, sed stage alone): closing bracket inside a mid-line value (first 6 characters)
+PASS (hidden): closing bracket inside a mid-line value (last 6 characters)
+PASS (hidden, line-only final filter): closing bracket inside a mid-line value (last 6 characters)
+PASS (hidden, sed stage alone): closing bracket inside a mid-line value (last 6 characters)
+PASS (hidden): web address, token as user part, host without a dot (first 6 characters)
+PASS (hidden, line-only final filter): web address, token as user part, host without a dot (first 6 characters)
+PASS (hidden, sed stage alone): web address, token as user part, host without a dot (first 6 characters)
+PASS (hidden): web address, token as user part, host without a dot (last 6 characters)
+PASS (hidden, line-only final filter): web address, token as user part, host without a dot (last 6 characters)
+PASS (hidden, sed stage alone): web address, token as user part, host without a dot (last 6 characters)
+PASS (hidden): web address with escaped slashes (first 6 characters)
+PASS (hidden, line-only final filter): web address with escaped slashes (first 6 characters)
+PASS (hidden, sed stage alone): web address with escaped slashes (first 6 characters)
+PASS (hidden): web address with escaped slashes (last 6 characters)
+PASS (hidden, line-only final filter): web address with escaped slashes (last 6 characters)
+PASS (hidden, sed stage alone): web address with escaped slashes (last 6 characters)
+PASS (hidden): web address with escaped slashes, no colon (first 6 characters)
+PASS (hidden, line-only final filter): web address with escaped slashes, no colon (first 6 characters)
+PASS (hidden, sed stage alone): web address with escaped slashes, no colon (first 6 characters)
+PASS (hidden): web address with escaped slashes, no colon (last 6 characters)
+PASS (hidden, line-only final filter): web address with escaped slashes, no colon (last 6 characters)
+PASS (hidden, sed stage alone): web address with escaped slashes, no colon (last 6 characters)
+PASS (hidden): user:password@host without a scheme (first 6 characters)
+PASS (hidden, line-only final filter): user:password@host without a scheme (first 6 characters)
+PASS (hidden, sed stage alone): user:password@host without a scheme (first 6 characters)
+PASS (hidden): user:password@host without a scheme (last 6 characters)
+PASS (hidden, line-only final filter): user:password@host without a scheme (last 6 characters)
+PASS (hidden, sed stage alone): user:password@host without a scheme (last 6 characters)
+PASS (hidden): Bearer value with a hash sign (first 6 characters)
+PASS (hidden, line-only final filter): Bearer value with a hash sign (first 6 characters)
+PASS (hidden, sed stage alone): Bearer value with a hash sign (first 6 characters)
+PASS (hidden): Bearer value with a hash sign (last 6 characters)
+PASS (hidden, line-only final filter): Bearer value with a hash sign (last 6 characters)
+PASS (hidden, sed stage alone): Bearer value with a hash sign (last 6 characters)
+PASS (hidden): Bearer value of 5 characters (first 6 characters)
+PASS (hidden, line-only final filter): Bearer value of 5 characters (first 6 characters)
+PASS (hidden, sed stage alone): Bearer value of 5 characters (first 6 characters)
+PASS (hidden): Bearer value of 5 characters (last 6 characters)
+PASS (hidden, line-only final filter): Bearer value of 5 characters (last 6 characters)
+PASS (hidden, sed stage alone): Bearer value of 5 characters (last 6 characters)
+PASS (hidden): echo piped into sudo -S (first 6 characters)
+PASS (hidden, line-only final filter): echo piped into sudo -S (first 6 characters)
+PASS (hidden, sed stage alone): echo piped into sudo -S (first 6 characters)
+PASS (hidden): echo piped into sudo -S (last 6 characters)
+PASS (hidden, line-only final filter): echo piped into sudo -S (last 6 characters)
+PASS (hidden, sed stage alone): echo piped into sudo -S (last 6 characters)
+PASS (hidden): echo piped into kinit (first 6 characters)
+PASS (hidden, line-only final filter): echo piped into kinit (first 6 characters)
+PASS (hidden, sed stage alone): echo piped into kinit (first 6 characters)
+PASS (hidden): echo piped into kinit (last 6 characters)
+PASS (hidden, line-only final filter): echo piped into kinit (last 6 characters)
+PASS (hidden, sed stage alone): echo piped into kinit (last 6 characters)
+PASS (hidden): echo piped into ssh-add (first 6 characters)
+PASS (hidden, line-only final filter): echo piped into ssh-add (first 6 characters)
+PASS (hidden, sed stage alone): echo piped into ssh-add (first 6 characters)
+PASS (hidden): echo piped into ssh-add (last 6 characters)
+PASS (hidden, line-only final filter): echo piped into ssh-add (last 6 characters)
+PASS (hidden, sed stage alone): echo piped into ssh-add (last 6 characters)
+PASS (kept): text after a block value header stays (1)
+PASS (kept): text after a block value header stays (10)
+PASS (kept): text after a multi-line quoted value stays
+PASS (kept): text after a multi-line plain value stays
+PASS (kept): text after a long hidden container stays
+PASS (kept): docker run -p with a port number stays
+PASS (kept): mkdir -p with a number stays
+PASS (kept): ls -a stays
+PASS (kept): grep -a -n stays
+PASS (kept): text after a wrapped assignment stays (1)
+PASS (kept): text after a wrapped assignment stays (2)
+PASS (kept): text after a wrapped assignment stays (3)
+PASS (kept): text after a wrapped assignment stays (4)
+PASS (kept): text after a wrapped assignment stays (5)
+PASS (kept): text after a wrapped assignment stays (6)
+PASS (kept): a 30000-character line carries a cut notice with its true length
+PASS (kept): dotted CamelCase name stays
+PASS (kept): file name with dots stays
+PASS (kept): a name followed by a full stop stays
+PASS (kept): a NUL byte is shown as ? (tr stage)
+PASS (kept): mkdir -p with a path stays
+PASS (machinery): a weak filter stops the run with exit 3, opens no test-program file, leaves no folder
+PASS (machinery): a empty filter stops the run with exit 3, opens no test-program file, leaves no folder
+PASS (machinery): an identity filter (cat) makes --self-test fail with a non-zero exit code
+PASS (machinery): filter_ready refuses the useless rule file st-bad1.sed
+PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
+PASS (machinery): filter_ready refuses a useless awk program
+PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
+FAIL (machinery): --mask must hide the value (exit=3)
+FAIL (machinery): a normal run must end with exit 0 and a SUMMARY line (exit=3)
+FAIL (machinery): a normal run must keep exactly one work folder (found 0)
+PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
+PASS (machinery): the filter runs with LC_ALL=C (byte-wise matching)
+PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
+PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
+PASS (machinery): the left-out report counts one name with a line break and one symbolic link
+FAIL (machinery): a file name with # & and a backslash must be printed as file:line:word (exit=3)
+PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
+PASS (machinery): sh -x does not print a value (the script turns the trace off)
+FAIL (machinery): signal TERM in the main phase (exit=3 wanted 143, programs left=0, folders left=0)
+PASS (machinery): signal HUP in the main phase: NOT TESTED (the program that started this self-test ignores HUP, for example nohup; start it without nohup to test this case)

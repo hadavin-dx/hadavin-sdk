@@ -1,24 +1,29 @@
-"""Builds REPORT-c6r.md from REPORT-c6p.md (read only). Every patch asserts exactly one match.
-Usage: python3 -B build_c6q.py   Output: REPORT-c6r.md in the folder above.  Reads the owner-sheet facts from evidence-c6r/static-checks-output.txt."""
+"""Builds REPORT-c6s.md from REPORT-c6r.md (read only). Every patch asserts exactly one match (or the stated count).
+Usage: python3 -B -I build_c6s.py   Output: REPORT-c6s.md in the folder above.
+Reads the owner-sheet facts and the check time from evidence-c6s/static-checks-output.txt (run static-checks.sh first)."""
 import re, sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import build_c6r_text as T
-from build_c6r_text import wc, C1, S1, R2, L2, L3, L4, B_L1_NONE, B_L2, B_L3, B_L4, CAP_NONE, CAP_R1, CAP_R2
 
 D = "/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/"
-E = D + "evidence-c6r/"
-L = open(D + "REPORT-c6p.md", encoding="utf-8").read().split("\n")
+E = D + "evidence-c6s/"
+L = open(D + "REPORT-c6r.md", encoding="utf-8").read().split("\n")
+
+
+FAILS = []
 
 
 def sub(s, old, new, c=1):
     n = s.count(old)
-    assert n == c, "expected %d match(es), found %d: %r" % (c, n, old[:90])
+    if n != c:
+        FAILS.append("expected %d match(es), found %d: %r" % (c, n, old[:110]))
+        return s
     return s.replace(old, new)
 
 
 def find(prefix):
     idx = [i for i, l in enumerate(L) if l.startswith(prefix)]
-    assert len(idx) == 1, "prefix matched %d lines: %r" % (len(idx), prefix[:70])
+    if len(idx) != 1:
+        FAILS.append("prefix matched %d lines: %r" % (len(idx), prefix[:70]))
+        return 0
     return idx[0]
 
 
@@ -53,13 +58,19 @@ def rsub(k, col, old, new, c=1):
     putrow(k, g)
 
 
+def radd(k, col, text):
+    g = getrow(k)
+    g[COL[col]] = g[COL[col]].rstrip() + " " + text
+    putrow(k, g)
+
+
 def rset(k, col, new):
     g = getrow(k)
     g[COL[col]] = new
     putrow(k, g)
 
 
-# ---------------------------------------------------------------- facts from the check run (owner sheets)
+# ---------------------------------------------------------------- facts from the check run (owner sheets, release notes)
 cs = open(E + "static-checks-output.txt", encoding="utf-8").read()
 CT = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
 
@@ -70,383 +81,244 @@ def ist(t):
     return "%02d:%02d:%02d" % (x // 3600, x % 3600 // 60, x % 60)
 
 
-CTU = CT[11:19]
-CTI = ist(CT)
+CTU, CTI = CT[11:19], ist(CT)
 sheets = re.findall(r"^(OWNER-SHEET-v(\d+)[^:]*\.md): (\d+) / (\d+) / (\d+) / (\d+)$", cs, re.M)
 newest = max(int(x[1]) for x in sheets)
-rend = sorted(x[0] for x in sheets if int(x[1]) == newest)
-NEWEST_ONLY_SOURCE = all("SOURCE" in x for x in rend)
-mt = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v28-[AB]\.md)$", cs, re.M)
-V28T = sorted(set(m[1] for m in mt))[-1]
-mt29 = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v29-[A-Z]+\.md)$", cs, re.M)
-V29 = {m[2]: m[1] for m in mt29}
-assert set(V29) == {"OWNER-SHEET-v29-A.md", "OWNER-SHEET-v29-B.md", "OWNER-SHEET-v29-SOURCE.md"}, V29
-assert newest == 29
-assert all(v <= CT for v in [m[0] for m in mt29]), "a v29 file is newer than the check time: rerun static-checks.sh"
-RANGE = "v19 to v%d (all variants, the templates called SOURCE included)" % newest
-
-
-def shortn(n):
-    return re.sub(r"^OWNER-SHEET-|\.md$", "", n)
+assert newest == 30, newest
+mt = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v(?:28|29|30)-[A-Z]+\.md)$", cs, re.M)
+TM = {m[2]: m[1] for m in mt}
+assert set(x for x in TM if "v30" in x) == {"OWNER-SHEET-v30-A.md", "OWNER-SHEET-v30-B.md", "OWNER-SHEET-v30-SOURCE.md"}, TM
+assert all(m[0] <= CT for m in mt), "an owner sheet is newer than the check time: rerun static-checks.sh"
+assert "none on disk at the check time" in cs, "an owner sheet of version 31 or later exists"
+RN = re.search(r"newest version on disk.*?\n(LEAD-RELEASE-NOTE-v(\d+)\.md)", cs).group(2)
+assert RN == "14", RN
 
 
 def hh(t):
     return "%s UTC = %s IST" % (t, ist("0000-00-00T" + t))
 
 
-V29TXT = ("OWNER-SHEET-v29-A.md (written %s) and OWNER-SHEET-v29-B.md (written %s), both rendered sheets, and OWNER-SHEET-v29-SOURCE.md (the template; written %s)"
-          % (hh(V29["OWNER-SHEET-v29-A.md"]), hh(V29["OWNER-SHEET-v29-B.md"]), hh(V29["OWNER-SHEET-v29-SOURCE.md"])))
-nd = [(shortn(x[0]), x[2]) for x in sheets if x[2] != "0"]
-assert [x for x in sheets if x[3] != "0" or x[4] != "0"] == [], "a sheet holds 'read, create and change only' or 'does not delete': text must change"
-assert nd == [("v19", "1")], nd
-rogroups = {}
+V30SENT = ("At %s UTC = %s IST the folder holds OWNER-SHEET-v30-A.md (written %s) and OWNER-SHEET-v30-B.md (written %s), both rendered sheets, and OWNER-SHEET-v30-SOURCE.md (the template; written %s); v29 A, B and SOURCE are older (v29 A and B were written %s)"
+           % (CTU, CTI, hh(TM["OWNER-SHEET-v30-A.md"]), hh(TM["OWNER-SHEET-v30-B.md"]), hh(TM["OWNER-SHEET-v30-SOURCE.md"]), hh(TM["OWNER-SHEET-v29-A.md"])))
+nd = [x for x in sheets if x[2] != "0"]
+assert [x[0] for x in nd] == ["OWNER-SHEET-v19.md"], nd
+assert all(x[3] == "0" and x[4] == "0" for x in sheets)
+rog = {}
 for x in sheets:
-    rogroups.setdefault(int(x[5]), []).append(shortn(x[0]))
-
-
-def squash(names):
-    return ", ".join(names)
-
-
-ROTXT = "; ".join("%s mention%s in %s" % ({0: "no", 1: "one", 2: "two"}.get(k, str(k)), "" if k == 1 else "s", squash(v)) for k, v in sorted(rogroups.items()))
+    rog.setdefault(int(x[5]), []).append(re.sub(r"^OWNER-SHEET-|\.md$", "", x[0]))
+ROTXT = "; ".join("%s mention%s in %s" % ({0: "no", 1: "one", 2: "two"}.get(k, str(k)), "" if k == 1 else "s", ", ".join(v)) for k, v in sorted(rog.items()))
 SHEETFACT = ("'never deletes' occurs only in v19 (1 hit); 'read, create and change only' and 'does not delete' occur nowhere; mentions of read-only or read only (a count of any mention, which can be about something other than the HubSpot key): %s" % ROTXT)
-SHEETCHK = ("%s UTC = %s IST" % (CTU, CTI))
+NEWESTLINE = "NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v30 (at the check time %s UTC = %s IST); NEWEST RELEASE NOTE NAMED: v14." % (CTU, CTI)
 
-# ---------------------------------------------------------------- table of card lengths (numbers computed from the texts)
-TAB = T.table()
-tab_md = ["| Lease answer | Card length | Spoken words | Seconds at 150 words a minute | Card budget on the run sheet | Video total (scenes 150 s + budget) |", "|---|---|---|---|---|---|"]
-for k, ln, w, s, b, tot in TAB:
-    nm = {"none": "none (the default)", "1": "1 (45-second limit)", "2": "2 (lease explained)"}[k]
-    tab_md.append("| %s | %s%s | %d | %s | %d s | about %d s |" % (nm, ln, " (the default)" if (k == "none" and ln == "(a)") else "", w, s, b, tot))
-TABLE = "\n".join(tab_md)
-NA = [r for r in TAB if r[0] == "none" and r[1] == "(a)"][0]
-NB = [r for r in TAB if r[0] == "none" and r[1] == "(b)"][0]
-W_A = (wc(C1), wc(L2), wc(L3), wc(L4))
-assert NA[2] == sum(W_A) == 90 and NA[3] == "36.0" and NA[4] == 40 and NA[5] == 190
-assert NB[2] == 74 and NB[4] == 30 and NB[5] == 180
+# ---------------------------------------------------------------- the box (new text, one file)
+box = open(E + "c6s_box.txt", encoding="utf-8").read().rstrip("\n").split("\n")
+for i, l in enumerate(box):
+    if l.startswith("| L-SHEET |"):
+        box[i] = ("| L-SHEET | OWNER ONLY: confirm the ONE final owner sheet (the checklist the owner reads). %s. | The sheet the owner names final. NOT covered by 'apply all defaults'. |" % V30SENT)
+s0 = find("## Start here")
+s1 = find("## 0. Failures")
+assert L[s1 - 1] == ""
+L[s0:s1 - 1] = box
 
-# ---------------------------------------------------------------- rows
-ROWS = {}
-for l in L:
-    m = ROWRE.match(l)
-    if m:
-        ROWS[int(m.group(1))] = m.groups()
-N = len(ROWS)
-assert N == 94
+# ---------------------------------------------------------------- title
+patch("# REPORT-c6r:", "# REPORT-c6r: video audit fix pass, supersedes REPORT-c6q.md", "# REPORT-c6s: video audit fix pass, supersedes REPORT-c6r.md")
 
-# row 6 (run sheet: rehearsal list items 11, 13, 15)
-rsub(6, "new", " (This check needs n8n and is not run yet.)", "")
-i13 = getrow(6)[COL["new"]]
-a = i13.index("13. REPEAT-SEND CHECK")
-b = i13.index("14. GATE, saved runs")
-ITEM13 = ("13. REPEAT-SEND CHECK (scene 3). The owner sends the same prepared send note twice (he pastes the note again; he types no new id). "
-          "Write down the clock time of the first send in scene 2 and of the repeat send in scene 3 (UTC to the second, with IST), the reply text of the repeat (it must say the repeat flag is true), and the gap between the two sends. "
-          "If the closing card or the scene 3 caption says that the claim holds only within 45 seconds of the first send, the gap must be under 30 seconds, because the 45 seconds start when the first send arrives and scene 2 is planned at 40 seconds. "
-          "If the gap is 30 seconds or more, that sentence is not filmed: the studio lead either has scenes 2 and 3 restructured so that the repeat send comes straight after the first reply (he names a builder) or takes the 45-second limit out of the card and the caption. "
-          "If neither the card nor the caption says so, the gap is only written down. After the repeat the CRM list must still show 1 row and the test mailbox 1 mail; if not, stop and tell the studio lead (the person who sees it first says stop; the studio lead decides whether to film again).<br>")
-g = getrow(6)
-g[COL["new"]] = i13[:a] + ITEM13 + i13[b:]
-putrow(6, g)
-i15 = getrow(6)[COL["new"]]
-a = i15.index("15. SECOND LEAK SCAN")
-b = i15.index("16. AFTER THE TAKE")
-ITEM15 = ("15. SECOND LEAK SCAN. After the first rehearsal with real accounts, the studio lead runs a second leak scan on the stores of this computer (the stores that the leak scan section of the start notes lists; hit counts only, never the values). "
-          "It searches for four things: the real value of the mail account's password and the real value of the customer-list key, each read from the file or store that holds the keys and handed to the search without ever being printed or saved; and the made-up names and the made-up e-mail addresses used in that rehearsal. "
-          "He writes the number of hits per store and the time in UTC and IST under this item. Any hit in a store other than n8n's own database stops the take; a hit inside n8n's own database is written down and the studio lead decides in writing whether the take goes on. "
-          "The first scan runs on fake services and fake keys only; this second scan is the only one that can show whether a real key or a real mail password reached a saved run.<br>")
-g = getrow(6)
-g[COL["new"]] = i15[:a] + ITEM15 + i15[b:]
-putrow(6, g)
-rsub(6, "why", "c6n changes: item 13 of c6o only wrote the gap down; c6p restores the 30 s limit for reading 1, which is the studio lead's own answer Q22 (c) and therefore the default, and keeps 'only write it down' for reading 2 and none (c6o design review M1, M7); item 13 also says how the owner sends the same id twice;",
-     "c6n changes: item 13 also says how the owner sends the same id twice;")
-rsub(6, "why", "Item 13 measures from the first SEND, not from the first reply, and (under reading 1 of the lease question) asks for under 30 seconds,",
-     "Item 13 measures from the first SEND, not from the first reply, and asks for under 30 seconds when the card or the caption carries the 45-second limit,")
-rsub(6, "why", "item 16 comes after the take.",
-     "item 16 comes after the take. c6q changes (c6p design review B1, M1, M3, M5; c6p naive review M6): item 13 asks for under 30 seconds only if the card or caption carries the 45-second limit, because the default puts no lease sentence on public video text (the studio lead's newest word, ORD:230), and no longer uses report words ('reading', 'the lease question'); item 11 loses its stale sentence 'This check needs n8n and is not run yet'; item 15 says what the second scan searches for (the real key values, read from the file that holds the keys and not printed, counts only), so it can show whether real keys reached a saved run.", 1)
+# ---------------------------------------------------------------- section 0: keep the failures, move the history after section 1
+hist = []
 
-rsub(17, "new", "where it is said depends on the answer to the lease question", "the video does not explain it unless the studio lead decides otherwise")
-patch("| 13 | run sheet, line 41", "Closing card line 1 says the repeat-send statement and the limit of the claim (a second send within 45 seconds of the first).", "Closing card line 1 says the repeat-send statement and nothing about the 45 seconds.")
-patch("| 21 | run sheet, line 32", "Scene 3 caption: the plain statement plus the limit (a second send within 45 seconds of the first).", "Scene 3 caption: the plain statement; the rehearsal writes down both send times.")
-# row 8 (risks list items 11, 12)
-rset(8, "view", "Nothing on screen; the take is blocked until the studio lead has written the result of the contact-deletion check, and scene 3 is filmed only if the rule that refuses a second row was seen in the database the take runs on.")
-rsub(8, "new", "the latest start on Mon 23 Nov is 18:04 UTC = 23:34 IST and the owner cancels the key by 18:19 UTC = 23:49 IST)",
-     "the latest start on Mon 23 Nov is 18:04 UTC = 23:34 IST, a plan fact of the studio lead that moves if the seconds the take program needs, which he reads at the re-pin, differ; the owner cancels the key by 18:19 UTC = 23:49 IST)")
-g = getrow(8)
-n8 = g[COL["new"]]
-a = n8.index("<br>12. GATE, the repeat-send statement")
-ITEM12 = ("<br>12. GATE, the repeat-send statement: scene 3 and card line 1 are NOT FILMABLE until the unique rule on the contact id (the database rule that refuses a second row for the same contact id) has been seen in the table of the database the take runs on. "
-          "The take runs on a fresh database container with the same table layout (the studio lead's answer of 2026-11-16 10:50 UTC = 16:20 IST: after the rehearsal container is removed, the take uses a fresh container), so the rule is looked at twice: in the loopback re-smoke, and again at take preparation after the fresh container is up. "
-          "Each time the studio lead lists the table's rules (the psql command \\d mf_leads), writes the output here with the date and the time in UTC and IST, and the output shows a primary key or a unique rule on the contact id. "
-          "If the closing card or the scene 3 caption says that a second send is never processed again, one rehearsal repeat sent more than 45 seconds after the first is also written here and its reply shows the repeat flag true; if it says the claim holds only within 45 seconds of the first send, item 13 of the rehearsal list applies. "
-          "There is no exit: if the rule is not seen, scene 3 and card line 1 are cut and the take goes on without them. In the test program the table is created with a primary key on the contact id (mf.py line 45) and the same rule is in n8n-flows-v4/mf_leads.sql line 5; that is not proof for the take database.")
-g[COL["new"]] = n8[:a] + ITEM12
-putrow(8, g)
-rsub(8, "why", "c6n changes (c6n design review M5",
-     "c6q changes (c6p design review M6, M7 and minors): item 12 no longer waits for an answer about a lease sentence (the default puts none on the card or caption, ORD:230); it says the rule is looked at again in the take's fresh container (ORD:146, the studio lead's answer Q20.2); item 11 says that the latest start 18:04 UTC = 23:34 IST is a plan fact (ORD:229) that moves with the seconds the take program needs (the plan formula: deadline minus need_seconds, G10 of LRN:30 in the older release note v5); the unfinished approval of the lease wording is gate G12 (LRN:33) and LREP:80. DEPARTURE FROM ORD:147: the studio lead's answer Q20.3 asked for the card line 'the HubSpot key used by the take is read-only; the probe key is separate'; this row and every other row write nothing about what the owner's key may do, because the same answer says it is unknown from here (UNVERIFIED until the owner confirms it). c6n changes (c6n design review M5")
 
-# row 13 and 21 and 11 (closing card)
-rset(13, "st", "NOT APPLIED; on the default of L-CARD, L-CARDLEN, L-LEASE, L-POST")
-rset(13, "view", "Closing card line 1 says the repeat-send statement and nothing about the 45 seconds.")
-rset(13, "new", 'Line 1, statement, spoken: "%s"' % C1)
-rset(13, "why", "Split of the old row 13 (c6k design review M1). The default puts no lease sentence on the card: the studio lead's newest word says the lease sentence stays out of the public post (ORD:230, later than his answer Q22 (c) at ORD:186), and unless he answers L-POST 'no' the card and caption are part of that post. "
-     "The two lease sentences that could replace this line, with their word counts and what each costs the viewer, are in section 3 (L-LEASE); the lengths are in the table of the box. "
-     "The contact table refuses a second row with the same contact id at any gap while the row exists (MF:45; mf_leads.sql line 5; ON CONFLICT DO NOTHING at JF:97; repeat answered from the stored row, JF:270 and JF:298), so the plain statement is true for a second send; it says nothing about a contact whose first run crashed, which the recovery flow may take over (JR:26). "
-     "The unique rule on the contact id is NOT yet seen in the database the take runs on (risks list item 12 stops the take without it). Sources: JF:97, MF:45, ORD:151, ORD:186, ORD:230, LREP:80")
-rset(21, "st", "NOT APPLIED; on the default of L-LEASE, L-POST")
-rset(21, "view", "Scene 3 caption: the plain statement; the rehearsal writes down both send times.")
-rset(21, "new", 'Caption: "%s". The screen is the evidence; the rehearsal must show the repeat reply and the clock times of both sends (write them on this run sheet).' % CAP_NONE)
-rset(21, "why", "Default: no lease sentence on the caption (ORD:230; question L-POST). The two other captions are in section 3 (L-LEASE). Rehearsal list item 13 writes the clock times and the gap down. Sources: JF:97, MF:45, ORD:151, ORD:186, ORD:230")
-rset(11, "st", "NOT APPLIED; on the default of L-CARD, L-CARDLEN, L-LEASE, L-POST")
+def take_line(prefix):
+    i = find(prefix)
+    return L.pop(i)
+
+
+h_q = take_line("- THE LAST REPORT (REPORT-c6q.md)")
+h_q = sub(h_q, "- THE LAST REPORT (REPORT-c6q.md) FAILED INDEPENDENT REVIEW:", "- HISTORY, c6q (REPORT-c6q.md FAILED INDEPENDENT REVIEW):")
+h_q = sub(h_q, "THIS REPORT (c6r) HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them)", "c6r HAD NOT BEEN REVIEWED when this was written; I did not run the EGM steps (the studio lead runs them)")
+h_p = take_line("- HISTORY, c6p")
+h_o = take_line("- HISTORY, c6o")
+h_n = take_line("- HISTORY, THE REPORT BEFORE THAT")
+h_sn = take_line("- SLIPS OF REPORT-c6n.md")
+h_rec = take_line("- ONE PIECE OF EVIDENCE I COULD NOT RECONCILE")
+h_l = take_line("- A SLIP OF REPORT-c6l.md")
+h_m = take_line("- SLIPS OF REPORT-c6m.md")
+h_k = take_line("- HISTORY, slips of REPORT-c6k.md")
+
+NEW_R = ("- HISTORY, c6r (REPORT-c6r.md FAILED INDEPENDENT REVIEW): review-c6r-design.md (0 blockers, 4 majors F1 to F4, minors m1 to m4), review-c6r-naive.md (0 blockers, 8 majors M1 to M8, minors) and evidence-c6r-independent/ (its own 39 checks passed; the builder's verifier failed 2 of 123 on the new owner sheets v30; 8 missing negative-control items none). c6s fixes them (the map from every finding to its fix is c6s-CHANGES.md): "
+         "(1) FAILED-RUN SAVING (F1): check C-4a and check C-11 and the row list of check C-4 still assumed that failed runs are saved; they now follow the defaults (successful runs all, failed runs none), the plan line PLAN:125 that sets both to all is overridden on that one point (the owner's words cover successful runs only), and L-SAVE, the box and section 9 say so; "
+         "(2) CARD LINE 2 (F2): it states what the system does with an alert, but no run exists on the flows of the take; it is now gated on the loopback re-smoke showing an alert mail (risks list item 12, section 3e); "
+         "(3) REAL-KEY SCAN (F3): it runs after every rehearsal with real accounts and after the take BEFORE anything is deleted; the scanner is read by a second person and tested with a fake key before it touches a real key; it searches in place or on a copy that is deleted and counted; counts only; the swap point is named (row 6 items 15 and 16); "
+         "(4) SHEETS AND RELEASE NOTE (F4): the sheet check is rerun over v19 and later (v30 exists); the verifier fails on any sheet newer than the stated check time and on any version newer than the one named; release note v14 is cited for G12 (still open); the wider reading of G12 is labelled this report's own assumption; "
+         "(5) minors m1 to m4 (crash-then-repeat evidence for the approval, 'expected to be true until C-9 part 2', the cut-case totals once and a two-line replacement for the card Time cell, an EXAMPLE time later than the check time); "
+         "(6) the stranger-reader review: the box is rewritten and shorter (it was 3,490 words), starts with what the answer line does not do, uses 'you' for the studio lead, has one OWNER ONLY rule (L-SHEET and L-SAVEERR, only the owner answers), explains Q27 (a), (b), (c) and G12, gives numbered steps for rows 23, 58, 59, for the approval of G12 and for adding the 45-second sentence to the sheets (you or a builder you name), explains the circle in C-9 part 2, and defines EGM, KEY, FINAL, RUN, CHECK and ROW; the history that stood at the top of section 0 is now in section 1b, after the how-to; the words 'take', 'claim' and 'alert' have one meaning each; stale names are corrected (c6s, items 11 to 16, L-SAVEERR in the glossary, the two different 36s, row 11 in table 5a). "
+         "THIS REPORT (c6s) HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them), and evidence-c6s/verify-c6s.py is mine: it proves the new text matches what I wrote and that listed slips are gone, not that a statement is true.")
+hist = [NEW_R, h_q, h_p, h_o, h_n, h_sn, h_rec, h_l, h_m, h_k]
+
+# section 0 remaining bullets
+patch("- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED.", "rows 73 and up are new in c6o, and rows 1, 33 and 39 were split)", "rows 73 and up are new in c6o, and rows 1, 33 and 39 were split; c6p to c6s add no row)")
+patch("- NOT DONE, NOT VERIFIED IN c6r (first)", "- NOT DONE, NOT VERIFIED IN c6r (first):", "- NOT DONE, NOT VERIFIED IN c6s (first):")
+patch("- NOT DONE, NOT VERIFIED IN c6s (first)", "the approval of the lease wording (gate G12, LRN:33; LREP:80) is OPEN with the studio lead;",
+      "the approval of the lease wording (gate G12, LRN:33 in release note v12 and LRN14:33 in release note v14, the newest; LREP:80) is OPEN with the studio lead (release note v14 does not close it: its G12 row asks for the sentence in writing, and its own list of facts that need a decision names the lease wording); that G12 is about the words 'processed once' beside a crash scene is this report's own reading, not the words of LREP:80;")
+patch("- NOT DONE, NOT VERIFIED IN c6s (first)", "the take script is not in the audited files; which owner sheet is final is not known.",
+      "the take script is not in the audited files; which owner sheet is final is not known; the leak scan program (check C-6) is not written, so the real-key scan has never run; card line 2 is backed only by stand-in tests; the plan line PLAN:125 and the owner's words disagree about failed runs (overridden here, see L-SAVE).")
+L[find("- THE NEWEST OWNER SHEET, RECHECKED AGAIN IN c6r")] = (
+    "- THE NEWEST OWNER SHEET, RECHECKED AGAIN IN c6s: %s. At 2026-11-16T%sZ = %s IST (the check time of evidence-c6s/static-checks-output.txt) the owner sheets in the steps-edits folder are v19 to v28 (A and B variants and SOURCE templates), v29 and v30: %s. "
+    "In c6r the check time was 16:52:47Z = 22:22:47 IST and v29 was the newest; v30 A, B and SOURCE were written after it (the c6r independent evidence found them), so the c6r statement 'v29 is newest' was true at its check time and became stale. v28 A and B were last changed at 16:09:58 UTC = 21:39:58 IST. "
+    "The check C-10c is rerun over v19 and later (all variants, the templates called SOURCE included): %s. The studio lead has ordered ONE final sheet (ORD:226 to ORD:228), so this check must be repeated on the sheet the owner reads. "
+    "'Newest' can change at any minute: this report names the newest version and the check time, and verify-c6s.py fails if any owner sheet changed after the stated check time AND if any owner sheet or release note has a version higher than the one named. L-SHEET asks the owner to confirm the one final sheet (section 3)."
+    % (NEWESTLINE.rstrip("."), CTU, CTI, V30SENT.replace("At %s UTC = %s IST the folder holds " % (CTU, CTI), ""), SHEETFACT))
+patch("- What the check script proves", "raw output evidence-c6r/verify-c6r-output.txt,", "raw output evidence-c6s/verify-c6s-output.txt,")
+patch("- What the check script proves", "c6r adds (counts are in the SUMMARY line of evidence-c6r/verify-c6r-output.txt and in evidence-c6r/neg-output.txt)", "c6r added (its checks and negative controls are in evidence-c6r/); c6s adds (counts are in the SUMMARY line of evidence-c6s/verify-c6s-output.txt and in evidence-c6s/neg-output.txt)")
+patch("- What the check script proves", "The checks read the rows against the scratchpad copy of the source files, not against the repository.",
+      "The checks read the rows against the scratchpad copy of the source files, not against the repository. c6s adds checks for: the defaults of failed-run saving in C-4, C-4a and C-11, the gate on card line 2, the real-key scan after every rehearsal and after the take before deletion with the review and fake-key test of the scanner, the newest-version rule for owner sheets and release notes, the label on the wider reading of G12, the cut-case totals, one OWNER ONLY rule, the word rules for take, claim and alert, and the box length; each has a negative control (evidence-c6s/neg_controls_c6s.py).")
+patch("- WHAT IS ABSENT FROM THE CHECKED FILES", "The text of QUEUE rule 6 IS on disk (QUE:8).", "The text of QUEUE rule 6 IS on disk (QUE:8).")
+
+# ---------------------------------------------------------------- section 1b: history, after the how-to
+i2 = find("## 2. Numbers and names")
+assert L[i2 - 1] == ""
+L[i2 - 1:i2 - 1] = ["", "## 1b. History of earlier versions (moved here from the top of section 0, after the how-to; nothing was deleted)"] + hist
+
+# ---------------------------------------------------------------- section 1: words
+patch("- CONTACT RECORD (or CONTACT)", "ALERT = the one warning mail the system sends to a named address when it cannot tell what happened to a contact; a person then decides.",
+      "ALERT = a warning mail the system is built to send to a named address when it cannot tell what happened to a contact; a person then decides (in the stand-in tests it sent one such mail; how many it sends on the flows of the take has not been tested).")
+patch("- WORDS THAT THE FILES USE IN MORE THAN ONE WAY", "this report writes 'reserved for the run that took it first'", "this report writes 'reserved by the run that wrote its claim row first'")
+patch("- WORDS THAT THE FILES USE IN MORE THAN ONE WAY", "a sentence said in the video is a STATEMENT.",
+      "a sentence said in the video is a STATEMENT (the recovery flow 'claims the contact again'; the sentence 'We make this claim only when ...' of L-LEASE answer 1 is a quotation of your earlier answer, and 'THE TWO STATEMENTS' of L-LEASE are the plain statement and the 45-second sentence). KEY = a secret code that lets a program use an account (the mail account password, the customer-list key); the files also write KEY:number for a source cite, which is explained under the table of short names.")
+for p in ("| 45 s | the lease SETTING", "| lease | how long a contact record"):
+    patch(p, "may take it again", "may claim it again")
+patch("| claim table, claim row, reserved", "reserved' for the run that took it, for as long as the lease lasts", "reserved' by the run that wrote the claim row first, for as long as the lease lasts")
+patch("| alert | the one mail", "| alert | the one mail the system sends to a named address when it cannot tell what happened to a contact record. |", "| alert | a warning mail the system is built to send to a named address when it cannot tell what happened to a contact record; the stand-in tests showed one such mail, and what it sends on the flows of the take has not been tested. |")
+patch("| saving off, saving all", "The take uses all.", "The take uses all for successful runs and none for failed runs (the default of L-SAVEERR; the plan line PLAN:125 says all for both and is overridden on that point).")
+patch("| c6b to c6p |", "| c6b to c6p | successive versions of this audit report; c6q (this file) supersedes c6p, which superseded c6o;", "| c6b to c6s | successive versions of this audit report; c6s (this file) supersedes c6r, which superseded c6q, c6p and c6o;")
+patch("| L-CARD, L-CARDCUT, L-CARDTEXT", "L-CARDTEXT, L-LEASE, L-POST, L-KILL, L-APPROX, L-SAVE, L-PAGE", "L-CARDTEXT, L-LEASE, L-POST, L-KILL, L-APPROX, L-SAVE, L-SAVEERR, L-PAGE")
+patch("| L-CARDLEN | the new question of c6o", "| L-CARDLEN | the new question of c6o", "| L-CARDLEN | the question (added in c6o)")
+# short names
+patch("| LRN | handover/core-hardening/steps-edits/LEAD-RELEASE-NOTE-v12.md", "| LRN | handover/core-hardening/steps-edits/LEAD-RELEASE-NOTE-v12.md | the release note for the studio lead (gate G12 is the approval of the lease wording) |",
+      "| LRN | handover/core-hardening/steps-edits/LEAD-RELEASE-NOTE-v12.md | the release note v12 for the studio lead (gate G12 is the approval of the lease wording) |\n| LRN14 | handover/core-hardening/steps-edits/LEAD-RELEASE-NOTE-v14.md | the release note v14, the newest at the check time (its G12 row is on line 33; line 8 lists the lease wording among the facts that need your decision) |")
+patch("| OS25 |", "(a rendered sheet; v28 and v29-SOURCE are newer, see section 0)", "(a rendered sheet; newer sheets exist, see section 0)")
+patch("| OS26 |", "(a template with placeholders; v28 and v29-SOURCE are newer, see section 0)", "(a template with placeholders; newer sheets exist, see section 0)")
+patch("| OS19 |", "(assumed newest by REPORT-c6k.md; v29-A and v29-B are newest at 16:52:47 UTC = 22:22:47 IST)", "(assumed newest by REPORT-c6k.md; v30-A and v30-B are the newest rendered sheets at %s UTC = %s IST)" % (CTU, CTI))
+patch("| OS28 |", "(the newest rendered sheets at the check of 16:52:47 UTC = 22:22:47 IST are v29-A and v29-B)", "(the newest rendered sheets at the check of %s UTC = %s IST are v30-A and v30-B)" % (CTU, CTI))
+# explanation of KEY:number cite was already there; nothing else
+
+# ---------------------------------------------------------------- section 3: questions
+SAVE_OLD = "Yes (the plan of the re-smoke says all for both settings, PLAN:125; the owner's words cover the successful-run setting). Checks: C-11 (static, done) and C-4 (import check, not run)."
+SAVE_NEW = ("Yes, for successful runs only. The plan of the re-smoke (PLAN:125) sets BOTH EXECUTIONS_DATA_SAVE_ON_SUCCESS and EXECUTIONS_DATA_SAVE_ON_ERROR to all and cites the owner; the owner's words (ONE:22-27, DECISION-one-store.md lines 16 and 27) cover successful runs only, so on that one point the plan is OVERRIDDEN: the studio lead sets EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and EXECUTIONS_DATA_SAVE_ON_ERROR=none in the environment that starts n8n, and the saving of failed runs waits for L-SAVEERR (OWNER ONLY). "
+            "Checks: C-11 (the plan conflict, static, done: the plan says all for both, so the override is needed) and C-4 (import check, not run).")
+patch("| L-SAVE | studio lead", SAVE_OLD, SAVE_NEW)
+patch("| L-SAVEERR | studio lead, with the owner's confirmation", "| L-SAVEERR | studio lead, with the owner's confirmation (the owner's words cover successful runs only; saving FAILED runs is a separate setting the owner has not been asked about, c6q design review M-E)",
+      "| L-SAVEERR | OWNER ONLY (the studio lead asks him and writes down his answer; the studio lead does not answer for him) (the owner's words cover successful runs only; saving FAILED runs is a separate setting the owner has not been asked about, c6q design review M-E)")
+patch("| L-SHEET (was Q10)", "OWNER ONLY (the studio lead asks him; if the owner agrees, the studio lead may answer for him)", "OWNER ONLY (the studio lead asks him and writes down his answer; the studio lead does not answer for him)")
+patch("| L-SHEET (was Q10)", "At 16:52:47 UTC = 22:22:47 IST the folder holds OWNER-SHEET-v29-A.md (written 16:46:37 UTC = 22:16:37 IST) and OWNER-SHEET-v29-B.md (written 16:46:37 UTC = 22:16:37 IST), both rendered sheets, and OWNER-SHEET-v29-SOURCE.md (the template; written 16:41:12 UTC = 22:11:12 IST); v28 A and B were last changed at 16:09:58 UTC = 21:39:58 IST. Name the one sheet that is final (for example 'v29A'); if the studio lead renders a later version, name that one.",
+      V30SENT + "; v28 A and B were last changed at 16:09:58 UTC = 21:39:58 IST. Name the one sheet that is final (for example 'v30A'); if the studio lead renders a later version, name that one.")
+patch("| L-SHEET (was Q10)", "has been run on v19 to v29 (all variants", "has been run on v19 to v30 (all variants")
+patch("Who answers: STUDIO LEAD", "OWNER ONLY = only the owner knows the fact or holds the permission on his own accounts; the studio lead asks him.",
+      "OWNER ONLY = only the owner knows the fact or holds the permission on his own accounts; the studio lead asks him and writes down his answer, and never answers for him. Two questions are OWNER ONLY: L-SHEET and L-SAVEERR.")
+patch("| L-LEASE | studio lead", "THE TWO CLAIMS", "THE TWO STATEMENTS")
+patch("| L-LEASE | studio lead", "so the unlimited claim is tested", "so the statement without a time limit is tested")
+# who runs steps text of 3d
+patch("| Repeat-send check (rehearsal list item 13)", "or the studio lead takes the 45-second limit out of the card and caption", "or the studio lead removes the 45-second limit from the card and caption")
+# stop rules
+patch("| Real-key scan (rehearsal list items 15 and 16)", "scans before the take, after the take and after deletion |",
+      "scans after EVERY rehearsal with real accounts, after the take BEFORE anything is deleted, and again after deletion; the scanner is first read by a second person and tested with a fake key; it prints counts only, and searches n8n's own database in place or on a copy that is deleted and counted |")
+ix = find("| Real-key scan (rehearsal list items 15 and 16)")
+L.insert(ix + 1, "| Card line 2, the alert sentence (risks list item 12) | the loopback re-smoke on the edited flows has shown an alert mail in the test mailbox, and the studio lead has written the date and time in UTC and IST, his name and that the alert mail was seen | studio lead | the owner, if card line 2 is cut | No for card line 2 only: it is cut and lines 3 and 4 stay |")
+
+# ---------------------------------------------------------------- 5a and rows
+patch("5a. WHAT CHANGES FOR A PERSON", "the 36 rows of the run sheet and the page statements whose 'What the viewer sees' is not 'Nothing'", "the 37 rows of the run sheet and the page statements whose 'What the viewer sees' is not 'Nothing'; this group of 37 is a different group from the 36 rows that apply on the default of a question")
+# row 11
+R11VIEW = "The run sheet's total for the one video changes to 150 s for scenes 1 to 4 plus an estimated 40 s for the closing card (about 190 s in all, not measured; the run sheet had 30 s for the card, about 180 s in all). No viewer text changes."
 g = getrow(11)
-g[COL["new"]] = ("- The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 s = 150 s, plus the closing card %d s (an ESTIMATE from the word count: the four spoken card lines hold %d words, which is about %d s at 150 words a minute; "
-                 "the card time is EST NOT MEASURED until the stopwatch run of rehearsal list item 10) = about %d s in all. The next two lines count scenes 5 to 11, which are not in the one video (the studio lead's decision of 2026-11-16).<br>- Core scenes 1 to 10 and 12:" % (NA[4], NA[2], round(float(NA[3])), NA[5]))
-g[COL["why"]] = ("The closing card of this report holds %d words under the defaults (card line 1 is the plain statement of 11 words; counted by evidence-c6r/verify-c6q.py), about %d s at 150 words a minute, so the budget of 30 s is raised to %d s and the total is about %d s, labelled as an estimate (c6p design review M2). "
-                 "The four scenes add to 150 s (25 + 40 + 25 + 60, from the Time column of the run sheet scenes 1 to 4). The card needs a stopwatch run to be measured; until then the number is an estimate. "
-                 "If the studio lead answers L-LEASE 1 or 2 (and L-POST 'no') or L-CARDLEN (b), this row is re-issued with the matching line of the table of lengths in the box (for example 115 words, about 46 s, budget 50 s, total about 200 s for the 45-second limit sentence with option (a)). Sources: RS:41, DEC:2 (decision 1) c6o and c6p history: row 11 of c6o wrote the card as 'about 58 s' (the c6n six-line card of 144 words) (c6o design review M2, naive review B1); c6p wrote 115 words and 46 s with the 45-second limit sentence, which c6q no longer uses as the default."
-                 % (NA[2], round(float(NA[3])), NA[4], NA[5]))
+assert g[COL["view"]].startswith("Nothing on screen; the run sheet's total")
+g[COL["view"]] = R11VIEW
 putrow(11, g)
-rsub(14, "why", "with line 1 of row 13 the four spoken lines hold 115 words (about 46 s); L-CARDLEN option (b) gives a shorter text of 87 words.",
-     "with line 1 of row 13 the four spoken lines hold %d words (about %d s); the table of lengths in the box gives the other cases (option (b) and the lease sentences)." % (NA[2], round(float(NA[3]))))
-rsub(14, "why", "so that the card fits 50 s;", "so that the card stays short;")
-rsub(14, "why", "Row 14 is also tied to L-CARDLEN:", "Row 14 is also tied to L-CARDLEN (and the card line 4 words 'other lease settings' name a setting that no spoken line explains under the default; section 3, L-POST, says so):")
+i4 = find("| 4 | run sheet, line 80 |")
+L.insert(i4 + 1, "| 11 | run sheet, line 44 | %s |" % R11VIEW)
+radd(11, "why", "c6s changes (c6r design review m3; c6r naive review M6): the cut-case totals (scenes 1, 2 and 4 = 125 s; card lines 2 to 4 = 79 words = 31.6 s, budget 35 s; total about 160 s) are given once, in the box (CUT CASE); the card's own Time cell on run sheet line 41 is a hand edit with a two-line replacement in the box (L-CARDLEN: old cell text 30 s EST, new cell text 40 s EST under the defaults, 35 s EST in the cut case); this row now appears in table 5a (its viewer cell no longer starts with 'Nothing').")
+# row 13
+rsub(13, "why", "so the plain statement is true for a second send;", "so the plain statement is expected to be true for a second send until C-9 part 2 has shown the table rule in the take's own database (the facts rest on files that are not in the repository);")
+# row 14
+radd(14, "why", "c6s changes (c6r design review F2): card line 2 states what the system does with an alert, but no run exists on the flows of the take (the plan excludes alert paths beyond three scenes, and the stand-in tests showed one alert mail); it is gated: it is not filmed until the loopback re-smoke on the edited flows has shown an alert mail (risks list item 12, row 8), and if none is seen line 2 is cut and lines 3 and 4 stay.")
+# row 6
+R6_15_OLD = "15. SECOND LEAK SCAN. After the first rehearsal with real accounts, the studio lead runs a second leak scan"
+R6_15_NEW = "15. SECOND LEAK SCAN. After EVERY rehearsal with real accounts (the first, and again after each later one), the studio lead runs a second leak scan"
+rsub(6, "new", R6_15_OLD, R6_15_NEW)
+rsub(6, "new", "The first scan runs on fake services and fake keys only; this second scan is the only one that can show whether a real key or a real mail password reached a saved run.",
+     "The first scan runs on fake services and fake keys only; this second scan, repeated after each rehearsal, and the scan after the take (item 16) are the only ones that can show whether a real key or a real mail password reached a saved run. "
+     "THE SCANNER: the scanner (the leak scan program) is read by a second person and tested with a fake key before it touches a real key: the fake key is built from parts and planted in a stand-in store, the test shows that the scanner counts it (count 1) and counts 0 on a clean store. The scanner prints counts only: no file holds the key or any matched line, and the key is not in the list of running programs and not in the shell history. The second person writes under this item that the scanner was read and tested, with the date and time in UTC and IST and a name; until then the scanner is not used on a real key. "
+     "WHERE IT SEARCHES: it searches n8n's own database in place (the search runs inside the database and returns counts), or on a dump of that database (a copy of the whole database written to a file) that is deleted right after the scan; the deletion of the dump is checked by counting the dump files that remain (the count must be 0), because a dump holds the saved runs and is as sensitive as the database. "
+     "SWAP POINT: a pattern file kept in memory can still be written to the swap area of this computer (disk space the system uses when memory is full); so the pattern is handed over through standard input where the scanner allows it, and if a pattern file is used the studio lead writes under this item whether swap is off or encrypted on this computer; if he cannot show either, only standard input is used.")
+R6_16_OLD = "16. AFTER THE TAKE. The same day, the studio lead deletes every saved run"
+R6_16_NEW = ("16. AFTER THE TAKE. First, BEFORE anything is deleted (the saved runs of the take are still there), the studio lead runs the real-key scan of item 15 on all its stores, writes the hit counts and the time in UTC and IST under this item, and a hit for a real key value means the same as in item 15: cancel or replace the key and treat the runs as compromised. "
+             "Then, the same day, the studio lead deletes every saved run")
+rsub(6, "new", R6_16_OLD, R6_16_NEW)
+rsub(6, "new", "So he then runs the leak scan's check of n8n's own database a third time, writes", "So he then runs the leak scan's check of n8n's own database once more after the deletion, writes")
+rsub(6, "new", "This third scan also searches for the real key values, in the same way as in item 15", "This scan after the deletion also searches for the real key values, in the same way as in item 15")
+rsub(6, "why", "this row adds items 11 to 14 to the REHEARSAL LIST", "this row adds items 11 to 16 to the REHEARSAL LIST")
+radd(6, "why", "c6s changes (c6r design review F3): item 15 is repeated after EVERY rehearsal with real accounts (before: only after the first); item 16 scans BEFORE anything is deleted (before: only after the deletion, so a key leaked during the take could be erased unseen) and again after it; new sentences name the scanner review and the fake-key test before it touches a real key, counts only with no file holding the key or matched lines, search in place or on a dump that is deleted and counted, and the swap point (a pattern file in memory can reach swap; standard input is preferred).")
+# row 8 item 12
+R8_ANCH = " There is no exit: if the rule is not seen, scene 3 and card line 1 are cut and the take goes on without them."
+rsub(8, "new", R8_ANCH,
+     " The approval must cite, in writing with the date and time in UTC and IST: (1) the table rule seen in the re-smoke database; (2) the repeat sent more than 45 seconds after the first send, with the repeat flag true; (3) one rehearsal case in which the first run crashes (as in scene 4) and the same contact is sent again while the recovery flow is still working on it, with the CRM list and the test mailbox counted afterwards (1 row and 1 mail; if there are more, the words 'processed once' are not approved)."
+     " CARD LINE 2 GATE: card line 2 (the sentence that says the system sends an alert) is not filmed until the loopback re-smoke on the edited flows has shown an alert mail in the test mailbox; the studio lead writes here the date and time in UTC and IST, his name and that the alert mail was seen; if no alert mail is seen, card line 2 is cut and lines 3 and 4 stay. The stand-in tests showed one alert mail; that is not a run on the flows of the take."
+     + R8_ANCH)
+radd(8, "why", "c6s changes (c6r design review F2, F4, m1): item 12 now also gates card line 2 (the alert sentence) on an alert mail seen in the loopback re-smoke on the edited flows, and makes the approval cite three pieces of evidence, the third being the case in which a crash is followed by a repeat during the recovery (m1). Gate G12 is still open in release note v14 (LRN14:33: its row asks for the sentence in writing; LRN14:8 lists the lease wording among the facts that need the studio lead's decision); that G12 is about the words 'processed once' beside a crash scene is this report's own reading (LREP:80 says only 'approval of the lease sentence'). Sources: LRN14:33, LRN14:8, LREP:80")
 
-# rows 25, 37, 47, 57, 70, 72, 90, 91: no report-only labels inside the new texts
-rsub(25, "new", "; the word of RES:97)", "; 'stored' is the word the lane3 results table uses)")
-rsub(37, "new", "(the word of RES:97; the test mailbox", "('stored' is the word the lane3 results table uses; the test mailbox")
-rsub(47, "new", " (n=2, two runs, both 144.3 s, v4 K1; RES:85)", " (n=2, two runs, both 144.3 s, v4 K1)")
-rsub(57, "new", "(the owner's choice as recorded in the plan of the re-smoke, PLAN:125; the studio lead has not yet confirmed it)", "(the owner's choice as recorded in the plan of the re-smoke; the studio lead has not yet confirmed it)")
-rsub(70, "new", "(target; true only after check C-8)", "(target; true only after the loopback re-smoke shows that n8n runs on Postgres)")
-rsub(72, "new", "they are not true until the loopback re-smoke shows that n8n runs on Postgres, check C-8)", "they are not true until the loopback re-smoke shows that n8n runs on Postgres)")
-rsub(91, "new", "(TARGET until the loopback re-smoke, check C-8)", "(TARGET until the loopback re-smoke shows which database n8n uses)")
-rset(90, "new", "The target is one Postgres server with two databases: the claim database and, for n8n's own state, a SEPARATE database `n8n`")
-rsub(90, "why", "The new text ends right before ' owned by the role', so the sentence that follows still describes the n8n database;",
-     "The new text now ends with the database `n8n` itself, so the words ' owned by the role' that follow in the file belong to that database (in c6p the new text ended with 'own state' and ' owned by' attached to the state; c6p design review minor);")
+# ---------------------------------------------------------------- section 7: checks
+patch("| C-4 | Import check", "NOT RUN; missing input: running n8n and the rows 63, 62, 65, 64, 67, 66, 69, 68 applied (impossible-now here; needs-lead)",
+      "NOT RUN; missing input: running n8n and the rows 63, 65, 67, 69 and 92 applied (the rows 62, 64, 66 and 68 wait for L-SAVEERR, default no, and are not needed by default; impossible-now here; needs-lead)")
+L[find("| C-4a |")] = ("| C-4a | After the flow-file rows that apply on the defaults are applied to copies (rows 63, 65, 67, 69; the rows 62, 64, 66, 68 wait for L-SAVEERR and are NOT applied), each of the four real-v5 flow files holds saveDataSuccessExecution all, saveDataErrorExecution none and saveManualExecutions false, once each; with L-SAVEERR answered yes (rows 62, 64, 66, 68 applied too) the failed-run setting reads all | the check script (done by me) | counts all 1, error-all 0, error-none 1, manual-false 1 in each of the 4 files on the defaults | any other count | DONE on copies; result in evidence-c6s/verify-c6s-output.txt |")
+L[find("| C-11 |")] = ("| C-11 | L-SAVE check: the owner's words (ONE:22-27; DECISION-one-store.md lines 16 and 27) cover SUCCESSFUL runs only, but the re-smoke plan row PLAN:125 sets both saving settings to all and cites the owner: the plan is overridden on the failed-run setting (static) | me, file read | the plan row is read and the conflict is written down; the studio lead sets EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and EXECUTIONS_DATA_SAVE_ON_ERROR=none in the environment that starts n8n (the failed-run value becomes all only if the owner answers yes to L-SAVEERR) | the environment that starts n8n holds EXECUTIONS_DATA_SAVE_ON_ERROR=all without the owner's yes | DONE (static): PLAN:125 says all for both, so the override is needed and written (box, L-SAVE, section 9); the runtime proof is C-4 (NOT RUN) and the environment value is set by the studio lead (needs-lead) |")
+patch("| C-6 | Leak scan for the take", "NOT RUN; missing inputs: the scan itself (not written; the audit writes no code), a running n8n with stand-ins, and the path of the spend ledger from the take's config (needs-lead)",
+      "NOT RUN; missing inputs: the scan itself (not written; the audit writes no code), a second person who reads it and tests it with a fake key before it touches a real key (counts only; no file holds the key or matched lines; the key is not in the list of running programs or the shell history; n8n's own database is searched in place or on a dump that is deleted and counted), a running n8n with stand-ins, and the path of the spend ledger from the take's config (needs-lead)")
+patch("| C-10c | The owner sheet the owner reads", "part 1 DONE on the sheets on disk at 2026-11-16T16:52:47Z = 22:22:47 IST (v19 to v29 (all variants, the templates called SOURCE included), evidence-c6r/static-checks-output.txt section C-10c: ", "part 1 DONE on the sheets on disk at 2026-11-16T%sZ = %s IST (v19 to v30 (all variants, the templates called SOURCE included), evidence-c6s/static-checks-output.txt section C-10c: " % (CTU, CTI))
+i = find("| C-10c | The owner sheet the owner reads")
+a = L[i].index("'never deletes' occurs only in v19")
+b = L[i].index("so the check must be repeated on the sheet the studio lead names final")
+L[i] = L[i][:a] + SHEETFACT + "); v28 A and B were last changed at 16:09:58 UTC = 21:39:58 IST; " + V30SENT.replace("At %s UTC = %s IST the folder holds " % (CTU, CTI), "the folder holds ") + ", " + L[i][b:]
 
-# ---------------------------------------------------------------- section 3: L-LEASE, L-POST, L-CARDLEN, L-SHEET, L-DEL, L-ONEDB, L-SAVE
-LEASE_ROW = ("| L-LEASE | studio lead (his answers: ORD:151, Q21.2; ORD:186, Q22 (c) of 12:50 UTC = 18:20 IST; ORD:230, L-Q22c, the newest) | "
-             "Which sentence about the 45-second setting goes on the closing card (line 1) and in the scene 3 caption? 1 and 2 count only if L-POST is answered 'no'. "
-             "NONE (the default): card line 1 is the plain statement '%s' (11 words) and the caption is '%s'; no sentence about 45 seconds on any public video text. "
-             "ANSWER 1 = the studio lead's answer Q22 (c) ('item 1 wording plus one honest sentence that a gap longer than the lease is not claimed'): card sentence '%s' (25 words); caption '%s'. What the viewer gets: a 45-second window that the flows do not need; true, but weaker than what the flows do; it can only be filmed if the repeat send comes within 45 seconds of the first send (rehearsal list item 13 asks for under 30 seconds and scene 2 is planned at 40 seconds, so scenes 2 and 3 may have to be restructured: the studio lead names a builder; no row here does it). "
-             "ANSWER 2 = what the flow files show: a second send with the same id is not processed again at any time while its row exists (primary key on the contact id, MF:45, mf_leads.sql line 5, ON CONFLICT DO NOTHING at JF:97, repeat answered from the stored row, JF:270 and JF:298); the 45 seconds only decide when the recovery flow may claim a contact that is not finished again (JR:26): card sentence '%s' (40 words; it REPLACES the 25-word sentence of answer 1, so the net is 15 more words and about 6 more seconds of speech, see the table of lengths in the box); caption '%s'. What the viewer gets: a second idea (a second program that claims stopped contacts again) on a card that is already long. "
-             "NOT TO BE SPOKEN AS FACT BEFORE C-9 PART 2: the facts of answer 2 rest on files that are not in the checkout and on a table rule not yet seen in the database the take runs on; they stay in the report until part 2 of check C-9 has passed, and a rehearsal repeat sent more than 45 seconds after the first has shown the repeat flag. "
-             "WHAT 'NONE' CLAIMS, HONESTLY: 'processed once' for a second send of the same id, which is true while the contact's row exists once the table rule is seen in the take's database; it says nothing about a contact whose first run crashed, which the recovery flow may claim again (three tries in total, LREP:80), so the words 'processed once' beside a crash scene need the studio lead's approval of the lease wording (gate G12, LRN:33), which is OPEN with him; I do not give it. THE GATE: risks list item 12 of the run sheet blocks card line 1 and the scene 3 caption until the studio lead has written that approval with its UTC and IST time, and requires one rehearsal repeat sent more than 45 seconds after the first send whenever line 1 or the caption carries the plain statement (so the unlimited claim is tested, not assumed). THE TWO CLAIMS: the one final owner sheet and the release note carry the limited claim (within 45 seconds, your Q22 (c) wording) while the video, under 'none', carries the unlimited one; the limited claim is true and weaker, so the sheets understate the video; the studio lead decides whether that is wanted. "
-             "WHAT 'NONE' DOES TO YOUR EARLIER ANSWER: if 'public post' includes the card and caption (L-POST yes), 'none' is your newest word and Q22 (c)'s sentence lives only in the one final owner sheet and the release note, which no row here edits (section 9 names who adds it); if 'public post' does not include them (L-POST no), Q22 (c) is in force and the choice is 1 or 2. "
-             "RECOMMENDATION: keep the default (none). Change it only if you answer L-POST 'no'; then choose 2 only after C-9 part 2 has passed. | none (ORD:230, if L-POST is yes). Rows 11, 13 and 21 apply on it. | No | "
-             "1 or 2 (with L-POST 'no'): rows 11, 13 and 21 are re-issued with that sentence and that line of the table of lengths; risks list item 12 stays in force; with 2, rehearsal list item 13 only writes the gap down. | 11, 13, 21 |") % (C1, CAP_NONE, S1, CAP_R1, R2, CAP_R2)
-setline("| L-LEASE | studio lead", LEASE_ROW)
-POST_ROW = ("| L-POST (new in c6q) | studio lead | Your answer in ORDERS.md (ORD:230, 'L-Q22c') says: 'no, the lease sentence stays out of the public post'. Does 'public post' include the video's closing card and its scene 3 caption? "
-            "| Yes, they count as public. So the default puts no lease sentence on the card or the caption, and the 45-second limit lives in the one final owner sheet and the release note only. | No | "
-            "If no: the card and caption may carry the sentence chosen in L-LEASE (1 or 2); rows 11, 13 and 21 are re-issued. What a viewer sees under every answer: the on-screen label 'setting: lease 45 s' (rows 1 and 17) and the words 'other lease settings' of card line 4 (row 14) stay; they are not the lease sentence, but the word 'lease' is not explained in the video unless answer 2 is chosen; say so if you want them changed. | 11, 13, 21 |")
-i = find("| L-LEASE | studio lead")
-L.insert(i, POST_ROW)  # L-POST before L-LEASE in the table: read first
-# L-CARDLEN
-CARDLEN_ROW = ("| L-CARDLEN | studio lead | Closing card length. OPTION (a), the default and the text of rows 13 and 14: the four spoken lines hold %d words (line 1: %d, line 2: %d, line 3: %d, line 4: %d), about %d s at 150 words a minute; card budget %d s (the run sheet gave 30 s), total about %d s. "
-               "OPTION (b), a shorter text: line 1 '%s' line 2 '%s' line 3 '%s' line 4 '%s' (%d words with the plain line 1, about %s s, budget %d s, total about %d s). "
-               "The other cases (a lease sentence with (a) or (b)) are in the table of lengths in the box, built one way for both options: the lease sentence is ADDED to line 1 as it stands (the 11-word plain line), lines 2 to 4 are not touched, and answer 2 REPLACES the 25-word sentence of answer 1 (net +15 words in both options). No other rewrite of line 1 is used. All seconds are estimates from the word count; the stopwatch run (rehearsal list item 10) measures them. "
-               "| (a): rows 13 and 14 as written, row 11 with %d s and about %d s in all. | No | (b): rows 13, 14 and 11 are re-issued with the (b) text and the numbers above. | 11, 13, 14, 86 |") % (
-    NA[2], W_A[0], W_A[1], W_A[2], W_A[3], round(float(NA[3])), NA[4], NA[5], B_L1_NONE, B_L2, B_L3, B_L4, NB[2], NB[3], NB[4], NB[5], NA[4], NA[5])
-setline("| L-CARDLEN | studio lead", CARDLEN_ROW)
-# L-SHEET
-SHEET_ROW = ("| L-SHEET (was Q10) | OWNER ONLY (the studio lead asks him; if the owner agrees, the studio lead may answer for him) | Confirm the one final owner sheet. The studio lead ordered ONE sheet of at most 6,300 words, with the two routes A and B for the older key and marked blanks for the facts only the owner or the studio lead holds (ORD:226 to ORD:228). "
-             "At %s = %s IST the folder holds %s; v28 A and B were last changed at %s UTC = %s IST. Name the one sheet that is final (for example 'v29A'); if the studio lead renders a later version, name that one. | The sheet the studio lead names final. Until then C-10c has been run on %s as a stand-in only. "
-             "'Apply all defaults' does not cover this question: write it as a separate line. | No | C-10c is run on the confirmed sheet. No row touches an owner sheet. | none (check C-10c) |") % (CTU + " UTC", CTI, V29TXT, V28T, ist("0000-00-00T" + V28T), RANGE)
-setline("| L-SHEET (was Q10)", SHEET_ROW)
-patch("| L-DEL (ANSWERED; part still open)", "Until then the run sheet says 'UNVERIFIED' and that the studio lead verifies at the re-pin (the order's own words: 'lead verifies at re-pin').",
-      "Until then the run sheet says 'UNVERIFIED' and that the studio lead verifies at the re-pin (the order's own words: 'lead verifies at re-pin'). DEPARTURE FROM ORD:147: the same-day answer Q20.3 asked for the card line 'the HubSpot key used by the take is read-only; the probe key is separate'; no row writes it, because that answer also says the scope is unknown from here and the owner has not confirmed it.")
-patch("| L-SAVE | studio lead", "Yes (PLAN:125). Checks: C-11 (static, done) and C-4 (import check, not run).", "Yes (the plan of the re-smoke already says all for both settings, PLAN:125). Checks: C-11 (static, done) and C-4 (import check, not run). Why failed runs matter: with saving of failed runs on, a failed run keeps the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).")
-patch("| L-CARD (was Q1, part 1)", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |")
-
-exec(open(E + "c6r_rows.py", encoding="utf-8").read())
-patch("| L-SAVE | studio lead", "studio lead (what the owner approved on 2026-11-16, ONE:22-27: saving SUCCESSFUL runs, on made-up data, for the take only, deleted and turned off afterwards; his words do not mention saving FAILED runs, which the second setting does, so the studio lead confirms both)", "studio lead (what the owner approved on 2026-11-16, ONE:22-27: saving SUCCESSFUL runs, on made-up data, for the take only, deleted and turned off afterwards; this question covers successful runs only, failed runs are L-SAVEERR)")
-patch("| L-SAVE | studio lead", "Does the take save every run in n8n (EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and _ON_ERROR=all), so that the execution list filmed in scenes 1 and 2 shows runs?", "Does the take save every successful run in n8n (EXECUTIONS_DATA_SAVE_ON_SUCCESS=all), so that the execution list filmed in scenes 1 and 2 shows runs?")
-patch("| L-SAVE | studio lead", "Yes (the plan of the re-smoke already says all for both settings, PLAN:125).", "Yes (the plan of the re-smoke says all for both settings, PLAN:125; the owner's words cover the successful-run setting).")
-patch("| L-SAVE | studio lead", "Why failed runs matter: with saving of failed runs on, a failed run keeps the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).", "Saved runs keep the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).")
-i = find("| L-SAVE | studio lead")
-L.insert(i + 1, "| L-SAVEERR | studio lead, with the owner's confirmation (the owner's words cover successful runs only; saving FAILED runs is a separate setting the owner has not been asked about, c6q design review M-E) | Does the take also save FAILED runs in n8n (EXECUTIONS_DATA_SAVE_ON_ERROR=all, flow-file setting saveDataErrorExecution)? | No (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only). Say yes only if a failed run must be filmed; then the studio lead gets the owner's yes first, the six rows that wait are re-issued, and the leak scan covers failed runs. Checks: none run. | No | If yes: rows 53, 55, 62, 64, 66 and 68 are applied as written in their old and new text and row 92 is changed to set the failed-run setting to all. | 53, 55, 62, 64, 66, 68 |")
-# ---------------------------------------------------------------- tables 3b / section 3 tied columns are regenerated from the statuses below
-TOK = re.compile(r"L-[A-Z]+|C-\d+[a-d]?")
-cnt = {}
-ready = []
-for k in sorted(ROWS):
-    g = getrow(k)
-    for t in set(TOK.findall(g[COL["st"]])):
-        cnt.setdefault(t, []).append(k)
-    if g[COL["st"]].endswith("ready"):
-        ready.append(k)
-withc = [k for k in sorted(ROWS) if any(t.startswith("C-") for t in TOK.findall(getrow(k)[COL["st"]]))]
-onlyq = [k for k in sorted(ROWS) if k not in ready and k not in withc]
-W1 = len(ready) + len(onlyq)
-waits = [k for k in sorted(ROWS) if "waits for the answer of L-SAVEERR" in getrow(k)[COL["st"]]]
-ready = [k for k in ready if k not in waits]
-withc = [k for k in withc if k not in waits]
-onlyq = [k for k in onlyq if k not in waits]
-W1 = len(ready) + len(onlyq)
-assert (len(ready), len(onlyq), len(withc), len(waits), W1) == (49, 36, 3, 6, 85), (len(ready), len(onlyq), len(withc), len(waits), W1)
-lst = lambda a: ", ".join(map(str, a))
-# table 3b: rebuild all question/check lines
-b0 = find("| L-APPROX | 33, 39, 73")
-b1 = find("| (no question, no check)")
-newb = []
-for t in sorted(cnt):
-    rws = cnt[t]
-    only = [k for k in rws if set(TOK.findall(getrow(k)["st".__len__() * 0 + 1])) == {t}]
-    also = [k for k in rws if k not in only]
-    newb.append("| %s | %s | %d | %d (%s) | %d (%s) |" % (t, lst(rws), len(rws), len(only), lst(only) if only else "none", len(also), lst(also) if also else "none"))
-L[b0:b1] = newb
-# section 3 'rows tied' column: every question line
-for t in cnt:
-    if not t.startswith("L-"):
-        continue
-    pre = "| %s" % t
-    idxs = [i for i, l in enumerate(L) if l.startswith(pre + " ") and l.count(" | ") >= 6 and "Confirmed" not in l and not re.match(r"\| %s \| [\d, ]+ \| \d+ \|" % re.escape(t), l)]
-    assert len(idxs) == 1, (t, idxs)
-    i = idxs[0]
-    L[i] = re.sub(r" \| ([\d, ]+) \|$", " | %s |" % lst(cnt[t]), L[i])
-# TOTAL line unchanged in counts
-# ---------------------------------------------------------------- 3c, 3e, 3d
-patch("3c. 'APPLY ALL DEFAULTS'", "the closing card gets the four spoken lines of rows 13 and 14 WITH the reading 1 lease sentence (115 words, about 46 s);",
-      "the closing card gets the four spoken lines of rows 13 and 14 with the plain statement as line 1 and no lease sentence (%d words, about %d s); the card line 4 and the label 'setting: lease 45 s' name the lease setting without explaining it (L-POST);" % (NA[2], round(float(NA[3]))))
-patch("| Repeat-send check (rehearsal list item 13)", "under reading 1 of L-LEASE the gap is under 30 seconds |", "if the card or the caption carries the 45-second limit the gap is under 30 seconds, otherwise it is only written down |")
-patch("| Repeat-send check (rehearsal list item 13)", "In a rehearsal: redo scene 3 (or choose L-SCENES).", "In a rehearsal: redo scene 3, or the studio lead takes the 45-second limit out of the card and caption.")
-patch("| Repeat-send rule seen (risks list item 12)", "the table rule on the contact id is seen in the take's own database AND the lease question is answered (the default is reading 1)",
-      "the table rule on the contact id is seen in the database the take runs on, in the re-smoke and again after the take's fresh container is up")
-patch("3d. Who runs the long-standing steps", "before the first rehearsal (DEC:13; decision 12)", "before the first rehearsal (DEC:13; decision 12; the first rehearsal comes after steps 5 to 9 of the box list)")
-
-# ---------------------------------------------------------------- section 1 / 5b / 7 / 8 / 9 / 4 patches
-patch("- ONE ID: the first column", "rows 73 to 94 are new in c6o; c6p adds no row.", "rows 73 to 94 are new in c6o; c6p and c6q add no row.")
-patch("- ONE ID: the first column", "REPORT-c6n.md and REPORT-c6o.md;", "REPORT-c6n.md, REPORT-c6o.md and REPORT-c6p.md;")
-patch("- THE CLOSING CARD ROWS ARE ONE SET:", "rows 3, 4, 11, 12, 13, 14, 15, 20, 29, 31 change the closing card and the lines that talk about it.",
-      "rows 3, 4, 11, 12, 13, 14, 15, 20, 29, 31 change the closing card and the lines that talk about it (rows 81 and 86 are tied to the same questions: row 81 is a note about naming the 45 seconds, row 86 the old totals; they apply with the set).")
-patch("- THE CLOSING CARD ROWS ARE ONE SET:", "The set depends on five questions (L-CARD, L-CARDCUT, L-CARDTEXT, L-CARDLEN, L-LEASE;", "The set depends on six questions (L-CARD, L-CARDCUT, L-CARDTEXT, L-CARDLEN, L-LEASE, L-POST;")
-patch("| 1 | the repeat-send statement | card line 1 (row 13", "| card line 1 (row 13; with the reading 1 lease sentence) |", "| card line 1 (row 13; the plain statement under the default) |")
-patch("| OS28 |", "(newest rendered sheet at 16:01 UTC = 21:31 IST; still being written)", "(the newest rendered sheets at the check of %s are v29-A and v29-B)" % SHEETCHK)
-patch("| OS19 |", "v28 is newest at 16:01 UTC = 21:31 IST", "v29-A and v29-B are newest at %s" % SHEETCHK)
-patch("| OS25 |", "(a rendered sheet; v28 is newer, see section 0)", "(a rendered sheet; v28 and v29-SOURCE are newer, see section 0)")
-patch("| OS26 |", "(a template with placeholders; v28 is newer, see section 0)", "(a template with placeholders; v28 and v29-SOURCE are newer, see section 0)")
-# new short names: after the OS28 row
-i = find("| OS28 |")
-L.insert(i + 1, "| LREP | handover/core-hardening/REPORT.md | the studio lead's own report blocks (line 80 names the open approval of the lease sentence) |")
-L.insert(i + 2, "| LRN | handover/core-hardening/steps-edits/LEAD-RELEASE-NOTE-v12.md | the release note for the studio lead (gate G12 is the approval of the lease wording) |")
-# C-9, C-10b, C-10c
-patch("| C-9 |", "part 2: the same rule seen in the take's own table (psql \\d mf_leads)", "part 2: the same rule seen in the table of the database the take runs on (psql \\d mf_leads), in the re-smoke and again at take preparation after the fresh container is up (ORD:146)")
-patch("| C-9 |", "There is no allowance (the c6n exit 'index not seen, accepted' is removed; the lease question must also be answered, the default is reading 1)", "There is no allowance (the c6n exit 'index not seen, accepted' is removed)")
-patch("| C-9 |", "part 2 NOT RUN; missing input: the take's database after the re-smoke (needs-lead)", "part 2 NOT RUN; missing input: the take's database after the re-smoke and the take's fresh container (needs-lead)")
-patch("| C-10b |", "the take script sends no request that deletes or archives; (b) is shown |", "the take script sends no request that deletes or archives, and all of (a), (b) and (c) are shown with line numbers |")
-patch("| C-10b |", "any other call, or any of (a), (b), (c) not shown: STOP (no take on Mon 23 Nov 2026, Q25; latest start that day 18:04 UTC = 23:34 IST, L-23NOV)", "any other call, or any of (a), (b), (c) not shown: STOP (no take on Mon 23 Nov 2026, Q25; the latest start that day, 18:04 UTC = 23:34 IST, is a plan fact, L-23NOV)")
-c10c_old = [l for l in L if l.startswith("| C-10c |")][0]
-setline("| C-10c |", "| C-10c | The owner sheet the owner reads: grep -n -i -E 'never deletes|read, create and change only|does not delete' on each sheet | me for the sheets on disk; studio lead for the final sheet | the sheet says the owner deletes leftovers by hand and does not say the HubSpot key is read-only or create-and-change-only unless the owner confirmed it (Q20 item 3) | any other statement of the key's scope | "
-        "part 1 DONE on the sheets on disk at %sT%sZ = %s IST (%s, evidence-c6r/static-checks-output.txt section C-10c: %s); v28 A and B were last changed at %s UTC = %s IST; the folder holds %s, so the check must be repeated on the sheet the studio lead names final; part 2 NOT RUN; missing input: the final sheet and L-SHEET (needs-owner) |" % (CT[:10], CTU, CTI, RANGE, SHEETFACT, V28T, ist("0000-00-00T" + V28T), V29TXT))
-patch("| C-10b |", "STOP (no take on Mon 23 Nov 2026", "STOP (no take on Mon 23 Nov 2026", 1)
-patch("| C-4 and C-6 as a gate |", "Row 6, rehearsal list item 14; NOT RUN", "Row 6, rehearsal list item 14; NOT RUN")
-# section 4 glossary
-patch("| L-CARDLEN | the new question of c6o", "(c6p dropped L-SCENES: the restructure of scenes 2 and 3 is now a consequence of reading 1 of L-LEASE)", "(the question about restructuring scenes 2 and 3 was dropped in c6p; the restructure is now a consequence of answer 1 of L-LEASE when L-POST is 'no')")
-patch("| L-CARD, L-CARDCUT, L-CARDTEXT, L-LEASE,", "L-CARD, L-CARDCUT, L-CARDTEXT, L-LEASE,", "L-CARD, L-CARDCUT, L-CARDTEXT, L-LEASE, L-POST,")
-patch("| c6b to c6n |", "c6p (this file) supersedes c6o, which superseded c6n;", "c6q (this file) supersedes c6p, which superseded c6o;")
-patch("| c6b to c6n |", "| c6b to c6n |", "| c6b to c6p |")
-
-# ---------------------------------------------------------------- section 0
-L[0] = "# REPORT-c6r: video audit fix pass, supersedes REPORT-c6q.md (2026-11-16, UTC; IST = UTC + 5:30)"
-i0 = find("- THE LAST REPORT (REPORT-c6o.md) FAILED INDEPENDENT REVIEW")
-L[i0] = L[i0].replace("- THE LAST REPORT (REPORT-c6o.md) FAILED INDEPENDENT REVIEW:", "- HISTORY, c6o (REPORT-c6o.md FAILED INDEPENDENT REVIEW):", 1)
-L[i0] = L[i0].replace("This report (c6p) fixes every item or labels it in section 9; section 8 lists each item with its fix. THIS REPORT HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them). The main faults of c6o that c6p corrects:", "c6p fixed these; the main faults of c6o were:", 1)
-L[i0] = L[i0].replace("THIS REPORT HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them). ", "", 1)
-L[i0] = sub(L[i0], "(now reading 1 is the default because it is your own answer, with a recommendation for reading 2)", "(c6p made your answer Q22 (c) the default; c6q replaces that with none, because ORD:230 is newer)")
-NEW0 = [
-    "- THE LAST REPORT (REPORT-c6p.md) FAILED INDEPENDENT REVIEW: review-c6p-design.md (1 blocker, 7 majors, minors), review-c6p-naive.md (0 blockers, 6 majors, 10 minors) and evidence-c6p-independent/00-SUMMARY.md (its checks found no failure; it listed gaps the checks did not cover). THIS REPORT (c6q) HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them), and the checks of evidence-c6r/verify-c6q.py are mine: they prove the new text matches what I wrote and that listed slips are gone, not that a statement is true. The main faults of c6p that c6q corrects: (1) the default put a lease sentence on the public video text although your newest word says it stays out of the public post (ORD:230); the default is now no lease sentence, with ONE new yes or no question (L-POST: does 'public post' include the closing card and caption?) and the 45-second limit living in the owner sheet and the release note only; (2) the card arithmetic for the recommended lease sentence was missing; the box now holds a table (lease answer by card length: words, seconds, budget, total), and the lease sentence of answer 2 REPLACES the one of answer 1 (net +15 words, about +6 s); (3) new run-sheet texts used report words ('reading 1', 'the lease question', 'this report holds no rows', check labels, source cites); they are now written as plain sentences and the check scans for these shapes; (4) rehearsal list item 15 said nothing about what the second leak scan searches for; it now says (real key values read from the file that holds the keys, not printed, counts only); (5) the box was about 4,500 words and used words before defining them; it is now shorter and the second word list moved to section 1; (6) L-SHEET was stale; it now says 'confirm the one final sheet' and that v29 is coming; (7) the check C-10b cells disagreed (the pass cell said only (b)); (8) rows 25, 37, 47, 57, 70, 72, 90 and 91 carried source cites or check labels or a wrong 'owned by' attachment.",
-    "- NOT DONE, NOT VERIFIED IN c6q (first): nothing is applied; no n8n, flow, harness or stopwatch run exists; the seconds of the card are estimates from word counts; the facts of lease answer 2 are NOT TO BE SPOKEN AS FACT before C-9 part 2; the approval of the lease wording (gate G12, LRN:33; LREP:80) is OPEN with the studio lead; the flows' behaviour was read from files and not run; the take script is not in the audited files; which owner sheet is final is not known (v29 is coming).",
-    "- DEPARTURE FROM ORD:147, STATED: the studio lead's answer Q20.3 asked for the card line 'the HubSpot key used by the take is read-only; the probe key is separate'. No row writes it: the same answer says the key's scope is unknown from here and the owner has not confirmed it, and a card line that states an unverified scope is a claim this audit cannot back. If you want the line anyway, say so; a builder adds a row.",
-]
-L[i0:i0] = NEW0
-patch("- SLIPS OF REPORT-c6n.md THAT I CORRECT HERE", "and ORD:151's 'no takeover after expiry' most plausibly meant that a second send does not take over (reading 2's behaviour), so no contradiction with mf-recovery.json line 26 is proven. c6p restates L-LEASE against Q22 (c) and ORD:230 (section 3).",
-      "and I guessed that ORD:151's 'no takeover after expiry' meant that a second send does not take over; c6q WITHDRAWS that guess: LREP:80 (the studio lead's own report block of 11:10 UTC = 16:40 IST) says the real-v5 recovery flow re-claims an unfinished contact, three tries in total, and that 'no takeover after expiry' was wrong, which matches JR:26. c6p restated L-LEASE against Q22 (c) and ORD:230; c6q restates it again because ORD:230 is the newest word (section 3).")
-patch("- SLIPS OF REPORT-c6n.md THAT I CORRECT HERE", "(c6o text, replaced by c6p; see the next bullet and L-LEASE in section 3)", "(c6o text, replaced by c6p and again by c6q; see L-LEASE in section 3)")
-patch("- SLIPS OF REPORT-c6n.md THAT I CORRECT HERE", "so reading 1 is in force; a claim limit that understates", "so reading 1 was in force in c6p (c6q: ORD:230 is newer); a claim limit that understates")
-# SPOKEN LENGTH
-setline("- SPOKEN LENGTH OF THE CLOSING CARD, STILL NOT TESTED:", "- SPOKEN LENGTH OF THE CLOSING CARD, STILL NOT TESTED: with the rows as they stand (row 13 with the plain statement, row 14) the spoken card holds %d words (counted by evidence-c6r/verify-c6q.py: lines of %d, %d, %d, %d words), about %d s at 150 words a minute; with the 45-second limit sentence it held 115 words (about 46 s) in c6p; the c6n card held 144 words (about 58 s). The run sheet budget is raised to %d s and the video total is about %d s, both estimates (row 11); the table of lengths in the box gives every other case. No stopwatch run exists." % (NA[2], W_A[0], W_A[1], W_A[2], W_A[3], round(float(NA[3])), NA[4], NA[5]))
-# what the check script proves
-patch("- What the check script proves", "(section 7, rows C-1, C-1b and C-4a; raw output evidence-c6p/verify-c6p-output.txt,", "(section 7, rows C-1, C-1b and C-4a; raw output evidence-c6r/verify-c6q-output.txt,")
-patch("- What the check script proves", "It does NOT prove that a statement is true or that a new text is right.", "c6q adds: the word counts, seconds, budgets and totals of the table of lengths are recomputed from the quoted card lines; the new texts hold no report label (check labels such as C-8, source cites such as RES:97 or PLAN:125, 'reading 1', 'reading 2', 'this report', the names of questions); the box and the run-sheet gates agree on (a), (b) and (c). Most other checks only prove that a string is present or absent. It does NOT prove that a statement is true or that a new text is right.")
-# newest owner sheet bullet
-setline("- THE NEWEST OWNER SHEET, RECHECKED:", "- THE NEWEST OWNER SHEET, RECHECKED AGAIN IN c6r: at %sT%sZ = %s IST (the check time of evidence-c6r/static-checks-output.txt) the owner sheets in the steps-edits folder are v19 to v28 (A and B variants and SOURCE templates) and v29: %s. In c6q the check time was 16:32:07Z = 22:02:07 IST and only OWNER-SHEET-v29-SOURCE.md existed; the independent evidence run found v29 A and B written after it, so the c6q statement 'only a template of v29 exists' was true at its check time and became stale (c6q independent evidence, failure 2). v28 A and B were last changed at %s UTC = %s IST. The check C-10c is rerun over %s: %s. The studio lead has ordered ONE final sheet (ORD:226 to ORD:228), so this check must be repeated on the sheet the owner reads. 'Newest' can change at any minute: write the check time whenever you say it; verify-c6r.py fails if any owner sheet changed after the stated check time. L-SHEET asks you to confirm the one final sheet (section 3)." % (CT[:10], CTU, CTI, V29TXT, V28T, ist("0000-00-00T" + V28T), RANGE, SHEETFACT))
-patch("- CONTACT DELETION IS ANSWERED, NOT NEW:", "a plan line 1051 is stale;", "the studio lead calls a plan line 1051 stale text, which ORD:187 marks UNVERIFIED;")
-patch("WHAT IS ANSWERED (your answers in ORDERS.md)", "line 1051 of the plan is stale text;", "the studio lead calls line 1051 of the plan stale text (UNVERIFIED, as ORD:187 itself says);")
-patch("- NOT RUN: n8n, any flow", "the checks C-3, C-4, C-5, C-6, C-8, C-10b, C-10c part 2 (the sheet the owner reads, after L-SHEET)", "the checks C-3, C-4, C-5, C-6, C-8, C-10b, C-10c part 2 (the final owner sheet, after L-SHEET)")
-patch("- Does the web page carry the number 60.1 to 61.9 s?", "Does the web page carry the number 60.1 to 61.9 s?", "Does the web page carry the number 60.1 to 61.9 s?")
-# the 'Words more' first-rehearsal wording is patched in the box block below
-
-# ---------------------------------------------------------------- section 8 and 9
-patch("COVERAGE OF THE c6o REVIEWS (review-c6o-design.md", "COVERAGE OF THE c6o REVIEWS (review-c6o-design.md", "COVERAGE OF THE c6o REVIEWS, AS FIXED IN c6p (c6q changes the card default and the lease rows: see the block above) (review-c6o-design.md")
-patch("| Naive M3 (L-SCENES unanswerable) | L-SCENES removed; its substance is a consequence of reading 1", "L-SCENES removed; its substance is a consequence of reading 1", "the question about restructuring the scenes was removed; its substance is a consequence of answer 1 of the lease question")
-patch("| Design M2 (scenes 2 and 3 restructure) | question L-SCENES with the effect on the 40 s and 25 s budgets", "question L-SCENES with the effect on the 40 s and 25 s budgets", "a question about restructuring the scenes (dropped in c6p) with the effect on the 40 s and 25 s budgets")
-i8 = find("COVERAGE OF THE c6o REVIEWS")
-COV = [
-    "COVERAGE OF THE c6p REVIEWS (review-c6p-design.md, review-c6p-naive.md, evidence-c6p-independent/00-SUMMARY.md); the line-by-line mapping with the exact lead questions is in c6q-CHANGES.md:",
+# ---------------------------------------------------------------- section 8: coverage of the c6r reviews (new block before the c6q block)
+cov = [
+    "COVERAGE OF THE c6r REVIEWS (review-c6r-design.md, review-c6r-naive.md, review-c6r-evidence.md, evidence-c6r-independent/); the line-by-line mapping is in c6s-CHANGES.md:",
     "",
     "| Review item | Fix | Where / check |",
     "|---|---|---|",
-    "| Design B1 (default lease sentence on public video text against ORD:230; 'none reverses Q22 (c)' unsupported) | the default is no lease sentence on the card and caption; ONE new yes or no question L-POST asks whether 'public post' includes the card and caption; the limit then lives in the owner sheet and release note only; the claim of 'none' is restated honestly | box, section 3 (L-POST, L-LEASE), rows 11, 13, 21 |",
-    "| Design M1, naive M4 (default incoherent: gap under 30 s, scene 2 at 40 s; label 'setting: lease 45 s'; what the viewer sees per answer) | with no lease sentence on the card the gap is only written down; the table of lengths and L-LEASE say what the viewer gets per answer; the label and the words 'other lease settings' are named in L-POST | box, section 3, row 6 item 13 |",
-    "| Design M2, naive M1 (card arithmetic for the recommended sentence; 'add sixteen seconds'; 'add' reads as keeping both) | table of lease answer by card length (words, seconds, budget, total); answer 2 REPLACES answer 1 (net +15 words, about +6 s); 'add' removed | box, L-CARDLEN, verify-c6q.py |",
-    "| Design M3 (report-only labels in new run-sheet texts; stale 'needs n8n' sentence) | new texts rewritten as plain sentences (rows 6, 8, 13, 21, 25, 37, 47, 57, 70, 72, 90, 91); the sentence is removed from item 11; the check scans for check labels, source cites, 'reading 1/2', 'this report' and question names | verify-c6q.py |",
-    "| Design M4 (newest word L-A/B, L-LEN, L-FACTS ignored; L-SHEET and section 9 stale) | L-SHEET reads 'confirm the one final sheet' and names the rendered v29 A and B; C-10c rerun at %s (%s) | section 3, section 9, C-10c, evidence-c6r/static-checks-output.txt |" % (CTU + " UTC = " + CTI + " IST", RANGE),
-    "| Design M5 (item 15 second leak scan plants only fake values) | item 15 says what is searched: real key values read from the file that holds the keys, not printed, counts only | row 6 |",
-    "| Design M6 (C-10b PASS and FAIL cells disagree; the line in the box) | both cells say all of (a), (b) and (c); the box says once that there is no take on Mon 23 Nov unless they are shown | C-10b, box |",
-    "| Design M7 (REPORT.md line 80; reading-2 facts) | LREP:80 and gate G12 (LRN:33) named as OPEN with the studio lead; the guess 'plausibly meant a second send' withdrawn; the facts of answer 2 are marked not to be spoken as fact before C-9 part 2 | section 0, L-LEASE, section 9 |",
-    "| Design minors (row 90 'owned by'; 'the evening inference'; 18:04 as a plan fact; plan line 1051; ORD:147; fresh container; contact grep copied; duplicate section 9 lines; string-only checks) | row 90 ends at the database n8n; the evening inference is gone; 18:04 is called a plan fact that moves with the seconds the take needs; line 1051 is 'called stale by the studio lead, UNVERIFIED'; the departure from ORD:147 is stated in section 0; the rule is looked at again in the take's fresh container; the contact grep was rerun (evidence-c6r/contact-grep-output.txt); the duplicate lines are merged; verify-c6q.py adds recomputed and cross-place checks | section 0, row 8, rows 90, C-9, section 9 |",
-    "| Naive M2 (box too long) | box shortened (see its word count in evidence-c6r/verify-c6q-output.txt); the second word list moved to section 1 | box, section 1 |",
-    "| Naive M3 (labels used before definition or never defined) | box defines loopback re-smoke, wave 1, rehearsal list, risks list, stand-in, the two test figures, table rule on the contact id, check C-9 part 2, send, same id and the ten files before using them | box |",
-    "| Naive M5 (exact card not in the box) | all four card lines are printed in the box | box |",
-    "| Naive M6 (reply line) | the three names are placeholders you choose, the form for several exceptions is given, what happens if C-9 part 2 fails is said, and L-SHEET is said to be outside 'apply all defaults' | box |",
-    "| Naive minors | L-SCENES mentions removed; rows 81 and 86 named in section 1; one definition of wave 1; the first rehearsal comes after steps 5 to 9 everywhere; words with more than one meaning listed in section 1; answer 2 no longer says 'refused' or 'recovery part'; raw cites removed from the box; L-SAVE says why failed runs matter | section 1, section 3, box |",
-    "| Evidence summary (L-SCENES in 3e; 'ready' and 'n8n' used before definition; C-8, RES:97, PLAN:125 in new texts; owner sheet v28 changed after the check) | 3e reworded; the box defines both words first; the labels are removed from the new texts of rows 25, 37, 47, 57, 70, 72, 91; C-10c rerun | 3e, box, rows, C-10c |",
+    "| Design F1 (failed-run saving not carried through C-4a, C-11, C-4 row list; PLAN:125) | C-4a and C-11 follow the defaults (successful runs all, failed runs none); PLAN:125 overridden on that point; C-4 row list corrected | L-SAVE, box, sections 7 and 9; checks 'F1' of verify-c6s.py |",
+    "| Design F2 (card line 2 states alert behaviour as fact) | gate: card line 2 not filmed until the loopback re-smoke on the edited flows shows an alert mail, with UTC, IST and a name | row 8 item 12, section 3e entry, box; check 'F2' |",
+    "| Design F3 (real-key scan holes: only after the first rehearsal; none between the take and deletion; scanner unreviewed; dump; swap) | scan after every rehearsal with real accounts and after the take BEFORE deletion; scanner read by a second person and tested with a fake key; counts only; in place or a dump deleted and counted; swap point named | row 6 items 15 and 16, section 3e, C-6; check 'F3' |",
+    "| Design F4 (stale sheets; release note v14; G12 stretched) | sheet check rerun over v19 and later (v30 exists); the verifier fails on a newer sheet than the check time and on a version newer than the named one; release note v14 cited (G12 open); the wider reading of G12 labelled as this report's assumption | box, section 0, section 3, C-10c, section 9; checks 'F4' |",
+    "| Design m1 to m4 | crash-then-repeat case in the approval evidence; 'expected to be true until C-9 part 2'; cut-case totals once and a two-line Time cell replacement; EXAMPLE time later than the check time | row 8, row 13, box (L-CARDLEN, CUT CASE, answer line) |",
+    "| Naive M1 to M8, minors | box rewritten and shortened; does-not-do list first; reviewer order explained; one OWNER ONLY rule; Q27 and G12 explained; numbered steps; the circle in C-9 part 2 explained; word fixes; stale names; row 11 in 5a; section 0 history moved to 1b | box, sections 0, 1, 1b, 3, 4, 5a |",
+    "| Independent evidence (verifier failed 2 of 123 on v30; glob missed v30) | static-checks.sh covers v19 and later; the report names v30 and the check time | evidence-c6s/static-checks.sh |",
     "",
 ]
-L[i8:i8] = COV
-# section 9
-patch("- [needs-owner or needs-lead] L-SHEET:", "- [needs-owner or needs-lead] L-SHEET:", "- [needs-owner or needs-lead] L-SHEET:")
-setline("- [needs-owner or needs-lead] L-SHEET:", "- [needs-owner or needs-lead] L-SHEET: confirm the ONE final owner sheet. At %s UTC = %s IST the folder holds %s. Next step: name the final sheet; C-10c is run on it. The older sheets v10 to v12 still contain the phrases (v10 2 hits, v11 1, v12 1); they are not used if the owner reads v29." % (CTU, CTI, V29TXT))
-patch("- [needs-lead] plan-wp6-resmoke-v5.md still names film-v5", "Plan line 1051 is stale (Q23).", "The studio lead calls plan line 1051 stale (Q23); UNVERIFIED (ORD:187): he shows the final version's search at the re-pin.")
-setline("- [needs-lead] L-LEASE (default 1;", "- [needs-lead] L-POST (new) and L-LEASE (default none) and L-CARDLEN (default (a)): all have defaults. The exact question: does 'public post' (ORD:230) include the closing card and the scene 3 caption? If it does not and L-LEASE 1 is chosen, scenes 2 and 3 may have to be restructured so that the repeat send comes within 30 seconds of the first send; this report holds no rows for that: a builder the studio lead names writes them.")
-i = find("- [needs-lead] L-POST (new) and L-LEASE")
-L.insert(i + 1, "- [needs-lead] Gate G12, the approval of the lease wording (LRN:33; LREP:80: the recovery flow re-claims an unfinished contact, three tries in total), is OPEN with the studio lead. Exact question: may the words 'processed once' stand on the card and caption beside a crash scene, given that the recovery flow may take over a crashed contact? I do not approve it.")
-L.insert(i + 2, "- [needs-lead] Under the default the 45-second limit sentence (answer 1 of L-LEASE) is not on the video. Next step: the studio lead has the one final owner sheet and the release note carry it; no row of this report edits them (the sheet is being rebuilt).")
-i = find("- [needs-lead] Not reviewed: this report was written")
-L[i] = "- [needs-lead] Not reviewed: this report was written and checked by me alone; I started no sub-agent and no background process. The EGM review of the changed files, resolve and the drift report for c6q are run by the studio lead."
-j = find("- [needs-lead] The EGM review of the changed files, resolve and the drift report for c6p")
-del L[j]
+ic = find("COVERAGE OF THE c6q REVIEWS")
+L[ic:ic] = cov
 
-# ---------------------------------------------------------------- the box: replace everything between '## Start here' and the line before '- TWO ROLES.' and move the second word list into section 1
-b = find("## Start here")
-e = find("## 0. Failures")
-wi = find("- TWO ROLES.")
-words_block = L[wi:e]
-words_block = [w for w in words_block]
-# first rehearsal wording: one rule
-for k, w in enumerate(words_block):
-    if w.startswith("- TIMES AND DATES:"):
-        words_block[k] = sub(w, "First rehearsal: the studio lead, after the loopback re-smoke has passed and the two lines of rehearsal list item 14 are written (DEC:13 gives only the re-smoke target: tonight or tomorrow morning IST).",
-                             "First rehearsal: the studio lead, after steps 5 to 9 of the list in the box are written (the loopback re-smoke has passed, the two lines of rehearsal list item 14 are written, the five entries of risks list item 11 are written, the owner has been asked about the sheet and the key); DEC:13 gives only the re-smoke target: tonight or tomorrow morning IST.")
-    if w.startswith("- READY ="):
-        words_block[k] = w
-words_block.insert(0, "")
-words_block.insert(1, "WORDS (more; one meaning each; used the same way in the whole report; the box at the top has the first list):")
-words_block.append("- WORDS THAT THE FILES USE IN MORE THAN ONE WAY (this report uses each in one way): ROW = a row of the edit table (section 5), never a row of a database table or of an execution list unless it says so. FINAL = 'final state' is the last state of a contact record (done, or unknown with one alert); 'final version' is the version of the files at the re-pin. KILL = switching n8n off at a chosen moment in a crash test. RUN = one pass of a flow, or one test run. CHECK = a numbered check of section 7. CUT = removed from the video, the file or the card. CLAIM = only the claim table and the claim row (the database row that reserves a contact record); a sentence said in the video is a STATEMENT. LEASE and TAKE and LEAD have the one meaning given above (the files also use 'take' for a run taking a contact record: this report writes 'reserved for the run that took it first').")
-sec1 = find("## 1. How to use this report")
-# remove old words block from the box region
-del L[wi:e]
-e = find("## 0. Failures")
-BOX = open(E + "c6r_box.txt", encoding="utf-8").read().rstrip("\n") + "\n"
-LSHEET = ("| L-SHEET | OWNER ONLY (the studio lead asks him): confirm the ONE final owner sheet (the checklist the owner reads). At {CTU} UTC = {CTI} IST the folder holds %s. | The sheet you name final. NOT covered by 'apply all defaults'. |" % V29TXT)
-rep = dict(LSHEET=LSHEET, w=len(waits), wl=lst(waits), N=N, r=len(ready), o=len(onlyq), c=len(withc), cl=lst(withc), W1=W1, NA=NA[2], SA=round(float(NA[3])), BA=NA[4], NB=NB[2], SB=round(float(NB[3])), BB=NB[4], R2=R2, C1=C1, L2=L2, L3=L3, L4=L4,
-           w1=W_A[0], w2=W_A[1], w3=W_A[2], w4=W_A[3], TABLE=TABLE, CTU=CTU, CTI=CTI)
-for k, v in rep.items():
-    BOX = BOX.replace("{%s}" % k, str(v))
-assert "{" not in BOX.replace("{N}", ""), re.findall(r"\{\w+\}", BOX)
-L[b:e] = BOX.split("\n")
-sec1 = find("## 1. How to use this report")
-L[sec1 + 1:sec1 + 1] = words_block[1:] + [""] if False else []
-# insert the second word list right after the heading of section 1
-L[sec1 + 1:sec1 + 1] = words_block[1:]
-exec(open(E + "c6r_text.py", encoding="utf-8").read())
-open(D + "REPORT-c6r.md", "w", encoding="utf-8").write("\n".join(L))
-print("built REPORT-c6r.md: %d lines" % len(L), "rows", N, "box words", len(BOX.split()))
+# ---------------------------------------------------------------- section 9
+patch("- [needs-owner or needs-lead] L-SHEET", "[needs-owner or needs-lead] L-SHEET: confirm the ONE final owner sheet.", "[needs-owner] L-SHEET: confirm the ONE final owner sheet.")
+i9 = find("- [needs-owner] L-SHEET: confirm the ONE final owner sheet.")
+a = L[i9].index("At 16:52:47 UTC")
+b = L[i9].index("Next step: name the final sheet")
+L[i9] = L[i9][:a] + V30SENT + ". " + L[i9][b:]
+L[i9] = sub(L[i9], "they are not used if the owner reads v29", "they are not used if the owner reads v30")
+patch("- [needs-lead] Gate G12, the approval of the lease wording", "I do not approve it.",
+      "I do not approve it. Release note v14 (LRN14:33, LRN14:8) does not close it. The question reads as 'the words processed once beside a crash scene' because I read it that way: that is this report's own assumption (LREP:80 says only 'approval of the lease sentence'); ask whether you meant something narrower.")
+patch("- [needs-lead] Under the default the 45-second limit sentence", "Next step: the studio lead has the one final owner sheet and the release note carry it; no row of this report edits them (the sheet is being rebuilt).",
+      "Next step: you, or a builder you name, add it to the one final owner sheet and to the release note (box, step 9); no row of this report edits them.")
+patch("- [needs-lead] The card row's own Time cell", "Next step: change it to '40 s EST' when applying row 11, or say that the old cell stays.",
+      "Next step (box, L-CARDLEN): change it by hand, old cell text '30 s EST', new cell text '40 s EST' under the defaults ('35 s EST' in the cut case).")
+patch("- [needs-lead] The box is about 3,490 words", "- [needs-lead] The box is about 3,490 words: shorter than the c6p box would be impossible with the what-to-type block and the explained words the naive review asked for. Decide whether to move the second list of words into section 1 (the box then drops by about 450 words and the naive M5 explanations leave the box). Not done, because the two reviews ask for opposite things.",
+      "- [done in c6s] The box was 3,490 words in c6r; it is rewritten and shorter (its word count is printed by evidence-c6s/verify-c6s-output.txt); the explanations the stranger reader needs stay in the box, the duplicates of section 1 were removed, nothing of the report body was deleted.")
+patch("- [needs-lead] Section 0 starts with history before the how-to", "- [needs-lead] Section 0 starts with history before the how-to, and the words 'EGM' and 'KEY' (four meanings) are not defined in the box; fixing both means moving text between sections; the studio lead decides whether it is worth another round.",
+      "- [done in c6s] Section 0 started with history before the how-to; the history is now section 1b after the how-to, and the words EGM and KEY are defined in the box.")
+patch("- [needs-lead] If scene 3 and card line 1 are cut", "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved), the run sheet totals (150 s of scenes, 90 spoken words) fall; row 11 does not cover that case. Next step: the studio lead says whether a second set of totals is wanted.",
+      "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved or the table rule not seen), the totals are in the box (CUT CASE: about 125 s of scenes 1, 2 and 4, 79 spoken words, card budget 35 s, total about 160 s); row 11 writes the defaults only. Next step: you apply the cut totals by hand, or name a builder who adds a row.")
+L.append("- [needs-lead] Failed-run saving, plan conflict: the re-smoke plan row PLAN:125 (an input; not edited here) sets EXECUTIONS_DATA_SAVE_ON_ERROR=all and cites the owner, but the owner's words cover successful runs only (ONE:22-27; DECISION-one-store.md lines 16 and 27). On that one point this report overrides the plan. Next step: you set EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and EXECUTIONS_DATA_SAVE_ON_ERROR=none in the environment that starts n8n, and have the plan row corrected when you next edit the plan; if the owner says yes to L-SAVEERR, the failed-run value becomes all.")
+L.append("- [needs-lead] The leak scan program (check C-6) does not exist, so the real-key scan of row 6 items 15 and 16 has never run. Next step: a builder you name writes it; a second person reads it and tests it with a fake key (counts only; no file holds the key or matched lines) before it touches a real key; searching n8n's own database in place or on a dump that is deleted and counted; the swap point is named in row 6 item 15.")
+L.append("- [needs-lead] Card line 2 (the alert sentence) is backed only by stand-in tests. Next step: the loopback re-smoke on the edited flows must show an alert mail in the test mailbox, with date and time in UTC and IST and a name, under risks list item 12 (row 8); otherwise card line 2 is cut.")
+
+if FAILS:
+    print("\n".join(FAILS)); print(len(FAILS), "FAILED PATCHES"); sys.exit(1)
+open(D + "REPORT-c6s.md", "w", encoding="utf-8").write("\n".join(L))
+print("built REPORT-c6s.md: %d lines" % len(L))

@@ -40,7 +40,7 @@ ban('C45', r'Filled example')                                                   
 need('C46', 'then send "none" for the time in 8.1'.replace('then send', 'send') , SH)                                  # card After-the-card none
 need('C47', 'a new try needs a new numbers message and yes')                                                            # key save failed path
 need('C61', 'Until then the older key stays valid and can spend.', (('B', B),))   # S Major 2: B card list (b) says what the card does not stop
-need('C62', '7 days (168 hours) or more before the earliest key time of the run day', (('A', A),))                                                          # S/T older key A: recent use refuses the cancel
+need('C62', 'at least 168 hours (7 days) before the earliest key time of the run day', (('A', A),))                                                          # S/T older key A: recent use refuses the cancel
 need('C63', 'otherwise describe each such key, cancel nothing, wait')                                    # S Major 3: no-key path cancels nothing the owner did not make
 # ---- Part 2: the 15 plants check-v24 missed (own25.py), each caught by its own check
 PRICES_OK = {'0.27', '0.81', '15.00', '189.00', '3.00', '7.11'}
@@ -96,9 +96,9 @@ def secret_hits(t):
 need('C70', 'IST** = UTC + 5:30')                                                                                       # N01 offset label
 need('C71', 'A line saying contacts will be deleted or archived, or asking you to type a figure, is always a difference.')  # N05 R5
 need('C72', 'the time is before the latest start (else do not press Enter: do the card)')                              # N10 warning before cancel path
-need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST')
+need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'); need('C73', 'Section 9 (posting, by Wed 25 Nov 2026 15:00 UTC = 20:30 IST')
 for n, t in SH:
-    if t.count('Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST') < 2: fail('C73', n + ': the post-by date must be the same on the sheet pointer and the film page')                                                       # N11 post-by date tied to the literal
+    if t.count('Wed 25 Nov 2026 15:00 UTC = 20:30 IST') < 2: fail('C73', n + ': the post-by date must be the same on the sheet pointer and the film page')                                                       # N11 post-by date tied to the literal
 for n, t in (('N', NOTE), ('O', OPEN)):
     for m in re.finditer(r'[Pp]ost(?:ing)?[- ]by[^.\n]{0,40}?(Mon|Tue|Wed|Thu|Fri) (\d{1,2}) Nov', t):
         if (m[1], m[2]) != ('Wed', '25'): fail('C73', '%s post-by date %s %s' % (n, m[1], m[2]))
@@ -126,7 +126,7 @@ i6 = A.find('\n7. **Last checks, then the older key.**', s6, s7); i66 = A.find('
 if i6 < 0 or i66 < 0 or i66 > i6: fail('C89', 'A: the older-key step is not after step 6.6 inside section 6')
 need('C90', '**Filled after you press create (6.3):**'); need('C90', '**Filled in step 2:**')
 need('C91', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')
-need('C92', 'the **backup person** (a human you can call'); need('C92', 'none named: no run')
+need('C92', 'the **backup person** (one named human you can call'); need('C92', 'none named: no run')
 need('C93', 'the only valid answer is their own written words "matches the sentences"')
 need('C94', 'A differing printed count: send the counts, do not post, FREEZE.')
 for nm, t in SH:                                                                                                        # Gmail label and Chrome profile: a click path (UNVERIFIED, tolerated) in both places, never "how unknown"
@@ -194,25 +194,25 @@ need('C132', 'run `rm -f -- "<key file>"` in the test terminal (R6 shape check f
 need('C133', '(only names the clean-up message already listed)')                                                                         # S m5
 need('C134', 'revoke the apps the message names'); ban('C134', r'delete or revoke')                                                      # S m6
 need('C135', 'or `prep-<run name>@example.com`')                                                                                         # S m7
-need('C136', "host name only (the part of its address between `https://` and the next `/`")                                                          # S m8
+need('C136', "that page's host name only"); need('C136', "the part of the page's address between `https://` and the next `/`")                                                          # S m8
 need('C137', 'passes 7.11 before 8.1')                                       # S B1
 need('C137', '(after your yes, 7.11 still follows, before 8.1)')
 need('C137', 'by the older-key time of the message on the run day and even if the lead is silent', (('B', B),))
-need('C137', 'whatever way the run ended (finished, declined, time passed, key save failed, cancel failed, FREEZE, no `end`)', (('B', B),))
+need('C137', 'whatever way the run ended (the card lists the ways)', (('B', B),)); need('C137', 'Every way the run ends (finished, "I decline", "time passed"')
 need('C138', 'Four phone alarms'); need('C138', 'alarm 4 at the older-key time (do 7.11 now, whatever else is open')   # S B1 fourth alarm
 need('C139', 'The cancel-by time is before the older-key time.')                                                         # S B1 time order checked by the owner
 _ct = re.search(r'Cancel-by time: (\d\d):(\d\d) UTC', B); _ot = re.search(r'Older-key time: (\d\d):(\d\d) UTC', B)
 if not _ct or not _ot or (int(_ct[1]) * 60 + int(_ct[2])) >= (int(_ot[1]) * 60 + int(_ot[2])): fail('C139', 'B: the cancel-by time is not before the older-key time (read from the text)')
 need('C140', 'Wait at least the "Minimum think time" of the message'); ban('C140', r'Wait 10 seconds')   # S M2
-need('C141', 'Test program asks you to type a figure: no'); need('C141', 'a figure line that is not "no": no run')                          # S M3
+need('C141', 'Test program asks you to type a figure: no'); need('C141', 'the row "Test program asks you to type a figure" saying anything but no: no run')                          # S M3
 need('C142', 'this cancel cannot be undone', (('B', B),)); need('C142', 'first read its last-used time in the key list and describe it to the lead (a use after your run key\'s create time', (('B', B),))   # S M5
 need('C143', 'Model key outside the model program: none (the lead checked n8n\'s credential store and shows it)'); need('C143', 'a model key stored in n8n would spend without the spend lock')   # S M6
-need('C144', 'anything but `exit 0` and the shell prompt: FREEZE')                                                                       # S m2
+need('C144', 'Anything else (no `exit` line, or no shell prompt after it): the card first (the key is alive; STOP RULE), then FREEZE')                                                                       # S m2
 need('C145', 'put the Privacy switches back as the first sentence of 8.7 says')                                                                                # S m3
-need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today on this sheet (describe it and wait: the lead sends a new numbers message with a later run day, at least 7 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
-need('C147', '5.1 to 5.8 may be done on earlier days, 5.9 and sections 6 to 8 only on the run day')                                      # T m10
+need('C146', 'else no run today on this sheet: describe it and wait. What then:', (('A', A),)); need('C146', 'the lead sends a new numbers message with a later run day, at least 7 days after that use', (('A', A),))   # S M4: what happens when the 7-day rule fails
+need('C147', '5.1 to 5.8 (and 6.1, which 5.7 needs) may be done on earlier days, 5.9 and the rest of sections 6 to 8 only on the run day')                                      # T m10 and v30 T M1
 need('C148', 'or no sentence "the test program made no delete call": skip only the contact deleting of this step and describe which')                  # S m14
-need('C159', 'alarm 1 at the latest start'); need('C159', 'alarm 2 at the alarm time'); need('C159', 'alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
+need('C159', 'all in IST: alarm 1 at the latest start'); need('C159', 'alarm 2 at the alarm time'); need('C159', 'alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
 # ---- Part 5 (v30): lead-side documents must match the built sheets (S M1 and the stranger's lead-document findings)
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
@@ -278,7 +278,7 @@ for nm in 'AB':                                                                 
 need('C174', 'n8n credentials: exactly the three, by name')                                                              # S: numbers page slot
 need('C175', 'alone (R1), with the narrowest scopes the create form offers')                                            # S: look key clauses
 need('C175', 'cancel is proven')
-need('C176', 'if used less than 7 days ago take B'); need('C176', '7 days (168 hours) or more', (('A', A),))                          # S: the 7-day rule at exactly 7 days, route A/B condition (L-A/B)
+need('C176', 'if used less than 7 days ago take B'); need('C176', 'at least 168 hours (7 days) before the earliest key time of the run day', (('A', A),))                          # S: the 7-day rule at exactly 7 days, route A/B condition (L-A/B)
 for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):                                                                          # L-23NOV: 18:14 only with the refusal-limit label and its IST pair
     for _m in re.finditer(r'18:14', _t):
         _w = _t[max(0, _m.start() - 60):_m.start()]
@@ -292,6 +292,6 @@ for _s in ('18:04 UTC = 23:34 IST', '18:19 UTC = 23:49 IST'):
     if _s not in NOTE or _s not in OPEN: fail('C179', 'note or open list lacks %r (L-23NOV)' % _s)
 need('C180', '[OWNER FILLS:'); need('C180', '[LEAD FILLS at re-pin:')                                                      # L-FACTS: visibly different placeholder rows
 need('C181', 'the seven words, which alone start or end a step'); need('C181', '"continue" (after a FREEZE)')            # S R8: the whole word set
-need('C182', 'Seven days means 168 hours')                                                                               # S: 168 hours stated once
+need('C182', 'The 7-day rule (worded the same everywhere in this package)')                                                                               # S: the 7-day rule stated once in full
 if 'Open 102' not in OPEN or 'Open 103' not in NOTE: fail('C183', 'the open questions about the card word count and the 18:04 derivation are missing')
 if 'UNVERIFIED' not in OPEN or 'E-52' not in OPEN: fail('C184', 'O: the L-APP2 / E-52 UNVERIFIED row is missing')

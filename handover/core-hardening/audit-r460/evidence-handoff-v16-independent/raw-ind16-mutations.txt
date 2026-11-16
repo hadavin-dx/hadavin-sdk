@@ -1,0 +1,56 @@
+CONTROL dl: unmutated file, failures=0 of 33 checks
+CONTROL d: unmutated file, failures=0 of 39 checks
+CONTROL f: unmutated file, failures=0 of 40 checks
+CONTROL u: unmutated file, failures=0 of 40 checks
+CONTROL d_lock: unmutated file, failures=0 of 1 checks
+CONTROL f_lock: unmutated file, failures=0 of 1 checks
+CONTROL u_lock: unmutated file, failures=0 of 1 checks
+M01 CAUGHT  DB2: spend_log_decrease loses SECURITY DEFINER -> 1 failing checks, first: F[spend_log_decrease] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalog, p
+M02 CAUGHT  DB2: kill_switch_log_change loses SECURITY DEFINER -> 1 failing checks, first: F[kill_switch_log_change] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalo
+M03 CAUGHT  DB2: spend_log_decrease search_path puts pg_temp first -> 1 failing checks, first: F[spend_log_decrease] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalog, p
+M04 CAUGHT  DB2: v13 shape (no schema qualification + pg_temp first) in spend_log_decrease -> 1 failing checks, first: F[spend_log_decrease] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalog, p
+M05 CAUGHT  DB2: REVOKE on spend_log_decrease removed -> 2 failing checks, first: F[spend_log_decrease] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalog, p
+M06 CAUGHT  DB2: REVOKE on kill_switch_log_change removed -> 2 failing checks, first: F[kill_switch_log_change] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalo
+M07 CAUGHT  DB2: kill switch trigger fires on every update -> 2 failing checks, first: K2 a change of only the `by` column writes no row
+M08 CAUGHT  DB2: kill switch trigger condition inverted -> 3 failing checks, first: K1 turning the kill switch on writes one row (old_on f, new_on t, old_by NULL, new_by opx, who rt)
+M09 CAUGHT  DB2: logs raises instead of lowerings -> 5 failing checks, first: L1 a lowering of spend by the runtime role writes one row with the right agent, day, scope, old, new, login ro
+M10 CAUGHT  DB2: NaN/Infinity transitions not logged (both triggers) -> 1 failing checks, first: L4 a total that becomes NaN (spend) or Infinity (spend_month) is logged
+M11 CAUGHT  DB2: spend_month decrease trigger removed -> 5 failing checks, first: L2 a lowering of spend_month writes scope spend_month and period = first of month
+M12 CAUGHT  DB2: spend decrease trigger removed -> 7 failing checks, first: L1 a lowering of spend by the runtime role writes one row with the right agent, day, scope, old, new, login ro
+M13 CAUGHT  DB2: key guard trigger on spend removed -> 2 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M14 CAUGHT  DB2: key guard trigger on spend_month removed -> 1 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M15 CAUGHT  DB2: key guard ignores day -> 2 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M16 CAUGHT  DB2: key guard ignores month -> 1 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M17 CAUGHT  DB2: key guard ignores agent_id in the spend branch -> 2 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M18 CAUGHT  DB2: key guard error code changed -> 1 failing checks, first: G1 key columns cannot change on either table (all 4 refused, SQLSTATE 42501 from the trigger)
+M19 CAUGHT  DB2: spend_decrease_log append-only drops UPDATE -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M20 CAUGHT  DB2: kill_switch_log append-only drops DELETE -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M21 CAUGHT  DB2: spend_decrease_log truncate trigger removed -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M22 CAUGHT  DB2: kill_switch_log truncate trigger removed -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M23 CAUGHT  DB2: append-only error code changed -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M24 CAUGHT  DB2: who defaults to current_user (the definer) not session_user -> 3 failing checks, first: L1 a lowering of spend by the runtime role writes one row with the right agent, day, scope, old, new, login ro
+M25 CAUGHT  DB2: old and new swapped in the decrease row -> 1 failing checks, first: L1 a lowering of spend by the runtime role writes one row with the right agent, day, scope, old, new, login ro
+M26 CAUGHT  DB2: scope hard-coded 'spend' for month rows -> 1 failing checks, first: L2 a lowering of spend_month writes scope spend_month and period = first of month
+M27 CAUGHT  DB2: kill-switch row has old_on/new_on swapped -> 2 failing checks, first: K1 turning the kill switch on writes one row (old_on f, new_on t, old_by NULL, new_by opx, who rt)
+M28 CAUGHT  DB2: `at` defaults to a constant time -> 2 failing checks, first: L1 a lowering of spend by the runtime role writes one row with the right agent, day, scope, old, new, login ro
+M29 CAUGHT  DB2: index on spend_decrease_log removed -> 1 failing checks, first: F[index] spend_decrease_log_by_agent and kill_switch_log_by_time exist
+M30 CAUGHT  DB2: index on kill_switch_log removed -> 1 failing checks, first: F[index] spend_decrease_log_by_agent and kill_switch_log_by_time exist
+M31 CAUGHT  DB2: audit_log_append_only loses its search_path -> 1 failing checks, first: F[audit_log_append_only] not SECURITY DEFINER and search_path = pg_catalog, pg_temp
+M32 CAUGHT  DB2: spend_keep_keys loses its search_path -> 1 failing checks, first: F[spend_keep_keys] not SECURITY DEFINER and search_path = pg_catalog, pg_temp
+M33 CAUGHT  DB2: kill_switch_log_change search_path pg_temp first -> 1 failing checks, first: F[kill_switch_log_change] SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalo
+M34 CAUGHT  DB2: append-only message changed -> 1 failing checks, first: AO2 the refusal says append-only
+M35 CAUGHT  DB2: kill-switch row copies old_by into new_by -> 1 failing checks, first: K1 turning the kill switch on writes one row (old_on f, new_on t, old_by NULL, new_by opx, who rt)
+M36 CAUGHT  DB2: kill_switch_log truncate removed AND delete removed -> 1 failing checks, first: AO1 UPDATE, DELETE and TRUNCATE on both records are refused 42501 even for the owner and a superuser
+M40 CAUGHT  DB1 default: > 0 instead of >= 0 -> 13 failing checks, first: DB1[default] constraint text on both tables
+M41 CAUGHT  DB1 default: spend_month allows >= -1 -> 4 failing checks, first: DB1[default] constraint text on both tables
+M42 CAUGHT  DB1 variant: <= Infinity -> 5 failing checks, first: DB1[finite] constraint text on both tables
+M43 CAUGHT  DB1 variant: spend_month loses the Infinity clause -> 5 failing checks, first: DB1[finite] constraint text on both tables
+M44 CAUGHT  DB1 default: lock_timeout removed (lock test) -> 1 failing checks, first: LOCK[m_m44] with a writer holding spend, the file fails 55P03 in about 5 s and rolls back
+M45 CAUGHT  DB1 variant: lock_timeout 5min (lock test) -> 1 failing checks, first: LOCK[m_m45] with a writer holding spend, the file fails 55P03 in about 5 s and rolls back
+M46 CAUGHT  DB1 variant: constraint renamed on spend -> 1 failing checks, first: DB1[finite] constraint text on both tables
+M47 CAUGHT  DB1 upgrade: spend_month line removed -> 5 failing checks, first: DB1[upgrade] constraint text on both tables
+M48 CAUGHT  DB1 upgrade: <= Infinity -> 5 failing checks, first: DB1[upgrade] constraint text on both tables
+M49 CAUGHT  DB1 upgrade: drops the rule and adds nothing on spend -> 13 failing checks, first: DB1[upgrade] constraint text on both tables
+M50 CAUGHT  DB1 upgrade: lock_timeout removed (lock test) -> 1 failing checks, first: LOCK[m_m50] with a writer holding spend, the file fails 55P03 in about 5 s and rolls back
+INFO mutations: 47 caught, 0 missed, 0 invalid, of 47
+rc=0
