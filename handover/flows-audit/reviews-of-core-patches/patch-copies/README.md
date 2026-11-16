@@ -1,8 +1,10 @@
 # Core patch copies A-01 and C-01 (ORDER 012 item 2): a ready copy, NOT to be applied now
 
+**This folder is for a COPY, never the live code.** It holds patch files and notes that sit next to the repository's real code; nothing in this folder changes `src/` or `tests/` of the repository. The recipe below applies a patch only to a throwaway clone in a new temporary folder, to prove what the patch does; it does not apply anything to the repository itself. ("live" is defined in the words box.)
+
 **STATUS (read this first).** `../REVIEW.md:5` (the file one folder up) says, word for word: "A-01 is DEFERRED, the C-01 extras (the token ceiling)
 are CUT, the G5 wording patch is KEPT (text only)", and item 3 of its list says "C-01: DO NOT APPLY NOW". Those three are the lead's default of 2026-11-16, not a confirmed decision of the
-studio head; he may veto them. So today: **apply nothing from this folder**, and when something is applied later, only on a copy of the commit `b4cce5b`, never on head
+studio head; he may veto them. So today: **apply nothing from this folder**, and when something is applied later, only on a copy of the commit `b4cce5b`, never on the newest commit
 (section "Which commit these patches fit").
 - **Price check (C-01):** the default, if the studio head keeps it, is `C-01-price-only.patch` (price rule only, no `max_tokens` ceiling, no `defaults.py` change, 24 new tests, plus 6 of A-01 = 30 in the recipe).
   `C-01.patch` is the alternative that also carries the ceiling that was cut (26 new tests; 32 with A-01). Use one of the two, never both. Do not edit either file by hand.
@@ -10,7 +12,7 @@ studio head; he may veto them. So today: **apply nothing from this folder**, and
   and row 6 needs a per-row guard in the chain drain for which no patch file exists. The file is kept only as a ready copy.
 - **G5 wording:** text only, no patch file (section "G5 wording drop").
 
-Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database was run (no database was started); the lint, `git apply --check` and test runs named below were re-run in this pass.
+Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database was run (no database was started). In this pass the verdict script was tested on made-up log files (three cases), and the lint, name and `git apply --check` lines were re-run (see `../fix-patchcopies1.md` for the first database run and `handover/flows-audit/reviews/fix-patchcopies6.md` for this pass). The full test runs quoted below are from the fifth pass and were NOT repeated in the sixth.
 
 ## Words used here (plain meanings; each word keeps this one meaning in this folder)
 | Word | Meaning here |
@@ -21,21 +23,23 @@ Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database w
 | audit kind | the kind that writes the tamper-evident audit trail; two exist at `b4cce5b`: `chain` (in the database) and `local_dir` (files in a folder) |
 | outbox | a holding table (`audit_outbox`) or folder where an audit event waits when it could not be written at once; "draining" it means writing the waiting events for real |
 | reconcile (three different things) | (1) the tick step `reconcile` (matches finished work against the store); (2) the audit method `reconcile()` that drains the outbox; (3) the tick step `audit_reconcile` that A-01 adds, which calls (2). This folder always writes which one |
-| studio head, database administrator, migrations login | "the studio head" = the person who owns the studio and decides. "the migrations login" = the database login that owns the tables and runs the migrations (`store/migrate.py`); only it can hand out rights on a table. "the database administrator" = the named human who is allowed to sign in with that login (the studio head names him or her). This folder never uses the bare words "owner" or "database owner" |
+| studio head, database administrator, migrations login, scheduler operator | "the studio head" = the person who owns the studio and decides. "the migrations login" = the database login that owns the tables and runs the migrations (`store/migrate.py`); it is the "table-owning login". "the database administrator" = the named human (the studio head names him or her, decision D3) who is allowed to sign in with the logins the dead-man statements need; which login each statement needs is in `DEAD-MAN-CHECK.md`, section "Which login runs each statement". "the scheduler operator" = the named person who runs the scheduler job that executes the dead-man check (decision D6; for a client build, the client's operations person). This folder never uses the bare words "owner" or "database owner" for a person or a login |
 | studio head vs lead | the studio head is a person (called "the owner" in older studio notes). The lead is the AI session that directs the other sessions and runs the reviews; the lead is not a person |
 | builder vs fixer | a builder is a session that builds a change; a fixer is a session that corrects an earlier piece of work after a review. Both open pull requests and never merge |
 | gate, check, guard test, verdict | "gate" = a command the repository requires to succeed before a change goes in; locally these are four: `ruff check`, `ruff format --check`, `pytest` and `bandit -ll` (the pull-request checks CodeQL, SonarCloud and CodeRabbit run on GitHub, cannot be run here and are NOT part of any local verdict). "check" = any command or reading whose result is reported. "guard test" = a test in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` or `tests/test_lockin_guard.py` (the repository rules; listed by name under "Pass rule"). "verdict" = exactly one of three names defined under "Pass rule": PASSED, ADDS NO NEW FAILURE, NOT PASSED |
-| `b4cce5b` and "head" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one the patches were built on; "head" = the newest commit of this working copy (branch `cloud/flows-audit`): `5b5b8933a` when this pass ran. Earlier text said `f05790e42`; `src/` and `tests/` are identical in the two, so every head result below holds for both. Every file and line cite below says "at `b4cce5b`" or "at head" |
+| `b4cce5b` and "newest commit" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one the patches were built on; "newest commit" = the newest commit of this working copy (branch `cloud/flows-audit`): `5b5b8933a` when the fifth pass ran. Earlier text said `f05790e42`; `src/` and `tests/` are identical in the two, so every result for the newest commit below holds for both. Every file and line cite below says "at `b4cce5b`" or "at the newest commit". The word "newest commit" is used only in "studio head" |
 | unpatched copy / patched copy | a fresh clone checked out at `b4cce5b` with nothing applied / the same with `C-01-price-only.patch` (or `C-01.patch`) then `A-01.patch` applied |
 | G5, G2, G3, G4 | rules of an older outbound text gate: G3 = remove untrusted text, G4 = withhold commands, G5 = block leaked secrets, G2 = flag unverifiable claims. Only G3 and G4 exist in the code |
 | RUNG, CODE-LAST | the ladder from "use something that already exists" to "write our own code" (`handover/BRIEF-PREAMBLE.md` rule 20): our own code is the last resort |
 | I, my, the assistant | the fixer session (an assistant run, not a person) that last edited this file. Older text said "I" without saying who |
 | `../REVIEW.md` and its row ids (C-3, C-4, C-6, C-8, A-1, A-3, A-6, A-8, G-1, X-2, X-5, X-6, D-3) | the review file one folder up (`handover/flows-audit/reviews-of-core-patches/REVIEW.md`); the ids are rows of its findings table: find a row by its id, or an item by its number in the plain summary at the top |
-| "Decision 18, 19, 23" | numbered questions the studio head is asked in item 11 of `../REVIEW.md`; here only: 18 = where the price check lives, 19 = the stand-in price of a self-hosted model |
+| "Decision 18, 19, 23" | numbered questions the studio head is asked in item 11 of `../REVIEW.md` (the blocks are near its line 384 to 390); here only: 18 = where the price check lives, 19 = the stand-in price of a self-hosted model, 23 = two questions about the G5 patch: 23a may a cleaned copy of the G5 patch (with the personal repository handle removed from its context lines) be kept in the repository, 23b rewrite the branch history that already contains that handle, or accept it in writing. This folder keeps no G5 patch file, so it follows 23a "no" until the studio head answers |
 | ORDER 012 | `handover/flows-audit/ORDERS.md`, section "ORDER 012": the lead's order that asked for these copies. ORDER 009 is cited in the G5 section; its text is not in this checkout (searched `handover/`), so what is said about it there is UNVERIFIED |
 | `system-map` Decision B | the "Decision B" of the system-map review folder `handover/flows-audit/reviews-of-system-map/`; its text was not found there. Here it means only: who picks, and pays for, a second alert channel (row D4 of `DEAD-MAN-CHECK.md`) |
 | BRIEF-PREAMBLE rules 9 and 20 | numbered rules in `handover/BRIEF-PREAMBLE.md`: 9 = cloud sessions open pull requests and never merge, 20 = code last |
 | dead-man check | a query run by something outside the tick that alarms when the tick has stopped; see `DEAD-MAN-CHECK.md` |
+| live | used in this folder in exactly one sense, "real, as opposed to a copy, a recording or a fake": (1) the pytest marker `live` (always in code font) = tests that call a real model; they are left out of every run here; (2) "the live code" = the code the repository really runs, as opposed to the copies in this folder. Nothing else is called "live" here: a real paid model is called a "paid model", and the stages in which the system works for real are called "real-use stages" |
+| paid model, real-use stage | "paid model" = any llm kind other than `fake` (the recorded fake never spends). "real-use stage" = any environment stage except the one that allows demo-only kinds (`dev` at `b4cce5b`, `demo` at the newest commit); the kind `fake` is refused in a real-use stage |
 
 ## Decisions that are not mine to make (ONE table; each row says who decides and whether it stops a merge)
 | # | Decision | Who decides | Blocks a merge? | Default if nobody decides |
@@ -63,20 +67,20 @@ Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database w
 This folder, `handover/flows-audit/reviews-of-core-patches/patch-copies/`, holds three patch files (`C-01.patch` = price check plus ceiling, `C-01-price-only.patch` = price check only, `A-01.patch`), one note
 (`DEAD-MAN-CHECK.md`), this file, and no G5 patch file: the earlier G5 patch file is gone on purpose and must NOT be recreated (see "G5 wording drop"; G5 is a hand-edit list).
 
-## Which commit these patches fit (the one place that says it: do NOT apply any of them on a copy of head)
-All three patches were built on `b4cce5b`, and every test number, exit code and criterion in this file is valid only for a copy of `b4cce5b`. Do not apply any patch on a copy of head.
+## Which commit these patches fit (the one place that says it: do NOT apply any of them on a copy of the newest commit)
+All three patches were built on `b4cce5b`, and every test number, exit code and criterion in this file is valid only for a copy of `b4cce5b`. Do not apply any patch on a copy of the newest commit.
 `git apply --check` run in this pass (2026-11-16) on fresh `git archive` extracts, each in its own new folder, no cloud settings:
-| Patch | at `b4cce5b` | at head (`5b5b8933a`) | why |
+| Patch | at `b4cce5b` | at the newest commit (`5b5b8933a`) | why |
 |---|---|---|---|
-| `C-01.patch` | rc 0 | **rc 1** (`error: patch failed: src/hadavin_sdk/config.py:362`) | hunk 2 of `config.py` has the context line `if self.environment != "dev":` (`config.py:366` at `b4cce5b`); at head the stage check was rewritten and the line is `if is_live(self.environment):` (`config.py:394`) |
+| `C-01.patch` | rc 0 | **rc 1** (`error: patch failed: src/hadavin_sdk/config.py:362`) | hunk 2 of `config.py` has the context line `if self.environment != "dev":` (`config.py:366` at `b4cce5b`); at the newest commit the stage check was rewritten and the line is `if is_live(self.environment):` (`config.py:394`) |
 | `C-01-price-only.patch` | rc 0 | **rc 1** (same error, same line) | same hunk 2, same context line |
-| `A-01.patch` | rc 0 | rc 0 (it applies, but nobody ran its tests at head, so it is not cleared for head either) | its files did not change in the lines it touches |
-A patch for head would have to be rebuilt from the text of its hunks and re-tested; not done, because nothing here is to be applied now.
-- Line numbers: every `config.py`, `ci.yml` and fixture line cite in this file is at `b4cce5b` unless it says "head". Where they differ:
-  `Route` `config.py:55` (head `:64`); `Config` `:316` (head `:332`); `refused = []` `:365` (head `:393`); the allowed-in-demo table is `DEV_ONLY` at
-  `backends/table.py:593` (head: `DEMO_ONLY`, `table.py:593`); `ci.yml` bandit line `:119` (head `:181`, and the head form adds `tools`);
-  `ci.yml` test line `:88` (head `:92`), timing-test line `:94` (head `:100`); fixture `tests/fixtures/config/config.yaml:2` says `environment: dev` at `b4cce5b`
-  and `environment: demo` at head (the stage names were renamed to demo, pilot, prod after `b4cce5b`).
+| `A-01.patch` | rc 0 | rc 0 (it applies, but nobody ran its tests at the newest commit, so it is not cleared for the newest commit either) | its files did not change in the lines it touches |
+A patch for the newest commit would have to be rebuilt from the text of its hunks and re-tested; not done, because nothing here is to be applied now.
+- Line numbers: every `config.py`, `ci.yml` and fixture line cite in this file is at `b4cce5b` unless it says "newest commit". Where they differ:
+  `Route` `config.py:55` (newest commit `:64`); `Config` `:316` (newest commit `:332`); `refused = []` `:365` (newest commit `:393`); the allowed-in-demo table is `DEV_ONLY` at
+  `backends/table.py:593` (newest commit: `DEMO_ONLY`, `table.py:593`); `ci.yml` bandit line `:119` (newest commit `:181`, and the newest-commit form adds `tools`);
+  `ci.yml` test line `:88` (newest commit `:92`), timing-test line `:94` (newest commit `:100`); fixture `tests/fixtures/config/config.yaml:2` says `environment: dev` at `b4cce5b`
+  and `environment: demo` at the newest commit (the stage names were renamed to demo, pilot, prod after `b4cce5b`).
 
 ## Apply and test recipe (runnable; written 2026-11-16; run in ONE terminal so the variables stay set)
 Needs: `git`, `uv` (it installs the Python and the packages), and either network access once or a warm `uv` cache. Python 3.12 or newer (`pyproject.toml`
@@ -105,18 +109,18 @@ and 32 with `C-01.patch`. (`git apply` writes the files; nothing is committed. A
 `HTTPS_PROXY="$HTTPS_PROXY"` after `env -i` if the network needs a proxy.)
 
 ### Expected exit codes (ONE table; the gate commands, run with no cloud settings in the environment as `.claude/rules/verify-tests-and-evals.md` asks, which `env -i` gives)
-Gate on the exit code of the command itself, never on a `| tail` pipe. `E="env -i PATH=$PATH HOME=$HOME"`; run each command in the folder named in the column head.
+Gate on the exit code of the command itself, never on a `| tail` pipe. `E="env -i PATH=$PATH HOME=$HOME"`; run each command in the folder named in the column @@HEAD@@.
 | Command (all start with `$E uv run --all-extras --group test`) | unpatched copy | patched copy |
 |---|---|---|
 | `ruff check` | 0 | 0 |
 | `ruff format --check` | 0 | 0 |
-| `bandit -q -r src demos -ll` (the form of `ci.yml:119` at `b4cce5b`; the form at head adds `tools`, a folder that does not exist at `b4cce5b`; bandit prints one `nosec` warning, which is not a failure) | 0 | 0 |
+| `bandit -q -r src demos -ll` (the form of `ci.yml:119` at `b4cce5b`; the form at the newest commit adds `tools`, a folder that does not exist at `b4cce5b`; bandit prints one `nosec` warning, which is not a failure) | 0 | 0 |
 | `pytest -q -p no:cacheprovider -m "not live and not perf" -rf` (the full run, below) | **1** while the two baseline failures exist, 0 after they are fixed | **1** while the two baseline failures exist, 0 after they are fixed |
 | `pytest` on the two new test files copied onto the unpatched copy (proof section) | 1 (the new tests fail on old code) | not run |
 
 ### Baseline, then the patched run (the full test run)
-The markers `live` and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at head) and runs `perf` in its own step
-(`:94`, head `:100`), which is not part of this recipe.
+The markers `live` and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at the newest commit) and runs `perf` in its own step
+(`:94`, newest commit `:100`), which is not part of this recipe.
 ```
 run() {  # $1 = folder, $2 = tag
   ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rf > "$W/$2.log" 2>&1; echo "$2 exit=$?" )
@@ -184,7 +188,7 @@ upgrade may need that one word changed). Those 16 pin today's behaviour and cann
 
 ### Results of the fifth pass (2026-11-16): what was seen
 Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, each turned into a git repository with one commit, patches applied, then `git add -A` (not a clone; `uv run --offline`, warm cache, `env -i`; Python and pydantic as in `uv.lock`). The clone-and-apply steps of the recipe were also run literally on a clone of the local checkout: both `git apply --check` exit 0, `apply exit=0`, and `git ls-files` then lists both new test files.
-- `git apply --check` on a fresh `b4cce5b` archive: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0. At head (`5b5b8933a`): `C-01.patch` rc 1, `C-01-price-only.patch` rc 1, `A-01.patch` rc 0.
+- `git apply --check` on a fresh `b4cce5b` archive: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0. At the newest commit (`5b5b8933a`): `C-01.patch` rc 1, `C-01-price-only.patch` rc 1, `A-01.patch` rc 0.
 - Baseline (unpatched), full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 286.64s`, exit 1. Patched with `C-01-price-only.patch` then `A-01.patch`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 286.29s`, exit 1 (9394 = 9364 + 30). Patched with `C-01.patch` then `A-01.patch`: `2 failed, 9396 passed, 454 skipped, 26 deselected in 233.17s`, exit 1 (9396 = 9364 + 32). In all three, the failed tests are the same two guard tests; (a) the `diff` is empty; (d1) `Left contains 10 more items` in all three logs; (d2) the same three offending files in all three logs.
   Verdict by the pass rule for both patched runs: **ADDS NO NEW FAILURE** (the repository gate stays red because of the two baseline failures).
   The full runs shared a 4-core machine with each other and with smaller jobs, so their times are not comparable.
@@ -207,7 +211,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
   (`config.py` `Money` annotation at `b4cce5b`), nothing refused 0 or a negative price. The replay path already had its own refusal (`k1b/replay.py:85-90`, called at
   `:118`); this closes the live path at the choke point.
 - Stage rule behind the exemption (decision table, row 4, recorded in `REVIEW.md` row C-8): the only kind with no price rule is `fake`, and `fake` is itself a
-  demo-only kind (`DEV_ONLY` at `backends/table.py:593`, head `DEMO_ONLY`) refused in live stages (`config.py:366-368` at `b4cce5b`, `:394-396` at head). So in a live
+  demo-only kind (`DEV_ONLY` at `backends/table.py:593`, newest commit `DEMO_ONLY`) refused in live stages (`config.py:366-368` at `b4cce5b`, `:394-396` at the newest commit). So in a live
   stage nothing is exempt. There is no exemption for a keyless loopback address or for the kind `openai_compat`, because that kind also points at paid hosted endpoints and an
   address test would reopen the bug for them.
 - **Rollout note (exact text, C-6 and C-8):** "Any pilot or production config with a price of 0 or a negative price now refuses to start. A model you run yourself
@@ -225,7 +229,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
 - `max_tokens`: `Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)`; ceiling `200_000` in `defaults.py`: this part is CUT today (decision table, row 3) and exists only in `C-01.patch`, not in `C-01-price-only.patch`. If it returns, the studio head
   confirms the number; change that one line and the two test lines that write 200_000 and 200_001. Existing fixtures use 64 and 1024; `demos/` has no route config.
 - The test config for a live model is `{kind: anthropic, platform: api, api_key_secret_name: <name>}` (matches `AnthropicSettings`, `backends/table.py:43-61`).
-  `test_a_priced_live_route_still_loads` asserts those settings parsed. The fixture environment is `dev` at `b4cce5b` (`demo` at head), which the environment table does not refuse.
+  `test_a_priced_live_route_still_loads` asserts those settings parsed. The fixture environment is `dev` at `b4cce5b` (`demo` at the newest commit), which the environment table does not refuse.
 - Which `llm.kind` values exist at `b4cce5b` (`backends/table.py:512-541`): `fake`, `anthropic`, `bedrock`, `openai_compat`, `gemini`. Only `fake` spends nothing; the
   recorded replay is not a kind but `fake` with `recorded_dir`. The one config in the tree that names an llm kind is `tests/fixtures/config/config.yaml` (kind `fake`).
 - Negative tests: price 0, 0.00 and -1 on input and on output are each refused for a live kind (6 cases, `match="zero or negative price"`); a priced live route loads; the fake kind with
@@ -285,6 +289,6 @@ Risk: sentences 2-4 touch a docstring that `REVIEW.md` row G-1 said might unders
 
 ## Not checked
 No live model or network call to a model. No database was started (standing order of this review). `K1bAudit` was not changed. The patches were not rebuilt for commits after
-`b4cce5b` (`C-01.patch` and `C-01-price-only.patch` do not apply at head; `A-01.patch` applies at head but its tests were not run there). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline).
+`b4cce5b` (`C-01.patch` and `C-01-price-only.patch` do not apply at the newest commit; `A-01.patch` applies at the newest commit but its tests were not run there). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline).
 The full test runs were made in single-commit repositories built from `git archive`, not in clones (the clone and apply steps were run separately). `ruff` and `bandit` were not run on a copy patched with `C-01.patch`.
 `../REVIEW.md` is not edited by this pass (another session edits it); it may still quote older figures (for example "13 new tests fail on old code" belongs to an earlier version of the patch set); this folder's tables are the current ones. Nothing was committed or pushed.
