@@ -52,6 +52,16 @@ PH_RE = re.compile("|".join(PLACEHOLDERS))
 CODE_KEYS = ("jsCode", "functionCode", "pythonCode")
 MANIFEST_SUFFIX = ".manifest.json"
 MANIFEST_FORMAT = "fill_flows-manifest-1"
+# A small file written first into every output folder. `delete --no-manifest` needs it, so a
+# lost fingerprint file cannot make an unrelated folder look like this tool's output.
+MARKER_NAME = ".fill_flows-output"
+MARKER_FORMAT = "fill_flows-output-1"
+DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+
+
+def _a(x) -> str:
+    """A name from a file or a flow, safe to print (no control or look-alike characters)."""
+    return ascii(str(x))[1:-1]
 
 
 class Refused(Exception):
@@ -78,16 +88,24 @@ def read_values(path: str) -> dict[str, str]:
     if inside_git(os.path.dirname(rp)):
         raise Refused("values file is inside a git repository (move it out; it holds secrets)")
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        # O_NONBLOCK: opening a pipe must not wait for a writer
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError:
+        raise Refused("values file: cannot open it (missing, a symlink, or not readable)") from None
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode):
+            raise Refused("values file is not a regular file")
+        if st.st_mode & 0o077:
+            raise Refused("values file can be read by other users (run: chmod 600 on it)")
         with os.fdopen(fd, "rb") as fh:
-            st = os.fstat(fh.fileno())
-            if not stat.S_ISREG(st.st_mode):
-                raise Refused("values file is not a regular file")
-            if st.st_mode & 0o077:
-                raise Refused("values file can be read by other users (run: chmod 600 on it)")
+            fd = -1
             raw = fh.read()
     except OSError:
         raise Refused("values file: cannot open it (missing, a symlink, or not readable)") from None
+    finally:
+        if fd >= 0:
+            os.close(fd)
     if raw.startswith(b"\xef\xbb\xbf"):
         raise Refused("values file starts with a BOM (byte order mark): save it as plain UTF-8")
     try:
@@ -230,6 +248,10 @@ class Subst:
 
     def string(self, s: str, ctx: str | None = None) -> str:
         if s in PLACEHOLDERS and s in self.values:
+            if ctx in CODE_KEYS:
+                raise Refused(
+                    f"a placeholder name sits in a {ctx} field (program code; not filled)"
+                )
             if not self.values[s]:
                 self.bad.add(s)
                 return s
@@ -245,9 +267,13 @@ class Subst:
 
     def walk(self, o, ctx: str | None = None):
         if isinstance(o, dict):
-            return {
-                self.string(k): self.walk(v, k if k in CODE_KEYS else ctx) for k, v in o.items()
-            }
+            out = {}
+            for k, v in o.items():
+                nk = self.string(k)
+                if nk in out:
+                    raise Refused("two keys of one object become the same key after filling")
+                out[nk] = self.walk(v, k if k in CODE_KEYS else ctx)
+            return out
         if isinstance(o, list):
             return [self.walk(v, ctx) for v in o]
         if isinstance(o, str):
