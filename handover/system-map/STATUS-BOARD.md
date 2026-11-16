@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:32:22Z
+UPDATED_UTC: 2026-11-16T13:35:18Z
 PUSHED_UTC: 2026-11-16T13:29:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -13,7 +13,7 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 0 at this beat (the minimum is 8; reason above)
+AGENTS_RUNNING: 8 at this beat (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: hand-backs digested through 1138 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
@@ -45,9 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| (none running) | | | | | |
+| a16ff99cd6a3b2029 | cold read of work/run-day-card-draft-v2.md (re-read after two fixes) | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| aae225d6b75a50f78 | cold read of work/critical-path-r1.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| a55ccad82e45cd87d | cold read of work/open-items-table.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| acda4c4ea57a66f05 | cold read of work/decision-list-for-lead.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| a59029c8b13895f2a | cold read of work/merged-findings.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| a52529c4cafef48a2 | cold read of work/premortem-r1.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| ae091854583aeffce | cold read of work/rehearsal-passed-limits-draft.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
+| afafa0b6384497a04 | cold read of work/owner-timeline-draft.md | 2026-11-16T13:35:18Z | +10 min | running | nothing yet |
 
-0 agents running, below the minimum of 8. Reason: every work page has had a cold read; the open work is my own rewrite of work/GLOSSARY.md (one people table, one file table with paths, one Unknown list, one line per lane; digest 1138), which must be written before it can be re-read. Next 5 tasks: (1) rewrite GLOSSARY.md; (2) re-read it; (3) add a purpose/key header to the evidence files; (4) fold stacked "wins" paragraphs into the history files; (5) re-read each edited page. Ended and digested: a9b7719a7885c31e8, a9def0eccb950097b, aa5f3110b449bb971, acfa7bb80e1cdeb0b.
+8 running (the minimum is 8). Per ORDER 040 each hand-back is replaced in the same turn. Next 5 tasks: (1) rewrite GLOSSARY.md (one people table, one file table with paths, one Unknown list, one line per lane); (2) purpose/key headers on the evidence files; (3) fold stacked "wins" paragraphs into the history files; (4) re-read each edited page; (5) apply cold-read digests to open-items-table and decision-list-for-lead. Ended and digested earlier: a9b7719a7885c31e8, a9def0eccb950097b, aa5f3110b449bb971, acfa7bb80e1cdeb0b.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
