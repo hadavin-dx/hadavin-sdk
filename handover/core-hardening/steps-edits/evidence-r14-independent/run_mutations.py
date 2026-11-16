@@ -25,7 +25,7 @@ def sub(old, new, count=1, within=None):
 def newblock_sub(rid, old, new, count=1):
     # replace only inside the NEW block(s) of row rid
     def f(t):
-        a = t.index('### ' + rid + ':'); b = t.index('\n### E-', a + 5)
+        a = t.index('### ' + rid + ':'); b = t.find('\n### E-', a + 5); b = len(t) if b < 0 else b
         seg = t[a:b]
         na = seg.index('NEW'); 
         assert old in seg[na:], 'anchor missing in NEW ' + old[:50]
@@ -73,9 +73,9 @@ add('M35', 'row E-20 header deleted (55 rows, rest merges)', lambda t: re.sub(r'
 add('M36', 'duplicate id: E-21 header renamed E-20', lambda t: re.sub(r'(?m)^### E-21:', '### E-20:', t, count=1))
 add('M37', 'OLD text of E-09 altered by one word', newblock_sub('E-09', 'x', 'x') if False else (lambda t: t.replace('password = the one you set in WSL when you start', 'password = the one you set in WSL when you begin', 1)))
 add('M38', 'stated line of E-11 wrong (87 -> 88)', sub('### E-11: OWNER-STEPS-realrun-v3.md, line 87,', '### E-11: OWNER-STEPS-realrun-v3.md, line 88,'))
-add('M39', 'HOLD label removed from E-13 NEW (1)', lambda t: t.replace('NEW [HOLD G3: DO NOT APPLY] (1)', 'NEW (1)', 1))
+add('M39', 'HOLD label removed from E-13 NEW (1)', lambda t: re.sub(r'(?m)^NEW \[HOLD G3: DO NOT APPLY\] \(1\)', 'NEW (1)', t, count=1))
 add('M40', 'latest start we plan paired with 18:14 in E-12', newblock_sub('E-12', 'latest start we plan (18:04 UTC = 23:34 IST)', 'latest start we plan (18:14 UTC = 23:44 IST)'))
-add('M41', 'money stop moved to 18:19 in E-12', newblock_sub('E-12', S, K))
+add('M41', 'money stop moved to 18:19 in E-12 (all 3)', newblock_sub('E-12', S, K, 99))
 add('M42', 'shred before revoke: "When the key is revoked, shred" -> "Before the key is revoked, shred"', newblock_sub('E-48', 'When the key is revoked, shred every file', 'Before the key is revoked, shred every file'))
 add('M43', 'keep-copies sentence deleted', newblock_sub('E-48', ' Until the key is revoked, keep its copies.', ''))
 add('M44', 'E-13 second pass: index table file name changed for E-14', lambda t: re.sub(r'(?m)^(\| E-14 \| )OWNER-STEPS-realrun-v3\.md', r'\1AGENT-SCOPE-DO-AND-DONT.md', t, count=1))

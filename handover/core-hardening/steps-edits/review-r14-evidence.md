@@ -1,0 +1,5 @@
+# EDITS round 14 independent evidence (EVIDENCE RUNNER, condensed copy), 2026-11-16T16:59:56Z
+Raw: steps-edits/evidence-r14-independent/. Recorded, not judged.
+Failures first: (1) own checker 3 failures, all in one E-12 sentence: bare "18:18" and "18:19" with no UTC/IST pair; (2) verify14.py writes scratch to a hard-coded path outside the folder; ran a one-line copy: exit 0, 97 of 97 controls caught; (3) runner's first 48 mutations: 3 missed, checker tightened, then 48 of 48 (adjusted after seeing misses); (4) "(recommended)" dropped after Route B in E-48 but 3c still says the assistant recommends B.
+Passes: 56 rows (44 Apply now, 12 Hold), ids unique; 57 OLD blocks each once on stated line; 110 UTC/IST pairs right; 61 weekday pairs right; key end 18:19 UTC = 23:49 IST and money stop 18:29 UTC = 23:59 IST not tied; 0 internal codes in owner text; typing steps wait for "not looking"; shred rule and order ok; apply14 applied 44 of 44; secret-shaped strings 0; banned 0 of 161 files.
+Not checked: understandability, truth of plan facts (860 s, 18:04), NOT DECIDED list, Hold rows applied.

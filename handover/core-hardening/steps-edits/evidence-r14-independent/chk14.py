@@ -159,7 +159,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     m3g = re.search(r'(?m)^\s+3g\. .*$', t48)
     if not m3g or 'not looking' not in m3g[0] or 'you may look again' not in m3g[0]: F('typing', 'E-48 3g lacks not looking / you may look again')
     ms = re.search(r'(?m)^- \*\*The typing rule\*\*.*$', '\n'.join(byid['E-52']['new'])) if 'E-52' in byid else None
-    if not ms or 'not looking' not in ms[0]: F('typing', 'E-52 typing rule line lacks not looking')
+    if not ms or "wait for the assistant's reply `not looking`" not in ms[0]: F('typing', 'E-52 typing rule line lacks not looking')
     for r in own:
         for t in r['new']:
             if re.search(r'unless the assistant tells you otherwise', t): F('phrase', f"{r['id']} NEW re-adds 'unless the assistant tells you otherwise'")

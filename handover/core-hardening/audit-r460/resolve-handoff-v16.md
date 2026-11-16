@@ -30,4 +30,4 @@ M1 to M5 and minors 1 to 8: FIXED-IN-TEXT as the table in `v16-CHANGES.md` says 
 L7, L9, L16, L17 OWNER-OPEN, not assumed. Reader = audit reader role (L12). Q34 default file kept exact (`CHECK (usd >= 0)`), applied only on an owner yes. Q24 no second vendor account (nothing here adds one). Q28 D5 non-blocking, core paused.
 
 ## Independent evidence of v15 (read last)
-@@INDEP@@
+`evidence-handoff-v15-independent/00-SUMMARY.md` did NOT exist at 16:58 UTC (I waited about 10 minutes with a bounded poll; the independent run was still going). I therefore read its raw files instead, as they stood: `raw-indep-baseline.txt` ends `SUMMARY pass=122 fail=0`; `raw-indep-mutations.txt` lists 33 mutants of the v15 held files, every one CAUGHT, none survived; `raw-sha-match.txt` matches the three v15 sha256 pins; `raw-banned-indep.txt` has 0 hits in 26 files. These concern v15's held files; v16's DB-2 file has a new hash by design (4c37aea8...) and its checks are my own runs, not independent. **Nothing in these files asks for a change, but the summary (the judgement) is unread: LEAD-ONLY, read it when it lands and send what it lists.**

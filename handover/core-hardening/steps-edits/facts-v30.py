@@ -28,6 +28,11 @@ D23_CB = DEADLINE - dt.timedelta(minutes=10)
 LS23 = dt.datetime(2026, 11, 23, 18, 4)      # lead ORDER L-23NOV: latest start on Mon 23 Nov (derivation asked in v30-OPEN-FOR-LEAD)
 RV23 = dt.datetime(2026, 11, 23, 18, 19)     # key revoked by this time even if a take runs (L-23NOV)
 assert -(-NEED_S // 60) <= RL
+SEVENBACK = EK - dt.timedelta(hours=168)         # the 7-day rule: the older key's last use must be before this (A)
+BS = dt.datetime(2026, 11, 22, 18, 9)          # deadline reminder (owner action through Sun 22 Nov): revoke time 18:19 UTC minus 10 minutes
+assert SEVENBACK.strftime('%a') == 'Wed' and BS.strftime('%a') == 'Sun' and BS + dt.timedelta(minutes=10) < RV23
+GAP_MAX = 60                                      # latest start minus earliest key time, at most (minutes)
+assert (LS - EK).seconds // 60 <= GAP_MAX
 PH = {'mkc': 'model key cancelled', 'nokey': 'no key was made', 'cf': 'cancel failed', 'tp': 'time passed', 'rs': 'run started',
       'cd': 'contacts deleted <number>', 'apr': 'app passwords revoked', 'hsr': 'HubSpot apps revoked', 'dmd': 'demo mails deleted <number>',
       'acc': 'accepted', 'posted': 'posted', 'dec': 'I decline', 'ksf': 'key save failed, cancelled, new run name <name>',
@@ -42,6 +47,7 @@ F = {
  'day': DAY.strftime('%a %d %b %Y'), 'day_date': DAY.strftime('%a %b %d'), 'dl_full': '2026-11-23 ' + pair(DEADLINE), 'dl': pair(DEADLINE), 'dl_day': 'Mon 23 Nov 2026', 'dl_iso': '2026-11-23T18:29:00Z', 'dl_sp': '2026-11-23 18:29 UTC',
  'ek': pair(EK), 'okb': pair(OKB), 'ls': pair(LS), 'lf': pair(LF), 'cb': pair(CB), 'last': pair(LAST, True), 'cap': t(CAP), 'cap_x': '%d minutes' % (Y + RL + FP + MG + 10),
  'd23cb': pair(D23_CB), 'ls23': pair(LS23), 'rv23': pair(RV23), 'last_label': 'the program\'s refusal limit: ' + pair(LAST, True), 'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST', 'ls_t': t(LS), 'lf_t': t(LF), 'cb_t': t(CB),
+ 'sevenback': SEVENBACK.strftime('%a %d %b %Y ') + pair(SEVENBACK), 'bs': BS.strftime('%a %d %b %Y ') + pair(BS), 'bs_t': pair(BS), 'gap_max': str(GAP_MAX),
  'think': '20', 'ps_t': '11:08:07', 'set_t': '11:06:55', 'key_t': '11:07:30',
 }
 for k, v in PH.items(): F['ph_' + k] = v

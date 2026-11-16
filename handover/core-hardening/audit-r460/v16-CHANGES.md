@@ -43,7 +43,7 @@ Postgres evidence: `evidence-handoff-v16/pg_v16.py` through `pg_run_v16.sh`, 175
 | Unverified items without a way | table "Unverified items and how each is settled" | section 10 |
 
 ## Independent evidence of v15 (`evidence-handoff-v15-independent/`)
-See `resolve-handoff-v16.md` (last section) for what the summary file said when I read it last; if it was absent, that is stated there.
+`00-SUMMARY.md` was absent at 16:58 UTC; raw files read; see `resolve-handoff-v16.md` last section.
 
 ## Edits to carried PRs (L15)
 Hot-file lists in 7.1 and the count in the other-tracks file (13 to 14). No PR content of the other tracks changed.

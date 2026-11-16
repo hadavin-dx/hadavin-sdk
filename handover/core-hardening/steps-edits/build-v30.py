@@ -29,7 +29,9 @@ def appendix_blocks(o):
     """the long detail leaves the sheet and goes to the appendix in order: whole blocks <<F1 title ... F1>>, and inline cuts (((F5 title:: text ))) that leave the pointer "(appendix 5)"; the sheet keeps its own short text beside each"""
     parts = {}
     def add(n, t, body):
-        parts.setdefault(n, [t, []])[1].append(body.strip('\n'))
+        body = body.strip('\n')
+        if re.match(r'\d\.\d', body): body = 'Step ' + body       # a fragment never starts with a bare step number
+        parts.setdefault(n, [t, []])[1].append(body)
     def r(m):
         add(m.group(1), m.group(2), m.group(3)); return ''
     o = re.sub(r'<<F(\d+) ([^\n]*)\n(.*?)\nF\1>>\n?', r, o, flags=re.S)

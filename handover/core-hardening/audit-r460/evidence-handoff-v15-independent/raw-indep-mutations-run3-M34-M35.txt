@@ -1,0 +1,3 @@
+M34 log: v13 shape (unqualified log name in both EXECUTEs, no SET search_path on the log function): CAUGHT (SUMMARY pass=119 fail=3) failing_checks: L1b spend_log_decrease: search_path exactly pg_catalog, pg_t ; T1b temp-table attack: real log got the row ; T2d lowering still logs after revoke
+M35 log: unqualified log name but path kept pg_catalog, pg_temp: CAUGHT (SUMMARY pass=108 fail=14) failing_checks: L5b lowering (day) writes exactly 1 row ; L5c row content (a2, 2026-11-16, spend, 3.5 -> 3.25, who=rt_ ; L5d lowering (month) row content ; L5g total becoming NaN is logged ; L5h NaN to NaN not logged ; L5i NaN to 1 is a lowering (logged) ...
+TOTAL mutations=35 caught=2
