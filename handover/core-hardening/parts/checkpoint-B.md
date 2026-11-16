@@ -1,5 +1,5 @@
 # checkpoint-B (lane B, state and runtime). Audited sha b4cce5b (HEAD on disk at start: 1c50990, only handover/core-hardening/ differs).
-Start 2026-11-16 07:03 UTC (12:33 IST). Checkpoint written 07:09 UTC (14:39... see IST column in final report: 12:39 IST).
+Start 2026-11-16 07:03 UTC (12:33 IST). Checkpoint written 07:09 UTC (12:39 IST). Note: findings-B, claims-B and walk-B could not be written to disk (the Write tool refused the findings file: "Subagents should return findings as text"); their full content is in the lane B hand-back report. map-B.md and this file are on disk.
 
 ## Done (opened and read in full unless noted)
 - runtime/: agent_loop.py (all 869 lines), runs.py, plan.py, tick.py, evidence.py (walk of the agent loop done first)
