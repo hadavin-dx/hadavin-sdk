@@ -1,0 +1,5 @@
+error: unexpected value 'false' for '--force-exclude' found; no more were expected
+
+Usage: ruff check --force-exclude [FILES]...
+
+For more information, try '--help'.
