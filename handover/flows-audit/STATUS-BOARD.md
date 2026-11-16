@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:20:50Z
+UPDATED_UTC: 2026-11-16T15:21:57Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,13 +6,13 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 9
-CAPACITY: 3.29 load of 4 cores, mem 1/15 GB, RAM 1393/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 476M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 9 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 5.26 load of 4 cores, mem 1/15 GB, RAM 1634/16087 MB, disk 13G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T15:20:50Z
+PUSHED_UTC: 2026-11-16T15:21:57Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -34,17 +34,16 @@ PUSHED_UTC: 2026-11-16T15:20:50Z
 | a419eeb7 | evidence runner | sonnet | F8 flow-check final-head evidence | 15:10Z | 15:40Z | running | raw logs in flow-check/raw |
 | a7da39e2 | fixer | sonnet | FINDINGS/LEDGER round 4 | 15:17Z | 15:45Z | running | none yet |
 | a19ffc7c | fixer | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST round 20 | 15:18Z | 15:50Z | running | none yet |
-| ac2e4ff4 | reader | sonnet | RW/CT round 9 comprehension | 15:18Z | 15:35Z | running | none yet |
-| aa0423d2 | citation checker | sonnet | CT changed rows | 15:18Z | 15:35Z | running | none yet |
 | a3fe3d65 | reader | sonnet | Q31 round 7 | 15:18Z | 15:35Z | running | none yet |
 | ac1111d8 | fixer | sonnet | patch-copies round 4 (uncapped) | 15:19Z | 15:45Z | running | none yet |
 | a012fb26 | reader | sonnet | REVIEW.md round 24 stranger read | 15:21Z | 15:40Z | running | none yet |
-| ad8c0eee | design reviewer | sonnet | REVIEW.md round 24 design/least-privilege | 15:21Z | 15:40Z | running | none yet |
+| ad8c0eee | design reviewer | sonnet | REVIEW.md round 24 design | 15:21Z | 15:40Z | running | none yet |
+| a086c2de | fixer | sonnet | RW/CT round 16 (B1-B3, M4-M10, CT majors) | 15:22Z | 15:50Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 F8 round 11 fixer (after a419eeb): review-f8-r10 M1-M5 and tests F1-F12
 2 Q31 fixer if a3fe3d6 finds Blockers/Majors
-3 CT/RW batch fixer after ac2e4ff and aa0423d
+3 RW/CT fresh round 10 reader after a086c2d
 4 patch-copies second-angle reader plus code round 5 after ac1111d
 5 plan files round 21 read after a19ffc7
 
