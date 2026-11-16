@@ -2438,7 +2438,9 @@ def main():
             [dm, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
             0,
             must=[("  - ", "setting 'toEmail'"), ("  - ", want_)],
-            must_not=[val_] if nm_ == "not_an_address" else (),   # f8-r9: a filled value of a mail setting is never printed
+            must_not=[val_]
+            if nm_ == "not_an_address"
+            else (),  # f8-r9: a filled value of a mail setting is never printed
         )
     for nm_, val_ in (
         ("plain", "someone@example.test"),
