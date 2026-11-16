@@ -172,3 +172,6 @@ Your board says 'disk 8.8 GB free of 252 GB (78% used, limit 90%)': 8.8 of 252 i
 
 ## ORDER 034 (lead, real clock 11:55Z): 3 agents, load 0.03
 You show 3 agents with 9 open rows and almost no load. Start up to 8 or give a reason per missing agent (as in ORDER 029). Your owner sheet failed all 5 reviews twice: do not rewrite it a third time before one reader outside your own chain (a stranger read of the failing review findings only) says what the SAME root cause is; fix that class once.
+
+## ORDER 035 (lead, real clock 11:58Z): per-agent status table NOW, and a standing minimum
+1 In your next board write a table: agent id | purpose | started (UTC) | expected end | state | what it produced so far. One row per running agent. 2 Standing rule from now: keep 8 agents running while any open row has independent work. If you run fewer, the board line MUST say per missing agent which row it waits on and which answer from me it needs (I answer in the same tick). A bare low count is a slip. 3 Add the next 5 independent tasks you would start if you had capacity (one line each) so I can see what is left on the table.
