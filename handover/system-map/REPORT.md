@@ -1,5 +1,11 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 08:03 UTC - ORDER 005: deliverables v1 written; result review round 1 starting (3 fresh egm reviewers)
+Failed or not checked: the 65 Nits; the MASTER-MAP rows one by one; no runtime; verifier Major lines were not re-sampled by me (only the 5 Blockers). Verdict so far: RELIABLE WITH CORRECTIONS (85 of 85 Blockers+Majors checked, 0 WRONG as whole findings; 3 of 5 Blockers and 24 of 80 Majors rated too high; 15 cites past end of file).
+Closed (10): V1, V2, V3, V4, V5a, V5b, V6, H1, H2, RUN (all sonnet, read only; outputs in reviews-of-core-hardening/work/). 0 left running.
+Registered now (sonnet, read only, expected end +20 min): RV1 egm-codebase-details | RV2 egm-zoom-out | RV3 egm-comprehension, reading REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md, patches/, work/ files and the snapshot.
+Critical path: 3 reviewers -> egm-resolve -> fixes -> (round 2 only if Blocker/Major open) -> drift report -> FINAL.
+
 ## Status 07:57 UTC / IST +5:30 - ORDER 005 running; ORDER 006 (parallel by default) received and followed
 Critical path: V1-V4 + RUN (about 08:40) -> V5 compare + my second look -> REVIEW/CORRECTIONS/LEDGER -> 3 result reviewers -> resolve -> FINAL. Load check before launch: 4 cores, load 0.3, 15 GB free.
 Agents running (10, all sonnet, read only, started about 07:58-07:57 UTC, box 45 min): V1 lane A+X | V2 lane B+D1 | V3 lane C+D3 | V4 lane D2 | H1 miss hunt (vendor SDK, stages, least privilege, hardcoding) | H2 miss hunt (dead, idle, duplicate, second source) | RUN evidence runner (citations, uncited claims, counts) | V5a cut list + rung table | V5b blind classification of all core modules | V6 independent second look at the 5 Blockers.

@@ -1,0 +1,14 @@
+--- a/handover/core-hardening/AUDIT-FINDINGS.md	2026-11-16 08:01:40.537472442 +0000
++++ b/handover/core-hardening/AUDIT-FINDINGS.md	2026-11-16 08:01:40.561060954 +0000
+@@ -220,9 +220,9 @@
+ ## Findings (format: id | sev | class | evidence | what is wrong | fix | verdict | thing's own verdict | duplicate-of | guarantee / code / test | patch)
+ All patches: none (decision or session).
+ 
+-**B-01 | Blocker | UNVERIFIED-CLAIM.**
++**B-01 | Major | UNVERIFIED-CLAIM.** (cross-review ORDER 005: severity lowered from Blocker until the deployment is shown; the check is defence in depth, tools keep their own READ_OPERATIONS)
+ - Evidence: `runtime/tick.py:235 app.disabled_sources.add(key)`; `app.py:58 disabled_sources: set[str] = field(default_factory=set)`; `cli.py:299 (reviewer-corrected)` (`_tick` builds its own app with `build(None, agents)` and exits after one pass).
+-- Wrong: README.md:35 says a failed re-probe "switches off every tool that names the source ... until a probe passes". The switch is a Python set inside the tick process. Tick is documented as a separate scheduler job every 30-60 s (tick.py:1-3), so the set dies at exit and the agent-running process never sees it. Only tick exit code 1 and `tick_state.last_error` reach a person. It is a Blocker if tick runs as a separate process (the default). It is fine only if the host runs `run_tick` inside the runtime process; that is UNVERIFIED.
++- Wrong: README.md:35 says a failed re-probe "switches off every tool that names the source ... until a probe passes". The switch is a Python set inside the tick process. Tick is documented as a separate scheduler job every 30-60 s (tick.py:1-3), so the set dies at exit and the agent-running process never sees it. A failed probe step ends tick with exit code 1 and `tick_state.last_error`; a persistent failure also makes the next `build` exit 2 at start (app.py:125-128). Only an agent process that started earlier never learns of it. It matters if tick runs as a separate process (tick.py:1-3 says it does). It is fine only if the host runs `run_tick` inside the runtime process; that is UNVERIFIED.
+ - Fix: store switched-off sources in the Store and read them in `_switched_off` (app.py:469); add a test with two app objects on one store.
+ - Verdict FIX-NEEDED; own NEEDED.
+ - Guarantee: README.md:35. Code: tick.py:221-240, app.py:58,104,469. Test: tests/test_k5_round9b.py:295-314 asserts only `app.disabled_sources == {"c"}` on one object; no test found by grep for two processes sharing the flag.
