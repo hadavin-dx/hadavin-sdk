@@ -13,10 +13,10 @@ from contextlib import redirect_stderr, redirect_stdout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import fill_flows as ff  # noqa: E402
+import fill_flows as ff
 
-DEMO = os.path.normpath(os.path.join(HERE, "..", "..", "demo"))
-BASE = "/tmp/ff13"
+DEMO = os.environ.get("FF_DEMO_DIR") or os.path.normpath(os.path.join(HERE, "..", "..", "demo"))
+BASE = os.environ.get("FF_TEST_BASE", "/tmp/ff13")  # noqa: S108 - scratch dir for made-up data
 CANARY = "CANARY" + "-" + "q7x" + "-" + "zz"  # made-up, built from parts
 URL = "http://127.0.0.1:9/" + CANARY
 VALS = {
@@ -29,11 +29,34 @@ VALS = {
 }
 
 
+def rtext(path):
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def jload(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def jdump(obj, path):
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(obj, fh)
+
+
+def wtext(path, text, mode="w"):
+    with open(path, mode, encoding="utf-8") as fh:
+        fh.write(text)
+
+
 def run(*args):
     """Run the CLI as a subprocess; returns (code, stdout, stderr)."""
-    p = subprocess.run(
+    p = subprocess.run(  # noqa: S603
         [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
     )
     return p.returncode, p.stdout, p.stderr
 
@@ -44,8 +67,11 @@ def write_values(path, vals):
 
 
 def tree_hash(d):
-    return {n: hashlib.sha256(open(os.path.join(d, n), "rb").read()).hexdigest()
-            for n in sorted(os.listdir(d))}
+    out = {}
+    for n in sorted(os.listdir(d)):
+        with open(os.path.join(d, n), "rb") as fh:
+            out[n] = hashlib.sha256(fh.read()).hexdigest()
+    return out
 
 
 class Base(unittest.TestCase):
@@ -58,8 +84,12 @@ class Base(unittest.TestCase):
 
     def copy_flows(self, flavor):
         dst = os.path.join(self.t, "in-" + flavor)
-        shutil.copytree(os.path.join(DEMO, f"n8n-flows-{flavor}-v5"), dst,
-                        ignore=shutil.ignore_patterns("*.md", "*.txt"))
+        shutil.copytree(
+            os.path.join(DEMO, f"n8n-flows-{flavor}-v5"),
+            dst,
+            ignore=shutil.ignore_patterns("*.md", "*.txt"),
+            dirs_exist_ok=True,
+        )
         return dst
 
     def out(self, name="out"):
@@ -78,33 +108,29 @@ class Positive(Base):
                 self.assertNotIn(VALS["DESK_ALERT_TO"], stream)
             self.assertEqual(sorted(os.listdir(out)), sorted(os.listdir(src)))
             for n in os.listdir(src):
-                a = json.load(open(os.path.join(src, n)))
-                b = json.load(open(os.path.join(out, n)))
+                a = jload(os.path.join(src, n))
+                b = jload(os.path.join(out, n))
                 self.assertEqual(len(a["nodes"]), len(b["nodes"]))
                 self.assertEqual(a["connections"], b["connections"])
-                self.assertNotIn("$env", open(os.path.join(out, n)).read())
+                self.assertNotIn("$env", rtext(os.path.join(out, n)))
             self.assertEqual(oct(os.stat(out).st_mode & 0o777), "0o700")
             for n in os.listdir(out):
                 self.assertEqual(oct(os.stat(os.path.join(out, n)).st_mode & 0o777), "0o600")
             # the unused keys of the other flavor produce only a key-name warning
             self.assertIn("warning: key", se)
             # source untouched
-            self.assertIn("$env", open(os.path.join(src, "mf-sub-crm-mail.json")).read())
+            self.assertIn("$env", rtext(os.path.join(src, "mf-sub-crm-mail.json")))
 
     def test_expression_forms_are_correct(self):
-        b = json.load(open(os.path.join(self.out("o-x") or "", "x"))) if False else None
-        del b
         src = self.copy_flows("real")
         out = self.out()
         self.assertEqual(run("fill", "--in", src, "--values", self.vf, "--out", out)[0], 0)
-        o = json.load(open(os.path.join(out, "mf-sub-crm-mail.json")))
+        o = jload(os.path.join(out, "mf-sub-crm-mail.json"))
         q = next(n for n in o["nodes"] if "qualify" in str(n["parameters"].get("url", "")))
         self.assertEqual(q["parameters"]["url"], '={{ "' + URL.replace("{", "") + '" }}/qualify')
-        self.assertEqual(q["parameters"]["options"]["timeout"],
-                         '={{ Number("2500" || 10000) }}')
-        al = json.load(open(os.path.join(out, "mf-recovery.json")))
-        self.assertIn('={{ "' + VALS["DESK_ALERT_TO"] + '" }}',
-                      json.dumps(al).replace('\\"', '"'))
+        self.assertEqual(q["parameters"]["options"]["timeout"], '={{ Number("2500" || 10000) }}')
+        al = jload(os.path.join(out, "mf-recovery.json"))
+        self.assertIn('={{ "' + VALS["DESK_ALERT_TO"] + '" }}', json.dumps(al).replace('\\"', '"'))
 
     def test_idempotent_same_bytes(self):
         src = self.copy_flows("film")
@@ -112,7 +138,7 @@ class Positive(Base):
         self.assertEqual(run("fill", "--in", src, "--values", self.vf, "--out", o1)[0], 0)
         self.assertEqual(run("fill", "--in", src, "--values", self.vf, "--out", o2)[0], 0)
         self.assertEqual(tree_hash(o1), tree_hash(o2))
-        self.assertEqual(open(o1 + ".manifest.json").read(), open(o2 + ".manifest.json").read())
+        self.assertEqual(rtext(o1 + ".manifest.json"), rtext(o2 + ".manifest.json"))
 
     def test_already_filled_input_exit_4(self):
         src = self.copy_flows("film")
@@ -140,8 +166,15 @@ class Positive(Base):
 
 class Negative(Base):
     def fill(self, src=None, vf=None, out=None):
-        return run("fill", "--in", src or self.copy_flows("real"),
-                   "--values", vf or self.vf, "--out", out or self.out())
+        return run(
+            "fill",
+            "--in",
+            src or self.copy_flows("real"),
+            "--values",
+            vf or self.vf,
+            "--out",
+            out or self.out(),
+        )
 
     def test_missing_key(self):
         v = {k: x for k, x in VALS.items() if k != "DESK_URL"}
@@ -168,10 +201,10 @@ class Negative(Base):
     def test_leftover_token_in_added_node(self):
         src = self.copy_flows("real")
         p = os.path.join(src, "mf-form.json")
-        o = json.load(open(p))
+        o = jload(p)
         o["nodes"][0]["parameters"]["extra"] = "={{ $env.DESK_OTHER_THING }}"
         o["nodes"][1]["parameters"]["dyn"] = "={{ $env[name] }}"
-        json.dump(o, open(p, "w"))
+        jdump(o, p)
         code, _, se = self.fill(src=src)
         self.assertEqual(code, 1)
         self.assertIn("DESK_OTHER_THING", se)
@@ -179,15 +212,15 @@ class Negative(Base):
         # a non-DESK/MF name is refused even when a value exists for it
         write_values(self.vf, {**VALS, "PATH": "x"})
         o["nodes"][0]["parameters"]["extra"] = "$env.PATH"
-        json.dump(o, open(p, "w"))
+        jdump(o, p)
         self.assertEqual(self.fill(src=src)[0], 1)
 
     def test_dynamic_env_use_refused(self):
         src = self.copy_flows("real")
         p = os.path.join(src, "mf-form.json")
-        o = json.load(open(p))
+        o = jload(p)
         o["nodes"][1]["parameters"]["dyn"] = "={{ $env[name] }}"
-        json.dump(o, open(p, "w"))
+        jdump(o, p)
         code, _, se = self.fill(src=src)
         self.assertEqual(code, 1)
         self.assertIn("mf-form.json", se)
@@ -204,7 +237,7 @@ class Negative(Base):
 
     def test_output_exists(self):
         os.mkdir(self.out())
-        code, _, se = self.fill()
+        code, _, _ = self.fill()
         self.assertEqual(code, 1)
         self.assertEqual(os.listdir(self.out()), [])
         src = self.copy_flows("real")
@@ -215,16 +248,16 @@ class Negative(Base):
     def test_bad_values(self):
         for bad in ('has"quote', "back\\slash", "new\nline", "tab\there", "cr\rx", "u\u2028x"):
             with open(self.vf, "w", newline="") as fh:
-                for k, v in VALS.items():
-                    fh.write(f"{k}={bad if k == 'DESK_URL' else v}\n")
+                fh.writelines(f"{k}={bad if k == 'DESK_URL' else v}\n" for k, v in VALS.items())
             code, so, se = self.fill()
             if bad in ('has"quote', "back\\slash"):
                 # quotes and backslashes are legal; they must be escaped, not refused
                 self.assertEqual(code, 0, bad)
-                o = json.load(open(os.path.join(self.out(), "mf-sub-crm-mail.json")))
-                url = next(n for n in o["nodes"]
-                           if "/qualify" in str(n["parameters"].get("url", "")))
-                lit = url["parameters"]["url"][len("={{ "):-len(" }}/qualify")]
+                o = jload(os.path.join(self.out(), "mf-sub-crm-mail.json"))
+                url = next(
+                    n for n in o["nodes"] if "/qualify" in str(n["parameters"].get("url", ""))
+                )
+                lit = url["parameters"]["url"][len("={{ ") : -len(" }}/qualify")]
                 self.assertEqual(json.loads(lit), bad)  # the literal reads back exactly
                 shutil.rmtree(self.out())
                 os.unlink(self.out() + ".manifest.json")
@@ -236,7 +269,7 @@ class Negative(Base):
     def test_braces_cannot_close_expression(self):
         write_values(self.vf, {**VALS, "DESK_URL": "http://127.0.0.1:9/a}}b{{c"})
         self.assertEqual(self.fill()[0], 0)
-        t = open(os.path.join(self.out(), "mf-sub-crm-mail.json")).read()
+        t = rtext(os.path.join(self.out(), "mf-sub-crm-mail.json"))
         self.assertNotIn("a}}b", t)
         self.assertIn("\\\\u007d\\\\u007d", t)
 
@@ -256,7 +289,7 @@ class Negative(Base):
 
     def test_invalid_json_input(self):
         src = self.copy_flows("real")
-        open(os.path.join(src, "mf-form.json"), "w").write("{not json")
+        wtext(os.path.join(src, "mf-form.json"), "{not json")
         code, _, se = self.fill(src=src)
         self.assertEqual(code, 1)
         self.assertIn("mf-form.json", se)
@@ -278,13 +311,13 @@ class Delete(Base):
 
     def test_manifest_has_no_values(self):
         out = self.made()
-        m = open(out + ".manifest.json").read()
+        m = rtext(out + ".manifest.json")
         self.assertNotIn(CANARY, m)
         self.assertEqual(oct(os.stat(out + ".manifest.json").st_mode & 0o777), "0o600")
 
     def test_refuses_extra_file(self):
         out = self.made()
-        open(os.path.join(out, "mine.txt"), "w").write("keep")
+        wtext(os.path.join(out, "mine.txt"), "keep")
         code, _, se = run("delete", "--out", out)
         self.assertEqual(code, 1)
         self.assertIn("mine.txt", se)
@@ -293,8 +326,8 @@ class Delete(Base):
     def test_hash_change(self):
         out = self.made()
         p = os.path.join(out, "mf-form.json")
-        open(p, "a").write(" ")
-        code, _, se = run("delete", "--out", out)
+        wtext(p, " ", "a")
+        code, _, _ = run("delete", "--out", out)
         self.assertEqual(code, 1)
         self.assertTrue(os.path.exists(p))  # nothing deleted
         self.assertEqual(run("delete", "--out", out, "--force-hash")[0], 0)
@@ -303,14 +336,14 @@ class Delete(Base):
     def test_symlink_in_folder(self):
         out = self.made()
         victim = os.path.join(self.t, "victim.txt")
-        open(victim, "w").write("precious")
+        wtext(victim, "precious")
         p = os.path.join(out, "mf-form.json")
         os.unlink(p)
         os.symlink(victim, p)
         for extra in ((), ("--force-hash",)):
             code, _, _ = run("delete", "--out", out, *extra)
             self.assertEqual(code, 1)
-            self.assertEqual(open(victim).read(), "precious")
+            self.assertEqual(rtext(victim), "precious")
 
     def test_symlinked_out_dir_and_manifest_names(self):
         out = self.made()
@@ -319,9 +352,9 @@ class Delete(Base):
         self.assertEqual(run("delete", "--out", link)[0], 1)
         self.assertTrue(os.path.isdir(out))
         # a manifest naming a path outside the folder is refused
-        man = json.load(open(out + ".manifest.json"))
+        man = jload(out + ".manifest.json")
         man["files"]["../victim.txt"] = "0" * 64
-        json.dump(man, open(out + ".manifest.json", "w"))
+        jdump(man, out + ".manifest.json")
         self.assertEqual(run("delete", "--out", out)[0], 1)
         self.assertTrue(os.path.exists(os.path.join(out, "mf-form.json")))
 
@@ -339,29 +372,33 @@ class Unit(Base):
         self.assertEqual(s.string("={{$env.MF_CRM_URL}}"), '={{"x"}}')
         self.assertEqual(s.string("={{ $env['MF_CRM_URL'] }}"), '={{ "x" }}')
         self.assertEqual(s.string('={{ $env["MF_CRM_URL"] }}'), '={{ "x" }}')
-        self.assertEqual(s.string("={{ $env[ 'MF_CRM_URL' ] + $env.MF_CRM_URL }}"),
-                         '={{ "x" + "x" }}')
-        self.assertEqual(s.string("=http://$env.MF_CRM_URL/{{ $env.MF_CRM_URL }}"),
-                         '=http://x/{{ "x" }}')
+        self.assertEqual(
+            s.string("={{ $env[ 'MF_CRM_URL' ] + $env.MF_CRM_URL }}"), '={{ "x" + "x" }}'
+        )
+        self.assertEqual(
+            s.string("=http://$env.MF_CRM_URL/{{ $env.MF_CRM_URL }}"), '=http://x/{{ "x" }}'
+        )
         self.assertEqual(s.string("={{ $env.DESK_URL }}"), '={{ "a\\"b\\\\c" }}')
         self.assertEqual(s.bad, set())
         s.string("={{ $env.DESK_NOPE }}")
         self.assertEqual(s.bad, {"DESK_NOPE"})
 
     def test_values_never_in_messages_in_process(self):
-        write_values(self.vf, {**VALS, "DESK_URL": CANARY + "\n"})
+        with open(self.vf, "w", newline="") as fh:
+            fh.write("DESK_URL=" + CANARY + "\r\n")
         buf = io.StringIO()
         with redirect_stdout(buf), redirect_stderr(buf):
-            code = ff.main(["fill", "--in", self.copy_flows("real"),
-                            "--values", self.vf, "--out", self.out()])
+            code = ff.main(
+                ["fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", self.out()]
+            )
         self.assertEqual(code, 1)
         self.assertNotIn(CANARY, buf.getvalue())
 
     def test_property_roundtrip_random_values(self):
         import random
 
-        rnd = random.Random(7)
-        alphabet = 'ab"\\{}$\'`/:.%\u00e9\u4e2d '
+        rnd = random.Random(7)  # noqa: S311 - test data only
+        alphabet = "ab\"\\{}$'`/:.%\u00e9\u4e2d "
         for _ in range(200):
             v = "".join(rnd.choice(alphabet) for _ in range(rnd.randint(1, 12)))
             if "$env" in v or v.strip() == "" and not v:

@@ -26,9 +26,7 @@ EXIT_NOTHING = 4  # fill found no token at all (already filled, or the wrong fol
 
 NAME_OK = re.compile(r"^(DESK|MF)_[A-Z0-9_]+$")
 KEY_OK = re.compile(r"^[A-Z][A-Z0-9_]*$")
-TOKEN = re.compile(
-    r"\$env(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*(['\"])([^'\"\]]*)\2\s*\])"
-)
+TOKEN = re.compile(r"\$env(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*(['\"])([^'\"\]]*)\2\s*\])")
 ANY_ENV = re.compile(r"\$env")
 BRACES = re.compile(r"(\{\{.*?\}\})", re.DOTALL)
 PLACEHOLDERS = ("PLACEHOLDER", "SUB_WORKFLOW_ID", "PG_CREDENTIAL_ID", "SMTP_CREDENTIAL_ID")
@@ -218,8 +216,10 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
             "DESK_/MF_ name): " + ", ".join(sorted(sub.bad))
         )
     if not found_any:
-        print("nothing to fill: no $env token in the input (already filled, or wrong folder)",
-              file=sys.stderr)
+        print(
+            "nothing to fill: no $env token in the input (already filled, or wrong folder)",
+            file=sys.stderr,
+        )
         return EXIT_NOTHING
     for k in sorted(set(values) - sub.used):
         print(f"warning: key {k} in the values file is not used by any node", file=sys.stderr)
@@ -247,11 +247,11 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
         except OSError:
             pass
         raise
-    left_ph = sum(
-        d.decode("utf-8").count(p) for d in outputs.values() for p in PLACEHOLDERS
+    left_ph = sum(d.decode("utf-8").count(p) for d in outputs.values() for p in PLACEHOLDERS)
+    print(
+        f"filled {len(outputs)} files, {len(sub.used)} names used, "
+        f"{left_ph} placeholder strings still present (filled by a later step)"
     )
-    print(f"filled {len(outputs)} files, {len(sub.used)} names used, "
-          f"{left_ph} placeholder strings still present (filled by a later step)")
     return EXIT_OK
 
 
@@ -290,8 +290,9 @@ def do_delete(out_dir: str, force_hash: bool) -> int:
         with open(manifest_path, "rb") as fh:
             man = json.loads(fh.read().decode("utf-8"))
         files = man["files"]
-        assert man.get("format") == MANIFEST_FORMAT and isinstance(files, dict)
-    except Exception:
+        if man.get("format") != MANIFEST_FORMAT or not isinstance(files, dict):
+            raise ValueError
+    except (OSError, ValueError, KeyError, AttributeError, TypeError):
         raise Refused("manifest is not a valid fill_flows manifest; nothing deleted") from None
     for n, h in files.items():
         if not isinstance(n, str) or n in ("", ".", "..") or "/" in n or "\\" in n or "\0" in n:
@@ -301,7 +302,9 @@ def do_delete(out_dir: str, force_hash: bool) -> int:
     present = set(os.listdir(out_dir))
     extra = sorted(present - set(files))
     if extra:
-        raise Refused(f"folder holds files not in the manifest: {', '.join(extra)}; nothing deleted")
+        raise Refused(
+            f"folder holds files not in the manifest: {', '.join(extra)}; nothing deleted"
+        )
     todo = []
     for n, h in sorted(files.items()):
         p = os.path.join(out_dir, n)
@@ -310,8 +313,9 @@ def do_delete(out_dir: str, force_hash: bool) -> int:
         if os.path.islink(p) or not os.path.isfile(p):
             raise Refused(f"{n}: symlink or not a regular file; nothing deleted")
         if sha256_nofollow(p) != h and not force_hash:
-            raise Refused(f"{n}: content changed since it was written (use --force-hash); "
-                          "nothing deleted")
+            raise Refused(
+                f"{n}: content changed since it was written (use --force-hash); nothing deleted"
+            )
         todo.append(p)
     for p in todo:
         os.unlink(p)
@@ -344,7 +348,7 @@ def main(argv=None) -> int:
     except Refused as e:
         print(f"refused: {e}", file=sys.stderr)
         return EXIT_REFUSED
-    except Exception as e:  # never print the exception text: it could carry a path or value
+    except Exception as e:  # noqa: BLE001  never print the exception text: it could carry a path or value
         print(f"failed: {type(e).__name__}", file=sys.stderr)
         return EXIT_REFUSED
 
