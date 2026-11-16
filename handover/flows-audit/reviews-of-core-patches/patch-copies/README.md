@@ -223,7 +223,7 @@ run() {  # $1 = folder, $2 = tag; writes $W/$2.log, $W/$2.rc (the exit code of p
   ( cd "$1" || { echo 99 > "$W/$2.rc"; echo "no folder $1" > "$W/$2.log"; exit 0; }   # 99 = the folder is missing; the verdict then says NOT PASSED
     E uv run --python "$PY" --locked --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rfE > "$W/$2.log" 2>&1; echo $? > "$W/$2.rc" )
   local rc; rc=$(cat "$W/$2.rc"); tail -n 1 "$W/$2.log"
-  if { [ "$rc" = 0 ] || [ "$rc" = 1 ]; } && tail -n 1 "$W/$2.log" | grep -Eq '[0-9]+ (failed|passed|skipped|deselected|errors?) .* in [0-9.]+s'; then echo "$2 exit=$rc (expected 1 while the two baseline failures exist, 0 after they are fixed)"
+  if { [ "$rc" = 0 ] || [ "$rc" = 1 ]; } && tail -n 1 "$W/$2.log" | grep -Eq '[0-9]+ (failed|passed|skipped|deselected|errors?).* in [0-9.]+s'; then echo "$2 exit=$rc (expected 1 while the two baseline failures exist, 0 after they are fixed)"
   else echo "UNEXPECTED $2 exit=$rc or no pytest summary line as the last line of the log: STOP, run nothing below, keep the logs (keep_logs) and report as \"Where to send a failure report\" says"; return 1; fi
   grep -E '^(FAILED|ERROR) ' "$W/$2.log" | sed 's/ - .*//' | sort > "$W/$2-failed.txt"   # a captured-log line of a test that starts with FAILED or ERROR would also match and show as a failed test: that can only turn clause (a) or (c) to FAILED, never a false pass (fail safe; read the log)
 }
