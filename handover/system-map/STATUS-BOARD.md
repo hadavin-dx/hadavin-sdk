@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:02:22Z
-PUSHED_UTC: 2026-11-16T13:02:22Z
+UPDATED_UTC: 2026-11-16T13:03:40Z
+PUSHED_UTC: 2026-11-16T13:03:40Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -44,19 +44,18 @@ INTERRUPTED: none
 
 ## AGENTS
 
+ListAgents at 2026-11-16T13:03:40Z: no agent running (all 8 below finished). Reason for 0 of 8: the reads finished and I had not yet relaunched; relaunch follows this push.
+
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a491026889941c9f0 | L5ac re-read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a61de0b562fec3583 | row1-builder-brief read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a4b52c8efd1c6a768 | LEAD-NOTICE read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| ac98bf7b3d48db305 | rehearsal-limits read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a87e13904d06df5e2 | ARCHIVE-CUT-LIST read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a0b405b78bc48e328 | M17 read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a7a6e0b108c184e56 | STATUS-BOARD read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a4292119df862631f | critical-path-r1 read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-| a51e8723fda241341 | critical-path read (wrong path, no review) (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
-
-Zero running at this beat; 8 start right after this push.
+| a5856b33ae9c5bea2 | L1c read r3 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| ae3dc8e6b1c2ea623 | merged-findings read r4 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| a897de595fd974581 | L5b read r3 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| ace5b0b57fa6af8eb | L4c read r4 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| aacadc6a055f3ccb6 | FINAL-CROSSCHECK read r4 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| a8624f40b1580f9f1 | BRIEF-LANE read r4 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| a9a1bcefeb799b45b | row1-builder-brief read r2 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
+| a7c5bfb227ca94628 | critical-path-r1 read r2 (sonnet) | 13:00 | 13:03 | completed | report digested 895-901 (row1 digest 894) |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
