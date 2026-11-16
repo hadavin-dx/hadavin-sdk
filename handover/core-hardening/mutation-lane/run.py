@@ -448,17 +448,20 @@ def write_target(
 
 
 def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tuple[int, bool]:
-    """r7 review N7: a test of the mutant may have run chmod on the file under test (mode 444); then the planted text
-    could never be written back. The owner may always change the mode of an own file: on the OPEN read-only file (a
-    regular file, our own, exactly one name) give the owner write permission, then open the SAME inode for writing from
-    the same folder descriptor. The recorded mode is set back by the caller. Anything else stays read-only (compared only)."""
+    """r7 review N7: a test of the mutant may have run chmod on the file under test (mode 444, or 000); then the planted
+    text could never be written back. The owner may always change the mode of an own file: on the OPEN file (a regular
+    file, our own, exactly one name) give the owner read and write permission, then open the SAME inode for writing from
+    the same folder descriptor. The recorded mode is set back by the caller. Anything else stays as it is (compared only)."""
     st = os.fstat(fd)
     if not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid() or st.st_nlink != 1:
         return fd, False
-    with os.fdopen(os.dup(fd), "rb") as probe:
-        if probe.read() == saved:  # nothing to write: a read-only file that holds the original is left alone
-            return fd, False
-    os.fchmod(fd, stat.S_IMODE(st.st_mode) | 0o200)
+    try:
+        with os.fdopen(os.dup(fd), "rb") as probe:
+            if probe.read() == saved:  # nothing to write: a read-only file that holds the original is left alone
+                return fd, False
+    except OSError:  # an O_PATH descriptor (mode 000) cannot be read: assume it differs
+        pass
+    os.chmod(f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode) | 0o600)  # works on O_PATH descriptors, follows the inode
     try:
         fd2 = os.open(name, base | os.O_RDWR, dir_fd=pfd)
     except OSError:
@@ -499,8 +502,11 @@ def restore_target(
                 raise
             fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode or 0o644, dir_fd=pfd)
             created = writable = True
-        except PermissionError:  # a read-only file: it can still be compared
-            fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
+        except PermissionError:  # a read-only file: it can still be compared (mode 000: not even that, O_PATH only)
+            try:
+                fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
+            except PermissionError:
+                fd = os.open(name, os.O_PATH | os.O_NOFOLLOW, dir_fd=pfd)
             if mode is not None:
                 fd, writable = _make_writable(fd, name, pfd, base, saved)
         except OSError as e:
