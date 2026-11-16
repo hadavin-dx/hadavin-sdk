@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T08:34:34Z
+UPDATED_UTC: 2026-11-16T08:35:16Z
 SESSION: flows-audit
 ORDER: 007 (and 008 board)
 STATE: WORKING
@@ -8,8 +8,8 @@ ITEMS_OPEN: 1
 PERCENT: 55
 AGENTS_RUNNING: 1
 INTERRUPTED: none
-NEXT: apply zoom-out fixes after codebase-details report; ORDER 012 applied (Q3 answered)
-PUSHED_UTC: 2026-11-16T08:34:34Z
+NEXT: wait for codebase-details report, then resolve and fix
+PUSHED_UTC: 2026-11-16T08:35:16Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
