@@ -1,0 +1,69 @@
+baseline: check-v31 FAIL lines 9 (all C19 in v31-CHANGES.md at this snapshot); indep31 findings 0
+H01 src  check-v31=CAUGHT [C03,C79] | indep31=CAUGHT [I02] | deadline moved 10 minutes in the facts
+H02 src  check-v31=CAUGHT [C03,C04,C19,C73] | indep31=CAUGHT [I02] | post-by IST wrong
+H03 src  check-v31=CAUGHT [C03,C04,C151,C179,C18,C187] | indep31=CAUGHT [I02] | IST offset 5:00 for every computed pair
+H04 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I02] | one IST time swapped (earliest key time) in the sheet source
+H05 src  check-v31=CAUGHT [C210] | indep31=MISSED [-] | revoke time 18:19 changed to 18:29 (both halves consistent) in the sheet
+H06 src  check-v31=CAUGHT [C159] | indep31=CAUGHT [I10] | the cancel-by alarm step deleted from both sheets
+H07 src  check-v31=CAUGHT [C176,C185,C62] | indep31=CAUGHT [I10] | the 7-day rule dropped (wording)
+H08 src  check-v31=CAUGHT [C176,C222] | indep31=CAUGHT [I10] | the "less than 7 days ago take B" sentence changed
+H09 src  check-v31=MISSED [-] | indep31=CAUGHT [I10] | the warning beside default A removed (lead note)
+H10 src  check-v31=CAUGHT [C55] | indep31=CAUGHT [I07] | anthropic-style key built from parts, in the sheet
+H11 src  check-v31=CAUGHT [C55] | indep31=CAUGHT [I07] | hyphenated sk- style key in the sheet
+H12 src  check-v31=CAUGHT [C55] | indep31=CAUGHT [I07] | AWS-shaped key (not the allowed example) in the sheet
+H13 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I03] | wrong weekday on deadline day
+H14 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I03] | wrong weekday on run day
+H15 src  check-v31=CAUGHT [C03,C04,C73] | indep31=CAUGHT [I03] | post-by day Fri 25 Nov
+H16 src  check-v31=CAUGHT [C06] | indep31=CAUGHT [I08] | banned string added to the sheet (string never printed)
+H17 src  check-v31=CAUGHT [C226] | indep31=CAUGHT [I09] | real-shaped email address in the sheet
+H18 src  check-v31=MISSED [-] | indep31=CAUGHT [I05] | absolute path in the sheet
+H19 src  check-v31=CAUGHT [C19] | indep31=CAUGHT [I06] | internal code Q27 in the owner sheet
+H20 src  check-v31=MISSED [-] | indep31=CAUGHT [I06] | internal code ORD: in the owner sheet
+H21 src  check-v31=MISSED [-] | indep31=CAUGHT [I06] | internal code DEC: in the owner sheet
+H22 src  check-v31=CAUGHT [C07,C171] | indep31=CAUGHT [I01] | sheet padded by 130 words (over the 6,300 cap)
+H23 src  check-v31=CAUGHT [C138,C14c,C172,C25] | indep31=MISSED [-] | alarm count changed
+H24 src  check-v31=CAUGHT [C215] | indep31=MISSED [-] | sentence on sheet B older-key cancel removed
+H25 src  check-v31=MISSED [-] | indep31=CAUGHT [I10] | one-letter rule shortened
+H26 src  check-v31=CAUGHT [C213] | indep31=CAUGHT [I10] | lead page: lead message releases the older-key cancel
+H27 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I02] | lead note: wrong IST for 18:04
+H28 src  check-v31=CAUGHT [C03] | indep31=MISSED [-] | start margin 860 s changed to 900
+H29 src  check-v31=CAUGHT [BUILD] | indep31=CAUGHT [-] | input tokens changed (price per call)
+H30 src  check-v31=CAUGHT [C12] | indep31=CAUGHT [I10] | the word "cancel failed" replaced everywhere
+H31 src  check-v31=CAUGHT [C12,C21] | indep31=CAUGHT [I10] | the word "model key cancelled" replaced everywhere
+H32 src  check-v31=CAUGHT [C03] | indep31=MISSED [-] | seconds dropped from the last-start pair
+H33 src  check-v31=MISSED [-] | indep31=MISSED [-] | 7-day date computed with 160 hours
+H34 src  check-v31=CAUGHT [C176,C185,C62] | indep31=CAUGHT [I10] | 7-day rule changed to 5 days
+H35 src  check-v31=CAUGHT [C176] | indep31=MISSED [-] | rule inverted (take A)
+H36 src  check-v31=CAUGHT [C28,C53] | indep31=MISSED [-] | danger sign W9 label renamed W8
+H37 src  check-v31=MISSED [-] | indep31=MISSED [-] | cancel-list label L5 renamed L4
+H38 src  check-v31=MISSED [-] | indep31=MISSED [-] | UNVERIFIED label removed from section 6 heading
+H39 src  check-v31=CAUGHT [C19,C195,C73] | indep31=CAUGHT [I02] | IST half dropped from post-by in heading
+H40 src  check-v31=CAUGHT [C04,C17,C48] | indep31=MISSED [-] | price per call changed to 0.28 in one place of the sheet
+H41 src  check-v31=CAUGHT [C149,C189] | indep31=CAUGHT [I10] | lead note: "Money-safe" removed from the default A sentence
+H42 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I03] | sheet date Mon 16 Dec 2026 (a Wednesday)
+H43 ANCHOR NOT FOUND v31-OPEN-FOR-LEAD-SOURCE.md | open list: deadline IST wrong
+H44 src  check-v31=CAUGHT [C224] | indep31=CAUGHT [I10] | one OWNER FILLS placeholder misspelled
+H45 src  check-v31=CAUGHT [C224] | indep31=CAUGHT [I10] | one LEAD FILLS placeholder misspelled
+H46 ANCHOR NOT FOUND OWNER-SHEET-v31-SOURCE.md | limit 13.21 changed (if used in the sheet)
+H47 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I02] | cancel-by pair wrong (IST)
+H48 src  check-v31=CAUGHT [C04] | indep31=CAUGHT [I02] | older-key time pair wrong (IST)
+P01 page check-v31=CAUGHT [C01] | indep31=CAUGHT [I10] | built sheet A: cancel-by alarm wording cut
+P02 page check-v31=CAUGHT [C01] | indep31=MISSED [-] | built appendix A: 18:19 changed to 18:29 (pair stays consistent)
+P03 page check-v31=CAUGHT [C01,C04] | indep31=CAUGHT [I02] | built appendix A: deadline IST wrong
+P04 page check-v31=CAUGHT [C01,C19,C201] | indep31=CAUGHT [I04] | built sheet B: pointer to a non-existent appendix part
+P05 ANCHOR NOT FOUND OWNER-FILM-PERSON-v31.md | built film page: wrong IST
+P06 page check-v31=CAUGHT [C01] | indep31=MISSED [-] | built card B: one cancel-by renamed
+P07 page check-v31=CAUGHT [C01,C176,C185,C62] | indep31=CAUGHT [I10] | built sheet A: "(7 days)" dropped
+P08 page check-v31=CAUGHT [C01,C04] | indep31=CAUGHT [I03] | built sheet A: wrong weekday
+P09 page check-v31=CAUGHT [C01] | indep31=CAUGHT [I10] | built lead note: the "warning beside it" label removed (warning text stays)
+P10 page check-v31=CAUGHT [C01,C55] | indep31=CAUGHT [I07] | built sheet A: secret-shaped string
+P11 page check-v31=CAUGHT [C01,C12] | indep31=MISSED [-] | built card A: a "cancel failed" word changed
+P12 ANCHOR NOT FOUND OWNER-APPENDIX-v31-B.md | built appendix B: 7-day-back date changed (weekday right)
+SUMMARY total 60, anchor-not-found 4
+mode src: 46 mutations; check-v31 caught 38; indep31 caught 35; both missed 3; only check-v31 8; only indep31 5
+mode page: 10 mutations; check-v31 caught 10; indep31 caught 7; both missed 0; only check-v31 3; only indep31 0
+   page mode, check-v31 caught by a code other than C01 (and C19): 6 of 10
+NEITHER catches: H33 (7-day date computed with 160 hours), H37 (cancel-list label L5 renamed L4), H38 (UNVERIFIED label removed from section 6 heading)
+check-v31 misses: H09, H18, H20, H21, H25, H33, H37, H38
+indep31 misses: H05, H23, H24, H28, H32, H33, H35, H36, H37, H38, H40, P02, P06, P11
+done rc 0

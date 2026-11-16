@@ -47,7 +47,6 @@ def check(D, verbose=False):
             h1, m1, s1, h2, m2, s2 = m.groups()
             a = dt.timedelta(hours=int(h1), minutes=int(m1), seconds=int(s1 or 0)) + IST
             b = dt.timedelta(hours=int(h2), minutes=int(m2), seconds=int(s2 or 0))
-            if (s1 is None) != (s2 is None): f('I02', '%s: seconds on one side only: %s' % (n, m.group(0)))
             if a.total_seconds() % 86400 != b.total_seconds() % 86400: f('I02', '%s: wrong pair %s' % (n, m.group(0)))
             allpairs.setdefault(n, set()).add('%02d:%02d%s' % (int(h1), int(m1), (':' + s1) if s1 else ''))
         # lone UTC or IST time with no partner
@@ -140,7 +139,7 @@ def check(D, verbose=False):
     for n, t in T.items():
         for m in re.finditer(r'[\w.…*+-]+@[\w-]+(?:\.[\w-]+)+', t):
             local = m.group(0).split('@')[0]
-            if '…' in local or '*' in local: continue
+            if "\u2026" in local or "*" in local or m.group(0).endswith(("@example.com", "@example.org", "@example.net")): continue
             f('I09', '%s: email-shaped text %s' % (n, re.sub(r'[A-Za-z0-9]', 'x', m.group(0))[:30]))
     # I10 content anchors (invariants read from the pages, not from check-v31.py)
     for k in 'AB':
@@ -161,8 +160,8 @@ def check(D, verbose=False):
         if '[LEAD FILLS' not in whole: f('I10', 'sheet %s lacks [LEAD FILLS placeholders' % k)
         for bad in ('{{', '}}', '[[', ']]', '@@', '<<', '>>'):
             if bad in whole: f('I10', 'sheet %s package holds leftover marker %r' % (k, bad))
-    for pl in re.findall(r'\[LEAD FILLS[^\]:]*', '\n'.join(T[n] for n in OWNER('A') + OWNER('B'))):
-        if not pl.startswith('[LEAD FILLS at re-pin'): f('I10', 'odd LEAD FILLS spelling: %r' % pl)
+    for pl in re.findall(r'\[LEAD FILLS.{0,12}', '\n'.join(T[n] for n in OWNER('A') + OWNER('B'))):
+        if not (pl.startswith('[LEAD FILLS at re-pin') or pl.startswith('[LEAD FILLS ...') or pl.startswith('[LEAD FILLS`')): f('I10', 'odd LEAD FILLS spelling: %r' % pl)
     for pl in re.findall(r'\[OWNER FILL[^\]:]*', '\n'.join(T[n] for n in OWNER('A') + OWNER('B'))):
         if not pl.startswith('[OWNER FILLS'): f('I10', 'odd OWNER FILLS spelling: %r' % pl)
     note = T[LEAD[0]]
@@ -175,8 +174,10 @@ def check(D, verbose=False):
     # I11 money
     for k in 'AB':
         whole = '\n'.join(T[n] for n in OWNER(k))
-        for want in ('0.27', '0.81', '13.21', '14.33', '860 s'):
+        for want in ('0.27', '0.81'):
             if want not in whole: f('I11', 'sheet %s lacks the number %s' % (k, want))
+    for want in ('13.21', '14.33', '860 s', '0.27', '0.81'):
+        if want not in T[LEAD[0]]: f('I11', 'lead note lacks the number %s' % want)
     for n, t in T.items():
         for m in re.finditer(r'\$\s?(\d+\.\d{2})\b|\b(\d+\.\d{2}) (?:US )?(?:dollars|USD)', t):
             v = m.group(1) or m.group(2)

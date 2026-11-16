@@ -159,4 +159,76 @@ R13 CAUGHT by C97 | 8.7 profile removal widened
 R14 CAUGHT by C99 | sample numbers message loses the gap slot
 R15 CAUGHT by C100 | create-form scopes widened
 R16 CAUGHT by C28 | W9 older key exposure trigger weakened
-R17 
+R17 CAUGHT by C101 | laptop sleep value dropped
+R18 CAUGHT by C91 | FREEZE is called a cancel
+R19 CAUGHT by C98 | word key given a second meaning
+R20 CAUGHT by C103 | profile name differs between steps
+R21 CAUGHT by C95 | Chrome profile how-to and ask-the-lead removed
+R22 CAUGHT by C104 | entry to revoke guessed
+W01 CAUGHT by C172 | A or B: the fourth alarm word removed
+W02 CAUGHT by C172 | older-key point step renamed
+W03 CAUGHT by C172 | FREEZE stops the older-key cancel
+W04 CAUGHT by C173 | sheet letter removed from the heading
+W05 CAUGHT by C174 | n8n slot by name removed
+W06 CAUGHT by C175 | look key scopes clause
+W07 CAUGHT by C176 | A/B condition reversed
+W08 CAUGHT by C177 | 18:14 without its label
+W09 CAUGHT by C178 | lease sentence put back in the public post
+W10 CAUGHT by C179 | latest start of 23 Nov changed
+W11 CAUGHT by C180 | placeholder label changed
+W12 CAUGHT by C181 | R8 word set changed
+W13 CAUGHT by C182 | 168 hours wording
+W14 CAUGHT by C183 | open question reference removed
+W15 CAUGHT by C184 | E-52 UNVERIFIED row changed
+W16 CAUGHT by C171 | sheet grows over 6,300 words
+X01 CAUGHT by C185 | 7-day lag sentence removed
+X02 CAUGHT by C186 | 7.11 escape put back
+X03 CAUGHT by C187 | deadline backstop removed from the sheet
+X04 CAUGHT by C188 | note says the older key in A waits for the lead
+X05 CAUGHT by C189 | 7-day warning removed from the default line
+X06 CAUGHT by C190 | Recall page no longer a stop
+X07 CAUGHT by C191 | clipboard manager rule removed
+X08 CAUGHT by C192 | film person restrictions removed
+X09 CAUGHT by C192 | film person stops for the From column
+X10 CAUGHT by C193 | revoke name rule removed
+X11 CAUGHT by C194 | gap cap changed in facts
+X12 CAUGHT by C195 | UTC time without its IST pair
+X13 CAUGHT by C196 | three waits not named
+X14 CAUGHT by C197 | failed cancel calls more than one person
+X15 CAUGHT by C198 | press Enter removed from 6.4
+X16 CAUGHT by C199 | orphaned appendix fragment
+X17 CAUGHT by C200 | double colon
+X18 CAUGHT by C201 | appendix part number gap
+X19 CAUGHT by C202 | retire check not defined
+X20 CAUGHT by C203 | at re-pin not explained
+X21 CAUGHT by C206 | placeholder spelling in the open list
+X22 CAUGHT by C207 | open row 109 missing
+X23 CAUGHT by C187 | deadline reminder not set after the yes
+X24 CAUGHT by C209 | 18:04 plan-fact sentence removed from the note
+X25 CAUGHT by C185 | 7-day rule worded twice
+X26 CAUGHT by C186 | 7.11 forced cancel uses the claim phrase
+X27 CAUGHT by C196 | 5-minute rule worded differently in 6.2
+Y01 CAUGHT by BUILD | Monday reminder time changed
+Y02 CAUGHT by C210 | dead Mon 23 Nov paragraph back
+Y03 CAUGHT by C212 | old default wording back in the open list
+Y04 CAUGHT by C213 | lead message releases the older-key cancel (H06 phrasing)
+Y05 CAUGHT by C213 | older-key cancel waits for a lead word (other phrasing)
+Y06 CAUGHT by C214 | numbers sample loses the row name
+Y07 CAUGHT by C215 | B warning of 5.1 shortened
+Y08 CAUGHT by C216 | card step 5 older-key sentence reversed
+Y09 CAUGHT by C217 | yes binding removed
+Y10 CAUGHT by C218 | guard honesty sentence reversed
+Y11 CAUGHT by C219 | run day for the first reading removed
+Y12 CAUGHT by C220 | last-5-minutes rule reversed
+Y13 CAUGHT by C221 | film page: how to show only the page area
+Y14 CAUGHT by C222 | sync path wording
+Y15 CAUGHT by C222 | definitions heading
+Y16 CAUGHT by C222 | owner-fill rows described as empty slots
+Y17 CAUGHT by C223 | open list: the minimum is said to be checked
+Y18 CAUGHT by C224 | a LEAD FILLS placeholder spelled differently (H09)
+Y19 CAUGHT by C225 | a fact no source uses (ls_t kind)
+Y20 CAUGHT by C226 | email-shaped text in the owner pages
+Y21 CAUGHT by C227 | hard-coded absolute path in a script
+TOTAL plants 230 (negative controls ok 1, not counted below):
+TOTAL plants 230: caught by the meant check 228, missed 0 (of them caught only by another check 0), anchor-not-found 1
+done rc 1

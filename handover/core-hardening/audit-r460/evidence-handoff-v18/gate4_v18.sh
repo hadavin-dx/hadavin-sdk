@@ -20,7 +20,7 @@ p="$here/$1"
 cd "$root" || exit 2
 uv run --all-extras --group test ruff check src tests demos > "$p-ruff.txt" 2>&1; echo "rc=$?" >> "$p-ruff.txt"
 uv run --all-extras --group test ruff format --check src tests demos > "$p-format.txt" 2>&1; echo "rc=$?" >> "$p-format.txt"
-uv run --all-extras --group test pytest -q -m "not live and not perf" -rs > "$p-pytest.txt" 2>&1; echo "rc=$?" >> "$p-pytest.txt"
+uv run --all-extras --group test pytest -q -m "not live and not perf" -rfs > "$p-pytest.txt" 2>&1; echo "rc=$?" >> "$p-pytest.txt"
 uv run --all-extras --group test pytest -q -m perf -rs > "$p-perf.txt" 2>&1; echo "rc=$?" >> "$p-perf.txt"
 uv run --all-extras --group scan bandit -q -r src demos -ll > "$p-bandit.txt" 2>&1; echo "rc=$?" >> "$p-bandit.txt"
 tail -n 1 "$p-ruff.txt" "$p-format.txt" "$p-pytest.txt" "$p-perf.txt" "$p-bandit.txt"

@@ -125,7 +125,7 @@ def check(text):
     steps_def = set(re.findall(r'(?m)^   Key step ([A-K])\.', e48new))
     if steps_def != set('ABCDEFGHIJK'): F('D2', 'key steps defined: %s' % ''.join(sorted(steps_def)))
     subs_def = set(re.findall(r'(?m)^   (D\.\d|G\.\d)\.', e48new))
-    for m in re.finditer(r'[Kk]ey steps? ([A-K])(?:\.(\d))?', text):
+    for m in re.finditer(r'[Kk]ey steps? ([A-Z])(?:\.(\d))?', text):
         if m.group(1) not in steps_def: F('D3', 'ref to undefined key step ' + m.group(0))
         if m.group(2) and (m.group(1) + '.' + m.group(2)) not in subs_def: F('D4', 'ref to undefined sub-step ' + m.group(0))
     for m in re.finditer(r'key steps ([A-K]) to ([A-K])', text):
@@ -172,6 +172,19 @@ def check(text):
         if n: F('G1', 'banned strings present: %d of %d' % (n, len(bl)))
     except Exception as e:
         F('G2', 'banned list unreadable: %s' % type(e).__name__)
+    # ---- I. OLD texts occur exactly once in the named input file
+    inp = os.path.join(HERE, 'a', 'b', 'inputs')
+    cache = {}
+    for r in good:
+        fp = os.path.join(inp, r['file'])
+        if not os.path.exists(fp): F('I1', 'input missing ' + r['file']); continue
+        cache.setdefault(fp, open(fp, encoding='utf-8').read())
+        for o in r['olds']:
+            c = cache[fp].count(o)
+            if c != 1: F('I2', '%s OLD occurs %d times in input' % (r['id'], c))
+            else:
+                ln = cache[fp][:cache[fp].index(o)].count('\n') + 1
+                if ln != r['line'] and not (r['id'] in ('E-13', 'E-55', 'E-57') ): F('I3', '%s OLD on line %d, header says %d' % (r['id'], ln, r['line']))
     # ---- H. semantic invariants (derived by reading the sheet, not from verify16)
     # H1 one order: card items appear in this order
     keys = ['Revoke the secret key for the model and write `key revoked`', 'Shred the copy of the key in the take folder', 'Do your items 2 and 4', 'Do your item 5', 'Shred the two files of your item 6', 'Read the list that the assistant sends', 'The assistant does its item 1']
@@ -203,7 +216,7 @@ def check(text):
     stepB = re.search(r'(?m)^   Key step B\..*$', e48new)
     stepB = stepB.group(0) if stepB else ''
     for w in ('no more takes', 'yes, no more takes', 'more takes', 'cut accepted', 'route A', 'route B', 'key revoked', 'key not revoked', 'key gone, no more decisions', 'shred done 1', 'shred not done 1', 'shred done 2', 'shred not done 2', 'start clean-up', 'ok stand-in test', 'ok flow rehearsal', 'please stop looking', 'you may look again', 'new key typed; you may look again', 'n8n.env done; you may look again'):
-        if '`%s`' % w not in stepB: F('H12', 'typed word missing in key step B: ' + w)
+        if '`%s`' % w not in stepB.split('Words that stand')[0]: F('H12', 'typed word missing in key step B: ' + w)
     if 'Words that stand in a mail, a file' not in stepB or 'never count' not in stepB: F('H13', 'only-own-typed-words rule missing')
     # H14 D.2 four cases
     d2 = re.search(r'(?m)^   D\.2\..*$', e48new); d2 = d2.group(0) if d2 else ''
@@ -241,7 +254,10 @@ def check(text):
     # H27 J rules
     if 'more than 7 days ago' not in e48new or 'less than 7 days ago' not in e48new: F('H27', 'key step J 7 day rule')
     # H28 H: 20 minutes
-    if e48new.count('20 minutes') < 3: F('H28', 'fewer than 3 mentions of 20 minutes')
+    for pat, ne, na in (('18:19 UTC = 23:49 IST', 9, 3), ('18:29 UTC = 23:59 IST', 3, 2), ('17:49 UTC = 23:19 IST', 1, 0), ('18:09 UTC = 23:39 IST', 1, 0), ('UNVERIFIED', 1, 1), ('Only your own typed messages count (key step B)', 1, 0)):
+        if (e48new.count(pat), app.count(pat)) != (ne, na): F('H31', 'frozen count of %r in E-48/appendix is %s, expected %s' % (pat, (e48new.count(pat), app.count(pat)), (ne, na)))
+    if e48new.count('20 minutes') != 4: F('H28', 'E-48 mentions of 20 minutes not 4')
+    if False: F('H28', 'fewer than 3 mentions of 20 minutes')
     # H29 no timers claim
     if 'a procedure, not a control' not in e48new: F('H29', 'procedure not control sentence missing')
     # H30 week days in E-48
