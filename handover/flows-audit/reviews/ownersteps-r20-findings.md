@@ -1,0 +1,3 @@
+# Owner part round 20 stranger read (agent a29f6cb; reviewer words unverified). 0 Blockers, 1 Major. Counts, UTC/IST pairs, weekday dates, row order all checked by the reviewer: pass.
+Major 1: "delete message 1/2" can be read as a chat message number; definition only at line 27, first uses bare (line 23, rows 1a, 1b). APPLIED by flows-audit: line 23 and line 27 now say it means a message that asks you to delete a contact; lead part cmp rc 0.
+Not rated Major: "account" covers three things; "row 6/rule 6/item 6" easy to confuse; item 4d deadline (later of 90 min) can reach the 17:00 revoke deadline if the clean-up message is late.
