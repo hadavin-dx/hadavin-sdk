@@ -1,0 +1,2 @@
+banned list entries read at run time: 10; files scanned: 50; exact-case hits: 0; case-insensitive hits: 0
+banned list entries read at run time: 10; files scanned: 9; exact-case hits: 0; case-insensitive hits: 0

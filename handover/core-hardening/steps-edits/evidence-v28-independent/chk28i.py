@@ -171,7 +171,7 @@ for k in 'AB':
     info('K07', 'sheet %s items per section: %s' % (k, items))
 
 # K08 A and B differ only in older-key parts
-OLD = re.compile(r'older|okb|16:00 UTC|21:30|7\.11|(?<![A-Z])(?:Three|Four) phone|alarm 4|-[AB]\.md|sheet [AB]', re.I)
+OLD = re.compile(r'older|okb|16:00 UTC|21:30|7\.11|(?<![A-Z])(?:Three|Four) phone|alarm 4|(?:three|four) alarms of 6\.2|-[AB]\.md|sheet [AB]', re.I)
 for p in ('OWNER-SHEET-v28', 'OWNER-CARD-v28', 'OWNER-NUMBERS-v28'):
     a = T[p + '-A.md'].split('\n'); b = T[p + '-B.md'].split('\n'); sm = difflib.SequenceMatcher(None, a, b, autojunk=False)
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
@@ -182,6 +182,10 @@ for p in ('OWNER-SHEET-v28', 'OWNER-CARD-v28', 'OWNER-NUMBERS-v28'):
         ok = bool(OLD.search(la + ' ' + lb))
         if not ok: ok = all(' '.join(wa[x1:x2]).lower() in ('three', 'four') for t2, x1, x2, y1, y2 in ws.get_opcodes() if t2 != 'equal')
         info('K08', '%s hunk A%d-%d/B%d-%d older-key vocabulary=%s : %s' % (p, i1 + 1, i2, j1 + 1, j2, ok, seg[:300]))
+        for t2, x1, x2, y1, y2 in ws.get_opcodes():
+            if t2 == 'equal': continue
+            ctx = ' '.join(wa[max(0, x1 - 15):x2 + 15]) + ' ' + ' '.join(wb[max(0, y1 - 15):y2 + 15])
+            if not OLD.search(ctx) and not OLD.search(' '.join(wa[x1:x2]) + ' ' + ' '.join(wb[y1:y2])): fail('K08', '%s changed words [%s] -> [%s] (A line %d) have no older-key wording within 15 words' % (p, ' '.join(wa[x1:x2])[:60], ' '.join(wb[y1:y2])[:60], i1 + 1))
         if not ok: fail('K08', '%s hunk at A line %d differs in a part with no older-key wording' % (p, i1 + 1))
         for x in re.findall(r'\d\d:\d\d UTC', la + lb): pass
 if T['OWNER-FILM-v28.md'] != T['OWNER-FILM-v28.md']: fail('K08', 'film')

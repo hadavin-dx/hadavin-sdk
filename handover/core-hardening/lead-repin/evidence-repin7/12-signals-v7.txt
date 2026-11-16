@@ -1,0 +1,18 @@
+dash  main  INT   start_SigIgn/Blk=0000000000000000/0000000000000000 exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  main  TERM  start_SigIgn/Blk=0000000000000000/0000000000000000 exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  main  HUP   start_SigIgn/Blk=0000000000000000/0000000000000000 exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  main  QUIT  start_SigIgn/Blk=0000000000000000/0000000000000000 exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  INT   start_SigIgn/Blk=0000000000000000/0000000000000000 exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  TERM  start_SigIgn/Blk=0000000000000000/0000000000000000 exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  HUP   start_SigIgn/Blk=0000000000000000/0000000000000000 exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  QUIT  start_SigIgn/Blk=0000000000000000/0000000000000000 exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  main  INT   start_SigIgn/Blk=0000000000010000/0000000000000000 exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  TERM  start_SigIgn/Blk=0000000000010000/0000000000000000 exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  HUP   start_SigIgn/Blk=0000000000010000/0000000000000000 exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  QUIT  start_SigIgn/Blk=0000000000010000/0000000000000000 exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  mask  INT   start_SigIgn/Blk=0000000000010000/0000000000000000 exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  mask  TERM  start_SigIgn/Blk=0000000000010000/0000000000000000 exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  mask  HUP   start_SigIgn/Blk=0000000000010000/0000000000000000 exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  mask  QUIT  start_SigIgn/Blk=0000000000010000/0000000000000000 exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+BAD rows: 0
+launcher exit 0

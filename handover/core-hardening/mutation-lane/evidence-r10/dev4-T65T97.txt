@@ -1,3 +1,58 @@
 == T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped
 line hit: False SIG.allow: False first: None critical: True
   FAIL: T65 planted: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+line hit: False SIG.allow: False first: None critical: False
+  FAIL: T65 control: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+/tmp/safety-only.XYaZ20.sh: line 317: 23684 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): ddb6d82547df28c4.planted.json was written for another folder than the one now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev4/toy/root (renamed away, replaced, or no folder identity recorded): the folder the mutant was planted in wa
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; ddb6d82547df28c4.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: ddb6d82547df28c4.planted.json was written for another folder than the one n
+  PASS: T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got 3; r9: 0 and deleted marker and backup), marker kept (1), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got 0), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder
+/tmp/safety-only.XYaZ20.sh: line 70: 25688 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (garbage): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/safety-only.XYaZ20.sh: line 70: 27703 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (list): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/safety-only.XYaZ20.sh: line 70: 29708 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+              [--timeout TIMEOUT] [--pythonpath PYTHONPATH] [--repo REPO]
+              [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+              [--skip-import-check] [--restore] [--discard-marker]
+              [--accept-unchecked-folder] [--helper-timeout HELPER_TIMEOUT]
+run.py: error: argument --sha: '' is not a commit id (4 to 64 hexadecimal digits; an empty value is refused: is a shell variable unset?)
+  PASS: T97c M2 --sha "" with a forged marker and backup: exit 2 (got 2; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept
+  PASS: T97c2 siblings: --sha zz (got 2), --repo "" (got 2), --out-json "" (got 2) are all refused with exit 2, nothing planted
+exit 2 for an argparse error: named in row 2: True
+exit 2 for a state folder that is not mode 700: named in row 2: True
+exit 2 for a lock held by a live run: named in row 2: True
+exit 2 for a --sha that names no commit: named in row 2: True
+BAD: []
+  PASS: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 0; r9: fails)
+/tmp/safety-only.XYaZ20.sh: line 70:  5432 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 0 (decimal 0), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 0 (r9: 644)
+/tmp/safety-only.XYaZ20.sh: line 70: 21481 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 4755 (decimal 2541), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 4755 (r9: 644)
+/tmp/safety-only.XYaZ20.sh: line 70:  5741 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o4755) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the muta
+  PASS: T97e2 m2 marker mode 4755 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+/tmp/safety-only.XYaZ20.sh: line 70: 19653 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o666) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the mutan
+  PASS: T97e2 m2 marker mode 666 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+  PASS: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 2; r9: wrote it), file not created; an existing foreign file: exit 2 (got 2; r9: overwritten), still 'precious', no raw file written
+  PASS: T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got 0, 0)
+INTERRUPTED (signal 15): no mutant planted, no marker
+exit 143
+leaked []
+  PASS: T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)
+REFUSED: marker is for another root ("/nowhere/else"): refused; the tree equals the git archive given with --sha: no file is planted or changed (the marker was left alone; to remove it use --discard-marker)
+exit 2 does NOT mean nothing is planted anywhere: nothing was written; the files under --root were compared with the git archive of --sha (see above); a folder the marker may name is not looked at
+RESTORE FAILED: marker is for another root ("/nowhere/else"): refused; the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each; the mutant may 
+  PASS: T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got 2), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got 3; r9: 2), marker kept
+m6 mode after a failed reopen: 0o444
+m7 tree_check: ['<marker left behind>']
+m8 child of the helper still alive after the timeout: False
+WARNING: the state folder could not be synced after removing k.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+m11 unlink_state returned, file exists: False
+BAD: []
+  PASS: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 0; r9: fails all four)

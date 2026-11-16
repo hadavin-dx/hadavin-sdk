@@ -6,7 +6,7 @@ O, W, CK = sys.argv[1].rstrip('/') + '/', sys.argv[2].rstrip('/') + '/', sys.arg
 FILES = ['OWNER-SHEET-v28-A.md', 'OWNER-CARD-v28-A.md', 'OWNER-NUMBERS-v28-A.md', 'OWNER-SHEET-v28-B.md', 'OWNER-CARD-v28-B.md', 'OWNER-NUMBERS-v28-B.md',
          'OWNER-FILM-v28.md', 'LEAD-RELEASE-NOTE-v12.md', 'v28-OPEN-FOR-LEAD.md']
 SA, SB, CA, CB, NA, NB, FM, LN, OL = FILES[0], FILES[3], FILES[1], FILES[4], FILES[2], FILES[5], FILES[6], FILES[7], FILES[8]
-EXTRA = ['v28-CHANGES.md', 'build-v28.py', 'check-v28.py', 'facts-v28.py', 'newchecks-v28.py', 'mut28.py', 'pointers-v28.txt', 'OWNER-SHEET-v28-SOURCE.md', 'LEAD-RELEASE-NOTE-v12-SOURCE.md', 'v28-OPEN-FOR-LEAD-SOURCE.md']
+EXTRA = ['OWNER-SHEET-v16.md', 'v28-CHANGES.md', 'build-v28.py', 'check-v28.py', 'facts-v28.py', 'newchecks-v28.py', 'mut28.py', 'pointers-v28.txt', 'OWNER-SHEET-v28-SOURCE.md', 'LEAD-RELEASE-NOTE-v12-SOURCE.md', 'v28-OPEN-FOR-LEAD-SOURCE.md']
 # secrets are built from parts here so this file holds no literal key
 FAKE_ANT = 'sk-' + 'ant-' + 'api03-' + 'Zq7' * 12
 FAKE_AKIA = 'AK' + 'IA' + 'QWERTY' + '1234567890'
@@ -59,8 +59,9 @@ def run(d):
     r = subprocess.run([sys.executable, '-I', '-B', CK, d], capture_output=True, text=True)
     return r.returncode, [l for l in r.stdout.split('\n') if l.startswith('FAIL')], r.stderr[-200:]
 def fresh(tag):
-    d = W + tag + '/'
-    shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
+    top = W + tag + '/'
+    shutil.rmtree(top, ignore_errors=True); os.makedirs(top + 'steps-edits'); os.symlink(os.path.abspath(O + '../inputs'), top + 'inputs')
+    d = top + 'steps-edits/'
     for f in FILES + EXTRA: shutil.copy(O + f, d + f)
     return d
 rc0, base, err0 = run(fresh('base'))
