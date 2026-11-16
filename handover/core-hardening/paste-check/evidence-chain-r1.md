@@ -298,3 +298,43 @@ v5: README.md, REPORT-v5.md, checkpoint.md, G5-wording.patch, C-01-MINIMAL.patch
 ## Part E: banned-word counts (list read from tests/test_no_reference_material.py BANNED at run time, 10 entries; words not printed; counts per entry index 0-9)
 All counts 0 for: PLAN-CHAIN.md, plan-v10-corrections-after-chain.md, apply-v10-after-chain.py, plan-v5-fixes.patch, plan-v5-repin-v6.patch, plan-v5-gate-rows-v3.patch, plan-v5-gate-rows.patch, plan-v10-real-v5-edits.md, LEAD-CHECKLIST-v5.md, scratch step1/step2/step3 plans, scratch real-v5-plan.md (step 4 result), and the Part A raw output. rc=0.
 (Exact substring match as in the test, `s in text`; the test also scans file types and names, which I did not run.)
+
+## Part F (fix pass 2, builder run, NOT independent evidence: the evidence runner must re-run it): apply-v10-after-chain.py tests on scratch copies
+Command: `bash test-apply-v10-after-chain.sh <plan after gate-rows-v3>`. Raw output:
+```
+515cf4704ebba5bd
+## T1 good input
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing []
+written /tmp/tmp.ZKtnFhuozL/out1.md 28f92c5d1211207c 780 lines
+rc=0 out_exists=yes sha=28f92c5d1211207c
+## T2 wrong input sha (one byte appended)
+REFUSED: input sha256 is a908e9862ea369c9, expected 515cf4704ebba5bd (the plan after fixes, repin-v6 and gate-rows-v3)
+rc=1 out_exists=no
+## T3 wrong input: the unpatched-shaped file (first 100 lines)
+REFUSED: input sha256 is 82dbe0f86a00b3a2, expected 515cf4704ebba5bd (the plan after fixes, repin-v6 and gate-rows-v3)
+rc=1 out_exists=no
+## T4 equal paths
+REFUSED: input and output are the same path
+rc=1 sha_after=515cf4704ebba5bd
+## T5 same file by another name (symlink)
+REFUSED: input and output are the same path
+rc=1 sha_after=515cf4704ebba5bd
+## T6 output already exists
+REFUSED: output file already exists (this script never overwrites)
+rc=1 content=keep
+## T7 failed edit (old text of edit 3 damaged in a scratch copy of the edit list)
+damaged edit 3 old text
+REFUSED: 1 edit(s) did not find their old text exactly once; nothing written
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing [('3', 0)]
+rc=1 out_exists=no
+## T8 missing output folder
+REFUSED: output folder does not exist
+rc=1
+## T9 wrong argument count
+REFUSED: usage: apply-v10-after-chain.py <chained plan> <new output file>
+rc=1
+scratch folder: /tmp/tmp.ZKtnFhuozL (left in place; nothing in the repository was changed)
+```
+Fresh chain re-run (fix pass 2): fixes, repin-v6, gate-rows-v3 each dry run then apply, rc 0 each, shas 53f1670383a2c728, 39af84aec78b650f, 515cf4704ebba5bd; then apply-v10-after-chain.py: 'failing []', rc 0, sha256 28f92c5d1211207cce0222c87bb7a6e6dc8e39a21a659624a1a7fe9cc32992ce, 780 lines; A6 counts 24 10 2 1; UNVERIFIED numbers 1 to 20, 0 duplicates; input plan sha unchanged (67a0a195537de875). Tested repin patches on the plan after fixes: repin 4 0 2 0, repin-v2 24 0 2 1 (wrong), repin-v3 to v5 24 10 2 1 with other shas, v6 24 10 2 1 (39af84aec78b650f). Banned-word list (10 entries, read from tests/test_no_reference_material.py): 0 hits in the changed files and the final plan.
