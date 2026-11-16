@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:21:10Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:21:33Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-024; lead ANSWER 10:20Z (take uses the PATCHED real-v5 copy) read; ORDER 024 done
 STATE: WORKING
@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 6 (cleanup-card naive read; stale-text finder; critical path; take pre-mortem; README and LEAD-PAGE structure; diff consistency check). Done this beat: stale-text fixes in QUESTIONS, TAKE-BLOCKERS, README, LEAD-PAGE; T19 and stored-data steps saved (found: mf_leads stores key, e-mail and name, so a no-lead-data claim needs a row delete); owner timeline and banned-claims review saved as drafts.
+AGENTS_RUNNING: 4 (take pre-mortem; README and LEAD-PAGE structure; diff consistency check; one more starting). Done: cleanup-card wording edits applied, 3a held; critical path saved (work/critical-path-r1.md).
 INTERRUPTED: none
 NEXT: apply the lead's ANSWER (patched copy: F-002 and F-008 applied, then fill_flows) to QUESTIONS 7, TAKE-BLOCKERS rows 1 and 2, README and LEAD-PAGE (my earlier note recommended the unpatched files; now superseded). Then collect the 6 reports and apply wording fixes; scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: does end delete (QUESTIONS 1); v5 step J editor; D-04/D-05; rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.13, mem 15 GB total 0 used, disk 40 percent
