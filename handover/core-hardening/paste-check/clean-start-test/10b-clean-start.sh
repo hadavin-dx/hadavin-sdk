@@ -12,7 +12,9 @@ BEGIN;
 LOCK TABLE :tbl IN ACCESS EXCLUSIVE MODE;
 SELECT count(*) AS n FROM :tbl \gset
 \echo rows before: :n
-\copy :tbl (lead_key, crm_id) TO :'out'
+\o :out
+COPY (SELECT lead_key, crm_id FROM :tbl ORDER BY created_at) TO STDOUT;
+\o
 \set lines `wc -l < "$OUT"`
 SELECT (:lines = :n) AS export_ok \gset
 \if :export_ok

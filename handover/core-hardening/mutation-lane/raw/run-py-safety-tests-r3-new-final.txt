@@ -1,0 +1,131 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/repo is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted
+  file now: return2
+./safety-tests.sh: line 39: 31734 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T2 file stays planted
+== T3 the next run refuses and says how to restore
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
+  exit code 2
+  PASS: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+  exit code 2
+  PASS: T4 exit 2
+== T5 --restore puts the saved original back
+process 31744 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
+  exit code 143
+  PASS: T6 exit 143
+  PASS: T6 file restored
+  PASS: T6 state empty
+== T7 SIGINT likewise, exit code read directly from $?
+  exit code 130
+  PASS: T7 exit 130
+  PASS: T7 file restored
+  PASS: T7 state empty
+== T8 two runs at once: the second is refused by the lock, and the first is still alive
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-ne
+  second run exit code 2
+  PASS: T8 second refused (2)
+  PASS: T8 first run still alive
+  PASS: T8 file still planted by the first
+  PASS: T8 file restored after
+== T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  exit code 0
+  PASS: T9 exit 0
+  PASS: T9 state empty
+differing files (0; 0 = clean): []
+== T10 absolute path as the mutant file is refused (exit 2), nothing planted
+REFUSED: mutant m1 file: must be relative to the root and contain no '..': '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/root/src/mod.py'
+  exit code 2
+  PASS: T10 exit 2
+  PASS: T10 file unchanged
+  PASS: T10 state empty
+== T11 '..' in the mutant file is refused (exit 2)
+REFUSED: mutant m1 file: must be relative to the root and contain no '..': '../root/src/mod.py'
+  exit code 2
+  PASS: T11 exit 2
+  PASS: T11 file unchanged
+== T12 symlinked folders inside the scratch root
+REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
+  (extra symlinked folder 'evil') exit code 2
+  PASS: T12b exit 2
+  PASS: T12b real repo file unchanged
+REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
+  (src itself is a link to the real repo) exit code 2
+  PASS: T12a exit 2
+  PASS: T12a real repo file unchanged
+== T13 git cannot tell (rev-parse fails): fail closed
+REFUSED: git cannot tell whether --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/root is a work tree (rc 128): fatal: detected dubious ownership in reposit
+  (work-tree check fails) exit code 2
+  PASS: T13a exit 2
+REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/repo (rc 128): fatal: detected dubious ownership in repository
+  (show-toplevel fails) exit code 2
+  PASS: T13b exit 2
+== T14 a leftover file after the loop gives a non-zero exit; a declared --extra does not
+  undeclared leftover: exit code 4
+  PASS: T14a exit 4
+  declared --extra: exit code 0
+  PASS: T14b exit 0
+== T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
+./safety-tests.sh: line 77: 32464 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T15 orphan pytest alive
+stopped orphaned test group 32473; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+  PASS: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)
+  exit code 129
+  PASS: T16 exit 129
+  PASS: T16 file restored
+== T17 --restore while a run is live is refused (lock)
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-ne
+  exit code 2
+  PASS: T17 exit 2
+  PASS: T17 run still planted
+== T18 a mutant id that climbs out of --raw is refused
+REFUSED: mutant id is not a plain unique name: '../escape'
+  exit code 2
+  PASS: T18 exit 2
+  PASS: T18 no file outside raw
+== T19 an error while the tests start (no .venv python) still removes the marker
+REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/root/.venv/bin/python does not exist: the scratch root needs its 
+  exit code 2
+  PASS: T19 exit 2
+  PASS: T19 file unchanged
+  PASS: T19 state empty
+== T20 four signals in a row while a mutant is planted (5 times): file restored, marker gone, exit 129/130/143
+  (probabilistic: it cannot force the second signal into the exact window; see T21 for the deterministic part)
+  PASS: T20.1 exit 129/130/143 (got 129)
+  PASS: T20.1 file restored
+  PASS: T20.1 state empty
+  PASS: T20.2 exit 129/130/143 (got 129)
+  PASS: T20.2 file restored
+  PASS: T20.2 state empty
+  PASS: T20.3 exit 129/130/143 (got 129)
+  PASS: T20.3 file restored
+  PASS: T20.3 state empty
+  PASS: T20.4 exit 129/130/143 (got 129)
+  PASS: T20.4 file restored
+  PASS: T20.4 state empty
+  PASS: T20.5 exit 129/130/143 (got 129)
+  PASS: T20.5 file restored
+  PASS: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+handler logic ok
+  PASS: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22a mode 755 refused (got 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22b symlinked state folder refused (got 2)
+  PASS: T22b nothing written through the link
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22c other owner refused (got 2)
+== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written

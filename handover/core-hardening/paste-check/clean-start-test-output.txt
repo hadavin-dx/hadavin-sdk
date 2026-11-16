@@ -1,33 +1,27 @@
-WARNING:  terminating connection because of crash of another server process
-DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
-HINT:  In a moment you should be able to reconnect to the database and repeat your command.
-server closed the connection unexpectedly
-	This probably means the server terminated abnormally
-	before or while processing the request.
-connection to server was lost
-psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
-	Is the server running locally and accepting connections on that socket?
-psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
-	Is the server running locally and accepting connections on that socket?
+NOTICE:  schema "app" does not exist, skipping
+NOTICE:  schema "app" does not exist, skipping
 === WRONG database (connected to n8n_db, expected take_db): must STOP, rows stay 4
-psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
-	Is the server running on that host and accepting TCP/IP connections?
-psql rc=2
-psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
-	Is the server running locally and accepting connections on that socket?
-rows now: 
+WRONG DATABASE: current_database() is not the expected name. STOP, nothing was changed.
+ERROR:  division by zero
+psql rc=3
+rows now: 4
 === export file cannot match (OUT=/dev/null): must STOP, rows stay 4
-psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
-	Is the server running on that host and accepting TCP/IP connections?
-psql rc=2
-psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
-	Is the server running locally and accepting connections on that socket?
-rows now: 
+rows before: 4
+EXPORT LINE COUNT (0) DOES NOT MATCH ROW COUNT (4). STOP, nothing was emptied.
+ERROR:  division by zero
+psql rc=3
+rows now: 4
 === RIGHT database: export 4 rows, truncate, count 0
-psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
-	Is the server running on that host and accepting TCP/IP connections?
-psql rc=2
-psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
-	Is the server running locally and accepting connections on that socket?
-rows now: 
---- export file (0 lines; the key with a line break is escaped on ONE line):
+rows before: 4
+OK: exported 4 rows to the file, table emptied, count now 0
+psql rc=0
+rows now: 0
+--- export file (4 lines; the key with a line break is escaped on ONE line):
+made-up-1	101
+made-up-2	\N
+made-up-3	
+made-up-line\nbreak	104
+=== lock test: session 1 holds the lock 3 s then truncates; session 2 inserts 1 s in
+[1]+  Done                    ( $P -c "BEGIN" -c "LOCK TABLE app.mf_leads IN ACCESS EXCLUSIVE MODE" -c "SELECT pg_sleep(3)" -c "TRUNCATE app.mf_leads" -c "COMMIT" > /dev/null )
+rows after (the late insert waited, then landed AFTER the truncate, so it is a visible row, not a hidden loss):
+made-up-late
