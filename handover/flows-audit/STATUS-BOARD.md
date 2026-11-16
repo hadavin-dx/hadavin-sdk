@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:47:17Z
+UPDATED_UTC: 2026-11-16T10:47:23Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
 PERCENT: 83
 AGENTS_RUNNING: 3
-CAPACITY: 0.63 load of 4 cores, mem 0/15 GB, RAM 882/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 646M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
+CAPACITY: 0.66 load of 4 cores, mem 0/15 GB, RAM 915/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 646M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -36,7 +36,7 @@ F8 r5 independent evidence: 10 of 25 mutants survive (3 real gaps: lines 519, 62
 citation check patches r3: unsourced relayed figures stay labelled relayed (144.3 s n=1 at 120 s, 780 s, 8 of 18, T13 database kill); V7 L12 stale 'B90 n=2'; K4/K5 not-run scope v3 only; reviewer errors on AF1 and evidence file corrected by me
 zoom-out: queue may be over-built for one take; 3 take risks unowned (HubSpot id shape before rehearsal, test vs production webhook URL, clean-up of saved runs); asked lead in Q17, queue unchanged
 NEXT: F3 r7 evidence + security review; F8 r6 fixer; Q14 Q17 wait
-PUSHED_UTC: 2026-11-16T10:47:17Z
+PUSHED_UTC: 2026-11-16T10:47:23Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
