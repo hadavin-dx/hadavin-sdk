@@ -42,11 +42,13 @@ DECIDED, nothing to do: scope is real-v5 only (decision 1); film-v5 mail-credent
 ## Single points to accept
 The owner alone types `y` (state a backup window). One n8n on one laptop with no fallback if Docker fails on the day.
 
-## What "rehearsal passed" must mean (a draft; the studio lead chooses at each [choose] BEFORE saying it to the owner)
-No document defines it: v5 line 74 only requires "rehearsal passed, with its result file"; plan section 7 has a 20-row PASS/FAIL table (STOP, GO, REC) but no overall rule.
-1. What runs: the loopback re-smoke, plus one import of the filled real-v5 flow set, plus take prep (decision 8; replaces the real-account smoke). Open: take prep uses a paid model call only inside the owner's written yes, or a fake model; it also leaves one contact and one mail that must be on the leftover list and cleaned before run-day step 1.
-2. Result file: `evidence-2/INDEX.md` of that plan, plus a summary of at most 10 plain lines for the owner.
-3. Pass: every STOP row PASS; every GO finding "accepted" or "fixed"; REC rows recorded. One STOP row failing = rehearsal failed.
-4. Crash test (row DM): [choose] required / not required. If not PASS, the post must not say "crash-safe" (v5 line 170).
-5. Who judges: an independent `egm:*` result review and the resolve step (plan line 505); only then the studio lead writes "rehearsal passed" and names the file.
-6. Time: the review round must end by [date]; reruns that fit before the latest start: [number] (a rehearsal takes 3.5 to 4.5 hours, plan line 445).
+## What "rehearsal passed" must mean (a draft from an independent read; the studio lead chooses at each [choose] BEFORE saying it to the owner)
+No document defines it: v5 line 74 only requires "rehearsal passed, with its result file"; plan section 7 (lines 464 to 486) has a 20-row PASS/FAIL table (STOP, GO, REC) but no overall rule. Nine rows are mixed (T1, B1, C3, X1, E1, E3, E5, L4, C1) and the letter "D" in row C1 is not defined.
+1. PASS means all of the following hold. A mixed row is judged on its STOP part. Row NC is copied into the result file as it is.
+2. Every STOP part is PASS. A row not run counts as FAIL. One STOP failure is FAIL; the studio lead fixes it and reruns only the failed sections plus row Z1.
+3. Every GO finding is "fixed" (a rerun shows it) or "accepted": the owner's one-line written yes in the result file, with date, before the take starts. An EGRESS-FAIL stays FAIL until option (a), (b) or (d) of plan line 506 is chosen in writing.
+4. Crash test (row DM): [choose] required / not required. If required, DM PASS means mails == 1. If mails >= 2, or E and E2 both MISSED, the rehearsal passes only if the owner accepts the limit in writing; the take and post then must not say "crash-safe" (v5 line 170).
+5. Take prep (decision 8) uses [choose] a fake model / a paid call inside the owner's written yes with numbers. Its leftover contact and mail are listed and cleaned, and row Z1 confirms it.
+6. The evidence runner fills the raw-result column only. The independent `egm:*` reviewer reads the raw results, not the runner's verdict. The studio lead fills the verdict column; a reviewer blocker overrides the lead. Only then the studio lead writes "rehearsal passed" and names the file.
+7. Time box: one run at most 5 hours, at most 2 review rounds, fixes batched. A rerun is allowed only if it can end 4 hours before the latest take start (18:14 UTC / 23:44 IST). Otherwise the studio lead tells the owner, in UTC and IST, which limit the take carries. Result file: `evidence-2/INDEX.md` of that plan plus at most 10 plain lines for the owner.
+Gaps this draft still leaves: the plan has no row for the flow import or for take prep (scope mismatch); the studio lead must add rows or accept that they are judged outside the table.
