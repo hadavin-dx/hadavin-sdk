@@ -231,4 +231,4 @@ Clock (real, honest): A, F, B start together; C1/C2 at +1 h; A+F done +2.5 h; C 
 | Close | recorded mutation-test clip, labelled "recorded test output, not live" (harness, unchanged) | none |
 
 ## 7. Not claimed
-Port.io/Datadog parity (judged by reviewers on images); full WCAG (axe + contrast + keyboard only); a per-lead history (the lead book stores latest state and times only); any pilot readiness (no login, localhost, made-up data); portal load under the README burst numbers (close the portal during load runs).
+a well-known developer-portal vendor/Datadog parity (judged by reviewers on images); full WCAG (axe + contrast + keyboard only); a per-lead history (the lead book stores latest state and times only); any pilot readiness (no login, localhost, made-up data); portal load under the README burst numbers (close the portal during load runs).
