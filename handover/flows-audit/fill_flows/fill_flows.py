@@ -8,10 +8,11 @@ only. See README.md for the rules and exit codes.
 Usage:
   fill_flows.py fill   --in DIR --values FILE --out DIR   (DIR for --out must not exist)
   fill_flows.py check  DIR [--tokens-only]                (read-only scan)
-  fill_flows.py delete --out DIR [--force-hash] [--no-manifest]
+  fill_flows.py delete --out DIR [--force-hash] [--no-manifest] [--remove-others]
 
 Needs Linux, macOS or WSL (Windows Subsystem for Linux, in its Linux home folder): it refuses
-to start where the operating system cannot open files without following symlinks.
+to start where the operating system cannot open files without following symlinks. It also
+refuses to start on a Python older than 3.11 (the oldest version the tests were run on).
 """
 
 from __future__ import annotations
@@ -32,6 +33,26 @@ EXIT_REFUSED = 1  # any refusal; usage errors from argparse are 2
 EXIT_INCOMPLETE = 3  # fill wrote the copy, but placeholders are left: NOT READY TO IMPORT
 EXIT_NOTHING = 4  # fill found no token at all (already filled, or the wrong folder)
 HAS_NOFOLLOW = hasattr(os, "O_NOFOLLOW") and hasattr(os, "getuid")
+MIN_PYTHON = (3, 11)
+# Size limits: a flow file or manifest larger than this is refused instead of read into memory.
+MAX_JSON_BYTES = 32 * 1024 * 1024
+MAX_VALUES_BYTES = 1024 * 1024
+# Folders that a sync or backup program copies to other places: a values file or a filled copy
+# must not sit there (checked on the folder names of the real path, lower case, start of name).
+SYNCED_MARKS = (
+    "dropbox",
+    "onedrive",
+    "icloud",
+    "mobile documents",
+    "com~apple~clouddocs",
+    "cloudstorage",
+    "google drive",
+    "googledrive",
+    "nextcloud",
+    "owncloud",
+    "pcloud",
+    "box sync",
+)
 
 NAME_OK = re.compile(r"^(DESK|MF)_[A-Z0-9_]+$")
 KEY_OK = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -81,6 +102,15 @@ def _a(x) -> str:
     return ascii(str(x))[1:-1]
 
 
+def _say(text: str = "", err: bool = False) -> None:
+    """Print one line. A reader that has gone away (a closed pipe, `| head`) must not turn a
+    finished run into a failure, so a write error here is ignored; the exit code still tells."""
+    try:
+        print(text, file=sys.stderr if err else sys.stdout, flush=True)
+    except OSError:  # BrokenPipeError is an OSError
+        pass
+
+
 class Refused(Exception):
     """A refusal. The message never contains a value."""
 
@@ -96,6 +126,13 @@ def under_mnt(path: str) -> bool:
     """True for a path on /mnt (a Windows drive mounted into Linux: file modes do not hold)."""
     rp = os.path.realpath(path)
     return rp == "/mnt" or rp.startswith("/mnt/")
+
+
+def in_synced_folder(path: str) -> bool:
+    """True when a folder name on the real path is a known sync or backup folder (Dropbox,
+    OneDrive, iCloud Drive, Google Drive, ...): such a folder copies files to other places."""
+    parts = os.path.realpath(path).split(os.sep)
+    return any(p.lower().startswith(SYNCED_MARKS) for p in parts if p)
 
 
 def _fd_path(fd: int, fallback: str) -> str:
@@ -128,6 +165,8 @@ def _check_open_place(fd: int, lexical: str, what: str) -> None:
         raise Refused(f"{what} is under /mnt (Windows drive): file modes do not protect it")
     if inside_git(real):
         raise Refused(f"{what} is inside a git repository (a parent folder has .git)")
+    if in_synced_folder(real):
+        raise Refused(f"{what} is inside a cloud-synced or backed-up folder (it would be copied)")
 
 
 class _Stopped(BaseException):

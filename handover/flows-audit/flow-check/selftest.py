@@ -2222,6 +2222,16 @@ def main():
         must_not=["node MailClaim: the query uses"],
     )
     check_out(
+        "r5_new_warns_are_counted_as_known_open_problems",
+        base5 + ["--ddl", ddl2],
+        0,
+        must=[
+            ("  - ", "mf-form.json: this flow starts from a web address or form"),
+            ("  - ", "mf-recovery.json: 1 value(s) in node settings are still placeholders"),
+            ("  - ", "node AlertMark: the query uses column(s)"),
+        ],
+    )
+    check_out(
         "r5_ddl_other_table_name_is_warn",
         base5 + ["--ddl", ddlx],
         0,
