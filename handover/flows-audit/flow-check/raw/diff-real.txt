@@ -1,6 +1,6 @@
 # node-level diff, unpatched generator output vs patched (paths only, no values)
 # allowed patches: F002,F008
-== /tmp/r10c-ev/w1/g/real/mf-form.json ==
+== /tmp/r10c-ev/w2/g/real/mf-form.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -12,7 +12,7 @@
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True
-== /tmp/r10c-ev/w1/g/real/mf-hook.json ==
+== /tmp/r10c-ev/w2/g/real/mf-hook.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -24,8 +24,8 @@
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True
-== /tmp/r10c-ev/w1/g/real/mf-recovery.json ==
-== /tmp/r10c-ev/w1/g/real/mf-sub-crm-mail.json ==
+== /tmp/r10c-ev/w2/g/real/mf-recovery.json ==
+== /tmp/r10c-ev/w2/g/real/mf-sub-crm-mail.json ==
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True
