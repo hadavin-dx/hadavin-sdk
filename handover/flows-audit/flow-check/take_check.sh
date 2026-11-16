@@ -441,15 +441,15 @@ DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
 # round 10d: sha256 of stdin as 64 hex characters; no output and status 1 when sha256sum fails (a failure must never turn into an empty hash)
 sha_stdin() { local o; o=$(sha256sum 2>/dev/null) || return 1; o=${o%% *}; case $o in *[!0-9a-f]*|"") return 1;; esac; [ ${#o} -eq 64 ] || return 1; printf '%s' "$o"; }
 # round 10c (Q2): sha256 of the four flow files AND of every other *.json in the folder (this script reads all *.json there for the run-saving check), taken BEFORE the checker runs and again after the last read; a difference is exit 4. A file that is not a regular file or that sha256sum cannot read is printed as MISSING (never as an empty hash).
-flow_snapshot() {
+flow_snapshot() {   # $1 = the folder to hash (the original folder, or the private copy)
   SNAP_FOUR=""; SNAP_OTHER=""; SNAP_MISSING=0
   local f p h
   for f in mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; do
-    p="$D/$f"
+    p="$1/$f"
     if [ -f "$p" ] && h=$(sha256sum -- "$p" 2>/dev/null) && [ -n "$h" ]; then SNAP_FOUR="$SNAP_FOUR${h%% *}  $f"$'\n'
     else SNAP_FOUR="${SNAP_FOUR}MISSING  $f"$'\n'; SNAP_MISSING=1; fi
   done
-  for p in "$D"/*.json; do
+  for p in "$1"/*.json; do
     [ -e "$p" ] || [ -L "$p" ] || continue
     f=${p##*/}
     case "$f" in mf-form.json|mf-hook.json|mf-recovery.json|mf-sub-crm-mail.json) continue;; esac
@@ -457,21 +457,36 @@ flow_snapshot() {
     else SNAP_OTHER="${SNAP_OTHER}MISSING  $f"$'\n'; SNAP_MISSING=1; fi
   done
 }
-flow_snapshot; SNAP_BEFORE="$SNAP_FOUR$SNAP_OTHER"; FLOWSHA_LINES=$SNAP_FOUR; FLOWSHA_MISSING=$SNAP_MISSING; OTHER_LINES=$SNAP_OTHER   # round 10d: taken BEFORE has_keyok and the other reads of the flow files below
+flow_snapshot "$D"; SNAP_BEFORE="$SNAP_FOUR$SNAP_OTHER"; FLOWSHA_LINES=$SNAP_FOUR; FLOWSHA_MISSING=$SNAP_MISSING; OTHER_LINES=$SNAP_OTHER   # round 10d: taken BEFORE has_keyok and the other reads of the flow files below
+# round f8-r9 (m9): READ ONCE. The folder is copied once into a private folder of this run (cp -a keeps links and folders as they are, so a listed flow that is a folder or a dangling link is still seen as one); the copy is hashed and must equal the hash taken just above; the checker and every other read below use the COPY, so every reader sees the very bytes that were hashed. The original is hashed again at the end: a write made to it during the run is still exit 4.
+DC="$TMP/flows"; COPYFAIL=0; COPYDIFF=0
+if [ -d "$D" ] && mkdir "$DC" && cp -a -- "$D"/. "$DC"/ 2>/dev/null; then
+  flow_snapshot "$DC"; [ "$SNAP_BEFORE" = "$SNAP_FOUR$SNAP_OTHER" ] || COPYDIFF=1
+else
+  COPYFAIL=1; DC="$D"   # a folder that does not exist or cannot be copied: the checker is run on it as before and says what is wrong; this script adds a problem
+fi
 has_keyok() { python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$1" 2>/dev/null; }   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
 # node:connection count of mf-form and mf-hook, detected per file: 15:14 when the file holds the F-002 key check (it adds 3 nodes), else 12:11. TAKE_CHECK_FORM_EXPECT (test hook) overrides both.
-FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15:14 || echo 12:11)}"
-FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-hook.json" && echo 15:14 || echo 12:11)}"
-PCOPT=(); if has_keyok "$D/mf-form.json" && has_keyok "$D/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
+FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$DC/mf-form.json" && echo 15:14 || echo 12:11)}"
+FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$DC/mf-hook.json" && echo 15:14 || echo 12:11)}"
+PCOPT=(); if has_keyok "$DC/mf-form.json" && has_keyok "$DC/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
 DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
-python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" "${PCOPT[@]}" \
+python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$DC" "${DDLOPT[@]}" "${PCOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --accept-no-save mf-recovery.json \
   --expect mf-form.json="$FORMCNT_FORM" --expect mf-hook.json="$FORMCNT_HOOK" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
   --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token \
   --quiet-info > "$OUT" 2>&1
 RC=$?
+if [ "$DC" != "$D" ]; then   # the checker printed the path of the private copy: show the folder the person gave
+  python3 -I -c 'import sys; p, a, b = sys.argv[1:4]; t = open(p, encoding="utf-8", errors="surrogateescape").read(); open(p, "w", encoding="utf-8", errors="surrogateescape").write(t.replace(a, b))' "$OUT" "$DC" "$D" || { RC=3; echo "!!! could not rewrite the folder name in the checker output" >&2; }
+fi
 PROBLEMS=()   # things this script itself found wrong (each one makes the exit status 4 when the checker exited 0)
+[ "$COPYFAIL" = 1 ] && PROBLEMS+=("flows folder could not be copied")
+[ "$COPYDIFF" = 1 ] && PROBLEMS+=("flow files changed while they were copied")
+HAZTXT="ENVIRONMENT HAZARDS: none"
+if [ -n "$ENVHAZ" ]; then HAZTXT="ENVIRONMENT HAZARDS:$ENVHAZ these can change what this script runs (this script exits 4)"; PROBLEMS+=("environment hazard:$ENVHAZ"); fi
+CMDTXT="Commands used (as found on PATH):"; for c in python3 sha256sum sort sed grep diff cmp date; do CMDTXT="$CMDTXT $c=$(command -v "$c" 2>/dev/null || echo NOT-FOUND)"; done
 if [ ${#OVR[@]} -gt 0 ]; then
   OVRTXT="ACTIVE ENVIRONMENT OVERRIDES: ${OVR[*]}"
   if [ "${TAKE_CHECK_TEST:-}" = 1 ]; then OVRTXT="$OVRTXT (test flag TAKE_CHECK_TEST=1 is set: this is a test run, not a take check; a run that would pass exits 5, never 0)"; else OVRTXT="$OVRTXT (NOT allowed outside tests: this script exits 4)"; PROBLEMS+=("environment override(s) without the test flag"); fi
@@ -486,6 +501,8 @@ if FLOWSHA=$(printf '%s' "$FLOWSHA_LINES" | sha_stdin); then FLOWSHA_HEX=$FLOWSH
 [ "$FLOWSHA_MISSING" = 1 ] && PROBLEMS+=("a flow file is missing or unreadable")
 echo "=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ==="
 echo "$OVRTXT"
+echo "$HAZTXT"
+echo "$CMDTXT"
 echo "$FLOWSTXT"
 echo "sha256 of the four flow files checked (compare with the sha written down at re-pin; it is the sha256 of the four lines below, without the two leading spaces):"
 echo "  combined: $FLOWSHA"
@@ -537,7 +554,7 @@ if grep -q -E "^WARN .*run-saving settings|^WARN accept-no-save" "$OUT"; then
   PROBLEMS+=("run saving off")
 fi
 # round 9 (M2): the check above only sees the words "none" and false. Every flow except the accepted recovery flow must say exactly all / all / True (a missing settings block, a missing key or an odd word such as "off" also keeps the run list empty or undefined).
-SAVEBAD=$(python3 -I - "$D" <<'PYEOF'
+SAVEBAD=$(python3 -I - "$DC" <<'PYEOF'
 import glob, json, os, sys
 files = sorted(glob.glob(os.path.join(sys.argv[1], "*.json")))
 if not files:
@@ -564,7 +581,7 @@ if [ -n "$SAVEBAD" ]; then
   printf '%s\n' "$SAVEBAD" | sed 's/^/    /'
   PROBLEMS+=("run saving not all/all/True")
 fi
-if [ -f "$D/mf-recovery.json" ] && ! grep -q -F "ACCEPTED: recovery flow not part of the take (decision 4)" "$OUT"; then
+if [ -f "$DC/mf-recovery.json" ] && ! grep -q -F "ACCEPTED: recovery flow not part of the take (decision 4)" "$OUT"; then
   echo "!!! THE RECOVERY FLOW IS NOT PRINTED AS ACCEPTED (line 'ACCEPTED: recovery flow not part of the take (decision 4)' is missing): its run saving is not an excused decision. This script exits 4."
   PROBLEMS+=("recovery flow not accepted")
 fi
@@ -574,11 +591,11 @@ echo "--- (4) Does each of the two entry flows contain the F-002 key check (a no
 NOKEY=0
 for f in mf-form.json mf-hook.json; do
   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
-  if has_keyok "$D/$f"; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially). The take needs F-002: this script exits 4."; NOKEY=$((NOKEY+1)); fi
+  if has_keyok "$DC/$f"; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially). The take needs F-002: this script exits 4."; NOKEY=$((NOKEY+1)); fi
 done
 if [ "$NOKEY" -gt 0 ]; then echo "!!! The take needs F-002: this script exits 4 ($NOKEY entry flow(s) above have no key check)."; PROBLEMS+=("key check absent in $NOKEY entry flow(s)"); fi
 # round 10c (Q2): the last read of the flow files is above; hash them again and compare with the hash taken before the checker ran
-flow_snapshot; SNAP_AFTER="$SNAP_FOUR$SNAP_OTHER"; CHANGED=0
+flow_snapshot "$D"; SNAP_AFTER="$SNAP_FOUR$SNAP_OTHER"; CHANGED=0
 if [ "$SNAP_BEFORE" != "$SNAP_AFTER" ] || [ "$SNAP_MISSING" = 1 ]; then
   if [ "$SNAP_BEFORE" != "$SNAP_AFTER" ]; then CHANGED=1; echo "!!! A FLOW FILE CHANGED WHILE THIS CHECK RAN (sha256 before the checker differs from sha256 after the last read): the checker and this script may have read different files, so nothing here is a verdict about one file set. Run it again when nothing writes to the folder. This script exits 4."; PROBLEMS+=("flow files changed during the check"); fi
 fi
