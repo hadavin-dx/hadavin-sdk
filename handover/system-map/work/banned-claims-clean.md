@@ -1,4 +1,5 @@
-Folded 16 Nov 2026: older stacked notes live in work/banned-claims-clean-history.md; this page has no other live text. Cite section names, not line numbers. Files named below: inputs/DECISIONS-2026-11-16.md = the lead session's twelve decisions (second-hand); decisions/M17-end-never-deletes.md = the page that checks what the end step does; work/banned-claims.md = old stacked notes.
+Folded 16 Nov 2026: this page is the only live version; older notes are history only (work/banned-claims-clean-history.md and work/banned-claims.md). Cite section names, not line numbers. Files named below: inputs/DECISIONS-2026-11-16.md = the lead session's twelve decisions (second-hand); decisions/M17-end-never-deletes.md = the page that checks what the end step does; work/banned-claims.md = old stacked notes.
+Terms used below (added 16 Nov 2026): take = the one recorded run of the demo; 'processed once' = stored once and mailed once, not twice; count check = the step that compares the contacts received with the contacts processed; spend check = the check that stops paid model calls over the set limit; count login = a separate read-only database login for the count (not built); the program = the demo's Python runner script that drives n8n; end step = the program's last command, typed as `end`; two doors = the two entry points of the demo (not defined in any file I can read: UNVERIFIED, so any claim about them stays banned).
 Terms: contact record = one made-up sales contact (also called a lead on older pages); id = that record's id; take = one recorded run of the demo (the film is cut from it); n8n = the workflow tool that runs the demo; crash test = stopping n8n in the middle of a run.
 Decisions 2, 3 and 8 are items of the lead session's decision list of 16 Nov (inputs/DECISIONS-2026-11-16.md; known second-hand only, UNVERIFIED), in one sentence each: 2 = the take never deletes anything; 3 = the plan to give each part its own login (the roles proposal) is parked, so no such login is built; 8 = no smoke test with a real account before the take (exact wording NOT RECORDED; no banned claim below depends on it).
 rehearsal = a test run on the laptop before the take, without a real account.
@@ -26,11 +27,10 @@ Do not say or show any of these. One claim per line; a "Why" says what would unl
 - That n8n cannot reach the internet. Why: not checked.
 - That the system is crash-safe. Why: unlocked only by a named result file showing the crash test passed (the crash test stops n8n in the middle of a run and checks that the contact record is still processed once), read by the checker.
 - That the count uses an independent or read-only login. Why: that login is not built (decision 3 parks the plan).
-- That the program deletes anything. Why: the take never deletes (decision 2). This one is never unlocked.
-- That the independent login exists. Why: it is not built.
+- That the program deletes anything (the owner's own hand deletion in Allowed 2 is a different claim). Why: the take never deletes (decision 2). This one is never unlocked.
 
 ## Unlock rule
-The studio head names a result file (a text file saying whether one named test passed or failed) and the checker reads it. No such file exists today, so nothing is unlocked today. A claim that the program deletes anything can never be unlocked.
+The studio head names a result file (a text file saying whether one named test passed or failed) and the checker reads it. No such file exists today, so no banned claim is unlocked today (the one allowed sentence in Allowed 1 needs no unlocking). A claim that the program deletes anything can never be unlocked.
 
 ## Open items
 Checker's name; date to name it (proposal: Tue 17 Nov 2026 12:00 UTC / 17:30 IST); the final video script wording, written after the rehearsal.

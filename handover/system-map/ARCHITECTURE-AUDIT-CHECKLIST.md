@@ -1,4 +1,5 @@
 # ARCHITECTURE AUDIT CHECKLIST (bible R460; owner HARD rule 2026-11-15; applies to EVERY project, demo, real build and existing/continuing project)
+Terms (added 16 Nov 2026): the bible = the studio's rulebook of numbered rules (R-numbers); the rule that makes this checklist mandatory is R460. EGM = Elephant-Goldfish Model, the studio's review method: one author session plus fresh reviewer agents (`egm:*` types) that each read the page cold. Blocker = a finding that stops the work until fixed; Major = a finding to fix before delivery; Nit = a small wording or style point. Ledger = the blocker ledger file `egm/BLOCKER-LEDGER.md` in the studio's private notes (not in this repository), one row per Blocker or Major. Owner = the human who owns the studio. Round cap: Blockers in security, money or redaction paths are reviewed until a round finds none; every other path gets at most 2 review rounds.
 Copy this file into `egm\<project>\architecture-audit\` and fill it. A project without a filled, reviewed audit is not ready for a demo, take, pilot or delivery.
 
 ## 0. When
