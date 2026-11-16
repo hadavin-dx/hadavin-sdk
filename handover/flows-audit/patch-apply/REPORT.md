@@ -1,3 +1,4 @@
+> Superseded by flow-check/check_flows.py (F8, 2026-11-16): use that checker; this file stays as the record of the earlier rounds.
 Mon Nov 16 09:01:17 UTC 2026
 
 # F4 patch-apply evidence (raw, no judgement)

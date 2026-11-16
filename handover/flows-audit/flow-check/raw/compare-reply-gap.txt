@@ -1,0 +1,9 @@
+# reply-gap step names: M1 (raw/m1-*.md, 'default stop on a path from responseNode webhook') vs F8 (raw/pristine.txt, raw/patched.txt, 'REPLY GAP')
+pristine real mf-form.json M1 ['Claim', 'RunSub', 'Stored'] F8 ['Claim', 'RunSub', 'Stored'] SAME
+pristine real mf-hook.json M1 ['Claim', 'RunSub', 'Stored'] F8 ['Claim', 'RunSub', 'Stored'] SAME
+pristine film mf-form.json M1 ['Claim', 'RunSub', 'Stored'] F8 ['Claim', 'RunSub', 'Stored'] SAME
+pristine film mf-hook.json M1 ['Claim', 'RunSub', 'Stored'] F8 ['Claim', 'RunSub', 'Stored'] SAME
+patched real mf-form.json M1 ['RunSub', 'Stored'] F8 ['RunSub', 'Stored'] SAME
+patched real mf-hook.json M1 ['RunSub', 'Stored'] F8 ['RunSub', 'Stored'] SAME
+patched film mf-form.json M1 ['RunSub', 'Stored'] F8 ['RunSub', 'Stored'] SAME
+patched film mf-hook.json M1 ['RunSub', 'Stored'] F8 ['RunSub', 'Stored'] SAME

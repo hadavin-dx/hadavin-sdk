@@ -1,0 +1,4 @@
+The system-map flow check (M1) is NOT copied here any more.
+Branch: cloud/system-map (origin), commit a14a437cbeb8facaac3c19d54ea45a5c4a8fdb79 (confirmed with: git log -1 --format=%H origin/cloud/system-map, 2026-11-16).
+File: handover/system-map/flowcheck/tools/flowcheck.py. Read it with: git show origin/cloud/system-map:handover/system-map/flowcheck/tools/flowcheck.py
+The copy removed from this folder was byte-identical to that file at that commit (checked with diff before removal).
