@@ -1,0 +1,32 @@
+PASS (hidden): KEY= form
+PASS (hidden): export TOKEN= form
+PASS (hidden): password = "..." form
+PASS (hidden): JSON quoted key
+PASS (hidden): JSON client_secret no spaces
+PASS (hidden): Authorization Bearer
+PASS (hidden): bare Bearer value
+PASS (hidden): sk- value
+PASS (hidden): pat- value
+PASS (hidden): github token shape
+PASS (hidden): YAML next line after grep prefix
+PASS (hidden): YAML block line a
+PASS (hidden): YAML block line b
+PASS (hidden): web address with user:password
+PASS (hidden): AKIA-shaped id
+PASS (hidden): passwd: form
+PASS (hidden): pwd= form
+PASS (hidden): credential = form
+PASS (hidden): secret at column 300 (hidden before the cut)
+PASS (hidden): JSON secret followed by more JSON
+PASS (hidden): quoted secret inside a call
+PASS (kept): text after a quoted JSON secret stays readable (DELETE)
+PASS (kept): text after a quoted secret in a call stays readable
+PASS (kept): comparison key == "end" is not hidden
+PASS (kept): plain answer = "end" is not hidden
+PASS (kept): the one allowed example key shows
+PASS (kept): ordinary line with the word end
+PASS (kept): unrelated YAML line after a hidden block
+PASS (kept): unrelated grep line after hidden YAML value
+PASS (kept): long line carries a cut notice
+SELF-TEST: pass=30 fail=0 (input and output copies: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind/lead-repin.r9vYuO/st-in.txt and /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind/lead-repin.r9vYuO/st-out.txt)
+dash rc=0

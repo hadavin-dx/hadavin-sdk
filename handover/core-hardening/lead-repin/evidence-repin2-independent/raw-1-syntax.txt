@@ -1,0 +1,10 @@
+d8f717587afb673cc1382a4677e5cbc9548c628f4a613eae2eb682fcd7d51fa3  /home/user/hadavin-sdk/handover/core-hardening/lead-repin/lead-repin-verify.sh
+bbcfac8d811aa18ae14ac75c87a495d2fd49501b71a8afedcd6ae8bc24375078  /home/user/hadavin-sdk/handover/core-hardening/lead-repin/LEAD-REPIN-VERIFY.md
+== sh -n
+rc=0
+== bash -n
+rc=0
+== dash -n
+rc=0
+shellcheck not installed
+lrwxrwxrwx 1 root root 4 Mar 31  2024 /bin/sh -> dash
