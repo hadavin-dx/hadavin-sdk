@@ -1,23 +1,37 @@
 diff --git a/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
-index 103d55a..e5fc9a7 100644
+index 103d55a..944bccb 100644
 --- a/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
 +++ b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
-@@ -4,6 +4,7 @@ Changelog (2026-11-14 audit fixes; statement 19 added after lane3 HB189):
- 1. Fixed: 4, 7, 12, 13, 14, 17 now use the settled numbers (K3 and K3B 1 alert each, v3 B90 n=3, v4 B90 n=3 plus 1 laptop run, lane3 K1 144.3 s at lease 120 s); 12 lost "in my runs" and "would pass".
+@@ -1,9 +1,10 @@
+ # Page statements V4: alerts and recovery (rewrite of section C for the v4 flows)
+ 
+ Changelog (2026-11-14 audit fixes; statement 19 added after lane3 HB189):
+-1. Fixed: 4, 7, 12, 13, 14, 17 now use the settled numbers (K3 and K3B 1 alert each, v3 B90 n=3, v4 B90 n=3 plus 1 laptop run, lane3 K1 144.3 s at lease 120 s); 12 lost "in my runs" and "would pass".
++1. Fixed: 4, 7, 12, 13, 14 now use the settled numbers (K3 and K3B 1 alert each, v3 B90 n=3, v4 B90 n=3 plus 1 laptop run, lane3 K1 144.3 s at lease 120 s: relayed from another test session, not measured by us); 12 lost "in my runs" and "would pass". Statement 17 no longer carries any figure (see bullet 4).
  2. Moved to UNBACKED (do not publish until backed): the 30 s alert timing (6), lane3 cases A and C (8), library timeouts (16), the scan claim (18). Statements 1, 2, 3, 5 got small wording fixes.
- 3. Added: two different K3 names, the new tag RELAYED-LEAD, and one recovery rule of thumb (statement 17).
+-3. Added: two different K3 names, the new tag RELAYED-LEAD, and one recovery rule of thumb (statement 17).
++3. Added: two different K3 names, the new tag RELAYED-LEAD, and one recovery rule of thumb (statement 17; removed again, see bullet 4).
 +4. 2026-11-16: statement 17 rewritten (no rule of thumb, no 120 s figure, no 20 s numbers: those stay only in statement 12); statement 20 struck; total corrected.
  
  Written 2026-11-14 by the cloud demo session. Replaces section C of PAGE-STATEMENTS-DRAFT and the v4 additions draft. Nothing in this file was run by the cloud session. Plain words only.
  
-@@ -117,19 +118,19 @@ No lane3 report was found under handover/demo3. HB180 and HB186 are absent from
+@@ -104,7 +105,7 @@ No lane3 report was found under handover/demo3. HB180 and HB186 are absent from
+ 
+ 14. "On the demo harness the kill series (K1, K2, demo K3, K3B) was not run on the v4 flows. The only v4 recovery figure is a lane3 relay: K1 recovered in 144.3 s at its lease of 120 s (n=1, v4 K1). The raw lane3 report was not seen."
+     Tag: NOT RUN for the demo harness on v4. The lane3 figure: RELAYED-INDEPENDENT.
+-    Test: K1, K2, demo K3, K3B on v4 (harness); lane3 v4 K1.
++    Test: K1, K2, demo K3, K3B on v4 (harness); lane3 v4 K1 (relayed, not measured by us).
+     Raw file: none for the harness; lane3 report not found in handover.
+ 
+ 15. "A lead that used up its three tries after the mail step started is called unknown, not failed."
+@@ -117,45 +118,35 @@ No lane3 report was found under handover/demo3. HB180 and HB186 are absent from
      Test: AF2, not run.
      Raw file: none named.
  
 -17. "Recovery within 60 s was measured only at the 20 s test lease (max 59.6 s, margin 0.4 s, n=20 per kill point, one machine); at the shipped 120 s lease lane3 measured 144.3 s once (n=1, v4 K1); at the 45 s film lease nothing is measured. Rough rule from lane3: about the lease plus 25 s; the 20 s data is lease + 40 s so treat the rule as rough."
 -    Tag: 20 s figure MEASURED-ON-LAPTOP (lead-read). 120 s figure RELAYED-INDEPENDENT (one figure, report not seen). 45 s: NOT RUN.
-+17. "Recovery time depends on the lease (how long n8n waits before another run may take over a lead that stopped). The only recovery times we measured are for a 20 s test lease, in statement 12. At the 45 s lease used in the one video we measured nothing, so this page quotes no recovery time for it."
-+    Tag: HELD until runs at lease 45 s exist. The 20 s figures are MEASURED-ON-LAPTOP (lead-read) and stand in statement 12 only (one source for the numbers; this statement repeats none). The 120 s figure (one relayed run, report not seen) is not used here. 45 s: UNVERIFIED, NOT RUN by us. Where the clock starts is not stated in V7-NUMBERS-lead-read.md (UNVERIFIED).
++17. "How long a stopped lead takes to be finished depends on a waiting time called the lease: how long n8n waits before a later run (one go through the steps for one lead) may pick up a lead whose earlier run stopped. We measured recovery times only with a lease of 20 seconds. For a lease of 45 seconds we measured nothing, so we give no recovery time for it. The wait also includes the time until the next check for stopped leads (the flows run that check every 30 seconds; read from the flow files, not run) and the time n8n needs to restart (not measured)."
++    Tag: HELD until runs at lease 45 s exist. The 20 s figures are MEASURED-ON-LAPTOP (lead-read) and stand in statement 12 only (one source for the 20 s figures; this statement repeats none). The 144.3 s figure (one run at lease 120 s, relayed from another test session, not measured by us, report not seen, n=1) stays in statements 14 and in the honest limits; it is not used here. 45 s: UNVERIFIED, NOT RUN by us. Where the clock starts is not stated in V7-NUMBERS-lead-read.md (UNVERIFIED).
      Test: lease table, not run.
 -    Raw file: V7-v3 folder for the 20 s figure; none for the others.
 +    Raw file: V7-v3 folder for the 20 s figures (laptop-local, not in this repository); none for 45 s.
@@ -36,14 +50,24 @@ index 103d55a..e5fc9a7 100644
  
  19. "An alert can arrive up to about 13 minutes late if n8n itself dies while it is sending the alert; it is not lost." [RELAYED-INDEPENDENT, lane3 HB189 v4 kill series, n8n killed 10 s into the alert send: exactly 1 alert, not lost, 780 s late because the killed send holds the 12 minute claim until it runs out; n=not given to me, raw file not named to me, ask lead. The cause is the 720 s claim window (statement 1) read from the v4 flow. NOT run by me.] Plain meaning: v4 trades v3's possible second alert for a possible late alert, and only when n8n dies during the alert send. Not an engineering change (the lead's RIGHT-SIZE call): the main flow and the doubtful-case scene are unaffected. Must NOT be shortened to "alerts always arrive within minutes" or to "exactly one alert" without this delay.
  
-@@ -145,17 +146,7 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
- - One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
+ ## Honest limits (what is not measured)
+ - The Send Email node timeout (AF2 not run).
+ - AF2, K4, K5, T10, T11, T13: not in the claims above. T13 was never re-read by the lead.
+-- Lease 45 s: nothing measured. Lease 120 s: one lane3 figure only.
++- Lease 45 s: nothing measured. Lease 120 s: one lane3 figure only (relayed, not measured by us).
+ - Any v4 run by the demo harness: none given (T8, T15, K1 to K3B, AF1 on v4 not run).
+ - A hold of the alert answer beyond 720 s: not run.
+ - A real mailbox, a real HubSpot account, a Slack alert: none.
+ - Lane3 claims are second-hand: HB180 and HB186 are named but absent from the handover tree. Cases A and C are undefined.
+ - Alert delay: up to about 13 minutes if n8n dies during the alert send (statement 19); n and raw file not given to me.
+-- One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
++- One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure, relayed).
  - Stale source note: the V7 numbers file still says v4 B90 n=2; the settled value is n=3 on lane3 plus 1 on the laptop. Fix it at its source (not done here).
  
 -## Statement 20 (FINAL, lead relay of lane3 HB194, lease 45 s, film-v4, n8n 2.46.6, independent harness)
 -20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Seconds from the kill to a final state, all 18 kill runs correct: 60.1 to 61.9 s (K1 5 runs, K2 5, K3B 5, K3 3 in this page's names). Tag RELAYED-INDEPENDENT (one machine, made-up data, stand-in services). Raw: lane3 HB194 table; file name not given to me, not in my checkout, I read nothing.
 +## Statement 20 (STRUCK, DO NOT QUOTE)
-+20. [Struck.] The sentence said a lead interrupted by an n8n crash "was finished about a minute after the crash". It is struck for two reasons: 8 of the 18 runs behind it ended unknown (not finished), and its range pooled four different stop points. Lead decision 2026-11-16 item 1 also keeps every recovery number out of the one video. Its source was a relay of lane3 HB194 (lease 45 s, older film flows, independent harness); the raw table was not seen. No figure from it is kept on this page.
++20. [Struck.] The sentence said a lead interrupted by an n8n crash "was finished about a minute after the crash". It is struck for two reasons: 8 of the 18 runs behind it ended unknown (not finished), and its range pooled four different stop points. The decision of 2026-11-16 also keeps every recovery number out of the video. Its source was a relay of lane3 HB194 (lease 45 s, older film flows, independent harness); the raw table was not seen. No figure from it is kept on this page.
  NAMING (lead, final): lane3 K3 = this page's K3B (killed after the mail left: unknown + 1 alert); lane3 K6 = this page's demo K3. Statement 12 naming: use this page's names only.
 -- K1 (killed after the claim): n=5, done. Median 60.8, max 61.9 (from the 17:19Z relay; n unchanged, final per-test medians not re-relayed).
 -- K2 (killed after the CRM write): n=5, done. Median 60.9, max 61.2 (same note).
