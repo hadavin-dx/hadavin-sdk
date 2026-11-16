@@ -1,0 +1,10 @@
+# Hand-off v16 security review, round 8 (egm-design, uncapped, condensed copy), 2026-11-16T17:01:19Z
+Read-only, nothing run. 0 blockers, 3 majors, 5 minors. All six v15 majors closed in design text; Postgres evidence real but author-run, product code and repo tests do not exist.
+## MAJOR
+- M1 Kill switch and spend totals stay open: L-2 design (5.10b, H16:356,314) gives runtime role EXECUTE on spend_add/kill_switch_set; a negative delta cannot be told from a settle; the runtime login can still switch the kill switch off; "by" is caller-supplied, "who" is the shared runtime login. Fix: operator-only role for switch-off, take by from session_user, bound negative delta by a per-agent reservation (L-1). Class "record only", open.
+- M2 SECURITY DEFINER class guard (secdef_guard_v16.py) bypassed by ordinary spellings: attributes after the body, single-quoted or BEGIN ATOMIC body, schema-qualified name, ALTER FUNCTION, CREATE PROCEDURE; one %I. hides a bare-table statement; runtime _SAFE_CREATE does not cover it. Fix: reject the token anywhere outside a declared function (or real parser/allowlist), add mutants per spelling.
+- M3 "Agent never holds the audit-reader secret" rests on a code-path spy test; same env/file secrets kind means the agent can read it. Fix: store the agent identity cannot read, plus a negative test resolving the name through the agent's own secrets kind.
+## MINOR
+- m4 returned-total check only in UPDATE branch; INSERT branch (positive reserve on a NaN row) unchecked. m5 kill_switch_log AFTER UPDATE trigger failing blocks an operator switch-ON: decide and test. m6 circuit_open missing from end-state table and card rules. m7 qualify allowlist unbuilt (judge.py:108 counts any code except guard_unavailable as pass): make it an S-2a start gate. m8 start-up checks lenient in demo/pilot; L-2 date 2026-12-04 can slip.
+v15 closure: M1,M2 closed in design; M3 author-run (14/17.10 not run); M4 weak; M5 record only; M6 partial; minors m1,m2,m4,m7 closed, m3,m5,m6,m8 open.
+Do not start DB-2 until M1-M3 are decided.
