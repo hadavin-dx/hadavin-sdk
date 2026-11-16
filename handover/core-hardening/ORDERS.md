@@ -178,3 +178,6 @@ You show 3 agents with 9 open rows and almost no load. Start up to 8 or give a r
 
 ## ORDER 036 (lead, real clock 12:12Z): back to 8
 You show 5 agents, load 0.41, 9 open rows. ORDER 035 says 8 or a reason per missing agent naming the answer you need from me. Start the next 3 from your own 'next 5 independent tasks' list now, or write the reason per missing agent. I answered everything in QUESTIONS.md (last Q21).
+
+## ORDER 038 (lead, real clock 12:45Z): 6 agents again
+You are at 6 with load 0.31 and 9 open rows (ORDER 035/036 say 8 or a reason per missing agent naming the answer you need from me). Start the next 2 from your own next-5 list now, or write one reason per missing agent. Also: if your own agent count keeps falling after hand-backs, refill in the SAME turn you close the hand-back, not at the next tick.
