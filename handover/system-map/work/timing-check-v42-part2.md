@@ -1,43 +1,72 @@
-Status: DRAFT, unverified
+Status: DRAFT. Unverified: (a) what the 49 minutes contain and whether the 17:40Z latest start is right (source: ORDERS.md line 183, unverified); (b) every step duration in the runbook (lead session estimates, not measurements); (c) the take program's own refusal rule; (d) runbook lines outside 321-628 except those named below. Checked only: the arithmetic on this page, by hand. Nothing was run.
 
 # Timing check H2, part 2: take-day runbook v4.2, lines 321-628, against the 49-minute worst-case window
 
-Written 2026-11-16 (UTC). Static read only. Nothing was run, no sub-agent, no spend. Times in UTC and IST (IST = UTC + 5:30). All wording marked PROPOSAL is a suggestion for the lead, not a decision.
+Written 2026-11-16 (UTC). Static read only. Nothing was run, no sub-agent, no spend. Times in UTC (Z) and IST (IST = UTC + 5:30). All wording marked PROPOSAL is a suggestion for the lead session, not a decision.
 
-File read: `handover/system-map/inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md` lines 202-227 (section 3), 258-270 (G1 to G11, for G7), 314-321 (T-01), and 321-628 (my range). Also read `work/timing-check-a.md` (the v5 owner-sheet findings).
+## In plain words
+
+This page checks every time statement in lines 321 to 628 of the take-day runbook, version 4.2 (the written plan for the day of the filmed demo run). It asks one question: does each statement fit a worst-case run of 49 minutes that must end before the money stop at 18:29Z?
+
+**49 minutes: source ORDERS.md line 183, unverified.** The lead session ordered a check against "latest start about 17:40Z for window end 18:29Z". Nobody has written down what the 49 minutes contain. Rows that depend on the 49 (they stay proposals until the lead session answers): R-30, R-31, R-34, R-35, R-36, R-39, R-42, R-46, R-48, R-49, R-53, R-56, R-60, the "G7 and the stop time" section, and these arithmetic rows: latest start, 12:00Z margin, take slot against worst case, take with 49 minutes, same-day retake with 49 minutes, last possible retake start, late Monday take. Rows that do not depend on it: the rest (they use only runbook figures).
+
+## Words and codes used on this page
+
+Definitions use `work/GLOSSARY.md` wording where it has one.
+- **lead session**: the Claude session that gives orders to the system-map session through ORDERS.md. The rows below say "the lead"; read each as "lead session". **studio lead**: the Claude session that does the technical steps and is the only one that messages the owner. **owner**: the human at the laptop who gives the written yes.
+- **take**: one recorded (filmed) run of the lead-intake demo on made-up data. **take program**: the script that runs it, `scripts/run_real_check_n8n.py` (named by the runbook; not in this checkout).
+- **re-pin**: pointing the demo at a new fixed version of the core code (a version id called a sha). The runbook's re-pin event is one set of steps T-02 to T-12 on Tue 17 Nov. **re-smoke**: a repeat quick test run after the re-pin (my reading; UNVERIFIED).
+- **gate** (start-state gate): a check of about 25 minutes before the take, W-04. **Row 4**: the 30-minute Wednesday step W-02 (my reading: the owner posts one test lead and checks the results; UNVERIFIED). **G7**: runbook rule G7 (line 265).
+- **Row labels.** R-01 to R-62 are this page's own row numbers, so a row can be cited. The codes T-nn, W-nn, G-n, U-nn and O-n are the runbook's own labels, used here only to point to lines: T-nn = the Tuesday re-pin steps, W-nn = the Wednesday steps (rehearsal, gate, take), G-n = go/no-go rules, O-n = owner steps. What U-nn stands for is not given in the part I read: UNVERIFIED (U-16, U-19, U-20 appear in the rows). "H2" is the label of this check. Also used by the runbook and left as written because their meaning is not in my range: PSG, F-002, T19, DEACT, STOP-N8N, scene 4, WAIT_S, LIMIT_S.
+- **EGM**, **bible**, **R-numbers** in the studio's sense: not used on this page.
 
 ## What I could not check (read first)
 
-1. What the 49 minutes are made of. v4.2 contains no "49" in a timing sense (my search for "49" found only table-of-changes rows, not a duration). The only source is the lead's order at `ORDERS.md` line 183 ("latest start about 17:40Z for window end 18:29Z"). I assume 49 minutes means: the slowest case of the take program's spending run, from its start to its last spend or last deletion. If it also includes the owner's watch, the clean-up, or a restart, the findings in rows R-30 to R-34 change.
-2. Where the take program (`scripts/run_real_check_n8n.py`) takes its window figure. Not in this checkout. The runbook range does not state the number (v5 says 14 minutes; v4.2 says only "window too close", line 450). So I cannot show that the program's own refusal rule uses 49.
-3. None of the step durations (T-02 to T-11, W-01 to W-05) were measured. They are the lead's estimates (line 407: "Estimates are the lead's own").
+0. File read: `handover/system-map/inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md` lines 202-227 (section 3), 258-270 (G1 to G11, for G7), 314-321 (T-01), and 321-628 (my range). Also read `work/timing-check-a.md` (the v5 owner-sheet findings).
+1. What the 49 minutes are made of. v4.2 contains no "49" in a timing sense (my search for "49" found only table-of-changes rows, not a duration). The only source is the lead session's order at `ORDERS.md` line 183 ("latest start about 17:40Z for window end 18:29Z"). I assume 49 minutes means: the slowest case of the take program's spending run, from its start to its last spend or last deletion. If it also includes the owner's watch, the clean-up, or a restart, the findings in rows R-30 to R-34 change.
+2. Where the take program takes its window figure. Not in this checkout. The runbook range does not state the number (v5, the owner sheet version 5, says 14 minutes; v4.2 says only "window too close", line 450). So I cannot show that the program's own refusal rule uses 49.
+3. None of the step durations (T-02 to T-11, W-01 to W-05) were measured. They are the lead session's estimates (line 407: "Estimates are the lead's own").
 4. Whether the Wednesday blocks (60 / 30 / 120 / 25 / 60 minutes) hold in real use. The runbook says the rehearsal measures them; it has not run.
-5. Whether n8n starts inside the 12 x 10 s readiness loop on this laptop, and what the real stop time is.
+5. Whether n8n (the tool that runs the demo steps) starts inside the 12 x 10 s readiness loop on this laptop, and what the real stop time is.
 6. Lines outside 321-628 (section 4 spend, sections 6 to 8) were not read except G1 to G11 and T-01.
 
-## Window arithmetic (shown)
+## Window arithmetic (shown, one calculation per row)
 
-| Item | Calculation | Result |
-|---|---|---|
-| Latest start, 49-minute worst case | 18:29Z minus 49 min | 17:40Z = 23:10 IST (17:40 + 5:30 = 23:10, checked) |
-| Window end in IST | 18:29Z + 5:30 | 23:59 IST (checked) |
-| Mon 23 Nov 12:00Z slipped-take limit (line 222, 482, 526) versus latest start | 17:40 minus 12:00 | 5 h 40 min = 340 min of extra room that the 12:00Z limit gives away |
-| Margin of a take that starts at the 12:00Z limit | 18:29 minus (12:00 + 49 min = 12:49) | 5 h 40 min |
-| Re-pin event, Tue (line 325, 407) | 3 + 5 + 2 + 15 + 10 + 15 + 3 + 40 + 65 + 45 + 20 | 223 min (checked: 3, 8, 10, 25, 35, 50, 53, 93, 158, 203, 223) |
-| Start for Tue 08:00Z | 08:00 minus 223 min (3 h 43 min) | 04:17Z = 09:47 IST (checked) |
-| Start for Mon 23 Nov 07:00Z | 07:00 minus 223 min | 03:17Z = 08:47 IST (checked) |
-| Repeat of T-06 to T-10, line 348, 454, 524 | 15 + 3 + 40 + 65 + 45 | 168 min (checked: 18, 58, 123, 168). Note: T-07 (3 min) runs in parallel with T-08 (line 355, 361), so on the critical path it is 165 min; 168 is a safe upper bound. T-11 (20 min) is also parallel (line 402), so the whole event on the critical path is 223 - 3 - 20 = 200 min if both overlaps hold. The runbook keeps 223 as the one-after-another sum (line 209). |
-| Latest start of a 168-minute repeat to finish by Mon 07:00Z | 07:00 minus 168 min (2 h 48 min) | 04:12Z = 09:42 IST. Line 524 states only the 223-minute start (03:17Z); it does not state the 168-minute start. |
-| G7 chain (line 265) | re-smoke 1 h + practice 1 h + Row 4 0.5 h + rehearsal 2 h + take 1 h = 5.5 h = 330 min; from 07:00Z | ends 12:30Z = 18:00 IST. The chain leaves out the start-state gate (25 min, W-04, line 478) and the lead's watch (20 min). With the gate: take starts 11:55Z, ends 12:55Z; with the watch: 13:15Z. Margin to 18:29Z from 13:15Z: 5 h 14 min. |
-| Take slot versus worst case | W-05 slot 10:00 to 11:00Z = 60 min (line 484) versus 49 min | 11 min of slack inside the slot, if 49 is the take program's run only |
-| Same-day retake (line 226, 508, 528) | gate 25 + take 60 + edit 120 + watch 20 = 225 min; 15:00Z minus 225 min (3 h 45 min) | 11:15Z = 16:45 IST (checked) |
-| First take ends, watch ends | 10:00 + 60 = 11:00Z; + 20 = 11:20Z | 11:20Z is 5 min after 11:15Z, so the same-day retake for a 15:00Z post fails by 5 min (matches line 226) |
-| Same, with a 49-minute take | 10:00 + 49 = 10:49Z; + 20 = 11:09Z | 11:09Z is 6 min before 11:15Z, so a same-day retake would then fit (only if the gate for the retake starts at once) |
-| Owner edit after hand-over | 11:20Z + 120 min | 13:20Z; post 15:00Z leaves 100 min (checked) |
-| Scene 4 stop, worst case (line 473) | 45 s + 5 s + 3 s | 53 s (checked) |
-| Scene 4 limit, `<LIMIT_S>` (line 473) | 180 s = 3 min (matches G6 rule 2 "3 minutes") | OK as a number |
-| Scene 4 total worst case from the lines given | stop 53 s + readiness loop up to 12 x 10 s = 120 s + lease 45 s + check 30 s | 248 s = 4 min 8 s, which is more than 180 s. Caveat: the lease may already be running during the stop, so the real figure can be lower. Not measured; the rehearsal measures it (line 473). |
-| Last possible start of a retake if the first take ran Mon 23 Nov | first start t; second start = t + 49 (run) + 20 (watch) + 25 (gate) = t + 94 min must be <= 17:40Z | t <= 16:06Z (= 21:36 IST). With a 60-minute slot: t + 105 <= 17:40Z, t <= 15:55Z (= 21:25 IST). |
+| Item | Calculation | Result | Note |
+|---|---|---|---|
+| Latest start, 49-minute worst case | 18:29Z - 49 min | 17:40Z = 23:10 IST | depends on the 49 |
+| Window end in IST | 18:29Z + 5:30 | 23:59 IST | |
+| Slipped-take limit (lines 222, 482, 526) against latest start | 17:40 - 12:00 | 5 h 40 min | the 12:00Z limit is stricter than the hard latest start by this much; depends on the 49 |
+| Margin of a take that starts at 12:00Z | 18:29 - (12:00 + 49 min = 12:49) | 5 h 40 min | depends on the 49 |
+| Re-pin event, Tue (lines 325, 407): sum | 3 + 5 + 2 + 15 + 10 + 15 + 3 + 40 + 65 + 45 + 20 | 223 min | running totals 3, 8, 10, 25, 35, 50, 53, 93, 158, 203, 223 all checked |
+| Start for Tue 08:00Z | 08:00 - 223 min (3 h 43 min) | 04:17Z = 09:47 IST | |
+| Start for Mon 23 Nov 07:00Z | 07:00 - 223 min | 03:17Z = 08:47 IST | |
+| Repeat of T-06 to T-10 (lines 348, 454, 524), one after another | 15 + 3 + 40 + 65 + 45 | 168 min | running totals 18, 58, 123, 168 checked |
+| Same repeat, T-07 beside T-08 | 168 - 3 | 165 min | T-07 (3 min) runs in parallel with T-08 (lines 355, 361) |
+| Whole re-pin event, T-07 and T-11 in parallel | 223 - 3 - 20 | 200 min | only if both overlaps hold; the runbook keeps 223 (line 209) |
+| Latest start of a 168-minute repeat, done by Mon 07:00Z | 07:00 - 168 min (2 h 48 min) | 04:12Z = 09:42 IST | line 524 states only the 223-minute start (03:17Z), not this one |
+| G7 chain (line 265) | re-smoke 60 + practice 60 + Row 4 30 + rehearsal 120 + take 60 = 330 min; 07:00Z + 330 min | ends 12:30Z = 18:00 IST | leaves out the gate and the watch |
+| G7 chain with the gate | 12:30Z + 25 min | ends 12:55Z (take starts 11:55Z) | gate is W-04, line 478 |
+| G7 chain with gate and watch | 12:55Z + 20 min | 13:15Z | |
+| Margin from the G7 chain to the window end | 18:29 - 13:15 | 5 h 14 min | |
+| Take slot against worst case | W-05 slot 60 min (line 484) - 49 min | 11 min | depends on the 49 |
+| Same-day retake total (lines 226, 508, 528) | gate 25 + take 60 + edit 120 + watch 20 | 225 min | |
+| Latest gate start for a 15:00Z post | 15:00Z - 225 min (3 h 45 min) | 11:15Z = 16:45 IST | |
+| First take ends | 10:00 + 60 | 11:00Z | |
+| First watch ends | 11:00 + 20 | 11:20Z | 5 min after 11:15Z, so a same-day retake fails by 5 min (matches line 226) |
+| Take of 49 minutes, watch end | 10:00 + 49 + 20 | 11:09Z | 6 min before 11:15Z, so a retake would fit if its gate starts at once; depends on the 49 |
+| Owner edit after hand-over | 11:20Z + 120 min | 13:20Z | post at 15:00Z leaves 100 min |
+| Scene 4 stop, worst case (line 473) | 45 s + 5 s + 3 s | 53 s | |
+| Scene 4 limit `<LIMIT_S>` (line 473) | 180 s | 3 min | matches G6 rule 2 "3 minutes" |
+| Scene 4 total worst case from the lines given | 53 s stop + 120 s readiness loop (12 x 10 s) + 45 s lease + 30 s check | 248 s = 4 min 8 s | more than 180 s; the lease may already run during the stop, so the real figure can be lower; not measured, the rehearsal measures it (line 473) |
+| Retake after a Monday take, gap between starts | 49 (run) + 20 (watch) + 25 (gate) | 94 min | depends on the 49 |
+| Last start of a first take so the retake starts by 17:40Z | 17:40Z - 94 min | 16:06Z = 21:36 IST | depends on the 49 |
+| Same, with a 60-minute slot | 17:40Z - (60 + 20 + 25 = 105 min) | 15:55Z = 21:25 IST | |
+| Same-day retake total with a 49-minute take | 25 + 49 + 120 + 20 | 214 min | depends on the 49 |
+| Latest gate start for a 15:00Z post, 49-minute take | 15:00Z - 214 min (3 h 34 min) | 11:26Z | depends on the 49 |
+| Late Monday take, watch end | 17:40Z + 49 min + 20 min | 18:49Z = 00:19 IST on Tue 24 Nov | depends on the 49 |
+| Late Monday take, edit end | 18:49Z + 120 min | 20:49Z (02:19 IST Tue) | |
+| Late Monday take, time left before the Wed 25 Nov 15:00Z post | Wed 25 Nov 15:00Z - Mon 23 Nov 20:49Z | 42 h 11 min | |
 
 ## Rows: every sentence in lines 321-628 that states or implies a time
 
@@ -51,9 +80,9 @@ Column "Conflict" = does it conflict with the 49-minute worst-case window (lates
 | R-02 | 325 | "Latest start for the sequential event is 04:17Z; a later start means the 08:00Z target is missed" | NO | 04:17Z is checked (above). Unrelated to 17:40Z. | none |
 | R-03 | 327 | "T-03 ... (about 2 min)" | NO | no window link | none |
 | R-04 | 330, 337, 345 | "T-04 ... (about 15 min)", "T-05 ... (about 10 min)", "T-06 ... (about 15 min)" | NO | Tue; counted in the 223 sum | none |
-| R-05 | 348 | "a new sha and a repeat through T-10 (about 168 min)" | NO for the window; arithmetic OK (168 = 15 + 3 + 40 + 65 + 45) | but the sum counts T-07 in series while line 361 says T-07 runs parallel with T-08 | PROPOSAL: "about 168 min one after another (about 165 min with T-07 beside T-08)". |
+| R-05 | 348 | "a new sha and a repeat through T-10 (about 168 min)" | NO for the window; arithmetic OK (168 = 15 + 3 + 40 + 65 + 45) | but the sum counts T-07 in series while line 361 says T-07 runs parallel with T-08 | Which figure the runbook should use: 168 min. It is the one-after-another sum that matches the 223-minute total (line 209), and it is a safe upper bound. PROPOSAL: keep "about 168 min" and add "(165 min with T-07 beside T-08)" as a note, not as the planning figure. |
 | R-06 | 355 | "T-07 ... (about 3 min; runs in parallel with T-08)" | NO | same as R-05 | none |
-| R-07 | 360 | "T-08 Own n8n, database and values file (about 40 min)" | NO | lead re-adds step 0, stored-active check, guard proof at re-pin (line 407); so 40 is probably low | PROPOSAL: leave the figure, add "lead re-adds at re-pin" is already written; no change |
+| R-07 | 360 | "T-08 Own n8n, database and values file (about 40 min)" | NO | lead re-adds step 0, stored-active check, guard proof at re-pin (line 407); so 40 is probably low | No change. |
 | R-08 | 377 | readiness loop "i -lt 12 ... sleep 10" | NO | 12 x 10 s = 120 s worst case; counted nowhere in the 40 min; part of the Wed restart too (R-18) | PROPOSAL: add "(at most 120 s)" after "within 12 tries". |
 | R-09 | 383 | "`timeout 15` ... Exit 124" | NO | bounded, 15 s | none |
 | R-10 | 385 | "T-09 ... (about 65 min, the v3 two-fill estimate; one fill is less)" | NO | Tue only; stated as an upper bound | none |
