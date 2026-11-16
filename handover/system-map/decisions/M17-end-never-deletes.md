@@ -1,17 +1,24 @@
 # M17: what `end` does at the film pause (16 Nov 2026)
-Decision proposed: when the owner types `end` at the film pause, the program must not delete anything. Status: PROPOSED, on HOLD. Old notes (history only; apply nothing from them): decisions/M17-end-never-deletes-history.md.
-ACTION BLOCK (PROPOSAL): Owner of the check: studio lead. Do: read scripts/run_real_check_n8n.py and quote its `end` lines on this page under "Quoted lines". By: Tue 17 Nov 03:30 UTC / 09:00 IST (system-map session PROPOSAL; nobody has agreed). Until that quote exists, use no text from this page.
-Release phrases (PROPOSAL): the card phrase is current today: system-map/OWNER-RUN-DAY-CARD.md step 22 says "demo mails may be deleted" for the contact deletes. The phrase "contacts may be deleted" (work/end-delete-cases.md, new step C) is a proposal only.
-Unchecked: what `end` does today. scripts/run_real_check_n8n.py is not in this checkout (location NOT SET), so assume `end` may permanently delete until the lines are quoted.
-Glossary: owner = the human at the laptop; studio head = the human who runs the studio (whether they are the same person is NOT SETTLED); studio lead = the Claude session doing the technical steps; `end` = the word the owner types to close the pause; V5 = the owner's step list, inputs/OWNER-STEPS-realrun-v5-core-hardening.md (it holds the sentences to change). The take = the filmed demo run on made-up data. Film pause = the moment the program waits so the 3 made-up HubSpot contacts can be filmed. Who decides whether the owner and the studio head are the same person: the lead session (not answered).
-Draft wording for V5 (applied only after VERIFIED): "At the film pause, type `end`. Nothing is deleted. The program lists the made-up contacts left in HubSpot; you delete them by hand after the studio lead sends the list."
-Next step: script path is scripts/run_real_check_n8n.py; its location in the repo is NOT SET. By Tue 17 Nov 03:30 UTC / 09:00 IST (proposal) the studio lead finds it or asks the lead session who has it; if it is still not found, the lead session decides what happens next. The studio lead (the Claude session doing the technical steps) reads scripts/run_real_check_n8n.py and quotes its delete or archive call here, then writes VERIFIED. Owner: the studio lead. Quote the lines under a heading "Quoted lines" in this file, then change Status to VERIFIED. Due: Tue 17 Nov 03:30 UTC / 09:00 IST (proposal by the system-map session; nobody has agreed).
+Status: SETTLED by lead answer 3 (work/LEAD-ANSWERS.md, 16 Nov 2026 16:23 UTC / 21:53 IST). Older layout: decisions/M17-end-never-deletes-history-6.md (ignore it).
 
-Proposal: `end` only closes the pause. The program deletes nothing and prints the leftover made-up contacts. The owner deletes them by hand from the studio lead's list.
-What `end` does today: UNVERIFIED. The program scripts/run_real_check_n8n.py is not in this checkout and I have not read it. Owner pages say `end` archives or deletes contacts; whether archive means permanent delete is UNVERIFIED.
-Release message for the by-hand delete (it is the message that lets the owner start deleting: the one-line message the studio lead sends to say the owner may now delete by hand): UNDECIDED; until it is sent the owner deletes nothing by hand; decider the studio lead; due Tue 17 Nov 12:00 UTC / 17:30 IST (proposal; nobody has agreed). The studio lead decides whether 'demo mails may be deleted' also covers contacts.
-Replacement for the V5 sentences that say `end` archives or deletes (V5 lines 124 and 127 as cited by an earlier page; confirm against V5 before editing): use the draft wording near the top of this page; use only this page's wording. Ignore the drafts in decisions/v5-edits-for-M17.md (they are wrong); use that file only for where each sentence goes.
-To do: nothing is applied until the studio lead writes VERIFIED. The studio lead writes VERIFIED in this file by Tue 17 Nov 03:30 UTC / 09:00 IST (proposal), after quoting the delete or archive call under "Quoted lines".
+## The sentence (use exactly)
+"The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list."
 
-## Quoted lines
-(empty: the studio lead quotes the delete or archive call here)
+## Source and what was not checked
+Source: lead answer 3 (work/LEAD-ANSWERS.md), which says the take program's own text and the decision of 2026-11-16 confirm it. The program itself (scripts/run_real_check_n8n.py) is not in our checkout and was not read by this session. So the sentence rests on the lead's answer, not on a quoted line of the program. The "Quoted lines" check that older versions of this page asked for is no longer a condition for using the sentence.
+
+## Words
+- owner = the one person: the human at the laptop, who owns the studio. There is no other person ("studio head" is closed: no such person).
+- take = the filmed demo run on made-up data. Film pause = the moment the program waits so the 3 made-up HubSpot contacts can be filmed. `end` = the word the owner types to close that pause.
+- studio lead = the Claude session doing the technical steps.
+
+## Consequences
+1. `end` only closes the pause. The program deletes nothing, archives nothing and has no delete step.
+2. After `end` the program prints a list of the made-up contacts still in HubSpot (lead id and contact id).
+3. The owner deletes any left behind by hand in HubSpot, using a filtered list (filter the contact list by the run name in the address, take-<run name>-a@example.com, -b@, -c@) and deleting only those.
+4. No delete approval and no release phrase gate the program, because the program deletes nothing. The phrase "contacts may be deleted" is withdrawn. "demo mails may be deleted" stays for Gmail demo mails only.
+5. If the program is ever found to delete a contact, that is a program defect: the studio lead reports it to core-hardening; it is not a card variant.
+6. The take key can stay read-only for contacts (no delete right needed).
+
+## Replacement wording for the owner's step list (V5)
+"At the film pause, type `end`. Nothing is deleted. The program lists the made-up contacts left in HubSpot; you delete them yourself by a filtered list." Where each sentence goes: decisions/v5-edits-for-M17.md.

@@ -1,11 +1,12 @@
 # v5 line edits so the owner steps file matches M17 (the take never deletes). For core-hardening, who own v5. 16 Nov 2026. Made-up data only.
-Older layout: decisions/v5-edits-for-M17-history.md (ignore it).
+Sentence (lead answer 3): "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list."
+Older layouts: decisions/v5-edits-for-M17-history-3.md (and -history.md, -history-2.md); ignore them.
 
 ## Terms
 | term | meaning |
 |---|---|
-| M17 | the proposal in decisions/M17-end-never-deletes.md that `end` never deletes anything |
-| decision 2 | item 2 of inputs/DECISIONS-2026-11-16.md: the take never deletes |
+| M17 | the settled decision in decisions/M17-end-never-deletes.md that `end` never deletes anything |
+| decision 2 / lead answer 3 | item 2 of inputs/DECISIONS-2026-11-16.md and answer 3 in work/LEAD-ANSWERS.md: the take never deletes |
 | take | the one filmed run of the lead-intake demo on made-up data |
 | film pause | the moment the program waits so the 3 made-up contacts can be filmed (V5 step F) |
 | `end` | the word the owner types to close that pause |
@@ -23,16 +24,16 @@ The table lists the edit to make. Its middle column quotes what v5 says today on
 
 | v5 line (old number) | v5 says today | change |
 |---|---|---|
-| 31 | - **Delete**: make it gone for good. Used for: HubSpot contacts, HubSpot private apps, secret files, and demo mails (move to Trash, then emp | delete the two sentences about the program saying "archive" and a recoverable copy; add "The program deletes no HubSpot contact; you delete them by hand." |
+| 31 | - **Delete**: make it gone for good. Used for: HubSpot contacts, HubSpot private apps, secret files, and demo mails (move to Trash, then emp | delete the two sentences about the program saying "archive" and a recoverable copy; add "The program deletes no HubSpot contact; it lists any left behind and you delete them by a filtered list." |
 | 43 | 6. F: the film pause; you type `end` only when filming of the contact list is done. | add: "`end` only closes the pause; the program deletes nothing." |
-| 44 | 7. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post). | new step F2 "you delete the 3 leftover test contacts by hand in HubSpot from the studio lead's list"; renumber old item 7 as 8 |
+| 44 | 7. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post). | new step F2 "you delete the leftover test contacts yourself in HubSpot by a filtered list"; renumber old item 7 as 8 |
 | 63 | 7. **Words you type that delete things** are listed in a boxed line right above the step. Read the box first. | "Words you type that end the film pause or delete things ..." |
 | 114 | Read the notice: 3 test people, up to 3 model calls and the worst case, up to 3 contacts deleted at the end, up to 3 mails (one per test per | "up to 3 contacts deleted at the end" becomes "up to 3 contacts left in HubSpot for you to delete by hand" |
 | 124 | > **WARNING before step F. When the program asks for `end`, closing the terminal, pressing Ctrl-C, or typing two wrong words in a row ENDS t | warning: `end` ends the pause, deletes nothing; closing the terminal, Ctrl-C or two wrong words also end the pause and delete nothing. Do not add "the pause cannot be reopened" to v5 until the program is checked; M17 does not say it either. |
-| 127 | The program prints: "Film the contact list now: type `end` and press Enter to archive" (it means delete). The person who films (set before t | program's on-screen question: NOT SET: needs studio lead to quote scripts/run_real_check_n8n.py end lines (file not in checkout); neither work/end-delete-cases.md nor decisions/M17-end-never-deletes.md ("Quoted lines" is empty) gives the real words. After `end` the program prints leftover contacts by lead id and contact id. Also replace "The program then deletes this run's contacts." with "The program deletes nothing."; replace "also ends the pause and deletes the contacts" with "also ends the pause; nothing is deleted"; drop "(it means delete)" |
+| 127 | The program prints: "Film the contact list now: type `end` and press Enter to archive" (it means delete). The person who films (set before t | program's on-screen question: SETTLED by source = lead answer 3 (work/LEAD-ANSWERS.md). The script itself (scripts/run_real_check_n8n.py) is not in our checkout and was not read, so the exact on-screen words are not quoted here; core-hardening writes them to match the sentence. After `end` the program prints the leftover contacts by lead id and contact id. Also replace "The program then deletes this run's contacts." with "The program deletes nothing."; replace "also ends the pause and deletes the contacts" with "also ends the pause; nothing is deleted"; drop "(it means delete)" |
 | 128 | You should see HubSpot show no contacts of this run afterwards, and the program print its result. | "HubSpot still shows the 3 contacts of this run, and the program prints the leftover list" |
-| 129 | - Stop and tell the studio lead: you closed the terminal or pressed Ctrl-C early. Leftover contacts are deleted by hand in HubSpot; the stud | "are deleted by hand" becomes "are always deleted by hand" |
-| 129 (insert after) | (new text; nothing to quote) | NEW heading "Step F2. Delete the leftover test contacts by hand (you)": in HubSpot, Contacts, tick the 3 contacts take-<run name>-a@example.com, -b@ and -c@ (match the id from the program's list AND the address), More, Delete. Done only after the studio lead's list; ends with "contacts deleted" and the number. The warning above G (line 132) names F2 for contacts |
+| 129 | - Stop and tell the studio lead: you closed the terminal or pressed Ctrl-C early. Leftover contacts are deleted by the owner by a filtered list in HubSpot; the stud | "are deleted by hand" becomes "are always deleted by the owner by a filtered list" |
+| 129 (insert after) | (new text; nothing to quote) | NEW heading "Step F2. Delete the leftover test contacts yourself by a filtered list (you)": in HubSpot, Contacts, tick the 3 contacts take-<run name>-a@example.com, -b@ and -c@ (match the id from the program's list AND the address), More, Delete. Done after the program has printed its leftover list; no release word is needed, because the program deletes nothing; ends with "contacts deleted" and the number. The warning above G (line 132) names F2 for contacts |
 | 130 | - If the HubSpot key the program uses cannot delete contacts, the deletion can fail after the sends. Unless the studio lead tells you otherw | remove (the take key is read-only, decision 2) |
 | 132 | > **WARNING before step G. In step G delete ONLY mails in the receiver account and ONLY HubSpot contacts of the failed run (the studio lead  | contacts are deleted only in step F2, not in G |
 | 137 | 2. In HubSpot, delete any leftover contacts the studio lead counted: Contacts, tick them, More, Delete. Delete only contacts whose name or a | move the contact delete to F2 (exact address take-<run name>-a@example.com, -b@, -c@); G item 2 points to F2 |
