@@ -1,0 +1,3 @@
+ab8fed68f28b3caab9ee7e877965613fac78a33b19478feda919f159c0c3ecfa  inputs-patch-Q20-5.patch
+62a3682cc7add8cf661a4a2380903739ddf7a5fbb7b3a4eb836e13fb6451147a  ../cross-read/CLAIM-EVIDENCE-Q21.md
+f67579f98ce5b6223684affc28430aedd4e392332ac43307541d15990f0ebe8d  inputs-patch-Q20-5.md
