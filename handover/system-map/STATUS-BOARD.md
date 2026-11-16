@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:01:02Z
-PUSHED_UTC: 2026-11-16T14:01:02Z
+UPDATED_UTC: 2026-11-16T14:01:20Z
+PUSHED_UTC: 2026-11-16T14:01:20Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1340 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1341 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,7 +46,7 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a6a3c5ad532251496 | cold read rehearsal-passed-limits-draft.md (re-read after fixes) | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| (new, see agent list) | cold read LEAD-NOTICE-batch-1.md | 2026-11-16T14:01:20Z | +5 min | running | nothing yet |
 | a66c496b4bceffa05 | cold read GLOSSARY.md (re-read after fixes) | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
 | a689cc210024fbdb2 | cold read L1.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
 | a9db5027b1b69097b | cold read L2.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
