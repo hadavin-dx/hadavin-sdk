@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 16:08Z
+UPDATED_UTC: 16:09Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -52,13 +52,12 @@ INTERRUPTED: none
 - a3798a0064132a398 | RUNBOOK PATCH A: edits forced by the 12 decisions -> work/RUNBOOK-V4.3-PATCH-part1.md | running | next: merge into RUNBOOK-V4.3-PATCH.md
 - a81d81119ca940bea | TIMING A: timing sentences vs 49-minute window -> work/timing-check-a.md | running | next: list sentences to change
 - a8a3c12ebafe89663 | TIMING B: critical path backward from 17:40Z -> work/critical-path-r2.md | running | next: replace critical-path-r1
-- affcb970f43e3aa14 | EVIDENCE D-01..D-04 -> work/decision-evidence-d01-d04.md | running | next: fold into decision list
 - a239cf8ed4e3bb635 | EVIDENCE D-05..D-08 -> work/decision-evidence-d05-d08.md | running | next: fold into decision list
-- aa98295de746ff4f2 / aefec113b1aa60da7 | (see two lines below; GLOSSARY reader a3e704b84c4d18c87 FINISHED, digest 2065) READER: GLOSSARY done | started 16:08Z | running | next: digest
-- aa98295de746ff4f2 | READER: work/banned-claims-clean.md after fix | started 16:08Z | running | next: digest
-- aefec113b1aa60da7 | READER: work/end-delete-cases.md after fix | started 16:08Z | running | next: digest
-- LEGEND-reader | READER: work/LEGEND-review-pages.md after fix | running | next: digest
-Finished since last push: GLOSSARY reader a3e704b84c4d18c87, PATCH B (adaa45bbe4ce0921a, sources missing, see NEEDS_YOU 0), fixers ae8c581c859eee013 and abda0d23361fc8275.
+- a6feb873fafdc399d | READER: work/LEGEND-review-pages.md after fix | running | next: digest
+- FIXER-1 | GLOSSARY + banned-claims-clean, reader round 2 | started 16:09Z | running | next: re-check by scan, no third read (cap)
+- FIXER-2 | end-delete-cases + M17 page, reader round 2 | started 16:09Z | running | next: same
+- FIXER-3 | decision-list-for-lead.md rows D-01..D-04 | started 16:09Z | running | next: fold D-05..D-08 when evidence lands
+Finished since last push: evidence D-01..D-04 (affcb970f43e3aa14), readers aefec113b1aa60da7, aa98295de746ff4f2. Patch B finished earlier (sources missing, NEEDS_YOU 0).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
