@@ -142,3 +142,5 @@ need('C102', '(no earlier run used it or begins like it)')                      
 for nm, t in SH:                                                                                                         # one Chrome profile name everywhere
     names = set(re.findall(r'`(demo-[a-z]+)`', t))
     if names != {'demo-take'} or t.count('demo-take') < 3: fail('C103', '%s: Chrome profile names %s, demo-take x%d' % (nm, sorted(names), t.count('demo-take')))
+need('C104', 'the entry is the one with the exact name the numbers or clean-up message gives; no name known: describe, revoke nothing')   # how to identify the entry to revoke
+need('C104', 'whether it can be undone')                                                                                  # last-resort reversibility is stated

@@ -607,3 +607,178 @@ INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); se
   PASS: T66e guard: a normal kill with --control (a named failing test) is not flagged: exit 0 (got 0), 'flags: none', baseline recorded
   PASS: T66f --no-control: every raw file says 'baseline: NOT RUN', the SUMMARY says NO BASELINE and not COMPLETE, exit 5 (got 5)
 == T67 (review r5 M2) exit 0 means every mutant ran: COULD-NOT-PLANT, TIMEOUT and ERROR give exit 5 and a SUMMARY line
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T67a COULD-NOT-PLANT (old text absent): exit 5 (got 5), SUMMARY counts it, raw says so
+  PASS: T67b TIMEOUT: exit 5 (got 5), SUMMARY counts it
+  PASS: T67c ERROR (pytest exit 5, no test selected): exit 5 (got 5), SUMMARY counts it
+SUMMARY: 2 mutant(s) planned, 2 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T67d two mutants, one killed and one that could not be planted: exit 5 (got 5), both raw files, counts '1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT', summary file written
+  PASS: T67e guard: every mutant killed: exit 0 (got 0), summary says COMPLETE
+  PASS: T67f guard: a clean verdict with a declared --extra file keeps exit 0 (got 0)
+  PASS: T67g exit 4 (tree not clean) still wins over exit 5 (got 4)
+== T68 (review r5 nit 3) --restore with no marker anywhere says it CANNOT TELL, not 'nothing to restore'
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT
+  PASS: T68 text says 'CANNOT TELL' and no longer 'nothing to restore' (exit 2; r9: 2, was 0: the files are unknown, so exit 0 would claim nothing is planted)
+== T69 (review r5 nit 4) a control marker: invalid JSON is a refusal; a group that cannot be settled keeps the marker
+control run: RESTORE FAILED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.control.json is not valid
+  PASS: T69a invalid JSON in the control marker (its test group cannot be settled): exit 3 (got 3; r7: 2), 'RESTORE FAILED', control marker KEPT, no traceback
+control run: no test group recorded; the control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.control.json is KEPT because its test group may still
+  PASS: T69b control marker with no test group recorded (cannot be verified): marker KEPT, exit 3 (got 3), text says KEPT
+control run: test group already gone; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but
+  PASS: T69c guard: a control marker whose group is provably gone is removed, exit 0 (got 0)
+== T70 (review r5 nit 5) the import check is repeated before EACH mutant
+m2 COULD-NOT-PLANT (import check failed just before this mutant: import check: `import mod` loads '/elsewhere/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/f
+SUMMARY: 2 mutant(s) planned, 2 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T70 after the first mutant's tests changed what the tests import, the second mutant is NOT planted: COULD-NOT-PLANT (import check), exit 5 (got 5)
+  PASS: T70 the first mutant ran normally and records the repeated check
+== T71 (review r5 nit 6) a change to the tree made BEFORE the first mutant (control tests, the import check) stops the run before it is planted
+baseline 0 1 passed in 0.01s
+STOPPED before the first mutant: the control run changed the scratch tree: ['junk.txt']
+  PASS: T71a the control run's tests wrote a file: exit 4 (got 4) BEFORE mutant m1 (no X-m1.txt), 'STOPPED before the first mutant'
+STOPPED before the first mutant: the import check changed the scratch tree: ['sidefx.txt']
+  PASS: T71b importing the target module wrote a file (import check): exit 4 (got 4) before the mutant is planted (no X-m1.txt)
+== T72 (review r5 nit 7) mutant ids that name other raw files are refused
+  PASS: T72 id 'baseline' refused, exit 2 (got 2), nothing planted, no raw file named after it
+  PASS: T72 id 'tree-diff' refused, exit 2 (got 2), nothing planted, no raw file named after it
+  PASS: T72 id 'summary' refused, exit 2 (got 2), nothing planted, no raw file named after it
+== T73 (review r5 nit 8) an old Python (version and tomllib simulated) is refused at the start with a message, also for --restore
+REFUSED: this tool needs Python 3.11.4 or newer (tomllib, tarfile filters); this is 3.10.12
+  PASS: T73 exit 2 (got 2) with a message naming Python 3.11.4, no traceback
+== T74 (review r5 nit 9) --sha is pinned: the full id of a COMMIT is recorded; an id that is no commit is refused
+  PASS: T74a a short id works (rc 0) and the raw file records the FULL id (and how it was given)
+REFUSED: --sha '1d3901c04889306557980660da0852e2ae2d9d91' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/repo (unknown, ambigu
+  PASS: T74b the id of a TREE (git archive would accept it) is refused, exit 2 (got 2), nothing planted
+  PASS: T74c guard: an unknown id is refused, exit 2 (got 2)
+== T75 (review r5 smaller point) git and patch run with a clean environment: GIT_DIR and GIT_WORK_TREE of the caller do not reach them
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got 0)
+== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+./safety-tests.sh: line 70: 19268 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept; a folder on the way is a
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
+./safety-tests.sh: line 70: 19381 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root/src/mod.py is not a regular file with exactly one name (links: 2
+  PASS: T76b file with two names that still holds the planted text: exit 3 (got 3), marker and backup kept, the other name untouched
+  PASS: T76b genuine restore afterwards
+./safety-tests.sh: line 70: 21066 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: Permission denied; the mutant may still be planted; marker and backup kept
+  PASS: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T76c genuine restore afterwards
+./safety-tests.sh: line 70: 21178 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T76d a damaged backup (hash differs from the marker): nothing is written, but the mutant is still planted, so exit 3 (got 3; r7 pinned 2), marker kept
+== T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE
+baseline 1 1 failed in 0.01s
+REFUSED: the baseline (unmutated tree, --control) is not usable: it exited with 1, not 0; no mutant was planted; see X-baseline.txt
+  PASS: T77a no option at all, tree already failing: the baseline refuses the mutants, exit 2 (got 2), baseline file says NO, no mutant raw file, file unchanged (r6: ran every mutant as KILLED)
+  PASS: T77b no option at all, healthy tree: baseline recorded and used, exit 0 (got 0), 'baseline: rc 0, 1 passed' in the raw file, SUMMARY says COMPLETE
+  PASS: T77c a run WITHOUT a baseline (the option --no-control; on the r6 copy NOBASE_OPT= is empty: r6 runs without one by default, this is the behaviour itself), every verdict clean: exit 5 (got 5), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file
+  PASS: T77d the last of --no-control/--control wins: --control after --no-control runs the baseline, exit 0 (got 0)
+  PASS: T77e --no-control after --control: no baseline, exit 5 (got 5)
+  PASS: T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got 4)
+== T78 (review r6 nit 2) --restore is signal-guarded: a signal in the middle of the write-back does not leave the file planted
+./safety-tests.sh: line 70: 21977 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; hash matche
+signal 15 arrived during the restore: the restore was finished first
+  PASS: T78a SIGTERM inside the restore write: the restore finishes (file back, marker and backup gone), exit 0 (got 0), the signal is reported (r6: unwound, exit 143, file still planted)
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T78b a signal while the process leaves with exit 5 (COULD-NOT-PLANT): the exit code stays 5 (got 5; r6: a traceback or 130/143)
+== T79 (review r6 nit 3) sweep_group: a stranger that holds the number of the finished test group is left alone
+stranger case: process(es) [23034] now hold the number of the test group but started outside this run: left alone | alive: True
+control case: STOPPED 1 process(es) of the test group that outlived the le | alive: False
+  PASS: T79 the stranger started after the group ended is left alone (still alive), the control inside the window is stopped
+== T80 (review r6 nit 4) output paths are checked BEFORE anything is planted: --out-json inside --root, a missing folder, a file with two names, --raw inside --root
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root/out.json lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466
+  PASS: T80a --out-json inside --root: refused, exit 2 (got 2), no mutant run (no X-m1.txt), file unchanged, no out file
+REFUSED: the folder of output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/no-such-folder/out.json does not exist: refused (nothing is created for you)
+  PASS: T80b --out-json in a folder that does not exist: refused before planting, exit 2 (got 2), no X-m1.txt (r6: ran everything, failed at the end)
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/out80.json has more than one name (hard link): refused
+  PASS: T80c --out-json that has two names: refused, exit 2 (got 2), the other name still holds 'precious', no X-m1.txt
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/rawT/X-m1.txt has more than one name (hard link): refused
+  PASS: T80d a raw file that has two names: refused before planting, exit 2 (got 2), the other name untouched, file unchanged
+REFUSED: --raw /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root/rawinside lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scra
+  PASS: T80e --raw inside --root: refused, exit 2 (got 2), nothing created there, file unchanged
+== T81 (review r6 nit 5) a bad archive, a bad interpreter, a bad list, a lone surrogate and an internal bug are refusals, never a traceback with exit 1
+REFUSED: the archive of 914497c8ab94463acf588864bcf875a63aca4a03 cannot be extracted safely (AbsoluteLinkError: 'evil-link' is a link to an absolute path): refused
+  PASS: T81a a tracked absolute symbolic link makes the archive extraction fail (tarfile FilterError): refused, exit 2 (got 2), no traceback (r6: exit 1)
+REFUSED: import check of mod cannot start: Exec format error
+  PASS: T81b an interpreter that cannot be started (exec format error) in the import check: refused, exit 2 (got 2), no traceback
+REFUSED: mutant m1: new holds a character that is not valid text (a lone surrogate): refused
+  PASS: T81c a lone surrogate in a mutant text: refused, exit 2 (got 2), no traceback, file unchanged, state empty
+  PASS: T81d a mutant list that is not JSON: refused, exit 2 (got 2), no traceback
+  PASS: T81e a mutant list that does not exist: refused, exit 2 (got 2), no traceback
+RuntimeError: simulated bug after the loop
+INTERNAL ERROR (RuntimeError: simulated bug after the loop); no marker: nothing is planted by this run
+  PASS: T81f an internal bug (exception that is no refusal): INTERNAL ERROR text, exit 2 (got 2; r6: Python's own exit 1), file restored, state empty
+== T82 (review r6 nit 6) patch runs with --batch, --forward, --no-backup-if-mismatch and stdin from /dev/null; a reversed patch is refused, never applied reversed
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T82a the patch call carries --batch, --forward and --no-backup-if-mismatch (args: -p1 -s --batch --forward --no-backup-if-mismatch -d /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611)
+  PASS: T82b the patch call's standard input is /dev/null (got: /dev/null)
+1 out of 1 hunk ignored -- saving rejects to file docs/note.txt.rej
+  PASS: T82c a patch that looks reversed, with 'y' answers waiting on the input: refused as 'does not apply' (got 2), never applied reversed (r6: asked its question on the caller's input)
+== T83 (review r6 nit 7) a short --sha that is also the NAME of a branch is refused, the id must start with the typed hex
+REFUSED: --sha 'cafe' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/repo (unknown, ambiguous, not a commit, or the name of a branch or tag): 54f5d6e4e47e87398c434602
+  PASS: T83 --sha cafe (a branch name made of hex digits, pointing at HEAD) is refused, exit 2 (got 2), no mutant run (r6: resolved the branch)
+== T84 (review r6 nit 8) --root renamed away and replaced by a decoy folder during the run: the run's restore must not report success on the decoy
+  exit code 3
+  PASS: T84a exit 3 (got 3), marker and backup kept, the planted file in the renamed folder is still planted (r6: restored on the decoy, exit 143, marker cleared)
+RESTORE FAILED: cannot write src/mod.py back: the folder now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root is not the folder the mutant was planted in (i
+  PASS: T84b --restore at the path that now holds the decoy: exit 3 (got 3), text names the renamed folder problem, marker kept
+  PASS: T84c renamed back: --restore works and the file is back
+== T85 (review r6 nit 8) a test that changes the mode of the file under test: the mode is set back
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T85 mode 640 before, a test chmods the file to 600: it is 640 again after the run (got 640), content restored
+== T86 (found while testing r7) a -q from the caller on top of the tool's own -q must not drop pytest's summary line (then no passed test is counted: a survivor became NO-TEST-PASSED and a baseline became 'no test passed')
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T86 a surviving mutant with the caller's -q: verdict SURVIVED, 'pytest summary line: 1 passed', exit 0 (got 0); the baseline counts the passed test too
+== T87 (review r7 M1, class: an exit code that says nothing is planted while the mutant is planted) --restore with a marker for this root: every failure exits 3, only a marker naming another root or backup path exits 2
+./safety-tests.sh: line 70: 25106 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup cannot be opened safely (No such fi
+  PASS: T87a the backup file is missing: exit 3 (got 3; r7: 2), file still planted, marker kept, text says RESTORE FAILED
+./safety-tests.sh: line 70: 25237 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup cannot be opened safely (Too many l
+  PASS: T87b the backup is a symbolic link (to a file with the right content): exit 3 (got 3; r7: 2), nothing written (file still planted), marker kept
+./safety-tests.sh: line 70: 25317 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup is not a regular file owned by this
+  PASS: T87c the backup is a FIFO: exit 3 (got 3; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+./safety-tests.sh: line 70: 25410 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.planted.json is not valid JSON: refused; the m
+  PASS: T87d the marker is not valid JSON: exit 3 (got 3; r7: 2), file still planted, marker kept, no traceback
+./safety-tests.sh: line 70: 25508 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.planted.json lacks required fields: refused; t
+  PASS: T87e the marker lacks required fields: exit 3 (got 3; r7: 2), file still planted, marker kept
+./safety-tests.sh: line 70: 25676 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 is not a plain folder owned by this user with mode 700: r
+  PASS: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+./safety-tests.sh: line 70: 25864 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-
+  PASS: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87g genuine restore afterwards
+./safety-tests.sh: line 70: 26021 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RuntimeError: an internal bug
+INTERNAL ERROR (RuntimeError: an internal bug); a marker exists (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.plan
+  PASS: T87h an internal bug inside --restore (restore_target raises RuntimeError): exit 3 (got 3; r7: 2 with INTERNAL ERROR), file still planted, marker kept
+  PASS: T87h genuine restore afterwards
+./safety-tests.sh: line 70: 26242 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker is for another root ('/somewhere/else'): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87i guard: a marker that names another root is a forged marker: exit 2 (got 2), nothing written, marker kept
+./safety-tests.sh: line 70: 26429 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker names a backup other than /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup: refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87j guard: a marker that names another backup path is forged: exit 2 (got 2), nothing written, marker kept
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-96
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87k guard: no marker anywhere and the real-repository check refuses: still exit 2 (got 2), nothing recorded as planted
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)

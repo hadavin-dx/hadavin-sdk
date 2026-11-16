@@ -350,7 +350,7 @@ function dotted_secret(tok,   n, p, i, x) {
   for (i = 1; i <= n; i++) {
     x = p[i]
     if (length(x) <= 3 || x ~ /^[0-9]+$/ || x ~ /^[a-z0-9_-]+$/) continue
-    if (isid_camel(x)) continue
+    if (isid_camel(x) || x ~ /^[A-Z]?[a-z]+([A-Z][a-z]+)*[0-9]*$/) continue
     return 1
   }
   return 0
@@ -553,18 +553,30 @@ function nonascii_names(s,   out, st, ln, m) {
   }
   return out s
 }
-function ml_start(b,   m, nm, rest) {
-  if (!match(b, /^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?["']?[]A-Za-z0-9_.[-]+["']?\]?[ \t]*(\+?=|:=)[ \t]*/)) return
-  m = substr(b, 1, RLENGTH); rest = substr(b, RLENGTH + 1)
-  nm = m
-  sub(/[ \t]*(\+?=|:=)[ \t]*$/, "", nm)
-  sub(/^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?/, "", nm)
-  gsub(/["'\]]/, "", nm)
-  if (!secret_name(nm)) return
-  if (rest ~ /\\[ \t]*$/) { MLBS = 1; return }
+function ml_start(b,   m, nm, rest, sec, t, tk) {
+  sec = 0; rest = b
+  if (match(b, /^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?["']?[]A-Za-z0-9_.[-]+["']?\]?[ \t]*(\+?=|:=)[ \t]*/)) {
+    m = substr(b, 1, RLENGTH); rest = substr(b, RLENGTH + 1)
+    nm = m
+    sub(/[ \t]*(\+?=|:=)[ \t]*$/, "", nm)
+    sub(/^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?/, "", nm)
+    gsub(/["'\]]/, "", nm)
+    sec = secret_name(nm)
+  }
+  if (sec && rest ~ /\\[ \t]*$/) { MLBS = 1; return }
   ML_D = 0; ML_Q = ""
-  ml_scan(rest)
-  if (ML_D <= 0) { ML_D = 0; ML_Q = "" }
+  ml_scan(b)
+  if (ML_D <= 0) { ML_D = 0; ML_Q = ""; return }
+  if (!sec) {
+    # the line opens a bracket it does not close: it is hidden onward when ANY name before an = or : on it is a secret name
+    t = b
+    while (match(t, /[A-Za-z0-9_.-]+["' \t]*[=:]/)) {
+      tk = substr(t, RSTART, RLENGTH); sub(/["' \t]*[=:]$/, "", tk)
+      if (secret_name(tk)) { sec = 1; break }
+      t = substr(t, RSTART + RLENGTH)
+    }
+  }
+  if (!sec) { ML_D = 0; ML_Q = "" }
 }
 function pre_line(   t, pfx, body, hid) {
   PRE_N++

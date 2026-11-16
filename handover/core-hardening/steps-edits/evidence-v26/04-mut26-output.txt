@@ -88,7 +88,7 @@ M44 CAUGHT by C19 | R8 pointer go (5.8) to 5.7
 M45 CAUGHT by C11 | R4 pointer 6.7 to 6.8
 M46 CAUGHT by C19 | 8.1 card step 3 to 5
 M47 CAUGHT by C04,C73 | post-by IST in sheet
-M48 CAUGHT by C19 | CHANGES table pointer 8.2 to 8.3
+M48 CAUGHT by C19 | CHANGES table pointer 8.1 to 8.3
 M49 CAUGHT by C19 | open row pointer 7.8 to 7.7
 M50 CAUGHT by C17 | note worked price
 M51 CAUGHT by C12,C21 | unlisted set phrase sent in 8.5
@@ -136,10 +136,3 @@ R12 CAUGHT by C94 | 7.10 mismatch action changed
 R13 CAUGHT by C97 | 8.7 profile removal widened
 R14 CAUGHT by C99 | sample numbers message loses the gap slot
 R15 CAUGHT by C100 | create-form scopes widened
-R16 CAUGHT by C28 | W9 older key exposure trigger weakened
-R17 CAUGHT by C101 | laptop sleep value dropped
-R18 CAUGHT by C91 | FREEZE loses the card-first rule
-R19 CAUGHT by C98 | word key given a second meaning
-R20 CAUGHT by C103 | profile name differs between steps
-R21 CAUGHT by C95 | Chrome profile how-to and ask-the-lead removed
-TOTAL plants 143: caught by the meant check 143, missed 0 (of them caught only by another check 0), anchor-not-found 0
