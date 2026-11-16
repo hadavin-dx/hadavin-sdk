@@ -1,4 +1,3 @@
-Terms are defined in the KEY below; work/GLOSSARY.md adds more detail, but you do not need it to read this page.
 Folded 16 Nov 2026 (system-map): 9 stacked notes moved to work/L5b-history.md; 1 labelled note(s) kept at the bottom are live. Line numbers in older text are void; cite finding ids or section names.
 
 Authority: the CURRENT STATE r11 note at the bottom of this file wins. Older notes are in work/L5b-history.md.
@@ -10,21 +9,18 @@ Authority: the CURRENT STATE r11 note at the bottom of this file wins. Older not
 > - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
 > - lane = one read-only audit pass over a set of files by one agent. L1c, L3c, L4c, L5ac are continuation lanes that read what the first lane left. Findings are cited by id (for example L1c-FD-003 = finding 3 of lane L1c), not by line number; the merged list is merged-findings.md.
 > - Size columns are bytes unless the header says otherwise.
-> - Status words: READ = opened fully, apart from any cut named in the row. READ-TRUNCATED = opened fully but long lines were cut at the length named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ. PARTIAL = part of the file opened; the note names how much (for example the first 12 of 108 lines). The number in the second column of every coverage table is the file size in bytes. A SKIMMED row whose note says "not opened" means LISTED-ONLY. A "continuation lane" is a later helper that would read the NOT-READ and PARTIAL files; no owner or date is set for it. Every finding that cites DECISION line N cannot be checked: ignore that citation.
+> - Status words (only three exist; the note column gives the extent): READ = opened whole, apart from any cut named in the note (long lines cut at a stated length still count as READ). SKIMMED = only part of the file looked at: headers, search hits, a first and last slice, or only a listing and checksum; the note says which. NOT-READ = no part of the contents looked at, and the note says why or leaves it open. Draw no conclusion about a file from a lane that did not read it.
 > - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
 > - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
 > - DECISION line N = line N of DECISION-one-store.md (decision 10 of inputs/DECISIONS-2026-11-16.md names that file and its line 14; two copies exist and which one is meant is not recorded). The sentence on line N is NOT RECORDED here, so every finding citing one is UNVERIFIED.
 > - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
 
-<!-- TABLE-KEY -->
-> TABLE KEY (added 16 Nov 2026). Coverage tables on this page have the columns: path | size in bytes | status | note. If a row says SKIMMED but its note says "not opened", read it as LISTED-ONLY (name, size, and where the note says so a checksum; contents not read). If a note says only a grep or a count line was taken, the file's contents were not read and no claim on this page rests on them. A size of 0 means the file is empty. A note repeated on many rows describes the method for the whole group; it is not a per-file result. Where a note names a search (grep) without its pattern or its hits, the pattern and the hits are NOT RECORDED.
 
 
 > PAGE SCOPE (statuses are defined only in the KEY above): the scope is the part of the demo that decision 1 keeps: scenes 1 to 4 of the run sheet of the version called real-v5 (its one claim: a lead sent twice with the same id is processed once). Scenes 5 to 11 (version film-v5) are not in the video. Plain words: real-v5 = the plan version with scenes 1 to 4 that is filmed; film-v5 = the longer plan version with scenes 5 to 11 that is not filmed; run sheet = the numbered list of scenes for the take (its location is NOT RECORDED here). Old rows that say SKIMMED with a note "not opened" mean LISTED-ONLY (file name and size only); old rows that say NOT-READ with a note "partly read" mean PARTIAL (the note says how much); a status READ with a note "cut" means READ-TRUNCATED. The first number column is the file size in bytes. Source: inputs/DECISIONS-2026-11-16.md, decision 1. Owner and date of each continuation lane: not yet assigned; the studio lead names them when it starts each one.
 > PURPOSE: this page records which files the lane opened, how far it read each, and which findings it raised, so the lead can decide what to fix. It states no result about the system itself beyond the findings cited by id.
 
 ## Coverage
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 PARTIAL: no file was opened in full. All 376 rows are SKIMMED (docstring or header plus grep) because the brief makes src/ and tests/ one CORE row and asks for a kind overlap hunt, not a module walk. Plan section 6 allows SKIMMED only for named kinds, so the lead must treat these rows as NOT fully READ for any claim beyond the findings below.
 | path | bytes | status | note |
 |---|---|---|---|
@@ -406,7 +402,6 @@ PARTIAL: no file was opened in full. All 376 rows are SKIMMED (docstring or head
 | tests/warden_port/test_redaction_review9.py | 2793 | SKIMMED | test file; name, size and import grep only |
 
 ## Components
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L5b-C-001 | CORE | CORE: src/ and tests/ (shared core hadavin_sdk) | out of take scope; not mapped module by module; directory list and README only. `src/hadavin_sdk/__init__.py:1 "Hadavin SDK: shared building blocks for fixed-price AI builds"` | OTHER |
@@ -414,7 +409,6 @@ PARTIAL: no file was opened in full. All 376 rows are SKIMMED (docstring or head
 | L5b-C-003 | backends (kind table) | one table maps each capability and kind to settings and factory (the place where vendor kinds are chosen) | `src/hadavin_sdk/backends/table.py:1 "The backend table: every capability, its kinds"` | OTHER |
 
 ## Stores
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 All rows are CORE kinds. Whether the take uses any of them is `NOT VISIBLE: take repo`. DECISION keeps three stores (n8n data, mf_leads, stage.journal); every row below is a further place that can hold state or records, so the lead must check it is not reached by the take.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -428,19 +422,15 @@ All rows are CORE kinds. Whether the take uses any of them is `NOT VISIBLE: take
 | L5b-S-008 | audit.chain in-memory SQLite | private SQLite memory database used when the chain runs without Postgres | audit/chain.py (_Db.memory) | chain rows | process memory | lost on exit | N/A | N/A | N/A | none | none | UNVERIFIED | audit.chain | `src/hadavin_sdk/audit/chain.py:103 "isolation_level=None, check_same_thread=False"` | STORE |
 
 ## Workflows
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 NONE FOUND: searched src/ and tests/ for n8n, workflow, node in file names and with grep; core has no workflow engine (backends/table.py lists kinds only).
 
 ## Workflow walk
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 NONE FOUND: no workflows in src/ or tests/.
 
 ## Scripts
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 NONE FOUND: src/ and tests/ hold no standalone scripts; the one dev tool tools/mutation_runner.py is outside this lane (L5a) and is only cited as an importer.
 
 ## Jobs
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L5b-J-001 | tick (housekeeping pass) | one idempotent pass: approvals sweep, reconcile, stuck-run rule, checkpoint, purge, source reprobe | runtime/tick.py | store rows | state changes, heartbeat log line | each step in its own try, failure written to tick_state, exit code 1 | next tick re-runs a failed step | stuck_after_s formula | idempotent by design (docstring) | python logging hadavin_sdk.tick | UNVERIFIED | tests/test_p7_tick.py (name only) | cli tick | `src/hadavin_sdk/runtime/tick.py:4 "runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence"` | RETRY; NOTICE |
@@ -455,7 +445,6 @@ NONE FOUND: src/ and tests/ hold no standalone scripts; the one dev tool tools/m
 | L5b-J-010 | k1b audit write with hold | writes audit events after the side effect; on failure keeps the event for reconcile | k1b/audit_sink.py | operation event | audit sink write | keeps event for reconcile (docstring) | reconcile later | N/A | UNVERIFIED | audit sink | none | tests/test_k1b_cli.py (name only) | k1b | `src/hadavin_sdk/k1b/audit_sink.py:38 "on failure the sink keeps it for"` | LOG; RETRY |
 
 ## Credentials
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 NAMES only. No value was opened.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -466,7 +455,6 @@ NAMES only. No value was opened.
 | L5b-K-005 | platform secrets (Slack token, database DSN, API keys) | credentials a backend itself needs | backends/platform_secrets.py | N/A: credential | N/A: credential | UNVERIFIED | N/A: credential | N/A: credential | N/A | none | per backend | tests/test_p1b_backends.py (name only) | backend factory | `src/hadavin_sdk/backends/platform_secrets.py:1 "Platform secrets: the credentials a backend itself needs"` | OTHER |
 
 ## Docs and tests and folders
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L5b-F-001 | src/hadavin_sdk/actions | action contracts, authorizer (allow, needs approval, deny), executor, secrets kinds | `src/hadavin_sdk/actions/authorizer.py:1 "The gate: deterministic"` | OTHER |
@@ -487,7 +475,6 @@ NAMES only. No value was opened.
 | L5b-T-005 | tests/fixtures (16 top-level files plus 25 recorded replies, recorded_http, bundles, config, inputs) | made-up inputs, recorded model replies, red-team bundles | `tests/fixtures/recorded/README.md:1 "recorded model answers"` | OTHER |
 
 ## Findings
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
 | L5b-FD-001 | dead | Lead (unconfirmed) | extract.py has no importer in src/ or tools/ (grep for hadavin_sdk.extract over src and tools found only tests): `src/hadavin_sdk/extract.py:1 "one retry with the validator's errors, then a dead letter"`; imported only by `tests/test_s4_llm_guard.py:8 "from hadavin_sdk.extract import Valid, extract"`. Its DeadLetter output is never stored: Store has `src/hadavin_sdk/store/protocol.py:104 "def add_dead_letter(self, dl: DeadLetter)"` but grep shows callers only in tests/contracts/test_store.py. So a dead-letter store and a retry engine exist in core with no production caller. Next step for the lead: keep only if the take or a demo calls it (take repo NOT VISIBLE), else ARCHIVE proposal | none | RETRY |
@@ -503,7 +490,6 @@ NAMES only. No value was opened.
 | L5b-FD-011 | unverified | Nit | MASTER-MAP wiring claim: which store kind is the core default and whether any take step imports core at all is UNVERIFIED (take repo NOT VISIBLE; no runtime). Not NOT-FOUND: grep for an n8n or workflow reference in src/ found none | none | STORE |
 
 ## Checkpoint
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; coverage table columns = path | size in bytes | status | note (SKIMMED = header or search hits only, contents not read line by line); take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 Done: all 376 manifest rows now SKIMMED (docstring or header plus grep); job-key greps run over src/ for STORE, LOG, FILTER, COUNTER, RETRY, NOTICE; importer proof by grep for extract, migration_numbers, testing.mutation, evals, stats, hashing, replay_records, k1b modules. Next: nothing in this lane; the lead may order a READ continuation of tests/test_k5_* if overlap between review-round test files matters. Blockers: no full READ of any file (brief scope was kind overlap, not module walk); test-file overlap UNVERIFIED; no runtime, so default store kind UNVERIFIED.
 
 CURRENT STATE r11 16 Nov 2026 (replaces r10 entirely; wins). Words: see work/GLOSSARY.md. FD-003 to FD-005: not usable until the lead defines mf_leads, stage.journal and n8n data (meaning not recorded); do not act on them. FD-001 and FD-002: severity is 'Lead (unconfirmed)'. The 'chain NEEDED' verdict in FD-004 is NOT VERIFIED (from a skimmed row). 'The brief', 'Plan section 6', 'CORE row': meaning not recorded. DECISION line N cites: UNVERIFIED (two copies of the decision file disagree; see the glossary). Job keys: seven names are in the glossary, their meanings are not recorded. Table cells still TO DO. USABLE NOW: FD-001 (extract.py is unused), FD-002 (two dev tools sit in the runtime package) and FD-007 (demo tests inside core tests); severities unconfirmed. Do not act on FD-003, FD-004 or FD-005 until the studio lead defines mf_leads, stage.journal and n8n data. Skimmed only; no file was read in full.
