@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T09:47:49Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T09:49:25Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-020 on top of 016; queue M10-M16
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 4 reviewers (S9 implementation-readiness, zoom-out 'needed for the take', naive reader of the owner cards, facts check of flowset report); 1 more to start when one finishes
+AGENTS_RUNNING: 5 reviewers (target 5+ met): naive owner read, structural read of work list, LEAD-PAGE vs cards, naive read of TAKE-BLOCKERS, architect read of the safe path
 INTERRUPTED: none
-NEXT: collect S9 implementation-readiness, drift work-list read and the licence-failure cause; apply Blockers; core-hardening still has to apply drift/APPLIED-S9.md (S9-1..5 and S9-12) and fix the licence test; keep 4 or more lanes
-CAPACITY: 4 cores, load 0.1, reviewers read only (about 1 of 4 busy, below 70 percent target; no heavy test queued); memory 1 of 15 GB; disk 38 percent; heavy slots 0 of 3
+NEXT: collect the 5 reports and apply Blockers and Majors; refill a lane the same turn one ends; the lead decides QUESTIONS.md items 6, 7, 8 (S9 mechanism, licence files, whether the video needs scenes 5 to 11); core-hardening applies S9 only after those
+CAPACITY: 4 cores, load 0.5 (about 1 of 4 busy; reviewers only read, below the 70 percent target, no heavy test queued); memory 0 of 15 GB used (free -g), disk 38 percent used; heavy slots 0 of 3
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 09:47:49Z
+PUSHED_UTC: 09:49:25Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -37,9 +37,10 @@ PUSHED_UTC: 09:47:49Z
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| abe6bd87 | egm-implementation-readiness | sonnet | can core-hardening apply the S9 edits as written | 09:45Z | +6 min | 60 | running | none |
-| a09bc8d3 | egm-zoom-out | sonnet | is each document needed for the take | 09:47:49Z | +8 min | 5 | running | none |
-| aa56eabc | egm-comprehension | sonnet | naive owner read of view and two cards | 09:47:49Z | +8 min | 5 | running | none |
-| aca836ec | egm-codebase-details | sonnet | facts and cites of flowset report | 09:47:49Z | +8 min | 5 | running | none |
-| a549160e | egm-comprehension | sonnet | drift work list read as the studio lead | 09:45:49Z UTC | +6 min | 10 | running | none |
-| a9a2b9f3 | egm-codebase-details | sonnet | cause of the 11 licence-file failures | 09:45:49Z UTC | +5 min | 10 | running | none |
+| aa56eabc | egm-comprehension | sonnet | naive owner read of OWNER-VIEW and the two cards | 09:47Z / 15:17 | 09:57Z / 15:27 | 40 | running | none |
+| a82c2eea | egm-structural | sonnet | work list (drift section 13) usable? counts right? | 09:48Z / 15:18 | 09:58Z / 15:28 | 30 | running | none |
+| a03f158d | egm-codebase-details | sonnet | LEAD-PAGE rows 16 to 23 against cards and v5 | 09:48Z / 15:18 | 09:58Z / 15:28 | 30 | running | none |
+| ae189bb7 | egm-comprehension | sonnet | naive read of TAKE-BLOCKERS.md | 09:48Z / 15:18 | 09:55Z / 15:25 | 20 | running | none |
+| af2ae07d | egm-design | sonnet | shortest safe path to a rehearsal and a take; lock-in and least privilege | 09:49Z / 15:19 | 10:00Z / 15:30 | 10 | running | none |
+
+Finished this beat (reports read, fixes pushed): S9 implementation readiness (8 Blockers, wording fixed, 7 decisions to the lead), drift work-list read (rows added), licence cause (10 of 11 problems found), zoom-out "needed for the take" (TAKE-BLOCKERS.md written), flowset fact check (source notes added).
