@@ -6,3 +6,4 @@ Edited only OWNER-STEPS-q16-rows.md. Backup: /tmp/claude-0/-home-user/9d809a30-0
 - D (adversarial items 1, 2): P1, P2 added as "proposed, waiting for the lead (Q22)".
 - Owner part unchanged.
 Not fixed: exact check command line, which placeholders occur in the real flows, column name lead_key, mailbox emptying method: all left UNVERIFIED for the lead (not read from files).
+- Q21 (lead answer, ORDERS.md line 131): Step A cost line now reads "up to 3 live model calls under the owner's standing credits yes; no US$0 claim" (the old US$0 expectation removed); DESK_ALERT_TO route stated as fill_flows literals, frozen tool, no n8n setting change, check = no node reads $env. Saved runs: the sheet has no deletion promise (grep found none); the lead's own optional clean-up is not written in the sheet, as ordered.

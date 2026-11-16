@@ -1707,6 +1707,12 @@ def main():
         def m_f008_rec(j, d):
             j["settings"]["saveDataSuccessExecution"] = "all"
 
+        def m_f008_manual_form(j, d):
+            j["settings"]["saveManualExecutions"] = False
+
+        def m_f008_manual_gone(j, d):
+            del j["settings"]["saveManualExecutions"]
+
         def m_f002_in_rec(j, d):
             j["nodes"].append(noop("KeyOk"))
             j["connections"][a_source(j)]["main"][0].append(link("KeyOk"))
@@ -1824,6 +1830,22 @@ def main():
                 "F-008 saveDataSuccessExecution is 'all' expected 'none'",
                 "mf-recovery.json",
                 ("unexplained settings change",),
+            ),
+            (
+                "patchonly_f008_manual_off_form",
+                m_f008_manual_form,
+                1,
+                "F-008 saveManualExecutions is False expected True",
+                "mf-form.json",
+                (),
+            ),
+            (
+                "patchonly_f008_manual_missing_sub",
+                m_f008_manual_gone,
+                1,
+                "F-008 saveManualExecutions is None expected True",
+                "mf-sub-crm-mail.json",
+                (),
             ),
             (
                 "patchonly_f002_node_missing",
@@ -2704,6 +2726,32 @@ def main():
             qa + ["--accept-no-save", "sub/mf-recovery.json"],
             2,
             must=[("usage error: bad --accept-no-save", "")],
+        )
+        # round 7: a second flow that only has a schedule trigger and keeps saving off must NOT be excused by the name of the recovery flow
+        # (kills a blanket accept and an accept that matches only the "mf-" start of the name)
+        dd2 = f"{work}/q18-second-schedule-flow"
+        shutil.copytree(PATCHED, dd2)
+        shutil.copyfile(f"{dd2}/mf-recovery.json", f"{dd2}/mf-recovery2.json")
+        check_out(
+            "q18_other_schedule_only_flow_is_not_excused_by_the_recovery_name",
+            [dd2, "--quiet-info", "--files"]
+            + ["mf-form.json,mf-hook.json,mf-recovery.json,mf-sub-crm-mail.json,mf-recovery2.json"]
+            + acc
+            + [
+                "--accept-if",
+                "mf-recovery2.json=StuckRow:1",
+                "--accept-if",
+                "mf-recovery2.json=AlertRow:1",
+            ]
+            + ["--accept-no-save", "mf-recovery.json"],
+            0,
+            must=[
+                ("WARN", f"{dd2}/mf-recovery2.json this flow's run-saving settings"),
+                ("ACCEPTED: recovery flow", f"{dd2}/mf-recovery.json keeps"),
+            ],
+            must_not=[
+                f"ACCEPTED: recovery flow not part of the take (decision 4): {dd2}/mf-recovery2.json"
+            ],
         )
         for nm_, fn_ in (("form", "mf-form.json"), ("sub", "mf-sub-crm-mail.json")):
             dd_ = f"{work}/q18-{nm_}-off"
