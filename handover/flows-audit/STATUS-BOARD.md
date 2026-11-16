@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:09:58Z
+UPDATED_UTC: 2026-11-16T16:15:28Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 7.96 load of 4 cores, mem 1/15 GB, RAM 1351/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 4.79 load of 4 cores, mem 1/15 GB, RAM 1511/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: disk 17G free (56%); percent basis: 70 = 7 of 10 items verified by independent check, none closed since 13:59Z, open 30; waiting on 8 agents
-PUSHED_UTC: 2026-11-16T16:09:58Z
+NEXT: disk 17G free (56%); percent basis: 70 = 7 of 10 items verified by independent check, none closed since 13:59Z, open 30; fixers: 4 running, readers/checkers 4
+PUSHED_UTC: 2026-11-16T16:15:28Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,20 +31,20 @@ PUSHED_UTC: 2026-11-16T16:09:58Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 round 11 fixer (uncapped) | sonnet | flow-check fixes | 15:48Z | 16:48Z | running | run_all.sh intermittency work |
-| a15c1de2 | plan-files round 22 fixer | sonnet | FIX-PLAN/TAKE-CHECKLIST/RUNBOOK fixes (r15 reader M1-M4) | 15:54Z | 16:54Z | running | edits pending |
-| a00c2f81 | patch-copies citation checker | sonnet | cite check README/DEAD-MAN | 16:05Z | 16:35Z | running | none yet |
-| a63eb0e0 | Q31 round 13 fixer | sonnet | front page, reader r12 M1-M12, new items | 16:07Z | 17:07Z | running | edits pending |
-| aedc0abd | REVIEW.md r28 design reviewer | sonnet | uncapped design review | 16:07Z | 16:27Z | running | none yet |
-| a4d708eb | FINDINGS/LEDGER round 9 fixer | sonnet | reader r8 B1-B2/M1-M5 | 16:08Z | 16:38Z | running | edits pending |
-| aa300770 | RW/CT round 14 stranger reader | sonnet | confirm round-13 fixes | 16:08Z | 16:28Z | running | none yet |
-| a558a4d5 | REVIEW.md r28 stranger reader | sonnet | uncapped reader lane | 16:10Z | 16:30Z | running | none yet |
+| adf9bee4 | patch-copies round 9 fixer (uncapped) | sonnet | README/DEAD-MAN from 3 reports | 16:11Z | 16:41Z | running | edits pending |
+| a7188515 | RW/CT round 15 fixer | sonnet | 12 Majors of reader r14 | 16:12Z | 16:42Z | running | edits pending |
+| af2eac9a | plan-files round 23 stranger reader | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 16:12Z | 16:32Z | running | none yet |
+| a81f425a | REVIEW.md round 29 fixer (uncapped) | sonnet | design r28 + reader r28 + citation r28 | 16:13Z | 16:43Z | running | edits pending |
+| a52f846c | Q31 round 14 stranger reader | sonnet | QUESTIONS.md Q31 | 16:14Z | 16:34Z | running | none yet |
+| a61a8f40 | Q31 citation checker r14 | sonnet | cites/times/counts | 16:15Z | 16:35Z | running | none yet |
+| a4d8461a | FINDINGS/LEDGER round 9 reader | sonnet | stranger read of both files | 16:15Z | 16:35Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 patch-copies: one fixer for stranger r8 + code r8 + citation, then round 9 reviews
-2 REVIEW.md r28: one fixer for design+reader+citation lanes
-3 Q31 round 13 fixed: verify totals, fresh reader
-4 FINDINGS/LEDGER r9 verify (45 rows 5/5/35), fresh reader
-5 F8 evidence runner alone after acf8ab5
+1 patch-copies round 9 fresh uncapped reviews (stranger, code, citation) after adf9bee
+2 F8 fresh evidence runner alone plus uncapped reviews after acf8ab5
+3 RW/CT round 15 verify then fresh reader
+4 REVIEW.md fresh round 29 reader and design after a81f425
+5 Q31 fixer for reader r14 plus citation r14; FINDINGS/LEDGER fixer if reader finds Majors
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
