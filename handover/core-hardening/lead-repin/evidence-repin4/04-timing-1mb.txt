@@ -1,4 +1,4 @@
-long1.txt dash rc=0 secs=.515780967 out_bytes=306
-long1.txt bash rc=0 secs=.547291546 out_bytes=306
-long2.txt dash rc=0 secs=.502726261 out_bytes=34
-long2.txt bash rc=0 secs=.575256610 out_bytes=34
+long1.txt 980003bytes dash rc=0 secs=.566501689
+long1.txt 980003bytes bash rc=0 secs=.625764204
+long2.txt 1080003bytes dash rc=0 secs=.611859257
+long2.txt 1080003bytes bash rc=0 secs=.696823368

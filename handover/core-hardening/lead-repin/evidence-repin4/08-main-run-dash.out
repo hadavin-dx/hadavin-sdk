@@ -1,8 +1,8 @@
 lead-repin-verify.sh v4  (reads only; prints, never judges; the lead reads this output before sharing it)
 masking self-test (canary) before any file was opened: SELF-TEST: passed=288 failed=0 (the made-up input and output files were deleted)
 take folder: /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/take
-private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run2/lead-repin.AwrZNf
-copy of this output (masked): /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run2/lead-repin.AwrZNf/lead-repin-verify-out.txt
+private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run4/lead-repin.wwB6Ps
+copy of this output (masked): /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run4/lead-repin.wwB6Ps/lead-repin-verify-out.txt
 Nothing below was checked against a real take program by the builder of this script.
 Q27 a, b and c stay UNVERIFIED until the lead shows them at the final head; this script only finds text.
 Files used:
@@ -36,14 +36,14 @@ left out of "take folder, python and shell" (/tmp/claude-0/-home-user/<masked-bl
   symbolic links of any kind (find does not follow them): 0
   folders or files the find command could not open (permission denied): 0
   names with a line break (cannot be listed safely): 0
-  inside folders named node_modules: 0
-  inside folders named _local: 0
-  inside folders named secrets: <masked>
-  inside folders named .venv: 0
-  inside folders named venv: 0
-  inside folders named __pycache__: 0
-  inside folders named tests: 1
-  inside folders named test: 0
+  files inside folders called node_modules, count 0
+  files inside folders called _local, count 0
+  files inside folders called secrets, count 1
+  files inside folders called .venv, count 0
+  files inside folders called venv, count 0
+  files inside folders called __pycache__, count 0
+  files inside folders called tests, count 1
+  files inside folders called test, count 0
   files of other types (not searched at all, whatever their content or name; this one number is every file that is not a python or shell file): 3
   test files outside tests folders (test_*, *_test.py, conftest.py): 0
 left out of "flows folder, json" (/tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/take) and NOT searched, file counts by reason:
@@ -51,12 +51,12 @@ left out of "flows folder, json" (/tmp/claude-0/-home-user/<masked-blob>/scratch
   symbolic links of any kind (find does not follow them): 0
   folders or files the find command could not open (permission denied): 0
   names with a line break (cannot be listed safely): 0
-  inside folders named node_modules: 0
-  inside folders named _local: 1
-  inside folders named secrets: <masked>
-  inside folders named .venv: 0
-  inside folders named venv: 0
-  inside folders named __pycache__: 0
+  files inside folders called node_modules, count 0
+  files inside folders called _local, count 1
+  files inside folders called secrets, count 0
+  files inside folders called .venv, count 0
+  files inside folders called venv, count 0
+  files inside folders called __pycache__, count 0
   files of other types (not searched at all, whatever their content or name; this one number is every file that is not a json file): 9
 _local flow json files: 1. Only the matched WORD of each delete-word hit is printed (file:line:word), never the line, because a local copy may hold real values; open the lines yourself.
 ./flows/_local/real.json:1:method":"DELETE
@@ -602,5 +602,5 @@ SUMMARY: blocks=16 search_blocks=13 with_hits=5 zero_hits=8 information_blocks=3
 Hidden by the masking filter in search results: 349 line(s) had a value hidden, 134 of them were hidden whole (next-line rule).
 Search lines that were NOT printed in full: 0 search(es) had a PRINT MISMATCH; 114 matching line(s) had the match word hidden (read the lines marked above).
 Masking is a safety net: read this output yourself before you share it.
-Final pass over the whole output above: 11 additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).
-The work folder /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run2/lead-repin.AwrZNf now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).
+Final pass over the whole output above: 9 additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).
+The work folder /tmp/claude-0/-home-user/<masked-blob>/scratchpad/repin4/run4/lead-repin.wwB6Ps now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).
