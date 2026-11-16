@@ -1,3 +1,0 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/q18w/g/real --quiet-info --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --accept-no-save sub/mf-recovery.json
-usage error: bad --accept-no-save value, want one exact flow file name like mf-recovery.json
-exit=2

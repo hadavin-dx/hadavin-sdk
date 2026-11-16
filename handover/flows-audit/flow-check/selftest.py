@@ -2677,9 +2677,7 @@ def main():
             "q18_patched_recovery_none_accepted_is_exit_0_and_not_a_warn",
             qa + ["--accept-no-save", "mf-recovery.json"],
             0,
-            must=[
-                ("ACCEPTED: recovery flow not part of the take (decision 4)", "mf-recovery.json")
-            ],
+            must=[(ACC_REC, "mf-recovery.json")],
             must_not=["WARN " + PATCHED + "/mf-recovery.json this flow's run-saving"],
         )
         check_out(

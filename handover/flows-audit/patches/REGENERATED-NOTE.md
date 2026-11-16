@@ -29,3 +29,8 @@ F-001: DROPPED by the lead (Q17-3, 2026-11-16, ORDERS.md 10:58Z): the take uses 
 6. Wording rows still held in RUNSHEET-WORDING.md were not pasted.
 7. The 30 s check interval and the claim that a mail-window stop ends unknown come from reading the flow files (review r2 facts); nothing was run.
 8. The execution list stays HELD until the save-runs patch (F-008) is applied and the flows are rebuilt.
+
+## F-008 changed (2026-11-16, lead answer Q18)
+- Manual runs ("Test workflow") are now saved too: `saveManualExecutions` is True in the shared settings of the two entry flows and the sub-workflow. Reason is in the patch comment line (a Python comment, so the format allowed it). The recovery flow keeps saving "none" and manual False (unchanged).
+- The lead's reason (the take's evidence reads n8n's run list, "system-map checks it") is the lead's statement; I did not verify it.
+- Checker: new option `--accept-no-save FILE`; the recovery flow is printed as "ACCEPTED: recovery flow not part of the take (decision 4)". `--patch-checks F008` now also requires manual True (False for recovery). Evidence: flow-check/fix-q18.md.
