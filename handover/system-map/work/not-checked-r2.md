@@ -1,21 +1,39 @@
-# Not checked, real-v5-only take (open items only; rewritten 2026-11-16 11:58 UTC / 17:28 IST by the system-map session)
-Source: an unverified zoom-out read of REPORT.md, the flow-file checker (flowcheck)/REPORT.md, flowset/REPORT.md and DECISIONS-2026-11-16. Items settled by decisions 1 to 12 are removed: patched copy chosen (lead answer 10:20Z), source tree and licence copies (decision 11), S9-1 and S9-4 deferred and no closed-gate claim (decision 5), scenes 5 to 11 cut (decision 1), HubSpot write scope moot because the take never deletes (decision 2), proof screen is a rehearsal capture (decision 9). T19 (the test for "processed once") has not run. Nothing below is verified.
-Terms: T19 = the test that sends one lead twice and counts mails and contact writes; Claim, MarkDone, CrmUpsert = steps in the flows (Claim inserts the lead id once; MarkDone is the last step; CrmUpsert creates or updates the contact); `$env` = settings read from the laptop's environment; BL-wp6-G1 = the open item 'the fill script is not built'; core-hardening session = the other Claude session that patches the program (named by the lead); loopback re-smoke = the studio lead's short self-check on its own side before the rehearsal; what it checks is not recorded in any file (decision 12). Words: studio lead = the Claude session that runs technical steps; owner = the person who types answers; rehearsal = test run on the laptop without a real account (decision 12, target tonight or tomorrow morning IST).
+# Not checked: open items before the take (rewritten Mon 16 Nov 2026 by the system-map session)
+
+## Source and scope
+Source: an unverified zoom-out read of REPORT.md, flowcheck/REPORT.md, flowset/REPORT.md and inputs/DECISIONS-2026-11-16.md. Items settled by decisions 1 to 12 of that file are removed: patched copy chosen (lead answer 10:20Z), source tree and licence copies (decision 11), S9-1 and S9-4 deferred and no closed-gate claim (decision 5), scenes 5 to 11 cut (decision 1), HubSpot write scope moot because the take never deletes (decision 2), proof screen is a rehearsal capture (decision 9). T19 has not run. Nothing below is verified.
+
+## Terms
+- take = one filmed run of the lead-intake demo on made-up data; scenes 1 to 4 = the four parts of the run sheet that the take shows (the run sheet is on branch origin/demo/handover and is not in this checkout).
+- studio lead = the Claude session doing the technical steps; owner = the human at the laptop; studio head = the human who runs the studio (not named); core-hardening session = the other Claude session that patches the program.
+- T19 = the test that sends one lead twice and counts mails and contact writes.
+- Claim, MarkDone, CrmUpsert = steps in the flows (Claim inserts the lead id once; MarkDone is the last step; CrmUpsert creates or updates the contact). flowcheck = the flow-file checker. `$env` = settings read from the laptop's environment.
+- BL-wp6-G1 = the open item "the fill script is not built".
+- loopback re-smoke = the studio lead's short self-check on its own side before the rehearsal; what it checks and what counts as passing are not recorded in any file (decision 12).
+- rehearsal = a test run on the laptop without a real account (decision 12; target tonight or tomorrow morning IST).
+- row N = row N of the table below.
+
+## Open items
 | # | open item | person | due |
 |---|---|---|---|
-| 0 | Build fill_flows.py (BL-wp6-G1), the script that supplies the `$env` values. Owner not chosen yet; if none by Tue 17 Nov 12:00 UTC / 17:30 IST the studio lead asks the owner to choose. Row 1 cannot run until it is done. | named by the studio head | before row 1; proposal Tue 17 Nov 12:00 UTC / 17:30 IST |
-| 1 | Real-v5 flows have never run in n8n with real settings (the fill script for `$env` values is not built, BL-wp6-G1). Import the filled copy on the laptop, send one made-up lead, reach MarkDone. Pass = one lead reached MarkDone (yes/no). | studio lead | after the loopback re-smoke passes; target tonight or tomorrow morning IST (decision 12), exact UTC and IST: NOT SET, the studio lead proposes by Tue 17 Nov 12:00 UTC / 17:30 IST |
-| 2 | Run T19: send one lead twice. Pass = one mail and one contact write in total (yes/no). The claim "processed once" depends on it. | studio lead | same time as row 1 |
-| 3 | Re-check the regenerated flow folder (flowcheck on the final folder, write its git sha). | core-hardening session | after the folder is on a fetchable branch |
-| 4 | Saved runs hold lead id, e-mail and name. Is the n8n executions list kept off camera or cleaned? Look at the executions page and the Postgres tables in the rehearsal. | studio lead | same time as row 1 |
-| 5 | List the mail sender and the 3 recipients; confirm all are the owner's own inboxes. No program check enforces this (S9-1 deferred). | owner | before the owner sends the written yes (the one-line yes with money numbers) |
-| 6 | Run sheet is not in this checkout (it is on origin/demo/handover). Mark scene 1 to 4 sentences that mention stand-ins, refusal, 60 s or counts. | studio lead | before the film |
+| 0 | Build fill_flows.py (BL-wp6-G1), the script that supplies the `$env` values. | not chosen yet | before row 1 |
+| 1 | Import the filled copy on the laptop, send one made-up lead, reach MarkDone. | studio lead | after the loopback re-smoke passes |
+| 2 | Run T19: send one lead twice. | studio lead | same time as row 1 |
+| 3 | Re-check the regenerated flow folder with flowcheck on the final folder and write its git sha. | core-hardening session | after the folder is on a fetchable branch |
+| 4 | Saved runs hold lead id, e-mail and name. Is the n8n executions list kept off camera or cleaned? | studio lead | same time as row 1 |
+| 5 | List the mail sender and the 3 recipients; confirm all are the owner's own inboxes. No program check enforces this (S9-1 deferred). | owner | before the owner sends the written yes |
+| 6 | Mark every scene 1 to 4 sentence in the run sheet that mentions stand-ins, refusal, 60 s or counts. | studio lead | before the film |
 | 7 | flowcheck blind spots (writes without "crm" in the address, `$node[...]`, disabled steps). | core-hardening session | after the rehearsal |
-| 8 | Duplicate behaviour of `CrmUpsert` on the owner's own free HubSpot trial is unchecked. | studio lead | same time as row 1 |
+| 8 | Duplicate behaviour of CrmUpsert on the owner's own free HubSpot trial. | studio lead | same time as row 2 |
 
-## Current text (Mon 16 Nov 2026; replaces the earlier paragraph)
-Goal: settle the open checks before the take (one filmed run of the lead-intake demo on made-up data). Must pass before filming: rows 0, 1, 2 and 4. If row 0 has no owner by Tue 17 Nov 12:00 UTC / 17:30 IST (my proposal), the studio lead asks the owner. Row 8 is run together with row 2. Row 7 happens after the rehearsal. Tracked only, not gating: rows 3, 5 and 6 (row 5 should be done before the owner's written yes).
-Pass rules: row 2 (T19) = send one lead twice; pass is one mail and one contact write in total, counts recorded. Row 4 = the executions page and the Postgres tables hold no real-looking data on camera; record what was seen. Row 6 = every scene 1 to 4 sentence that mentions stand-ins, refusal, 60 s or counts is marked.
-Row 0 is the fill script; row 1 cannot run before it exists.
-Times: the table's due column gives the decision 12 target (tonight or tomorrow morning IST); no file sets an exact time, so exact times are NOT SET.
-Words: take = the filmed run; studio lead = the Claude session doing the technical steps; owner = the human at the laptop; row N = row N of the table above.
+## Goal and gating
+Goal: settle the open checks before the take. Must pass before filming: rows 0, 1, 2 and 4. Tracked only, not gating: rows 3, 5, 6 and 8 (row 5 should be done before the written yes); row 7 comes after the rehearsal. Row 1 cannot run before row 0 exists. If row 0 has no owner by Tue 17 Nov 12:00 UTC / 17:30 IST (my proposal), the studio lead asks the owner to choose.
+
+## Pass rules
+- Row 1: one lead reached MarkDone (yes/no).
+- Row 2: pass = one mail and one contact write in total, counts recorded.
+- Row 4: the executions page and the Postgres tables hold no real-looking data on camera; record what was seen.
+- Row 6: every scene 1 to 4 sentence that mentions stand-ins, refusal, 60 s or counts is marked.
+
+## Times
+No file sets an exact time for any row; they are NOT SET. Decision 12 gives only the target (tonight or tomorrow morning IST) for rows 1, 2 and 4. The studio lead proposes exact UTC and IST times by Tue 17 Nov 12:00 UTC / 17:30 IST (my proposal).
