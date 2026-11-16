@@ -1,3 +1,19 @@
+changes| alarms on a second device (|5.8
+changes| as R7 says; a counted mail |R7
+changes| key at 6.7; it never stops |7.11
+changes| the card says helper none; |5.9
+changes|7 | delete exactly those as |R7
+changes|ays when Recall is checked (|6.1
+changes|ches back, two places | R1, |6.1
+changes|corrected; new row 133 says |7.11
+changes|ery way the run ends passes |7.11
+changes|k, two places | R1, 6.1 and |8.7
+changes|may cancel the older key at |6.7
+changes|ng; each patch is listed in |section 3
+changes|o when the run ends without |section 8
+changes|switches back, two places | |R1
+changes|ther to drop sheet A, since |7.11
+changes|| | M12 delete rule against |R7
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5

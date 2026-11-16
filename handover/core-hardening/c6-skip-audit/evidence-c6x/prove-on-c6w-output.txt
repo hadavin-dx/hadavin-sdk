@@ -1,0 +1,6 @@
+unchanged c6w text                 exit 0  failed checks: 0  []
+card-words-90-first                exit 0  failed checks: 0  []
+card-seconds-36-first              exit 0  failed checks: 0  []
+budget-40-first                    exit 0  failed checks: 0  []
+card-words-87-first                exit 0  failed checks: 0  []
+PROOF: 4 of 4 first-copy edits make no new check fail on the c6w text (so c6w would have called them fine): ['card-words-90-first', 'card-seconds-36-first', 'budget-40-first', 'card-words-87-first']

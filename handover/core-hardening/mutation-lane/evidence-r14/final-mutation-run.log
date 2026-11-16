@@ -51,3 +51,12 @@ heavy-slot: slot 3 taken at 2026-11-16T20:22:36Z
 ('raw-sharedtmp', 'T103', 'ONLY=T103 RUN=<run.mut-raw-sharedtmp.py> bash safety-tests.r14.sh', 'T103a.raw-sharedtmp', '26', 'KILLED - as expected', 22)
 ('raw-no-resolve', 'T103', 'ONLY=T103 RUN=<run.mut-raw-no-resolve.py> bash safety-tests.r14.sh', '(none)', '26', 'SURVIVED - as expected (SURVIVES: layered, a link on the way is already refused by the symbolic-link guard before the resolved path is looked at; the two layers cover the same cases on Linux)', 23)
 ('raw-not-wired', 'T103', 'ONLY=T103 RUN=<run.mut-raw-not-wired.py> bash safety-tests.r14.sh', 'T103b.1, T103b.2, T103b.3, T103b.4, T103b.5', '26', 'KILLED - as expected', 23)
+('out-json-not-wired', 'T103', 'ONLY=T103 RUN=<run.mut-out-json-not-wired.py> bash safety-tests.r14.sh', 'T103b.1, T103b.2, T103b.3, T103b.4, T103b.5, T103b.6, T103b.7, T103b.8, T103b.9, T103c, T103c2, T103d', '26', 'KILLED - as expected', 250)
+('leader-no-module-check', 'T103', 'ONLY=T103 RUN=<run.mut-leader-no-module-check.py> bash safety-tests.r14.sh', 'T103a.leader-shape', '26', 'KILLED - as expected', 23)
+('leader-no-rootdir', 'T103', 'ONLY=T103 RUN=<run.mut-leader-no-rootdir.py> bash safety-tests.r14.sh', 'T103a.leader-shape', '26', 'KILLED - as expected', 23)
+('leader-no-python-path', 'T103', 'ONLY=T103 RUN=<run.mut-leader-no-python-path.py> bash safety-tests.r14.sh', 'T103a.leader-shape', '26', 'KILLED - as expected', 23)
+('leader-not-used-pgid-branch', 'T103', 'ONLY=T103 RUN=<run.mut-leader-not-used-pgid-branch.py> bash safety-tests.r14.sh', 'T103c', '26', 'KILLED - as expected', 23)
+('leader-not-used-command-branch', 'T103', 'ONLY=T103 RUN=<run.mut-leader-not-used-command-branch.py> bash safety-tests.r14.sh', 'T103c3', '26', 'KILLED - as expected', 22)
+('leader-always-false', 'T103', 'ONLY=T103 RUN=<run.mut-leader-always-false.py> bash safety-tests.r14.sh', 'T103a.leader-shape, T103c2', '26', 'KILLED - as expected', 22)
+('note-always-long', 'T103', 'ONLY=T103 RUN=<run.mut-note-always-long.py> bash safety-tests.r14.sh', 'T103d', '26', 'KILLED - as expected', 22)
+heavy-slot: slot 3 freed, exit 0

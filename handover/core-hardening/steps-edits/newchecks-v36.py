@@ -847,7 +847,10 @@ if not re.search(r'(?m)^\| 117 \|[^\n]*Recall is checked at 6\.1, before any key
 # C290 (security m6): the film page says the microphone and sound must be OFF, else stop
 _must('C290', (('film page', _FILM9 or A),), ('its microphone and sound must be OFF', 'if you cannot see that or switch them off, stop and call the owner'), 'm6 film page 3(a)')
 # C291 (stranger M2): the Enter-by time is explained where it is first used on the sheet and card
-_must('C291', _AB, ('the Enter-by time (the latest start minus 5 minutes)',), 'M2 Enter-by explained')
+_must('C291', _AB, ('the Enter-by time (the latest start minus 5 minutes)',), 'M2 Enter-by explained on the card')
+for _n in 'AB':
+    _i = SHEETS_DISK[_n].find('Enter-by')
+    if _i < 0 or '(the latest start minus 5 minutes)' not in SHEETS_DISK[_n][_i:_i + 60]: fail('C291', 'sheet %s: the first use of "Enter-by" is not followed by what it is' % _n)
 # C292 (stranger M3): the y-question time is inclusive
 _must('C292', _AB, ('(exactly that many minutes is still in time)',), 'M3 inclusive minutes')
 # C293 (stranger M5): no card line runs over 350 words (v35 had 488)

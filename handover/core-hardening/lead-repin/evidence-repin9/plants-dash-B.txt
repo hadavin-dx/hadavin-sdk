@@ -24,3 +24,6 @@ q08 [dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=2050 failed=4 (t
 q09 [dash]: KILLED-phase1 exit=1 fail_lines=10 SELF-TEST: passed=2044 failed=10 (the made-up input and output files were deleted) (3s)
 q10 [dash]: SURVIVED exit=0 SELF-TEST: passed=2094 failed=0 (the made-up input and output files were deleted) first_fail=[] (122s)
 q11 [dash]: KILLED-phase1 exit=1 fail_lines=48 SELF-TEST: passed=2006 failed=48 (the made-up input and output files were deleted) (3s)
+q12 [dash]: SURVIVED exit=0 SELF-TEST: passed=2094 failed=0 (the made-up input and output files were deleted) first_fail=[] (125s)
+q13 [dash]: KILLED-phase1 exit=1 fail_lines=48 SELF-TEST: passed=2006 failed=48 (the made-up input and output files were deleted) (3s)
+q14 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)

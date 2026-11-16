@@ -1,0 +1,38 @@
+heavy-slot: slot 3 taken at 2026-11-16T20:33:05Z
+banned entries read at run time: 10
+baseline FAIL lines in scratch copy: 0
+H01 CAUGHT by C04 | add a wrong UTC/IST pair (11:30 UTC is 17:00 IST) | first: FAIL C04 OWNER-SHEET-v35-A.md bad pair 11:30 UTC = 16:30 IST
+H02 CAUGHT by C04,C239,C96 | first {{dl_day}} replaced by a wrong weekday (Tue 23 Nov) | first: FAIL C04 OWNER-SHEET-v35-A.md wrong weekday Tue 23 Nov 2026
+H03 CAUGHT by C04 | first "Sun 22 Nov" -> Sat | first: FAIL C04 OWNER-SHEET-v35-A.md wrong weekday Sat 22 Nov
+H04 CAUGHT by C04 | wrong weekday-date added (19 Nov 2026 is Thu) | first: FAIL C04 OWNER-SHEET-v35-A.md wrong weekday Fri 19 Nov 2026
+H05 CAUGHT by C274 | 5-minute boundary changed to 4 in card definition | first: FAIL C274 card A does not define the Enter-by time exactly once
+H06 CAUGHT by BUILD | 5-minute boundary changed in facts | first: FAIL BUILD stopped: AssertionError
+H07 CAUGHT by C239 | Sunday cancel-by bound replaced by weekday bound | first: FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|cb|3
+H08 CAUGHT by C239,C275 | Sunday older-key bound moved to 18:19 (backstop) | first: FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|bs_pair|1
+H09 CAUGHT by BUILD | last run day moved from Sun to Sat | first: FAIL BUILD stopped: AssertionError
+H10 CAUGHT by BUILD | 18:19 revoke time -> 18:20 | first: FAIL BUILD stopped: AssertionError
+H11 CAUGHT by BUILD | 18:09 Monday reminder -> 18:08 | first: FAIL BUILD stopped: AssertionError
+H12 CAUGHT by BUILD | 18:09 Sunday reminder -> 18:10 | first: FAIL BUILD stopped: AssertionError
+H13 CAUGHT by C03,C79,C96 | deadline 18:29 -> 18:28 | first: FAIL C03 deadline pairs
+H14 CAUGHT by BUILD | IST offset +1 minute | first: FAIL BUILD stopped: AssertionError
+H15 CAUGHT by C78 | ISO deadline string only | first: FAIL C78 A lacks 'DEADLINE = 2026-11-23T18:29:00Z'
+H16 CAUGHT by C250 | cancel step sentence deleted (card step 4) | first: FAIL C250 card A lacks "the same named row" in step 4
+H17 MISSED (no new FAIL line) | cancel step contradicted
+H18 CAUGHT by C08,C109,C12,C126,C146,C165,C170,C173,C19,C238,C27,C61,C86,C89 | swap every [[A: and [[B: condition marker | first: FAIL C08 A yes sentence wrong
+H19 MISSED (no new FAIL line) | 7-day rule removed from 6.7/7.11 condition (place 1)
+H20 MISSED (no new FAIL line) | 7-day rule removed from card L2 (place 2)
+H21 CAUGHT by C176,C182,C185,C62 | 7-day rule changed to 5 days | first: FAIL C176 A lacks 'at least 168 hours (7 days) before the earliest key time of the run da'
+H22 CAUGHT by C55 | secret-shaped string (sk-ant-style, built from parts) added | first: FAIL C55 A holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+H23 CAUGHT by C55 | secret-shaped AWS-style id added (not the allowed example) | first: FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
+H24 CAUGHT by C06 | banned entry #0 from the list added | first: FAIL C06 OWNER-SHEET-v35-A.md holds a banned word (index 0)
+H25 CAUGHT by C06 | banned entry #0 uppercased | first: FAIL C06 OWNER-SHEET-v35-A.md holds a banned word (index 0)
+H26 CAUGHT by C06 | banned entry #0 with a zero-width space inside | first: FAIL C06 OWNER-SHEET-v35-A.md holds a banned word (index 3)
+H27 CAUGHT by C21,C246,C271 | typed phrase "cancel failed" broken in facts (all uses) | first: FAIL C21 note: quoted words 'cancel failed' look like the set phrase 'cancel faild' but differ
+H28 CAUGHT by C12,C21,C239 | one typed phrase use broken in source | first: FAIL C12 A told phrase not in list: cancel fail
+H29 CAUGHT by C03,C04,C17,C236,C48 | call count 3 -> 2 | first: FAIL C03 facts money differs
+H30 MISSED (no new FAIL line) | count: helper keys at most three -> four
+H31 CAUGHT by C138,C14c,C172,C25 | count: four alarms -> five (text only) | first: FAIL C138 A lacks 'Four phone alarms'
+H32 MISSED (no new FAIL line) | count: normally 1 key -> 2
+H33 CAUGHT by C259 | paste once -> twice | first: FAIL C259 "Paste once (Ctrl+Shift+V or right-click), only if" is not present exactly once
+H34 CAUGHT by C249 | Sunday condition loosened | first: FAIL C249 A lacks 'Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by t'
+H35 CAUGHT by BUILD | 7-day constant 168h -> 144h in facts | first: FAIL BUILD stopped: AssertionError

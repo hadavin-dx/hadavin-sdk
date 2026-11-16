@@ -8,7 +8,7 @@ def run(d):
     if rb.returncode: return {'FAIL BUILD stopped: ' + (rb.stderr.strip().split('\n') or [''])[-1][:80]}, rb       # the build's own assertions (marker left, run length below 860 s)
     r = subprocess.run([sys.executable, '-B', d + 'check-v36.py'], capture_output=True, text=True, env=dict(os.environ, V27_DIR=d, V31_BANNED_TEST=BANNED_PATH))
     return set(l for l in r.stdout.split('\n') if l.startswith('FAIL')), r
-ALLCOPIES = {'N01', 'R18', 'P30'}
+ALLCOPIES = {'N01', 'R18', 'P30', 'AD07'}
 # (id, file, old, new, what)
 import ast
 def _banned():
@@ -39,7 +39,7 @@ P = [
 ('P15', 'OWNER-SHEET-v36-SOURCE.md', 'the lead checks it is new', 'the lead checks nothing', 'run-name reuse rule removed'),
 ('P16', 'OWNER-SHEET-v36-SOURCE.md', '[[A:, then the older key]]', '', 'A older key step renamed (no longer after 6.6)'),
 ('P17', 'OWNER-SHEET-v36-SOURCE.md', 'reverses `end` and the card, ', '', 'lead may reverse order'),
-('P18', 'OWNER-SHEET-v36-SOURCE.md', 'within the "Minutes at Type y to start" of the message, counted from the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
+('P18', 'OWNER-SHEET-v36-SOURCE.md', 'at or before the end of the "Minutes at Type y to start" of the message (exactly that many minutes is still in time), counted from the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
 ('P19', 'OWNER-SHEET-v36-SOURCE.md', 'if 7.4 never happened, send "none" for the time in 8.1. ', '', 'run that never started'),
 ('P20', 'OWNER-SHEET-v36-SOURCE.md', 'SAMPLE (made-up values, never real):\n', '', 'SAMPLE label removed'),
 ('P21', 'OWNER-SHEET-v36-SOURCE.md', 'never use rotate or any button that shows a new secret', 'rotate the secret', 'HubSpot rotate allowed'),
@@ -85,7 +85,7 @@ V = [
 ('V14', N, 'both sheets have four alarms, the fourth at', 'both sheets have alarms, the fourth at', 'note G30 loses the fourth alarm'),
 ('V15', O, 'WHEN IT FAILS (v36)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
 ('V16', O, 'MET for the sheet page alone by', 'Word target not stated by', 'open list says word target met'),
-('V17', S, 'If the run ends before 6.7 the older key is still valid: you cancel it at 7.11', 'If the run ends before 6.7 nothing more happens: 7.11', 'A older key: what happens after an early end no longer said'),
+('V17', S, 'Otherwise it is still valid.', 'Otherwise nothing more happens.', 'A older key: what happens after an early end no longer said'),
 ('V18', S, 'none within the silence minutes: describe, FREEZE; no key is alive then', '', 'no shell prompt: no action'),
 ('V19', S, 'Start only after the lead\'s word "post"', 'Start', 'posting without the lead word'),
 ('V20', S, 'say "filmed" and read both counts aloud', 'say "filmed"', 'film counts no longer read aloud'),
@@ -100,7 +100,7 @@ M = [
 ('M03', S, 'Price per call at full size: USD {{price}}', 'Price per call at full size: USD 0.28', 'sample notice price line'),
 ('M04', S, 'expected total USD <expected total>, balance USD', 'expected total USD 0.82, balance USD', 'yes pattern total'),
 ('M05', S, 'If you had typed `end`, proceed at 7.9;', 'If you had typed `end`, proceed at 7.5;', 'after-the-card pointer 7.9 to 7.5'),
-('M06', S, 'back to the values on your paper in 8.7', 'back to the values on your paper in 8.5', 'pointer back on in 8.7 to 8.5'),
+('M06', S, 'back to the values on your paper at 8.7', 'back to the values on your paper at 8.5', 'pointer back on in 8.7 to 8.5'),
 ('M07', N, 'the HubSpot app secret revoke (G42, sheet 8.4)', 'the HubSpot app secret revoke (G42, sheet 8.3)', 'note pointer sheet 8.4 to 8.3'),
 ('M08', N, 'The order `end` then cancel (sheet 7.8)', 'The order `end` then cancel (sheet 7.6)', 'note pointer sheet 7.8 to 7.6'),
 ('M09', N, 'only the characters of owner sheet R8', 'only the characters of owner sheet R7', 'note R8 to R7'),
@@ -405,7 +405,7 @@ X = [
 ('X20', S, 'what "at re-pin" means', 'what the brackets mean', 'at re-pin not explained'),
 ('X21', O, '`[OWNER FILLS: ...]`', '`[OWNER FILLS ...]`', 'placeholder spelling in the open list'),
 ('X22', O, '| 109 | Still OWNER-OPEN', '| 110 | Still OWNER-OPEN', 'open row 109 missing'),
-('X23', S, 'Right after the yes, set the two **deadline reminders** (7.11)', 'Right after the yes, do nothing more (7.11)', 'deadline reminder not set after the yes'),
+('X23', S, 'Right after the yes, set **alarm 5** at {{bs}} and **alarm 6** at {{bm}}', 'Right after the yes, do nothing more at {{bs}} and {{bm}}', 'deadline reminder not set after the yes'),
 ('X24', N, '18:04 is a plan fact', '18:04 is a time', '18:04 plan-fact sentence removed from the note'),
 ('X25', S, 'and only if the 7-day rule of 5.1 holds', 'and only if the 7-day rule holds (at least 168 hours (7 days) before)', '7-day rule worded twice'),
 ('X26', S, 'send "{{ph_older711}}", then cancel', 'send "{{ph_older}}", then cancel', '7.11 forced cancel uses the claim phrase'),
@@ -443,7 +443,7 @@ P += Y
 EXPECT.update({'Y01':['C210','BUILD'],'Y02':['C210'],'Y03':['C212'],'Y04':['C213'],'Y05':['C213'],'Y06':['C214'],'Y07':['C215'],'Y08':['C216'],'Y09':['C217'],'Y10':['C218'],'Y11':['C219'],'Y12':['C220'],'Y13':['C221'],'Y14':['C222'],'Y15':['C222'],'Y16':['C222'],'Y17':['C223'],'Y18':['C224'],'Y19':['C225'],'Y20':['C226'],'Y21':['C227']})
 Z = [
 ('Z01', FA, 'SEVENBACK = EK - dt.timedelta(hours=168)', 'SEVENBACK = EK - dt.timedelta(hours=160)', 'H33: 7-day time computed with 160 hours'),
-('Z02', S, ' L5 The last-resort step', ' L4 The last-resort step', 'H37: cancel-list label L5 renamed L4'),
+('Z02', S, 'L5 The last-resort step in', 'L4 The last-resort step in', 'H37: cancel-list label L5 renamed L4'),
 ('Z03', S, '## 6. The model key (R1 applies; UNVERIFIED)', '## 6. The model key (R1 applies)', 'H38: UNVERIFIED removed from the section 6 heading'),
 ('Z04', S, '{{fp}}', '12', 'H50: film pause 10 changed to 12 in one place'),
 ('Z05', S, '{{ceil}}', '4', 'H51: call ceiling 3 changed to 4 in one place'),
@@ -458,7 +458,7 @@ Z = [
 ('Z14', N, 'a failed key save skips 6.7', 'a failed key save cancels nothing of the older key', 'S M2: lead note says a failed key save cancels nothing'),
 ('Z15', S, '(a) The owner asks you', '(a) Someone asks you', 'S M3: helper trigger (a) no longer the owner himself'),
 ('Z16', S, 'Never the lead, the film person, the backup person or anyone else, whatever they say.', 'The lead may also ask you.', 'S M3: helper may be released by the lead'),
-('Z17', S, 'is never the film person, editor, post checker or backup person', 'may be the backup person', 'S M3: helper role bar removed from the sheet'),
+('Z17', S, 'cancel helper (never the film person, editor, post checker or backup person of the numbers message)', 'cancel helper (may be the backup person of the numbers message)', 'S M3: helper role bar removed from the sheet'),
 ('Z18', S, 'can leave a key spending after the deadline, until about {{bm_chain}} if it starts at the reminder {{bm}}, or until about {{bt_end}} if it starts at the backstop time {{dl_day}} {{rv23}}, when I wait the ordinary 10 and 10 minutes, so near the deadline I do the last-resort step at once after my first cancel failed.', 'can leave a key spending.', 'N M5: the typed yes loses the end of the last resort'),
 ('Z19', S, 'a fifth and a sixth phone alarm', 'a fifth phone alarm', 'S minor 5: the sixth alarm lost'),
 ('Z20', S, 'I understand that this yes binds me to step 7.11 and to the two deadline alarms', 'I understand that this yes is a plan', 'N M7: yes binding removed'),
@@ -478,7 +478,7 @@ EXPECT.update({'Z01':['C235'],'Z02':['C237'],'Z03':['C238'],'Z04':['C236'],'Z05'
 
 V33 = [
 ('AA01', S, 'or until about {{bt_end}} if it starts', 'or until about 18:21 UTC = 23:51 IST if it starts', 'H04: last-resort end changed to an earlier consistent pair'),
-('AA02', S, 'both after the deadline (the two cases of the yes)', 'both before the deadline (the two cases of the yes)', 'H05: "after the deadline" changed to "before"'),
+('AA02', S, 'both after the deadline', 'both before the deadline', 'H05: "after the deadline" changed to "before"'),
 ('AA03', S, 'Any other key, even one the owner mistyped the name of: touch nothing, write down its name', 'Any other key, even one the owner mistyped the name of: cancel it, write down its name', 'H07: helper told to cancel any other key'),
 ('AA04', S, 'never by a tool, script, window or person', 'or by a tool, script, window or person', 'H14: R6 allows a tool or script'),
 ('AA05', S, 'Right after `exit 0`, copy one harmless word such as `clear` (it replaces the clipboard).', '', 'H17: the clear clipboard step removed'),
@@ -489,7 +489,7 @@ V33 = [
 ('AA10', S, "then cancel the older key by the card's L2, steps 2 to 4, only if its name and creation date equal the blanks", "then cancel the older key by the card's L2, steps 2 to 4", 'H23: older-key cancel without the name and date condition (7.11)'),
 ('AA11', S, 'L2 the older key named in the numbers message, only if its name and creation date equal the blanks;', 'L2 the older key named in the numbers message;', 'H23 second place: card list L2 without the condition'),
 ('AA12', S, 'if key text appears, close it and tell the owner it appeared', 'if key text appears, keep it and tell the owner it appeared', 'H35: helper told to keep key text'),
-('AA13', S, 'even if a run was in progress (no run is planned on that day)', 'unless a run was in progress (no run is planned on that day)', 'H38: backstop with an exception for a run'),
+('AA13', S, 'even if a run was in progress', 'unless a run was in progress', 'H38: backstop with an exception for a run'),
 ('AA14', S, 'do the last-resort step at once after your first "{{ph_cf}}" (retry', 'wait the 10 and 10 minutes after your first "{{ph_cf}}" (retry', 'M1: card waits the ordinary chain near the deadline'),
 ('AA15', S, 'type `cd ` and the Take folder of the message, nothing more', 'type `cd ` and the Take folder of the message', 'M2: cd line may hold more'),
 ('AA16', S, 'the `cd` line of 7.2 is exactly `cd ` plus the Take folder, nothing else (no `&&`, `;`, `|`, second command or space-separated word after the folder)', 'the `cd` line of 7.2 is checked', 'M2: R6 cd rule dropped'),
@@ -509,8 +509,8 @@ V34 = [
 ('AB02', S, 'search the exact address, see exactly one result whose page shows it, then delete', 'search the start of the address, then delete all results', 'X07: contact delete rule widened'),
 ('AB03', S, 'if nobody answers within 10 more minutes, do the last-resort step yourself, only in the model account', 'if nobody answers within 10 more minutes, wait', 'X08: ordinary waiting chain loses the last-resort step'),
 ('AB04', S, "Post only the video and the lead's exact sentences, after", "Post the video, the lead's exact sentences and a lease line, after", 'X10: public post allows extra text'),
-('AB05', S, ', and a helper whose cancel fails does only the last-resort step on its paper or none,', ',', 'M1: the yes no longer names the failed helper case'),
-('AB06', S, 'do at once the last-resort step on your paper', 'call the owner and wait', 'M1: failed helper cancel ends with no step'),
+('AB05', S, ', and a helper whose cancel fails does nothing more than call me,', ',', 'M1: the yes no longer names the failed helper case'),
+('AB06', S, 'only your last-resort step is left (the helper never does it); call the backup person at once', 'call the owner and wait', 'M1: failed helper cancel ends with no step'),
 ('AB07', LN, 'one sentence (lead answer Q22c)', 'two sentences', 'M2: lead note claim wording back to two sentences'),
 ('AB08', OP, 'Q22c is one sentence and it names no person', 'Q22 (c) is two sentences and neither names a person', 'M2: open list row 7 back to two sentences'),
 ('AB09', S, 'the owner phones them after step 5.9 on the run day', 'the owner gives them on the run day', 'B2: helper paper completion time removed'),
@@ -542,6 +542,31 @@ V35 = [
 P = P + V35
 EXPECT.update({'AC01': ['C274'], 'AC02': ['C274'], 'AC03': ['C275'], 'AC04': ['C276'], 'AC05': ['C277'], 'AC06': ['C278'], 'AC07': ['C279'], 'AC08': ['C280']})
 EXPECT['X27'] = ['C196', 'C274']; EXPECT['Y12'] = ['C220', 'C274']; EXPECT['X23'] = ['C187']   # round 7: the Enter-by rule is also read by C274
+V36 = [
+('AD01', S, "Your cancel helper has phoned that the cancel button word and the cancelled word are both written on the paper, or the card's helper blank says none: else no key.", 'Make the key.', 'S1: the create press has no helper gate (C281)'),
+('AD02', S, 'ask the helper to phone you back once both are written on the paper', 'ask the helper to write both on the paper', 'S1: no call back asked of the helper (C281)'),
+('AD03', S, '**Rule:** the role may do one thing, cancel keys.', 'The role may do several things.', 'S2: permission rule softened (C282)'),
+('AD04', S, 'or no such role exists, write "none" for the helper and give no paper', 'or no such role exists, give the paper', 'S2: no none route (C282)'),
+('AD05', S, 'phone alarms with sound that repeat every 5 minutes, with Do-not-disturb OFF and the same two alarms on a second device', 'phone alarms with sound', 'S3: alarms do not repeat (C283)'),
+('AD06', S, 'Alarms 5 and 6 repeat every 5 minutes until 7.11 is done', 'Alarms 5 and 6 ring once', 'S3: part 10 alarm repeat removed (C283)'),
+('AD07', S, 'or after 7.11 when the run ends without section 8', 'at 8.7', 'm3, M11: Privacy switches back only at 8.7 (C287)'),
+('AD08', S, "the helper's role removed and the paper voided by phone", 'the run over', 'm3: role removal not named on the no-section-8 path (C287)'),
+('AD09', S, 'its time for alarm 5 is {{rv22}}', 'its time for alarm 5 is {{rv23}}', 'm1: Sunday backstop shows the Monday time (C285)'),
+('AD10', S, 'with an earliest key time of {{ek}} as in the sample, sheet A fits only a key last used at or before {{a_cut}}', 'sheet A fits only a key last used at or before {{a_cut}}', 'm2: the cut stated without its sample earliest key time (C286)'),
+('AD11', S, '(exactly that many minutes is still in time)', '', 'M3: inclusive minutes removed (C292)'),
+('AD12', S, 'no run is planned on Mon 23 Nov', 'a run is planned on Mon 23 Nov', 'M7: card says a Monday run is planned (C295)'),
+('AD13', S, '10 minutes before alarm 5', '5 minutes before alarm 5', 'M8: wrong minutes before alarm 5 (C295)'),
+('AD14', S, 'The run day is agreed at b)', 'The run day is agreed at c)', 'M9: 5.1a points to the wrong step (C296)'),
+('AD15', S, 'delete exactly those as R7 says', 'delete them all', 'M12: delete rule widened (C296)'),
+('AD16', S, 'Your numbers checks (1 to 8)', 'Your checks (1 to 8)', 'M14: numbers checks lose their name (C296)'),
+('AD17', S, '8 days after a use that shows only a date', '7 days after a use that shows only a date', 'M9: 7 and 8 days again (C296)'),
+('AD18', S, 'it never stops 7.11, which cancels', 'it stops 7.11, which cancels', 'S4: 5.1a says the 7-day rule stops 7.11 (C284)'),
+('AD19', S, 'Every way the run ends', 'Some ways the run ends', 'm3: not every end passes 7.11 (C287)'),
+('AD20', OP, 'Recall is checked at 6.1, before any key exists', 'Recall is checked', 'm5: Recall row loses when it is checked (C289)'),
+('AD21', LN, 'an app of another use is never revoked unless the clean-up message names it', 'every app is revoked', 'm4: secrets table revokes every app (C288)'),
+]
+P = P + V36
+EXPECT.update({'AD01': ['C281'], 'AD02': ['C281'], 'AD03': ['C282'], 'AD04': ['C282'], 'AD05': ['C283'], 'AD06': ['C283'], 'AD07': ['C287'], 'AD08': ['C287'], 'AD09': ['C285'], 'AD10': ['C286'], 'AD11': ['C292'], 'AD12': ['C295'], 'AD13': ['C295'], 'AD14': ['C296'], 'AD15': ['C296'], 'AD16': ['C296'], 'AD17': ['C296'], 'AD18': ['C284'], 'AD19': ['C287'], 'AD20': ['C289'], 'AD21': ['C288']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
