@@ -235,10 +235,34 @@ def load_marker(path: pathlib.Path) -> dict:
     return m
 
 
-def write_target(path: pathlib.Path, data: bytes) -> None:
-    """Write the file under test without following a link at the last path part."""
-    fd = os.open(path, os.O_WRONLY | os.O_TRUNC | os.O_NOFOLLOW)
+def check_single_link(path: pathlib.Path, what: str) -> None:
+    """A file with more than one name is refused: writing it in place changes every name (review r3 safety B)."""
+    st = os.lstat(path)
+    if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+        raise Refused(
+            f"{what} {path} is not a regular file with exactly one name (links: {st.st_nlink}): "
+            f"a hard-linked scratch tree would plant the mutant in the file it is linked to: refused"
+        )
+
+
+def write_target(path: pathlib.Path, data: bytes, create: bool = False, mode: int = 0o644) -> None:
+    """Write the file under test in place, without following a link at the last path part. The checks are made
+    on the OPEN file, before anything is truncated: it must be a regular file with exactly one name (a hard link
+    would write through to another tree). `create=True` (restore only) re-creates a deleted file with O_EXCL."""
+    flags = os.O_WRONLY | os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags)
+    except FileNotFoundError:
+        if not create:
+            raise
+        fd = os.open(path, flags | os.O_CREAT | os.O_EXCL, mode)
     with os.fdopen(fd, "wb") as fh:
+        st = os.fstat(fh.fileno())
+        if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+            raise Refused(
+                f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written"
+            )
+        fh.truncate(0)
         fh.write(data)
 
 
@@ -398,23 +422,139 @@ def stop_group(pgid: int) -> None:
         pass
 
 
-def stop_orphan(m: dict, root: pathlib.Path) -> str:
-    """After a SIGKILL of run.py the test group may still run: stop it, but only if it is ours."""
-    pgid = m.get("pgid")
-    if not isinstance(pgid, int) or pgid <= 1:
-        return "no test group recorded"
+def proc_stat(pid: int) -> dict | None:
+    """From /proc/<pid>/stat: state, parent, process group, session, start time (clock ticks since boot).
+    The name field may hold spaces and brackets, so the fields are counted from the LAST closing bracket."""
     try:
-        cmdline = pathlib.Path(f"/proc/{pgid}/cmdline").read_bytes().decode(errors="replace")
+        data = pathlib.Path(f"/proc/{pid}/stat").read_text(errors="replace")
+        rest = data[data.rindex(")") + 2 :].split()
+        return {
+            "state": rest[0],
+            "ppid": int(rest[1]),
+            "pgrp": int(rest[2]),
+            "sid": int(rest[3]),
+            "start": int(rest[19]),
+        }
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def proc_argv(pid: int) -> list[str] | None:
+    try:
+        raw = pathlib.Path(f"/proc/{pid}/cmdline").read_bytes()
     except OSError:
-        return "test group already gone"
-    if "pytest" not in cmdline or str(root) not in cmdline:
-        return f"process {pgid} is not this run's pytest: left alone"
-    stop_group(pgid)
-    for _ in range(50):
-        if not pathlib.Path(f"/proc/{pgid}").exists():
-            break
-        time.sleep(0.1)
-    return f"stopped orphaned test group {pgid}"
+        return None
+    return raw.decode(errors="replace").split("\0")[:-1] if raw else []
+
+
+def proc_identity(pid: int) -> dict:
+    """What identifies this very process later (a pid alone can be reused): start time and full argument list."""
+    st, argv = proc_stat(pid), proc_argv(pid)
+    return {} if st is None or not argv else {"start_ticks": st["start"], "argv": argv}
+
+
+def group_members(pgid: int) -> list[int]:
+    """Live processes of the process group (and session) `pgid`, zombies left out."""
+    out = []
+    for d in pathlib.Path("/proc").iterdir():
+        if d.name.isdigit():
+            st = proc_stat(int(d.name))
+            if st and st["pgrp"] == pgid and st["sid"] == pgid and st["state"] != "Z":
+                out.append(int(d.name))
+    return out
+
+
+def works_in(pid: int, root: pathlib.Path) -> bool:
+    """The process runs inside root: its folder is under root, or an argument names root."""
+    try:
+        if pathlib.Path(os.readlink(f"/proc/{pid}/cwd")).is_relative_to(root):
+            return True
+    except OSError:
+        pass
+    return any(str(root) in a for a in proc_argv(pid) or [])
+
+
+def unreaped_child(pid: int) -> bool:
+    """True while `pid` is our own child that nobody has waited for yet (running or zombie). Once it is reaped
+    its number may be given to another process, and a signal to that group would hit a stranger (review r3)."""
+    try:
+        os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    except ChildProcessError:
+        return False
+    return True
+
+
+def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
+    """Process groups that are provably this run's test group (a killed run may leave several things behind)."""
+    pgid, rec_start, rec_argv = m.get("pgid"), m.get("start_ticks"), m.get("argv")
+    if isinstance(pgid, int) and pgid > 1:
+        if not isinstance(rec_start, int) or not isinstance(rec_argv, list):
+            return []  # a marker without the identity (older or forged): never guess
+        st = proc_stat(pgid)
+        if (
+            st and st["state"] != "Z"
+        ):  # the leader still exists: must be exactly the process we started
+            same = st["start"] == rec_start and proc_argv(pgid) == rec_argv
+            return [pgid] if same and st["pgrp"] == pgid and st["sid"] == pgid else []
+        # leader gone (pid not in use or a zombie): its group may live on while members exist. A pid cannot be
+        # given to a new group while members live, so members are ours if they started after the leader
+        # and work in root
+        alive = [
+            q
+            for q in group_members(pgid)
+            if (qs := proc_stat(q)) and qs["start"] >= rec_start and works_in(q, root)
+        ]
+        return [pgid] if alive else []
+    # SIGKILL between the start and the marker rewrite: no group recorded; find a session leader that runs the
+    # command the first marker names, in root, started after this run did
+    head, run_start = m.get("cmd_head"), m.get("run_start_ticks")
+    if not isinstance(head, list) or not isinstance(run_start, int):
+        return []
+    found = []
+    for d in pathlib.Path("/proc").iterdir():
+        if not d.name.isdigit():
+            continue
+        q = int(d.name)
+        st = proc_stat(q)
+        if (
+            st
+            and st["state"] != "Z"
+            and st["pgrp"] == q == st["sid"]
+            and st["start"] >= run_start
+            and (proc_argv(q) or [])[: len(head)] == head
+            and works_in(q, root)
+        ):
+            found.append(q)
+    return found
+
+
+def stop_orphan(m: dict, root: pathlib.Path) -> str:
+    """After a SIGKILL of run.py the test group may still run: stop it, but only if it is ours (start time and
+    full argument list recorded in the marker must match; review r3 minors). A failure to stop it is reported,
+    never allowed to abort the restore of the file."""
+    pgid = m.get("pgid")
+    if not isinstance(pgid, int) and not m.get("cmd_head"):
+        return "no test group recorded"
+    if isinstance(pgid, int) and pgid <= 1:
+        return "no test group recorded"
+    groups = orphan_candidates(m, root)
+    if not groups:
+        if isinstance(pgid, int) and proc_stat(pgid) is None and not group_members(pgid):
+            return "test group already gone"
+        return f"process {pgid} is not this run's pytest (or cannot be verified): left alone"
+    notes = []
+    for g in groups:
+        try:
+            stop_group(g)
+        except OSError as e:
+            notes.append(f"could NOT stop test group {g} ({e.strerror or e}): file restored anyway")
+            continue
+        for _ in range(50):
+            if not group_members(g):
+                break
+            time.sleep(0.1)
+        notes.append(f"stopped orphaned test group {g}")
+    return "; ".join(notes)
 
 
 def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
@@ -475,10 +615,16 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
         raise Refused("the saved backup does not match the hash recorded in the marker: refused")
-    target = safe_rel(root, m["file"], "marker file")  # checked again right before the write
+    # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
+    target = safe_rel(root, m["file"], "marker file", must_exist=False)
     orphan = stop_orphan(m, root)
-    write_target(target, saved)
-    ok = sha256(target.read_bytes()) == m["orig_sha256"]
+    mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        write_target(target, saved, create=True, mode=mode)
+        ok = sha256(target.read_bytes()) == m["orig_sha256"]
+    except OSError as e:
+        raise Refused(f"cannot write {m['file']} back: {e.strerror or e}: refused") from e
     if ok:
         marker.unlink()
         bk.unlink(missing_ok=True)
@@ -497,10 +643,15 @@ def test_env(pythonpath: str | None) -> dict:
 
 
 def check_test_args(tests: list[str], root: pathlib.Path) -> None:
-    """ALLOWLIST of what may follow `--` (review r2 safety M1): -k EXPR, -m EXPR, -q, -x, -p no:NAME and paths
+    """ALLOWLIST of what may follow `--` (review r2 safety M1): -k EXPR, -m EXPR, -q, -x, -p no:NAME (NAME from
+    the fixed set PLUGINS_OFF_ALLOWED, review r3 Major A) and paths
     (with an optional ::node) that resolve inside root. Anything else is refused, in particular every argument
     starting with `@` (pytest reads options from that file), clustered short flags and every long option."""
-    allowed = "allowed: -k EXPR, -m EXPR, -q, -x, -p no:NAME, and paths inside --root"
+    allowed = f"allowed: -k EXPR, -m EXPR, -q, -x, -p no:NAME with NAME one of {sorted(PLUGINS_OFF_ALLOWED)}, and paths inside --root"
+    off_why = f"may only switch off one of the plugins {sorted(PLUGINS_OFF_ALLOWED)} (no:NAME)"
+
+    def plugin_off_ok(v: str) -> bool:
+        return v.startswith("no:") and v[3:] in PLUGINS_OFF_ALLOWED
 
     def no(t: str, why: str) -> Refused:
         return Refused(f"TESTS argument {t!r} {why}: refused ({allowed})")
@@ -524,12 +675,12 @@ def check_test_args(tests: list[str], root: pathlib.Path) -> None:
         elif t[:2] in ("-k", "-m") and not t.startswith("--"):  # attached form: -kEXPR
             expr(t[:2], t[2:])
         elif t == "-p":
-            if nxt is None or not PLUGIN_OFF_RE.fullmatch(nxt):
-                raise no(f"-p {nxt or ''}".strip(), "may only switch a plugin off (no:NAME)")
+            if nxt is None or not plugin_off_ok(nxt):
+                raise no(f"-p {nxt or ''}".strip(), off_why)
             i += 1
         elif t.startswith("-p") and not t.startswith("--"):
-            if not PLUGIN_OFF_RE.fullmatch(t[2:]):
-                raise no(t, "may only switch a plugin off (no:NAME)")
+            if not plugin_off_ok(t[2:]):
+                raise no(t, off_why)
         elif t.startswith("-"):
             raise no(t, "is not an allowed option")
         else:
@@ -537,6 +688,45 @@ def check_test_args(tests: list[str], root: pathlib.Path) -> None:
             if not path or not (real_root / path).resolve().is_relative_to(real_root):
                 raise no(t, "is not a path inside --root")
         i += 1
+
+
+def pytest_config_in(d: pathlib.Path) -> list[str]:
+    """Names of the files in folder `d` from which pytest would take settings."""
+    found = [n for n in PYTEST_INI_NAMES if (d / n).is_file()]
+    for name, marker in PYTEST_INI_SECTIONS:
+        f = d / name
+        if f.is_file():
+            try:
+                if marker in f.read_text(errors="replace"):
+                    found.append(name)
+            except OSError:
+                found.append(f"{name} (unreadable)")
+    return found
+
+
+def check_pytest_config(root: pathlib.Path, tests: list[str]) -> None:
+    """pytest looks for its ini file going UP from the common folder of the test paths. If the first one found
+    lies above --root (e.g. `addopts` in /tmp/pytest.ini) the settings would come from outside the scratch
+    tree and could change what runs: refused (review r3 minor). An ini inside --root is part of the archive."""
+    root = root.resolve()
+    dirs = []
+    for t in tests:
+        if not t.startswith("-"):
+            q = (root / t.split("::", 1)[0]).resolve()
+            dirs.append(q if q.is_dir() else q.parent)
+    start = pathlib.Path(os.path.commonpath([str(d) for d in dirs])) if dirs else root
+    if not start.is_relative_to(root):
+        start = root
+    for d in (start, *start.parents):
+        found = pytest_config_in(d)
+        if found:
+            if d == root or d.is_relative_to(root):
+                return
+            raise Refused(
+                f"pytest would take its settings from {d / found[0]}, outside --root {root}: "
+                f"the run could be changed from outside the scratch tree; put the ini file into the "
+                f"scratch tree (it must be part of the git archive) or remove it: refused"
+            )
 
 
 def module_of(rel: str) -> str | None:
@@ -622,19 +812,30 @@ def run_tests(
         raise Refused(f"{py} does not exist: the scratch root needs its own .venv")
     env = test_env(pythonpath)
     cmd = [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "-rf", *tests]
-    # one process group, so a timeout or a signal can stop all of it
-    proc = subprocess.Popen(
-        cmd,
-        cwd=root,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",  # bytes that are not UTF-8 must never turn a test run into an error
-        start_new_session=True,
-    )
+    # From the start of the child to the first statement of the `try` below a signal is only REMEMBERED (critical),
+    # never raised: a raise between the fork and `proc = ...` would leave the new group running with nobody to
+    # stop it (review r3 minor, control run). It is delivered inside the `try`, where the group is stopped.
+    was_critical = SIG.critical
+    SIG.critical = True
     try:
+        # one process group, so a timeout or a signal can stop all of it
+        proc = subprocess.Popen(
+            cmd,
+            cwd=root,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",  # bytes that are not UTF-8 must never turn a test run into an error
+            start_new_session=True,
+        )
+    except BaseException:
+        SIG.critical = was_critical
+        raise
+    try:
+        SIG.critical = was_critical
+        deliver_pending()  # a signal remembered during the start (control run: nothing is planted)
         if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
             on_start(proc.pid)
         SIG.allow = True  # only now may a signal unwind us while a mutant is planted
@@ -657,8 +858,11 @@ def run_tests(
         BaseException
     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
         SIG.allow = False  # first statement: nothing below can raise a second time
+        # Once the leader has been waited for (communicate returned just before the signal) its number may belong
+        # to a stranger: then nothing is signalled (review r3 minor, pid reuse after reap).
         try:
-            stop_group(proc.pid)  # a group that is already gone must not hide the signal
+            if proc.returncode is None and unreaped_child(proc.pid):
+                stop_group(proc.pid)  # a group that is already gone must not hide the signal
         except (
             OSError
         ):  # the group could not be stopped (e.g. no permission): at least stop the leader
@@ -669,7 +873,7 @@ def run_tests(
         finally:
             try:
                 reap(proc)
-            except OSError:
+            except (OSError, ValueError):
                 pass
         raise
 
@@ -685,7 +889,10 @@ def one(a, tests, m, results, ref):
     root = pathlib.Path(a.root)
     p = safe_rel(root, m["file"], f"mutant {m['id']} file")
     refp = safe_rel(ref, m["file"], f"mutant {m['id']} reference file")
-    if os.path.samefile(p, refp):
+    check_single_link(p, f"mutant {m['id']} target")
+    check_single_link(refp, f"mutant {m['id']} reference")
+    sp, sr = os.lstat(p), os.lstat(refp)
+    if (sp.st_dev, sp.st_ino) == (sr.st_dev, sr.st_ino):
         raise Refused(f"mutant {m['id']}: {m['file']} and its reference are the same file")
     orig = p.read_bytes()
     ref_bytes = refp.read_bytes()
@@ -708,25 +915,37 @@ def one(a, tests, m, results, ref):
             "backup": str(backup),
             "orig_sha256": sha256(orig),
             "mutant": f"{a.prefix}-{m['id']}",
+            "mode": stat.S_IMODE(sp.st_mode),
+            # first marker (before the tests start): what to look for if SIGKILL comes before the second one
+            "cmd_head": [str(root / ".venv/bin/python"), "-m", "pytest"],
+            "run_start_ticks": (proc_stat(os.getpid()) or {}).get("start"),
         }
 
         def note_group(pgid: int) -> None:
-            write_state(marker, json.dumps({**info, "pgid": pgid}).encode())
+            # second marker: the group and its identity (start time, full argument list), see stop_orphan
+            write_state(marker, json.dumps({**info, "pgid": pgid, **proc_identity(pgid)}).encode())
 
         # From here to the end of the restore a signal never unwinds the run except while the tests are
         # awaited (see SigState): a second signal cannot cut the restore short.
         SIG.critical = True
         try:
+            wrote = False
             try:
                 write_state(backup, orig)
                 write_state(marker, json.dumps(info).encode())
                 planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
-                write_target(p, planted)
+                wrote = True
+                try:
+                    write_target(p, planted)
+                except Refused:
+                    wrote = False  # refused on the open file before any byte was changed
+                    raise
                 cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
             finally:
                 try:
                     p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
-                    write_target(p2, orig)
+                    if wrote:
+                        write_target(p2, orig)
                     back = p2.read_bytes()
                     same_hash = back == orig and back == ref_bytes
                 except (Refused, OSError) as e:
@@ -904,6 +1123,7 @@ def main():
                 print(text)
                 sys.exit(0 if ok else EXIT_RESTORE_FAILED)
             check_test_args(tests, root)
+            check_pytest_config(root, tests)
             if not NAME_RE.fullmatch(a.prefix):
                 raise Refused(f"--prefix is not a plain name: {a.prefix!r}")
             for x in a.extra:
@@ -925,8 +1145,13 @@ def main():
                 )
             ms = load_mutants(a)
             for m in ms:  # every path is checked before anything is planted
-                safe_rel(root, m["file"], f"mutant {m['id']} file")
-                safe_rel(ref, m["file"], f"mutant {m['id']} reference file")
+                check_single_link(
+                    safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+                )
+                check_single_link(
+                    safe_rel(ref, m["file"], f"mutant {m['id']} reference file"),
+                    f"mutant {m['id']} reference",
+                )
             a.imports = (
                 {m["file"]: "SKIPPED by --skip-import-check" for m in ms}
                 if a.skip_import_check
