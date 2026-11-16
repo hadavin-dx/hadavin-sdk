@@ -134,3 +134,25 @@ Fixer run 2026-11-16. Backup of the file before the edit: the session scratchpad
 
 ## Changes
 REVIEW.md only (top restructured, rows C-3, C-6, C-7, A-2, A-3, A-4, G-1, G-2, D-1, X-2, X-4, X-5, X-6 edited, rows C-8 and the X-6 parts table and the DEAD-MAN-CHECK.md edit list added, Counts section and pasted output, Not checked, Open for the studio head, History and 'X-6 full working text' appended). Not committed.
+
+# Round 17 (review-reader-r17.md and review-design-r17.md; log appended here)
+Fixer run 2026-11-16. Backup before the edit: session scratchpad, file REVIEW.r17.bak. Edited only REVIEW.md and this log. The new REVIEW.md was produced by a script (cleaning plus hand-written sections); the removed process tags and old text are kept verbatim in its History section.
+Checkpoint: the 20-minute checkpoint line was NOT written at 20 minutes (the context was compacted and the script was still being finished); this line is written at the end, 14:09 UTC.
+
+## Unverified or not done (first)
+- No test, lint, bandit or Postgres statement was run on any patch. Every Postgres statement in the X-6 parts stays UNVERIFIED. Nothing was applied to any patch or to DEAD-MAN-CHECK.md; the file only lists edits.
+- The full-repository run is NOT green: 2 guard tests fail and block a pull request. They were not re-run after the files that quoted the forbidden string were replaced, so their current state is unknown.
+- The claim of 13 new tests (+37/+55 versus +53/+74) is marked UNVERIFIED. The counts 41 and 14 (total 70) are UNVERIFIED (the codebase reviewer counted 39 and 4).
+- No price-only patch exists for C-01, so "do not apply C-01 now" is stated and none was created.
+- I did not re-read every row of the new file against the two reviews one by one. I checked only by a residual search (no "round N", reviewer ids, "CORRECTION OF MY ROUND", "Decision 21" outside History). Remaining hits: "queue item F2" (a real queue item name) and "ROUND 14 point 3" inside the X-6 map to the old paragraph labels (deliberate).
+- The question for the lead about DECISIONS-2026-11-16.md line 5 is asked in the file, not answered.
+- `tools/check_secrets.py` still reports 2 hits on files I did not touch (flow-check/evidence-f8-r8.md:55 and flow-check/raw/test-take-check.txt:177); not fixed here (outside my two files).
+
+## Commands run from handover/flows-audit
+- `python3 -I reviews-of-core-patches/count_review.py reviews-of-core-patches/REVIEW.md`: rc 0; rows 28; severity Nit 11, Major 5, Minor 12; decision DECLINE 3, PROPOSE FIX 25 (same text is pasted in the file's Counts section).
+- `python3 tools/check_refs.py`: PASS 5167 references.
+- `ruff check .`: All checks passed. `ruff format --check .`: 592 files already formatted.
+- `python3 -I tools/check_secrets.py`: FAIL 2 hits (above, not mine).
+
+## Changes
+One severity scale and the hold sentence defined once at the top; rating rule applied evenly (3 live Major X-4, X-5, X-6; 2 conditional C-3, X-2); round numbers, reviewer ids and correction layers moved to History; X-5 split into X-5.1 to X-5.6 and X-6 parts mapped to the old paragraph labels; choices (4) and (5) split into 20 numbered decisions with cost of accepting and recommended default; DEAD-MAN-CHECK added to summary and index; edit-list pointers fixed; per-process secret scoping prerequisite and the purge_store precedent caveat added to X-6; project terms defined; one decider name (studio head).
