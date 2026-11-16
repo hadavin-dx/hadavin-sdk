@@ -225,3 +225,53 @@ Y13 CAUGHT by C221 | film page: how to show only the page area
 Y14 CAUGHT by C222 | sync path wording
 Y15 CAUGHT by C222 | definitions heading
 Y16 CAUGHT by C222 | owner-fill rows described as empty slots
+Y17 CAUGHT by C223 | open list: the minimum is said to be checked
+Y18 CAUGHT by C224 | a LEAD FILLS placeholder spelled differently (H09)
+Y19 CAUGHT by C225 | a fact no source uses (ls_t kind)
+Y20 CAUGHT by C226 | email-shaped text in the owner pages
+Y21 CAUGHT by C227 | hard-coded absolute path in a script
+Z01 CAUGHT by C235 | H33: 7-day time computed with 160 hours
+Z02 CAUGHT by C237 | H37: cancel-list label L5 renamed L4
+Z03 CAUGHT by C238 | H38: UNVERIFIED removed from the section 6 heading
+Z04 CAUGHT by C236 | H50: film pause 10 changed to 12 in one place
+Z05 CAUGHT by C236 | H51: call ceiling 3 changed to 4 in one place
+Z06 CAUGHT by C236 | H53: run length 15 changed to 12 in one place
+Z07 CAUGHT by C212 | H09: warning removed from one place of the lead note
+Z08 CAUGHT by C240 | H18: absolute path in the sheet
+Z09 CAUGHT by C240 | H20: internal code ORD: in the sheet
+Z10 CAUGHT by C240 | H21: internal code DEC: in the sheet
+Z11 CAUGHT by C241 | H25: one-letter rule shortened
+Z12 CAUGHT by C242 | H54: a lead message releases the older-key cancel
+Z13 CAUGHT by C228 | S M1: card L2 widened to any valid key
+Z14 CAUGHT by C229 | S M2: lead note says a failed key save cancels nothing
+Z15 CAUGHT by C230 | S M3: helper trigger (a) no longer the owner himself
+Z16 CAUGHT by C230 | S M3: helper may be released by the lead
+Z17 CAUGHT by C230 | S M3: helper role bar removed from the sheet
+Z18 CAUGHT by C233 | N M5: the typed yes loses the end of the last resort
+Z19 CAUGHT by C232 | S minor 5: the sixth alarm lost
+Z20 CAUGHT by C233 | N M7: yes binding removed
+Z21 CAUGHT by C234 | raw recording no longer secret
+Z22 CAUGHT by C244 | N B1: the unusable wording is back
+Z23 CAUGHT by C244 | N M1: "take B" is back (word with two meanings)
+Z24 CAUGHT by C245 | N minor 1: wrong pointer for the STOP RULE
+Z25 CAUGHT by C237 | label W9 defined as W8
+Z26 CAUGHT by C237 | label L1 defined as L2
+Z27 CAUGHT by C240 | absolute path in the helper page
+Z28 CAUGHT by C238 | UNVERIFIED removed from the section 7 heading
+Z29 CAUGHT by C230 | helper trigger (b) loses its two calls
+Z30 CAUGHT by C230 | helper trigger (d) widened
+AA01 CAUGHT by C255 | H04: last-resort end changed to an earlier consistent pair
+AA02 CAUGHT by C256 | H05: "after the deadline" changed to "before"
+AA03 CAUGHT by C257 | H07: helper told to cancel any other key
+AA04 CAUGHT by C258 | H14: R6 allows a tool or script
+AA05 CAUGHT by C259 | H17: the clear clipboard step removed
+AA06 CAUGHT by C259 | H18: paste once changed
+AA07 CAUGHT by C260 | H19: key file mode made world readable
+AA08 CAUGHT by C260 | H20 first copy: never tolerated changed
+AA09 CAUGHT by C260 | H20 second copy: never tolerated changed
+AA10 CAUGHT by C261 | H23: older-key cancel without the name and date condition (7.11)
+AA11 CAUGHT by C261 | H23 second place: card list L2 without the condition
+AA12 CAUGHT by C257 | H35: helper told to keep key text
+AA13 CAUGHT by C262 | H38: backstop with an exception for a run
+AA14 CAUGHT by C246 | M1: card waits the ordinary chain near the deadline
+AA15 CAUGHT by C247 | M2: cd line may hold more

@@ -267,3 +267,6 @@ NEG r15e52conf caught | FAIL r15 E-52 confirm lacks '`no more takes` is confirme
 NEG r15reply caught | FAIL r15 E-12 reply line missing: 4. money: up to 3 model calls and up to US$<X>
 NEG r15blocks caught | FAIL r15 E-12 reply still has 'Part 1'
 NEG r15ph caught | FAIL r13 placeholder in E-54 or rule R11
+NEG r15brand caught | FAIL r15 E-48 I still has 'Anthropic'
+NEG r15two caught | FAIL r15 E-09 e lacks 'with the two names `<password file name>` and `<folder>`'
+NEG r15nano caught | FAIL r15 E-09 extras lacks 'ls -a'

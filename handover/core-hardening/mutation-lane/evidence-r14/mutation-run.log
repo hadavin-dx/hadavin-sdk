@@ -42,3 +42,4 @@ heavy-slot: slot 3 taken at 2026-11-16T20:02:28Z
 ('child-identity-no-mtime', 'T102', 'ONLY=T102 RUN=<run.mut-child-identity-no-mtime.py> bash safety-tests.r14.sh', '(none)', '33', 'SURVIVED - as expected (SURVIVES: equivalent, st_mtime_ns is redundant next to st_ctime_ns (any write changes the change time))', 0)
 ('raw-dots', 'T103', 'ONLY=T103 RUN=<run.mut-raw-dots.py> bash safety-tests.r14.sh', 'T103a.raw-dots, T103a.outjson-dots', '26', 'KILLED - as expected', 22)
 ('raw-symlink', 'T103', 'ONLY=T103 RUN=<run.mut-raw-symlink.py> bash safety-tests.r14.sh', 'T103a.raw-symlink, T103a.outjson-symlink, T103b.4, T103b.5, T103b.8, T103b.9', '26', 'KILLED - as expected', 22)
+('raw-levels', 'T103', 'ONLY=T103 RUN=<run.mut-raw-levels.py> bash safety-tests.r14.sh', 'T103a.raw-levels, T103a.outjson-levels, T103b.1, T103b.2, T103b.6', '26', 'KILLED - as expected', 23)
