@@ -31,4 +31,4 @@ Backup of the folder before any edit: scratchpad `bak/` (not in the repo). No co
 - `bash run_all.sh`: exit 0; self-test `577 as expected, 0 not as expected, 58 skipped` (round 3: 538 / 0 / 52). Last line: `OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s)`. `bash run_all.sh --strict`: exit 1 (placeholder ids), as designed.
 - Real-v5: pristine 0 FAIL 18 WARN, 8 known; patched 0 FAIL 20 WARN, 10 known; strict runs exit 1, 4 FAIL each; no-baseline exit 1, 2 FAIL.
 - Round-3 checker against the round-4 self-test (shim ignoring `--fail-unverified`): `raw/selftest-oldchecker-r3.txt`: 546 as expected, 31 not (all new round-4 cases). Without the shim 427 fail only because the old checker rejects the new option, which says nothing.
-- ruff check: All checks passed. ruff format --check: 22 files already formatted. bandit -ll -r: no Medium or High issue, 0 skipped by nosec. No noqa/nosec/type-ignore/pragma (grep empty).
+- ruff check: All checks passed. ruff format --check: 23 files already formatted. bandit -ll -r: no Medium or High issue, 0 skipped by nosec. No noqa/nosec/type-ignore/pragma (grep empty).

@@ -1,16 +1,15 @@
-UPDATED_UTC: 2026-11-16T10:22:40Z
+UPDATED_UTC: 2026-11-16T10:23:12Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 47
-AGENTS_RUNNING: 6
-CAPACITY: 1.24 load of 4 cores, mem 0/15 GB, RAM 954/16087 MB, disk 27G free of 252G, top3 542M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 6 (light+heavy per list)
+PERCENT: 50
+AGENTS_RUNNING: 7
+CAPACITY: 2.72 load of 4 cores, mem 0/15 GB, RAM 962/16087 MB, disk 27G free of 252G, top3 542M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 7 (light+heavy per list)
 INTERRUPTED: none
-FAILED: F8: independent rerun r3: run_all rc 0, self-test 538/0/52, ruff, format, bandit rc 0, no noqa; BUT 3 of 16 runnable new mutants survive (lines 608, 964, 1149; 4 of 20 were syntax errors); raw/pristine-no-baseline.txt still old (09:32); n8n auth values, credential kinds, $env block UNVERIFIED; design review running
-F3: r6 fixer reports 128 tests, gates rc 0, 19 of 20 old mutants killed, 11 of 128 new tests fail on old code (its own numbers, independent rerun running); NOT proven: macOS F_GETPATH real call, n8n reading of escaped $env, mutation coverage of new code, py3.9/3.10/3.12, one unexplained suite failure that did not repeat; real n8n import not run
+FAILED: F3: r6 fixer reports 128 tests, gates rc 0, 19 of 20 old mutants killed, 11 of 128 new tests fail on old code (its own numbers, independent rerun running); NOT proven: macOS F_GETPATH real call, n8n reading of escaped $env, mutation coverage of new code, py3.9/3.10/3.12, one unexplained suite failure that did not repeat; real n8n import not run
 ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
 F5: r6 done by the fixer (checker passes vs CLAIMS-TABLE as of 10:11 mtime; must be rerun after the claims r6 fixer); no independent rerun yet; row text on archiving, example.test, pruning, lead count rests on UNCHECKED sources; nits of review r5b not fixed (cap)
@@ -27,8 +26,9 @@ desk repo trace: 18 UNTRACED rows traced (13 SUPPORTED text-only, 4 OVERSTATED, 
 claims r6 fixer done (own numbers: 126/69/52/29/51=327, 84 to-do rows all tagged; M8 words and M16 partly open; Q13: desk script archives contacts only with --cleanup, take script not in desk repo, decision 2 unconfirmed; closing card rows 16/17 vs scenes 1-4 open); independent rerun + reader running; F5 checker must be rerun after it
 decisions applied by agent to 12 files (56 edits, own count); NOT done: F-003/F-004 patches still insert scene 5 text and 60.1 to 61.9 s (must be regenerated), ratings of rows for out-of-video scenes not re-rated (lead call), OWNER-STEPS v4 and VIDEO-RUNSHEET are LEAD-TO-APPLY; reviewer running
 claims r6 independent rerun: counts match (126/69/52/29/51=327, 84 rows, tags 10+7+67); BUT F5 checker exits 1 (5 ids missing from RUNSHEET-WORDING: B-016,019,038,088,092); 2 cites (mf.py:158, stage_server.py:48) do not show the claimed text; F5 r7 fixer running
-NEXT: collect F3 evidence+security, F8 r4, reader, decisions review, F5 r7
-PUSHED_UTC: 2026-11-16T10:22:40Z
+F8 r4 fixer done (own numbers: run_all rc 0, self-test 577/0/58 skips, gates rc 0, 3 survivors killed); NOT done: every n8n rule from memory UNVERIFIED, env-access setting invisible to a file check, run_all.sh/take_check.sh have no self-test, 58 skips never fail the run, 2 nits open; independent rerun + reviewer running
+NEXT: collect F3 ev+sec, F8 ev+review, claims r7, F5 r7, decisions review
+PUSHED_UTC: 2026-11-16T10:23:12Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -47,12 +47,13 @@ PUSHED_UTC: 2026-11-16T10:22:40Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| f8fix4 | F8 r4 fixer | sonnet | 5 Majors + 3 survivors | 10:33 | 11:08 | 5 | running | flow-check/fix-f8-r4.md |
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3sec4 | F3 security review 4 (fresh, owner-under-pressure angle) | sonnet | what r3 missed | 10:21 | 10:41 | 5 | running | (inline) |
-| clrd6 | claims r6 stranger reader (egm-comprehension) | sonnet | fresh read of scope box and Table 2 | 10:26 | 10:41 | 5 | running | - |
 | decrv | decisions-apply result review (egm-codebase-details) | sonnet | 56 edits vs 12 decisions, missed spots, counts | 10:26 | 10:41 | 5 | running | - |
 | f5fix7 | F5 r7 fixer | sonnet | add 5 missing rows (B-016,019,038,088,092), rerun checker | 10:30 | 10:45 | 5 | running | reviews-f1/fix-f5-r7.md |
+| clfix7 | claims r7 fixer | sonnet | 6 Majors of stranger read + 2 wrong cites | 10:31 | 10:55 | 5 | running | reviews-f1/fix-f1-r7.md |
+| f8ev4 | F8 r4 evidence runner | sonnet | independent rerun, 25 mutants, hostile inputs | 10:33 | 10:55 | 5 | running | flow-check/evidence-r4.md |
+| f8rv4 | F8 r4 second reviewer (owner-morning angle) | sonnet | what r3 missed | 10:33 | 10:48 | 5 | running | - |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
