@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:12:03Z
+UPDATED_UTC: 2026-11-16T14:18:47Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,13 +7,13 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 0.66 load of 4 cores, mem 0/15 GB, RAM 1017/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.13 load of 4 cores, mem 1/15 GB, RAM 1042/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check (checker run or fresh reviewer): see items.txt; no item closed since 13:59Z, so percent unchanged; agents finishing do not count.
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
-NEXT: 1. REVIEW.md round 18 fixer for Blockers/Majors (waits on the three r18 reviewers) 2. Evidence runner for F8 round 9 final head, then fresh uncapped review (waits on abfcd0a) 3. Fresh stranger read of RUNSHEET-WORDING after round 2 (waits on a1660d9) 4. Fresh r15 review of FP/TC/RUNBOOK (waits on aad5a30) 5. Post-twice script review (waits on lead, Q29-4) 
-PUSHED_UTC: 2026-11-16T14:12:03Z
+NEXT: REVIEW.md r19 reviews; F8 r9 evidence; r15 reads; claims r10; post-twice script (lead)
+PUSHED_UTC: 2026-11-16T14:18:47Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,21 +32,21 @@ PUSHED_UTC: 2026-11-16T14:12:03Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| abfcd0a | fixer | sonnet | F8 round 9 (uncapped) + raw-file secret fix | 13:58Z | 14:48Z | running | log flow-check/fix-f8-r9.md |
-| a1660d9 | fixer | sonnet | RUNSHEET-WORDING round 2 + count line 19 | 14:07Z | 14:40Z | running | log fix-rswording8.md |
-| aad5a30 | fixer | sonnet | FP/TC/RUNBOOK round 14 (part 1, part 2, consistency) | 14:08Z | 14:55Z | running | log fix-tcfp10.md |
-| aad511e | citation | sonnet | citation checker r10 on rewritten cites | 14:09Z | 14:30Z | running | reviews/citation-r10.md |
-| a71df70 | fixer | sonnet | CLAIMS-TABLE round 8 (reader + facts) | 14:10Z | 14:45Z | running | log fix-claims8.md |
-| a178eab | reviewer | sonnet | REVIEW.md r18 stranger read (uncapped) | 14:11Z | 14:30Z | running | findings inline |
-| afb3350 | reviewer | sonnet | REVIEW.md r18 design review (uncapped) | 14:11Z | 14:30Z | running | findings inline |
-| a7bdfc7 | reviewer | sonnet | REVIEW.md r18 facts review (uncapped) | 14:11Z | 14:30Z | running | findings inline |
+| abfcd0a | F8 r9 fixer (uncapped) | sonnet | fix check_secrets hits, test_take_check, --strict docs | 13:55Z | 14:45Z | running | log fix-f8-r9.md |
+| aad5a30 | FP/TC/RUNBOOK r14 fixer | sonnet | apply r14 findings, make Clock blocks identical | 14:00Z | 14:40Z | running | log fix-tcfp10.md |
+| a741c91 | REVIEW.md r18 fixer (uncapped) | sonnet | apply reader/design/facts findings | 14:05Z | 14:50Z | running | log fix-review12.md |
+| a786e82 | citation r11 on FINDINGS, LEDGER-ROWS | sonnet | recheck cites | 14:08Z | 14:35Z | running | reviews/citation-r11.md pending |
+| ac1d614 | RUNSHEET-WORDING r3 fixer | sonnet | apply r3 reader M1-M11 | 14:14Z | 14:40Z | running | log fix-rswording9.md |
+| a488ff4 | CLAIMS-TABLE r9 fixer | sonnet | apply facts blockers/majors + r5 part 2 + nits | 14:19Z | 14:50Z | running | log fix-claims9.md |
+| a01ed9d | QUESTIONS Q31 fixer r1 | sonnet | counts, labels, answer-first index, key | 14:19Z | 14:45Z | running | log fix-q31-1.md |
+| a4ba4bf | EVIDENCE RUNNER run_all.sh rerun | sonnet | run_all.sh plain and --strict, check_secrets | 14:19Z | 14:35Z | running | reviews/evidence-run-all-2.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. REVIEW.md round 18 fixer for Blockers/Majors (waits on the three r18 reviewers)
-2. Evidence runner for F8 round 9 final head, then fresh uncapped review (waits on abfcd0a)
-3. Fresh stranger read of RUNSHEET-WORDING after round 2 (waits on a1660d9)
-4. Fresh r15 review of FP/TC/RUNBOOK (waits on aad5a30)
-5. Post-twice script review (waits on lead, Q29-4)
+1. REVIEW.md round 19 fresh reviews after a741c91 (uncapped)
+2. F8 r9 evidence runner + fresh uncapped review after abfcd0a
+3. Fresh r15 reads of FIX-PLAN/TAKE-CHECKLIST/RUNBOOK after aad5a30
+4. Claims r10 fresh read after a488ff4, and RUNSHEET-WORDING re-read after ac1d614
+5. Post-twice script review (waits on lead: Q29-4)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
