@@ -226,6 +226,14 @@ def build(words):
     t = sub(t, "(the stand-in tests showed one; the take's flows are not run)", "(the stand-in tests showed one; the take's flows were not run)", 1)
     t = sub(t, " Names after 'builder' and 'reviewers' are labels no program reads;", " The names are labels no program reads;", 1)
     t = sub(t, " (my reading: for look-up tests only)", "", 1)
+    # row 96 edits the rightmost cell of run sheet line 41; rows 12 to 15 consume the text around it, so it must apply first
+    _L = t.split("\n")
+    _i96 = [k for k, l in enumerate(_L) if l.startswith("| 96 | NOT APPLIED")]
+    _i12 = [k for k, l in enumerate(_L) if l.startswith("| 12 | NOT APPLIED")]
+    assert len(_i96) == 1 and len(_i12) == 1, "row 96 or row 12 not found"
+    _r = _L.pop(_i96[0])
+    _L.insert(_L.index([l for l in _L if l.startswith("| 12 | NOT APPLIED")][0]), _r)
+    t = "\n".join(_L)
     return t, NEWV
 
 

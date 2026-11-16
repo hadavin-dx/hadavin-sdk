@@ -1003,3 +1003,45 @@ WARNING: the state folder could not be synced after removing d7f216e169748170.pl
 WARNING: the state folder could not be synced after removing d7f216e169748170.backup (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
 test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/scratch/tmpstate/hadavin-mutation-lane-0/d7f216e169748170.backup; hash matches saved original: True
   PASS: T97j m11 --restore with a failing state-folder sync: exit 0 (got 0; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/safety-tests.r12.sh: line 70: 10200 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("evil\nPASSED: faked line\u001b[31m") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/run.r12.py --root /
+  PASS: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+REFUSED: this tool cannot start here: no usable temporary folder (FileNotFoundError: No usable temporary directory found)
+exit 2
+  PASS: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  PASS: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 0; r9: fails)
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+usage: run.r12.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r12.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r12.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r12.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r12.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+  PASS: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 0 of 5 wrong (r9: exit 1 or a traceback)
+  PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 0
+  PASS: T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/safety-tests.r12.sh: line 70: 18556 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/safety-tests.r12.sh: line 70: 24342 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/scratch/tmpstate/hadavin-mutation-lane-0/d7f216e169748170.backup; 
+  PASS: T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/safety-tests.r12.sh: line 70: 30653 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o664): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/root/scratch/tmpstate/hadavin-mutation-lane-0/d7f216e169748170.backup; 
+  PASS: T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0775: a write bit for others is taken away (r12 m5; r11 wrote 0777) (got exit 0, mode 775; the special-bit case is T99b)
+missing [] no (d): False
+  PASS: T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 0; r9: fails)
+== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)
+wrong: []
+  PASS: T99a S603 (r12: now with a real allowed program as the base, git): Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit 0; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)

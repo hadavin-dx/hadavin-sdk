@@ -179,3 +179,7 @@ NEG r12cut caught | FAIL r12 E-57 lacks Reply `cut accepted`
 NEG r12conf caught | FAIL confirmation letters
 NEG rowcount caught | FAIL ids differ {'E-58'}
 NEG conf caught | FAIL confirmation letters
+NEG r13bare caught | FAIL r13 bare label "latest start": he owner texts; the older single label "latest start" 
+NEG r13swap caught | FAIL r13 "latest start we plan" followed by time 18:14
+NEG r13swap2 caught | FAIL r13 "program refusal limit" followed by time 18:04
+NEG r13arith caught | FAIL r13 time arithmetic: 17:49 UTC = 23:49 IST
