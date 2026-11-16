@@ -15,3 +15,10 @@ Checked against the JSON in n8n-flows-real-v5 and n8n-flows-film-v5 by script th
 - F13 fixed: scene 9 title "Alert, no second mail".
 - F14 fixed: note that no scene uses mf-hook.json (grep: no scene names it).
 Not checked: no run of anything; banned-word grep (one database, approval, audit trail) returned no hits.
+
+## Round 2
+- R2-1 fixed: Kind C paste now says the stage service is not checked and takes it out of the test-copies list; the drop-the-connection sentence limited to scenes 6 to 9, scene 11 (451 on the alert mail only) and scene 10 (table row only) added.
+- R2-2 fixed: scene 4 cell now cites "Claim" (mf-form) and "ClaimStuck" (mf-recovery) for the 45 s lease and "Every30s" for the 30 s check (verified in JSON, both sets).
+- R2-3 fixed: scene 1 "What is real" softened to planned; mailbox for owner to confirm, CRM account not checked.
+- R2-4 fixed: C1 stuck-row check also covers unknown or failed rows with alert_sent false (AlertClaim query verified in film-v5).
+- R2-5 fixed: mf-hook phrase reworded; grep shows both sets hold an mf-hook.json with its own path; no scene names it.
