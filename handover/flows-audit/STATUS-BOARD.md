@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:20:36Z
+UPDATED_UTC: 2026-11-16T11:23:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
-STATE: WORKING
+STATE: WAITING-LEAD
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 6
-PERCENT: 94
-AGENTS_RUNNING: 4
-CAPACITY: 0.44 load of 4 cores, mem 0/15 GB, RAM 873/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.4G /tmp/claude-0 , agents 4 (light+heavy per list)
+ITEMS_OPEN: 5
+PERCENT: 95
+AGENTS_RUNNING: 3
+CAPACITY: 0.50 load of 4 cores, mem 0/15 GB, RAM 858/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.4G /tmp/claude-0 , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -61,8 +61,10 @@ F8 design review r3: 0 Blocker, 4 Majors (no WARN baseline so exit 0 hides a new
 sweep2 citation check: 7 wrong (QUESTIONS.md:5 still says deleted at clean-up; EXCEPTIONS.md:8 row numbers; role-count sources disagree; stale FINDINGS line cites; two Q22 headings); pointer fixer launching
 drift lane 008: 8 contradictions between audit files (DESK_ALERT_TO still open in FINDINGS/LEDGER, F-013 OPEN in LEDGER, 'deleted at clean-up' in QUESTIONS:5 and REPORT:51, RW Q-A/D1/port lines, CT:447 Q7 NOT DONE); fixers running (cite5, drift8fix); sweep3 found 13 one-place conflicts, 9 questions for the lead (reviews/sweep3-one-place.md) to go into QUESTIONS Q25 after cite5
 owner sheet stranger r8: 3 Blockers 10 Majors (Step D cannot be done as written, Step A scope unclear, re-pin not in lead order); fixer aca4e60 running (reviews/stranger-ownersteps-r8.md)
-NEXT: running: owner sheet fixer r8, F8 design Majors fixer, RW adversarial, FIX-PLAN readiness; next: Q25, claims-table sweep, refill
-PUSHED_UTC: 2026-11-16T11:20:36Z
+RW adversarial r1: 2 Blockers (A-016f general promise vs own A-016c; proof gate can pass while claim false), 7 Majors; lead rulings needed (reviews/adversarial-rw-r1.md)
+FIX-PLAN item 3 readiness r1: 5 Blockers 8 Majors (order item 3 needs item 4; no apply command; 12:11 vs 15:14; b6 cannot fail by exit code; export-back method missing); reviews/readiness-fixplan3-r1.md
+NEXT: running: F8 design Majors, RW adversarial fixer, FIX-PLAN item 3 fixer; next: Q25 told to lead, drift report, refill
+PUSHED_UTC: 2026-11-16T11:23:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -82,10 +84,8 @@ PUSHED_UTC: 2026-11-16T11:20:36Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f8fix8 | F8 fixer r8 (N04 N11) | sonnet | surviving mutants | 11:58 | 12:10 | 5 | running | flow-check/fix-f8-r8.md
-| a13ae04 | adversarial reader RW | sonnet | break the run-sheet words | 11:20 | 11:35 | 5 | running | (inline)
-| a1b2dcd | readiness read FIX-PLAN 3 | sonnet | can lead execute item 3 | 11:20 | 11:35 | 5 | running | (inline)
-| aca4e60 | owner sheet r8 fixer | sonnet | fix stranger r8 Blockers/Majors | 11:30 | 11:45 | 5 | running | fix-ownersteps-r8.md
 | a1da05e | F8 design Majors fixer | sonnet | 4 design Majors | 11:30 | 11:50 | 5 | running | flow-check/fix-f8-r9.md
+| a414a44 | RW adversarial fixer | sonnet | fix RW/CT per adversarial r1 | 11:35 | 11:50 | 5 | running | fix-rw-r1.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
