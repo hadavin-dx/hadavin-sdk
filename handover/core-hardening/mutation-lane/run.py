@@ -138,11 +138,9 @@ HANDLED_SIGNALS = tuple(sorted(int(x) for x in signal.valid_signals() if x not i
 PLUGINS_OFF_ALLOWED = frozenset({"randomly", "xdist", "cov", "cacheprovider"})
 # files from which pytest takes its settings (looked up going up from the test paths)
 PYTEST_INI_NAMES = ("pytest.ini", ".pytest.ini", "pytest.toml", ".pytest.toml")
-PYTEST_INI_SECTIONS = (
-    ("pyproject.toml", "[tool.pytest"),
-    ("tox.ini", "[pytest]"),
-    ("setup.cfg", "[tool:pytest]"),
-)
+PYTEST_INI_SECTIONS = (("tox.ini", "pytest"), ("setup.cfg", "tool:pytest"))  # (file, section name)
+# files that must not exist in any folder ABOVE --root (review r4 M2)
+ABOVE_ROOT_FILES = ("setup.py", "conftest.py", "pyproject.toml")
 # other places a run with another TMPDIR may have left a marker (built from parts, not typed as literals)
 STATE_PARENTS = tuple(
     pathlib.Path(os.sep, *parts) for parts in (("tmp",), ("var", "tmp"), ("dev", "shm"))
@@ -831,24 +829,48 @@ def check_test_args(tests: list[str], root: pathlib.Path) -> None:
 
 
 def pytest_config_in(d: pathlib.Path) -> list[str]:
-    """Names of the files in folder `d` from which pytest would take settings."""
+    """Names of the files in folder `d` from which pytest would take settings. Files are parsed, not searched for
+    a text, so dotted keys (`tool.pytest.ini_options.x = ...`) and inline tables count too; a file that cannot be
+    read or parsed counts as holding settings (fail closed)."""
     found = [n for n in PYTEST_INI_NAMES if (d / n).is_file()]
-    for name, marker in PYTEST_INI_SECTIONS:
+    f = d / "pyproject.toml"
+    if f.is_file():
+        try:
+            tool = tomllib.loads(f.read_text(encoding="utf-8")).get("tool")
+            if isinstance(tool, dict) and "pytest" in tool:
+                found.append("pyproject.toml")
+        except (OSError, ValueError):  # unreadable, not UTF-8, not valid TOML
+            found.append("pyproject.toml (unreadable)")
+    for name, section in PYTEST_INI_SECTIONS:
         f = d / name
         if f.is_file():
             try:
-                if marker in f.read_text(errors="replace"):
+                cp = configparser.ConfigParser(interpolation=None, strict=False)
+                cp.read_string(f.read_text(encoding="utf-8"))
+                if cp.has_section(section):
                     found.append(name)
-            except OSError:
+            except (OSError, ValueError, configparser.Error):
                 found.append(f"{name} (unreadable)")
     return found
 
 
 def check_pytest_config(root: pathlib.Path, tests: list[str]) -> None:
-    """pytest looks for its ini file going UP from the common folder of the test paths. If the first one found
+    """Two checks. (1) Above --root there must be no `setup.py`, `conftest.py` or `pyproject.toml` at all: pytest
+    takes its root folder from a setup.py or a pyproject.toml without a pytest section, and loads a conftest.py
+    from every folder up to its root (review r4 M2). The pytest command also carries --rootdir and --confcutdir
+    set to --root, so those files could not act even if present; they are refused as well (second lock).
+    (2) pytest looks for its ini file going UP from the common folder of the test paths. If the first one found
     lies above --root (e.g. `addopts` in /tmp/pytest.ini) the settings would come from outside the scratch
     tree and could change what runs: refused (review r3 minor). An ini inside --root is part of the archive."""
     root = root.resolve()
+    for d in root.parents:
+        for name in ABOVE_ROOT_FILES:
+            if (d / name).exists() or (d / name).is_symlink():
+                raise Refused(
+                    f"{d / name} lies outside --root {root} and above it: pytest could take its root folder, "
+                    f"settings or a conftest from it and change what runs; move the scratch tree "
+                    f"or remove the file: refused"
+                )
     dirs = []
     for t in tests:
         if not t.startswith("-"):
@@ -928,12 +950,61 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
     return out
 
 
-def reap(proc: subprocess.Popen) -> str:
+def reap(proc: subprocess.Popen, wait: int = 30) -> str:
+    """Collect what the test run printed. If it does not end in `wait` seconds the leader is killed AND waited
+    for (no zombie, and its number is not left to be reused while we still hold the handle)."""
     try:
-        return proc.communicate(timeout=30)[0] or ""
+        return proc.communicate(timeout=wait)[0] or ""
     except subprocess.TimeoutExpired:
         proc.kill()
-        return ""
+        try:
+            return proc.communicate(timeout=10)[0] or ""
+        except subprocess.TimeoutExpired:
+            return ""
+
+
+def stop_or_kill(proc: subprocess.Popen) -> None:
+    """Stop the whole test group; if that is not allowed, at least the leader. Never raises OSError."""
+    try:
+        stop_group(proc.pid)
+    except OSError:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+def sweep_group(pgid: int) -> str:
+    """After the leader has ended: stop what is still alive in its process group (a test may have started a
+    background process). While any member lives the number cannot be given to another group, so the members are
+    this run's own (review r4 nit 5). Returns a line for the raw file."""
+    left = group_members(pgid)
+    if not left:
+        return "no process of the test group left after the leader ended"
+    stop_group(pgid)
+    for _ in range(50):
+        if not group_members(pgid):
+            break
+        time.sleep(0.1)
+    return f"STOPPED {len(left)} process(es) of the test group that outlived the leader: {left}"
+
+
+def pytest_cmd(root: pathlib.Path, tests: list[str]) -> list[str]:
+    """The one pytest command line. --rootdir and --confcutdir pin pytest's root folder and the highest folder
+    from which a conftest.py is loaded to --root, so nothing above the scratch tree can change what runs."""
+    return [
+        str(root / ".venv/bin/python"),
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        f"--rootdir={root}",
+        f"--confcutdir={root}",
+        "--tb=line",
+        "-rf",
+        *tests,
+    ]
 
 
 def run_tests(
@@ -943,6 +1014,7 @@ def run_tests(
     timeout: int = 600,
     on_start=None,
 ):
+    """Returns (command, exit code or None on timeout, output, sweep note)."""
     # stale .pyc files could hide a planted change (same size, same second): never write or reuse them
     for d in root.rglob("__pycache__"):
         if d.relative_to(root).parts[0] != ".venv":
@@ -951,7 +1023,7 @@ def run_tests(
     if not py.exists():
         raise Refused(f"{py} does not exist: the scratch root needs its own .venv")
     env = test_env(pythonpath)
-    cmd = [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "-rf", *tests]
+    cmd = pytest_cmd(root, tests)
     # From the start of the child to the first statement of the `try` below a signal is only REMEMBERED (critical),
     # never raised: a raise between the fork and `proc = ...` would leave the new group running with nobody to
     # stop it (review r3 minor, control run). It is delivered inside the `try`, where the group is stopped.
@@ -982,18 +1054,19 @@ def run_tests(
         deliver_pending()  # a signal that came earlier (during the planting) is delivered here
         try:
             out, _ = proc.communicate(timeout=timeout)
-            result = (cmd, proc.returncode, out)
+            rc = proc.returncode
         except subprocess.TimeoutExpired:
             SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
-            stop_group(proc.pid)
+            stop_or_kill(proc)  # a failure to stop the group is no reason to lose the result (review r4 T46)
             rest = reap(proc)  # a second communicate() returns everything printed so far
-            result = (
-                cmd,
-                None,
-                f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}",
-            )
+            out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+            rc = None
         SIG.allow = False
-        return result
+        try:
+            note = sweep_group(proc.pid)
+        except OSError as e:
+            note = f"could NOT sweep the test group ({e.strerror or e})"
+        return (cmd, rc, out, note)
     except (
         BaseException
     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
@@ -1003,6 +1076,8 @@ def run_tests(
         try:
             if proc.returncode is None and unreaped_child(proc.pid):
                 stop_group(proc.pid)  # a group that is already gone must not hide the signal
+            elif proc.returncode is not None:
+                sweep_group(proc.pid)  # leader ended already: stop members that outlived it
         except (
             OSError
         ):  # the group could not be stopped (e.g. no permission): at least stop the leader
