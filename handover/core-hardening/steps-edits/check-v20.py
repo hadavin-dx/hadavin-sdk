@@ -238,13 +238,13 @@ need = ['run-<run name>', 'two phone alarms', 'prepaid', 'auto-reload', '18:29 U
         'record/0-1/', 'recognise', 'If you do nothing', 'Minimal', 'Order of the day', 'One run per key', '"go"', 'I decline',
         'exact addresses ending `@example.com`', 'letters, digits and `. _ / -`', 'Second way', 'Reading the counts', 'bash', 'grep "^<setting name>="',
         'NOT safe', 'the whole balance', '(a) an address other than', '(f) a browser tab title', 'Recall & snapshots', 'Key checks', 'cancel-by alarm',
-        'Report in words', 'prep-<run name>@example.com', 'Demo mail', 'minimum think time', 'Go marker', 'End-date refusal', 'continue', 'Funding', 'comm=']
+        'Report in words', 'prep-<run name>@example.com', 'Demo mail', 'minimum think time', 'Go marker', 'End-date refusal', 'continue', 'comm=']
 for p in need:
     if p.lower() not in S.lower(): bad('sheet lacks %r' % p)
 for p in ['Expected after the run', 'minutes at "Type y to start"', 'Second take', 'second take', 'need_seconds', 'take broker port', 'per-run path',
           'independent reader', 'F-01', 'ss -tlnH', 'balance on the prepaid page', 'G30', 'G31', 'G32', 'G33', 'G34', 'G35', 'G36', 'G37', 'G38',
           'ORDERS.md line 150', 'ORDERS.md line 152', 'a lead sent twice with the same id is processed once', 'FACTS line 3', 'AGENT-SCOPE line 15', 'CORRECTIONS (a)',
-          'cancel buffer', 'Subject start', 'subject start', 'Funding', 'funding', 'prep-<run name>@example.com', 'NOT SHOWN']:
+          'cancel buffer', 'Subject start', 'subject start', 'prep-<run name>@example.com', 'NOT SHOWN']:
     if p.lower() not in Nn.lower(): bad('note lacks %r' % p)
 for p in ['5678', '5679', '5690', '5691', '5692', '5693']:
     if p not in Nn: bad('note port list lacks %s' % p)

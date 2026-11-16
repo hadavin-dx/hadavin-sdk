@@ -10,9 +10,9 @@ Written Mon 16 Nov 2026. **Sheet** = OWNER-SHEET-v20.md (section number such as 
 | CM4 and the 7.7 error sentence (take program never calls the model after `end`) | LEAD | needs a code reading | Open 34; Note G34; the sheet 7.7 error sentence stays and the message states the accepted exit code |
 | XM-B end-date refusal shown at the final head | LEAD | needs a test run at the final head | Open 15; Note G16; sheet check 2 forbids a run on Mon 23 Nov unless the message says shown |
 | XM-F typed worst-case figure prompt | LEAD | needs a code reading; a decision cannot change code | Open 35; Note G35; sheet R5, R10 and 7.3 make any request to type a figure a FREEZE |
-| RG21 lead-side stop mechanism, CB (stop at alarm) | LEAD | the timer is the lead's | Open 27; Note G30 (now three times); no mechanism, no "go" |
+| RG21 lead-side stop mechanism, CB (stop at alarm) | DECIDED (Q26) | no lead timer exists and none is invented; the sheet tells the owner to cancel the key himself | Open 27; Note G30; no "go" on Mon 23 Nov |
 | RG1 film cue and the lead's n8n timing | LEAD | the printed line and the offsets come from the rehearsal | Open 36; Note G36; no cue, no run |
-| CC dedicated funding | NOT FORCED | adopted as the recommended option, not as a rule: it needs new money and a new owner yes with numbers, a new account or workspace (UNVERIFIED), and the owner decided on 2026-11-15 to use the existing credits (FACTS line 3) | Open 32; sheet R4 and the "Funding" slot |
+| CC dedicated funding | DECIDED (Q24) | dropped: no second account or workspace; the whole balance stays the exposure and the yes names the shared Linux user, clipboard and screen | Open 32; sheet R4 and 5.8 |
 | Sheet length (brief: aim shorter than v19 if quality allows) | NOT SHORTER | quality did not allow: about 6,500 words and 109 lines against v19 5,246 words and 102 lines; about 100 findings added definitions, rules and sample slots; no safety rule dropped | Open 30 |
 | Second way (the v18 stranger blocker SB2, still open) and XM-E lead reach beyond the key file | PARTLY | the second way is the lead's to name (Open 26, G31); the yes sentence now names the clipboard and the screen, but nothing technical stops the lead | Open 22, 26 |
 | Everything marked UNVERIFIED | UNCHANGED | take scripts, flows, model program, page words are not in this checkout | Note section 0 item 2 |
@@ -22,7 +22,7 @@ Written Mon 16 Nov 2026. **Sheet** = OWNER-SHEET-v20.md (section number such as 
 |---|---|---|
 | XB1 | LEAD | see section 0; Note G1, G27 (the clean-up message carries "the take program made no delete call"); sheet R7 no longer cites a note |
 | XM-A 6.2 against R4 | FIXED | Sheet R4 key checks (5.6 only the older key; 6.2 no valid key at all; 6.6 and 7.1 exactly one) and 6.2, 6.6; a second old key: no run, fresh account offered |
-| XM-B zero slack, no mechanism | FIXED (text) and LEAD | Sheet 1 (cancel-by never later than 10 minutes before the window end), check 2 to 4, R3 (second phone alarm, cancel-by alarm rule); Note 2 (cancel buffer Z, new worked examples), G10, G16, G30; the end-date refusal and the timer stay LEAD |
+| XM-B zero slack, no mechanism | FIXED (text) and LEAD | Sheet 1 (cancel-by never later than 10 minutes before the window end), check 2 to 4, R3 (second phone alarm, cancel-by alarm rule); Note 2 (cancel buffer Z, new worked examples), G10, G16, G30; the end-date refusal stays LEAD (Q27: lead verifies at re-pin) and no timer exists (Q26) |
 | XM-C absence counted as cancelled | FIXED | Sheet 1 (cancelled word = what the owner saw beside the older key), R3 step 2 (state word, reload, count with all filters off); the lead no longer supplies the word |
 | XM-D word that ends a FREEZE | FIXED | Sheet R8 (the fourth word is "continue"; a FREEZE with a key alive ends in R3 and a finished run) |
 | XM-E lead reach | FIXED (honest wording) | Sheet 1 (lead), R1, 5.8 yes sentence (key file, clipboard, screen); Open 22 |
@@ -79,7 +79,7 @@ Written Mon 16 Nov 2026. **Sheet** = OWNER-SHEET-v20.md (section number such as 
 | RG18 cancel-by time used by no step | FIXED | Sheet R3 (second alarm), 3 check 2 to 4 |
 | RG19 version id cannot be compared | FIXED | Sheet 7.2 (compare only if the message says it prints), 3 sample; Open 40 |
 | RG20 marker files end in `.used` | FIXED | Sheet 5.1 |
-| RG21 lead timer before "go" | LEAD | Note G30 (the mechanism and its three UTC times before "go"); Open 27 |
+| RG21 lead timer before "go" | DECIDED (Q26) | Note G30 (no timer; no "go" on Mon 23 Nov); Open 27 |
 | RG22 unresolved lead items block template slots | FIXED | Note 3 (a slot may hold "NOT SHOWN", "none" or "no" in the stated form; a missing line is no run) |
 | RG23 template lacks slots | FIXED | Note 3 (subject start, prep address, setting map with units, recording tool and box, expected demo mail count, film cue, think time, funding, go marker, typed figure, end-date refusal, how the film reaches people) |
 | RG24 older key and button words requested but the owner has no step | FIXED | Sheet 5.1 |

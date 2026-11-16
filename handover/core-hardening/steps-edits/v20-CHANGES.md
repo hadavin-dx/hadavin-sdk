@@ -25,3 +25,13 @@ Price (40,000 x 3 + 10,000 x 15) / 1,000,000 = 0.27; 3 x 0.27 = 0.81; 12.40 + 0.
 
 ## 5. Not claimed
 Nothing here is reviewed. The EGM steps after the build (independent evidence runner, `egm:*` reviewers, resolve, drift report) are the lead's.
+
+## Lead answers Q22 to Q31 applied (ORDERS.md, lead 12:50Z)
+- Q22 applied: claim wording (c) in force (DECISIONS item 1 sentence plus "A gap longer than the lease is not claimed."); Note section 5 and Open 8 changed.
+- Q23 applied: decision 2 stands; line 1051 is written as UNVERIFIED stale text; the lead shows the final head's grep at re-pin; HubSpot key not widened. Note section 0 item 1 and Open 1 changed (G1 and G21 unchanged).
+- Q24 applied: R4 whole-balance kept; the yes sentence (5.8) now says the lead shares the owner's Linux user and could read the key file, clipboard or screen; the separate-funding option, the "Funding" slot, the fresh-account offer, Open 32 and the map row CC are removed or rewritten. No money-limit question.
+- Q25 applied: sheet check 2 states target run day Wed 18 Nov and cancel-by 18:19 UTC = 23:49 IST on Mon 23 Nov; no take on 23 Nov unless the end-date refusal is shown at the final head.
+- Q26 applied: the lead-side timer sentence is removed from R3 (the owner cancels the key himself); Note G30 now means "no lead timer, no go on Mon 23 Nov"; Note section 4 step 7, Open 27 and map rows rewritten.
+- Q27 applied: stays UNVERIFIED; "lead verifies at re-pin"; defaults kept.
+- Q28 applied: D5 listed as OWNER-OPEN, non-blocking (Note section 0 item 7, Open 41). Q29 noted in the same item: run.py out of every pull request. Q30 and Q31: nothing.
+- check-v20.py: removed the required word "Funding". Re-run: exit 0, 0 problems.
