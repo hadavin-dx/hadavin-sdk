@@ -26,11 +26,11 @@ INSERT INTO spend (agent_id, day, usd) VALUES ('a', '2026-11-16', -3) ON CONFLIC
 INSERT INTO spend (agent_id, day, usd) VALUES ('a', '2026-11-16', -2) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
 \echo '--- T1c OLD SHAPE, positive delta +1 (must still work)'
 INSERT INTO spend (agent_id, day, usd) VALUES ('a', '2026-11-16', 1) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
-\echo '--- T2 NEW SHAPE: negative delta as UPDATE ... RETURNING (row holds 3 after the next line)'
+\echo '--- T2 NEW SHAPE: negative delta as UPDATE ... RETURNING (the row holds 3, +2 makes 5, -1 makes 4)'
 INSERT INTO spend (agent_id, day, usd) VALUES ('a', '2026-11-16', 2) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
 UPDATE spend SET usd = usd + (-1) WHERE agent_id = 'a' AND day = '2026-11-16' RETURNING usd;
 \echo '--- T2b NEW SHAPE: give back to exactly 0'
-UPDATE spend SET usd = usd + (-2) WHERE agent_id = 'a' AND day = '2026-11-16' RETURNING usd;
+UPDATE spend SET usd = usd + (-4) WHERE agent_id = 'a' AND day = '2026-11-16' RETURNING usd;
 \echo '--- T2c NEW SHAPE: a delta that would leave the total below zero is refused by the CHECK (expect 23514)'
 UPDATE spend SET usd = usd + (-0.01) WHERE agent_id = 'a' AND day = '2026-11-16' RETURNING usd;
 \echo '--- T2d NEW SHAPE: negative delta on a row that does not exist: UPDATE touches 0 rows (the code must treat that as an error)'
@@ -60,5 +60,16 @@ BEGIN
 END $f$;
 CREATE TRIGGER spend_result_ok AFTER INSERT OR UPDATE ON spend FOR EACH ROW EXECUTE FUNCTION spend_result_ok();
 RESET ROLE;
+DELETE FROM spend;
 SET ROLE rt_v13;
-TRUNCATE spend;
+INSERT INTO spend (agent_id, day, usd) VALUES ('t', '2026-11-16', 5) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
+\echo 'T4a trigger variant: old shape, delta -3 on a row of 5 (expect 2, no error)'
+INSERT INTO spend (agent_id, day, usd) VALUES ('t', '2026-11-16', -3) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
+\echo 'T4b trigger variant: old shape, delta -3 on a row of 2 (resulting -1: expect 23514)'
+INSERT INTO spend (agent_id, day, usd) VALUES ('t', '2026-11-16', -3) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
+\echo 'T4c trigger variant: negative first insert for a NEW key (no conflict): expect 23514'
+INSERT INTO spend (agent_id, day, usd) VALUES ('new', '2026-11-16', -3) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd;
+\echo 'T4d trigger variant: NaN and Infinity by UPDATE: expect 23514'
+UPDATE spend SET usd = 'NaN' WHERE agent_id = 't';
+UPDATE spend SET usd = 'Infinity' WHERE agent_id = 't';
+RESET ROLE;

@@ -10,7 +10,7 @@
 7. The three checks of v25 are summarised, not re-run: I read review-v25-stranger.md, review-v25-security.md and evidence-v25-independent/ only.
 
 ## Findings of the v25 checks: finding, fix, check that fails on v25
-Checks C70 to C103 are in newchecks-v26.py (Part 3). `python3 v26-fail-proof.py` plants each missed plant in the built v25 files and shows the intended check failing on the planted files and not on the unplanted ones (evidence-v26/05-fail-proof.txt). Plants that only exist in the new text (no v25 equivalent) are proved by mut26.py (143 plants; a plant counts as caught only if the check meant for it fails; evidence-v26/04-mut26-output.txt).
+Checks C70 to C103 are in newchecks-v26.py (Part 3). `python3 v26-fail-proof.py` plants each missed plant in the built v25 files and shows the intended check failing on the planted files and not on the unplanted ones (evidence-v26/05-fail-proof.txt). Plants that only exist in the new text (no v25 equivalent) are proved by mut26.py (144 plants; a plant counts as caught only if the check meant for it fails; evidence-v26/04-mut26-output.txt).
 | Finding | Fix in v26 | Check that fails when the fix is undone |
 |---|---|---|
 | Stranger blocker: the irreversible older-key cancel came too early | A: cancel only at 6.7, after 6.6 (new key saved, size checked) and the last checks; "restarted" word at 6.6 | C89, C85, C28 |

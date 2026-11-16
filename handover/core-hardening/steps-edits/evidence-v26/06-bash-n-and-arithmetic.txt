@@ -1,0 +1,9 @@
+sheet A bash -n rc 0 
+sheet B bash -n rc 0 
+price per call cents (40000*300+10000*1500)/1e6 = 27.0 -> 0.27 USD with cents/100
+expected total 3 x 27 cents = 81 -> 0.81
+limit 1240+81 = 1321 -> 13.21
+860 s in minutes = 14.33
+deadline - 860 s = 18:14:40 UTC
+A has 0.27 x 3 , 0.81 x 2 , 13.21 x 0 , 14.33 x 0
+B has 0.27 x 3 , 0.81 x 2 , 13.21 x 0 , 14.33 x 0

@@ -336,7 +336,7 @@ function blob(tok,   n, c) {
     if (tok ~ /[A-Z]/ && tok ~ /[a-z]/) return 1     # v6: from 24 characters (v5: 32): a mixed-case secret with slashes is hidden
     return -1
   }
-  if (tok ~ /\./ && dotted_secret(tok)) return 1
+  if (tok ~ /\./ && length(tok) >= 24 && tok ~ /[A-Z]/ && tok ~ /[a-z]/) return dotted_secret(tok)   # every piece a plain name: kept
   if (is_uuid(tok)) return 1
   if (snake_name(tok)) return 0
   if (tok !~ /[-_+]/ && isid_camel(tok)) return 0
@@ -572,8 +572,10 @@ function ml_start(b,   m, nm, rest, sec, t, tk) {
     t = b
     while (match(t, /[A-Za-z0-9_.-]+["' \t]*[=:]/)) {
       tk = substr(t, RSTART, RLENGTH); sub(/["' \t]*[=:]$/, "", tk)
-      if (secret_name(tk)) { sec = 1; break }
-      t = substr(t, RSTART + RLENGTH)
+      rest = substr(t, RSTART + RLENGTH)
+      # NAME: [ or NAME: {  is a container the awk stage already tracks to its closing bracket: leave it to that stage
+      if (secret_name(tk) && !(substr(t, RSTART + RLENGTH - 1, 1) == ":" && rest ~ /^[ \t]*[[{]/)) { sec = 1; break }
+      t = rest
     }
   }
   if (!sec) { ML_D = 0; ML_Q = "" }

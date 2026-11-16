@@ -1,0 +1,95 @@
+Pager usage is off.
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:4: ERROR:  42710: role "mig_v13" already exists
+LOCATION:  CreateRole, user.c:376
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:4: ERROR:  42710: role "rt_v13" already exists
+LOCATION:  CreateRole, user.c:376
+GRANT
+GRANT
+SET
+CREATE TABLE
+GRANT
+CREATE TABLE
+CREATE INDEX
+CREATE FUNCTION
+CREATE OR REPLACE twice (idempotent; the migration guard accepts only OR REPLACE):
+CREATE FUNCTION
+CREATE TRIGGER
+REVOKE
+RESET
+--- the runtime role has no grant on the log (REVOKE ALL, empty runtime list as the GRANTS entry would give):
+REVOKE
+REVOKE
+SET
+INSERT 0 1
+a lowering UPDATE by the runtime role works and writes one row through the function:
+ usd 
+-----
+   3
+(1 row)
+
+UPDATE 1
+raising writes none:
+ usd 
+-----
+   4
+(1 row)
+
+UPDATE 1
+the runtime role is denied every statement on the log (expect 42501 x5):
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:38: ERROR:  42501: permission denied for table spend_decrease_log
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:39: ERROR:  42501: permission denied for table spend_decrease_log
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:40: ERROR:  42501: permission denied for table spend_decrease_log
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:41: ERROR:  42501: permission denied for table spend_decrease_log
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:42: ERROR:  42501: permission denied for table spend_decrease_log
+LOCATION:  aclcheck_error, aclchk.c:2812
+and may not call the function by hand (expect 42501):
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:44: ERROR:  42501: permission denied for function spend_log_decrease
+LOCATION:  aclcheck_error, aclchk.c:2812
+RESET
+       ?column?       | count 
+----------------------+-------
+ log rows (expect 1): |     1
+(1 row)
+
+--- fail-closed: if the log cannot be written, the settle (UPDATE) fails and the total does not change
+SET
+ALTER TABLE
+RESET
+SET
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:52: ERROR:  23514: new row for relation "spend_decrease_log" violates check constraint "full_disk_stand_in"
+DETAIL:  Failing row contains (2, a, 2026-11-16, spend, 4, 3, 2026-11-16 15:21:33.927081+00, postgres).
+CONTEXT:  SQL statement "INSERT INTO spend_decrease_log (agent_id, day, scope, old_usd, new_usd) VALUES (OLD.agent_id, OLD.day, TG_TABLE_NAME, OLD.usd, NEW.usd)"
+PL/pgSQL function spend_log_decrease() line 3 at SQL statement
+SCHEMA NAME:  public
+TABLE NAME:  spend_decrease_log
+CONSTRAINT NAME:  full_disk_stand_in
+LOCATION:  ExecConstraints, execMain.c:2109
+ usd 
+-----
+   4
+(1 row)
+
+RESET
+SET
+ALTER TABLE
+RESET
+--- cost of the trigger: 20000 lowering UPDATEs inside one DO block, with and without the trigger (local, indicative only)
+SET
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:71: NOTICE:  00000: without trigger: 2187 ms; with trigger: 7215 ms (20000 updates each)
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+DO
+RESET
+   ?column?    | count 
+---------------+-------
+ log rows now: | 20001
+(1 row)
+
+                    ?column?                    | pg_total_relation_size 
+------------------------------------------------+------------------------
+ log table + index size (bytes) for those rows: |                3350528
+(1 row)
+
