@@ -898,3 +898,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 647 not-checked r6: line 24 dropped rules. FIXED by CURRENT.
 - 648 L5b r6: dropped definitions. FIXED by CURRENT STATE.
 - (decision-list r6 and premortem r6 ended; their hand-backs not seen by this session, no digest.)
+
+- 649 premortem r6: line 24 dropped risk 3/6 decision and terms. FIXED by CURRENT.
+- 650 decision-list r6: five stacked paragraphs, two notice times. FIXED by CURRENT block (row splits TO DO).
