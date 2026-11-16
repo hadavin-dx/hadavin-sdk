@@ -1,5 +1,13 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 06:47 UTC / 12:17 IST: ORDER 002, step 1 plan review (round 1 of max 3)
+Done: AUDIT-PLAN.md written (4 lanes A-D, evidence runner, 4 builders, result reviewers). Nothing failed yet. Nothing built yet; no audit finding exists yet.
+Agents running: 2 language-model (plan reviewers), 0 script lanes.
+Agent register (id | purpose | start | expected end | state | next):
+- egm:egm-design (sonnet) | review AUDIT-PLAN.md design | 06:47Z | +10 min | running | read report, resolve
+- egm:egm-implementation-readiness (sonnet) | review AUDIT-PLAN.md readiness | 06:47Z | +10 min | running | read report, resolve
+Next block: 06:57 UTC.
+
 ## ORDER 001 proof: EGM VISIBLE (2026-11-16 06:44 UTC, 12:14 IST)
 Status block: agents running 0 language-model agents, 0 script lanes (both reviewers finished). Branch cloud/core-hardening. No secrets, no spend, no live product model calls, no merges, no other branch.
 
