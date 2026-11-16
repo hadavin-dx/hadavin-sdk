@@ -1925,47 +1925,93 @@ chk "T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (
 echo "== T100 (r12, review r11: M1 the Child guard, m1 --raw order, m2 total size, m3 node id and --pythonpath, m5 world-write clamp, m4 discriminating tests; each says whether it fails on r11)"
 # a) M1: every way round the guard. The base is a real allowed program (git) so each case is refused for ITS reason.
 python3 - "$RUN" <<'PY' >"$S/t100a.out" 2>&1; rc=$?
-import importlib.util, shutil, sys, os
+import importlib.util, shutil, sys, os, tempfile, pathlib, stat
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
 G = shutil.which("git"); GV = [G, "-C", "/", "rev-parse", "--is-inside-work-tree"]; E = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
-def started(args, kw, pos=()):
-    marker = "/tmp/t100a-ran-%d" % os.getpid()
+X = pathlib.Path(tempfile.mkdtemp(prefix="t100a-x-"))   # r13: stands for /tmp/x
+(X / ".venv/bin").mkdir(parents=True)
+Y = pathlib.Path(tempfile.mkdtemp(prefix="t100a-y-"))   # another scratch tree
+(Y / ".venv/bin").mkdir(parents=True)
+def outcome(args, kw, pos=()):
+    """what Child does: ('started',) | ('refused', text) | ('typeerror', text) | ('other', name)"""
     try:
         r.Child(args, *pos, **kw).wait()
-        return "started"
-    except r.Refused:
-        return None
-    except TypeError:
-        return None
+        return ("started", "")
+    except r.Refused as e:
+        return ("refused", str(e))
+    except TypeError as e:
+        return ("typeerror", str(e))
     except BaseException as e:
-        return f"{type(e).__name__}"
-cases = {
-    "positional bufsize": (GV, {"env": E}, (-1,)),
-    "positional executable (4th, /bin/sh)": (GV, {}, (-1, "/bin/sh")),
-    "positional shell": (GV, {}, (-1, None, None, None, None, None, None, True)),
-    "executable=/bin/sh": (GV, {"env": E, "executable": "/bin/sh"}),
-    "env missing": (GV, {}),
-    "env=None": (GV, {"env": None}),
-    "absolute shell /bin/sh -c": (["/bin/sh", "-c", "true"], {"env": E}),
-    "absolute /usr/bin/env": (["/usr/bin/env", "true"], {"env": E}),
-    "absolute bash": (["/bin/bash", "-c", "true"], {"env": E}),
-    "user=": (GV, {"env": E, "user": 0}),
-    "umask=": (GV, {"env": E, "umask": 0}),
-    "close_fds=False": (GV, {"env": E, "close_fds": False}),
-    "process_group=": (GV, {"env": E, "process_group": 0}),
-    "restore_signals=": (GV, {"env": E, "restore_signals": False}),
-    "cwd relative": (GV, {"env": E, "cwd": "relative/dir"}),
-    "start_new_session=False": (GV, {"env": E, "start_new_session": False}),
-    "shell=1": (GV, {"env": E, "shell": 1}),
-    "an absolute program named sh in another folder": (["/tmp/notgit/sh"], {"env": E}),
-}
+        return ("other", type(e).__name__)
 wrong = []
-for name, spec_ in cases.items():
-    args, kw = spec_[0], spec_[1]; pos = spec_[2] if len(spec_) > 2 else ()
-    got = started(args, kw, pos)
-    if got is not None: wrong.append(f"{name}: {got}")
+def expect(name, got, kind, sub=""):
+    if got[0] != kind or sub not in got[1]:
+        wrong.append(f"{name}: wanted {kind} containing {sub!r}, got {got}")
+# r13 m3: every case names the EXACT cause (a refusal with its reason, or the TypeError of a positional extra), not 'any TypeError'
+Q = "positional argument"
+expect("positional bufsize", outcome(GV, {"env": E}, (-1,)), "typeerror", Q)
+expect("positional executable (4th, /bin/sh)", outcome(GV, {}, (-1, "/bin/sh")), "typeerror", Q)
+expect("positional shell", outcome(GV, {}, (-1, None, None, None, None, None, None, True)), "typeerror", Q)
+expect("executable=/bin/sh", outcome(GV, {"env": E, "executable": "/bin/sh"}), "refused", "['executable'] is not allowed")
+expect("env missing", outcome(GV, {}), "refused", "env= is required")
+expect("env=None", outcome(GV, {"env": None}), "refused", "env= is required")
+expect("env name outside the allow-list (FOO)", outcome(GV, {"env": {"PATH": "/bin", "FOO": "1"}}), "refused", "['FOO']")
+expect("env name outside the allow-list (LD_PRELOAD)", outcome(GV, {"env": {"LD_PRELOAD": "/x.so"}}), "refused", "['LD_PRELOAD']")
+expect("absolute /bin/sh -c", outcome(["/bin/sh", "-c", "true"], {"env": E}), "refused", "is not the git or patch this run found")
+expect("absolute /usr/bin/env", outcome(["/usr/bin/env", "true"], {"env": E}), "refused", "is not the git or patch this run found")
+expect("absolute bash", outcome(["/bin/bash", "-c", "true"], {"env": E}), "refused", "is not the git or patch this run found")
+expect("user=", outcome(GV, {"env": E, "user": 0}), "refused", "['user'] is not allowed")
+expect("umask=", outcome(GV, {"env": E, "umask": 0}), "refused", "['umask'] is not allowed")
+expect("close_fds=False", outcome(GV, {"env": E, "close_fds": False}), "refused", "['close_fds'] is not allowed")
+expect("process_group=", outcome(GV, {"env": E, "process_group": 0}), "refused", "['process_group'] is not allowed")
+expect("restore_signals=", outcome(GV, {"env": E, "restore_signals": False}), "refused", "['restore_signals'] is not allowed")
+expect("cwd relative", outcome(GV, {"env": E, "cwd": "relative/dir"}), "refused", "cwd must be None or an absolute path")
+expect("start_new_session=False", outcome(GV, {"env": E, "start_new_session": False}), "refused", "start_new_session must be True")
+expect("shell=1", outcome(GV, {"env": E, "shell": 1}), "refused", "a shell is never used")
+expect("an absolute program named sh in another folder", outcome(["/tmp/notgit/sh"], {"env": E}), "refused", "is not the git or patch this run found")
+# r13 M1: the file must be the one found at start, not any file with the right name. Another folder's `git` (a script, a copy)
+# is refused; a link to the real git is the same file and is accepted; so are start-ups of the scratch tree's own python only.
+fake = X / "git"; fake.write_text("#!/bin/sh\nexit 0\n"); fake.chmod(0o755)
+expect("M1 /tmp/x/git (a different file named git)", outcome([str(fake)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+copy = X / "git-copy" ; copy.mkdir(); cp = copy / "git"; shutil.copy2(G, cp)
+expect("M1 /tmp/x/git-copy/git (a byte copy of the real git)", outcome([str(cp)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+fake_patch = X / "patch"; fake_patch.write_text("#!/bin/sh\nexit 0\n"); fake_patch.chmod(0o755)
+PA = ["-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch", "-d", "/", "-i", "/dev/null"]
+expect("M1 /tmp/x/patch (a different file named patch)", outcome([str(fake_patch)] + PA, {"env": E}), "refused", "is not the git or patch this run found")
+link = X / "git-link"; link.mkdir(); lk = link / "git"; os.symlink(os.path.realpath(G), lk)
+expect("M1 ACCEPT /tmp/x/git-link/git (a link to the real git: same file)", outcome([str(lk)] + GV[1:], {"env": E}), "started")
+expect("M1 ACCEPT the git that tool() found", outcome(GV, {"env": E}), "started")
+# arguments of the fixed calls: the shape is checked (no -c, no --exec-path, no other sub-command, no extra option)
+for name, args in {
+    "git -c core.pager=x ...": [G, "-c", "core.pager=x", "-C", "/", "rev-parse", "--show-toplevel"],
+    "git --version": [G, "--version"],
+    "git -C / config --list": [G, "-C", "/", "config", "--list"],
+    "git -C / archive --output=x HEAD": [G, "-C", "/", "archive", "--output=/tmp/t100-x", "HEAD"],
+    "git -C / rev-parse --verify --quiet -x": [G, "-C", "/", "rev-parse", "--verify", "--quiet", "--git-dir"],
+    "git -C / rev-parse --show-toplevel extra": [G, "-C", "/", "rev-parse", "--show-toplevel", "x"],
+}.items():
+    expect("M1 shape: " + name, outcome(args, {"env": E}), "refused", "are not one of the git calls")
+# the tool's own python: exactly <root>/.venv/bin/python
+if hasattr(r, "set_child_root"):
+    pyx = str(X / ".venv/bin/python"); pyy = str(Y / ".venv/bin/python")
+    shutil.copy2(sys.executable, pyx); shutil.copy2(sys.executable, pyy)
+    CODE = r.IMPORT_PROBE_CODE
+    r.set_child_root(None)
+    expect("M1 python with no root set: /tmp/x/.venv/bin/python", outcome([pyx, "-c", CODE, "os"], {"env": E}), "refused", "is not the git or patch this run found")
+    r.set_child_root(X)
+    expect("M1 REFUSE /tmp/y/.venv/bin/python (another tree's python)", outcome([pyy, "-c", CODE, "os"], {"env": E}), "refused", "is not the git or patch this run found")
+    expect("M1 REFUSE /tmp/x/.venv/../.venv/bin/python (not exactly the root's path)", outcome([str(X / ".venv/../.venv/bin/python"), "-c", CODE, "os"], {"env": E}), "refused", "is not the git or patch this run found")
+    expect("M1 REFUSE /usr/bin/python3 (the caller's python)", outcome([sys.executable, "-c", CODE, "os"], {"env": E}), "refused", "is not the git or patch this run found")
+    expect("M1 REFUSE /tmp/x/.venv/bin/python -c 'print(1)' (not the fixed probe)", outcome([pyx, "-c", "print(1)", "os"], {"env": E}), "refused", "are not one of the python calls")
+    expect("M1 REFUSE /tmp/x/.venv/bin/python -m http.server", outcome([pyx, "-m", "http.server"], {"env": E}), "refused", "are not one of the python calls")
+    expect("M1 REFUSE pytest head with another rootdir", outcome([pyx, "-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={Y}", f"--confcutdir={X}", "--tb=line", "-rfp"], {"env": E}), "refused", "are not one of the python calls")
+    expect("M1 ACCEPT /tmp/x/.venv/bin/python with the probe", outcome([pyx, "-c", CODE, "os"], {"env": E, "cwd": str(X)}), "started")
+    good_pytest = r.pytest_cmd(X, ["--version"])
+    expect("M1 ACCEPT /tmp/x/.venv/bin/python with the real pytest head (pytest_cmd)", outcome(good_pytest, {"env": E, "cwd": str(X)}), "started")
+else:
+    wrong.append("M1: no set_child_root (r12 accepts any path ending in /.venv/bin/python)")
 # the call must be refused by check_child_call itself (a test calls it directly), not only by Child
-for name, (args, kw) in {"env missing": ([G], {}), "unknown option": ([G], {"env": E, "bufsize": 1})}.items():
+for name, (args, kw) in {"env missing": (GV, {}), "unknown option": (GV, {"env": E, "bufsize": 1}), "other git": ([str(fake)] + GV[1:], {"env": E})}.items():
     try:
         r.check_child_call(args, kw); wrong.append(f"check_child_call accepted: {name}")
     except r.Refused:
@@ -1973,7 +2019,7 @@ for name, (args, kw) in {"env missing": ([G], {}), "unknown option": ([G], {"env
 # positional extras are a TypeError (the signature has no *a), proven by the signature
 import inspect
 if [p.kind for p in inspect.signature(r.Child.__init__).parameters.values()].count(inspect.Parameter.VAR_POSITIONAL): wrong.append("Child.__init__ still takes *args")
-# OSError at the start is a refusal, never a traceback: program git with a folder that does not exist, and E2BIG
+# OSError at the start is a refusal, never a traceback: program git with a folder that does not exist, and E2BIG (one argument over 128 KiB)
 try:
     r.Child(GV, env=E, cwd="/nonexistent-t100/x")
     wrong.append("missing cwd: started")
@@ -1988,10 +2034,11 @@ except r.Refused:
     pass
 except BaseException as e:
     wrong.append(f"E2BIG: {type(e).__name__}")
+shutil.rmtree(X, ignore_errors=True); shutil.rmtree(Y, ignore_errors=True)
 print("wrong:", wrong); sys.exit(1 if wrong else 0)
 PY
 cat "$S/t100a.out"
-chk "T100a M1 Child cannot be walked round: 18 cases (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit $rc; r11: fails, most of them start)" "[ $rc -eq 0 ]"
+chk "T100a M1 Child cannot be walked round (r13: each case names its exact cause; another folder's git, patch and python are refused, a link to the real git and the root's own python are accepted; argument shapes of the fixed calls): about 60 cases, among them the old 18 (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit $rc; r11: fails, most of them start)" "[ $rc -eq 0 ]"
 # b) m1: --raw is created after every output check; an OSError of mkdir is a refusal
 fresh_root; RAWNEW="$S/rawnew100"; rm -rf "$RAWNEW"
 mut --raw "$RAWNEW" --out-json "$S/no-such-folder-100/o.json" -- tests/test_fast.py >"$S/t100b1.out" 2>&1; rc1=$?

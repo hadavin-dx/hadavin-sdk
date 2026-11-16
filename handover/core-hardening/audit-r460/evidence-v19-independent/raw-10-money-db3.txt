@@ -1,5 +1,155 @@
-Traceback (most recent call last):
-  File "/tmp/ev19/evidence-handoff-v19/money_ev19_tmp.py", line 12, in <module>
-    import secdef_audit_v19 as au
-ModuleNotFoundError: No module named 'secdef_audit_v19'
-rc=1
+OBS server 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+==== M1 reserve amounts
+OBS M1 reserve 0: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve 0: no bad row
+EXPECT PASS M1 reserve 0 writes no row  [None None]
+OBS M1 reserve -0: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve -0: no bad row
+EXPECT PASS M1 reserve -0 writes no row  [None None]
+OBS M1 reserve 0.0000001: sqlstate=None day=(Decimal('1E-7'), Decimal('1E-7')) month=(Decimal('1E-7'), Decimal('1E-7'))
+EXPECT PASS M1 reserve 0.0000001: no bad row
+OBS M1 reserve 1: sqlstate=None day=(Decimal('1'), Decimal('1')) month=(Decimal('1'), Decimal('1'))
+EXPECT PASS M1 reserve 1: no bad row
+OBS M1 reserve negative -0.01: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve negative -0.01: no bad row
+EXPECT PASS M1 reserve negative -0.01 refused or inert  [None None]
+OBS M1 reserve negative huge -1e30: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve negative huge -1e30: no bad row
+EXPECT PASS M1 reserve negative huge -1e30 refused or inert  [None None]
+OBS M1 reserve 1e12 ceiling: sqlstate=23514 day=None month=None
+EXPECT PASS M1 reserve 1e12 ceiling: no bad row
+EXPECT PASS M1 reserve 1e12 ceiling refused or inert  [23514 None]
+OBS M1 reserve 999999999999.999999: sqlstate=None day=(Decimal('999999999999.999999'), Decimal('999999999999.999999')) month=(Decimal('999999999999.999999'), Decimal('999999999999.999999'))
+EXPECT PASS M1 reserve 999999999999.999999: no bad row
+OBS M1 reserve 1e15: sqlstate=23514 day=None month=None
+EXPECT PASS M1 reserve 1e15: no bad row
+EXPECT PASS M1 reserve 1e15 refused or inert  [23514 None]
+OBS M1 reserve 1e131071: sqlstate=23514 day=None month=None
+EXPECT PASS M1 reserve 1e131071: no bad row
+EXPECT PASS M1 reserve 1e131071 refused or inert  [23514 None]
+OBS M1 reserve 1e131072: sqlstate=22003 day=None month=None
+EXPECT PASS M1 reserve 1e131072: no bad row
+EXPECT PASS M1 reserve 1e131072 refused or inert  [22003 None]
+OBS M1 reserve NaN: sqlstate=23514 day=None month=None
+EXPECT PASS M1 reserve NaN: no bad row
+EXPECT PASS M1 reserve NaN refused or inert  [23514 None]
+OBS M1 reserve Infinity: sqlstate=23514 day=None month=None
+EXPECT PASS M1 reserve Infinity: no bad row
+EXPECT PASS M1 reserve Infinity refused or inert  [23514 None]
+OBS M1 reserve -Infinity: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve -Infinity: no bad row
+EXPECT PASS M1 reserve -Infinity refused or inert  [None None]
+OBS M1 reserve NULL: sqlstate=None day=None month=None
+EXPECT PASS M1 reserve NULL: no bad row
+EXPECT PASS M1 reserve NULL refused or inert  [None None]
+==== M2 settle cases
+OBS M2 settle exact give-back 10->0: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('0'), Decimal('0'))/(Decimal('0'), Decimal('0'))
+EXPECT PASS M2 settle exact give-back 10->0: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('0'), Decimal('0'))]
+OBS M2 settle settle at worst 10->10: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('0'))/(Decimal('10'), Decimal('0'))
+EXPECT PASS M2 settle settle at worst 10->10: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('0'))]
+OBS M2 settle settle ABOVE worst 10->15: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('15'), Decimal('0'))/(Decimal('15'), Decimal('0'))
+EXPECT PASS M2 settle settle ABOVE worst 10->15: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('15'), Decimal('0'))]
+OBS M2 settle worst above open 11: sqlstate=23514 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle worst above open 11: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle negative worst: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle negative worst: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle negative actual: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle negative actual: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle NaN worst: sqlstate=23514 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle NaN worst: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle NaN actual: sqlstate=23514 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle NaN actual: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle Infinity actual: sqlstate=23514 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle Infinity actual: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle -Infinity worst: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle -Infinity worst: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle actual 1e12: sqlstate=23514 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle actual 1e12: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle actual 1e131072: sqlstate=22003 before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle actual 1e131072: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle NULL worst: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle NULL worst: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle NULL actual: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle NULL actual: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle worst 0 actual 0: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10'))
+EXPECT PASS M2 settle worst 0 actual 0: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('10'), Decimal('10'))]
+OBS M2 settle worst 0 actual 3: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('13'), Decimal('10'))/(Decimal('13'), Decimal('10'))
+EXPECT PASS M2 settle worst 0 actual 3: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('13'), Decimal('10'))]
+OBS M2 settle worst 0.5 of open 10: sqlstate=None before=(Decimal('10'), Decimal('10'))/(Decimal('10'), Decimal('10')) after=(Decimal('9.5'), Decimal('9.5'))/(Decimal('9.5'), Decimal('9.5'))
+EXPECT PASS M2 settle worst 0.5 of open 10: settled money (usd-open) never falls (day and month)  [(Decimal('10'), Decimal('10'))->(Decimal('9.5'), Decimal('9.5'))]
+==== M3 settle above worst (over-report direction) and settled-total monotonic over 300 random operations
+EXPECT PASS M3 random 300 ops: settled money never fell for any agent, no bad row  [{}]
+==== M4 agent id spellings
+OBS M4 agent 'NFC cafe': sqlstate=None rows=1
+OBS M4 agent 'NFD cafe': sqlstate=23514 rows=0
+OBS M4 agent 'NFKC fullwidth A': sqlstate=None rows=1
+OBS M4 agent 'leading space': sqlstate=23514 rows=0
+OBS M4 agent 'trailing space': sqlstate=23514 rows=0
+OBS M4 agent 'tab inside': sqlstate=23514 rows=0
+OBS M4 agent 'newline': sqlstate=23514 rows=0
+OBS M4 agent 'NUL-free DEL 0x7f': sqlstate=23514 rows=0
+OBS M4 agent 'zero width space': sqlstate=None rows=1
+OBS M4 agent 'NBSP lead': sqlstate=None rows=1
+OBS M4 agent 'RTL override': sqlstate=None rows=1
+OBS M4 agent 'combining only': sqlstate=None rows=1
+OBS M4 agent 'emoji ZWJ seq': sqlstate=None rows=1
+OBS M4 agent '200 NFC é': sqlstate=None rows=1
+OBS M4 agent '201 NFC é': sqlstate=23514 rows=0
+OBS M4 agent '200 NFD (e+accent = 400 chars)': sqlstate=23514 rows=0
+OBS M4 agent 'sql quote': sqlstate=None rows=1
+OBS M4 agent 'percent': sqlstate=None rows=1
+OBS M4 agent 'lone surrogate-free U+FFFD': sqlstate=None rows=1
+OBS M4 agent 'NULL': sqlstate=23502 rows=0
+OBS M4 agent 'empty': sqlstate=23514 rows=0
+OBS M4 agent 'only space': sqlstate=23514 rows=0
+EXPECT PASS M4 NFD spelling refused, NFC accepted
+EXPECT PASS M4 leading/trailing blank and control char refused
+EXPECT PASS M4 NULL and empty refused
+OBS M4 agent ids that differ only by case, and NFKC fullwidth, are separate budgets: [('café',), ('Ａ',)]
+==== M5 days and months
+OBS M5 reserve day 2019-12-31: sqlstate=23514 month rows=[]
+OBS M5 reserve day 2020-01-01: sqlstate=None month rows=[('2020-01-01',)]
+OBS M5 reserve day 2099-12-31: sqlstate=None month rows=[('2099-12-01',)]
+OBS M5 reserve day 2100-01-01: sqlstate=23514 month rows=[]
+OBS M5 reserve day infinity: sqlstate=23514 month rows=[]
+OBS M5 reserve day -infinity: sqlstate=23514 month rows=[]
+OBS M5 reserve day 0001-01-01: sqlstate=23514 month rows=[]
+OBS M5 reserve day 4713-01-01 BC: sqlstate=23514 month rows=[]
+OBS M5 reserve day 2024-02-29: sqlstate=None month rows=[('2024-02-01',)]
+OBS M5 reserve day 5874897-12-31 (pg max): sqlstate=23514 month rows=[]
+EXPECT PASS M5 outside-window days refused 23514
+EXPECT PASS M5 boundary days accepted
+EXPECT PASS M5 NULL day refused
+EXPECT PASS M5 settle of a day with no row changes neither day nor month
+OBS M5 settle for another day of the same month: month row after = (Decimal('5'), Decimal('5')) (expected 5,5: unchanged)
+==== M6 shadowing and session tricks as the runtime role
+OBS M6 runtime SET search_path=public: sqlstate=None
+OBS M6 runtime temp table named spend: sqlstate=None
+OBS M6 runtime SET ROLE mg: sqlstate=42501
+EXPECT PASS M6 runtime SET ROLE mg refused  [sqlstate=42501]
+OBS M6 runtime SET SESSION AUTHORIZATION mg: sqlstate=42501
+EXPECT PASS M6 runtime SET SESSION AUTHORIZATION mg refused  [sqlstate=42501]
+OBS M6 runtime set_config role: sqlstate=42501
+EXPECT PASS M6 runtime set_config role refused  [sqlstate=42501]
+OBS M6 runtime CREATE VIEW: sqlstate=42501
+EXPECT PASS M6 runtime CREATE VIEW refused  [sqlstate=42501]
+OBS M6 runtime CREATE FUNCTION public: sqlstate=42501
+EXPECT PASS M6 runtime CREATE FUNCTION public refused  [sqlstate=42501]
+OBS M6 runtime CREATE TRIGGER on spend: sqlstate=42501
+EXPECT PASS M6 runtime CREATE TRIGGER on spend refused  [sqlstate=42501]
+OBS M6 runtime ALTER FUNCTION owner: sqlstate=42501
+EXPECT PASS M6 runtime ALTER FUNCTION owner refused  [sqlstate=42501]
+OBS M6 runtime ALTER FUNCTION search_path: sqlstate=42501
+EXPECT PASS M6 runtime ALTER FUNCTION search_path refused  [sqlstate=42501]
+OBS M6 runtime GRANT execute to rt on settle: sqlstate=42501
+EXPECT PASS M6 runtime GRANT execute to rt on settle refused  [sqlstate=42501]
+OBS M6 runtime release as runtime: sqlstate=42501
+EXPECT PASS M6 runtime release as runtime refused  [sqlstate=42501]
+OBS M6 runtime DROP FUNCTION: sqlstate=42501
+EXPECT PASS M6 runtime DROP FUNCTION refused  [sqlstate=42501]
+OBS M6 runtime CREATE RULE on spend: sqlstate=42501
+EXPECT PASS M6 runtime CREATE RULE on spend refused  [sqlstate=42501]
+EXPECT PASS M6b with a temp table named spend first on search_path, the function still writes the REAL table  [(Decimal('2'), Decimal('2'))]
+EXPECT PASS M7 final: no bad row anywhere  [0]
+SUMMARY expectations 66 of 66 passed
+rc=0

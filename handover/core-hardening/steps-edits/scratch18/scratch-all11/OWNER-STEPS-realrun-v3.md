@@ -202,7 +202,7 @@ NEEDS-OWNER. Use a fresh Chrome profile named `demo-take`, signed in only to the
 - STOP and tell the lead: any real address is visible. No footage is used until it is cropped or retaken.
 
 ### Step 20. If a take fails
-NEEDS-OWNER. The lead says why. Remove the demo mails from the `demo` label and the Inbox yourself, delete any leftover HubSpot contacts that the assistant counted, and only those whose e-mail address is exactly `take-<id>-a@example.com`, `take-<id>-b@example.com` or `take-<id>-c@example.com` (with the id of the take that failed). Search for `take-<id>-` (with the id of that take). If the search finds more than 3 contacts, or any contact whose address is not one of these three, you delete nothing and tell the assistant. Whether the take program writes exactly this form of address is not checked (UNVERIFIED): if the search finds none of these three addresses, delete nothing and tell the assistant, and give a NEW written yes with numbers (step 16). A take that got past both typed answers uses up its take id even if it fails (a reused id is refused; a refusal before that spends no id): pick a NEW id, never delete the `.used` marker.
+NEEDS-OWNER. The lead says why. Remove the demo mails from the `demo` label and the Inbox yourself, delete any leftover HubSpot contacts that the assistant counted, and only those whose e-mail address is exactly `take-<id>-a@example.com`, `take-<id>-b@example.com` or `take-<id>-c@example.com` (with the id of the take that failed). Search for `take-<id>-` (with the id of that take). If the search finds more than 3 contacts, or any contact whose e-mail address is not one of these three, you delete nothing and tell the assistant. Whether the take program writes exactly this form of e-mail address is not checked (UNVERIFIED): if the search finds none of these three addresses, delete nothing and tell the assistant, and give a NEW written yes with numbers (step 16). A take that got past both typed answers uses up its take id even if it fails (a reused id is refused; a refusal before that spends no id): pick a NEW id, never delete the `.used` marker.
 
 ## Phase 3: cut, retire, post
 
@@ -259,7 +259,7 @@ The question. The stand-in test is planned to test only whether removing the con
    | `yes, no more takes` | the confirmation (final); the answer to the question of D.2 (2) | D.3 |
    | `another take` | you want another take; no reply counts as this word | D.3 |
    | `cut accepted` | route B: you watched the whole cut and accept it | D.4 |
-   | `key gone, no more decisions` | the key is gone AND there are no more takes AND the cut is final; counts as the confirmation and as `key revoked` | D.5, I |
+   | `key gone, no more decisions` | the key is gone AND there are no more takes AND the cut is final; is the confirmation and also `key revoked` | D.5, I |
    | `key revoked` | the key is gone from the list at the provider; a report only, it never confirms anything | I |
    | `key not revoked` | you could not revoke it; write the reason after it | I |
    | `shred done key copies` | every file of parts (a) and (b) is shredded | G.2 |
