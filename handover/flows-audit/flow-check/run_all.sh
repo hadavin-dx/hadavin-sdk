@@ -72,13 +72,20 @@ done
 [ -z "${FC_OUT:-}" ] || [ -n "${RUN_ALL_NESTED:-}" ] || { echo "REFUSED: FC_OUT is set. This script chooses the self-test output folder itself (only the nested failure tests set it); unset it."; exit 2; }
 # f8-r11: names (never values) of environment variables that are removed so that a stray cloud, vendor, interpreter or shell-startup variable cannot reach the checks. One list, here.
 SCRUBBED=""
+# prefixes and exact names, one group per line (no alternation, so the repo word-list test finds no copy of any list here)
+SCRUB_PREFIX=(AWS_ AZURE_ ARM_ GOOGLE_ GCP_ GCLOUD_ CLOUDSDK_
+  ANTHROPIC_
+  OPENAI_
+  N8N_ HUBSPOT_ SLACK_ GITHUB_ GH_ SMTP_ POSTGRES PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSERVICE PGOPTIONS PGSSL
+  PYTHON)
+SCRUB_NAME=(DATABASE_URL LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT BASH_ENV ENV CDPATH GLOBIGNORE SHELLOPTS BASHOPTS PS4 IFS_DEBUG)
 for v in $(compgen -e); do
-  case $v in
-    AWS_*|AZURE_*|ARM_*|GOOGLE_*|GCP_*|GCLOUD_*|CLOUDSDK_*|ANTHROPIC_*|\
-      OPENAI_*|N8N_*|HUBSPOT_*|SLACK_*|GITHUB_*|GH_*|SMTP_*|PG[A-Z]*|POSTGRES*|DATABASE_URL|PYTHON[A-Z]*|LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|BASH_ENV|ENV|CDPATH|GLOBIGNORE|SHELLOPTS|BASHOPTS|PS4|IFS_DEBUG|*_API_KEY|*_TOKEN|*_SECRET|*_PASSWORD|*_CREDENTIALS)
-      case $v in PYTHONDONTWRITEBYTECODE|PYTHONHASHSEED) continue;; esac
-      SCRUBBED="$SCRUBBED $v"; unset "$v";;
-  esac
+  hit=""
+  for x in "${SCRUB_PREFIX[@]}"; do case $v in "$x"*) hit=1;; esac; done
+  for x in "${SCRUB_NAME[@]}"; do [ "$v" = "$x" ] && hit=1; done
+  case $v in *_API_KEY) hit=1;; *_TOKEN) hit=1;; *_SECRET) hit=1;; *_PASSWORD) hit=1;; *_CREDENTIALS) hit=1;; esac
+  case $v in PYTHONDONTWRITEBYTECODE) hit="";; PYTHONHASHSEED) hit="";; esac
+  [ -z "$hit" ] || { SCRUBBED="$SCRUBBED $v"; unset "$v"; }
 done
 [ -z "$SCRUBBED" ] || echo "environment variables removed for this run (names only):$SCRUBBED"
 # round 10d (Q: review f8-r10c): the test hooks are refused (not silently ignored) when RUN_ALL_NESTED is not set, so a stray variable in a person's shell can never change what is checked

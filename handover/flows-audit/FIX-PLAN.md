@@ -25,14 +25,14 @@
 | 14 and 15 (text fixes, re-check by reading) | 07:44 | 13:14 | 45 |
 | 16 (short re-smoke, 60 min; the lead's slot is 08:00 to 09:30) | 08:29 | 13:59 | 60 |
 | 17 (GO / NO-GO) | by 14:00 | by 19:30 | 10 |
-The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 IST); from 04:00Z the event ends 08:29Z, 29 min later, and the re-smoke ends 09:29Z (14:59 IST). Latest start of step 1 that still allows a Tuesday GO: 06:51Z (12:21 IST) with a 60-min re-smoke, 06:21Z (11:51 IST) with the 90-min slot (30 minutes earlier, 06:21Z and 05:51Z, if step 4a waits the full 30 minutes).
+The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 IST); from 04:00Z the event ends 08:29Z, 29 min later, and the re-smoke ends 09:29Z (14:59 IST). Latest start of step 1 that still allows a Tuesday GO (no failure; RUNBOOK section 6), by case. The 269 minutes of the table are not the whole serial chain before 14:00Z: four more serial pieces are NOT rows of the table and are added here: the short re-smoke (step 16: 60 min, or the 90-min slot), step 14 (f) (F-011 and F-041 fixed or downgraded with written evidence: 60 min), the lead's fix pass after the review of the take scripts (30 min) and step 17 (GO / NO-GO: 10 min). Case 1 (60-min re-smoke, step 4a does not wait): 269 + 60 + 60 + 30 + 10 = 429 min, and 14:00Z minus 429 min = 06:51Z (12:21 IST). Case 2 (90-min slot, no wait): 269 + 90 + 60 + 30 + 10 = 459 min = 06:21Z (11:51 IST). Case 3 (60-min re-smoke, step 4a waits the full 30 minutes): 429 + 30 = 459 min = 06:21Z (11:51 IST), the same clock time as Case 2 for a different reason. Case 4 (90-min slot and the full 30-minute wait): 489 min = 05:51Z (11:21 IST).
 
 **Wednesday 18 Nov (path GO), no failure:**
 | UTC | IST | What |
 |---|---|---|
 | 05:45 (latest 06:00) | 11:15 | F-031 and F-007 text fixes re-read |
 | 06:00 to 07:00 | 11:30 to 12:30 | practice run; T19 to T21 at its end |
-| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (what the HubSpot key may do, and whether a retake is allowed) goes out at its start |
+| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (what the HubSpot trial-account credential may do, and whether a retake is allowed) goes out at its start |
 | 07:30 | 13:00 | F-002 rule check |
 | 07:30 to 07:40 | 13:00 to 13:10 | positive control; Step D message 1 (Step D: the owner deletes the made-up test contacts in HubSpot by hand) is sent after the two sends of RUNBOOK step 19a, during its mailbox wait |
 | 07:40 to 08:25 | 13:10 to 13:55 | rehearsal 1 (45 min) |
@@ -44,7 +44,7 @@ The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 
 | about 11:20 | about 16:50 | whole raw recording watched; recording-ready message (planned by 12:00Z) |
 | about 13:30 | about 19:00 | "clean-up starts"; the owner switches off the model key by 17:00Z (22:30 IST) (RUNBOOK calls it S9-3) |
 | 15:00 | 20:30 | the owner posts |
-The Wednesday times above are the dated times: no start-state gates and no change in RUNBOOK step 22. With the gates (RUNBOOK section 6): Case A (nothing to change in step 22) the rehearsal block ends 09:37, the take is 10:07 to 11:07 and the recording-ready message is about 11:27; Case B (recovery switched off only in step 22 (ii)) the take is 11:02 to 12:02 and the recording-ready message is about 12:22. RUNBOOK section 6 wins.
+The Wednesday times above are the dated times: no start-state gates and no change in RUNBOOK step 22. With the gates (RUNBOOK section 6): Case A (nothing to change in step 22) the rehearsal block ends 09:37, the take is 10:07 to 11:07 and the recording-ready message is about 11:27; Case B (recovery switched off only in step 22 (ii)) the take is 11:02 to 12:02 and the recording-ready message is about 12:22. The row "the lead sets the numbers (10) and the recording test (5)" is a dated time (08:25 to 08:40). With the start-state gates (Case A or Case B, both the same up to this row; derived by the audit from RUNBOOK section 6 and RUNBOOK I20, lead to confirm) rehearsal 1 runs 07:48 to 08:33 and the numbers and the recording test run 08:33 to 08:48; the "Wed 08:33Z" that FIX-PLAN step 22 names is this gated time. RUNBOOK section 6 wins.
 
 **Who is needed when (people other than the lead):**
 | Who | What | When (UTC) |
