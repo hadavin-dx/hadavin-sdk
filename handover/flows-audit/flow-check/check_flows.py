@@ -229,7 +229,7 @@ def sql_use(query):
     for m in toks:
         w = m.group(0).lower()
         nxt = q[m.end() :].lstrip()[:1]
-        if prev in TABLE_AFTER and w not in SQL_WORDS and nxt != "(" or prev == "into" and w not in SQL_WORDS:
+        if prev in TABLE_AFTER and w not in SQL_WORDS:
             tables.add(w)
         elif w not in SQL_WORDS and nxt != "(":
             words.add(w)
@@ -625,7 +625,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
     if near:
         fail(tag, f"names that differ only by case or spaces {near}")
     # per node settings
-    noretry, silent, phs = [], [], []
+    noretry, silent, phs, pph = [], [], [], []
     for n in real:
         nm, short = n["name"], n["type"].split(".")[-1]
         pos = n.get("position")
