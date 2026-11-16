@@ -1,2 +1,2 @@
-# QUESTIONS from core-hardening to lead. The lead answers in ORDERS.md.
+# QUESTIONS from core-hardening
 (none)

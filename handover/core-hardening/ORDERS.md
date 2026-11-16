@@ -1,17 +1,9 @@
-# ORDERS for core-hardening (lead to cloud). Newest last. Order text starting with GO lifts the hold.
+# ORDERS for core-hardening (lead to cloud). Newest last. Text starting with GO lifts the hold.
 
-## ORDER 001 (lead, 2026-11-16 SETUP ONLY, no work yet)
-You are the cloud session "core-hardening" for Hadavin, reporting to the laptop lead. This is a NEW session.
-1. git fetch, check out branch core/cloud-handover (git checkout -B core/cloud-handover origin/core/cloud-handover), pull.
-2. Read handover/core-hardening/README.md, handover/BRIEF-PREAMBLE.md, handover/MODEL-ROUTING.md, handover/RULE-R456-WORK-CONDUCT.md.
-3. EGM setup (handover/CLOUD-EGM-SETUP-2026-11-12.md): /plugin marketplace add google/elephant-goldfish-model, /plugin install egm@egm, reload. Then run python3 handover/tools/egm_model_patch.py (Opus 5.5 for egm-brainstorm, egm-draft, egm-resolve; Sonnet 5.5 for egm-review, review-loop, drift-report, bootstrap and every egm reviewer agent). Prove it: list the 7 egm:egm-* skills, list the egm:* agents, and paste the output of: grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c
-4. Models: this session runs Sonnet 5.5; EVERY Agent call sets model explicitly (opus 5.5 only for plan skills, sonnet 5.5 for builders/reviewers/evidence runners, haiku 5.5 only for plain lookups). EGM only through the Skill tool, never by reading SKILL.md. Never native plan mode.
-5. If the plugin install is blocked, STOP and write exactly what was refused. Never use a general-purpose agent as reviewer.
-6. Write the proof into handover/core-hardening/REPORT.md (top block, UTC and IST, FILE-INDEX line), commit, push to core/cloud-handover (git push origin HEAD:core/cloud-handover).
-7. Start NO work until an order starting with GO appears in this file. Rules: no secrets, no real data, no spend, no live model calls, no merges, no pushes to any other branch, register every agent before starting it, status block at least every 10 minutes.
-
-## ORDER 002 (lead, 2026-11-16, RETRY of ORDER 001 setup; still NO work)
-The owner APPROVED the EGM plugin install for this session. Redo ORDER 001 steps 3 to 6 now: claude plugin marketplace add google/elephant-goldfish-model (if not yet), claude plugin install egm@egm, python3 handover/tools/egm_model_patch.py (setup docs are now in handover/CLOUD-EGM-SETUP-2026-11-12.md and handover/EGM-CHILD-HOWTO.md), then the proof (7 egm skills, egm agents, grep model: lines) at the top of handover/core-hardening/REPORT.md, commit, push to core/cloud-handover. If the skills do not show in this session after install, say so and tell me whether a new session is needed. Still start NO work until an order starting with GO.
-
-## ORDER 003 (lead, 2026-11-16, PROOF ONLY, still NO work)
-Install and patch are accepted (thank you). Now check whether egm skills and agents are visible to you: list the egm:egm-* skills in your Skill tool and the egm:* agents in your Agent tool (names exactly as shown). If still unknown, do NOT retry the install; write "NOT VISIBLE" at the top of handover/core-hardening/REPORT.md with the exact lists you do see, commit, push to core/cloud-handover and stop. If visible, run the dry run (egm:egm-review-loop on a 3-line test paragraph, model shown), save its output to handover/core-hardening/egm-dryrun.md, report, push, and wait for GO.
+## ORDER 001 (lead, 2026-11-16 06:32 UTC) PROOF ONLY, no work
+You are cloud session "core-hardening" for Hadavin (hadavin-sdk core hardening r7u/r7v, EV7U, mutant survivors, core part of architecture audit), reporting to the laptop lead.
+1. Work only on branch cloud/core-hardening (already checked out) and in handover/core-hardening/. Read handover/BRIEF-PREAMBLE.md, MODEL-ROUTING.md, RULE-R456-WORK-CONDUCT.md.
+2. EGM must already be installed by the environment setup. Prove it at the top of handover/core-hardening/REPORT.md: the egm:egm-* skills in your Skill tool, the egm:* agents in your Agent tool (exact names), and the output of: grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c (expect 6 opus-5-5, 64 sonnet-5-5).
+3. If not visible: write NOT VISIBLE with the lists you see, do not retry the install, commit, push to cloud/core-hardening, stop.
+4. If visible: run egm:egm-review-loop on a 3-line test paragraph, save to handover/core-hardening/egm-dryrun.md, report, push, wait for GO.
+Rules: every Agent call sets model explicitly (opus 5.5 only for egm-brainstorm/draft/resolve, sonnet 5.5 otherwise, haiku 5.5 plain lookups); EGM only via the Skill tool; no secrets, no spend, no live model calls, no merges, no push to any other branch; status block every 10 minutes in REPORT.md (UTC and IST).
