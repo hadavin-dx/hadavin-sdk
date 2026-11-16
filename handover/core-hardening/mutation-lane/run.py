@@ -1043,16 +1043,28 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
         raise Refused("the saved backup does not match the hash recorded in the marker: refused")
-    # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
-    target = safe_rel(root, m["file"], "marker file", must_exist=False)
-    orphan, _ = stop_orphan(m, root)
-    mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+    # From here the marker, the backup and its hash are VALID: whatever fails now is a failed restore (exit 3, the mutant
+    # may still be planted, marker and backup kept), never a refusal (exit 2 means: nothing was written; review r6 M1).
+    # Class: an exit code that says "nothing changed" while the file is still mutated.
     try:
+        # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
+        target = safe_rel(root, m["file"], "marker file", must_exist=False)
+        orphan, _ = stop_orphan(m, root)
+        mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+        if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
+            now = os.stat(root)
+            if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):
+                raise Refused(
+                    f"the folder now at {root} is not the folder the mutant was planted in (it was renamed or "
+                    f"replaced): look for the renamed folder and restore it by hand from {bk}"
+                )
         # compare, write and verify on ONE open file (review r5 M3); nothing is compared by path
         already, back = restore_target(target, saved, root, create=True, mode=mode)
         ok = sha256(back) == m["orig_sha256"]
-    except OSError as e:
-        raise Refused(f"cannot write {m['file']} back: {e.strerror or e}: refused") from e
+    except (Refused, OSError) as e:
+        why = e.strerror or e if isinstance(e, OSError) else e
+        text = f"RESTORE FAILED: cannot write {m['file']} back: {why}; the mutant may still be planted; marker and backup kept"
+        return False, f"{control}; {text}" if control else text
     if ok:
         marker.unlink()
         bk.unlink(missing_ok=True)
@@ -1227,6 +1239,8 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
             )
         except subprocess.TimeoutExpired as e:
             raise Refused(f"import check of {mod} timed out after 300 s") from e
+        except OSError as e:  # the interpreter cannot be started, the folder is gone ...
+            raise Refused(f"import check of {mod} cannot start: {e.strerror or e}") from e
         if cp.returncode != 0:
             raise Refused(
                 f"import check: `import {mod}` failed (rc {cp.returncode}): {text_of(cp)[-300:]}"
@@ -1353,6 +1367,7 @@ def run_tests(
     except BaseException:
         SIG.critical = was_critical
         raise
+    leader_start = (proc_stat(proc.pid) or {}).get("start")  # for the pid-reuse check in sweep_group
     try:
         try:
             SIG.critical = was_critical
@@ -1376,9 +1391,10 @@ def run_tests(
                     f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
                 )
                 rc = None
+            ended = boot_ticks()  # as early as possible after the leader was waited for
             SIG.allow = False
             try:
-                note = sweep_group(proc.pid)
+                note = sweep_group(proc.pid, leader_start, ended)
             except OSError as e:
                 note = f"could NOT sweep the test group ({e.strerror or e})"
             result = (cmd, rc, out, note)
@@ -1404,7 +1420,8 @@ def run_tests(
             if proc.returncode is None and unreaped_child(proc.pid):
                 stop_group(proc.pid)  # a group that is already gone must not hide the signal
             elif proc.returncode is not None:
-                sweep_group(proc.pid)  # leader ended already: stop members that outlived it
+                # leader ended already: stop members that outlived it (only those that started before now)
+                sweep_group(proc.pid, leader_start, boot_ticks())
         except (
             OSError
         ):  # the group could not be stopped (e.g. no permission): at least stop the leader
@@ -1508,6 +1525,8 @@ def one(a, tests, m, results, ref) -> list[str]:
             "orig_sha256": sha256(orig),
             "mutant": f"{a.prefix}-{m['id']}",
             "mode": stat.S_IMODE(sp.st_mode),
+            "root_dev": ROOT_IDENT[1] if ROOT_IDENT else None,
+            "root_ino": ROOT_IDENT[2] if ROOT_IDENT else None,
             # first marker (before the tests start): what to look for if SIGKILL comes before the second one
             "cmd_head": [str(root / ".venv/bin/python"), "-m", "pytest"],
             "cmd_argv": pytest_cmd(root, tests),
@@ -1538,7 +1557,7 @@ def one(a, tests, m, results, ref) -> list[str]:
                     p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
                     # compare, write (only if the bytes differ: review r4 nit 1, a file that was never touched is not
                     # written again) and verify on ONE open file (review r5 M3), never by path
-                    _, back = restore_target(p2, orig, root)
+                    _, back = restore_target(p2, orig, root, mode=stat.S_IMODE(sp.st_mode))
                     same_hash = back == orig and back == ref_bytes
                 except (Refused, OSError) as e:
                     print("RESTORE ERROR:", e, file=sys.stderr)
@@ -1633,7 +1652,10 @@ def one(a, tests, m, results, ref) -> list[str]:
 
 def load_mutants(a) -> list[dict]:
     if a.list:
-        ms = json.loads(pathlib.Path(a.list).read_text(encoding="utf-8"))
+        try:
+            ms = json.loads(pathlib.Path(a.list).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:  # missing, unreadable, not UTF-8, not JSON
+            raise Refused(f"--list {a.list} cannot be read as a JSON list ({type(e).__name__}: {e}): refused") from e
     else:
         ms = [{"id": a.id, "file": a.file, "old": a.old, "new": a.new, "desc": a.desc}]
     if not isinstance(ms, list) or not ms:
@@ -1650,6 +1672,14 @@ def load_mutants(a) -> list[dict]:
                 f"{m['id']!r}"
             )
         seen.add(m["id"])
+        for k in ("id", "file", "old", "new", "desc"):  # review r6 nit 5: a lone surrogate cannot be written as UTF-8
+            v = m.get(k, "")
+            if not isinstance(v, str):
+                raise Refused(f"mutant {m['id']}: {k} is not a string: refused")
+            try:
+                v.encode("utf-8")
+            except UnicodeEncodeError as e:
+                raise Refused(f"mutant {m['id']}: {k} holds a character that is not valid text (a lone surrogate): refused") from e
         if m["old"] == m["new"] or not m["old"]:
             raise Refused(f"mutant {m['id']}: old text is empty or equal to new text (a no-op)")
     return ms
@@ -1681,21 +1711,26 @@ def stop_if_dirty(a, root: pathlib.Path, after: str) -> None:
         sys.exit(EXIT_TREE_NOT_CLEAN)
 
 
-def summarize(results: list[dict], planned: int) -> tuple[str, bool]:
-    """The SUMMARY line (review r5 M2): one count per verdict kind, flagged and not run. `complete` is True only when
-    every planned mutant ran and has a clean KILLED or SURVIVED verdict without a flag."""
+def summarize(results: list[dict], planned: int, baseline_ran: bool = True) -> tuple[str, bool]:
+    """The SUMMARY line (review r5 M2, r6 M2): one count per verdict kind, flagged and not run. `complete` is True only
+    when a baseline ran and every planned mutant ran and has a clean KILLED or SURVIVED verdict without a flag."""
     count = {k: sum(1 for r in results if r["kind"] == k) for k in VERDICT_KINDS}
     flagged = sum(1 for r in results if r["flags"])
     not_run = planned - len(results)
     complete = (
-        not_run == 0 and flagged == 0 and all(r["kind"] in ("KILLED", "SURVIVED") for r in results)
+        baseline_ran
+        and not_run == 0
+        and flagged == 0
+        and all(r["kind"] in ("KILLED", "SURVIVED") for r in results)
     )
     parts = ", ".join(f"{count[k]} {k}" for k in VERDICT_KINDS)
     line = (
         f"SUMMARY: {planned} mutant(s) planned, {len(results)} ran: {parts}; {flagged} flagged; {not_run} not run; "
         + (
-            "COMPLETE (every mutant has a clean KILLED or SURVIVED verdict)"
+            "COMPLETE (a baseline ran and every mutant has a clean KILLED or SURVIVED verdict)"
             if complete
+            else f"NO BASELINE (--no-control): INCOMPLETE (exit {EXIT_INCOMPLETE}) whatever the verdicts are"
+            if not baseline_ran
             else f"INCOMPLETE (exit {EXIT_INCOMPLETE} unless the tree is not clean: then exit {EXIT_TREE_NOT_CLEAN})"
         )
     )
@@ -1732,7 +1767,19 @@ def main():
     ap.add_argument("--old")
     ap.add_argument("--new")
     ap.add_argument("--desc", default="")
-    ap.add_argument("--control", action="store_true")
+    ap.add_argument(
+        "--control",
+        dest="control",
+        action="store_true",
+        default=True,
+        help="run the unmutated tree first and refuse the mutants unless it passes (the default)",
+    )
+    ap.add_argument(
+        "--no-control",
+        dest="control",
+        action="store_false",
+        help="skip the baseline: the run can never be COMPLETE and exits 5 (the last of --control/--no-control wins)",
+    )
     ap.add_argument("--out-json")
     ap.add_argument("--timeout", type=int, default=600, help="seconds per test run")
     ap.add_argument(
