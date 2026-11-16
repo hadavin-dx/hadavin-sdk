@@ -357,26 +357,78 @@ V="$(tr '\n' ' ' < "$POSTLOG.counts")"; if test "$V" = "2 2 2 1 "; then echo "R5
 ```
 Expected in the order printed: 2, 2, 2, 1, then `R5e-PASS` (the first number is `grep -c '^HTTP 200 '` on `$POSTLOG`). The only exit codes shown are the labelled `curl exit` lines, one per POST; no bare `exit $?` is printed (a bare one would be the last `sha256sum`'s, not curl's). If the line `log path is new` is not printed, stop: the old log would be overwritten.
 
-Block R5f (row 5, the count proof; one order: the count is read first and is TRUSTED only after the positive control of check 5b has passed on the same mailbox and filter; on Tuesday the control runs right after the mailbox count of RUNBOOK step 16, on Wednesday before the rehearsal; the call types `DAYWORD="TUE"` or `DAYWORD="WED"` and the block runs the mailbox count file of that day (answer cells `MAILCOUNT_TUE` and `MAILCOUNT_WED`, Inputs-list item 5); a count read before the control passed is not a pass; the block refuses to read before the wait is over, and prints a pass word for the row and for the mailbox count):
+Block R5w (the wait check; run it in the bootstrap of each day, and before RUNBOOK steps 16 and 18; `DAYWORD` is typed in the call; it checks that the one `WAIT_S=` line of `shas.env` holds the value of that day: on Wednesday the file must also hold the comment line `# WAIT_S_TUE=<number>` that the switch leaves behind, on Tuesday it must not; new text, untested):
 ```
-( . "$ENVSH" && need_set PGCONN_SELECT_ONLY KEY POSTLOG WAIT_S DAYWORD || exit 1
+( . "$ENVSH" && need_set WAIT_S DAYWORD || exit 1
+case "$WAIT_S" in ''|*[!0-9]*) echo "REFUSED: WAIT_S is not a whole number of seconds"; exit 1;; esac
+case "$DAYWORD" in TUE|WED) ;; *) echo "REFUSED: DAYWORD must be TUE or WED"; exit 1;; esac
+W_SW="$(grep -c -E '^# WAIT_S_TUE=[0-9]+$' "$ENVSH")"; W_LN="$(grep -c '^WAIT_S=' "$ENVSH")"
+if test "$W_LN" != 1; then echo "REFUSED: $ENVSH must hold exactly one WAIT_S= line (it holds $W_LN)"; exit 1; fi
+if test "$DAYWORD" = WED && test "$W_SW" != 1; then echo "REFUSED: DAYWORD is WED but $ENVSH does not hold exactly one comment line # WAIT_S_TUE=<number>, so WAIT_S may still be the Tuesday value; switch it first (placeholder row WAIT_S)"; exit 1; fi
+if test "$DAYWORD" = TUE && test "$W_SW" != 0; then echo "REFUSED: DAYWORD is TUE but $ENVSH holds a # WAIT_S_TUE= comment line, so WAIT_S is already the Wednesday value"; exit 1; fi
+echo "WAIT_S=$WAIT_S for $DAYWORD"
+echo "R5w-PASS"
+)
+```
+Pass: `WAIT_S=<number> for TUE` (or `WED`) and then `R5w-PASS`; a REFUSED line or no word is NOT a pass. The sentence RUNBOOK step 18 needs for it is listed in `reviews/fix-takechecklist68.md` (RUNBOOK.md is edited by another agent).
+
+Block R5b (check 5b, the positive control; run BEFORE Block R5f, after the control mails were sent and the wait is over; `DAYWORD` and `ADDR` are typed in the call: Wednesday `ADDR` is ONE of the two addresses and the block is run twice (once per address), Tuesday `ADDR="$KEYF@example.test $KEYH@example.test"` after `keyload 19t`; the control's send command (LEAD FILLS, check 5b) has appended one UTC date line to `$CTLLOG` right before each of its two sends; the count file is the one of the Contract in the row `MAILCOUNT_TUE`; new text, untested):
+```
+( . "$ENVSH" && need_set TAKE_FOLDER TESTLOG CTLLOG WAIT_S DAYWORD ADDR || exit 1
+case "$WAIT_S" in ''|*[!0-9]*) echo "REFUSED: WAIT_S is not a whole number of seconds"; exit 1;; esac
+case "$DAYWORD" in TUE) WANTN=2;; WED) WANTN=1;; *) echo "REFUSED: DAYWORD must be TUE or WED"; exit 1;; esac; input_ready "MAILCOUNT_$DAYWORD" || exit 1
+W_SW="$(grep -c -E '^# WAIT_S_TUE=[0-9]+$' "$ENVSH")"; W_LN="$(grep -c '^WAIT_S=' "$ENVSH")"
+if test "$W_LN" != 1; then echo "REFUSED: $ENVSH must hold exactly one WAIT_S= line (it holds $W_LN)"; exit 1; fi
+if test "$DAYWORD" = WED && test "$W_SW" != 1; then echo "REFUSED: DAYWORD is WED but $ENVSH does not hold exactly one comment line # WAIT_S_TUE=<number>, so WAIT_S may still be the Tuesday value; switch it first (placeholder row WAIT_S)"; exit 1; fi
+if test "$DAYWORD" = TUE && test "$W_SW" != 0; then echo "REFUSED: DAYWORD is TUE but $ENVSH holds a # WAIT_S_TUE= comment line, so WAIT_S is already the Wednesday value"; exit 1; fi
+echo "WAIT_S=$WAIT_S for $DAYWORD"
+test -s "$CTLLOG" || { echo "REFUSED: $CTLLOG is missing or empty; the control's send command must have written its two date lines there"; exit 1; }
+test "$(grep -c -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$' "$CTLLOG")" = 2 || { echo "REFUSED: $CTLLOG must hold exactly two UTC date lines (one before each control send)"; exit 1; }
+LASTC="$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$' "$CTLLOG" | tail -n 1)"; LASTS="$(date -u -d "$LASTC" +%s 2>/dev/null)"; NOWS="$(date -u +%s)"
+case "$LASTS" in ''|*[!0-9]*) echo "REFUSED: the last date line of $CTLLOG is not a date"; exit 1;; esac
+if test $((NOWS - LASTS)) -lt "$WAIT_S"; then echo "REFUSED: wait not over ($((NOWS - LASTS)) s of $WAIT_S s since the last control send); run this block again later"; exit 1; fi
+if test -e "$CTLLOG.mail"; then echo "REFUSED: $CTLLOG.mail exists; type a NEW CTLLOG and run again"; exit 1; fi
+POSTLOG="$CTLLOG" ADDR="$ADDR" bash "$TAKE_FOLDER/inputs/MAILCOUNT_$DAYWORD.sh"; MCRC=$?; echo "mailcount exit $MCRC"
+if test "$MCRC" = 0 && test -s "$CTLLOG.mail" && test "$(grep -c -x "mail-count $WANTN" "$CTLLOG.mail")" = 1 && test "$(grep -c '^mail-count ' "$CTLLOG.mail")" = 1; then printf 'R5b-PASS DAYWORD=%s addr=%s mail-count %s at %s\n' "$DAYWORD" "$(printf '%s' "$ADDR" | tr ' ' ',')" "$WANTN" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$TESTLOG"; echo "R5b-PASS"; else echo "R5b-FAIL"; fi
+)
+```
+Pass: `R5b-PASS` (and the same line in `$TESTLOG`). Wednesday: two runs with two different addresses, each `mail-count 1`; Tuesday: one run, `mail-count 2`. `R5b-FAIL`, a REFUSED line or no word is NOT a pass: fewer or more mails mean the mailbox filter or the wait is wrong, and check 6 is not trusted.
+
+Block R5f (row 5, the count proof; ONE order: Block R5b (the positive control of check 5b) first, then this block, because the count is TRUSTED only after the control has passed on the same mailbox and filter: this block refuses to read until `$TESTLOG` holds the control line of the same DAYWORD (Tuesday one line; Wednesday two lines with two different addresses); the call types `DAYWORD="TUE"` or `DAYWORD="WED"` and the block runs the mailbox count file of that day (answer cells `MAILCOUNT_TUE` and `MAILCOUNT_WED`, Inputs-list item 5); on Wednesday the call also types `ATTEMPTS_WANT` (the value of RUNBOOK step 22) and the block compares it with the row; the block refuses to read before the wait is over or when `WAIT_S` is not the value of that day, needs exactly two UTC date lines in `$POSTLOG`, and ends with ONE word, `R5f-PASS` or `R5f-FAIL`, for the whole row; new text, untested; LEAD DECIDES: owner = the lead, due Tue 06:00Z (11:30 IST) whether the order "control first" stands, because the older text said the Tuesday control runs right after the mailbox count of RUNBOOK step 16):
+```
+( . "$ENVSH" && need_set TAKE_FOLDER PGCONN_SELECT_ONLY KEY ADDR POSTLOG TESTLOG WAIT_S DAYWORD || exit 1
 case "$WAIT_S" in ''|*[!0-9]*) echo "REFUSED: WAIT_S is not a whole number of seconds"; exit 1;; esac
 case "$DAYWORD" in TUE|WED) ;; *) echo "REFUSED: DAYWORD must be TUE or WED"; exit 1;; esac; input_ready "MAILCOUNT_$DAYWORD" || exit 1
+W_SW="$(grep -c -E '^# WAIT_S_TUE=[0-9]+$' "$ENVSH")"; W_LN="$(grep -c '^WAIT_S=' "$ENVSH")"
+if test "$W_LN" != 1; then echo "REFUSED: $ENVSH must hold exactly one WAIT_S= line (it holds $W_LN)"; exit 1; fi
+if test "$DAYWORD" = WED && test "$W_SW" != 1; then echo "REFUSED: DAYWORD is WED but $ENVSH does not hold exactly one comment line # WAIT_S_TUE=<number>, so WAIT_S may still be the Tuesday value; switch it first (placeholder row WAIT_S)"; exit 1; fi
+if test "$DAYWORD" = TUE && test "$W_SW" != 0; then echo "REFUSED: DAYWORD is TUE but $ENVSH holds a # WAIT_S_TUE= comment line, so WAIT_S is already the Wednesday value"; exit 1; fi
+echo "WAIT_S=$WAIT_S for $DAYWORD"
+if test "$DAYWORD" = WED; then need_set ATTEMPTS_WANT || exit 1; case "$ATTEMPTS_WANT" in ''|*[!0-9]*) echo "REFUSED: ATTEMPTS_WANT is not a whole number"; exit 1;; esac; fi
+test -s "$TESTLOG" || { echo "REFUSED: $TESTLOG is missing or empty; run Block R5b first"; exit 1; }
+if test "$DAYWORD" = TUE; then NCTL="$(grep -c '^R5b-PASS DAYWORD=TUE ' "$TESTLOG")"; WANTC=1; else NCTL="$(grep '^R5b-PASS DAYWORD=WED ' "$TESTLOG" | sed 's/.* addr=//; s/ .*//' | sort -u | grep -c .)"; WANTC=2; fi
+if test "${NCTL:-0}" -lt "$WANTC"; then echo "REFUSED: $TESTLOG holds $NCTL control line(s) for $DAYWORD, $WANTC needed; run Block R5b first"; exit 1; fi
+echo "control-lines-ok"
+test -s "$POSTLOG" || { echo "REFUSED: $POSTLOG is missing or empty"; exit 1; }
+test "$(grep -c -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$' "$POSTLOG")" = 2 || { echo "REFUSED: $POSTLOG must hold exactly two UTC date lines, one before each POST (Block R5e or the post-twice script writes them)"; exit 1; }
 LASTPOST="$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$' "$POSTLOG" | tail -n 1)"
 LASTS="$(date -u -d "$LASTPOST" +%s 2>/dev/null)"; NOWS="$(date -u +%s)"
 case "$LASTS" in ''|*[!0-9]*) echo "REFUSED: no date line of the second POST in $POSTLOG (run Block R5e or the post-twice script first)"; exit 1;; esac
 if test $((NOWS - LASTS)) -lt "$WAIT_S"; then echo "REFUSED: wait not over ($((NOWS - LASTS)) s of $WAIT_S s since the last POST); run this block again later"; exit 1; fi
 echo "wait-over"
 if test -e "$POSTLOG.row"; then echo "REFUSED: $POSTLOG.row exists; type a NEW path and run again"; exit 1; fi
+R5OK=yes
 ROW="$(psql "$PGCONN_SELECT_ONLY" -t -A -F ' ' -c "select state, attempts from mf_leads where lead_key = '$KEY'" 2>&1)"; echo "psql exit $?"; printf '%s\n' "$ROW" > "$POSTLOG.row"; echo "row: $ROW"
-case "$ROW" in "done "[0-9]*) echo "row-done-attempts-${ROW#done }";; *) echo "NOT PASSED: the row is missing, not in state done, or psql failed"; exit 1;; esac
-# LEAD FILLS: the mailbox count command is the file "$TAKE_FOLDER/inputs/MAILCOUNT_$DAYWORD.sh" (MAILCOUNT_TUE.sh or MAILCOUNT_WED.sh, Inputs-list item 5; tool, filter on the made-up address, the wait is already over); it must write exactly one line `mail-count N` into "$POSTLOG.mail" (N = mails that match the filter)
+case "$ROW" in "done "[0-9]*) echo "row-done-attempts-${ROW#done }";; *) echo "NOT PASSED: the row is missing, not in state done, or psql failed"; echo "R5f-FAIL"; exit 1;; esac
+if test "$DAYWORD" = WED; then if test "${ROW#done }" = "$ATTEMPTS_WANT"; then echo "attempts-match-$ATTEMPTS_WANT"; else echo "NOT PASSED: attempts are ${ROW#done } but ATTEMPTS_WANT is $ATTEMPTS_WANT"; R5OK=no; fi; fi
+# LEAD FILLS: the mailbox count command is the file "$TAKE_FOLDER/inputs/MAILCOUNT_$DAYWORD.sh" (MAILCOUNT_TUE.sh or MAILCOUNT_WED.sh, Inputs-list item 5; contract in the row MAILCOUNT_TUE: run as POSTLOG=... ADDR=... bash FILE; the wait is already over); it must write exactly one line `mail-count N` into "$POSTLOG.mail" (N = mails that match the filter) and exit 0
 if test -e "$POSTLOG.mail"; then echo "REFUSED: $POSTLOG.mail exists; type a NEW path and run again"; exit 1; fi
-POSTLOG="$POSTLOG" ADDR="${ADDR:-}" bash "$TAKE_FOLDER/inputs/MAILCOUNT_$DAYWORD.sh"; echo "mailcount exit $?"
-if test -s "$POSTLOG.mail" && test "$(grep -c -x 'mail-count 1' "$POSTLOG.mail")" = 1 && test "$(grep -c '^mail-count ' "$POSTLOG.mail")" = 1; then echo "mail-count-PASS"; else echo "NOT PASSED: $POSTLOG.mail is missing or does not hold exactly the one line: mail-count 1"; fi
+POSTLOG="$POSTLOG" ADDR="$ADDR" bash "$TAKE_FOLDER/inputs/MAILCOUNT_$DAYWORD.sh"; MCRC=$?; echo "mailcount exit $MCRC"
+if test "$MCRC" = 0 && test -s "$POSTLOG.mail" && test "$(grep -c -x 'mail-count 1' "$POSTLOG.mail")" = 1 && test "$(grep -c '^mail-count ' "$POSTLOG.mail")" = 1; then echo "mail-count-PASS"; else echo "NOT PASSED: $POSTLOG.mail is missing or does not hold exactly the one line: mail-count 1, or the count file did not exit 0"; R5OK=no; fi
+if test "$R5OK" = yes; then echo "R5f-PASS"; else echo "R5f-FAIL"; fi
 )
 ```
-Pass: `wait-over`, `row-done-attempts-N` (any whole number N: on Tuesday N is only written down, because the attempts value is set on Wednesday in RUNBOOK step 22, Wed 08:25Z (13:55 IST) dated; on Wednesday N is compared with the value the lead set, check 6) and `mail-count-PASS`; a `REFUSED` or `NOT PASSED` line, or a missing word, is NOT a pass (the two mailbox count files do not exist yet: LEAD FILLS, Inputs-list item 5; the lines of this block marked as the count command are new text, untested).
+Pass: `control-lines-ok`, `wait-over`, `row-done-attempts-N` (any whole number N: on Tuesday N is only written down, because the attempts value is set on Wednesday in RUNBOOK step 22, Wed 08:25Z (13:55 IST) dated; on Wednesday the block prints `attempts-match-N` after comparing N with `ATTEMPTS_WANT`, the value the lead set, check 6), `mail-count-PASS` and, last, `R5f-PASS`; a `REFUSED` or `NOT PASSED` line, or a missing word, is NOT a pass (the two mailbox count files do not exist yet: LEAD FILLS, Inputs-list item 5; the lines of this block marked as the count command are new text, untested).
 
 Block R6 (row 6; the two awk lists are kept in `"$LEDGER_OUT.counted"` and `"$LEDGER_OUT.decides"`):
 ```
@@ -440,7 +492,7 @@ echo "decision-lines=$(grep -c '^DECISION ' "$JUDGELOG")"; grep '^DECISION ' "$J
 ```
 Pass: `decision-lines=1` and the one `DECISION` line read back. After a NO-GO the failed rows are fixed, run again with new log paths and a NEW `$JUDGELOG`, and a new decision line is written there.
 
-**Raw output files (Form 1 needs the raw output saved; every file is outside the repository):** `$ROW1` and `$ROW1.counts` (row 1); `$EVLOG`, `$EVLOG.git` (row 3); `$LOG`, `$LOG.counts`, `$LOG.pin1` (row 4 part 2 and pin 1); `$LOG2`, `$LOG2.counts`, `$LOG2.pin`, `$LOG2.final`, `$LOG2.final.counts` (row 4, exported copy); `$ACTLOG` (FIX-PLAN Step 8a); `$POSTLOG`, `$POSTLOG.counts`, `$POSTLOG.row`, `$POSTLOG.mail` (row 5); `$LEDGER_OUT`, `$LEDGER_OUT.counted`, `$LEDGER_OUT.decides`, `$LEDGER_OUT.out`, `$LEDGER_OUT.accounted` (row 6); `$GREPOUT`, `$GREPOUT.read` (row 7); `$JUDGELOG` (rows 2, 6, 7 and the decision). The lead pastes the path of each file into the report of the Tuesday decision.
+**Raw output files (Form 1 needs the raw output saved; every file is outside the repository):** `$ROW1` and `$ROW1.counts` (row 1); `$EVLOG`, `$EVLOG.git` (row 3); `$LOG`, `$LOG.counts`, `$LOG.pin1` (row 4 part 2 and pin 1); `$LOG2`, `$LOG2.counts`, `$LOG2.pin`, `$LOG2.final`, `$LOG2.final.counts` (row 4, exported copy); `$ACTLOG` (FIX-PLAN Step 8a); `$POSTLOG`, `$POSTLOG.counts`, `$POSTLOG.row`, `$POSTLOG.mail` (row 5); `$CTLLOG`, `$CTLLOG.mail` (check 5b); `$LEDGER_OUT`, `$LEDGER_OUT.counted`, `$LEDGER_OUT.decides`, `$LEDGER_OUT.out`, `$LEDGER_OUT.accounted` (row 6); `$GREPOUT`, `$GREPOUT.read` (row 7); `$JUDGELOG` (rows 2, 6, 7 and the decision). The lead pastes the path of each file into the report of the Tuesday decision.
 
 F-031 and F-007 are text fixes and are NOT in this test (Q30 item 2): they must be applied and re-read by Wed 06:00Z (11:30 IST) (check 13); they stay Blocker until applied. F-002 is NOT in this test (F-002 rule, Words box).
 
