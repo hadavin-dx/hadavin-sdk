@@ -656,3 +656,15 @@ SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NO
 tree diff: 0 difference(s)
   PASS: T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got 0)
 == T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+safety-tests.sh: line 70: 18602 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept; a folder on the way is
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
+safety-tests.sh: line 70: 22793 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/toy/root/src/mod.py is not a regular file with exactly one name (links
+  PASS: T76b file with two names that still holds the planted text: exit 3 (got 3), marker and backup kept, the other name untouched
+  PASS: T76b genuine restore afterwards
+safety-tests.sh: line 70: 26874 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: Permission denied; the mutant may still be planted; marker and backup kept
+  PASS: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T76c genuine restore afterwards

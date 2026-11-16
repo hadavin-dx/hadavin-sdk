@@ -1377,3 +1377,14 @@ PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
 PASS (machinery): filter_ready refuses a useless awk program
 PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
 PASS (machinery): --mask passes the canary, hides the value and exits 0
+PASS (machinery): a normal run on a one-file folder ends with exit 0 and a SUMMARY line
+PASS (machinery): a normal run keeps exactly one work folder (the masked output copy)
+PASS (machinery): the kept folder holds only the output copy and the rule files (4 files, no file name list)
+PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
+PASS (machinery): the filter runs with LC_ALL=C (byte-wise matching)
+PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
+PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
+PASS (machinery): the left-out report counts one name with a line break and one symbolic link
+PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
+PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
+PASS (machinery): sh -x does not print a value (the script turns the trace off)
