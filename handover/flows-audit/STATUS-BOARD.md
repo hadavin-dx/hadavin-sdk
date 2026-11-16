@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:05:06Z
+UPDATED_UTC: 2026-11-16T15:09:56Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,13 +6,13 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 9
-CAPACITY: 2.72 load of 4 cores, mem 1/15 GB, RAM 1374/16087 MB, disk 17G free of 252G, top3 345M /tmp/e7m 422M /tmp/tmp.SjFcfMab07 9.5G /tmp/claude-0 , agents 9 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 2.04 load of 4 cores, mem 1/15 GB, RAM 1761/16087 MB, disk 17G free of 252G, top3 422M /tmp/tmp.SjFcfMab07 552M /tmp/pytest-of-root 11G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T15:05:06Z
+PUSHED_UTC: 2026-11-16T15:09:56Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,21 +31,20 @@ PUSHED_UTC: 2026-11-16T15:05:06Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| abfcd0a3 | fixer F8 r9 (uncapped) | sonnet | flow-check fixes, secret-check false positive | 13:55Z | 15:20Z | WORKING | log flow-check/fix-f8-r9.md |
-| a9a70bf1 | fixer REVIEW.md r22 (uncapped) | sonnet | REVIEW.md reports r22 | 14:58Z | 15:30Z | WORKING | log fix-review15.md |
-| a1089b6e | reader Q31 round 6 (lead read) | sonnet | QUESTIONS.md Q31 | 15:01Z | 15:15Z | WORKING | report pending |
-| aa1b7a5d | fixer plan files r19 | sonnet | RUNBOOK, FIX-PLAN, TAKE-CHECKLIST | 15:03Z | 15:30Z | WORKING | log reviews/fix-tcfp14.md |
-| a94cd3cf | fixer patch-copies r3 (uncapped) | sonnet | patch-copies README, DEAD-MAN-CHECK | 15:03Z | 15:30Z | WORKING | log fix-patchcopies3.md |
-| a4276e8b | reader FINDINGS/LEDGER consistency | sonnet | FINDINGS, LEDGER-ROWS | 15:04Z | 15:15Z | WORKING | report pending |
-| abfa80a0 | citation check remaining CLAIMS rows | sonnet | CLAIMS-TABLE | 15:04Z | 15:15Z | WORKING | report pending |
-| ab79617b | reader RW round 8 | sonnet | RUNSHEET-WORDING | 15:04Z | 15:15Z | WORKING | report pending |
-| a882098d | reader claims round 7 | sonnet | CLAIMS-TABLE | 15:04Z | 15:15Z | WORKING | report pending |
+| aa1b7a5d | fixer | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST round 19 (15 Majors) | 14:50Z | 15:30Z | running | edits pending, log fix-tcfp14.md |
+| a94cd3cf | fixer (uncapped) | sonnet | patch-copies round 3 (4 Blockers B1-B4, 6 Majors) | 14:58Z | 15:30Z | running | log fix-patchcopies3.md pending |
+| aefca634 | fixer | sonnet | Q31 round 6 (1 Blocker, 13 Majors) | 15:00Z | 15:25Z | running | log fix-q31-7.md pending |
+| a473c63c | fixer | sonnet | FINDINGS/LEDGER-ROWS round 2 (1 Blocker: F-011 cell differs) | 15:02Z | 15:25Z | running | log fix-findings-ledger3.md pending |
+| a0d317b5 | fixer | sonnet | CLAIMS-TABLE r7 + RW r8 + citation findings in one batch | 15:09Z | 15:35Z | running | log fix-rwct15.md pending |
+| a75883d7 | fixer (uncapped) | sonnet | REVIEW.md round 23 (2 design Majors, 10 reader Majors) | 15:10Z | 15:40Z | running | log fix-review16.md pending |
+| a419eeb7 | evidence runner | sonnet | F8 run_all x3, strict, test_take_check, ruff, secrets alone | 15:10Z | 15:40Z | running | evidence-f8-r9-runner.md pending |
+| a5351c64 | reviewer egm-codebase-details | sonnet | F8 round 10 fresh uncapped review | 15:10Z | 15:25Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-F8 evidence runner plus fresh uncapped review after abfcd0a
-Fix batch for Q31 round 6 plus items 80/81 wording and item 6 stale sentence
-Verify plan-file and patch-copies fixer edits; fresh uncapped patch-copies round 4
-REVIEW.md round 23 uncapped reviewers only if Blockers/Majors remain
+Verify each fixer output with own commands, then fresh reader per file (Q31 round 7, plan files, patch-copies round 4 uncapped)
+Fresh CLAIMS-TABLE/RW round after a0d317b (Blockers/Majors only)
+REVIEW.md round 24 uncapped after fixer
+F8 fixer round 10 if the review or evidence finds faults
 drift-007 refresh and trigger-word grep before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
