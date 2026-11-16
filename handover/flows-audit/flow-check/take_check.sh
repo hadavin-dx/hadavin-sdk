@@ -119,7 +119,7 @@ awk '/^STEPS THAT READ ENVIRONMENT VARIABLES/ {p=1; print; next} p && /^  - / {p
 echo "If n8n on the filming machine blocks environment-variable access inside steps, those steps stop working. No file check can see that setting. To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 does NOT mean authentication was checked."
 RESULTLINE=$(grep -h -E '^RESULT: ' "$OUT" | head -n 1)
 WARNN=$(sed -n 's/^RESULT: [0-9][0-9]* FAIL, \([0-9][0-9]*\) WARN.*/\1/p' "$OUT" | head -n 1)
-UNVN=$(grep -c -F "[n8n rule UNVERIFIED" "$OUT")
+UNVN=$(grep -E "^WARN" "$OUT" | grep -c -F "n8n rule UNVERIFIED")
 NORM=$(mktemp /tmp/take-warns.XXXXXX) || exit 3
 trap 'rm -f -- "$OUT" "$NORM"' EXIT
 python3 -I - "$OUT" "$D" > "$NORM" <<'PYEOF'
