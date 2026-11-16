@@ -8,7 +8,7 @@ index 2b59bf9..8d8a16f 100644
      m[out].append({"node": b, "type": "main", "index": 0})
 -ST = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": False}
 +# Saved runs (owner 2026-11-16, ORDER 004; lead answer Q18): ON for the take, for the two entry flows and the sub-workflow only, because the take shows the run list. Runs started by hand with "Test workflow" are saved too (saveManualExecutions True), so a rehearsal run shows in the same list. Made-up data only: a saved run holds the lead's key, e-mail and name.
-+# The recovery flow fires every 30 s (about 2,880 runs a day, each carrying lead keys and e-mails), so it stays at none. The clean-up step of the take must delete every saved run from the take database (the lead picks the delete step on the laptop and tests it).
++# The recovery flow fires every 30 s (about 2,880 runs a day, each carrying lead keys and e-mails), so it stays at none. The take never deletes saved runs, and no owner step deletes them (lead decision Q19-1).
 +ST = {"executionOrder": "v1", "saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": True}
 +ST_NONE = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": False}   # recovery flow: never saved
  KEY = "$('SubIn').first().json.lead_key"; TOK = "$('SubIn').first().json.claim_token"

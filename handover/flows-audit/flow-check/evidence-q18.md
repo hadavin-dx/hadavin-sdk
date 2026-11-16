@@ -1,7 +1,7 @@
 # Evidence Q18 (EVIDENCE RUNNER: raw output, no judgement)
 
 ## Version note
-Run 2026-11-16 (UTC). Repo HEAD: dd25464db3aba12b7be00d2bd35054aee208c842 (git status at start: only untracked handover/flows-audit/reviews/sweep2-one-place.md, not in scope).
+Run 2026-11-16 (UTC). Repo HEAD recorded at the START of the run: 09e09643268d884ca233661e3ebd04e21c1461fd. HEAD read again when this file was written: dd25464db3aba12b7be00d2bd35054aee208c842 (it moved during the run; other work is going on in the repo). The five files below were hashed at the start and again after the mutants; they did not change.
 Work copy: /tmp/f8ev7 (handover/demo, flows-audit/flow-check, tools, patches); removed at the end. Tools: ruff 0.16.9, bandit 1.9.4, python Python 3.13.18.
 sha256 before the runs (source files, and again after all mutants were restored in the copy: identical, checked with diff; source files in the repo also unchanged):
 ```
