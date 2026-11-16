@@ -26,9 +26,11 @@ source and target exists; at least one trigger; every node reachable from a trig
 types, so a node whose only incoming link comes from an orphan or from itself is unreachable); node/connection counts
 equal the expected ones; onError=continueErrorOutput nodes have a non-empty main[1]; IF nodes have both branch outputs;
 every $('Name') and $node["Name"] inside an expression names a node of the same file.
-Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, or a type
+Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, n8n-nodes-base.cron, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
-F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
+F-002 Claim is printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
+WARN-LEAD-DECISION lines (webhook or form without authentication, nodes that read $env) keep exit 0 on purpose, but the closing block always prints 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)'.
+Webhook authentication must be none, basicAuth, headerAuth or jwtAuth (form trigger: none or basicAuth) and the credential block must hold the matching kind (httpBasicAuth, httpHeaderAuth, jwtAuth).
 Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error (unknown option, missing value, unknown patch name, bad --expect)."""
 import json, os, re, sys, collections
 OPTS = {"webhook_auth": False, "table": False, "block_env": False, "real_ids": False, "cred_names": {}}
@@ -76,7 +78,9 @@ HEADER = """# ===== READ THIS FIRST (plain words; every line of this header star
 #   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
 # Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
 # FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
-# "Known open problems" (closing block) counts WARN lines that are real defects we already know: no password on a web address,
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked: read 'OPEN LEAD DECISIONS' in the closing block.
+# A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
+# "Known open problems" (closing block) counts WARN and WARN-LEAD-DECISION lines that are real defects we already know: no password on a web address,
 #   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
 #   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
 # Three decisions are open (details in REPORT.md, box "Start here"):
@@ -253,7 +257,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
     near = sorted(k for k, v in norm.items() if len(v) > 1)
     if near: fail(tag, "names that differ only by case or spaces %s" % near)
     # per node settings
-    noretry, silent = [], []
+    noretry, silent, phs = [], [], []
     for n in real:
         nm, short = n["name"], n["type"].split(".")[-1]
         pos = n.get("position")
@@ -282,16 +286,10 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         if short in CRED_KIND and isinstance(cr, dict) and cr and not set(CRED_KIND[short]) & set(cr): fail(tag, "node %s (%s) credential kind(s) %s do not include the expected kind %s" % (nm, short, sorted(cr), " or ".join(repr(k) for k in CRED_KIND[short])))
         for k, v in (cr or {}).items():
             idv = str((v or {}).get("id") or "") if isinstance(v, dict) else ""
-            if idv and any(p in idv for p in PLACEHOLDERS):
-                msg = "node %s credential %r id %r is still a placeholder: replace it in n8n before import" % (nm, k, idv)
-                if OPTS["real_ids"]: fail(tag, msg + " (--require-real-credential-ids)")
-                else: warn(tag, msg + " [run with --require-real-credential-ids to make it a FAIL]")
+            if idv and any(p in idv for p in PLACEHOLDERS): phs.append("%s credential %s id %s" % (nm, k, idv))
         wf = (n.get("parameters") or {}).get("workflowId") if isinstance(n.get("parameters"), dict) else None
         for wv in (list(strings(wf)) if wf is not None else []):
-            if any(p in wv for p in PLACEHOLDERS):
-                msg = "node %s sub-workflow id %r is still a placeholder: replace it in n8n before import" % (nm, wv)
-                if OPTS["real_ids"]: fail(tag, msg + " (--require-real-credential-ids)")
-                else: warn(tag, msg + " [run with --require-real-credential-ids to make it a FAIL]")
+            if any(p in wv for p in PLACEHOLDERS): phs.append("%s sub-workflow id %s" % (nm, wv))
         secret_scan(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
         if envs:
@@ -313,6 +311,10 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             if isw:
                 if n.get("disabled") is True: print("  [%s] webhook %s is disabled: no reply check" % (tag, nm))
                 else: webhook_paths(n, nodes, adj, tag)
+    if phs:
+        msg = "%d id(s) are still placeholders and must be replaced in n8n before import: %s" % (len(phs), "; ".join(sorted(phs)))
+        if OPTS["real_ids"]: fail(tag, msg + " (--require-real-credential-ids)")
+        else: warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]")
     if noretry: warn(tag, "external-call nodes without retryOnFail: %s" % sorted(noretry))
     if silent: warn(tag, "external-call nodes with onError=continueRegularOutput (an error becomes normal-looking data): %s" % sorted(silent))
     # references: upstream check (a node that is not upstream may not have run when the expression reads it)

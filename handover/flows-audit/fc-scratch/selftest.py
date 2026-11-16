@@ -215,6 +215,46 @@ def g_wh_id_list(j, d):
 def g_secret_in_expr(j, d): first_nt(j)["parameters"]["apiKey"] = "={{ $json.a || '" + "".join(["h", "unter", "2", "xyz"]) + "' }}"
 def g_env_bracket(j, d): first_nt(j)["parameters"]["note"] = '={{ $env["SOME_NAME"] }}'
 def g_env_process(j, d): first_nt(j)["parameters"]["note"] = "={{ process.env.SOME_NAME }}"
+def g_wh_auth_badvalue(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0].setdefault("parameters", {})["authentication"] = "digestAuth"; w[0]["credentials"] = {"httpHeaderAuth": {"id": "H1", "name": "mf-hook-header"}}
+def g_wh_auth_wrongkind(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0].setdefault("parameters", {})["authentication"] = "basicAuth"; w[0]["credentials"] = {"httpHeaderAuth": {"id": "H1", "name": "mf-hook-header"}}
+def g_wh_auth_jwt_ok(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0].setdefault("parameters", {})["authentication"] = "jwtAuth"; w[0]["credentials"] = {"jwtAuth": {"id": "J1", "name": "mf-hook-jwt"}}
+def g_form_auth_badvalue(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["type"] = "n8n-nodes-base.formTrigger"; w[0].setdefault("parameters", {})["authentication"] = "headerAuth"; w[0]["credentials"] = {"httpHeaderAuth": {"id": "H1", "name": "mf-hook-header"}}
+def g_hs_kind(j, d):
+    n = first_of(j, "hubspot")
+    if not n: return SKIP
+    k = list(n["credentials"])[0]; n["credentials"]["smtp"] = n["credentials"].pop(k)
+def g_hs_name(j, d):
+    n = first_of(j, "hubspot")
+    if not n: return SKIP
+    k = list(n["credentials"])[0]; n["credentials"][k]["name"] = "some-other-credential"
+def g_hs_nocred(j, d):
+    n = first_of(j, "hubspot")
+    if not n: return SKIP
+    n.pop("credentials")
+def g_env_optional(j, d): first_nt(j)["parameters"]["note"] = "={{ $env?.SOME_NAME }}"
+def g_env_bare(j, d): first_nt(j)["parameters"]["note"] = "={{ Object.keys($env) }}"
+def g_ref_backtick(j, d): first_nt(j)["parameters"]["note"] = "={{ $(`Nope`).first().json.x }}"
+def g_ref_dynamic(j, d): first_nt(j)["parameters"]["note"] = "={{ $('No' + 'pe').first().json.x }}"
+def g_dupwh_slash(j, d):
+    o = [f for f in FILES if f != FOCUS and os.path.isfile(d + "/" + f)][0]; h = json.load(open(d + "/" + o))
+    for n in j["nodes"]:
+        if n["type"] == "n8n-nodes-base.webhook":
+            for m in h["nodes"]:
+                if m["type"] == "n8n-nodes-base.webhook": m["parameters"]["path"] = "/" + str(n["parameters"]["path"]).upper(); m["parameters"]["httpMethod"] = n["parameters"].get("httpMethod", "GET")
+            json.dump(h, open(d + "/" + o, "w")); return None
+    return SKIP
 def g_wh_auth_nocred(j, d):
     w = _wh(j)
     if not w: return SKIP
@@ -333,7 +373,22 @@ G = [
  ("prev_node_used", g_prev, "WARN", "uses $prevNode", (), []),
  ("silent_error_external_call", g_silent, "WARN", "continueRegularOutput (an error becomes normal-looking data)", (), []),
  ("write_node_continues_on_error", g_write_silent, "WARN", "write node", (), []),
- ("always_output_with_error_output", g_aod_err, "WARN", "alwaysOutputData together with continueErrorOutput", (), []),
+ ("always_output_with_error_output_is_fail", g_aod_err, "FAIL", "alwaysOutputData together with continueErrorOutput", (), []),
+ ("webhook_without_auth_is_a_lead_decision_line", None, "LEAD", "WARN-LEAD-DECISION", (), []),
+ ("env_read_is_a_lead_decision_line", g_env_read, "LEAD", "WARN-LEAD-DECISION", (), []),
+ ("webhook_auth_value_not_accepted", g_wh_auth_badvalue, "FAIL", "authentication='digestAuth' is not one n8n accepts here", (), []),
+ ("webhook_auth_wrong_credential_kind", g_wh_auth_wrongkind, "FAIL", "needs a credential of kind 'httpBasicAuth'", (), []),
+ ("form_trigger_auth_value_not_accepted", g_form_auth_badvalue, "FAIL", "authentication='headerAuth' is not one n8n accepts here", (), ["unreachable", "orphan", "WITHOUT respondToWebhook", "no respondToWebhook"]),
+ ("hubspot_credential_kind_wrong", g_hs_kind, "FAIL", "do not include the expected kind 'hubspotAppToken'", (), []),
+ ("hubspot_credential_name_wrong", g_hs_name, "FAIL", "expected 'hubspot-app-token' (--expect-credential)", ("--expect-credential", "hubspotAppToken=hubspot-app-token"), []),
+ ("hubspot_credential_missing", g_hs_nocred, "FAIL", "has no credentials block", (), []),
+ ("placeholder_ids_are_warn_even_when_quiet", None, "WARN", "still placeholders", (), []),
+ ("placeholder_ids_fail_when_required", None, "FAIL", "still placeholders", ("--require-real-credential-ids",), []),
+ ("env_read_optional_chain_strict", g_env_optional, "FAIL", "reads $env?.SOME_NAME", ("--block-env-access",), []),
+ ("env_read_bare_strict", g_env_bare, "FAIL", "reads $env", ("--block-env-access",), []),
+ ("expression_names_missing_node_in_backticks", g_ref_backtick, "FAIL", "refers to $('Nope')", (), []),
+ ("expression_computed_node_name_is_warn", g_ref_dynamic, "WARN", "computed name", (), []),
+ ("webhook_path_reused_with_slash_and_case", g_dupwh_slash, "FAIL", "two webhooks share method+path", (), []),
  ("switch_unwired_output_is_warn", g_switch_gap, "WARN", "SWITCH node Sw has unwired output(s)", (), []),
  ("env_read_default_is_warn", g_env_read, "WARN", "$env.SOME_NAME", (), []),
  ("webhook_without_auth_default", None, "WARN", "has no authentication", (), []),
@@ -356,7 +411,8 @@ CONTROLS = [
  ("control_filter_with_one_output", g_filter_ok, ()),
  ("control_webhook_auth_with_credentials", g_wh_auth_cred, ()),
  ("control_sticky_note_text_may_quote_a_node_name", g_sticky_ref_ok, ()),
- ("control_credential_names_as_expected", None, ("--expect-credential", "postgres=n8n-publish-pg", "--expect-credential", "smtp=mf-mail-smtp")),
+ ("control_credential_names_as_expected", None, ("--expect-credential", "postgres=n8n-publish-pg", "--expect-credential", "smtp=mf-mail-smtp", "--expect-credential", "hubspotAppToken=hubspot-app-token")),
+ ("control_webhook_auth_jwt_with_credentials", g_wh_auth_jwt_ok, ()),
 ]
 
 FOCUS = "mf-form.json"
@@ -385,7 +441,7 @@ def make(name, mut, work, src, which, keep_counts=False):
         if f == which and keep_counts: c = count(json.load(open(src + "/" + f)))
         if c: exp += ["--expect", "%s=%d:%d" % (f, c[0], c[1])]
     return d, False, exp
-def lines_of(out, level): return [l for l in out.splitlines() if l.startswith(level + " ")]
+def lines_of(out, level): return [l for l in out.splitlines() if l.startswith(level + " ") or (level == "WARN" and l.startswith("WARN-LEAD-DECISION "))]
 
 def main():
     if os.path.isdir(OUT) and os.listdir(OUT) and not os.path.isfile(OUT + "/CHECK-COMMAND.txt"):
@@ -413,6 +469,7 @@ def main():
             rc, out = run(cmd(d, src, exp, extra), n); report(n + " (exit 0, no FAIL)", rc == 0 and not lines_of(out, "FAIL"), "rc=%d fails=%s" % (rc, lines_of(out, "FAIL")[:2]))
     # the reply-gap and no-auth WARN must be listed as known open problems on the unmutated form file
     out = base_out[("real", "mf-form.json")]
+    report("control_closing_block_sums_lead_decisions (webhook without auth counted)", "OPEN LEAD DECISIONS: 1 webhook(s) without auth, 0 $env node(s)" in out, "line missing or numbers differ")
     report("control_known_problems_are_listed (REPLY GAP and no authentication counted)", "REPLY GAP" in out and any(l.startswith("  - ") and "no authentication" in l for l in out.splitlines()))
     # negative / warn cases
     skipnames = {}
@@ -426,6 +483,7 @@ def main():
             named = [l for l in fl if text in l]; stray = [l for l in fl if text not in l and not any(a in l for a in also)]
             good = rc == 1 and bool(named) and not stray; why = "rc=%d named=%d stray=%s" % (rc, len(named), [s[:90] for s in stray[:2]])
         else:
+            if level == "LEAD": wl = [l for l in out.splitlines() if l.startswith("WARN-LEAD-DECISION ")]; text = ""
             named = [l for l in wl if text in l]; fresh = [l for l in named if mut is None or l.replace(d, "D") not in base_warn.get((tv, f), set())]
             stray = [l for l in fl if not any(a in l for a in also)]
             good = rc == (1 if fl else 0) and not stray and bool(fresh); why = "rc=%d stray_fails=%s new_named_warn=%d" % (rc, [x[:90] for x in stray[:2]], len(fresh))

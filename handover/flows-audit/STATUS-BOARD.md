@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:00:22Z
+UPDATED_UTC: 2026-11-16T10:01:21Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 85
-AGENTS_RUNNING: 7
-CAPACITY: 2.21 load of 4 cores, mem 1/15 GB, disk free 27G, agents 7 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 2.40 load of 4 cores, mem 1/15 GB, disk free 27G, agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: second reviewer found 5 Majors (no-auth webhook only WARN, webhook credential kind unchecked, HubSpot credential uncovered, placeholder ids pass quietly, alwaysOutputData WARN only) + wrong doc lines; r3 fixer running after the evidence runner; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: rerun clean earlier; fresh security review r2 found no Blocker but 12 real Minor/Nit (nested-template lexer, delete recovery dead end, delete not idempotent, missing-value copy written); r5 fixer running; 3.9/3.10, macOS, live import not run
 ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r4 fixer done (327 = 114/69/49/25/70; 11 SUPPORTED marked text-only needs run); two fresh reviewers running; reader nits left (pronoun drift, several meanings of take); F-01 review unreadable so B-214, B-215 UNTRACED; SLIP: that fixer deleted untracked fix-f5-r4.md (log rebuilt by me from the fixer report, shorter)
 F5: r4 done, two fresh reviewers running; fix-f5-r4.md was deleted by another agent and rebuilt shorter by me; lead decision 10:02Z cuts scenes 5-11 so a scope pass is needed; Q-A to Q-E open for coordinator
-NEXT: apply lead decisions; F5 reader review then scope-cut fixer; collect F3 r5, F8, cite check, claims reviews
-PUSHED_UTC: 2026-11-16T10:00:22Z
+NEXT: apply lead decisions; F5 reader review then scope-cut fixer; collect F3 r5, F8, cite check, claims reviews, necessity
+PUSHED_UTC: 2026-11-16T10:01:21Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -41,6 +41,7 @@ PUSHED_UTC: 2026-11-16T10:00:22Z
 | f8-fix3 | F8 r3 fixer (Majors) | sonnet | fix 5 Majors + docs after evidence | 10:05 | 10:20 | 5 | running | flow-check/fix-f8-r3.md |
 | cl-fac | claims r4 facts reviewer | sonnet | sample 40+ rows vs sources | 10:08 | 10:20 | 5 | running | (report inline) |
 | cl-rd | claims r4 reader reviewer | sonnet | fresh reader pass | 10:08 | 10:20 | 5 | running | (report inline) |
+| nec | necessity review (zoom-out) | sonnet | purpose test after lead decisions | 10:07 | 10:18 | 5 | running | (report inline) |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
