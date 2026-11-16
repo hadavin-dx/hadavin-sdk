@@ -253,7 +253,8 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
 # round 10c (Q1): the committed take-warns.pin keeps the flows-audit reviewer line, so a bare take exits 4 ("pin not yet confirmed by the lead") until the lead edits it. This script tests the FILES, so it runs the take with a copy of the pin whose reviewer line is a stand-in (same WARN lines, same hash); the committed pin's own state is printed near the end.
-STANDIN=$(timeout -k 10 "$LIM_TAKE" bash "$HERE/take_check.sh" --standin-name) && [ -n "$STANDIN" ] || { echo "ABORT: take_check.sh --standin-name gave no name (round f8-r8: the stand-in name and the word lists live in take_check.sh only)"; exit 3; }
+mkdir -p "$W/tc" || exit 2
+lim "$LIM_TAKE" bash "$HERE/take_check.sh" --standin-name > "$W/tc/standin.txt" 2>&1 && STANDIN=$(<"$W/tc/standin.txt") && [ -n "$STANDIN" ] || { echo "ABORT: take_check.sh --standin-name gave no name (round f8-r8: the stand-in name and the word lists live in take_check.sh only)"; exit 3; }
 PINDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)   # round f8-r8: the stand-in line carries the pin's own date (never older than the pin), not the clock date
 PINRCPT=$(sed -n 's/^# sha256 of the WARN lines below.*: \([0-9a-f]\{64\}\)$/\1/p' "$HERE/take-warns.pin" | head -n 1 | cut -c1-8)   # round f8-r9 (M1): the reviewer line carries the first 8 characters of the WARN-lines hash
 mkdir -p "$W/tc" && { echo "# reviewed by: $STANDIN, ${PINDATE:-$(date -u +%Y-%m-%d)}, pin sha256 ${PINRCPT:-missing}"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
@@ -278,7 +279,7 @@ grep -q -E "^FINAL: .*Flow files sha256 \(four files, combined\): [0-9a-f]{64}\.
 grep -q -F "!!!" "$RAW/take-check.txt" && TCMISS="$TCMISS [a !!! line: the take script found a table or column problem]"
 # take_check.sh failure exits (each must be 4 with its own loud line): table file missing, old table without the alert columns, no query text to read
 mkdir -p "$W/tc" && cp -r -- "$W/g/real" "$W/tc/noquery" || TCMISS="$TCMISS [could not make the no-query test folder]"
-python3 -I - "$W/tc/noquery" <<'PYEOF' || TCMISS="$TCMISS [no-query test folder not built]"
+lim "$LIM_TAKE" python3 -I - "$W/tc/noquery" <<'PYEOF' || TCMISS="$TCMISS [no-query test folder not built]"
 import glob, json, sys
 for p in glob.glob(sys.argv[1] + "/*.json"):
     j = json.load(open(p, encoding="utf-8"))
@@ -311,7 +312,7 @@ tcfail() { # name expected-line env-assignments...
 }
 # Q18: the take on the patched copy with ONE run-saving fault planted: each must be exit 4 with its own loud line (the checker must not hide it)
 for nm in form-off sub-off rec-saves; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
-python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [run-saving test folders not built]"
+lim "$LIM_TAKE" python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [run-saving test folders not built]"
 import json, sys
 def edit(folder, fn, **kw):
     p = f"{sys.argv[1]}/{folder}/{fn}"
@@ -324,7 +325,7 @@ edit("rec-saves", "mf-recovery.json", saveDataSuccessExecution="all", saveDataEr
 PYEOF
 # Q18 extras: (1) key check reads the node list, not any text; (2) checker exit 2 and 3 through take_check.sh give the "no verdict" line and the same exit status
 cp -r -- "$W/g/real" "$W/tc/keyok-gone" || TCMISS="$TCMISS [could not make keyok-gone folder]"
-python3 -I - "$W/tc/keyok-gone/mf-form.json" <<'PYEOF' || TCMISS="$TCMISS [keyok-gone not built]"
+lim "$LIM_TAKE" python3 -I - "$W/tc/keyok-gone/mf-form.json" <<'PYEOF' || TCMISS="$TCMISS [keyok-gone not built]"
 import json, sys
 p = sys.argv[1]
 j = json.load(open(p, encoding="utf-8"))
@@ -348,7 +349,7 @@ done
 # M1: the set of WARN lines is pinned (a new WARN, a missing pin file) and a disabled external-call node is a FAIL
 for nm in form-odd sub-nokey hook-emptyset warn-new; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
 cp -r -- "$D/n8n-flows-real-v5" "$W/tc/f008-only-src" || TCMISS="$TCMISS [could not make the f008-only source]"
-python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [round 9 test folders not built]"
+lim "$LIM_TAKE" python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [round 9 test folders not built]"
 import json, sys
 def load(folder, fn):
     return f"{sys.argv[1]}/{folder}/{fn}", json.load(open(f"{sys.argv[1]}/{folder}/{fn}", encoding="utf-8"))
@@ -368,7 +369,7 @@ for fn in ("mf-form.json", "mf-hook.json", "mf-sub-crm-mail.json"):
     j.setdefault("settings", {}).update(saveDataSuccessExecution="all", saveDataErrorExecution="all", saveManualExecutions=True)
     save(p, j)
 PYEOF
-cp -r -- "$W/g/real" "$W/tc/disabled-send" && python3 -I - "$W/tc/disabled-send/mf-sub-crm-mail.json" <<'PYEOF' || TCMISS="$TCMISS [disabled-send test folder not built]"
+cp -r -- "$W/g/real" "$W/tc/disabled-send" && lim "$LIM_TAKE" python3 -I - "$W/tc/disabled-send/mf-sub-crm-mail.json" <<'PYEOF' || TCMISS="$TCMISS [disabled-send test folder not built]"
 import json, sys
 p = sys.argv[1]
 j = json.load(open(p, encoding="utf-8"))
@@ -432,6 +433,18 @@ for f in pristine-strict patched-strict; do   # real-v5 strict: 0 or 1 are both 
   [ "$(grep -c '^exit=' "$RAW/$f.txt")" = 1 ] || RC=1
   for x in $(grep -h '^exit=' "$RAW/$f.txt" | cut -d= -f2); do case $x in 0|1) ;; *) RC=1;; esac; done
 done
+# f8-r13 (review f8-r12 design M2): an exit 1 can also come from a crash of the checker. Each of the five real-v5 files must hold exactly one RESULT line, no Traceback, and a RESULT that agrees with its exit line: default mode 0 FAIL with exit 0; strict mode FAIL count above 0 with exit 1 (or 0 FAIL with exit 0); no-baseline: exit 1 with FAIL above 0 (it is information only, but a crash must show).
+RESNOTE=""
+for f in pristine patched pristine-strict patched-strict pristine-no-baseline; do
+  rl=$(grep -h -E '^RESULT: [0-9]+ FAIL, [0-9]+ WARN$' "$RAW/$f.txt"); ex=$(grep -h '^exit=' "$RAW/$f.txt" | cut -d= -f2)
+  if [ "$(printf '%s\n' "$rl" | grep -c .)" != 1 ] || grep -q -E '^Traceback' "$RAW/$f.txt"; then RC=1; RESNOTE="$RESNOTE [$f: not exactly one RESULT line, or a Traceback]"; continue; fi
+  nf=${rl#RESULT: }; nf=${nf%% *}
+  case $f in
+    pristine|patched) { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
+    pristine-strict|patched-strict) { { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; }; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
+    pristine-no-baseline) { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
+  esac
+done
 [ "$ST" = 0 ] || RC=1
 [ "$TC" = 5 ] && [ -z "$TCMISS" ] || RC=1   # 5 = a would-be pass of a take call that has the test override (stand-in pin)
 show() { for f in "$@"; do echo "[$f]"; grep -h -E '^(######## |exit=|RESULT|Known open problems)' "$RAW/$f.txt"; done; }
@@ -448,6 +461,7 @@ CNTMSG=$(count_check "$RAW/selftest-new.txt" "$RAW/test-take-check.txt") || RC=1
 echo "$CNTMSG"
 [ "$ST" = 0 ] || tail -n 5 "$RAW/selftest-new.txt" 2>/dev/null | cut -c1-300 | sed 's/^/  selftest tail: /'   # f8-r11: a failing self-test shows where its output ended
 echo "[take_check.sh exit=$TC] missing lines:${TCMISS:- none}"
+echo "[checker result lines] ${RESNOTE:-each of the five real-v5 files has exactly one RESULT line that agrees with its exit status}"
 [ "$TT" = 0 ] || grep -h '^FAIL' "$RAW/test-take-check.txt" 2>/dev/null | head -n 8 | cut -c1-300 | sed 's/^/  take suite: /'   # f8-r11: a failing take suite shows which cases failed (nested runs delete their raw folder, so this is the only trace)
 LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/')
 [ -n "${RUN_ALL_NESTED:-}" ] && [ -n "${RUN_ALL_DROP_LEAD:-}" ] && LW=""   # test hook (round 10c, Q3)
@@ -457,9 +471,9 @@ case $LW in
   *) LEADMSG="OPEN LEAD DECISIONS (real-v5, the take): unknown (the real-v5 checker run did not finish; see raw/pristine.txt)"; RC=1;;
 esac
 PINREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)
-PINSHOWN=$(timeout -k 10 "$LIM_TAKE" bash "$HERE/take_check.sh" --safe-text "$PINREV")   # round f8-r8: the word rules (session, lead to confirm, placeholder, stand-ins, hidden characters) are asked of take_check.sh, never copied here
+lim "$LIM_TAKE" bash "$HERE/take_check.sh" --safe-text "$PINREV" > "$W/tc/pinshown.txt" 2>&1; PINSHOWN=$(<"$W/tc/pinshown.txt")   # round f8-r8: the word rules (session, lead to confirm, placeholder, stand-ins, hidden characters) are asked of take_check.sh, never copied here
 if [ -z "$PINREV" ]; then PINMSG="COMMITTED PIN (take-warns.pin) has no reviewer line. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead adds one (this run used a stand-in line, so its take check could pass)."
-elif PINWHY=$(env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN timeout -k 10 "$LIM_TAKE" bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE" "${PINRCPT:-nohash!!}"); then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
+elif lim "$LIM_TAKE" env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE" "${PINRCPT:-nohash!!}" > "$W/tc/pinwhy.txt" 2>&1; PWRC=$?; PINWHY=$(<"$W/tc/pinwhy.txt"); [ "$PWRC" = 0 ]; then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
 else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN'. NOT confirmed by the lead: take_check.sh refuses it ($(printf '%s' "$PINWHY" | cut -c1-120)), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass)."; fi
 [ -n "$STLINE" ] && [ "${STLINE#SELFTEST summary line missing}" != "$STLINE" ] && { echo "  selftest output (last 5 lines of $RAW/selftest-new.txt):"; tail -n 5 "$RAW/selftest-new.txt" 2>/dev/null | cut -c1-300 | sed 's/^/    /'; }
 # f8-r11: publish into the tracked raw/ folder only when asked, only at the very end, each file under a temporary name and then renamed
@@ -467,8 +481,13 @@ else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters rem
 PUBMSG=""
 if [ -n "$REFRESH" ]; then
   if [ "$RC" != 0 ]; then PUBMSG="raw/ was NOT refreshed: this run did not pass (its raw files are kept in $RAW)"
-  elif PUBN=$(publish_raw "$RAW" "$RAWABS"); then PUBMSG="raw files refreshed in $RAWABS: $PUBN (listed with their sha256 in refresh-manifest.txt)"
-  else RC=1; PUBMSG="raw files refreshed in $RAWABS: NOT all copied (${PUBN:-0} copied); the run fails"; fi
+  else
+    # f8-r13: a signal during the copy waits until it is over (about 40 small files), so raw/ never holds half a refresh with an old manifest
+    trap '' INT TERM HUP; PUBN=$(publish_raw "$RAW" "$RAWABS"); PUBRC=$?
+    trap 'echo "INTERRUPTED (INT): stopping every process this run started" >&6; exit 130' INT; trap 'echo "INTERRUPTED (TERM): stopping every process this run started" >&6; exit 143' TERM; trap 'echo "INTERRUPTED (HUP): stopping every process this run started" >&6; exit 129' HUP
+    if [ "$PUBRC" = 0 ]; then PUBMSG="raw files refreshed in $RAWABS: $PUBN (listed with their sha256 in refresh-manifest.txt)"
+    else RC=1; PUBMSG="raw files refreshed in $RAWABS: NOT all copied (${PUBN:-0} copied); the run fails"; fi
+  fi
 else
   PUBMSG="tracked raw folder $RAWABS was NOT changed (pass --refresh to publish this run's raw files)"
 fi

@@ -1,14 +1,17 @@
 #!/bin/bash
 # f8-r11: repeat-run test. Runs run_all.sh N times in a row (default 5; one at a time, a full run takes about 4 minutes) and requires the same exit status and the same summary lines every time.
-# Usage: bash repeat_run_all.sh [N] [OUTDIR (must not exist)]    Detach it for N > 5 (a background task is stopped after about 30 minutes).
+# (f8-r13: run for real only when the lead asks; a full run takes about 4 minutes.) Usage: bash repeat_run_all.sh [N] [OUTDIR (must not exist)]    Detach it for N > 5 (a background task is stopped after about 30 minutes).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 N=${1:-5}; [[ $N =~ ^[0-9]+$ ]] && [ "$N" -ge 2 ] || { echo "usage: bash repeat_run_all.sh [N>=2] [OUTDIR]"; exit 2; }
 if [ -n "${2:-}" ]; then [ -e "$2" ] && { echo "REFUSED: $2 exists"; exit 2; }; O=$2; mkdir -p -- "$O" || exit 2; else O=$(mktemp -d "${TMPDIR:-/tmp}/rep.XXXXXX") || exit 2; fi
 echo "outputs in $O"
+# f8-r13: a signal stops the run in progress (run_all.sh stops its own helpers on TERM) and this script ends with the signal's status
+RP=""
+trap '[ -z "$RP" ] || { kill -TERM "$RP" 2>/dev/null; wait "$RP" 2>/dev/null; }; exit 143' INT TERM HUP
 for i in $(seq 1 "$N"); do
   # f8-r12 (m8): each run has its own time limit (30 minutes, a full run takes about 4), so one stuck run cannot hold the whole repeat; the runs follow one another because run_all.sh locks the raw folder
-  timeout -k 10 "${REPEAT_RUN_LIMIT:-1800}" bash "$HERE/run_all.sh" > "$O/run-$i.txt" 2>&1; echo $? > "$O/run-$i.rc"
+  timeout -k 10 "${REPEAT_RUN_LIMIT:-1800}" bash "$HERE/run_all.sh" > "$O/run-$i.txt" 2>&1 & RP=$!; wait "$RP"; echo $? > "$O/run-$i.rc"; RP=""
   # the lines that carry the result (case counts, exit statuses, open decisions); folder names and times are removed
   grep -E '^(\[selftest exit=|COUNTS |COUNT DRIFT|\[take_check.sh exit=|run_all exit status|OPEN LEAD DECISIONS|exit=|RESULT)' "$O/run-$i.txt" > "$O/sum-$i.txt"
   echo "run $i: exit $(cat "$O/run-$i.rc"), $(wc -l < "$O/sum-$i.txt") summary lines"
