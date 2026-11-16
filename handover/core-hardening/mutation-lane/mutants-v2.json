@@ -1,0 +1,938 @@
+[
+ {
+  "id": "C2-01",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if not v.is_finite():\n            raise ValueError(\"a price must be a finite number\")\n        return v",
+  "new": "        return v",
+  "desc": "Route._finite validator removed (NaN/Infinity price accepted by the route itself)",
+  "expect": "SURVIVE (double cover: README says pydantic's Money already refuses NaN/Infinity; confirm by run)",
+  "killer": "tests/test_c01_route_limits.py::test_nan_and_infinity_are_a_clean_config_error_never_a_crash[...] only if pydantic stops refusing"
+ },
+ {
+  "id": "C2-02",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if not v.is_finite():",
+  "new": "        if v.is_finite():",
+  "desc": "v2 _finite flipped: every finite price refused",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_priced_live_route_still_loads (and most of the file)"
+ },
+ {
+  "id": "C2-03",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    return price.is_finite() and (price > 0",
+  "new": "    return price.is_finite() or (price > 0",
+  "desc": "_price_ok: is_finite and -> or (NaN raises, Infinity passes)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_price_predicate_is_total_even_where_pydantic_is_bypassed"
+ },
+ {
+  "id": "C2-04",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    return price.is_finite() and (price > 0",
+  "new": "    return (price > 0",
+  "desc": "_price_ok: is_finite term dropped (NaN raises InvalidOperation, Infinity passes)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_price_predicate_is_total_even_where_pydantic_is_bypassed"
+ },
+ {
+  "id": "C2-05",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    return price.is_finite() and (price > 0",
+  "new": "    return not price.is_finite() and (price > 0",
+  "desc": "_price_ok: is_finite negated",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_priced_live_route_still_loads"
+ },
+ {
+  "id": "C2-06",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price >= 0 or (zero_ok and price == 0))",
+  "desc": "price > 0 became >= 0 (price 0 always allowed)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]"
+ },
+ {
+  "id": "C2-07",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price > 1 or (zero_ok and price == 0))",
+  "desc": "price floor 1 (tiny positive price refused)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_tiny_positive_price_is_accepted_on_purpose"
+ },
+ {
+  "id": "C2-08",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price > 0 or (zero_ok or price == 0))",
+  "desc": "zero_ok and -> or (price 0 always allowed)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]"
+ },
+ {
+  "id": "C2-09",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price > 0 and (zero_ok and price == 0))",
+  "desc": "or -> and (nothing passes)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_priced_live_route_still_loads"
+ },
+ {
+  "id": "C2-10",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price > 0 or (zero_ok and price >= 0))",
+  "desc": "zero_ok branch allows negative prices",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_never_lets_a_negative_or_non_finite_price_through"
+ },
+ {
+  "id": "C2-11",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "price > 0 or (zero_ok and price == 0))",
+  "new": "price > 0 or (price == 0))",
+  "desc": "zero_ok ignored: price 0 always allowed",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]"
+ },
+ {
+  "id": "C2-12",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    local_free = bool(getattr(llm, \"keyless_loopback\", False))",
+  "new": "    local_free = not bool(getattr(llm, \"keyless_loopback\", False))",
+  "desc": "local_free inverted",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_zero_by_design_works_only_on_a_keyless_loopback_model; test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]"
+ },
+ {
+  "id": "C2-13",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    local_free = bool(getattr(llm, \"keyless_loopback\", False))",
+  "new": "    local_free = bool(getattr(llm, \"keyless_loopback\", True))",
+  "desc": "local_free default True for kinds without the property (anthropic)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm0]"
+ },
+ {
+  "id": "C2-14",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    local_free = bool(getattr(llm, \"keyless_loopback\", False))",
+  "new": "    local_free = True",
+  "desc": "local_free always true",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]"
+ },
+ {
+  "id": "C2-15",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "            zero_ok = r.price_is_zero_by_design and local_free",
+  "new": "            zero_ok = r.price_is_zero_by_design or local_free",
+  "desc": "zero_ok: flag and loopback -> or (a local model priced 0 with no flag passes)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_local_model_with_price_0_but_no_flag_is_refused"
+ },
+ {
+  "id": "C2-16",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "            zero_ok = r.price_is_zero_by_design and local_free",
+  "new": "            zero_ok = r.price_is_zero_by_design",
+  "desc": "zero_ok: loopback term dropped (flag alone lets price 0 pass on any live kind)",
+  "expect": "SURVIVE? (flag-refused tests use a positive price, and the flag message is still emitted; a test with price 0 + flag on a remote kind must also assert 'needs a price above 0')",
+  "killer": "none known; proposed: price 0 + flag on LIVE_LLM expects BOTH refusal texts"
+ },
+ {
+  "id": "C2-17",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "            if r.price_is_zero_by_design and not local_free:",
+  "new": "            if r.price_is_zero_by_design and local_free:",
+  "desc": "flag refusal condition inverted",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]"
+ },
+ {
+  "id": "C2-18",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "            if r.price_is_zero_by_design and not local_free:",
+  "new": "            if False:",
+  "desc": "flag-on-wrong-kind refusal removed",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]"
+ },
+ {
+  "id": "C2-19",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+  "new": "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                or _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+  "desc": "one field zero is enough to pass (and -> or)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*] (one field zero each)"
+ },
+ {
+  "id": "C2-20",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+  "new": "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)",
+  "desc": "output price no longer checked (input checked twice)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-output_usd_per_mtok]"
+ },
+ {
+  "id": "C2-21",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+  "new": "                _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+  "desc": "input price no longer checked",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok]"
+ },
+ {
+  "id": "C2-22",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    live = llm.kind != \"fake\"",
+  "new": "    live = llm.kind == \"fake\"",
+  "desc": "live inverted",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[*]; test_the_fake_model_may_cost_nothing"
+ },
+ {
+  "id": "C2-23",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    live = llm.kind != \"fake\"",
+  "new": "    live = True",
+  "desc": "price check also on the fake kind",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_fake_model_may_cost_nothing"
+ },
+ {
+  "id": "C2-24",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if live:\n            zero_ok",
+  "new": "        if live and name == \"default\":\n            zero_ok",
+  "desc": "price check only on the route named default (route-position gap)",
+  "expect": "SURVIVE? (the second route in the at-once test has a good price)",
+  "killer": "none known; proposed: route 'zcheap' priced 0 expects refusal naming it"
+ },
+ {
+  "id": "C2-25",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    for name, r in sorted(routes.items()):",
+  "new": "    for name, r in sorted(routes.items())[-1:]:",
+  "desc": "only the LAST route (sorted) checked",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_every_route_refusal_is_reported_at_once (default lost)"
+ },
+ {
+  "id": "C2-26",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    for name, r in sorted(routes.items()):",
+  "new": "    for name, r in sorted(routes.items())[:1]:",
+  "desc": "only the FIRST route (sorted) checked",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_every_route_refusal_is_reported_at_once (route second lost)"
+ },
+ {
+  "id": "C2-27",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    for name, r in sorted(routes.items()):",
+  "new": "    for name, r in routes.items():",
+  "desc": "routes not sorted (message order only)",
+  "expect": "SURVIVE (equivalent)",
+  "killer": "none: only the order of the refusal lines changes; the tests use `in text`"
+ },
+ {
+  "id": "C2-28",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "                out.append(f\"route {name}: a live model needs a price above 0\")",
+  "new": "                out.append(\"a live model needs a price above 0\")",
+  "desc": "route name dropped from the price message",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_every_route_refusal_is_reported_at_once"
+ },
+ {
+  "id": "C2-29",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if r.max_tokens > max_route_tokens:",
+  "new": "        if r.max_tokens >= max_route_tokens:",
+  "desc": "max_tokens > became >= (ceiling value refused)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads"
+ },
+ {
+  "id": "C2-30",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if r.max_tokens > max_route_tokens:",
+  "new": "        if r.max_tokens > max_route_tokens + 1:",
+  "desc": "max_tokens ceiling off by one (200_001 loads)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_above_the_ceiling_is_refused[200001]"
+ },
+ {
+  "id": "C2-31",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "        if r.max_tokens > max_route_tokens:",
+  "new": "        if r.max_tokens < max_route_tokens:",
+  "desc": "max_tokens comparison reversed",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads; test_max_tokens_above_the_ceiling_is_refused[*]"
+ },
+ {
+  "id": "C2-32",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)",
+  "new": "refused = _route_refusals(self.routes, self.backends.llm, defaults.MAX_ROUTE_TOKENS)",
+  "desc": "configured max_route_tokens ignored (default used)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_ceiling_is_a_config_field_and_can_be_lowered"
+ },
+ {
+  "id": "C2-33",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)",
+  "new": "refused = []",
+  "desc": "route refusals not collected at all",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::most tests"
+ },
+ {
+  "id": "C2-34",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)",
+  "new": "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=1)",
+  "desc": "ceiling field gt=0 -> gt=1 (a ceiling of 1 refused)",
+  "expect": "SURVIVE? (only 0 is tested)",
+  "killer": "none known; proposed: max_route_tokens=1 with max_tokens=1 loads"
+ },
+ {
+  "id": "C2-35",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)",
+  "new": "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, ge=0)",
+  "desc": "ceiling field gt=0 -> ge=0 (0 allowed)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_ceiling_field_itself_must_be_above_zero"
+ },
+ {
+  "id": "C2-36",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    max_tokens: int = Field(gt=0)",
+  "new": "    max_tokens: int = Field(gt=1)",
+  "desc": "route max_tokens gt=0 -> gt=1",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_boundary_at_the_bottom"
+ },
+ {
+  "id": "C2-37",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    max_tokens: int = Field(gt=0)",
+  "new": "    max_tokens: int = Field(ge=0)",
+  "desc": "route max_tokens gt=0 -> ge=0 (0 allowed)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_boundary_at_the_bottom"
+ },
+ {
+  "id": "C2-38",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    max_tokens: int = Field(gt=0)",
+  "new": "    max_tokens: int",
+  "desc": "route max_tokens lower bound removed (0 and -1 allowed)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_boundary_at_the_bottom"
+ },
+ {
+  "id": "C2-39",
+  "file": "src/hadavin_sdk/config.py",
+  "old": "    price_is_zero_by_design: bool = False",
+  "new": "    price_is_zero_by_design: bool = True",
+  "desc": "flag defaults to true",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_defaults_to_false_and_does_not_change_the_agent_hash_input; test_a_local_model_with_price_0_but_no_flag_is_refused"
+ },
+ {
+  "id": "C2-40",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = 1",
+  "desc": "ceiling literal 1",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads"
+ },
+ {
+  "id": "C2-41",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = 0",
+  "desc": "ceiling literal 0 (every route refused)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads"
+ },
+ {
+  "id": "C2-42",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = -1",
+  "desc": "ceiling literal -1",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads"
+ },
+ {
+  "id": "C2-43",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = 200_001",
+  "desc": "ceiling literal 200_001",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_above_the_ceiling_is_refused[200001]"
+ },
+ {
+  "id": "C2-44",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = 199_999",
+  "desc": "ceiling literal 199_999",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads"
+ },
+ {
+  "id": "C2-45",
+  "file": "src/hadavin_sdk/defaults.py",
+  "old": "MAX_ROUTE_TOKENS = 200_000",
+  "new": "MAX_ROUTE_TOKENS = 2_000_000",
+  "desc": "ceiling literal 2_000_000 (the extra-zero typo it guards)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_max_tokens_above_the_ceiling_is_refused[*]"
+ },
+ {
+  "id": "C2-46",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "new": "        return urlsplit(self.base_url).hostname in _LOOPBACK",
+  "desc": "keyless_loopback: key term dropped (a loopback model WITH a key counts as free)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm1] (LOCAL_WITH_KEY)"
+ },
+ {
+  "id": "C2-47",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "new": "        return not self.api_key_secret_name",
+  "desc": "keyless_loopback: host term dropped (any keyless host counts as local)",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm2] (REMOTE_NO_KEY)"
+ },
+ {
+  "id": "C2-48",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "new": "        return not self.api_key_secret_name or urlsplit(self.base_url).hostname in _LOOPBACK",
+  "desc": "keyless_loopback: and -> or",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::llm1 and llm2 cases"
+ },
+ {
+  "id": "C2-49",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "new": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname not in _LOOPBACK",
+  "desc": "keyless_loopback: host test inverted",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_zero_by_design_works_only_on_a_keyless_loopback_model"
+ },
+ {
+  "id": "C2-50",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "new": "        return bool(self.api_key_secret_name) and urlsplit(self.base_url).hostname in _LOOPBACK",
+  "desc": "keyless_loopback: key test inverted",
+  "expect": "KILLED",
+  "killer": "tests/test_c01_route_limits.py::test_zero_by_design_works_only_on_a_keyless_loopback_model"
+ },
+ {
+  "id": "C2-51",
+  "file": "src/hadavin_sdk/backends/table.py",
+  "old": "_LOOPBACK = {\"127.0.0.1\", \"localhost\", \"::1\"}",
+  "new": "_LOOPBACK = {\"127.0.0.1\", \"localhost\", \"::1\", \"example.com\"}",
+  "desc": "loopback set widened by one remote host (also widens the existing http check at line ~80: only the new route-price use is the target here)",
+  "expect": "SURVIVE? (no test uses a remote host in the set)",
+  "killer": "none known; equivalent for the tests, real for the rule; proposed: a keyless route to a non-loopback host is refused (REMOTE_NO_KEY covers example.com only through the host name `models.example.com`, which is not in the set)"
+ },
+ {
+  "id": "A2-01",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    TickStep(\"audit_drain\", 0, audit_drain),",
+  "new": "    TickStep(\"audit_drain\", 3600, audit_drain),",
+  "desc": "step interval 0 -> 3600 (not every tick)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_entry_points_at_the_right_function_and_runs_every_tick"
+ },
+ {
+  "id": "A2-02",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    TickStep(\"audit_drain\", 0, audit_drain),",
+  "new": "    TickStep(\"audit_drain\", 0, reconcile),",
+  "desc": "STEPS entry points at the approvals reconcile",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_entry_points_at_the_right_function_and_runs_every_tick"
+ },
+ {
+  "id": "A2-03",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    TickStep(\"audit_drain\", 0, audit_drain),\n",
+  "new": "",
+  "desc": "step removed from STEPS",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_entry_points_at_the_right_function_and_runs_every_tick; tests/test_p7_tick.py::the step-order list test"
+ },
+ {
+  "id": "A2-04",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if remaining > 0:",
+  "new": "    if remaining >= 0:",
+  "desc": "failing rule: remaining > 0 -> >= 0 (always fails)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_an_empty_outbox_is_green_and_says_zero"
+ },
+ {
+  "id": "A2-05",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if remaining > 0:",
+  "new": "    if remaining > 1:",
+  "desc": "failing rule: remaining > 0 -> > 1 (one waiting event is green)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_database_that_stays_down_leaves_the_step_failing"
+ },
+ {
+  "id": "A2-06",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "        raise RuntimeError(f\"audit events still waiting: {remaining} (corrupt {corrupt})\")",
+  "new": "        return",
+  "desc": "failing rule: raise removed",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1"
+ },
+ {
+  "id": "A2-07",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    remaining = backlog() if backlog is not None else 0",
+  "new": "    try:\n        remaining = backlog() if backlog is not None else 0\n    except Exception:\n        remaining = 0",
+  "desc": "backlog() exception swallowed (unknown looks like empty)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_an_unreadable_outbox_table_fails_the_step_not_a_green_zero"
+ },
+ {
+  "id": "A2-08",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    remaining = backlog() if backlog is not None else 0",
+  "new": "    remaining = 0",
+  "desc": "remaining forced to 0",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_database_that_stays_down_leaves_the_step_failing"
+ },
+ {
+  "id": "A2-09",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    corrupt = getattr(audit, \"last_corrupt\", 0)",
+  "new": "    corrupt = 0",
+  "desc": "corrupt count not read",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged"
+ },
+ {
+  "id": "A2-10",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    _LOG.info(\"audit_drain drained=%d remaining=%d corrupt=%d\", drained, remaining, corrupt)",
+  "new": "    _LOG.info(\"audit_drain drained=%d remaining=%d corrupt=%d\", 0, remaining, corrupt)",
+  "desc": "drained count logged as 0",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_counts"
+ },
+ {
+  "id": "A2-11",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        _LOG.info(",
+  "new": "    if False:\n        _LOG.info(",
+  "desc": "missing-reconcile guard removed",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_logs_one_line_and_passes"
+ },
+ {
+  "id": "A2-12",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    drained = fn()",
+  "new": "    drained = 0",
+  "desc": "reconcile never called",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_counts"
+ },
+ {
+  "id": "A2-13",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        self.last_corrupt = 0\n        done = 0\n        for event in list(self._pending):\n            if self._drain(event):",
+  "new": "        done = 0\n        for event in list(self._pending):\n            if self._drain(event):",
+  "desc": "chain: last_corrupt not reset at the start of reconcile",
+  "expect": "SURVIVE? (no test reconciles twice, first with a bad row, then clean)",
+  "killer": "none known; proposed: reconcile twice, second run has no bad row, expect last_corrupt == 0"
+ },
+ {
+  "id": "A2-14",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        self.last_corrupt = 0\n        done = 0",
+  "new": "        done = 0",
+  "desc": "local_dir: last_corrupt not reset at the start of reconcile",
+  "expect": "SURVIVE? (same gap)",
+  "killer": "none known; same proposed test for LocalDirSink"
+ },
+ {
+  "id": "A2-15",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                    event_id,\n                )\n                continue\n            if self._drain(event):",
+  "new": "                    event_id,\n                )\n            if self._drain(event):",
+  "desc": "chain: corrupt-row continue removed (the bad row falls through to the drain with a stale or unbound event)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_bad_row_is_skipped_logged_counted_and_the_good_row_behind_it_is_drained"
+ },
+ {
+  "id": "A2-16",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                self.last_corrupt += 1",
+  "new": "                pass",
+  "desc": "chain: corrupt rows not counted",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_bad_row_is_skipped_...(last_corrupt == 1)"
+ },
+ {
+  "id": "A2-17",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "                self.last_corrupt += 1",
+  "new": "                pass",
+  "desc": "local_dir: corrupt files not counted",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged"
+ },
+ {
+  "id": "A2-18",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            except ValueError as exc:\n                self.last_corrupt += 1",
+  "new": "            except KeyError as exc:\n                self.last_corrupt += 1",
+  "desc": "chain: damaged row no longer caught (blocks the rows behind it)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_bad_row_is_skipped_..."
+ },
+ {
+  "id": "A2-19",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "                os.replace(path, self.outbox / \"corrupt\" / path.name)",
+  "new": "                pass",
+  "desc": "local_dir: corrupt file not moved aside",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged"
+ },
+ {
+  "id": "A2-20",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "ORDER BY event_id\")",
+  "new": "\")",
+  "desc": "drain: ORDER BY removed",
+  "expect": "SURVIVE? (tests do not assert the drain order of two or more rows)",
+  "killer": "none known; proposed: three outbox rows inserted out of order, assert the chain order equals the agreed order"
+ },
+ {
+  "id": "A2-21",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "ORDER BY event_id\")",
+  "new": "ORDER BY event_id DESC\")",
+  "desc": "drain: order swapped (descending)",
+  "expect": "SURVIVE? (same)",
+  "killer": "same proposed test"
+ },
+ {
+  "id": "A2-22",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                    continue\n                done += 1\n        return done\n\n    def backlog",
+  "new": "                    pass\n                done += 1\n        return done\n\n    def backlog",
+  "desc": "chain: a failed DELETE is counted as drained (continue removed)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting"
+ },
+ {
+  "id": "A2-23",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                    self._db.run(\"DELETE FROM audit_outbox WHERE event_id = ?\", (event_id,))",
+  "new": "                    pass",
+  "desc": "chain: DELETE never runs after the append (outbox never shrinks)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_counts"
+ },
+ {
+  "id": "A2-24",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                    self._db.run(\"DELETE FROM audit_outbox WHERE event_id = ?\", (event_id,))\n                except Exception as exc:",
+  "new": "                    self._db.run(\"DELETE FROM audit_outbox WHERE event_id = ?\", (event_id,))\n                except KeyError as exc:",
+  "desc": "chain: failed DELETE no longer caught (reconcile raises)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting"
+ },
+ {
+  "id": "A2-25",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            pass\n        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False",
+  "new": "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False",
+  "desc": "chain _drain: DuplicateEvent swallow removed (a duplicate stays in the outbox forever)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_row_that_was_written_but_cannot_be_deleted_... (second reconcile == 2)"
+ },
+ {
+  "id": "A2-26",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False\n        return True",
+  "new": "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return True\n        return True",
+  "desc": "chain _drain: failure reported as success (event dropped from the outbox)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_database_that_stays_down_leaves_the_step_failing"
+ },
+ {
+  "id": "A2-27",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1",
+  "new": "            if self._drain(event):\n                done += 1",
+  "desc": "chain: drained memory event never removed (re-counted every run)",
+  "expect": "SURVIVE? (no v2 test drains _pending successfully)",
+  "killer": "none known; proposed (from the v1 proof tests): test_chain_reconcile_drains_memory_only_events_once"
+ },
+ {
+  "id": "A2-28",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1",
+  "new": "            if False:\n                self._pending.remove(event)\n                done += 1",
+  "desc": "chain: memory events never drained",
+  "expect": "SURVIVE? (same gap)",
+  "killer": "same proposed test"
+ },
+ {
+  "id": "A2-29",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "new": "        except KeyError:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "desc": "chain write_outcome: DuplicateEvent except removed (a duplicate goes to the outbox)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing"
+ },
+ {
+  "id": "A2-30",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "new": "        except DuplicateEvent:\n            return None\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "desc": "chain write_outcome: duplicate returns None",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing"
+ },
+ {
+  "id": "A2-31",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"\n            # A line a person can alert on (audit A-01): the error type and the event id only, never the body.\n            _LOG.warning(\n                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )\n            try:\n                self._db.run(\n                    \"INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) \"\n                    \"ON CONFLICT (event_id) DO NOTHING\",\n                    (event.event_id, event.model_dump_json()),\n                )\n            except Exception as exc2:  # noqa: BLE001\n                _LOG.error(\n                    \"audit outbox not written (%s): event %s is held in memory only\",\n                    type(exc2).__name__,\n                    event.event_id,\n                )\n                self._pending.append(event)\n            return None\n",
+  "new": "        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"\n            # A line a person can alert on (audit A-01): the error type and the event id only, never the body.\n            _LOG.warning(\n                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )\n            try:\n                self._db.run(\n                    \"INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) \"\n                    \"ON CONFLICT (event_id) DO NOTHING\",\n                    (event.event_id, event.model_dump_json()),\n                )\n            except Exception as exc2:  # noqa: BLE001\n                _LOG.error(\n                    \"audit outbox not written (%s): event %s is held in memory only\",\n                    type(exc2).__name__,\n                    event.event_id,\n                )\n                self._pending.append(event)\n            return None\n        except DuplicateEvent:\n            return event.event_id\n",
+  "desc": "chain write_outcome: `except Exception` placed BEFORE `except DuplicateEvent` (the duplicate branch is dead; a duplicate goes to the outbox)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing"
+ },
+ {
+  "id": "A2-32",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            _LOG.warning(\n                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )\n",
+  "new": "",
+  "desc": "chain: outbox warning removed",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body"
+ },
+ {
+  "id": "A2-33",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "_LOG.warning(\n                \"audit outcome not appended",
+  "new": "_LOG.debug(\n                \"audit outcome not appended",
+  "desc": "chain: outbox warning downgraded to DEBUG",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body"
+ },
+ {
+  "id": "A2-34",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "\"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,",
+  "new": "\"audit outcome not appended (%s): event %s goes to the outbox\",\n                exc,",
+  "desc": "chain: warning leaks the error text",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body"
+ },
+ {
+  "id": "A2-35",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "new": "goes to the outbox\",\n                type(exc).__name__,\n                event.run_id,",
+  "desc": "chain: warning logs the run id instead of the event id",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body"
+ },
+ {
+  "id": "A2-36",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "_LOG.error(\n                    \"audit outbox not written",
+  "new": "_LOG.debug(\n                    \"audit outbox not written",
+  "desc": "chain: memory-only ERROR downgraded to DEBUG",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged"
+ },
+ {
+  "id": "A2-37",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                self._pending.append(event)\n            return None\n",
+  "new": "            return None\n",
+  "desc": "chain: event no longer kept in memory when the outbox write also fails (audit loss)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged (len(_pending) == 1)"
+ },
+ {
+  "id": "A2-38",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        return len(self._pending) + int(rows[0][0])",
+  "new": "        return int(rows[0][0])",
+  "desc": "chain backlog: memory events not counted",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_events_held_in_memory_count_as_remaining"
+ },
+ {
+  "id": "A2-39",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        return len(self._pending) + int(rows[0][0])",
+  "new": "        return len(self._pending)",
+  "desc": "chain backlog: table rows not counted",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_database_that_stays_down_leaves_the_step_failing"
+ },
+ {
+  "id": "A2-40",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            _LOG.warning(\"audit outbox not readable (%s): retried next tick\", type(exc).__name__)\n            return done",
+  "new": "            return done",
+  "desc": "chain: unreadable-table warning removed",
+  "expect": "SURVIVE? (no test asserts this line)",
+  "killer": "none known; proposed: caplog on a failing SELECT expects one WARNING with the type only"
+ },
+ {
+  "id": "A2-41",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            _LOG.warning(\n                \"audit outcome not written (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )\n",
+  "new": "",
+  "desc": "local_dir: outbox warning removed",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_local_dir_kind_logs_one_warning_with_type_and_id_never_the_error_text"
+ },
+ {
+  "id": "A2-42",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "_LOG.warning(\n                \"audit outcome not written",
+  "new": "_LOG.debug(\n                \"audit outcome not written",
+  "desc": "local_dir: warning downgraded to DEBUG",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_local_dir_kind_logs_one_warning_..."
+ },
+ {
+  "id": "A2-43",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "\"audit outcome not written (%s): event %s goes to the outbox\",\n                type(exc).__name__,",
+  "new": "\"audit outcome not written (%s): event %s goes to the outbox\",\n                exc,",
+  "desc": "local_dir: warning leaks the error text",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_local_dir_kind_logs_one_warning_..."
+ },
+ {
+  "id": "A2-44",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        except DuplicateEvent:\n            return f\"{event.event_id}.json\"\n        except Exception as exc:",
+  "new": "        except KeyError:\n            return f\"{event.event_id}.json\"\n        except Exception as exc:",
+  "desc": "local_dir write_outcome: DuplicateEvent except removed",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_local_dir_duplicate_path_logs_nothing"
+ },
+ {
+  "id": "A2-45",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            except Exception:  # noqa: BLE001\n                self._pending.append(event)\n            return None",
+  "new": "            except Exception:  # noqa: BLE001\n                pass\n            return None",
+  "desc": "local_dir: event dropped when the outbox folder is also unusable",
+  "expect": "SURVIVE? (no v2 test makes the outbox unusable)",
+  "killer": "none known; proposed (v1 proof test): test_local_dir_reconcile_drains_memory_only_events_once"
+ },
+ {
+  "id": "A2-46",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            self._pending.remove(event)\n            done += 1\n        if not self.outbox.exists():",
+  "new": "            done += 1\n        if not self.outbox.exists():",
+  "desc": "local_dir reconcile: drained memory event never removed",
+  "expect": "SURVIVE? (same gap)",
+  "killer": "same proposed test"
+ },
+ {
+  "id": "A2-47",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            path.unlink()\n            done += 1",
+  "new": "            done += 1",
+  "desc": "local_dir reconcile: outbox file never deleted after a successful write",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_the_real_local_dir_kind_drains_through_the_tick_step (outbox empty)"
+ },
+ {
+  "id": "A2-48",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            except DuplicateEvent:\n                pass\n            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked",
+  "new": "            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked",
+  "desc": "local_dir reconcile: DuplicateEvent on an outbox file no longer absorbed (file stays forever)",
+  "expect": "SURVIVE? (no test puts an already-written event in the outbox folder)",
+  "killer": "none known; proposed: write the event, copy it into outbox/, reconcile expects the file gone"
+ },
+ {
+  "id": "A2-49",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        return len(self._pending) + waiting",
+  "new": "        return waiting",
+  "desc": "local_dir backlog: memory events not counted",
+  "expect": "SURVIVE? (no local_dir test holds events only in memory)",
+  "killer": "none known; proposed: _pending with unusable outbox, backlog() == 1"
+ },
+ {
+  "id": "A2-50",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        waiting = len(list(self.outbox.glob(\"*.json\"))) if self.outbox.exists() else 0",
+  "new": "        waiting = len(list(self.outbox.glob(\"*\"))) if self.outbox.exists() else 0",
+  "desc": "local_dir backlog: counts everything in outbox (the corrupt/ folder, temp files)",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged (corrupt/ would count as 1)"
+ },
+ {
+  "id": "A2-51",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        waiting = len(list(self.outbox.glob(\"*.json\"))) if self.outbox.exists() else 0",
+  "new": "        waiting = 0",
+  "desc": "local_dir backlog: files never counted",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1"
+ },
+ {
+  "id": "A2-52",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "                _LOG.error(\n                    \"audit outbox file not readable",
+  "new": "                _LOG.debug(\n                    \"audit outbox file not readable",
+  "desc": "local_dir: corrupt-file ERROR downgraded to DEBUG",
+  "expect": "SURVIVE? (the test uses caplog at INFO and asserts the counts, not this line)",
+  "killer": "none known; proposed: caplog at ERROR expects the file name and type only"
+ },
+ {
+  "id": "A2-53",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                _LOG.error(\n                    \"audit outbox row not readable",
+  "new": "                _LOG.debug(\n                    \"audit outbox row not readable",
+  "desc": "chain: corrupt-row ERROR downgraded to DEBUG",
+  "expect": "KILLED",
+  "killer": "tests/test_a01_audit_reconcile.py::test_a_bad_row_is_skipped_logged_counted_... (asserts ValidationError and the id in caplog.text at INFO; DEBUG is not captured at INFO)"
+ }
+]
