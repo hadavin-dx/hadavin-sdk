@@ -30,3 +30,6 @@ A fresh zoom-out reviewer found that ROLES-PROPOSAL.md serves none of the three 
 
 ## Q12 (flows-audit, 2026-11-16 10:08 UTC): system-map D-04 and D-05 note (ORDERS.md ANSWERS block, 10:02Z)
 The lead asked for a one-page note handover/system-map/decisions/D04-D05.md (problem, replacement text, risk). I cannot write it: the text of D-04 and D-05 (system-map QUESTIONS Q2) is not in any file I can read (my copy of system-map under /tmp/sm has no D-04 or D-05; handover/system-map does not exist in this branch). Exact input needed: the Q2 text of D-04 and D-05, or the path where it is. BLOCKED until then. D-01..D-03, D-10, S-03, L-01 (APPLY) are system-map items I do not hold either; the system-map session consumes them.
+
+
+Q12 UPDATE 10:09Z: lead ANSWER 10:20Z says D-04/D-05 are NOT flows-audit (system-map session writes D04-D05.md). Q12 closed: not mine.
