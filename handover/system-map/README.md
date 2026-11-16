@@ -6,7 +6,7 @@ WARNING: the CURRENT owner steps are inputs/OWNER-STEPS-realrun-v5-core-hardenin
 1. Take date and start time (v5 gives none; target Wed 18 Nov, not confirmed).
 2. A named person to start Docker and run the first rehearsal (the five changed flows have never run in n8n).
 3. Security edits S9-1 to S9-5 and S9-12 applied in v5 and the scope sheet by core-hardening (list: drift/APPLIED-S9.md).
-4. Flow-set decision A, B, C and D (flowset/REPORT.md); default: two separate sessions, no live switch.
+4. Flow-set decision A, B, C and D (flowset/REPORT.md); default: two separate sessions, no live switch. Two gaps behind it: the take-time substitution of the `$env` values is not built (BL-wp6-G1), so neither flow set can run yet; and the mail credential `mf-mail-smtp` holds the real sender password, with no written way to point it at the stand-in mail program. Dates: the TAKE must happen by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time); Wed 25 Nov 15:00 UTC / 20:30 IST is only the POST date. The run sheet, `scripts/n8n_api.py` and the flow JSON are not in this checkout, so the scene list is rebuilt from the proposed patch F-003.
 5. HubSpot key must be able to delete contacts (drift R8-5), plus the HubSpot check and login-key choice (OWNER-VIEW row 7; the exact lines do not exist yet: the studio lead writes them or removes the row).
 6. The two failing guard tests on core-hardening (not a take blocker, blocks a pull request).
 Owner pages: OWNER-VIEW.md, then the two cards. Everything else here is for the studio lead.
