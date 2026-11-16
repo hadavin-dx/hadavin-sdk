@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:12:54Z
+UPDATED_UTC: 2026-11-16T11:14:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 89
-AGENTS_RUNNING: 8
-CAPACITY: 1.70 load of 4 cores, mem 0/15 GB, RAM 1015/16087 MB, disk 27G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 962M /tmp/claude-0 , agents 8 (light+heavy per list)
+PERCENT: 90
+AGENTS_RUNNING: 5
+CAPACITY: 5.39 load of 4 cores, mem 0/15 GB, RAM 983/16087 MB, disk 27G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 1.3G /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -54,8 +54,9 @@ F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB c
 gap lane G1-G9 (reviews/notchecked-lane-r1.md): take start-state gate, 'processed once' counts wording, screen scan for personal data, abort rule: Q22 answers applied to owner sheet by osfix6; FIX-PLAN/CT application waits for sweepfix2 and frontfix to finish
 F8 r7 fixer: ruff format not reproduced (passes with repo config); TCMISS, M2 M3 M7 M12 fixed per own report, my rerun run_all rc 0, check_patches PASS; M10 equivalent; independent evidence on final head running (f8ev)
 owner sheet r6 stranger read: 3 Blockers 11 Majors (owner could not yet do their part safely: no stop-until-recheck line inside owner block, which contact Step D deletes, cost line unreadable); r7 fixer running, no third review (round cap)
-NEXT: 8 running; next: collect, verify, claims-table proof wording after front fixer, drift report, FINAL search
-PUSHED_UTC: 2026-11-16T11:12:54Z
+F-002 patch second review: 2 Majors (Claim always=False may emit no item on a repeat key so POST 2 could hang: T19 is the only test; ReplyStoreFail uses $('Valid').item on an error path: use .first()); F-002 stays Blocker; fixer running
+NEXT: running: F8 evidence, sweep2 cites, branch cross-read, Q22 claims wording, patch fixer, gate fixer; refill to 8: next lanes drift report, one-place sweep
+PUSHED_UTC: 2026-11-16T11:14:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -74,14 +75,12 @@ PUSHED_UTC: 2026-11-16T11:12:54Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| frontfix | front-matter fixer | sonnet | RW/CT status table, definitions | 11:12 | 11:35 | 5 | running | fix-front.md
 | f8ev | EVIDENCE RUNNER F8 final | sonnet | gates, 15 new mutants, hostile inputs | 11:20 | 11:45 | 5 | running | flow-check/evidence-f8-r7.md
 | cite4 | citation checker sweep2 | sonnet | check fix-sweep2 edits | 11:20 | 11:35 | 5 | running | reviews/citations-sweep2-r1.md
 | xread2 | cross-read system-map+core-hardening branches | sonnet | contradictions with our files | 11:27 | 11:40 | 5 | running | reviews/crossread-branches-r1.md
-| patrev2 | second reviewer F-002/F-008 patches (egm-codebase-details) | sonnet | technical accuracy | 11:27 | 11:40 | 5 | running | (inline)
-| osfix7 | owner sheet fixer r7 | sonnet | stranger r6 items | 11:33 | 11:45 | 5 | running | fix-ownersteps-r7.md
-| ans28 | apply lead answers items 1-5 | sonnet | CUT-LIST F-013 DESK_ALERT_TO | 11:34 | 11:45 | 5 | running | fix-ans28.md
-| advgate | adversarial reader take-day gate | sonnet | 12 ways take fails | 11:34 | 11:45 | 5 | running | reviews/adversarial-gate-r2.md
+| q22c | claims-table Q22 proof wording | sonnet | CT/RW | 11:40 | 11:52 | 5 | running | fix-q22-claims.md
+| patfix2 | F-002 patch review fixer | sonnet | Major 1-2, nit 3 | 11:44 | 11:55 | 5 | running | fix-patch-r2.md
+| gate2 | adversarial gate items to plan | sonnet | FIX-PLAN, FINDINGS NC, README | 11:44 | 11:55 | 5 | running | fix-gate2.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
