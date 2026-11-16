@@ -7,7 +7,7 @@ Date of the run: 2026-11-16 (UTC). Machine: Linux, running as root (uid 0), Pyth
 - NOT run: Python 3.9 and 3.10 (no interpreter here), macOS (the `F_GETPATH` branch of `_fd_path` is written but never executed), Windows/WSL, NFS/FUSE, sync folders. Third party / environment: needs a Mac and the two interpreters; next step: run `python3 -I -m unittest` there.
 - NOT verified against a real n8n: whether `n8n import:workflow --separate --input=DIR` skips non-JSON files. Finding 12 is fixed by exit code 3 plus a `NOT-READY-DO-NOT-IMPORT.txt` file; the README says plainly that a tool that imports every file of a folder on its own is not stopped by the note (only `&&` and the note protect). Needs n8n (the owner's n8n); next step: try it on the free-trial n8n.
 - Tests run as root: the chmod 0500 step cannot fail on permissions here; the test now asserts the tool's own message, so it also holds for a non-root user (not run as non-root; no second user was tried).
-- Whole-repo `ruff check` / `ruff format --check` from /home/user/hadavin-sdk end rc=1 (1267 errors, 110 files to format) in OTHER handover files that I did not touch. Scoped to this folder: rc 0 / rc 0. I did not fix the other files (outside the task). The full repo `pytest` run was started in the background; its result is at the bottom (see "Full repo pytest").
+- Whole-repo `ruff check` / `ruff format --check` from /home/user/hadavin-sdk end rc=1 (1267 errors, 110 files to format) in OTHER handover files that I did not touch. Scoped to this folder: rc 0 / rc 0. I did not fix the other files (outside the task). The full repo `pytest` run passed (see "Full repo pytest" at the bottom).
 - A git "board" process commits the working tree about once a minute, so `git status` shows my edits as already committed; I made no commit.
 - Finding 2 part "route raw open() writes through WRITTEN" is done for every values-file write in the test file; the three remaining plain `open()` calls write flow files or hash reads, not values.
 - Finding 10: the allowlist is a judgement: it lists five address keys (`url`, `toEmail`, `fromEmail`, `ccEmail`, `bccEmail`), none of which the real v5 flows use in a plain text (counted by a test). If a future flow needs a token in a plain field of another name, the fill refuses it and names the field; the owner/builder then adds the key.
@@ -63,4 +63,4 @@ Mutation checks on the NEW code (scratch copies `m-a` .. `m-e`, one change each)
 - fill_flows.py, test_fill_flows.py, README.md, fix-f3-r5.md (all in handover/flows-audit/fill_flows/).
 
 ## Full repo pytest
-(see the end of this file for the result line once the background run ends)
+`pytest -q -m "not live and not perf"` from the repo root: rc 0, 10068 passed, 457 skipped, 28 deselected (265 s). Note: the repo `testpaths` is `tests`, so this run does not include the fill_flows tests (those were run by path above).
