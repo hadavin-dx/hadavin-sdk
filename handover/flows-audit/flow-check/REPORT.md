@@ -1,50 +1,58 @@
-# F8 flow-check report (ORDER 016), 2026-11-16 UTC (IST = UTC + 5:30)
-Folder: handover/flows-audit/flow-check/. Not committed. Nothing was run in n8n. Standard library only. Made-up data only.
+# Flow check (F8), round 1 fixes, 2026-11-16 (times in UTC; IST = UTC + 5:30)
 
-## 1. What failed or is unverified (read first)
-1. **F-002 is NOT proven.** All four checker runs exit 0, but the patched form and hook flows still print `WARN ... F-002 Claim alwaysOutputData/onError UNPROVEN until T19`. What n8n does when the claim insert stores nothing (a repeat lead key) needs a real n8n run (T19, T20). Next step: the laptop lead runs T19 and T20.
-2. **Severity differs from system-map M1 on one point.** M1 treats "webhook without authentication" as a FAIL (exit 1 on every entry flow). This checker prints a WARN by default (the owner's audit already lists it as L7-FD-005, none of the five patches adds a key) and FAILs only with `--require-webhook-auth`. With that option both of our runs also exit 1 (2 FAIL per run, the form flow and the e-mail-style flow). Exit 0 here does not mean "the form address is protected"; it is not.
-3. **A reply gap remains in the patched flows (read from the file, not run).** In patched mf-form and mf-hook the steps `RunSub` and `Stored` still stop the run on error and the caller gets no answer. F-002 closes this for `Claim` only. Same finding as M1.
-4. **Checks that only guard later changes (no file has the feature today):** switch nodes, sticky notes, secret values, missing credential blocks, `$node.X` dot form, duplicate webhook paths. They are proven only by the self-test cases, not by a real hit in the 16 flow files.
-5. **Not checked:** whether n8n accepts the JSON (import), SQL inside the postgres nodes, expression syntax beyond node references, `$prevNode`, computed `$items(x)` names, httpRequest credentials sent through plain header values (only `authentication` set to something other than none requires a credential block), sub-workflow call results across files. The secret scan is pattern based: a secret in a shape not listed would pass; a harmless string in a listed shape would fail. The "reads a node that is not upstream" WARN never fired in the 16 files, so its false-positive rate is unknown.
-6. **M3 is not a flow check.** In system-map QUEUE.md, M3 is the drift check of the take documents (`drift/REPORT.md`), not a flow-graph check. There is nothing to compare line by line with a flow checker; the comparison below is with M1 (`flowcheck/`), which is the flow-graph check (QUEUE.md line: "M1 ... flow-graph check of the patched flows").
+**Bottom line: the checker finds no structural error in the 8 flow folders it was run on, but the flows are NOT shown to be ready to film. Exit code 0 only means "no structural FAIL". Known problems are open (section 1), and the checker never started n8n.**
 
-## 2. What was built (extended from patch-apply/check_flows.py, nothing removed)
-`check_flows.py` (old checks: parse, duplicate names, dangling links, orphans, unreachable, counts, IF/Switch outputs, error output wired, `$('X')` and `$items("X")` references, F-002/F-008 patch checks, diff against pristine). **New in F8:**
-- `$node.X` dot references resolved (the old checker knew `$('X')`, `$node["X"]`, `$items("X")`); WARN when a referenced node is not upstream of the reading node, WARN on self reference.
-- Sticky notes are left out of orphan/unreachable checks; FAIL for a file with only sticky notes (or only trigger plus notes); notes with links FAIL.
-- FAIL: incoming link into a trigger; invalid connection shape or index; duplicate node ids; names that differ only by case/spaces; missing position or typeVersion; `onError` outside the three n8n values; `retryOnFail`/`alwaysOutputData` not boolean; `maxTries` outside 2 to 5; `waitBetweenTries` outside 0 to 5000.
-- WARN: `alwaysOutputData` with `continueErrorOutput`; external-call nodes without retry (one line per file); external calls that continue on error; write node (mail, CRM) whose own error or an upstream call's error is swallowed; disabled nodes.
-- Credentials: FAIL when postgres, emailSend, hubspot (or httpRequest with authentication) has no credentials block, or a credential has no name or no id; credential names, ids and every placeholder are listed per file.
-- Secret scan: FAIL on AWS key id (except the one allowed example key), sk- keys, GitHub/Slack tokens, private key block, JWT, password in a URL, literal `Bearer` value, and literal values under keys like password/secret/token/apiKey. Fake values in the self-test are built from parts.
-- Webhook answers: for each webhook with responseMode `responseNode`, every path must end in `respondToWebhook` (FAIL names the end node; FAIL if none is reachable); WARN lists steps whose failure stops the run with no reply. Other response modes are printed.
-- Cross-file FAIL: two webhooks with the same method+path or the same webhookId.
-- `--table` prints the error-settings table (onError, retry, alwaysOutputData) per file; `--files all`; `--require-webhook-auth`.
-`selftest.py` runs 34 negative cases (each must exit 1 AND show its named text), 4 controls (exit 0) on the pristine flows and 4 negatives + 1 control on the patched flows. `run_all.sh` rebuilds the patched flows (F-002 then F-008 applied to a scratch copy, generator run for real and film) and runs the pristine and patched checks as two background processes, each under `timeout 300`.
+What this is: a small program (`check_flows.py`) that reads the exported n8n flow files (JSON text files) and checks their wiring and settings without running n8n. A flow is one n8n workflow (here: `mf-form`, `mf-hook`, `mf-recovery`, `mf-sub-crm-mail`). Written for ORDER 016/017 (work orders for the flow audit). The files in this folder are not committed to git (the lead decides that). Python 3 only, no extra packages.
 
-## 3. Commands, exit codes, counts
-| command | result |
-|---|---|
-| `bash run_all.sh /tmp/fc8` (applies both patches rc 0, generator real and film rc 0; two parallel background processes; wall time about 0.2 s) | raw: `raw/pristine.txt`, `raw/patched.txt`, `raw/diff-real.txt`, `raw/diff-film.txt` |
-| pristine real-v5 (committed folder, `--baseline` itself, counts 12:11 12:11 10:9 20:26) | exit 0, 0 FAIL, 12 WARN |
-| pristine film-v5 | exit 0, 0 FAIL, 12 WARN |
-| patched real (F-002+F-008, counts 15:14 15:14 10:9 20:26, `--patch-checks F002,F008 --diff-base pristine --allow F002,F008`) | exit 0, 0 FAIL, 14 WARN |
-| patched film | exit 0, 0 FAIL, 14 WARN |
-| same four with `--require-webhook-auth` | exit 1 each, 2 FAIL each (the two entry flows) |
-| `python3 -I selftest.py ../../demo/n8n-flows-real-v5 /tmp/fc8/g/real` (`selftest-new.txt`, raw cases in `selftest-output/`) | exit 0: 43 as expected, 0 not |
-| same cases against the OLD patch-apply/check_flows.py (`FC_CK=...`, `selftest-oldchecker.txt`, `selftest-output-oldchecker/`) | exit 1: 21 as expected, 22 NOT (21 new negative cases not caught, plus the sticky-note control that the old checker wrongly fails). This is the proof the new cases fail on the old code. |
-The diff files show the same node and connection changes as patch-apply round 3 (ADDED KeyOk, ReplyBadKey, ReplyStoreFail; Claim and Valid changed; settings changed by F-008); no unexplained change.
+Words used in this report
+- **FAIL** = the checker found a definite fault in the file; exit code 1. **WARN** = something a person must read; exit code stays 0. A WARN can be serious (see section 1).
+- **real / film**: two versions of the same four flows. "real" is for the real filmed take; "film" is the made-up-data version for the video. Both are checked because they are separate files. The scan for secret-looking values ran on both and found none (it is pattern based: a secret in an unlisted shape would pass).
+- **v5**: the 5th generated version of the flows (committed folders `handover/demo/n8n-flows-real-v5` and `n8n-flows-film-v5`).
+- **pristine** = those committed folders as they are. **patched** = the same flows after patches F-002 and F-008 are applied to a scratch copy (generated again by `build_mainframe.py`).
+- **F-002** = patch for audit finding F-002: the step `Claim` (writes the lead key, a made-up id, into the database so a repeated lead is only processed once) must still answer the caller when the key is repeated or the write fails. It adds `KeyOk` (is the key well formed), `ReplyBadKey` (answers 422) and `ReplyStoreFail` (answers 503). **F-008** = patch that makes n8n save the run records for the take.
+- **T19, T20** = two tests of F-002 that must be run on a real n8n on the laptop (not here). **Caller** = whoever sent the web request (the form page or the hook).
+- **Reply gap** = a step whose failure stops the run so the caller gets no answer at all. In the files: `RunSub` (calls the sub-flow) and `Stored` (final database write) in `mf-form` and `mf-hook`; `Claim` as well in the pristine version.
+- **M1** = the earlier flow check by another agent on branch `cloud/system-map` (the comparison base). **M3** = a different check on that branch: it compares four take documents with each other (owner steps, agent scope, one-store decision, plan v5); it does not read flow files. I was asked to compare with M1 and M3; I compared with M1 only, because M3 is not a flow check. Please confirm that is what you wanted.
+- **--baseline DIR** tells the checker which folder holds the unpatched flows: an IF step (a yes/no split) that already lacked its second branch there becomes a WARN instead of a FAIL. **Pristine without `--baseline` exits 1 with 2 FAIL** (`StuckRow`, `AlertRow` in `mf-recovery`; raw `raw/pristine-no-baseline.txt`). So "0 FAIL" below depends on `--baseline` excusing those two.
+- Step names: `Claim` = write the lead key; `Stored` = write the result; `RunSub` = call the sub-flow; `Valid` = check the input; `AlertSend` = send the desk e-mail. Settings: `onError` = what a step does when it fails; `continueErrorOutput` = send the failure down a second output; `alwaysOutputData` = pass an empty result on instead of stopping; `responseNode` = the web answer is sent by a separate reply step.
 
-## 4. Differences from system-map M1 (`handover/system-map/flowcheck/`, branch origin/cloud/system-map after `git fetch origin cloud/system-map`, tool `tools/flowcheck.py`; a copy is in `m1/flowcheck_M1_copy.py`, its self-test printed `selftest ok`, `raw/m1-selftest.txt`). Same 16 files per state, raw `raw/m1-*.md`, comparison `raw/compare-m1-vs-f8.txt`.
-1. Node and connection counts: 16 of 16 files identical (12/11, 12/11, 10/9, 20/26 pristine; 15/14, 15/14, 10/9, 20/26 patched, real and film).
-2. Webhook without authentication: M1 FAIL (exit 1 on all 4 sets). F8 WARN, exit 0 (FAIL with option). Reason in section 1 item 2.
-3. "Step stops the run on a path from a responseNode webhook": M1 WARN per step; F8 one WARN per webhook naming the same steps. Pristine: Claim, RunSub, Stored; patched: RunSub, Stored. Identical sets in all 8 form/hook files.
-4. Mail step with an upstream call that continues on error: both warn the same pair in recovery (`AlertSend` after `AlertClaim`), 4 of 4 sets.
-5. alwaysOutputData with continueErrorOutput: M1 FAIL rule, F8 WARN rule; neither fires in any of the 16 files (clean, as M1 states).
-6. Only F8 reports: IF nodes without a second output (`StuckRow`, `AlertRow` in recovery; WARN because the baseline lacks them too), missing retry (one line per file), steps that continue on error, F-002 UNPROVEN line, patch content checks, node-level diff against pristine, expected counts, `$node`/`$items` references, sticky notes, secrets, credential blocks, webhook path ends, duplicate webhook paths, setting validity.
-7. Only M1 reports: the per-file Markdown with webhook table, `$env` reads, save settings and write-path table (F8 prints the equivalents as the info lines and `--table`, in a different layout, not byte comparable), M1's rule that an httpRequest counts as a write only when its URL contains "crm" (F8 counts any non-GET httpRequest as a write; no flow file has such a node, so no output differs today).
-8. Agreement on pass items: no parse failure, duplicate name, dangling link, orphan or unreachable node and no unresolved `$('Name')` in any of the 32 built files M1 checked; F8 agrees for the 16 it ran (pristine and patched: 8 + 8).
-Paths tried for M1/M3: `git ls-tree -r --name-only origin/cloud/system-map | grep -i -E 'M1|M3|check'` found no M1/M3 output file by that name; M1's output is `handover/system-map/flowcheck/{REPORT.md,tools/flowcheck.py,evidence/md/*.md,evidence/summary-table.md}`; M3 is `handover/system-map/drift/REPORT.md` (not read for flows). Read with `git show origin/cloud/system-map:<path>`; the branch was present after the fetch.
+## 1. What failed, is open or was not checked (read first)
+Every number comes from a file in `raw/` (table in section 3).
+1. **F-002 is not proven.** Both patched runs exit 0, but each prints "F-002 ... UNPROVEN until T19". What n8n does when a repeat key stores nothing needs a real n8n run (T19, T20). Who: the laptop lead. How long, and whether filming waits: no file I read says; the lead decides.
+2. **The web addresses of `mf-form` and `mf-hook` have no password.** Anyone who knows the address can post. Default mode prints a WARN; M1 calls it a FAIL. **The owner decides** whether it is a FAIL. Both modes were run: default exit 0; `--require-webhook-auth` exit 1 (`raw/pristine-strict.txt`, `raw/patched-strict.txt`). This checker is therefore more lenient than M1 on this point.
+3. **Reply gap remains** in the patched flows (`RunSub`, `Stored`): on a failure there the caller gets no answer. Read from the file; n8n was not run. Same finding as M1 (same step names in 8 of 8 form/hook runs, `raw/compare-reply-gap.txt`).
+4. **New finding: 4 nodes read environment variables (`$env.NAME`).** real: `AlertSend` in `mf-recovery` (`DESK_ALERT_TO`) and `Qualify` in `mf-sub-crm-mail` (`DESK_URL`, `DESK_TIMEOUT_MS`); film: `Qualify` (`MF_STAGE_URL`, `MF_STAGE_TIMEOUT_MS`) and `CrmUpsert` (`MF_CRM_URL`). If the take blocks env access inside nodes, these nodes stop working. Default mode WARNs; `--block-env-access` makes each a FAIL (the strict runs show 4 FAIL per run: 2 webhooks plus 2 env nodes). I could not verify the name of the n8n switch that blocks env access: marked "n8n rule UNVERIFIED". The lead must decide: change the 4 nodes, or allow env access.
+5. **Not checked at all:** that n8n accepts the files on import; the SQL inside database steps; expression syntax beyond node names; secrets in a shape the scan does not list. Rules about n8n itself with no source in this repo are now only WARN, marked "n8n rule UNVERIFIED": retry limits (2 to 5 tries, 0 to 5000 ms), the list of allowed `onError` values, and "the failure output is the last output of a step".
+6. **A passing self-test proves the checker catches planted faults. It does not prove the real flows are right.**
+7. The "reads a step that is not upstream" WARN never fired on the 16 real files, so its false-alarm rate is unknown. Several checks guard only future changes (no real file has switch steps, sticky notes, secrets, form triggers): proven by planted faults only.
+8. Not redone: the M1 comparison was not re-run with the new checker. Counts and reply-gap step names were compared again from existing raw files (`raw/compare-m1-vs-f8.txt`, 16 of 16 same). Old `patch-apply` numbers were not reproduced.
 
-## 5. Files
-check_flows.py, selftest.py, run_all.sh, REPORT.md, m1/flowcheck_M1_copy.py (copy of the system-map tool, unchanged), raw/, selftest-output/, selftest-output-oldchecker/, selftest-new.txt, selftest-oldchecker.txt. Run order: `bash run_all.sh` first (it makes /tmp/fc8), then selftest.py.
+## 2. What the checker does now
+Closing block on every run: "Known open problems: N" (WARN lines that are real open defects: no password on a web address, reply gap, F-002, env reads), "Not proven: ...", "Passing this check does NOT mean the flows are ready to film." The exit code depends only on FAIL.
+- **FAIL:** file does not parse or has the wrong shape (a FAIL line, no crash); duplicate step names or ids; link to or from a step that does not exist; step with no way in; step no trigger can reach; wrong step or link count; IF step with a branch leading nowhere (project rule); failure output missing; missing position or version; wrong value types; missing credentials; secret-looking value (keys, tokens, private key, password in a URL, `Bearer` value, literal value under keys like password/token/apiKey) in any step, sticky note or top-level key; web reply paths that end without a reply step (a disabled reply step or disabled webhook does not count); two webhooks with the same address or id.
+- **WARN:** section 1 items, steps without retry, steps that swallow errors, mail or CRM steps after swallowed errors, unwired Switch outputs, disabled steps, `$prevNode`, reading a step that may not have run, `alwaysOutputData` with a failure output (F-002 pattern).
+- **Options:** `--require-webhook-auth`, `--block-env-access`, `--baseline`, `--patch-checks`, `--diff-base`, `--table`, `--files all`, `--expect`.
+- **Credentials per flow** are always printed. Real flows: Postgres credential `n8n-publish-pg` (id is the placeholder `PG_CREDENTIAL_ID`) and SMTP credential `mf-mail-smtp` (placeholder `SMTP_CREDENTIAL_ID`); placeholders must be replaced in n8n.
+- **Which checker:** `flow-check/check_flows.py` replaces `patch-apply/check_flows.py` (pointer line added there). M1 (`flowcheck.py` on branch `cloud/system-map`, commit `a14a437cbeb8facaac3c19d54ea45a5c4a8fdb79`, confirmed with `git log -1`) is a separate tool; the byte-identical copy in `m1/` was replaced by `m1/POINTER.txt`. Raw M1 outputs stay in `raw/m1-*.md`.
+- Round-1 review findings, one line each: `fix-f8-r1.md`.
+
+## 3. How to run, and where every number comes from
+`bash run_all.sh` (default work folder `/tmp/fc8`; it deletes only that exact folder and creates it itself). It applies both patches to a scratch copy, generates the patched flows, runs the checker four times (pristine and patched, default and strict), runs the self-test, and exits 0 only if the 4 default runs and the self-test exit 0. Last run: exit 0.
+
+| what | result | raw file |
+|---|---|---|
+| pristine real and film, default | each exit 0, 0 FAIL, 14 WARN, 6 known open problems | `raw/pristine.txt` |
+| patched real and film, default | each exit 0, 0 FAIL, 16 WARN, 8 known open problems | `raw/patched.txt` |
+| pristine, strict (`--require-webhook-auth --block-env-access`) | each exit 1, 4 FAIL | `raw/pristine-strict.txt` |
+| patched, strict | each exit 1, 4 FAIL | `raw/patched-strict.txt` |
+| pristine real without `--baseline` | exit 1, 2 FAIL | `raw/pristine-no-baseline.txt` |
+| self-test, new checker | exit 0: 368 as expected, 0 not, 20 skipped (case does not apply to that file) | `raw/selftest-new.txt`, cases in `selftest-output/` |
+| same cases, OLD checker | exit 1: 68 as expected, 300 not. Caution: many fail only because the old checker does not know the new options; this shows the new cases do not pass on old code, not 300 separate bugs | `raw/selftest-oldchecker.txt` |
+| patch and generator steps | logs and a list of generated flow files with short hashes | `raw/apply.log`, `raw/gen-real.log`, `raw/gen-film.log`, `raw/patched-flows-list.txt` |
+| what the patches change | no unexplained change (patched runs exit 0) | `raw/diff-real.txt`, `raw/diff-film.txt` |
+| M1 comparison | counts 16 of 16 same; reply-gap steps same in 8 of 8 | `raw/compare-m1-vs-f8.txt`, `raw/compare-reply-gap.txt` |
+| time | four checker runs together under 1 s (whole-second clock shows 0 s); self-test 17 s | `raw/timing.txt` |
+
+Self-test rules (`selftest.py`): each case plants ONE fault in a copy and requires the exit code, a line that STARTS with FAIL (or WARN) holding the named text, and no unrelated FAIL line. Cases run on 4 real files and 1 film file. Optional settings `FC_CK` (another checker) and `FC_OUT` (output folder) are described at the top of the file. Counts are recomputed so a count mismatch is not a hidden second cause.
+
+M1 versus this checker: webhook without password: M1 FAIL, here WARN by default (item 2); `alwaysOutputData` with failure output: M1 FAIL, here WARN with the F-002 reason (neither fires in the 16 files); only here: IF steps with one branch, retry, env reads, credential blocks, patch content, diff against pristine, expected counts, secrets, sticky notes; only in M1: its per-file markdown tables.
