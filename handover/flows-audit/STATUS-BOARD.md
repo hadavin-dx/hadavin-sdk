@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:11:33Z
+UPDATED_UTC: 2026-11-16T10:11:55Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 8
-CAPACITY: 0.65 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
+CAPACITY: 0.46 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: independent rerun: self-test 469/0/32 and run_all rc 0 match the claim, but ruff check FAILS (213 errors) and ruff format --check fails on check_flows.py and selftest.py; 3 of 20 line mutants survive (lines 389, 398, 462); r3 fixer told to fix both plus 5 Majors from the second review; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: evidence r5: 113 OK, gates rc 0, 8 of 20 mutants survive; security review r3 (read only, nothing run): 3 Medium + 3 Low in clean-up, partial copies, check, delete (no value leak found); r6 fixer running; py3.9/3.10, macOS, real n8n not run
@@ -17,9 +17,10 @@ F5: r5 rebuilt by script (rows not diffed by the fixer; rows B-067, B-091, B-215
 F2: C-1 Major withdrawn and now independently confirmed (Route and load_config both refuse NaN/Infinity on pydantic 2.14.1; zero, -1 and tiny prices are accepted, so the price-above-0 check is still a real gap); now 0 Blocker, 5 Major, 14 Nit; patches deferred by lead
 ROLES folder marked NOT FOR THE TAKE in its README (lead decision 3); necessity review: RUNSHEET and CLAIMS still carry the 11-scene plan until r5 fixers finish
 claims lane B cite check: 127 of 226 B rows, 123 OK, 4 WRONG (B-107, B-155, B-114, B-184) sent to the r5 fixer; 99 B rows unchecked
-ORDER023: sed DENIED by permission check (edits ~/.claude/plugins); nothing changed (6 opus 64 sonnet still); needs owner allow; noted in REPORT.md
-NEXT: OWNER: allow the ORDER 023 sed (denied). Lanes: F3 r6, F8 r3, F5 r5 ev+facts, claims r5 ev+read, cite lane A
-PUSHED_UTC: 2026-11-16T10:11:33Z
+ORDER023 cancelled by ORDER 024: sed never ran (denied); 6 opus 64 sonnet 0 fable proven in REPORT.md
+claims cite lane A+rest of B: 200 rows, 198 OK, 2 WRONG (A-097 trace sentence reversed v1/v2 README; A-068 off by one); desk repo IS on this machine (/home/user/duplicate-proof-lead-desk-n8n head f3c39cf) so several UNTRACED rows can be traced: tracer running
+NEXT: ORDER 023 cancelled (ORDER 024). Lanes: F3 r6, F8 r3, F5 r5 ev+facts, claims r5 ev+read, desk tracer
+PUSHED_UTC: 2026-11-16T10:11:55Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -39,12 +40,12 @@ PUSHED_UTC: 2026-11-16T10:11:33Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f8-fix3 | F8 r3 fixer (Majors) | sonnet | fix 5 Majors + docs after evidence | 10:05 | 10:20 | 5 | running | flow-check/fix-f8-r3.md |
-| cl-cite2 | claims lane A + rest of B cite checker | sonnet | 97 A rows + 99 B rows | 10:30 | 10:45 | 5 | running | reviews-f1/citations-laneA-and-rest.md |
 | a7f3r6 | f3-fix6 | sonnet | F3 round 6: kill 8 surviving mutants | 10:10 | 10:40 | 5 | running | fill_flows/fix-f3-r6.md |
 | f5ev5 | F5 r5 evidence runner | sonnet | checker + r4/r5 diff + cites | 10:14 | 10:34 | 5 | running | evidence-f5-r5.md |
 | f5rv5 | F5 r5 facts reviewer | sonnet | facts on real-v5 rows | 10:14 | 10:34 | 5 | running | (inline) |
 | clev5 | claims r5 evidence runner | sonnet | counts + verdict diff + cites | 10:18 | 10:38 | 5 | running | reviews-f1/evidence-claims-r5.md |
 | clrd5 | claims r5 stranger read (1-260) | sonnet | reader review of the new top | 10:18 | 10:35 | 5 | running | (inline) |
+| trdesk | desk-repo tracer for UNTRACED rows | sonnet | trace B-067.. in the public desk repo | 10:21 | 10:46 | 5 | running | reviews-f1/trace-desk-repo.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
