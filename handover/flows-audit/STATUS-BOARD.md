@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:01:10Z
+UPDATED_UTC: 2026-11-16T17:02:03Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 7
-CAPACITY: 4.65 load of 4 cores, mem 1/15 GB, RAM 1331/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 3.02 load of 4 cores, mem 1/15 GB, RAM 1361/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: verify arriving reports; next: Q31 r20 read, plan-files r28, patch-copies r12, F8 evidence
-PUSHED_UTC: 2026-11-16T17:01:10Z
+NEXT: verify arriving reports; next: Q31 r20, RW/CT r24, plan-files r29 readers, patch-copies r12, F8 evidence
+PUSHED_UTC: 2026-11-16T17:02:03Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,11 +32,12 @@ PUSHED_UTC: 2026-11-16T17:01:10Z
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:20Z | running | run_all.sh intermittency work |
 | ae59e2df | REVIEW.md r35 fixer | sonnet | fix design r34 + reader r34 (uncapped) | 16:50Z | 17:20Z | running | edits in progress |
-| a88baea0 | plan-files r28 fixer | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST from r27 + fix A sentence | 16:55Z | 17:15Z | running | edits in progress |
 | aa679f36 | Q31 r20 reader | sonnet | stranger read of Q31 | 16:58Z | 17:08Z | running | reading |
-| a1e95c64 | patch-copies r12 fixer | sonnet | README/DEAD-MAN-CHECK from 2 reviews (uncapped) | 17:00Z | 17:25Z | running | starting |
-| a9f2669b | FINDINGS/LEDGER r14 fixer | sonnet | 9 Majors from reader r13 | 17:00Z | 17:20Z | running | starting |
-| a3f52522 | RW/CT r24 reader | sonnet | stranger read of unread RW/CT parts | 17:01Z | 17:12Z | running | starting |
+| a1e95c64 | patch-copies r12 fixer | sonnet | README/DEAD-MAN-CHECK from 2 reviews (uncapped) | 17:00Z | 17:25Z | running | editing |
+| a9f2669b | FINDINGS/LEDGER r14 fixer | sonnet | 9 Majors from reader r13 | 17:00Z | 17:20Z | running | editing |
+| a3f52522 | RW/CT r24 reader | sonnet | stranger read of unread RW/CT parts | 17:01Z | 17:12Z | running | reading |
+| a8b8f169 | plan-files r29 reader | sonnet | stranger read RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 17:02Z | 17:12Z | running | reading |
+(8th slot empty: every independent review target is a file a running fixer is editing; a reviewer now would read a stale version)
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 verify Q31 r20 reader report, launch fixer
