@@ -107,3 +107,34 @@ REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa
   PASS: T20.1 exit 129/130/143 (got 129)
   PASS: T20.1 file restored
   PASS: T20.1 state empty
+  PASS: T20.2 exit 129/130/143 (got 129)
+  PASS: T20.2 file restored
+  PASS: T20.2 state empty
+  PASS: T20.3 exit 129/130/143 (got 129)
+  PASS: T20.3 file restored
+  PASS: T20.3 state empty
+  PASS: T20.4 exit 129/130/143 (got 129)
+  PASS: T20.4 file restored
+  PASS: T20.4 state empty
+  PASS: T20.5 exit 129/130/143 (got 129)
+  PASS: T20.5 file restored
+  PASS: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+handler logic ok
+  PASS: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22a mode 755 refused (got 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22b symlinked state folder refused (got 2)
+  PASS: T22b nothing written through the link
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22c other owner refused (got 2)
+== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 10221 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup does not match the hash recorded in the marker: nothing written; the mutant may still be planted; marker and backup k
+  PASS: T23a hash mismatch refused, exit 3 because a marker exists and the mutant may still be planted (got 3)
+  PASS: T23a file not written
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765
+  PASS: T23b marker as a link refused, exit 3 (got 3)
+  PASS: T23b file not written

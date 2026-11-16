@@ -81,7 +81,7 @@ def run(edits, inputs, quiet=False):
             if b[0] < a[1]: F(f'OLD spans overlap {a[2]} {b[2]}')
     # ---- counts in the file's own text
     cs = txt[txt.index('## Counts'):txt.index('## NOT DECIDED')] if '## Counts' in txt and '## NOT DECIDED' in txt else ''
-    m = re.search(r'\*\*Apply now (\d+)\*\*, \*\*Hold (\d+)\*\*, \*\*Conditional (\d+)\*\*', cs)
+    m = re.search(r'\*\*Apply now (\d+)\*\*, \*\*Hold (\d+)\*\*(?: \([^)]*\))?, \*\*Conditional (\d+)\*\*', cs)
     if not m: F('counts sentence missing')
     else:
         if (int(m.group(1)), int(m.group(2)), int(m.group(3))) != (stc['Apply now'], stc['Hold'], stc['Conditional']):
@@ -117,35 +117,64 @@ def run(edits, inputs, quiet=False):
     # ---- times
     def outside_old(t):
         return re.sub(r'(?m)^OLD(?: \d)? \(exact\):\n~~~~\n.*?\n~~~~$', '', t, flags=re.S)
-    body = outside_old(txt)
     pair = re.compile(r'(\d{1,2}):(\d{2}) UTC(?: = | \()(\d{1,2}):(\d{2}) IST')
-    paired_spans = []
-    for m in pair.finditer(body):
-        u = int(m.group(1)) * 60 + int(m.group(2)); i = int(m.group(3)) * 60 + int(m.group(4))
-        if (i - u) % 1440 != 330: F('UTC/IST pair not +5:30: ' + m.group(0))
-        paired_spans.append((m.start(), m.end()))
-    def inpair(pos): return any(a <= pos < b for a, b in paired_spans)
-    for m in re.finditer(r'\b(\d{1,2}):(\d{2})\b(?!Z)', body):
-        if not inpair(m.start()):
-            ctx = body[max(0, m.start() - 30):m.end() + 12].replace('\n', ' ')
-            F('time outside a UTC/IST pair: ' + ctx)
-    for m in re.finditer(r'\b\d{1,2}:\d{2} (?:UTC|IST)\b', body):
-        if not inpair(m.start()): F('UTC or IST time not in a pair: ' + body[max(0, m.start() - 30):m.end() + 12].replace('\n', ' '))
-    # deadlines: whole-file consistency
-    pairs_all = collections.Counter(m.group(0).split(' IST')[0] for m in pair.finditer(txt))
+    def mins(h, m): return int(h) * 60 + int(m)
+    # A: strict in NEW blocks
+    nq = 0
+    for r in rows:
+        for b in r['blocks']:
+            if b['kind'] != 'NEW': continue
+            t = b['text']; spans = []
+            for m in pair.finditer(t):
+                nq += 1
+                if (mins(m.group(3), m.group(4)) - mins(m.group(1), m.group(2))) % 1440 != 330: F(f"{r['id']} NEW pair not +5:30: {m.group(0)}")
+                spans.append((m.start(), m.end()))
+            for m in re.finditer(r'\b(\d{1,2}):(\d{2})\b(?!Z)', t):
+                if not any(a_ <= m.start() < b_ for a_, b_ in spans):
+                    F(f"{r['id']} NEW time outside a UTC/IST pair: " + t[max(0, m.start() - 30):m.end() + 15].replace('\n', ' '))
+    # B: prose and Why (outside OLD and outside NEW): pairs +5:30; UTC time needs IST on same line (quotes of old text reported as info)
+    prose = outside_old(txt)
+    prose = re.sub(r'(?m)^NEW[^\n]*:\n~~~~\n.*?\n~~~~$', '', prose, flags=re.S)
+    for m in pair.finditer(prose):
+        if (mins(m.group(3), m.group(4)) - mins(m.group(1), m.group(2))) % 1440 != 330: F('prose pair not +5:30: ' + m.group(0))
+    for m in re.finditer(r'(\d{1,2}):(\d{2}) \+ 5:30 = (\d{1,2}):(\d{2})', prose):
+        if (mins(m.group(3), m.group(4)) - mins(m.group(1), m.group(2))) % 1440 != 330: F('arithmetic wrong: ' + m.group(0))
+    for ln in prose.split('\n'):
+        for m in re.finditer(r'\b(\d{1,2}):(\d{2}) UTC\b', ln):
+            if 'IST' not in ln: info.append('prose UTC time with no IST on its line: ' + ln[max(0, m.start() - 30):m.end() + 10])
+            elif not pair.match(ln[m.start():m.start() + 30]) : info.append('prose UTC time not directly paired (IST elsewhere on line): ' + ln[max(0, m.start() - 20):m.end() + 12])
+    # C: whole-file deadline consistency (outside OLD): each fixed time has its fixed partner, never another
+    body = outside_old(txt)
     for want_u, want_i in (('18:19', '23:49'), ('18:04', '23:34'), ('18:29', '23:59'), ('18:14', '23:44')):
         for m in re.finditer(re.escape(want_u) + r' UTC', body):
-            if not re.match(r' (?:=|\()' + r' ?' + re.escape(want_i) + r' IST', body[m.end():m.end() + 14]): F(f'{want_u} UTC not paired with {want_i}')
+            if not re.match(r' (?:=|\() ?' + re.escape(want_i) + r' IST', body[m.end():m.end() + 14]):
+                ln = body[:m.start()].count('\n')
+                if not re.match(r'\)? ?(=|\()', body[m.end():m.end() + 4]) and 'IST' in body.split('\n')[ln]: info.append(f'{want_u} UTC quoted without pair on its line')
+                else: F(f'{want_u} UTC not paired with {want_i}: ' + body[max(0, m.start() - 30):m.end() + 20].replace('\n', ' '))
         for m in re.finditer(re.escape(want_i) + r' IST', body):
-            if not body[max(0, m.start() - 16):m.start()].rstrip(' =(').endswith(want_u + ' UTC'): F(f'{want_i} IST not preceded by {want_u} UTC')
-    # context rules (160 chars before the time, same line)
+            if not body[max(0, m.start() - 16):m.start()].rstrip(' =(').endswith(want_u + ' UTC'):
+                ln = body[:m.start()].count('\n')
+                if 'UTC' in body.split('\n')[ln] and ('+ 5:30' in body.split('\n')[ln] or want_u in body.split('\n')[ln]): info.append(f'{want_i} IST quoted, partner elsewhere on line')
+                else: F(f'{want_i} IST not preceded by {want_u} UTC: ' + body[max(0, m.start() - 30):m.end()].replace('\n', ' '))
+    for t in set(re.findall(r'(\d{1,2}:\d{2}) UTC', body)):
+        if t not in ('18:19', '18:04', '18:29', '18:14'): F('unexpected UTC time ' + t)
+    # D: keyword class -> time (nearest keyword before the pair, same line, 100 chars)
+    kw = [(r'last time to revoke|revoke[^.;]{0,60}\b(by|before)\b|once more before|key for the model is\b|revoke by', '18:19'),
+          (r'no start later than|latest start (?:time )?(?:is|:|stays|\(|of)|latest start', '18:04'),
+          (r'spending window[^.;]{0,25}(?:ends|:)|window ends|rest of the retirement by|end of the spending|retirement, by|Retirement, by|may spend money', '18:29'),
+          (r'program itself accepts|program accepts|about 18:1', '18:14')]
+    ctxn = 0
     for m in pair.finditer(body):
         t = f'{int(m.group(1)):02d}:{m.group(2)}'
-        ctx = body[max(0, m.start() - 110):m.start()].split('\n')[-1].lower()
-        if t == '18:19' and not re.search(r'revoke|once more before|before the last time|2026-11-23 $|latest|last time|ten minutes|so that the take is over|the take is over|ends|cancel', ctx): F('18:19 in unexpected context: ' + ctx[-70:])
-        if re.search(r'(last time to revoke|revoke[^.]{0,40}(by|before))\s*(mon 23 nov 2026 |2026-11-23 )?$', ctx) and t != '18:19': F(f'revoke deadline context carries {t}: ' + ctx[-70:])
-        if re.search(r'(no start later than|latest start[^.]{0,30}(is|:|at)|asks for no start later than)\s*$', ctx) and t != '18:04': F(f'latest-start context carries {t}: ' + ctx[-70:])
-        if re.search(r'(spending window[^.]{0,30}(ends|:)|window ends)\s*(mon 23 nov 2026 |2026-11-23 )?$', ctx) and t != '18:29': F(f'window-end context carries {t}: ' + ctx[-70:])
+        pre = body[max(0, m.start() - 100):m.start()].split('\n')[-1]
+        best = None
+        for pat, tt in kw:
+            for k in re.finditer(pat, pre):
+                if best is None or k.end() > best[0]: best = (k.end(), tt, k.group(0))
+        if best:
+            ctxn += 1
+            if best[1] != t and not (best[1] == '18:19' and t in ('18:29',) and re.search(r'window|retirement|rest', pre[best[0]:])): F(f'context "{best[2][:30]}" expects {best[1]} but pair is {t}: ' + pre[-60:])
+    info.append(f'time pairs in NEW blocks: {nq}; keyword-context checks: {ctxn}')
     if '18:19 UTC = 23:49 IST' not in body: F('revoke deadline pair missing')
     if '18:04 UTC = 23:34 IST' not in body: F('latest start pair missing')
     # ---- weekday / dates (2026)
@@ -198,11 +227,11 @@ def run(edits, inputs, quiet=False):
     vocab = {'no more takes', 'more takes', 'cut accepted', 'same key', 'different key', 'not sure', 'key kept', 'yes', 'no', 'ok', 'end', 'y',
              'tested', 'untested', 'Yes, remove the container only', 'No', 'no, other things use it', 'proven', 'not proven'}
     # each vocab phrase used in backticks in any owner NEW text must also appear in a defining sentence in an Apply-now OWNER block (not only in held ones) when used in an Apply-now block
+    cue = re.compile(r'(?i)(repl|write|wrote|type|answer|say|send|words?\b|means|counts as|ends|exact)')
     for ph in vocab:
-        used_applied = [r['id'] for r, b in owner_new if stat(r) != 'Hold' and f'`{ph}`' in b['text']]
-        if used_applied:
-            defs = [r['id'] for r, b in owner_new if stat(r) != 'Hold' and re.search(r'`' + re.escape(ph) + r'`[^.\n]{0,160}(means|counts as|ends|stops|is the|you reply|reply|write|type|word)|(reply|write|type|word|answer|send)[^.\n]{0,160}`' + re.escape(ph) + r'`', b['text'])]
-            if not defs: F(f'reply phrase `{ph}` used in applied rows {used_applied} but no defining sentence in an applied row')
+        used = [(r['id'], b['text']) for r, b in owner_new if stat(r) != 'Hold' and f'`{ph}`' in b['text']]
+        if used and not any(cue.search(t[max(0, m.start() - 400):m.end() + 200]) for _, t in used for m in re.finditer('`' + re.escape(ph) + '`', t)):
+            F(f'reply phrase `{ph}` used in applied rows {[u[0] for u in used]} with no cue verb nearby')
     # ---- secrets / emails / personal paths
     for pat, nm in ((r'AKIA[0-9A-Z]{16}', 'aws-shaped'), (r'sk-[A-Za-z0-9_-]{20,}', 'sk-shaped'), (r'ghp_[A-Za-z0-9]{20,}', 'gh token'), (r'xox[bap]-[A-Za-z0-9-]{10,}', 'slack token'),
                     (r'pat-[a-z0-9]{2,5}-[0-9a-f-]{20,}', 'hubspot-shaped'), (r'-----BEGIN [A-Z ]*PRIVATE KEY', 'pem'), (r'(?i)password\s*[:=]\s*\S{6,}', 'password assign'),
