@@ -437,7 +437,7 @@ Y = [
 ('Y18', S, '[LEAD FILLS at re-pin:', '[LEAD FILLS at repin:', 'a LEAD FILLS placeholder spelled differently (H09)'),
 ('Y19', FA, "'bm':", "'zz_dead': 'x', 'bm':", 'a fact no source uses (ls_t kind)'),
 ('Y20', S, '## 7. The run (UNVERIFIED)', 'Mail ann@corp.test with the list.\n\n## 7. The run (UNVERIFIED)', 'email-shaped text in the owner pages'),
-('Y21', BUILD_F, '"""Builds every v31 text', '# path /ho' + 'me/x/k\n"""Builds every v31 text', 'hard-coded absolute path in a script'),
+('Y21', BUILD_F, '"""Builds every v31 text', '_X = "/ho' + 'me/x/k"\n"""Builds every v31 text', 'hard-coded absolute path in a script'),
 ]
 P += Y
 EXPECT.update({'Y01':['C210','BUILD'],'Y02':['C210'],'Y03':['C212'],'Y04':['C213'],'Y05':['C213'],'Y06':['C214'],'Y07':['C215'],'Y08':['C216'],'Y09':['C217'],'Y10':['C218'],'Y11':['C219'],'Y12':['C220'],'Y13':['C221'],'Y14':['C222'],'Y15':['C222'],'Y16':['C222'],'Y17':['C223'],'Y18':['C224'],'Y19':['C225'],'Y20':['C226'],'Y21':['C227']})

@@ -264,3 +264,35 @@ NEG r15label caught | FAIL r14 3e bare no
 NEG r15row caught | FAIL ids differ {'E-61'}
 NEG r15short caught | FAIL r15 E-48 intro lacks 'In short:'
 NEG r16F1word caught | FAIL r15 E-48 B lacks '`key gone, no more decisions`'
+NEG r16F1time caught | FAIL r16 F1 D5 lacks 'ONLY when you type it AFTER 18:19 UTC = 23:49 IST on Mon 23 Nov 2026
+NEG r16F2a caught | FAIL r16 F2 E-62 lacks 'you delete nothing and tell the assistant'
+NEG r16F2b caught | FAIL r16 F2 E-42 still has 'made-up names'
+NEG r16F2c caught | FAIL ids differ {'E-62', 'E-63'}
+NEG r16F3 caught | FAIL r16 F3 G lacks 'password files and editor copies'
+NEG r16F4a caught | FAIL r16 F4 the numbered order is missing or out of order: [119, 395, 554, -1, 729, 856, 1
+NEG r16F4b caught | FAIL r16 F4 card lacks 'never starts while a copy of the key exists and the key is not rev
+NEG r16F4c caught | FAIL r16 F4 E-16 lacks 'It does NOT start while a copy of the secret key for the model exi
+NEG r16F4d caught | FAIL r16 F4 E-16 lacks 'The order of step 22 is the only order'
+NEG r16m1 caught | FAIL r16 m1 E-16 lacks 'if a recording or a video file is inside, it stops, removes nothin
+NEG r16m5 caught | FAIL r16 m5 E-11 lacks 'Write `ok stand-in test` (for the stand-in test)'
+NEG r16m3 caught | FAIL r13 time arithmetic: 18:09 UTC = 23:49 IST
+NEG r16M2 caught | FAIL r14 E-12 margin
+NEG r16M1 caught | FAIL r16 M1 refs still has 'only a message typed by you counts: step 22 item 3, key step C
+NEG r16plain caught | FAIL r16 E-56 codes still has '(r17)'
+NEG r16e54 caught | FAIL r16 E-54 heading is not on its own line
+NEG r16m15 caught | FAIL r16 stop-looking without the wait for `not looking` in E-48: '` BEFORE you click the 
+NEG r16m17 caught | FAIL r16 stop-looking without the wait for `not looking` in E-09: '`; (2) type the secret 
+NEG r16m18 caught | FAIL r16 E-09 a does not list sub-steps c, f, g and h
+NEG r16m19 caught | FAIL r16 shred rule lacks "`ls -l '<path>'`"
+NEG r16m22 caught | FAIL r12 E-48 lacks shred -u -- '<path>'
+NEG r16m24 caught | FAIL r16 shred rule lacks '/x/take-10'
+NEG r16m31 caught | FAIL r13 E-48 lacks `revoke the secret key for the model`
+NEG r16m32 caught | FAIL r16 alarm 1 has the wrong name in E-12: 'is the secret key for the model still alive?
+NEG r16m51a caught | FAIL r16 secret-shaped text matches sk-ant-api03[-A-Za
+NEG r16m51b caught | FAIL r16 secret-shaped text matches \bsk-[A-Za-z0-9_-]
+NEG r16idx caught | FAIL index mismatch E-62 ('OWNER-STEPS-realrun-v3.md', '113', 'Apply now', 'CONTRADICTION'
+NEG r16banned caught | FAIL banned strings
+NEG r16pair caught | FAIL r13 time arithmetic: 17:49 UTC = 23:29 IST
+NEG r16wd caught | FAIL r14 wrong weekday: Tue 23 Nov 2026
+NEG r16code caught | FAIL E-48 owner NEW text contains E-nn
+FAILURES 0

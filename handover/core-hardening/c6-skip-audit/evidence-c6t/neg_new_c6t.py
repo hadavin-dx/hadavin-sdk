@@ -58,3 +58,7 @@ env_variant("T-E23-sheet-v31-B-missing", lambda d: os.remove(d + "/OWNER-SHEET-v
 for _n in ENV:
     if _n.startswith("T-"):
         M[_n] = rep
+M["T-E17b-sheet-v31-time-wrong"] = re.sub(r"(OWNER-SHEET-v31-A\.md \(written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
+M["T-E24-EGM-undefined-1c"] = rep_once("EGM = the studio's review method", "EGM is the studio's review method")
+M["T-E25-assumption-label-gone-box"] = box_sub("MY ASSUMPTION", "THE RULE")
+M["T-E26-own-reading-gone-box"] = box_sub("this report's own reading", "a fact")

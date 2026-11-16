@@ -1,5 +1,0 @@
-REFUSED: import check: `import mod` failed (rc 1): ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1333, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'mod'

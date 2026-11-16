@@ -164,3 +164,12 @@ test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957
 test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; h
   FAIL: T99f m6 marker mode 660 with --sha, git file 0644: exit 3 (got 0), nothing written (still planted) (r10: exit 0 for 0664, mode written)
 /tmp/safety-only.EJ4qKm.sh: line 70:  3154 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o632) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T99f m6 marker mode 632 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664, mode written)
+/tmp/safety-only.EJ4qKm.sh: line 70:  6666 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T99f2 GUARD m6 with the default git archive (file 0664) a marker mode 0666 is still refused (write for others), exit 3 (got 3)
+Traceback (most recent call last):
+  File "<stdin>", line 13, in <module>
+  File "<frozen runpy>", line 294, in run_path
+  FAIL: T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got 130), no traceback, no KeyboardInterrupt text (r10: exit 1 and a KeyboardInterrupt traceback)
+FAILED CHECKS: 15 (of 52 checks run; skipped: none)

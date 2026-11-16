@@ -1565,7 +1565,7 @@ done
 for MODEV in 2541 438; do
   kill_planted; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t97e2.out" 2>&1; rc=$?; cut -c1-200 "$S/t97e2.out"
-  chk "T97e2 m2 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc; r9: 0 for 0666, exit 3 already for 4755), 'special bit', nothing written (still planted)" "[ $rc -eq 3 ] && grep -q 'special bit' '$S/t97e2.out' && [ '$(last)' = return2 ]"
+  chk "T97e2 m2 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc; r9: 0 for 0666, exit 3 already for 4755), 'special bit' (4755) or 'writable by others' (0666; r12 texts), nothing written (still planted)" "[ $rc -eq 3 ] && grep -q 'special bit\\|writable by others' '$S/t97e2.out' && [ '$(last)' = return2 ]"
   python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 done
 # m3 --out-json: not in any searched state folder, and an existing foreign file is never overwritten
@@ -1625,7 +1625,9 @@ res = r.tree_check(a, rt, fr, mk); print("m7 tree_check:", res)
 if "<marker left behind>" not in res: bad.append("m7: dangling marker not counted")
 # m8: a timeout kills the whole process group of a helper, not only its leader
 try:
-    r.run_cmd([__import__("shutil").which("bash"), "-c", f'"{sl}" 3157 & exec "{sl}" 3158'], timeout=1)
+    wrapdir = pathlib.Path(tempfile.mkdtemp(prefix="t97i-")); wrap = wrapdir / "git"   # r12: the guard allows only git, patch and the venv python by NAME, so the wrapper script is called git
+    wrap.write_text(f'#!/bin/bash\n"{sl}" 3157 &\nexec "{sl}" 3158\n'); wrap.chmod(0o755)
+    r.run_cmd([str(wrap)], timeout=1)
     bad.append("m8: no timeout")
 except subprocess.TimeoutExpired:
     pass

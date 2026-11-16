@@ -403,7 +403,7 @@ check("E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the 
 # E-lrn: release note lines cited are the same in v14 and in the newest note (the check script compares whole lines)
 check("E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold", cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "")
 # M1/M2 (design): the 45-second sentence is not claimed to be carried by the sheets; LRN14:149 and :150 are the evidence; lease words on the video are held under G12
-check("M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default", not re.search(r"lives in (the )?(one final )?owner sheet|then lives in the owner|must carry it when the card|the sheets carry", "\n".join(l for l in raw.split("\n") if not l.startswith("| Design M1"))) and any(l.startswith("| L-POST (new in c6q)") and "LRN14:150" in l and "LRN14:149" in l for l in txt), "")
+check("M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default", not re.search(r"(?i)lives in (the )?(one final )?owner sheet|then lives in the owner|must carry it when the card|the sheets carry", "\n".join(l for l in raw.split("\n") if not l.startswith("| Design M1"))) and any(l.startswith("| L-POST (new in c6q)") and "LRN14:150" in l and "LRN14:149" in l for l in txt), "")
 check("M1: TASK (9) is a question to you (yes or no), not an instruction", "TASK (9) A QUESTION TO YOU" in box and "(9) you (or a builder you name) add the 45-second limit sentence" not in raw, "")
 check("M2: the lease words that stay on the video (the label 'setting: lease 45 s', the words 'other lease settings') are held under gate G12 in the box and in section 3", "'setting: lease 45 s'" in boxs and "other lease settings" in boxs and "G12" in boxs and any(l.startswith("| L-POST (new in c6q)") and "HELD under gate G12" in l for l in txt), "")
 # M3 (design): the alert mail is provoked in the re-smoke, has a check row, and the cut cases include line 2 cut and lines 1 and 2 cut
@@ -423,7 +423,7 @@ for pre_, w_, k_ in _cases:
     _okc.append(len(ls_) == 1 and _tbl(w_, k_) in ls_[0])
 check("M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell)", all(_okc), _okc)
 # M4: the report does not call itself shorter without a count (the c6s wording)
-check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), "it is rewritten and shorter" not in raw and ("%d words" % len(boxs.split())) in boxs, "")
+check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), all("it was 3,490 words" in l for l in raw.split("\n") if "rewritten and shorter" in l) and ("%d words" % len(boxs.split())) in boxs, "")
 # N1: the two numbered lists have different names
 check("N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task", all(("TASK (%d)" % k_) in sec1c for k_ in range(1, 13)) and not re.search(r"\bsteps? (?:6|7|8|9|10|11|12)\b", boxs) and not re.search(r"(?<!TASK )\(1\) write the answer line", raw), "")
 # N2: claim means reserve only
@@ -436,3 +436,10 @@ check("N4: the start box says the run sheet holds scenes 1 to 4 and a closing ca
 check("N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops", "OPTION (b) OF L-CARDLEN, 74 words" in boxs and "'fully', 'sent to n8n', 'own', 'customer-record', 'our own runs'" in boxs, "")
 # m6: the scanner reader is named
 check("m6: every 'second person' says who (someone who did not write the scan)", raw.count("a second person") == raw.count("a second person (someone who did not write the scan)"), raw.count("a second person"))
+
+# E-defs: each definition the start box and section 1c rely on is present where it is used (the c6s checks looked at box and 1c together, so one copy could vanish unseen)
+_need_box = ["G12 = YOUR gate", "MY ASSUMPTION", "LRN14:33", "this report's own reading", "You are the STUDIO LEAD"]
+_need_1c = ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", "KEY = a secret code", "a warning mail the system is built to send to a person", "this report's own reading"]
+check("E-defs: the start box itself holds %s and section 1c holds %s" % (_need_box, _need_1c), all(x in boxs for x in _need_box) and all(x in sec1c for x in _need_1c) and "the one warning mail the system sends" not in raw, [x for x in _need_box if x not in boxs] + [x for x in _need_1c if x not in sec1c])
+_r6 = bylead[6]["new"] if 6 in bylead else ""
+check("E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key", "second person" in sec1c and "tested with a fake key before it touches a real key" in raw and "(someone who did not write the scan) and tested with a fake key before it touches a real key" in raw and raw.count("tested with a fake key before it touches a real key") >= 2, "")

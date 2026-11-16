@@ -1,14 +1,4 @@
-ive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)
-PASS naive: the C-9 part 2 circle is explained
-PASS naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation
-PASS naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
-PASS naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
-PASS naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
-PASS naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)
-PASS naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box
-PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
-PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
-PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+ or rewritten, not left stale (3,490-word box, history order)
 PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
 PASS E-count: the start box states its own word count once and it equals the real count of the box (2495) :: (['2495'], 2495)
 PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2495
@@ -23,7 +13,7 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:02Z (read from the files at run time) :: []
 PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
@@ -34,13 +24,15 @@ PASS M2: the lease words that stay on the video (the label 'setting: lease 45 s'
 PASS M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3)
 PASS M3: Table B has the cut cases 'line 2 cut' (55 words) and 'lines 1 and 2 cut' (44 words) with seconds, budget, total and Time cell recomputed from the quoted card lines :: ['| card line 2 cut (no alert mail seen) | 1, 2, 3, 4 = 150 s | 55 | 22.0 | 25 s | about 175 s | 25 s EST |']
 PASS M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell) :: [True, True, True, True, True, True]
-PASS M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
+FAIL M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
 PASS N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task
 PASS N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim' :: ['ery 30 seconds) may claim the contact again. ', "e questions below, 'claim' means statement). "]
 PASS N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'
 PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
 PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
-SUMMARY: 196 checks, 0 FAILED
+FAIL E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: ['LRN14:33']
+PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
+SUMMARY: 198 checks, 2 FAILED: M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495; E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"]
 
-EXIT CODE 0
+EXIT CODE 1

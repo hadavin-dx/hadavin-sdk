@@ -243,7 +243,8 @@ db = "s_" + secrets.token_hex(3); grants_select_only()
 _, mgs, _, _ = new_g(db, [(H17 / "spend_decrease_log.sql", "0006_dec"), (H17 / "spend_guarded_writes.sql", "0007_guard")])
 rts = psycopg.connect(dsn("rt17", db), autocommit=True)
 check("MA2 clean database: the query run on the RUNTIME login (no table rights needed) finds no problem", au.secdef_problems(rts, roles=ROLES, owner="migr17") == [])
-mk = lambda body: mgs.execute(body)
+sup = psycopg.connect(dsn("postgres", db), autocommit=True)  # a superuser makes the hostile changes (ALTER OWNER needs it)
+mk = lambda body: sup.execute(body)
 EVIL = "CREATE FUNCTION {n}() RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT 1'"
 cases = [
  ("a hand-made SECURITY DEFINER function that is on no list", EVIL.format(n="evil"), "DROP FUNCTION evil()", "unexpected SECURITY DEFINER function public.evil"),
@@ -251,7 +252,7 @@ cases = [
  ("kill_switch_release granted to the runtime role", "GRANT EXECUTE ON FUNCTION kill_switch_release() TO rt17", "REVOKE EXECUTE ON FUNCTION kill_switch_release() FROM rt17", "rt17"),
  ("kill_switch_engage granted to the operator role", "GRANT EXECUTE ON FUNCTION kill_switch_engage() TO op17", "REVOKE EXECUTE ON FUNCTION kill_switch_engage() FROM op17", "op17"),
  ("a second overload of a listed name, created with the default (PUBLIC) EXECUTE", "CREATE FUNCTION spend_reserve(p text, p2 date, p3 numeric, p4 numeric) RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT 1'", "DROP FUNCTION spend_reserve(text,date,numeric,numeric)", "unexpected SECURITY DEFINER function public.spend_reserve(text,date,numeric,numeric)"),
- ("kill_switch_release owner changed to another role", "ALTER FUNCTION kill_switch_release() OWNER TO op17", "ALTER FUNCTION kill_switch_release() OWNER TO migr17", "owned by op17"),
+ ("kill_switch_release owner changed to another role", "ALTER FUNCTION kill_switch_release() OWNER TO op17", "ALTER FUNCTION kill_switch_release() OWNER TO migr17; GRANT EXECUTE ON FUNCTION kill_switch_release() TO op17", "owned by op17"),
  ("search_path of spend_settle reset (ALTER FUNCTION ... RESET)", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) RESET search_path", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) SET search_path = pg_catalog, pg_temp", "not exactly search_path"),
  ("search_path of spend_settle set to public by ALTER FUNCTION SET", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) SET search_path = public", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) SET search_path = pg_catalog, pg_temp", "not exactly search_path"),
  ("a SECURITY DEFINER function with a listed name in another schema", "CREATE SCHEMA other17; CREATE FUNCTION other17.kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT 1'", "DROP SCHEMA other17 CASCADE", "unexpected SECURITY DEFINER function other17.kill_switch_release"),

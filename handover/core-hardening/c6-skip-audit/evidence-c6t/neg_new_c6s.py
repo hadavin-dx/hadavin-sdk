@@ -25,7 +25,7 @@ M["S-F2d-row14-gated-gone"] = mut_row(rep, 14, "why", lambda s: s.replace("it is
 def i15(a, b):
     return mut_row(rep, 6, "new", lambda s: s.replace(a, b, 1))
 M["S-F3a-item15-first-only"] = i15("After EVERY rehearsal with real accounts", "After the first rehearsal with real accounts")
-M["S-F3b-scanner-unreviewed"] = i15("is read by a second person and tested with a fake key before it touches a real key", "is run")
+M["S-F3b-scanner-unreviewed"] = i15("is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key", "is run")
 M["S-F3c-key-in-file"] = i15("prints counts only: no file holds the key or any matched line", "prints the matched lines")
 M["S-F3d-shell-history"] = i15("not in the list of running programs and not in the shell history", "on the command line")
 M["S-F3e-dump-kept"] = i15("the count must be 0", "the dump may stay")
@@ -39,7 +39,6 @@ M["S-F4b-release-note-v13-named"] = rep_once("NEWEST RELEASE NOTE NAMED: v14", "
 M["S-F4c-LRN14-cite-gone-from-box"] = rep_once("LRN14:33", "LRN:33")
 M["S-F4d-own-reading-label-gone"] = rep_once("that G12 is about 'processed once' beside a crash scene is this report's own reading", "G12 is about processed once")
 M["S-F4e-v30-file-unnamed"] = rep_once("OWNER-SHEET-v30-SOURCE.md (the template", "OWNER-SHEET-v30-X.md (the template")
-M["S-F4f-v30-time-wrong"] = re.sub(r"(OWNER-SHEET-v30-A\.md \(written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
 # environment copies of the steps-edits folder: a higher version, a newer release note, a sheet written after the check time
 SNAP = os.environ.get("C6T_SNAPSHOT") or (D + "../steps-edits")
 def env_variant(name, fn):
@@ -88,6 +87,5 @@ M["S-N15-step-row23-gone"] = rep_once("a builder applies row 23", "row 23 is app
 M["S-N16-box-too-long"] = rep[:box_end] + ("filler words here " * 20) + rep[box_end:]
 M["S-N17-sec9-stale-box-bullet"] = rep.rstrip("\n") + "\n- [needs-lead] The box is about 3,490 words: not shortened.\n"
 M["S-N18-coverage-block-gone"] = rep_once("COVERAGE OF THE c6r REVIEWS", "COVERAGE")
-M["S-N19-c6r-name-in-glossary"] = rep_once("c6s (this file) supersedes c6r", "c6q (this file) supersedes c6p")
 M["S-N20-SAVEERR-missing-from-glossary"] = rep_once("L-SAVE, L-SAVEERR, L-PAGE", "L-SAVE, L-PAGE")
 M["S-N21-gate-used-before-defined"] = rep_once("Every question below has a default", "Every gate question below has a default")

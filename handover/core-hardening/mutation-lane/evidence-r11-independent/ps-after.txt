@@ -1,0 +1,2 @@
+root     11499  0.1  0.0   5388  4468 ?        S    17:44   0:00 bash /tmp/safety-only.i69Paw.sh
+root     26274  6.6  0.2  56280 35292 ?        Ss   17:44   0:00 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/dev2/toy/root/.ven

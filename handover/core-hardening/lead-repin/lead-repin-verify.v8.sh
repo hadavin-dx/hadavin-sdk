@@ -163,7 +163,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
 CANARY_PLANNED=1534
-SELFTEST_PLANNED=1398
+SELFTEST_PLANNED=1567
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -1593,6 +1593,12 @@ EOF
   st_o=$(LEAD_REPIN_MAX_SECONDS=99999999999999999999999999 LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" 2>/dev/null); st_r=$?
   if [ "$st_r" -eq 0 ] && printf '%s' "$st_o" | grep -a -q '^SUMMARY:'; then mt_ok "a time limit of 26 digits falls back to the default and the run ends normally"; else mt_bad "a time limit of 26 digits must not end the run (exit=$st_r)"; fi
   rm -rf "$st_child"/lead-repin.??????
+  # v8: hostile lines of the longest allowed size (20000 characters of separators, quotes, brackets, name words) cost bounded time: ten lines in under 60 seconds
+  st_hl=$WORK/st-hostile.txt
+  awk 'BEGIN { split("a-|a:|[|password=|token_|a |\"|_|password\t|k-", u, "|"); for (k = 1; k <= 10; k++) { s = ""; while (length(s) < 20000) s = s u[k]; print substr(s, 1, 20000) } }' > "$st_hl"
+  st_t0=$(date +%s); st_o=$(LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask < "$st_hl" 2>/dev/null | wc -l | tr -d ' '); st_t1=$(date +%s)
+  if [ "$st_o" -eq 10 ] && [ $((st_t1 - st_t0)) -le 60 ]; then mt_ok "ten hostile lines of 20000 characters are masked in under 60 seconds (took $((st_t1 - st_t0)))"; else mt_bad "hostile long lines: ten lines expected, got $st_o, in $((st_t1 - st_t0)) seconds (limit 60)"; fi
+  rm -f "$st_hl"; rm -rf "$st_child"/lead-repin.??????
   # v8: a shell function of the caller that replaces sed (bash: export -f) is not used
   if command -v bash > /dev/null 2>&1; then
     st_o=$(printf 'API_KEY=%s_64_\n' "$base" | env 'BASH_FUNC_sed%%=() { cat; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$st_sa" --mask 2>/dev/null); st_r=$?

@@ -73,7 +73,7 @@ PASS no 'accepted' exit slip in any new text :: []
 PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
 PASS 5a lists exactly the 37 viewer-visible run-sheet and page rows :: (37, 37)
 PASS 5a text equals each row's own 'what the viewer sees' cell
-PASS report names the check time 2026-11-16T17:42:35Z and the newest sheet version on disk (v31) :: [31, 31, 31]
+PASS report names the check time 2026-11-16T17:45:02Z and the newest sheet version on disk (v31) :: [31, 31, 31]
 PASS no owner sheet changed after the stated check time (C-10c is current) :: []
 PASS no claim that v25 or v26 is the newest
 PASS L-SHEET reads 'confirm the one final sheet' and names the newest version (v31) A, B and SOURCE
@@ -115,9 +115,9 @@ PASS naive M5: the claim table is named in the box and every code word of the bo
 PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
 PASS every '23:30' example time in the box has 'IST' within 40 characters (1 places) :: 1
 PASS the real v31 files on disk are ['OWNER-SHEET-v31-A.md', 'OWNER-SHEET-v31-B.md', 'OWNER-SHEET-v31-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v31-A.md', 'OWNER-SHEET-v31-B.md', 'OWNER-SHEET-v31-SOURCE.md']
-INFO OWNER-SHEET-v31-A.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:42:35Z
-INFO OWNER-SHEET-v31-B.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:42:35Z
-INFO OWNER-SHEET-v31-SOURCE.md last written 17:31:34 UTC; check time of the report 2026-11-16T17:42:35Z
+INFO OWNER-SHEET-v31-A.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:45:02Z
+INFO OWNER-SHEET-v31-B.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:45:02Z
+INFO OWNER-SHEET-v31-SOURCE.md last written 17:31:34 UTC; check time of the report 2026-11-16T17:45:02Z
 PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
 PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
 PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
@@ -125,7 +125,7 @@ PASS REPORT-c6q.md was not changed by this run (it is older than the build of RE
 PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6t.md and holds its own title line)
 PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
 PASS the box line of L-SHEET and the section 0 bullet each print every real v31 file with its real written time (UTC): [('OWNER-SHEET-v31-A.md', '17:33:09'), ('OWNER-SHEET-v31-B.md', '17:33:09'), ('OWNER-SHEET-v31-SOURCE.md', '17:31:34')] :: [('OWNER-SHEET-v31-A.md', '17:33:09'), ('OWNER-SHEET-v31-B.md', '17:33:09'), ('OWNER-SHEET-v31-SOURCE.md', '17:31:34')]
-PASS F4 the report names the newest owner sheet version (v31) and release note (v15) on disk, and the check time :: (('31', '17:42:35', '23:12:35', '15'), 31, 15)
+PASS F4 the report names the newest owner sheet version (v31) and release note (v15) on disk, and the check time :: (('31', '17:45:02', '23:15:02', '15'), 31, 15)
 PASS F4 no owner sheet or release note has a version higher than the one named :: []
 PASS F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined
 PASS F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9
@@ -148,7 +148,7 @@ PASS F3 row 6 reason says items 11 to 16
 PASS m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
 PASS m2 row 13 says 'expected to be true until C-9 part 2'
 PASS m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer :: 6
-PASS m4 every example answer time in the box is later than the check time 2026-11-16T17:42:35Z (and has its IST) :: ['2026-11-16T18:00:00Z', '2026-11-16T18:05:00Z', '2026-11-16T18:05:00Z']
+PASS m4 every example answer time in the box is later than the check time 2026-11-16T17:45:02Z (and has its IST) :: ['2026-11-16T18:00:00Z', '2026-11-16T18:05:00Z', '2026-11-16T18:05:00Z']
 PASS naive: the order of the reviewer names is explained
 PASS naive: the 'does not do' list comes before the answer line
 PASS naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
@@ -179,7 +179,7 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:02Z (read from the files at run time) :: []
 PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
@@ -190,11 +190,13 @@ PASS M2: the lease words that stay on the video (the label 'setting: lease 45 s'
 PASS M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3)
 PASS M3: Table B has the cut cases 'line 2 cut' (55 words) and 'lines 1 and 2 cut' (44 words) with seconds, budget, total and Time cell recomputed from the quoted card lines :: ['| card line 2 cut (no alert mail seen) | 1, 2, 3, 4 = 150 s | 55 | 22.0 | 25 s | about 175 s | 25 s EST |']
 PASS M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell) :: [True, True, True, True, True, True]
-PASS M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
+FAIL M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
 PASS N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task
 PASS N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim' :: ['ery 30 seconds) may claim the contact again. ', "e questions below, 'claim' means statement). "]
 PASS N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'
 PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
 PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
-SUMMARY: 196 checks, 0 FAILED
+PASS E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: []
+PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
+SUMMARY: 198 checks, 1 FAILED: M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
