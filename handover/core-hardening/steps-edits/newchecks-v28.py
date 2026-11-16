@@ -154,7 +154,7 @@ need('C105', 'counted only from your Enter on the start line until the notice, f
 need('C106', '9. **Look key (after "go", before the earliest key time).**')                                                              # T BL2, S M4 of v26: words seen on a real cancel before the run key matters
 need('C106', 'write on the card the three words you see: cancel button, confirmation box (the button that really cancels) and cancelled word')
 need('C107', 'Any other difference: press nothing, go to "If it fails".')                                  # T BL2: a differing word never makes the owner improvise
-need('C108', 'you see the real word at 5.9 and the lead answers "confirmed"')                                                                        # T BL2: blanks come from what the owner saw
+need('C108', '(the lead cannot see your screen); you see the real word at 5.9 and the lead answers "confirmed"')                                                                        # T BL2: blanks come from what the owner saw
 ban('C108', r'word seen by the lead|seen by the lead')
 need('C108', 'Cancelled word: <word, or "from the look key"> (UNVERIFIED; you see the real word at 5.9 and the lead answers "confirmed")')
 need('C109', 'a new key can always be made; only a program that uses the older key would be hurt', (('A', A),))                         # T M2
@@ -253,7 +253,7 @@ for nm, t in SH:                                                                
     if '"unknown" in any slot' not in t: fail('C168', nm + ': the numbers checks do not say that "unknown" in any slot is no run')
 if 'Open 96' not in NOTE or '\n| 96 |' not in OPEN or '\n| 97 |' not in OPEN: fail('C169', 'note or open list lacks the rows for the aborted-run message and the A/B decision')   # N13 and RC3
 for nm in 'AB':                                                                                                           # RC3: the pages are named in both sheets as written on disk
-    _s = open(D + 'OWNER-SHEET-v28-%s.md' % nm, encoding='utf-8').read()
+    _s = SHEETS_DISK[nm]
     for pg in ('OWNER-CARD-v28-', 'OWNER-NUMBERS-v28-'):
         if pg + nm + '.md' not in _s: fail('C170', '%s does not name %s%s.md' % (nm, pg, nm))
     if 'OWNER-FILM-v28.md' not in _s: fail('C170', 'sheet %s does not name the film page' % nm)

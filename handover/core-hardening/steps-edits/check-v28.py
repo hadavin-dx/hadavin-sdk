@@ -30,6 +30,7 @@ def whole(k):                                              # the sheet with its 
     try: return b.combine(rd('OWNER-SHEET-v28-%s.md' % k), rd('OWNER-CARD-v28-%s.md' % k), rd('OWNER-NUMBERS-v28-%s.md' % k), rd('OWNER-FILM-v28.md'))
     except Exception as e: fail('C02', 'cannot combine pages of %s: %s' % (k, type(e).__name__)); return ''
 A = whole('A'); B = whole('B')
+SHEETS_DISK = {'A': rd('OWNER-SHEET-v28-A.md'), 'B': rd('OWNER-SHEET-v28-B.md')}   # the sheet pages as printed (the pages they name are checked in C170)
 ALL = {'OWNER-SHEET-v28-A.md': A, 'OWNER-SHEET-v28-B.md': B}
 for n in ('LEAD-RELEASE-NOTE-v12.md', 'v28-OPEN-FOR-LEAD.md', 'v28-CHANGES.md'):
     if os.path.exists(D + n): ALL[n] = rd(n)

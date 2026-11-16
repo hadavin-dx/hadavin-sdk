@@ -24,7 +24,7 @@ P = [
 ('P05', 'facts-v28.py', "IST = dt.timedelta(hours=5, minutes=30)", "IST = dt.timedelta(hours=5, minutes=0)", 'IST offset'),
 ('P06', 'facts-v28.py', "'dl_day': 'Mon 23 Nov 2026'", "'dl_day': 'Tue 23 Nov 2026'", 'weekday of deadline'),
 ('P07', 'facts-v28.py', "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST'", "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:00 IST'", 'post-by pair'),
-('P09', 'OWNER-SHEET-v28-SOURCE.md', "except the key's own one-time display at 6.3 and the paste at 6.4 (a long text elsewhere counts)", '', 'card (g) exception removed'),
+('P09', 'OWNER-SHEET-v28-SOURCE.md', "except the key's own one-time display at 5.9 and 6.3 and the paste at 6.4", '', 'card W7 exception removed'),
 ('P10', 'OWNER-SHEET-v28-SOURCE.md', 'switch it OFF yourself at once with the tool the numbers message names', 'say "stop" and wait', 'recording stop by voice'),
 ('P11', 'OWNER-SHEET-v28-SOURCE.md', 'alarm 1 at the latest start, alarm 2 at the alarm time', 'alarm 2 at the alarm time', 'first alarm removed'),
 ('P12', 'OWNER-SHEET-v28-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
@@ -33,7 +33,7 @@ P = [
 ('P15', 'OWNER-SHEET-v28-SOURCE.md', '(no earlier run used it or begins like it)', '(any run name will do)', 'run-name reuse rule removed'),
 ('P16', 'OWNER-SHEET-v28-SOURCE.md', 'only at 6.7, after 6.6 passed (new key saved, size checked)', 'at 6.4', 'A older key cancelled before the key is saved'),
 ('P17', 'OWNER-SHEET-v28-SOURCE.md', 'reverses `end` and the card, ', '', 'lead may reverse order'),
-('P18', 'OWNER-SHEET-v28-SOURCE.md', 'within {{y}} minutes of the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
+('P18', 'OWNER-SHEET-v28-SOURCE.md', 'within the "Minutes at Type y to start" of the message, counted from the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
 ('P19', 'OWNER-SHEET-v28-SOURCE.md', 'if 7.4 never happened, send "none" for the time in 8.1. ', '', 'run that never started'),
 ('P20', 'OWNER-SHEET-v28-SOURCE.md', 'SAMPLE (made-up values, never real):\n', '', 'SAMPLE label removed'),
 ('P21', 'OWNER-SHEET-v28-SOURCE.md', 'never use rotate or any button that shows a new secret', 'rotate the secret', 'HubSpot rotate allowed'),
@@ -65,25 +65,25 @@ BW = BANNED_WORD
 V = [
 ('V01', S, 'silence at the y question, before the film cue, in the film pause and while waiting for `end` is normal', 'silence is never normal', 'silence rule exemptions removed (stranger BL1)'),
 ('V02', S, '9. **Look key (after "go", before the earliest key time).**', '9. **Key (after "go").**', 'look key step removed (stranger BL2)'),
-('V03', S, 'A button or box word that differs from the blank: press nothing, go to "If it fails". ', '', 'differing cancel word rule removed'),
-('V04', S, 'you see the real word at 5.9 and that word counts', 'the lead gives it', 'cancelled word no longer seen by the owner'),
-('V05', S, 'On every route, after your yes, do 7.11 before 8.1 if it is not done.', '', 'B 7.11 not reachable from every route (security B1)'),
-('V06', S, '[[B:, alarm 4 at {{okb}} (do 7.11 now, whatever else is open)]]', '', 'B fourth alarm removed'),
-('V07', S, 'The cancel-by time is before {{okb}}.', '', 'cancel-by before older-key time no longer checked'),
-('V08', S, 'Wait at least {{think}} seconds (', 'Wait 10 seconds (', 'minimum think time back to 10 seconds'),
-('V09', S, 'Then in the test terminal type the printed line of 6.4 (R6 shape check of its key file path first): it waits at the paste line and nothing is alive yet. ', '', 'key-save line no longer typed before create'),
+('V03', S, 'Any other difference: press nothing, go to "If it fails". ', '', 'differing cancel word rule removed'),
+('V04', S, '(the lead cannot see your screen); you see the real word at 5.9 and the lead answers "confirmed"', '(the lead cannot see your screen); the lead gives it', 'cancelled word no longer seen by the owner'),
+('V05', S, ' passes 7.11 before 8.1.**', '.**', 'B 7.11 not reachable from every route (security B1)'),
+('V06', S, '[[B:, alarm 4 at the older-key time (do 7.11 now, whatever else is open)]]', '', 'B fourth alarm removed'),
+('V07', S, '[[B:The cancel-by time is before the older-key time.]]', '', 'cancel-by before older-key time no longer checked'),
+('V08', S, 'Wait at least the "Minimum think time" of the message (', 'Wait 10 seconds (', 'minimum think time back to 10 seconds'),
+('V09', S, 'In the test terminal type the printed line of 6.4 (R6 shape check of its key file path first): it waits at the paste line and nothing is alive yet. ', '', 'key-save line no longer typed before create'),
 ('V10', S, 'Test program asks you to type a figure: no', 'Test program asks you to type a figure: yes', 'typed-figure line changed'),
-('V11', S, 'send its last-used time (a use after', 'send its time (a use after', 'B 7.11 last-used time dropped'),
+('V11', S, 'first read its last-used time in the key list and describe it to the lead (a use after', 'first read its time and describe it to the lead (a use after', 'B 7.11 last-used time dropped'),
 ('V12', S, 'a model key stored in n8n would spend without the spend lock', 'a model key in n8n is fine', 'n8n model key reason removed'),
 ('V13', O, 'Safe default if you do not answer: A', 'Safe default if you do not answer: B', 'open list names B as default'),
 ('V14', N, 'sheet B has a fourth alarm at', 'sheet B has an alarm at', 'note G30 loses the fourth alarm'),
 ('V15', O, 'WHEN IT FAILS (v28)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
 ('V16', O, 'NOT MET at v28', 'MET at v28', 'open list says word target met'),
-('V17', S, 'A run that ended before 6.7: no cancel of it until the lead sends a new numbers message', '', 'A older key cancelled after an early end'),
+('V17', S, 'A run that ended before 6.7: 7.11 says what happens.', '', 'A older key: what happens after an early end no longer said'),
 ('V18', S, 'none within the silence minutes: describe, FREEZE; no key is alive then', '', 'no shell prompt: no action'),
 ('V19', S, 'Start only after the lead\'s word "post"', 'Start', 'posting without the lead word'),
 ('V20', S, 'say "filmed" and read both counts aloud', 'say "filmed"', 'film counts no longer read aloud'),
-('V21', S, "and your phone's clock (IST minus 5:30) is within 2 minutes of it", '', 'phone clock check removed'),
+('V21', S, "your phone's clock (IST minus 5:30) is within 2 minutes of it, ", '', 'phone clock check removed'),
 ('NEG1', S, '9. **Look key (after "go", before the earliest key time).**', '9. **Key (after "go").**', 'NEGATIVE CONTROL: same plant as V02 but the meant check is a wrong one, so it must print MISSED'),
 ]
 P += V
@@ -93,7 +93,7 @@ M = [
 ('M02', S, 'Expected total: USD {{total}} (not a limit)', 'Expected total: USD 0.82 (not a limit)', 'expected total line 0.81 to 0.82'),
 ('M03', S, 'Price per call at full size: USD {{price}}', 'Price per call at full size: USD 0.28', 'sample notice price line'),
 ('M04', S, 'expected total USD <expected total>, balance USD', 'expected total USD 0.82, balance USD', 'yes pattern total'),
-('M05', S, 'If you had typed `end`, proceed at 7.9.', 'If you had typed `end`, proceed at 7.5.', 'after-the-card pointer 7.9 to 7.5'),
+('M05', S, 'If you had typed `end`, proceed at 7.9;', 'If you had typed `end`, proceed at 7.5;', 'after-the-card pointer 7.9 to 7.5'),
 ('M06', S, 'back on in 8.7', 'back on in 8.5', 'pointer back on in 8.7 to 8.5'),
 ('M07', N, 'the HubSpot app secret revoke (G42, sheet 8.4)', 'the HubSpot app secret revoke (G42, sheet 8.3)', 'note pointer sheet 8.4 to 8.3'),
 ('M08', N, 'The order `end` then cancel (sheet 7.8)', 'The order `end` then cancel (sheet 7.6)', 'note pointer sheet 7.8 to 7.6'),
@@ -106,13 +106,13 @@ M = [
 ('M15', O, 'alarm 12:00 UTC = 17:30 IST', 'alarm 12:00 UTC = 17:20 IST', 'IST pair in open list'),
 ('M16', S, '`run-<run name>`', '`run-<runname>`', 'placeholder renamed (one place)'),
 ('M17', S, 'older key <its name or none>', 'older key <its name or nome>', 'yes placeholder spelled differently'),
-('M18', N, '(Open 2 and 31)', '(Open 2 and 99)', 'list-form pointer Open 99 (no such row)'),
-('M19', S, 'minimise the test terminal. The film person alone', 'minimise the test terminal: if you must stop it, click Cancel beside each key and refresh the page twice to see the cancelled state. The film person alone', 'cancel rule paraphrased outside the card (6.6)'),
+('M18', N, '(Open 2 and 31)', '(Open 2 and 199)', 'list-form pointer Open 199 (no such row)'),
+('M19', S, 'minimise the test terminal. A danger sign in the film pause', 'minimise the test terminal: if you must stop it, click Cancel beside each key and refresh the page twice to see the cancelled state. A danger sign in the film pause', 'cancel rule paraphrased outside the card (7.6)'),
 ('M20', S, 'send "{{ph_hsr}}"', 'send "{{ph_apr}}"', 'wrong set phrase at 8.4'),
 ('M21', S, 'delete exactly those as R7 says', 'delete exactly those as R9 says', 'R7 to R9 in 5.4'),
 ('M22', S, 'The balance is at least the expected total.', 'The balance is at least the expected total plus 5.', 'check 3 changed'),
 ('M23', FA, 'Y, RL, FP, MG = 5, 15, 10, 10', 'Y, RL, FP, MG = 5, 15, 10, 15', 'margin changed in facts (sums)'),
-('M24', S, '[[A: L2 the older key named', '[[A: [[B: leftover]] L2 the older key named', 'nested marker left'),
+('M24', S, 'L2 the older key named', '[[A: [[B: leftover]] L2 the older key named', 'nested marker left'),
 ('M25', S, 'The balance is at least the expected total.', 'The balance is at least the expected total. [[ left', 'stray marker left'),
 ('M26', N, "## 9. Kept from earlier appendices (lead's own use)", "## 9. Kept from earlier appendices (lead's own use) " + BW, 'banned word in note'),
 ('M27', O, '| 40 | Does the take program print', '| 41 | Does the take program print', 'open list numbering gap'),
@@ -352,7 +352,7 @@ EXPECT['R18'] = ['C91']
 EXPECT['R19'] = ['C98']
 EXPECT['R20'] = ['C103']
 EXPECT['R21'] = ['C95']
-EXPECT.update({'P11':['C159'],'V01':['C105'],'V02':['C106'],'V03':['C107'],'V04':['C108'],'V05':['C137'],'V06':['C138'],'V07':['C139'],'V08':['C140'],'V09':['C111'],'V10':['C141'],'V11':['C142'],'V12':['C143'],'V13':['C149'],'V14':['C151'],'V15':['C154'],'V16':['C155'],'V17':['C126'],'V18':['C124'],'V19':['C125'],'V20':['C122'],'V21':['C121'],'NEG1':['C999']})
+EXPECT.update({'P20':['C14k','BUILD'],'P11':['C159'],'V01':['C105'],'V02':['C106'],'V03':['C107'],'V04':['C108'],'V05':['C137'],'V06':['C138'],'V07':['C139'],'V08':['C140'],'V09':['C111'],'V10':['C141'],'V11':['C142'],'V12':['C143'],'V13':['C149'],'V14':['C151'],'V15':['C154'],'V16':['C155'],'V17':['C126'],'V18':['C124'],'V19':['C125'],'V20':['C122'],'V21':['C121'],'NEG1':['C999']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
