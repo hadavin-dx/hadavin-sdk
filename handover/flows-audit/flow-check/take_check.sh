@@ -24,6 +24,7 @@ if [ ${#DDLOPT[@]} -eq 0 ]; then
 else
   echo "Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql. The take needs THAT table (with the four alert columns), not the older one in demo/n8n-flows."
 fi
+echo "GATE BEFORE THE FIRST SEND (decided by the lead, order Q16): the take uses demo/n8n-flows-v4/mf_leads.sql. In psql, run: select column_name from information_schema.columns where table_name='mf_leads' and column_name in ('alert_sent','alert_token','alert_until','alert_attempts');  It must list all four alert_ columns. If it lists fewer, do not send: no alert would ever go out. This script cannot see your database."
 if ! grep -q '"KeyOk"' "$D/mf-form.json" "$D/mf-hook.json" 2>/dev/null; then
   echo "These files do NOT contain F-002 (the check that a lead key is well formed, the answer for a bad key, and the answer when the table write fails) or F-008 (saving of past runs, so the run list in n8n shows what happened). Apply both patches first if the take should show them."
 fi

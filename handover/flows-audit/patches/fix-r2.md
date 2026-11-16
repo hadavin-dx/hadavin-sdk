@@ -1,0 +1,7 @@
+# fix-r2 (fixer, patches round 2, 2026-11-16)
+What failed first: the round-1 patches left the target files contradicting themselves (rows 5-11, old totals, example.test, statement 20, film-v5 in the F-001 comment), and card line 3 and scene 4 voice carried claims the reviews called false or forbidden. Nothing ran; static work.
+Raw rc: check_patches.sh PASS 5 patches rc 0; all 5 patches together: git apply --check rc 0, apply rc 0 (lanes7/evidence-patches-r3.txt, scratch copy; real tree untouched).
+Edited: patches/F-001, F-003, F-004, REGENERATED-NOTE.md, this file, lanes7/evidence-patches-r3.txt (new). Backup before: scratchpad patches-r2/.
+Review items: B1, B2 done as the lead said. M1 (rows 5-11, totals, banner) done by moving rows; M2 HELD note; M3 example.test replaced; M4 card now one line, no implied 45 s test; M5 statement 17 sources statement 12 (lead-read); M6 statement 20 struck. A-comprehension M3-M14 done except the points listed in REGENERATED-NOTE.md "Still needs the lead".
+Grep of patched files: 60.1, 61.9, film-v5, one database, approval, audit trail: 0 hits. "scenes 5 to 11": 1 (the later-video heading, VIDEO-RUNSHEET.md:92). example.test: 2 hits, both build_mainframe.py:13-14 (not touched). "intake": VIDEO-RUNSHEET.md:47, 55, 65, 103 (name list, later-video rows or notes) and PAGE-STATEMENTS-V4.md:52, 57 (older statements), build_mainframe.py:14.
+Not fixed: see REGENERATED-NOTE.md items 1-7. No EGM review or drift report was run by me.

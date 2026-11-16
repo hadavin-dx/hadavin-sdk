@@ -73,7 +73,7 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
 TCMISS=""
-for w in "NOTHING RAN IN n8n" "PLACEHOLDERS IN NODE SETTINGS" "these must be filled before import" "do NOT contain F-002" "Table definition used for the column check" "Environment variables that n8n must hold"; do
+for w in "NOTHING RAN IN n8n" "PLACEHOLDERS IN NODE SETTINGS" "these must be filled before import" "do NOT contain F-002" "Table definition used for the column check" "Environment variables that n8n must hold" "GATE BEFORE THE FIRST SEND"; do
   grep -q -F -- "$w" "$RAW/take-check.txt" || TCMISS="$TCMISS [$w]"
 done
 grep -q -F "SQL COLUMNS NOT CHECKED" "$RAW/take-check.txt" && TCMISS="$TCMISS [columns not checked]"
