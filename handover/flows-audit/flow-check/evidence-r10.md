@@ -407,3 +407,53 @@ REFUSED: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpa
 [... cut ...]
 REFUSED: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/tc exists
 ```
+
+## (2c) rerun with a not-yet-existing scratch dir: `bash test_take_check.sh /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/work/g/real /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/tc`
+exit code: 0
+full output: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/cmd2c.log
+```
+ok   control: exit 0, OVERRIDES line says none, pinned WARN count and the words 'known defects' are printed (got exit 0)
+ok   B1a: --write-warn-pin on the pin in use is refused (exit 2) and leaves it unchanged (got exit 2)
+ok   B1b: a clean run writes a NEW pin with date and sha256 and exits 4, not 0 (got exit 4)
+ok   B1b: the written pin, used as the pin, gives exit 0 (got exit 0)
+ok   B1c: --write-warn-pin on an existing file is refused (exit 2) and leaves it unchanged (got exit 2)
+ok   B1d: a run with a FAIL writes no pin and keeps exit 1 (got exit 1)
+ok   B1e: a changed WARN set prints the difference, writes the new file, exits 4 (got exit 4)
+ok   B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above
+ok   M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit 4)
+ok   M1: TAKE_CHECK_FLOWS without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_DDL without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_FORM_EXPECT without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: with the test flag the override is allowed but still printed (got exit 0)
+ok   M3: a folder named mf-hook.json is a FAIL, exit 1 (got exit 1)
+ok   M3: a dangling link named mf-recovery.json is a FAIL, exit 1 (got exit 1)
+ok   M4: a pin header with a broken sha256 line is exit 4 (got exit 4)
+ok   M4: a pin whose lines do not match its sha256 is exit 4 (got exit 4)
+ok   M4: a pin without a date is exit 4 (got exit 4)
+ok   M4: a pin with lines removed by hand is caught twice (hash and set) (got exit 4)
+ok   count: mf-form.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+test_take_check: 22 of 22 cases as expected, 0 not as expected
+[... cut ...]
+ok   B1b: the written pin, used as the pin, gives exit 0 (got exit 0)
+ok   B1c: --write-warn-pin on an existing file is refused (exit 2) and leaves it unchanged (got exit 2)
+ok   B1d: a run with a FAIL writes no pin and keeps exit 1 (got exit 1)
+ok   B1e: a changed WARN set prints the difference, writes the new file, exits 4 (got exit 4)
+ok   B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above
+ok   M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit 4)
+ok   M1: TAKE_CHECK_FLOWS without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_DDL without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_FORM_EXPECT without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: with the test flag the override is allowed but still printed (got exit 0)
+ok   M3: a folder named mf-hook.json is a FAIL, exit 1 (got exit 1)
+ok   M3: a dangling link named mf-recovery.json is a FAIL, exit 1 (got exit 1)
+ok   M4: a pin header with a broken sha256 line is exit 4 (got exit 4)
+ok   M4: a pin whose lines do not match its sha256 is exit 4 (got exit 4)
+ok   M4: a pin without a date is exit 4 (got exit 4)
+ok   M4: a pin with lines removed by hand is caught twice (hash and set) (got exit 4)
+ok   count: mf-form.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+test_take_check: 22 of 22 cases as expected, 0 not as expected
+```
