@@ -1,9 +1,17 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## STATUS 06:50 UTC / 12:20 IST: ORDER 002, plan round 2 under review
+Done: plan round 1 reviewed (design 4B/7M/5N, readiness 7B/7M/4N), resolved (reviews/plan-r1-resolve.md), PLAN-002.md rewritten as round 2 (54 flow files, 655 nodes; Tier A 130 nodes full tables, Tier B 525 nodes one row each).
+Agents running: 2 language-model agents (plan round 2 reviewers, sonnet), 0 script lanes. Next: resolve round 2, then L0 script, then builders L1/L2/L3.
+Uncertain / not checked: node counts come from a json.load run by me, raw output not yet in evidence-1.md; DECISION-one-store.md absent (searched handover/).
+## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
+| P1d | plan r1 design reviewer | 06:48/12:18 | 06:51 | done | closed | resolved |
+| P1r | plan r1 readiness reviewer | 06:48/12:18 | 06:51 | done | closed | resolved |
+| P2d | plan r2 design reviewer (a3fe7bb86981f0ae3) | 06:50/12:20 | +5 min | 06:50 | running | read report, resolve |
+| P2r | plan r2 readiness reviewer (a95baa9ffe5703636) | 06:50/12:20 | +5 min | 06:50 | running | read report, resolve |
+
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
 Agents running: 0 language-model agents, 0 script lanes. Next: egm:egm-review-loop on PLAN-002.md.
-## AGENT REGISTER (id | purpose | started | expected end | last checked | state | next)
-(none yet)
 
 ## STATUS 2026-11-16 06:56 UTC / 12:26 IST: ORDER 001 done, waiting for GO
 Agents running: 0 language-model agents, 0 script lanes (both reviewers finished). Nothing else started: order says proof only.
