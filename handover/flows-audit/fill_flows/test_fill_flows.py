@@ -1,5 +1,7 @@
 """Self-test with made-up values only. Run: python -m unittest -v (in this folder)."""
 
+from __future__ import annotations
+
 import hashlib
 import io
 import json
@@ -83,6 +85,8 @@ def write_values(path, vals):
 def tree_hash(d):
     out = {}
     for n in sorted(os.listdir(d)):
+        if n == ff.MARKER_NAME:  # holds the folder name, so it differs between folders
+            continue
         with open(os.path.join(d, n), "rb") as fh:
             out[n] = hashlib.sha256(fh.read()).hexdigest()
     return out
@@ -91,6 +95,8 @@ def tree_hash(d):
 def all_strings(folder):
     found = set()
     for n in os.listdir(folder):
+        if n == ff.MARKER_NAME:
+            continue
         found.update(ff.iter_strings(jload(os.path.join(folder, n))))
     return found
 
@@ -178,7 +184,9 @@ class Positive(Base):
             out = self.out("o-" + flavor)
             code, so, se = self.fill(src=src, out=out)
             self.assertEqual(code, 3, se)  # written, but placeholders are left
-            self.assertEqual(sorted(os.listdir(out)), sorted(os.listdir(src)))
+            self.assertEqual(
+                sorted(os.listdir(out)), sorted([*os.listdir(src), ff.MARKER_NAME])
+            )
             for n in os.listdir(src):
                 a = jload(os.path.join(src, n))
                 b = jload(os.path.join(out, n))
@@ -525,11 +533,11 @@ class Negative(Base):
         calls = []
         real = ff._write_new
 
-        def flaky(path, data):
+        def flaky(path, data, dir_fd):
             calls.append(os.path.basename(path))
             if len(calls) == 3:
                 raise OSError("disk full (test)")
-            return real(path, data)
+            return real(path, data, dir_fd)
 
         out = self.out()
         with mock.patch.object(ff, "_write_new", flaky):
@@ -759,7 +767,7 @@ class Hardening(Base):
         os.chmod(out, 0o700)
         with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
             self.assertEqual(self.inproc("delete", "--out", out, "--no-manifest")[0], 1)
-        self.assertEqual(len(os.listdir(out)), 4)
+        self.assertEqual(len(os.listdir(out)), 5)
         self.assertEqual(self.cli("delete", "--out", out, "--no-manifest")[0], 0)
 
     def test_no_manifest_refuses_non_json_and_env_text(self):
@@ -785,7 +793,7 @@ class Hardening(Base):
         self.assertEqual((code, "symlink" in se), (1, True))
         shutil.copy(out + ".manifest.json", link + ".manifest.json")
         self.assertEqual(self.cli("delete", "--out", link)[0], 1)
-        self.assertEqual(len(os.listdir(out)), 4)
+        self.assertEqual(len(os.listdir(out)), 5)
         self.assertTrue(os.path.exists(out + ".manifest.json"))
 
     def test_delete_of_a_half_filled_folder(self):
@@ -832,7 +840,7 @@ class Hardening(Base):
         self.assertFalse(os.path.exists(out))
         self.assertFalse(os.path.exists(out + ".manifest.json"))
         self.assertEqual(self.inproc(*args)[0], 3)  # the re-run is not blocked
-        self.assertEqual(len(os.listdir(out)), 4)
+        self.assertEqual(len(os.listdir(out)), 5)
 
     # ---- F5: forms and values
     def test_odd_spellings(self):
@@ -909,7 +917,7 @@ class Hardening(Base):
         for extra in ((), ("--force-hash",)):
             code, _, se = self.cli("delete", "--out", out, "--no-manifest", *extra)
             self.assertEqual((code, "not a plain .json file" in se), (1, True), se)
-            self.assertEqual(len(os.listdir(out)), 5)  # nothing was deleted
+            self.assertEqual(len(os.listdir(out)), 6)  # nothing was deleted
 
     def test_no_manifest_refuses_a_fifo_without_hanging(self):
         out = self.made()
@@ -917,7 +925,7 @@ class Hardening(Base):
         os.mkfifo(os.path.join(out, "zz.json"), 0o600)
         code, _, se = self.cli("delete", "--out", out, "--no-manifest", "--force-hash")
         self.assertEqual((code, "not a plain .json file" in se), (1, True), se)
-        self.assertEqual(len(os.listdir(out)), 5)
+        self.assertEqual(len(os.listdir(out)), 6)
 
     def test_fill_names_a_leftover_manifest_plainly(self):
         # kills "manifest-exists refusal removed": without it the O_EXCL write fails with an
@@ -954,7 +962,7 @@ class Hardening(Base):
             for extra in ((), ("--force-hash",)):
                 code, _, se = self.cli("delete", "--out", out, "--no-manifest", *extra)
                 self.assertEqual((code, "manifest is a symlink or not a file" in se), (1, True))
-                self.assertEqual(len(os.listdir(out)), 4)  # nothing deleted
+                self.assertEqual(len(os.listdir(out)), 5)  # nothing deleted
             self.assertEqual(rtext(victim), "precious")
             if kind == "link":
                 os.unlink(out + ".manifest.json")
@@ -1022,7 +1030,7 @@ class Hardening(Base):
             code, _, se = self.inproc("delete", "--out", os.path.join(link, "sub"))
         self.assertEqual((code, "symlink made by another user" in se), (1, True), se)
         self.assertEqual(sorted(os.listdir(real)), ["sub", "sub.manifest.json"])
-        self.assertEqual(len(os.listdir(os.path.join(real, "sub"))), 4)
+        self.assertEqual(len(os.listdir(os.path.join(real, "sub"))), 5)
 
     def test_check_reports_every_one_of_the_six_placeholder_names(self):
         for name in ff.PLACEHOLDERS:
