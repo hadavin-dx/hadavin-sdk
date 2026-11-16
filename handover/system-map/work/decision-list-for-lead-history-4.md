@@ -1,0 +1,25 @@
+# Answers I recommend for the open drift rows D-01 to D-08, D-04 and D-05 (system-map session, 16 Nov 2026, about 16:00 UTC / 21:30 IST)
+
+Who this is for: the lead session (the Claude session that gives the orders). It decides in its next tick. Nothing here is verified by running anything; every "evidence" is written text on disk, quoted with file and line. Made-up data only.
+
+Words used: "plan" = inputs/plan-wp6-resmoke-v5.md. "Steps v3" = inputs/OWNER-STEPS-realrun-v3.md (archived). "Steps v5" = inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current). "Scope file" = inputs/AGENT-SCOPE-DO-AND-DONT.md. "Decisions file" = inputs/DECISIONS-2026-11-16.md. Row ids D-nn come from drift/REPORT.md. Each line says which text I recommend you keep and which text to change.
+
+Your answer: write one line per row in work/LEAD-ANSWERS.md, for example "D-01 accept".
+
+| Row | Recommend | Why (one sentence) | Evidence |
+|---|---|---|---|
+| D-01 | Keep the plan text (take n8n on port 5690). Change steps v3 line 75 (port 5678). | Decisions file line 7 says ports 5678 and 5679 are the owner's own n8n, so v3 would send the owner to the wrong n8n. The real take port is still not named. | steps v3:75; plan:121, :271; decisions file:7 |
+| D-02 | Keep the plan text (separate roles and password files). Change steps v3 line 78 (one password). | The plan builds four roles with their own password files, so one password in the steps is wrong. Open point: who creates the app-role password. | steps v3:78; plan:122, :126; DECISION-one-store.md:14 |
+| D-03 | Keep "owner deletes by hand" (decision 2) and treat the read-only token (steps v3 line 69) as the target. The row itself is out of date. | Decision 2 says the take never deletes. Read-only still fails after the sends until the program's end step stops deleting; that program change is not verified. | decisions file:3; steps v3:69; scope file:20 |
+| D-04 | Keep only the one claim "the same lead id sent twice is processed once". Remove the longer claim in steps v3 line 131 and in steps v5 line 164. | The spend limit is a backstop checked by a person, and the independent count login is not built. | steps v3:131; steps v5:164, :171; scope file:16; decisions/D04-D05.md:12-13 |
+| D-05 | Keep the plan text: do not claim "processed once" is crash-safe until the mail-crash test passes. Add to the post step: "the owner is told the test result before posting". | The crash test has not run. Steps v5 line 170 is looser than the plan. | plan:476, :505; steps v5:170; decisions/D04-D05.md:20 |
+| D-06 | Keep the plan text (executions saved by two lines in n8n.env; clean-up removes the database container). Reword steps v3 line 121. | The setting is global in the take's n8n, not per flow. Not verified: whether the flow JSON has its own save setting. | plan:125; scope file:9; steps v3:121 |
+| D-07 | Keep the plan text (no schema line; database named n8n). Mark DECISION-one-store line 14 as stale. | Line 26 of the same file already says "separate database n8n". | plan:272, :122, :281; DECISION-one-store.md:14, :26 |
+| D-08 | Keep the plan text (role-level search_path = app, flows use mf_leads unqualified) and write it into DECISION-one-store as PROPOSED, not DECIDED. | The plan has it with four probes (P-A1, P-A2, P-C1, P-C2); it is a setting, not a code change, but nobody has run it. | plan:281, :284, :289, :505; DECISION-one-store.md:23, :28 |
+
+| D-09 | Apply the fix: add the `.n8n/config` copy of the key to the scope file (line 8) and `n8n.lock` to DECISION-one-store line 26. Rate it Major, not Blocker. | It is a missing list entry, not a false statement, and it changes no filming step. | plan:403, :93, :297, :275, :514; scope file:8; DECISION-one-store.md:26 |
+| D-10 | Leave steps v3 line 85 as written; only add the real dates the operator sets. Downgrade to Major or Nit. | Steps v3 lines 85-89 make Phase 1 the checks with no paid call and Phase 2 the take, so Wed to Sun fits inside the window ending Mon 23 Nov. | steps v3:85, :27, :89, :92; DECISION-one-store.md:17; drift/REPORT.md:40, :93 |
+
+Severity note: the researcher found D-06, D-07 and D-08 are rated Major, not Blocker, in drift/REPORT.md lines 36-38. D-09 and D-10 are in the table above (D-10 is a false Blocker).
+
+Not checked: scripts/run_real_check_n8n.py and scripts/n8n_drive.py are not in the checkout, so every statement about what the program does is unverified.
