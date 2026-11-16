@@ -1,5 +1,5 @@
 """Check (c). In FINDINGS.md and lanes/*.md: '<path>.json:<NodeName>' must name a node that exists; '<path>.(md|py|txt|sql|sh):<n>' must be a line <= file length.
-Path resolution: relative to handover/demo, then handover/, then repo root; if that fails, by BASENAME anywhere under handover/demo (a ref passes if ANY file with that basename satisfies it; a basename that exists nowhere fails).
+Path resolution: relative to handover/demo, then handover/, then repo root, then handover/flows-audit; if that fails, by BASENAME anywhere under handover/demo (a ref passes if ANY file with that basename satisfies it; a basename that exists nowhere fails).
 A ref '<path>.json:row <n>' passes if n <= node count of that file.
 Node names may contain spaces: the text after ':' up to , ; ) | ` or ' and ' / ' vs ' is taken, and the ref passes if a node name of the file is a prefix of it.
 Run from repo root: python3 handover/flows-audit/tools/check_refs.py   Exit 0 pass, 1 fail, one PASS or FAIL line."""
@@ -24,7 +24,7 @@ def line_count(path):
         return sum(1 for _ in fh)
 
 
-bases = [DEMO, R, os.path.join(R, "..")]
+bases = [DEMO, R, os.path.join(R, ".."), os.path.join(R, "flows-audit")]
 index = {}
 for d, _, fs in os.walk(DEMO):
     for f in fs:
