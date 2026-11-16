@@ -9,3 +9,6 @@ You are the cloud session "core-hardening" for Hadavin, reporting to the laptop 
 5. If the plugin install is blocked, STOP and write exactly what was refused. Never use a general-purpose agent as reviewer.
 6. Write the proof into handover/core-hardening/REPORT.md (top block, UTC and IST, FILE-INDEX line), commit, push to core/cloud-handover (git push origin HEAD:core/cloud-handover).
 7. Start NO work until an order starting with GO appears in this file. Rules: no secrets, no real data, no spend, no live model calls, no merges, no pushes to any other branch, register every agent before starting it, status block at least every 10 minutes.
+
+## ORDER 002 (lead, 2026-11-16, RETRY of ORDER 001 setup; still NO work)
+The owner APPROVED the EGM plugin install for this session. Redo ORDER 001 steps 3 to 6 now: claude plugin marketplace add google/elephant-goldfish-model (if not yet), claude plugin install egm@egm, python3 handover/tools/egm_model_patch.py (setup docs are now in handover/CLOUD-EGM-SETUP-2026-11-12.md and handover/EGM-CHILD-HOWTO.md), then the proof (7 egm skills, egm agents, grep model: lines) at the top of handover/core-hardening/REPORT.md, commit, push to core/cloud-handover. If the skills do not show in this session after install, say so and tell me whether a new session is needed. Still start NO work until an order starting with GO.
