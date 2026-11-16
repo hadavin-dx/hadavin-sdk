@@ -1,10 +1,8 @@
 PROPOSAL, ON HOLD. Apply nothing. What M17 decides: what the word `end` does when the filming pause closes. Unknown: whether `end` permanently deletes the 3 made-up contacts today (the program script is not in this checkout and nobody has read it); until someone reads it, assume it may delete. Proposal: `end` only closes the pause and prints the leftover contacts; the owner deletes them by hand. Needed: a named session reads the program and writes VERIFIED; that name is NOT SET. Older paragraphs r1 to r10 are in decisions/M17-history-old.md; only the HOLD r11 paragraph at the bottom is current.
 
-STATUS: PROPOSAL ON HOLD (not history). Apply nothing until the studio lead writes VERIFIED after reading the program's end step. Nobody is named for that yet. The current text is the last paragraph (HOLD r11); older paragraphs are kept for the record and their line pointers are void. | # HISTORY ONLY (moved 16 Nov 2026 from M17-end-never-deletes.md). Not current; apply nothing from it.
-
 # M17: the take never deletes (decision 2); replacement lines for "end"
 Written Mon 16 Nov 2026 by the system-map session from a read-only agent report (UNVERIFIED against the program: `scripts/run_real_check_n8n.py` is not in this checkout; only docs name it). Reader: the studio lead. Made-up data only.
-Rule being applied (lead ANSWERS 16 Nov 10:13Z, item 1): `end` only closes the film pause. The program deletes nothing. It prints the leftover made-up contacts by lead key and contact id. The owner deletes them by hand after the studio lead's list.
+Proposed rule (NOT applied; lead ANSWERS 16 Nov 10:13Z, item 1, second-hand): `end` only closes the film pause. The program deletes nothing. It prints the leftover made-up contacts by lead key and contact id. The owner deletes them by hand after the studio lead's list.
 Files marked V5 are owned by core-hardening (this session does not edit them): V5 = inputs/OWNER-STEPS-realrun-v5-core-hardening.md. RDC = OWNER-RUN-DAY-CARD.md, OV = OWNER-VIEW.md, OCC = OWNER-CLEANUP-CARD.md (this session's own; held until the run-day card rewrite lands).
 
 | File | Line | Old (start of text) | New |
