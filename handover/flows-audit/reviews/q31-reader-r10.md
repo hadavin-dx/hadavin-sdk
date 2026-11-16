@@ -1,0 +1,13 @@
+# Q31 round 10 fresh reader (agent ae4816d), lines 420-675. Reviewer words unverified. Saved by flows-audit, condensed.
+0 Blockers, 11 Majors. Counts: 86 numbered main items (1-39, 47-93), 84 OPEN, 1 ANSWERED (20), 1 NOTE (66); second list 40 OPEN, 41/42/44/45/46 NOTE, 43 ANSWERED; 15A OPEN; labelled 94, OPEN 86 = stated numbers hold. Every open item in an index row of item 66 (76(e) only group D).
+M1 delete message 2 "after 11:00Z" and "planned end of the take" 11:00Z fall inside take (glossary Timing case 1 10:07-11:07Z, case 2 11:02-12:02Z); Retake case A "by 12:00Z" vs case 2 end 12:02Z: anchor each to end of take (lines 454,456,459,475,555,595; glossary 424).
+M2 30-minute waits vs 24-minute cap (items 51(c) 500, 518 vs items 34-37,47,52,53,59-65,77-79,88 "up to 30 minutes"); item 8(b)/(c) 459 unlimited wait not in 51(c) list; items 69/80 (584,600) count wait after 04:16Z but step 5 starts 04:51Z, counted as two waits for one window; item 51(a) no rule when Block R3 overrun > 24 min.
+M3 Wednesday waits have no cap (items 38(d),50,54-57,71,72,82,87); case 2 take 11:02Z, latest start 11:30Z; one 30-min wait gives 11:32Z.
+M4 "re-check done" 09:30Z (items 6(a),24,74(d); 457,475,591) can be overtaken: re-smoke ends 09:29Z only with zero waits.
+M5 item 10 defaults defeat each other (461,469,546): (a) route B downgrade, (b)/(c) no downgrade counts, item 18 lines not accepted -> only a tested fix clears F-011/F-041 while fix A dropped.
+M6 wait value (seconds before mailbox read): item 25 (480, Tue 06:00Z "not set"), item 45 (672, unset until rehearsal), item 50 (499, Wed 05:45Z, T19 does not run); group D (563) says 25 governs; item 50 harsher.
+M7 item 55 two times (Tue 04:00Z vs Wed 05:45Z; 504,529,553). M8 items 56 and 38(e) due Tue 04:00Z but default "answers by Wed 05:45Z" (493,505). M9 item 39 no own time, no sub-item table, default "defaults written in CLAIMS-TABLE.md" unquoted, (d) changed default, (e) none (494).
+M10 defaults point to glossary rows not in section (take prep, practice run, send/paid call, T19-T21, Retake case A/B, delete message 1/2, pin/reviewer line/named WARN reader; lines 454,459,465); "07:30Z check" in item 92 (612) undefined.
+M11 item 71(c) (586) due Tue 04:54Z not in index row (531); line 515 omits 71; item 16(a) (467) "now (Monday)" answer due Tue 03:00Z; "ceiling" two meanings (item 3 count of sends vs item 1 dollar announcement).
+Minor: table 437 and item 6 say one message holds 83 and 6, index/item 93 put 93 between; item 75 06:15Z plans on 09:00Z confirmed at 07:00Z.
+Not checked: glossary rows, LEAD ACTIONS table (line 52), RUNBOOK, TAKE-CHECKLIST, ORDERS, FINDINGS, owner sheet, lines 1-419, History 617-665 (searched only).
