@@ -42,7 +42,7 @@ Rules now: no new builder or review round except to fix a Blocker or Major on th
 | Hand-off R460 spend PRs (v21/v22) | UNSURE, treated as NO for new rounds | core spend guard; I could not tell if the take needs it. Running v22 builder `a10b12aa458440c6c` and v21 evidence `aeac3633101f6a431` finish; no further review rounds unless the lead says the take needs the spend guard. Lead: please confirm yes or no. |
 | run.py mutation lane (r14) | NO | mutation work; stop and archive after builder `aac3700882bcd1e32` reports; no security or evidence round; the lead's one batch covers it. |
 
-## AGENTS (8 running: 6 builders/evidence/checkers on the video path plus 2 finishing; above 3 because the cut list lets running agents finish; no replacements started)
+## AGENTS (9 running, v36 builder ab050ff9069214f27 completed; above 3 because the cut list lets running agents finish and v36 checkers are on the video path; no replacements started)
 | agent id | purpose | started UTC | expected end UTC | state | next action |
 |---|---|---|---|---|---|
 | a5a7511fde94f8b47 | builder: re-pin v9 (v8 evidence relayed 19:26Z) | 18:43Z | 19:43Z | running | hand-back, then security (uncapped), stranger, evidence |
