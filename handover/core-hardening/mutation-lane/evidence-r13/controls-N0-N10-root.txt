@@ -35,3 +35,30 @@ ROW|N4b|exit=2|expect 2
 RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant may still be planted; marker and backup kept
 ROW|N5|exit=3|file_last=return2|expect 3; alias=return2
 ### N5b two-name via link outside root
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9:  4132 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant may still be planted; marker and backup kept
+ROW|N5b|exit=3|file_last=return2|expect 3; outside=return2
+### N6 marker with wrong mode (0777), plain then with --sha
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9:  7340 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o664): the marker may be forged; nothing written; the mutant may still be planted; marker and backup kept (run --restore again when the cause is fixed)
+ROW|N6b|exit=3|file_last=return2|with --sha expect 3 (execute bits); mode now 664
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/tmpstate/hadavin-mutation-lane-0/bc314b56f13bb538.backup; hash matches saved original: True; NOTE the marker mode 0o777 was writable by others: --restore neve
+ROW|N6|exit=0|file_last=return1|plain: limit d: likely 0 and mode written; mode now 775
+### N7 marker for other root (forged root field)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9: 12220 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+REFUSED: marker is for another root ("/nonexistent/elsewhere"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+ROW|N7|exit=2|file_last=return2|expect 2 (names another root), file stays planted
+### N8 marker deleted by hand but file planted, plain
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9: 16870 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marke
+ROW|N8|exit=2|file_last=return2|expect 2 not 0
+### N9 damaged marker (garbage)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9: 21302 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/tmpstate/hadavin-mutation-lane-0/bc314b56f13bb538.planted.json is not valid JSON: refused; the mutant may still be planted; marker and backup kept (run --restore again when the cause is f
+ROW|N9|exit=3|file_last=return2|expect 3 per docstring
+### N10 marker present, backup deleted
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/lib.sh: line 9: 24356 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/ctl-root/neg/tmpstate/hadavin-mutation-lane-0/bc314b56f13bb538.backup cannot be opened safely (No such file or directory): refused; the mutant may still be planted; marker and backup kept (run --r
+ROW|N10|exit=3|file_last=return2|expect 3
+DONE

@@ -170,7 +170,7 @@ withc = [r["i"] for r in rows if any(t.startswith("C-") for t in TOK.findall(r["
 waits = [r["i"] for r in rows if "waits for the answer of L-SAVEERR" in r["st"]]
 onlyq = [r["i"] for r in rows if r["i"] not in nofilm and r["i"] not in waits and TOK.findall(r["st"]) and all(t.startswith("L-") for t in TOK.findall(r["st"]))]
 withc = [i for i in withc if i not in waits]
-check("recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68", len(ready) + len(onlyq) + len(withc) + len(waits) + len(nofilm) == N and waits == [53, 55, 62, 64, 66, 68] and (len(ready), len(onlyq), len(withc)) == (49, 38, 3), (len(ready), len(onlyq), len(withc), len(waits), len(nofilm), N))
+check("recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68", len(ready) + len(onlyq) + len(withc) + len(waits) + len(nofilm) == N and waits == [53, 55, 62, 64, 66, 68] and (len(ready), len(onlyq), len(withc)) == (57, 38, 3), (len(ready), len(onlyq), len(withc), len(waits), len(nofilm), N))
 sec3 = [l for l in txt if re.match(r"^\| (L-[A-Z]+|C-\d+) \| [\d, ]+ \| \d+ \|", l)]
 okc = True
 for l in sec3:

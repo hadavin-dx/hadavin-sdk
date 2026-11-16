@@ -7,7 +7,8 @@ from decimal import Decimal
 from pathlib import Path
 sock, src, H17, H16 = sys.argv[1], sys.argv[2], Path(sys.argv[3]), Path(sys.argv[4])
 HOLD17 = Path(__file__).resolve().parent.parent / 'evidence-handoff-v17' / 'held-sql'
-HOLD18 = Path(__file__).resolve().parent.parent / 'evidence-handoff-v18' / 'held-sql'  # the v18 files, only for controls of the v19 changes  # the v17 files, only for controls
+HOLD18 = Path(__file__).resolve().parent.parent / "evidence-handoff-v18" / "held-sql"
+HOLD19 = Path(__file__).resolve().parent.parent / "evidence-handoff-v19" / "held-sql"  # the v18 files, only for controls of the v19 changes  # the v17 files, only for controls
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, src)
 import psycopg
@@ -37,8 +38,9 @@ SEL = {k: m.Grant('table', 'SELECT') for k in ('spend', 'spend_month', 'kill_swi
 ORIG = {k: m.GRANTS[k] for k in SEL}
 def grants_select_only(): m.GRANTS.update(SEL)
 def grants_original(): m.GRANTS.update(ORIG)
-import secdef_audit_v19 as au
-import secdef_guard_v18 as g18, secdef_guard_v19 as g19
+import secdef_audit_v20 as au
+import secdef_guard_v18 as g18, secdef_guard_v19 as g19, secdef_guard_v20 as g20
+import allow_v20 as A20
 from allow_v19 import ALLOWED_BY_FILE, ATOMIC_TABLES_BY_FILE
 ROLES = {'runtime': 'rt17', 'operator': 'op17'}
 def build(db, files, base=True):

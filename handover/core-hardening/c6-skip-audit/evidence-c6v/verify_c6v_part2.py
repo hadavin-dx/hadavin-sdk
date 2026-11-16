@@ -3,6 +3,7 @@
 import glob
 bylead = {r["i"]: r for r in rows}
 boxs = full[full.index("## Start here"):full.index("## Start here, part 2")]
+BODYW = len(boxs.split("\n", 1)[1].split())   # c6v rule: the box is counted WITHOUT its heading line (the box says so); the whole box with heading must also be under 2,500
 part2 = full[full.index("## Start here, part 2"):full.index("## 0. Failures")]   # the start box proper (part 2 holds the printed words and is counted apart)
 sec1c = full[full.index("## 1c."):full.index("## 2. Numbers")]   # the detail moved out of it
 box = boxs + "\n" + sec1c   # the presence checks of c6s look in both
@@ -138,13 +139,13 @@ check("the box begins with the roles (2 lines) and the what-to-type block preced
 lq = box.find("| Label | Plain question")
 fl = [m.group(0) for m in re.finditer(r"L-[A-Z]+", box)]
 check("question labels are first used in the table of questions, except in the what-to-type block that names the two OWNER ONLY ones", lq >= 0 and bool(fl) and [m.start() for m in re.finditer(r"L-[A-Z]+", box) if m.start() < box.find("QUESTIONS (label") and not (box.find("WHAT TO TYPE") <= m.start() < box.find("WORDS YOU NEED ("))] == [], fl[:1])
-bw = len(boxs.split())   # c6v: the short start box only (the detail is section 1c)
+bw = BODYW   # c6v: the short start box only (the detail is section 1c)
 p = H + "/handover/core-hardening/c6-skip-audit/REPORT-c6p.md"
 pw = None
 if os.path.exists(p):
     pr = rd(p)
     pw = len(pr[pr.index("## Start here"):pr.index("## 0. Failures")].split())
-check("c6v N5: the start box is under 2,500 words (c6s: 3,488; %d words now) and states its own real count" % bw, bw < 2500 and ("This box holds %d words" % bw) in boxs, bw)
+check("c6v N5: the start box is under 2,500 words (c6s: 3,488; %d words now) and states its own real count" % bw, bw < 2500 and len(boxs.split()) < 2500 and ("This box holds %d words" % bw) in boxs, bw)
 sets = re.findall(r"saveDataSuccessExecution|saveManualExecutions|EXECUTIONS_DATA_SAVE", box)
 check("box names no n8n setting", not sets, sets)
 check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
@@ -318,8 +319,8 @@ check("REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this r
 # ---------------------------------------------------------------- c6v checks (the c6s reviews: design, stranger reader, independent evidence)
 # each check below was shown to fail on REPORT-c6s.md (see neg_new_c6v.py and c6v-CHANGES.md)
 _stated = re.findall(r"This box holds (\d+) words", boxs)
-check("E-count: the start box states its own word count once and it equals the real count of the box (%d)" % len(boxs.split()), len(_stated) == 1 and int(_stated[0]) == len(boxs.split()), (_stated, len(boxs.split())))
-check("N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted)", len(boxs.split()) < 2500 and "1c-A." in sec1c and "1c-F." in sec1c and "1c-C." in sec1c, len(boxs.split()))
+check("E-count: the start box states its own word count once and it equals the real count of the box without its heading line (%d)" % BODYW, len(_stated) == 1 and int(_stated[0]) == BODYW, (_stated, BODYW))
+check("N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted)", len(boxs.split()) < 2500 and BODYW < 2500 and "1c-A." in sec1c and "1c-F." in sec1c and "1c-C." in sec1c, len(boxs.split()))
 # E-title: the title carries the right IST rule
 check("E-title: the title line says IST = UTC + 5:30", "IST = UTC + 5:30" in raw.split("\n")[0], raw.split("\n")[0][:100])
 # E-numbers: every row count in the box equals the recount from the rows
@@ -424,7 +425,7 @@ for pre_, w_, k_ in _cases:
     _okc.append(len(ls_) == 1 and _tbl(w_, k_) in ls_[0])
 check("M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell)", all(_okc), _okc)
 # M4: the report does not call itself shorter without a count (the c6s wording)
-check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), all(("it was 3,490 words" in l or "3,488 words" in l) for l in raw.split("\n") if "rewritten and shorter" in l) and ("%d words" % len(boxs.split())) in boxs, "")
+check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % BODYW, all(("it was 3,490 words" in l or "3,488 words" in l) for l in raw.split("\n") if "rewritten and shorter" in l) and ("%d words" % BODYW) in boxs, "")
 # N1: the two numbered lists have different names
 check("N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task", all(("TASK (%d)" % k_) in sec1c for k_ in range(1, 13)) and not re.search(r"\bsteps? (?:6|7|8|9|10|11|12)\b", boxs) and not re.search(r"(?<!TASK )\(1\) write the answer line", raw), "")
 # N2: claim means reserve only

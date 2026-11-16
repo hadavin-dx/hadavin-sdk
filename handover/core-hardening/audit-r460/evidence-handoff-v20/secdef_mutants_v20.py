@@ -1,4 +1,4 @@
-"""Mutants for the SECURITY DEFINER guards (v16, v17, v18, v19). A mutant is a SQL text that Postgres accepts and that leaves a routine or right the guard must refuse.
+"""Mutants for the SECURITY DEFINER guards (v16 to v20; v20 is the guard under test, the v19 column shows which new mutants v19 misses). A mutant is a SQL text that Postgres accepts and that leaves a routine or right the guard must refuse.
 Prints for each: whether v16, v17 and v18 flag it; a check PASSES when v18 flags it (controls: v18 must NOT flag). Needs TWO arguments:
   python secdef_mutants_v19.py <held-sql folder> <product migrations folder>      (a missing argument stops the run with exit 2, v17 silently ran 25 of 30)
 Also runs the 25 + 2 spellings of the v17 independent evidence runner (spellings.json, spellings2.json) and the parser tests P1, P2."""
@@ -6,8 +6,10 @@ import sys, glob, os, json
 if len(sys.argv) != 3 or not all(os.path.isdir(a) for a in sys.argv[1:]):
     print("usage: secdef_mutants_v19.py <held-sql folder> <product migrations folder> (both must be existing folders)"); sys.exit(2)
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-import secdef_guard_v16 as g16, secdef_guard_v17 as g17, secdef_guard_v18 as g18, secdef_guard_v19 as g19
-from allow_v19 import ALLOWED_BY_FILE, ATOMIC_TABLES_BY_FILE, EXTRA_BY_FILE
+import secdef_guard_v16 as g16, secdef_guard_v17 as g17, secdef_guard_v18 as g18, secdef_guard_v19 as g19, secdef_guard_v20 as g20
+from secdef_guard_v20 import PIN_ANY
+import allow_v20 as A20
+from allow_v20 import ALLOWED_BY_FILE, ATOMIC_TABLES_BY_FILE, EXTRA_BY_FILE
 V17_ALLOWED = {"spend_log_decrease", "kill_switch_log_change", "spend_reserve", "spend_settle", "kill_switch_engage", "kill_switch_release"}
 DB3 = "spend_guarded_writes.sql"; DB2 = "spend_decrease_log.sql"
 RES = "spend_reserve(text,date,numeric)"; SET = "spend_settle(text,date,numeric,numeric)"; ENG = "kill_switch_engage()"; REL = "kill_switch_release()"
@@ -17,7 +19,10 @@ def fn(name="evil", args="", hdr=f"LANGUAGE sql SECURITY DEFINER {SP}", body="AS
 RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, numeric")
 # (name, file, text, allowed-for-v18, expected: "flag" or "clean")
 M = []
-def add(n, text, allowed=None, file="x.sql", want="flag"): M.append((n, file, text, allowed if allowed is not None else {}, want))
+OPTS = {}
+def add(n, text, allowed=None, file="x.sql", want="flag", opts=None):
+    M.append((n, file, text, allowed if allowed is not None else {}, want))
+    if opts: OPTS[n] = opts
 # ---- the 20 mutants of v17 (S01-S20), kept
 add("S01 attributes after the body", "CREATE OR REPLACE FUNCTION evil() RETURNS trigger AS $f$ BEGIN RETURN NULL; END $f$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog;\n" + rev("evil"))
 add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
@@ -153,34 +158,108 @@ addn("K7 control: ALTER TABLE with two ADD actions, SET LOCAL statement_timeout,
 addn("K8 control: CREATE TRIGGER executing a listed function", "CREATE TRIGGER t BEFORE UPDATE ON spend FOR EACH ROW EXECUTE FUNCTION spend_keep_keys();\n", ALLOWED_BY_FILE[DB2], DB2, "clean")
 addn("K9 control: an atomic body that reads and writes only the pinned relations, with a join and an alias", ATOM("UPDATE kill_switch k SET \"on\" = true FROM spend s WHERE k.id = 1 AND s.usd >= 0;"), {ENG: "definer"}, DB3, "clean")
 
+
+# ================= v20: NEW mutants (round 6 of the security review and the independent runner of v19). The run shows `v19 MISSES it` for each one the v19 guard passes.
+NEWMUT20 = set()
+def add20(n, *a, **k): add(n, *a, **k); NEWMUT20.add(n)
+REAL = {"trigger_pins": "real", "fn_pins": "real", "kinds": "real"}      # use the pins of allow_v20 for this file
+DB2TXT = open(os.path.join(sys.argv[1], DB2)).read(); DB3TXT = open(os.path.join(sys.argv[1], DB3)).read()
+KIND_REL = {"kinds": "real"}
+RELF = lambda body: f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC {body} END;\n" + rev("kill_switch_release")
+# ---- B1: bodies that are never scanned
+add20("V01 definer RETURN expression calls query_to_xml (security B1)", f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS xml LANGUAGE sql SECURITY DEFINER {SP} RETURN query_to_xml(p_agent, true, false, '');\n" + rev("spend_reserve", "text, date, numeric"), {RES: "definer"}, DB3)
+add20("V02 definer RETURN expression calls set_config", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS text LANGUAGE sql SECURITY DEFINER {SP} RETURN set_config('role', 'postgres', true);\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+add20("V03 definer RETURN expression reads an unpinned table", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS text LANGUAGE sql SECURITY DEFINER {SP} RETURN (SELECT rolpassword FROM pg_authid LIMIT 1);\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+add20("V04 definer with no body at all (neither ATOMIC, RETURN nor one string)", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER {SP};\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+add20("V05 definer with two string bodies", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} AS 'select 1', 'select 2';\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+add20("V06 definer with a string body AND a RETURN", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS int LANGUAGE sql SECURITY DEFINER {SP} AS 'select 1' RETURN 1;\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+# ---- M1: %I.name( hides a call
+add20("V07 EXECUTE format('SELECT %I.evil_fn($1)') (security M1)", TRIG("BEGIN EXECUTE format('SELECT %I.evil_fn($1)', TG_TABLE_SCHEMA) USING NEW.usd; RETURN NULL; END"), DB2A, DB2)
+add20("V08 EXECUTE format('INSERT INTO %I.t SELECT %I.evil_fn(1)')", TRIG("BEGIN EXECUTE format('INSERT INTO %I.t SELECT %I.evil_fn(1)', TG_TABLE_SCHEMA, TG_TABLE_SCHEMA); RETURN NULL; END"), DB2A, DB2)
+add20("V09 EXECUTE string with FROM %I.evil_srf(...) (a set-returning function in FROM)", TRIG("BEGIN EXECUTE format('INSERT INTO %I.t SELECT * FROM %I.evil_srf($1)', TG_TABLE_SCHEMA, TG_TABLE_SCHEMA) USING NEW.usd; RETURN NULL; END"), DB2A, DB2)
+# ---- M2: triggers
+add20("V10 DB-2 text with a DROP TRIGGER IF EXISTS of a pinned audit trigger at the end (security M2)", DB2TXT + "\nDROP TRIGGER IF EXISTS spend_log_decrease ON spend;\n", ALLOWED_BY_FILE[DB2], DB2, opts=REAL)
+add20("V11 DB-2 text with a WHEN (false) on the kill-switch trigger", DB2TXT.replace('WHEN (NEW."on" IS DISTINCT FROM OLD."on")', "WHEN (false)"), ALLOWED_BY_FILE[DB2], DB2, opts=REAL)
+add20("V12 DB-2 text plus CREATE OR REPLACE TRIGGER spend_log_decrease ... WHEN (false)", DB2TXT + "\nCREATE OR REPLACE TRIGGER spend_log_decrease AFTER UPDATE ON spend FOR EACH ROW WHEN (false) EXECUTE FUNCTION spend_log_decrease();\n", ALLOWED_BY_FILE[DB2], DB2, opts=REAL)
+add20("V13 DROP TRIGGER IF EXISTS of a name that is not pinned", DB2TXT + "\nDROP TRIGGER IF EXISTS some_other ON spend;\n", ALLOWED_BY_FILE[DB2], DB2, opts=REAL)
+add20("V14 DB-2 text without the append-only trigger of the record (a pinned trigger the file no longer creates)", DB2TXT.replace("CREATE TRIGGER kill_switch_log_append_only BEFORE UPDATE OR DELETE ON kill_switch_log FOR EACH ROW\n  EXECUTE FUNCTION audit_log_append_only();\n", ""), ALLOWED_BY_FILE[DB2], DB2, opts=REAL)
+add20("V15 control: DB-2 text with a DROP TRIGGER IF EXISTS of a pinned name BEFORE its CREATE", "DROP TRIGGER IF EXISTS spend_keep_keys ON spend;\n" + DB2TXT, ALLOWED_BY_FILE[DB2], DB2, "clean", opts=REAL)
+add20("V16 control: the real DB-2 file with every pin", DB2TXT, ALLOWED_BY_FILE[DB2], DB2, "clean", opts=REAL)
+# ---- M3: relations introduced by MERGE, USING, TABLE, SELECT INTO
+add20("V17 atomic body MERGE INTO an unpinned table (security M3)", ATOM("MERGE INTO audit_entries a USING kill_switch k ON true WHEN MATCHED THEN DELETE;"), {ENG: "definer"}, DB3)
+add20("V18 atomic body DELETE ... USING pg_authid", ATOM("DELETE FROM kill_switch USING pg_authid WHERE true;"), {ENG: "definer"}, DB3)
+add20("V19 atomic body TABLE pg_authid", ATOM("TABLE pg_authid;"), {ENG: "definer"}, DB3)
+add20("V20 atomic body SELECT ... INTO a new table", ATOM("SELECT id INTO newt FROM kill_switch;"), {ENG: "definer"}, DB3)
+add20("V21 atomic body COPY / TRUNCATE of an unpinned table", ATOM("TRUNCATE audit_entries;"), {ENG: "definer"}, DB3)
+add20("V22 EXECUTE string with USING pg_authid", TRIG("BEGIN EXECUTE format('DELETE FROM %I.t USING pg_authid', TG_TABLE_SCHEMA); RETURN NULL; END"), DB2A, DB2)
+# ---- M4: head and body fingerprint
+add20("V23 release without its `AND \"on\" = true` (same tables, other behaviour) (security M4)", DB3TXT.replace('WHERE id = 1 AND "on" = true;', "WHERE id = 1;"), ALLOWED_BY_FILE[DB3], DB3, opts=REAL)
+add20("V24 release and engage swapped bodies", DB3TXT.replace("UPDATE kill_switch SET \"on\" = false, \"by\" = session_user, ts = clock_timestamp() WHERE id = 1 AND \"on\" = true;", "UPDATE kill_switch SET \"on\" = true;"), ALLOWED_BY_FILE[DB3], DB3, opts=REAL)
+add20("V25 reserve with another return type", DB3TXT.replace("RETURNS TABLE (day_usd numeric, month_usd numeric)\nLANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp\nBEGIN ATOMIC\n  INSERT INTO spend (agent_id", "RETURNS TABLE (day_usd numeric, month_usd numeric)\nLANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp\nBEGIN ATOMIC\n  INSERT INTO spend (agent_id", 1).replace("p_worst > 0\n    ON CONFLICT (agent_id, day)", "p_worst > -1\n    ON CONFLICT (agent_id, day)"), ALLOWED_BY_FILE[DB3], DB3, opts=REAL)
+add20("V26 control: the real DB-3 file with every pin", DB3TXT, ALLOWED_BY_FILE[DB3], DB3, "clean", opts=REAL)
+# ---- F1 (independent runner of v19): statement kinds
+add20("V27 release body DELETE FROM spend (runner R01; Postgres accepted it)", RELF("DELETE FROM spend;"), {REL: "definer"}, DB3, opts=KIND_REL)
+add20("V28 release body WITH d AS (DELETE FROM spend RETURNING 1) SELECT 1 (runner R14)", RELF("WITH d AS (DELETE FROM spend RETURNING 1) SELECT 1;"), {REL: "definer"}, DB3, opts=KIND_REL)
+add20("V29 release body TRUNCATE spend (runner R15; the server refuses it)", RELF("TRUNCATE spend;"), {REL: "definer"}, DB3, opts=KIND_REL)
+add20("V30 release with the LEAKPROOF attribute (runner R10; the server refuses it)", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER LEAKPROOF {SP} BEGIN ATOMIC UPDATE kill_switch SET \"on\" = false; END;\n" + rev("kill_switch_release"), {REL: "definer"}, DB3, opts=KIND_REL)
+add20("V31 control: release body UPDATE only", RELF("UPDATE kill_switch SET \"on\" = false WHERE id = 1;"), {REL: "definer"}, DB3, "clean", opts=KIND_REL)
+add20("V32 DB-2 definer body with a DELETE inside the EXECUTE string", TRIG("BEGIN EXECUTE format('DELETE FROM %I.spend_decrease_log', TG_TABLE_SCHEMA); RETURN NULL; END"), DB2A, DB2, opts={"kinds": "real"})
+# ---- m1 / F2: expressions inside allowed shapes
+add20("V33 ADD CONSTRAINT CHECK (pg_read_file(..)) (runner H42)", "ALTER TABLE spend ADD CONSTRAINT c CHECK (pg_read_file('x') = 'y');\n")
+add20("V34 ADD COLUMN DEFAULT current_setting(..) (runner H43)", "ALTER TABLE spend ADD COLUMN x text DEFAULT current_setting('server_version');\n")
+add20("V35 ADD COLUMN GENERATED ALWAYS AS (evil()) STORED (runner H44)", "ALTER TABLE spend ADD COLUMN g text GENERATED ALWAYS AS (evil(agent_id)) STORED;\n")
+add20("V36 CREATE INDEX on an expression calling evil() (runner H90)", "CREATE INDEX i ON spend (evil(agent_id));\n")
+add20("V37 CREATE INDEX ... WHERE evil() (runner H91)", "CREATE INDEX i ON spend (agent_id) WHERE evil();\n")
+add20("V38 CREATE TABLE with DEFAULT evil()", "CREATE TABLE t (a int DEFAULT evil());\n")
+add20("V39 CREATE TRIGGER WHEN (evil())", "CREATE TRIGGER t BEFORE UPDATE ON spend FOR EACH ROW WHEN (evil()) EXECUTE FUNCTION spend_keep_keys();\n", ALLOWED_BY_FILE[DB2], DB2)
+add20("V40 CHECK with OPERATOR(...)", "ALTER TABLE spend ADD CONSTRAINT c CHECK (usd OPERATOR(public.+) 1 > 0);\n")
+add20("V41 control: CHECK with length, regex, date_trunc, extract, REFERENCES t (id), numeric(10,2)", "ALTER TABLE spend ADD CONSTRAINT c CHECK (length(agent_id) BETWEEN 1 AND 200 AND agent_id ~ '^a$' AND extract(day FROM day) >= 1);\nCREATE INDEX i2 ON spend (date_trunc('day', ts));\nCREATE TABLE t2 (a numeric(10,2) REFERENCES t (id), b timestamptz DEFAULT clock_timestamp());\n", {}, "x.sql", "clean")
+# ---- m2: positional SET
+add20("V42 atomic body: SELECT ... FOR UPDATE; SET search_path = public (the UPDATE within 4 tokens exempted the SET in v19)", ATOM("SELECT 1 FROM kill_switch FOR UPDATE; SET search_path = public;"), {ENG: "definer"}, DB3)
+add20("V43 control: UPDATE name AS alias SET and DO UPDATE SET are legal", ATOM("INSERT INTO kill_switch (id) VALUES (1) ON CONFLICT (id) DO UPDATE SET ts = now(); UPDATE kill_switch AS k SET ts = now();"), {ENG: "definer"}, DB3, "clean")
+# ---- m3: tokenizer follows the server
+add20("V44 SECURITY<NBSP>DEFINER is ONE identifier for the server, not the two words (tokenizer, v19 split it)", RESERVE.replace("SECURITY DEFINER", "SECURITY DEFINER"), {RES: "definer"}, DB3)
+add20("V45 control: a name made of an astral character is one word", "COMMENT ON TABLE t IS 'x';\nALTER TABLE spend ADD COLUMN \U0001F600x int;\n", {}, "x.sql", "clean")
+
 # the independent runner's spellings
 for fname in ("spellings.json", "spellings2.json"):
     for k, txt in json.load(open(os.path.join(HERE, fname))).items():
         if k.startswith("C1") or k.startswith("C2"): continue
         add("R" + k, txt, {RES: "definer"} if k.startswith("25") else {}, DB3 if k.startswith("25") else "x.sql", "flag")
-ok = bad = 0; v17_miss = 0; v16_miss = 0; v18_miss = 0; new_total = 0; new_miss18 = 0
+def realpins(file, o):
+    if not o: return {"trigger_pins": PIN_ANY, "fn_pins": PIN_ANY, "kinds": PIN_ANY}
+    r = {"trigger_pins": PIN_ANY, "fn_pins": PIN_ANY, "kinds": PIN_ANY}
+    if o.get("trigger_pins") == "real": r["trigger_pins"] = A20.TRIGGER_PINS_BY_FILE.get(file)
+    if o.get("fn_pins") == "real": r["fn_pins"] = A20.FN_PINS_BY_FILE.get(file)
+    if o.get("kinds") == "real": r["kinds"] = A20.KINDS_BY_FILE.get(file)
+    return r
+ok = bad = 0; v17_miss = 0; v16_miss = 0; v18_miss = 0; v19_miss = 0; new_total = 0; new_miss18 = 0; new20_total = 0; new20_miss19 = 0
+import allow_v19 as A19
 for n, file, text, allowed, want in M:
-    p19 = g19.check_sql_text(file, text, allowed, extra_statements=EXTRA_BY_FILE.get(file, ()), atomic_tables=ATOMIC_TABLES_BY_FILE.get(file))
+    p20 = g20.check_sql_text(file, text, allowed, extra_statements=EXTRA_BY_FILE.get(file, ()), atomic_tables=ATOMIC_TABLES_BY_FILE.get(file), **realpins(file, OPTS.get(n)))
+    try: p19 = g19.check_sql_text(file, text, allowed, extra_statements=A19.EXTRA_BY_FILE.get(file, ()), atomic_tables=A19.ATOMIC_TABLES_BY_FILE.get(file))
+    except Exception as e: p19 = ["crash " + type(e).__name__]
     try: p18 = g18.check_sql_text(file, text, allowed)
     except Exception as e: p18 = ["crash " + type(e).__name__]
     try: p17 = g17.check_sql_text(file, text, V17_ALLOWED)
     except Exception as e: p17 = ["crash " + type(e).__name__]
     try: p16 = g16.check_sql_text(file, text, V17_ALLOWED)
     except Exception as e: p16 = ["crash " + type(e).__name__]
-    good = bool(p19) if want == "flag" else not p19
+    good = bool(p20) if want == "flag" else not p20
     ok += good; bad += not good
     miss17 = want == "flag" and not p17; v17_miss += miss17; v16_miss += want == "flag" and not p16
     miss18 = want == "flag" and not p18; v18_miss += miss18
+    miss19 = want == "flag" and not p19; v19_miss += miss19
     if n in NEWMUT and want == "flag": new_total += 1; new_miss18 += miss18
-    print(("PASS " if good else "FAIL ") + f"{n}: v19 flags={len(p19)} ; v18 flags={len(p18)} ; v17 flags={len(p17)} ; v16 flags={len(p16)}" + ("  (v18 MISSES it)" if miss18 else "") + ("  (v17 MISSES it)" if miss17 else "") + (f"  [{p19[0][:90]}]" if p19 and not good else ""))
-# parser tests (a statement count that v17 gets wrong)
+    if n in NEWMUT20 and want == "flag": new20_total += 1; new20_miss19 += miss19
+    print(("PASS " if good else "FAIL ") + f"{n}: v20 flags={len(p20)} ; v19 flags={len(p19)} ; v18 flags={len(p18)} ; v17 flags={len(p17)} ; v16 flags={len(p16)}" + ("  (v19 MISSES it)" if miss19 and n in NEWMUT20 else "") + ("  (v18 MISSES it)" if miss18 else "") + (f"  [{p20[0][:100]}]" if p20 and not good else ""))
 T = f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE k SET a = CASE WHEN true THEN 1 ELSE 2 END; UPDATE k SET b = 1; END;\nSELECT 1;\n"
-n17 = len(g17.statements(g17.strip_comments(T))); n18 = len(g19.split_statements(g19.tokenize(T)))
-for name, ok_, d in (("P1 BEGIN ATOMIC with CASE ... END is ONE statement (plus the SELECT: 2 in all)", n18 == 2, f"v18={n18} v17={n17}"), ("P2 a quoted name with -- and /* leaves the next statement visible", len(g19.split_statements(g19.tokenize('CREATE TABLE "a--b" (x int);\nCREATE TABLE "c/*" (y int);\nSELECT 1;\n'))) == 3, "v18 sees 3 statements")):
+n20 = len(g20.split_statements(g20.tokenize(T)))
+for name, ok_, d in (("P1 BEGIN ATOMIC with CASE ... END is ONE statement (plus the SELECT: 2 in all)", n20 == 2, f"v20={n20}"), ("P2 a quoted name with -- and /* leaves the next statement visible", len(g20.split_statements(g20.tokenize('CREATE TABLE "a--b" (x int);\nCREATE TABLE "c/*" (y int);\nSELECT 1;\n'))) == 3, "v20")):
     ok += ok_; bad += not ok_; print(("PASS " if ok_ else "FAIL ") + name + f" [{d}]")
 folder1, folder2 = sys.argv[1], sys.argv[2]
 for f in sorted(glob.glob(os.path.join(folder1, "*.sql")) + glob.glob(os.path.join(folder2, "*.sql"))):
-    b = os.path.basename(f); p = g19.check_sql_text(b, open(f).read(), ALLOWED_BY_FILE.get(b, {}), extra_statements=EXTRA_BY_FILE.get(b, ()), atomic_tables=ATOMIC_TABLES_BY_FILE.get(b))
+    b = os.path.basename(f); p = A20.check(g20, b, open(f).read())
     ok += not p; bad += bool(p); print(("PASS " if not p else "FAIL ") + f"real file {b}: {p}")
-print(f"{ok} checks passed, {bad} failed; mutants the v18 guard misses: {v18_miss}; the v17 guard misses: {v17_miss}; the v16 guard misses: {v16_miss}; of the {new_total} NEW v19 mutants that must be flagged the v18 guard misses {new_miss18} and flags {new_total - new_miss18} (listed above without the 'v18 MISSES' mark)")
+print(f"{ok} checks passed, {bad} failed; mutants the v19 guard misses: {v19_miss}; the v18 guard misses: {v18_miss}; the v17 guard misses: {v17_miss}; the v16 guard misses: {v16_miss}; of the {new20_total} NEW v20 mutants that must be flagged the v19 guard misses {new20_miss19} and flags {new20_total - new20_miss19} (the others are listed above without the 'v19 MISSES' mark)")
 sys.exit(1 if bad else 0)

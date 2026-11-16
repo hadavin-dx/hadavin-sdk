@@ -54,7 +54,7 @@ NEWROWS = [
     (101, 64, "Nothing on screen (the run sheet's rehearsal list).", "3. The stand-in drop on the film flows with .drop = 1: run it five times; note intake count (0 or 1), alert count, state, real seconds to alert, and whether a reply comes back (scene 8).",
      "3. " + NOT_FILMED + "scene 8 is not filmed): skip this item. (Old text: The stand-in drop on the film flows with .drop = 1: run it five times; note intake count (0 or 1), alert count, state, real seconds to alert, and whether a reply comes back (scene 8).)", "Rehearsal item 3 rehearses scene 8."),
     (102, 57, "Nothing on screen (the run sheet's list of risks).", "8. Which lease is shipped is not settled: real-v4 and v5 use 45 s, DESIGN-A-README says 120 s for its flows folder.",
-     "8. DECIDED (the studio lead's answers under 'Update 17:08Z' below): the shipped lease is 45 s for the real and film flows; the 120 s of DESIGN-A-README belongs to its own flows folder, not to the take.", "Risks item 8 says the shipped lease is not settled; line 85 of the same file says 'Shipped lease for real and film = 45 s (decided)'. Row 81 edits the second sentence of the same line (an independent part)."),
+     "8. DECIDED (the studio lead's answers under 'Update 17:08Z' (22:38 IST) below): the shipped lease is 45 s for the real and film flows; the 120 s of DESIGN-A-README belongs to its own flows folder, not to the take.", "Risks item 8 says the shipped lease is not settled; line 85 of the same file says 'Shipped lease for real and film = 45 s (decided)'. Row 81 edits the second sentence of the same line (an independent part)."),
     (103, 56, "Nothing on screen (the run sheet's list of risks).", "7. Scene 5 uses the stand-in CRM (a real CRM cannot be told to refuse). If the owner wants the whole take on real services, scene 5 must be cut. Open question for the owner.",
      "7. DECIDED: scene 5 is cut (the one video is scenes 1 to 4 and the closing card); no question for the owner remains here.", "Risks item 7 is an open question about scene 5, which decision 1 cuts."),
     (104, 54, "Nothing on screen (the run sheet's list of risks).", "5. Scene 7 to 9 numbers: the drop fault has no measured row",
@@ -226,6 +226,9 @@ def build(words):
     t = sub(t, "(the stand-in tests showed one; the take's flows are not run)", "(the stand-in tests showed one; the take's flows were not run)", 1)
     t = sub(t, " Names after 'builder' and 'reviewers' are labels no program reads;", " The names are labels no program reads;", 1)
     t = sub(t, " (my reading: for look-up tests only)", "", 1)
+    t = sub(t, "; this report is on branch cloud/core-hardening, which holds only one of them)", ")", 1)
+    t = sub(t, "reading the final take files. PUBLIC POST = your phrase in ORDERS.md ('the lease sentence stays out of the public post').", "reading the final take files. PUBLIC POST = the post that goes out with the video (your ruling is quoted in section 1c).", 1)
+    t = sub(t, "L-SHEET and L-SAVEERR (OWNER ONLY, in the table); G12", "the two OWNER ONLY questions of the table; G12", 1)
     # row 96 edits the rightmost cell of run sheet line 41; rows 12 to 15 consume the text around it, so it must apply first
     _L = t.split("\n")
     _i96 = [k for k, l in enumerate(_L) if l.startswith("| 96 | NOT APPLIED")]
