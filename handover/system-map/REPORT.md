@@ -1,5 +1,12 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## FINAL 07:39 UTC / 13:09 IST - ORDER 002 outputs written; round 2 resolved; waiting for the lead
+WHAT FAILED OR WAS NOT CHECKED (first): no n8n runtime and no network, so every claim about n8n behaviour is UNVERIFIED. The take repository `duplicate-proof-lead-desk` is NOT VISIBLE. 183 files were NOT-READ (L1c 18, L3c 66, L4c 99); unread means unchecked, not clean. Round 2 found 9 Blockers and 19 Majors (zoom-out 0/5, design 4/6, comprehension 3/8, codebase-details 2/4); all were applied in generator v3 (work/result-resolve-r2.md, auto accept; 2 items partly contested, 1 escalated). There is no third result round, so the v3 text has NOT been re-reviewed by a fresh reviewer. Five ARCHIVE proposals (L6-J-019, 055, 012, 039, 049) were not grepped for callers: the laptop lead greps first (work/drift-report.md).
+OUTPUTS: MASTER-MAP.md (797 rows), SWEEP.md (314 raw findings, 20 Blocker; deduplicated 307, 16 Blocker, 10 touch the take), ONE-PLACE-TABLE.md (7 keys, 7 Owner lines, 59 rows = 49 + 10 appendix).
+EVIDENCE (own commands, just run): scan_outputs no defects; 21 unit tests OK; check_citations 2013 of 2013 FOUND (proves the quote exists, not that it supports the claim).
+OPEN FOR THE LAPTOP LEAD: the place that holds the dollar cap; the second alert channel and its watcher; what the take proof counter reads; whether the independent count runs outside n8n; DECISION says three roles, this review proposes a fourth identity; run the Postgres re-smoke and planted-data check before execution saving goes on. OPEN FOR THE STUDIO HEAD: key rotation, any history rewrite, archive moves.
+AGENTS: all agents I started are closed (12 lane agents, 2 evidence agents, 4 + 4 reviewers, resolve skills); 0 running, 0 background shells.
+
 Clock correction 07:31 UTC: three earlier time stamps (07:41, 07:55, 08:25) were my estimates, ahead of the real clock (`date -u`); they are now replaced by the real times (about 07:28, 07:29 and 07:31).
 
 ## Status 2026-11-16 07:31 UTC / 13:01 IST - result round 1 resolved and applied; round 2 started
@@ -46,10 +53,10 @@ Agent register (id, purpose, start, expected end, state):
 | RESULT-COMPREHENSION | egm:egm-comprehension result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:28 | +20 min | closed 07:29 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
 | RESULT-DESIGN | egm:egm-design result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:28 | +20 min | closed 07:29 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
 | EVIDENCE-2 | EVIDENCE RUNNER: reruns the 8 commands on the regenerated outputs; raw output to work/evidence-2.md | 07:31 | +15 min | running |
-| RESULT2-CODEBASE | round 2 fresh reviewer CODEBASE (Blocker and Major only) | 07:31 | +20 min | running |
-| RESULT2-ZOOM | round 2 fresh reviewer ZOOM (Blocker and Major only) | 07:31 | +20 min | running |
-| RESULT2-COMPREHENSION | round 2 fresh reviewer COMPREHENSION (Blocker and Major only) | 07:31 | +20 min | running |
-| RESULT2-DESIGN | round 2 fresh reviewer DESIGN (Blocker and Major only) | 07:31 | +20 min | running |
+| RESULT2-CODEBASE | round 2 fresh reviewer CODEBASE (Blocker and Major only) | 07:31 | +20 min | closed (reported) |
+| RESULT2-ZOOM | round 2 fresh reviewer ZOOM (Blocker and Major only) | 07:31 | +20 min | closed (reported) |
+| RESULT2-COMPREHENSION | round 2 fresh reviewer COMPREHENSION (Blocker and Major only) | 07:31 | +20 min | closed (reported) |
+| RESULT2-DESIGN | round 2 fresh reviewer DESIGN (Blocker and Major only) | 07:31 | +20 min | closed (reported) |
 | LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | closed 07:25 UTC (PARTIAL, SKIMMED) |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
