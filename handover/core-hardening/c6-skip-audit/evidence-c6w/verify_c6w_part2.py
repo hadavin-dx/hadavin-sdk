@@ -111,8 +111,12 @@ vs = sorted(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for
 check("report names the check time %s and the newest sheet version on disk (v%s)" % (ct, vs[-1] if vs else "?"), bool(vs) and ("v%d" % vs[-1]) in full and ct[11:19] in full and ct[:10] in full, vs[-3:])
 import datetime
 ct_dt = datetime.datetime.strptime(ct, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
-late = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") if os.path.getmtime(f) > ct_dt]
-check("no owner sheet changed after the stated check time (C-10c is current)", not late, late)
+import hashlib
+_hrec = dict((m.group(2), m.group(1)) for m in re.finditer(r"^([0-9a-f]{64})  (\S+\.md)$", cs, re.M))
+_shaf = lambda f: hashlib.sha256(open(f, "rb").read()).hexdigest()
+_changed = lambda f: os.path.getmtime(f) > ct_dt and _hrec.get(os.path.basename(f)) != _shaf(f)   # newer by file time AND different by content hash (or not recorded)
+late = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") if _changed(f)]
+check("no owner sheet changed (content hash) after the stated check time (C-10c is current); a file written again with identical content does not count", not late, late)
 check("no claim that v25 or v26 is the newest", not re.search(r"(?i)newest[^.|]{0,60}v2[56]\b(?!-SOURCE\b)", full), "")
 NEWV0 = max(int(re.search(r"-v(\d+)-", f).group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*-*.md"))
 check("L-SHEET reads 'confirm the one final sheet' and names the newest version (v%d) A, B and SOURCE" % NEWV0, any(l.startswith("| L-SHEET (was Q10)") and "Confirm the one final owner sheet" in l and ("OWNER-SHEET-v%d-A.md" % NEWV0) in l and ("OWNER-SHEET-v%d-B.md" % NEWV0) in l and ("OWNER-SHEET-v%d-SOURCE.md" % NEWV0) in l for l in txt))
@@ -392,7 +396,7 @@ _rnbad = [(a_, b_) for a_, b_ in _rnm if a_ != b_]
 check("E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md", not _rnbad and any(l.startswith("| LRN14 |") and "LEAD-RELEASE-NOTE-v14.md" in l for l in txt) and len(_rnm) >= 1, _rnbad)
 # E-mtime: owner sheets, release notes and their SOURCE files are not newer than the check time, and the newest release note's written time is named and true
 _ctd = datetime.datetime.strptime(ct, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
-_newer = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*") + glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*") if os.path.getmtime(f) > _ctd]
+_newer = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*") + glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*") if _changed(f)]
 check("E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time %s (read from the files at run time)" % ct, not _newer, _newer)
 _rnl = sorted((f for f in glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*.md") if "SOURCE" not in f), key=lambda f: int(re.search(r"-v(\d+)", f).group(1)))
 _rnf = _rnl[-1]

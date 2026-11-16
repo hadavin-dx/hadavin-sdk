@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py", line 87, in <module>
+    REF = structure(psycopg.connect(dsn("migr17", "ref_genuine"), autocommit=True))
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py", line 70, in structure
+    "functions": q("SELECT p.oid::regprocedure::text, p.prosecdef, p.proconfig, pg_get_userbyid(p.proowner), md5(p.prosrc || coalesce(pg_get_function_result(p.oid),'') || coalesce(pg_get_expr(p.prosqlbody, 0),'')) FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY 1"),
+                 ~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py", line 67, in <lambda>
+    q = lambda s: c.execute(s).fetchall()
+                  ~~~~~~~~~^^^
+  File "/home/user/hadavin-sdk/.venv/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InvalidParameterValue: input is a query, not an expression
+rc=1

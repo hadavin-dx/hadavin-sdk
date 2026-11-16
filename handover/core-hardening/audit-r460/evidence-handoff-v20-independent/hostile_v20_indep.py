@@ -67,7 +67,7 @@ def structure(c):
     q = lambda s: c.execute(s).fetchall()
     return {
      "triggers": q("SELECT tgrelid::regclass::text, tgname, tgenabled FROM pg_trigger WHERE NOT tgisinternal ORDER BY 1,2"),
-     "functions": q("SELECT p.oid::regprocedure::text, p.prosecdef, p.proconfig, pg_get_userbyid(p.proowner), md5(p.prosrc || coalesce(pg_get_function_result(p.oid),'') || coalesce(pg_get_expr(p.prosqlbody, 0),'')) FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY 1"),
+     "functions": q("SELECT p.oid::regprocedure::text, p.prosecdef, p.proconfig, pg_get_userbyid(p.proowner), md5(pg_get_functiondef(p.oid)) FROM pg_proc p WHERE pronamespace='public'::regnamespace ORDER BY 1"),
      "constraints": q("SELECT conrelid::regclass::text, conname, convalidated, pg_get_constraintdef(oid) FROM pg_constraint WHERE connamespace='public'::regnamespace AND conrelid::regclass::text IN ('spend','spend_month','kill_switch') ORDER BY 1,2"),
      "rules_policies": q("SELECT 'rule', tablename, rulename FROM pg_rules WHERE schemaname='public' UNION ALL SELECT 'policy', tablename, policyname FROM pg_policies UNION ALL SELECT 'rls', relname, relrowsecurity::text FROM pg_class WHERE relname IN ('spend','spend_month','kill_switch') ORDER BY 1,2,3"),
      "relations": q("SELECT relname, relkind FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind IN ('r','v','m','f','p') ORDER BY 1"),
@@ -222,6 +222,8 @@ add("H72", "DB-2 file", "the append-only trigger on the log is disabled inside t
 add("H73", "DB-2 file", "WHEN condition of the decrease trigger widened to never fire (NEW.usd < OLD.usd removed)", None, ["SELECT 1"], target="db2", replace=("WHEN (NEW.usd IS DISTINCT FROM OLD.usd AND (NEW.usd < OLD.usd OR NEW.usd >= 'Infinity'::numeric))\n  EXECUTE FUNCTION spend_log_decrease();\nCREATE TRIGGER spend_month_log_decrease", "WHEN (false)\n  EXECUTE FUNCTION spend_log_decrease();\nCREATE TRIGGER spend_month_log_decrease"))
 add("H74", "DB-2 file", "spend_log_decrease made SECURITY INVOKER-looking: attribute order moved after the body (plpgsql, search_path first)", None, ["SELECT 1"], target="db2", replace=("RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER\nSET search_path = pg_catalog, pg_temp AS $f$\nBEGIN\n  IF TG_TABLE_NAME = 'spend' THEN\n    EXECUTE format('INSERT INTO %I.spend_decrease_log", "RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER\nSET search_path = pg_catalog, pg_temp, public AS $f$\nBEGIN\n  IF TG_TABLE_NAME = 'spend' THEN\n    EXECUTE format('INSERT INTO %I.spend_decrease_log"))
 
+SMOKE = bool(os.environ.get('HV_SMOKE'))
+if SMOKE: F = F[:6] + [x for x in F if x[0] in ('H23', 'H72')]
 for cid, fam, what, extra, probes, target, rep in F:
     base = T3 if target == "db3" else T2
     if rep is not None:
@@ -257,7 +259,9 @@ def dcase(cid, fam, what, agent, q, args, note=""):
 RES, SET = "SELECT * FROM spend_reserve(%s, %s, %s)", "SELECT * FROM spend_settle(%s, %s, %s, %s)"
 n = 0
 def aid_case(label, a, expect):
-    global n; n += 1; cid = f"D{n:02d}"
+    global n
+    if SMOKE and n >= 4: return
+    n += 1; cid = f"D{n:02d}"
     dcase(cid, "agent id", f"{label} (expected by the file's rule: {expect})", a, RES, (a, D, 1))
 aid_case("0 characters ''", "", "refuse")
 aid_case("1 character 'a'", "a", "accept")
@@ -276,7 +280,9 @@ aid_case("NULL agent id", None, "no row")
 n0 = n
 # amounts
 def amt(label, v, expect, agent=None):
-    global n; n += 1; a = agent or f"amt{n}"
+    global n
+    if SMOKE and n >= 6: return
+    n += 1; a = agent or f"amt{n}"
     dcase(f"D{n:02d}", "amount", f"reserve {label} (expected: {expect})", a, RES, (a, D, v))
 amt("0", 0, "no row"); amt("-1", -1, "no row"); amt("NULL", None, "no row"); amt("0.0000001", "0.0000001", "accept"); amt("999999999999.99", "999999999999.99", "accept")
 amt("1e12 exactly", "1000000000000", "23514"); amt("1e12 - 0.0000001 (boundary under)", "999999999999.9999999", "accept"); amt("1e20", "100000000000000000000", "23514"); amt("NaN", "NaN", "refuse"); amt("Infinity", "Infinity", "refuse")
@@ -327,6 +333,7 @@ rows.append((f"D{n:02d}b", "invariant", "same for spend_month", "n/a", f"{cons2}
 dbr = "r_genuine"; ok, _ = apply_files(dbr, T2, T3); assert ok == "ok", ok
 mgr = psycopg.connect(dsn("migr17", dbr), autocommit=True); seed(mgr)
 def rcase(cid, what, stmts, check_sql=None):
+    if SMOKE and cid > 'R03': return
     c = psycopg.connect(dsn("rt17", dbr), autocommit=True); outs = []
     for s in stmts:
         try:

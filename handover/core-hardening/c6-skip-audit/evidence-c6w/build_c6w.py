@@ -322,6 +322,7 @@ def extra3b(t):
                    (" there (folder handover/core-hardening/c6-skip-audit/), one commit per branch.", " there, one commit per branch."),
                    (" (its scope is unconfirmed);", ";"),
                    (" The names are labels no program reads; the reviewers are review agents", " The reviewers are review agents"),
+                   ("5. Only the owner lines go in besides. Your line starts the builder.", "5. Your line starts the builder."),
                    (" (shorter cases: Table B, section 1c; each needs a hand edit).", " (shorter cases: Table B, section 1c)."),
                    (" (the check script compares them with the file name)", " (a script compares them with the file name)")):
         assert _h.count(_a) == 1, _a
