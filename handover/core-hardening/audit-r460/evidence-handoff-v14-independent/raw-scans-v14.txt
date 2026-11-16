@@ -1,0 +1,9 @@
+BANNED entries read at run time: 10
+banned scan | doc v14 | files 1 | case-sensitive hits 0 | case-insensitive hits 0 | files with a hit 0
+banned scan | doc v14 other-tracks | files 1 | case-sensitive hits 0 | case-insensitive hits 0 | files with a hit 0
+banned scan | builder evidence v14 | files 51 | case-sensitive hits 0 | case-insensitive hits 0 | files with a hit 0
+banned scan | my folder | files 21 | case-sensitive hits 0 | case-insensitive hits 0 | files with a hit 0
+secret-shape scan | doc v14 | {'allowed_example_key': 1}
+secret-shape scan | doc v14 other-tracks | {'allowed_example_key': 1}
+secret-shape scan | builder evidence v14 | {'allowed_example_key': 1}
+secret-shape scan | my folder | {'allowed_example_key': 2}

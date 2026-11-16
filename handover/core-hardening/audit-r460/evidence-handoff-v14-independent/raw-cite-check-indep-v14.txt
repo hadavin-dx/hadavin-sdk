@@ -1,5 +1,5 @@
 cites: 394
-status counts: {'AMBIG': 2, 'HIT0': 304, 'HIT2': 17, 'MOVED': 50, 'NOANCHOR': 8, 'NOANCHOR_IN_FILE': 13}
+status counts: {'AMBIG': 2, 'HIT0': 304, 'HIT2': 17, 'MOVED': 50, 'NOANCHOR': 8, 'NOANCHOR_IN_FILE': 13, 'strict:': 23, 'strict:NO_RARE_ANCHOR': 11, 'strict:STRICT_HIT': 253, 'strict:STRICT_MOVED': 107}
 == CORE-PR-HANDOFF-v14.md: identifier-like backtick names checked 976; NOT in code corpus (src,tests,demos,.github,handover minus audit-r460): 104; path-like names unresolved: 33
   NAME-NOT-IN-CODE line 12: TG_TABLE_SCHEMA
   NAME-NOT-IN-CODE line 15: tcp_user_timeout

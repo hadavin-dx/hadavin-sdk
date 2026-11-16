@@ -1,0 +1,5 @@
+rows 56 apply 44 hold 12 byfile (37, 15, 4) old blocks 57 apply NEW 44 hold blocks 13 index rows 56 utc/ist pairs 53 weekday-date strings 34 iso dates 37
+NOTE IST time without adjacent UTC twin: ... and up to US$X, window ends 2026-11-23 23:59 IST
+NOTE IST time without adjacent UTC twin: ...for example: ... window ends 2026-11-23 23:59 IST
+NOTE UTC time without IST: ...## Step 21. Mon 23 Nov before 18:29 UTC: you watch the cut NEEDS
+RESULT PASS

@@ -1,0 +1,18 @@
+NON-ROOT RUN of v7 (user nobody uid 65534, via setpriv; made-up take folder; one file mode 000)
+id: uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+Mon Nov 16 16:06:08 UTC 2026
+exit code (dash): 0
+stderr lines: 2; 'Permission denied' on stdout: 0; on stderr: 0
+--- STOP / UNREADABLE / SUMMARY lines:
+UNREADABLE (not searched, NOT zero matches): /tmp/nr7/take/scripts/other.py
+    [search "delete words in the other python and shell files of the test program": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=1] ZERO FILES SEARCHED: nothing was looked at (1 file(s) U
+UNREADABLE (not searched, NOT zero matches): /tmp/nr7/take/scripts/other.py
+    [search "test name qs_37 in the test-program folder (tests included)": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=1] ZERO HITS: either not there or the search words are wrong; this 
+  STOP-SIGNAL: 14 file(s) MISSING (a wrong path, not a zero count): fix the path and run again.
+  STOP-SIGNAL: 2 file(s) UNREADABLE (not searched): fix the permission or tell the lead.
+  STOP-SIGNAL: 8 search(es) looked at ZERO FILES: a "0 matching lines" there means nothing.
+SUMMARY: blocks=16 search_blocks=13 with_hits=0 zero_hits=13 information_blocks=3 files_missing=14 files_unreadable=2 (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)
+--- work folders left in the private TMPDIR (a normal run keeps its masked copy): 1
+--- stderr text:
+WORK-FOLDER: /tmp/nr7/tmp/lead-repin.uMR4Zp
+COPY-OF-OUTPUT (masked): /tmp/nr7/tmp/lead-repin.uMR4Zp/lead-repin-verify-out.txt

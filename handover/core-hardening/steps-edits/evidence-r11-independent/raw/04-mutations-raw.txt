@@ -1,0 +1,32 @@
+baseline exit 0 RESULT PASS
+CAUGHT | 01 remove HOLD label from E-04 (NEW (exact):) | exit 1 | first: FAIL E-04 HOLD label does not start with NEW [HOLD G1: DO NOT APPLY]: 'NEW (exact):'
+CAUGHT | 02 HOLD label of E-40 loses brackets/prefix ("NEW HOLD G1 ...") | exit 1 | first: FAIL E-40 HOLD label does not start with NEW [HOLD G1: DO NOT APPLY]: 'NEW (exact) HOLD G1: DO NOT APPLY:'
+CAUGHT | 03 HOLD word moved after prefix ("NEW (exact) [HOLD G5: ...]") E-49 | exit 1 | first: FAIL E-49 HOLD label does not start with NEW [HOLD G5: DO NOT APPLY]: 'NEW (exact) [HOLD G5: DO NOT APPLY]:'
+CAUGHT | 04 Apply row E-01 gets two NEW blocks | exit 1 | first: FAIL E-01 (Apply now) has 2 NEW blocks (need exactly 1)
+CAUGHT | 05 Apply row E-02 loses its NEW block | exit 1 | first: FAIL E-02 (Apply now) has 0 NEW blocks (need exactly 1)
+CAUGHT | 06 changed UTC (18:19 -> 18:18, IST unchanged) one place | exit 1 | first: FAIL UTC/IST pair wrong: '18:18 UTC = 23:49 IST' (want 23:48)
+CAUGHT | 07 changed IST (23:59 -> 23:29) one place | exit 1 | first: FAIL UTC/IST pair wrong: '18:29 UTC = 23:29 IST' (want 23:59)
+CAUGHT | 08 stale count: 56 rows in total -> 57 | exit 1 | first: FAIL stated counts ('57', '37', '15', '4') differ from actual (56, 37, 15, 4)
+CAUGHT | 09 stale count: Apply now 44 -> 45 | exit 1 | first: FAIL stated status counts ('45', '12', '0', '56') differ from actual (44, 12, 0, 56)
+CAUGHT | 10 stale count: OWNER-STEPS 37 rows -> 38 | exit 1 | first: FAIL stated counts ('56', '38', '15', '4') differ from actual (56, 37, 15, 4)
+CAUGHT | 11 wrong weekday Mon 23 Nov 2026 -> Tue | exit 1 | first: FAIL weekday wrong: 'Tue 23 Nov 2026' is a Mon
+CAUGHT | 12 wrong weekday Wed 18 Nov -> Thu 18 Nov | exit 1 | first: FAIL weekday wrong: 'Thu 18 Nov' is a Wed
+CAUGHT | 13 OLD block of E-03 changed by one character | exit 1 | first: FAIL E-03 OLD1 occurs 0 times (need 1)
+CAUGHT | 14 stated line of E-06 75 -> 76 in header | exit 1 | first: FAIL E-06 OLD at line 75, stated [76]
+CAUGHT | 15 duplicate id: E-20 header renamed E-19 | exit 1 | first: FAIL duplicate row ids: ['E-19']
+CAUGHT | 16 index table: E-20 status Apply now -> Hold | exit 1 | first: FAIL index row E-20 differs from header: ['OWNER-STEPS-realrun-v3.md', '162', 'Hold', '-', '-', 'STALE'] vs ('
+CAUGHT | 17 index table: E-21 line 164 -> 165 | exit 1 | first: FAIL index row E-21 differs from header: ['OWNER-STEPS-realrun-v3.md', '165', 'Apply now', '-', '-', 'STALE'] 
+CAUGHT | 18 overlap: E-18 OLD replaced by E-17 OLD | exit 1 | first: FAIL OLD overlap in OWNER-STEPS-realrun-v3.md: E-17 and E-18
+CAUGHT | 19 fake AWS-style key built from parts in an Apply NEW (E-48) | exit 1 | first: FAIL secret-like string (AKIAAB...) at line 722
+CAUGHT | 20 fake sk- key built from parts in Apply NEW E-09 | exit 1 | first: FAIL secret-like string (sk-ant...) at line 267
+CAUGHT | 21 fake ghp_ token built from parts in Apply NEW E-30 | exit 1 | first: FAIL secret-like string (ghp_ZZ...) at line 520
+CAUGHT | 22 Hold gate letter mismatch: E-45 header G1 -> G5 | exit 1 | first: FAIL stated G1 Hold list ['E-04', 'E-05', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45'] differs from rows ['E-04', '
+CAUGHT | 23 a Hold NEW block deleted (12 blocks) | exit 1 | first: FAIL E-42 Hold row without NEW block
+CAUGHT | 24 Apply NEW of E-01 contains E-02 OLD text (second match later) | exit 1 | first: FAIL apply E-02: OLD occurs 2 times in the working copy at its turn
+CAUGHT | 25 wrong year: Mon 16 Nov 2026 -> Mon 16 Nov 2025 | exit 1 | first: FAIL weekday wrong: 'Mon 16 Nov 2025' is a Sun
+CAUGHT | 26 impossible ISO date 2026-11-23 -> 2026-11-31 | exit 1 | first: FAIL invalid ISO date '2026-11-31'
+CAUGHT | 27 Apply row status flipped to Hold in header only (E-19) | exit 1 | first: FAIL Apply-now rows 43 != 44
+CAUGHT | 28 stale type count: UNCLEAR WORD 10 -> 11 | exit 1 | first: FAIL stated type counts ('15', '11', '14', '16', '1') differ from actual {'STALE': 15, 'UNCLEAR WORD': 10, 'MI
+CAUGHT | 29 E-13 second OLD removed | exit 1 | first: FAIL OLD block total 56 != 57
+CAUGHT | 30 ordering: a Hold row (E-53) status label word "Hold" -> "Held" | exit 1 | first: FAIL E-53 unknown status 'Held'
+mutations planted 30, caught 30, missed 0

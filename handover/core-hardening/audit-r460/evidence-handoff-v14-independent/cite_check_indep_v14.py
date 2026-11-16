@@ -79,12 +79,22 @@ for doc in docs:
                                     d = abs(i - (lo + hi) // 2)
                                     if best is None or d < best[0]: best = (d, i)
                             st = "MOVED"; detail = f"{rel} nearest anchor line {best[1]} (delta {best[0]}) anchors={sorted(fa)[:4]}"
+                strict = ""
+                if cands and st not in ("RANGE", "MISSING", "NOANCHOR", "NOANCHOR_IN_FILE", "AMBIG"):
+                    _l = L(code_files[cands[0]]); rare = []
+                    for w in fa:
+                        occ = [i for i, t in enumerate(_l, 1) if re.search(r"\b" + re.escape(w) + r"\b", t)]
+                        if 0 < len(occ) <= 4: rare.append((w, occ))
+                    if rare:
+                        inw = [w for w, occ in rare if any(lo - 0 <= i <= hi + 0 for i in occ)]
+                        strict = "STRICT_HIT" if inw else "STRICT_MOVED:" + ";".join(f"{w}@{occ}" for w, occ in rare[:3])
+                    else: strict = "NO_RARE_ANCHOR"
                 txt0 = ""
                 if cands and st not in ("RANGE", "MISSING"):
                     _ls = L(code_files[cands[0]]); txt0 = (_ls[lo - 1].strip()[:90] + (" || " + _ls[hi - 1].strip()[:60] if hi != lo else "")) if lo - 1 < len(_ls) else ""
-                bump(st); rows.append((os.path.basename(doc), n, f"{path}:{lo}" + (f"-{hi}" if hi != lo else ""), kind, st, detail, txt0))
+                bump(st); bump("strict:" + strict.split(":")[0]); rows.append((os.path.basename(doc), n, f"{path}:{lo}" + (f"-{hi}" if hi != lo else ""), kind, st, detail, txt0, strict))
 with open(out, "w", newline="") as f:
-    w = csv.writer(f, delimiter="\t"); w.writerow(["doc", "doc_line", "cite", "kind", "status", "detail", "cited_line_text"]); w.writerows(rows)
+    w = csv.writer(f, delimiter="\t"); w.writerow(["doc", "doc_line", "cite", "kind", "status", "detail", "cited_line_text", "strict_rare_anchor"]); w.writerows(rows)
 print("cites:", len(rows)); print("status counts:", dict(sorted(counts.items())))
 # backtick-name existence
 for doc in docs:
