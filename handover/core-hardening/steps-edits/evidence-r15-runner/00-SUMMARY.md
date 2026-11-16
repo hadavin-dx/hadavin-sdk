@@ -1,0 +1,28 @@
+# Evidence r15 runner: summary (raw output only, no judgement)
+
+Run on 2026-11-16 (UTC), about 25 minutes. Target: `steps-edits/EDITS.md` (round 15).
+
+## Failures and deviations first
+1. **verify15.py missed 9 of 60 planted mutations** (my checker caught all 60): #15 not-looking wait removed in key step H, #17 typing-rule definition wait removed, #18 E-09 sub-step a scope list shortened, #19 shred `ls -l` check removed, #22 `shred -u` replaced by `rm` in the shred rule, #24 take-folder prefix rule (`take-10`) removed, #31 and #32 alarm names swapped (key step C and the E-12 request line), #51 a key-shaped string with the `sk-ant-api03` pattern added. Cause of #51 (checked): verify15's secret pattern `sk-[A-Za-z0-9]{20,}` does not match a key with hyphens after `sk-` (tested: False). Table in `mutations.md`.
+2. **My own checker was tuned against the unmodified file.** First runs had false alarms (end of the row region found wrongly, adjacent legitimate UTC/IST pairs read as a swap, "latest start" mentions with no time, the E-09 sentence that lists the trigger words). I fixed the checker, not EDITS.md. Two mutation misses of mine (#58 wording weakened in E-09, and the alarm swap hitting a different line than intended) led me to add checks and rerun all 60. The numbers below are from the final rerun.
+3. **verify15.py was not run in place.** It writes `scratch15/` next to itself; to leave the steps-edits folder unchanged I ran a byte-identical copy in a mirror tree (copies of verify15.py, EDITS.md, the 6 inputs, tests/test_no_reference_material.py) under the scratchpad. Behaviour and result are those of the unchanged script.
+4. Mutations run with `NO_NEG=1` for verify15 (skips its own internal negative controls so each run is one pass). Its own internal controls ran once in step 2: 129 lines "NEG ... caught", 0 "NOT CAUGHT".
+5. Time of the E-09/E-48 typing-rule wording: my check #15/#16 treats "not looking" within 70 characters after "please stop looking" as the wait; the one sentence that only lists the trigger words (E-09) is exempted by hand in my checker.
+
+## Results
+| Step | Result |
+|---|---|
+| 1 sha256 before and after (EDITS.md, EDITS.round14.md, verify15.py, 6 inputs) | identical (`sha-before.txt`, `sha-after.txt`); EDITS.md 274049 bytes |
+| 2 `verify15.py` as is (mirror copy) | exit code 0, `FAILURES 0`; 59 rows parsed, 60 OLD texts, 47 Apply-now applied, status {Apply now 47, Hold 12}, files {OWNER-STEPS 40, AGENT-SCOPE 15, DECISION-one-store 4}; `verify15-run.txt` |
+| 3 my own checker `mychk.py` on EDITS.md | exit 0, FAILS 0; 59 rows (47 + 12), ids unique and in order E-01..E-61 without 10 and 35, index of 59 rows matches headers (file, line, status, type, gate), 60 OLD blocks each once at stated line, 119 UTC = IST pairs all +5:30, 61 weekday/date pairs right, 18:19=23:49 and 18:29=23:59 not crossed, no 18:04 in NEW text, "latest start" always 18:00 UTC = 23:30 IST, no E-/Q-/L-/R-/ND-/EL-/WP-/D- codes in OWNER-STEPS NEW text, E-48 has realpath, ls -l, `..` rule, absolute-path rule, take-10 prefix rule, shred done scope (a)(b)(c), yes, no more takes confirmation, both alarms, key steps A to K; E-09 sub-steps f, g, h call the typing rule; every "please stop looking" is followed by "not looking"; the item-6 step uses key step G and bans `*`; all 12 Hold rows carry a HOLD G label and a gate; `mychk-run.txt` |
+| 4 apply Apply-now rows in order to scratch copies | 47 of 47 OLD texts matched exactly once; scratch lines OWNER-STEPS 313, AGENT-SCOPE 37, DECISION-one-store 29 (scratch dir outside the repo; input files unchanged) |
+| 5 mutations on copies of EDITS.md | 60 planted: mine caught 60 of 60; verify15.py caught 51 of 60 (9 missed, listed above); 0 anchors missing, 0 no-change, 0 crashes; `mutations.md`, `mutate-run.txt`, script `mutate.py` |
+| 6 banned scan | 0 of 10 banned strings in EDITS.md (list read from tests/test_no_reference_material.py at run time; counts only; the one banned-string mutation was built at run time and was caught by both) |
+| 6 secret-shaped scan | 0 matches (sk-ant-api03 pattern, sk-, AKIA, ghp_, xox, private key header, password assignment) in EDITS.md |
+
+Mutation classes covered (60): key end 18:29 / tied pairs (3), wrong weekday or date (4), IST dropped or wrong (5), 18:04 back / latest start (3), not-looking removed (3), typing-rule scope (1), shred rule parts removed (7), shred wildcard back (1), yes-no-more-takes and "anything else" removed (3), shred done scope (1), alarm swapped / moved (3), row deleted (2), duplicate id / order (2), OLD altered or line wrong (3), counts changed (3), Hold label / gate / index status / index line / header status (5), owner codes E-/ND/Q (3), secret / AWS-like / banned strings (3), fence deleted, key step relabelled, In short removed, WHATEVER removed, typed-only rule weakened, window end IST wrong (6), others.
+
+## What I did not run
+No judgement of wording or meaning; no check that OLD texts are the right things to replace; no reading of the 12 Hold rows' content beyond labels and gates; no test of verify15's own internal controls after my mutations; no check of EDITS.round14.md beyond its sha; no test of chk15.py (builder's, not copied or run); no run of the programs the steps describe; no check of Windows or WSL behaviour; no spend; no commit or push; mutation copies and mirror live in the scratchpad (outside the repo), not removed.
+
+Cleanup: no background processes left (`ps` shows none); `__pycache__` removed from this folder (scripts run with -B -I). New files only in this folder: 00-SUMMARY.md, checkpoint.md, mychk.py, mutate.py, mutations.md, mutate-run.txt, mychk-run.txt, verify15-run.txt, sha-before.txt, sha-after.txt.

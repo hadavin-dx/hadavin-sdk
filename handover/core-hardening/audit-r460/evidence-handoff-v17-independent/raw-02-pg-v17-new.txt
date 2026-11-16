@@ -1,0 +1,53 @@
+INFO server PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+PASS L DB-1 default spend_nonneg: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 default spend_nonneg: nothing was applied (rolled back)
+PASS L DB-1 variant spend_nonneg_finite: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 variant spend_nonneg_finite: nothing was applied (rolled back)
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): nothing was applied (rolled back)
+PASS L DB-2 v17 spend_decrease_log: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-2 v17 spend_decrease_log: nothing was applied (rolled back)
+PASS L DB-3 v17 spend_guarded_writes: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-3 v17 spend_guarded_writes: nothing was applied (rolled back)
+CONTROL-OK (the new check fails on v16) L v16 DB-2 file under the same lock: no 55P03  [57014 after 12.0s (waits until the 12s statement cap)]
+INFO L: every file in held-sql/ has a lock check above; the lead's gate is `grep -c lock_timeout` plus this run (PR DB-1 test)
+PASS L text: spend_decrease_log.sql contains SET LOCAL lock_timeout before its first statement that takes a lock
+PASS L text: spend_guarded_writes.sql contains SET LOCAL lock_timeout before its first statement that takes a lock
+PASS L text: spend_nonneg.sql contains SET LOCAL lock_timeout before its first statement that takes a lock
+PASS L text: spend_nonneg_finite.sql contains SET LOCAL lock_timeout before its first statement that takes a lock
+PASS L text: spend_nonneg_upgrade.sql contains SET LOCAL lock_timeout before its first statement that takes a lock
+PASS K m5: with the record unwritable, switching ON still works  [err=None]
+PASS K m5: with the record unwritable, switching OFF is refused (fail closed) and the switch stays ON  [err=42P01]
+PASS K m5: with the record writable again a switch OFF is recorded (1 row)  [1]
+CONTROL-OK (the new check fails on v16) K m5: v16 file: switching ON with the record unwritable  [err=42P01]
+PASS H1 m4: with no held file, a positive reserve (INSERT ... ON CONFLICT branch) on a NaN row RETURNS NaN, so the code check after RETURNING is needed in the INSERT branch too  [NaN]
+PASS G0 the four DB-3 functions are SECURITY DEFINER, owned by the non-superuser migration role, search_path pg_catalog, pg_temp  [[('migr17', False, True, ['search_path=pg_catalog, pg_temp'])]]
+PASS G0 PUBLIC has no EXECUTE on any of them
+PASS G1 runtime role: direct INSERT into spend refused 42501
+PASS G1 runtime role: direct UPDATE of spend refused 42501
+PASS G1 runtime role: direct UPDATE of spend_month refused 42501
+PASS G1 runtime role: direct UPDATE of kill_switch refused 42501
+PASS G1 runtime role: INSERT, DELETE of kill_switch refused 42501
+PASS G2 reserve 1.5 returns day and month totals (1.5, 1.5)  [(Decimal('1.5'), Decimal('1.5'))]
+PASS G3 settle (worst 1.5, actual 0.4) leaves 0.4 on both  [(Decimal('0.4'), Decimal('0.4'))]
+PASS G4 settle again with nothing open is refused 23514 (the 0.4 already settled cannot be erased)
+PASS G4 the total is still 0.4 after the refusal
+PASS G5 settle of a worst case larger than what is open (3 > 2) refused 23514
+PASS G6 a negative worst case changes nothing (total stays 2.4)  [(Decimal('2.4'), Decimal('2.4'))]
+PASS G6 a negative actual cost changes nothing
+PASS G7 reserve of NaN refused 23514
+PASS G7 reserve of Infinity refused 23514
+PASS G7 reserve of -1 refused 23514
+PASS G7 a settle with actual NaN refused 23514 and the total is unchanged
+PASS G8 fuzz, 400 random calls by the runtime role: settled money (total minus open reservation) never fell; a refused call changed nothing  [violations=0]
+PASS G8 after the fuzz no row has a negative total, a negative open amount, or open above the total
+PASS G9 runtime role engages the kill switch; `by` is its own login (rt17), not a value it chose  [(True, 'rt17')]
+PASS G9 runtime role cannot release it: 42501
+PASS G9 operator role releases it; `by` is the operator login (op17)  [(False, 'op17')]
+PASS G9 with DB-2 also applied the record has both changes with the invoking login in `who`  [[(False, True, 'rt17'), (True, False, 'op17')]]
+PASS G10 temporary tables named spend, spend_month, kill_switch plus search_path = pg_temp first: the real total moved (+1) and the temporary tables are empty  [2.4->3.4]
+PASS G11 DB-1 default, DB-2 and DB-3 apply together through the real migrate() (names do not clash)  [['0006_nn', '0007_dec', '0008_guard']]
+CONTROL-OK (the new check fails on v16) G1/G4 v16 design: the runtime role zeroes a settled total of 10 by direct UPDATE  [total is 0 (the exposure of security major M1)]
+CONTROL-OK (the new check fails on v16) G9 v16 design: the runtime role switches the kill switch OFF and picks the `by` text  [(False, 'chosen-by-caller')]
+SUMMARY 49 of 49 checks passed
+rc=0

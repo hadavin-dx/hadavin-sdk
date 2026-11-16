@@ -1,0 +1,111 @@
+# Owner appendix v31, sheet A: the long detail (it binds you the same as the sheet; each part says where the sheet points to it)
+
+## Appendix part 1: The words in full (every definition of the sheet)
+**The words.**
+- **UTC** = world clock time. **IST** = UTC + 5:30; your phone alarms use IST. **UNVERIFIED** = nobody has run or seen it (every vendor page, button, Windows, WSL, n8n and HubSpot step, and every printed wording, is UNVERIFIED); if what you see differs, stop (STOP RULE below), except **tolerated** items (marked at each step; only button, menu and page-path wording): describe it and proceed. A difference in a number, name, count, account, time or key state is never tolerated.
+- **Lead** = the AI session (an AI, not a person) in the chat where you got this sheet; that chat is the **message place**: a message from anywhere else is not accepted. The lead sends the **numbers message** (every value for this run; sample in section 3); you check it by hand, type a yes and wait for "go". A **run name** is 4 to 12 lowercase letters and digits, starting with a letter, never used before. The **other channel** (a second way to reach the lead, not the message place) and the **backup person** (one named human you can call, who can reach whoever runs the lead; the only person you call when a cancel fails) are named in the numbers message; none named: no run.
+- **WSL** = the Ubuntu window inside Windows (Start menu, type Ubuntu, Enter). The **test terminal** and **read terminal** (card words) are two WSL windows; the read terminal is for `date -u`, `ls -l`, `clear` and the grep of 5.7 only.
+- **Send** = type in the message place and press Enter. **Describe** = send which step you are at, what kind of line you see and plain numbers. Never copy, type or photograph a key, app password, long random-looking text or real mail address (the one copy at 6.3 and the paste at 6.4 are the only exception). **Set phrase** = words you send exactly (list ends section 2). **Run** as a verb = type a command and press Enter; a **run** = this one filmed attempt. **Key** alone = a model key; the words take in `take-` and `--take` are plain text.
+- **Clean-up message** = the lead's message after the run (8.2) with the lists to delete and revoke.
+- **Model key** = a key to the paid model's account; it lets a program spend money; it is **alive** from the create press until card step 5 is done. **Model account** = the paid model company's account where you pay and make keys; open it only from your own bookmark or an address you type. **Key list** = its page that lists keys with name, creation time, last-used time and a **state word** (the word that says whether a key works). **Per-key limit** = a spending cap on one key, if the create form offers one (the message says "none exists" otherwise). **Key scopes** = the permission list on the create form (the message names the ones to choose). **Tokens** = small pieces of text a model reads or writes (a word is about 1.3 tokens). **Run day** is a UTC date: after 18:30 UTC = 00:00 IST your phone's IST date is already the next day. The **test program** (started by you) sends three made-up people through **n8n** (a ready-made linking tool) into **HubSpot** (a ready-made customer-record service; here a free test account): one **contact** (customer record) and one mail per person. **Older key** = a paid-model key you saved earlier, if the numbers message names one. **Valid key** = any key whose state word is not the cancelled word (a state word you cannot judge counts as valid; an older key can be valid without being alive). **Look key** = a throwaway key `look-<run name>` you make at 5.9 only to see the real cancel words; it is a real key, alive until card step 4 is done for it. **Cancelled word** = the state word of a cancelled key (or "row gone"); the message gives a word or "from the look key" (the lead cannot see your screen); you see the real word at 5.9 and the lead answers "confirmed"; a word that differs from a given sample: no run.
+- **Film pause** = the wait while the film person films; it starts at the **film cue** (a printed line copied in the numbers message, or minutes after you sent "run started"). **Recording OFF** = every screen recording or sharing is off. **Privacy switches** = Windows Clipboard history, Sync across your devices, Recall; any clipboard manager, remote-access tool or screen-capture tool is off or closed the same way (never just minimised). **Film profile** = the Chrome profile `demo-take` (5.5). The numbers message names the film person, the **editor** (cuts the film) and the **post checker** (compares your post with the sentences); you are none of them.
+- **Demo mail** = a mail in the receiver Gmail under label `demo` that R7 allows you to delete. **Throwaway accounts** = the receiver Gmail (gets the demo mails), the sender Gmail (sends them) and the HubSpot test account you made earlier, never your real mailbox. **App passwords** = Gmail passwords made for one application; **HubSpot app secrets** = secret values of the small HubSpot programs ("private apps") that n8n's workflows use to write contacts. **Shell prompt** = the line ending in `$` in an Ubuntu window where you can type a command. **The y question** = the line `Type y to start`. **Paste line** = `paste key, Enter:`. **Step** = a numbered item such as 6.3; **window** = a program window on your screen; **profile** = a Chrome profile.
+- **Made-up people** = person A, B and C, with addresses `take-<run name>-a@example.com` (`-b@`, `-c@`); **submitted N times** = the test program sends that person's sign-up N times on purpose; **person id** = the made-up code the program gives that person (not an address); a printed line "unknown" for C is allowed (the program could not confirm that one); the **prep contact** = one extra practice contact. **Key file** = the file in WSL holding the model key. **Model program** = the lead's software that sends the made-up people's text to the paid model with your key; you never edit its settings. The lead starts and stops it on your laptop (it shares your Linux user, R1); **"restarted"** = the lead's word that it started again and now reads the key file. **Spend lock** = a lock that stops the model program making paid calls until the test program has accepted your challenge; "NOT SHOWN" = nobody has shown it exists, so the model program might spend between "restarted" and your `y` (the yes names this).
+- **Money.** **Prepaid** = you pay first and calls draw it down; **auto-reload** = the account tops itself up when low (must be off). **Balance** = the whole prepaid amount: the most you can lose. **Last-resort step** = one action in the model account that only stops spending; the numbers message names it and says whether it can be undone (UNVERIFIED).
+- **Times** (all in the numbers message). **Run day** = the one day of the run, as in `Wed 18 Nov 2026`. **Deadline** = the end of the period your spending approval covers, Mon 23 Nov 2026 18:29 UTC = 23:59 IST: after it nothing may spend. **Earliest key time**: before it you do not press create of the run key (the look key of 5.9 is made after "go", also before it). **Latest start** (card words; 7.3). **Take folder** = the WSL folder the message names (it holds the test program). **Run length** = the minutes the test program is expected to run from your `y` to the waiting line (the message states it). **Give-up minutes** = how long the test program waits for `end`, counted from your "run started", before it gives up. **Alarm time** and **cancel-by time** = when the run should be over, and the backup; **silence minutes** = how long the test terminal may print nothing before it counts as stuck. **FREEZE** = type and close nothing more in the test terminal (except `n` at "Type y to start"); in the read terminal run only `date -u` and `ls -l "<path from the message>"`; in the browser do only the card (its list L2 included, at 7.11) and the deleting R7 allows; describe; wait for the lead's word "continue". FREEZE is not a cancel: a live key is cancelled only by a danger sign (W1 to W9 on the card); a run whose key was alive ends after the card: no word resumes it. A FREEZE never stops 7.11: the older key is cancelled by the older-key time even while frozen (the card's list L2 is allowed in a FREEZE), and alarm 4 rings during a FREEZE too. "Continue" = the lead's word that you may go on to the next step (7.9 or 8.1) after a FREEZE in which no key was alive; it never resumes a run whose key was alive.
+
+## Appendix part 2: The sample numbers message (made-up values, never real)
+SAMPLE (made-up values, never real):
+```
+Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid model calls happen)   Earliest key time: 10:30 UTC = 16:00 IST
+Sheet letter: A   Older key: "studio-key-1" made 2026-11-10, last used [OWNER FILLS: older key last-used time], no file the lead read uses it (or "none"; "unknown" means no run)   Older-key time: 16:00 UTC = 21:30 IST on the run day
+Message place: this chat   Other channel: <name and how>   Backup person: <name and how to call>   Date you decided to use the existing balance: <date>
+Button words: [OWNER FILLS: cancel button word and confirmation box word, from the look key at 5.9]   Cancelled word: [OWNER FILLS: cancelled word and where you saw it] (the lead's row may only give a sample or "from the look key"; UNVERIFIED; the lead answers "confirmed")   Key scopes: <scopes the key page offers>   Last-resort step: [LEAD FILLS at re-pin: last-resort step] (can it be undone: <yes or no>)   Key list time zone: <zone>   Model settings file: <model settings file>
+Key file: <key file>   Take folder: <folder path>   cd line: <the cd line>   Key list address: <address>   Prepaid page address: <address>
+Accounts: model company and account <name>, receiver Gmail <name>, sender Gmail <name>, HubSpot test <name>   Masked in the notice: receiver <masked address>, sender <masked address>   Gap before 8.1: <minutes>
+Start line: python3 -I scripts/run_real_check_n8n.py --take <test settings file name>   Spend lock: shown (or NOT SHOWN)   Key file size in bytes: <range> (UNVERIFIED)   Test program asks you to type a figure: no   Model key outside the model program: none (the lead checked n8n's credential store and shows it)   n8n credentials: exactly the three, by name: [LEAD FILLS at re-pin: the three names] (the lead read n8n's own credential list)
+Model: model-x   Tokens in and out per call: 40000 and 10000   Prices per million: in USD 3.00, out USD 15.00   Price page: <page address>   Price per call at full size: USD 0.27   Call ceiling (the lead's figure): 3   Expected total: USD 0.81 (not a limit)   Per-key limit: none exists
+Balance on the prepaid page: USD 189.00   Auto-reload (the lead's reading): off
+Settings to compare, each name = value (unit): MODEL_NAME = model-x | TOKENS_IN = 40000 | TOKENS_OUT = 10000 | PRICE_IN_CENTS = 300 | PRICE_OUT_CENTS = 1500 (US cents per million tokens) | CALL_CEILING = 3 | DEADLINE = 2026-11-23T18:29:00Z
+Minutes at "Type y to start": 5   Minimum think time: [LEAD FILLS at re-pin: minimum think time] seconds   Run length: [LEAD FILLS at re-pin: run length] minutes (the made-up times of this sample assume 15)   Film pause: 10   Latest start: 11:30 UTC = 17:00 IST   Alarm time: 12:00 UTC = 17:30 IST   Cancel-by time: 12:10 UTC = 17:40 IST   Silence minutes: 3   Give-up minutes: 40
+Film cue: <the printed line, copied, or minutes after "run started">   Waiting line: <copied>   Demo mail subject start: <words>   Earlier demo mails expected: 0
+People: film person <name>, editor <name>, post checker <name>   Recording tool: <name>   Posting place: <place>   Video by: <how>
+Expected after the run (never changed after y): A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail; C 1 contact, 1 mail (its printed line says "unknown": accepted); the HubSpot search for `take-<run name>` shows 3 contacts and the demo mail list 3 mails   Exit codes accepted: 0 only
+The day in order: earliest key time 10:30 UTC = 16:00 IST, latest start 11:30 UTC = 17:00 IST, alarm time 12:00 UTC = 17:30 IST, cancel-by time 12:10 UTC = 17:40 IST, older-key time 16:00 UTC = 21:30 IST, deadline 18:29 UTC = 23:59 IST
+Post sentences: <the lead's exact sentences, the only words you may post>
+The yes sentence: <the lead's exact sentence>
+If you cancel the key during the run or right after `end`, the test program: <lead's answer>; exit code accepted then: <number or none>
+```
+
+**Three kinds of brackets in the sample (only the rows without brackets hold made-up sample values).** `<...>` = a value the lead types in a real message. `[LEAD FILLS at re-pin: ...]` = a fact nobody can know yet (minimum think time, run length, last-resort step, the three n8n names); the words "at re-pin" mean the lead's last update of such facts just before it sends the numbers message; the lead fills it then, and one still in a real message: no run. `[OWNER FILLS: ...]` = you write it on the card blank from your own screen (button words, cancelled word and where you saw it, older key last-used time); you never edit the lead's message. Nothing is invented: an unknown fact stays a bracket row. In the rows "Other channel" and "Backup person" the lead copies what you sent at 5.1; the row "Date you decided to use the existing balance" holds the day you gave the lead as the day you chose to spend from the money already in the account (R4).
+
+## Appendix part 3: Rules in full - the longer rule details
+R4, what is not a control: the model program's own limit setting, the deadline setting, the usage page, the call ceiling and a per-key limit you have not seen on its page.
+
+R6, the shape check of each filled-in part: the start line is exactly `python3 -I scripts/run_real_check_n8n.py --take ` and one file name; paths, folders and file names use only letters, digits and `/ . _ -`, a path starts with `/home/`, has no `..` and no part starting with `.`; the key file name contains the run name and lies inside the Take folder of the message; none of ; & | $ () < > \ ' " * ? ~, a backtick, a space in a path or a line break appears (the fixed printed commands of 5.7, 6.4 and 8.1 are typed as printed, with their quotes and pipes; only their filled-in parts are checked)
+
+R7, deleting contacts: Contacts: those in the clean-up message (addresses `take-<run name>-a@example.com`, `-b@` and `-c@` or `prep-<run name>@example.com`, the prep contact included): search the exact address, see exactly one result whose page shows it, then delete (a HubSpot delete is UNVERIFIED: treat it as final). 
+
+R10, the silence rule: no new line in the test terminal for the silence minutes, counted only from your Enter on the start line until the notice, from your `y` until the challenge is printed, and from your challenge answer until you send "run started" (silence at the y question, before the film cue, in the film pause and while waiting for `end` is normal: the y minutes, the film cue, the alarms and the give-up minutes bound those)
+
+## Appendix part 4: Steps 5 and 6 - click paths and page names (all UNVERIFIED, tolerated)
+Step 5.1, the host name: it is the part of the page's address between `https://` and the next `/`, for example `site.example` from `https://site.example/keys`; type it by hand.
+
+Step 5.3: (Windows Settings, System, Power & battery; the lid: Control Panel, Power Options; UNVERIFIED, tolerated)
+
+Step 5.4: (Gmail on the web: gear icon, See all settings, Filters and Blocked Addresses, Create a new filter, subject words, Apply the label `demo`; Conversation view: See all settings, General, off; UNVERIFIED, tolerated; a filter matches words anywhere in the subject)
+
+Step 5.5: (click your profile picture at the top right, Add profile, Continue without an account, name it; UNVERIFIED, tolerated)
+
+Step 5.6, before 5.9: a row whose name you do not know is a stop whatever its state word; 5.9 re-checks every row with the real word.
+
+Step 5.6, what then: the lead sends a new numbers message with a later run day, at least 7 days after that use and before Mon 23 Nov 2026, or you take sheet B.
+
+Step 5.7, the early switch-off: the paper keeps the first values (8.7 puts them back after the run) and you jot nothing new the second time; on the run day look and switch off again what is on. 
+
+Step 6.1: (Settings, System, Clipboard)
+
+## Appendix part 5: Steps 7 to 10 - page and screen details
+Check 5, n8n: you never type, paste or store a model key in n8n, and you do not open n8n; the lead read its list and you check only the count and the names.
+
+Step 7.3, matching a masked address: match each by its first two letters, the character before the @ and the domain; example: `de…1@gmail.com`. 
+
+Step 7.6, what the film person does (the film person's own page repeats it): they say "recording", turn Recording ON, film the two pages, say "filmed" and read both counts aloud, switch Recording OFF and leave.
+
+Step 7.7, how to see that Recording is OFF: the recording tool's own window says stopped, and no red dot or "recording" text shows on the screen or taskbar (UNVERIFIED).
+
+Step 8.3, click path: Gmail on the web: account picture, Manage your Google Account, Security, 2-Step Verification, App passwords (UNVERIFIED, tolerated); sign that account in at `demo-take` for this step only.
+
+Step 8.4, click path: HubSpot: Settings (gear), Integrations, Private Apps (UNVERIFIED, tolerated).
+
+## Appendix part 6: Why and background (rationale that is not a step)
+Step 5.1, a list that shows only a date: count that date as its last minute, so that date must be at least 8 days before the run day. Why the 7-day rule: sheet A cancels the older key, and a key used in the last 7 days probably still serves a program of yours; sheet B leaves it alone until the older-key time, so it can spend money until then (R4). The key list may show a last use hours late (UNVERIFIED): that is why 6.7 reads it again right before the irreversible cancel. 
+
+Step 5.1, key list page not found: describe what the account menu shows and wait; nothing is alive; check the account name.
+
+Step 6.7, why the older-key cancel comes after the new key is saved: a new key can always be made; only a program that uses the older key would be hurt.
+
+## Appendix part 7: Steps 6 and 7 - small notes
+Step 5.9, the rest: its text copied or left on screen: the card, as for a model key. The run key's page may still differ (UNVERIFIED).
+
+Step 6.2, why the alarm time is where it is: it is the end of the longest planned path; a start at the latest start leaves no spare minute, so press Enter on the start line at least 5 minutes before the latest start.
+
+Step 6.3 c: the page shows the key once.
+
+Step 7.4, why you wait: the program refuses faster answers.
+
+Step 7.6, the chat: keep it, minimised; if the chat is in the film profile, move it to your normal profile before the film cue.
+
+Step 7.9, the exit code: 0 means the program says it passed; only the codes the message accepts are fine.
+
+## Appendix part 8: The yes sentence pattern
+In this pattern: "Yes, run <run name>: <call ceiling> expected paid model calls, expected total USD <expected total>, balance USD <the balance you read on the prepaid page>, auto-reload <the word you read, it must be off>, per-key limit <amount or none>, older key <its name or none>, older key last used <its last-used time, never or none>, last-resort step <step>. I will cancel the older key myself after my new model key is saved, or by <the older-key time of the message> on the run day at the latest if the run ends earlier, even if the lead is silent, and I understand this cancel cannot be undone. I accept these risks: the look key and the run key are real keys that can spend until I cancel them, and I could lose the whole balance, cancelling a key may not end the calls, the lead and the film person could read my key file, clipboard or screen, and the model program may spend before I type y unless the message says Spend lock shown. Deadline 2026-11-23 18:29 UTC = 23:59 IST."
+
+## Appendix part 9: What you may type outside the shell
+What you send or type outside the shell (the yes, set phrases, description text): letters, digits, single spaces and `. _ / - : = @ + , '` only; the lead's exact post sentences are posted as given, only after the post checker's written "matches the sentences" (section 10).
+
+## Appendix part 10: Deadline backstop
+Step 7.11, the deadline backstop in full. Why: the older key may still be valid after 7.11 if 7.11 was missed (phone off, asleep, away) and a valid key can spend until the deadline (18:29 UTC = 23:59 IST) and past it; the program's own deadline setting is not a control (R4). What you do: when the deadline reminder rings (Sun 22 Nov 2026 18:09 UTC = 23:39 IST), open the key list; if the older key is a valid key, cancel it by the card's list L2, steps 2 to 4; if the cancel fails twice, "If it fails" on the card applies (the last-resort step is in the blanks); if the older key is already cancelled, or the message named none, dismiss the reminder. No yes yet: the reminder is not set, nothing of this run exists, and the older key stays your own ordinary key (accepted: this sheet governs only what a run adds). A missed 7.11: this reminder is the second chance. If you cannot act that evening: the person you wrote in the card blank "a person who may cancel the older key if you cannot" cancels it in the model account for you, after you asked them in advance; the lead, the film person and the backup person never hold or use your model account (least privilege). None named: nobody else can act, the older key can spend until the balance runs out (the yes says so), so keep the phone on and the reminder set. If your run day is Mon 23 Nov: 7.11 and alarm 4 apply by the older-key time of the message (at least 10 minutes before the deadline); no take is planned on 23 Nov. After the deadline (18:29 UTC = 23:59 IST) nothing may spend: a key you find valid then is a danger sign: describe it at once.
+
+---
+End of the appendix, sheet A (OWNER-APPENDIX-v31-A.md).
