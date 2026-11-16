@@ -40,6 +40,8 @@ If you cancel the key during the run or right after `end`, the test program: <le
 **Three kinds of brackets in the sample (only the rows without brackets hold made-up sample values).** `<...>` = a value the lead types in a real message. `[LEAD FILLS at re-pin: ...]` = a fact nobody can know yet (minimum think time, run length, last-resort step, the three n8n names); "re-pin" is the lead's last refresh of such facts just before it sends the numbers message; the lead fills it then, and one still in a real message: no run. `[OWNER FILLS: ...]` = you write it on the card blank from your own screen (button words, cancelled word and where you saw it, older key last-used time); you never edit the lead's message. Nothing is invented: an unknown fact stays a bracket row. In the rows "Other channel" and "Backup person" the lead copies what you sent at 5.1; the row "Date you decided to use the existing balance" holds the day you told the lead you chose to spend from the money already in the account (R4).
 
 ## Appendix part 3: Rules in full - the longer rule details
+R4, what is not a control: the model program's own limit setting, the deadline setting, the usage page, the call ceiling and a per-key limit you have not seen on its page.
+
 R6, the shape check of each filled-in part: the start line is exactly `python3 -I scripts/run_real_check_n8n.py --take ` and one file name; paths, folders and file names use only letters, digits and `/ . _ -`, a path starts with `/home/`, has no `..` and no part starting with `.`; the key file name contains the run name and lies inside the Take folder of the message; none of ; & | $ () < > \ ' " * ? ~, a backtick, a space in a path or a line break appears (the fixed printed commands of 5.7, 6.4 and 8.1 are typed as printed, with their quotes and pipes; only their filled-in parts are checked)
 
 R7, deleting contacts: Contacts: those in the clean-up message (addresses `take-<run name>-a@example.com`, `-b@` and `-c@` or `prep-<run name>@example.com`, the prep contact included): search the exact address, see exactly one result whose page shows it, then delete (a HubSpot delete is UNVERIFIED: treat it as final). 
@@ -47,15 +49,25 @@ R7, deleting contacts: Contacts: those in the clean-up message (addresses `take-
 R10, the silence rule: no new line in the test terminal for the silence minutes, counted only from your Enter on the start line until the notice, from your `y` until the challenge is printed, and from your challenge answer until you send "run started" (silence at the y question, before the film cue, in the film pause and while waiting for `end` is normal: the y minutes, the film cue, the alarms and the give-up minutes bound those)
 
 ## Appendix part 4: Steps 5 and 6 - click paths and page names (all UNVERIFIED, tolerated)
+Step 5.1, the host name: it is the part of the page's address between `https://` and the next `/`, for example `site.example` from `https://site.example/keys`; type it by hand.
+
 Step 5.3: (Windows Settings, System, Power & battery; the lid: Control Panel, Power Options; UNVERIFIED, tolerated)
 
 Step 5.4: (Gmail on the web: gear icon, See all settings, Filters and Blocked Addresses, Create a new filter, subject words, Apply the label `demo`; Conversation view: See all settings, General, off; UNVERIFIED, tolerated; a filter matches words anywhere in the subject)
 
 Step 5.5: (click your profile picture at the top right, Add profile, Continue without an account, name it; UNVERIFIED, tolerated)
 
+Step 5.6, before 5.9: a row whose name you do not know is a stop whatever its state word; 5.9 re-checks every row with the real word.
+
+Step 5.7, the early switch-off: the paper keeps the first values (8.7 puts them back after the run) and you jot nothing new the second time; on the run day look and switch off again what is on.)
+
 Step 6.1: (Settings, System, Clipboard)
 
 ## Appendix part 5: Steps 7 to 10 - page and screen details
+Check 5, n8n: you never type, paste or store a model key in n8n, and you do not open n8n; the lead read its list and you check only the count and the names.
+
+Step 7.3, matching a masked address: match each by its first two letters, the character before the @ and the domain; example: `de…1@gmail.com`.)
+
 Step 7.6, what the film person does (the film person's own page repeats it): they say "recording", turn Recording ON, film the two pages, say "filmed" and read both counts aloud, switch Recording OFF and leave.
 
 Step 7.7, how to see that Recording is OFF: the recording tool's own window says stopped, and no red dot or "recording" text shows on the screen or taskbar (UNVERIFIED).
@@ -65,11 +77,15 @@ Step 8.3, click path: Gmail on the web: account picture, Manage your Google Acco
 Step 8.4, click path: HubSpot: Settings (gear), Integrations, Private Apps (UNVERIFIED, tolerated).
 
 ## Appendix part 6: Why and background (rationale that is not a step)
-Step 5.1, why the 7-day rule: sheet A cancels the older key, and a key used in the last 7 days probably still serves a program of yours; sheet B leaves it alone until the older-key time, so it can spend money until then (R4). The key list may show a last use hours late (UNVERIFIED): that is why 6.7 reads it again right before the irreversible cancel.
+Step 5.1, a list that shows only a date: count that date as its last minute, so that date must be at least 8 days before the run day. Why the 7-day rule: sheet A cancels the older key, and a key used in the last 7 days probably still serves a program of yours; sheet B leaves it alone until the older-key time, so it can spend money until then (R4). The key list may show a last use hours late (UNVERIFIED): that is why 6.7 reads it again right before the irreversible cancel. 
 
 Step 5.1, key list page not found: describe what the account menu shows and wait; nothing is alive; check the account name.
 
 ## Appendix part 7: Steps 6 and 7 - small notes
+Step 5.9, the rest: its text copied or left on screen: the card, as for a model key. The run key's page may still differ (UNVERIFIED).
+
+Step 6.2, why the alarm time is where it is: it is the end of the longest planned path; a start at the latest start leaves no spare minute, so press Enter on the start line at least 5 minutes before the latest start.
+
 Step 6.3 c: the page shows the key once.
 
 Step 7.4, why you wait: the program refuses faster answers.

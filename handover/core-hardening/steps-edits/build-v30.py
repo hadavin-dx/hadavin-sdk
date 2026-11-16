@@ -45,6 +45,7 @@ def split(o, k):
     """returns (sheet text with the card cut out, card page, appendix text, film person page)"""
     o, film = cut(o, 'FILMPERSON')
     o, parts = appendix_blocks(o)
+    o = re.sub(r'\) \)', '))', o)          # a pointer followed by the closing bracket of its sentence
     i = o.index('<<CARD\n'); j = o.index('CARD>>\n')
     card = o[i + 7:j].strip('\n') + '\n'
     o = o[:i] + '@@CARD@@' + o[j + 8:]
