@@ -2,8 +2,8 @@ Corrected 2026-11-16 after citation check (reviews/citations-f6b-f2.md): C-1 pre
 
 Lead decision 2026-11-16 item 4: A-01 DEFERRED, C-01 extras CUT, G5 wording KEPT (text only). See inputs/DECISIONS-2026-11-16.md.
 
-Status: findings recorded, round 11 applied; money and security paths have no round cap, so a further review may follow. Nothing in this file was run; every Postgres and patch statement is unverified unless it says it was read from source.
-Round-by-round logs (what each point changed and what was opened): fix-review4.md to fix-review6.md, fix-review8.md, fix-review9.md, fix-review10.md (round 10, section G of reviews/round-16z-findings.md) and fix-review11.md (round 11, review-design-r11.md and review-codebase-r11.md). Log file numbers were one ahead of the round number up to round 8 (round 7 is fix-review8.md, round 8 is fix-review9.md; there is no fix-review7.md) and equal to it from round 10 on.
+Status: findings recorded, round 12 applied; money and security paths have no round cap, so a further review may follow. Nothing in this file was run; every Postgres and patch statement is unverified unless it says it was read from source.
+Round-by-round logs (what each point changed and what was opened): fix-review4.md to fix-review6.md, fix-review8.md, fix-review9.md, fix-review10.md (round 10, section G of reviews/round-16z-findings.md) fix-review11.md (round 11, review-design-r11.md and review-codebase-r11.md) and fix-review12.md (round 12, review-design-r12.md and review-codebase-r12.md). Log file numbers were one ahead of the round number up to round 8 (round 7 is fix-review8.md, round 8 is fix-review9.md; there is no fix-review7.md) and equal to it from round 10 on.
 # Cross-review of the ready-to-apply core patches (cloud/core-hardening, patches-ready), queue item F2
 Written 2026-11-16 09:02 UTC / 14:32 IST by flows-audit (egm:egm-resolve, run by the main session). Inputs: review-design-r1.md (R1-01..R1-14), review-codebase-r1.md (F1..F9), evidence-13.md (raw output of an evidence runner). Reviewer words are unverified until checked; where I checked, it says so.
 
@@ -85,7 +85,7 @@ Nothing here was run; all of it is read from source.
 ## Counts (by script)
 Rule: every table row whose first cell is an id C-n, A-n, G-n, D-n or X-n is counted; severity is the second cell; decision is the first words of the third cell (C, A and G rows have a 'merged from' cell, so their decision is the fourth cell; D rows have it in the third cell; the script handles both layouts). C-1 was a Major in the first text and is a Nit after the citation check.
 Command, run from this folder (`handover/flows-audit/reviews-of-core-patches/`): `python3 -I count_review.py REVIEW.md` (the script is in this folder; it reads this file's tables only).
-Output (pasted from the run of the command above, re-run after the round-11 edits (the round-6 wording is superseded); severity and decision counts are what the script printed):
+Output (pasted from the run of the command above, re-run after the round-12 edits (the round-6 wording is superseded); severity and decision counts are what the script printed):
 ```
 rows 26 ['C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'A-6', 'A-7', 'A-8', 'A-9', 'G-1', 'G-2', 'D-1', 'D-2', 'X-1', 'X-2', 'X-3', 'X-4', 'X-5', 'X-6']
 severity {'Nit': 10, 'Major': 12, 'Minor': 4}
