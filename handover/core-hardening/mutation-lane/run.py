@@ -469,10 +469,13 @@ def tree_files(root: pathlib.Path) -> dict[str, str]:
     return out
 
 
-def mount_points() -> list[pathlib.Path]:
-    """Mount points from /proc/self/mountinfo (field 5; space, tab, newline and backslash are written as octal)."""
+def mount_points(text: str | None = None) -> list[pathlib.Path]:
+    """Mount points from /proc/self/mountinfo (field 5; space, tab, newline and backslash are written as octal).
+    `text` replaces the file (for tests)."""
     out = []
-    for line in pathlib.Path("/proc/self/mountinfo").read_text(errors="replace").splitlines():
+    if text is None:
+        text = pathlib.Path("/proc/self/mountinfo").read_text(errors="replace")
+    for line in text.splitlines():
         parts = line.split(" ")
         if len(parts) > 4:
             out.append(

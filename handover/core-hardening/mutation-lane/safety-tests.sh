@@ -646,8 +646,8 @@ rm -rf "$S/evil"
 echo "== T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused"
 fresh_root; mkdir -p "$S/mntsrc"; echo beta > "$S/mntsrc/other.txt"
 if mount --bind "$S/mntsrc" "$T/root/docs" 2>/dev/null; then
-  out=$(mut -- tests/test_fast.py 2>&1); rc=$?; umount "$T/root/docs"; echo "$out" | cut -c1-200
-  chk "T62 mount point docs/ refused for that reason (rc $rc)" "[ $rc -eq 2 ] && printf %s '$out' | grep -q 'mount point'"
+  mut -- tests/test_fast.py > "$S/t62.out" 2>&1; rc=$?; umount "$T/root/docs"; cut -c1-200 "$S/t62.out"
+  chk "T62 mount point docs/ refused for that reason (rc $rc)" "[ $rc -eq 2 ] && grep -q 'mount point' '$S/t62.out'"
   chk "T62 nothing planted, bind source untouched" "[ '$(last)' = return1 -a -z '$(state_files)' ] && [ \"\$(cat $S/mntsrc/other.txt)\" = beta ]"
 else echo "  (mount --bind not permitted here: T62 skipped)"; SKIPPED="$SKIPPED T62"; fi
 rm -rf "$S/mntsrc"
@@ -661,9 +661,9 @@ try: r.refuse_mounts(root); ok = False; print("no refusal for a mount inside")
 except r.Refused as e: print("refused:", str(e)[:80])
 r.mount_points = lambda: [pathlib.Path("/"), pathlib.Path("/a/root"), pathlib.Path("/a/root/.venv"), pathlib.Path("/a/root2/x")]
 r.refuse_mounts(root); print("root itself, .venv and a sibling prefix (/a/root2) are no refusal")
-import re
-raw = "36 25 0:31 / /a/root/with\\040space/m rw - tmpfs tmpfs rw"
-print("parsed:", re.sub(r"\\\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), raw.split(" ")[4]))
+got = r.mount_points("36 25 0:31 / /a/root/with\\040space/m rw - tmpfs tmpfs rw\n37 25 0:32 / /a/root/back\\134slash rw - tmpfs tmpfs rw\n")
+print("parsed:", [str(x) for x in got])
+ok = ok and [str(x) for x in got] == ["/a/root/with space/m", "/a/root/back\\slash"]
 sys.exit(0 if ok else 1)
 PY
 chk "T62b refuse_mounts logic: a mount inside is refused; the root, .venv and a sibling prefix are not" "[ $? -eq 0 ]"
