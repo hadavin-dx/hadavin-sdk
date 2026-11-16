@@ -107,4 +107,4 @@ Status words: FIXED = text changed; BLANK = a numbered lead open item (OP says w
 | AD-40 | FIXED see AD-16 |
 
 ## Size, honestly
-Part 1 (steps) is 36,315 bytes against v15's 35,882 for the main sheet: about 430 bytes over although B, C.1, C.2, D and the people section moved to Part 2 and the open-items list and tables to Part 3. The whole file is larger than the three v15 files together (about 88,800 against 80,446 bytes) because v16 adds a stop word, the delete method, the people and posting section, eight open items and three secrets rows. Not made smaller because every cut tried removed a safety or fix item.
+Part 1 (steps) is 36,315 bytes against v15's 35,882 for the main sheet: about 430 bytes over although B, C.1, C.2, D and the people section moved to Part 2 and the open-items list and tables to Part 3. The whole file is larger than the three v15 files together (88,870 against 80,446 bytes) because v16 adds a stop word, the delete method, the people and posting section, eight open items and three secrets rows. Not made smaller because every cut tried removed a safety or fix item.
