@@ -1023,3 +1023,16 @@ usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
   PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
 noqa: [] direct Popen calls: 0
   PASS: T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 14243 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 14529 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash mat
+  PASS: T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 14768 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T98e forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash mat
+  PASS: T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit 0, mode 777)
+missing [] no (d): False
+  PASS: T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 0; r9: fails)
+FAILED CHECKS: 0 (of 442 checks run; skipped: none)

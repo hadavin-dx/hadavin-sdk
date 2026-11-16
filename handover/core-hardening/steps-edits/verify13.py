@@ -212,7 +212,7 @@ if 'items 1 to 15' not in ndsec: F('ND header count')
 csec = txt[txt.index('## FOR THE STUDIO LEAD TO CONFIRM'):txt.index('Removed in round 3')]
 letters = re.findall(r'(?m)^([a-z])\. ', csec)
 print('confirmation letters', letters)
-if letters != list('abcdefghijkl'): F('confirmation letters')
+if letters != list('abcdefghijklmn'): F('confirmation letters')
 # (6) wording classes
 for bad in ('FOR THE LEAD TO CONFIRM', 'NEEDS-LEAD', 'five facts exist', 'yes message', 'last time to cancel', 'Linux window', 'WSL window'):
     if bad in txt: F('stale phrase: ' + bad)
@@ -435,12 +435,12 @@ if '<answer>, <who>' in txt: F('old record format')
 if 'The line has the form shown after "Record:"' not in txt: F('record format sentence')
 for m_ in re.finditer(r'Record: `(ND\d+[^`]*)`', ndsec):
     if 'date and time' in m_.group(1): F('ND record carries a date: ' + m_.group(1))
-if '`ND7a-late: <answer>; <who>; <date and time in UTC and IST>`' not in txt: F('R7 record format')
+if '`ND7a-late: key revoked|key not revoked <reason>; <who>; <date and time in UTC and IST>`' not in txt: F('R7 record format')
 # c10 "rehearsal" always with its first word
 for m_ in re.finditer(r'(?i)(?<!flow )rehearsal', txt):
     F('rehearsal alone: ' + txt[max(0, m_.start()-30):m_.end()+10].replace('\n', ' '))
 # c11 Q19.5 and m4
-if 'except the key that the take runs on' not in rowtext('E-48'): F('E-48 Q19.5 wording')
+if 'except the one that the take ran on' not in rowtext('E-48'): F('E-48 Q19.5 wording')
 for rid_ in ('E-12', 'E-48'):
     if 'in writing what happens next' not in rowtext(rid_): F(rid_ + ' lacks what happens next')
 # c12 E-31, line 14 terms, E-14, E-22 text
@@ -524,14 +524,14 @@ for need in ('exactly one of these four labels', '"result file", "reviewers\' re
     if need not in t12: F('r12 E-12 lacks ' + need)
 if 'delete call' in t12: F('r12 E-12 delete call')
 t09 = pairs['E-09']['new'][0]
-for need in ('Who can see the password', 'part of their settings', 'throwaway database of this take only', 'Never type a password inside a command line', 'press Ctrl+X to close nano without changing anything', 'field called "Password"', 'Its first action is `chmod 600 n8n.env`', 'copy any made-up word'):
+for need in ('What the assistant can reach', 'the settings of the database server and n8n', 'throwaway database of this take only', 'Never type a password inside a command line', 'press Ctrl+X to close nano without changing anything', 'field called "Password"', 'Its first action is `chmod 600 n8n.env`', 'copy any made-up word'):
     if need not in t09: F('r12 E-09 lacks ' + need)
 if 'if a message asks you that, answer no' not in t09: F('r12 E-09 fallback forbidden')
 t48 = pairs['E-48']['new'][0]
-for need in ('`no more takes`', '`more takes`', '`same key`', '`different key`', 'shred -u <path>', 'Shredding does not revoke', 'not reliable on every disk', 'inside the take folder', 'its name and at the date it was last used', 'the one on port 5678', 'right after the last take that you accept', 'In its next message after your `no more takes`', 'no screenshot of the key list'):
+for need in ('`no more takes`', '`more takes`', '`same key`', '`different key`', 'shred -u <path>', 'Shredding does not revoke', 'not reliable on every disk', 'inside the take folder', 'the list says it was last used more than 7 days ago', 'http://localhost:5678', 'right after the last take that you want', 'In its next message after your `no more takes`', 'no key characters'):
     if need not in t48: F('r12 E-48 lacks ' + need)
 t37 = pairs['E-37']['new'][0]
-for need in ('port 5678', 'delete request', 'asks HubSpot to delete a contact', 'whether archiving a contact in HubSpot is the same as deleting it is not settled'):
+for need in ('5678', 'delete request', 'asks HubSpot to delete a contact', 'whether archiving a contact in HubSpot is the same as deleting it is not settled'):
     if need not in t37: F('r12 E-37 lacks ' + need)
 if 'delete call' in t37: F('r12 E-37 delete call')
 t16 = pairs['E-16']['new'][0]
@@ -543,10 +543,10 @@ t52 = rowtext('E-52')
 for need in ('**The last take that you accept**', '**How you reply**', '**The studio lead**', '**To shred**', '**A take**', 'UNVERIFIED. What would settle it'):
     if need not in t52: F('r12 E-52 lacks ' + need)
 t57 = rowtext('E-57'); t55 = rowtext('E-55'); t58 = rowtext('E-58')
-for need in ('reply `cut accepted`', '`no more takes`', 'no further take is possible with that key'):
+for need in ('Reply `cut accepted`', '`no more takes`', 'no further take is possible with that key'):
     if need not in t57: F('r12 E-57 lacks ' + need)
 if '`no more takes`' not in t55 or '18:19 UTC = 23:49 IST' not in t55: F('r12 E-55 trigger')
-if '`key kept`' not in t58: F('r12 E-58 conditional row')
+if '`key not revoked`' not in t58 or '`key kept`' in t58: F('r12 E-58 conditional row')
 t49 = rowtext('E-49')
 if 'no paid model call is planned' not in t49: F('r12 E-49 planned')
 if not re.search(r'(?m)^15\. \*\*When the owner writes `no more takes`', ndsec): F('r12 ND15 missing')
@@ -594,20 +594,20 @@ if not os.environ.get('NO_NEG'):
     neg('record', 'The line has the form shown after "Record:"', 'The line is `ND<number>: <answer>, <who>`; it has the form shown after Record', 'old record format')
     neg('nd8date', 'Record: `ND8: A|B`.', 'Record: `ND8: A|B <date and time in UTC and IST>`.', 'ND record carries a date')
     neg('rehearsal', 'The flow rehearsal comes after', 'The rehearsal comes after', 'rehearsal alone')
-    neg('q195', 'except the key that the take runs on (the key you saved for the take)', 'except the key', 'E-48 Q19.5 wording')
-    neg('m4', 'the assistant tells you in writing what happens next (step 22', 'the assistant tells you (step 22', 'E-12 lacks what happens next')
+    neg('q195', 'except the one that the take ran on', 'except the key', 'E-48 Q19.5 wording')
+    neg('m4', 'the assistant tells you in writing what happens next.', 'the assistant tells you.', 'E-12 lacks what happens next')
     neg('e31', 'nothing here says that it stops safely (UNVERIFIED)', 'it stops safely (UNVERIFIED)', 'E-31 unproven claim')
     neg('line14', 'search path = the list of schemas', 'search path is a list of schemas', 'line 14 lacks')
     neg('e14', '(rule 5 of this sheet: you are the one who publishes)', '(rule 5: you post)', 'E-14 post meaning')
     # negative controls for older checks (selected: row count, old text, ND range, confirmation letters, UTC pairing, banned scan not tested)
     neg('r12nd15', '15. **When the owner writes `no more takes`', '15. **Something else', 'r12 ND15 missing')
     neg('r12shred', 'Shredding does not revoke the key, and it is not reliable on every disk', 'Shredding revokes the key', 'r12 E-48 lacks')
-    neg('r12key2', 'the one on port 5678? If it is, revoking it breaks that n8n." Reply', 'the one in your n8n? If it is, revoking it breaks that n8n." Reply', 'r12 E-48 lacks the one on port 5678')
+    neg('r12key2', 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n." Reply `same key`', 'the one in your n8n? If it is, revoking it breaks that n8n." Reply `same key`', 'r12 E-48 lacks http://localhost:5678')
     neg('r12slot', 'exactly one of these four labels', 'exactly one of these labels', 'r12 E-12 lacks exactly one of these four labels')
     neg('r12call', 'The last step of the take program sends no delete request to HubSpot', 'The last step of the take program makes no delete call to HubSpot', 'delete call')
     neg('r12pw', 'Never type a password inside a command line, even if', 'Type the password on the command line if', 'r12 E-09 lacks')
     neg('r12vol', 'Whether a volume is used is UNVERIFIED.', 'A volume is used.', 'r12 E-16 lacks')
-    neg('r12cut', 'Watch the cut from the first second to the last; reply `cut accepted`', 'Watch the cut from the first second to the last; reply `accepted`', 'r12 E-57 lacks')
+    neg('r12cut', 'Reply `cut accepted`, or list the bad stretches', 'Reply `accepted`, or list the bad stretches', 'r12 E-57 lacks')
     neg('r12conf', '\nl. E-12 gives the request', '\nm. E-12 gives the request', 'confirmation letters')
     neg('rowcount', '### E-58: OWNER-STEPS', '### E-59: OWNER-STEPS', 'ids differ')
     neg('conf', '\nj. E-56 puts', '\nk. E-56 puts', 'confirmation letters')

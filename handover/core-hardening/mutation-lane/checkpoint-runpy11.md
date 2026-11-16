@@ -5,3 +5,4 @@
 15:47 FINAL full run started from evidence-r10/frozen (hashes.txt); dev1: T97 on r10 code all pass, 18 of 19 fail on r9 (guard T97f2 passes); T96l fixed (order of mode checks) after dev1 copy
 16:02 2nd FINAL full run started from evidence-r10/frozen (with coordinator items 1-4: T98 a-f); dev2 T96-T98 on r10 code 46/0 fail; dev3 T98 on r9 code 7/7 fail
 16:19 full run 2 had 3 failures: T65 x2 (test patched subprocess.Popen, run.py now uses class Child: test fixed) and T97e as user nobody (setuid cleared by a non-root write: run.py fixed, mode re-applied after write). Full run 3 started from frozen.
+16:33 full run 3: root 0/442, child 0/87. REPORT-runpy11.md written. Handing back.

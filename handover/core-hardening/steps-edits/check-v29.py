@@ -23,11 +23,11 @@ except BaseException as e:
 for n, o in GEN.items():                                   # C01 copies cannot differ from source
     if not os.path.exists(D + n): fail('C01', 'missing ' + n); continue
     if rd(n) != o: fail('C01', n + ' differs from what its source and facts build')
-PAGES = ('OWNER-SHEET-v29-A.md', 'OWNER-CARD-v29-A.md', 'OWNER-NUMBERS-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-CARD-v29-B.md', 'OWNER-NUMBERS-v29-B.md', 'OWNER-FILM-v29.md')
+PAGES = ('OWNER-SHEET-v29-A.md', 'OWNER-CARD-v29-A.md', 'OWNER-APPENDIX-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-CARD-v29-B.md', 'OWNER-APPENDIX-v29-B.md', 'OWNER-FILM-PERSON-v29.md')
 for n in PAGES + ('LEAD-RELEASE-NOTE-v13.md', 'v29-OPEN-FOR-LEAD.md', 'v29-CHANGES.md'):
     if not os.path.exists(D + n): fail('C02', 'file missing: ' + n)
 def whole(k):                                              # the sheet with its card page and numbers page put back, and the film page: what the owner reads
-    try: return b.combine(rd('OWNER-SHEET-v29-%s.md' % k), rd('OWNER-CARD-v29-%s.md' % k), rd('OWNER-NUMBERS-v29-%s.md' % k), rd('OWNER-FILM-v29.md'))
+    try: return b.combine(rd('OWNER-SHEET-v29-%s.md' % k), rd('OWNER-CARD-v29-%s.md' % k)) + '\n' + rd('OWNER-APPENDIX-v29-%s.md' % k) + '\n' + rd('OWNER-FILM-PERSON-v29.md')
     except Exception as e: fail('C02', 'cannot combine pages of %s: %s' % (k, type(e).__name__)); return ''
 A = whole('A'); B = whole('B')
 SHEETS_DISK = {'A': rd('OWNER-SHEET-v29-A.md'), 'B': rd('OWNER-SHEET-v29-B.md')}   # the sheet pages as printed (the pages they name are checked in C170)
