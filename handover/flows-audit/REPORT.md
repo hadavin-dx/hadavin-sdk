@@ -1,5 +1,10 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
+Agents running: 0 language-model agents, 0 script lanes. Next: egm:egm-review-loop on PLAN-002.md.
+## AGENT REGISTER (id | purpose | started | expected end | last checked | state | next)
+(none yet)
+
 ## STATUS 2026-11-16 06:56 UTC / 12:26 IST: ORDER 001 done, waiting for GO
 Agents running: 0 language-model agents, 0 script lanes (both reviewers finished). Nothing else started: order says proof only.
 What failed / uncertain: nothing failed. Not checked: I ran one review round only (dry run), no resolve step. The order's grep path (~/.claude/plugins/*/egm*) matched; I did not separately verify the plugin cache under /root/.claude/plugins/cache/egm.
