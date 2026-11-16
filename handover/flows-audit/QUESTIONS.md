@@ -84,3 +84,6 @@ Two choices only the lead can make; both sit in FINDINGS/FIX-PLAN today as oppos
 3. Take-prep rule: the take uses a lead id and e-mail used nowhere before (rehearsal, loopback and P4a leads included); prep checks lead_key = 0 rows in mf_leads and empties or filters the intake mailbox. Recommendation: yes, written into OWNER-STEPS lead steps by the lead.
 4. Proof for "processed once" in the edit: mailbox exactly 1 mail + the mf_leads row + the POST 2 reply under 10 s; the CRM row count alone is not proof. Recommendation: yes; I will change the claims table so.
 5. Re-pin date (Q-H), real-take port, and the missing take scripts/n8n_api.py: one list with a name and a time each is needed from the lead.
+
+## Q23 (11:15Z, from the F3 test-gap fixer, fill_flows/fix-f3-r9.md)
+fill_flows (frozen) accepts an output path whose parent folder is a symbolic link made by you or root, and writes into the link target; it refuses a link made by another user, and still checks the real target for /mnt, git and cloud-synced folders (README section "Folders that are links"). A test now documents this. Question for the lead: keep it accepted? Recommendation: keep (refusing every parent link would break macOS /tmp); no change to the frozen tool.
