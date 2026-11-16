@@ -1,0 +1,1 @@
+1 MB single line through --mask, three runs (wall clock seconds), 14:55Z, dash, nothing else running (the canary self-test inside --mask is included)

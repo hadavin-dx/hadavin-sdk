@@ -21,9 +21,9 @@ F = {
     "JR": (T + "/demo/n8n-flows-real-v5/mf-recovery.json", "handover/demo/n8n-flows-real-v5/mf-recovery.json", FA, "real-v5 flow: recovery (runs every 30 s)"),
     "JS": (T + "/demo/n8n-flows-real-v5/mf-sub-crm-mail.json", "handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json", FA, "real-v5 flow: shared step (CRM write and mail)"),
     "ONE": (H + "/inputs/DECISION-one-store.md", "handover/core-hardening/inputs/DECISION-one-store.md", CH, "the one-store decision"),
-    "DEC": (H + "/inputs/DECISIONS-2026-11-16.md", "handover/core-hardening/inputs/DECISIONS-2026-11-16.md", CH, "the lead's decisions of 2026-11-16"),
+    "DEC": (H + "/inputs/DECISIONS-2026-11-16.md", "handover/core-hardening/inputs/DECISIONS-2026-11-16.md", CH, "the studio lead's decisions of 2026-11-16"),
     "PLAN": (H + "/inputs/plan-wp6-resmoke-v5.md", "handover/core-hardening/inputs/plan-wp6-resmoke-v5.md", CH, "the re-smoke plan (version 5)"),
-    "ORD": (H + "/ORDERS.md", "handover/core-hardening/ORDERS.md", CH, "the lead's orders and answers"),
+    "ORD": (H + "/ORDERS.md", "handover/core-hardening/ORDERS.md", CH, "the studio lead's orders and answers"),
     "H6": (C6 + "/REPORT-c6h.md", "handover/core-hardening/c6-skip-audit/REPORT-c6h.md", CH, "the last full audit report"),
     "RES": (C6 + "/raw-lane3/RESULTS.md", "handover/core-hardening/c6-skip-audit/raw-lane3/RESULTS.md", CH, "the lane3 results table"),
     "FND": (T + "/flows-audit/FINDINGS.md", "handover/flows-audit/FINDINGS.md", FA, "the numbered findings"),
@@ -38,7 +38,7 @@ F = {
     "RJL": (C6 + "/raw-lane3/results.jsonl", "handover/core-hardening/c6-skip-audit/raw-lane3/results.jsonl", CH, "lane3 raw run records, one per line"),
     "OS25": (H + "/steps-edits/OWNER-SHEET-v25-A.md", "handover/core-hardening/steps-edits/OWNER-SHEET-v25-A.md", CH, "owner sheet v25, variant A (the newest sheet on disk)"),
     "OS19": (H + "/steps-edits/OWNER-SHEET-v19.md", "handover/core-hardening/steps-edits/OWNER-SHEET-v19.md", CH, "owner sheet v19 (assumed newest by REPORT-c6k.md)"),
-    "QUE": (H + "/QUEUE.md", "handover/core-hardening/QUEUE.md", CH, "the lead's queue (header rule 6)"),
+    "QUE": (H + "/QUEUE.md", "handover/core-hardening/QUEUE.md", CH, "the studio lead's queue (header rule 6)"),
     "EQ4": (T + "/demo/real-run/evidence-q4-rrc.txt", "handover/demo/real-run/evidence-q4-rrc.txt", FA, "help text of the take script"),
     "P4": (T + "/demo/PLAN-4-NLITE-FROM-LEAD.md", "handover/demo/PLAN-4-NLITE-FROM-LEAD.md", FA, "plan 4 (the take script plan)"),
     "CA": (T + "/demo/claims-audit.md", "handover/demo/claims-audit.md", FA, "earlier claims audit"),
@@ -81,6 +81,8 @@ ORDER = ["RS", "PG", "NS", "MF", "JF", "JH", "JR", "JS", "ONE"]
 
 
 def edit(key, fk, old, new, why, sources, dep="", ln=None, span=None, qsrc=()):
+    _fx = lambda t: re.sub(r"\b(the|The) lead(?! fields| key| id| ends| is\b)(?='s|\b)", lambda m: m.group(1) + " studio lead", t) if "DECISION-one-store" not in fk else t
+    new = _fx(new); why = _fx(why)
     if span:
         a, b = span
         for i, l in enumerate(lines(fk)):

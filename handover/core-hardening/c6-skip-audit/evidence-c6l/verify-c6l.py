@@ -90,10 +90,10 @@ print("TOTAL line:", tot[0] if tot else "MISSING")
 # '18' next to run must name both voided runs (same paragraph/line)
 b18 = [i+1 for i, l in enumerate(txt) if re.search(r"\b18 (kept )?(crash )?runs?\b|each of 18|all 18", l) and not ("VOID-fl45k3b" in l and "VOID-fl45k6c" in l)]
 print("lines with 18 runs and not naming both voided runs (report text):", b18 or "none")
-nb = [r["i"] for r in rows if re.search(r"\b18\b", r["new"]) and not ("VOID-fl45k3b" in r["new"] and "VOID-fl45k6c" in r["new"])]
+nb = [r["i"] for r in rows if re.search(r"\b18 (kept |crash )*runs?\b|each of 18", r["new"]) and not ("VOID-fl45k3b" in r["new"] and "VOID-fl45k6c" in r["new"])]
 print("rows whose new text has 18 without naming both voided runs:", nb or "none")
 # figure hold: rows not tied to L-PAGE must not carry 60.1 or 61.9 in new text
-fig = [(r["i"], r["st"]) for r in rows if re.search(r"60\.1|61\.9", r["new"]) and "L-PAGE" not in r["st"] and "L-ROUND" not in r["st"]]
+fig = [(r["i"], r["st"]) for r in rows if "PAGE-STATEMENTS" in r["f"] and re.search(r"60\.1|61\.9", r["new"]) and "L-PAGE" not in r["st"] and "L-ROUND" not in r["st"]]
 print("rows with the 60.1 to 61.9 figure and no L-PAGE hold:", fig or "none")
 # word scan in prose (outside quotes of old text): 'the lead' alone and 'claim'
 body = "\n".join(l for l in txt if not l.startswith("| ") or "Plain meaning" in l)

@@ -1,0 +1,8 @@
+===== A
+DOLLAR: {'USD 189.00': 2, 'USD 3.00': 1, 'USD 15.00': 1, 'USD 0.27': 1, 'USD 0.81': 1}
+values not in allowed list: {}
+MINUTE/SECOND figures: {'2 minutes': 1, '10 minutes': 2, '5 minutes': 1}
+===== B
+DOLLAR: {'USD 189.00': 2, 'USD 3.00': 1, 'USD 15.00': 1, 'USD 0.27': 1, 'USD 0.81': 1}
+values not in allowed list: {}
+MINUTE/SECOND figures: {'2 minutes': 1, '10 minutes': 2, '5 minutes': 1}
