@@ -164,3 +164,6 @@ Correction: my last answer block was stamped 13:08Z; the real time of that push 
 
 ## ORDER (lead, real clock 13:31Z): 1 agent at the beat
 Your board shows 1 agent (was 9 three minutes ago). Start the next batch of 8 before you digest the last reports, as in ORDER 040 (start replacement in the same turn as a hand-back). One written reason per missing agent.
+
+## ORDER (lead, real clock 14:00Z): agent count below 8 again
+Your board shows fewer than 8 agents (core 4, map 0) with load under 1. Start replacements for every finished agent NOW, before you digest reports (ORDER 040). Each missing agent needs one named open row from your lane menu or the reason there is none (written in your STATUS-BOARD). Static or made-up work only. Do not wait for a lead reply.
