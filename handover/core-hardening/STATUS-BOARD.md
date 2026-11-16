@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:35:00Z
+UPDATED_UTC: 2026-11-16T10:41:00Z
 SESSION: core-hardening
 ORDER: 021 + decisions 10:02Z; 024; lead answers Q14/Q15/Q18 applied
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
 PERCENT: 93
-AGENTS_RUNNING: 6
-CAPACITY: load 0.9 of 4 cores, mem 1.3 of 15.7 GB used, disk 8.8 GB free (78% used, limit 90%), 6 light + 0 heavy agents
+AGENTS_RUNNING: 10
+CAPACITY: load 0.3 of 4 cores, mem 1.4 of 15.7 GB used, disk 8.9 GB free of 252 GB (77% used, limit 90%), top disk: /tmp/claude-0 11G, /tmp/c8b 2.1G, /tmp/c5v2 2.0G (own scratch, kept until reviews finish); 10 light agents, 0 heavy
 INTERRUPTED: none
-FAILED: v11 owner sheet security review: 1 run-readiness BLOCKER (take code archives/deletes contacts in a finally, breaks decision 2; "close the terminal" safe exit probably triggers it) + 9 majors (old model keys not forced out, baseline drifts, backstop counter undefined, "nothing you type starts a run" false, lead holds executor rights as same Linux user, step 0 result file, clipboard order, decoy process number, flow copy with DESK_*/MF_* not erased) -> Q19 to lead, v12 waits for answers (money/secret path, uncapped). C13 gate rows: 5 majors (G1 ignores n8n_error, caption wider than proof, G2 no PASS line, rows not in plan tracking, unsourced facts) -> fix running. Real-v5 edit list v6: 8+4 majors (guard by eye, export gap, wrong step number, "lead" 3 meanings, false key claim, recipe cites film folder, stand-in answer unchecked, negative swap run not on disk) -> v7 running. run.py round 2: 2 majors -> r3 running. C3b v5: 3+4 majors -> fix running. C7b evidence: 5 majors -> fix running. Nothing run with n8n, Postgres, pwsh, shellcheck, WSL.
-NEXT: lead answers Q19 (and open Q16/Q17), then v12 owner sheet; save hand-backs C7b, run.py r3, C3b fix, v7, C13 fix, v11 stranger read; review each; REPORT.md refresh; disk watch.
-PUSHED_UTC: 2026-11-16T10:35:00Z
+FAILED: C13 gate rows v2 and C7b fix pass 1 handed back, UNREVIEWED; C7b: first-run logs lost (rebuilt), 95 of 100 new tests only fail at import on old code, no mutation run, no Postgres; C13: drive.py not on branch so RI=3 and keys.txt shape inferred, stale rows can pass G2. v7 handed back, nothing run in n8n 2.46.6. v11 sheet still fails the stranger test (3 blockers, 20 majors) and the security review (1 blocker); v12 builder running with Q19 answers. C3b v5 fix, run.py r3 still running. Nothing run with n8n, Postgres, pwsh, shellcheck, WSL.
+NEXT: collect reviews (C13 v2, C7b fix, v7, contradiction re-read), then v12 and its stranger read (C12 again); C3b v5 fix and run.py r3 hand-backs; REPORT.md refresh. Q16/Q17/Q19 answered (Q16 saved as describe-only note).
+PUSHED_UTC: 2026-11-16T10:41:00Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -30,12 +30,16 @@ PUSHED_UTC: 2026-11-16T10:35:00Z
 | C10 | who-types-what table | in v9 | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | being reviewed |
 | C11 | HubSpot probe step | in v9 (step 0 kept as 7-call probe) | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | |
 
-## AGENTS (6 running; lanes per ORDER 021 menu)
+## AGENTS (10 running; lanes per ORDER 021 menu)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
-| ad55bf1459157f7b6 | builder C7b evidence fix | sonnet | M1-M4, W1-W5, flake fix patch | 10:23Z | 11:25Z | running |
-| a935be1660a498231 | builder run.py r3 | sonnet | args allowlist, clean R1 evidence, lint | 10:29Z | 11:30Z | running |
+| a935be1660a498231 | builder run.py r3 | sonnet | args allowlist, clean R1 evidence | 10:29Z | 11:30Z | running |
 | a9781b6572c9be99f | builder C3b v5 fix | sonnet | readiness and facts majors | 10:29Z | 11:25Z | running |
-| ac4cee0a04a0f4221 | (c) C12 v11 stranger read | sonnet | 10-minute test | 10:33Z | 11:00Z | running |
-| abdb0d42100acbf33 | builder real-v5 edit list v7 | sonnet | v6 review majors | 10:40Z | 11:30Z | running |
-| a53c08980a81b5c69 | builder C13 gate rows fix | sonnet | 5 majors | 10:42Z | 11:30Z | running |
+| ae89e7f8a26dcb9cf | builder v12 owner sheet | sonnet | day card, shorter sheet, Q19 answers | 10:36Z | 11:30Z | running |
+| ae57906c98f0dbe1e | (a) reviewer C13 v2 gate logic | sonnet | pass/fail correctness | 10:40Z | 11:05Z | running |
+| a09fa16288f2f713f | (b) reviewer C13 v2 facts and citations | sonnet | citation check | 10:40Z | 11:05Z | running |
+| afe12a993542b4777 | (a) reviewer C7b fix security | sonnet | lookahead abuse, uncapped | 10:40Z | 11:05Z | running |
+| a91d3b8a3da80db25 | (b) reviewer C7b evidence | sonnet | claims vs logs | 10:40Z | 11:05Z | running |
+| ac13d4fc411d8aec8 | (a) reviewer v7 readiness | sonnet | stranger can run steps | 10:41Z | 11:05Z | running |
+| abd198f29ec31cb81 | (b) reviewer v7 facts and citations | sonnet | citation check | 10:41Z | 11:05Z | running |
+| a3fd64a186c4e4c0b | (d) contradiction re-read | sonnet | one place per job | 10:41Z | 11:05Z | running |
