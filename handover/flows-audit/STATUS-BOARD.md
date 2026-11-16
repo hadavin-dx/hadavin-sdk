@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T13:12:59Z
+UPDATED_UTC: 2026-11-16T13:16:06Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 95
 AGENTS_RUNNING: 8
-CAPACITY: 0.22 load of 4 cores, mem 0/15 GB, RAM 947/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.51 load of 4 cores, mem 0/15 GB, RAM 923/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: collect fixers and reviewers; fresh reviews of fixed files; citation fix pass; drift-007; ORDER 037 file list
-PUSHED_UTC: 2026-11-16T13:12:59Z
+NEXT: collect fixers and reviewers; citation fix pass after QUESTIONS/FINDINGS settle; drift-007; REPORT.md ORDER 037 file list
+PUSHED_UTC: 2026-11-16T13:16:06Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,14 @@ PUSHED_UTC: 2026-11-16T13:12:59Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a8752d8 | fixer | sonnet | RUNBOOK r9 fixes | 13:10Z | 13:30Z | running | pending |
-| a076382 | fixer | sonnet | REVIEW.md r13 fixes | 13:10Z | 13:30Z | running | pending |
-| afe9c35 | fixer | sonnet | OWNER-STEPS owner part r19 fixes | 13:10Z | 13:30Z | running | pending |
-| a3d2678 | reviewer | sonnet | F8 r6 codebase review | 13:10Z | 13:25Z | running | pending |
-| a062734 | reviewer | sonnet | F8 r6 design review | 13:10Z | 13:25Z | running | pending |
-| a601037 | reviewer | sonnet | FINDINGS r11 commands-vs-files | 13:11Z | 13:25Z | running | pending |
 | adbbdc7 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r10 fixes | 13:12Z | 13:30Z | running | pending |
-| new | reviewer | sonnet | QUESTIONS r12 review (Blocker/Major only) | 13:14Z | 13:30Z | running | pending |
+| ab0d1e7 | fixer | sonnet | F8 take_check reviewer_ok round 7 (whole-word list, comma bug, tests) | 13:14Z | 13:40Z | running | pending |
+| a29f6cb | reviewer | sonnet | owner part r20 stranger read (Blocker/Major) | 13:15Z | 13:30Z | running | pending |
+| a534f7f | fixer | sonnet | QUESTIONS r12 fixes (6 Majors) | 13:16Z | 13:35Z | running | pending |
+| af4e6a5 | fixer | sonnet | FINDINGS r11 fixes (M1 + 5 nits) | 13:16Z | 13:35Z | running | pending |
+| a4dce18 | reviewer | sonnet | RUNBOOK r10 review (Blocker/Major) | 13:16Z | 13:30Z | running | pending |
+| a8156a6 | reviewer | sonnet | REVIEW.md r14 design (approval guard bypasses) | 13:16Z | 13:30Z | running | pending |
+| aedd603 | reviewer | sonnet | REVIEW.md r14 codebase (cites, counts) | 13:16Z | 13:30Z | running | pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
