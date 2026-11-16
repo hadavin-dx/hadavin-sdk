@@ -287,3 +287,6 @@ NEG r16m1 caught | FAIL r16 m1 E-16 lacks 'if a recording or a video file is ins
 NEG r16m5 caught | FAIL r16 m5 E-11 lacks 'Write `ok stand-in test` (for the stand-in test)'
 NEG r16m3 caught | FAIL r13 time arithmetic: 18:09 UTC = 23:49 IST
 NEG r16M2 caught | FAIL r14 E-12 margin
+NEG r16M1 caught | FAIL r16 M1 refs still has 'only a message typed by you counts: step 22 item 3, key step C
+NEG r16plain caught | FAIL r16 E-56 codes still has '(r17)'
+NEG r16e54 caught | FAIL r16 E-54 heading is not on its own line

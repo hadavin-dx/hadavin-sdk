@@ -1,24 +1,17 @@
-changes| and rules that exist (5.1, |5.6
-changes| exist (5.1, 5.6, 5.9, 7.6, |7.9
-changes| on the near-deadline line; |7.11
-changes| that exist (5.1, 5.6, 5.9, |7.6
-changes|, 5.6, 5.9, 7.6, 7.9, 7.11, |R8
-changes|48: a failed key save skips |6.7
-changes|B13, AB14 | | Stranger M7 | |5.3
-changes|eading load | no net words (|section 2
-changes|eats, five sentences of the |5.1
-changes|er completed by phone after |5.9
-changes|ey changed (re-pointed, see |section 3
-changes|ges are lower than v33 (see |section 2
-changes|iled key save skips 6.7 and |7.11
-changes|ntence (lead answer Q22c)", |G12
-changes|rt step (or none); card and |7.11
-changes|rules that exist (5.1, 5.6, |5.9
-changes|son while the key is alive, |7.6
-changes|steps and rules that exist (|5.1
-changes|t (5.1, 5.6, 5.9, 7.6, 7.9, |7.11
-changes|ted after reading the diff (|section 1
-changes|that the owner phones after |5.9
+changes| key at 6.7; it never stops |7.11
+changes|ap-proof-v35.py: results in |section 6
+changes|d once | C277 | | Pointers: |R8
+changes|e card words, W5, 6.2, 6.6, |7.3
+changes|ere held by other jobs; see |section 5
+changes|es the posting rule itself; |section 10
+changes|in the card words, W5, 6.2, |6.6
+changes|may cancel the older key at |6.7
+changes|ppendix 7, check 2 sum 30 | |R8
+changes|rity M2: 7-day rule against |7.11
+changes|role and voids the paper at |8.7
+changes|s so in one sentence (5.1a, |6.7
+changes|used in the card words, W5, |6.2
+changes|| | Section 9 and 10 loop | |section 9
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5
