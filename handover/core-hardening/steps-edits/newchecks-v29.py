@@ -40,7 +40,7 @@ ban('C45', r'Filled example')                                                   
 need('C46', 'then send "none" for the time in 8.1'.replace('then send', 'send') , SH)                                  # card After-the-card none
 need('C47', 'a new try needs a new numbers message and yes')                                                            # key save failed path
 need('C61', 'Until then the older key stays valid and can spend.', (('B', B),))   # S Major 2: B card list (b) says what the card does not stop
-need('C62', 'more than 7 days before the run day', (('A', A),))                                                          # S/T older key A: recent use refuses the cancel
+need('C62', '7 days (168 hours) or more before the earliest key time of the run day', (('A', A),))                                                          # S/T older key A: recent use refuses the cancel
 need('C63', 'otherwise describe each such key, cancel nothing, wait')                                    # S Major 3: no-key path cancels nothing the owner did not make
 # ---- Part 2: the 15 plants check-v24 missed (own25.py), each caught by its own check
 PRICES_OK = {'0.27', '0.81', '15.00', '189.00', '3.00', '7.11'}
@@ -72,15 +72,15 @@ for n, t in (('A', A), ('B', B), ('N', NOTE), ('O', OPEN)):                     
             fail('C55', '%s holds secret-shaped text (pattern %s)' % (n, p[:22]))
 need('C56', 'Silence minutes: 3   Give-up minutes: 40')                                                                  # Q15 Q16
 for n, t in SH:                                                                                                         # Q18: delete guard keeps its one domain
-    if t.count('@example.com') != 4: fail('C57', '%s has %d @example.com (expected 4: people line, R7 twice, prep contact)' % (n, t.count('@example.com')))
+    if t.count('@example.com') != 5: fail('C57', '%s has %d @example.com (expected 5 in v29: R7 once, the appendix people line and clean-up message, the film person page)' % (n, t.count('@example.com')))
     if re.search(r'@example\.(?!com)', t): fail('C57', n + ' holds a different example domain')
 if 'program limit = 12.40 + 0.81 = 13.21' not in NOTE: fail('C58', 'note lacks the program limit sum')                  # Q20
 for m in re.finditer(r'(?<![\d.])13\.\d\d\b', NOTE + OPEN):
     if m[0] not in ('13.00', '13.21', '13.50'): fail('C58', 'note or open list holds %s (only 13.21; 13.00 and 13.50 are the pass/fail examples)' % m[0])
 need('C59', 'Exit codes accepted: 0 only')                                                                              # Q22
 NUM = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7}
-for n, t in SH:                                                                                                         # Q24: R8 count equals the listed words
-    m = re.search(r'Only (\w+) words in a lead message start or end a step \(besides[^)]*\): (.*?)\. No message changes', t, re.S)
+for n, t in SH:                                                                                                         # Q24: R8 count equals the listed words (v29 wording: the seven words, which alone start or end a step)
+    m = re.search(r'the (\w+) words, which alone start or end a step: (.*?); \(6\)', t, re.S)
     if not m or m[1] not in NUM: fail('C60', n + ' R8 word count sentence not found'); continue
     k = len(re.findall(r'"[^"]+"', m[2]))
     if NUM[m[1]] != k: fail('C60', '%s R8 says %s words but lists %d' % (n, m[1], k))
@@ -117,10 +117,10 @@ need('C83', 'addresses `take-<run name>-a@example.com`, `-b@` and `-c@` or `prep
 need('C84', 'type `rm -- "<key file>"`'); need('C84', 'then `ls -l "<key file>"` in the read terminal must say no such file')
 need('C85', '"restarted" (6.6)'); need('C85', '"restarted" came after 6.6')
 need('C86', '7.11, always, by the older-key time of the message', (('B', B),)); need('C86', 'Not done by the older-key time', (('B', B),))
-if '16:00 UTC' in A: fail('C86', 'A holds the B-only time')
+if 'alarm 4' not in A: fail('C86', 'A lacks the older-key alarm (v29: A also ends the older key at 7.11)')
 need('C87', 'exactly the rows you wrote minus K'); need('C87', 'rows now, own key ______ | rows now, older key ______')
 need('C88', 'this cancel cannot be undone'); need('C88', '**Older key point (cannot be undone;', (('B', B),))
-need('C89', 'only at 6.7, after 6.6 passed (new key saved, size checked)', (('A', A),))                                    # stranger blocker: older key cancel last, after the key is saved
+need('C89', 'Last checks, then the older key', (('A', A),))                                    # stranger blocker: older key cancel last, after the key is saved
 s6 = A.find('## 6. The model key'); s7 = A.find('## 7. The run')
 i6 = A.find('\n7. **Last checks, then the older key.**', s6, s7); i66 = A.find('\n6. ', s6, s7)
 if i6 < 0 or i66 < 0 or i66 > i6: fail('C89', 'A: the older-key step is not after step 6.6 inside section 6')
@@ -158,7 +158,7 @@ need('C106', 'write on the card the three words you see: cancel button, confirma
 need('C107', 'Any other difference: press nothing, go to "If it fails".')                                  # T BL2: a differing word never makes the owner improvise
 need('C108', '(the lead cannot see your screen); you see the real word at 5.9 and the lead answers "confirmed"')                                                                        # T BL2: blanks come from what the owner saw
 ban('C108', r'word seen by the lead|seen by the lead')
-need('C108', 'Cancelled word: <word, or "from the look key"> (UNVERIFIED; you see the real word at 5.9 and the lead answers "confirmed")')
+need('C108', 'Cancelled word: [OWNER FILLS: cancelled word and where you saw it]'); need('C108', 'the lead answers "confirmed"')
 need('C109', 'a new key can always be made; only a program that uses the older key would be hurt', (('A', A),))                         # T M2
 need('C110', 'the last resort applies (the older key may still spend)', (('A', A),))                                                     # T M3
 for nm, t in SH:                                                                                                                         # T M4: the key-save line is typed before the key exists
@@ -184,36 +184,35 @@ for nm, t in SH:                                                                
     for m in re.finditer(r'(?<![Ss]hell )(?<!\*\*)prompt', t): fail('C123', '%s holds "prompt" without "shell" at %d' % (nm, m.start()))
 need('C124', 'none within the silence minutes: describe, FREEZE; no key is alive then')                                                  # T M17
 need('C125', 'Start only after the lead\'s word "post" (it means the lead has the printed result and the video is accepted)')           # T M18
-need('C126', 'A run that ended before 6.7: 7.11 says what happens.', (('A', A),))                     # T M19
+need('C126', 'If the run ends before 6.7 the older key is still valid: you cancel it at 7.11', (('A', A),))                     # T M19
 need('C127', 'a second Ubuntu window where you only type `date -u`, `ls -l`, `clear` and the grep of 5.7')                                                                                     # T m2
 need('C128', '"none" only at 8.1')                                                                                                       # T m4
-need('C129', 'Minimum think time: 20 seconds'); need('C129', 'Run length: 15 minutes')                                                   # S M2, S m10
+need('C129', 'Minimum think time: [LEAD FILLS at re-pin: minimum think time] seconds'); need('C129', 'Run length: [LEAD FILLS at re-pin: run length] minutes')                                                   # S M2, S m10
 need('C130', '(its list L2 included, at 7.11)')   # T m14
 need('C131', 'copy a harmless word such as `clear`')                                                                                     # T m15
-need('C132', 'run `rm -f -- "<key file>"` (R6 shape check first; the file may not exist)')                                              # S m1
+need('C132', 'run `rm -f -- "<key file>"` in the test terminal (R6 shape check first; the file may not exist)')                                              # S m1
 need('C133', '(only names the clean-up message already listed)')                                                                         # S m5
 need('C134', 'revoke the apps the message names'); ban('C134', r'delete or revoke')                                                      # S m6
 need('C135', 'or `prep-<run name>@example.com`')                                                                                         # S m7
-need('C136', "host name only (the part before the first `/`; type it by hand)")                                                          # S m8
+need('C136', "host name only (the part of its address between `https://` and the next `/`")                                                          # S m8
 need('C137', 'passes 7.11 before 8.1')                                       # S B1
 need('C137', '(after your yes, 7.11 still follows, before 8.1)')
 need('C137', 'by the older-key time of the message on the run day and even if the lead is silent', (('B', B),))
 need('C137', 'whatever way the run ended (finished, declined, time passed, key save failed, cancel failed, FREEZE, no `end`)', (('B', B),))
-need('C138', 'Four phone alarms', (('B', B),)); need('C138', 'alarm 4 at the older-key time (do 7.11 now, whatever else is open)', (('B', B),))   # S B1 fourth alarm
-if 'alarm 4' in A: fail('C138', 'A holds the B-only fourth alarm')
-need('C139', 'The cancel-by time is before the older-key time.', (('B', B),))                                                         # S B1 time order checked by the owner
+need('C138', 'Four phone alarms'); need('C138', 'alarm 4 at the older-key time (do 7.11 now, whatever else is open')   # S B1 fourth alarm
+need('C139', 'The cancel-by time is before the older-key time.')                                                         # S B1 time order checked by the owner
 _ct = re.search(r'Cancel-by time: (\d\d):(\d\d) UTC', B); _ot = re.search(r'Older-key time: (\d\d):(\d\d) UTC', B)
 if not _ct or not _ot or (int(_ct[1]) * 60 + int(_ct[2])) >= (int(_ot[1]) * 60 + int(_ot[2])): fail('C139', 'B: the cancel-by time is not before the older-key time (read from the text)')
-need('C140', 'Wait at least the "Minimum think time" of the message (the program refuses faster answers)'); ban('C140', r'Wait 10 seconds')   # S M2
+need('C140', 'Wait at least the "Minimum think time" of the message'); ban('C140', r'Wait 10 seconds')   # S M2
 need('C141', 'Test program asks you to type a figure: no'); need('C141', 'a figure line that is not "no": no run')                          # S M3
 need('C142', 'this cancel cannot be undone', (('B', B),)); need('C142', 'first read its last-used time in the key list and describe it to the lead (a use after your run key\'s create time', (('B', B),))   # S M5
 need('C143', 'Model key outside the model program: none (the lead checked n8n\'s credential store and shows it)'); need('C143', 'a model key stored in n8n would spend without the spend lock')   # S M6
 need('C144', 'anything but `exit 0` and the shell prompt: FREEZE')                                                                       # S m2
 need('C145', 'put the Privacy switches back as the first sentence of 8.7 says')                                                                                # S m3
-need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today (describe it and wait: the lead sends a new numbers message with a later run day at least 8 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
+need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today on this sheet (describe it and wait: the lead sends a new numbers message with a later run day, at least 7 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
 need('C147', '5.1 to 5.8 may be done on earlier days, 5.9 and sections 6 to 8 only on the run day')                                      # T m10
 need('C148', 'or no sentence "the test program made no delete call": skip only the contact deleting of this step and describe which')                  # S m14
-need('C159', 'alarm 1 at the latest start, alarm 2 at the alarm time, alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
+need('C159', 'alarm 1 at the latest start'); need('C159', 'alarm 2 at the alarm time'); need('C159', 'alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
 # ---- Part 5 (v29): lead-side documents must match the built sheets (S M1 and the stranger's lead-document findings)
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
@@ -227,14 +226,14 @@ if '4 owner: two alarms' in NOTE: fail('C151', 'N: the day order still says two 
 if 'Test program asks you to type a figure: no' not in NOTE or 'G35' not in NOTE: fail('C152', 'N: typed-figure line / G35 missing')
 if 'Minimum think time' not in NOTE or 'Minimum think time' not in OPEN: fail('C153', 'note and open list must name the minimum think time slot')
 if 'WHEN IT FAILS (v29)' not in OPEN: fail('C154', 'O: row 78 does not say what happens when the 7 day rule fails')
-if 'NOT MET at v29' not in OPEN: fail('C155', 'O: row 75 does not say the word target is not met')
+if 'MET for the sheet page alone' not in OPEN or 'Open 102' not in OPEN: fail('C155', 'O: row 75 does not state the sheet-page word count and the card question')
 if 'checked by you with `ls ~/.hadavin-take-tags`' not in NOTE: fail('C156', 'N: run name check by the lead missing')
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'\bpay in (only )?(a little(?! more)|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
-if 'Added in v12' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v12 section or look key missing')
+if 'Added in v13' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v12 section or look key missing')
 # ---- Part 4 (v29): one check per class change of the v26/v28 root-cause reading (RC1 state machine, RC2 pre-flight facts, RC3 single source) and per evidence-runner fix
 def outside_numbers(t):
-    i = t.find('## 3. The numbers message'); j = t.find('## 5. Before the yes')
+    i = t.find('## Appendix part 2'); j = t.find('## Appendix part 3')
     return t[:i] + t[j:]
 for nm, t in SH:                                                                                                         # C160 N3, m11: lead-set figures are read from the message; no literal copy outside the sample
     o = outside_numbers(t)
@@ -245,9 +244,9 @@ need('C161', 'whatever way the run ended', (('B', B),))                         
 need('C161', 'every way the run ends passes here before 8.1')                                                            # RC1 both sheets
 need('C162', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')                                    # RC1: FREEZE never cancels
 need('C162', '**Not danger signs (no card, no FREEZE):** a lead message "wait"')                                         # RC1: a wait is never a trigger
-need('C163', '"confirmed" (5.9)'); need('C163', 'Only seven words in a lead message')                                    # N2: the new lead word and the count
+need('C163', '"confirmed" (5.9)'); need('C163', 'the seven words, which alone start or end a step')                                    # N2: the new lead word and the count
 need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every live word')   # N2
-need('C165', "this 7-day rule belongs to the planned cancel only", (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule below never applies to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
+need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule below never applies to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
 need('C166', 'except the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4')                              # N1: W7 exemption
 need('C167', 'the test program made no delete call')                                                                      # evidence-runner fix: the no-delete line in both sheets
 if 'Decision 2 stands: the test program never deletes' not in NOTE or 'the test program deletes;' in NOTE: fail('C167', 'N: the sentence "Decision 2 stands: the test program never deletes" is missing or turned into a delete instruction')   # evidence-runner fix: content check of the note
@@ -256,7 +255,7 @@ for nm, t in SH:                                                                
 if 'Open 96' not in NOTE or '\n| 96 |' not in OPEN or '\n| 97 |' not in OPEN: fail('C169', 'note or open list lacks the rows for the aborted-run message and the A/B decision')   # N13 and RC3
 for nm in 'AB':                                                                                                           # RC3: the pages are named in both sheets as written on disk
     _s = SHEETS_DISK[nm]
-    for pg in ('OWNER-CARD-v29-', 'OWNER-NUMBERS-v29-'):
+    for pg in ('OWNER-CARD-v29-', 'OWNER-APPENDIX-v29-'):
         if pg + nm + '.md' not in _s: fail('C170', '%s does not name %s%s.md' % (nm, pg, nm))
-    if 'OWNER-FILM-v29.md' not in _s: fail('C170', 'sheet %s does not name the film page' % nm)
+    if 'OWNER-FILM-PERSON-v29.md' not in _s: fail('C170', 'sheet %s does not name the film page' % nm)
 

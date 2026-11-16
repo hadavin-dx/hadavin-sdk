@@ -1,0 +1,6 @@
+19552     169 uv run --all-extras --group test pytest -q -m not live and not perf -rs
+19585     169 /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/bin/pytest -q -m not live and not perf -rs
+22721     238 python3 -B -I mutate_run.py raw-indep-mutations.txt
+29492     147 python3 -I /home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin7/mutate.py /home/user/hadavin-sdk/handover/core-hardening/lead
+29493     147 python3 -I /home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin7/mutate.py /home/user/hadavin-sdk/handover/core-hardening/lead
+31854     282 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1794818964053-59c0c4.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol

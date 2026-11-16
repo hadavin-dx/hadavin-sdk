@@ -555,6 +555,80 @@ if 'R10 (' not in txt: F('r12 rule R10')
 if 'HubSpot app 2' not in csec and 'app 2' not in csec: F('r12 L-APP2 not noted')
 print('round 12 checks done')
 
+# ================= round 13 checks (each must FAIL on EDITS.round12.md) =================
+# A. one label, one time: the old label is gone; each name is followed by its own time
+for m_ in re.finditer(r'(?<!`)\blatest start\b(?! we plan)', txt):
+    F('r13 bare label "latest start": ' + txt[max(0, m_.start()-40):m_.end()+30].replace('\n', ' '))
+def first_time_after(pos, span=90):
+    mt = re.search(r'\b(\d{1,2}:\d{2}) UTC', txt[pos:pos + span])
+    return mt.group(1) if mt else None
+cnt_plan = cnt_lim = 0
+for m_ in re.finditer(r'latest start we plan', txt):
+    mt_ = re.match(r'[\s(=:*]*(?:is |at )?(?:about )?(\d{1,2}:\d{2}) UTC', txt[m_.end():m_.end() + 40]); cnt_plan += 1
+    if mt_ and mt_.group(1) != '18:04': F('r13 "latest start we plan" followed by time ' + mt_.group(1))
+for m_ in re.finditer(r'program refusal limit', txt):
+    mt_ = re.match(r'[\s(=:*]*(?:is |of )?(?:about )?(\d{1,2}:\d{2}) UTC', txt[m_.end():m_.end() + 40]); cnt_lim += 1
+    if mt_ and mt_.group(1) != '18:14': F('r13 "program refusal limit" followed by time ' + mt_.group(1))
+print('label uses: latest start we plan', cnt_plan, 'program refusal limit', cnt_lim)
+if cnt_plan < 5 or cnt_lim < 3: F('r13 the two labels are not used')
+for rid_ in ('E-12', 'E-52'):
+    tt = rowtext(rid_)
+    if 'latest start we plan' not in tt or 'program refusal limit' not in tt: F('r13 ' + rid_ + ' lacks the two labels')
+# K. arithmetic: every "HH:MM UTC = HH:MM IST" pair is UTC + 5:30
+for m_ in re.finditer(r'\b(\d{1,2}):(\d{2}) UTC = (\d{1,2}):(\d{2}) IST', txt):
+    u = int(m_.group(1)) * 60 + int(m_.group(2)); i_ = int(m_.group(3)) * 60 + int(m_.group(4))
+    if (u + 330) % 1440 != i_: F('r13 time arithmetic: ' + m_.group(0))
+# B. typing rule for every typed secret
+t09 = rowtext('E-09'); t48 = rowtext('E-48'); t52 = rowtext('E-52'); t12 = rowtext('E-12'); t37 = rowtext('E-37')
+for need in ('What the assistant can reach', 'encryption key', 'please stop looking', '`not looking`', '`you may look again`', 'Any other reply from you keeps the assistant not looking',
+             '`password file created; <password file name>; <folder>; you may look again`', '`database password typed; you may look again`', '`n8n.env done; you may look again`',
+             '`mailbox password typed; you may look again`', '`HubSpot key typed; you may look again`', 'Add a line to n8n.env', 'wait for a new message from the assistant that starts "Create the password file"'):
+    if need not in t09: F('r13 E-09 lacks ' + need)
+if 'none of them is a password' in t09 or 'tells you what to do instead' in t09: F('r13 E-09 old wording')
+if 'please stop looking' not in t48: F('r13 E-48 typing rule for new keys')
+# C. the key always ends: unconditional, alarm, routes, identification
+for need in ('WHATEVER you answer', '`not sure` never keeps it alive', '17:49 UTC = 23:19 IST', '`revoke the model key`', 'Route A', 'Route B', 'The assistant recommends route B', 'LAST FOUR CHARACTERS',
+             '`key revoked`', '`key not revoked`', 'more than 7 days ago', 'never tell the assistant the characters', 'does not prove that the right key is gone', 'contains no `..`', 'starts with `-`',
+             'fewer than 20 minutes remain', 'security decision of 16 Nov 2026', 'nobody else reminds you', 'If it forgets to ask, you may write `no more takes` at any time', '18:29 UTC = 23:59 IST'):
+    if need not in t48: F('r13 E-48 lacks ' + need)
+for bad in ('do NOT revoke the key', 'the key stays and asks', 'The assistant writes down that the key stays'):
+    if bad in t48: F('r13 E-48 still keeps the key alive: ' + bad)
+for need in ('`not sure` never keeps the key alive', '18:19 UTC = 23:49 IST', 'http://localhost:5678', 'the number after the colon'):
+    if need not in t37: F('r13 E-37 lacks ' + need)
+# D. E-55 two-line old text and the trigger of the irreversible clean-up
+r55 = pairs['E-55']
+if r55['line2'] != 120 or r55['line'] != 119: F('r13 E-55 header lines')
+if 'after the lead says the last take is done' not in r55['old'][0] or r55['old'][0].count('\n') != 1: F('r13 E-55 old text is not two lines')
+if 'only after you have written `no more takes`' not in rowtext('E-55') or '| E-55 | OWNER-STEPS-realrun-v3.md | 119 (and 120) |' not in txt: F('r13 E-55 trigger or index')
+if 'only after you have written `no more takes`' not in rowtext('E-16') or 'there is nothing for you to do' in rowtext('E-16'): F('r13 E-16 trigger')
+# E. no reference to text the owner cannot see
+for rid_, t_ in own:
+    for bad in ('the sentence above', 'The first question of step 22', 'The second question of step 22', 'In the sentence above'):
+        if bad in t_: F(f'r13 {rid_} refers to unseen text: {bad}')
+# F. E-12: placeholder, reply form, widened yes, alarm
+for need in ('[LEAD FILLS at re-pin: start time of day for Wed 18 Nov 2026, in UTC and IST]', 'latest start we plan <time in UTC and IST>', 'two decimals', 'type the one word `no`',
+             'it can reach n8n\'s encryption key and the credentials saved in the take\'s n8n', 'In the older sentences of this step', 'IST (India Standard Time) is UTC plus 5 hours 30 minutes',
+             '17:49 UTC = 23:19 IST', 'search file slot', 'you revoke the secret key for the model anyway'):
+    if need not in t12: F('r13 E-12 lacks ' + need)
+if t12.count('I know that the assistant shares my Linux user, my clipboard and my screen, and that it can reach') != 2: F('r13 E-12 yes sentence form and bullet differ')
+if '[LEAD FILLS at re-pin' not in rowtext('E-54') or 'R11 (' not in txt: F('r13 placeholder in E-54 or rule R11')
+if re.search(r'(?m)^- \*\*R11 ', txt) is None: F('r13 R11 line')
+# G. E-52 words
+if t52.count('**The studio lead**') != 1 or 'studio lead' not in t52.split('\n')[1]: F('r13 E-52 studio lead defined once, next to the assistant')
+for need in ('**UTC and IST**', '**A port number**', '**UNVERIFIED**', '**IMAP**', '**The typing rule**', '**Route A and route B**', '**The program refusal limit**', 'typed exactly as shown'):
+    if need not in t52: F('r13 E-52 lacks ' + need)
+# I. small rows
+if 'UNVERIFIED means that nobody has checked it yet' not in rowtext('E-01'): F('r13 E-01')
+if 'take/nlite' in rowtext('E-02'): F('r13 E-02 branch names')
+if 'n8n (the automation program' not in rowtext('E-03'): F('r13 E-03')
+if '5678' not in rowtext('E-06'): F('r13 E-06')
+# J. studio notes
+if 'CONFLICT FOR THE STUDIO LEAD' not in ndsec or 'Default: (A)' in ndsec or 'Default: not chosen' not in ndsec: F('r13 ND15 both routes, no default')
+if not re.search(r'(?m)^m\. E-48 part 3i', csec) or not re.search(r'(?m)^n\. E-12 widens', csec): F('r13 confirmations m and n')
+if 'ANYWHERE the answers' in txt: F('r13 stale')
+if re.search(r'safe default \(the assistant asks the owner at clean-up whether to revoke', txt): F('r13 ND7 still conditional')
+print('round 13 checks done')
+
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):
@@ -611,5 +685,24 @@ if not os.environ.get('NO_NEG'):
     neg('r12conf', '\nl. E-12 gives the request', '\nm. E-12 gives the request', 'confirmation letters')
     neg('rowcount', '### E-58: OWNER-STEPS', '### E-59: OWNER-STEPS', 'ids differ')
     neg('conf', '\nj. E-56 puts', '\nk. E-56 puts', 'confirmation letters')
+    # ---- round 13 negative controls
+    neg('r13bare', 'the older single label that was used for both is retired', 'the older single label "latest start" that was used for both is retired', 'r13 bare label')
+    neg('r13swap', '**latest start we plan** = 18:04 UTC = 23:34 IST', '**latest start we plan** = 18:14 UTC = 23:44 IST', 'r13 "latest start we plan" followed by time 18:14')
+    neg('r13swap2', '**program refusal limit** = about 18:14 UTC = 23:44 IST', '**program refusal limit** = about 18:04 UTC = 23:34 IST', 'r13 "program refusal limit" followed by time 18:04')
+    neg('r13arith', '17:49 UTC = 23:19 IST', '17:49 UTC = 23:49 IST', 'r13 time arithmetic', 2)
+    neg('r13typing', '`mailbox password typed; you may look again`', '`mailbox password typed`', 'r13 E-09 lacks')
+    neg('r13reach', 'What the assistant can reach', 'What the assistant sees', 'r13 E-09 lacks What the assistant can reach', 2)
+    neg('r13always', 'WHATEVER you answer to any question below, and `not sure` never keeps it alive', 'if you answer yes, and `not sure` keeps it alive', 'r13 E-48 lacks')
+    neg('r13alarm', 'for Mon 23 Nov 2026 17:49 UTC = 23:19 IST and name it `revoke the model key`', 'for later', 'r13 E-48 lacks')
+    neg('r13route', 'The assistant recommends route B; the choice is yours.', 'The choice is yours.', 'r13 E-48 lacks The assistant recommends route B')
+    neg('r13shot', 'does not prove that the right key is gone', 'proves that the right key is gone', 'r13 E-48 lacks')
+    neg('r13e55', '| E-55 | OWNER-STEPS-realrun-v3.md | 119 (and 120) |', '| E-55 | OWNER-STEPS-realrun-v3.md | 119 |', 'r13 E-55 trigger or index')
+    neg('r13e16', 'starts it only after you have written `no more takes`', 'starts it when it decides', 'r13 E-16 trigger')
+    neg('r13above', 'In the older sentences of this step', 'In the sentence above this one', 'r13 E-12 refers to unseen text')
+    neg('r13ph', 'at re-pin: start time of day for Wed 18 Nov 2026, in UTC and IST]`. The request states', 'at re-pin: x]`. The request states', 'r13 E-12 lacks')
+    neg('r13yes', 'my screen, and that it can reach n8n\'s encryption key and the credentials saved in the take\'s n8n."', 'my screen."', 'r13 E-12')
+    neg('r13nd15', 'CONFLICT FOR THE STUDIO LEAD, not decided by the builder', 'Default: (A) is the default', 'r13 ND15')
+    neg('r13e52', '- **A finding**', '- **The studio lead**: x. **A finding**', 'r13 E-52 studio lead defined once')
+    neg('r13e37', 'the number after the colon in a web address; 5678 is the port number of your own n8n', 'the port', 'r13 E-37 lacks the number after the colon')
 print('FAILURES', fail)
 sys.exit(1 if fail else 0)

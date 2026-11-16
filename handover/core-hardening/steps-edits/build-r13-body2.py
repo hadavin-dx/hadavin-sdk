@@ -127,3 +127,7 @@ rsub('E-12', 'and the latest start time as a slot;', 'and the latest start we pl
 rsub('E-12', 'the earlier latest start (18:04 UTC = 23:34 IST) stays', 'the earlier latest start we plan (18:04 UTC = 23:34 IST) stays')
 rsub('E-12', '(f) latest start: the assistant asks', '(f) latest start we plan: the assistant asks')
 rsub('E-12', 'and the latest start time for the planned day (Wed 18 Nov)', 'and the latest start we plan for the planned day (Wed 18 Nov)')
+
+rsub('E-12', '(a reading of step 17, UNVERIFIED, not checked in the code)', '(a reading of the section "Refusals, deadline and exit codes" of this sheet, UNVERIFIED, not checked in the code)')
+why_add('E-12', 'Round 13 (security minor): the 18:14 UTC = 23:44 IST figure is quoted from the sheet\'s section "Refusals, deadline and exit codes" (the old text said "step 17", which is not where it stands).')
+why_add('E-17', 'Round 13 (naive m10): the clause "may send the mail twice" has a removal condition, written in rule R11: it is deleted before the post if the crash check ended `tested`, and stays if it ended `untested`.')

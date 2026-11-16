@@ -1,0 +1,35 @@
+baseline fails: indep=3 builder=1
+M01-wrong-count-48-ready                         indep:CAUGHT builder:CAUGHT | box says 49 ready, 42 default, 3 check and 91 wave-1 rows | box says the ready count
+M02-wrong-count-41-default                       indep:CAUGHT builder:MISSED | box says 49 ready, 42 default, 3 check and 91 wave-1 rows | -
+M03-wave1-90                                     indep:CAUGHT builder:MISSED | every statement of the wave 1 size says 91 (2 found) | -
+M04-stale-58s-in-box                             indep:MISSED builder:MISSED | - | -
+M05-row11-card-58s                               indep:CAUGHT builder:CAUGHT | no '58 s' in any new text | row 11 states the same words, seconds, budget and total (about 190 s)
+M06-label-leak-row-N                             indep:CAUGHT builder:CAUGHT | no report labels in ANY new text (all 94 rows) | no 'row N' reference in any new text
+M07-label-leak-KEYdigits                         indep:CAUGHT builder:CAUGHT | no report labels in ANY new text (all 94 rows) | no report label, check label, source cite or report word in any new te
+M08-label-leak-reading-1                         indep:CAUGHT builder:CAUGHT | box prints card line verbatim: Not tested (reading 1): o... | box prints all four card lines exactly as the rows have them and the t
+M09-label-leak-this-report                       indep:CAUGHT builder:CAUGHT | box prints card line verbatim: A lead sent twice with th... | box prints all four card lines exactly as the rows have them and the t
+M10-label-leak-lease-question                    indep:CAUGHT builder:MISSED | no report labels in ANY new text (all 94 rows) | -
+M11-wrong-IST-money-stop                         indep:CAUGHT builder:CAUGHT | every UTC = IST pair is +5:30 (40 pairs) | every 'UTC = IST' pair is exactly UTC + 5:30 (40 pairs)
+M12-wrong-IST-post-due                           indep:CAUGHT builder:CAUGHT | every UTC = IST pair is +5:30 (40 pairs) | IST given with the money stop
+M13-lease-sentence-on-card                       indep:CAUGHT builder:CAUGHT | box prints card line verbatim: A lead sent twice with th... | box prints all four card lines exactly as the rows have them and the t
+M14-lease-sentence-on-caption                    indep:CAUGHT builder:MISSED | lease sentence absent from card/caption new texts (rows 11,13,14,21) | -
+M15-row90-broken-end                             indep:CAUGHT builder:CAUGHT | row 90 new text ends with the database `n8n` | row 90 new text ends with the database n8n (so 'owned by' attaches to 
+M16-weekday-Mon-to-Tue                           indep:CAUGHT builder:MISSED | weekday+date pairs correct for 2026 (11 found) | -
+M17-weekday-Wed-to-Thu                           indep:CAUGHT builder:MISSED | weekday+date pairs correct for 2026 (11 found) | -
+M18-card-line2-word-removed                      indep:CAUGHT builder:CAUGHT | box prints card line verbatim: When the system cannot te... | box prints all four card lines exactly as the rows have them and the t
+M19-table-seconds-wrong                          indep:CAUGHT builder:CAUGHT | lease x card-length table (6 rows) equals own recomputation | table of lengths in the box (6 rows) equals the recomputation from the
+M20-table-budget-wrong                           indep:CAUGHT builder:CAUGHT | lease x card-length table (6 rows) equals own recomputation | table of lengths in the box (6 rows) equals the recomputation from the
+M21-old-text-altered                             indep:CAUGHT builder:CAUGHT | each old text occurs exactly once on its stated line (source: /tmp/cla | C-1 old text occurs once on its stated line (94 rows)
+M22-line-number-off-by-one                       indep:CAUGHT builder:CAUGHT | each old text occurs exactly once on its stated line (source: /tmp/cla | C-1 old text occurs once on its stated line (94 rows)
+M23-row-50-deleted                               indep:CAUGHT builder:CAUGHT | 94 rows parsed | 3b TOTAL line equals the recount
+M24-duplicate-row-id                             indep:CAUGHT builder:CAUGHT | row ids are exactly 1..94 in table, no dup | ids are exactly 1..N, no duplicate
+M25-status-ready-to-default                      indep:CAUGHT builder:CAUGHT | counts ready/default/check = 49/42/3 | 3b TOTAL line equals the recount
+M26-term-used-before-defined-intro               indep:CAUGHT builder:CAUGHT | each uppercase label is first used where defined (labels as written) | every word the box defines is first used where it is defined (case-ins
+M27-secret-shaped                                indep:CAUGHT builder:CAUGHT | secret/e-mail-shaped strings in report: 1 | no secret-like or e-mail string in report
+M28-clock-UTC-without-IST                        indep:CAUGHT builder:CAUGHT | each uppercase label is first used where defined (labels as written) | every clock time in UTC or Z has its IST nearby (outside old-text quot
+M29-row-count-93-in-section0                     indep:CAUGHT builder:CAUGHT | every 'Of the N rows' / 'holds N proposed' says 94 | section 0 says the row count of the table
+M30-stale-61.1-range                             indep:CAUGHT builder:CAUGHT | range 60.1 to 61.9 exact in every occurrence outside old-text cells (2 | figure 60.1 to 61.9 exact everywhere (20 occurrences)
+M31-wrong-sum-card-90-to-100                     indep:CAUGHT builder:CAUGHT | every stated card total (1 found) equals recomputed 90 words / 36 s /  | box prints all four card lines exactly as the rows have them and the t
+M32-lease-sentence-in-spoken-line1-via-row14     indep:CAUGHT builder:MISSED | lease sentence absent from card/caption new texts (rows 11,13,14,21) | -
+N0-control-unchanged                             indep:MISSED builder:MISSED | - | -
+TOTAL mutations incl control: 33; indep caught 31, builder caught 24

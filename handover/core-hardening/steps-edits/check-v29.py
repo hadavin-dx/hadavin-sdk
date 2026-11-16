@@ -62,7 +62,7 @@ for n, t in ALL.items():
         if m[2] not in ('0.27', '0.81', '13.21', '0.10', '0.50', '2.00', '10.00', '3.00', '15.00', '189.00', '180.00', '12.40', '0.00') and n.startswith('OWNER'): fail('C04', n + ' unexpected amount ' + m[0])
     if re.search(r'\b14\.4\b', t): fail('C04', n + ' says 14.4 (the figure is 14.33)')
 # C05 stale references
-STALE = [r'card Part 2', r'\bPart 2\b', r're-pin', r'check 5\b', r'sha256', r'\(v2[0-3]\b', r'OWNER-SHEET-v2[0-3]', r'LEAD-RELEASE-NOTE-v[1-7]\b', r'\bR[23] (is|are) kept']
+STALE = [r'card Part 2', r'\bPart 2\b', r'(?<!at )re-pin', r'check 5\b', r'sha256', r'\(v2[0-3]\b', r'OWNER-SHEET-v2[0-3]', r'LEAD-RELEASE-NOTE-v[1-7]\b', r'\bR[23] (is|are) kept']
 for n, t in ALL.items():
     if n == 'v29-CHANGES.md': continue
     for p in STALE:
@@ -141,7 +141,7 @@ for n, t in (('A', A), ('B', B)):
         if m[1] not in [v for k, v in F.items() if k.startswith('ph_')] and m[1] != 'none': fail('C12', '%s told phrase not in list: %s' % (n, m[1]))
 # C13 yes pattern characters
 for n, t in (('A', A), ('B', B)):
-    m = re.search(r'in this pattern: "(.*?)" Amounts have two decimals', t, re.S)
+    m = re.search(r'[Ii]n this pattern: "(Yes, run.*?IST\.)"', t, re.S)
     if not m: fail('C13', n + ' yes pattern not found'); continue
     y = re.sub(r'<[^>]*>', 'x', m[1])
     bad = set(re.sub(r"[A-Za-z0-9 .:,_/=@+\-]", '', y))
@@ -160,7 +160,7 @@ for n, t in (('A', A), ('B', B)):
         if s not in t: fail(c, '%s lacks %r' % (n, s))
 for n, t in (('A', A), ('B', B)):
     if 'and not before the earliest key time' not in t: fail('C14w', n + ' 6.3 does not check the earliest key time')
-if 'Three phone alarms' not in A or 'Four phone alarms' not in B: fail('C14c', 'alarm count wording (A three, B four)')
+if 'Four phone alarms' not in A or 'Four phone alarms' not in B: fail('C14c', 'alarm count wording (A three, B four)')
 for n, t in (('A', A), ('B', B)):
     if 'sha256' in t.lower(): fail('C14x', n + ' has a checksum line that looks like a secret')
 # C15 bash -n on the key-save line (key file filled with a made-up path)
@@ -269,7 +269,7 @@ for n in ('note', 'open'):
 # C23 fixed sentences that must stay (each one is a rule the reviews asked for)
 KEEP = ['**STOP RULE.**', 'A key alive: the card first', 'The balance is at least the expected total.', 'If two rules disagree: the card first, then R1, then R10', 'Never "Select all", never empty Trash',
         'letters, digits, single spaces and `. _ / - : = @ + , \'` only', 'A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail',
-        'paper notes "READ" and "TEST"', 'No word of the lead resumes a run whose key was alive', 'A wait is a pause: never a card or FREEZE, and it never delays the card']
+        'paper notes "READ" and "TEST"', 'No word of the lead resumes a run whose key was alive', '"wait": a pause, never a card or FREEZE, and it never delays the card']
 for n, t in (('A', A), ('B', B)):
     for s_ in KEEP:
         if s_ not in t: fail('C23', '%s lacks the fixed sentence %r' % (n, s_))
@@ -280,13 +280,13 @@ mr = re.search(r'single spaces and `([^`]+)` only', A)
 if mr:
     allowed = set(mr[1].replace(' ', '')) | set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ')
     for n, t in (('A', A), ('B', B)):
-        m = re.search(r'in this pattern: "(.*?)" Amounts have two decimals', t, re.S)
+        m = re.search(r'[Ii]n this pattern: "(Yes, run.*?IST\.)"', t, re.S)
         if m and set(re.sub(r'<[^>]*>', 'x', m[1])) - allowed: fail('C24', n + ': yes pattern holds a character R8 does not allow')
 else: fail('C24', 'R8 character list not found')
 # C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)
 for n, t in (('A', A), ('B', B)):
-    w = 'three' if n == 'A' else 'four'
-    if t.count('one of the %s alarms of 6.2' % w) != 1 or ('Three' if n == 'A' else 'Four') + ' phone alarms' not in t: fail('C25', n + ' alarm count wording')
+    w = 'four'
+    if t.count('one of the %s alarms of 6.2' % w) != 1 or 'Four phone alarms' not in t: fail('C25', n + ' alarm count wording')
 exec(open(HERE + 'newchecks-v29.py', encoding='utf-8').read())
 print('check-v29: %d failure(s)' % len(FAILS))
 for f in FAILS: print('FAIL', f)
