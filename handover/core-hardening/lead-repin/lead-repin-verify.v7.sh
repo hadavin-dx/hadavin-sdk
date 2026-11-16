@@ -1350,9 +1350,9 @@ self_test_meta() {
   st_fake=$WORK/st-fakebin; mkdir -p "$st_fake"; printf '#!/bin/sh\necho $$ > "%s/git.pid"\nexec sleep 31\n' "$st_fake" > "$st_fake/git"; chmod +x "$st_fake/git"
   for st_sig in TERM:143 HUP:129; do   # INT and QUIT cannot be tested from a shell: a program started with & by a non-interactive shell ignores them (see evidence-repin5, python launcher)
     st_sn=${st_sig%%:*}; st_se=${st_sig##*:}
+    rm -f "$st_fake/git.pid"   # v7: removed BEFORE the run starts (v6 removed it after, and a fast start could lose the new file: a flaky failure under load)
     PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1 &
     st_p=$!; st_i=0
-    rm -f "$st_fake/git.pid"
     while [ "$st_i" -lt 30 ] && [ ! -s "$st_fake/git.pid" ]; do st_i=$((st_i + 1)); sleep 1; done
     st_gp=$(cat "$st_fake/git.pid" 2>/dev/null)
     kill -s "$st_sn" "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?

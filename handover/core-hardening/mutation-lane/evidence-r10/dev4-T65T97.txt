@@ -56,3 +56,16 @@ WARNING: the state folder could not be synced after removing k.json (Input/outpu
 m11 unlink_state returned, file exists: False
 BAD: []
   PASS: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 0; r9: fails all four)
+/tmp/safety-only.XYaZ20.sh: line 70: 24221 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+WARNING: the state folder could not be synced after removing ddb6d82547df28c4.planted.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+WARNING: the state folder could not be synced after removing ddb6d82547df28c4.backup (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev4/tmpstate/hadavin-mutation-lane-0/ddb6d82547df28c4.backup; hash matches saved original: True
+  PASS: T97j m11 --restore with a failing state-folder sync: exit 0 (got 0; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/safety-only.XYaZ20.sh: line 70: 24504 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("evil\nPASSED: faked line\u001b[31m") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/run.py --root /tmp/c
+  PASS: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+REFUSED: this tool cannot start here: no usable temporary folder (FileNotFoundError: No usable temporary directory found)
+exit 2
+  PASS: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  PASS: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 0; r9: fails)
+FAILED CHECKS: 2 (of 21 checks run; skipped: none)

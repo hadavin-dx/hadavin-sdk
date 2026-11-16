@@ -850,10 +850,11 @@ spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = import
 root, variant = pathlib.Path(sys.argv[2]), sys.argv[3]
 src = open(sys.argv[1]).read().splitlines()
 first = next(i + 1 for i, l in enumerate(src) if "first statement: nothing below can raise a second time" in l)
-Real = subprocess.Popen
+Real = getattr(r, "Child", subprocess.Popen)   # r10: the one class that starts programs (r9: subprocess.Popen itself)
 class P(Real):
     def communicate(self, *a, **k): raise OSError(5, "simulated read error (no signal)")
 subprocess.Popen = P
+if hasattr(r, "Child"): r.Child = P
 state = {"fired": False}
 code = r.run_tests.__code__
 def tracer(frame, event, arg):

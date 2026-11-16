@@ -1,0 +1,392 @@
+doc	doc_line	cite	kind	status	detail	cited_line_text	strict_rare_anchor
+CORE-PR-HANDOFF-v15.md	19	approvals/requests.py:37-40	range	MOVED	src/hadavin_sdk/approvals/requests.py nearest anchor line 26 (delta 12) anchors=['approvals', 'audit', 'chain', 'contracts']	"flagged = detector is not None and injection_check(detector, inputs, ""approval_summary"").f || f""{WARNING if flagged else ''}{plan.agent_id} asks to run {p"	STRICT_MOVED:guard@[11, 12];models@[13];registry@[22, 62, 68, 96]
+CORE-PR-HANDOFF-v15.md	19	approvals/cards.py:76-83	range	MOVED	src/hadavin_sdk/approvals/cards.py nearest anchor line 42 (delta 37) anchors=['approvals', 'guard', 'hadavin_sdk', 'injection']	flagged = ( || *([WARNING.strip()] if flagged else []),	STRICT_MOVED:guard@[15];tools@[42];models@[16]
+CORE-PR-HANDOFF-v15.md	23	llm/retry.py:83-108	range	HIT0	src/hadavin_sdk/llm/retry.py	"def with_retry[T]( || raise AssertionError(""unreachable"")  # max_attempts >= 1 (se"	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	23	llm/openai_compat.py:117-129	range	MOVED	src/hadavin_sdk/llm/openai_compat.py nearest anchor line 88 (delta 35) anchors=['chat', 'max_attempts']	started, used = time.monotonic(), [0, 0] || break	STRICT_MOVED:chat@[1, 8, 88];max_attempts@[59, 83, 87]
+CORE-PR-HANDOFF-v15.md	24	store/protocol.py:107	single	HIT0	src/hadavin_sdk/store/protocol.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ..	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	30	src/hadavin_sdk/config.py:317	single	HIT0	src/hadavin_sdk/config.py	"environment: Literal[""dev"", ""pilot"", ""prod""]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	models.py:294	single	HIT0	src/hadavin_sdk/models.py	cost_usd: Decimal = Decimal(0)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	models.py:305	single	HIT0	src/hadavin_sdk/models.py	cost_usd: Decimal = Decimal(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	src/hadavin_sdk/config.py:55-58	range	HIT0	src/hadavin_sdk/config.py	class Route(_Strict): || output_usd_per_mtok: Money	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	registry.py:33-36	range	HIT0	src/hadavin_sdk/registry.py	class Budget(BaseModel): || monthly: Money	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	store/migrations/0001_core.sql:87-92	range	HIT0	src/hadavin_sdk/store/migrations/0001_core.sql	CREATE TABLE spend ( || );	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	0003_approvals_tick.sql:15-20	range	HIT0	src/hadavin_sdk/store/migrations/0003_approvals_tick.sql	CREATE TABLE spend_month ( || );	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	31	models.py:98	single	HIT0	src/hadavin_sdk/models.py	cost_usd: Decimal = Decimal(0)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	39	demos/ask-your-data/askdata/meter.py:1-17	range	HIT0	demos/ask-your-data/askdata/meter.py	"""""""The cost meter (design 13, amendments A-03): one JSON file shared with the Replay Check || """""""	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	39	demos/ask-your-data/askdata/meter.py:211-229	range	HIT0	demos/ask-your-data/askdata/meter.py	def reserve(self, worst_case: Decimal, *, live: bool = True) -> None: || self._write(d)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	40	pipeline.py:147	single	MOVED	demos/ask-your-data/askdata/pipeline.py nearest anchor line 140 (delta 7) anchors=['chat', 'max_attempts', 'only', 'pipeline']	self.meter.reserve(worst, live=self.s.live)	STRICT_MOVED:max_attempts@[46, 140];pipeline@[1];only@[4]
+CORE-PR-HANDOFF-v15.md	40	pipeline.py:155	single	HIT0	demos/ask-your-data/askdata/pipeline.py	reply = self.llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	40	pipeline.py:232-236	range	MOVED	demos/ask-your-data/askdata/pipeline.py nearest anchor line 155 (delta 79) anchors=['chat', 'max_attempts', 'only', 'pipeline']	"""""""Replace the reservation with the real cost. False (and the question ends over budget) i || except MeterError:"	STRICT_MOVED:max_attempts@[46, 140];pipeline@[1];only@[4]
+CORE-PR-HANDOFF-v15.md	40	tests/demo_askdata/test_meter.py:30-170	range	NOANCHOR_IN_FILE	tests/demo_askdata/test_meter.py	def test_worst_case_is_input_estimate_plus_max_tokens_at_the_output_rate(): || def test_remaining_is_the_smaller_of_the_two_rooms(tmp_path)	
+CORE-PR-HANDOFF-v15.md	40	tests/demo_askdata/test_meter.py:121-170	range	NOANCHOR_IN_FILE	tests/demo_askdata/test_meter.py	def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): || def test_remaining_is_the_smaller_of_the_two_rooms(tmp_path)	
+CORE-PR-HANDOFF-v15.md	41	meter.py:48-55	range	NOANCHOR_IN_FILE	demos/ask-your-data/askdata/meter.py	def worst_case_usd(route: Route, prompt_chars: int) -> Decimal: || ) / M	
+CORE-PR-HANDOFF-v15.md	41	k1b/loop.py:115-122	range	HIT0	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	41	k1b/loop.py:170	single	MOVED	src/hadavin_sdk/k1b/loop.py nearest anchor line 179 (delta 9) anchors=['reply']	budget.charge(worst_case_usd(route_prices, system, messages))	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	41	k1b/loop.py:179	single	HIT0	src/hadavin_sdk/k1b/loop.py	budget.charge(reply.cost_usd)	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	41	k1b/loop.py:206	single	MOVED	src/hadavin_sdk/k1b/loop.py nearest anchor line 189 (delta 17) anchors=['reply']	budget.charge(verdict.cost_usd)	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	41	llm/common.py:164-172	range	MOVED	src/hadavin_sdk/llm/common.py nearest anchor line 152 (delta 16) anchors=['reply']	tokens_in = tokens[0] or estimate_tokens(sent) || text=text,	STRICT_MOVED:reply@[1, 152]
+CORE-PR-HANDOFF-v15.md	41	llm/common.py:59-62	range	MOVED	src/hadavin_sdk/llm/common.py nearest anchor line 1 (delta 59) anchors=['reply']	def estimate_tokens(text: str) -> int: || return max(1, len(text) // 3)	STRICT_MOVED:reply@[1, 152]
+CORE-PR-HANDOFF-v15.md	42	store/postgres.py:416-431	range	HIT0	src/hadavin_sdk/store/postgres.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: || return Decimal(d), Decimal(m)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	42	store/memory.py:196-204	range	HIT0	src/hadavin_sdk/store/memory.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: || return self._spend[(agent_id, day)], Decimal(month)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	42	store/migrations/0001_core.sql:87-92	range	HIT0	src/hadavin_sdk/store/migrations/0001_core.sql	CREATE TABLE spend ( || );	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	43	limits.py:17-18	range	HIT0	src/hadavin_sdk/limits.py	def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]: || return self.store.add_spend(agent_id, now().date(), usd)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	43	limits.py:24-25	range	HIT0	src/hadavin_sdk/limits.py	day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write || budget = self.registry.agents[agent_id].budget_usd	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	43	models.py:19-20	range	MOVED	src/hadavin_sdk/models.py nearest anchor line 92 (delta 73) anchors=['agent_id', 'audit', 'models', 'store']	def now() -> datetime: || return datetime.now(UTC)	STRICT_MOVED:agent_id@[92, 112, 258];models@[275];store@[125]
+CORE-PR-HANDOFF-v15.md	43	limits.py:23-35	range	HIT0	src/hadavin_sdk/limits.py	"reasons.append(""kill_switch"") || run_id=""-"","	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	43	app.py:171	single	HIT0	src/hadavin_sdk/app.py	limits = Limits(store, audit, reg)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	43	src/hadavin_sdk/cli.py:209	single	HIT0	src/hadavin_sdk/cli.py	return kill_switch(Limits(store, audit, reg), args.action, args.by)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	retry.py:95-96	range	HIT0	src/hadavin_sdk/llm/retry.py	except ProviderError: || raise	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	retry.py:97-99	range	HIT0	src/hadavin_sdk/llm/retry.py	"except Exception as exc:  # every failure is classified below, never swallowed || raise ProviderError(f""{label}: {describe(exc, detail)}"") fro"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	retry.py:100-103	range	HIT0	src/hadavin_sdk/llm/retry.py	if attempt == max_attempts: || ) from exc	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	llm/common.py:233-241	range	HIT0	src/hadavin_sdk/llm/common.py	def _retry(self, call: Callable[[], Answer]) -> Answer: || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	anthropic.py:122	single	HIT0	src/hadavin_sdk/llm/anthropic.py	got = self._retry(lambda: self._parse(self._current().messages.create(**request)))	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	bedrock.py:156	single	HIT0	src/hadavin_sdk/llm/bedrock.py	got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	gemini.py:86	single	HIT0	src/hadavin_sdk/llm/gemini.py	got = self._retry(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	openai_compat.py:119	single	HIT0	src/hadavin_sdk/llm/openai_compat.py	got = self._retry(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	common.py:208-220	range	HIT0	src/hadavin_sdk/llm/common.py	def chat( || return self._chat(r, system, turns(messages, documents), spe	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	44	common.py:200-206	range	HIT0	src/hadavin_sdk/llm/common.py	def __init__( || self.routes, self.max_attempts, self._sleep = routes, max_at	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:325-541	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def handle( || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:425-427	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	reply = self.llm.chat( || system=system,	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:432-435	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	except ( || code = (	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:440	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	self.limits.charge(agent_id, reply.cost_usd)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:441	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	self.store.add_cost(run.run_id, reply.cost_usd)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:310-316	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def _screen(self, run: Run, text: str, source: str): || return verdict	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:239-250	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: || return None	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:359	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:421	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:460	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:569-597	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run: || return run	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:87	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"_REASON_TEXT = {""ungrounded"": ""ungrounded (inputs not found in cited evidence)""}"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:574	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"label = _REASON_TEXT.get(reason or """", reason or ""no proposal"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	45	agent_loop.py:520	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"verdict = self._screen(run, out.text, f""tool:{call.name}"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	extract.py:47	single	HIT0	src/hadavin_sdk/extract.py	reply = llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	evals.py:73	single	HIT0	src/hadavin_sdk/evals.py	reply = llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	guard/judge.py:70-72	range	HIT0	src/hadavin_sdk/guard/judge.py	# already redacted (placeholders pass unchanged); a refusal raises and `injection_check` f || reply = self.llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	runtime/agent_loop.py:425-427	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	reply = self.llm.chat( || system=system,	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	k1b/loop.py:94	single	HIT0	src/hadavin_sdk/k1b/loop.py	"box[""reply""] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	pipeline.py:155	single	HIT0	demos/ask-your-data/askdata/pipeline.py	reply = self.llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	46	guard/bedrock_guardrail.py:101	single	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	resp = self._client.apply_guardrail(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	47	bedrock_guardrail.py:95-101	range	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	def check(self, text: str, source: str) -> Verdict: || resp = self._client.apply_guardrail(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	47	bedrock_guardrail.py:61	single	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	def make(settings: Any, deps: Any) -> GuardrailDetector:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	47	guard/injection.py:85-101	range	HIT0	src/hadavin_sdk/guard/injection.py	def injection_check(detector: Detector, text: str, source: str) -> Verdict: || return Verdict(flagged=True, score=1.0, backend=name, reason	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	47	injection.py:85-101	range	HIT0	src/hadavin_sdk/guard/injection.py	def injection_check(detector: Detector, text: str, source: str) -> Verdict: || return Verdict(flagged=True, score=1.0, backend=name, reason	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	48	backends/factory.py:17-54	range	HIT0	src/hadavin_sdk/backends/factory.py	@dataclass(frozen=True) || built = getattr(module, func)(settings, deps)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	48	backends/table.py:570-579	range	HIT0	src/hadavin_sdk/backends/table.py	ALLOWED: dict[str, frozenset[str]] = { || }	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	48	llm/anthropic.py:80-88	range	HIT0	src/hadavin_sdk/llm/anthropic.py	def make(settings: Any, deps: Any) -> AnthropicLLM: || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:55-59	range	HIT0	src/hadavin_sdk/config.py	class Route(_Strict): || max_tokens: int = Field(gt=0)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:47	single	HIT0	src/hadavin_sdk/config.py	Money = Annotated[Decimal, BeforeValidator(_money)]	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:40-44	range	HIT0	src/hadavin_sdk/config.py	def _money(v: object) -> object: || return v	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:317	single	HIT0	src/hadavin_sdk/config.py	"environment: Literal[""dev"", ""pilot"", ""prod""]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:349	single	HIT2	src/hadavin_sdk/config.py	"@model_validator(mode=""after"")"	STRICT_MOVED:output_usd_per_mtok@[58];model_id@[56];pilot@[240, 317, 342]
+CORE-PR-HANDOFF-v15.md	49	backends/table.py:593-602	range	HIT0	src/hadavin_sdk/backends/table.py	DEV_ONLY: frozenset[tuple[str, str]] = frozenset( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	49	src/hadavin_sdk/config.py:36-59	range	HIT0	src/hadavin_sdk/config.py	"""url_allowed"", || max_tokens: int = Field(gt=0)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	50	store/migrate.py:46-67	range	HIT0	src/hadavin_sdk/store/migrate.py	"GRANTS: dict[str, Grant] = { || ""dead_letters_seq_seq"": Grant(""sequence"", ""USAGE""),"	STRICT_MOVED:folder@[93, 94];SEQUENCE@[88, 126, 176];IDENTITY@[88, 126]
+CORE-PR-HANDOFF-v15.md	50	migrate.py:80-85	range	HIT0	src/hadavin_sdk/store/migrate.py	_SAFE_CREATE = re.compile( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	50	migrate.py:87-90	range	HIT0	src/hadavin_sdk/store/migrate.py	_UNREAD = re.compile( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	50	migrate.py:93-94	range	HIT0	src/hadavin_sdk/store/migrate.py	"def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: || return sorted(folder.glob(""*.sql""))"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	50	migrate.py:97	single	HIT0	src/hadavin_sdk/store/migrate.py	def check_ledger(paths: list[Path]) -> list[str]:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	51	store/postgres.py:146	single	HIT0	src/hadavin_sdk/store/postgres.py	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	51	store/postgres.py:192-197	range	HIT0	src/hadavin_sdk/store/postgres.py	class PostgresStore: || self._lock = threading.Lock()	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	51	store/postgres.py:416-431	range	HIT0	src/hadavin_sdk/store/postgres.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: || return Decimal(d), Decimal(m)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	52	models.py:289-297	range	HIT0	src/hadavin_sdk/models.py	class Reply(Shape): || latency_ms: int = 0	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	52	models.py:300-307	range	HIT0	src/hadavin_sdk/models.py	class Verdict(Shape): || )  # a model-backed detector's call (llm_judge), charged by 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	52	guard/injection.py:77	single	HIT0	src/hadavin_sdk/guard/injection.py	cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	52	guard/judge.py:72-97	range	HIT0	src/hadavin_sdk/guard/judge.py	reply = self.llm.chat( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	53	anthropic.py:136	single	MOVED	src/hadavin_sdk/llm/anthropic.py nearest anchor line 109 (delta 27) anchors=['max_tokens']	# Thinking blocks are the model's working, never its answer: only text and tool calls are 	STRICT_MOVED:max_tokens@[109]
+CORE-PR-HANDOFF-v15.md	53	gemini.py:98-99	range	HIT0	src/hadavin_sdk/llm/gemini.py	"# Thinking is billed as output; candidatesTokenCount leaves it out. || out = (usage.get(""candidatesTokenCount"") or 0) + (usage.get("	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	53	gemini.py:98-100	range	HIT0	src/hadavin_sdk/llm/gemini.py	"# Thinking is billed as output; candidatesTokenCount leaves it out. || tokens = (usage.get(""promptTokenCount""), out or None)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	53	gemini.py:96-100	range	HIT0	src/hadavin_sdk/llm/gemini.py	"def _parse(resp: dict[str, Any]) -> Answer: || tokens = (usage.get(""promptTokenCount""), out or None)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/k5_support.py:160-211	range	HIT0	tests/k5_support.py	def build_runtime( || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_p5p6_followups.py:101-102	range	HIT0	tests/test_p5p6_followups.py	rt.detector = AnyOf([RegexDetector(0.5), judge(model)]) || rt.llm.chat = lambda *a, **k: Reply(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_p6_detectors.py:186	single	HIT0	tests/test_p6_detectors.py	with_judge.detector = AnyOf([RegexDetector(0.5), judge()])	STRICT_MOVED:FakeLLM@[16, 210]
+CORE-PR-HANDOFF-v15.md	54	tests/test_k5_tools.py:608	single	MOVED	tests/test_k5_tools.py nearest anchor line 593 (delta 15) anchors=['FakeLLM', 'Limits', 'chat']	"rt.llm = ScriptLLM([{""tool"": ""app""}, {""propose"": mine, ""evidence"": evidence_ids}])"	STRICT_MOVED:FakeLLM@[20, 1068, 1077];Limits@[1122, 1133, 1223, 1269]
+CORE-PR-HANDOFF-v15.md	54	tests/test_k5_round5.py:241	single	HIT0	tests/test_k5_round5.py	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/k5_support.py:206	single	HIT0	tests/k5_support.py	Limits(store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_k5_postgres.py:58	single	HIT0	tests/test_k5_postgres.py	Limits(pg_store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_k5_tools.py:1133	single	HIT0	tests/test_k5_tools.py	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_k5_tools.py:1269	single	HIT0	tests/test_k5_tools.py	Limits(store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_k3_pilot.py:104	single	HIT0	tests/test_k3_pilot.py	Limits(store, audit, reg),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	tests/test_s5_runtime.py:28	single	HIT0	tests/test_s5_runtime.py	limits = Limits(store, audit, reg)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	app.py:171	single	HIT0	src/hadavin_sdk/app.py	limits = Limits(store, audit, reg)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	src/hadavin_sdk/cli.py:209	single	HIT0	src/hadavin_sdk/cli.py	return kill_switch(Limits(store, audit, reg), args.action, args.by)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	54	llm/fake.py:21	single	HIT0	src/hadavin_sdk/llm/fake.py	class FakeLLM:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	58	k1b/loop.py:115-122	range	NOANCHOR_IN_FILE	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	
+CORE-PR-HANDOFF-v15.md	65	agent_loop.py:440	single	MOVED	src/hadavin_sdk/runtime/agent_loop.py nearest anchor line 358 (delta 82) anchors=['Limits']	self.limits.charge(agent_id, reply.cost_usd)	STRICT_MOVED:Limits@[29, 82, 191, 358]
+CORE-PR-HANDOFF-v15.md	79	src/hadavin_sdk/cli.py:115-117	range	MOVED	src/hadavin_sdk/cli.py nearest anchor line 90 (delta 26) anchors=['Limits', 'gate']	rep.add_argument( || )	STRICT_MOVED:Limits@[43, 209, 383]
+CORE-PR-HANDOFF-v15.md	89	src/hadavin_sdk/config.py:349	single	HIT2	src/hadavin_sdk/config.py	"@model_validator(mode=""after"")"	STRICT_MOVED:Route@[30, 55, 318];spend@[220];extra@[52]
+CORE-PR-HANDOFF-v15.md	90	src/hadavin_sdk/config.py:400-415	range	MOVED	src/hadavin_sdk/config.py nearest anchor line 391 (delta 16) anchors=['Literal', 'environment', 'prod']	class _UniqueKeyLoader(yaml.SafeLoader): || return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S50	STRICT_MOVED:Literal@[11, 317]
+CORE-PR-HANDOFF-v15.md	92	llm/common.py:59-62	range	HIT0	src/hadavin_sdk/llm/common.py	def estimate_tokens(text: str) -> int: || return max(1, len(text) // 3)	STRICT_MOVED:Decimal@[14, 167, 168, 169]
+CORE-PR-HANDOFF-v15.md	95	app.py:166-169	range	NOANCHOR_IN_FILE	src/hadavin_sdk/app.py	detector = combine(members) || summary_detector = combine([m for m in members if m.backend 	
+CORE-PR-HANDOFF-v15.md	96	src/hadavin_sdk/config.py:55-59	range	HIT0	src/hadavin_sdk/config.py	class Route(_Strict): || max_tokens: int = Field(gt=0)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	96	src/hadavin_sdk/config.py:40-44	range	HIT0	src/hadavin_sdk/config.py	def _money(v: object) -> object: || return v	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	96	registry.py:33-36	range	HIT0	src/hadavin_sdk/registry.py	class Budget(BaseModel): || monthly: Money	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	96	tests/test_p5p6_followups.py:62-67	range	MOVED	tests/test_p5p6_followups.py nearest anchor line 72 (delta 8) anchors=['config_hash', 'default', 'gate']	 || assert _hash(cfg_dir) == before	STRICT_MOVED:config_hash@[49];gate@[52, 495]
+CORE-PR-HANDOFF-v15.md	98	src/hadavin_sdk/config.py:451-454	range	HIT0	src/hadavin_sdk/config.py	except ConfigError: || raise ConfigError(str(exc)) from exc	STRICT_MOVED:load_config@[34, 436]
+CORE-PR-HANDOFF-v15.md	102	k1b/replay.py:85-91	range	HIT0	src/hadavin_sdk/k1b/replay.py	def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	103	registry.py:39-41	range	HIT0	src/hadavin_sdk/registry.py	class AgentRecord(BaseModel): || id: str	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	104	tests/test_k3_pilot_env.py:61	single	MOVED	tests/test_k3_pilot_env.py nearest anchor line 72 (delta 11) anchors=['config', 'evidence', 'yaml']	"""llm"": {""kind"": ""openai_compat"", ""base_url"": ""https://llm.example/v1""},"	STRICT_MOVED:evidence@[72]
+CORE-PR-HANDOFF-v15.md	104	tests/test_p5p6_followups.py:82	single	MOVED	tests/test_p5p6_followups.py nearest anchor line 95 (delta 13) anchors=['config', 'yaml']	"llm = {""kind"": ""openai_compat"", ""base_url"": ""https://llm.example/v1""}"	STRICT_MOVED:config@[23, 42, 193, 196]
+CORE-PR-HANDOFF-v15.md	104	tests/test_p5p6_followups.py:392	single	MOVED	tests/test_p5p6_followups.py nearest anchor line 196 (delta 196) anchors=['config', 'yaml']	"""kind"": ""anthropic"","	STRICT_MOVED:config@[23, 42, 193, 196]
+CORE-PR-HANDOFF-v15.md	104	tests/test_p5_llm.py:38-46	range	MOVED	tests/test_p5_llm.py nearest anchor line 32 (delta 10) anchors=['config', 'yaml']	"api = _llm(cfg_dir, {""kind"": ""anthropic"", ""api_key_secret_name"": ""a"", ""platform"": ""api""}) || tuned = {""kind"": ""anthropic"", ""api_key_secret_name"": ""a"", ""p"	STRICT_MOVED:config@[15, 29];yaml@[10, 29, 30, 32]
+CORE-PR-HANDOFF-v15.md	104	tests/test_p1a_fixes.py:117	single	HIT0	tests/test_p1a_fixes.py	"update={""llm"": reg.config.backends.llm.model_copy(update={""kind"": ""bedrock""})}"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	104	tests/test_p5p6_followups.py:121	single	MOVED	tests/test_p5p6_followups.py nearest anchor line 98 (delta 23) anchors=['config', 'yaml']	"""kind"": ""bedrock_guardrail"","	STRICT_MOVED:config@[23, 42, 193, 196]
+CORE-PR-HANDOFF-v15.md	105	tests/warden_port/test_bedrock_provider_r16.py:74	single	HIT0	tests/warden_port/test_bedrock_provider_r16.py	"make(""llm"", BedrockSettings(kind=""bedrock"", region=""contract-region-1""), routes=routes)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	105	tests/warden_port/test_providers.py:65	single	HIT0	tests/warden_port/test_providers.py	"llm = make(""llm"", settings, routes=ROUTES)"	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15.md	105	tests/test_p5p6_followups.py:300	single	HIT0	tests/test_p5p6_followups.py	"make(""llm"", settings, provider, routes=_route(moving))"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	105	tests/contracts/kinds/builtin.py:53	single	HIT0	tests/contracts/kinds/builtin.py	"llm = make(""llm"", FakeLLMSettings(kind=""fake"", recorded_dir=tmp_path), routes=ROUTES)"	STRICT_MOVED:settings@[64, 65]
+CORE-PR-HANDOFF-v15.md	105	tests/test_p5_llm.py:230	single	HIT0	tests/test_p5_llm.py	"llm = make(""llm"", settings, routes=ROUTES)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	105	tests/contracts/kinds/llm_wire.py:66	single	HIT0	tests/contracts/kinds/llm_wire.py	return AnthropicLLM(client, routes, 3, sleep=lambda s: None)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	105	tests/test_p6_detectors.py:339	single	MOVED	tests/test_p6_detectors.py nearest anchor line 355 (delta 16) anchors=['gate', 'guardrail', 'guardrail_settings', 'make']	"v = injection_check(GuardrailDetector(Odd(), ""g"", ""1"", 0.5), CLEAN, ""document"")"	STRICT_MOVED:make@[12, 355];unmetered@[274];guardrail_settings@[26, 355]
+CORE-PR-HANDOFF-v15.md	105	tests/test_k5_round9.py:74	single	MOVED	tests/test_k5_round9.py nearest anchor line 173 (delta 99) anchors=['gate', 'guardrail']	"GuardrailDetector(Client(), ""g"", ""1"", 0.5).check(f""a {s} b"", ""t"")"	STRICT_MOVED:guardrail@[193];gate@[173]
+CORE-PR-HANDOFF-v15.md	105	tests/contracts/kinds/detectors.py:92	single	HIT0	tests/contracts/kinds/detectors.py	"return GuardrailDetector(client or GuardrailClient(), ""contract-guardrail"", ""1"", 0.5)"	STRICT_MOVED:make@[17, 50];guardrail_settings@[101];gate@[5]
+CORE-PR-HANDOFF-v15.md	105	tests/contracts/kinds/llm_wire.py:54	single	HIT0	tests/contracts/kinds/llm_wire.py	from hadavin_sdk.llm.anthropic import AnthropicLLM	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	109	models.py:19-20	range	HIT0	src/hadavin_sdk/models.py	def now() -> datetime: || return datetime.now(UTC)	STRICT_MOVED:models@[275];ValueError@[29, 127];astimezone@[128]
+CORE-PR-HANDOFF-v15.md	109	app.py:73	single	HIT0	src/hadavin_sdk/app.py	clock: Callable[[], datetime] = now,	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	112	retry.py:95-96	range	HIT0	src/hadavin_sdk/llm/retry.py	except ProviderError: || raise	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	112	k1b/loop.py:176	single	HIT0	src/hadavin_sdk/k1b/loop.py	except ProviderError:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	112	agent_loop.py:432-433	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	except ( || ProviderError	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	113	llm/fake.py:21	single	HIT0	src/hadavin_sdk/llm/fake.py	class FakeLLM:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	113	backends/table.py:593-602	range	HIT0	src/hadavin_sdk/backends/table.py	DEV_ONLY: frozenset[tuple[str, str]] = frozenset( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	113	src/hadavin_sdk/config.py:366-369	range	HIT0	src/hadavin_sdk/config.py	"if self.environment != ""dev"": || ]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	114	retry.py:23	single	NOANCHOR	src/hadavin_sdk/llm/retry.py	MAX_DELAY_S = 8.0	
+CORE-PR-HANDOFF-v15.md	122	runtime/agent_loop.py:425-427	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	reply = self.llm.chat( || system=system,	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	122	runtime/agent_loop.py:432-435	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	except ( || code = (	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	122	agent_loop.py:359	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	123	runtime/agent_loop.py:310-312	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def _screen(self, run: Run, text: str, source: str): || verdict = injection_check(self.detector, text, source)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	123	guard/judge.py:70-72	range	HIT0	src/hadavin_sdk/guard/judge.py	# already redacted (placeholders pass unchanged); a refusal raises and `injection_check` f || reply = self.llm.chat(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	123	guard/injection.py:85-101	range	HIT0	src/hadavin_sdk/guard/injection.py	def injection_check(detector: Detector, text: str, source: str) -> Verdict: || return Verdict(flagged=True, score=1.0, backend=name, reason	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	124	k1b/loop.py:176	single	HIT0	src/hadavin_sdk/k1b/loop.py	except ProviderError:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	125	evals.py:73	single	MOVED	src/hadavin_sdk/evals.py nearest anchor line 37 (delta 36) anchors=['gate']	reply = llm.chat(	STRICT_MOVED:gate@[1, 35, 37, 122]
+CORE-PR-HANDOFF-v15.md	125	extract.py:47	single	MOVED	src/hadavin_sdk/extract.py nearest anchor line 34 (delta 13) anchors=['extract']	reply = llm.chat(	STRICT_MOVED:extract@[34]
+CORE-PR-HANDOFF-v15.md	125	src/hadavin_sdk/cli.py:146	single	HIT0	src/hadavin_sdk/cli.py	"if args.cmd == ""gate"":"	STRICT_MOVED:main@[19, 70, 414];code@[71, 227]
+CORE-PR-HANDOFF-v15.md	127	tests/k5_support.py:160-211	range	HIT0	tests/k5_support.py	def build_runtime( || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	170	audit/protocol.py:23	single	HIT0	src/hadavin_sdk/audit/protocol.py	def write_outcome(self, event: AuditEvent) -> str | None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	172	llm/common.py:59-62	range	HIT0	src/hadavin_sdk/llm/common.py	def estimate_tokens(text: str) -> int: || return max(1, len(text) // 3)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	172	k1b/loop.py:115-122	range	HIT0	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	app.py:62	single	HIT0	src/hadavin_sdk/app.py	def build(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	app.py:161-162	range	HIT0	src/hadavin_sdk/app.py	"audit = make(""audit"", b.audit, secrets, store=store, signer=signer, anchor=anchor) || llm = llm or make(""llm"", b.llm, secrets, routes=cfg.routes)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	app.py:171	single	HIT0	src/hadavin_sdk/app.py	limits = Limits(store, audit, reg)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	app.py:162-167	range	HIT0	src/hadavin_sdk/app.py	"llm = llm or make(""llm"", b.llm, secrets, routes=cfg.routes) || # The approval summary screen has no agent to charge, so it "	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	app.py:162-165	range	HIT0	src/hadavin_sdk/app.py	"llm = llm or make(""llm"", b.llm, secrets, routes=cfg.routes) || members = [make(""detector"", d, secrets, llm=llm) for d in b."	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	backends/table.py:570-579	range	HIT0	src/hadavin_sdk/backends/table.py	ALLOWED: dict[str, frozenset[str]] = { || }	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	src/hadavin_sdk/cli.py:150	single	HIT0	src/hadavin_sdk/cli.py	"make(""llm"", b.llm, make(""secrets"", b.secrets), routes=cfg.routes),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	src/hadavin_sdk/cli.py:221-222	range	HIT0	src/hadavin_sdk/cli.py	"llm = make(""llm"", cfg.backends.llm, secrets, routes=cfg.routes) || detector = combine([make(""detector"", d, secrets, llm=llm) fo"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	176	src/hadavin_sdk/cli.py:209	single	HIT0	src/hadavin_sdk/cli.py	return kill_switch(Limits(store, audit, reg), args.action, args.by)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	180	app.py:163-171	range	HIT0	src/hadavin_sdk/app.py	summary_detector = detector || limits = Limits(store, audit, reg)	STRICT_MOVED:getattr@[86, 152];build@[62, 345];without@[87]
+CORE-PR-HANDOFF-v15.md	182	tests/k5_support.py:160-211	range	HIT0	tests/k5_support.py	def build_runtime( || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	184	tests/test_s5_runtime.py:107-111	range	HIT0	tests/test_s5_runtime.py	"def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): || assert (run.state, run.reason_code) == (S.DENIED, ""limits.da"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	184	tests/test_s5_runtime.py:114-119	range	HIT0	tests/test_s5_runtime.py	def test_budget_already_spent_stops_before_the_model(cfg_dir): || assert rt.llm.calls == []	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	184	runtime/agent_loop.py:572	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or aud	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	184	tests/test_k5_tools.py:723-731	range	MOVED	tests/test_k5_tools.py nearest anchor line 756 (delta 29) anchors=['Hooks', 'audit', 'hooks', 'limits']	"def test_k5_run_budget_stops_run(tmp_path): || assert next(e for e in _events(rt, run) if e.operation == ""a"	STRICT_MOVED:post_card@[1257];post@[244, 252];Hooks@[1124, 1131, 1224, 1256]
+CORE-PR-HANDOFF-v15.md	186	common.py:208-220	range	HIT0	src/hadavin_sdk/llm/common.py	def chat( || return self._chat(r, system, turns(messages, documents), spe	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	186	openai_compat.py:117-129	range	HIT0	src/hadavin_sdk/llm/openai_compat.py	started, used = time.monotonic(), [0, 0] || break	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	188	common.py:233-241	range	HIT0	src/hadavin_sdk/llm/common.py	def _retry(self, call: Callable[[], Answer]) -> Answer: || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	214	llm/common.py:184-189	range	HIT0	src/hadavin_sdk/llm/common.py	class Answer: || tokens: tuple[int | None, int | None]	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	214	llm/bedrock.py:108	single	HIT0	src/hadavin_sdk/llm/bedrock.py	"code = exc.response.get(""ResponseMetadata"", {}).get(""HTTPStatusCode"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	214	llm/bedrock.py:104	single	HIT0	src/hadavin_sdk/llm/bedrock.py	def retryable(exc: BaseException) -> bool | None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	214	llm/anthropic.py:67	single	HIT0	src/hadavin_sdk/llm/anthropic.py	def retryable(exc: BaseException) -> bool | None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	214	llm/retry.py:31-36	range	HIT0	src/hadavin_sdk/llm/retry.py	def status(exc: BaseException) -> int | None: || return None	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	218	limits.py:26-27	range	HIT0	src/hadavin_sdk/limits.py	"if day >= budget.daily: || reasons.append(""daily_budget"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	219	retry.py:63	single	HIT0	src/hadavin_sdk/llm/retry.py	return isinstance(exc, OSError)  # URLError, socket timeouts, connection resets	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	235	models.py:289-297	range	HIT0	src/hadavin_sdk/models.py	class Reply(Shape): || latency_ms: int = 0	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	235	injection.py:77	single	HIT0	src/hadavin_sdk/guard/injection.py	cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	235	common.py:164-172	range	HIT0	src/hadavin_sdk/llm/common.py	tokens_in = tokens[0] or estimate_tokens(sent) || text=text,	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	235	llm/openai_compat.py:131	single	HIT0	src/hadavin_sdk/llm/openai_compat.py	got.tokens = (used[0] or None, used[1] or None)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	235	llm/openai_compat.py:117-129	range	HIT0	src/hadavin_sdk/llm/openai_compat.py	started, used = time.monotonic(), [0, 0] || break	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	241	llm/common.py:164	single	MOVED	src/hadavin_sdk/llm/common.py nearest anchor line 152 (delta 12) anchors=['reply']	tokens_in = tokens[0] or estimate_tokens(sent)	STRICT_MOVED:reply@[1, 152]
+CORE-PR-HANDOFF-v15.md	243	store/postgres.py:416-431	range	HIT0	src/hadavin_sdk/store/postgres.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: || return Decimal(d), Decimal(m)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	243	store/memory.py:196-204	range	HIT0	src/hadavin_sdk/store/memory.py	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: || return self._spend[(agent_id, day)], Decimal(month)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	248	app.py:166-169	range	HIT0	src/hadavin_sdk/app.py	detector = combine(members) || summary_detector = combine([m for m in members if m.backend 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	248	approvals/cards.py:79-83	range	HIT0	src/hadavin_sdk/approvals/cards.py	"and injection_check(detector, diagnosis, ""shadow_card"").flagged || *([WARNING.strip()] if flagged else []),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	248	cards.py:79	single	HIT0	src/hadavin_sdk/approvals/cards.py	"and injection_check(detector, diagnosis, ""shadow_card"").flagged"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	248	src/hadavin_sdk/tools.py:1122	single	MOVED	src/hadavin_sdk/tools.py nearest anchor line 1115 (delta 7) anchors=['check', 'finally', 'inner', 'limits']	"worker = threading.Thread(target=work, daemon=True, name=""hadavin-tool"")"	STRICT_MOVED:inner@[706, 709, 711];check@[8, 356];scope@[1188]
+CORE-PR-HANDOFF-v15.md	248	guard/http.py:90-93	range	HIT0	src/hadavin_sdk/guard/http.py	"finally: || worker = threading.Thread(target=lookup, daemon=True, name="""	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	249	agent_loop.py:440	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	self.limits.charge(agent_id, reply.cost_usd)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	249	agent_loop.py:314	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	self.limits.charge(run.agent_id, verdict.cost_usd)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	249	tests/test_s4_llm_guard.py:39	single	HIT0	tests/test_s4_llm_guard.py	"assert reply.cost_usd == Decimal(""0.00225"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	249	tests/test_s5_runtime.py:76	single	MOVED	tests/test_s5_runtime.py nearest anchor line 109 (delta 33) anchors=['Limits', 'charge']	"assert rt.store.get_run(run.run_id).cost_usd == Decimal(""0.00225"")"	STRICT_MOVED:charge@[109, 116];Limits@[11, 28]
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:325-351	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def handle( || cited: list[str] = []  # call ids of the read-tool calls mad	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:352-541	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	rmap: dict[str, str] = runmap.RunMap(mapping or {}) || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:403	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	manifest = self.registry.tools.get(agent_id, {})	STRICT_MOVED:injection_check@[27, 312];handle@[325];code@[86, 435, 438, 439]
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:405	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	for name in self.registry.tools_for(agent_id, set(self.hooks.tools) | box_names):	STRICT_MOVED:injection_check@[27, 312];handle@[325];code@[86, 435, 438, 439]
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:418	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"system = self.registry.prompt(agent_id) + (f""\n\n{_TOOL_RULE}"" if tooled else """")"	STRICT_MOVED:injection_check@[27, 312];handle@[325];code@[86, 435, 438, 439]
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:440	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	self.limits.charge(agent_id, reply.cost_usd)	STRICT_MOVED:injection_check@[27, 312];handle@[325];code@[86, 435, 438, 439]
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:432-433	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	except ( || ProviderError	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	guard/injection.py:85	single	HIT0	src/hadavin_sdk/guard/injection.py	def injection_check(detector: Detector, text: str, source: str) -> Verdict:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	approvals/requests.py:37-40	range	HIT0	src/hadavin_sdk/approvals/requests.py	"flagged = detector is not None and injection_check(detector, inputs, ""approval_summary"").f || f""{WARNING if flagged else ''}{plan.agent_id} asks to run {p"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	approvals/cards.py:79-83	range	HIT0	src/hadavin_sdk/approvals/cards.py	"and injection_check(detector, diagnosis, ""shadow_card"").flagged || *([WARNING.strip()] if flagged else []),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:312	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	verdict = injection_check(self.detector, text, source)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:239-250	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: || return None	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:359	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:421	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	251	agent_loop.py:460	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	guard/injection.py:81	single	HIT0	src/hadavin_sdk/guard/injection.py	def combine(detectors: list[Detector]) -> Detector:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	guard/injection.py:69-70	range	HIT0	src/hadavin_sdk/guard/injection.py	def check(self, text: str, source: str) -> Verdict: || verdicts = [injection_check(d, text, source) for d in self.d	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	k1b/loop.py:205	single	HIT0	src/hadavin_sdk/k1b/loop.py	"verdict = injection_check(detector, shown, ""k1b-tool-result"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	guard/judge.py:100-108	range	HIT0	src/hadavin_sdk/guard/judge.py	"def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]: || passed += v.reason_code != ""guard_unavailable"" and v.flagged"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	evals.py:109	single	HIT0	src/hadavin_sdk/evals.py	ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	guard/judge.py:108	single	HIT0	src/hadavin_sdk/guard/judge.py	"passed += v.reason_code != ""guard_unavailable"" and v.flagged == case[""injection""]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	252	evals.py:104-110	range	HIT0	src/hadavin_sdk/evals.py	for d in cfg.backends.detector: || judges_green = judges_green and total > 0 and ok / total >= 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	253	k1b/loop.py:205	single	MOVED	src/hadavin_sdk/k1b/loop.py nearest anchor line 181 (delta 24) anchors=['aborted', 'error']	"verdict = injection_check(detector, shown, ""k1b-tool-result"")"	STRICT_MOVED:aborted@[69, 171, 177]
+CORE-PR-HANDOFF-v15.md	255	approvals/requests.py:30	single	HIT0	src/hadavin_sdk/approvals/requests.py	"WARNING = ""WARNING: the inputs read like instructions to an AI. Check them before approvin"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	255	approvals/requests.py:37-40	range	HIT0	src/hadavin_sdk/approvals/requests.py	"flagged = detector is not None and injection_check(detector, inputs, ""approval_summary"").f || f""{WARNING if flagged else ''}{plan.agent_id} asks to run {p"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	255	approvals/cards.py:79-83	range	HIT0	src/hadavin_sdk/approvals/cards.py	"and injection_check(detector, diagnosis, ""shadow_card"").flagged || *([WARNING.strip()] if flagged else []),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	257	runtime/agent_loop.py:318-322	range	MOVED	src/hadavin_sdk/runtime/agent_loop.py nearest anchor line 389 (delta 69) anchors=['reason_code']	def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: || return run	STRICT_MOVED:reason_code@[389, 390, 523, 525]
+CORE-PR-HANDOFF-v15.md	258	agent_loop.py:359	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	258	agent_loop.py:421	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	258	agent_loop.py:460	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	if (stopped := self._limits_stop(run, cited)) is not None:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	258	tests/test_s5_runtime.py:107-111	range	HIT0	tests/test_s5_runtime.py	"def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): || assert (run.state, run.reason_code) == (S.DENIED, ""limits.da"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	268	agent_loop.py:83	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	GUARD_STOP_REASONS = frozenset(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	270	agent_loop.py:87	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"_REASON_TEXT = {""ungrounded"": ""ungrounded (inputs not found in cited evidence)""}"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	270	agent_loop.py:574	single	HIT0	src/hadavin_sdk/runtime/agent_loop.py	"label = _REASON_TEXT.get(reason or """", reason or ""no proposal"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	280	store/postgres.py:194	single	HIT0	src/hadavin_sdk/store/postgres.py	# A dropped connection fails the call (the run ends safely); reconnect-on-error arrives wi	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	285	.github/workflows/ci.yml:36-40	range	NOANCHOR_IN_FILE	.github/workflows/ci.yml	# The postgres store's contract suite runs against this throwaway database (no data, no se || image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6a	
+CORE-PR-HANDOFF-v15.md	286	store/migrate.py:80-85	range	HIT0	src/hadavin_sdk/store/migrate.py	_SAFE_CREATE = re.compile( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	286	store/migrate.py:150-166	range	HIT0	src/hadavin_sdk/store/migrate.py	def check_grants(paths: list[Path]) -> list[str]: || return problems	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	286	store/migrate.py:53-55	range	HIT0	src/hadavin_sdk/store/migrate.py	"""spend"": Grant(""table"", _RW), || ""kill_switch"": Grant(""table"", _RW),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	store/migrate.py:93-94	range	HIT0	src/hadavin_sdk/store/migrate.py	"def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: || return sorted(folder.glob(""*.sql""))"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	store/migrate.py:304	single	HIT0	src/hadavin_sdk/store/migrate.py	files = _migration_files()	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	store/migrate.py:93	single	HIT0	src/hadavin_sdk/store/migrate.py	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	tests/test_k2_migrations.py:108	single	HIT0	tests/test_k2_migrations.py	"monkeypatch.setattr(mig, ""_migration_files"", lambda: files)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	tests/test_k5_fixes2.py:300	single	HIT0	tests/test_k5_fixes2.py	"monkeypatch.setattr(mig, ""_migration_files"", lambda: files)"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	store/migrate.py:97-107	range	HIT0	src/hadavin_sdk/store/migrate.py	def check_ledger(paths: list[Path]) -> list[str]: || return problems	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	288	tests/test_lockin_guard.py:642-646	range	HIT0	tests/test_lockin_guard.py	def test_no_vendor_literal_in_migrations(): || 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	294	postgres.py:192-197	range	HIT0	src/hadavin_sdk/store/postgres.py	class PostgresStore: || self._lock = threading.Lock()	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	294	postgres.py:146	single	HIT0	src/hadavin_sdk/store/postgres.py	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	298	store/migrate.py:53-54	range	HIT0	src/hadavin_sdk/store/migrate.py	"""spend"": Grant(""table"", _RW), || ""spend_month"": Grant(""table"", _RW),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	298	store/migrate.py:53-55	range	HIT0	src/hadavin_sdk/store/migrate.py	"""spend"": Grant(""table"", _RW), || ""kill_switch"": Grant(""table"", _RW),"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	302	guard/bedrock_guardrail.py:61	single	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	def make(settings: Any, deps: Any) -> GuardrailDetector:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	302	guard/bedrock_guardrail.py:101	single	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	resp = self._client.apply_guardrail(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	302	guard/bedrock_guardrail.py:98-106	range	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	text = runmap.redact_text( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	302	guard/bedrock_guardrail.py:28-29	range	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	def _client(service: str, region: str) -> Any: || return boto3.client(	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	306	evals.py:73	single	MOVED	src/hadavin_sdk/evals.py nearest anchor line 104 (delta 31) anchors=['backends', 'gate', 'kind']	reply = llm.chat(	STRICT_MOVED:backends@[104];kind@[105];gate@[1, 35, 37, 122]
+CORE-PR-HANDOFF-v15.md	306	extract.py:47	single	MOVED	src/hadavin_sdk/extract.py nearest anchor line 37 (delta 10) anchors=['extract', 'type']	reply = llm.chat(	STRICT_MOVED:type@[37];extract@[34]
+CORE-PR-HANDOFF-v15.md	306	k1b/loop.py:94	single	HIT0	src/hadavin_sdk/k1b/loop.py	"box[""reply""] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	306	src/hadavin_sdk/cli.py:90-92	range	HIT0	src/hadavin_sdk/cli.py	"g = sub.add_parser(""gate"", help=""run an agent's golden set"") || g.add_argument(""--k"", type=_positive, default=1, help=""runs "	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	306	src/hadavin_sdk/cli.py:146	single	HIT0	src/hadavin_sdk/cli.py	"if args.cmd == ""gate"":"	STRICT_MOVED:default@[4, 92, 114];max_usd@[239];_money@[60, 116]
+CORE-PR-HANDOFF-v15.md	306	src/hadavin_sdk/cli.py:115-117	range	HIT0	src/hadavin_sdk/cli.py	rep.add_argument( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	307	k1b/loop.py:84-107	range	HIT0	src/hadavin_sdk/k1b/loop.py	def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -> Reply: || if t.is_alive():	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	307	k1b/loop.py:115-122	range	HIT0	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	307	k1b/loop.py:170-172	range	HIT0	src/hadavin_sdk/k1b/loop.py	budget.charge(worst_case_usd(route_prices, system, messages)) || return out	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	329	models.py:23-24	range	HIT0	src/hadavin_sdk/models.py	"def new_id(prefix: str) -> str: || return f""{prefix}-{uuid.uuid4().hex}"""	STRICT_MOVED:models@[275]
+CORE-PR-HANDOFF-v15.md	342	agent_loop.py:425-427	range	MOVED	src/hadavin_sdk/runtime/agent_loop.py nearest anchor line 325 (delta 101) anchors=['Runtime', 'handle']	reply = self.llm.chat( || system=system,	STRICT_MOVED:Runtime@[1, 3, 183];handle@[325]
+CORE-PR-HANDOFF-v15.md	343	guard/judge.py:70-72	range	NOANCHOR	src/hadavin_sdk/guard/judge.py	# already redacted (placeholders pass unchanged); a refusal raises and `injection_check` f || reply = self.llm.chat(	
+CORE-PR-HANDOFF-v15.md	344	bedrock_guardrail.py:101	single	NOANCHOR_IN_FILE	src/hadavin_sdk/guard/bedrock_guardrail.py	resp = self._client.apply_guardrail(	
+CORE-PR-HANDOFF-v15.md	345	evals.py:73	single	MOVED	src/hadavin_sdk/evals.py nearest anchor line 37 (delta 36) anchors=['gate']	reply = llm.chat(	STRICT_MOVED:gate@[1, 35, 37, 122]
+CORE-PR-HANDOFF-v15.md	346	extract.py:47	single	NOANCHOR_IN_FILE	src/hadavin_sdk/extract.py	reply = llm.chat(	
+CORE-PR-HANDOFF-v15.md	347	k1b/loop.py:94	single	MOVED	src/hadavin_sdk/k1b/loop.py nearest anchor line 133 (delta 39) anchors=['Budget']	"box[""reply""] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]"	STRICT_MOVED:Budget@[40, 133]
+CORE-PR-HANDOFF-v15.md	349	pipeline.py:155	single	NOANCHOR	demos/ask-your-data/askdata/pipeline.py	reply = self.llm.chat(	
+CORE-PR-HANDOFF-v15.md	353	app.py:162-167	range	HIT0	src/hadavin_sdk/app.py	"llm = llm or make(""llm"", b.llm, secrets, routes=cfg.routes) || # The approval summary screen has no agent to charge, so it "	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	353	src/hadavin_sdk/cli.py:150	single	HIT0	src/hadavin_sdk/cli.py	"make(""llm"", b.llm, make(""secrets"", b.secrets), routes=cfg.routes),"	STRICT_MOVED:detector@[222, 223, 226, 233];Limits@[43, 209, 383];table@[367]
+CORE-PR-HANDOFF-v15.md	353	llm/common.py:233	single	HIT0	src/hadavin_sdk/llm/common.py	def _retry(self, call: Callable[[], Answer]) -> Answer:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	363	k1b/loop.py:115-122	range	HIT0	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	389	config.py:377	single	AMBIG	src/hadavin_sdk/config.py,demos/ask-your-data/askdata/config.py	def _anchor_refusals(environment: str, b: Backends) -> list[str]:	
+CORE-PR-HANDOFF-v15.md	389	table.py:155	single	MOVED	src/hadavin_sdk/backends/table.py nearest anchor line 152 (delta 3) anchors=['anchor_s3', 'audit', 'config']	retain_days: int = Field(default=1, ge=1)	STRICT_MOVED:anchor_s3@[471]
+CORE-PR-HANDOFF-v15.md	400	ci.yml:79	single	HIT0	.github/workflows/ci.yml	run: ruff check src tests demos	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:81	single	HIT0	.github/workflows/ci.yml	run: ruff format --check src tests demos	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:88	single	HIT0	.github/workflows/ci.yml	"run: pytest -q -m ""not live and not perf"" -rs"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:94	single	HIT0	.github/workflows/ci.yml	run: pytest -q -m perf -rs	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:119	single	HIT0	.github/workflows/ci.yml	run: bandit -q -r src demos -ll	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	.github/workflows/ci.yml:86-87	range	HIT0	.github/workflows/ci.yml	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres || HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:93	single	HIT0	.github/workflows/ci.yml	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs 	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:77	single	HIT0	.github/workflows/ci.yml	run: uv sync --locked --no-build --all-extras --group test	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	400	ci.yml:83-88	range	HIT0	.github/workflows/ci.yml	"run: psql --version || run: pytest -q -m ""not live and not perf"" -rs"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	403	k1b/loop.py:115-122	range	HIT0	src/hadavin_sdk/k1b/loop.py	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: || ) / Decimal(1_000_000)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	410	llm/bedrock.py:108	single	HIT0	src/hadavin_sdk/llm/bedrock.py	"code = exc.response.get(""ResponseMetadata"", {}).get(""HTTPStatusCode"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	415	guard/injection.py:92-97	range	HIT0	src/hadavin_sdk/guard/injection.py	_LOG.warning( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	427	.github/workflows/ci.yml:108-144	range	HIT0	.github/workflows/ci.yml	"checksum: ""f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"" || ""$RUNNER_TEMP/trivy"" fs --skip-dirs .venv --scanners vuln,mi"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	431	k1b/loop.py:176	single	HIT0	src/hadavin_sdk/k1b/loop.py	except ProviderError:	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	431	runtime/agent_loop.py:432-433	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	except ( || ProviderError	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	464	guard/bedrock_guardrail.py:36	single	HIT0	src/hadavin_sdk/guard/bedrock_guardrail.py	"retries={""total_max_attempts"": 2, ""mode"": ""standard""},"	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	464	tests/demo_askdata/test_meter.py:121-170	range	HIT0	tests/demo_askdata/test_meter.py	def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): || def test_remaining_is_the_smaller_of_the_two_rooms(tmp_path)	STRICT_HIT
+CORE-PR-HANDOFF-v15.md	464	guard/judge.py:107	single	MOVED	src/hadavin_sdk/guard/judge.py nearest anchor line 100 (delta 7) anchors=['common', 'numeric', 'qualify']	"v = injection_check(judge, case[""text""], ""golden"")"	STRICT_MOVED:qualify@[100];numeric@[56, 57];common@[23]
+CORE-PR-HANDOFF-v15-other-tracks.md	34	approvals/gate.py:681-698	range	HIT0	src/hadavin_sdk/approvals/gate.py	"def withhold_commands(text: str) -> str: || return """".join(out) + text[last:]"	STRICT_MOVED:withheld@[54, 369, 374, 388]
+CORE-PR-HANDOFF-v15-other-tracks.md	35	approvals/gate.py:647-678	range	HIT0	src/hadavin_sdk/approvals/gate.py	_WRITE_SHAPES = re.compile( || )	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	36	llm/fake.py:39-40	range	HIT0	src/hadavin_sdk/llm/fake.py	"doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode(""utf-8"") || digest = hashlib.sha256(doc).hexdigest()"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	37	audit/chain.py:134-149	range	HIT0	src/hadavin_sdk/audit/chain.py	@dataclass || return self.rows - self.signed_through	STRICT_MOVED:verify_rows@[360, 363]
+CORE-PR-HANDOFF-v15-other-tracks.md	37	audit/chain.py:363-383	range	HIT0	src/hadavin_sdk/audit/chain.py	def verify_rows( || return result	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	37	src/hadavin_sdk/cli.py:349-363	range	HIT0	src/hadavin_sdk/cli.py	def audit_verify(audit) -> int: || return 0 if result.ok else 1	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	38	actions/secrets_file.py:33-64	range	HIT0	src/hadavin_sdk/actions/secrets_file.py	def _fetch(self, name: str) -> str: || ) from None	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	38	audit/signer.py:104-108	range	HIT0	src/hadavin_sdk/audit/signer.py	else: || source, pem = str(path), path.read_bytes()	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15-other-tracks.md	39	models.py:218-222	range	HIT0	src/hadavin_sdk/models.py	class DeadLetter(Shape): || ts: datetime = Field(default_factory=now)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	39	extract.py:18-25	range	HIT0	src/hadavin_sdk/extract.py	@dataclass || return sum((r.cost_usd for r in self.replies), Decimal(0))	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	40	guard/injection.py:85-101	range	HIT0	src/hadavin_sdk/guard/injection.py	def injection_check(detector: Detector, text: str, source: str) -> Verdict: || return Verdict(flagged=True, score=1.0, backend=name, reason	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	47	.github/workflows/ci.yml:119	single	NOANCHOR	.github/workflows/ci.yml	run: bandit -q -r src demos -ll	
+CORE-PR-HANDOFF-v15-other-tracks.md	52	src/hadavin_sdk/config.py:317	single	HIT0	src/hadavin_sdk/config.py	"environment: Literal[""dev"", ""pilot"", ""prod""]"	STRICT_MOVED:other@[237, 242];check@[231]
+CORE-PR-HANDOFF-v15-other-tracks.md	53	chain.py:171	single	HIT0	src/hadavin_sdk/audit/chain.py	self.checkpoint_every = checkpoint_every	STRICT_MOVED:public@[352, 360, 459, 469];verify_rows@[360, 363];ChainAudit@[152, 518, 547]
+CORE-PR-HANDOFF-v15-other-tracks.md	53	chain.py:360	single	HIT0	src/hadavin_sdk/audit/chain.py	return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	60	chain.py:161	single	HIT0	src/hadavin_sdk/audit/chain.py	checkpoint_every: int = 100,	STRICT_MOVED:unsigned_tail@[148]
+CORE-PR-HANDOFF-v15-other-tracks.md	60	backends/table.py:193	single	HIT0	src/hadavin_sdk/backends/table.py	checkpoint_every: int = Field(default=100, ge=1)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	60	backends/table.py:192-193	range	HIT0	src/hadavin_sdk/backends/table.py	class ChainSettings(KindSettings): || checkpoint_every: int = Field(default=100, ge=1)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	62	anchor_gcs.py:69-85	range	HIT0	src/hadavin_sdk/audit/anchor_gcs.py	def probed(bucket: Any, settings) -> GcsAnchor: || return GcsAnchor(bucket)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	62	anchor_azure.py:83-96	range	HIT0	src/hadavin_sdk/audit/anchor_azure.py	def probed(container: Any, settings) -> AzureBlobAnchor: || )	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	64	src/hadavin_sdk/cli.py:349-363	range	HIT0	src/hadavin_sdk/cli.py	def audit_verify(audit) -> int: || return 0 if result.ok else 1	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	64	audit/chain.py:171	single	HIT0	src/hadavin_sdk/audit/chain.py	self.checkpoint_every = checkpoint_every	STRICT_MOVED:configured@[21, 83, 378, 468];verify_rows@[360, 363];tick@[153, 534]
+CORE-PR-HANDOFF-v15-other-tracks.md	64	audit/chain.py:360	single	HIT0	src/hadavin_sdk/audit/chain.py	return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	64	chain.py:203	single	HIT0	src/hadavin_sdk/audit/chain.py	if self.signer is not None and seq % self.checkpoint_every == 0:	STRICT_MOVED:configured@[21, 83, 378, 468];verify_rows@[360, 363];tick@[153, 534]
+CORE-PR-HANDOFF-v15-other-tracks.md	68	evals.py:63	single	HIT0	src/hadavin_sdk/evals.py	"doc = runmap.redact_untrusted(doc.decode(""utf-8"", ""replace""), {}).encode(""utf-8"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	68	models.py:221	single	HIT0	src/hadavin_sdk/models.py	errors: list[str]	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	68	evals.py:63	single	HIT0	src/hadavin_sdk/evals.py	"doc = runmap.redact_untrusted(doc.decode(""utf-8"", ""replace""), {}).encode(""utf-8"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	68	extract.py:58	single	HIT0	src/hadavin_sdk/extract.py	"errors.append(f""{exc.__class__.__name__}: {safe_head(str(exc), 300)}"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	76	llm/fake.py:39-40	range	HIT0	src/hadavin_sdk/llm/fake.py	"doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode(""utf-8"") || digest = hashlib.sha256(doc).hexdigest()"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	80	actions/secrets_file.py:49-64	range	HIT0	src/hadavin_sdk/actions/secrets_file.py	"with os.fdopen(fd, ""rb"") as f: || ) from None"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	82	signer.py:104-108	range	HIT0	src/hadavin_sdk/audit/signer.py	else: || source, pem = str(path), path.read_bytes()	STRICT_MOVED:build_local@[96];audit@[5]
+CORE-PR-HANDOFF-v15-other-tracks.md	82	secrets_file.py:54	single	NOANCHOR_IN_FILE	src/hadavin_sdk/actions/secrets_file.py	"if os.name != ""nt"" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):"	
+CORE-PR-HANDOFF-v15-other-tracks.md	83	secrets_file.py:54	single	NOANCHOR_IN_FILE	src/hadavin_sdk/actions/secrets_file.py	"if os.name != ""nt"" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):"	
+CORE-PR-HANDOFF-v15-other-tracks.md	83	src/hadavin_sdk/config.py:395-396	range	HIT0	src/hadavin_sdk/config.py	"if b.signer.kind == ""ed25519_local"" and b.signer.private_key_path is not None: || refused.append(""signer ed25519_local with a key file (use pr"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	83	signer.py:182	single	MOVED	src/hadavin_sdk/audit/signer.py nearest anchor line 116 (delta 66) anchors=['ed25519_local']	_create(private_real, pem, 0o600)	STRICT_MOVED:ed25519_local@[4, 107, 114, 116]
+CORE-PR-HANDOFF-v15-other-tracks.md	84	audit/signer.py:197	single	HIT0	src/hadavin_sdk/audit/signer.py	return _private_key(path.read_bytes(), passphrase, str(path))	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	84	audit/signer.py:209	single	HIT0	src/hadavin_sdk/audit/signer.py	key = serialization.load_pem_public_key(path.read_bytes())	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	85	tests/test_lockin_guard.py:68-75	range	HIT0	tests/test_lockin_guard.py	"LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer || ""markdown_it"": {f""{PKG}.approvals.gate""},"	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15-other-tracks.md	91	tests/test_g4_parity.py:98	single	NOANCHOR_IN_FILE	tests/test_g4_parity.py	"""update its set of rules"","	
+CORE-PR-HANDOFF-v15-other-tracks.md	114	gate.py:4	single	NOANCHOR	src/hadavin_sdk/approvals/gate.py	(`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral 	
+CORE-PR-HANDOFF-v15-other-tracks.md	114	gate.py:366-377	range	NOANCHOR	src/hadavin_sdk/approvals/gate.py	 || #	
+CORE-PR-HANDOFF-v15-other-tracks.md	114	channel.py:19-21	range	NOANCHOR	src/hadavin_sdk/approvals/channel.py	"""""""WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control cha || paste to change a system, on any platform; then ONE redactio"	
+CORE-PR-HANDOFF-v15-other-tracks.md	115	gate.py:546	single	HIT0	src/hadavin_sdk/approvals/gate.py	"_TOKEN = re.compile(r""[^\S\n]+([^\s]+)"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	115	gate.py:695	single	HIT0	src/hadavin_sdk/approvals/gate.py	"end = text.find(""\n"", m.end())"	STRICT_MOVED:_PROGRAM@[541, 686];_TOKEN@[546, 565]
+CORE-PR-HANDOFF-v15-other-tracks.md	116	gate.py:608-615	range	HIT0	src/hadavin_sdk/approvals/gate.py	def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool: || return True  # `the aws Lambda runtime`: a capitalised word 	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	118	gate.py:674	single	HIT0	src/hadavin_sdk/approvals/gate.py	"r""|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"""	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	118	gate.py:540	single	HIT0	src/hadavin_sdk/approvals/gate.py	"_NAMES = [""aws"", *_VERB_FIRST, *_WORD_RUN]"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	119	gate.py:404	single	HIT0	src/hadavin_sdk/approvals/gate.py	"_AWS_READ_PREFIXES = (""describe-"", ""get-"", ""list-"", ""head-"", ""batch-get-"", ""lookup-"", ""sea"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	119	gate.py:597	single	HIT0	src/hadavin_sdk/approvals/gate.py	"words[1].startswith(_AWS_READ_PREFIXES) or (words[0] == ""s3"" and words[1] == ""ls"")"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	124	gate.py:573-589	range	HIT0	src/hadavin_sdk/approvals/gate.py	def _subcommands(toks: list[str]) -> list[str]: || return words	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	129	guard/redact.py:472	single	HIT0	src/hadavin_sdk/guard/redact.py	"""PHONE"","	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15-other-tracks.md	131	tests/warden_port/privacy_corpus.py:41-42	range	HIT0	tests/warden_port/privacy_corpus.py	"""CREDITCARD"": [ || ""card 4111 1111 1111 1111"","	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	131	tests/warden_port/test_redaction.py:309	single	MOVED	tests/warden_port/test_redaction.py nearest anchor line 355 (delta 46) anchors=['CREDITCARD']	"for pan in (""4111 1111 1111 1111"", ""4111-1111-1111-1111""):"	STRICT_MOVED:CREDITCARD@[355]
+CORE-PR-HANDOFF-v15-other-tracks.md	133	guard/redact.py:513	single	HIT0	src/hadavin_sdk/guard/redact.py	"# A HAR entry (`{""name"": ""Cookie"", ""value"": ""...""}`), curl's `--cookie`/`-b`, and a cookie"	STRICT_MOVED:redact@[17, 358, 862]
+CORE-PR-HANDOFF-v15-other-tracks.md	133	guard/redact.py:513	single	HIT0	src/hadavin_sdk/guard/redact.py	"# A HAR entry (`{""name"": ""Cookie"", ""value"": ""...""}`), curl's `--cookie`/`-b`, and a cookie"	STRICT_MOVED:redact@[17, 358, 862]
+CORE-PR-HANDOFF-v15-other-tracks.md	133	src/hadavin_sdk/guard/redact.py:513-519	range	HIT0	src/hadavin_sdk/guard/redact.py	"# A HAR entry (`{""name"": ""Cookie"", ""value"": ""...""}`), curl's `--cookie`/`-b`, and a cookie || ),"	STRICT_MOVED:redact@[17, 358, 862]
+CORE-PR-HANDOFF-v15-other-tracks.md	133	k1b/redaction.py:103	single	HIT0	src/hadavin_sdk/k1b/redaction.py	def _pair(key: str, value: str, f: Callable[[str], str]) -> str:	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/config.py:451-454	range	HIT0	src/hadavin_sdk/config.py	except ConfigError: || raise ConfigError(str(exc)) from exc	STRICT_MOVED:before@[172, 217];DEV_ONLY@[19, 368];load_config@[34, 436]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/config.py:317	single	HIT0	src/hadavin_sdk/config.py	"environment: Literal[""dev"", ""pilot"", ""prod""]"	STRICT_MOVED:before@[172, 217];DEV_ONLY@[19, 368];load_config@[34, 436]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/config.py:366-368	range	HIT0	src/hadavin_sdk/config.py	"if self.environment != ""dev"": || f""{c}: {s.kind}"" for c, s in self.backends.entries() if (c, "	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/config.py:19	single	HIT0	src/hadavin_sdk/config.py	from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	backends/table.py:593	single	HIT0	src/hadavin_sdk/backends/table.py	DEV_ONLY: frozenset[tuple[str, str]] = frozenset(	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	tests/test_lockin_guard.py:18	single	HIT0	tests/test_lockin_guard.py	from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	tests/test_p4_secrets.py:106	single	HIT0	tests/test_p4_secrets.py	"def _config(tmp_path, secrets, environment=""dev""):"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	tests/warden_port/test_audit_chain.py:568-573	range	HIT0	tests/warden_port/test_audit_chain.py	"found = _anchor_refusals(""dev"", _backends(ANCHOR, KMS, local)) || for bad in ({**ANCHOR, ""kind"": ""gcs_bucket_lock""}, {**ANCHOR"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	tests/test_p1b_backends.py:89-91	range	HIT0	tests/test_p1b_backends.py	"@pytest.mark.parametrize(""env"", [""pilot"", ""prod""]) || _edit(cfg_dir, lambda d: d.update(environment=env))"	STRICT_MOVED:yaml@[6, 19, 20, 22]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	actions/secrets_env.py:1	single	HIT0	src/hadavin_sdk/actions/secrets_env.py	"""""""`env` secrets: read from environment variables (`dev` only, by the environment table)."	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	audit/signer.py:64	single	HIT0	src/hadavin_sdk/audit/signer.py	"""""""An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table)."	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	table.py:126	single	HIT2	src/hadavin_sdk/backends/table.py	# (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.	STRICT_MOVED:field_validator@[17, 203];before@[294, 385];environment@[152, 215]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/config.py:346	single	MOVED	src/hadavin_sdk/config.py nearest anchor line 349 (delta 3) anchors=['Config', 'ConfigError', 'DEV_ONLY', 'ValueError']	)  # dev executor only	STRICT_MOVED:before@[172, 217];DEV_ONLY@[19, 368];load_config@[34, 436]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	defaults.py:100	single	HIT0	src/hadavin_sdk/defaults.py	EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_	STRICT_MOVED:before@[13, 45, 72, 78];config@[3, 59]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	registry.py:50	single	MOVED	src/hadavin_sdk/registry.py nearest anchor line 66 (delta 16) anchors=['Config', 'ConfigError', 'ValueError', 'before']	# Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: 	STRICT_MOVED:before@[111];environment@[321];ValueError@[97]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	src/hadavin_sdk/tools.py:361	single	MOVED	src/hadavin_sdk/tools.py nearest anchor line 369 (delta 8) anchors=['Config', 'ConfigError', 'ValueError', 'before']	"Without a pin (dev only; pilot and prod require one) it is an ordinary import."""""""	STRICT_MOVED:Config@[1041];environment@[602];config@[75, 93]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	agent_loop.py:174-179	range	HIT0	src/hadavin_sdk/runtime/agent_loop.py	# tool calls the purge must keep (K6 supplies labelled and demoted runs; before K6 there a || # Keys the HMAC of the restored inputs on the gate's audit e	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	141	actions/contract.py:34	single	MOVED	src/hadavin_sdk/actions/contract.py nearest anchor line 56 (delta 22) anchors=['ValueError', 'config', 'mode', 'yaml']	"""""""Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1"	STRICT_MOVED:config@[56];yaml@[1];mode@[67]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	store/postgres.py:75	single	HIT2	src/hadavin_sdk/store/postgres.py	captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_au	STRICT_MOVED:ValueError@[65];change@[515]
+CORE-PR-HANDOFF-v15-other-tracks.md	141	guard/redact.py:1162	single	MOVED	src/hadavin_sdk/guard/redact.py nearest anchor line 1233 (delta 71) anchors=['before']	"""dev"","	NO_RARE_ANCHOR
+CORE-PR-HANDOFF-v15-other-tracks.md	142	backends/table.py:155	single	HIT0	src/hadavin_sdk/backends/table.py	retain_days: int = Field(default=1, ge=1)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	142	src/hadavin_sdk/config.py:377-398	range	HIT0	src/hadavin_sdk/config.py	def _anchor_refusals(environment: str, b: Backends) -> list[str]: || 	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	142	table.py:150-157	range	HIT0	src/hadavin_sdk/backends/table.py	class _AnchorSettings(KindSettings): || 	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	142	anchor_gcs.py:69-85	range	HIT0	src/hadavin_sdk/audit/anchor_gcs.py	def probed(bucket: Any, settings) -> GcsAnchor: || return GcsAnchor(bucket)	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	142	anchor_azure.py:83-96	range	HIT0	src/hadavin_sdk/audit/anchor_azure.py	def probed(container: Any, settings) -> AzureBlobAnchor: || )	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	142	anchor_s3.py:4-7	range	HIT0	src/hadavin_sdk/audit/anchor_s3.py	default, COMPLIANCE only in prod with `retention_ack`), and every put carries `IfNoneMatch || ends, a history rewritten afterwards no longer matches its a	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	143	CHANGELOG.md:35	single	AMBIG	handover/egm/A24/snapshot-db0e0ce/files/CHANGELOG.md,handover/egm/A19/snapshot-85e0801/CHANGELOG.md,handover/egm/A19/snapshot-f1e9e9d/files/CHANGELOG.md	- New settings, both under `evidence`: `max_map_entries` defaults to 2000 (a run whose tex	
+CORE-PR-HANDOFF-v15-other-tracks.md	143	src/hadavin_sdk/audit/chain.py:140	single	MOVED	src/hadavin_sdk/audit/chain.py nearest anchor line 172 (delta 32) anchors=['cannot', 'lost', 'never']	"False  # the audit or its anchors could not be read: not checked, not ""tampered"""	STRICT_MOVED:lost@[19, 450]
+CORE-PR-HANDOFF-v15-other-tracks.md	178	.github/workflows/ci.yml:86-87	range	HIT0	.github/workflows/ci.yml	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres || HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	178	ci.yml:77	single	HIT2	.github/workflows/ci.yml	run: uv sync --locked --no-build --all-extras --group test	STRICT_MOVED:bandit@[119];ruff@[79, 81];pytest@[88, 94]
+CORE-PR-HANDOFF-v15-other-tracks.md	178	ci.yml:83-88	range	HIT0	.github/workflows/ci.yml	"run: psql --version || run: pytest -q -m ""not live and not perf"" -rs"	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	182	ci.yml:79	single	HIT0	.github/workflows/ci.yml	run: ruff check src tests demos	STRICT_HIT
+CORE-PR-HANDOFF-v15-other-tracks.md	207	chain.py:171	single	MOVED	src/hadavin_sdk/audit/chain.py nearest anchor line 315 (delta 144) anchors=['check', 'evidence']	self.checkpoint_every = checkpoint_every	STRICT_MOVED:evidence@[7, 315]

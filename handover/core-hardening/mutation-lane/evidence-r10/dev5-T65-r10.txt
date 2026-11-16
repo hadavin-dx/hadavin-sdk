@@ -1,0 +1,8 @@
+== T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped
+OSError (the failure itself) came out: [Errno 5] simulated read error (no signal)
+line hit: True SIG.allow: False first: 15 critical: True
+  PASS: T65 planted: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+OSError (the failure itself) came out: [Errno 5] simulated read error (no signal)
+line hit: True SIG.allow: False first: 15 critical: False
+  PASS: T65 control: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+FAILED CHECKS: 0 (of 2 checks run; skipped: none)

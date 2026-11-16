@@ -1,0 +1,1 @@
+checkpoint-c6q started 2026-11-16T16:20Z by machine clock. note 1: read c6p, both reviews, summary, ORDERS newest block. Plan: build_c6q.py patches REPORT-c6p.md (read only) into REPORT-c6q.md; verify-c6q.py extends verify-c6p.py.

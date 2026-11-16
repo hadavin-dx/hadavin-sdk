@@ -648,6 +648,11 @@ def write_target(
             on_open()
         fh.truncate(0)
         fh.write(data)
+        if (
+            created and mode & 0o7000
+        ):  # a write by a user without CAP_FSETID clears setuid/setgid: set the recorded bits again
+            fh.flush()
+            os.fchmod(fh.fileno(), mode)
 
 
 def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tuple[int, bool]:
@@ -784,6 +789,11 @@ def restore_target(
             fh.write(saved)
             fh.flush()
             os.fsync(fh.fileno())
+            want = 0o644 if mode is None else mode
+            if (created or need_mode) and want & 0o7000:
+                # r10: a write by a user without CAP_FSETID (not root) clears the setuid and setgid bits, so the recorded
+                # mode is set once more AFTER the write (T97e as user nobody: 4755 came back as 755)
+                os.fchmod(fh.fileno(), want)
         fh.seek(0)
         return already, fh.read()
 
