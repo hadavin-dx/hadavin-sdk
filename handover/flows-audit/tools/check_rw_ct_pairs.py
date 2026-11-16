@@ -44,7 +44,9 @@ def main(argv):
         return 2
     rows = list(paste_strings(rw))
     missing = [r for r in rows if r[2] not in ct]
-    print(f"paste strings in RW: {len(rows)} | found word for word in CT: {len(rows) - len(missing)}")
+    print(
+        f"paste strings in RW: {len(rows)} | found word for word in CT: {len(rows) - len(missing)}"
+    )
     print(f"not found in CT: {len(missing)}")
     for n, rid, s in missing:
         shown = s if "--list" in argv else s[:70]
