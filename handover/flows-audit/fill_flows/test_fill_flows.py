@@ -1183,6 +1183,20 @@ class Hardening(Base):
 
     def test_manifest_delete_refuses_a_folder_that_is_not_yours(self):
         out = self.made()
+        real = os.fstat
+
+        def other_dir_owner(fd):
+            st = real(fd)
+            if stat_is(st, "dir"):
+                return os.stat_result(
+                    (st.st_mode, *tuple(st)[1:4], os.getuid() + 1, *tuple(st)[5:])
+                )
+            return st
+
+        with mock.patch.object(ff.os, "fstat", other_dir_owner):
+            code, _, se = self.inproc("delete", "--out", out)
+        self.assertEqual((code, "folder is not owned by you" in se), (1, True), se)
+        self.assertEqual(len(os.listdir(out)), 5)
         with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
             code, _, se = self.inproc("delete", "--out", out)
         self.assertEqual((code, "not owned by you" in se), (1, True), se)
