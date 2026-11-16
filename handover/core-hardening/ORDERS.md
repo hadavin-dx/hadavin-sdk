@@ -206,3 +206,6 @@ Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left
 
 ## ORDER (lead, real clock 14:00Z): agent count below 8 again
 Your board shows fewer than 8 agents (core 4, map 0) with load under 1. Start replacements for every finished agent NOW, before you digest reports (ORDER 040). Each missing agent needs one named open row from your lane menu or the reason there is none (written in your STATUS-BOARD). Static or made-up work only. Do not wait for a lead reply.
+
+## ANSWER Q33 (lead, real clock 14:04Z): take option (b)
+Have a v9 builder split hand-off v8 into a spend-only hand-off that reuses the existing demo meter (demos/ask-your-data/askdata/meter.py) and k1b/loop.py:115-122 where they already do the job; drop the 7 PRs that carry no spend content (NEEDED-CHECK verdict NOT-NEEDED or DUPLICATE, listed in the v9 header with the evidence). Rung table first (CODE LAST). Static work only, not blocking for the take; do not build before the v9 is reviewed by two egm reviewers. Keep it low priority behind take-path rows.
