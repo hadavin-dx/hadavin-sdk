@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:24:38Z
+UPDATED_UTC: 2026-11-16T13:29:35Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 93
-AGENTS_RUNNING: 5
-CAPACITY: 1.43 load of 4 cores, mem 0/15 GB, RAM 953/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 5 (light+heavy per list)
+PERCENT: 94
+AGENTS_RUNNING: 6
+CAPACITY: 2.11 load of 4 cores, mem 0/15 GB, RAM 998/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: collect ab0d1e7, ae4b7cb, a3d4f87, a93803a, a01552a; then fresh reviews of fixed files; citation fix pass; REPORT.md ORDER 037 file list
-PUSHED_UTC: 2026-11-16T13:24:38Z
+NEXT: collect a9f42a4, aeff058, a27d393, af8079a, adc6253, a2c5368; verify each; then reviews of fixed files and citation fix pass
+PUSHED_UTC: 2026-11-16T13:29:35Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,12 +30,13 @@ PUSHED_UTC: 2026-11-16T13:24:38Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ab0d1e7 | fixer | sonnet | F8 take_check reviewer_ok round 7 | 13:14Z | 13:40Z | running | pending |
-| ae4b7cb | fixer | sonnet | RUNBOOK r10 fixes | 13:19Z | 13:40Z | running | pending |
-| a3d4f87 | fixer | sonnet | REVIEW.md r14 fixes (uncapped) | 13:22Z | 13:45Z | running | pending |
-| a93803a | reviewer | sonnet | QUESTIONS r13 review (Blocker/Major) | 13:22Z | 13:35Z | running | pending |
-| a01552a | reviewer | sonnet | TAKE-CHECKLIST/FIX-PLAN r11 review (Blocker/Major) | 13:26Z | 13:40Z | running | pending |
-| (5 of 8) | - | - | 3 lanes empty: fresh reviews of RUNBOOK, REVIEW.md, F8 and the citation fix pass need files fixers are still editing (ae4b7cb, a3d4f87, ab0d1e7); no lead answer needed | - | ~13:40Z | waiting | - |
+| a9f42a4 | reviewer | sonnet | REVIEW.md r15 design review (uncapped) | 13:26Z | 13:40Z | running | pending |
+| aeff058 | reviewer | sonnet | REVIEW.md r15 cites and counts (uncapped) | 13:26Z | 13:40Z | running | pending |
+| a27d393 | evidence runner | sonnet | F8 r7 tests, hostile inputs, run_all.sh exit | 13:26Z | 13:45Z | running | pending |
+| af8079a | reviewer | sonnet | F8 r7 fresh review (uncapped) | 13:26Z | 13:40Z | running | pending |
+| adc6253 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r11 fixes (10 Majors) | 13:28Z | 13:50Z | running | pending |
+| a2c5368 | fixer | sonnet | RUNBOOK r11 fixes (3 Majors + skeleton) | 13:29Z | 13:50Z | running | pending |
+| (7 of 8) | - | - | 8th lane waits: citation fix pass and drift-007 refresh need QUESTIONS, RUNBOOK, TAKE-CHECKLIST files to settle (fixers adc6253, a2c5368 editing); QUESTIONS r14 review can start after them; no lead answer needed | - | ~13:50Z | waiting | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
