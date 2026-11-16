@@ -3,3 +3,4 @@
 2. Needed before the take. Drift Blockers D-01 to D-05, D-10, S-03, L-01: apply or reject the replacement texts in drift/REPORT.md (operator decides; D-04 and D-05 with the studio head).
 3. Needed today (lead checks; no action from the studio head): can the saved HubSpot key delete contacts, and where is the SENDER app password file stored? (Unknown to this session.)
 4. Archive list: yes or no per row of ARCHIVE-CUT-LIST.md (after the take, not needed for Wed 18 Nov).
+5. (studio lead, from drift section 9) Five security Blockers in the take steps need your decision before the first real run: S9-1 flows stay inactive until the program prints its confirmation line; S9-2 the owner must compare the settings file figures himself; S9-3 revoke the model key in clean-up; S9-4 show masked mailbox and HubSpot portal in the notice; S9-5 remove "the studio lead's instructions win" for rules A, E, F, I. Reply apply or reject per item.

@@ -21,10 +21,10 @@ M8 [DRAFT cut list written (ARCHIVE-CUT-LIST.md); fact review running 2026-11-16
 M9 [DONE via M7 section 6, 2026-11-16] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
 
 ## REFILL 09:42Z (lead): start these NOW, in parallel, you have 1 agent and 3 free cores (target 70-85 percent)
-M10 SECOND-READER RING: for each deliverable already written (owner view, drift report, master map, ONE-PLACE-TABLE, cut list) start a FRESH naive reader (egm-comprehension) AND a facts-and-cites checker (egm-codebase-details) in parallel; log results in handover/system-map/rings/.
-M11 FACTS-ALREADY-DONE SWEEP: grep every document in the repo and in the other two sessions' pushed files (git show origin/cloud/<name>:...) for owner-step lists that ask the owner for accounts, keys, mailboxes, Docker, HubSpot accounts; list each place with line number and exact fix (one place per job).
-M12 VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (queue says Wed 18 morning IST, owner-steps say Thu 19 slot, deadline Wed 25 Nov 20:30 IST): list place, quote, fix.
-M13 THREE-WAY CONSISTENCY: ports, folder names, file names, step ids that appear in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
-M14 HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
+M10 [RUNNING 2026-11-16 09:36Z] SECOND-READER RING: for each deliverable already written (owner view, drift report, master map, ONE-PLACE-TABLE, cut list) start a FRESH naive reader (egm-comprehension) AND a facts-and-cites checker (egm-codebase-details) in parallel; log results in handover/system-map/rings/.
+M11 [RUNNING 2026-11-16 09:36Z] FACTS-ALREADY-DONE SWEEP: grep every document in the repo and in the other two sessions' pushed files (git show origin/cloud/<name>:...) for owner-step lists that ask the owner for accounts, keys, mailboxes, Docker, HubSpot accounts; list each place with line number and exact fix (one place per job).
+M12 [RUNNING 2026-11-16 09:36Z] VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (queue says Wed 18 morning IST, owner-steps say Thu 19 slot, deadline Wed 25 Nov 20:30 IST): list place, quote, fix.
+M13 [RUNNING 2026-11-16 09:36Z] THREE-WAY CONSISTENCY: ports, folder names, file names, step ids that appear in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
+M14 [RUNNING 2026-11-16 09:35Z] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
 M15 Cut list (archive, never delete) for repo files not used by the take: next area under R460.
 Keep at least 4 agents running; when one finishes start the next in the same turn.

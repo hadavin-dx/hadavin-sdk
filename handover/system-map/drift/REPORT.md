@@ -100,7 +100,20 @@ Least-privilege lens (documents only, no code opened; work/review-lens-dependenc
 | L-06 | Major | no single-dependency table (n8n, Postgres, SMTP/Gmail, IMAP, HubSpot, Anthropic, GitHub); model key not scoped; n8n licence unchecked (from model knowledge, UNVERIFIED) | one table in DE after line 18 with default, alternative and trigger per item |
 Counts (rechecked by a reader of the severity cells): Blockers 8 (D-01 to D-05, D-10, S-03, L-01); Majors 18 (D-06 to D-09, D-11 to D-13, D-18, S-02, S-04 to S-06, T-01, L-02 to L-06); Nits 9 (D-14 to D-17, D-19, D-20, S-01, S-07, T-06); T-02 to T-04 are minor test notes counted as Nit-level; T-05 is an open question without a severity. D-14 is a note counted as a Nit. S-01 is closed. Section 4 counts only D and S rows and is superseded by this line.
 
-## 8. Drift check against owner steps v5 (2026-11-16, ORDER 017; reviewer read plan lines 1 to 182 of 559 and searched the rest by keyword)
+## 8. Drift check against owner steps v5 (2026-11-16, ORDER 017; reviewer read plan lines 1 to 182 of 558 and searched the rest by keyword)
+
+**Names used in sections 8 to 10 (all paths are inside handover/system-map/ unless stated; "lead" = a sales contact record only where a lead id is meant; "studio lead" = the Claude engineering session that does the technical steps; "laptop lead" in README.md is the old name for the same):**
+| short name | file |
+|---|---|
+| v3 / OS | inputs/OWNER-STEPS-realrun-v3.md (stale) |
+| v4 difflist | inputs/OWNER-STEPS-v4-difflist-core-hardening.md (historical list of edits) |
+| v5 / OS5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current owner steps, steps lettered A to J) |
+| SC | inputs/AGENT-SCOPE-DO-AND-DONT.md |
+| DE | inputs/DECISION-one-store.md |
+| PL | inputs/plan-wp6-resmoke-v5.md (558 lines) |
+| FACTS | inputs/FACTS-ALREADY-DONE.md (what the owner already did) |
+| README, OWNER-VIEW, LEAD-PAGE, QUEUE, QUESTIONS, STATUS-BOARD | the file of that name in this folder |
+The "decide" rows (2, 4, 5, 10) are decided by the studio lead; QUESTIONS.md item 2 asks it. "The v5 author" = the core-hardening session, whose v5 file this session only reads. Exact replacement text for each row is still to be written (open).
 Result: v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, from cloud/core-hardening) is not wired into the other files. I did not find "Thu 19" in any file I hold; if the lead means a Thu 19 slot it is not in this folder. Fix list, worst first:
 | # | severity | fix | status |
 |---|---|---|---|
@@ -118,3 +131,23 @@ Result: v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, from cloud/core-har
 | 12 | Nit | latest start 18:15 UTC / 23:45 IST (v5:17) versus 18:14 UTC / 23:44 IST (v4 difflist:49); difflist cites files not in inputs/ | mark difflist historical |
 Not checked: plan lines 183 to 559 (keyword search only); drift/REPORT, board, orders, questions for a take date or Docker answer (read by the comparison above only through README, QUEUE and OWNER-VIEW).
 
+
+## 9. Security and least-privilege angle on sections 7 and 8 (second reviewer, 16 Nov 2026 10:10 UTC / 15:40 IST)
+Read from documents only (no code, no flow files). Each item below is NOT yet fixed in the steps file; the fix text is for the studio lead to apply. "OS5" = inputs/OWNER-STEPS-realrun-v5-core-hardening.md, "SC" = inputs/AGENT-SCOPE-DO-AND-DONT.md.
+**Blockers (reviewer's rating; a re-check by a second reader is still open)**
+- S9-1 The paid and real-account path is open before the owner types `y`: SC:13-14 (the stage answers on loopback with no token) and OS5:21 (the n8n hook door is unchecked) mean any process on the laptop can post a lead once real credentials are in n8n (OS5:90, step C.3). Fix: keep the flows inactive until the program has printed its confirmation line; add a test that a post to the stage and to the n8n hook before `y` causes zero model calls and zero sends; add a shared-secret header on both doors (drift L-05).
+- S9-2 The owner's money figures are written by the agent and checking them is optional (OS5:72 "you may open that file"; OS5:52 no dollar ceiling enforced; SC:15 real limit about US$180). Fix: step A says "you must compare the figures with the settings file and the ledger"; the notice prints the backstop and money spent so far read from the files.
+- S9-3 The model key is never revoked (OS5:5 lists it as already done; step I has no revoke; SC:13 key sits in a take-folder file removed by plain deletion at OS5:158). My own earlier drift note 6a said the same. Fix: dedicated key with a provider-side limit, and a revoke line with screenshot in step I.
+- S9-4 The owner cannot see which mailbox and which HubSpot account will be touched before typing `y` (OS5:14, OS5:109, SC:23). Fix: print a masked mailbox user and the HubSpot portal number in the notice; "any other account: answer no".
+- S9-5 OS5:3 says the studio lead's current instructions win over the sheet. Fix: steps A, E, F, I and rules 1 to 5 cannot be changed by a message, only by the owner's written yes naming the rule.
+**Majors**
+- S9-6 n8n listen address and first-visit owner-account takeover (SC:8-9, OS5:90): add the n8n listen-address setting set to loopback, bind Postgres to 127.0.0.1, and check with `ss -ltn` before C.3.
+- S9-7 Where the mails and the alert mail go is unstated and contradictory (OS5:11 against OS5:120): require a masked list of every recipient setting before step A and a rehearsal check that all equal the receiver address.
+- S9-8 The owner runs show/delete commands the agent supplies (OS5:15, 90, 159): owner rule that only `cat <file>` and `shred -u <file>` on paths under the take-secrets folder are run; anything with a pipe, `;` or `curl` is not run.
+- S9-9 Saved executions may hold credentials (SC:9, PL:125): rehearsal with a canary token, assert it is in no execution row; delete executions before the run folder.
+- S9-10 Published workflow files and the local substituted copy are not scanned (OS5:5, SC:23): scan the published JSON; the substituted copy stays in the take folder, gitignored, removed in step I.
+- S9-11 Screenshots go to an agent-readable folder (OS5:153 against SC:27): crop before saving; use a subfolder on the agent deny list.
+Overlap already listed above: L-01, L-02, D-03, section 8 item 4. L-05 is re-rated to S9-1.
+
+## 10. Citation check of section 8 (second reader, 16 Nov 2026 10:10 UTC / 15:40 IST)
+No Blockers. Two Majors: (a) section 8 row 2 says Wed 18 "appears only in" four places; the grep finds it in more places (QUEUE.md:15, LEAD-PAGE, STATUS-BOARD, REPORT, SWEEP, FINAL-CROSSCHECK); the true claim is "Wed 18 appears in no line of the steps file v5". (b) The owner view called the spending backstop "the most money the demo may spend"; v5:52 says no dollar ceiling is enforced. FIXED in OWNER-VIEW.md (words box). Nits: plan has 558 lines, not 559; the Docker container sentence is v5:22, not v5:23; README does not say "first trial" at the cited lines.

@@ -1,5 +1,13 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## 09:40 UTC / 15:10 IST - failures first; owner view round 2; drift sections 9 and 10; queue M10-M14 started
+Failed, not checked or open (first):
+- ORDER 019 answer: the 2 baseline failures were seen in a scratch copy that is not a git repository. `test_licences_are_proprietary` fails there because `git ls-files` exits 128 (scratch artefact). `test_no_vendor_brand_string_is_tracked` names the word 'Port.io' in handover/BRIEF-PREAMBLE-studio-2026-11-06.md and handover/demo/portal/portal-design-v2.md and a non-UTF-8 file handover/reviews/P1a-idempotence-probe.txt; those files are not on the branch I hold. Whether it is a real defect on core-hardening is decided by the fresh-clone run (M14), still running; NOT yet known.
+- Owner view round 1 had 4 Blockers (clean-up deadline, who cleans a failed run, latest start time, `end` deletes contacts). All fixed in OWNER-VIEW.md round 2; round 3 readers are running, so NOT yet verified.
+- Security reviewer found 5 Blockers in the take steps (drift section 9, S9-1 to S9-5: paid path open before `y`, money figures written by the agent, model key never revoked, owner cannot see which accounts are touched, "studio lead's instructions win"). Not fixable by me (the steps file is core-hardening's); needs the studio lead.
+- Still not run: the five changed flows in n8n (no Docker). No take date exists in v5.
+Done: OWNER-VIEW.md rewritten (11 rows); drift/REPORT.md gets a names table, sections 9 and 10, and two corrections (Wed 18 claim, plan line count); queue M10 to M14 started (3 sweep agents, 2 owner-view readers, 1 heavy run).
+
 ## 09:22 UTC / 14:52 IST - queue items M3, M5, M6, M8 reviewed and fixed; own tools audited (ORDER 015/016)
 Failed, not checked or open (first):
 - NOT run: the five changed flows in n8n (no Docker here). Verdict in OWNER-VIEW.md stays "Wed 18 Nov NOT yet confirmed".
