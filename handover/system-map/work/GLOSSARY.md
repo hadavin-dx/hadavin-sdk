@@ -1,14 +1,16 @@
 # Glossary for the system-map pages (live text; no amendment paragraphs live here)
-Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say studio head). The word "lead" alone is never used for a session in new text; for a sales contact write "lead record" or "lead id". Two copies of a file: quote both side by side and say current copy unknown.
+Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say "studio head"; whether that is the same person is UNVERIFIED, so do not equate them). The word "lead" alone is never used for a session in new text; for a sales contact write "lead record" or "lead id".
 This glossary serves the pages in handover/system-map/. They map what the lead-intake demo needs before one filmed run (the take) can happen, for the studio lead (a Claude session) and the owner (the human).
 What the demo does: the lead-intake demo takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. The take is the filmed run that shows one claim: a lead sent twice with the same id is processed once.
-More terms: V5 = see the Files table below (one definition there). Held pages = pages another session owns; the system-map session reads them but never edits them (list in ORDERS.md). Digest = my one-line note of a helper agent's report, in work/agent-reports-batch4.md. Cold read = a helper agent that reads one page with no other context and lists what it cannot follow. Real-run file = a file from a run on real accounts; no helper opens one (the OWNER-ONLY gate). UNVERIFIED (from a hand-back) = a helper agent said it, and nobody has checked the file. T19 = see work/t19-terms.md. D-04 = see "Words used on the pages" below (one definition there).
+More terms: V5 is defined once, in the Files table below. T19 and D-04 are defined once each, in "Words used on the pages" below. Held pages = pages another session owns; the system-map session reads them but never edits them (list in ORDERS.md). Digest = the system-map session's one-line note of a helper agent's report, in work/agent-reports-batch4.md. Cold read = a helper agent that reads one page with no other context and lists what it cannot follow. Real-run file = a file from a run on real accounts; the rule for it is "Real-run files" under "Rules for writing pages". UNVERIFIED (from a hand-back) = a helper agent said it, and nobody has checked the file.
 Written Mon 16 Nov 2026 by the system-map session.
 
 ## Rules for writing pages
 - Only meanings found in files are given. Where no file gives a meaning, the entry says "meaning not recorded"; the Unknown table says whom to ask.
 - "Line N" on a page means line N of the file that page names; if no file is named, mark the cite UNVERIFIED.
 - For the one-store decision write "DECISION line N (root copy)" or "(inputs copy)"; root copy = handover/system-map/DECISION-one-store.md, inputs copy = handover/system-map/inputs/DECISION-one-store.md.
+- Two copies of a file: quote both side by side and say the current copy is unknown.
+- Real-run files: a real-run file is a file from a run on real accounts. No helper opens one. The list of such files is work/OWNER-ONLY.txt (not created yet); until it exists, open no real-run file without the lead session's yes. Only the owner opens them.
 - Old text is in GLOSSARY-history.md (ignore it).
 
 ## Who orders whom (read this first)
@@ -22,17 +24,17 @@ The lead session gives orders to the system-map session (this one) through ORDER
 | core-hardening | a separate Claude session that owns V5 and the held pages | Claude session |
 | system-map session | this Claude session; it writes only inside handover/system-map/ | Claude session |
 | lane | one helper Claude session given one slice of the review to read (L1 to L6); its output file is a lane page | Claude session |
-| studio head | the human who runs the studio; not named. Use "owner" for the written yes; do not use "studio head" in new text | human |
+| studio head | the word older pages use for a human who runs the studio; not named. UNVERIFIED whether it is the owner: do not equate them. Use "owner" for the written yes; do not use "studio head" in new text | human |
 | owner | the human at the laptop who gives the written yes | human |
 
 ## Files (one table)
 | name | path | what it holds |
 |---|---|---|
 | held pages | listed in the table "Held pages" below | pages this session only digests and never edits |
-| V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's step list A to J for the filmed run of the version called real-v5. Defined here only; other pages say "V5 (see work/GLOSSARY.md)" |
+| V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's steps A to J for the filmed run. This row is the one definition of V5. Why it is called v5: not recorded. Other pages say "V5 (see work/GLOSSARY.md)" |
 | decisions of 16 Nov | inputs/DECISIONS-2026-11-16.md | 12 items; known second-hand only (the original is held by the lead session) (summary in STATUS-BOARD.md) |
 | one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. The lead-intake demo = the demo that takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. Which of the two copies is current: the lead session has not answered; cite both. "DECISION line N" means line N of that file |
-| OWNER-ONLY | work/OWNER-ONLY.txt (not created yet; until it exists, open no real-run file without the lead session's yes) | would list files only the owner opens; helpers never open them |
+| OWNER-ONLY | work/OWNER-ONLY.txt (not created yet) | would list the real-run files only the owner opens; the rule is "Real-run files" under "Rules for writing pages" |
 | t19 pages | work/t19-*.md | pages about test T19 |
 | critical-path-r1 | work/critical-path-r1.md | when the first filmed take can happen |
 
@@ -61,6 +63,7 @@ Owners are as recorded in the table but unconfirmed; ask the lead session. This 
 - **T19**: the test that sends the same made-up lead record twice and expects one mail, one HubSpot write and one stored row in the demo's database (which store: see work/t19-gap-facts.md "Purpose"). Not run yet.
 - **row N**: row N of the table on that page, unless the page writes "TAKE-BLOCKERS row N".
 - **READ / SKIMMED / NOT-READ / OWNER-ONLY-FILE** (a read status of a file, not the file itself): READ = a lane opened all of it. SKIMMED = it opened part. NOT-READ = it opened none, so it says nothing about the file. OWNER-ONLY-FILE = it did not open the file because only the owner may.
+- OWNER-ONLY (the list file work/OWNER-ONLY.txt, see Files table) and OWNER-ONLY-FILE (a read status) are two different things.
 - **UNVERIFIED**: stated, not checked against a file or command output. **NOT VISIBLE**: the lane could not see it. **NOT FOUND**: searched, not present. **NOT SET / TO DO**: nobody has filled it in.
 - **Severity** in a finding row: the lane's own label; the lead session has confirmed none.
 
@@ -109,7 +112,7 @@ Who can answer: ask the lead session (the Claude session that gives the system-m
 | ORDER 002 | ORDERS.md, PLAN-002.md, REPORT.md |
 | PLAN section 5.2 | L6.md, agent-reports-batch4.md |
 
-Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; do not use). Claim types: dead, idle, ops (meanings not recorded; do not use). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
+Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; do not use). Claim types: dead, idle, ops (meanings not recorded; do not use). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in handover/system-map/work/not-checked-r2.md, section Terms.
 
 ## Lanes (one line each)
 L1, L2, L3, L4, L5 and L6 are the lane names (meaning taken from the lane pages' headings, not confirmed: L1 to L4 read the core-hardening files in four slices, L5 the flow files, L6 whether each part is needed). Each lane page (work/L<n>*.md) says in its own first lines what it covers; this glossary does not repeat that. L5a/L5b is an unconfirmed split of L5 (UNVERIFIED, from a hand-back); do not use it until confirmed.
