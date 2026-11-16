@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:08:23Z
-PUSHED_UTC: 2026-11-16T14:08:23Z
+UPDATED_UTC: 2026-11-16T14:09:05Z
+PUSHED_UTC: 2026-11-16T14:09:05Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| acf5bb0cc9d61a1e9 | readiness read L1c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| a62bf2eae69434036 | readiness read L3c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| aea06ca981aebcdfa | readiness read L4c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| aa6cfe1b5cb2990fb | readiness read L5b | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| a60ffce06d407d37a | zoom-out read premortem-r1 | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| ae3b781228a6725cf | zoom-out read critical-path-r1 | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| ab75dd0773d9f394a | zoom-out read merged-findings | 2026-11-16T14:08Z | +5 min | running | nothing yet |
-| a3d366b70f8ee65ad | style read end-delete-cases | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| af0ade41732fd989d | style read BRIEF-LANE | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a1b2c5d80a39dbd0d | readiness read v5-edits-for-M17 | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a8a78dbfca78f7ba4 | style read BRIEF-EVIDENCE-2 | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| ace62a6db61533730 | zoom-out read t19-gap-facts | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| ad005a7e14022b334 | readiness read evidence-1 | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a290ec5486f555e4d | readiness read evidence-2 | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a31a17a05c4e41110 | readiness read L2c | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a2632fb977e98275d | readiness read L5ac | 2026-11-16T14:09Z | +5 min | running | nothing yet |
 
-Reason for readers not fixers: second lenses on owned pages not yet second-read; fix edits to my pages happen in my own turns (digested through 1412).
+Reason for readers not fixers: second lenses on owned pages not yet second-read; fix edits happen in my own turns (digested through 1421).
 NEXT 5: fix owner-timeline-draft, open-items-table, not-checked-r2, GLOSSARY Unknown list, decision-list A2/A5/A13.
 CAPACITY: 8 running.
 
