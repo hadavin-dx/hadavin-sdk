@@ -234,3 +234,46 @@ MUTANT 'old shared credential rejected': rc=1 KILLED | FAILED (failures=1) | ['F
 MUTANT 'credential equals document name': rc=1 KILLED | FAILED (failures=1) | ['FAIL: test_s3_wrong_credential_for_login (test_check_grants.Round4.test_s3_wrong_credential_for_login)']
 RESTORED copy rc 0 OK
 (case-insensitive mutants, re-run after the first, too broad, version broke 14 unrelated tests:)
+MUTANT 'case-insensitive columns: column scan on non-lowered text only': rc=1 KILLED | FAILED (failures=2) | ['FAIL: test_s5_mixed_case_write (test_check_grants.Round4.test_s5_mixed_case_write)', 'FAIL: test_s5_uppercase_column_is_read (test_check_grants.Round4.test_s5_uppercase_column_is_read)']
+MUTANT 'case-insensitive columns: toks() on non-lowered text': rc=0 SURVIVED | OK | []
+RESTORED copy rc 0 OK
+```
+Notes: the second case-insensitive mutant (toks() on text with A replaced) SURVIVED; it is a poor mutant (toks() input is already lower-cased by every caller), so it does not show a missing test, but it is also not a kill. The first, whole-query .lower() removal, killed 14 tests (broader than the one check).
+
+## Step 4b: 24 hostile flow files (each one a copy of n8n-flows-real-v5 with one change; run: python3 -I <scratch copy of script> --roles-doc ROLES-PROPOSAL.md <folder>)
+"expect" is my prior guess of the right answer, not a verdict. Script: hostile.py (scratchpad).
+```
+H01 SQL in a Code node | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-form X: SQL-like text in a 'n8n-nodes-base.code' node ('DELETE FROM'); the check reads only n8n-nodes-base.postgres nodes
+H02 SQL query in an expression in a Set node | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-hook X: SQL-like text in a 'n8n-nodes-base.set' node ('SELECT email FROM'); the check reads only n8n-nodes-base.postgres nodes
+H03 DELETE inside a string literal in a Postgres query | expect report | rc=0  | 0 FAIL lines | 0.0s | first: TOTAL PROBLEMS: 0
+H04 uppercase table name MF_LEADS | expect report | rc=0  | 0 FAIL lines | 0.0s | first: TOTAL PROBLEMS: 0
+H05 comment-hidden SQL (/* DELETE FROM mf_leads */) | expect report | rc=1  | 2 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: statement kind 'delete' not allowed (SELECT/INSERT/UPDATE only)
+H06 line-comment hidden DROP after the query | expect report | rc=1  | 2 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: statement kind 'drop' not allowed (SELECT/INSERT/UPDATE only)
+H07 second statement after semicolon (DROP TABLE) | expect FAIL | rc=1  | 2 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: statement kind 'drop' not allowed (SELECT/INSERT/UPDATE only)
+H08 schema-qualified table public.mf_leads | expect report | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: touches table 'public.mf_leads', only mf_leads is allowed
+H09 schema-qualified other table secret.users | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: touches table 'secret.users', only mf_leads is allowed
+H10 empty file (mf-hook.json, 0 bytes) | expect FAIL | rc=1  | 3 FAIL lines | 0.0s | first: FAIL flows mf-hook: cannot read flow file (JSONDecodeError: Expecting value: line 1 column 1 (char 0))
+H11 malformed JSON | expect FAIL | rc=1  | 3 FAIL lines | 0.0s | first: FAIL flows mf-hook: cannot read flow file (JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 14 (char 13))
+H12 huge file (about 60 MB of padding in a Set node) | expect report | rc=0  | 0 FAIL lines | 0.7s | first: TOTAL PROBLEMS: 0
+H13 top-level JSON is a list | expect FAIL | rc=1  | 3 FAIL lines | 0.0s | first: FAIL flows mf-hook: cannot read flow file (AttributeError: 'list' object has no attribute 'get')
+H14 'nodes' is null | expect FAIL | rc=1 TRACEBACK | 1 FAIL lines | 0.0s | first: Traceback (most recent call last):
+H15 Postgres type in different letter case (n8n-nodes-base.Postgres) with DELETE | expect FAIL | rc=1  | 2 FAIL lines | 0.1s | first: FAIL flows mf-form X: database node type 'n8n-nodes-base.Postgres' (only n8n-nodes-base.postgres is read by this check)
+H16 SQL in node notes | expect FAIL | rc=0  | 0 FAIL lines | 0.1s | first: TOTAL PROBLEMS: 0
+H17 disabled Postgres node with bad query | expect FAIL | rc=1  | 2 FAIL lines | 0.1s | first: FAIL flows mf-form X: no login mapped
+H18 full-width letters (DELETE written as fullwidth) in a Code node | expect report | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-form X: SQL-like text in a 'n8n-nodes-base.code' node ('mf_leads'); the check reads only n8n-nodes-base.postgres nodes
+H19 dollar-quoted body hiding DELETE | expect report | rc=1  | 2 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: statement kind 'delete' not allowed (SELECT/INSERT/UPDATE only)
+H20 query value is a list, not a string | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-sub-crm-mail MarkDone: empty query
+H21 extra flow file mf-extra.json | expect FAIL | rc=1  | 2 FAIL lines | 0.0s | first: FAIL flows mf-extra: this file has zero Postgres nodes (nothing in it was checked)
+H22 split-string SQL in a Code node ('DEL'+'ETE FROM') | expect report (known miss) | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-form X: SQL-like text in a 'n8n-nodes-base.code' node ('mf_leads'); the check reads only n8n-nodes-base.postgres nodes
+H23 SQL in an HTTP Request node body | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-form X: SQL-like text in a 'n8n-nodes-base.httpRequest' node ('UPDATE mf_leads SET'); the check reads only n8n-nodes-base.postgres nodes
+H24 operation key moved: 'Operation' (capital O) instead of operation | expect FAIL | rc=1  | 1 FAIL lines | 0.0s | first: FAIL flows mf-form Claim: operation is None, only executeQuery is checked
+```
+
+## Plain facts for the judge (not judgements)
+- H14 ('nodes': null): rc=1 but an uncaught TypeError traceback at check_grants_cover_queries.py line 230 (nodes = [x for x in nodes ...]); the 'cannot read flow file' handler does not cover it because the error is raised outside its try. H13 (top-level list) is handled.
+- H16: SQL text only in the notes of a Postgres node: rc=0, no problem reported (foreign_db_access is called only for non-Postgres nodes).
+- H17: a disabled Postgres node with DROP TABLE is read like an enabled one; reported only via 'no login mapped' (it does not check the disabled flag; reason shown is the node name, not the query).
+- H22 split-string SQL: reported only because the text still contains mf_leads; with that word removed it would not match the SQL pattern.
+- H03, H04, H08: H03 and H04 rc=0 (string literals blanked; table name lower-cased); H08 schema-qualified own table fails.
+- H12 (60 MB padding): rc=0 in 0.7 s, no size limit.
+- Not run: any database or n8n instance. Step 1a fails as written; 1b is the substitute.
