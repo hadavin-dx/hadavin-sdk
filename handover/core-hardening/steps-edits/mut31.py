@@ -6,17 +6,20 @@ FILES = ['facts-v31.py', 'build-v31.py', 'check-v31.py', 'OWNER-SHEET-v31-SOURCE
 def run(d):
     rb = subprocess.run([sys.executable, '-B', d + 'build-v31.py', d], capture_output=True, text=True)
     if rb.returncode: return {'FAIL BUILD stopped: ' + (rb.stderr.strip().split('\n') or [''])[-1][:80]}, rb       # the build's own assertions (marker left, run length below 860 s)
-    r = subprocess.run([sys.executable, '-B', d + 'check-v31.py'], capture_output=True, text=True, env=dict(os.environ, V27_DIR=d))
+    r = subprocess.run([sys.executable, '-B', d + 'check-v31.py'], capture_output=True, text=True, env=dict(os.environ, V27_DIR=d, V31_BANNED_TEST=BANNED_PATH))
     return set(l for l in r.stdout.split('\n') if l.startswith('FAIL')), r
 ALLCOPIES = {'N01', 'R18', 'P30'}
 # (id, file, old, new, what)
 import ast
 def _banned():
+    global BANNED_PATH
     r = H
     while not os.path.exists(r + 'tests/test_no_reference_material.py') and r != os.path.dirname(r.rstrip('/')) + '/': r = os.path.dirname(r.rstrip('/')) + '/'
-    t = ast.parse(open(r + 'tests/test_no_reference_material.py', encoding='utf-8').read())
+    BANNED_PATH = r + 'tests/test_no_reference_material.py'
+    t = ast.parse(open(BANNED_PATH, encoding='utf-8').read())
     for n in ast.walk(t):
         if isinstance(n, ast.Assign) and any(getattr(x, 'id', '') == 'BANNED' for x in n.targets): return [e.value for e in n.value.elts][0]
+BANNED_PATH = None
 BANNED_WORD = _banned()
 
 P = [
@@ -410,6 +413,34 @@ X = [
 ]
 P += X
 EXPECT.update({'X01':['C185'],'X02':['C186'],'X03':['C187'],'X04':['C188'],'X05':['C189'],'X06':['C190'],'X07':['C191'],'X08':['C192'],'X09':['C192'],'X10':['C193'],'X11':['C194'],'X12':['C195'],'X13':['C196'],'X14':['C197'],'X15':['C198'],'X16':['C199'],'X17':['C200'],'X18':['C201'],'X19':['C202'],'X20':['C203'],'X21':['C206'],'X22':['C207'],'X23':['C187'],'X24':['C209'],'X25':['C185'],'X26':['C186'],'X27':['C196']})
+
+# Y series: one plant per class of the v31 Part 8 checks (C210 to C227)
+BUILD_F = 'build-v31.py'
+Y = [
+('Y01', FA, "BM = dt.datetime(2026, 11, 23, 18, 9)", "BM = dt.datetime(2026, 11, 23, 18, 8)", 'Monday reminder time changed'),
+('Y02', S, '## 7. The run (UNVERIFIED)', 'If your run day is Mon 23 Nov, do x.\n\n## 7. The run (UNVERIFIED)', 'dead Mon 23 Nov paragraph back'),
+('Y03', O, 'Money-safe default: A', 'Safe default if you do not answer: A', 'old default wording back in the open list'),
+('Y04', N, "## 9. Kept from earlier appendices (lead's own use)", "When the lead message says go, the owner may skip the older key cancel: the lead releases the older key cancel.\n\n## 9. Kept from earlier appendices (lead's own use)", 'lead message releases the older-key cancel (H06 phrasing)'),
+('Y05', N, "## 9. Kept from earlier appendices (lead's own use)", "If the lead has not confirmed, the older key cancel waits for the lead's word.\n\n## 9. Kept from earlier appendices (lead's own use)", 'older-key cancel waits for a lead word (other phrasing)'),
+('Y06', S, 'Entries to revoke later: app passwords <names, exact>', 'Entries to revoke: app passwords <names, exact>', 'numbers sample loses the row name'),
+('Y07', S, 'Sheet B cancels the older key at 7.11 even if it was used a day ago', 'Sheet B cancels the older key at 7.11', 'B warning of 5.1 shortened'),
+('Y08', S, 'It does not mean no valid key remains: the older key may still spend until it is cancelled', 'It means no valid key remains', 'card step 5 older-key sentence reversed'),
+('Y09', S, 'The yes binds you to 7.11', 'The yes helps with 7.11', 'yes binding removed'),
+('Y10', S, 'it is an instruction, not a technical guard', 'it is a technical guard', 'guard honesty sentence reversed'),
+('Y11', S, 'today plus 7 days as a first guess', 'today', 'run day for the first reading removed'),
+('Y12', S, 'from 5 minutes before the latest start do not press Enter', 'from 5 minutes before the latest start press Enter', 'last-5-minutes rule reversed'),
+('Y13', S, 'press F11', 'press F12', 'film page: how to show only the page area'),
+('Y14', S, 'Remember my preferences', 'Remember me', 'sync path wording'),
+('Y15', S, 'Words with one meaning here', 'Words', 'definitions heading'),
+('Y16', S, 'are not an empty slot', 'are an empty slot', 'owner-fill rows described as empty slots'),
+('Y17', O, 'the sheet checks only the maximum', 'the sheet checks both at 5.7', 'open list: the minimum is said to be checked'),
+('Y18', S, '[LEAD FILLS at re-pin:', '[LEAD FILLS at repin:', 'a LEAD FILLS placeholder spelled differently (H09)'),
+('Y19', FA, "'bm':", "'zz_dead': 'x', 'bm':", 'a fact no source uses (ls_t kind)'),
+('Y20', S, '## 7. The run (UNVERIFIED)', 'Mail ann@corp.test with the list.\n\n## 7. The run (UNVERIFIED)', 'email-shaped text in the owner pages'),
+('Y21', BUILD_F, '"""Builds every v31 text', '# path /ho' + 'me/x/k\n"""Builds every v31 text', 'hard-coded absolute path in a script'),
+]
+P += Y
+EXPECT.update({'Y01':['C210','BUILD'],'Y02':['C210'],'Y03':['C212'],'Y04':['C213'],'Y05':['C213'],'Y06':['C214'],'Y07':['C215'],'Y08':['C216'],'Y09':['C217'],'Y10':['C218'],'Y11':['C219'],'Y12':['C220'],'Y13':['C221'],'Y14':['C222'],'Y15':['C222'],'Y16':['C222'],'Y17':['C223'],'Y18':['C224'],'Y19':['C225'],'Y20':['C226'],'Y21':['C227']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'

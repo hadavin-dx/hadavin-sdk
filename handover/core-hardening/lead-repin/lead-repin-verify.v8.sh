@@ -162,7 +162,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1372
+CANARY_PLANNED=1534
 SELFTEST_PLANNED=1398
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {

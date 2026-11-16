@@ -4,6 +4,7 @@
 set -u
 E="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 H="$(cd "$E/../.." && pwd)"
+: "${C6T_TREE:?set C6T_TREE to the folder of the copied demo tree (an input of the check)}"; export C6T_TREE
 S=${C6T_STEPS:-$H/steps-edits}
 cd "$E"
 bash static-checks.sh > static-checks-output.txt 2>&1

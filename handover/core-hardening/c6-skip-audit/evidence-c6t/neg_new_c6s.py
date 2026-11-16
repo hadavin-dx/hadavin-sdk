@@ -41,7 +41,7 @@ M["S-F4d-own-reading-label-gone"] = rep_once("that G12 is about 'processed once'
 M["S-F4e-v30-file-unnamed"] = rep_once("OWNER-SHEET-v30-SOURCE.md (the template", "OWNER-SHEET-v30-X.md (the template")
 M["S-F4f-v30-time-wrong"] = re.sub(r"(OWNER-SHEET-v30-A\.md \(written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
 # environment copies of the steps-edits folder: a higher version, a newer release note, a sheet written after the check time
-SNAP = os.environ.get("C6S_SNAPSHOT") or "/home/user/hadavin-sdk/handover/core-hardening/steps-edits"
+SNAP = os.environ.get("C6T_SNAPSHOT") or (D + "../steps-edits")
 def env_variant(name, fn):
     d = tempfile.mkdtemp()
     src = SNAP

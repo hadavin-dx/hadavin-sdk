@@ -1,11 +1,11 @@
-"""Negative controls for verify-c6s.py. Builds changed copies of REPORT-c6s.md (never edits it), runs verify-c6s.py on each and records the exit code
+"""Negative controls for verify-c6t.py. Builds changed copies of REPORT-c6t.md (never edits it), runs verify-c6t.py on each and records the exit code
 and the raw output. A control copy with no change must exit 0; every changed copy must exit non-zero. Fake key-shaped strings are built from parts here.
-Usage: python3 neg_controls_c6s.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
+Usage: python3 neg_controls_c6t.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
 import re, subprocess, sys, os, tempfile
-D = "/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/"
-E = D + "evidence-c6s/"
+E = os.path.dirname(os.path.abspath(__file__)) + "/"
+D = os.path.dirname(E.rstrip("/")) + "/"
 os.makedirs(E + "neg", exist_ok=True)
-rep = open(D + "REPORT-c6s.md", encoding="utf-8").read()
+rep = open(D + "REPORT-c6t.md", encoding="utf-8").read()
 import ast
 PAT = re.compile(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ([^|]*) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$")
 L = rep.split("\n")
@@ -57,6 +57,10 @@ M = {}
 box_end = rep.index("## 0. Failures")
 run_block(open(E + "neg_ported_c6r.py", encoding="utf-8").read(), "neg_ported_c6r.py")
 run_block(open(E + "neg_new_c6s.py", encoding="utf-8").read(), "neg_new_c6s.py")
+for _k in ("S-F4g-sheet-v31-exists", "S-F4h-release-note-v15-exists", "S-F4i-v30-sheet-newer-than-check-time", "S-F4j-v30-B-file-missing"):
+    ENV.pop(_k, None)
+    M.pop(_k, None)
+run_block(open(E + "neg_new_c6t.py", encoding="utf-8").read(), "neg_new_c6t.py")
 out = []
 bad = 0
 for name, text in M.items():
@@ -67,7 +71,7 @@ for name, text in M.items():
         continue
     p = os.path.join(tempfile.mkdtemp(), "REPORT-copy.md")
     open(p, "w", encoding="utf-8").write(text)
-    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6s.py", p], capture_output=True, text=True, env=(dict(os.environ, C6S_STEPS=envd) if envd else None))
+    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6t.py", p], capture_output=True, text=True, env=(dict(os.environ, C6T_STEPS=envd) if envd else None))
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)
     failed = [l for l in r.stdout.split("\n") if l.startswith("FAIL")]
     want_zero = name.startswith("V0")
@@ -75,7 +79,7 @@ for name, text in M.items():
     if not ok:
         bad += 1
     out.append("%-48s exit %d  %s  failed checks: %d; first: %s" % (name, r.returncode, "OK" if ok else "WRONG", len(failed), (failed[0][:110] if failed else "none")))
-out += ["PORT-SKIPPED (target text of an older control no longer exists in c6s; its rule has a new control): " + s_ for s_ in SKIPPED_PORT]
+out += ["PORT-SKIPPED (target text of an older control no longer exists in c6t; its rule has a new control): " + s_ for s_ in SKIPPED_PORT]
 out.append("SUMMARY: %d copies, %d wrong" % (len(M), bad))
 open(E + "neg-output.txt", "w").write("\n".join(out) + "\n")
 print("\n".join(out))

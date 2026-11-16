@@ -1739,7 +1739,7 @@ L1=$(last)
 chk "T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got $rc1), nothing written (last '$L1' = return2)" "[ $rc1 -eq 3 ] && [ '$L1' = return2 ]"
 python3 "$RUN" --root "$T/root" --restore >"$S/t98e2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98e2.out" | tail -2
 M2=$(stat -c %a "$T/root/src/mod.py")
-chk "T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0777 (got exit $rc2, mode $M2; the special-bit case is T99b)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ] && [ \"$M2\" = 777 ]"
+chk "T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0775: a write bit for others is taken away (r12 m5; r11 wrote 0777) (got exit $rc2, mode $M2; the special-bit case is T99b)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ] && [ \"$M2\" = 775 ]"
 python3 - "$RUN" <<'PY' >"$S/t98f.out" 2>&1; rc=$?
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
@@ -1755,20 +1755,21 @@ chk "T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a fo
 echo "== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)"
 # a) the S603 guard: Child refuses what the arguments must never be (r10: Child had no check, every bad call below started or tried to start)
 python3 - "$RUN" <<'PY' >"$S/t99a.out" 2>&1; rc=$?
-import importlib.util, inspect, sys
+import importlib.util, inspect, shutil, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+G = shutil.which("git"); GE = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}   # r12: a real allowed program, so each bad kind below is refused for ITS OWN reason
 bad = {
-    "one shell string": ("/bin/true", {}),
-    "tuple instead of list": (("/bin/true",), {}),
-    "relative program": (["true"], {}),
-    "empty list": ([], {}),
-    "NUL in an argument": (["/bin/true", "a\0b"], {}),
-    "a non-text argument": (["/bin/true", 5], {}),
-    "shell=True": (["/bin/true"], {"shell": True}),
-    "preexec_fn": (["/bin/true"], {"preexec_fn": lambda: None}),
-    "LD_PRELOAD in the environment": (["/bin/true"], {"env": {"PATH": "/bin", "LD_PRELOAD": "/x.so"}}),
-    "GIT_DIR in the environment": (["/bin/true"], {"env": {"GIT_DIR": "/x"}}),
-    "environment is not a dict of text": (["/bin/true"], {"env": {"PATH": 1}}),
+    "one shell string": (G, {"env": GE}),
+    "tuple instead of list": ((G,), {"env": GE}),
+    "relative program": (["git"], {"env": GE}),
+    "empty list": ([], {"env": GE}),
+    "NUL in an argument": ([G, "a\0b"], {"env": GE}),
+    "a non-text argument": ([G, 5], {"env": GE}),
+    "shell=True": ([G], {"shell": True, "env": GE}),
+    "preexec_fn": ([G], {"preexec_fn": lambda: None, "env": GE}),
+    "LD_PRELOAD in the environment": ([G], {"env": {"PATH": "/bin", "LD_PRELOAD": "/x.so"}}),
+    "GIT_DIR in the environment": ([G], {"env": {"GIT_DIR": "/x"}}),
+    "environment is not a dict of text": ([G], {"env": {"PATH": 1}}),
 }
 fails = []
 for name, (args, kw) in bad.items():
@@ -1780,7 +1781,7 @@ for name, (args, kw) in bad.items():
     except BaseException as e:
         fails.append(f"{name}: {type(e).__name__} instead of a refusal")
 try:
-    p = r.Child(["/bin/true"], env={"PATH": "/bin", "HOME": "/", "LC_ALL": "C"}, start_new_session=True); rc0 = p.wait()
+    p = r.Child([G, "--version"], env=GE, start_new_session=True, stdout=-3); rc0 = p.wait()
     if rc0 != 0: fails.append("a good call failed")
 except BaseException as e:
     fails.append(f"a good call refused: {e}")
@@ -1789,7 +1790,7 @@ if "check_child_call(" not in src: fails.append("Child.__init__ does not call ch
 print("wrong:", fails); sys.exit(1 if fails else 0)
 PY
 cat "$S/t99a.out"
-chk "T99a S603: Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit $rc; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)" "[ $rc -eq 0 ]"
+chk "T99a S603 (r12: now with a real allowed program as the base, git): Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit $rc; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)" "[ $rc -eq 0 ]"
 # b) MAJ-1: a forged marker with a setuid, setgid or sticky bit never makes such a file with a plain --restore
 for MODEV in 2541 1517 2559 3585; do   # 04755 02755 04777 07001-style: octal 4755 2755 4777 and 7001
   kill_planted; forge97; setmarker97 mode=$MODEV
@@ -1816,7 +1817,7 @@ finally:
     os.fchmod = real
 PY
 cat "$S/t99b3.out"
-chk "T99b3 MAJ-1 the mode is checked AFTER the write: when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit $rc; r10: returns normally)" "[ $rc -eq 0 ]"
+chk "T99b3 MAJ-1 the mode is checked AFTER the write, CREATED-file path only (the existing-file path is T100e): when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit $rc; r10: returns normally)" "[ $rc -eq 0 ]"
 python3 - "$RUN" <<'PY' >"$S/t99b4.out" 2>&1; rc=$?
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
@@ -1869,7 +1870,7 @@ python3 "$RUN" --root "$DROOT" --sha "$SHA" --repo "$T/repo" --prefix "$(python3
 python3 "$RUN" --root "$DROOT" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawD" --id "$(python3 -c "print('i'*300)")" --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t99d.id" 2>&1; rci=$?
 cut -c1-160 "$S/t99d.rel" "$S/t99d.pre" "$S/t99d.id" | head -12
 rm -rf "${DEEP:?}" "$S/rawD"
-chk "T99d m2 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): $BADD wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit $rcr), a 300-byte --prefix (got $rcp) and a 300-byte --id (got $rci) are refused with exit 2, no traceback, no INTERNAL ERROR" "[ $BADD -eq 0 ] && [ $rcr -eq 2 ] && [ $rcp -eq 2 ] && [ $rci -eq 2 ] && ! grep -q 'Traceback\|INTERNAL' '$S/t99d.rel' '$S/t99d.pre' '$S/t99d.id'"
+chk "T99d m2 (what discriminates r10 here is ONLY the root-plus-relative case; the 4095 and 4096 roots below do not exist as folders, so they end in exit 2 on r10 too: real 4093/4094-byte roots are T100f) 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): $BADD wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit $rcr), a 300-byte --prefix (got $rcp) and a 300-byte --id (got $rci) are refused with exit 2, no traceback, no INTERNAL ERROR" "[ $BADD -eq 0 ] && [ $rcr -eq 2 ] && [ $rcp -eq 2 ] && [ $rci -eq 2 ] && ! grep -q 'Traceback\|INTERNAL' '$S/t99d.rel' '$S/t99d.pre' '$S/t99d.id'"
 # e) minor 3: --raw in another folder a marker may live in: refused BEFORE the folder is created
 fresh_root; mkdir -p "$S/other-tmp"; OTHER="$S/other-tmp/hadavin-mutation-lane-$(id -u)/rawfolder99"
 TMP="$S/other-tmp" mut --raw "$OTHER" -- tests/test_fast.py >"$S/t99e.out" 2>&1; rc=$?
@@ -1883,7 +1884,7 @@ git -C "$T/repo" config tar.umask 022
 for MODEV in 436 432 410; do   # 0664 0660 0632
   kill_planted; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99f.out" 2>&1; rc=$?; cut -c1-200 "$S/t99f.out" | tail -1
-  chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha, git file 0644: exit 3 (got $rc), nothing written (still planted) (r10: exit 0 for 0664, mode written)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
+  chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha, git file 0644: exit 3 (got $rc), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
   python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 done
 git -C "$T/repo" config --unset tar.umask
@@ -1909,6 +1910,200 @@ runpy.run_path(run, run_name="__main__")
 print("not stopped")
 PY
 cut -c1-200 "$S/t99g.out" | head -3
-chk "T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got $rc), no traceback, no KeyboardInterrupt text (r10: exit 1 and a KeyboardInterrupt traceback)" "[ $rc -eq 130 ] && ! grep -q 'Traceback\|KeyboardInterrupt' '$S/t99g.out' && ! grep -q 'not stopped' '$S/t99g.out'"
+chk "T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got $rc), no traceback, no KeyboardInterrupt text (r10, measured in r12: exit 130 TOO, but with a KeyboardInterrupt traceback, so the no-traceback part of this check is what tells r10 from r11; the exit code alone does not)" "[ $rc -eq 130 ] && ! grep -q 'Traceback\|KeyboardInterrupt' '$S/t99g.out' && ! grep -q 'not stopped' '$S/t99g.out'"
+
+echo "== T100 (r12, review r11: M1 the Child guard, m1 --raw order, m2 total size, m3 node id and --pythonpath, m5 world-write clamp, m4 discriminating tests; each says whether it fails on r11)"
+# a) M1: every way round the guard. The base is a real allowed program (git) so each case is refused for ITS reason.
+python3 - "$RUN" <<'PY' >"$S/t100a.out" 2>&1; rc=$?
+import importlib.util, shutil, sys, os
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+G = shutil.which("git"); E = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+def started(args, kw, pos=()):
+    marker = "/tmp/t100a-ran-%d" % os.getpid()
+    try:
+        r.Child(args, *pos, **kw).wait()
+        return "started"
+    except r.Refused:
+        return None
+    except TypeError:
+        return None
+    except BaseException as e:
+        return f"{type(e).__name__}"
+cases = {
+    "positional bufsize": ([G, "--version"], {"env": E}, (-1,)),
+    "positional executable (4th, /bin/sh)": ([G, "--version"], {}, (-1, "/bin/sh")),
+    "positional shell": ([G, "--version"], {}, (-1, None, None, None, None, None, None, True)),
+    "executable=/bin/sh": ([G, "--version"], {"env": E, "executable": "/bin/sh"}),
+    "env missing": ([G, "--version"], {}),
+    "env=None": ([G, "--version"], {"env": None}),
+    "absolute shell /bin/sh -c": (["/bin/sh", "-c", "true"], {"env": E}),
+    "absolute /usr/bin/env": (["/usr/bin/env", "true"], {"env": E}),
+    "absolute bash": (["/bin/bash", "-c", "true"], {"env": E}),
+    "user=": ([G, "--version"], {"env": E, "user": 0}),
+    "umask=": ([G, "--version"], {"env": E, "umask": 0}),
+    "close_fds=False": ([G, "--version"], {"env": E, "close_fds": False}),
+    "process_group=": ([G, "--version"], {"env": E, "process_group": 0}),
+    "restore_signals=": ([G, "--version"], {"env": E, "restore_signals": False}),
+    "cwd relative": ([G, "--version"], {"env": E, "cwd": "relative/dir"}),
+    "start_new_session=False": ([G, "--version"], {"env": E, "start_new_session": False}),
+    "shell=1": ([G, "--version"], {"env": E, "shell": 1}),
+    "an absolute program named sh in another folder": (["/tmp/notgit/sh"], {"env": E}),
+}
+wrong = []
+for name, spec_ in cases.items():
+    args, kw = spec_[0], spec_[1]; pos = spec_[2] if len(spec_) > 2 else ()
+    got = started(args, kw, pos)
+    if got is not None: wrong.append(f"{name}: {got}")
+# the call must be refused by check_child_call itself (a test calls it directly), not only by Child
+for name, (args, kw) in {"env missing": ([G], {}), "unknown option": ([G], {"env": E, "bufsize": 1})}.items():
+    try:
+        r.check_child_call(args, kw); wrong.append(f"check_child_call accepted: {name}")
+    except r.Refused:
+        pass
+# positional extras are a TypeError (the signature has no *a), proven by the signature
+import inspect
+if [p.kind for p in inspect.signature(r.Child.__init__).parameters.values()].count(inspect.Parameter.VAR_POSITIONAL): wrong.append("Child.__init__ still takes *args")
+# OSError at the start is a refusal, never a traceback: program git with a folder that does not exist, and E2BIG
+try:
+    r.Child([G, "--version"], env=E, cwd="/nonexistent-t100/x")
+    wrong.append("missing cwd: started")
+except r.Refused:
+    pass
+except BaseException as e:
+    wrong.append(f"missing cwd: {type(e).__name__}")
+try:
+    r.Child([G] + ["x" * 100000] * 80, env=E)
+    wrong.append("E2BIG: started")
+except r.Refused:
+    pass
+except BaseException as e:
+    wrong.append(f"E2BIG: {type(e).__name__}")
+print("wrong:", wrong); sys.exit(1 if wrong else 0)
+PY
+cat "$S/t100a.out"
+chk "T100a M1 Child cannot be walked round: 18 cases (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit $rc; r11: fails, most of them start)" "[ $rc -eq 0 ]"
+# b) m1: --raw is created after every output check; an OSError of mkdir is a refusal
+fresh_root; RAWNEW="$S/rawnew100"; rm -rf "$RAWNEW"
+mut --raw "$RAWNEW" --out-json "$S/no-such-folder-100/o.json" -- tests/test_fast.py >"$S/t100b1.out" 2>&1; rc1=$?
+CR1=0; [ -e "$RAWNEW" ] && CR1=1
+fresh_root; rm -rf "$RAWNEW"
+mut --raw "$RAWNEW" --out-json "$T/root/o100.json" -- tests/test_fast.py >"$S/t100b2.out" 2>&1; rc2=$?
+CR2=0; [ -e "$RAWNEW" ] && CR2=1
+fresh_root; : > "$S/afile100"
+mut --raw "$S/afile100/sub/raw" -- tests/test_fast.py >"$S/t100b3.out" 2>&1; rc3=$?
+fresh_root; : > "$S/afile100b"
+mut --raw "$S/afile100b" -- tests/test_fast.py >"$S/t100b4.out" 2>&1; rc4=$?
+RC5=2; CR5=0
+if [ "$(id -u)" != 0 ]; then
+  fresh_root; mkdir -p "$S/ro100"; chmod 555 "$S/ro100"
+  mut --raw "$S/ro100/raw" -- tests/test_fast.py >"$S/t100b5.out" 2>&1; RC5=$?; chmod 755 "$S/ro100"
+  grep -q 'Traceback\|INTERNAL' "$S/t100b5.out" && CR5=1
+fi
+cut -c1-160 "$S/t100b1.out" "$S/t100b3.out" | tail -3
+chk "T100b m1 --raw: refused with exit 2 and NO folder created when another output check fails later (nonexistent --out-json folder: exit $rc1, created $CR1; --out-json inside --root: exit $rc2, created $CR2); a --raw below a file (exit $rc3) or equal to a file (exit $rc4) is exit 2 with no traceback; as a normal user a read-only parent is exit 2 too (exit $RC5, trace $CR5) (r11: folder created first; a file in the way is exit 2 with INTERNAL ERROR and a traceback)" "[ $rc1 -eq 2 ] && [ $CR1 -eq 0 ] && [ $rc2 -eq 2 ] && [ $CR2 -eq 0 ] && [ $rc3 -eq 2 ] && [ $rc4 -eq 2 ] && [ $RC5 -eq 2 ] && [ $CR5 -eq 0 ] && ! grep -q 'Traceback\|INTERNAL' '$S/t100b1.out' '$S/t100b2.out' '$S/t100b3.out' '$S/t100b4.out'"
+rm -rf "$RAWNEW" "$S/afile100" "$S/afile100b" "$S/ro100"
+# c) m2: the test words together are limited; a long --pythonpath list and a long node id are not refused as paths (m3)
+fresh_root
+WORDS=(); for i in 1 2 3; do WORDS+=(-k "$(python3 -c "print('w'*21000)")"); done
+mut -- "${WORDS[@]}" tests/test_fast.py >"$S/t100c1.out" 2>&1; rc1=$?
+mut -- -k "$(python3 -c "print('w'*21000)")" tests/test_fast.py >"$S/t100c2.out" 2>&1; rc2=$?
+cut -c1-200 "$S/t100c1.out" | tail -1
+chk "T100c m2 six words of 21000 bytes (126000 together, under the kernel's 131072 but over the tool's 60000) are refused up front with exit 2, no traceback (exit $rc1); one 21000-byte -k expression is not refused for size (no 'together' text; exit $rc2) (r11: the first is not refused for its size)" "[ $rc1 -eq 2 ] && grep -q 'together' '$S/t100c1.out' && ! grep -q 'Traceback\|INTERNAL' '$S/t100c1.out' && ! grep -q 'together' '$S/t100c2.out'"
+fresh_root
+NODE=$(python3 -c "print('tests/test_fast.py::test_f[' + 'n'*300 + ']')")
+mut -- "$NODE" >"$S/t100d1.out" 2>&1; rc1=$?
+LONGPP=$(python3 -c "print(':'.join('/tmp/pp100/' + 'p'*40 + str(i) for i in range(100)))")
+python3 - "$RUN" "$LONGPP" <<'PY' >"$S/t100d2.out" 2>&1; rc2=$?
+import importlib.util, argparse, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+bad = []
+if len(sys.argv[2]) <= 4095: bad.append("test list is not long enough")
+try:
+    r.pythonpath_arg(sys.argv[2])
+except BaseException as e:
+    bad.append(f"a 100-folder list over 4095 bytes in total: {type(e).__name__}")
+for v in ("/a/" + "x" * 300, "/a:/b/" + "y" * 4100):
+    try:
+        r.pythonpath_arg(v); bad.append("not refused: one folder over the limit")
+    except argparse.ArgumentTypeError:
+        pass
+print("bad:", bad); sys.exit(1 if bad else 0)
+PY
+cat "$S/t100d2.out"
+chk "T100d m3 a node id of 300+ bytes after a short path is not refused as a path (no 'longer than' text; exit $rc1); --pythonpath is checked folder by folder: a 100-folder list over 4095 bytes in total is accepted, one folder over the limit is refused (exit $rc2) (r11: both refused / missing)" "! grep -q 'longer than\|not usable as a path' '$S/t100d1.out' && [ $rc2 -eq 0 ]"
+# e) m4: the existing-file path of the mode check (need_mode): a file that already exists with another mode and other text
+python3 - "$RUN" "$S/t100e" <<'PY' >"$S/t100e.out" 2>&1; rc=$?
+import importlib.util, os, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+root = pathlib.Path(sys.argv[2]); root.mkdir(parents=True, exist_ok=True); os.umask(0o022)
+real = os.fchmod; bad = []
+for label, text in (("other text", b"y = 2\n"), ("same text", b"x = 1\n")):
+    target = root / "g.py"; target.unlink(missing_ok=True); target.write_bytes(text); os.chmod(target, 0o600)
+    os.fchmod = lambda fd, mode: None   # the system "did not keep" the mode
+    try:
+        r.restore_target(target, b"x = 1\n", root.resolve(), create=True, mode=0o640)
+        bad.append(f"{label}: NOT refused, mode {oct(target.stat().st_mode & 0o7777)}")
+    except r.Refused as e:
+        print(label, "refused:", str(e)[:100])
+    finally:
+        os.fchmod = real
+print("bad:", bad); sys.exit(1 if bad else 0)
+PY
+cat "$S/t100e.out"
+chk "T100e m4 the mode is checked after the write on the EXISTING-file path (need_mode) too, with other text and with the original text already in the file: refused when the system keeps another mode (exit $rc; r11: this path is only exercised by T99b3's created-file case, so this check shows the guard is there rather than what r11 lacked)" "[ $rc -eq 0 ]"
+# f) m4: real roots at the limit. root + '/x' must fit in 4095 bytes, so 4093 is the longest root; 4094 is refused
+RT=$S/rt100; rm -rf "$RT"; mkdir -p "$RT"
+python3 - "$RT" <<'PY' >"$S/t100f.paths"
+import os, sys
+base = sys.argv[1]
+def mk(n):
+    p = base; seg = 0
+    while len(p) < n:
+        room = n - len(p) - 1
+        if room < 1: break
+        take = min(200, room); p += "/" + "r" * take
+        if len(p) > n: p = p[: n]; break
+    os.makedirs(p, exist_ok=True); return p
+for n in (4093, 4094):
+    p = mk(n); print(len(p.encode()), p)
+PY
+BADF=0
+while read -r LEN P; do
+  git -C "$T/repo" archive "$SHA" | tar -x -C "$P"; ln -sfn "$VENV" "$P/.venv"
+  python3 "$RUN" --root "$P" --restore >"$S/t100f.$LEN" 2>&1; rcf=$?
+  echo "  root of $LEN bytes: exit $rcf: $(cut -c1-120 "$S/t100f.$LEN" | tail -1)"
+  if grep -q 'Traceback\|INTERNAL' "$S/t100f.$LEN"; then BADF=$((BADF+1)); fi
+  if [ "$LEN" = 4093 ] && { [ $rcf -ne 2 ] || grep -q 'bytes long' "$S/t100f.$LEN"; }; then BADF=$((BADF+1)); echo "  BAD 4093 refused for its length"; fi
+  if [ "$LEN" = 4094 ] && { [ $rcf -ne 2 ] || ! grep -q 'bytes long' "$S/t100f.$LEN"; }; then BADF=$((BADF+1)); echo "  BAD 4094 not named too long"; fi
+done < "$S/t100f.paths"
+rm -rf "$RT"
+chk "T100f m4 REAL roots (folders that exist): a root of 4093 bytes passes the length check (it ends in the normal no-marker refusal, exit 2, not named 'bytes long'); a root of 4094 bytes is refused as too long, because the tool needs root plus '/x' within 4095 (r12: the honest longest root is 4093, not 4095); no traceback: $BADF wrong" "[ $BADF -eq 0 ]"
+# g) m4 / T99g cause: which import is the first one after the handlers
+python3 - "$RUN" <<'PY' >"$S/t100g.out" 2>&1; rc=$?
+import re, sys
+src = open(sys.argv[1]).read()
+h = src.index("signal.signal(")
+heavy = [m.start() for m in re.finditer(r"^(import|from) (argparse|tarfile|subprocess|json)\b", src, re.M)]
+bad = [i for i in heavy if i < h]
+print("first signal.signal at", h, "; heavy imports before it:", bad); sys.exit(1 if bad else 0)
+PY
+cat "$S/t100g.out"
+chk "T100g T99g cause: no import of argparse, tarfile, subprocess or json stands before the first signal.signal call in the source (TEXT CHECK of the cause; T99g is the behaviour) (exit $rc; r10: fails)" "[ $rc -eq 0 ]"
+# h) m5: a forged marker mode with a write bit for others, plain --restore: written without it; --sha refuses with the right text
+for MODEV in 438 511; do   # 0666 0777
+  kill_planted; forge97; setmarker97 mode=$MODEV
+  python3 "$RUN" --root "$T/root" --restore >"$S/t99h.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-300 "$S/t99h.out" | tail -1
+  chk "T99h m5 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), file written WITHOUT the write bit for others (mode $GOT has no 2 in the last digit), the text says NOTE (r11: written as recorded)" "[ $rc -eq 0 ] && [ \"\${GOT: -1}\" != 6 ] && [ \"\${GOT: -1}\" != 7 ] && [ \"\${GOT: -1}\" != 2 ] && [ \"\${GOT: -1}\" != 3 ] && grep -q 'writable by others' '$S/t99h.out'"
+  chmod 644 "$T/root/src/mod.py"
+done
+git -C "$T/repo" config tar.umask 022
+kill_planted; setmarker97 mode=438
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99i1.out" 2>&1; rc1=$?
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+kill_planted; setmarker97 mode=436
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99i2.out" 2>&1; rc2=$?
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+git -C "$T/repo" config --unset tar.umask
+chk "T99i m5 the refusal text names the bit that was refused: mode 0666 -> 'writable by others' (exit $rc1); mode 0664 with a git file 0644 -> 'writable by the group' and the git mode (exit $rc2) (r11: both said 'git has neither')" "[ $rc1 -eq 3 ] && grep -q 'writable by others' '$S/t99i1.out' && ! grep -q 'has neither' '$S/t99i1.out' && [ $rc2 -eq 3 ] && grep -q 'writable by the group' '$S/t99i2.out' && grep -q '0o644' '$S/t99i2.out'"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

@@ -3,7 +3,8 @@
 -- move PR: an EMPTY runtime list and the audit-reader flag, Grant("table", "", audit_read=True) (question L12; NOT
 -- portal=True). v16 adds to v15: (c) a record of every kill-switch change, (d) append-only triggers on both records.
 -- v17 adds to v16: the lock_timeout line below (v16 had none although the text said it did), and the kill-switch log
--- trigger never blocks a switch ON (security minor m5).
+-- trigger never blocks a switch ON (security minor m5). v18: the handler also catches a cancelled statement (57014), which
+-- `WHEN OTHERS` alone does not, so a statement_timeout cannot block a switch ON either (minor m4).
 -- Needs Postgres 14 or newer: the trigger condition below reads 'Infinity'::numeric (independent of L7).
 -- (a) The key columns of both spend tables never change (a rewritten key hides a total from the decrease record
 --     and from the readers). (b) every lowering of a total writes one row to a table the runtime role cannot write;
@@ -90,7 +91,7 @@ BEGIN
   BEGIN
     EXECUTE format('INSERT INTO %I.kill_switch_log (old_on, new_on, old_by, new_by) VALUES ($1, $2, $3, $4)', TG_TABLE_SCHEMA)
       USING OLD."on", NEW."on", OLD."by", NEW."by";
-  EXCEPTION WHEN OTHERS THEN
+  EXCEPTION WHEN OTHERS OR QUERY_CANCELED THEN
     IF NEW."on" THEN
       RAISE WARNING 'kill_switch_log not written (%): the switch ON is kept', SQLSTATE;
     ELSE

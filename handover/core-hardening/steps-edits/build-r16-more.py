@@ -67,3 +67,16 @@ T = T.rstrip('\n') + '\n- Round 16 added: nothing was run except text, count, we
 APP = '\n## Appendix K: the detail of the key steps (round 16)\nThe owner reads key steps A to K in row E-48. Where a key step says "Detail", the text is here. Nothing was deleted; the detail was moved.\n\n' + '\n\n'.join(APPX.values()) + '\n'
 sub('\n## Lines checked and found consistent', APP + '\n## Lines checked and found consistent')
 sub('CONTRADICTION 17 (including the rows marked as code-change gated), DEFERRED 1 (E-13); total 59.', 'CONTRADICTION 18 (including the rows marked as code-change gated), DEFERRED 1 (E-13); total 60.')
+
+# ---------- E-52 words (stranger minors)
+rsub('E-52', 'version 5 (file `plan-wp6-resmoke-v5.md`). The assistant attaches its list of checks to the request for your yes', 'version 5. The assistant attaches its list of test items (the numbered tests of the plan) to the request for your yes')
+rsub('E-52', 'The take program**: the script `scripts/run_real_check_n8n.py` that runs the take', 'The take program**: our program that runs the take')
+rsub('E-52', '**The latest start we plan** is 18:00 UTC = 23:30 IST: the latest time at which the assistant asks for a take to start.', '**The latest start we plan** is 18:00 UTC = 23:30 IST: the latest time at which the assistant asks you to start typing the start of a take (the program itself then starts about a minute later).')
+rsub('E-52', '**Your reply**: the one line you type back.', '**Your reply**: the five numbered lines that you type back in one message.')
+rsub('E-52', '- **A smoke test**: a short first run of a whole chain, only to see whether it works at all.', '- **A smoke test**: a short first run of a whole chain, only to see whether it works at all.\n- **Three words that have one meaning each in this sheet.** **The handoff**: the written note that the assistant leaves at the end of the work, listing everything that is still open (for example a secret key that is not revoked). **The take root**: the folder in which the assistant makes the take folder; it is new and empty and is never your home folder. **The cap**: the largest amount of money that the model stage may spend; it is a figure in dollars, and the model stage stops at it.')
+why_add('E-52', 'Round 16 (stranger minors): the file names `plan-wp6-resmoke-v5.md` and `scripts/run_real_check_n8n.py` are out of the owner text; "list of checks" becomes "list of test items"; the latest start we plan is tied to the start of typing; "Your reply" means the five numbered lines; the handoff, the take root and the cap are defined once.')
+
+# ---------- E-09 minors
+rsub('E-09', 'open its saved credential in n8n (type Postgres) and type the password into the field called "Password"', 'open the saved credential of the take\'s database in n8n (the credential whose type is the database program Postgres) and type the password into the field called "Password"')
+rsub('E-09', 'Type `cd <folder>` and press Enter, with the folder from the assistant\'s message (', 'Type `cd <folder>` and press Enter, where `<folder>` is the take folder that the assistant names in its message (the take folder is the new, empty folder that the assistant made for the take; ', 1)
+why_add('E-09', 'Round 16 (stranger minors): `<folder>` is the take folder, said once; "type Postgres" becomes the credential of the take\'s database.')

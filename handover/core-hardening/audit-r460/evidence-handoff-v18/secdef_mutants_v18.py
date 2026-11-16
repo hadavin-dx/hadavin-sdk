@@ -10,11 +10,11 @@ import secdef_guard_v16 as g16, secdef_guard_v17 as g17, secdef_guard_v18 as g18
 from allow_v18 import ALLOWED_BY_FILE
 V17_ALLOWED = {"spend_log_decrease", "kill_switch_log_change", "spend_reserve", "spend_settle", "kill_switch_engage", "kill_switch_release"}
 DB3 = "spend_guarded_writes.sql"; DB2 = "spend_decrease_log.sql"
-RES = "spend_reserve(text,date,date,numeric)"; SET = "spend_settle(text,date,date,numeric,numeric)"; ENG = "kill_switch_engage()"; REL = "kill_switch_release()"
+RES = "spend_reserve(text,date,numeric)"; SET = "spend_settle(text,date,numeric,numeric)"; ENG = "kill_switch_engage()"; REL = "kill_switch_release()"
 SP = "SET search_path = pg_catalog, pg_temp"
 def rev(f, args=""): return f"REVOKE ALL ON FUNCTION {f}({args}) FROM PUBLIC;\n"
 def fn(name="evil", args="", hdr=f"LANGUAGE sql SECURITY DEFINER {SP}", body="AS $f$ SELECT 1 $f$"): return f"CREATE OR REPLACE FUNCTION {name}({args}) RETURNS int {hdr} {body};\n"
-RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_month date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, date, numeric")
+RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, numeric")
 # (name, file, text, allowed-for-v18, expected: "flag" or "clean")
 M = []
 def add(n, text, allowed=None, file="x.sql", want="flag"): M.append((n, file, text, allowed if allowed is not None else {}, want))
@@ -43,18 +43,18 @@ add("S19 bare UPDATE ONLY in a dollar body", TRIG("BEGIN UPDATE ONLY spend SET u
 add("S20 DB-3 style body without search_path", "CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER BEGIN ATOMIC UPDATE kill_switch SET \"on\" = true; END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3)
 # ---- MA1 spelling A: double-quoted names that look like comments
 add("A1 name \"a--b\" hides the token on the same line", "CREATE OR REPLACE FUNCTION \"a--b\"() RETURNS int LANGUAGE sql SECURITY DEFINER " + SP + " AS $f$ SELECT 1 $f$;\n")
-add("A2 name \"t/*\" opens a comment that hides an ALTER FUNCTION", "CREATE TABLE \"t/*\" (a int);\nALTER FUNCTION spend_reserve(text,date,date,numeric) SECURITY DEFINER;\nSELECT 1; /* real comment */\n")
+add("A2 name \"t/*\" opens a comment that hides an ALTER FUNCTION", "CREATE TABLE \"t/*\" (a int);\nALTER FUNCTION spend_reserve(text,date,numeric) SECURITY DEFINER;\nSELECT 1; /* real comment */\n")
 add("A3 E'..\\'..' string hides a statement boundary", "SELECT E'\\''; CREATE OR REPLACE FUNCTION evil() RETURNS int LANGUAGE sql SECURITY DEFINER " + SP + " AS $f$ SELECT 1 $f$;\n")
 # ---- B: ALTER FUNCTION with no SECURITY token
 for n, tail in (("B1 ALTER FUNCTION ... SET search_path = public", "SET search_path = public"), ("B2 ALTER FUNCTION ... RESET search_path", "RESET search_path"), ("B3 ALTER FUNCTION ... OWNER TO the runtime role", "OWNER TO rt17"), ("B4 ALTER ROUTINE ... SET search_path", None)):
-    add(n, f"ALTER {'ROUTINE' if tail is None else 'FUNCTION'} spend_reserve(text,date,date,numeric) {tail or 'SET search_path = public'};\n", {RES: "definer"}, DB3)
-add("B5 ALTER FUNCTION ... SECURITY INVOKER (drops the guard on a definer)", "ALTER FUNCTION spend_reserve(text,date,date,numeric) SECURITY INVOKER;\n", {RES: "definer"}, DB3)
+    add(n, f"ALTER {'ROUTINE' if tail is None else 'FUNCTION'} spend_reserve(text,date,numeric) {tail or 'SET search_path = public'};\n", {RES: "definer"}, DB3)
+add("B5 ALTER FUNCTION ... SECURITY INVOKER (drops the guard on a definer)", "ALTER FUNCTION spend_reserve(text,date,numeric) SECURITY INVOKER;\n", {RES: "definer"}, DB3)
 # ---- C: overloads
 add("C1 second overload of a listed name, only the real signature revoked", RESERVE + fn("spend_reserve", "p text", body="BEGIN ATOMIC UPDATE spend SET usd = 0; SELECT 1; END").replace("RETURNS int", "RETURNS int"), {RES: "definer"}, DB3)
 add("C2 two listed signatures, only one REVOKE", fn("f", "a text") + fn("f", "a int") + rev("f", "text"), {"f(text)": "definer", "f(integer)": "definer"})
 add("C3 overload with an alias type (int4 for integer): REVOKE for int does cover it", fn("f", "a int4") + rev("f", "integer"), {"f(integer)": "definer"}, want="clean")
 # ---- D: grants
-add("D1 GRANT of a second function in a list", RESERVE + "GRANT EXECUTE ON FUNCTION spend_reserve(text,date,date,numeric), kill_switch_release() TO rt17;\n", {RES: "definer"}, DB3)
+add("D1 GRANT of a second function in a list", RESERVE + "GRANT EXECUTE ON FUNCTION spend_reserve(text,date,numeric), kill_switch_release() TO rt17;\n", {RES: "definer"}, DB3)
 add("D2 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA", "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO rt17;\n")
 add("D3 ALTER DEFAULT PRIVILEGES ... GRANT EXECUTE ON FUNCTIONS (survives the later REVOKE)", "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO rt17;\n")
 add("D4 release granted to a non-operator role", "GRANT EXECUTE ON FUNCTION kill_switch_release() TO rt17;\n", {REL: "definer"}, DB3)

@@ -133,7 +133,7 @@ written back (r7 N7; as root a mode bit never blocks a write, so this path is on
 file that ALREADY holds the original text is left as it is, mode included (nothing is written, T88d); if it cannot be opened for
 writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and the mode is CHECKED after the write (r11). A plain `--restore` never
 writes a setuid, setgid or sticky bit: a marker mode with such a bit is cut to its lowest 9 bits and the text says so (r11 MAJ-1;
-a forged marker cannot make a setuid file); with --sha a marker mode with such a bit, or with a special bit, a write bit for others or a write bit for the group that the git file does not have
+a forged marker cannot make a setuid file; r12: a write bit for others is also taken away, T99h); with --sha a marker mode with such a bit, or with a special bit, a write bit for others or a write bit for the group that the git file does not have
 (git archive itself gives 0664), is refused (r10 m2, r11 m6).
 `--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4), may not lie in any
 state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and an existing file is overwritten only when it is a
@@ -142,10 +142,10 @@ in their own process group and the whole group is killed on a timeout (r10 m8); 
 characters are shown as \\xNN (r10 m9).
 Limit (d), exact: a plain `--restore` (no --sha) believes the marker and the backup in the state folder; a person or program
 that can write that folder AS THIS USER can write a forged marker plus a backup whose hash matches, and plain --restore would write that
-text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits, never more: r11 MAJ-1, T99b). Only `--restore --sha
+text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits and a write bit for others is taken away, never more: r11 MAJ-1, r12 m5, T99b, T99h). Only `--restore --sha
 COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
 whenever the state folder may not be trusted. A path of 4096 bytes or more (the kernel counts the closing NUL: 4095 is the longest), the root plus a relative path together, or a name over 255
-bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c). The
+bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c); the test words together may hold 60000 bytes (r12 m2, T100c). Every program start goes through `Child`, which accepts only git, patch and the scratch tree's .venv/bin/python, keyword arguments from a fixed list and a required, restricted env (r12 M1, T100a); it checks the NAME and PATH of the program, it is not a sandbox. The
 signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
 process by that signal at a time when nothing has been written (T98b).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
@@ -360,9 +360,7 @@ def shown(x, limit: int = 200) -> str:
 _CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
 
 
-CHILD_ENV_ALLOWED = frozenset(
-    {"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECODE", "PYTHONPATH"}
-)
+CHILD_ENV_ALLOWED = frozenset({"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECODE", "PYTHONPATH"})
 # r12 (review r11 M1): the keyword arguments a program start may carry. Everything else (shell, executable, preexec_fn, user,
 # group, umask, process_group, close_fds, pass_fds, creationflags, bufsize ...) is refused by NAME, so a new Popen option can
 # never slip in unchecked.
@@ -412,7 +410,9 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused(
             "program start refused: env= is required (None would give the child the caller's whole environment)"
         )
-    if not isinstance(env, dict) or not all(type(k) is str and type(v) is str for k, v in env.items()):
+    if not isinstance(env, dict) or not all(
+        type(k) is str and type(v) is str for k, v in env.items()
+    ):
         raise Refused("program start refused: the environment must be a dict of text")
     extra = sorted(set(env) - CHILD_ENV_ALLOWED)
     if extra or any("\0" in v for v in env.values()):
@@ -1635,14 +1635,11 @@ def restore_from_marker(
             )
         ref_mode = stat.S_IMODE(os.stat(safe_rel(expected_ref, m["file"], "marker file")).st_mode)
         mm = m.get("mode") if isinstance(m.get("mode"), int) else None
-        special = (
-            f"the mode in the marker ({oct(mm)}) has a special bit (setuid, setgid, sticky) or is writable by "
-            f"group or others: git has neither, so the marker may be forged; nothing written (r10 m2)"
-            if mm is not None
-            else ""
-        )
         if mm is not None and mm & 0o7000:  # a setuid, setgid or sticky bit is named as such first
-            raise Refused(special)
+            raise Refused(
+                f"the mode in the marker ({oct(mm)}) has a special bit (setuid, setgid or sticky): git has none, so the "
+                f"marker may be forged; nothing written (r10 m2)"
+            )
         if mm is not None and (mm & 0o111) != (ref_mode & 0o111):
             raise Refused(
                 f"the mode in the marker ({oct(mm)}) has other execute bits than {shown(m['file'])} in the git archive given "
@@ -1653,8 +1650,17 @@ def restore_from_marker(
         # a write bit for others is always refused (found by T95d3 in the first full run of r11: refusing every group bit
         # made the restore of a genuine 0664 file impossible)
         git_mode = REF_MODES.get(str(expected_ref), {}).get(m["file"], ref_mode)
-        if mm is not None and (mm & 0o002 or mm & 0o020 & ~git_mode):
-            raise Refused(special)
+        # r12 m5: the text names the bit that was refused (r11 said "git has neither" even when git has the group bit)
+        if mm is not None and mm & 0o002:
+            raise Refused(
+                f"the mode in the marker ({oct(mm)}) is writable by others: git never gives that, so the marker may be "
+                f"forged; nothing written"
+            )
+        if mm is not None and mm & 0o020 & ~git_mode:
+            raise Refused(
+                f"the mode in the marker ({oct(mm)}) is writable by the group, but the file in the git archive given with "
+                f"--sha has mode {oct(git_mode)}, without that bit: the marker may be forged; nothing written"
+            )
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
@@ -1677,6 +1683,14 @@ def restore_from_marker(
                 f"file got {oct(mode & 0o777)} (set the special bit by hand if it was really there)"
             )
             mode &= 0o777
+        if mode & 0o002:
+            # r12 m5: a plain --restore never writes a file that every user may change, whatever a (possibly forged) marker
+            # says; git never gives that bit. The content is still restored; the text says so
+            mode_note += (
+                f"; NOTE the marker mode {oct(mode)} was writable by others: --restore never writes that, the file got "
+                f"{oct(mode & ~0o002)}"
+            )
+            mode &= ~0o002
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
             if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):
@@ -2594,7 +2608,9 @@ def too_long(v: str) -> str | None:
     return None
 
 
-TOTAL_ARGS_MAX_BYTES = 60_000  # all the test words together (r12 m2); far below the smallest kernel limit (131072)
+TOTAL_ARGS_MAX_BYTES = (
+    60_000  # all the test words together (r12 m2); far below the smallest kernel limit (131072)
+)
 ARG_MAX_BYTES = 100_000  # one program argument: Linux allows 131072 bytes (MAX_ARG_STRLEN); r11 m1
 
 
@@ -2652,7 +2668,9 @@ def pythonpath_arg(v: str) -> str:
     for part in v.split(":"):
         bad = too_long(part)
         if bad:
-            raise argparse.ArgumentTypeError(f"one folder of the list is not usable as a path: {bad}")
+            raise argparse.ArgumentTypeError(
+                f"one folder of the list is not usable as a path: {bad}"
+            )
     return v
 
 

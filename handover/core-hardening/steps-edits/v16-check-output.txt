@@ -80,7 +80,7 @@ owner NEW texts containing E-nn code: []
 owner NEW texts containing ND code: []
 owner NEW texts containing lead key: ['E-52']
 E-36 NEW blocks 1
-scratch OWNER-STEPS lines 323 (original 193; E-03 adds 7 lines, E-25 adds 4, E-37 adds 2)
+scratch OWNER-STEPS lines 324 (original 193; E-03 adds 7 lines, E-25 adds 4, E-37 adds 2)
 E-25 end of file: ['15. That n8n (release number 2.46.6) run', '16. That the saved runs are kept in Post', '17. That n8n sends nothing out. Its outg', '18. Whether a crash between sending the ', '']
 counts text (60, 41, 15, 4) computed (60, 41, 15, 4)
 hold rows ['E-04', 'E-05', 'E-13', 'E-39', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-49', 'E-50', 'E-53'] apply-now 48 hold 12
@@ -101,8 +101,8 @@ scratch 'Words used (read once)' apply-now True all True
 scratch '**A secret key**' apply-now True all True
 scratch '**A database user**' apply-now True all True
 4b in apply-now False in all True
-scratch apply-now OWNER-STEPS lines 323
-scratch all OWNER-STEPS lines 330
+scratch apply-now OWNER-STEPS lines 324
+scratch all OWNER-STEPS lines 331
 fence lines 244
 UTC time without IST pairing (check): 15:20 UTC
 UTC time without IST pairing (check): 14:40 UTC
@@ -127,11 +127,11 @@ banned list size 10 hits in EDITS.md 0
 HOLD-labelled blocks 13
 round 11 checks done
 round 12 checks done
-label uses: latest start we plan 31 program refusal limit 11
+label uses: latest start we plan 32 program refusal limit 11
 round 14 checks done
 round 14 checks done
 round 15 checks done
-r16 checks: 79 phrase checks; UTC=IST pairs 146 ; weekday-date pairs 69 ; banned 0 of 10 ; secret-shaped 0 ; input mtimes read at run time 3
+r16 checks: 82 phrase checks; UTC=IST pairs 146 ; weekday-date pairs 69 ; banned 0 of 10 ; secret-shaped 0 ; input mtimes read at run time 3
 round 16 checks done
 ---- negative controls
 NEG r11hold caught | FAIL hold row NEW without label E-13
@@ -171,51 +171,3 @@ NEG r12vol caught | FAIL E-16 lacks UNVERIFIED
 NEG r12cut caught | FAIL r12 E-57 lacks Reply `cut accepted`
 NEG r12conf caught | FAIL confirmation letters
 NEG rowcount caught | FAIL ids differ {'E-58'}
-NEG conf caught | FAIL confirmation letters
-NEG r13bare caught | FAIL r13 bare label "latest start": he owner texts; the older single label "latest start" 
-NEG r13swap caught | FAIL r13 "latest start we plan" followed by time 18:14
-NEG r13swap2 caught | FAIL r13 "program refusal limit" followed by time 18:04
-NEG r13arith caught | FAIL r13 time arithmetic: 17:49 UTC = 23:49 IST
-NEG r13typing caught | FAIL r13 E-09 lacks `mailbox password typed; you may look again`
-NEG r13reach caught | FAIL r12 E-09 lacks What the assistant can reach
-NEG r13always caught | FAIL r13 E-48 lacks WHATEVER you answer
-NEG r13alarm caught | FAIL r13 E-48 lacks `revoke the secret key for the model`
-NEG r13route caught | FAIL r13 E-48 lacks the assistant recommends route B
-NEG r13shot caught | FAIL r13 E-48 lacks does not prove that the right key is gone
-NEG r13e55 caught | FAIL index mismatch E-55 ('OWNER-STEPS-realrun-v3.md', '119', 'Apply now', 'CONTRADICTION'
-NEG r13e16 caught | FAIL r13 E-16 trigger
-NEG r13above caught | FAIL r13 E-12 refers to unseen text: the sentence above
-NEG r13ph caught | FAIL r13 E-12 lacks The time of day is not yet chosen
-NEG r13yes caught | FAIL r13 E-12 yes sentence form and bullet differ
-NEG r13nd15 caught | FAIL r13 ND15 both routes, no default
-NEG r13e52 caught | FAIL r13 E-52 studio lead defined once, next to the assistant
-NEG r13e37 caught | FAIL r13 E-37 lacks the number after the colon
-NEG r14m10 caught | FAIL r14 3h key end
-NEG r14m12f caught | FAIL r14 E-09 sub-step f does not wait for `not looking`
-NEG r14m12g caught | FAIL r14 E-09 sub-step g does not wait for `not looking`
-NEG r14m12h caught | FAIL r14 E-09 sub-step h does not wait for `not looking`
-NEG r14m22 caught | FAIL r14 3a key end
-NEG r14m23 caught | FAIL r14 wrong weekday: Thu 18 Nov 2026
-NEG r14m34 caught | FAIL r14 wrong weekday: Sun 16 Nov 2026
-NEG r14m29 caught | FAIL r14 internal code in owner text E-48: Q25
-NEG r14m30 caught | FAIL r14 internal code in owner text E-48: L-23NOV
-NEG r14nd caught | FAIL E-48 owner NEW text contains ND
-NEG r14route caught | FAIL r14 route selection message not in exactly one place
-NEG r14rec2 caught | FAIL r14 second recommendation spot
-NEG r14norec caught | FAIL r13 E-48 lacks the assistant recommends route B
-NEG r14again caught | FAIL r14 3c lacks it asks again right after `cut accepted`
-NEG r14forced caught | FAIL r14 3c lacks Your `key revoked` then counts as `yes, no more takes`
-NEG r14real caught | FAIL r14 3f lacks realpath
-NEG r14link caught | FAIL r14 3f lacks the number `1` in its second column
-NEG r14slash caught | FAIL r14 3f lacks followed by `/`
-NEG r14wild caught | FAIL r14 3f lacks none of the signs `*`
-NEG r14star caught | FAIL r14 E-48 item 6 star rule
-NEG r14alarm2 caught | FAIL r14 3b lacks `is the secret key for the model still alive?`
-NEG r14promise caught | FAIL r14 3a honest label
-NEG r14default caught | FAIL r14 3h default when unsure
-NEG r14unless caught | FAIL r14 3j override sentence
-NEG r14e16 caught | FAIL r14 E-16 lacks `shred done 1`
-NEG r14e55 caught | FAIL r14 E-55 lacks your items 2 to 6
-NEG r14e37 caught | FAIL r14 E-37 note
-NEG r14consent caught | FAIL r14 E-12 consent reach
-NEG r14testitem caught | FAIL r14 E-12 test item

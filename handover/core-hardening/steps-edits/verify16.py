@@ -859,7 +859,7 @@ need16('F1 E-55', newtxt['E-55'], 'ONLY when you type it AFTER 18:19 UTC = 23:49
 absent16('F1 old sentence', newtxt['E-55'], 'and your `key revoked` then counts as `no more takes`')
 # F2: contacts only by the exact address, at most 3, in the three rows, and no made-up names
 for rid_ in ('E-04', 'E-42', 'E-62'):
-    need16('F2 ' + rid_, newtxt[rid_], '`take-<id>-a@example.com`', '`take-<id>-b@example.com`', '`take-<id>-c@example.com`', 'more than 3')
+    need16('F2 ' + rid_, newtxt[rid_], '`take-<id>-a@example.com`', '`take-<id>-b@example.com`', '`take-<id>-c@example.com`', 'more than 3', 'you delete nothing and tell the assistant')
     absent16('F2 ' + rid_, newtxt[rid_], 'made-up names')
 _r62 = [r_ for r_ in rows if r_['id'] == 'E-62']
 if not _r62 or _r62[0]['line'] != 112 or 'delete any leftover HubSpot contacts the lead counted' not in _r62[0]['old'][0]: F('r16 E-62 header or old text')
@@ -879,7 +879,7 @@ need16('F4 E-16', newtxt['E-16'], 'It does NOT start while a copy of the secret 
 absent16('F4 E-16', newtxt['E-16'], 'your item 3 comes first', 'None of it can be undone and because', 'about doing items first')
 # m1 take folder and list, m4 stop looking before the click, m5 ok words, m3 alarm 3, m6 counts, m8 other secret files
 need16('m1 E-16', newtxt['E-16'], 'NEW, EMPTY folder', 'never your home folder', 'if a recording or a video file is inside, it stops, removes nothing and tells you', 'You read that list before you type `start clean-up`')
-need16('m5 E-11', newtxt['E-11'], '`ok stand-in test`', '`ok flow rehearsal`')
+need16('m5 E-11', newtxt['E-11'], 'Write `ok stand-in test` (for the stand-in test)', 'or `ok flow rehearsal` (for the flow rehearsal)')
 need16('m3 alarms', ks('C') + newtxt['E-12'], 'Alarm 3: Mon 23 Nov 2026 18:09 UTC = 23:39 IST', 'alarm 3 for 18:09 UTC = 23:39 IST')
 # stranger M2: margin arithmetic computed in the checker, not copied
 _typing = _dt.datetime(2026, 11, 23, 18, 0); _prog = _typing + _dt.timedelta(seconds=60); _pend = _prog + _dt.timedelta(seconds=860); _rev2 = _dt.datetime(2026, 11, 23, 18, 19)

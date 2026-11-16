@@ -1,0 +1,44 @@
+deo except in quotation
+PASS naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
+PASS naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
+PASS naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
+PASS naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)
+PASS naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box
+PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
+PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
+PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
+PASS E-count: the start box states its own word count once and it equals the real count of the box (2495) :: (['2495'], 2495)
+PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2495
+PASS E-title: the title line says IST = UTC + 5:30 :: # REPORT-c6t: video audit fix pass, supersedes REPORT-c6s.md (2026-11-16, UTC; IST = UTC + 5:30)
+PASS E-numbers: every row count in the start box (all 94, ready 49, default 36, check 3, owner 6, wave 1 85) equals the recount from the table, in every place it is printed :: []
+PASS E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 labels compared; L-SHEET has none and L-DEL is 'as answered') :: []
+PASS E-keyend: the paid key is cancelled by 18:19 UTC = 23:49 IST and the money stop is 18:29 UTC = 23:59 IST; no text ties the key end to 18:29
+PASS E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, AKIA other than the allowed literal, private key header) :: 0
+PASS E-rnum: the start box holds no R-number, WP number or ledger id (they are for studio notes, not for the person who answers) :: []
+PASS E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line ([11, 35, 22, 22]), and the short box prints the same four numbers :: ([('1', '11'), ('2', '35'), ('3', '22'), ('4', '22')], [11, 35, 22, 22])
+PASS E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): 8 names :: []
+PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
+PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
+PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
+PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
+PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
+PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
+PASS E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold
+PASS M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default
+PASS M1: TASK (9) is a question to you (yes or no), not an instruction
+PASS M2: the lease words that stay on the video (the label 'setting: lease 45 s', the words 'other lease settings') are held under gate G12 in the box and in section 3
+PASS M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3)
+PASS M3: Table B has the cut cases 'line 2 cut' (55 words) and 'lines 1 and 2 cut' (44 words) with seconds, budget, total and Time cell recomputed from the quoted card lines :: ['| card line 2 cut (no alert mail seen) | 1, 2, 3, 4 = 150 s | 55 | 22.0 | 25 s | about 175 s | 25 s EST |']
+PASS M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell) :: [True, True, True, True, True, True]
+PASS M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
+PASS N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task
+PASS N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim' :: ['ery 30 seconds) may claim the contact again. ', "e questions below, 'claim' means statement). "]
+PASS N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'
+PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
+PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
+PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
+SUMMARY: 196 checks, 3 FAILED: rows 13 and 21 carry the plain statement and no 45-second sentence by default; row 21 (scene 3 caption) carries no lease sentence (no 'lease', no '45', no 'longer than', no 'claim'); row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
+
+EXIT CODE 1

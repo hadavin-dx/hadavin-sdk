@@ -74,7 +74,7 @@ try:
     _root = HERE
     while not os.path.exists(_root + 'tests/test_no_reference_material.py') and _root != os.path.dirname(_root.rstrip('/')) + '/':
         _root = os.path.dirname(_root.rstrip('/')) + '/'
-    tree = ast.parse(open(_root + 'tests/test_no_reference_material.py', encoding='utf-8').read())
+    tree = ast.parse(open(os.environ.get('V31_BANNED_TEST') or (_root + 'tests/test_no_reference_material.py'), encoding='utf-8').read())   # the env name is set only by mut31.py (its scratch copies sit outside the repo)
     words = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and any(getattr(x, 'id', '') == 'BANNED' for x in node.targets):

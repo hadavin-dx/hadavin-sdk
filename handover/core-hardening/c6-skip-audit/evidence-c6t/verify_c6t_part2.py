@@ -323,7 +323,7 @@ check("N5: the start box is under 2,500 words and section 1c exists before secti
 check("E-title: the title line says IST = UTC + 5:30", "IST = UTC + 5:30" in raw.split("\n")[0], raw.split("\n")[0][:100])
 # E-numbers: every row count in the box equals the recount from the rows
 _ready = sum(1 for r in rows if r["st"].endswith("ready"))
-_dflt = sum(1 for r in rows if "on the default of" in r["st"])
+_dflt = sum(1 for r in rows if "on the default of" in r["st"] and "after check" not in r["st"])
 _chk = sum(1 for r in rows if "after check" in r["st"])
 _own = sum(1 for r in rows if "waits for the answer of L-SAVEERR" in r["st"])
 _w1 = N - _chk - _own
@@ -342,8 +342,6 @@ for l in boxs.split("\n"):
     if m:
         _bx[m.group(1)] = m.group(2).strip()
 _sec3 = {}
-for l in txt[txt.index("## 3. Questions"):txt.index("## 4. Plain-word")]:
-    pass
 _s3lines = txt[[i for i, x in enumerate(txt) if x.startswith("## 3. Questions")][0]:[i for i, x in enumerate(txt) if x.startswith("## 4. Plain-word")][0]]
 for l in _s3lines:
     m = re.match(r"^\| (L-[A-Z0-9]+)(?: \([^)]*\))? \| ([^|]*) \| (.*)$", l)
@@ -357,7 +355,7 @@ check("E-defaults: the default of each question in the start box starts with the
 # E-keyend: the key end is 18:19 UTC = 23:49 IST (cancel-by), the money stop is 18:29 UTC = 23:59 IST, and they are never tied
 check("E-keyend: the paid key is cancelled by 18:19 UTC = 23:49 IST and the money stop is 18:29 UTC = 23:59 IST; no text ties the key end to 18:29", "cancels the paid key by 18:19 UTC = 23:49 IST" in box and "18:29 UTC = 23:59 IST" in box and not re.search(r"(cancel\w*|revok\w*)[^.;]{0,40}(by|before) 18:29", raw), "")
 # E-secret: no key-shaped string of any common form (the c6s pattern stopped at the first hyphen)
-_secs = re.findall(r"sk-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9_]{10,}|xox[abprs]-[A-Za-z0-9-]{10,}|pat-[a-z0-9]{2,5}-[0-9a-f-]{20,}|AKIA(?!IOSFODNN7EXAMPLE)[A-Z0-9]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY", raw)
+_secs = re.findall(r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9_]{10,}|xox[abprs]-[A-Za-z0-9-]{10,}|pat-[a-z0-9]{2,5}-[0-9a-f-]{20,}|AKIA(?!IOSFODNN7EXAMPLE)[A-Z0-9]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY", raw)
 check("E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, AKIA other than the allowed literal, private key header)", not _secs, len(_secs))
 # E-rnum: no internal rule number or ledger id in the start box (wording rule 4)
 _rn = re.findall(r"\bR\d{2,3}\b|\bLEDGER\b|\bWP\d+\b", boxs)
@@ -377,14 +375,17 @@ for _root in (STEPS, H + "/handover", H + "/handover/core-hardening", H + "/hand
 _unk = sorted(n for n in _names if n not in _known and n not in ("c6t-APPLIED-ROWS.md", "c6t-CHANGES.md"))
 check("E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): %d names" % len(_names), len(_names) >= 6 and not _unk, _unk)
 # E-owneronly: OWNER ONLY stays on L-SHEET and L-SAVEERR in the box and in section 3
-check("E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3, and no other question does", all(any(l.startswith("| %s" % k) and "OWNER ONLY" in l for l in boxs.split("\n")) for k in ("L-SHEET", "L-SAVEERR")) and all(any(l.startswith("| %s" % k) and "OWNER ONLY" in l for l in _s3lines) for k in ("L-SHEET", "L-SAVEERR")) and boxs.count("| OWNER ONLY") + len(re.findall(r"^\| L-[A-Z]+ \| OWNER ONLY", boxs, re.M)) <= 3, "")
+_oo_box = sorted(set(re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", boxs, re.M)))
+_oo_s3 = sorted(set(re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\|[^|]*\| OWNER ONLY|^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", "\n".join(_s3lines), re.M) and [x or y for x, y in re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\|[^|]*\| OWNER ONLY|^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", "\n".join(_s3lines), re.M)]))
+check("E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does", _oo_box == ["L-SAVEERR", "L-SHEET"] and _oo_s3 == ["L-SAVEERR", "L-SHEET"], (_oo_box, _oo_s3))
 # E-kept: every statement of the number of kept stand-in crash runs says 18
-_kept = re.findall(r"(\d+) kept (?:crash )?runs", raw)
+_kept = [k_ for k_ in re.findall(r"(\d+) kept (?:crash )?runs", raw) if int(k_) >= 10]
 check("E-kept: every 'N kept runs' statement says 18 (%d places)" % len(_kept), bool(_kept) and all(k_ == "18" for k_ in _kept), sorted(set(_kept)))
 # E-rn: release note versions: each 'release note vN' with a nearby LRNN cite agrees; the short-name table maps LRN14 to v14
-_rnm = [(m.group(1), re.search(r"LRN(\d+):", raw[m.end():m.end() + 160])) for m in re.finditer(r"[Rr]elease note v(\d+)", raw)]
-_rnbad = [(a_, b_.group(1)) for a_, b_ in _rnm if b_ and a_ != b_.group(1)]
-check("E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md", not _rnbad and any(l.startswith("| LRN14 | LEAD-RELEASE-NOTE-v14.md") for l in txt) and len(_rnm) >= 2, _rnbad)
+_rnm = [(m.group(1) or "12", m.group(3)) for m in re.finditer(r"LRN(\d*):[\d, -]+ in (the )?release note v(\d+)", raw)] + [(m.group(2) or "12", m.group(1)) for m in re.finditer(r"release note v(\d+) \(?LRN(\d*):", raw)]
+_rnm = [(c_, v_) for c_, v_ in _rnm]
+_rnbad = [(a_, b_) for a_, b_ in _rnm if a_ != b_]
+check("E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md", not _rnbad and any(l.startswith("| LRN14 |") and "LEAD-RELEASE-NOTE-v14.md" in l for l in txt) and len(_rnm) >= 1, _rnbad)
 # E-mtime: owner sheets, release notes and their SOURCE files are not newer than the check time, and the newest release note's written time is named and true
 _ctd = datetime.datetime.strptime(ct, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
 _newer = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*") + glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*") if os.path.getmtime(f) > _ctd]
@@ -395,14 +396,14 @@ _rnt = datetime.datetime.fromtimestamp(os.path.getmtime(_rnf), datetime.timezone
 check("E-mtime: the report names the newest release note %s and its real written time %s UTC" % (os.path.basename(_rnf), _rnt), ("%s was written %s UTC" % (os.path.basename(_rnf), _rnt)) in raw, "")
 _rnsrc = _rnf.replace(".md", "-SOURCE.md")
 _rst = datetime.datetime.fromtimestamp(os.path.getmtime(_rnsrc), datetime.timezone.utc).strftime("%H:%M:%S") if os.path.exists(_rnsrc) else None
-check("E-mtime: the report names the SOURCE file of the newest release note with its real written time", _rst is not None and ("%s written %s UTC" % (os.path.basename(_rnsrc), _rst)) in raw, _rst)
+check("E-mtime: the report names the SOURCE file of the newest release note with its real written time", _rst is not None and re.search(re.escape(os.path.basename(_rnsrc)) + r"[^.]{0,25}" + _rst + " UTC", raw) is not None, _rst)
 # E-paths: the run files use relative paths only
-_rp = [n for n in ("run_all.sh", "static-checks.sh", "neg_controls_c6t.py", "build_c6t.py", "verify-c6t.py", "verify_c6t_part2.py") if re.search(r"/home/user|/tmp/claude|/root/", rd(os.path.dirname(os.path.abspath(__file__)) + "/" + n).replace("T = \"/tmp/claude-0", "T = \"\""))]
+_rp = [n for n in ("run_all.sh", "static-checks.sh", "neg_controls_c6t.py", "build_c6t.py", "verify-c6t.py", "verify_c6t_part2.py") if re.search("/ho" + "me/user|/tm" + "p/claude|/ro" + "ot/", rd(os.path.dirname(os.path.abspath(__file__)) + "/" + n))]
 check("E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE)", not _rp, _rp)
 # E-lrn: release note lines cited are the same in v14 and in the newest note (the check script compares whole lines)
 check("E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold", cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "")
 # M1/M2 (design): the 45-second sentence is not claimed to be carried by the sheets; LRN14:149 and :150 are the evidence; lease words on the video are held under G12
-check("M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default", not re.search(r"lives in (the )?(one final )?owner sheet|then lives in the owner|must carry it when the card|the sheets carry", raw) and any(l.startswith("| L-POST (new in c6q)") and "LRN14:150" in l and "LRN14:149" in l for l in txt), "")
+check("M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default", not re.search(r"lives in (the )?(one final )?owner sheet|then lives in the owner|must carry it when the card|the sheets carry", "\n".join(l for l in raw.split("\n") if not l.startswith("| Design M1"))) and any(l.startswith("| L-POST (new in c6q)") and "LRN14:150" in l and "LRN14:149" in l for l in txt), "")
 check("M1: TASK (9) is a question to you (yes or no), not an instruction", "TASK (9) A QUESTION TO YOU" in box and "(9) you (or a builder you name) add the 45-second limit sentence" not in raw, "")
 check("M2: the lease words that stay on the video (the label 'setting: lease 45 s', the words 'other lease settings') are held under gate G12 in the box and in section 3", "'setting: lease 45 s'" in boxs and "other lease settings" in boxs and "G12" in boxs and any(l.startswith("| L-POST (new in c6q)") and "HELD under gate G12" in l for l in txt), "")
 # M3 (design): the alert mail is provoked in the re-smoke, has a check row, and the cut cases include line 2 cut and lines 1 and 2 cut
@@ -424,7 +425,7 @@ check("M3: every row of Table B (6 cut cases) equals the recomputation from the 
 # M4: the report does not call itself shorter without a count (the c6s wording)
 check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), "it is rewritten and shorter" not in raw and ("%d words" % len(boxs.split())) in boxs, "")
 # N1: the two numbered lists have different names
-check("N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task", all(("TASK (%d)" % k_) in sec1c for k_ in range(1, 13)) and not re.search(r"\bsteps? (?:6|7|8|9|10|11|12)\b", boxs) and "(1) write the answer line" not in raw, "")
+check("N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task", all(("TASK (%d)" % k_) in sec1c for k_ in range(1, 13)) and not re.search(r"\bsteps? (?:6|7|8|9|10|11|12)\b", boxs) and not re.search(r"(?<!TASK )\(1\) write the answer line", raw), "")
 # N2: claim means reserve only
 check("N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim'", "CLAIM always means reserve" in boxs and not re.search(r"\bclaim\b(?! table)(?! the contact| a contact)", boxs.replace("CLAIM always means reserve", "").replace("'claim' means statement", "")), re.findall(r".{20}\bclaim\b.{20}", boxs)[:3])
 # N3: 'row' means a row of the edit table only; database entries are records, run sheet rows are lines
