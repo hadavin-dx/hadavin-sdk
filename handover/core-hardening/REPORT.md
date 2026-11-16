@@ -1,3 +1,9 @@
+## STATUS ORDER 007 start (2026-11-16 ~08:25 UTC / 13:55 IST)
+Reviews read: reviews-from-lead/review-local-1.md and review-local-2-b4cce5b.md. Disagreements so far: none. Not started yet: item 6 (r7u/r7v hygiene): its restart block needs a rebuilt tree from a frozen head that is outside this repo; I will check what exists before claiming it can be done.
+AGENT REGISTER (all sonnet, egm:egm-codebase-details, read-only, started 08:24Z, expected end 08:45Z, last check 08:25Z): a7034eed redact.py 40-260; a2227583 redact.py 260-480; a681f5d0 redact.py 480-700; a62cd9dc redact.py 890-1050; aedd8b23 job-to-owner table (item 4).
+CRITICAL PATH: item 3 and 4 readers -> fold into AUDIT-FINDINGS -> item 2 re-rating count table -> item 5 right-sized plan -> item 7 fresh two-reviewer pass. Running now in my own thread: item 1 corrections.
+Container: 16 GB, 4 cores, load low.
+
 ## FINAL ORDER 005 task A: cross-review of flows-audit (2026-11-16, UTC and IST same day)
 FAILURES AND GAPS FIRST:
 - Verdict: DO NOT TRUST AS WRITTEN (about 9.5 rubric points, limit 3). Both Blockers and all 17 checked findings are real (0 wrong citation, 1 drift F-013, 1 unverified F-019), but the audit missed 6 take-touching Majors and made 3 wrong cut-list calls. Details: reviews-of-flows-audit/REVIEW.md; exact fixes CORRECTIONS.md (27 entries); LEDGER-ROWS.md (24 rows, format check passed).
