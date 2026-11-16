@@ -461,3 +461,7 @@ INTERRUPTED (signal 64): no mutant planted, no marker
   PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
   PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
   PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
+  PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
+  PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
+  PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
+  PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan

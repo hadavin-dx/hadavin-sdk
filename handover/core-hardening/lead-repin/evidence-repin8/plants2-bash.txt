@@ -1,0 +1,1 @@
+m04 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1589 failed=12 (the made-up input and output files were deleted) (3s)

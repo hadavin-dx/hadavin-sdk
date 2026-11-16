@@ -1,0 +1,2 @@
+m04 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1589 failed=12 (the made-up input and output files were deleted) (3s)
+m18 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1597 failed=4 (the made-up input and output files were deleted) (3s)

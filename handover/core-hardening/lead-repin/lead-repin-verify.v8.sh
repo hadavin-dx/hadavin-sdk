@@ -162,8 +162,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1594
-SELFTEST_PLANNED=1628
+CANARY_PLANNED=1601
+SELFTEST_PLANNED=1635
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -1060,6 +1060,7 @@ self_test() {
     printf 'class com.example.MyClass2.HandlerFactory kept_dotted_camel\nsee tests/test_qs_37_refuses_after_window_end.py kept_dotted_file\nThe name is kept_sentence_end.\n'
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
+    printf 'if count < limit then kept_lt_marker_line\n'
 
     # ---- v7 additions: classes found by the v6 security review (value built from parts; first 6 and last 6 characters are checked)
     v7n=200
@@ -1158,6 +1159,7 @@ self_test() {
     v8; printf '; token\t%s\n' "$vv"; v8_reg 'commented-out bare token TAB VALUE (;)' LS
     v8; printf '#requirepass %s\n' "$vv"; v8_reg 'commented-out requirepass VALUE (#, no space)' LS
     v8; printf 'requirepass short_first %s\n' "$vv"; v8_reg 'requirepass: a second word on the line is hidden too' LS
+    v8; printf '# requirepass short_first %s\n' "$vv"; v8_reg 'commented-out requirepass: a second word is hidden too' LS
     v8; printf 'rootpw  two_part %s\n' "$vv"; v8_reg 'rootpw: a second word on the line is hidden too' LS
     v8; printf 'password\t%s\n' "$vv"; v8_reg 'bare password TAB VALUE' LS
     v8; printf 'db_password\t%s\n' "$vv"; v8_reg 'bare db_password TAB VALUE' LS
@@ -1380,6 +1382,7 @@ self_test() {
   chk_kept 'file name with dots stays' 'tests/test_qs_37_refuses_after_window_end.py'
   chk_kept 'a name followed by a full stop stays' 'kept_sentence_end.'
   chk_kept 'a NUL byte is removed and the removal is shown (tr stage and pre-stage)' 'ab kept_nul_line [control bytes removed: 1]'
+  chk_kept 'a plain < in text stays a < (the private stand-in is turned back)' 'if count < limit then kept_lt_marker_line'
   chk_kept 'mkdir -p with a path stays' 'kept_v7_line mkdir -p /tmp/x'
   chk_kept 'a word after an ESC sequence stays and the removal is shown' 'kept_esc_word [control bytes removed: 1]'
   chk_kept 'a word after a bare CR stays (the CR is removed, not shown raw)' 'row1kept_cr_word [control bytes removed: 1]'
