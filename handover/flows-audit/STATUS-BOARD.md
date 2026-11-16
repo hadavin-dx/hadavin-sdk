@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-16T12:00:00Z
+UPDATED_UTC: 2026-11-16T12:00:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 6
-PERCENT: 86
+PERCENT: 87
 AGENTS_RUNNING: 8
-CAPACITY: 1.39 load of 4 cores, mem 0/15 GB, RAM 943/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.05 load of 4 cores, mem 0/15 GB, RAM 962/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
 FAILED: F8 fixer says ruff format failure did not reproduce; not yet confirmed by evidence runner (a5a7e77 running)
 FAILED: evidence runner (independent): run_all.sh exit 1 (case new-warn-changes-the-pin missing FINAL text) - F8 fixer had reported exit 0; ruff format --check exit 1 only inputs/plan-wp6-resmoke-v5.md (lead file); TAKE_CHECK_FLOWS=/tmp/x gave exit 1 (a real FAIL stays 1, my expectation of 4 was wrong); fixer a8d895a running
-NEXT: collect hand-backs; 8 running (ORDER 035 met); ORDER 013 claims table and core patches in review
-PUSHED_UTC: 2026-11-16T12:00:00Z
+NEXT: collect hand-backs; 8 running (ORDER 035 met)
+PUSHED_UTC: 2026-11-16T12:00:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -35,12 +35,12 @@ PUSHED_UTC: 2026-11-16T12:00:00Z
 |---|---|---|---|---|---|---|---|
 | a2c7078 | fixer | sonnet | F8 Majors Q1-Q5 | 11:51 | 12:40 | running | edits flow-check; log fix-f8-r10c.md |
 | aa3acc9 | fixer | sonnet | TAKE-CHECKLIST+FIX-PLAN | 12:08 | 12:40 | running | fix-tcfp2.md |
-| a0e1266 | fixer | sonnet | owner part pass 4 | 12:27 | 12:45 | running | fix-ownersteps7.md |
 | ad171a4 | fixer | sonnet | RUNBOOK round 4 | 12:29 | 12:50 | running | fix-runbook4.md |
 | a0a664e | drift | sonnet | drift check stable audit files | 12:31 | 12:45 | running | nothing yet |
 | a7095d2 | fixer | sonnet | core patches REVIEW round 3 fixes | 12:33 | 12:50 | running | fix-review2.md |
 | a2b9db9 | comprehension | sonnet | QUESTIONS.md stranger read | 12:36 | 12:50 | running | nothing yet |
 | a72843e | citations | sonnet | B-003 rows + pair sync | 12:38 | 12:50 | running | nothing yet |
+| ac4883e | comprehension | sonnet | owner part stranger read r6 | 12:07 | 12:20 | running | nothing yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
@@ -48,6 +48,7 @@ PUSHED_UTC: 2026-11-16T12:00:00Z
 3 Fresh owner-part read and citation lane after a0e1266; fresh readiness read after ad171a4
 4 Evidence runner run_all.sh and test_take_check.sh at final head, earlier exit 1 cause (waits: a2c7078)
 5 Final grep limitation/TODO/skipped, ledger rows, drift refresh (waits: all fixers)
+Q31 (9 owner-part questions from fix-ownersteps7.md) to append to QUESTIONS.md after stranger read a2b9db9 returns
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
