@@ -1,0 +1,2 @@
+REFUSED: --raw "/" holds a `.` or `..` part, or is the filesystem root or a top-level folder: give a folder at least two levels deep, written without . or ..
+exit=2

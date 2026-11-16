@@ -133,7 +133,7 @@ written back (r7 N7; as root a mode bit never blocks a write, so this path is on
 file that ALREADY holds the original text is left as it is, mode included (nothing is written, T88d); if it cannot be opened for
 writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and the mode is CHECKED after the write (r11). A plain `--restore` never
 writes a setuid, setgid or sticky bit: a marker mode with such a bit is cut to its lowest 9 bits and the text says so (r11 MAJ-1;
-a forged marker cannot make a setuid file; r12: a write bit for others is also taken away, T99h); with --sha a marker mode with such a bit, or with a special bit, a write bit for others or a write bit for the group that the git file does not have
+a forged marker cannot make a setuid file; r12, r13, r14 m4: a write bit for the group and for others is also taken away, T99h); with --sha a marker mode with such a bit, or with a special bit, a write bit for others or a write bit for the group that the git file does not have
 (git archive itself gives 0664), is refused (r10 m2, r11 m6).
 `--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4), may not lie in any
 state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and an existing file is overwritten only when it is a
@@ -142,9 +142,12 @@ in their own process group and the whole group is killed on a timeout (r10 m8); 
 characters are shown as \\xNN (r10 m9).
 Limit (d), exact: a plain `--restore` (no --sha) believes the marker and the backup in the state folder; a person or program
 that can write that folder AS THIS USER can write a forged marker plus a backup whose hash matches, and plain --restore would write that
-text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits and a write bit for others is taken away, never more: r11 MAJ-1, r12 m5, T99b, T99h). Only `--restore --sha
+text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits and the write bits for the group and for others are taken away, never more: r11 MAJ-1, r12 m5, r13, r14 m4, T99b, T99h). Only `--restore --sha
 COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
-whenever the state folder may not be trusted. A path of 4096 bytes or more (the kernel counts the closing NUL: 4095 is the longest), the root plus a relative path together, or a name over 255
+whenever the state folder may not be trusted. r14 M3, what --sha does NOT close: `--restore --sha` compares only the backup text and the mode with git; it does NOT check the marker's process group, start time and
+argument list. A forged marker next to a backup that equals git passes it, and `--restore` then sends SIGKILL to the process group named in the marker. r14 limits the damage: a group is stopped only when its
+leader is exactly this tool's test command (`<root>/.venv/bin/python -m pytest ... --rootdir=<root>`, T103d), so a forged pgid cannot kill a shell, tmux or a build; a person who can write the state folder as this user can still make
+this tool stop a pytest run of the same root. A path of 4096 bytes or more (the kernel counts the closing NUL: 4095 is the longest), the root plus a relative path together, or a name over 255
 bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c); the test words together may hold 60000 bytes (r12 m2, T100c). Every program start goes through `Child`, which accepts only the very git and patch files found at start (same real path, device and inode) and exactly <root>/.venv/bin/python, the argument shapes of this tool's fixed calls, keyword arguments from a fixed list and a required, restricted env (r12 M1, r13 M1, T100a); it checks WHICH FILE starts and the shape of its arguments, it is not a sandbox and does not vouch for the file itself. The
 signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
 process by that signal at a time when nothing has been written (T98b).
@@ -377,7 +380,6 @@ CHILD_PROGRAMS = (
 _TRUSTED: dict[str, tuple] = {}
 _FOUND: dict[str, str] = {}  # the path text `shutil.which` gave (what tool() returns)
 _MISSING: set[str] = set()  # r14 m2: programs that were NOT installed when `seal_tools` ran: never trusted later
-_SEALED = False
 _CHILD_PYTHON: str | None = None
 _CHILD_PYTHON_ID: tuple | None = None  # r14 m1: what the interpreter file was when `set_child_root` named it
 IMPORT_PROBE_CODE = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
@@ -413,11 +415,9 @@ def trust_tool(name: str) -> str | None:
 def seal_tools() -> list[str]:
     """r14 m2 (class: a program trusted at its FIRST find, which may be later than the start): record `git` and `patch` NOW; one
     that is not installed is remembered as missing and is refused for the rest of the run. Returns the names that are missing."""
-    global _SEALED
     for name in CHILD_PROGRAMS:
         if name not in _TRUSTED and trust_tool(name) is None:
             _MISSING.add(name)
-    _SEALED = True
     return sorted(_MISSING)
 
 
@@ -1465,6 +1465,19 @@ def unreaped_child(pid: int) -> bool:
     return True
 
 
+def is_test_leader(argv: list[str] | None, root: pathlib.Path) -> bool:
+    """r14 M3 (class: a kill decided from a state file the same user can write): a process group is stopped only when its leader is
+    exactly the shape of this tool's test command, `<root>/.venv/bin/python -m pytest ... --rootdir=<root> ...` (see `pytest_cmd`).
+    A forged marker whose process group is a shell, a terminal multiplexer or a build is left alone."""
+    return (
+        isinstance(argv, list)
+        and len(argv) >= 3
+        and argv[0] == os.path.join(os.fspath(root), ".venv/bin/python")
+        and argv[1:3] == ["-m", "pytest"]
+        and f"--rootdir={os.fspath(root)}" in argv
+    )
+
+
 def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
     """Process groups that are provably this run's test group (a killed run may leave several things behind)."""
     pgid, rec_start, rec_argv = m.get("pgid"), m.get("start_ticks"), m.get("argv")
@@ -1478,7 +1491,11 @@ def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
         if (
             st and st["state"] != "Z"
         ):  # the leader still exists: must be exactly the process we started
-            same = st["start"] == rec_start and proc_argv(pgid) == rec_argv
+            same = (
+                st["start"] == rec_start
+                and proc_argv(pgid) == rec_argv
+                and is_test_leader(rec_argv, root)
+            )
             return [pgid] if same and st["pgrp"] == pgid and st["sid"] == pgid else []
         # leader gone (pid not in use or a zombie): its group may live on while members exist. A pid cannot be
         # given to a new group while members live, so members are ours if they started after the leader
@@ -1510,6 +1527,7 @@ def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
             and st["pgrp"] == q == st["sid"]
             and st["start"] >= run_start
             and (argv == want if isinstance(full, list) else argv[: len(want)] == want)
+            and is_test_leader(argv, root)
             and works_in(q, root)
         ):
             found.append(q)
@@ -1840,11 +1858,13 @@ def restore_from_marker(
         if mode & 0o022:
             # r12 m5, r13: a plain --restore never writes a file that the group or every user may change, whatever a (possibly
             # forged) marker says; git never gives those bits. The content is still restored; the text says so
-            mode_note += (
-                f"; NOTE the marker mode {oct(mode)} was writable by the group or by others: --restore never writes that, "
-                f"the file got {oct(mode & ~0o022)} (a file that really was group-writable must be changed back by hand)"
-                f"{LIMIT_D_NOTE}"
-            )
+            if mode & 0o002 or mode_note:
+                mode_note += (
+                    f"; NOTE the marker mode {oct(mode)} was writable by the group or by others: --restore never writes that, "
+                    f"the file got {oct(mode & ~0o022)}{LIMIT_D_NOTE}"
+                )
+            else:  # r14 m5: a genuine 0664 file (only the group bit): one short sentence, not the limit (d) text
+                mode_note += f"; NOTE {oct(mode)} became {oct(mode & ~0o022)}: --restore never writes a group write bit"
             mode &= ~0o022
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
@@ -1877,8 +1897,7 @@ def restore_from_marker(
 
 
 LIMIT_D_NOTE = (
-    " (limit d: a plain --restore still writes the execute bits and the read bits a possibly forged marker names; only "
-    "--restore --sha compares the mode with the one git records)"
+    " (limit d: a plain --restore still writes the execute bits and the read bits of the marker; see --restore --sha)"
 )
 
 
@@ -2793,6 +2812,51 @@ def path_args(tests: list[str]) -> list[str]:
     return [tests[i] for i in path_indexes(tests)]
 
 
+SYSTEM_TOP_FOLDERS = frozenset(
+    {"bin", "boot", "dev", "etc", "lib", "lib32", "lib64", "libx32", "proc", "run", "sbin", "sys", "usr", "var"}
+)
+SHARED_TEMP_FOLDERS = ("/tmp", "/var/tmp", "/dev/shm")
+
+
+def refuse_unsafe_output_path(value: str, what: str, is_folder: bool) -> None:
+    """r14 M2 (class: an output path judged by its TEXT, while the operating system resolves it later): resolve first, then refuse.
+    `value` (--raw: a folder; --out-json: a file) is refused, with exit 2 and before any folder is made, when
+      * a part is `.` or `..` (r13 m2);
+      * a symbolic link lies anywhere on the way (the last part and every folder before it that exists);
+      * after resolution it has fewer than two levels (the filesystem root or a top-level folder; `/x.json` for a file);
+      * after resolution it lies in a system folder (/etc, /usr, /bin, /var except /var/tmp ... : SYSTEM_TOP_FOLDERS), or, for a folder,
+        is a shared temporary folder itself (/tmp, /var/tmp, /dev/shm).
+    Raises Refused."""
+    if set(value.split("/")) & {"..", "."}:
+        raise Refused(
+            f"REFUSED: {what} {shown(value)} holds a `.` or `..` part: write it without . or .."
+        )
+    here = os.path.abspath(value)
+    cur = "/"
+    for part in [x for x in here.split("/") if x]:
+        cur = os.path.join(cur, part)
+        if not os.path.lexists(cur):
+            break
+        if os.path.islink(cur):
+            raise Refused(
+                f"REFUSED: {what} {shown(value)} has a symbolic link on its way ({shown(cur)}): give a path without links"
+            )
+    real = os.path.realpath(here)
+    levels = [x for x in real.split("/") if x]
+    if len(levels) < 2:
+        raise Refused(
+            f"REFUSED: {what} {shown(value)} resolves to {shown(real)}: fewer than two levels (the filesystem root or a top-level folder)"
+        )
+    if levels[0] in SYSTEM_TOP_FOLDERS and not (levels[0] == "var" and levels[1] == "tmp"):
+        raise Refused(
+            f"REFUSED: {what} {shown(value)} resolves to {shown(real)}, which lies in a system folder (/{levels[0]})"
+        )
+    if is_folder and real in SHARED_TEMP_FOLDERS:
+        raise Refused(
+            f"REFUSED: {what} {shown(value)} is a shared temporary folder itself ({real}): give a folder inside it"
+        )
+
+
 def refuse_in_state_folders(path: pathlib.Path, what: str) -> None:
     """r11 m3 (class: a folder created before every refusal that could stop it): no output path, and no folder to be created for
     one, may lie in a folder a marker may live in (ours and the other usual places). Works on a path that does not exist yet."""
@@ -3040,17 +3104,16 @@ def main():
     )  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
-    if a.raw and (
-        set(a.raw.split("/")) & {"..", "."}
-        or len([x for x in os.path.abspath(a.raw).split("/") if x]) < 2
-    ):
-        # r13 m2 (class: a path whose `..` is resolved by the operating system only after a folder on the way was created):
-        # a `..` in --raw is refused BEFORE any check or any folder is made
-        print(
-            f"REFUSED: --raw {shown(a.raw)} holds a `.` or `..` part, or is the filesystem root or a top-level folder: give a folder at least two levels deep, written without . or ..",
-            file=sys.stderr,
-        )
-        sys.exit(EXIT_REFUSED)
+    # r13 m2, r14 M2 (class: a path judged by its text while the operating system resolves it later): --raw and --out-json are
+    # resolved FIRST, then refused (a `.` or `..` part, a link on the way, fewer than two levels, a system folder), before any
+    # check and before any folder is made
+    for _opt, _val, _is_folder in (("--raw", a.raw, True), ("--out-json", a.out_json, False)):
+        if _val:
+            try:
+                refuse_unsafe_output_path(_val, _opt, _is_folder)
+            except Refused as e:
+                print(str(e), file=sys.stderr)
+                sys.exit(EXIT_REFUSED)
     # r10 m4 (class: a window between installing the handlers and the `try` that maps a signal to an exit code): the handled
     # signals are BLOCKED while the handlers are installed and the temporary folder is made, and unblocked inside the `try`,
     # so a signal there is held and then handled like any other (128+N, folder removed), never an uncaught KeyboardInterrupt

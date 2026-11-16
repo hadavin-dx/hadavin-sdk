@@ -1,0 +1,28 @@
+### R --raw edge cases (uid 65534); run form with --no-control
+ROW|R01-normal|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|R02-empty|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --raw: an empty value is not allowed (is a shell variable unset?)
+ROW|R03-relative|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|R04-inside-root|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw /tmp/r13-indep-nobody/h/neg/root/rawin lies inside --root /tmp/r13-indep-nobody/h/neg/root: refused (it would change the scratch tree)
+ROW|R05-is-root|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw /tmp/r13-indep-nobody/h/neg/root lies inside --root /tmp/r13-indep-nobody/h/neg/root: refused (it would change the scratch tree)
+ROW|R06-dot|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|REFUSED: --raw "." holds a `.` or `..` part, or is the filesystem root or a top-level folder: give a folder at least two levels deep, written without . or ..
+ROW|R07-slash-SKIPPED-here-see-raw2|uid=65534|exit=0|traceback_lines=0|file_last=return1|state=|
+ROW|R08-devnull|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw "/dev/null" exists and is not a folder: refused
+ROW|R09-existing-file|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw "/tmp/r13-indep-nobody/h/neg/afile" exists and is not a folder: refused
+ROW|R10-symlink-to-dir|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw /tmp/r13-indep-nobody/h/neg/rawlink is a symbolic link: refused
+ROW|R11-parent-is-file|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw "/tmp/r13-indep-nobody/h/neg/pf/sub" cannot be created: Not a directory
+ROW|R12-dotdot|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|REFUSED: --raw "/tmp/r13-indep-nobody/h/neg/root/../rawdd" holds a `.` or `..` part, or is the filesystem root or a top-level folder: give a folder at least two
+ROW|R13-4095|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --raw: not usable as a path or name: one name in it is longer than 255 bytes
+ROW|R14-4096|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --raw: not usable as a path or name: it is 4096 bytes long (the limit is 4095)
+ROW|R15-120000|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --raw: not usable as a path or name: it is 120000 bytes long (the limit is 4095)
+ROW|R16-name-300|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --raw: not usable as a path or name: one name in it is longer than 255 bytes
+ROW|R17-newline-in-name|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|R18-control-char-name|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|R19-unicode|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|R20-readonly-parent|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: --raw "/tmp/r13-indep-nobody/h/neg/ro/sub" cannot be created: Permission denied
+ROW|R21-out-json-inside-root|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: output path /tmp/r13-indep-nobody/h/neg/root/o.json lies inside --root /tmp/r13-indep-nobody/h/neg/root: refused (it would change the scratch tree)
+ROW|R22-out-json-symlink|uid=65534|exit=0|traceback_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: output path /tmp/r13-indep-nobody/h/neg/oj is a symbolic link or not a regular file: refused
+ROW|R23-prefix-long|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: argument --prefix: not usable as a path or name: it is 5000 bytes long (the limit is 4095)
+ROW|R24-old-8MB|uid=65534|exit=126|traceback_lines=0|file_last=return1|state=|bash: line 1: /usr/local/bin/python3: Argument list too long
+ROW|R25-many-test-args|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.py: error: the test arguments together are 82920 bytes (counted with 9 per word); the limit is 60000
+### R-end: file_last must be return1 everywhere above unless a run completed
+DONE

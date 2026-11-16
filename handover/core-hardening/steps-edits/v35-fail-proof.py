@@ -1,5 +1,5 @@
-"""v35-fail-proof.py: runs the Part 9 checks of newchecks-v35.py (C228 to C273, one or more per finding of review-v31 to v34 security, naive and evidence reports)
-on the BUILT v33 files (read only) and on the BUILT v35 files. Every check must fail on v34 or be listed as unable to fail there with the reason printed; none may fail on v35.
+"""v35-fail-proof.py: runs the Part 9 checks of newchecks-v35.py (C228 to C280, one or more per finding of review-v31 to v34 security, naive and evidence reports; C274 to C280 are the round 7 meaning checks)
+on the BUILT v34 files (read only) and on the BUILT v35 files. Every check must fail on v34 or be listed as unable to fail there with the reason printed; none may fail on v35.
 Usage: python3 -B -I v35-fail-proof.py. Exit 0 = none fails on v35. Prints which checks do not fail on v34."""
 import os, re, sys
 D = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -14,7 +14,7 @@ codes = sorted(set(re.findall(r"\b(C2(?:2[89]|[3-9]\d))\b", body)))
 import importlib.util
 spec = importlib.util.spec_from_file_location('b32', D + 'build-v35.py'); bm = importlib.util.module_from_spec(spec); sys.argv = ['x', D]; spec.loader.exec_module(bm)
 def facts(v):
-    d = {}; exec(open(D + 'facts-%s.py' % v, encoding='utf-8').read(), d); return d['F']
+    d = {}; exec(open(D + 'facts-%s.py' % v, encoding='utf-8').read(), d); d['F'].setdefault('bs_pair', ' '.join(d['F']['bs'].split()[-5:])); return d['F']
 def whole(ver, k):
     return bm.combine(rd('OWNER-SHEET-%s-%s.md' % (ver, k)), rd('OWNER-CARD-%s-%s.md' % (ver, k))) + '\n' + rd('OWNER-APPENDIX-%s-%s.md' % (ver, k)) + '\n' + rd('OWNER-FILM-PERSON-%s.md' % ver)
 old = run(whole('v34', 'A'), whole('v34', 'B'), rd('LEAD-RELEASE-NOTE-v18.md'), rd('v34-OPEN-FOR-LEAD.md'), {'A': rd('OWNER-SHEET-v34-A.md'), 'B': rd('OWNER-SHEET-v34-B.md')}, facts('v34'), 'v34')

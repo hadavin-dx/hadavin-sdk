@@ -1,0 +1,28 @@
+### G1 control: normal run
+ROW|G1-control|uid=65534|exit=5|tb=0|fake_log_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+### G2 hostile git FIRST on PATH, run form
+ROW|G2-path-git-first|uid=65534|exit=5|tb=0|fake_log_lines=8|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/toy rev-parse --show-toplevel
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/root rev-parse --is-inside-work-tree
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/toy rev-parse --show-toplevel
+### G3 hostile git FIRST on PATH, --restore with --sha
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 16490 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|G3-path-git-first-restore|uid=65534|exit=0|tb=0|fake_log_lines=6|file_last=return1|state=0205f1914fec2e46.lock |test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane-65534/0205f1914fec2e46.backup; hash matches saved original:
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/toy rev-parse --show-toplevel
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/root rev-parse --is-inside-work-tree
+FAKE-GIT-RAN uid=65534 args=-C /tmp/r13-indep-nobody/h/neg/toy rev-parse --show-toplevel
+### G4 cwd holds a script named git, PATH has '.' first
+ROW|G4-cwd-git-dot-path|uid=65534|exit=2|tb=0|fake_log_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: program start refused: the program must be an absolute path, got "./git"
+### G5 symlink named git -> /bin/sh first on PATH
+ROW|G5-symlink-git-sh-first|uid=65534|exit=2|tb=0|fake_log_lines=0|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: git rev-parse failed for --repo /tmp/r13-indep-nobody/h/neg/toy (rc 0): 
+### G6 --repo is a folder whose own git is hostile: repo folder with a script named git in cwd
+ROW|G6-cwd-git-no-dot|uid=65534|exit=5|tb=0|fake_log_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+### G7 other .venv/bin/python: root/.venv -> fakevenv (python is a logging wrapper)
+ROW|G7-other-venv-python|uid=65534|exit=5|tb=0|fake_log_lines=3|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+FAKE-PY-RAN uid=65534 args=-c import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '') mod
+FAKE-PY-RAN uid=65534 args=-c import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '') mod
+### G8 --pythonpath pointing at another folder with a fake mod
+ROW|G8-pythonpath-elsewhere|uid=65534|exit=2|tb=0|fake_log_lines=3|file_last=return1|state=0205f1914fec2e46.lock |REFUSED: import check: `import mod` loads '/tmp/r13-indep-nobody/h/neg/evilpp/mod.py', not /tmp/r13-indep-nobody/h/neg/root/src/mod.py: the tests would not run the mutate
+### G9 hostile git via GIT_EXEC_PATH / GIT_DIR / LD_PRELOAD-name env set in the caller
+ROW|G9-git-env|uid=65534|exit=5|tb=0|fake_log_lines=0|file_last=return1|state=0205f1914fec2e46.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+DONE
