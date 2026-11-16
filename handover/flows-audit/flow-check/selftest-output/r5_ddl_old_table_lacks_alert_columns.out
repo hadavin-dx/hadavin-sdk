@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --quiet-info --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --ddl /tmp/fc-selftest-4o8rkudu/v2.sql
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --quiet-info --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --ddl /tmp/fc-selftest-dv_1gomn/v2.sql
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
