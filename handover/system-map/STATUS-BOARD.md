@@ -1,21 +1,21 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:06:35Z
-PUSHED_UTC: 2026-11-16T12:06:35Z
+UPDATED_UTC: 2026-11-16T12:07:19Z
+PUSHED_UTC: 2026-11-16T12:07:19Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
-NEEDS_YOU, in this order (lead; one action each; times UTC / IST):
-  1. Start Docker, then run the loopback self-check, then the first rehearsal of the changed flows (steps: work/t19-and-stored-data-steps.md; about 1.5 h, my estimate, unverified). Start by Tue 17 Nov 03:30 UTC / 09:00 IST (decision 12). Write your start time in the handoff.
-  2. Yes or no: may the system-map session change the failing licence test so it accepts the three Apache-2.0 licence copies under handover/promotion-inputs? (Yes: the files stay unchanged and the test changes. No: the test stays failing. Decision 11 forbids relicensing the files.)
-  3. Yes or no: will you paste the SESSION-HANDOFF text (the live-state text on your laptop) into inputs/ by Tue 17 Nov 12:00 UTC / 17:30 IST? If no, I drop row M20.
-  4. Answer the 8 open Blockers in drift/REPORT.md (row M3). Second action: answer D-04 and D-05 in work/decision-list-for-lead.md (the questions are written there).
-  5. Yes or no: did you start the loopback self-check (row 2a in work/critical-path-r1.md)? It was due Mon 16 Nov 13:00 UTC / 18:30 IST. Then answer work/decision-list-for-lead.md.
+NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
+  1. Start Docker and run the first rehearsal of the changed flows (steps: work/t19-and-stored-data-steps.md; about 1.5 h, my estimate, unverified). Start by Tue 17 Nov 03:30 UTC / 09:00 IST (decision 12).
+  2. Yes or no: may the system-map session change the failing licence test so it accepts the three Apache-2.0 licence copies under handover/promotion-inputs? Yes = the files stay unchanged and only the test changes. No = the test stays failing. Reply by Tue 17 Nov 06:00 UTC / 11:30 IST. Decision 11 forbids changing the files.
+  3. Yes or no: will you paste the SESSION-HANDOFF text (the live-state text on your laptop) into inputs/? Reply by Tue 17 Nov 12:00 UTC / 17:30 IST. If no, I drop row M20.
+  4. Answer the 8 open Blockers in drift/REPORT.md (row M3). Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
+  5. Answer D-04 and D-05 in work/decision-list-for-lead.md (the questions are written there). Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 9 running (8 minimum met) (ORDER 035 met). Ended this beat: PLAN-002 r4, QUEUE, open-items, decision-list, end-delete-cases, premortem, not-checked-r2, owner-timeline. New: STATUS-BOARD, t19, cleanup-held-edits, rehearsal-limits, CORRECTIONS, egm-dryrun, review-r460-tools, row1-brief, BRIEF-LANE. 0 missing.
-CAPACITY: nproc=4 load=0.06 0.19 0.20 | RAM used/total MB 914/16087 | /dev/vda        252G   18G   22G  46% / | 2348 |  top disk user I made: work/ (KB, last field); MB freed: 0 (ORDER 031)
-NEXT: digested through 475. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
+AGENTS_RUNNING: 8 running (ORDER 035 met). Ended this beat: CORRECTIONS, row1 brief, BRIEF-LANE, STATUS-BOARD, t19, cleanup-held-edits, rehearsal-limits, review-r460, egm-dryrun. New (named below): L1, L2, L3, L4, L5a, L6 lane reads, BRIEF-LANE r2, BRIEF-EVIDENCE-1. 0 missing.
+CAPACITY: nproc=4 load=0.36 0.24 0.22 | RAM used/total MB 908/16087 | /dev/vda        252G   18G   22G  46% / | 2352 |  top disk user I made: work/ (KB, last field); MB freed: 0 (ORDER 031)
+NEXT: digested through 484. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,15 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| ac1aa425 | cold read STATUS-BOARD (read-only) | 12:06 | +10 min | running | nothing yet |
-| a56e37d9 | cold read t19-and-stored-data-steps (read-only) | 12:06 | +10 min | running | nothing yet |
-| aa3d6d0f | cold read cleanup-card-held-edits (read-only) | 12:06 | +10 min | running | nothing yet |
-| aeee5738 | cold read rehearsal-passed-limits-draft (read-only) | 12:06 | +10 min | running | nothing yet |
-| a0f1c200 | cold read reviews-of-core-hardening/CORRECTIONS (read-only) | 12:06 | +10 min | running | nothing yet |
-| ac447a08 | cold read egm-dryrun (read-only) | 12:06 | +10 min | running | nothing yet |
-| a88d0184 | cold read review-r460-tools (read-only) | 12:06 | +10 min | running | nothing yet |
-| a7c7aab6 | cold read row1-builder-brief (read-only) | 12:06 | +10 min | running | nothing yet |
-| (new) | cold read BRIEF-LANE (read-only) | 12:06 | +10 min | running | nothing yet |
+| a7956c89 | cold read lane L1 (read-only) | 12:07 | +10 min | running | nothing yet |
+| a586db6f | cold read lane L2 (read-only) | 12:07 | +10 min | running | nothing yet |
+| a2d57548 | cold read lane L3 (read-only) | 12:07 | +10 min | running | nothing yet |
+| a0188783 | cold read lane L4 (read-only) | 12:07 | +10 min | running | nothing yet |
+| aa0bf3fa | cold read lane L5a (read-only) | 12:07 | +10 min | running | nothing yet |
+| a9edcb06 | cold read lane L6 (read-only) | 12:07 | +10 min | running | nothing yet |
+| addf721b | cold read BRIEF-LANE r2 (read-only) | 12:07 | +10 min | running | nothing yet |
+| a272164e | cold read BRIEF-EVIDENCE-1 (read-only) | 12:07 | +10 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
