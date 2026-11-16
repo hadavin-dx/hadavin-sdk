@@ -128,6 +128,19 @@ for k in 'AB':
 if not re.search(r'13\.21', NOTE): fail('I09', 'lead files lack limit 13.21')
 if not re.search(r'\b860 s', NOTE): fail('I09', 'lead files lack 860 s')
 if '14.33' not in NOTE: fail('I09', 'lead files lack 14.33 min')
+
+# I10 (added after plant run 1: gaps found in my own checker)
+if A_.count('take sheet B') < 2: fail('I10', 'sheet A: route A condition appears %d times, expected 2' % A_.count('take sheet B'))
+if A_.count('7 days (168 hours) or more before') < 2: fail('I10', 'sheet A: 7-day (168 hours) line appears fewer than 2 times')
+for k in 'AB':
+    if "except the key's own one-time display" not in T['OWNER-CARD-v29-%s.md' % k]: fail('I10', 'card %s lacks the W7 exception' % k)
+for m in re.finditer(r'\b(8[0-9]{2}) s\b', NOTE):
+    if m[1] != '860': fail('I10', 'lead files: run length %s s (expected 860)' % m[1])
+for k in 'AB':
+    ap = T['OWNER-APPENDIX-v29-%s.md' % k]
+    for name, val in (('TOKENS_IN', '40000'), ('TOKENS_OUT', '10000'), ('PRICE_IN_CENTS', '300'), ('PRICE_OUT_CENTS', '1500'), ('CALL_CEILING', '3')):
+        mm = re.search(name + r' = (\d+)', ap)
+        if not mm or mm[1] != val: fail('I10', 'appendix %s setting %s = %s (expected %s)' % (k, name, mm[1] if mm else None, val))
 print('\n'.join(sorted(set(fails))))
 print('indep_check: %d failure line(s)' % len(set(fails)))
 sys.exit(1 if fails else 0)

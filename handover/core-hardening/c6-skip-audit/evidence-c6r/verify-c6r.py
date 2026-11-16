@@ -472,5 +472,9 @@ check("no row old or new text holds a raw '|' (it would break its table cell)", 
 for nm in ("REPORT-c6q.md", "REPORT-c6p.md"):
     check("%s was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)" % nm, os.path.getmtime(H + "/handover/core-hardening/c6-skip-audit/" + nm) < os.path.getmtime(R) and rd(H + "/handover/core-hardening/c6-skip-audit/" + nm).startswith("# REPORT-" + nm[7:10]), "")
 check("row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction", "made-up e-mail domain and the name marker by which the sheet tells the owner to find leftover contacts must be exactly the ones" in bylead[6]["new"], "")
+_bl = [l for l in box.split("\n") if l.startswith("| L-SHEET |")]
+_wr = [(os.path.basename(f), _dt.datetime.fromtimestamp(os.path.getmtime(f), _dt.timezone.utc).strftime("%H:%M:%S")) for f in sorted(sw)]
+_has = lambda txt_, n_, t_: len(re.findall(re.escape(n_) + r" \([^)]{0,40}?written " + re.escape(t_) + " UTC", txt_))
+check("the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): %s" % _wr, len(_bl) == 1 and all(_has(_bl[0], n_, t_) == 1 and _has(raw.split("## 1.")[0], n_, t_) >= 2 for n_, t_ in _wr), _wr)
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

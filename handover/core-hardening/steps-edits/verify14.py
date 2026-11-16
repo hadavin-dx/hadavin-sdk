@@ -629,6 +629,103 @@ if 'ANYWHERE the answers' in txt: F('r13 stale')
 if re.search(r'safe default \(the assistant asks the owner at clean-up whether to revoke', txt): F('r13 ND7 still conditional')
 print('round 14 checks done')
 
+# ================= round 14 checks (each must FAIL on EDITS.round13.md) =================
+import datetime as _dt
+newtxt = {r['id']: '\n'.join(r['new']) for r in rows}
+t48n = newtxt['E-48']
+# 1. part 3h and 3a: the key end is 18:19 UTC = 23:49 IST and never the window end
+def part(t, tag):
+    ms = [l_ for l_ in t.split('\n') if l_.startswith('   ' + tag + '. ')]
+    return ms[0] if len(ms) == 1 else ''
+p3h, p3a = part(t48n, '3h'), part(t48n, '3a')
+if not p3h or 'by 18:19 UTC = 23:49 IST' not in p3h or '18:29' in p3h or '23:59' in p3h: F('r14 3h key end')
+if not p3a or 'by Mon 23 Nov 2026 18:19 UTC = 23:49 IST' not in p3a: F('r14 3a key end')
+for _tag in ('3b', '3c', '3j'):
+    if '18:19 UTC = 23:49 IST' not in part(t48n, _tag): F('r14 ' + _tag + ' key end')
+# every sentence of E-48, E-55, E-57, E-58, E-37, E-12 that says revoke and names 18:29 also names 18:19
+for _rid in ('E-48', 'E-55', 'E-57', 'E-58', 'E-37', 'E-12', 'E-52'):
+    for _s in re.split(r'(?<=[.;:])\s+', newtxt[_rid]):
+        if re.search(r'\brevoke', _s) and '18:29 UTC' in _s and '18:19 UTC' not in _s and 'spending window' not in _s and 'retirement' not in _s:
+            F('r14 ' + _rid + ' revoke sentence with 18:29 only: ' + _s[:80])
+# 2. E-09: every typing waits for the written reply `not looking`
+t09n = newtxt['E-09']
+for _tag in ('a', 'f', 'g', 'h'):
+    _l = [l_ for l_ in t09n.split('\n') if l_.startswith('   ' + _tag + '. ')]
+    if len(_l) != 1 or 'not looking' not in _l[0]: F('r14 E-09 sub-step %s does not wait for `not looking`' % _tag)
+if t09n.count('not looking') < 5: F('r14 E-09 not looking count')
+if 'Windows key and V' not in t09n or 'clipboard history' not in t09n: F('r14 E-09 clipboard history')
+# 3. weekday and date: every weekday named with a date is right
+_wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+_mo = {'Oct': 10, 'Nov': 11, 'Dec': 12}
+_nwd = 0
+for m_ in re.finditer(r'\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\d{1,2}) (Oct|Nov|Dec)\b(?: (\d{4}))?', txt):
+    _nwd += 1
+    _y = int(m_.group(4)) if m_.group(4) else 2026
+    if _wd[_dt.date(_y, _mo[m_.group(3)], int(m_.group(2))).weekday()] != m_.group(1):
+        F('r14 wrong weekday: ' + m_.group(0))
+for m_ in re.finditer(r'\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun) (2026-1[0-2]-\d\d)\b', txt):
+    _nwd += 1
+    if _wd[_dt.date.fromisoformat(m_.group(2)).weekday()] != m_.group(1): F('r14 wrong weekday: ' + m_.group(0))
+if _nwd < 40: F('r14 weekday check saw too few dates: %d' % _nwd)
+# 4. no Q-number, L-id, ND, row id or other internal code in owner-facing text (OWNER-STEPS rows, every NEW block)
+_code = re.compile(r'\b(Q\d{2}(?:\.\d)?|L-[A-Z0-9]{1,8}(?:/[A-Z])?|ND\d{1,2}|E-\d\d|S9-\d|WP\d+|R\d{1,3}|F-\d\d)\b')
+for r in rows:
+    if r['file'].startswith('OWNER-STEPS'):
+        for _b in r['new']:
+            for m_ in _code.finditer(_b):
+                F('r14 internal code in owner text %s: %s' % (r['id'], m_.group(0)))
+# 5. the route: ONE message selects it, ONE recommendation sentence
+_alln = '\n'.join(newtxt[r['id']] for r in rows if r['status'].startswith('Apply now'))
+if _alln.count('You choose the route by ONE message: write `route A` or `route B`') != 1: F('r14 route selection message not in exactly one place')
+if 'The words `no more takes` alone do not choose a route' not in p3c if (p3c := part(t48n, '3c')) else True: F('r14 3c lacks the no more takes sentence')
+if len(re.findall(r'recommends? route B', _alln)) != 1: F('r14 recommendation sentence count %d' % len(re.findall(r'recommends? route B', _alln)))
+if re.search(r'\(recommended\)|the one the assistant recommends', _alln): F('r14 second recommendation spot')
+for need in ('it asks again right after `cut accepted`', 'Your `key revoked` then counts as `no more takes`', 'in route B the words `no more takes` count only after `cut accepted`', 'Cost of A:', 'Cost of B:', 'Benefit of B:'):
+    if need not in p3c: F('r14 3c lacks ' + need)
+if 'route A' not in newtxt['E-57'] or '`route A` or `route B`' not in newtxt['E-57']: F('r14 E-57 route message')
+# 6. shred rule: one rule, path checks, no star
+p3f = part(t48n, '3f')
+for need in ('realpath', 'starts with `/`', 'no `..`', 'none of the signs `*`', 'the number `1` in its second column', 'followed by `/`', "`shred -u -- '<path>'`", "`rm -- '<path>'`", '`shred done`', '`shred not done`', 'ends the path to the copy'):
+    if need not in p3f: F('r14 3f lacks ' + need)
+if 'do not use the sign `*`' not in t48n or 'one at a time' not in t48n: F('r14 E-48 item 6 star rule')
+if re.search(r'shred -u [^-\'<]', t48n.replace('`shred -u ~/take-secrets/*`', '')): F('r14 E-48 shred command without the path rule')
+# 7. two alarms, promise not control, default when unsure, two options of 3i
+p3b = part(t48n, '3b')
+for need in ('Alarm 1', 'Alarm 2', '`revoke the secret key for the model`', '`is the secret key for the model still alive?`', '17:49 UTC = 23:19 IST'):
+    if need not in p3b: F('r14 3b lacks ' + need)
+if 'a promise by you' not in p3a or 'procedure, not a control' not in p3a: F('r14 3a honest label')
+if 'revoke the one key that you created for this take' not in p3h or 'no other key' not in p3h: F('r14 3h default when unsure')
+if 'Option revoke' not in part(t48n, '3i') or 'Option leave' not in part(t48n, '3i'): F('r14 3i options')
+if 'unless the assistant' in part(t48n, '3j'): F('r14 3j override sentence')
+for _r in rows:
+    for _b in _r['new']:
+        if 'unless the assistant tells you otherwise' in _b: F('r14 override sentence in ' + _r['id'])
+if 'A new key lives only inside the program that uses it' not in part(t48n, '3g'): F('r14 3g new key storage')
+if '(or after `key revoked` at the last time to revoke)' not in part(t48n, '3d'): F('r14 3d forced revoke')
+if 'a bare `no`, counts as `not sure`' not in part(t48n, '3e'): F('r14 3e bare no')
+# 8. order of the clean-up, path rules, owner items wait
+t16n, t55n, t37n, t12n = newtxt['E-16'], newtxt['E-55'], newtxt['E-37'], newtxt['E-12']
+for need in ('`key revoked`', '`shred done`', 'home folder', '`/mnt/c`', '`..`', 'link'):
+    if need not in t16n: F('r14 E-16 lacks ' + need)
+for need in ('your items 2 to 6', '`shred done`', 'counts as `no more takes`', '`cut accepted`'):
+    if need not in t55n: F('r14 E-55 lacks ' + need)
+if 'LAST FOUR CHARACTERS' not in t37n or 'on paper or on your phone' not in t37n: F('r14 E-37 note')
+# 9. E-12: test items, consent reach, margin, alarms, fallback
+if 'A test item is one numbered test' not in t12n or 'A check is one numbered test' in txt: F('r14 E-12 test item')
+if t12n.count('the files in `~/take-secrets`') < 3: F('r14 E-12 consent reach')
+if 'only about 40 seconds' not in t12n or 'a few seconds later' not in t12n: F('r14 E-12 margin')
+if 'Set two alarms' not in t12n or 'not a control' not in t12n: F('r14 E-12 alarms')
+for _rid in ('E-12', 'E-54'):
+    if 'If this is still in square brackets when you read it' not in newtxt[_rid]: F('r14 %s placeholder fallback' % _rid)
+if 'fallback sentence' not in txt[txt.index('R11 (E-12, E-54)'):][:700]: F('r14 R11 fallback')
+if txt.count('counting check') != 0: F('r14 counting check word')
+if 'about 40 seconds' not in txt[txt.index('**latest start we plan**'):][:500]: F('r14 words line 30 margin')
+if '18:14:40 UTC = 23:44:40 IST' not in txt: F('r14 18:14:40 pair missing')
+if not re.search(r'^o\. The latest start we plan', txt, re.M): F('r14 confirmation o')
+# 10. the routes are not recommended anywhere else; ND15 lists the spot
+if 'The spots that carry the recommendation' not in txt: F('r14 ND15 spots')
+print('round 14 checks done')
+
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):

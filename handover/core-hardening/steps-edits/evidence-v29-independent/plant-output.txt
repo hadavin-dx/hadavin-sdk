@@ -1,0 +1,44 @@
+M01 | CAUGHT | sheet A date weekday wrong (16 Nov) | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I03 OWNER-SHEET-v29-A.md lacks "Dated Mon 16 Nov 2026"
+M02 | CAUGHT | post-by weekday wrong | OWNER-SHEET-v29-A.md | occurrences in file 2 | FAIL I03 OWNER-SHEET-v29-A.md wrong weekday 'Thu 25 Nov 2026'
+M03 | CAUGHT | post-by IST wrong | OWNER-SHEET-v29-A.md | occurrences in file 2 | FAIL I02 OWNER-SHEET-v29-A.md:97 bad IST for 15:00 UTC ->  = 20:00 IST
+M04 | CAUGHT | money stop IST wrong | OWNER-APPENDIX-v29-A.md | occurrences in file 1 | FAIL I02 OWNER-APPENDIX-v29-A.md:15 bad IST for 18:29 UTC ->  = 23:29 IST
+M05 | CAUGHT | money stop weekday wrong | OWNER-APPENDIX-v29-A.md | occurrences in file 1 | FAIL I03 OWNER-APPENDIX-v29-A.md wrong weekday 'Tue 23 Nov 2026'
+M06 | CAUGHT | money stop UTC minute changed | OWNER-APPENDIX-v29-A.md | occurrences in file 1 | FAIL I02 OWNER-APPENDIX-v29-A.md:15 bad IST for 18:30 UTC ->  = 23:59 IST
+M07 | CAUGHT | IST dropped from a time | OWNER-APPENDIX-v29-A.md | occurrences in file 1 | FAIL I02 OWNER-APPENDIX-v29-A.md:34 UTC time without IST pair: ' key time 10:30 UTC, latest start 11:30 UTC = 
+M08 | CAUGHT | key-end IST wrong | LEAD-RELEASE-NOTE-v13.md | occurrences in file 1 | FAIL I02 LEAD-RELEASE-NOTE-v13.md:186 bad IST for 18:19 UTC ->  = 23:19 IST
+M09 | CAUGHT | refusal-limit label removed everywhere in lead note | LEAD-RELEASE-NOTE-v13.md | occurrences in file 6 | FAIL I04 LEAD-RELEASE-NOTE-v13.md:186 18:14:40/23:44:40 without the label "refusal limit" on the line
+M10 | CAUGHT | key-end time moved to 18:24 (consistent pair) | v29-OPEN-FOR-LEAD.md | occurrences in file 2 | FAIL I04 v29-OPEN-FOR-LEAD.md key revoked by 18:24 (expected 18:19)
+M11 | CAUGHT | route A condition deleted | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I10 sheet A: route A condition appears 1 times, expected 2
+M12 | CAUGHT | route B condition deleted | OWNER-SHEET-v29-B.md | occurrences in file 1 | FAIL I08 sheet B does not point back to sheet A route
+M13 | CAUGHT | 7-day rule changed in sheet A | OWNER-SHEET-v29-A.md | occurrences in file 2 | FAIL I10 sheet A: 7-day (168 hours) line appears fewer than 2 times
+M14 | CAUGHT | 7-day rule changed in card A | OWNER-CARD-v29-A.md | occurrences in file 1 | FAIL I08 OWNER-CARD-v29-A.md lacks the 7-day (168 hours) line
+M15 | CAUGHT | key-file delete step removed (A) | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I08 OWNER-SHEET-v29-A.md lacks the key-file delete step rm -- "<key file>"
+M16 | CAUGHT | key-file delete step removed (B) | OWNER-SHEET-v29-B.md | occurrences in file 1 | FAIL I08 OWNER-SHEET-v29-B.md lacks the key-file delete step rm -- "<key file>"
+M17 | CAUGHT | card W7 exception deleted | OWNER-CARD-v29-A.md | occurrences in file 1 | FAIL I10 card A lacks the W7 exception
+M18 | CAUGHT | card danger sign W9 renamed | OWNER-CARD-v29-A.md | occurrences in file 1 | FAIL I08 OWNER-CARD-v29-A.md lacks W9
+M19 | CAUGHT | card B step 5 deleted | OWNER-CARD-v29-B.md | occurrences in file 1 | FAIL I08 OWNER-CARD-v29-B.md lacks one of the five steps
+M20 | CAUGHT | banned code Q21 leaked into sheet | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I05 OWNER-SHEET-v29-A.md internal code 'Q21'
+M21 | CAUGHT | banned code L-123 leaked into card | OWNER-CARD-v29-A.md | occurrences in file 1 | FAIL I05 OWNER-CARD-v29-A.md internal code 'L-123'
+M22 | CAUGHT | banned code E-12 leaked into appendix | OWNER-APPENDIX-v29-A.md | occurrences in file 2 | FAIL I05 OWNER-APPENDIX-v29-A.md internal code 'E-12'
+M23 | CAUGHT | banned ORD: leaked into film page | OWNER-FILM-PERSON-v29.md | occurrences in file 1 | FAIL I05 OWNER-FILM-PERSON-v29.md internal code 'ORD:'
+M24 | CAUGHT | placeholder misspelled (owner) | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I06 OWNER-SHEET-v29-A.md odd placeholder '[OWNER FILL: ...]'
+M25 | CAUGHT | placeholder misspelled (lead) | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I06 OWNER-SHEET-v29-A.md misspelled/odd placeholder '[LEAD FILLS at repin: ...]'
+M26 | CAUGHT | heading letter wrong | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I07 OWNER-SHEET-v29-A.md heading letter
+M27 | CAUGHT | footer letter wrong | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I07 OWNER-SHEET-v29-A.md footer letter
+M28 | CAUGHT | card B footer letter wrong | OWNER-CARD-v29-B.md | occurrences in file 1 | FAIL I07 OWNER-CARD-v29-B.md footer letter
+M29 | CAUGHT | 200 words added (over 6,300) | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I01 sheet A has 6496 words, limit 6300
+M30 | CAUGHT | expected total changed in sheet | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I09 OWNER-SHEET-v29-A.md lacks 0.27 or 0.81
+M31 | CAUGHT | limit changed in lead note | LEAD-RELEASE-NOTE-v13.md | occurrences in file 1 | FAIL I09 lead files lack limit 13.21
+M32 | CAUGHT | run-day weekday wrong | OWNER-APPENDIX-v29-A.md | occurrences in file 2 | FAIL I03 OWNER-APPENDIX-v29-A.md wrong weekday 'Tue 18 Nov 2026'
+M33 | CAUGHT | run-day date moved, weekday kept | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I03 OWNER-SHEET-v29-A.md wrong weekday 'Wed 19 Nov 2026'
+M34 | CAUGHT | sheet A older-key cancel step number changed | OWNER-SHEET-v29-A.md | occurrences in file 1 | FAIL I08 sheet A lacks planned older-key cancel at 6.7
+M35 | CAUGHT | sheet B older-key rule changed | OWNER-SHEET-v29-B.md | occurrences in file 1 | FAIL I08 sheet B lacks "older key stays valid ... until you cancel it at 7.11"
+M36 | CAUGHT | run length changed in lead note | LEAD-RELEASE-NOTE-v13.md | occurrences in file 5 | FAIL I10 lead files: run length 840 s (expected 860)
+M37 | CAUGHT | IST offset wrong on all post-by pairs in sheet A | OWNER-SHEET-v29-A.md | occurrences in file 2 | FAIL I02 OWNER-SHEET-v29-A.md:105 bad IST for 15:00 UTC ->  = 20:00 IST
+M38 | CAUGHT | refusal-limit IST seconds wrong | LEAD-RELEASE-NOTE-v13.md | occurrences in file 4 | FAIL I02 LEAD-RELEASE-NOTE-v13.md:186 bad IST for 18:14:40 UTC ->  = 23:44:10 IST
+M39 | CAUGHT | deadline date moved, weekday kept (sheet A) | OWNER-SHEET-v29-A.md | occurrences in file 2 | FAIL I03 OWNER-SHEET-v29-A.md wrong weekday 'Mon 24 Nov 2026'
+M40 | CAUGHT | UTC time without IST added | OWNER-FILM-PERSON-v29.md | occurrences in file 1 | FAIL I02 OWNER-FILM-PERSON-v29.md:1 UTC time without IST pair: ' there at 12:00 UTC.'
+M41 | CAUGHT | call ceiling changed in appendix | OWNER-APPENDIX-v29-A.md | occurrences in file 1 | FAIL I10 appendix A setting CALL_CEILING = 4 (expected 3)
+M42 | CAUGHT | post-by weekday wrong in lead note | LEAD-RELEASE-NOTE-v13.md | occurrences in file 1 | FAIL I03 LEAD-RELEASE-NOTE-v13.md wrong weekday 'Tue 25 Nov'
+M43 | CAUGHT | all "sheet A" words turned into "sheet B" in sheet A | OWNER-SHEET-v29-A.md | occurrences in file 7 | FAIL I07 OWNER-SHEET-v29-A.md footer letter
+baseline fail lines: 10; planted 43, applied 43, caught 43, missed 0, not applied 0

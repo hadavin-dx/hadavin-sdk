@@ -1,0 +1,9 @@
+load: 1.32 1.95 2.10 3/157 28045
+copy sha256: d8ba8c28c3296f0b4d3e04e0bfd43358d9184c694b6b77bfe8ca8df0ff4975eb  /home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin7-independent/v7.sh
+v7 (HUP-ignored fix) d8ba8c28c3296f0b4d3e04e0bfd43358d9184c694b6b77bfe8ca8df0ff4975eb  ../lead-repin-verify.v7.sh
+e419fdeb606e465f5689af65b3084204647910eccd3b0d1d06435bded6da2617  ../lead-repin-verify.v6.sh
+e419fdeb606e465f5689af65b3084204647910eccd3b0d1d06435bded6da2617  ../lead-repin-verify.sh
+--- hashes in lead-repin/
+d8ba8c28c3296f0b4d3e04e0bfd43358d9184c694b6b77bfe8ca8df0ff4975eb  lead-repin-verify.v7.sh
+e419fdeb606e465f5689af65b3084204647910eccd3b0d1d06435bded6da2617  lead-repin-verify.sh
+e419fdeb606e465f5689af65b3084204647910eccd3b0d1d06435bded6da2617  lead-repin-verify.v6.sh

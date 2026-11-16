@@ -123,4 +123,5 @@ PASS no row old or new text holds a raw '|' (it would break its table cell) :: [
 PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)
 PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)
 PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
-SUMMARY: 122 checks, 0 FAILED
+PASS the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')] :: [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')]
+SUMMARY: 123 checks, 0 FAILED

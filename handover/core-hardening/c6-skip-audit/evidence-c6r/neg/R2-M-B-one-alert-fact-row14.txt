@@ -1,0 +1,55 @@
+16T16:51:19Z and the newest sheet version on disk (v29) :: [29, 29, 29]
+PASS no owner sheet changed after the stated check time (C-10c is current) :: []
+PASS no claim that v25 or v26 is the newest
+PASS L-SHEET reads 'confirm the one final sheet' and says v29 is coming
+PASS section 9 has no duplicate bullet (26 bullets) :: []
+PASS G12 named as open with the studio lead in section 9
+PASS every word the box defines is first used where it is defined (case-insensitive, 22 terms) :: []
+PASS the lines before the first word list use none of the defined words :: []
+PASS question labels are first used in the table of questions :: ['L-CARD']
+PASS whole box is at most 3,600 words (3490 words; c6p 3027; it is LONGER than c6p because the naive review asked for the what-to-type block and for every internal word to be explained: a lead question) :: 3490
+PASS box names no n8n setting :: []
+PASS box has one answer line with seconds, three free names, the exception form and L-SHEET apart
+PASS box wave 1 count equals ready + defaults (85) :: 85
+PASS box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows
+PASS box says steps 4 to 6 have no duration
+PASS L-SCENES question is gone
+PASS rows 25, 37, 38 and 76 exist as rows
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS section 8 has the coverage of the c6p, c6o and c6n reviews
+PASS every weekday written with a date is the true weekday (20 pairs; year 2026 unless written; no pair outside old-text quotes is skipped) :: []
+PASS no 'Tue 23 Nov' and no 'Thu 18 Nov' anywhere
+PASS row 21 (scene 3 caption) carries no lease sentence (no 'lease', no '45', no 'longer than', no 'claim') :: Caption: "a lead sent twice with the same id is processed once". The screen is the evidence; the rehearsal must show the repeat reply and th
+PASS every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (36 default-only, 85 wave 1) :: []
+PASS no stale count 91 or 42 stated as a wave 1 or default-only count :: []
+PASS the box does not carry the old '58 s' card length
+PASS row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
+FAIL 'one alert' is not stated as a fact about the take's flows in any new text (rows 13, 14, 74 and the box card text)
+PASS M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory
+PASS M-A: the stop rules table has the lease wording approval entry
+PASS M-C: Q27 reading labelled as the report's own assumption and OWNER-OPEN (ORD:232) in the box, row 8 and section 9
+PASS M-C: L-DEL rows say 'ANSWERED' only for the part that is answered and say the delete-path criterion is open :: 2
+PASS M-D: the key reaches the scan by a pattern file in memory or standard input from the key store; never a command line; never on disk; a hit means cancel or replace the key and treat the runs as compromised
+PASS M-D: item 16 repeats the search for real key values
+PASS M-E: rows 53, 55, 62, 64, 66, 68 wait for L-SAVEERR; row 92 keeps the failed-run setting none; row 44 says successful runs
+PASS M-E: L-SAVEERR is in the box and in section 3 with default No
+PASS C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each :: [('mf-form.json', 1, 0, 1), ('mf-hook.json', 1, 0, 1), ('mf-recovery.json', 1, 0, 1), ('mf-sub-crm-mail.json', 1, 0, 1)]
+PASS M-F: one construction (checked above); the box says so
+PASS naive M1: 'take' is defined as the filmed run and 'the recovery flow claims the contact again' is used instead of 'takes over' :: (1, 1)
+PASS naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)
+PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
+PASS every '22:10' example time in the box has 'IST' within 40 characters (2 places) :: 2
+PASS the real v29 files on disk are ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md']
+INFO OWNER-SHEET-v29-A.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:51:19Z
+INFO OWNER-SHEET-v29-B.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:51:19Z
+INFO OWNER-SHEET-v29-SOURCE.md last written 16:41:12 UTC; check time of the report 2026-11-16T16:51:19Z
+PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
+PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
+PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
+PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)
+PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)
+PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
+PASS the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')] :: [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')]
+SUMMARY: 123 checks, 2 FAILED: box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 40 s); 'one alert' is not stated as a fact about the take's flows in any new text (rows 13, 14, 74 and the box card text)
+
+EXIT CODE 1
