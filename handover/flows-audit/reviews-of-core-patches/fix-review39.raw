@@ -1,0 +1,14 @@
+rows 28 ['C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'C-8', 'A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'A-6', 'A-7', 'A-8', 'A-9', 'G-1', 'G-2', 'D-1', 'D-2', 'D-3', 'X-1', 'X-2', 'X-3', 'X-4', 'X-5', 'X-6']
+severity {'Nit': 11, 'Minor': 13, 'Major': 4}
+decision {'DECLINE': 3, 'PROPOSE FIX': 25}
+== check_refs
+PASS 5177 references
+rc=0
+== check_names
+PASS 655 rows
+rc=0
+== check_secrets
+PASS 0 hits in 2721 files
+rc=0
+868 files already formatted
+ruff rc=0
