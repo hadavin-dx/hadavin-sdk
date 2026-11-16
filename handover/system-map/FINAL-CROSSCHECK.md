@@ -18,12 +18,12 @@ Only the clearest. The rating "in force" for CH is its section 2a (item2-reratin
 | topic | CH | FA | SM | better supported |
 |---|---|---|---|---|
 | Webhook step `Receive` has no password | (not covered) | F-009 Nit (after the video); F-036 Nit "not in take (loopback)" | L7-FD-005 Blocker | Written evidence: F-009's own text says "Nit for a local demo, Major for any shared host" (no audit rates it Major outright); SM itself marks it UNVERIFIED (SWEEP.md:362). Nit holds only if the take is on a closed local network. I confirmed in flowcheck that all 16 files with a `Receive` step have no authentication (flowcheck/REPORT.md section 1). |
-| A lead that ended in state `review` raises no alert | | F-031 Blocker (its REPORT says "by the one rating rule I would rate them Major", checked by me: REPORT.md line 6, about F-002, F-031 and F-007) | L2-FD-007 Blocker | FA contradicts itself; the Blocker comes from the lead's order, the Major from the rating rule. Facts confirmed by me (third-read.md). |
+| A lead that ended in state `review` raises no alert | | F-031 Blocker (its REPORT says "by the one rating rule I would rate them Major", flows-audit REPORT.md line 6, read from branch cloud/flows-audit, NOT re-checked here; about F-002, F-031 and F-007; the quote is in no file in this checkout) | L2-FD-007 Blocker | FA contradicts itself; the Blocker comes from the lead's order, the Major from the rating rule. Facts confirmed by me (third-read.md). |
 | n8n keeps lead data in its own small database | | F-011 Major (conditional) | L2-FD-001, L2-FD-002 Blocker | not settled; FA's review supports Blocker only for L2-FD-002. |
 | Saving of run data is off | | F-008 Major (patch applies, checked by me) | L2-FD-003 Blocker | FA: it has a patch that applies. |
 | Alert mail uses the same mail login as lead mail | | F-030 Nit | L2-FD-008 and L6-FD-005 Blocker; L7-FD-006 Major | the same fault carries three SM ratings; this needs one decision. |
 | One database login for all flows | | F-010 Nit | L6-FD-006 Blocker | FA's review says Major, between the two. |
-| Recovery flow swallows errors | | F-008 Major, F-039 and F-044 Nit | L6-FD-026 Blocker | FA's patch leaves recovery saving at none, so SM's point stays partly open (checked by me: patch result "recovery stays none"). |
+| Recovery flow swallows errors | | F-008 Major, F-039 and F-044 Nit | L6-FD-026 Blocker | FA's patch leaves recovery saving at none, so SM's point stays partly open (checked by me: flowcheck/REPORT.md:57 "the recovery flow stays at none (it fires every 30 s)"). |
 | Setting `$env` blocked by n8n | | F-037 Blocker | (review) Major | see section 4 row 1. |
 | Money counters in several places | X-02 Blocker | | L6-FD-003 Blocker (SM calls it "arguable"), L5b-FD-003 Major | not settled. |
 | Leak check comment in the approval gate (A-02) | lane row Blocker, in force Nit | | review Major | converged on not Blocker: the text is a false comment, but both audits agree no independent leak check exists today. |
@@ -85,7 +85,7 @@ Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it e
 | 22 | CLOUD-RESUME.md | old note | NOT YET: one reference in questions-for-lead.md (the cited line 1127 is NOT CHECKED: the only copy here, handover/demo3/questions-for-lead.md, has 14 lines) |
 | 23-25 | CLOUD-RESUME-2026-11-07, -09, CLOUD-PROMPT.md | the CH list wanted them archived | NO: 4, 10 and 8 lines name them |
 | 26 | one of the two identical bible-extract files | duplicates | NOT YET: add a redirect first |
-| 27 | setting min_redaction_window | nothing reads it | NOT YET: a code edit (3 tests use it); owner chooses |
+| 27 | setting min_redaction_window | nothing reads it | NOT YET: a code edit (3 references in 2 test files: tests/test_k5_layers.py:30 and :87, tests/test_k5_fixes9.py:365); owner chooses |
 | 28-30, 32 | field trigger_ref, replay_records, dead_letters, the `live` test marker | CH called them unused | NO: trigger_ref is read at agent_loop.py:346 in this checkout (the audited b4cce5b only wrote it) and is a NOT NULL column (0001_core.sql:11), replay_records at deferred.py:95, a CI line selects on `live`, dead_letters is an applied database migration |
 | 31 | src/hadavin_sdk/extract.py | no source code calls it | NO until you choose: keep and wrap (CH fix plan) or archive (CH cut list); two tests import it |
 | 33 | desk repository parts (second store, counters, retry loop, follow-up mail) | the desk is retired from the take | NOT YET: desk security patches first (sweep rows 15-17) |
