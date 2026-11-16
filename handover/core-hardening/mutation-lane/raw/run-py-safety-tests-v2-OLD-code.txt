@@ -3,3 +3,29 @@ REFUSED: --root /home/user/hadavin-sdk is inside a git work tree: use a plain sc
   exit code 2
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
+  file now: return1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 32: kill: (14600) - No such process
+  FAIL: T2 file stays planted
+== T3 the next run refuses and says how to restore
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  FAIL: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/tmpstate/hadavin-mutation-lane/*.planted.json': No such file or directory
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  FAIL: T4 exit 2
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/mk/*.planted.json': No such file or directory
+== T5 --restore puts the saved original back
+no marker: nothing to restore
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 42: kill: (16048) - No such process
+  exit code 0
+  FAIL: T6 exit 143
+  PASS: T6 file restored
+  PASS: T6 state empty
+== T7 SIGINT likewise, exit code read directly from $?
