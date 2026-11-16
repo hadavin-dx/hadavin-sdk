@@ -1,0 +1,4 @@
+# SUPERSEDED (16 Nov 2026, 16:41Z): the held pages were edited with the corrected sentence
+This page proposed the old wording "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." That wording was WRONG (lead correction, work/LEAD-ANSWERS.md Batch 2). Do not use any replacement text below. Use the corrected sentence instead, from work/end-delete-cases.md:
+"After you type end, the program archives this take's three made-up contacts in HubSpot (archived is not the same as erased: HubSpot keeps them for a time); any it could not archive are listed, and you archive or delete them by hand from the list it prints."
+UNVERIFIED until the lead's loopback re-smoke (Tue 17 or Wed 18 Nov; result in egm/duplicate-proof-lead-desk/wp6/). The original page is kept unchanged at work/end-sentence-for-owners-history-1.md for the row list only (locations of old wording).

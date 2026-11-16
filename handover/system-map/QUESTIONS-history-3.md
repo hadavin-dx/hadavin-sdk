@@ -1,0 +1,31 @@
+# QUESTIONS (only the studio lead or the owner can answer)
+Decisions only; actions are in TAKE-BLOCKERS.md. Decisions made on 16 Nov are in inputs/DECISIONS-2026-11-16.md and are not repeated here. Open: item 2 only (D-04, D-05). It blocks the post (Wed 25 Nov), not the take. Items 1 and 3 to 8 are answered; the answers are in work/LEAD-ANSWERS.md.
+
+## Words used on this page
+*Studio lead* = the Claude session on the owner's laptop that does the technical steps. *Owner* = the one person who runs the studio. *Take* = the one recorded real run of the demo. *Post* = the owner's public write-up about the take, planned for Wed 25 Nov 2026 15:00 UTC / 20:30 IST. *Step J* = the post instructions in the owner's steps file inputs/OWNER-STEPS-realrun-v5-core-hardening.md (lines 163 to 172). *Sales lead* = a made-up customer enquiry. *D-04* = the post says more than the video proves; *D-05* = the post must carry the crash limit (what happens if the system stops between sending a mail and marking the sales lead finished). Both are explained in decisions/D04-D05.md. *T19* = a planned test that sends the same sales lead twice with the same id and expects one mail, one HubSpot write and one stored row. *F-002 and F-008* = two patches to the real-v5 workflows ([lead fills: one-line meaning of F-002]; F-008 switches on saving of successful runs, called executions, in n8n). *Flowcheck* = our check program for a folder of n8n flows. *Sha* = the fingerprint of a file, to prove the file did not change. *n8n run list* = the list of past runs that n8n keeps.
+
+## Open
+2. OPEN: D-04 and D-05 (post wording). The note is written: decisions/D04-D05.md. The studio lead decides. Reply: "D-04 apply, D-05 apply". Who edits step J: core-hardening (studio lead answer 14, work/LEAD-ANSWERS.md). D-04 in one line: the post may claim only "a lead sent twice with the same id is processed once", and nothing about a spending cap, separate checks, a portal or "crash-safe". D-05 in one line: the studio lead tells the owner the mail-crash test result before the post; if the test showed a double mail or did not run, the post waits for the exact limit wording and the owner's written yes. Post only, not a take blocker.
+
+## Answered
+1. ANSWERED and CORRECTED by the studio lead (Batch 2, answer 9, 16:41Z; the earlier 10:13Z wording "the take never deletes" was wrong).
+   Answer: After you type end, the program archives this take's three made-up contacts in HubSpot (archived is not the same as erased: HubSpot keeps them for a time); any it could not archive are listed, and you archive or delete them by hand from the list it prints. (UNVERIFIED until the lead's loopback re-smoke, Tue 17 or Wed 18 Nov; result in egm/duplicate-proof-lead-desk/wp6/. The clean-up list prints search text take-<tag>-a, -b, -c with the example.com domain; where <tag> first shows on screen is not verified.)
+   Status: UNVERIFIED until the loopback re-smoke on Tue 17 or Wed 18 Nov.
+   Follow-up: replacement lines are in decisions/M17-end-never-deletes.md (they need the same correction).
+3. ANSWERED (studio lead 10:13Z): the studio lead starts Docker Desktop, not the owner. Background: decision 12 makes the studio lead the runner of the first rehearsal, and inputs/plan-wp6-resmoke-v5.md line 489 had said "never start Docker Desktop (the lead does, P-4)".
+4. ANSWERED (10:13Z): the sender app-password file is owner-held; no session reads it. Item removed.
+5. ANSWERED (10:13Z): after the take, archive, never delete; the studio lead decides per row (ARCHIVE-CUT-LIST.md).
+6. ANSWERED (10:13Z): take prep is ONE made-up sales lead through the real chain inside the owner's written yes with numbers; the owner deletes it and its mail by hand before step 1 (decision 2).
+7. ANSWERED (studio lead 16 Nov 10:13Z and 10:20Z): the take imports the PATCHED real-v5 copy (F-002 and F-008 applied, then the fill values from fill_flows); the studio lead imports it; the file and its sha are named once in v5 and the plan. The earlier recommendation of the unpatched files is withdrawn. Checks still to do (each is a to-do, none is done):
+   - regenerate the patched copy;
+   - run flowcheck (our check program for a folder of n8n flows) on the final folder;
+   - record the sha (the file's fingerprint) of the final copy;
+   - run T19 on the laptop (same sales lead twice, expect one mail, one HubSpot write, one stored row);
+   - look at n8n's run list and the Postgres tables for stored sales-lead data (F-008 turns saving of successful runs on, so lead data stays in n8n during the take).
+   Keep "processed once" out of the caption until T19 passes.
+8. ANSWERED (a) by the studio lead 16 Nov 10:23Z: the film pause stays. The 10-minute limit is the owner's own clock alarm; the program does not enforce it (work/LEAD-ANSWERS.md batch 2, item 13). For what happens to contacts after `end`, see item 1. Card v2 applied.
+
+Answered by the 16 Nov decisions in inputs/DECISIONS-2026-11-16.md: scope (decision 1), HubSpot delete scope (decision 2; see item 1 for the correction), security items (decision 5), licence test (decision 11), who runs the first rehearsal (decision 12; item 3 covers only who starts Docker).
+
+## History note (item 8, asked 16 Nov, system-map session)
+The 10:13Z answers said "film-v5 is out, so no film pause" and also that `end` stops the take and lists leftover contacts. The question was: (a) the pause stays (the owner films the HubSpot list, then types `end`) or (b) no pause. Answer: (a), see item 8 above. The run-day card draft work/run-day-card-draft-v2.md assumed (a).
