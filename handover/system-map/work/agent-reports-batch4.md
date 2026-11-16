@@ -752,3 +752,46 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 536 not-checked-r2: no opener, re-smoke failure path, row 7 and 5 times, terms. FIXED.
 - 537 t19 r3: two pass rules, undefined terms, steps not runnable. FIXED (one pass rule, glossary); commands still blank, lead must write.
 - 538 FINAL-CROSSCHECK r3: decisions cited without source; stale open rows; two databases unnamed; role names. FIXED by ADDED paragraph; database names remain open for the lead.
+
+- 539 end-delete-cases r2: numbering unclear, no do-not-apply gate, lead key vs lead id, cards unnamed. FIXED by ADDED paragraph.
+- 540 critical-path r10: three earliest statements, missing script owner, undefined labels, latest-start arithmetic. FIXED by one table paragraph.
+- 541 open-items-table r4: coded header, decisions not stated, 'not stated' column, A4 chase. FIXED by ADDED paragraph.
+
+- 542 PLAN-002 r8: paths, check (c) contradiction, verdict rule, build status, count, lane lead. FIXED by ADDED paragraph.
+- 543 owner-timeline-draft: run unexplained, 6-digit source, terms, still works flip. FIXED by ADDED paragraph; split rows still open.
+- 544 BRIEF-LANE r4: lane name not in brief, scope paths, statuses, waived rules. FIXED by ADDED paragraph.
+- 545 merged-findings legend: columns undefined, to-do vs history, empty claim rows. FIXED by legend paragraph.
+- 546 L1c: job keys, take, DECISION path, PR map. FIXED by legend paragraph; PR-to-branch map still missing.
+- 547 open-items-table r5: decision 10 two meanings, D-05/ORDER 013 places, S9 codes, A4 start. FIXED by ADDED paragraph.
+
+- 548 end-delete-cases r3: old 13-16 contradiction, lead id/key, where the release phrase applies, glossary. FIXED by ADDED paragraph.
+- 549 critical-path r11: 14:00 case figure wrong (best 00:30), run length, owner-awake bound, script owner, role words, A4. FIXED by ADDED paragraph.
+
+- 550 BRIEF-EVIDENCE-1 r3: contradicting permission lists, Windows paths, masking conflict, undefined terms. FIXED by one RULES FOR THIS TASK block that wins.
+- 551 L2c: Blockers none vs FD-001 Blocker, no plain intro, legends, owners. FIXED by ADDED paragraph.
+
+- 552 L5ac: code vocabulary undefined, terms before definition. FIXED by glossary paragraph.
+- 553 L3c: purpose, the take/desk/DECISION, job keys, Q-labels. FIXED by ADDED paragraph.
+- 554 BRIEF-EVIDENCE-2 r4: stitched documents, conflicting write rules, piped rc, matching rule. FIXED by RULES block.
+- 555 L4c: lane/take/desk/DECISION undefined, line 146 vs 147. FIXED by ADDED paragraph.
+
+- 556 STATUS-BOARD terms (board is mine): Terms line after labels, '15 of 20 not done' vs table, ALERT text. Board fix applied this beat.
+- 557 L5b: take/DECISION/job key undefined, method contradiction, impossible count, unshown grep. FIXED by legend paragraph.
+- 558 BRIEF-EVIDENCE-1 r4: cat/stop rule, report rule, missing rc, /tmp writes. FIXED by RULES ADDED.
+
+- 559 LEDGER-ROWS (core-hardening's page, held): vocabulary undefined, 'lead' three meanings, OWNER-ONLY status text, CITE-01 count 9 vs list of 6, rows 22 and 27 not self-contained. Digest only; passed to the lead.
+- 560 M17 note: table unusable without files, proposal vs decision, decision 2 ambiguous. FIXED by STATUS paragraph.
+- 561 ARCHIVE-CUT-LIST: contradictory archive place and row status, undefined terms, no pass rule. FIXED by CURRENT VERDICT paragraph.
+
+- 562 L1c r2: DECISION line 7 vs 15, Blockers none vs FD-021, PR map, 117 vs 116. FIXED by CORRECTION paragraph; PR map still missing.
+- 563 L5ac r2: id-kind letters wrong in glossary, undefined terms, glossary placement. FIXED by CORRECTION paragraph (read first).
+
+- 564 reviews-of-core-hardening/PLAN.md (held, core-hardening owns): Blocker undefined labels (ORDER 005/002, E1-E14, RUNG TABLE), Majors floor wording, overlapping verdict bands (<=10 vs 10-25), step numbers clash, no date on 08:10/09:15 UTC. Digest only.
+- 565 reviews-of-core-hardening/REVIEW.md (held): Blockers terms before glossary, dangling CORRECTIONS refs; Majors undefined R368 and rule numbers. Digest only.
+- 566 L5b r2: legend after tables, FD-001/002 severity vs UNVERIFIED, 92 files wrong, undefined terms. FIXED by ADDED paragraph.
+- 567 decisions D04-D05: 3 Blockers (undefined codes, n8n, 120-word sentence), 1 Major (who does what). Held page, digest only; send to lead.
+- 568 rehearsal-limits: wrong path given by me; the file is work/rehearsal-passed-limits-draft.md. No review happened. Relaunch with the true path.
+- 569 banned-claims r4: five stacked passes, circular item 2, studio lead vs head wording, unlock file undefined. PARTLY FIXED by SIXTH PASS; the one-page rewrite is still TO DO.
+
+- 570 L2c r2: line 114 claim unclear, FD-001 no date, key list, stale 'Next'. FIXED by CORRECTION paragraph (dates are my proposals).
+- 571 L3c r2: orientation paragraph last, undefined round labels, 'lead' three meanings, PLAN-002 path. PARTLY FIXED by READ ME FIRST paragraph (still at file end; move is TO DO).
