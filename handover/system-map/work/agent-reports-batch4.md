@@ -1052,3 +1052,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 761 critical-path r19: times not derivable, terms in ignored lines. FIXED by CURRENT ANSWER r20.
 - 762 owner-timeline r12: amendments chain. FIXED by CURRENT r12; table fold TO DO.
 - 763 not-checked r11: standalone, nine-vs-eight, deadlines. FIXED by CURRENT r12.
+
+- 764 critical-path r20: glossary, Wed 18 reachability. FIXED by r20b.
+- 765 owner-timeline r13: times, row numbers, still-works rule. FIXED by r13 paragraph.
+- 766 L3c r10: terms removed. FIXED by RESTORED TERMS r10; cells TO DO.
+- 767 not-checked r12: take, row 6, S9. FIXED by r12b; row 6 BLOCKED.
+- 768 PLAN-002 r19: no-lane rule, lines 3/40/95/97, pre-launch evidence. FIXED by RULINGS r19.
+- 769 premortem r12: owners and dates, cut fixes, terms. FIXED by STATE r12 (unknowns marked).
+- 770 open-items r13: definitions, TB row, column 6, A1/A8. FIXED by TERMS r13.
+- 771 (premortem and L3c duplicates counted above; no 771 content)
