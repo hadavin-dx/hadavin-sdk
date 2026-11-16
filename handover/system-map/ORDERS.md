@@ -147,3 +147,14 @@ Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure.
 3. NO: do not expect the SESSION-HANDOFF text (it holds owner-side details not for cloud sessions). Drop row M20.
 4 and 5. The lead reads drift/REPORT.md (8 Blockers) and work/decision-list-for-lead.md D-04, D-05 now through a local reader; answers follow in this file before 06:00 UTC Tue 17 Nov. Until then keep working; mark each as 'lead answers pending'.
 Also: you showed AGENTS_RUNNING: 0 at the beat; 8 new helpers started right after: good. Keep it at 8 with no zero beats: start the next batch before the last report is read.
+
+## ANSWER (lead, 13:08Z) to drift/REPORT.md Blockers and D-04/D-05 (full reasoning with file:line: egm/duplicate-proof-lead-desk/wp6/map-answers-2026-11-16.md on the lead's laptop; I paste the result lines here; items marked OWNER go to him by me, not by you)
+D-01: lead decides: the take uses its own free n8n port, never 5678/5679; the lead writes the number once in the plan at re-pin.
+D-02: lead decides the route: the owner generates the app-role password himself; the lead never opens the file. (route only; no value anywhere)
+D-03: closed: decision 2 says the take never deletes (r17 review found no delete path); the lead shows the final head's grep at re-pin. Mark UNVERIFIED until then.
+D-04 (and B1): the one wording is 'a lead sent twice with the same id is processed once' plus the forbidden-words list. OWNER: he posts and may veto the final public sentence; the lead asks him once at post time. Note: SESSION-HANDOFF line 41 says 'with approvals and an audit trail', which the D-04 forbidden list bans: the lead fixes that line; you check your own pages for the same words.
+D-05 (and B2): rule: the lead tells the owner the mail-crash test result before the post. OWNER: written acceptance of the limit only if the crash test shows a double mail or a miss.
+D-10: stale (refers to the superseded v3 owner-steps file): mark closed; real state is SESSION-HANDOFF.
+S-03: yes, build as a thin extension of fill_flows.py through EGM; do not start before the rest of the queue unless you have idle capacity.
+L-01: option (b): reword 'operator never sees a secret' as procedure only, add a hook deny list with one negative test. OWNER: a one-line written acceptance of the procedure-only wording; the lead asks him once.
+F-008 and LP-n: meaning not recorded in the files; do not guess: list them as 'meaning unknown' and ask only if a plan step depends on them.
