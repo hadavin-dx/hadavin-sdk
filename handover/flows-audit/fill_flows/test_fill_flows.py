@@ -62,6 +62,11 @@ def jdump(obj, path):
         json.dump(obj, fh)
 
 
+def wtext_read(path):
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
 def wtext(path, text, mode="w"):
     with open(path, mode, encoding="utf-8") as fh:
         fh.write(text)
@@ -1365,6 +1370,306 @@ class Hardening(Base):
             compared += 1
             self.assertEqual(r_orig, r_out, (orig, out))
         self.assertGreater(compared, 10)
+
+
+class Round5(Base):
+    """Security review round 2 (fix round 5): one test or more per finding."""
+
+    def made(self, flavor="film"):
+        out = self.out()
+        self.fill(src=self.copy_flows(flavor), out=out)
+        return out
+
+    def swap_on_open(self, match, action):
+        """A replacement for os.open that runs `action` once, at the first open whose path
+        equals `match`: right before (when=before) the real call."""
+        real_open = os.open
+        state = {"n": 0}
+
+        def hook(path, flags, mode=0o777, *, dir_fd=None):
+            if os.fspath(path) == match and state["n"] == 0:
+                state["n"] = 1
+                action()
+            return real_open(path, flags, mode, dir_fd=dir_fd)
+
+        return hook
+
+    # ---- 2: error text and escaped forms
+    def test_leak_check_sees_escaped_forms(self):
+        v = "ab" + '"' + "cd\\ef"  # a value with a quote and a backslash
+        WRITTEN.append(v)
+        for shown in (v, json.dumps(v)[1:-1], ascii(v)[1:-1], repr(v)[1:-1]):
+            with self.assertRaises(AssertionError):
+                self.leak_check(shown, "")
+            with self.assertRaises(AssertionError):
+                self.leak_check("", "x " + shown)
+
+    def test_exception_text_is_never_printed(self):
+        WRITTEN.append(CANARY)
+        for name, exc in (
+            ("do_check", ValueError("bad " + CANARY)),
+            ("do_delete", KeyError(CANARY)),
+            ("do_fill", RuntimeError(CANARY)),
+        ):
+            with mock.patch.object(ff, name, side_effect=exc):
+                args = {
+                    "do_check": ("check", self.t),
+                    "do_delete": ("delete", "--out", self.out()),
+                    "do_fill": ("fill", "--in", self.t, "--values", self.vf, "--out", self.out()),
+                }[name]
+                code, so, se = self.inproc(*args)
+            self.assertEqual((code, se), (1, "failed: " + type(exc).__name__ + "\n"), name)
+
+    # ---- 3: a swap AFTER the open
+    def test_fill_folder_swapped_for_a_link_after_the_open_writes_nothing_there(self):
+        victim = os.path.join(self.t, "victim")
+        os.mkdir(victim)
+        out = self.out()
+        real_open = os.open
+        state = {"done": False}
+
+        def hook(path, flags, mode=0o777, *, dir_fd=None):
+            fd = real_open(path, flags, mode, dir_fd=dir_fd)
+            if dir_fd is not None and path == "out" and flags & os.O_DIRECTORY:
+                if not state["done"]:  # the output folder was just opened: now swap its name
+                    state["done"] = True
+                    os.rename(out, out + ".moved")
+                    os.symlink(victim, out)
+            return fd
+
+        with mock.patch.object(ff.os, "open", hook):
+            code, _, _ = self.inproc(
+                "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
+            )
+        self.assertTrue(state["done"])
+        self.assertEqual(os.listdir(victim), [])
+        self.assertEqual(code, 3)
+        self.assertEqual(len(os.listdir(out + ".moved")), 6)  # all written through the open folder
+
+    # ---- 4: a cut manifest with no folder
+    def test_delete_force_hash_removes_an_empty_or_cut_manifest_when_no_folder(self):
+        out = self.out()
+        man = out + ".manifest.json"
+        for text in ("", '{"format": "fill_flows-manifest-1", "fil'):
+            write_raw(man, text)
+            os.chmod(man, 0o600)
+            code, _, se = self.cli("delete", "--out", out)  # without the flag: still refused
+            self.assertEqual((code, "not a valid fill_flows manifest" in se), (1, True), se)
+            self.assertTrue(os.path.exists(man))
+            code, so, _ = self.cli("delete", "--out", out, "--force-hash")
+            self.assertEqual((code, "deleted the manifest" in so), (0, True), so)
+            self.assertFalse(os.path.exists(man))
+            self.assertEqual(self.fill(out=out)[0], 3)  # and a new fill works again
+            self.cli("delete", "--out", out)
+
+    def test_fill_refusal_names_the_way_out_of_a_cut_manifest(self):
+        out = self.out()
+        write_raw(out + ".manifest.json", "")
+        code, _, se = self.fill(out=out)
+        self.assertEqual((code, "delete --out" in se, "--force-hash" in se), (1, True, True), se)
+
+    def test_force_hash_does_not_remove_a_manifest_that_is_a_link(self):
+        out = self.out()
+        victim = os.path.join(self.t, "victim")
+        write_raw(victim, "precious")
+        os.symlink(victim, out + ".manifest.json")
+        code, _, se = self.cli("delete", "--out", out, "--force-hash")
+        self.assertEqual((code, "symlink or not a file" in se), (1, True), se)
+        self.assertEqual(rtext(victim), "precious")
+
+    # ---- 6: checks on the place the open handle really is in
+    def test_values_file_swapped_into_git_after_the_name_check_is_refused(self):
+        clean = os.path.join(self.t, "clean")
+        os.mkdir(clean, 0o700)
+        repo = os.path.join(self.t, "repo2")
+        os.makedirs(os.path.join(repo, ".git"))
+        write_values(os.path.join(clean, "v.env"), VALS)
+        write_values(os.path.join(repo, "v.env"), VALS)
+        link = os.path.join(self.t, "vlink")
+        os.symlink(clean, link)
+        vf = os.path.join(link, "v.env")
+
+        def swap():
+            os.unlink(link)
+            os.symlink(repo, link)
+
+        out = self.out()
+        with mock.patch.object(ff.os, "open", self.swap_on_open(vf, swap)):
+            code, _, se = self.inproc(
+                "fill", "--in", self.copy_flows("real"), "--values", vf, "--out", out
+            )
+        self.assertEqual((code, "git repository" in se), (1, True), se)
+        self.assertFalse(os.path.exists(out))
+
+    def test_output_parent_swapped_into_git_after_the_name_check_writes_nothing(self):
+        clean = os.path.join(self.t, "clean-parent")
+        os.mkdir(clean, 0o700)
+        repo = os.path.join(self.t, "repo3")
+        os.makedirs(os.path.join(repo, ".git"))
+        link = os.path.join(self.t, "plink")
+        os.symlink(clean, link)
+
+        def swap():
+            os.unlink(link)
+            os.symlink(repo, link)
+
+        with mock.patch.object(ff.os, "open", self.swap_on_open(link, swap)):
+            code, _, se = self.inproc(
+                "fill",
+                "--in",
+                self.copy_flows("real"),
+                "--values",
+                self.vf,
+                "--out",
+                os.path.join(link, "sub"),
+            )
+        self.assertEqual((code, "git repository" in se), (1, True), se)
+        self.assertEqual(os.listdir(repo), [".git"])
+        self.assertEqual(os.listdir(clean), [])
+
+    def test_fd_path_follows_the_handle_not_the_name(self):
+        a = os.path.join(self.t, "a")
+        os.mkdir(a)
+        fd = os.open(a, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.rename(a, a + "2")
+            self.assertTrue(ff._fd_path(fd, "fallback").endswith("/a2"))
+        finally:
+            os.close(fd)
+        self.assertEqual(ff._fd_path(10**6, "fallback"), "fallback")  # no such handle: fallback
+
+    # ---- 7: --no-manifest and the sibling manifest
+    def test_no_manifest_does_not_remove_an_invalid_sibling_manifest(self):
+        out = self.made()
+        man = out + ".manifest.json"
+        write_raw(man + ".new", "{broken")
+        os.replace(man + ".new", man)
+        os.chmod(man, 0o600)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "not a valid fill_flows manifest" in se), (1, True), se)
+        self.assertTrue(os.path.exists(man))
+        self.assertEqual(len(os.listdir(out)), 6)  # nothing deleted
+        code, _, _ = self.cli("delete", "--out", out, "--no-manifest", "--force-hash")
+        self.assertEqual(code, 0)  # the person said so: folder and the cut manifest go
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(man))
+
+    def test_no_manifest_removes_a_valid_sibling_manifest(self):
+        out = self.made()
+        self.assertEqual(self.cli("delete", "--out", out, "--no-manifest")[0], 0)
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+
+    # ---- 8: bad file names at fill time
+    def test_input_names_with_a_backslash_or_control_character_are_refused(self):
+        for bad in ("a\\b.json", "x\x01y.json", "x\x1b[31m.json", "x\u202ey.json"):
+            d = self.flow_dir({"url": "$env.DESK_URL"})
+            os.rename(os.path.join(d, "mf-x.json"), os.path.join(d, bad))
+            out = self.out()
+            code, _, se = self.fill(src=d, out=out)
+            self.assertEqual((code, "path or control character" in se), (1, True), (bad, se))
+            self.assertNotIn("\x1b", se)
+            self.assertFalse(os.path.exists(out))
+            self.assertFalse(os.path.exists(out + ".manifest.json"))
+
+    def test_output_folder_name_with_a_backslash_is_refused(self):
+        out = os.path.join(self.t, "o\\x")
+        code, _, se = self.fill(out=out)
+        self.assertEqual((code, "plain name" in se), (1, True), se)
+        self.assertFalse(os.path.exists(out))
+
+    # ---- 9: infinity
+    def test_a_number_that_reads_as_infinity_is_refused(self):
+        d = self.flow_dir({"url": "$env.DESK_URL", "big": 0})
+        p = os.path.join(d, "mf-x.json")
+        wtext(p, wtext_read(p).replace('"big": 0', '"big": 1e999'))
+        code, _, se = self.fill(src=d)
+        self.assertEqual((code, "mf-x.json" in se, "not valid JSON" in se), (1, True, True), se)
+        self.assertFalse(os.path.exists(self.out()))
+        with self.assertRaises(ValueError):
+            ff.dump({"a": float("inf")})
+        with self.assertRaises(ValueError):
+            ff.dump({"a": float("nan")})
+
+    # ---- 11: Ctrl-C between the creation of a file and its entry in the clean-up list
+    def test_interrupt_right_after_a_file_is_written_leaves_nothing(self):
+        real = ff._write_new
+        n = {"n": 0}
+
+        def wrapped(*a, **k):
+            real(*a, **k)
+            n["n"] += 1
+            if n["n"] == 3:  # manifest, marker, then the first file: interrupt just after it
+                raise KeyboardInterrupt
+
+        out = self.out()
+        with mock.patch.object(ff, "_write_new", wrapped), self.assertRaises(KeyboardInterrupt):
+            self.inproc("fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+
+    def test_a_real_ctrl_c_during_creation_leaves_nothing(self):
+        import signal
+
+        real_open = os.open
+        n = {"n": 0}
+
+        def hook(path, flags, mode=0o777, *, dir_fd=None):
+            fd = real_open(path, flags, mode, dir_fd=dir_fd)
+            if flags & os.O_EXCL and dir_fd is not None:
+                n["n"] += 1
+                if n["n"] == 4:  # the file is made; the signal comes before the list entry
+                    signal.raise_signal(signal.SIGINT)
+            return fd
+
+        out = self.out()
+        with mock.patch.object(ff.os, "open", hook), self.assertRaises(KeyboardInterrupt):
+            self.inproc("fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out)
+        self.assertGreaterEqual(n["n"], 4)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+
+    # ---- 12: a copy that still holds placeholders is loud and marked
+    def test_incomplete_copy_is_marked_not_ready(self):
+        out = self.made("real")
+        self.assertIn(NOT_READY, os.listdir(out))
+        self.assertIn("NOT READY TO IMPORT", rtext(os.path.join(out, NOT_READY)))
+        self.assertEqual(oct(os.stat(os.path.join(out, NOT_READY)).st_mode & 0o777), "0o600")
+        self.assertIn(NOT_READY, jload(out + ".manifest.json")["files"])
+        code, so, _ = self.cli("check", out)
+        self.assertEqual((code, NOT_READY in so), (1, True), so)
+        # a complete copy carries no such file
+        write_values(self.vf, {**VALS, **PH_VALS})
+        done = self.out("done")
+        self.assertEqual(self.fill(src=self.copy_flows("real"), out=done)[0], 0)
+        self.assertNotIn(NOT_READY, os.listdir(done))
+        self.assertEqual(self.cli("check", done)[0], 0)
+
+    def test_fill_then_import_stops_when_placeholders_are_left(self):
+        # README: `fill && import`. The shell must not reach the second command.
+        cmd = ["sh", "-c", 'python3 -I "$0" fill --in "$1" --values "$2" --out "$3" && echo IMPORTED']
+        out = self.out()
+        args = [os.path.join(HERE, "fill_flows.py"), self.copy_flows("real"), self.vf, out]
+        p = subprocess.run(cmd + args, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
+        self.leak_check(p.stdout, p.stderr)
+        self.assertNotIn("IMPORTED", p.stdout)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn("NOT READY TO IMPORT", p.stderr)
+
+    def test_delete_handles_the_not_ready_note(self):
+        out = self.made("real")
+        self.assertEqual(self.cli("delete", "--out", out)[0], 0)
+        self.assertFalse(os.path.exists(out))
+        out = self.made("real")
+        os.unlink(out + ".manifest.json")
+        note = os.path.join(out, NOT_READY)
+        os.unlink(note)
+        write_raw(note, "someone else's note")
+        os.chmod(note, 0o600)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "not-ready note is not" in se), (1, True), se)
+        os.unlink(note)
+        self.assertEqual(self.cli("delete", "--out", out, "--no-manifest")[0], 0)
+        self.assertFalse(os.path.exists(out))
 
 
 if __name__ == "__main__":
