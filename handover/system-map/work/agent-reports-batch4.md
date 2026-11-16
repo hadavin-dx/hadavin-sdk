@@ -1119,3 +1119,4 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 814 PLAN-002 r21: owner meanings, step 0. FIXED by RULINGS r22; fold TO DO.
 
 - 815 L1c r12: Blocker count, reaper, cells. PARTLY FIXED by CURRENT r13; cells TO DO.
+- 816 M17 r11: no single current state, release word, terms. FIXED by FOLDING: page rewritten short; history in decisions/M17-history.md.
