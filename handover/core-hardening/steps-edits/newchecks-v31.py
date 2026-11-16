@@ -457,11 +457,11 @@ for _nm, _t in (('A', _AP['A']), ('B', _AP['B'])):
         if _blk.count(_ph) != 1: fail('C224', 'appendix %s sample: %r appears %d times (must be exactly 1)' % (_nm, _ph, _blk.count(_ph)))
     if len(re.findall(r'\[LEAD FILLS', _blk)) != 4 or len(re.findall(r'\[OWNER FILLS', _blk)) != 3: fail('C224', 'appendix %s sample: placeholder count is not 4 LEAD and 3 OWNER' % _nm)
 # C225 (evidence H15): every fact the sources are built from is used by some source; a fact that no source uses is dead
-_srcs = ''.join(_pg(x) for x in ('OWNER-SHEET-%s-SOURCE.md' % _V, 'v%s-OPEN-FOR-LEAD-SOURCE.md' % _V[1:]) if os.path.exists(D + x)) if False else ''
+_srcs = ''.join(_pg(x) for x in ('OWNER-SHEET-%s-SOURCE.md' % _V, 'v%s-OPEN-FOR-LEAD-SOURCE.md' % _V[1:]) if _os.path.exists(D + x)) if False else ''
 _ns = {}; exec(_pg('facts-%s.py' % _V), _ns)
 for _x in _glob.glob(D + '*-SOURCE.md'):
     if _V in _x or 'NOTE' in _x and ('-v15-' in _x if _V == 'v31' else '-v14-' in _x): _srcs += open(_x, encoding='utf-8').read()
-_chk = ''.join(_pg(x) for x in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V) if os.path.exists(D + x))
+_chk = ''.join(_pg(x) for x in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V) if _os.path.exists(D + x))
 _dead = [k for k in _ns['F'] if ('{{%s}}' % k) not in _srcs and not k.startswith('ph_') and ("F['%s']" % k) not in _chk and ("F.get('%s'" % k) not in _chk and ("'%s'" % k) not in _chk]
 if _dead: fail('C225', 'facts used by no source (dead): %s' % ', '.join(sorted(_dead)))
 # C226 (evidence 5): no email-shaped text in the owner pages except @example.com
@@ -473,6 +473,6 @@ def _mt(n): return _os.path.getmtime(D + n)
 for _nm in 'AB':
     for _built, _srcn in (('OWNER-SHEET-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V), ('OWNER-CARD-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V), ('OWNER-APPENDIX-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V)):
         for _dep in (_srcn, 'facts-%s.py' % _V, 'build-%s.py' % _V):
-            if os.path.exists(D + _dep) and _mt(_built) + 1 < _mt(_dep): fail('C227', '%s is older than %s (rebuild)' % (_built, _dep))
+            if _os.path.exists(D + _dep) and _mt(_built) + 1 < _mt(_dep): fail('C227', '%s is older than %s (rebuild)' % (_built, _dep))
 for _fn in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V, 'facts-%s.py' % _V, 'mut%s.py' % _V[1:], '%s-fail-proof.py' % _V):
-    if os.path.exists(D + _fn) and re.search(r"['\"]/(?:ho" + r"me|tmp|Users|mnt)/", _pg(_fn)): fail('C227', '%s holds a hard-coded absolute path' % _fn)
+    if _os.path.exists(D + _fn) and re.search(r"['\"]/(?:ho" + r"me|tmp|Users|mnt)/", _pg(_fn)): fail('C227', '%s holds a hard-coded absolute path' % _fn)

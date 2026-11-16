@@ -61,3 +61,4 @@ T = T.rstrip('\n') + '\n- Round 16 added: nothing was run except text, count, we
 # ---------- Appendix K (detail text, nothing deleted)
 APP = '\n## Appendix K: the detail of the key steps (round 16)\nThe owner reads key steps A to K in row E-48. Where a key step says "Detail", the text is here. Nothing was deleted; the detail was moved.\n\n' + '\n\n'.join(APPX.values()) + '\n'
 sub('\n## Lines checked and found consistent', APP + '\n## Lines checked and found consistent')
+sub('CONTRADICTION 17 (including the rows marked as code-change gated), DEFERRED 1 (E-13); total 59.', 'CONTRADICTION 18 (including the rows marked as code-change gated), DEFERRED 1 (E-13); total 60.')
