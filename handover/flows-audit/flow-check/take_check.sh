@@ -184,12 +184,17 @@ def camel(t):
 
 
 def ones_readings(s, cap=8):
-    """The digit 1 is read both ways (i and l): every reading of the first 8 ones in this piece; the rest all i or all l (a listed word has at most 4 such letters, so more cannot match)."""
+    """The digit 1 is read both ways (i and l): every reading of the first 8 ones in this piece; the rest all i or all l; plus the readings in which most ones are noise (all dropped, or exactly one read as i or l)."""
     idx = [i for i, c in enumerate(s) if c == "1"]
     if not idx:
         return [s]
     head, tail = idx[:cap], idx[cap:]
     out = []
+    # ones that are only noise: the piece with every 1 dropped, and (up to 64 ones) each single 1 read as i or l with all the others dropped (c1111111111aude hides claude)
+    out.append("".join(c for c in s if c != "1"))
+    for j in idx[:64]:
+        for ch in ("i", "l"):
+            out.append("".join(ch if k == j else c for k, c in enumerate(s) if c != "1" or k == j))
     for rest in (("i", "l") if tail else ("i",)):
         for mask in range(1 << len(head)):
             chars = list(s)

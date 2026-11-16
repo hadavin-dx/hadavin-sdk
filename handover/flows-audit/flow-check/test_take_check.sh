@@ -5,7 +5,11 @@
 # are printed), M3 (a listed flow that is a folder or a dangling link is a FAIL), M4 (the pin header date and sha256 are checked), and a flow whose node count changed while everything
 # is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
-HERE=$(cd "$(dirname "$0")" && pwd); TAKE="${TEST_TAKE_SCRIPT:-$HERE/take_check.sh}"   # TEST_TAKE_SCRIPT: only to run these cases against an older copy of the script (it must sit in a mirror folder like the one built below)
+HERE=$(cd "$(dirname "$0")" && pwd)
+# f8-r9 (M4): TEST_TAKE_SCRIPT points the whole suite at ANOTHER script, so a leaked variable would test (and pass) the wrong file. It is honoured only with TEST_TAKE_DEV=1, and the path under test is always printed.
+if [ -n "${TEST_TAKE_SCRIPT:-}" ] && [ "${TEST_TAKE_DEV:-}" != 1 ]; then echo "REFUSED: TEST_TAKE_SCRIPT is accepted only with TEST_TAKE_DEV=1 (it would test another script than the one in this folder). Unset it for a real run."; exit 2; fi
+TAKE="${TEST_TAKE_SCRIPT:-$HERE/take_check.sh}"; echo "script under test: $TAKE"
+   # TEST_TAKE_SCRIPT: only to run these cases against an older copy of the script (it must sit in a mirror folder like the one built below)
 # f8-r8: the two quick-run hooks below must never leak from an environment into a real run (a leaked RV_DUMP used to make the whole suite exit 0 before any case ran): like the RUN_ALL_* hooks of run_all.sh they are REFUSED (exit 2) unless TEST_TAKE_DEV=1 is set on purpose
 if { [ -n "${RV_DUMP:-}" ] || [ -n "${RV_ONLY:-}" ]; } && [ "${TEST_TAKE_DEV:-}" != 1 ]; then echo "REFUSED: RV_DUMP / RV_ONLY are quick-run hooks for editing the word list; they are accepted only with TEST_TAKE_DEV=1 (a leaked variable must not end this suite early)"; exit 2; fi
 P=${1:-}; [ -d "$P" ] || { echo "usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]"; exit 2; }
@@ -36,9 +40,11 @@ OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date ca
 [ -n "$PD" ] || { echo "no date line in the pin"; exit 2; }
 LONGX=$(head -c 1100 /dev/zero | tr '\0' x)
 BEFOREPIN=$(date -u -d "$PD -1 day" +%Y-%m-%d)
+RCPT=$(sed -n 's/^# sha256 of the WARN lines below.*: \([0-9a-f]\{64\}\)$/\1/p' "$PIN" | head -n 1 | cut -c1-8); [ -n "$RCPT" ] || { echo "no WARN-lines hash line in the pin"; exit 2; }
+RD="$PD, pin sha256 $RCPT"   # f8-r9 M1: every reviewer line a take accepts carries the receipt (first 8 hex of the WARN-lines hash)
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
-{ echo "# reviewed by: Testonly Reviewer, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
-{ echo "# reviewed by: flows-audit session, $PD, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
+{ echo "# reviewed by: Testonly Reviewer, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
+{ echo "# reviewed by: flows-audit session, $RD, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
 
 # ---------------------------------------------------------------------------------------------
 # The reviewer-line word check, case by case (fast: it calls only `take_check.sh --check-reviewer-line`, nothing else runs). TODAY and the other dates are computed ONCE at the top of this
@@ -113,7 +119,7 @@ no|Pat Smith, {TODAY}, ok{ESC}[2J|rule: hidden character
 no|R2D2 Four, {TODAY}|rule: name characters
 no|Pat O_L_L_M, {TODAY}|rule: name characters
 no|Pat C1aude, {TODAY}|rule: name characters
-no|Pat O’Neil, {TODAY}|rule: name characters
+ok|Pat O’Neil, {TODAY}
 no|1Pat Smith, {TODAY}|rule: name characters
 no|x, {TODAY}|rule: name too short
 no|Li, {TODAY}|rule: name too short
@@ -141,7 +147,7 @@ no|Pat Fable, {TODAY}|rule: listed word fable
 no|Pat Qwen, {TODAY}|rule: listed word qwen
 no|Pat Codex, {TODAY}|rule: listed word codex
 no|Pat Cursor, {TODAY}|rule: listed word cursor
-no|Pat Devin, {TODAY}|rule: listed word devin
+ok|Pat Devin, {TODAY}
 no|Pat Kimi, {TODAY}|rule: listed word kimi
 no|Pat Opus, {TODAY}|rule: listed word opus
 no|Sonnet Opus, {TODAY}|rule: listed word opus
@@ -154,11 +160,11 @@ no|Pat Deepseek, {TODAY}|rule: listed word deepseek
 no|Pat Anthropic, {TODAY}|rule: listed word anthropic
 no|Pat Robot, {TODAY}|rule: listed word robot
 no|Some Assistant, {TODAY}|rule: listed word assistant
-no|Ai Nguyen, {TODAY}|rule: listed word ai
+ok|Ai Nguyen, {TODAY}
 no|Pat None, {TODAY}|rule: listed word none
 no|Pat Todo, {TODAY}|rule: listed word todo
 no|Name Placeholder, {TODAY}|rule: listed word placeholder
-no|Pat Sessions, {TODAY}|rule: listed word sessions
+ok|Pat Sessions, {TODAY}
 no|Test Reviewer, {TODAY}|rule: listed word reviewer
 no|Runall Standin, {TODAY}|rule: listed word runall
 no|Pat Lead, {TODAY}|rule: listed word lead
@@ -183,7 +189,7 @@ no|Pat Smith, {TODAY}, gp7|rule: listed word gpt
 no|Pat Smith, {TODAY}, 5onnet|rule: listed word sonnet
 no|Pat Smith, {TODAY}, Clаude read it|rule: mixed alphabets
 no|Pat Smith, {TODAY}, my assistant helped|rule: listed word assistant
-no|Pat Smith, {TODAY}, no AI used|rule: listed word ai
+ok|Pat Smith, {TODAY}, no AI used
 no|Pat Smith, {TODAY}, TBD|rule: listed word tbd
 no|Pat Smith, {TODAY}, not yet read|rule: note says not read
 no|Pat Smith, {TODAY}, not read|rule: note says not read
@@ -259,7 +265,7 @@ no|Pat Support, {TODAY}|rule: listed word support
 no|Pat Root, {TODAY}|rule: listed word root
 no|Pat Dependabot, {TODAY}|rule: listed word dependabot
 no|Pat Renovate, {TODAY}|rule: listed word renovate
-no|Pat Jenkins, {TODAY}|rule: listed word jenkins
+ok|Pat Jenkins, {TODAY}
 no|Pat Github, {TODAY}|rule: listed word github
 no|Pat Bard, {TODAY}|rule: listed word bard
 no|Pat Perplexity, {TODAY}|rule: listed word perplexity
@@ -292,8 +298,34 @@ no|Pat Smith, {TODAY}, haven't read|rule: note says not read
 no|Pat Smith, {TODAY}, not checked|rule: note says not read
 no|Pat Smith, {TODAY}, skimmed only|rule: note says not read
 no|Pat Smith, {TODAY}, pending|rule: note says not read
-no|Pat Sessions, {TODAY}|rule: listed word sessions
+ok|Pat Sessions, {TODAY}
 no|Audit Session, {TODAY}|rule: listed word session
+no|Pat Smith, {TODAY}, read with Opuս|rule: mixed alphabets
+no|Pat Smith, {TODAY}, read with ĸimi|rule: listed word kimi
+no|Pat ĸimi, {TODAY}|rule: listed word kimi
+no|Pat Smith, {TODAY}, read with ClaᎠde|rule: mixed alphabets
+no|Pat Clаude Smith, {TODAY}|rule: mixed alphabets
+no|Pat Smиth, {TODAY}|rule: mixed alphabets
+no|Pat Smith, {TODAY}, read with Claʼude|rule: listed word claude
+no|Pat Smʰth, {TODAY}|rule: modifier letter
+no|Pat ClaudeCode, {TODAY}|rule: listed word claude
+no|Pat Smith, {TODAY}, read with c1111111111aude|rule: listed word claude
+no|Pat Smith, {TODAY}, read with 0pus|rule: listed word opus
+no|Pat Smith, {TODAY}, read with 8ard|rule: listed word bard
+no|Pat Smith, {TODAY}, read with 6emini|rule: listed word gemini
+no|Pat Smith, {TODAY}, read with Gemini 9|rule: listed word gemini
+no|Pat y, {TODAY}|rule: name word too short
+ok|張伟, {TODAY}
+ok|Ortega y Gasset, {TODAY}
+ok|Pat Smith y Jones, {TODAY}
+ok|میلان‌الحسینی, {TODAY}
+ok|A. Jones, {TODAY}
+ok|Pat J., {TODAY}
+ok|Pat Smith, {TODAY}, no LLM used
+no|Pat Smith, {TODAY}, an LLM read it|rule: listed word llm
+no|Pat Llamas, {TODAY}|rule: listed word llama
+no|Pat Alexa, {TODAY}, read all lines|rule: listed word alexa
+no|Pat Smith, {TODAY}, jenkins read it|rule: listed word jenkins
 no|Pat Smith, {TODAY}, lead to confirm|rule: lead to confirm
 EOF
 )
@@ -308,7 +340,7 @@ while IFS='|' read -r want line why pd envx; do
   # shellcheck disable=SC2086
   rvout=$(env -u TAKE_CHECK_WARN_PIN TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY="$TODAY" $envx bash "$TAKE" --check-reviewer-line "$line" ${pd:+"$pd"} 2>&1); rvrc=$?
   if [ "$want" = ok ]; then [ "$rvrc" = 0 ] && [ "$rvout" = ok ]; else [ "$rvrc" = 1 ] && case "$rvout" in *"$why"*) true;; *) false;; esac; fi
-  ok $? "reviewer line [$want] '$(printf '%s' "$line" | tr -d '\000-\037')' ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
+  ok $? "reviewer line [$want] '$(printf '%s' "${line:0:70}" | tr -d '\000-\037')'$([ ${#line} -gt 70 ] && printf ' [input is %s characters; first 70 shown]' "${#line}") ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
 # f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
@@ -345,10 +377,10 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $PD" && has q1ok "The reviewer line is text; not verified." && ! says_person "$S/q1ok.txt"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $RD" && has q1ok "The reviewer line is text; not verified." && ! says_person "$S/q1ok.txt"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! says_person "$S/q1a.txt"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
-for pair in "only-session:# reviewed by: Audit Session B, $PD" "only-confirm:# reviewed by: A. Person, $PD, Lead To Confirm"; do
+for pair in "only-session:# reviewed by: Audit Session B, $RD" "only-confirm:# reviewed by: A. Person, $RD, Lead To Confirm"; do
   nm=q1-${pair%%:*}; { echo "${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "pin not yet confirmed by the lead"; ok $? "Q1: '${pair#*:}' is exit 4 (got exit $RC)"
@@ -364,7 +396,7 @@ tk b1b -- --flows "$P" --write-warn-pin "$S/new.pin"
 # a pin written by the script is NOT valid until a person replaces the placeholder in its header (round 10b, M-3); reviewed.pin stands for that person's edit
 grep -q '^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): [0-9a-f]\{64\}$' "$S/new.pin"; ok $? "B1: the written pin carries the '# flows sha256' line"
 grep -q 'PLACEHOLDER' "$S/new.pin" && grep -q 'NOT YET READ BY A PERSON' "$S/new.pin"; ok $? "M-3: the written pin says it is not yet read and holds the placeholder line"
-sed "s/^# reviewed by: .*/# reviewed by: Testonly Reviewer, $PD/" "$S/new.pin" > "$S/reviewed.pin"
+sed "s/^# reviewed by: .*/# reviewed by: Testonly Reviewer, $RD/" "$S/new.pin" > "$S/reviewed.pin"
 tk m3p1 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m3p1 "STILL HAS THE PLACEHOLDER"; ok $? "M-3: a pin whose header still has the placeholder is exit 4 (got exit $RC)"
 grep -v '^# reviewed by' "$S/reviewed.pin" > "$S/norev.pin"
@@ -517,70 +549,70 @@ tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "
 [ "$RC" = 4 ] && has b1nosha "THE PIN HEADER HAS NO '# flows sha256 ...' LINE"; ok $? "B1: a pin without the flows sha256 line is exit 4 (got exit $RC)"
 # B2: the reviewer line must read NAME, YYYY-MM-DD (optional note); stand-ins are exit 4
 # f8-r8: each case names the ONE message and rule it must give (the old test accepted any of three messages)
-for pair in "b2-agent:claude agent, $PD|NOT A PERSON|rule: listed word agent" "b2-tbd:TBD|NOT A PERSON|rule: shape" "b2-x:x, $PD|NOT A PERSON|rule: name too short" "b2-nodate:Testonly Reviewer|NOT A PERSON|rule: shape" "b2-baddate:Testonly Reviewer, 2026-13-45|NOT A PERSON|rule: bad date" "b2-future:Testonly Reviewer, 2999-01-01|NOT A PERSON|rule: future date" "b2-empty-name:, $PD|NOT A PERSON|rule: name characters" "b2-digits:R2D2 4, $PD|NOT A PERSON|rule: name characters" "b2-ai:Some Assistant, $PD|NOT A PERSON|rule: listed word assistant" "b2-placeholder-word:Name Placeholder, $PD|STILL HAS THE PLACEHOLDER|" "b2-sessions:Pat Sessions, $PD|pin not yet confirmed by the lead|" "b2-lead-confirm:Pat Smith, $PD, lead to confirm|pin not yet confirmed by the lead|"; do
+for pair in "b2-agent:claude agent, $RD|NOT A PERSON|rule: listed word agent" "b2-tbd:TBD|NOT A PERSON|rule: shape" "b2-x:x, $RD|NOT A PERSON|rule: name too short" "b2-nodate:Testonly Reviewer|NOT A PERSON|rule: shape" "b2-baddate:Testonly Reviewer, 2026-13-45|NOT A PERSON|rule: bad date" "b2-future:Testonly Reviewer, 2999-01-01|NOT A PERSON|rule: future date" "b2-empty-name:, $RD|NOT A PERSON|rule: name characters" "b2-digits:R2D2 4, $RD|NOT A PERSON|rule: name characters" "b2-ai:Some Assistant, $RD|NOT A PERSON|rule: listed word assistant" "b2-placeholder-word:Name Placeholder, $RD|STILL HAS THE PLACEHOLDER|" "b2-sessions:Pat Sessions, $RD|pin not yet confirmed by the lead|" "b2-lead-confirm:Pat Smith, $RD, lead to confirm|pin not yet confirmed by the lead|"; do
   nm=${pair%%:*}; spec=${pair#*:}; line=${spec%%|*}; r2=${spec#*|}; msg=${r2%%|*}; rule=${r2#*|}
   { echo "# reviewed by: $line"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "$msg" && { [ -z "$rule" ] || has "$nm" "$rule"; } && [ "$(grep -c -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed|THE PIN HEADER STILL HAS THE PLACEHOLDER)" "$S/$nm.txt")" = 1 ]; ok $? "B2: reviewer line '$line' is exit 4 with exactly the message '$msg' ${rule:+and '$rule'} (got exit $RC)"
 done
-{ echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
+{ echo "# reviewed by: Jane Q. Roe-Smith, $RD, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
-[ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, $PD, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
+[ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, $RD, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 # f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
-for pair in "m1-tbd-dot:TBD., $PD" "m1-claude-code:Claude-Code, $PD" "m1-agent-dot:Agent., $PD" "m1-unknown-dash:Unknown-, $PD" "m1-sonnet-opus:Sonnet Opus, $PD" "m1-runall:Runall Standin, $PD" "m1-test-reviewer:Test Reviewer, $PD" "m1-testonly-no-flag-name:Testonly Reviewer, $PD" "m1-model-in-name:Jane Gemini, $PD" "m1-year-old:Jane Q. Roe-Smith, $OLDDATE" "m1-before-pin:Jane Q. Roe-Smith, $BEFOREPIN" "m1-dotted-llm:Pat L.L.M., $PD" "m1-dotted-claude:P.a.t C.l.a.u.d.e, $PD"; do
+for pair in "m1-tbd-dot:TBD., $RD" "m1-claude-code:Claude-Code, $RD" "m1-agent-dot:Agent., $RD" "m1-unknown-dash:Unknown-, $RD" "m1-sonnet-opus:Sonnet Opus, $RD" "m1-runall:Runall Standin, $RD" "m1-test-reviewer:Test Reviewer, $RD" "m1-testonly-no-flag-name:Testonly Reviewer, $RD" "m1-model-in-name:Jane Gemini, $RD" "m1-year-old:Jane Q. Roe-Smith, $OLDDATE" "m1-before-pin:Jane Q. Roe-Smith, $BEFOREPIN" "m1-dotted-llm:Pat L.L.M., $RD" "m1-dotted-claude:P.a.t C.l.a.u.d.e, $RD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
   [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "M1: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
 done
 # f8-r5: names that must still be accepted (would-be pass with the override: exit 5, never the stand-in message). 'Zed' (3 letters, human-looking) is accepted by design: a script cannot tell it from a real name
-for pair in "r5-pat-smith:Pat Smith, $PD" "r5-obrien:O'Brien, $PD" "r5-aiden-botha:Aiden Botha, $PD" "r5-zed:Zed Smith, $PD"; do
+for pair in "r5-pat-smith:Pat Smith, $RD" "r5-obrien:O'Brien, $RD" "r5-aiden-botha:Aiden Botha, $RD" "r5-zed:Zed Smith, $RD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r5: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
 # f8-r6 (review f8-r5), updated in f8-r7: refusals of the reviewer-line check run through the whole take (the fuzzy cases of f8-r6 are replaced by the whole-word cases above); dates use computed values, never typed ones.
 # each line is refused with exit 4 and the reviewer-line message, even with the test flag and the pin override (these names do not start with Testonly)
-for pair in "f8r6-claude-bot:Pat Claude Bot, $PD" "f8r6-claudebot:Pat Claudebot, $PD" "f8r6-chatgpt:Pat Chatgpt, $PD" "f8r6-openai:Pat Openai, $PD" "f8r6-gptbot:Pat Gptbot, $PD" "f8r6-bots:Pat Bots, $PD" "f8r6-agents:Pat Agents, $PD" "f8r6-grok:Pat Grok, $PD" "f8r6-llama:Pat Llama, $PD" "f8r6-mistral:Pat Mistral, $PD" "f8r6-deepseek:Pat Deepseek, $PD" "f8r6-copilot:Pat Copilot, $PD" "f8r6-anthropic:Pat Anthropic, $PD" "f8r6-robot:Pat Robot, $PD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $PD" "f8r6-underscore:Pat O_L_L_M, $PD" "f8r6-digit:Pat C1aude, $PD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $PD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $PD" "f8r6-note-claude:Pat Smith, $PD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $PD, note ChatGPT" "f8r6-note-dots:Pat Smith, $PD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $PD, an LLM read it"; do
+for pair in "f8r6-claude-bot:Pat Claude Bot, $RD" "f8r6-claudebot:Pat Claudebot, $RD" "f8r6-chatgpt:Pat Chatgpt, $RD" "f8r6-openai:Pat Openai, $RD" "f8r6-gptbot:Pat Gptbot, $RD" "f8r6-bots:Pat Bots, $RD" "f8r6-agents:Pat Agents, $RD" "f8r6-grok:Pat Grok, $RD" "f8r6-llama:Pat Llama, $RD" "f8r6-mistral:Pat Mistral, $RD" "f8r6-deepseek:Pat Deepseek, $RD" "f8r6-copilot:Pat Copilot, $RD" "f8r6-anthropic:Pat Anthropic, $RD" "f8r6-robot:Pat Robot, $RD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $RD" "f8r6-underscore:Pat O_L_L_M, $RD" "f8r6-digit:Pat C1aude, $RD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $RD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $RD" "f8r6-note-claude:Pat Smith, $RD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $RD, note ChatGPT" "f8r6-note-dots:Pat Smith, $RD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $RD, an LLM read it"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "f8-r6: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
 done
 # 'Sessions' as a surname: any reviewer line containing the word session is refused by the earlier session check (its own message); documented in the README
-{ echo "# reviewed by: Pat Sessions, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/f8r6-sessions.pin"
+{ echo "# reviewed by: Pat Sessions, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/f8r6-sessions.pin"
 tk f8r6-sessions TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/f8r6-sessions.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has f8r6-sessions "pin not yet confirmed by the lead"; ok $? "f8-r6: 'Pat Sessions' is refused (exit 4, the session message: any line holding the word session is refused) (got exit $RC)"
 # names that must be accepted (would-be pass with the override: exit 5, never the reviewer-line message). 'Claudette' passes because only whole words are listed; 'Ai Nguyen' is refused on purpose (the word ai is on the list), see the README
-for pair in "f8r6-al-lee:Al Lee, $PD" "f8r6-bo-ng:Bo Ng, $PD" "f8r6-mary-jane:Mary-Jane O'Neil, $PD" "f8r6-tolkien:J.R.R. Tolkien, $PD" "f8r6-botha:Aiden Botha, $PD" "f8r6-claudette:Claudette Smith, $PD" "f8r6-roe:Jane Q. Roe-Smith, $PD" "f8r6-note-ok:Pat Smith, $PD, read all 4 WARN lines and the code" "f8r6-today:Pat Smith, $TODAY" "f8r7-jose:Jos$(printf '\303\251') M$(printf '\303\274')ller, $PD" "f8r7-initials:A. I. Walker, $PD" "f8r7-bo-ta:Bo Ta, $PD" "f8r7-robotham:Pat Robotham, $PD"; do
+for pair in "f8r6-al-lee:Al Lee, $RD" "f8r6-bo-ng:Bo Ng, $RD" "f8r6-mary-jane:Mary-Jane O'Neil, $RD" "f8r6-tolkien:J.R.R. Tolkien, $RD" "f8r6-botha:Aiden Botha, $RD" "f8r6-claudette:Claudette Smith, $RD" "f8r6-roe:Jane Q. Roe-Smith, $RD" "f8r6-note-ok:Pat Smith, $RD, read all 4 WARN lines and the code" "f8r6-today:Pat Smith, $TODAY" "f8r7-jose:Jos$(printf '\303\251') M$(printf '\303\274')ller, $RD" "f8r7-initials:A. I. Walker, $RD" "f8r7-bo-ta:Bo Ta, $RD" "f8r7-robotham:Pat Robotham, $RD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r6: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
 # f8-r7: the refusal message names the rule that fired (review f8-r6, design N2), and the cases of the two f8-r6 reviews run through the whole take, not only the helper
-for tr in "e7-comma:Pat,Claude Bot, $PD|rule: shape" "e7-comma-gpt:Pat,Gptbot, $PD|rule: shape" "e7-comma-note:Pat,Claude, $PD, read all lines|rule: shape" "e7-roe:Roe, Jane, $PD|rule: shape" "e7-jr-comma:John Smith, Jr., $PD|rule: shape" "e7-chatbot:Pat Chatbot, $PD|rule: listed word chatbot" "e7-future:Pat Smith, 2999-01-01|rule: future date" "e7-before-pin:Pat Smith, $BEFOREPIN|rule: old date" "e7-short:Li, $PD|rule: name too short" "e7-notread:Pat Smith, $PD, not yet read|rule: note says not read" "e7-leet:Pat Smith, $PD, read Cl4ude|rule: listed word claude" "e7-accent-note:Pat Smith, $PD, read Cl$(printf '\303\241')ude|rule: listed word claude" "e7-llm-dots:Pat Smith, $PD, an L.L.M. read it|rule: listed word llm" "e7-ai-dots:Pat Smith, $PD, A.I. wrote it|rule: listed word ai" "e7-fable:Pat Fable, $PD|rule: listed word fable" "e7-bad-date:Pat Smith, 2026-13-45|rule: bad date" "e7-hidden:Pat Cla$(printf '\342\200\213')ude, $PD|rule: hidden character" "e7-cyrillic:Cl$(printf '\320\260')ude Smith, $PD|rule: mixed alphabets" "e7-placeholder-case:Pat Smith, $PD, placeholder|THE PIN HEADER STILL HAS THE PLACEHOLDER"; do
+for tr in "e7-comma:Pat,Claude Bot, $RD|rule: shape" "e7-comma-gpt:Pat,Gptbot, $RD|rule: shape" "e7-comma-note:Pat,Claude, $RD, read all lines|rule: shape" "e7-roe:Roe, Jane, $RD|rule: shape" "e7-jr-comma:John Smith, Jr., $RD|rule: shape" "e7-chatbot:Pat Chatbot, $RD|rule: listed word chatbot" "e7-future:Pat Smith, 2999-01-01|rule: future date" "e7-before-pin:Pat Smith, $BEFOREPIN|rule: old date" "e7-short:Li, $RD|rule: name too short" "e7-notread:Pat Smith, $RD, not yet read|rule: note says not read" "e7-leet:Pat Smith, $RD, read Cl4ude|rule: listed word claude" "e7-accent-note:Pat Smith, $RD, read Cl$(printf '\303\241')ude|rule: listed word claude" "e7-llm-dots:Pat Smith, $RD, an L.L.M. read it|rule: listed word llm" "e7-ai-dots:Pat Smith, $RD, A.I. wrote it|rule: listed word ai" "e7-fable:Pat Fable, $RD|rule: listed word fable" "e7-bad-date:Pat Smith, 2026-13-45|rule: bad date" "e7-hidden:Pat Cla$(printf '\342\200\213')ude, $RD|rule: hidden character" "e7-cyrillic:Cl$(printf '\320\260')ude Smith, $RD|rule: mixed alphabets" "e7-placeholder-case:Pat Smith, $RD, placeholder|THE PIN HEADER STILL HAS THE PLACEHOLDER"; do
   nm=${tr%%:*}; rest=${tr#*:}; line=${rest%|*}; why=${rest##*|}
   { echo "# reviewed by: $line"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -F -- "$why" "$S/$nm.txt"; ok $? "f8-r7: reviewer line '$line' is exit 4 and the message names '$why' (got exit $RC)"
 done
 # a trailing space, and a pin saved with Windows line ends (CR LF), are read like the plain form
-{ printf '# reviewed by: Pat Smith, %s   \n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-trail.pin"
+{ printf '# reviewed by: Pat Smith, %s   \n' "$RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-trail.pin"
 tk e7-trail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-trail.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has e7-trail "NOT A PERSON" && has e7-trail "WARN set equals the pinned set"; ok $? "f8-r7: a reviewer line with trailing spaces is accepted (exit 5 with the override) (got exit $RC)"
 sed 's/$/\r/' "$LEADPIN" > "$S/e7-crlf.pin"
 tk e7-crlf TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-crlf.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has e7-crlf "NOT A PERSON" && ! has e7-crlf "DOES NOT MATCH ITS OWN SHA-256" && has e7-crlf "WARN set equals the pinned set"; ok $? "f8-r7: a whole pin with CR LF line ends is read like the plain pin (exit 5 with the override) (got exit $RC)"
 # a reviewer line holding a terminal control character is refused, and the output never repeats that character
-{ printf '# reviewed by: Pat \033[31mSmith, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc.pin"
+{ printf '# reviewed by: Pat \033[31mSmith, %s\n' "$RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc.pin"
 tk e7-esc TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has e7-esc "rule: hidden character" && ! grep -q -a "$(printf '\033')" "$S/e7-esc.txt"; ok $? "f8-r7: a reviewer line with an escape character is exit 4 and the output holds no escape character (got exit $RC)"
-{ printf '# reviewed by: Audit Session \033[31m, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc2.pin"
+{ printf '# reviewed by: Audit Session \033[31m, %s\n' "$RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc2.pin"
 tk e7-esc2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc2.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has e7-esc2 "pin not yet confirmed by the lead" && ! grep -q -a "$(printf '\033')" "$S/e7-esc2.txt"; ok $? "f8-r7: the session message also prints the line without control characters (got exit $RC)"
 # the FINAL line says that the reviewer line is only text
 grep '^FINAL:' "$S/control.txt" | grep -q -F "The reviewer line is text; not verified."; ok $? "f8-r7: the FINAL line says 'The reviewer line is text; not verified.'"
 # the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
-{ echo "# reviewed by: Testonly Runall, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
+{ echo "# reviewed by: Testonly Runall, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
 tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has m1-allow "NOT A PERSON"; ok $? "M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit $RC)"
 # the real bypass: the script's own stand-in pin copied in as THE pin (no override, no test flag) must not give exit 0. A mirror folder holds copies of the scripts, the real checker and the pin; demo/ is a link to the real demo folder
@@ -590,50 +622,50 @@ mir() { local nm=$1; shift; env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHEC
 mir mirbase
 MIRSHA=$(sed -n 's/^  combined: \([0-9a-f]\{64\}\)$/\1/p' "$S/mirbase.txt" | head -n 1)
 [ -n "$MIRSHA" ]; ok $? "M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)"
-for pair in "mir-testrev:Testonly Reviewer, $PD" "mir-test-reviewer:Test Reviewer, $PD" "mir-runall:Runall Standin, $PD" "mir-tbd:TBD., $PD" "mir-claudecode:Claude-Code, $PD"; do
+for pair in "mir-testrev:Testonly Reviewer, $RD" "mir-test-reviewer:Test Reviewer, $RD" "mir-runall:Runall Standin, $RD" "mir-tbd:TBD., $RD" "mir-claudecode:Claude-Code, $RD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
   mir "$nm"
   [ "$RC" = 4 ] && grep -q "NOT A PERSON" "$S/$nm.txt"; ok $? "M1: '${pair#*:}' in the real pin place, no override, no test flag: exit 4, never 0 (got exit $RC)"
 done
-{ echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+{ echo "# reviewed by: Jane Q. Roe-Smith, $RD, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
 mir mir-human
 [ "$RC" = 0 ]; ok $? "M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit $RC)"
 # ---- round f8-r8 whole-take cases ----
 # M1: a plain shell variable must not move the date rule. The reviewer line below is dated 2998-01-02; the real pin place, no override, no test flag: REVIEWER_TODAY=2999-01-01 used to make it pass (exit 0, OVERRIDES: none)
 FUT=2998-01-02
-{ echo "# reviewed by: Jane Q. Roe-Smith, $FUT"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+{ echo "# reviewed by: Jane Q. Roe-Smith, $FUT, pin sha256 $RCPT"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
 for mv in "REVIEWER_TODAY=2999-01-01" "TAKE_CHECK_TODAY=2999-01-01" "REVIEWER_TODAY=2999-01-01 TAKE_CHECK_TODAY=2999-01-01"; do
   MIRENV="$mv"; mir "m1v-${mv//[^A-Z0-9]/}"; MIRENV=""
   nm="m1v-${mv//[^A-Z0-9]/}"
   [ "$RC" = 4 ] && has "$nm" "rule: future date" && has "$nm" "OVERRIDES: none"; ok $? "f8-r8 M1: with '$mv' exported, a pin line dated $FUT is exit 4 'rule: future date' and OVERRIDES says none (got exit $RC)"
 done
-{ echo "# reviewed by: Pat Smith, $FUT"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1v-test.pin"
+{ echo "# reviewed by: Pat Smith, $FUT, pin sha256 $RCPT"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1v-test.pin"
 tk m1v-test TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY=2999-01-01 REVIEWER_TODAY=2999-01-01 TAKE_CHECK_WARN_PIN="$S/m1v-test.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m1v-test "rule: future date"; ok $? "f8-r8 M1: even with the test flag, TAKE_CHECK_TODAY and REVIEWER_TODAY do not move the date rule in a take (they are read only by --check-reviewer-line) (got exit $RC)"
 grep -q 'REVIEWER_TODAY' "$HERE/README.md"; ok $? "f8-r8 M1: the README names REVIEWER_TODAY and says it has no effect"
 # a line over 128 KiB (more than a command line can carry) is refused, never read as ok, and the output does not repeat it
-{ printf '# reviewed by: Pat Smith, %s, ' "$PD"; head -c 200000 /dev/zero | tr '\0' x; printf '\n'; grep -v '^# reviewed by' "$PIN"; } > "$S/big.pin"
+{ printf '# reviewed by: Pat Smith, %s, ' "$RD"; head -c 200000 /dev/zero | tr '\0' x; printf '\n'; grep -v '^# reviewed by' "$PIN"; } > "$S/big.pin"
 tk big TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/big.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has big "rule: too long" && has big "[cut: 300 of 2000" && ! grep -q -E 'x{301}' "$S/big.txt"; ok $? "f8-r8: a reviewer line of 200 KiB is exit 4 with 'rule: too long', printed cut at 300 characters with its length (got exit $RC)"
 # a note with shell syntax is only text: accepted (exit 5 with the override), nothing is run
 SENT="/tmp/ttc-sentinel-$$"; rm -f -- "$SENT" "$SENT-2"   # a short neutral path: the scratch folder name itself may hold a listed word
-{ printf '# reviewed by: Pat Smith, %s, run $(touch %s) and `touch %s-2` and "q" and '"'"'r'"'"' ; touch %s\n' "$PD" "$SENT" "$SENT" "$SENT"; grep -v '^# reviewed by' "$PIN"; } > "$S/shellnote.pin"
+{ printf '# reviewed by: Pat Smith, %s, run $(touch %s) and `touch %s-2` and "q" and '"'"'r'"'"' ; touch %s\n' "$RD" "$SENT" "$SENT" "$SENT"; grep -v '^# reviewed by' "$PIN"; } > "$S/shellnote.pin"
 tk shellnote TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/shellnote.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has shellnote "NOT A PERSON" && [ ! -e "$SENT" ] && [ ! -e "$SENT-2" ] && has shellnote 'run $(touch'; ok $? "f8-r8: a note holding \$(...), backticks and quotes is accepted as plain text (exit 5 with the override) and nothing is executed (got exit $RC)"
 # the 300-character cut: the printed line is cut and says how long it was
-CUTNOTE=$(head -c 400 /dev/zero | tr '\0' y); CUTLINE="Pat Smith, $PD, $CUTNOTE"
+CUTNOTE=$(head -c 400 /dev/zero | tr '\0' y); CUTLINE="Pat Smith, $RD, $CUTNOTE"
 { printf '# reviewed by: %s\n' "$CUTLINE"; grep -v '^# reviewed by' "$PIN"; } > "$S/cut.pin"
 tk cut TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/cut.pin" -- --flows "$P"
 [ "$RC" = 5 ] && has cut "[cut: 300 of ${#CUTLINE} characters shown]" && ! grep -q -E 'y{301}' "$S/cut.txt"; ok $? "f8-r8: a 400-character note is accepted and printed cut at 300 with '[cut: 300 of ${#CUTLINE} characters shown]' (got exit $RC)"
 # hidden characters through the whole take, in the name and in the note (each is exit 4, rule hidden character, and the output holds none of them)
 i=0
-for hl in "Pat Cl$(printf '\315\217')aude, $PD" "Pat Smith, $PD, ok$(printf '\357\270\217')" "$(printf '\343\205\244\343\205\244\343\205\244'), $PD" "Pat Smith, $PD, a$(printf '\342\200\250')b" "Pat $(printf '\314\201\314\201\314\201'), $PD" "Pat Smith$(printf '\341\205\237'), $PD"; do
+for hl in "Pat Cl$(printf '\315\217')aude, $RD" "Pat Smith, $RD, ok$(printf '\357\270\217')" "$(printf '\343\205\244\343\205\244\343\205\244'), $RD" "Pat Smith, $RD, a$(printf '\342\200\250')b" "Pat $(printf '\314\201\314\201\314\201'), $RD" "Pat Smith$(printf '\341\205\237'), $RD"; do
   i=$((i+1)); nm=hid$i; { printf '# reviewed by: %s\n' "$hl"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "rule: hidden character" && ! LC_ALL=C grep -q -a -E $'\315\217|\357\270\217|\343\205\244|\342\200\250|\314\201|\341\205\237' "$S/$nm.txt"; ok $? "f8-r8 M2: hidden-character line #$i is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit $RC)"
 done
 # m2: Possession is not the word session (word match, as the README says): accepted; Sessions keeps its own message
-{ echo "# reviewed by: Pat Possession, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/poss.pin"
+{ echo "# reviewed by: Pat Possession, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/poss.pin"
 tk poss TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/poss.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has poss "NOT A PERSON" && ! has poss "not yet confirmed by the lead"; ok $? "f8-r8 m2: 'Pat Possession' is not read as the word session (exit 5 with the override) (got exit $RC)"
 # helper options
