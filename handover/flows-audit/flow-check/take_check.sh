@@ -57,6 +57,7 @@ fi
 echo "GATE BEFORE THE FIRST SEND (a person's step; this script cannot see your database): in psql run: select column_name from information_schema.columns where table_name='mf_leads' and column_name in ('alert_sent','alert_token','alert_until','alert_attempts');  It must list all four alert_ columns. If it lists fewer, do not send: no alert would ever go out."
 echo "--- (2) Is saving of past runs off? One line per file (a run list in n8n stays empty when it is off) ---"
 grep -h -E '^mf-[a-z-]+\.json nodes=' "$OUT"
+grep -h -E '^mf-[a-z-]+\.json nodes=.* saveDataSuccess=all saveDataError=all saveManual=True$' "$OUT" | sed -E 's/^(mf-[a-z-]+\.json) .*/INFO: \1 run saving is ON (successful runs, failed runs and runs started by hand) on purpose: the take shows the run list (patch F-008, lead answer Q18). Saved runs hold made-up lead keys, e-mails and names and must be deleted at clean-up./'
 grep -h -E "^WARN .*run-saving settings" "$OUT" | cut -c1-260
 grep -h -E "^WARN accept-no-save" "$OUT" | cut -c1-260
 grep -h -E "^ACCEPTED: " "$OUT" | cut -c1-300
@@ -69,7 +70,8 @@ awk '/^(PLACEHOLDERS IN NODE SETTINGS|CREDENTIAL IDS STILL PLACEHOLDERS)/ {p=1; 
 echo "--- (4) Does each of the two entry flows contain the F-002 key check (a node named KeyOk)? ---"
 NOKEY=0
 for f in mf-form.json mf-hook.json; do
-  if grep -q '"KeyOk"' "$D/$f" 2>/dev/null; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)"; NOKEY=$((NOKEY+1)); fi
+  # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
+  if python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$D/$f" 2>/dev/null; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)"; NOKEY=$((NOKEY+1)); fi
 done
 echo "--- (5) Open decisions and environment variables ---"
 grep -h -E '^(OPEN LEAD DECISIONS|No static tool|IF branches accepted)' "$OUT"

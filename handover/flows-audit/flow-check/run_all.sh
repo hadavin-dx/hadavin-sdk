@@ -114,6 +114,26 @@ edit("form-off", "mf-form.json", saveDataSuccessExecution="none", saveDataErrorE
 edit("sub-off", "mf-sub-crm-mail.json", saveDataSuccessExecution="none", saveDataErrorExecution="none")
 edit("rec-saves", "mf-recovery.json", saveDataSuccessExecution="all", saveDataErrorExecution="all", saveManualExecutions=True)
 PYEOF
+# Q18 extras: (1) key check reads the node list, not any text; (2) checker exit 2 and 3 through take_check.sh give the "no verdict" line and the same exit status
+cp -r -- "$W/g/real" "$W/tc/keyok-gone" || TCMISS="$TCMISS [could not make keyok-gone folder]"
+python3 -I - "$W/tc/keyok-gone/mf-form.json" <<'PYEOF' || TCMISS="$TCMISS [keyok-gone not built]"
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+j["nodes"] = [n for n in j["nodes"] if n["name"] != "KeyOk"]   # the connections that name KeyOk stay: the old text match still saw "KeyOk" there
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+TAKE_CHECK_FLOWS="$W/tc/keyok-gone" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-keyok-gone.txt" 2>&1
+grep -q -F "mf-form.json: key check ABSENT" "$RAW/take-check-keyok-gone.txt" && ! grep -q -F "mf-form.json: key check present" "$RAW/take-check-keyok-gone.txt" || TCMISS="$TCMISS [take_check: a removed KeyOk node must print 'key check ABSENT' for mf-form.json]"
+printf '\377\376 not utf-8 \200\n' > "$W/tc/bad-ddl.sql"
+printf 'import sys\nsys.exit(3)\n' > "$W/tc/exit3.py"
+for pair in "2:bad-ddl:TAKE_CHECK_DDL=$W/tc/bad-ddl.sql" "3:exit3:TAKE_CHECK_CK=$W/tc/exit3.py"; do
+  want=${pair%%:*}; rest=${pair#*:}; nm=${rest%%:*}; assign=${rest#*:}
+  env "$assign" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+  [ "$x" = "$want" ] && grep -q -F "THE CHECKER DID NOT GIVE A VERDICT (its exit status is $want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit $want and the no-verdict line, got exit $x]"
+done
+# (3) the saving-ON flows must be named in the top block with their reason (INFO), not shown silently
+[ "$(grep -c '^INFO: mf-.* run saving is ON' "$RAW/take-check.txt")" = 3 ] || TCMISS="$TCMISS [take_check: want 3 INFO lines saying run saving is ON on purpose (form, hook, sub-workflow)]"
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
 tcfail form-run-saving-off "mf-form.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
 tcfail sub-run-saving-off "mf-sub-crm-mail.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
