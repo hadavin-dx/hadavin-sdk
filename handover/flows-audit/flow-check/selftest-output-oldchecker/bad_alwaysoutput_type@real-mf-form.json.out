@@ -1,0 +1,10 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py /tmp/fc-selftest-quos8clm/bad_alwaysoutput_type@real-mf-form.json --baseline ../../demo/n8n-flows-real-v5 --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --quiet-info
+### /tmp/fc-selftest-quos8clm/bad_alwaysoutput_type@real-mf-form.json
+mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+WARN /tmp/fc-selftest-quos8clm/bad_alwaysoutput_type@real-mf-form.json/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/fc-selftest-quos8clm/bad_alwaysoutput_type@real-mf-form.json/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+RESULT: 0 FAIL, 2 WARN
+exit=0

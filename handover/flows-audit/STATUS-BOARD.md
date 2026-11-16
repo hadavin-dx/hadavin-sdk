@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:31:33Z
+UPDATED_UTC: 2026-11-16T09:31:58Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 5
 PERCENT: 80
 AGENTS_RUNNING: 9
-CAPACITY: 2.09 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
+CAPACITY: 1.84 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: own evidence quoted a vendor brand string and turned a guard test red: fixed, both guard tests pass now (2 passed, rc 0); F3 mutants killed, rerun running; roles proposal Blocker (fixer running); claims table round 2 Blockers (fixer running); F5 round 2 reader found 4 Blockers (fix next); 157 citation quotes unmatched (triage running)
-NEXT: F5 round 2 fixer after facts review; collect F1/F8/ROLES/F6b fixers; two reviewers each
-PUSHED_UTC: 2026-11-16T09:31:33Z
+NEXT: F5 r2 fixer after facts review; F6b r2 fixer then 2 reviewers; collect F1/F8/ROLES
+PUSHED_UTC: 2026-11-16T09:31:58Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -33,9 +33,8 @@ PUSHED_UTC: 2026-11-16T09:31:33Z
 | aaa5a08748ba9d17a | fixer F8 r1 | sonnet | flow checker fixes | 09:27 | 09:50 | 80 | running | flow-check/ |
 | a2bafbe63ce21dd88 | fixer F1 r2 | sonnet | claims table round 2 + ORDER 017 facts | 09:30 | 09:55 | 30 | running | CLAIMS-TABLE.md |
 | aab50790343456f97 | fixer ROLES r1 | sonnet | roles proposal fixes (security) | 09:30 | 09:55 | 30 | running | ROLES-PROPOSAL.md |
-| ae0051a8039d6a7df | reviewer F6b design | sonnet | review F6B-AUDIT.md | 09:30 | 09:42 | 60 | running | - |
 | afd17e84e757774c0 | reviewer F5 facts r2 | sonnet | review RUNSHEET-WORDING facts | 09:35 | 09:45 | 50 | running | - |
-| a987c3f149931954e | fixer F6b r1 | sonnet | F6B-AUDIT fixes | 09:35 | 09:55 | 30 | running | F6B-AUDIT.md |
+| a987c3f149931954e | fixer F6b r2 | sonnet | design-review fixes | 09:36 | 09:50 | 20 | running | F6B-AUDIT.md |
 | aee4bb56840c8d24b | citation triage | sonnet | classify unmatched quotes | 09:30 | 09:48 | 60 | running | CITATION-TRIAGE.md |
 | abc2d22151b3aca4e | EVIDENCE RUNNER F3 r4 | sonnet | tests, mutants, hostile | 09:31 | 09:48 | 60 | running | fill_flows/evidence-f3-r4.md |
 | a05a4f788c5ade6f3 | reviewer F3 security | sonnet | security/portability review | 09:31 | 09:45 | 60 | running | - |

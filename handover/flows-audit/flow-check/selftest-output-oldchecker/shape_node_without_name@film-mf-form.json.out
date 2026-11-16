@@ -1,0 +1,15 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json --baseline ../../demo/n8n-flows-film-v5 --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --quiet-info
+### /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json
+FAIL /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-form.json node(s) at index [1] lack name or type
+FAIL /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-form.json dangling target 'Item' from 'Receive'
+FAIL /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-form.json connection source 'Item' is not a node
+FAIL /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-form.json unreachable from any trigger ['Claim', 'Claimed', 'IsProcessing', 'ReplyRan', 'ReplyReview', 'ReplyStored', 'RunSub', 'Stored', 'SubInput', 'Valid']
+FAIL /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-form.json node count 11 != expected 12
+mf-form.json nodes=11 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+WARN /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/fc-selftest-quos8clm/shape_node_without_name@film-mf-form.json/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+RESULT: 5 FAIL, 2 WARN
+exit=1

@@ -1,0 +1,16 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py /tmp/fc-selftest-quos8clm/shape_connection_not_object@film-mf-form.json --baseline ../../demo/n8n-flows-film-v5 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --quiet-info
+### /tmp/fc-selftest-quos8clm/shape_connection_not_object@film-mf-form.json
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py", line 284, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ~~~~^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py", line 269, in main
+    r = check_flow(d, tag, expect.get(fn), bd)
+  File "/home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py", line 77, in check_flow
+    for typ, idx, t in targets_of(outs):
+                       ~~~~~~~~~~^^^^^^
+  File "/home/user/hadavin-sdk/handover/flows-audit/flow-check/../patch-apply/check_flows.py", line 62, in targets_of
+    for typ, lists in (outs or {}).items():
+                      ^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'items'
+exit=1
