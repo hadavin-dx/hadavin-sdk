@@ -66,6 +66,9 @@ def main(base):
             "| TAKE-REPO | duplicate-proof-lead-desk take code repo | NOT VISIBLE in this box (local only by owner rule); lead covers locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk | none |",
             "| CORE | src/ and tests/ (shared core hadavin_sdk) | out of take scope; not mapped module by module; directory list and README only | NOT VISIBLE: see L5b CORE row | none |",
             "| UNTRACKED | untracked or ignored files | out of scope: lanes read `git ls-files` only | N/A: scope rule | none |", ""]
+    add = os.path.join(base, "hand-kept", "MAP-ADDITIONS.md")
+    if os.path.exists(add):
+        out += open(add).read().split("\n")
     open(os.path.join(base, "MASTER-MAP.md"), "w").write("\n".join(out))
     sev = {"Blocker": 0, "Major": 1, "Nit": 2}
     findings.sort(key=lambda hr: (sev.get(hr[1][2], 3), hr[1][0]))

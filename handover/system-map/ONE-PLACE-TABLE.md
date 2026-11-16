@@ -2,7 +2,7 @@
 
 **Scope.** Cloud checkout of the public repository (branch cloud/system-map), not the whole studio folder: nothing under egm/, bible/, brain/, templates/ or _local/ is read; the take repository duplicate-proof-lead-desk is not visible; 183 files are NOT-READ (see SWEEP.md). 'Citation found' proves a quoted line exists, not that it supports the claim.
 
-Source of rows: work/L6.md (proposals of the job pass; the laptop lead decides). Every copy except the job owner place, NEEDED rows and KEEP-CORE rows has a proposal. Nothing is deleted, and nothing with a caller is archived. 49 rows are in the job blocks and 10 build-process rows are in the appendix.
+Source of rows: work/L6.md (proposals of the job pass; the laptop lead decides). Every copy except the job owner place, NEEDED rows and KEEP-CORE rows has a proposal. Nothing is deleted, and nothing with a caller is archived. 49 rows are in the job blocks, 10 build-process rows are in the appendix and 5 rows added on 2026-11-16 are in Appendix B.
 
 ## How to read this file
 - **Take** = the lead-intake automation that Hadavin (the one-person AI studio this repository belongs to) will show in the video on Wed 18 Nov: n8n flows and one Postgres. Its code repository `duplicate-proof-lead-desk` is NOT in this box ("this box" = this checkout of the repository). The laptop lead checks the take repository locally, so a verdict about the take repository stays UNVERIFIED.
@@ -164,13 +164,14 @@ These rows keep job keys because the keys sort every part of the repository (see
 |---|---|---|---|---|---|---|---|---|
 | TAKE-REPO | duplicate-proof-lead-desk | N/A: not visible | none | N/A: not visible | no | N/A: not visible | not visible, the laptop lead covers it locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk |
 
-## Appendix B: files added on 2026-11-16 (ORDER 015 item M4, added by hand)
-Same rules as above. Job keys as defined at the top. "Owner:" = the one place that does the job.
+## Appendix B: files added on 2026-11-16 (queue item M4 of ORDER 015, added by hand)
 
-| job | owner place | copy | verdict | proposal | studio head yes needed | reason | evidence |
-|---|---|---|---|---|---|---|---|
-| STORE (the decision text) | handover/system-map/inputs/DECISION-one-store.md (28 lines, has the 2026-11-16 corrections) | handover/system-map/DECISION-one-store.md (20 lines) | DUPLICATE | CHANGE: replace the root copy by the inputs copy, or a one-line pointer to it; rows above that cite "DECISION line N" for N above 20 or for the corrections must cite the inputs copy | no (this folder only; the laptop lead decides) | the root copy lacks the executions decision and the corrections; a reader of the root copy would act on old text | diff of the two files, 2026-11-16 |
-| LOG (board) | each session's own STATUS-BOARD.md | the two other sessions' boards | NEEDED | keep | no | one board per session by design; each session writes only its own | git ls-tree of the three branches |
-| OTHER (inputs copies) | handover/system-map/inputs/ | copies in flows-audit/inputs/ and core-hardening/inputs/ | NEEDED until the take | keep; delete the copies after Wed 18 Nov | no | read-only copies so each session works without touching the others | cmp, 2026-11-16 |
-| OTHER (audit checklist) | handover/flows-audit/ARCHITECTURE-AUDIT-CHECKLIST.md | handover/system-map/ARCHITECTURE-AUDIT-CHECKLIST.md | DUPLICATE | MERGE-INTO one place after the take; the copies are byte-identical today | no | same file in two folders | cmp, 2026-11-16 |
-| OTHER (fill values into flow copies) | handover/flows-audit/fill_flows/fill_flows.py | none | NEEDED (under review, F3) | keep; the laptop lead copies it into the take repository after review | no | no n8n node does this per queue item F3 (UNVERIFIED by this session) | flows-audit/QUEUE.md F3 |
+Same columns and rules as the job blocks above. Ids `L8-X-nnn` are the same ids as in the hand-kept section of MASTER-MAP.md. "Owner:" = the one place that does the job; it is written in the owner place column of each row. Evidence: work/evidence-m4-cmp.txt. Hand-kept: tools/merge.py does not touch this file.
+
+| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |
+|---|---|---|---|---|---|---|---|---|
+| L8-X-004a handover/system-map/DECISION-one-store.md (20 lines) | the decision text, root copy; owner place: handover/system-map/inputs/DECISION-one-store.md (28 lines, has the 2026-11-16 corrections) | DUPLICATE | none | MERGE-INTO the inputs copy; until the laptop lead decides, rows above that cite "DECISION line N" for N above 20 or for the corrections must cite the inputs copy | no (this folder only; the laptop lead decides) | OK | the root copy lacks the executions decision and the corrections, so a reader of it would act on old text; the inputs copy is also described as the read-only copy other sessions use, so the lead decides which one stays | work/evidence-m4-cmp.txt (line counts) |
+| L8-X-001 each session's own STATUS-BOARD.md | five-minute board; owner place: that session's own file | NEEDED | L8-EX-01: one board per session, each session writes only its own | keep | no | OK | boards are a build-process notice, not part of the take | work/evidence-m4-cmp.txt (ls-tree names) |
+| L8-X-004b copies of the inputs in flows-audit/inputs/ | read-only copies of four input files; owner place: handover/system-map/inputs/ | NEEDED until the take | L8-EX-02: each session works without touching the others | ARCHIVE after Wed 18 Nov (move, never delete) | yes (moves need it) | OK | read-only copies let each session work alone; the four are byte-identical today | work/evidence-m4-cmp.txt (SAME lines) |
+| L8-X-002 handover/system-map/ARCHITECTURE-AUDIT-CHECKLIST.md | audit checklist; owner place: handover/flows-audit/ARCHITECTURE-AUDIT-CHECKLIST.md | DUPLICATE | none | MERGE-INTO one place after the take | no | OK | same file in two folders, byte-identical today | work/evidence-m4-cmp.txt (SAME line) |
+| L8-X-005 handover/flows-audit/fill_flows/fill_flows.py | writes a filled copy of the n8n flow files; owner place: open (the job has no confirmed place yet) | OPEN OWNER (review F3 not finished) | none | keep until review F3 ends; then the laptop lead decides where it lives | no | UNVERIFIED (not run by this session; whether any n8n node could do this is not checked) | no copy exists; the verdict waits for the review | work/evidence-m4-cmp.txt (ls-tree names) |

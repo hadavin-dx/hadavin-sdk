@@ -1,0 +1,17 @@
+# evidence for M4 rows, run 2026-11-16 UTC
+SAME flows-audit:handover/flows-audit/inputs/DECISION-one-store.md vs inputs/DECISION-one-store.md
+SAME flows-audit:handover/flows-audit/inputs/OWNER-STEPS-realrun-v3.md vs inputs/OWNER-STEPS-realrun-v3.md
+SAME flows-audit:handover/flows-audit/inputs/AGENT-SCOPE-DO-AND-DONT.md vs inputs/AGENT-SCOPE-DO-AND-DONT.md
+SAME flows-audit:handover/flows-audit/inputs/plan-wp6-resmoke-v5.md vs inputs/plan-wp6-resmoke-v5.md
+SAME flows-audit:handover/flows-audit/ARCHITECTURE-AUDIT-CHECKLIST.md vs ARCHITECTURE-AUDIT-CHECKLIST.md
+SAME flows-audit:handover/flows-audit/STATUS-BOARD.template.md vs STATUS-BOARD.template.md
+FACTS-ALREADY-DONE.md in flows-audit inputs:
+0
+FACTS-ALREADY-DONE.md in core-hardening inputs:
+0
+ls-tree names:
+   20 DECISION-one-store.md
+   28 inputs/DECISION-one-store.md
+  108 FINAL-CROSSCHECK.md
+  179 flowcheck/REPORT.md
+  335 total
