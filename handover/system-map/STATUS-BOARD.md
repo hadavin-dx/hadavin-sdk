@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:13:36Z
+UPDATED_UTC: 2026-11-16T11:13:49Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 (ORDER 028). Running 5: TAKE-BLOCKERS count check, SWEEP.md rows 87-366 read, fresh-reader re-read of digests 120-131, README/BOARD/REPORT/QUEUE one-place sweep, DECISIONS vs D04-D05 and M17 contradictions. Started now, 3: LEAD-PAGE vs QUESTIONS vs OWNER-VIEW open-items cross-read, FINAL-CROSSCHECK rows 15-39 fact check, OWNER-CLEANUP-CARD vs v5 step I order-of-steps check. Digested through batch 134.
+AGENTS_RUNNING: 7 (SWEEP.md rows 87-366 read, digest re-read by a fresh reader, README/BOARD/REPORT/QUEUE one-place sweep, DECISIONS vs D04-D05 and M17 contradictions, open-items cross-read, FINAL-CROSSCHECK rows 15-39, cleanup card vs v5 step I); refilling the 8th now; digested through batch 135
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
 CAPACITY: nproc 4, load 0.16 0.27 0.20, RAM 864/16087 MB used, disk / 42% used, 23G free, top3: work 2.1MB, flowcheck 0.5MB, reviews-of-core-hardening 0.4MB
