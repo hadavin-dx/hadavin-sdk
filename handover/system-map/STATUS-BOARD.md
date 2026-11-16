@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:06:25Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:09:43Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-021; lead DECISIONS 10:02Z (video is real-v5 only) read, being applied
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 8 (ListAgents showed 3; 5 more started this beat): README+LEAD-PAGE stale list; D04-D05 corrected draft; cross-read of other sessions' pushes; second reviewer of tools; adversarial read of rewritten lead pages; cite check of owner pages vs v5; not-checked list; card one-action-per-line rewrite
+AGENTS_RUNNING: 6: cite check of README+LEAD-PAGE (a0fbca6c); end-delete reconciliation draft; OWNER-VIEW stage.env/cleanup fixes draft; naive read of TAKE-BLOCKERS+QUESTIONS; zoom-out on fastest path; style read of OWNER-VIEW. Plus 1 detached pytest (M14, clone of core-hardening b6c40a9bd, ~82 percent, no result yet). 5 finished and read this beat.
 INTERRUPTED: none
-NEXT: TAKE-BLOCKERS, QUESTIONS rewritten to the 16 Nov decisions; OWNER-VIEW, cards got decision 5 text (no spend-gate claim, S9-3 model key, S9-12 sentence). HELD for the lead: `end` deletes (v5, cards, program notice) vs decision 2 'take never deletes' (QUESTIONS 1); cards vs v5 differ on HubSpot delete rule, shred names, revoke deadline (v5 is core-hardening's); README, LEAD-PAGE, D04-D05 still stale; card one-action-per-line split not done; plan:489 says the lead starts Docker (QUESTIONS 3)
-CAPACITY: 4 cores, load 0.10 (agents are model-bound), memory 0 of 15 GB used, disk 38 percent used; heavy slots 0 of 3
+NEXT: applied this beat: rehearsal-passed rule (independent read: 7 rules, from TAKE-BLOCKERS), banned-claims draft work/banned-claims.md. To apply from reports: card one-action-per-line split (steps 13-16 held), OWNER-VIEW lines 8 and 15 (stage.env figures cannot match the yes: WRONG), CC:15 deadline contradicts v5:145, tools fixes (partition.py truncates manifest in place; scan_outputs misses .jsonl and tools/; vacuous guard test). HELD for the lead: `end` deletes vs decision 2 (QUESTIONS 1); who edits v5 step J; D-04/D-05 apply. D-01..D-03, D-10, S-03, L-01 live in core-hardening's v5, not mine.
+CAPACITY: 4 cores, load 0.97, memory 1 of 15 GB used, disk 40 percent used; heavy slots 1 of 3 (pytest M14)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:12:00Z
+PUSHED_UTC: 2026-11-16T10:09:43Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -35,12 +35,12 @@ PUSHED_UTC: 2026-11-16T10:12:00Z
 | M16 | flow-set question | round 1 reviewed, fixes applied (NO-GO rule, credential risk); fresh reader running | 70 | flowset/REPORT.md | |
 
 ## AGENTS
-| id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
-|---|---|---|---|---|---|---|---|---|
-| aa56eabc | egm-comprehension | sonnet | naive owner read of OWNER-VIEW and the two cards | 09:47Z / 15:17 | 09:57Z / 15:27 | 40 | running | none |
-| a82c2eea | egm-structural | sonnet | work list (drift section 13) usable? counts right? | 09:48Z / 15:18 | 09:58Z / 15:28 | 30 | running | none |
-| a03f158d | egm-codebase-details | sonnet | LEAD-PAGE rows 16 to 23 against cards and v5 | 09:48Z / 15:18 | 09:58Z / 15:28 | 30 | running | none |
-| ae189bb7 | egm-comprehension | sonnet | naive read of TAKE-BLOCKERS.md | 09:48Z / 15:18 | 09:55Z / 15:25 | 20 | running | none |
-| af2ae07d | egm-design | sonnet | shortest safe path to a rehearsal and a take; lock-in and least privilege | 09:49Z / 15:19 | 10:00Z / 15:30 | 10 | running | none |
-
-Finished this beat (reports read, fixes pushed): S9 implementation readiness (8 Blockers, wording fixed, 7 decisions to the lead), drift work-list read (rows added), licence cause (10 of 11 problems found), zoom-out "needed for the take" (TAKE-BLOCKERS.md written), flowset fact check (source notes added).
+| id | role | model | what it does | started UTC / IST | expected end UTC / IST | state |
+|---|---|---|---|---|---|---|
+| a0fbca6c | egm-codebase-details | sonnet | cite check of README and LEAD-PAGE edits | 10:08Z / 15:38 | 10:14Z / 15:44 | running |
+| ae7ae345 | egm-design | sonnet | end-delete reconciliation text, both cases | 10:10Z / 15:40 | 10:16Z / 15:46 | running |
+| afd36344 | egm-codebase-details | sonnet | exact OWNER-VIEW and cleanup-card fixes | 10:10Z / 15:40 | 10:16Z / 15:46 | running |
+| adc9115a | egm-comprehension | sonnet | naive read of TAKE-BLOCKERS and QUESTIONS | 10:10Z / 15:40 | 10:16Z / 15:46 | running |
+| aee72fde | egm-zoom-out | sonnet | fastest safe path to the take, cut list | 10:10Z / 15:40 | 10:16Z / 15:46 | running |
+| ae144e61 | egm-style | sonnet | plain-wording read of OWNER-VIEW | 10:10Z / 15:40 | 10:16Z / 15:46 | running |
+| (shell) | pytest | - | M14 fresh clone of b6c40a9bd, log in scratchpad m14c.log | 10:03Z / 15:33 | 10:20Z / 15:50 | running |
