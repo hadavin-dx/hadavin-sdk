@@ -1018,3 +1018,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 736 row1-builder-brief r7: task dropped. FIXED by CURRENT ONLY r8; script not built.
 - 737 banned-claims r5: sentences not quoted. FIXED by CURRENT r6; checker unnamed.
 - 738 L5b r8: terms dropped. FIXED by CURRENT STATE r9.
+
+- 739 PLAN-002 r17: L5c missing, launch gate. FIXED by CURRENT RULINGS r17.
+- 740 critical-path r18: A4 owner wrong. FIXED by CURRENT ANSWER r19.
+- 741 not-checked r10: not self-contained. FIXED by CURRENT r11; fill script owner still unassigned.
