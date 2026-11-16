@@ -1,0 +1,11 @@
+# F8 round 5 review of reviewer_ok (agent a53e161; reviewer words unverified; static; shellcheck not run)
+Blocker 1: space-separated spell-outs pass (take_check.sh ~239-251): "Pat O L L M, 2026-11-16", "Pat C L A U D E", "Pat L. L. M." give exit 0 (runs joined only inside one space token; no word check sees "ollm"). Same trick class as dots/hyphens; fix at the choke point.
+Major 2: multi-letter pieces drop out of the run (~241-250): "Cla.ude", "Cl-aude", "C.laude", "Clau.de", "Cla Ude" pass.
+Major 3: stand-ins match only as exact whole word or run of single letters: Claudebot, Chatgpt, Openai, Gptbot, Bots, Agents, Assistants, Models pass; list (~221) lacks llama, mistral, grok, deepseek, copilot, chatgpt, openai, anthropic, bard, robot, qwen. Plain substring match would refuse Claudette/Botha: needs allow-list plus squashed-string check for long stand-ins.
+Major 4: refusal message (~280) says "however it is joined with dots or hyphens" - false; comment ~219 and round list lines 4-18 lack f8-r5.
+Major 5: the note after the date ("NAME, DATE, note", ~224) is unchecked: "Pat Smith, 2026-11-16, written by Claude" passes. Check the note too or drop it.
+Nit 6: "Pat O_L_L_M" exit 4 comes from the old character check (~227: only A-Za-z space . ' -), so it says nothing about the new code; that ASCII-only rule also closes unicode/zero-width/digit tricks, accidentally: pin it with a test.
+Nit 7: real names wrongly refused: diacritics and typographic apostrophe (Jose with accent, O’Neil), "Ai Nguyen" (ai), Gemini/Lead as names, "Pat Sessions" (substring session, ~279), single name under 3 letters ("Li"), initials like T.B.D. Accepted by trace: Al Lee, Bo Ng, Zed Smith, Mary-Jane O'Neil, J.R.R. Tolkien, Jane Q. Roe-Smith, Aiden Botha, O'Brien.
+Nit 9: future-date check uses UTC date (an IST date 00:00-05:30 IST refused); date -u -d is GNU-only; tests hard-code 2026-11-16 and will fail once the pin date passes it.
+Tests: m1-dotted-llm and m1-dotted-claude fail on the old script (old exit 0); accept tests pass on old too; not tested: L.L.M., pat o.l.l.m., Pat O-L-L-M, Pat C.L.A.U.D.E. Smith, Pat O_L_L_M, J.R.R. Tolkien, Al Lee, Bo Ng, Mary-Jane O'Neil; none of findings 1-5 has a test.
+Not read: take-warns.pin, check_flows.py, run_all.sh, README, git history.
