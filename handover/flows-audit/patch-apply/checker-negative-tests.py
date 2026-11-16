@@ -5,7 +5,11 @@ checker with ONE fixed command line. A mutant counts as caught only if the exit 
 Also runs one control (no defect, must exit 0) and two argument-misuse cases (same command plus/minus one option).
 The exact command is saved to negative-output/CHECK-COMMAND.txt. Exit code 0 only if every case behaves as expected."""
 
-import json, os, shutil, subprocess, sys
+import json
+import os
+import shutil
+import subprocess
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 W = "/tmp/pa13b"
@@ -34,7 +38,7 @@ def cmd(d, extra=(), patch_checks=True):
 
 
 def node(j, name):
-    return [x for x in j["nodes"] if x["name"] == name][0]
+    return next(x for x in j["nodes"] if x["name"] == name)
 
 
 def conn(src, dst, idx=0):
@@ -95,11 +99,11 @@ def m_reroute(j, d):
 
 
 def m_valid_type(j, d):
-    a = [
+    a = next(
         x
         for x in node(j, "Valid")["parameters"]["assignments"]["assignments"]
         if x.get("name") == "lead_key"
-    ][0]
+    )
     a["type"] = "number"
 
 
@@ -208,7 +212,7 @@ MUTANTS = [
 def run(c, name):
     r = subprocess.run(c, capture_output=True, text=True)
     out = r.stdout + r.stderr
-    open("%s/%s.out" % (OUT, name), "w").write(
+    open(f"{OUT}/{name}.out", "w").write(
         "$ " + " ".join(c) + "\n" + out + "exit=%d\n" % r.returncode
     )
     return r.returncode, out

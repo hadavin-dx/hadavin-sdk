@@ -2,7 +2,9 @@
 Severity = first word of the severity cell (Blocker, Major, Nit); BEFORE = 'when' cell starts with BEFORE, else AFTER.
 Prints counts and the BEFORE/AFTER split table; exit 0."""
 
-import re, sys, collections
+import collections
+import re
+import sys
 
 p = sys.argv[1] if len(sys.argv) > 1 else "FINDINGS.md"
 c = collections.Counter()

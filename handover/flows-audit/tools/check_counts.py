@@ -1,7 +1,11 @@
 """Check (a). Run from repo root: python3 handover/flows-audit/tools/check_counts.py
 Pass = 52 files / 655 nodes live; equals tools/out/counts.txt; each lane heading '### <path rel. handover/demo> (<n> nodes)' has n table rows = nodes in that json; every one of the 52 files appears in exactly one lane. Exit 0 pass, 1 fail. Lanes absent = prints SKIP-LANES (only counts checked)."""
 
-import glob, json, os, re, sys
+import glob
+import json
+import os
+import re
+import sys
 
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")

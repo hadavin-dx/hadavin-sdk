@@ -1,6 +1,8 @@
 """Run: python3 tools/test_dump_nodes.py (exit 0 = all 8 fixture cases pass). Made-up fixtures only."""
 
-import subprocess, sys, os
+import os
+import subprocess
+import sys
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,7 +22,7 @@ def table(name):
 
 
 def row(out, node):
-    return [l for l in out.splitlines() if l.startswith("| ") and f"| {node} |" in l][0]
+    return next(l for l in out.splitlines() if l.startswith("| ") and f"| {node} |" in l)
 
 
 fail = []

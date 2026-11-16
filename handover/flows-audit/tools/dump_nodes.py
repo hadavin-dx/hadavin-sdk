@@ -5,10 +5,14 @@ Usage:
   dump_nodes.py diff <a.json> <b.json>     node/param/connection differences a -> b
 Secret-looking parameter values are masked; only key names are printed."""
 
-import json, re, sys, glob, os
+import glob
+import json
+import os
+import re
+import sys
 
 _P = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mask_patterns.json")))
-SECRET_KEY = re.compile(_P["key_name_regex"], re.I)
+SECRET_KEY = re.compile(_P["key_name_regex"], re.IGNORECASE)
 VALUE_RES = [re.compile(r) for r in _P["value_regexes"]]
 EXPR_RES = [re.compile(r) for r in _P["expression_regexes"]]
 WHOLE = re.compile(_P["whole_token_regex"])
@@ -40,7 +44,7 @@ def load(path):
     names = [n["name"] for n in d["nodes"]]
     edges = {}
     for src, v in d.get("connections", {}).items():
-        for kind, outs in v.items():
+        for outs in v.values():
             for i, ts in enumerate(outs):
                 for t in ts or []:
                     edges.setdefault(src, []).append((i, t["node"]))
@@ -121,7 +125,8 @@ JUDGE = [
 
 def skeleton(path):
     """table rows plus 13 judgement columns marked TODO (lane agents replace TODO only)."""
-    import io, contextlib
+    import contextlib
+    import io
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -148,7 +153,7 @@ def flow_files(root):
 def check(path):
     """exit 1 on unparsable file, duplicate node names or dangling edges"""
     try:
-        d, names, edges = load(path)
+        _d, names, edges = load(path)
     except Exception as e:
         print("PARSE-FAIL", path, e)
         return 1
@@ -173,8 +178,8 @@ def counts(root):
 
 
 def diff(a, b):
-    da, na, ea = load(a)
-    db, nb, eb = load(b)
+    da, _na, ea = load(a)
+    db, _nb, eb = load(b)
     A = {n["name"]: n for n in da["nodes"]}
     B = {n["name"]: n for n in db["nodes"]}
     for k in A.keys() - B.keys():

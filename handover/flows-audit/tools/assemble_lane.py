@@ -7,7 +7,11 @@ Reads  handover/flows-audit/lanes/<lane>.judge.jsonl   (one JSON object per line
 Writes handover/flows-audit/lanes/<lane>.md = header + skeleton table per file with TODO replaced by the given cells.
 Rows without an entry stay TODO; the script prints how many TODO rows remain per file. A cell may not contain a newline; '|' is escaped."""
 
-import json, os, re, subprocess, sys
+import json
+import os
+import re
+import subprocess
+import sys
 
 H = os.path.dirname(os.path.abspath(__file__))
 LANES = os.path.join(H, "..", "lanes")

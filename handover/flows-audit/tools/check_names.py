@@ -1,6 +1,10 @@
 """Check (b). Every lane table row: node exists in its json; the first 10 cells (machine columns) equal the row of the same number in tools/out/<name>.md cell for cell. Run from repo root. Exit 0/1."""
 
-import glob, json, os, re, sys
+import glob
+import json
+import os
+import re
+import sys
 
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")

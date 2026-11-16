@@ -1,6 +1,9 @@
 """Check (e). Scans every file under handover/flows-audit except tools/scratch, tools/fixtures, tools/mask_patterns.json and tools/test_dump_nodes.py for the patterns in mask_patterns.json: bearer text, credential-bearing connection strings, and whole 32+ character key-like tokens (git shas are allowed). 0 hits = pass. Run from repo root. Exit 0/1."""
 
-import json, os, re, sys
+import json
+import os
+import re
+import sys
 
 H = os.path.dirname(os.path.abspath(__file__))
 R = os.path.join(H, "..")
@@ -39,7 +42,7 @@ for d, _, fs in os.walk(R):
                     and not shaline.fullmatch(l.strip())
                     and not (
                         re.fullmatch(r"[0-9a-f]{32}|[0-9a-f]{64}", tok)
-                        and re.search(r"sha-?256|md5|hash|derived", l, re.I)
+                        and re.search(r"sha-?256|md5|hash|derived", l, re.IGNORECASE)
                     )
                 ):
                     hits.append(f"{rel}:{i} token-like (length {len(tok)})")

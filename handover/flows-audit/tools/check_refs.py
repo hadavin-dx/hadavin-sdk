@@ -4,7 +4,11 @@ A ref '<path>.json:row <n>' passes if n <= node count of that file.
 Node names may contain spaces: the text after ':' up to , ; ) | ` or ' and ' / ' vs ' is taken, and the ref passes if a node name of the file is a prefix of it.
 Run from repo root: python3 handover/flows-audit/tools/check_refs.py   Exit 0 pass, 1 fail, one PASS or FAIL line."""
 
-import glob, json, os, re, sys
+import glob
+import json
+import os
+import re
+import sys
 
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")

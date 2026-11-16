@@ -23,7 +23,11 @@ ending in 'Trigger'. respondToWebhook is NOT a trigger.
 F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
 Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error."""
 
-import json, os, re, sys, collections
+import collections
+import json
+import os
+import re
+import sys
 
 FILES_DEFAULT = ["mf-form.json", "mf-hook.json", "mf-recovery.json", "mf-sub-crm-mail.json"]
 TRIGGER_EXACT = {
@@ -68,12 +72,12 @@ FAILS, WARNS = [], []
 
 
 def fail(where, msg):
-    FAILS.append("%s: %s" % (where, msg))
+    FAILS.append(f"{where}: {msg}")
     print("FAIL", where, msg)
 
 
 def warn(where, msg):
-    WARNS.append("%s: %s" % (where, msg))
+    WARNS.append(f"{where}: {msg}")
     print("WARN", where, msg)
 
 
@@ -97,7 +101,7 @@ def load(path, tag):
         with open(path, encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        fail(tag, "parse failure %s" % type(e).__name__)
+        fail(tag, f"parse failure {type(e).__name__}")
         return None
 
 
@@ -115,24 +119,24 @@ def check_flow(d, tag, expect, baseline_d):
         return
     bad = [i for i, n in enumerate(nodes) if not n.get("name") or not n.get("type")]
     if bad:
-        fail(tag, "node(s) at index %s lack name or type" % bad)
+        fail(tag, f"node(s) at index {bad} lack name or type")
         nodes = [n for n in nodes if n.get("name") and n.get("type")]
     names = [n["name"] for n in nodes]
     nameset = set(names)
     dups = sorted(k for k, v in collections.Counter(names).items() if v > 1)
     if dups:
-        fail(tag, "duplicate names %s" % dups)
+        fail(tag, f"duplicate names {dups}")
     conns = d.get("connections", {})
     ncon = 0
     adj = collections.defaultdict(set)
     incoming = set()
     for src, outs in conns.items():
         if src not in nameset:
-            fail(tag, "connection source %r is not a node" % src)
+            fail(tag, f"connection source {src!r} is not a node")
         for typ, idx, t in targets_of(outs):
             ncon += 1
             if t not in nameset:
-                fail(tag, "dangling target %r from %r" % (t, src))
+                fail(tag, f"dangling target {t!r} from {src!r}")
             else:
                 adj[src].add(t)
                 incoming.add(t)
@@ -148,9 +152,9 @@ def check_flow(d, tag, expect, baseline_d):
     orphans = sorted(n for n in names if n not in incoming and n not in trig)
     unreach = sorted(n for n in names if n not in seen)
     if orphans:
-        fail(tag, "orphan nodes (no incoming link, not a trigger) %s" % orphans)
+        fail(tag, f"orphan nodes (no incoming link, not a trigger) {orphans}")
     if unreach:
-        fail(tag, "unreachable from any trigger %s" % unreach)
+        fail(tag, f"unreachable from any trigger {unreach}")
     if expect:
         if "nodes" in expect and len(nodes) != expect["nodes"]:
             fail(tag, "node count %d != expected %d" % (len(nodes), expect["nodes"]))
@@ -167,8 +171,7 @@ def check_flow(d, tag, expect, baseline_d):
         if n.get("onError") == "continueErrorOutput" and not has(1):
             fail(
                 tag,
-                "node %s has onError=continueErrorOutput but main[1] is missing or has no target"
-                % n["name"],
+                "node {} has onError=continueErrorOutput but main[1] is missing or has no target".format(n["name"]),
             )
         if n["type"] in IFLIKE:
             if n["type"] == "n8n-nodes-base.switch":
@@ -185,7 +188,7 @@ def check_flow(d, tag, expect, baseline_d):
                     )
                 )
                 if not need:
-                    warn(tag, "switch node %s: cannot tell its output count" % n["name"])
+                    warn(tag, "switch node {}: cannot tell its output count".format(n["name"]))
             else:
                 need = [0, 1]
             kind = n["type"].split(".")[-1].upper()
@@ -198,8 +201,7 @@ def check_flow(d, tag, expect, baseline_d):
                 )
                 (warn if base_missing else fail)(
                     tag,
-                    "%s node %s lacks output(s) %s%s"
-                    % (
+                    "{} node {} lacks output(s) {}{}".format(
                         kind if kind != "IF" else "IF",
                         n["name"],
                         miss,
@@ -213,11 +215,10 @@ def check_flow(d, tag, expect, baseline_d):
                 if ref not in nameset:
                     fail(
                         tag,
-                        "node %s: expression refers to $('%s') which is not a node of this file"
-                        % (n["name"], ref),
+                        "node {}: expression refers to $('{}') which is not a node of this file".format(n["name"], ref),
                     )
             if PREV.search(s):
-                warn(tag, "node %s uses $prevNode (cannot be resolved statically)" % n["name"])
+                warn(tag, "node {} uses $prevNode (cannot be resolved statically)".format(n["name"]))
     return {"nodes": len(nodes), "connections": ncon, "triggers": trig}
 
 
@@ -260,7 +261,7 @@ def deep_diff(a, b, path=""):
         if all(isinstance(x, dict) and "name" in x for x in a + b) and (a or b):
             da, db = {x["name"]: x for x in a}, {x["name"]: x for x in b}
             for k in sorted(set(da) | set(db)):
-                p = "%s[%s]" % (path, k)
+                p = f"{path}[{k}]"
                 if k not in da:
                     out.append(p + " (added)")
                 elif k not in db:
@@ -290,11 +291,11 @@ def patch_checks(d, fname, which, tag):
         if not form:
             for nm in new:
                 if get(d, nm):
-                    fail(tag, "F-002 node %s must exist only in mf-form and mf-hook" % nm)
+                    fail(tag, f"F-002 node {nm} must exist only in mf-form and mf-hook")
         else:
             for nm in new:
                 if not get(d, nm):
-                    fail(tag, "F-002 node %s missing" % nm)
+                    fail(tag, f"F-002 node {nm} missing")
             if all(get(d, nm) for nm in new):
                 links = [
                     ("Valid", 0, ["KeyOk"]),
@@ -310,19 +311,17 @@ def patch_checks(d, fname, which, tag):
                     if d["connections"].get(nm) != want:
                         fail(
                             tag,
-                            "F-002 connection structure of %s is %s expected %s"
-                            % (nm, json.dumps(d["connections"].get(nm)), json.dumps(want)),
+                            "F-002 connection structure of {} is {} expected {}".format(nm, json.dumps(d["connections"].get(nm)), json.dumps(want)),
                         )
                 cl = get(d, "Claim")
                 if cl.get("onError") != "continueErrorOutput":
-                    fail(tag, "Claim onError is %r" % cl.get("onError"))
+                    fail(tag, "Claim onError is {!r}".format(cl.get("onError")))
                 print(
-                    "  [%s] Claim alwaysOutputData=%r onError=%r"
-                    % (fname, cl.get("alwaysOutputData"), cl.get("onError"))
+                    "  [{}] Claim alwaysOutputData={!r} onError={!r}".format(fname, cl.get("alwaysOutputData"), cl.get("onError"))
                 )
                 warn(tag, F002_UNPROVEN)
                 conds = get(d, "KeyOk")["parameters"].get("conditions", {}).get("conditions") or []
-                print("  [%s] KeyOk IF condition: %s" % (fname, json.dumps(conds)))
+                print(f"  [{fname}] KeyOk IF condition: {json.dumps(conds)}")
                 if (
                     len(conds) != 1
                     or conds[0].get("leftValue") != KEY_COND
@@ -331,14 +330,12 @@ def patch_checks(d, fname, which, tag):
                 ):
                     fail(
                         tag,
-                        "F-002 KeyOk condition is not the expected string %r with boolean-true operator"
-                        % KEY_COND,
+                        f"F-002 KeyOk condition is not the expected string {KEY_COND!r} with boolean-true operator",
                     )
                 for nm, code in (("ReplyBadKey", 422), ("ReplyStoreFail", 503)):
                     p = get(d, nm)["parameters"]
                     print(
-                        "  [%s] %s status=%s body=%s"
-                        % (
+                        "  [{}] {} status={} body={}".format(
                             fname,
                             nm,
                             p.get("options", {}).get("responseCode"),
@@ -356,8 +353,7 @@ def patch_checks(d, fname, which, tag):
                 ):
                     fail(tag, "F-002 ReplyStoreFail body lacks the $('Valid') reference")
                 print(
-                    "  [%s] Valid lead_key assignment: %s"
-                    % (
+                    "  [{}] Valid lead_key assignment: {}".format(
                         fname,
                         [
                             a.get("value")
@@ -371,7 +367,7 @@ def patch_checks(d, fname, which, tag):
         s = d.get("settings", {})
         for k in ("saveDataSuccessExecution", "saveDataErrorExecution"):
             if s.get(k) != want:
-                fail(tag, "F-008 %s is %r expected %r" % (k, s.get(k), want))
+                fail(tag, f"F-008 {k} is {s.get(k)!r} expected {want!r}")
 
 
 ALLOW_NODES = {  # allowed changes by patch: (flow files, node, changed path prefixes or None for added)
@@ -403,38 +399,38 @@ def node_diff(base, patched, fname, allow, tag, out):
     allowed = [r for a in allow for r in ALLOW_NODES.get(a, []) if fname in r[0]]
     allow_added = {r[1] for r in allowed if r[2] is None}
     allow_changed = {r[1]: r[2] for r in allowed if r[2] is not None}
-    out.append("== %s ==" % tag)
+    out.append(f"== {tag} ==")
     for nm in sorted(set(pn) - set(bn)):
-        out.append("  node ADDED   %s (%s v%s)" % (nm, pn[nm]["type"], pn[nm]["typeVersion"]))
+        out.append("  node ADDED   {} ({} v{})".format(nm, pn[nm]["type"], pn[nm]["typeVersion"]))
         if nm not in allow_added:
-            fail(tag, "unexplained added node %s" % nm)
+            fail(tag, f"unexplained added node {nm}")
     for nm in sorted(set(bn) - set(pn)):
-        out.append("  node REMOVED %s" % nm)
-        fail(tag, "unexplained removed node %s" % nm)
+        out.append(f"  node REMOVED {nm}")
+        fail(tag, f"unexplained removed node {nm}")
     for nm in sorted(set(bn) & set(pn)):
         ch = deep_diff(bn[nm], pn[nm])
         if ch:
-            out.append("  node CHANGED %s: %s" % (nm, ", ".join(ch)))
+            out.append("  node CHANGED {}: {}".format(nm, ", ".join(ch)))
             pref = allow_changed.get(nm)
             for c in ch:
                 if pref is None or c.split(" (")[0] not in pref:
-                    fail(tag, "unexplained change in node %s at %s" % (nm, c))
+                    fail(tag, f"unexplained change in node {nm} at {c}")
     bc, pc = base.get("connections", {}), patched.get("connections", {})
     for src in sorted(set(bc) | set(pc)):
         if bc.get(src) != pc.get(src):
-            out.append("  connections CHANGED for source %s" % src)
+            out.append(f"  connections CHANGED for source {src}")
             if not any(src in ALLOW_CONN.get(a, ()) for a in allow):
-                fail(tag, "unexplained connection change for source %s" % src)
+                fail(tag, f"unexplained connection change for source {src}")
     bs, ps = base.get("settings", {}), patched.get("settings", {})
     for k in sorted(set(bs) | set(ps)):
         if bs.get(k) != ps.get(k):
-            out.append("  settings CHANGED %s: %r -> %r" % (k, bs.get(k), ps.get(k)))
+            out.append(f"  settings CHANGED {k}: {bs.get(k)!r} -> {ps.get(k)!r}")
             if not any(k in ALLOW_SETTINGS.get(a, {}).get(fname, ()) for a in allow):
-                fail(tag, "unexplained settings change %s" % k)
+                fail(tag, f"unexplained settings change {k}")
     for k in sorted(set(base) | set(patched)):
         if k not in ("nodes", "connections", "settings") and base.get(k) != patched.get(k):
-            out.append("  top-level key %s CHANGED" % k)
-            fail(tag, "unexplained top-level change %s" % k)
+            out.append(f"  top-level key {k} CHANGED")
+            fail(tag, f"unexplained top-level change {k}")
 
 
 def main(argv):
@@ -493,27 +489,26 @@ def main(argv):
         return 2
     for k, v in expect.items():
         if k not in files:
-            fail("--expect", "unknown file key %r (known: %s)" % (k, sorted(files)))
+            fail("--expect", f"unknown file key {k!r} (known: {sorted(files)})")
         if not isinstance(v, dict) or set(v) - {"nodes", "connections"}:
-            fail("--expect", "bad entry for %r: %r" % (k, v))
+            fail("--expect", f"bad entry for {k!r}: {v!r}")
     if allow and not set(allow) <= pc:
         fail(
             "args",
-            "--allow %s needs --patch-checks to name the same patches (got %s)"
-            % (",".join(allow), ",".join(sorted(pc)) or "none"),
+            "--allow {} needs --patch-checks to name the same patches (got {})".format(",".join(allow), ",".join(sorted(pc)) or "none"),
         )
     diffsum = []
     for dr in dirs:
-        print("### %s" % dr)
+        print(f"### {dr}")
         if not os.path.isdir(dr):
             fail(dr, "not a directory")
             continue
         have = sorted(x for x in os.listdir(dr) if x.endswith(".json"))
         if have != sorted(files):
-            fail(dr, "file list %s != expected %s" % (have, sorted(files)))
+            fail(dr, f"file list {have} != expected {sorted(files)}")
         for fn in files:
             p = os.path.join(dr, fn)
-            tag = "%s/%s" % (dr, fn)
+            tag = f"{dr}/{fn}"
             if not os.path.isfile(p):
                 continue
             d = load(p, tag)
@@ -550,8 +545,7 @@ def main(argv):
         print(text)
         if diffout:
             open(diffout, "w", encoding="utf-8").write(
-                "# node-level diff, unpatched generator output vs patched (paths only, no values)\n# allowed patches: %s\n%s"
-                % (",".join(allow) or "none", text)
+                "# node-level diff, unpatched generator output vs patched (paths only, no values)\n# allowed patches: {}\n{}".format(",".join(allow) or "none", text)
             )
     print("RESULT: %d FAIL, %d WARN" % (len(FAILS), len(WARNS)))
     return 1 if FAILS else 0

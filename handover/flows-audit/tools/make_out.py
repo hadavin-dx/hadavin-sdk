@@ -3,7 +3,9 @@
 Names: path relative to handover/demo, '/' -> '__', '.json' stripped. Diff: diff__<a>__TO__<b>.txt.
 Writes ONLY under handover/flows-audit/tools/out."""
 
-import os, subprocess, sys
+import os
+import subprocess
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 T = os.path.join(HERE, "dump_nodes.py")
