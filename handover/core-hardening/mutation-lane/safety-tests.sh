@@ -1,8 +1,8 @@
 #!/bin/bash
-# Safety tests T1-T96 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T97 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
 # Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T96 (rounds 4 to 9) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T97 (rounds 4 to 10) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
 # Round 8: ONLY="T76 T87" runs just those blocks. The shorter script is cut out of THIS file's own text at run time (the
 # header, the chosen blocks, the closing lines), so a block that runs is byte-for-byte the shipped block; there is no separate
 # copy to keep in step. A block that needs a helper defined inside another block must be listed together with it.
@@ -1177,9 +1177,9 @@ echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mo
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
   NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
-    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
+    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"
-    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
+    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
   else
     echo "  (cannot switch to an unprivileged user here: the permission checks are UNVERIFIED)"; SKIPPED="$SKIPPED T88"
   fi
@@ -1400,7 +1400,9 @@ PY
 python3 "$RUN" --root "$T/root" --restore >"$S/t96f1.out" 2>&1; rc1=$?
 python3 "$RUN" --root "$T/root" --restore --discard-marker >"$S/t96f2.out" 2>&1; rc2=$?
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker >"$S/t96f3.out" 2>&1; rc3=$?; cut -c1-250 "$S/t96f3.out"
-chk "T96e stale folder identity in the marker: --restore exits 3 for ever (got $rc1); --discard-marker without --sha is refused, exit 2 (got $rc2); with --sha and an equal tree it removes marker and backup: exit 0 (got $rc3; r8: unknown option, exit 2), state empty" "[ $rc1 -eq 3 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 0 ] && [ -z '$(state_files)' ] && [ '$(last)' = return1 ]"
+K96=0; keptstate && K96=1
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker --accept-unchecked-folder >"$S/t96f3b.out" 2>&1; rc3b=$?; cut -c1-250 "$S/t96f3b.out"
+chk "T96e stale folder identity in the marker: --restore exits 3 for ever (got $rc1); --discard-marker without --sha is refused, exit 2 (got $rc2); with --sha and an equal tree but a marker that does not prove its folder: exit 3 (got $rc3; r10 M1), marker kept ($K96); with --accept-unchecked-folder: exit 0 (got $rc3b), state empty" "[ $rc1 -eq 3 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 3 ] && [ $K96 -eq 1 ] && [ $rc3b -eq 0 ] && [ -z '$(state_files)' ] && [ '$(last)' = return1 ]"
 kill_planted
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker >"$S/t96f4.out" 2>&1; rc=$?; cut -c1-250 "$S/t96f4.out"
 chk "T96e2 --discard-marker while the file is STILL planted (tree differs from git): exit 3 (got $rc; r8: 2), nothing removed, file still planted" "[ $rc -eq 3 ] && planted_kept"
@@ -1480,5 +1482,204 @@ mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk)); m["
 PY
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >/dev/null 2>&1; rc=$?; chk "T96l2 guard: the genuine mode with --sha restores: exit 0 (got $rc), state empty" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
 
+echo "== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)"
+setmarker97() { python3 - "$STATE" "$@" <<'PY'
+import glob, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk))
+for kv in sys.argv[2:]:
+    k, v = kv.split("=", 1); m[k] = json.loads(v)
+json.dump(m, open(mk, "w"))
+PY
+}
+forge97() { python3 - "$STATE" <<'PY'
+import glob, hashlib, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; bk = glob.glob(sys.argv[1] + "/*.backup")[0]
+evil = b"def f():\n    return 99  # swapped by someone who can write the state folder\n"
+open(bk, "wb").write(evil)
+m = json.load(open(mk)); m["orig_sha256"] = hashlib.sha256(evil).hexdigest(); json.dump(m, open(mk, "w"))
+PY
+}
+# M1 a) the planted root was renamed away and a full git copy took its path: --discard-marker compared only that copy and said 0
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+mv "$T/root" "$T/root-moved97"; mkdir "$T/root"; git -C "$T/repo" archive "$SHA" | tar -x -C "$T/root"; ln -s "$VENV" "$T/root/.venv"
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker >"$S/t97a1.out" 2>&1; rc1=$?; cut -c1-300 "$S/t97a1.out"
+KEPT97=0; keptstate && KEPT97=1
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker --accept-unchecked-folder >"$S/t97a2.out" 2>&1; rc2=$?; cut -c1-300 "$S/t97a2.out"
+chk "T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got $rc1; r9: 0 and deleted marker and backup), marker kept ($KEPT97), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got $rc2), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder" "[ $rc1 -eq 3 ] && [ $KEPT97 -eq 1 ] && grep -q 'NOT compared with git' '$S/t97a1.out' && [ $rc2 -eq 0 ] && [ -z '$(state_files)' ] && grep -q 'ACCEPTED BY YOU' '$S/t97a2.out' && [ \"\$(tail -1 $T/root-moved97/src/mod.py | tr -d ' ')\" = return2 ]"
+rm -rf "${T:?}/root-moved97"
+# M1 b) a marker that cannot be read (garbage) or is no object (a list): its test group was not looked for
+for variant in garbage list; do
+  kill_planted; git -C "$T/repo" show "$SHA:src/mod.py" > "$T/root/src/mod.py"; mk=$(ls "$STATE"/*.planted.json)
+  if [ $variant = garbage ]; then printf 'not json at all' > "$mk"; else printf '[1, 2]' > "$mk"; fi
+  python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker >"$S/t97b1.out" 2>&1; rc1=$?
+  K=0; [ -e "$mk" ] && K=1
+  python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" --discard-marker --accept-unchecked-folder >"$S/t97b2.out" 2>&1; rc2=$?
+  chk "T97b M1 unreadable marker ($variant): --discard-marker exits 3 (got $rc1; r9: 0), marker kept ($K), with --accept-unchecked-folder exit 0 (got $rc2) and state empty" "[ $rc1 -eq 3 ] && [ $K -eq 1 ] && grep -q 'cannot be read as a marker' '$S/t97b1.out' && [ $rc2 -eq 0 ] && [ -z '$(state_files)' ]"
+done
+# M2 an empty --sha (an unset variable) must not drop the git authority
+kill_planted; forge97; EMPTY=""
+python3 "$RUN" --root "$T/root" --restore --sha "$EMPTY" --repo "$T/repo" >"$S/t97c1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t97c1.out"
+chk "T97c M2 --sha \"\" with a forged marker and backup: exit 2 (got $rc1; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept" "[ $rc1 -eq 2 ] && [ '$(last)' = return2 ] && keptstate && ! grep -q 'return 99' '$T/root/src/mod.py'"
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >/dev/null 2>&1
+fresh_root; python3 "$RUN" --root "$T/root" --restore --sha zz >"$S/t97c2.out" 2>&1; rc2=$?
+python3 "$RUN" --root "$T/root" --restore --repo "$EMPTY" >"$S/t97c3.out" 2>&1; rc3=$?
+mut --out-json "$EMPTY" -- tests/test_fast.py >"$S/t97c4.out" 2>&1; rc4=$?
+chk "T97c2 siblings: --sha zz (got $rc2), --repo \"\" (got $rc3), --out-json \"\" (got $rc4) are all refused with exit 2, nothing planted" "[ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $rc4 -eq 2 ] && grep -q 'empty value' '$S/t97c3.out' && [ '$(last)' = return1 ]"
+# m1 the exit-2 row is true: every observed exit 2 is named in it, and the word ONLY is gone
+fresh_root
+python3 - "$RUN" "$T/root" "$SHA" "$T/repo" "$STATE" <<'PY' >"$S/t97d.out" 2>&1; rc=$?
+import fcntl, importlib.util, os, pathlib, subprocess, sys
+run, root, sha, repo, state = sys.argv[1:6]
+spec = importlib.util.spec_from_file_location("runmod", run); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+doc = r.__doc__; head = doc[doc.index("Exit codes"):doc.index("A line `SUMMARY")]
+row2 = " ".join(head[head.index("  2    refused"):head.index("  3    restore failed")].split())
+bad = []
+if "ONLY" in row2: bad.append("row 2 still says ONLY")
+def go(*args):
+    cp = subprocess.run([sys.executable, run, "--root", root, *args], capture_output=True, text=True); return cp.returncode
+seen = []
+seen.append((go("--restore", "--no-such-option"), "an argparse error", "argparse error"))
+os.makedirs(state, mode=0o700, exist_ok=True); os.chmod(state, 0o755)
+seen.append((go("--restore"), "a state folder that is not mode 700", "not mode 700"))
+os.chmod(state, 0o700)
+key = r.key_for(pathlib.Path(root).resolve()); fh = open(os.path.join(state, key + ".lock"), "w"); fcntl.flock(fh, fcntl.LOCK_EX)
+seen.append((go("--restore"), "a lock held by a live run", "a lock held by a live run"))
+fh.close()
+seen.append((go("--restore", "--sha", "abcdef0123", "--repo", repo), "a --sha that names no commit", "a --sha that names no commit"))
+for rc, what, words in seen:
+    ok = rc == 2 and words in row2
+    print(f"exit {rc} for {what}: named in row 2: {ok}")
+    if not ok: bad.append(f"{what}: exit {rc} or not named in the row 2 text")
+print("BAD:", bad); sys.exit(1 if bad else 0)
+PY
+cut -c1-300 "$S/t97d.out"; chk "T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+# m2 the recorded mode is restored exactly: 0 stays 0, a setuid bit stays; --sha refuses special bits and write-for-all
+for MODEV in 0 2541; do
+  kill_planted; setmarker97 mode=$MODEV; rm -f "$T/root/src/mod.py"
+  python3 "$RUN" --root "$T/root" --restore >"$S/t97e.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py" 2>/dev/null); WANT=$(printf '%o' $MODEV)
+  chk "T97e m2 recorded mode $WANT (decimal $MODEV), file deleted: --restore re-creates it with exactly that mode: exit 0 (got $rc), mode $GOT (r9: 644)" "[ $rc -eq 0 ] && [ \"$GOT\" = \"$WANT\" ]"
+  chmod 644 "$T/root/src/mod.py"
+done
+for MODEV in 2541 438; do
+  kill_planted; setmarker97 mode=$MODEV
+  python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t97e2.out" 2>&1; rc=$?; cut -c1-200 "$S/t97e2.out"
+  chk "T97e2 m2 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc; r9: 0 and the mode written), 'special bit', nothing written (still planted)" "[ $rc -eq 3 ] && grep -q 'special bit' '$S/t97e2.out' && [ '$(last)' = return2 ]"
+  python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+done
+# m3 --out-json: not in any searched state folder, and an existing foreign file is never overwritten
+fresh_root; OT97=$S/othertmp97; rm -rf "${OT97:?}"; mkdir -p -m 700 "$OT97/hadavin-mutation-lane-$(id -u)"
+TMP=$OT97 mut --out-json "$OT97/hadavin-mutation-lane-$(id -u)/zz.json" -- tests/test_fast.py >"$S/t97f1.out" 2>&1; rc1=$?
+printf 'precious' > "$S/precious97.txt"; mut --out-json "$S/precious97.txt" -- tests/test_fast.py >"$S/t97f2.out" 2>&1; rc2=$?
+chk "T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got $rc1; r9: wrote it), file not created; an existing foreign file: exit 2 (got $rc2; r9: overwritten), still 'precious', no raw file written" "[ $rc1 -eq 2 ] && [ ! -e '$OT97/hadavin-mutation-lane-$(id -u)/zz.json' ] && [ $rc2 -eq 2 ] && [ \"\$(cat $S/precious97.txt)\" = precious ] && [ ! -e '$S/rawT/X-m1.txt' ]"
+fresh_root; rm -f "$S/own97.json"; NCF= mut --out-json "$S/own97.json" -- tests/test_fast.py >/dev/null 2>&1; rc1=$?; fresh_root; NCF= mut --out-json "$S/own97.json" -- tests/test_fast.py >/dev/null 2>&1; rc2=$?
+chk "T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got $rc1, $rc2)" "[ $rc1 -eq 0 ] && [ $rc2 -eq 0 ]"
+rm -rf "${OT97:?}"
+# m4 a signal that arrives while the temporary folder is being made (before the try) is handled like any other
+fresh_root
+python3 - "$RUN" "$T/root" <<'PY' >"$S/t97g.out" 2>&1
+import os, runpy, signal, sys, tempfile
+run, root = sys.argv[1], sys.argv[2]
+real, made = tempfile.mkdtemp, []
+def mk(*a, **k):
+    d = real(*a, **k); made.append(d); os.kill(os.getpid(), signal.SIGTERM); return d
+tempfile.mkdtemp = mk
+sys.argv = ["run.py", "--root", root, "--restore"]
+try:
+    runpy.run_path(run, run_name="__main__")
+except SystemExit as e:
+    print("exit", e.code)
+except BaseException as e:
+    print("uncaught", type(e).__name__)
+print("leaked", [d for d in made if os.path.exists(d)])
+PY
+cut -c1-200 "$S/t97g.out"; chk "T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)" "grep -q '^exit 143' '$S/t97g.out' && grep -q '^leaked \[\]' '$S/t97g.out'"
+# m5 a marker for another root with --sha: the files are still compared with git
+fresh_root; mkdir -p -m 700 "$STATE"; KEYF=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16)
+printf '{"root": "/nowhere/else", "backup": "x", "file": "src/mod.py", "orig_sha256": "%s", "mutant": "m1"}' "$(printf 0%.0s $(seq 64))" > "$STATE/$KEYF.planted.json"
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t97h1.out" 2>&1; rc1=$?; cut -c1-300 "$S/t97h1.out"
+printf 'def f():\n    return 2\n' > "$T/root/src/mod.py"
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t97h2.out" 2>&1; rc2=$?; cut -c1-300 "$S/t97h2.out"
+chk "T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got $rc1), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got $rc2; r9: 2), marker kept" "[ $rc1 -eq 2 ] && grep -q 'tree equals the git archive' '$S/t97h1.out' && grep -q 'does NOT mean nothing is planted' '$S/t97h1.out' && [ $rc2 -eq 3 ] && [ -e '$STATE/$KEYF.planted.json' ]"
+rm -f "${STATE:?}/${KEYF:?}.planted.json"; git -C "$T/repo" show "$SHA:src/mod.py" > "$T/root/src/mod.py"
+# m6 + m7 + m8 + m11 in one process: calls into the functions, with the real files
+fresh_root
+python3 - "$RUN" "$T/root" "$SL" "$S" <<'PY' >"$S/t97i.out" 2>&1; rc=$?
+import errno, importlib.util, os, pathlib, stat, subprocess, sys, tempfile, time, types
+run, root, sl, scratch = sys.argv[1:5]
+spec = importlib.util.spec_from_file_location("runmod", run); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+bad = []
+# m6: the owner permission added to a read-only file is taken away again when the file cannot be opened for writing
+d = tempfile.mkdtemp(); f = os.path.join(d, "x.py"); open(f, "w").write("changed\n"); os.chmod(f, 0o444)
+pfd = os.open(d, os.O_RDONLY | os.O_DIRECTORY); fd = os.open("x.py", os.O_RDONLY | os.O_NOFOLLOW, dir_fd=pfd)
+r._make_writable(fd, "no-such-name.py", pfd, os.O_NOFOLLOW, b"original\n")
+mode = stat.S_IMODE(os.stat(f).st_mode); print("m6 mode after a failed reopen:", oct(mode))
+if mode != 0o444: bad.append(f"m6: mode {oct(mode)}")
+# m7: a dangling link in the marker's place counts as 'marker left behind'
+d2 = pathlib.Path(tempfile.mkdtemp()); rt, fr, raw = d2 / "root", d2 / "fresh", d2 / "raw"
+for x in (rt, fr, raw): x.mkdir()
+mk = d2 / "marker.json"; os.symlink("/nonexistent/nowhere", mk)
+a = types.SimpleNamespace(raw=str(raw), prefix="Z", sha_full="0" * 40, patch=[], root=str(rt), extra=[])
+res = r.tree_check(a, rt, fr, mk); print("m7 tree_check:", res)
+if "<marker left behind>" not in res: bad.append("m7: dangling marker not counted")
+# m8: a timeout kills the whole process group of a helper, not only its leader
+try:
+    r.run_cmd(["bash", "-c", f'"{sl}" 3157 & exec "{sl}" 3158'], timeout=1)
+    bad.append("m8: no timeout")
+except subprocess.TimeoutExpired:
+    pass
+time.sleep(0.5)
+alive = subprocess.run(["pgrep", "-f", f"{sl} 3157"], capture_output=True).returncode == 0
+subprocess.run(["pkill", "-9", "-f", f"{sl} 3157"], capture_output=True)
+print("m8 child of the helper still alive after the timeout:", alive)
+if alive: bad.append("m8: the helper's child survived")
+# m11: the folder sync fails after the file was removed: no exception, the file is gone, a warning is printed
+d3 = tempfile.mkdtemp(); os.chmod(d3, 0o700); r.STATE = pathlib.Path(d3); (r.STATE / "k.json").write_text("x")
+def boom(): raise OSError(errno.EIO, "Input/output error")
+r.fsync_state_dir = boom
+try:
+    r.unlink_state(r.STATE / "k.json"); print("m11 unlink_state returned, file exists:", (r.STATE / "k.json").exists())
+    if (r.STATE / "k.json").exists(): bad.append("m11: file still there")
+except OSError as e:
+    bad.append(f"m11: raised {e}")
+print("BAD:", bad); sys.exit(1 if bad else 0)
+PY
+cut -c1-300 "$S/t97i.out"; chk "T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit $rc; r9: fails all four)" "[ $rc -eq 0 ]"
+# m11 end to end: a restore whose state-folder sync fails after each removal still ends exit 0 with the file back and no state left
+kill_planted
+python3 - "$RUN" "$T/root" <<'PY' >"$S/t97j.out" 2>&1; rc=$?
+import errno, importlib.util, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+def boom(): raise OSError(errno.EIO, "Input/output error")
+r.fsync_state_dir = boom
+sys.argv = ["run.py", "--root", sys.argv[2], "--restore"]
+r.main()
+PY
+cut -c1-300 "$S/t97j.out"; chk "T97j m11 --restore with a failing state-folder sync: exit 0 (got $rc; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ] && grep -q 'WARNING' '$S/t97j.out'"
+# m9 marker text with a newline and an escape sequence cannot add a line or act on the terminal
+kill_planted; setmarker97 'mutant="evil\nPASSED: faked line\u001b[31m"'
+mut -- tests/test_fast.py >"$S/t97k.out" 2>&1; rc=$?; cut -c1-250 "$S/t97k.out"
+chk "T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit $rc): no line starts with 'PASSED:', no raw escape character in the output (r9: both)" "[ $rc -eq 2 ] && ! grep -q '^PASSED: faked' '$S/t97k.out' && ! grep -q \$'\\x1b' '$S/t97k.out' && grep -q 'faked line' '$S/t97k.out'"
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+# m10 a failure while the module loads (no usable temporary folder) is a refusal, exit 2, not Python's own exit 1
+fresh_root
+python3 - "$RUN" "$T/root" <<'PY' >"$S/t97l.out" 2>&1
+import runpy, sys, tempfile
+def boom(): raise FileNotFoundError("No usable temporary directory found")
+tempfile.gettempdir = boom
+run, root = sys.argv[1], sys.argv[2]; sys.argv = ["run.py", "--root", root, "--restore"]
+try: runpy.run_path(run, run_name="__main__")
+except SystemExit as e: print("exit", e.code)
+except BaseException as e: print("uncaught", type(e).__name__)
+PY
+cut -c1-250 "$S/t97l.out"; chk "T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)" "grep -q '^exit 2' '$S/t97l.out' && grep -q 'REFUSED' '$S/t97l.out'"
+# m6 docstring: the sentence about the read-only file matches the test T88d
+python3 - "$RUN" <<'PY' >"$S/t97m.out" 2>&1; rc=$?
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+d = " ".join(r.__doc__.split())
+bad = ("also when a test made it read-only" in d) or ("ALREADY holds the original text is left as it is" not in d)
+print("BAD" if bad else "ok"); sys.exit(1 if bad else 0)
+PY
+chk "T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

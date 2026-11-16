@@ -1,0 +1,5 @@
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, documented exit codes
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev1/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or a 
+  PASS: T96a --restore with no marker anywhere and no --sha: exit 2 (got 2; r8: 0), text says CANNOT TELL and names both ways out (TMPDIR of the killed run, --sha), file untouched
+the tree equals the git archive given with --sha: no file is planted or changed
+  PASS: T96b --restore --sha COMMIT, no marker, tree equals git: exit 0 (got 0), text says the tree equals the git archive (r8: ignored --sha, said CANNOT TELL)

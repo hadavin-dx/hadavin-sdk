@@ -1,0 +1,2 @@
+ROW|H4|sig=TERM|mode=plain|delay=0.0|exit=-15|elapsed=0.00s|file_after_signal=return 2|marker_left=0|followup_restore_sha_exit=3|final_file=return 2|msg=
+ROW|H4|sig=TERM|mode=plain|delay=0.05|exit=-15|elapsed=0.05s|file_after_signal=return 2|marker_left=0|followup_restore_sha_exit=3|final_file=return 2|msg=
