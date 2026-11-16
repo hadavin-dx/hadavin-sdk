@@ -1,4 +1,5 @@
-# SUPERSEDED (16 Nov 2026, 16:41Z): the held pages were edited with the corrected sentence
-This page proposed the old wording "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." That wording was WRONG (lead correction, work/LEAD-ANSWERS.md Batch 2). Do not use any replacement text below. Use the corrected sentence instead, from work/end-delete-cases.md:
-"After you type end, the program archives this take's three made-up contacts in HubSpot (archived is not the same as erased: HubSpot keeps them for a time); any it could not archive are listed, and you archive or delete them by hand from the list it prints."
-UNVERIFIED until the lead's loopback re-smoke (Tue 17 or Wed 18 Nov; result in egm/duplicate-proof-lead-desk/wp6/). The original page is kept unchanged at work/end-sentence-for-owners-history-1.md for the row list only (locations of old wording).
+# SUPERSEDED (16 Nov 2026, 16:50Z): use the Batch 3 sentence
+This page once proposed "The take never deletes contacts ..." (WRONG), then the 16:41Z sentence "the program archives this take's three made-up contacts" (also wrong now: it implied the take's key can archive). Do not use any replacement text from the older versions. Use the corrected sentence from work/end-delete-cases.md:
+"The take's HubSpot key cannot archive or delete. After you type end, the program tries once to archive this take's three made-up contacts; whatever it cannot archive it lists, and you archive or delete those by hand from the printed list."
+Expected case: all three contacts are on the printed list (read-only key). UNVERIFIED until the lead's loopback re-smoke (Tue 17 or Wed 18 Nov; result in egm/duplicate-proof-lead-desk/wp6/).
+Older versions: work/end-sentence-for-owners-history-1.md (original, for the row list of old wording) and -history-2.md (the 16:41Z page).
