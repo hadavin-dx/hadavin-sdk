@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:13:39Z
-PUSHED_UTC: 2026-11-16T14:13:39Z
+UPDATED_UTC: 2026-11-16T14:13:59Z
+PUSHED_UTC: 2026-11-16T14:13:59Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,9 +45,9 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a236a074929abba68 | fourth read of not-checked-r2 | 2026-11-16T14:13Z | +5 min | running | nothing yet |
+| (new) | second read of decision-list-for-lead | 2026-11-16T14:13Z | +5 min | running | nothing yet |
 
-CAPACITY: 1 running. Reason for the 7 missing slots: every owned page has had two or three reads and the same defect classes repeat; open work is my own edits, and each finished rewrite gets one re-read. Digested through 1438.
+CAPACITY: 1 running. Reason for the 7 missing slots: every owned page has had two to four reads and the same defect classes repeat; open work is my own edits, and each finished rewrite gets one re-read. Digested through 1439.
 NEXT 5: split decision-list A3/A9/E9 and move A13, GLOSSARY Unknown list, BRIEF-EVIDENCE-1/2, evidence-1/2 reruns, premortem-r1/critical-path-r1.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
