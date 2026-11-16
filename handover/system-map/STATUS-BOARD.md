@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T16:40Z
+UPDATED_UTC: 2026-11-16T16:43Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -7,7 +7,7 @@ BOOT_ID: 5cbee216
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 15
 PERCENT: 83 (the mean of the per-row percent column in the ITEMS table; only 5 of 20 items are fully done; the lead's tool reads this key, so it keeps the name)
-STATE: waiting for lead
+STATE: working
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
 NEEDS_YOU, in this order (for the lead session to answer or pass to the studio lead; item 3 may need the owner; paths start at handover/system-map/; times UTC / IST):
   0. CORRECTION 16:12Z: the v4.2 runbook (inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md) and LANE-D-13o/13p/13q/13r/13s.md ARE in the checkout; my earlier 'missing' claim was wrong. Nothing missing now except laptop-only files (run program, run sheet). Patch rebuilt against v4.2 (agents below).
@@ -19,9 +19,9 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 0
+AGENTS_RUNNING: 7
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: lead answers to LEAD-NOTICE-batch-2; final wording of r37-r39
+NEXT: digest hand-backs; one fresh read per edited held page
 INTERRUPTED: none
 
 ## ITEMS
@@ -49,7 +49,14 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-EMPTY SLOTS: 8. Reason: every open row is finished or waits. The patch is at its reader cap; rows tied to rounds 36/34/35 (branches r37-r39) wait for final wording; lane readers have nothing new (partition 4470 of 4470, 0 problems); held pages are not editable by me; the rest waits for the lead's answers to LEAD-NOTICE-batch-2 (15 items).
+- aa62fe7e26a53f260 HELD-1: archive sentence into OWNER-VIEW, OWNER-RUN-DAY-CARD; running; next: edits, grep
+- a979b77cb3191c04d HELD-2: OWNER-CLEANUP-CARD, LEAD-PAGE; running; next: edits, grep
+- a67ac7a55bca69215 HELD-3: TAKE-BLOCKERS, QUEUE; running; next: edits, grep
+- a2b2f0f98c1c2797d HELD-4: SWEEP (about 30 "studio head" lines); running; next: edits, grep
+- a5a057aaa7a1177d6 HELD-5: MASTER-MAP, README, QUESTIONS; running; next: edits, grep
+- a9f2e0370d436b1dc MINE: correct my own pages (M17, v5-edits, end-delete-cases, D04-D05, open items, decision list, L4c check); running; next: edits
+- a8f6fbda23a347bae TIMING-B2: apply Batch 2 answers to timing part3 and the patch; running; next: edits, recount
+EMPTY SLOTS: 1. Reason: the fresh reads of the ten held pages wait for the edits (one fresh reader per rewritten page); root DECISION-one-store.md was replaced by the inputs copy (answer 10; diff 0).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
