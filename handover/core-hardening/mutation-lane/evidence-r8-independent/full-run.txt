@@ -668,3 +668,61 @@ RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-
 RESTORE FAILED: cannot write src/mod.py back: Permission denied; the mutant may still be planted; marker and backup kept
   PASS: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 3), file still planted, marker and backup kept
   PASS: T76c genuine restore afterwards
+./safety-tests.sh: line 70:  3242 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T76d a damaged backup (hash differs from the marker): nothing is written, but the mutant is still planted, so exit 3 (got 3; r7 pinned 2), marker kept
+== T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE
+baseline 1 1 failed in 0.01s
+REFUSED: the baseline (unmutated tree, --control) is not usable: it exited with 1, not 0; no mutant was planted; see X-baseline.txt
+  PASS: T77a no option at all, tree already failing: the baseline refuses the mutants, exit 2 (got 2), baseline file says NO, no mutant raw file, file unchanged (r6: ran every mutant as KILLED)
+  PASS: T77b no option at all, healthy tree: baseline recorded and used, exit 0 (got 0), 'baseline: rc 0, 1 passed' in the raw file, SUMMARY says COMPLETE
+  PASS: T77c a run WITHOUT a baseline (the option --no-control; on the r6 copy NOBASE_OPT= is empty: r6 runs without one by default, this is the behaviour itself), every verdict clean: exit 5 (got 5), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file
+  PASS: T77d the last of --no-control/--control wins: --control after --no-control runs the baseline, exit 0 (got 0)
+  PASS: T77e --no-control after --control: no baseline, exit 5 (got 5)
+  PASS: T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got 4)
+== T78 (review r6 nit 2) --restore is signal-guarded: a signal in the middle of the write-back does not leave the file planted
+./safety-tests.sh: line 70:  3539 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.backup; hash mat
+signal 15 arrived during the restore: the restore was finished first
+  PASS: T78a SIGTERM inside the restore write: the restore finishes (file back, marker and backup gone), exit 0 (got 0), the signal is reported (r6: unwound, exit 143, file still planted)
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T78b a signal while the process leaves with exit 5 (COULD-NOT-PLANT): the exit code stays 5 (got 5; r6: a traceback or 130/143)
+== T79 (review r6 nit 3) sweep_group: a stranger that holds the number of the finished test group is left alone
+stranger case: process(es) [3705] now hold the number of the test group but started outside this run: left alone | alive: True
+control case: STOPPED 1 process(es) of the test group that outlived the le | alive: False
+  PASS: T79 the stranger started after the group ended is left alone (still alive), the control inside the window is stopped
+== T80 (review r6 nit 4) output paths are checked BEFORE anything is planted: --out-json inside --root, a missing folder, a file with two names, --raw inside --root
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/root/out.json lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c
+  PASS: T80a --out-json inside --root: refused, exit 2 (got 2), no mutant run (no X-m1.txt), file unchanged, no out file
+REFUSED: the folder of output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/no-such-folder/out.json does not exist: refused (nothing is created for you)
+  PASS: T80b --out-json in a folder that does not exist: refused before planting, exit 2 (got 2), no X-m1.txt (r6: ran everything, failed at the end)
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/out80.json has more than one name (hard link): refused
+  PASS: T80c --out-json that has two names: refused, exit 2 (got 2), the other name still holds 'precious', no X-m1.txt
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/rawT/X-m1.txt has more than one name (hard link): refused
+  PASS: T80d a raw file that has two names: refused before planting, exit 2 (got 2), the other name untouched, file unchanged
+REFUSED: --raw /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/root/rawinside lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/s
+  PASS: T80e --raw inside --root: refused, exit 2 (got 2), nothing created there, file unchanged
+== T81 (review r6 nit 5) a bad archive, a bad interpreter, a bad list, a lone surrogate and an internal bug are refusals, never a traceback with exit 1
+REFUSED: the archive of 3aa204cab84f939fb41677a90a7cae0d34da321e cannot be extracted safely (AbsoluteLinkError: 'evil-link' is a link to an absolute path): refused
+  PASS: T81a a tracked absolute symbolic link makes the archive extraction fail (tarfile FilterError): refused, exit 2 (got 2), no traceback (r6: exit 1)
+REFUSED: import check of mod cannot start: Exec format error
+  PASS: T81b an interpreter that cannot be started (exec format error) in the import check: refused, exit 2 (got 2), no traceback
+REFUSED: mutant m1: new holds a character that is not valid text (a lone surrogate): refused
+  PASS: T81c a lone surrogate in a mutant text: refused, exit 2 (got 2), no traceback, file unchanged, state empty
+  PASS: T81d a mutant list that is not JSON: refused, exit 2 (got 2), no traceback
+  PASS: T81e a mutant list that does not exist: refused, exit 2 (got 2), no traceback
+RuntimeError: simulated bug after the loop
+INTERNAL ERROR (RuntimeError: simulated bug after the loop); no marker: nothing is planted by this run
+  PASS: T81f an internal bug (exception that is no refusal): INTERNAL ERROR text, exit 2 (got 2; r6: Python's own exit 1), file restored, state empty
+== T82 (review r6 nit 6) patch runs with --batch, --forward, --no-backup-if-mismatch and stdin from /dev/null; a reversed patch is refused, never applied reversed
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T82a the patch call carries --batch, --forward and --no-backup-if-mismatch (args: -p1 -s --batch --forward --no-backup-if-mismatch -d /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611)
+  PASS: T82b the patch call's standard input is /dev/null (got: /dev/null)
+1 out of 1 hunk ignored -- saving rejects to file docs/note.txt.rej
+  PASS: T82c a patch that looks reversed, with 'y' answers waiting on the input: refused as 'does not apply' (got 2), never applied reversed (r6: asked its question on the caller's input)
+== T83 (review r6 nit 7) a short --sha that is also the NAME of a branch is refused, the id must start with the typed hex
+REFUSED: --sha 'cafe' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/repo (unknown, ambiguous, not a commit, or the name of a branch or tag): 5459125aa02785ee0e23e
+  PASS: T83 --sha cafe (a branch name made of hex digits, pointing at HEAD) is refused, exit 2 (got 2), no mutant run (r6: resolved the branch)
+== T84 (review r6 nit 8) --root renamed away and replaced by a decoy folder during the run: the run's restore must not report success on the decoy

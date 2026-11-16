@@ -1,0 +1,26 @@
+Q01 MISSED wrong price per call hardcoded
+Q02 MISSED wrong total hardcoded
+Q03 MISSED wrong output tokens in sample
+Q04 CAUGHT wrong IST pair | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md bad pair 12:00 UTC = 17:00 IST
+Q05 CAUGHT wrong deadline IST pair | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md bad pair 18:29 UTC = 23:49 IST
+Q06 CAUGHT pointer to wrong step | rc=1 | FAIL C19 pointer not in the verified list: sheetA|test start**: see the card (|7.2
+Q07 CAUGHT pointer to wrong step in R8 | rc=1 | FAIL C19 pointer not in the verified list: sheetA| start or end a step: "go" (|5.7
+Q08 MISSED STOP RULE step deleted (key alive: card)
+Q09 ANCHOR-NOT-FOUND stray backtick
+Q10 MISSED cancel rule changed
+Q11 MISSED card gate (f) deleted
+Q12 MISSED auto-reload rule flipped in R4
+Q13 MISSED secret-shaped string (built from parts) in sheet
+Q14 CAUGHT balance changed | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md unexpected amount USD 180.90
+Q15 MISSED give-up minutes sample changed
+Q16 MISSED silence minutes sample changed
+Q17 CAUGHT expected count changed | rc=1 | FAIL C17 sheetA: 'B submitted 9 times' says 9, expected 10
+Q18 MISSED delete domain guard changed (one copy)
+Q19 CAUGHT pointer wrong in R1 | rc=1 | FAIL C19 pointer not in the verified list: sheetA|OFF (off in 6.1, back on in |8.6
+Q20 MISSED lead note limit wrong
+Q21 CAUGHT lead note minutes wrong | rc=1 | FAIL C17 note: '14.30 min' says 14.30, expected 14.33
+Q22 MISSED accepted exit codes widened
+Q23 CAUGHT rule priority order swapped | rc=1 | FAIL C19 pointer not in the verified list: sheetA| card first, then R10, then |R1
+Q24 MISSED word count in R8
+Q25 CAUGHT lead note last start IST wrong | rc=1 | FAIL C04 LEAD-RELEASE-NOTE-v8.md bad pair 18:14:40 UTC = 23:14:40 IST
+TOTAL own plants 25: caught 10, missed 14, anchor-not-found 1

@@ -353,8 +353,24 @@ def ensure_state() -> None:
         )
 
 
+def fsync_state_dir() -> None:
+    """r9 minor 5: a rename or an unlink in the state folder is only durable after the FOLDER is synced. Without it a power
+    loss could bring back a removed marker (a stale marker) or lose a new one (a planted file with no marker)."""
+    dfd = os.open(STATE, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(dfd)
+    finally:
+        os.close(dfd)
+
+
+def unlink_state(path: pathlib.Path) -> None:
+    """The one way a state file (marker, backup, control marker) is removed: unlink, then sync the folder."""
+    path.unlink(missing_ok=True)
+    fsync_state_dir()
+
+
 def write_state(path: pathlib.Path, data: bytes) -> None:
-    """Atomic: a new private file (O_EXCL, mode 600) in the state folder, then rename over the target."""
+    """Atomic: a new private file (O_EXCL, mode 600) in the state folder, then rename over the target, then the folder is synced."""
     fd, tmp = tempfile.mkstemp(dir=STATE, prefix=".tmp-")
     try:
         with os.fdopen(fd, "wb") as fh:
@@ -362,6 +378,7 @@ def write_state(path: pathlib.Path, data: bytes) -> None:
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, path)  # replaces a link itself, never follows it
+        fsync_state_dir()
     except BaseException:
         pathlib.Path(tmp).unlink(missing_ok=True)
         raise
@@ -590,6 +607,12 @@ def restore_target(
     if not stat.S_ISREG(st.st_mode):
         os.close(fd)
         raise Refused(f"{path} is not a regular file: not written")
+    if writable and not created and st.st_nlink != 1:
+        # r9 minor 6: checked BEFORE the mode is touched (the other name may be a file outside the scratch tree)
+        os.close(fd)
+        raise Refused(
+            f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written, mode not changed"
+        )
     with os.fdopen(fd, "r+b" if writable else "rb") as fh:
         if created:
             os.fchmod(
@@ -684,6 +707,9 @@ def helper_env() -> dict:
     return {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "LC_ALL": "C"}
 
 
+HELPER_TIMEOUT = 300  # seconds for one git or patch call (r9 minor 2); `--helper-timeout` changes it
+
+
 def run_cmd(
     argv: list[str],
     input_bytes: bytes | None = None,
@@ -692,19 +718,28 @@ def run_cmd(
     timeout: int | None = None,
 ) -> subprocess.CompletedProcess:
     """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell.
-    With no `env` the helper environment above is used (never the caller's whole environment)."""
-    return subprocess.run(
-        argv,
-        input=input_bytes,
-        stdin=None
-        if input_bytes is not None
-        else subprocess.DEVNULL,  # no helper may read the caller's input
-        capture_output=True,
-        check=False,
-        cwd=cwd,
-        env=helper_env() if env is None else env,
-        timeout=timeout,
-    )
+    With no `env` the helper environment above is used (never the caller's whole environment). A call with no `timeout`
+    gets HELPER_TIMEOUT (r9: a stalled `git archive` used to hang the run and the `--restore --sha`); the child is killed
+    and the call is a refusal. A caller that passes its own `timeout` handles `TimeoutExpired` itself."""
+    try:
+        return subprocess.run(
+            argv,
+            input=input_bytes,
+            stdin=None
+            if input_bytes is not None
+            else subprocess.DEVNULL,  # no helper may read the caller's input
+            capture_output=True,
+            check=False,
+            cwd=cwd,
+            env=helper_env() if env is None else env,
+            timeout=HELPER_TIMEOUT if timeout is None else timeout,
+        )
+    except subprocess.TimeoutExpired as e:
+        if timeout is not None:
+            raise
+        raise Refused(
+            f"{pathlib.Path(argv[0]).name} did not finish within {HELPER_TIMEOUT} s and was stopped (--helper-timeout)"
+        ) from e
 
 
 def text_of(cp: subprocess.CompletedProcess) -> str:
@@ -718,6 +753,12 @@ def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pat
     pp = pathlib.PurePosixPath(rel)
     if pp.is_absolute() or ".." in pp.parts:
         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
+    # r9 minor 7: the tree comparison skips `.venv` directly under the root and the cache folders at any depth, so a file
+    # there would be planted, changed or restored without any later check seeing it: never a target
+    if pp.parts[0] in SKIP_TOP or SKIP_ANY & set(pp.parts):
+        raise Refused(
+            f"{what}: {rel!r} lies in a folder the tree comparison does not look at ({', '.join(sorted(SKIP_TOP | SKIP_ANY))}): refused"
+        )
     real_base = base.resolve()
     cur = base
     for part in pp.parts:
@@ -1163,7 +1204,7 @@ def restore_control(root: pathlib.Path, key: str) -> tuple[bool, str]:
         raise Refused(f"control marker {path} is not for this root: refused")
     note, settled = stop_orphan(m, root)
     if settled:
-        path.unlink()
+        unlink_state(path)
         return True, f"control run: {note}"
     return False, (
         f"control run: {note}; the control marker {path} is KEPT because its test group may still run: "
@@ -1287,8 +1328,8 @@ def restore_from_marker(
             "hand, then run --restore again"
         )
     elif ok:
-        marker.unlink()
-        bk.unlink(missing_ok=True)
+        unlink_state(marker)
+        unlink_state(bk)
     return ok and settled and control_ok, f"{control}; {text}" if control else text
 
 
@@ -1805,8 +1846,8 @@ def one(a, tests, m, results, ref) -> list[str]:
                     )
                     leave(EXIT_RESTORE_FAILED)
                 # verified identical: no marker may stay, even on an error
-                marker.unlink(missing_ok=True)
-                backup.unlink(missing_ok=True)
+                unlink_state(marker)
+                unlink_state(backup)
                 SIG.own_marker = False
         finally:
             SIG.critical = False
@@ -2297,7 +2338,7 @@ def main():
                     )
                 finally:
                     # reached only after the group was stopped or ended (a SIGKILL skips it: the marker stays)
-                    control.unlink(missing_ok=True)
+                    unlink_state(control)
                 last, bfailed = summary(out)
                 bad_reason = (
                     "it timed out"
