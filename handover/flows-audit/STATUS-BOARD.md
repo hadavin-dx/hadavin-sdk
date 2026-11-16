@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:22:18Z
+UPDATED_UTC: 2026-11-16T20:23:46Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 10
-CAPACITY: 3.70 load of 4 cores, mem 1/15 GB, RAM 1305/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 10 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 5.82 load of 4 cores, mem 1/15 GB, RAM 1311/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:22:18Z
+PUSHED_UTC: 2026-11-16T20:23:46Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,14 +32,11 @@ PUSHED_UTC: 2026-11-16T20:22:18Z
 |---|---|---|---|---|---|---|---|
 | a7636841 | F8 fixer | sonnet | F8 flow-check fixes r13 (HEAVY only while it runs tests) | 19:50Z | 20:50Z | running | checkpoint pending |
 | a831d233 | fixer | sonnet | FIX-PLAN r64 fixes | 20:14Z | 20:35Z | running | none yet |
-| a07394fa | reader | sonnet | QUESTIONS 500-579 stranger read | 20:23Z | 20:36Z | running | none yet |
-| afb9a487 | reader | sonnet | QUESTIONS 660-739 stranger read | 20:23Z | 20:36Z | running | none yet |
-| a331b890 | cite checker | sonnet | CLAIMS-TABLE lane A A-051..A-098 | 20:27Z | 20:42Z | running | none yet |
 | aa6c7174 | reviewer | sonnet | REVIEW.md uncapped re-read after r54 fix | 20:29Z | 20:45Z | running | none yet |
 | a53bbe84 | fixer | sonnet | TAKE-CHECKLIST r64 fixes | 20:31Z | 20:50Z | running | none yet |
 | a452d028 | reader | sonnet | RUNBOOK 220-370 stranger read | 20:34Z | 20:48Z | running | none yet |
-| aa81cf1d | reader | sonnet | RUNBOOK 370-509 stranger read | 20:34Z | 20:48Z | running | none yet |
 | aeb0421e | reviewer | sonnet | patch-copies uncapped re-read pass 24 | 20:37Z | 20:52Z | running | none yet |
+| ac364a63 | fixer | sonnet | QUESTIONS Q31 fixes (3 reader reports) | 20:40Z | 21:00Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
