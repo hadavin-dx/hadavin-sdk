@@ -1,9 +1,9 @@
-"""Independent check: reads REPORT-c6l.md only (not build_c6l.py). 1) old text occurs once on its line; 2) apply all rows in table order
+"""Independent check: reads REPORT-c6m.md only (not build_c6m.py). 1) old text occurs once on its line; 2) apply all rows in table order
 to COPIES in a temp dir; 3) every cite KEY:line exists; 4) scan NEW texts for internal labels, stale phrases, banned strings."""
 import re, os, shutil, tempfile, sys
 H = "/home/user/hadavin-sdk"
 T = "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover"
-R = H + "/handover/core-hardening/c6-skip-audit/REPORT-c6l.md"
+R = H + "/handover/core-hardening/c6-skip-audit/REPORT-c6m.md"
 txt = open(R, encoding="utf-8").read().split("\n")
 def real(p):
     return H + "/" + p if p.startswith("handover/core-hardening/") else T + "/" + p[len("handover/"):]
@@ -15,9 +15,9 @@ print("short names", len(paths))
 rd = lambda p: open(p, encoding="utf-8", errors="replace").read()
 rows = []
 for l in txt:
-    m = re.match(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$", l)
+    m = re.match(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ([^|]*) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$", l)
     if m:
-        i, st, f, ln, old, new, why, was = m.groups()
+        i, st, f, ln, view, old, new, why, was = m.groups()
         rows.append(dict(i=int(i), st=st, f=f, ln=int(ln), old=old.replace("<br>", "\n"), new=new.replace("<br>", "\n"), why=why))
 print("rows parsed", len(rows)); bad = 0
 for r in rows:
@@ -56,7 +56,7 @@ for r in rows:
     if "DECISION-one-store" in r["f"]: continue
     for m in LAB.finditer(r["new"]): lb += 1; print("LABEL in new text row", r["i"], repr(m.group(0)), "|", r["new"][max(0, m.start()-30):m.end()+30].replace("\n", "/"))
 print("internal labels in new texts: %d" % lb)
-STALE = ["52.9", "0 rows", "shows 0", "never deletes", "70 to 75", "80 kills"]
+STALE = ["52.9", "0 rows", "shows 0", "never deletes", "70 to 75", "80 kills", "archive|delete", "studio lead's made", "studio lead table"]
 for s in STALE:
     hits = [r["i"] for r in rows if s in r["new"]]
     print("stale phrase %r in new texts of rows: %s" % (s, hits or "none"))
@@ -94,7 +94,7 @@ print("lines with 18 runs and not naming both voided runs (report text):", b18 o
 nb = [r["i"] for r in rows if re.search(r"\b18 (kept |crash )*runs?\b|each of 18", r["new"]) and not ("VOID-fl45k3b" in r["new"] and "VOID-fl45k6c" in r["new"])]
 print("rows whose new text has 18 without naming both voided runs:", nb or "none")
 # figure hold: rows not tied to L-PAGE must not carry 60.1 or 61.9 in new text
-fig = [(r["i"], r["st"]) for r in rows if "PAGE-STATEMENTS" in r["f"] and re.search(r"60\.1|61\.9", r["new"]) and "L-PAGE" not in r["st"] and "L-ROUND" not in r["st"]]
+fig = [(r["i"], r["st"]) for r in rows if "PAGE-STATEMENTS" in r["f"] and re.search(r"60\.1|61\.9", r["new"]) and "L-PAGE" not in r["st"] and "L-APPROX" not in r["st"]]
 print("rows with the 60.1 to 61.9 figure and no L-PAGE hold:", fig or "none")
 # word scan in prose (outside quotes of old text): 'the lead' alone and 'claim'
 body = "\n".join(l for l in txt if not l.startswith("| ") or "Plain meaning" in l)
@@ -104,6 +104,19 @@ used = set(k for k, _ in re.findall(r"\b([A-Z][A-Z0-9]{1,5}):(\d+)\b", full))
 print("cite keys used but not defined:", sorted(used - set(paths)) or "none")
 gl = "\n".join(txt[txt.index("## 4. Plain-word glossary (every short name and label used in this report; term, meaning, where it comes from)"):])
 labs = set(re.findall(r"\b(?:L-[A-Z]+|C-\d+[a-d]?)\b", full))
-miss = [x for x in sorted(labs) if x not in gl and not (x.startswith("C-") and "C-1 to C-11" in gl) and not (x.startswith("L-") and "L-CARD, L-KILL" in gl)]
+miss = [x for x in sorted(labs) if x not in gl and not (x.startswith("C-") and "C-1 to C-11" in gl) and not (x.startswith("L-") and "L-CARD, L-CARDCUT" in gl) and x != "L-ROUND"]
 print("labels missing from glossary:", miss or "none")
 shutil.rmtree(tmp)
+
+# extra c6m checks
+print("--- c6m extra checks ---")
+allnew = "\n".join(r["new"] + "\n" + r["why"] for r in rows)
+print("wrong-word slips 'studio lead' + made-up/table/name in new text or reason:", re.findall(r"studio lead(?:'s)? (?:made-up|table|name)", allnew) or "none")
+print("pipe-grep text 'archive|delete' anywhere in the report:", full.count("archive|delete"))
+print("'new in this report' near contact deletion:", len(re.findall(r"new in this report", full)))
+print("rows saying the take script archives as fact:", [r["i"] for r in rows if re.search(r"\btake (script )?archives\b|archives at the end", r["new"])] or "none")
+for q in ("Q19", "Q22", "Q23", "Q25", "Q27", "Q21.1"):
+    print("report cites", q, ":", full.count(q))
+print("action box first (before section 0):", full.index("## Start here") < full.index("## 0. Failures"))
+print("every row has a viewer column text:", all(len(re.match(r"^\| %d \|.*" % r["i"], [l for l in txt if l.startswith("| %d | NOT APPLIED" % r["i"])][0]).group(0)) > 0 for r in rows))
+print("IST given with the money stop:", "23:59 IST" in full, "| take target:", "Wed 18 Nov" in full)

@@ -1,7 +1,7 @@
 P("# REPORT-c6m: video audit fix pass, supersedes REPORT-c6l.md (2026-11-16, UTC; IST = UTC + 5:30)")
 P("")
 P("## Start here: what I need from you (read this box first; everything after it is detail)")
-P("Nothing in this report has been applied to any file. The edit table (section 5) holds %d proposed text changes, each with its old text, its new text and what a viewer of the video sees (%d are 'ready', %d wait for an answer, %d wait for a check that needs n8n). You answer by writing ONE line in ORDERS.md (section 'Start here' below, last paragraph). The box has one line for every question label (L-) and one line for all check labels (C-). Words used here are explained in the list after the box." % (nrows, RC, RO, RW))
+P("Nothing in this report has been applied to any file. The edit table (section 5) holds %d proposed text changes, each with its old text, its new text and what a viewer of the video sees (%d are 'ready', %d wait for an answer, %d wait for a check that needs n8n). You answer by writing ONE line in ORDERS.md (the paragraph just below the box). The box has one line for every question label (L-) and one line for all check labels (C-). Words used here are explained in the list after the box." % (nrows, RC, RO, RW))
 P("")
 P("| Label | Plain meaning (one sentence) | Default if you say 'apply all defaults' | Who answers |")
 P("|---|---|---|---|")

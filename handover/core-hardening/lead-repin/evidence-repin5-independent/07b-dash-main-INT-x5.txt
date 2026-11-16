@@ -1,0 +1,5 @@
+dash main INT: folders_during=1 rc=130 folders_left=0 stray=0 []
+dash main INT: folders_during=1 rc=130 folders_left=0 stray=0 []
+dash main INT: folders_during=1 rc=130 folders_left=0 stray=0 []
+dash main INT: folders_during=1 rc=130 folders_left=0 stray=0 []
+dash main INT: folders_during=1 rc=130 folders_left=0 stray=0 []
