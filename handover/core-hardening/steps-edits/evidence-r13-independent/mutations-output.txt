@@ -1,0 +1,118 @@
+MUT M01 wrong IST: latest start 18:04 = 23:44
+   mine: caught ist | 18:04 UTC paired with 23:44 IST
+   verify13: caught (1 FAIL) | FAIL r13 time arithmetic: 18:04 UTC = 23:44 IST
+MUT M02 wrong IST: key end 18:19 = 23:59 (E-48)
+   mine: caught ist | 18:19 UTC paired with 23:59 IST
+   verify13: caught (1 FAIL) | FAIL r13 time arithmetic: 18:19 UTC = 23:59 IST
+MUT M03 wrong IST: window end 18:29 = 23:29 (E-58)
+   mine: caught ist,rowcontent | 18:29 UTC paired with 23:29 IST
+   verify13: caught (2 FAIL) | FAIL E-58 times
+MUT M04 wrong IST: alarm 17:49 = 23:49 (E-12)
+   mine: caught ist | 17:49 UTC paired with 23:49 IST
+   verify13: caught (2 FAIL) | FAIL r13 time arithmetic: 17:49 UTC = 23:49 IST
+MUT M05 old label: "The latest start we plan is 18:04" -> "The latest start is 18:04" (E-12)
+   mine: caught label | old single label "latest start" without "we plan":  time and the latest start we plan. The
+   verify13: caught (1 FAIL) | FAIL r13 bare label "latest start":  time and the latest start we plan. The latest start is 18:04 UT
+MUT M06 old label in index/header: "**latest start we plan** = " -> "**latest start** = "
+   mine: caught label | old single label "latest start" without "we plan": issued it, so that it stops working). *
+   verify13: caught (1 FAIL) | FAIL r13 bare label "latest start": issued it, so that it stops working). **latest start** = 18:04 U
+MUT M07 refusal limit paired with 18:04/23:34
+   mine: caught label | program refusal limit paired with 18:04 UTC = 23:34 IST
+   verify13: caught (1 FAIL) | FAIL r13 "program refusal limit" followed by time 18:04
+MUT M08 latest start we plan paired with 18:14/23:44 (E-12)
+   mine: caught label | latest start we plan paired with 18:14 UTC = 23:44 IST
+   verify13: caught (1 FAIL) | FAIL r13 "latest start we plan" followed by time 18:14
+MUT M09 label "program" dropped: "The program refusal limit is a different" (E-12)
+   mine: caught label | refusal limit without "program": art for Wed 18 Nov is much earlier. The refusal limit is 
+   verify13: caught (1 FAIL) | FAIL r13 E-12 lacks the two labels
+MUT M10 key end 18:29Z in E-48 part 3h
+   mine: NOT CAUGHT
+   verify13: NOT CAUGHT
+MUT M11 key end 18:29Z in E-55 first sentence
+   mine: ANCHOR-ERROR ValueError('substring not found')
+   verify13: 
+MUT M12 missing not-looking step: owner does not wait for `not looking` (E-09)
+   mine: caught rowcontent | E-09 NEW lacks (not-looking step): 'wait for its written reply `not looking`'
+   verify13: NOT CAUGHT
+MUT M13 route A only (E-48 route B text and recommendation removed)
+   mine: caught content,rowcontent | E-48/E-55/E-57 lack E-48 route B
+   verify13: caught (2 FAIL) | FAIL r13 E-48 lacks Route B
+MUT M14 shred path without the no-.. rule (E-48 3f)
+   mine: caught rowcontent,shred | E-48 NEW block has shred -u without the no-'..' path rule
+   verify13: caught (1 FAIL) | FAIL r13 E-48 lacks contains no `..`
+MUT M15 count 45 vs 44 in header
+   mine: caught counts | header 45/12 vs computed 44/12
+   verify13: caught (1 FAIL) | FAIL status counts in text differ
+MUT M16 count Hold 13 in header
+   mine: caught counts | header 44/13 vs computed 44/12
+   verify13: caught (1 FAIL) | FAIL status counts in text differ
+MUT M17 Apply-now id list drops E-58
+   mine: caught counts | Apply now id list in header differs from rows
+   verify13: caught (1 FAIL) | FAIL apply-now id list
+MUT M18 duplicate id: E-20 header renamed E-19
+   mine: caught counts,ids-order,ids-unique | duplicate ids ['E-19']
+   verify13: caught (4 FAIL) | FAIL ids differ {'E-20'}
+MUT M19 ids out of order: E-21 and E-22 swapped
+   mine: caught counts,ids-order | ids differ from E-01..E-58 without E-10,E-35: [] (order)
+   verify13: caught (5 FAIL) | FAIL ids differ set()
+MUT M20 OLD text first character changed (E-14)
+   mine: caught old | E-14 count 0
+   verify13: caught (3 FAIL) | FAIL E-14 old count 0
+MUT M21 stated line wrong: E-14 line 107 -> 108
+   mine: caught old | E-14 found at line 107 stated [108]
+   verify13: caught (2 FAIL) | FAIL E-14 old on line [107] stated [108]
+MUT M22 weekday wrong: Mon 23 Nov 2026 -> Tue (E-48)
+   mine: caught weekday | Tue 23 Nov 2026 is really Mon
+   verify13: NOT CAUGHT
+MUT M23 weekday wrong: Wed 18 Nov 2026 -> Thu (E-12)
+   mine: caught weekday | Thu 18 Nov 2026 is really Wed
+   verify13: NOT CAUGHT
+MUT M24 same phrase two meanings: E-16 clean-up trigger `no more takes` -> `cut accepted`
+   mine: caught rowcontent | E-16 NEW lacks (clean-up trigger): 'only after you have written `no more takes`'
+   verify13: caught (1 FAIL) | FAIL r13 E-16 trigger
+MUT M25 phrase changed: E-58 `key revoked` -> `key kept` (first)
+   mine: caught phrase | E-58 uses old phrase `key kept`
+   verify13: caught (1 FAIL) | FAIL r12 E-58 conditional row
+MUT M26 internal code E-nn in owner text (E-48)
+   mine: caught codes | E-48 owner NEW text has E-nn: 'WHATEVER you answer (see E-12) to any questi'
+   verify13: caught (1 FAIL) | FAIL E-48 owner NEW text contains E-nn
+MUT M27 internal code ND in owner text (E-09)
+   mine: caught codes | E-09 owner NEW text has ND: ' write to the assistant (ND4) `please stop '
+   verify13: caught (1 FAIL) | FAIL E-09 owner NEW text contains ND
+MUT M28 internal code R-number in owner text (E-12)
+   mine: caught codes | E-12 owner NEW text has R-number: 'e program refusal limit (R7) is a differen'
+   verify13: caught (1 FAIL) | FAIL E-12 owner NEW text contains R-rule
+MUT M29 internal code Q-number in owner text (E-12)
+   mine: caught codes | E-12 owner NEW text has Q-number: 'e program refusal limit (Q25) is a differen'
+   verify13: NOT CAUGHT
+MUT M30 internal code L-id in owner text (E-16)
+   mine: caught codes | E-16 owner NEW text has L-id: 'more takes` in the chat (L-23NOV) (in route B o'
+   verify13: NOT CAUGHT
+MUT M31 unpaired UTC time (E-48 3h)
+   mine: caught ist-unpaired | E-48 NEW has UTC time without IST: 'h. Revoke the key, ALWAYS, by 18:19 UTC on Mon 23 Nov 
+   verify13: caught (1 FAIL) | FAIL E-48 UTC time without IST: 'h. Revoke the key, ALWAYS, by 18:19 UTC on Mon 23 Nov 2026 '
+MUT M32 key kept alive: E-12 bullet "you revoke ... anyway" -> "you may keep"
+   mine: NOT CAUGHT
+   verify13: caught (1 FAIL) | FAIL r13 E-12 lacks you revoke the secret key for the model anyway
+MUT M33 HOLD label removed from E-13 block
+   mine: NOT CAUGHT
+   verify13: caught (6 FAIL) | FAIL hold row NEW without label E-13
+MUT M34 weekday wrong in text: Wed 18 Nov -> Tue 18 Nov (first, header region)
+   mine: caught weekday | Tue 18 Nov is really Wed
+   verify13: NOT CAUGHT
+MUT M35 E-48 "WHATEVER you answer" weakened to a conditional
+   mine: caught rowcontent | E-48 NEW lacks (routes, deadline, shred rule): 'WHATEVER you answer'
+   verify13: caught (1 FAIL) | FAIL r13 E-48 lacks WHATEVER you answer
+MUT M36 index row mismatch: E-14 index line 107 -> 108
+   mine: NOT CAUGHT
+   verify13: caught (1 FAIL) | FAIL index mismatch E-14 ('OWNER-STEPS-realrun-v3.md', '108', 'Apply now', 'UNCLEAR WORD') vs OWNER-
+MUT M37 old single label "latest start" (no "we plan") in E-48/E-55 area: E-55 first sentence
+   mine: caught label | old single label "latest start" without "we plan": t states the planned start time and the
+   verify13: caught (1 FAIL) | FAIL r13 bare label "latest start": t states the planned start time and the latest start. The latest
+MUT M38 banned vendor string appended (IN MEMORY ONLY, never written)
+   mine: caught banned | 1 banned strings present (not printed)
+   verify13: not run (file would hold banned/secret-shaped text)
+MUT M39 secret-shaped string built from parts appended (IN MEMORY ONLY)
+   mine: caught secret | secret-shaped string matches /AKIA[0-9A-Z]{16}/ (len 20)
+   verify13: not run (file would hold banned/secret-shaped text)
+TOTAL 39 mine caught 34 verify13 caught 29 of 37 run
