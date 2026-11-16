@@ -80,7 +80,6 @@ s#(://)[^:/@[:space:]]{4,}@#\1<masked>@#g
 s#((\\/){2}[^:/@\\[:space:]]*:)[^[:space:]]*@#\1<masked>@#g
 s#((\\/){2})[^:/@\\[:space:]]{4,}@#\1<masked>@#g
 s#(^|[[:space:]"'=(])([A-Za-z0-9._-]+:)[^[:space:]@/:"']+@([A-Za-z0-9-]+)#\1\2<masked>@\3#g
-s#(Bearer)[[:space:]]+[^[:space:]<"',;)]{4,}#\1 <masked>#Ig
 s#(Basic)[[:space:]]+[A-Za-z0-9+/=]{16,}#\1 <masked>#Ig
 s/((authorization|proxy-authorization)["']?[[:space:]]*:[[:space:]]*[A-Za-z][A-Za-z0-9-]*[[:space:]]+)[^[:space:]"'<]+/\1<masked>/Ig
 s/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_.-]+/<masked>/g
