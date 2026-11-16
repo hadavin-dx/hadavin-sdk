@@ -20,3 +20,6 @@ Status: resolved (round 1 of max 2). Date 2026-11-16. Findings: item7-review-rou
 Also applied from C: tick.py:323 writes last_ok_at per step (dead-man check reads a named step); gate.py:59 cite for R-06.
 Counts: accepted 21, contested 0, escalated 0, declined 0. Remaining: nothing Blocker or Major open from this round. A second round would only be needed for a Blocker or Major; none remains by my own reading, but a fresh reviewer has not confirmed it (the round cap is 2; I have used 1).
 Not verified: lane parts I-VII were read by neither reviewer; item3 readers' findings are static.
+
+## Round 2 (fresh design reviewer a26d006cae6a913b1): 0 Blocker, 4 Major, 3 Nit; all applied, no third fresh review (round cap 2)
+M1 9h scope contradiction (700-890 partly read by reader 4; "now READ" removed). M2 R-07 rated Nit by 9h's own rule; totals now 3/36/124 = 163. M3 plan: C-02 into fix 3, X-15 into live-not-scheduled, R-05 into step 5. M4 item2-rerating.md stale D3-03 and X-15 lines corrected. Nits: line 2 and 72 stale text, line 7 pointer, Route vs Config, item4 row 10 verdict word. These Majors were text fixes made by me after round 2 and are NOT re-checked by a fresh reviewer; saying so.
