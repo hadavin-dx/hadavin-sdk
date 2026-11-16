@@ -1,1 +1,5 @@
 == T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+evidence-r7/t76-85-derived.sh: line 50: kill: (30769) - No such process
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/dev7/s6/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, b
+  FAIL: T76a symbolic link on the way to the target at --restore: exit 3 (got 0), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
