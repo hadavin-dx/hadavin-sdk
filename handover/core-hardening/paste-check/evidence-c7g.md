@@ -612,3 +612,28 @@ acc5-cases.sh 0 hits
 REPORT-repin-v6.md 0 hits
 checkpoint-v6.md 0 hits
 evidence-c7g.md 0 hits
+
+## 13 Round-4 fix pass (2026-11-16; findings review-c3b-v6-readiness-r4.md M1-M5 and review-c3b-v6-facts-r4.md minor). Linux container only (kernel 6.18), plain bash and dash, stand-in folders, stand-in git repositories, stand-in processes. Nothing ran in Git Bash, WSL or PowerShell; `cygpath` does not exist here and was replaced by a shell function that prints a fixed Windows path.
+### 13.1 apply chain on a fresh scratch copy (patch file NOT changed in this pass)
+input plan sha256 prefix 67a0a195537de875; patch -p1 plan-v5-fixes.patch rc=0; patch -p1 plan-v5-repin-v6.patch rc=0
+counts (<FINAL[-] / LEAD-FILL [0-9] / HEAD_PIN control / patch marker): 24 10 2 1
+marker lines (real grep -n -o on the patched scratch plan): 2 3 4 125 258 275 433 434 585 586 ; 17 markers (unchanged from section 12.6)
+patch sha256 (unchanged): 8a83abaa5c10db10ec84adabc82a855b087ff67286a44cec1611b812c90011d2
+### 13.2 syntax of every bash block of the new LEAD-CHECKLIST-v5.md (24 blocks): bash -n rc 0 for all, dash -n rc 0 for all (no output)
+### 13.3 facts-r4 minor: the early R2 branch "pid gone but N group processes left" (patch line 60), block extracted from the patched plan (11 lines, bash -n and dash -n rc 0)
+case: leader (own session) forks a child that ignores TERM, leader exits and is collected by the test, then `bash R2.sh <leader pid> take`
+```
+OUT: R2: pid 18264 is gone but 1 process(es) of its group are left: STOP, nothing sent (the environ of the leader cannot be checked), tell the lead | rc 1
+group members before cleanup: ['18265']
+```
+The test then ended its own child (pkill on that group; the child was gone afterwards). Nothing was sent by R2 (the block prints STOP before any signal). Earlier section 7 had the same case (D, D2) only for the v6 block before the round-3 changes; this is the run on the final block.
+### 13.4 new and changed checklist commands, run in scratch (paths swapped with sed; the tested text is the text extracted from the file)
+A8 (M4): fresh -> `copied`; second run -> `already there: STOP. Next: run cmp ...` (full message printed); `cmp` on an untouched copy prints nothing; on an edited copy prints `differ/EOF`; after `mv "$PF" "$PF.old"` A8 prints `copied` and both files exist.
+A9 (M2, new): stub cygpath = the plan's guess path -> `string (1) found: 1 (must be 1)` and `strings (2) and (3) found: 2 (must be 2)`; stub = a different path (D:\x\plan.md) -> 0 and 0 (the lead must edit line 3 of PF). The plan has exactly these three path strings (grep -o on the patched plan: one Windows form, two `PF=...;`); only the Windows form is read by the runner.
+C6 (minor, new ready block, with a stand-in git repo whose `n8n_kill.py` gains `sys.exit(3)`, the old head replaced for `eec6ba4`): known case -> `ACCEPT`, then the `== n8n_kill.py` part with `+    sys.exit(3)`; unknown case (shallow clone without the old commit, old text read from a second repo) -> `ACCEPT`, same part; empty `PIN` -> `STOP (block missing)` and an empty part (out.txt holds `PIN empty: STOP`).
+C9 (M4): file with no final line end -> `(the last line of PROGRESS.md had no line end: one was added)`, last two lines printed, bytes checked with od (the line end sits between the old line and the new line, new line ends with LF); second run -> `a LEAD-GO line is already there: STOP`; no folder or file yet -> the line is written.
+D1 (M4, new command): `PID=` empty -> `PID must be digits: STOP`; `PID=12x` -> same; `PID=432` when the log has `NEED-LEAD R2 pid=4321` (no glue to a longer pid) -> `no NEED-LEAD R2 line for pid 432 ... STOP`; `PID=4321` with a NEED-LEAD last line that has no line end -> line end added, `LEAD-YES R2 pid=4321 <time>` appended (od shows LF on both lines).
+D2 (M5): the awk command on a log with blocks `== P-3b`, `== P-4b` (two HIT lines and exit=0), `== P-5` prints exactly the P-4b block; on a log whose last block is `== P-4b` it prints only that last block; the cmdline read of a process started as `exec -a n8n-stand-in sleep 3` prints `n8n-stand-in 3`.
+### 13.5 not tested (honest list)
+The D2 steps in a real WSL shell (`/proc` there), a real hit, the stand-in under WSL, `cygpath -w` in Git for Windows, `less` in A-C2b, the Git Bash `tail -c 1` behaviour with CRLF files (a PROGRESS.md with CRLF line ends would pass the line-end guard, because its last byte is LF; the added LEAD line has LF only), `patch` in Git Bash. The checklist is still a text for a person; no single run from A1 to D2 was made.
+### 13.6 banned-word scan (list read from tests/test_no_reference_material.py; words not printed): LEAD-CHECKLIST-v5.md 0, LEAD-FILL-list-v5.md 0, plan-v5-repin-v6.patch 0; no CR, no non-ASCII byte in the checklist
