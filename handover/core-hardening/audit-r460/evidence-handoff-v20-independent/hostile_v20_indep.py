@@ -39,6 +39,17 @@ def verdict(name, text):
     except Exception as e:  # a crash of the guard is itself a result
         return f"GUARD-CRASH({type(e).__name__})", [repr(e)[:120]]
 
+def grant_fns(db):
+    """what the start-up grant step does (author's prototype apply_function_grants), limited to the functions that exist in this database"""
+    try:
+        mgx = psycopg.connect(dsn("migr17", db), autocommit=True)
+        have = {r[0] for r in mgx.execute("SELECT proname FROM pg_proc WHERE pronamespace = 'public'::regnamespace")}
+        pol = {k: v for k, v in au.FUNCTION_POLICY.items() if k.split("(")[0] in have}
+        au.apply_function_grants(mgx, roles={"runtime": "rt17", "operator": "op17"}, policy=pol)
+    except Exception as e:
+        return f"APPLIED, but the function-grant step failed {type(e).__name__}: {str(e).splitlines()[0][:80]}"
+    return None
+
 def apply_files(db, db2_text, db3_text):
     """fresh database owned by the migration role; real 0001-0005, then DB-2 and DB-3 texts (None = not applied). Returns ('ok'|'REJECTED ...', tmp)."""
     admin.execute(sql.SQL("CREATE DATABASE {} OWNER migr17").format(sql.Identifier(db)))
@@ -61,6 +72,8 @@ def apply_files(db, db2_text, db3_text):
         for _ in range(2): m.migrate(dsn("migr17", db), runtime_role="rt17")
     except Exception as e:
         return f"APPLIED, but re-run of migrate() failed {type(e).__name__}: {str(e).splitlines()[0][:80]}", tmp
+    r = grant_fns(db)
+    if r: return r, tmp
     return "ok", tmp
 
 def structure(c):
@@ -74,17 +87,17 @@ def structure(c):
      "owner_acl": q("SELECT relname, pg_get_userbyid(relowner), relacl::text FROM pg_class WHERE relname IN ('spend','spend_month','kill_switch') ORDER BY 1"),
     }
 def data(c):
-    return (c.execute("SELECT agent_id, day, usd, open_usd FROM spend ORDER BY 1,2").fetchall(), c.execute("SELECT agent_id, month, usd, open_usd FROM spend_month ORDER BY 1,2").fetchall(),
+    return (c.execute("SELECT agent_id, day, usd, 0 FROM spend ORDER BY 1,2").fetchall(), c.execute("SELECT agent_id, month, usd, 0 FROM spend_month ORDER BY 1,2").fetchall(),
             c.execute('SELECT "on" FROM kill_switch ORDER BY id').fetchall())
 def seed(c):
-    c.execute("INSERT INTO spend (agent_id, day, usd, open_usd) VALUES ('seed', %s, 100, 0)", (D,))
-    c.execute("INSERT INTO spend_month (agent_id, month, usd, open_usd) VALUES ('seed', %s, 100, 0)", (date(2026, 11, 1),))
+    c.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('seed', %s, 100)", (D,))
+    c.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('seed', %s, 100)", (date(2026, 11, 1),))
     c.execute('INSERT INTO kill_switch (id, schema_version, "on", "by", ts) VALUES (1, 1, true, \'seed\', now()) ON CONFLICT (id) DO UPDATE SET "on" = true')
     c.execute("CREATE TABLE IF NOT EXISTS secret_t (v text)"); c.execute("INSERT INTO secret_t VALUES (%s)", (MARK,))
 
 # genuine reference structure
 ok, _ = apply_files("ref_genuine", T2, T3); assert ok == "ok", ok
-REF = structure(psycopg.connect(dsn("migr17", "ref_genuine"), autocommit=True))
+_mgref = psycopg.connect(dsn("migr17", "ref_genuine"), autocommit=True); seed(_mgref); REF = structure(_mgref)
 gv, gp = verdict(DB3N, T3); g2v, _ = verdict(DB2N, T2)
 print(f"GENUINE-CHECK v20 DB-3 guard verdict {gv}; DB-2 guard verdict {g2v}; genuine DBs applied ok", flush=True)
 
@@ -224,11 +237,21 @@ add("H74", "DB-2 file", "spend_log_decrease made SECURITY INVOKER-looking: attri
 
 SMOKE = bool(os.environ.get('HV_SMOKE'))
 if SMOKE: F = F[:6] + [x for x in F if x[0] in ('H23', 'H72')]
+_rep67 = ("CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$');\nALTER TABLE spend ADD CONSTRAINT spend_day_window", "CHECK (true);\nALTER TABLE spend ADD CONSTRAINT spend_day_window")
+def both_tables(t):
+    t = t.replace(_rep67[0], _rep67[1], 1)
+    return t.replace("ADD CONSTRAINT spend_month_agent_len CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$');", "ADD CONSTRAINT spend_month_agent_len CHECK (true);", 1)
+add("H75", "weakened check", "agent-id CHECK replaced by CHECK (true) on BOTH spend and spend_month (so a reserve with a space in the id works)", None, ["SELECT * FROM spend_reserve('a b', '2026-11-16', 1)", "SELECT * FROM spend_reserve(E'a\\nb', '2026-11-16', 1)"], replace=("__BOTH_AGENT__", ""))
+add("H76", "weakened check", "ceiling 1e12 raised to 1e30 on BOTH tables (a reserve of 1e20 is accepted)", None, ["SELECT * FROM spend_reserve('big', '2026-11-16', 1e20)"], replace=("__BOTH_CEIL__", ""))
+add("H77", "DB-2 file", "audit_log_append_only made a no-op (RETURN NULL) so the logs can be edited", None, ["SELECT 1"], target="db2", replace=("  RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = '42501';\nEND $f$;", "  RETURN OLD;\nEND $f$;"))
+add("H78", "pinned semantic", "kill_switch_engage turned around: sets \"on\" = false (same kinds, same table, same signature)", None, ["SELECT kill_switch_engage()"], replace=("ON CONFLICT (id) DO UPDATE SET \"on\" = true,", "ON CONFLICT (id) DO UPDATE SET \"on\" = false,"))
 for cid, fam, what, extra, probes, target, rep in F:
     base = T3 if target == "db3" else T2
     if rep is not None:
         old, new = rep
         if old == "__APPEND__": text = base + "\n" + extra
+        elif old == "__BOTH_AGENT__": text = both_tables(base)
+        elif old == "__BOTH_CEIL__": text = base.replace("usd < 1000000000000::numeric", "usd < 1e30::numeric")
         else:
             assert old in base, f"{cid}: replace anchor not found"
             text = base.replace(old, new, 1)
@@ -242,6 +265,7 @@ for cid, fam, what, extra, probes, target, rep in F:
 dbd = "d_genuine"; ok, _ = apply_files(dbd, T2, T3); assert ok == "ok", ok
 mgd = psycopg.connect(dsn("migr17", dbd), autocommit=True); rtd = psycopg.connect(dsn("rt17", dbd), autocommit=True)
 def left(agent):
+    if agent is not None and '\x00' in agent: return 'no row can exist (NUL cannot be stored in text)'
     a = mgd.execute("SELECT count(*), coalesce(sum(usd),0), coalesce(sum(open_usd),0) FROM spend WHERE agent_id = %s", (agent,)).fetchone()
     b = mgd.execute("SELECT count(*), coalesce(sum(usd),0), coalesce(sum(open_usd),0) FROM spend_month WHERE agent_id = %s", (agent,)).fetchone()
     return f"day rows={a[0]} usd={a[1]} open={a[2]}; month rows={b[0]} usd={b[1]} open={b[2]}"
@@ -312,7 +336,7 @@ dbc = "d_cutover"; ok2, tmpc = apply_files(dbc, T2, None); assert ok2 == "ok", o
 mgc = psycopg.connect(dsn("migr17", dbc), autocommit=True)
 mgc.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('cut', %s, 5)", (D,)); mgc.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('cut', %s, 5)", (date(2026, 11, 1),))
 (tmpc / "0007_guard.sql").write_text(T3); m.GRANTS.update(ORIG); m.migrate(dsn("migr17", dbc), runtime_role="rt17"); m.GRANTS.update(SEL); m.migrate(dsn("migr17", dbc), runtime_role="rt17")
-rtc = psycopg.connect(dsn("rt17", dbc), autocommit=True)
+grant_fns(dbc); rtc = psycopg.connect(dsn("rt17", dbc), autocommit=True)
 try: r = rtc.execute(SET, ("cut", D, 5, 0)).fetchall(); res = "ok " + repr([[str(x) for x in row] for row in r])
 except psycopg.Error as e: res = f"error {e.sqlstate}"
 lc = mgc.execute("SELECT usd, open_usd FROM spend WHERE agent_id='cut'").fetchone(); lm = mgc.execute("SELECT usd, open_usd FROM spend_month WHERE agent_id='cut'").fetchone()

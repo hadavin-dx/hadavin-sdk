@@ -1,0 +1,17 @@
+H1 card A: IST 23:59 -> 23:58 | edit applied=True | FAIL lines=2 | CAUGHT
+     FAIL C01 OWNER-CARD-v34-A.md differs from what its source and facts build
+     FAIL C04 OWNER-SHEET-v34-A.md bad pair 18:29 UTC = 23:58 IST
+H2 helper: 18:19 -> 18:20 (one place) | edit applied=True | FAIL lines=2 | CAUGHT
+     FAIL C01 OWNER-HELPER-v34.md differs from what its source and facts build
+     FAIL C249 the helper page lacks 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = '
+H3 appendix B: 18:04 -> 18:05 UTC | edit applied=True | FAIL lines=3 | CAUGHT
+     FAIL C01 OWNER-APPENDIX-v34-B.md differs from what its source and facts build
+     FAIL C04 OWNER-SHEET-v34-B.md bad pair 18:05 UTC = 23:34 IST
+     FAIL C210 B lacks '18:04 UTC = 23:34 IST'
+   deleted line: Dated Mon 16 Nov 2026. This is **sheet A** (the letter is in the heading and footer of eve
+H4 sheet A: delete first line naming Card/Appendix | edit applied=True | FAIL lines=4 | CAUGHT
+     FAIL C01 OWNER-SHEET-v34-A.md differs from what its source and facts build
+     FAIL C14d A lacks 'Text between backticks is typed without the backticks'
+     FAIL C147 A lacks '5.1 to 5.8 (and 6.1, which 5.7 needs) may be done on earlier days, 5.9'
+H5 film page: delete first line naming another page | edit applied=False | FAIL lines=0 | MISSED
+H6 sheet B: ceiling 3->4 (extra) | edit applied=False | FAIL lines=0 | MISSED

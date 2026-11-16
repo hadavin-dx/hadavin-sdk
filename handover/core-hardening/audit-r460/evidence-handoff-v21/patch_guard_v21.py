@@ -105,5 +105,13 @@ rep('                    trig_created[tn] = idx\n', '                    trig_cr
 rep('''            elif tn in trig_dropped and trig_created[tn] < trig_dropped[tn]: problems.append(f"{name}: trigger {tn} is dropped after its last CREATE (the table would be left without it)")''',
  '''            elif tn in trig_dropped and trig_created[tn] < trig_dropped[tn]: problems.append(f"{name}: trigger {tn} is dropped after its last CREATE (the table would be left without it)")
             elif tn in trig_drop_tbl and trig_drop_tbl[tn] != trig_tbl.get(tn): problems.append(f"{name}: DROP TRIGGER {tn} ON {trig_drop_tbl[tn]} names another table than the CREATE TRIGGER ({trig_tbl.get(tn)}): it would drop a same-named trigger of a different table")''')
+# v21: two edits made after the first build (found by control W18 and by mutant W04) and the security-review minor m8 (EXECUTE string: a forbidden statement after a ';' inside the string)
+rep('    if w in ("FILTER", "OVER"): return prev == ("punct", ")") or w == "OVER"', '    if w in ("FILTER", "OVER"): return prev == ("punct", ")")')
+rep('        if _syntax_paren(toks, k): continue\n', '        if _syntax_paren(toks, k): continue\n        if k and _is(toks[k - 1], "AS"): continue   # v21: `FROM t AS d (a, b)` is an alias with a column list, and `AS type(n)` a type modifier, not a call\n')
+rep('re.match(r"\\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\\b", _sql_of(tk), re.I | re.A)', 're.search(r"(?:^|;)\\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\\b", _sql_of(tk), re.I | re.A)')
+# v21 security m11 (split_statements depth): `AS case` and `AS end` are column labels (any word may follow AS), not the start or end of a CASE expression or of the body
+rep('        elif atomic and _is(tk, "CASE"): depth += 1\n        elif atomic and _is(tk, "END"):\n', '        elif atomic and _is(tk, "CASE") and not (k and _is(toks[k - 1], "AS")): depth += 1\n        elif atomic and _is(tk, "END") and not (k and _is(toks[k - 1], "AS")):\n')
+# v21 security m11 (invoker functions rested on the pin only): the call allow-list now also applies to the body of an INVOKER function (a `set_config('role', ...)` in a trigger of the caller's session changes the caller's role)
+rep('    if definer: out += _call_problems(toks, fn)', '    out += _call_problems(toks, fn)')
 open("secdef_guard_v21.py", "w").write(src)
 print("written", len(src))

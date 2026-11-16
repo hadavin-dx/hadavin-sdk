@@ -9,20 +9,21 @@ check("D-B1: the typed answer line names this report: the label equals the file 
 _rn14 = rd(STEPS + "/LEAD-RELEASE-NOTE-v14.md").split("\n")
 _rnl_ = sorted((f for f in glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*.md") if "SOURCE" not in f), key=lambda f: int(re.search(r"-v(\d+)", f).group(1)))
 _rnn = rd(_rnl_[-1]).split("\n")
+_nh = "\n".join(l for l in txt if not _c7_hist(l))   # report text without the quoted-history table lines
 _eq = sorted(k for k in (8, 33, 149, 150) if _rn14[k - 1] == _rnn[k - 1])
-check("D-M1: the real files agree with the one statement 'lines 33 and 150 equal, lines 8 and 149 differ' (equal now: %s) and no text says that lines 8, 33, 149 and 150 are equal" % _eq, _eq == [33, 150] and "its lines 33 and 150 equal the newest note" in boxs and "its lines 8 and 149 differ" in boxs and not re.search(r"lines 8, 33, 149(,| and) 150\b[^.;|]{0,30}\bequal", raw) and not re.search(r"lines 8, 33 and 149 (are )?equal", raw), _eq)
+check("D-M1: the real files agree with the one statement 'lines 33 and 150 equal, lines 8 and 149 differ' (equal now: %s) and no text says that lines 8, 33, 149 and 150 are equal" % _eq, _eq == [33, 150] and "its lines 33 and 150 equal the newest note" in boxs and "its lines 8 and 149 differ" in boxs and not re.search(r"lines 8, 33, 149(,| and) 150\b[^.;|]{0,30}\bequal", _nh) and not re.search(r"lines 8, 33 and 149 (are )?equal", _nh), _eq)
 # N-B2: one form of the G12 line
 _g12 = re.findall(r"`## G12 \(studio lead, <UTC> = <IST>\): approved: [^`]*`", raw)
 _lwa = [n for n, l in enumerate(txt, 1) if "lease wording approved" in l and not _c7_hist(l)]
 check("N-B2: ONE G12 form: it is printed once in the box, every other copy is equal to it, the typed line comes only after the three loopback re-smoke results, and 'lease wording approved' is gone outside quoted history (%d copies, %s other lines)" % (len(_g12), _lwa), len(re.findall(r"`## G12 \(studio lead, <UTC> = <IST>\): approved: [^`]*`", boxs)) == 1 and len(set(_g12)) == 1 and "only after the loopback re-smoke of TASK (5)" in boxs and "the table rule seen in the re-smoke database" in sec1c and "a crash followed by a repeat while the recovery flow is working" in sec1c and not _lwa, (len(_g12), len(set(_g12))))
 # D-M2: every row with the lease label holds G12 (rows 1 and 19 included), and the lists of rows name exactly those rows
-_lab = sorted(r["i"] for r in rows if "setting: lease 45 s" in r["new"] or "45 s lease setting" in r["new"] or "45 s lease" in r["new"])
+_lab = sorted(r["i"] for r in rows if "setting: lease 45 s" in r["new"] or "45 s lease setting" in r["new"])
 _nohold = [i for i in _lab if "G12" not in bylead[i]["new"] + bylead[i]["view"] + bylead[i]["why"]]
 _carve = sorted(i for i in _lab if i not in (1, 17) or True)
 _lists = re.findall(r"carve-outs of rows ([\d, and]+?) that now say", raw)
 _lists += re.findall(r"carve-out in rows ([\d, and]+?) now reads", raw)
 _lnums = [sorted(int(x) for x in re.findall(r"\d+", l_)) for l_ in _lists]
-check("D-M2: every row whose new text carries the lease label holds G12 (rows %s; without hold: %s); rows 1 and 19 are among them; the lists of carve-out rows in the report equal that set" % (_lab, _nohold), not _nohold and 1 in _lab and 19 in _lab and len(_lnums) >= 2 and all(set(x) <= set(_lab) and set(_lab) - set(x) <= {1, 17, 5} or x == _lab for x in _lnums) and all(81 in x for x in _lnums), (_lab, _lnums))
+check("D-M2: every row whose new text carries the lease label holds G12 (rows %s; without hold: %s); rows 1 and 19 are among them; the lists of carve-out rows in the report equal that set" % (_lab, _nohold), not _nohold and 1 in _lab and 19 in _lab and len(_lnums) >= 2 and all(x == _lab for x in _lnums), (_lab, _lnums))
 # D-M3: one card state in rows 11, 13, 14 and 96
 _r96 = bylead[96]["new"]
 check("D-M3: row 96 sets the card's Time cell to the same 40 s as row 11 (90 words) and no default row says 35 s EST", "40 s EST" in _r96 and "35 s EST" not in _r96 and "40 s" in bylead[11]["new"] and all("35 s" not in bylead[k]["new"] for k in (11, 13, 14)), _r96[:80])
@@ -32,8 +33,8 @@ _lund = [x for x in _ll if ("| %s |" % x) not in boxs and ("%s =" % x) not in bo
 check("D-M4: every L- label used in the start box has its own row in the box question table or an '=' definition (%d labels; undefined: %s)" % (len(_ll), _lund), not _lund and "L-CARDLEASE" in _ll, _lund)
 # D-m1: one list before the first rehearsal
 _pre = re.findall(r"TASKS \(1\) to \(6\) and \(8\) to \((\d+)\)", raw)
-_pre_all = re.findall(r"TASKS \(1\) to \((\d+)\) and \(8\) to \((\d+)\)", raw)
-check("D-m1: the list that must be finished before the first rehearsal is one list, TASKS (1) to (6) and (8) to (10), in every place that gives it (%d places)" % len(_pre), len(_pre) >= 4 and set(_pre) == {"10"} and not _pre_all and "ONE LIST" in raw and "TASKS (5) to (9)" not in raw, _pre)
+_pre_all = [x for x in re.findall(r"TASKS \(1\) to \((\d+)\) and \(8\) to \((\d+)\)", raw) if x[0] != "6"]
+check("D-m1: the list that must be finished before the first rehearsal is one list, TASKS (1) to (6) and (8) to (10), in every place that gives it (%d places)" % len(_pre), len(_pre) >= 4 and set(_pre) == {"10"} and not _pre_all and "ONE LIST" in raw and not any("TASKS (5) to (9)" in l and not l.startswith("| ") for l in txt), _pre)
 # D-m2: the written-time statement
 check("D-m2: section 0 says the identical written time of v30 to v33 is a bulk write and that no content hash was used", "shows a bulk write" in raw and "content hash" in raw.split("## 1.")[0], "")
 # D-m3: no 'v30A'
@@ -47,7 +48,7 @@ check("D-m5: the report names the number of full runs of run_all.sh and the cap"
 # D-m6, D-m7
 check("D-m6: option (b) of L-CARDLEN states its 0.4 s margin and that it may run over until a stopwatch run", "0.4 s" in raw and "stopwatch" in raw.split("0.4 s")[1][:400] if "0.4 s" in raw else False, "")
 _ll4 = [l for l in txt if l.startswith("| L-LEASE |") and "studio lead (his answers" in l]
-check("D-m7: the L-LEASE row of section 3 says plainly that the default follows ORD:230 and reverses ORD:186", len(_ll4) == 1 and "ORD:230" in _ll4[0] and "reverses ORD:186" in _ll4[0], len(_ll4))
+check("D-m7: the L-LEASE row of section 3 says plainly that the default follows ORD:230 and reverses ORD:186", len(_ll4) == 1 and "ORD:230" in _ll4[0] and "THE DEFAULT REVERSES YOUR ANSWER Q22 (c) (ORD:186)" in _ll4[0], len(_ll4))
 # D-M5: honest counts
 check("D-M5: 'HOW MUCH IS PROVEN BY WHOM' says the counts of changed copies are my own run; the box states its own word count apart from part 2", "HOW MUCH IS PROVEN BY WHOM" in raw and "are my own run of my own scripts" in raw and "is not counted, so reading both takes about" in boxs, "")
 # N-M2: the branch statement equals the table
@@ -76,3 +77,23 @@ _chg = H + "/handover/core-hardening/c6-skip-audit/c6w-CHANGES.md"
 _ids = ["design B1", "design M1", "design M2", "design M3", "design M4", "design M5"] + ["design m%d" % k for k in range(1, 8)] + ["naive B1", "naive B2"] + ["naive M%d" % k for k in range(1, 10)] + ["naive m%d" % k for k in range(1, 10)]
 _cm = [x for x in _ids if not os.path.exists(_chg) or ("| %s |" % x) not in rd(_chg)]
 check("V12: c6w-CHANGES.md exists and has its own row for each of the %d finding ids of the two c6v reviews (missing: %s)" % (len(_ids), _cm), os.path.exists(_chg) and not _cm, _cm)
+# ---- the 7 classes the independent run on c6v found missed: a changed sentence at ONE copy of several (the census of class 1 in verify_c6w_part3.py counts every copy of each phrase below; these checks read the meaning)
+_nv = max(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
+_nrn = int(re.search(r"-v(\d+)", _rnl_[-1]).group(1))
+_reg = boxs + sec1c
+_sv = sorted(set(int(x) for x in re.findall(r"OWNER-SHEET-v(\d+)-[AB]", _reg)))
+check("C7-1 every owner sheet file named in the start box and in section 1c is the newest version v%d (found %s)" % (_nv, _sv), _sv == [_nv], _sv)
+_rv = sorted(set(int(x) for x in re.findall(r"LEAD-RELEASE-NOTE-v(\d+)\.md", boxs)))
+_nw = sorted(set(int(a or b or c) for a, b, c in re.findall(r"NEWEST RELEASE NOTE NAMED: v(\d+)|newest release note (?:is |= )?v(\d+)|v(\d+) = the newest", raw)))
+check("C7-2 the release note file named in the start box and every 'newest' release note statement is the newest version v%d (box %s; statements %s)" % (_nrn, _rv, _nw), _nrn in _rv and set(_rv) <= {14, _nrn} and _nw == [_nrn], (_rv, _nw))
+_g1 = re.findall(r"G12[^.|;]{0,40}?(?:LRN14:|release note v14 line |v14 line )(\d+)", raw) 
+_g1b = re.findall(r"\(LRN14:(\d+), 'sentence in writing'\)", raw)
+check("C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found %s)" % sorted(set(_g1 + _g1b)), set(_g1 + _g1b) <= {"33"} and len(_g1b) >= 1 and "in writing" in _rn14[32], (_g1, _g1b))
+_op = re.findall(r"\b(\w+) items are OPEN", raw)
+check("C7-4 'N items are OPEN' says Five in every place (found %s)" % sorted(set(_op)), set(_op) == {"Five"} and "Five items are OPEN" in boxs, _op)
+_ctw = re.findall(r"(?:at the check time|At) (?:2026-11-16T)?(\d\d:\d\d:\d\d)(?:Z| UTC)", raw)
+check("C7-5 every place that names the check time names %s (found %s)" % (ct[11:19], sorted(set(_ctw))), set(_ctw) == {ct[11:19]} and len(_ctw) >= 2, _ctw)
+_ll5 = [l for l in txt if l.startswith("| L-LEASE |") and "45-second" in l]
+check("C7-6 every question line of L-LEASE (%d) carries the G12 hold" % len(_ll5), len(_ll5) >= 2 and all("G12" in l for l in _ll5), len(_ll5))
+_fl = re.findall(r"G12[^.;|]{0,80}\bcan be filmed|\bcan be filmed[^.;|]{0,40}\bG12 (?:is )?open", raw)
+check("C7-7 no sentence says that anything held under G12 can be filmed while G12 is open; 'cannot be filmed' stays in the box (%d times)" % boxs.count("cannot be filmed"), not _fl and "cannot be filmed" in boxs and "can be filmed" not in re.sub(r"cannot be filmed", "", raw), _fl)

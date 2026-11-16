@@ -2,18 +2,26 @@
  "ANSWERED BY DEFAULT": 1,
  "CHECKED": 3,
  "DONE": 14,
+ "Five items are OPEN": 2,
  "G12 OPEN": 1,
+ "G12 gate": 0,
  "G12 is approved": 26,
  "G12 is open": 0,
  "G12 open": 4,
  "I confirm": 0,
  "I do not approve it": 3,
+ "LEAD-RELEASE-NOTE-v17.md": 0,
+ "LEAD-RELEASE-NOTE-v18.md": 3,
+ "LRN14:33": 6,
  "NOT APPLIED": 106,
  "NOT FILMABLE": 6,
  "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE": 1,
  "OPEN (OWNER ONLY)": 4,
  "OWNER ONLY": 17,
  "OWNER-OPEN": 7,
+ "OWNER-SHEET-v33-A.md": 0,
+ "OWNER-SHEET-v34-A.md": 7,
+ "OWNER-SHEET-v34-B.md": 7,
  "UNVERIFIED": 33,
  "VERIFIED_not_UN": 1,
  "_card_line_copies": [
@@ -21,6 +29,11 @@
   3,
   3,
   3
+ ],
+ "_check_time_copies": [
+  7,
+  2,
+  2
  ],
  "_confirmed_cells": {
   "L-CARDLEN": "No",
@@ -31,17 +44,32 @@
   "L-SAVE": "No",
   "L-SAVEERR": "No"
  },
+ "_lease_row_G12_counts": [
+  1,
+  1,
+  1,
+  0
+ ],
  "archive_contacts 'no'": 1,
+ "can be filmed": 0,
+ "cannot be filmed": 1,
  "filmed only after your written approval": 1,
  "has NO delete call": 1,
+ "items are OPEN": 2,
  "lease sentence stays out of the public post": 3,
+ "line 33": 9,
+ "line 34": 0,
  "no delete call": 2,
  "no, never": 2,
  "nothing is applied": 4,
  "only made-up contacts of this run": 1,
  "relayed": 6,
+ "release note v14 line 33": 1,
+ "release note v17": 0,
+ "release note v18": 7,
  "the 45 s lease setting is allowed only after G12 is approved": 12,
  "to 10 files": 1,
  "twelve numbered TASKS": 1,
- "two OPEN": 1
+ "two OPEN": 1,
+ "v34 rendering A": 4
 }

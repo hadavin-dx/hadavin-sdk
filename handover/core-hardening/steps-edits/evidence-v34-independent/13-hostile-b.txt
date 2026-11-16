@@ -1,0 +1,11 @@
+H5 film page: delete pointer words "and sheet B" | edit applied=True | FAIL lines=3 | CAUGHT
+     FAIL C01 OWNER-FILM-PERSON-v34.md differs from what its source and facts build
+     FAIL C238 heading not in the verified list: OWNER-FILM-PERSON-vNN.md|# Film person page (v34): for the film person only; the same for 
+     FAIL C238 verified heading is gone: OWNER-FILM-PERSON-vNN.md|# Film person page (v34): for the film person only; the same for 
+H6 sheet B: balance USD 189.00 -> 198.00 | edit applied=True | FAIL lines=3 | CAUGHT
+     FAIL C01 OWNER-SHEET-v34-B.md differs from what its source and facts build
+     FAIL C04 OWNER-SHEET-v34-B.md unexpected amount USD 198.00
+     FAIL C48 B holds amount 198.00 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+H7 card B: deadline 18:29 -> 18:30 UTC | edit applied=True | FAIL lines=2 | CAUGHT
+     FAIL C01 OWNER-CARD-v34-B.md differs from what its source and facts build
+     FAIL C04 OWNER-SHEET-v34-B.md bad pair 18:30 UTC = 23:59 IST

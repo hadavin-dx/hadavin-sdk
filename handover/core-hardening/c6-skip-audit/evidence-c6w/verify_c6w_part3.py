@@ -7,7 +7,8 @@ _E = os.path.dirname(os.path.abspath(__file__))
 PHRASES = ["I do not approve it", "G12 OPEN", "G12 is open", "G12 open", "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "has NO delete call", "no delete call",
            "archive_contacts 'no'", "only made-up contacts of this run", "no, never", "lease sentence stays out of the public post", "filmed only after your written approval",
            "to 10 files", "twelve numbered TASKS", "two OPEN", "OPEN (OWNER ONLY)", "ANSWERED BY DEFAULT", "NOT APPLIED", "NOT FILMABLE", "OWNER ONLY", "OWNER-OPEN",
-           "the 45 s lease setting is allowed only after G12 is approved", "G12 is approved", "I confirm", "nothing is applied"]
+           "the 45 s lease setting is allowed only after G12 is approved", "G12 is approved", "I confirm", "nothing is applied",
+           "cannot be filmed", "can be filmed", "Five items are OPEN", "items are OPEN", "LRN14:33", "release note v14 line 33", "line 33", "line 34", "release note v18", "release note v17", "LEAD-RELEASE-NOTE-v18.md", "LEAD-RELEASE-NOTE-v17.md", "OWNER-SHEET-v34-A.md", "OWNER-SHEET-v33-A.md", "OWNER-SHEET-v34-B.md", "v34 rendering A", "G12 gate"]
 REGEXES = {"UNVERIFIED": r"UNVERIFIED", "VERIFIED_not_UN": r"(?<!UN)VERIFIED", "CHECKED": r"\bCHECKED\b", "DONE": r"\bDONE\b", "relayed": r"RELAYED"}
 
 def _census(s):
@@ -19,6 +20,8 @@ def _census(s):
             c = [x.strip() for x in l.strip("|").split(" | ")]
             conf[c[0]] = c[4][:12]
     d["_confirmed_cells"] = conf
+    d["_check_time_copies"] = [s.count(ct[11:19] + " UTC"), s.count(ct[11:19] + "Z"), s.count(ct)]   # the check time, in each form it is written (c6v: one copy changed was missed)
+    d["_lease_row_G12_counts"] = [l.count("G12") for l in s.split("\n") if l.startswith("| L-LEASE |")]   # the G12 hold on every L-LEASE row (c6v: removing it with the word count kept was missed)
     d["_card_line_copies"] = [s.count(q) for q in Q]   # how many times each of the four card lines is quoted whole
     return d
 

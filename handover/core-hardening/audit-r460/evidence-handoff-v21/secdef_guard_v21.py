@@ -129,8 +129,8 @@ def split_statements(toks):
     for k, tk in enumerate(toks):
         if not atomic and _is(tk, "BEGIN") and k + 1 < len(toks) and _is(toks[k + 1], "ATOMIC"):
             atomic, depth = True, 0
-        elif atomic and _is(tk, "CASE"): depth += 1
-        elif atomic and _is(tk, "END"):
+        elif atomic and _is(tk, "CASE") and not (k and _is(toks[k - 1], "AS")): depth += 1
+        elif atomic and _is(tk, "END") and not (k and _is(toks[k - 1], "AS")):
             if depth: depth -= 1
             else: atomic = False
         if tk == ("punct", ";") and not atomic:
@@ -268,7 +268,7 @@ def _body_problems(source, fn, strict=True):
     words = [tk for tk in toks if tk[0] == "word"]
     if _BODY_BAD.search(" ".join(w[1] for w in words)): p.append(f"{fn} body contains ALTER, GRANT, REVOKE, CREATE, DROP, SET ROLE or SESSION AUTHORIZATION")
     for tk in toks:
-        if tk[0] == "str" and _BODY_BAD.search(_sql_of(tk)) and re.match(r"\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\b", _sql_of(tk), re.I | re.A):
+        if tk[0] == "str" and _BODY_BAD.search(_sql_of(tk)) and re.search(r"(?:^|;)\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\b", _sql_of(tk), re.I | re.A):
             p.append(f"{fn} string starts a forbidden statement")
     if strict: p += [f"{fn} {x}" for x in _intro_problems(toks)]
     return p
@@ -342,7 +342,7 @@ def _extra_body_problems(toks, fn, definer):
             out.append(f"{fn} body has a SET that is not part of an UPDATE (SET ROLE, SET \"role\", SET session_authorization or SET search_path)")
         if _is(tk, "DO") and not (k + 1 < len(toks) and _is(toks[k + 1], "UPDATE", "NOTHING")): out.append(f"{fn} body has a DO block")
         if _is(tk, "RESET"): out.append(f"{fn} body has RESET")
-    if definer: out += _call_problems(toks, fn)
+    out += _call_problems(toks, fn)
     return out
 _STOP = {"WHERE", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "CROSS", "ON", "GROUP", "ORDER", "LIMIT", "HAVING", "RETURNING", "SET", "VALUES", "USING", "UNION", "FOR", "WINDOW", "DO", "SELECT", "LATERAL", "NATURAL"}
 def _atomic_problems(toks, fn, tables, kinds=PIN_ANY):

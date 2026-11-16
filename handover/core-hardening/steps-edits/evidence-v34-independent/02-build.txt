@@ -1,0 +1,14 @@
+OWNER-SHEET-v34-A.md 6277 words
+OWNER-CARD-v34-A.md 2211 words
+OWNER-APPENDIX-v34-A.md 5753 words
+OWNER-SHEET-v34-B.md 6078 words
+OWNER-CARD-v34-B.md 2126 words
+OWNER-APPENDIX-v34-B.md 5684 words
+OWNER-FILM-PERSON-v34.md 577 words
+OWNER-HELPER-v34.md 897 words
+LEAD-RELEASE-NOTE-v18.md 13634 words
+v34-OPEN-FOR-LEAD.md 8968 words
+
+real	0m0.048s
+user	0m0.040s
+sys	0m0.004s

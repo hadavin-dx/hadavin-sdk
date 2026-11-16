@@ -4,3 +4,6 @@ Done: all source edits (security M1, M2, minors 1 to 7; stranger B2, B3, M1, M3,
 Heavy-slot waits: mut34 run 1 slot at once (0 s wait; it started before the lead order and was stopped, then rerun in the slot: taken at once), mut34 run 2 slot at once, gap-proof waiting for a slot since 19:07 UTC (about 9 minutes so far).
 Next: gap-proof result, final accept of the pointer ledger for v34-CHANGES, final check, cleanup, hand-back.
 Blockers: none. Open: B1, M2 clock, M6 exit code (lead decisions, open list rows 116 to 120). No commit.
+
+## Final (19:28 UTC)
+Done: check-v34 0 failures; mut34 300 plants, 299 caught, 0 missed, 0 anchor-not-found; fail-proof 43 checks (13 fail on v33, 0 on v34); gap-proof v33 misses 4/15, v34 0/15. Slot waits: mut34 runs about 0 s, gap-proof about 11 min, no exit 75. No commit or push.

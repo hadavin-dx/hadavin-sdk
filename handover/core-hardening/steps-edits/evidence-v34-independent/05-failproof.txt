@@ -1,0 +1,18 @@
+checks in Part 9: 43 (C228 to C273)
+fail on built v33: 13
+  v33 fails C230 (4 line(s)); first: helper page lacks 'The owner asks you, by a call you start'
+  v33 fails C238 (24 line(s)); first: heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v33, sheet A: one filmed run
+  v33 fails C239 (16 line(s)); first: fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|a_cut|1
+  v33 fails C246 (2 line(s)); first: A lacks "the helper path ends at the owner's last-resort step"
+  v33 fails C248 (2 line(s)); first: NOTE does not list the helper page
+  v33 fails C249 (2 line(s)); first: A lacks 'so that no reminder or backstop time meets a live run key.'
+  v33 fails C267 (16 line(s)); first: helper page or source lacks 'do at once the last-resort step on your paper'
+  v33 fails C268 (16 line(s)); first: note: forbidden wording 'lease wording (G12)'
+  v33 fails C269 (8 line(s)); first: the helper page does not say when the helper paper is completed
+  v33 fails C270 (6 line(s)); first: source holds 'no such page: describe that there is no Recall page, then go' 0 times (need 1)
+  v33 fails C271 (16 line(s)); first: source: forbidden wording 'up to 20 minutes'
+  v33 fails C272 (3 line(s)); first: source holds 'sleep Never; screen off Never; lid close action' 0 times (need 1)
+  v33 fails C273 (1 line(s)); first: sheet A: five pages hold 15722 words, not lower than v33 (15722)
+do NOT fail on built v33 (cannot prove a change; reason in v34-CHANGES.md): ['C228', 'C229', 'C231', 'C232', 'C233', 'C234', 'C235', 'C236', 'C237', 'C240', 'C241', 'C242', 'C243', 'C244', 'C245', 'C247', 'C250', 'C251', 'C255', 'C256', 'C257', 'C258', 'C259', 'C260', 'C261', 'C262', 'C263', 'C264', 'C265', 'C266']
+fail on built v34: none
+v34-fail-proof: 0 problem(s)

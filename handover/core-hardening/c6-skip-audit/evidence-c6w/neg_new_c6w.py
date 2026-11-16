@@ -65,3 +65,47 @@ M["W-row96-after-row15-order"] = "\n".join(_L)
 # box over the cap by adding words (the stated count then differs from the real count)
 M["W-box-extra-words"] = _nth("## Start here: what I need from you", "## Start here: what I need from you now and also " + "word " * 40, 0)
 
+# ---- c6w class 7: the 7 classes the independent run on c6v missed (one changed copy at EVERY copy), and each defect class of the two c6v reviews restored
+_ct8 = _ctn[11:19]
+_ctn2 = _ctn[:17] + ("%02d" % ((int(_ctn[17:19]) + 1) % 60)) + "Z"
+for _n in range(0, 2):
+    M["W-C7-check-time-changed-copy%d" % _n] = _nth("at the check time " + _ct8 + " UTC", "at the check time " + _ctn2[11:19] + " UTC", _n)
+M["W-C7-check-time-Z-form-changed"] = _nth(_ct8 + "Z = ", _ctn2[11:19] + "Z = ", 0)
+for _n in range(0, 7):
+    M["W-C7-sheet-v34A-to-v33A-copy%d" % _n] = _nth("OWNER-SHEET-v34-A.md", "OWNER-SHEET-v33-A.md", _n)
+M["W-C7-Five-to-Four"] = _nth("Five items are OPEN", "Four items are OPEN", 0)
+for _n in range(0, 9):
+    M["W-C7-line33-to-34-copy%d" % _n] = _nth("line 33", "line 34", _n)
+for _n in range(0, 2):
+    M["W-C7-LRN14-33-to-34-copy%d" % _n] = _nth("LRN14:33", "LRN14:34", _n)
+for _n in range(0, 7):
+    M["W-C7-v18-to-v17-copy%d" % _n] = _nth("release note v18", "release note v17", _n)
+for _n in range(0, 3):
+    M["W-C7-v18-file-to-v17-copy%d" % _n] = _nth("LEAD-RELEASE-NOTE-v18.md", "LEAD-RELEASE-NOTE-v17.md", _n)
+_ll_idx = [k for k, l in enumerate(rep.split("\n")) if l.startswith("| L-LEASE |") and "45-second" in l]
+for _n, _k in enumerate(_ll_idx):
+    _Ls = rep.split("\n"); _Ls[_k] = _Ls[_k].replace("G12", "xxx"); M["W-C7-L-LEASE-G12-hold-removed-line%d" % _n] = "\n".join(_Ls)
+_cb = rep.count("cannot be filmed")
+for _n in range(0, _cb):
+    M["W-C7-cannot-to-can-copy%d" % _n] = _nth("cannot be filmed", "can be filmed", _n)
+# defect classes of the c6v reviews, restored
+M["W-C7-answer-line-names-c6v"] = _nth("c6w apply all defaults to REPORT-c6w.md", "c6v apply all defaults to REPORT-c6v.md", 0)
+M["W-C7-answer-line-label-only"] = _nth("c6w apply all defaults to REPORT-c6w.md", "c6w apply all defaults to REPORT-c6v.md", 0)
+M["W-C7-lines-8-33-149-equal"] = _nth("its lines 8 and 149 differ", "its lines 8, 33, 149 and 150 equal the newest note", 0)
+M["W-C7-two-G12-forms"] = _nth("only after the loopback re-smoke of TASK (5)", "only after the loopback re-smoke of TASK (5)", 0) if False else _nth("`## G12 (studio lead, <UTC> = <IST>): approved:", "`## G12 (studio lead, <UTC> = <IST>): lease wording approved:", 1)
+M["W-C7-lease-wording-approved-added"] = _nth("a second person", "lease wording approved, a second person", 0)
+for _k in (1, 19):
+    M["W-C7-row%d-G12-hold-removed" % _k] = mut_row(rep, _k, "view", lambda x: x.replace("G12", "xxx")) if "G12" in PAT.match(L[rowidx(_k)]).group(5) + PAT.match(L[rowidx(_k)]).group(7) + PAT.match(L[rowidx(_k)]).group(8) else None
+M["W-C7-row96-back-to-35s"] = mut_row(rep, 96, "new", lambda x: x.replace("40 s EST", "35 s EST"))
+M["W-C7-undefined-L-label"] = _nth("L-CARDLEASE", "L-CARDNOPE", 0)
+M["W-C7-before-rehearsal-list-5-to-9"] = _nth("TASKS (1) to (6) and (8) to (10)", "TASKS (1) to (6) and (8) to (9)", 1)
+M["W-C7-v30A-example"] = _nth("v34 rendering A", "v30A", 0)
+M["W-C7-stale-label-c6u-this-file"] = _nth("c6w (this file) supersedes c6v", "c6u (this file) supersedes c6t", 0)
+M["W-C7-sheet-A-wording"] = _nth("the A file and the B file of one checklist", "sheet A and sheet B of one checklist", 0)
+M["W-C7-further-round-paragraph-deleted"] = _nth("EVERY ANSWER OTHER THAN THE DEFAULT NEEDS A FURTHER ROUND", "ANSWERS", 0)
+M["W-C7-branch-statement-90-to-91"] = _nth("it holds the files of 90 rows", "it holds the files of 91 rows", 0)
+M["W-C7-box-count-stated-wrong"] = _nth("This box holds ", "This box holds 1", 0)
+M["W-C7-roles-sentence-deleted"] = _nth("; if you are also the owner, the two roles stay separate", "", 0)
+M["W-C7-labels-bullet-PRIMARY-KEY-deleted"] = _nth("PRIMARY KEY =", "PRIMARY =", 0)
+M["W-C7-run-count-deleted"] = _nth("I ran the full pipeline run_all.sh", "I ran the pipeline", 0)
+M["W-C7-L-LEASE-reversal-sentence-deleted"] = _nth("THE DEFAULT REVERSES YOUR ANSWER Q22 (c) (ORD:186)", "THE DEFAULT FOLLOWS ORD:230", 0)

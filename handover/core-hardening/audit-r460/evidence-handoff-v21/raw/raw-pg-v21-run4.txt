@@ -244,3 +244,38 @@ PASS F5 a settle with actual NULL on an agent-day that HAS an open reservation o
 PASS F5 a settle with actual -Infinity on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
 PASS F4 a runtime login can create a TEMP table named spend (and, in the same session, a trigger on it), but the DB-3 function still writes the real table (pg_catalog first, pg_temp last in its search_path)
 INFO ---- v21 M2 (security): a settle that the guard rejects returns NO row even when the agent-day has rows
+PASS M2 v21 file: settle with worst NULL on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with worst -1 on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with actual NULL on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with actual -1 on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: the honest settle (worst 5, actual 1) still returns the row (1, 1)  [[(Decimal('1'), Decimal('1'))]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) M2 v20 DB-3 file: settle(NULL) on an open reservation returns one row ([(Decimal('5'), Decimal('5'))]), so 'an empty result means error' passed vacuously
+INFO ---- v21 M1 (security): pseudo agent ids -cli and -unattributed:<agent> under DB-3
+PASS M1 with DB-3 applied a reserve under '-cli' is refused 23514 (fails closed); default of L26b: the store does not call the DB-3 functions for a pseudo id
+PASS M1 with DB-3 applied a reserve under '-unattributed:agent1' is refused 23514 (fails closed); default of L26b: the store does not call the DB-3 functions for a pseudo id
+PASS M1 an existing spend row with the agent id '-cli' makes the DB-3 file refuse at apply time (23514); pre-check before the cutover: SELECT count(*) FROM spend WHERE agent_id !~ the rule must be 0
+INFO ---- v21 m4 alias column list and TABLESAMPLE: the server accepts both forms, the v21 relation scan names the second relation
+PASS m4 alias column list: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+PASS m4 TABLESAMPLE: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+PASS m4 TABLESAMPLE REPEATABLE: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+INFO ---- v21 m5 ASCII-only folding: the server does not fold the Kelvin sign or the long s
+PASS m5 Kelvin sign inside clock_timestamp: the server says state 42883 (42883 = no such function, so it is NOT the keyword or the allowed call); v21 reads 'clocK_timestamp'; the v20 fold reads 'clock_timestamp'
+PASS m5 long s starting select: the server says state 42883 (42883 = no such function, so it is NOT the keyword or the allowed call); v21 reads 'ſELECT'; the v20 fold reads 'SELECT'
+PASS m5 a column named with the Kelvin sign keeps it on the server ('Ka'), v21 'Ka', the v20 fold 'ka'
+INFO ---- v21 m6 search_path item folding
+PASS m6 the server keeps the quoted name as typed (SHOW says "PG_CATALOG", pg_temp) and the v21 guard flags the function = True (the v20 guard also flags this sample = True, for another reason, so this is NOT a control)
+INFO ---- v21 m7 a -- comment ends at a carriage return
+PASS m7 the server returns 2 columns (the comment ended at the carriage return); v21 tokenizer reads ['SELECT', '1', ',', '2']; v20 read ['SELECT', '1']
+PASS m7 the guard flags a file that hides DROP TABLE behind a comment that ends at a carriage return (v20 passes it)
+INFO ---- v21 m9 fingerprint: operators and prefixes that differ only by a space
+PASS m9 server: `@-1` is state 42883 (no operator @-), `@ - 1` is 1; v21 fingerprints differ = True, v20 fingerprints equal = True
+PASS m9 server: `E'x'` is 'x', `E 'x'` is state 42704; v21 fingerprints differ = True
+INFO ---- v21 m11 zero timeouts and the m10 start-up dependency check
+PASS m11 the server accepts `SET LOCAL lock_timeout = 0` and it means NO timeout (SHOW says 0); v21 guard flags it, v20 does not
+PASS m10 a body bound to a function of another schema is reported by the start-up query: ["public.kill_switch_engage(): bound to functions or operators in schema ['ev21'], not pg_catalog (they bind at "]
+PASS m10 control: the real DB-3 functions are bound to pg_catalog operators and functions only (clean database: no problem)
+INFO ---- v21 readiness M1 start-up query: one signature; an unset operator role is a problem, not a KeyError; the applied files are read from the database
+PASS M1r operator role unset: reported, no crash (['public.kill_switch_release(): the operator role is not configured, so EXECUTE cannot be ch', "public.kill_switch_release(): EXECUTE is held by ['op17'] (PUBLIC means everyone), expecte"])
+PASS M1r a database with neither DB-2 nor DB-3 applied: policy_for_applied is empty and the query is clean
+SUMMARY safety checks 210 of 210 passed; controls 31 of 31 showed the old behaviour; stated exploits shown 3 of 3
+rc=0

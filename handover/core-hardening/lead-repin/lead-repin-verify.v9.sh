@@ -1,4 +1,6 @@
 #!/bin/sh
+set +x +v 2>/dev/null          # v9: the very first command (SHELLOPTS=xtrace:verbose from the caller would otherwise print every comment line below)
+if [ -n "${BASH_XTRACEFD+x}" ]; then exec 8>&1 9>&2; unset BASH_XTRACEFD; exec 1>&8 2>&9 8>&- 9>&-; fi   # v9: bash CLOSES the trace file number when it is unset (BASH_XTRACEFD=1 or 2 closed the output); copy 1 and 2 first, then put them back
 # lead-repin-verify.v9.sh (version 9): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
@@ -166,8 +168,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1982
-SELFTEST_PLANNED=2019
+CANARY_PLANNED=2054
+SELFTEST_PLANNED=2094
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 DC1=$(printf '\021'); DC2=$(printf '\022'); RS=$(printf '\036')   # v9: private stand-ins used inside one rule block only
 write_mask_sed() {
@@ -269,7 +271,10 @@ line_rules() {
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
 s/(tok)(eniz|enis)/\1${SOH}\2/Ig
 s/((${ID})[[:space:]]*:=[[:space:]]*)(${STR}|[^[:space:]<"'][^[:space:]]*)/\1<masked>/Ig
-s/(<[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["'][[:space:]]+(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
+s/((<|${STX})[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["'][[:space:]]+(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
+s/(<|${STX})[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["']/${RS}&/Ig
+s/(${RS}(<|${STX})[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
+s/${RS}//g
 s/((${ID})${PRE}[[:space:]]*)(""")([^"]|"[^"]|""[^"])*"""/\1<masked>"""/Ig
 s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*""".*"""/I!s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
@@ -336,7 +341,11 @@ s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
 s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)"end"/\1${DC1}/Ig
 s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)'end'/\1${DC2}/Ig
 s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
+s/(ConvertTo-SecureString([[:space:]]+-String)?[[:space:]]+)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s#(https?://[^[:space:]/]*(hook|webhook|incoming)[^[:space:]/]*/([^[:space:]/]+/)*)[^[:space:]/?\#<"']{8,}#\1<masked>#Ig
+s#(https?://[^[:space:]]*/(web)?hooks?/([^[:space:]/]+/)*)[^[:space:]/?\#<"']{8,}#\1<masked>#Ig
 s/((${ID})\.(equals|equalsignorecase|startswith|endswith|compare)[[:space:]]*\([[:space:]]*)(${STR})/\1<masked>/Ig
+s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)([^[:space:]<"'=${DC1}${DC2}][^[:space:]]*)/\1<masked>/Ig
 s/${DC1}/"end"/g
 s/${DC2}/'end'/g
 s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
@@ -632,6 +641,10 @@ function nonascii_names(s,   out, st, ln, m, t3) {
 }
 function ml_start(b,   m, nm, rest, sec, t, tk) {
   sec = 0; rest = b
+  if (b ~ /^[ \t]*[>*#;$-]*[ \t]*["']?[A-Za-z0-9_.-]+["']?[ \t]*:?[ \t]*$/) {   # v9: a secret name alone on its line: the value is on the next line
+    t = b; gsub(/[^A-Za-z0-9_.-]/, "", t)
+    if (secret_name(t)) NXT = 3
+  }
   if (match(b, /^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?["']?[]A-Za-z0-9_.[-]+["']?\]?[ \t]*(\+?=|:=)[ \t]*/)) {
     m = substr(b, 1, RLENGTH); rest = substr(b, RLENGTH + 1)
     nm = m
@@ -1312,6 +1325,22 @@ self_test() {
     v9; printf 'resource "aws_x" "api_token" {\n  value = "%s"\n}\nkept_after_tf_2 = 1\n' "$vv"; v9_reg 'Terraform resource block with a secret label' ""
     v9; printf 'kind: Secret\ndata:\n  user: %s\n  other: %s\nkept_after_k8s: ok\n' "$hd" "$tl"; v9_reg 'Kubernetes Secret data' ""
     v9; printf 'stringData:\n  user: %s\n  other: %s\nkept_after_k8s_2: ok\n' "$hd" "$tl"; v9_reg 'Kubernetes Secret stringData' ""
+    # late findings of the independent evidence run (values made of letters only, so the long-token rule cannot hide them)
+    v9b() { v9n=$((v9n + 1)); hd=$(printf 'zt%03dv' "$v9n" | tr 0123456789 abcdefghij); tl=$(printf 'xp%03dd' "$v9n" | tr 0123456789 abcdefghij); vv=$hd$tl; }
+    v9b; printf 'password== %s\n' "$vv"; v9_reg 'password== value (two equals signs)' LS
+    v9b; printf 'password === %s\n' "$vv"; v9_reg 'password === value (three equals signs)' LS
+    v9b; printf 'set secret to %s\n' "$vv"; v9_reg 'secret to VALUE' LS
+    v9b; printf 'secret\357\274\232%s\n' "$vv"; v9_reg 'secret, full-width colon' ""
+    v9b; printf 'password\357\274\235%s\n' "$vv"; v9_reg 'password, full-width equals sign' ""
+    v9b; printf 'login ok password %s\n' "$vv"; v9_reg 'login ok password VALUE' LS
+    v9b; printf '| password | %s |\n' "$vv"; v9_reg 'markdown table row' LS
+    v9b; printf "ConvertTo-SecureString '%s' -AsPlainText -Force\n" "$vv"; v9_reg 'ConvertTo-SecureString quoted value' LS
+    v9b; printf 'x = 1 # api key %s\n' "$vv"; v9_reg 'key only in a trailing comment' LS
+    v9b; printf 'post https://hooks.chat.example/services/Tabc/Babc/%s now\n' "$vv"; v9_reg 'chat webhook address, secret is the last path segment' LS
+    v9b; printf 'https://chat.example/api/webhooks/12345/%s\n' "$vv"; v9_reg 'webhook address, id then secret' LS
+    v9b; printf 'api_key\n%s\nkept_after_alone_1: ok\n' "$vv"; v9_reg 'name alone on a line, value on the next line' ""
+    v9b; printf '<input value="%s" name="password">\n' "$vv"; v9_reg 'input element, value before name' LS
+    v9b; printf '<input type="hidden" value="%s" name="api_token"/>\n' "$vv"; v9_reg 'input element, value before name, self-closing' LS
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
     # shellcheck disable=SC2086
@@ -1604,6 +1633,14 @@ self_test_meta() {
     st_o=$(printf 'password %s_62_ tail\n' "$base" | env SHELLOPTS=posix:xtrace LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash --posix "$SELF" --mask 2>&1); st_r=$?
     if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_62_" && [ "$(printf '%s\n' "$st_o" | grep -a '^+' | grep -a -v -F -x -- '+ set +x +v' | wc -l | tr -d ' ')" = 0 ]; then mt_ok "bash --posix with SHELLOPTS=posix:xtrace: the value is hidden, only the one trace line of the trace-off command itself shows, exit 0"
     else mt_bad "bash --posix with SHELLOPTS=posix:xtrace must hide the value and print no trace (exit=$st_r)"; fi
+    for st_fd in 1 2; do
+      st_o=$(printf 'password %s_63_ tail\n' "$base" | env BASH_XTRACEFD=$st_fd LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
+      if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_" && printf '%s\n' "$st_o" | grep -a -q -F -- 'tail'; then mt_ok "bash with BASH_XTRACEFD=$st_fd (bash would close that output when the variable is unset): the line is masked and the output stays open"
+      else mt_bad "bash with BASH_XTRACEFD=$st_fd must still print the masked line (exit=$st_r)"; fi
+    done
+    st_o=$(printf 'password %s_64_ tail\n' "$base" | env SHELLOPTS=xtrace:verbose LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1 >/dev/null); st_r=$?
+    if [ "$(printf '%s\n' "$st_o" | grep -a -c -v -E '^(\+ set \+x \+v|#!/bin/sh|set \+x \+v )')" = 0 ] || [ -z "$st_o" ]; then mt_ok "bash with SHELLOPTS=xtrace:verbose prints no script line to the error channel (the first command turns both options off)"
+    else mt_bad "bash with SHELLOPTS=xtrace:verbose printed script lines to the error channel"; fi
     st_o=$(printf 'API_KEY=%s_63_\n' "$base" | env 'BASH_FUNC_sed%%=() { echo PWNED; }' 'BASH_FUNC_myfn%%=() { echo PWNED; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
     if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q 'PWNED' && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_"; then mt_ok "functions exported from bash (sed and another name) are removed: the value is hidden, exit 0"
     else mt_bad "an exported bash function must not run (exit=$st_r)"; fi

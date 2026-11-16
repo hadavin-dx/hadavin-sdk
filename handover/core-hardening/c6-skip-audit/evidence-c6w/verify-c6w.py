@@ -262,5 +262,23 @@ for _pn in ("verify_c6w_part2.py", "verify_c6w_part3.py", "verify_c6w_part4.py")
             exec(compile(ast.Module([_node], []), _p2, "exec"), globals())
         except Exception as _e:
             check("%s statement at line %d could not run on this report (%s: %s)" % (_pn, _node.lineno, type(_e).__name__, str(_e)[:80]), False)
+# V13 (new in c6w): every count in c6w-CHANGES.md equals the number in the output files (the independent run on c6v: a forged '267 to 300' or '6 runs to 3' passed)
+_chgp = os.path.join(os.path.dirname(R), "c6w-CHANGES.md")
+_E_ = os.path.dirname(os.path.abspath(__file__))
+def _num(pattern, path):
+    try:
+        m = re.search(pattern, open(path, encoding="utf-8").read(), re.M)
+        return int(m.group(1)) if m else None
+    except OSError:
+        return None
+_cnt = {}
+if os.path.exists(_chgp):
+    for _m in re.finditer(r"^COUNT ([a-z0-9 ]+): (\d+)\s*$", open(_chgp, encoding="utf-8").read(), re.M):
+        _cnt[_m.group(1)] = int(_m.group(2))
+_runlog = open(_E_ + "/run-log.txt").read().count("run_all.sh start") if os.path.exists(_E_ + "/run-log.txt") else None
+_rr = re.search(r"I ran the full pipeline run_all\.sh (\d+) time\(s\)", raw)
+_want = {"verify checks": TOTAL[0] + 1, "full runs of run_all.sh": _runlog, "negative changed copies": _num(r"^SUMMARY: (\d+) copies", _E_ + "/neg-output.txt"), "negative wrong copies": _num(r"^SUMMARY: \d+ copies, (\d+) wrong", _E_ + "/neg-output.txt"), "scanned files": _num(r"^SCANNED (\d+) files", _E_ + "/scan-c6w-output.txt")}
+_badc = [(k, _cnt.get(k), v) for k, v in _want.items() if _cnt.get(k) != v]
+check("V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: %s)" % _badc, os.path.exists(_chgp) and not _badc and _rr is not None and int(_rr.group(1)) == _runlog, _badc)
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

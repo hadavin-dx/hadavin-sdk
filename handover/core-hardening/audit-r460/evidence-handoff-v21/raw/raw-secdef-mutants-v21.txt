@@ -210,6 +210,9 @@ PASS P4 E'x' and E 'x' have different fingerprints in v21 (v20 equal) [server: t
 PASS P5 comments and the amount of white space do not change a fingerprint []
 PASS P6 a -- comment ends at a carriage return: the tokens after it are read [server: two columns]
 PASS P8 the relation scan itself (not the call rule) names pg_authid after an alias column list, after TABLESAMPLE, and after TABLESAMPLE ... REPEATABLE (v20 flagged the first two for a wrong reason: it read `d (` as a call) [v20 relation scan did not name it]
+PASS P9 (security m8) a forbidden statement AFTER a ';' inside an EXECUTE string is flagged by v21; the v20 guard flags only a string that STARTS with it; the control string with one statement is clean in both []
+PASS P10 (security m11) `AS end` and `AS case` inside a BEGIN ATOMIC body are column labels: the body is still ONE statement in v21 (v20 ended it at `AS end`) []
+PASS P11 (security m11) an INVOKER function body that calls set_config('role', ...) is flagged by v21; v20 checked calls only in definer bodies and the pin alone stood in the way []
 PASS P7 ASCII-only folding: Kelvin sign and long s keep their identity []
 PASS real file 0001_core.sql: []
 PASS real file 0002_audit_chain.sql: []
@@ -221,4 +224,4 @@ PASS real file spend_guarded_writes.sql: []
 PASS real file spend_nonneg.sql: []
 PASS real file spend_nonneg_finite.sql: []
 PASS real file spend_nonneg_upgrade.sql: []
-223 checks passed, 0 failed; mutants the v19 guard misses: 50; the v18 guard misses: 102; the v17 guard misses: 137; the v16 guard misses: 165; of the 38 NEW v20 mutants that must be flagged the v19 guard misses 37 and flags 1 (the others are listed above without the 'v19 MISSES' mark); of the 16 NEW v21 mutants that must be flagged the v20 guard misses 12 and flags 4
+226 checks passed, 0 failed; mutants the v19 guard misses: 50; the v18 guard misses: 102; the v17 guard misses: 137; the v16 guard misses: 165; of the 38 NEW v20 mutants that must be flagged the v19 guard misses 37 and flags 1 (the others are listed above without the 'v19 MISSES' mark); of the 16 NEW v21 mutants that must be flagged the v20 guard misses 12 and flags 4

@@ -1,0 +1,12 @@
+banned terms loaded: 10
+files scanned 24 banned total 0
+secret-shape aws_akia count 0 (allowed example literal 0 )
+secret-shape github count 0 (allowed example literal 0 )
+secret-shape sk count 0 (allowed example literal 0 )
+secret-shape slack count 0 (allowed example literal 0 )
+secret-shape privkey count 0 (allowed example literal 0 )
+secret-shape jwt count 0 (allowed example literal 0 )
+secret-shape email count 11 (allowed example literal 0 )
+secret-shape acct12 count 0 (allowed example literal 0 )
+secret-shape longhex40 count 0 (allowed example literal 0 )
+secret-shape b64long count 1 (allowed example literal 0 )

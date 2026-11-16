@@ -341,6 +341,9 @@ def extra3b(t):
 
     t = sub(t, "only the take's own 45 s lease setting may be named.`", "only the take's own 45 s lease setting may be named, and only after G12 is approved.`", 1)
     t = sub(t, "1, 2, 5, 15, 17, 19, 30, 34, 83, 93 and 94", "1, 2, 5, 15, 17, 19, 30, 34, 81, 83, 93 and 94", 2)
+
+    t = sub(t, "(40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). | none.", "(40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). 1 and 2 also need the G12 approval first. | none.", 1)
+    t = t.replace("two names for sheet A and B", "two names for the A file and the B file of one owner sheet")
     # real written times of the newest sheet and release note (read from the files; the c6v text carried older times)
     import os as _os, datetime as _dt
     _st = _os.environ.get("C6V_STEPS") or _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "steps-edits")

@@ -1,0 +1,27 @@
+19:29:03
+ 19:29:03 up 10:39,  0 user,  load average: 2.36, 2.35, 3.01
+M01 CAUGHT | changed ['EDITS.md'] | nfail 2 | rc 1 | FAIL r13 time arithmetic: 18:19 UTC = 23:39 IST
+M02 CAUGHT | changed ['r18-OWNER-DAY-SHEET.md'] | nfail 3 | rc 1 | FAIL r18 count day sheet '18:09 UTC = 23:39 IST' is 0, expected 1
+M03 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 17 | rc 1 | FAIL r13 time arithmetic: 18:09 UTC = 23:49 IST
+M04 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 2 | rc 1 | FAIL r14 wrong weekday: Tue 23 Nov 2026
+M05 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 1 | rc 1 | FAIL r12 E-48 lacks Shredding does not revoke
+M06 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 1 | rc 1 | FAIL r17 F-4 the new-key rule has numbers ['30']
+M07 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 2 | rc 1 | FAIL r16 F4 the numbered order is missing or out of order: [125, 632, 862, 1038, 1122, -1, 1324]
+M08 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 3 | rc 1 | FAIL r13 E-09 lacks please stop looking
+M09 CAUGHT | changed ['EDITS.md'] | nfail 11 | rc 1 | FAIL rows != 60
+M10 MISSED | changed ['EDITS.md'] | nfail 0 | rc 0 | 
+M11 MISSED | changed ['r18-CHANGES.md'] | nfail 0 | rc 0 | 
+M12 CAUGHT | changed ['EDITS.md'] | nfail 9 | rc 1 | FAIL status counts in text differ
+M13 CAUGHT | changed ['EDITS.md'] | nfail 1 | rc 1 | FAIL r16 UTC/IST pair is wrong: 18:15:20 UTC = 23:55:20 IST
+M14 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 12 | rc 1 | FAIL E-12 UTC time without IST: 'm 3, key step C): alarm 1 for 17:49 UTC on Mon 23 Nov 2026,'
+M15 MISSED | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 0 | rc 0 | 
+M16 CAUGHT | changed ['EDITS.md'] | nfail 2 | rc 1 | FAIL r14 wrong weekday: Thu 18 Nov 2026
+M17 CAUGHT | changed ['EDITS.md', 'r18-OWNER-APPENDIX-K.md'] | nfail 1 | rc 1 | FAIL r18 count appendix '18:19 UTC = 23:49 IST' is 2, expected 3
+M18 MISSED | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 0 | rc 0 | 
+M19 CAUGHT | changed ['r18-OWNER-DAY-SHEET.md'] | nfail 3 | rc 1 | FAIL r18 day sheet line is not in the applied sheet: 2. You: shred the copy of the key in the take folder and 
+M20 CAUGHT | changed ['r18-OWNER-APPENDIX-K.md'] | nfail 3 | rc 1 | FAIL r18 count appendix '18:29 UTC = 23:59 IST' is 2, expected 3
+M21 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 1 | rc 1 | FAIL r17 F-8 D.5 lacks 'Between 18:19 UTC = 23:49 IST and 18:29 UTC = 23:59 IST there are only 10 minute'
+M22 MISSED | changed ['EDITS.md', 'r18-OWNER-APPENDIX-K.md'] | nfail 0 | rc 0 | 
+M23 MISSED | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 0 | rc 0 | 
+M24 CAUGHT | changed ['EDITS.md', 'r18-OWNER-DAY-SHEET.md'] | nfail 6 | rc 1 | FAIL r15 E-48 G done lacks 'If you write neither, the assistant treats it as `shred not '
+19:30:47
