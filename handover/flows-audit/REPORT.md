@@ -1,13 +1,17 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:57 UTC / 13:27 IST - ORDER 005: plan v2 done, 5 review lanes running
+Agents running: 5 sonnet (R5-B 20 Blockers, R5-M1 and R5-M2 Major sample, R5-D table owners/decisions/bands, R5-Z missed items/cut list). Closed: plan reviewers (NOT READY, 1+3 Blockers, 12 Majors; all fixed in PLAN-005 v2) and EV5. EV5 raw result: 56 of 56 Blocker citations and 209 of 209 citations of every 3rd Major exist on the exact line (shows the quotes exist, not that they support the claims); table counts match the claim (59 = 49+10, 7 Owner lines). Next: save lane reports, resolve, write REVIEW/CORRECTIONS/LEDGER-ROWS.
+
 ## Status 2026-11-16 07:53 UTC / 13:23 IST - ORDER 005 started (cross-review of system-map)
 Agents running: 0 at write time; 4 sonnet agents + plan review start next (register below). Target exported read-only to /tmp/sm and /tmp/smfull (git archive of origin/cloud/system-map). Plan: PLAN-005.md. Not visible: take repo, n8n runtime, HubSpot, SMTP.
 Agent register for ORDER 005 (id | purpose | started UTC/IST | expected end | last checked | state | next):
-| PR5-design, PR5-impl | plan review round 1 of PLAN-005 | 07:54 / 13:24 | 08:05 | 07:54 | starting | resolve, then launch lanes |
-| EV5 | EVIDENCE RUNNER: citation + caller checks, raw output | after plan review | +30 min | - | planned | read evidence-5.md |
-| R5-code | codebase-details: Blockers + Majors vs source | after plan review | +40 min | - | planned | save report |
-| R5-design | design: one-place owners, 4 decisions, bands | after plan review | +40 min | - | planned | save report |
-| R5-zoom | zoom-out: missed items, cut list | after plan review | +40 min | - | planned | save report |
+| EV5 | EVIDENCE RUNNER: citation + caller checks, raw output | 07:53 / 13:23 | 08:00 | 07:54 | CLOSED (reported; evidence-5.md) | read by lanes |
+| PR5-design, PR5-impl | plan review r1 | 07:53 | | 07:54 | CLOSED (reported; NOT READY, fixed in PLAN-005 v2) | none |
+| R5-B | codebase-details: 20 Blockers vs source | 07:56 / 13:26 | 08:36 | - | running | save report |
+| R5-M1, R5-M2 | codebase-details: Major sample halves | 07:56 | 08:36 | - | running | save reports |
+| R5-D | design: table owners, 4 decisions, bands | 07:56 | 08:36 | - | running | save report |
+| R5-Z | zoom-out: missed items, cut list | 07:56 | 08:36 | - | running | save report |
 
 ## FINAL 2026-11-16 07:43 UTC / 13:13 IST: ORDER 004 applied (Reading A), waiting for the lead
 Agents running: 0 (I started none for this order). No helper shells left.
