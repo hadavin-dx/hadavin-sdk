@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16 20:26Z
-PUSHED_UTC: 2026-11-16 20:26Z
+UPDATED_UTC: 2026-11-16 20:28Z
+PUSHED_UTC: 2026-11-16 20:28Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
 BOOT_ID: 5cbee216
@@ -20,7 +20,7 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 3
-CAPACITY nproc=4 load=0.28 0.29 0.19 (read at 20:26Z) disk: 12G free (floor 6G)
+CAPACITY nproc=4 load=0.10 0.20 0.17 (read at 20:28Z) disk: 12G free (floor 6G)
 NEXT: digest hand-backs; one fresh read per edited held page
 INTERRUPTED: none
 
@@ -49,7 +49,7 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a0da1ece800aa189f | steps v5 round-13 fixer (money path) | started about 20:22Z | running | expected end about 20:32Z | next: verify counts, digest, round-14 readers
+- a0da1ece800aa189f | steps v5 round-13 fixer (money path) | started about 20:24Z | running | expected end about 20:33Z | next: verify counts, digest, round-14 readers
 - a909cb27eb9750ea0 | L-01 round-13 naive reader (stamp 22:15Z) | started about 20:26Z | running | expected end about 20:33Z | next: save, batch with fact reader, fixer
 - a3019b954469e6e74 | L-01 round-13 fact reader | started about 20:26Z | running | expected end about 20:32Z | next: save, batch with naive reader, fixer
 
