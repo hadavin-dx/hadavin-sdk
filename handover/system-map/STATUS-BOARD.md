@@ -1,30 +1,33 @@
-UPDATED_UTC: 2026-11-16T08:59:10Z
+UPDATED_UTC: 2026-11-16T09:02:15Z
 SESSION: system-map
-ORDER: 014 (with 011)
+ORDER: 015 (queue mode; 011 and 014 inside it)
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
-ITEMS_TOTAL: 3
-ITEMS_OPEN: 1
-PERCENT: 85
-AGENTS_RUNNING: 2
+ITEMS_TOTAL: 6
+ITEMS_OPEN: 4
+PERCENT: 40
+AGENTS_RUNNING: 3
 INTERRUPTED: none
-NEXT: collect 2 reviewers of FINAL-CROSSCHECK.md, fix Blockers and Majors, then FINAL
-PUSHED_UTC: 2026-11-16T08:59:10Z
+NEXT: collect crosscheck fact review, drift report and owner view; apply review fixes; M4 map refresh myself
+PUSHED_UTC: 2026-11-16T09:02:15Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
-| 1 | ORDER 011 item 1 flowcheck | done | 100 | flowcheck/REPORT.md | re-run on flows-audit FINAL head d1097db3: identical; n8n run still NOT TESTED |
-| 2 | ORDER 011 item 2 third read | done | 100 | flowcheck/third-read.md | 10 CONFIRMED, 0 WRONG; F-012 now Nit in the audit; 3 small corrections |
-| 3 | ORDER 014 FINAL-CROSSCHECK.md | draft pushed 8d6ec97b, in review | 85 | FINAL-CROSSCHECK.md | agents finished; 2 reviewers running |
+| M1 | flowcheck and third read | done | 100 | flowcheck/REPORT.md, flowcheck/third-read.md | n8n run of patched flows still NOT TESTED (no Docker daemon here) |
+| M2 | FINAL-CROSSCHECK.md | in review | 85 | FINAL-CROSSCHECK.md | design review found 5 Majors, fixes pending; fact review running |
+| M3 | drift check of take documents | running | 10 | drift/REPORT.md | agent a6ffab42 |
+| M4 | MASTER-MAP and ONE-PLACE-TABLE refresh | todo (next, done by me) | 0 | | starts when the reviews of M2 are applied |
+| M5 | OWNER VIEW | running | 10 | OWNER-VIEW.md | agent a06c0766 |
+| M6 | idle fallback audit (R460) | todo | 0 | | only if idle |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a2765456 | crosscheck ratings | sonnet | ratings, duplicates, contradictions, collisions | 09:00Z | 09:12Z | 100 | done | work/crosscheck-ratings-agent.md |
-| ae283080 | combined cut list | sonnet | archive list with callers | 08:48Z | 09:03Z | 100 | done | cut list: 39 rows, 2 safe now, 28 not yet, 9 no |
-| afa277a0 | egm-codebase-details | sonnet | fact-check FINAL-CROSSCHECK.md | 08:59Z | 09:09Z | 10 | running | none |
-| a229dfc6 | egm-design | sonnet | order coverage, wording, honesty | 08:59Z | 09:09Z | 10 | running | none |
+| afa277a0 | egm-codebase-details | sonnet | fact-check FINAL-CROSSCHECK.md | 08:59Z | 09:15Z | 50 | running | none |
+| a6ffab42 | drift check M3 | sonnet | compare four take documents | 09:07Z | 09:25Z | 10 | running | none |
+| a06c0766 | owner view M5 | sonnet | one-page plain status for the owner | 09:10Z | 09:25Z | 10 | running | none |
+| a229dfc6 | egm-design | sonnet | review of FINAL-CROSSCHECK.md | 08:59Z | 09:09Z | 100 | done | 5 Majors, 5 Nits (to apply) |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
