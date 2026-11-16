@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:47:28Z
-PUSHED_UTC: 2026-11-16T12:47:28Z
+UPDATED_UTC: 2026-11-16T12:47:52Z
+PUSHED_UTC: 2026-11-16T12:47:52Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 806. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 807. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| ad8aa74a4db2d4e40 | PLAN-002 r22 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| a94253297ec2f6b2d | premortem r14 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| ad19ffc1db5a3b19c | row1-builder-brief r11 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| a9ac33a1c6ca48470 | M17 r11 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| a349d3e357361b4fb | ARCHIVE-CUT-LIST r13 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| a3b1ba61a9c603aa6 | critical-path r22 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| a46dea8a92b401e32 | open-items r15 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
-| adf7e373dafb0c5af | merged-findings r12 read | 2026-11-16T12:47:28Z | +2 min | running | nothing yet |
+| ad8aa74a4db2d4e40 | PLAN-002 r22 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| a94253297ec2f6b2d | premortem r14 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| ad19ffc1db5a3b19c | row1-builder-brief r11 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| a9ac33a1c6ca48470 | M17 r11 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| a349d3e357361b4fb | ARCHIVE-CUT-LIST r13 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| a3b1ba61a9c603aa6 | critical-path r22 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| a46dea8a92b401e32 | open-items r15 read | 2026-11-16T12:47:52Z | +2 min | running | nothing yet |
+| NEW1 | L1c r14 read | 2026-11-16T12:47:52Z | +2 min | launching | nothing yet |
 
-Running: 8. Digests done through 806. Next 5 independent tasks: tell the lead of the L4c real-run reads and the missing work/OWNER-ONLY.txt; send held-page digests; fix decision-list row splits; re-read L1c r13 and L3c r11; fix open-items column 6 values.
+Running: 8 (merged-findings r12 closed, digest 807). Next 5 independent tasks: tell the lead of the L4c real-run reads and the missing work/OWNER-ONLY.txt; send held-page digests; fix decision-list row splits; re-read L3c r11; fix open-items column 6.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

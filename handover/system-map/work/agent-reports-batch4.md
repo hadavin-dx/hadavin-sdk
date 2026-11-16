@@ -1107,3 +1107,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 804 merged-findings r10: terms undefined, stacked legends. PARTLY FIXED by LEGEND r11; cells TO DO.
 - 805 critical-path r20: row 2a wrong, glossary. FIXED by CURRENT ANSWER r21.
 - 806 open-items r13: bare row numbers, deadlines. PARTLY FIXED by CURRENT r13; cells TO DO.
+
+- 807 merged-findings r11: glossary missing, severity cells, duplicates. PARTLY FIXED by LEGEND r12; cells TO DO.
