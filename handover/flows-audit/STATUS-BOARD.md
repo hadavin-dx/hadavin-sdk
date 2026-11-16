@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:48:26Z
+UPDATED_UTC: 2026-11-16T10:51:11Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
 PERCENT: 85
-AGENTS_RUNNING: 6
-CAPACITY: 1.24 load of 4 cores, mem 0/15 GB, RAM 854/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 682M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
+AGENTS_RUNNING: 5
+CAPACITY: 1.15 load of 4 cores, mem 0/15 GB, RAM 912/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 683M /tmp/claude-0 871M /tmp/f3m , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -36,8 +36,9 @@ F8 r5 independent evidence: 10 of 25 mutants survive (3 real gaps: lines 519, 62
 citation check patches r3: unsourced relayed figures stay labelled relayed (144.3 s n=1 at 120 s, 780 s, 8 of 18, T13 database kill); V7 L12 stale 'B90 n=2'; K4/K5 not-run scope v3 only; reviewer errors on AF1 and evidence file corrected by me
 zoom-out: queue may be over-built for one take; 3 take risks unowned (HubSpot id shape before rehearsal, test vs production webhook URL, clean-up of saved runs); asked lead in Q17, queue unchanged
 Q14/Q17 answered 10:58Z: applying (Q14 5 re-rates + recount, caption cut, F-001 drop, HubSpot row); F3 frozen after r7, F8/F2/F6 parked; OWNER-STEPS v4 is not in this tree (only v3), so the stranger read used v3 + q16 rows
-NEXT: Q14/Q17 applying; F3 r7 evidence+security; F8 r6 last round; stranger read; claims sweep
-PUSHED_UTC: 2026-11-16T10:48:26Z
+stranger read: OWNER-STEPS v3 not doable in 10 minutes (4 Blockers, 20 Majors, 13 Nits on v3, 8 on my q16 rows); v3 is the lead's file, findings saved for v4
+NEXT: Q14/Q17 fixer; F3 r7 evidence+security; F8 r6; claims sweep
+PUSHED_UTC: 2026-11-16T10:51:11Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -61,7 +62,6 @@ PUSHED_UTC: 2026-11-16T10:48:26Z
 | f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
 | f3sec5 | F3 r7 security reviewer | sonnet | fresh security review of snapshot | 10:50 | 11:15 | 5 | running | (inline) |
 | q14fix | Q14/Q17 apply fixer | sonnet | re-rate 5 to Nit, recount once, cut caption, drop F-001, HubSpot row | 10:58 | 11:30 | 5 | running | fix-q14-q17.md |
-| ownread | OWNER-STEPS stranger read | sonnet | 10-minute test, no jargon (v3 + q16 rows; v4 not in tree) | 10:58 | 11:15 | 5 | running | (inline) |
 | onejob | one-place-per-job claims sweep | sonnet | duplicates and drift in CLAIMS-TABLE | 10:58 | 11:15 | 5 | running | (inline) |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
