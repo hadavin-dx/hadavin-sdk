@@ -2323,7 +2323,12 @@ def main():
         "r6_manual_runs_off_alone_is_named_and_only_for_that_file",
         [mn, "--quiet-info"] + acc2,
         0,
-        must=[("WARN", "mf-recovery.json this flow's run-saving settings ['saveManualExecutions'] are off")],
+        must=[
+            (
+                "WARN",
+                "mf-recovery.json this flow's run-saving settings ['saveManualExecutions'] are off",
+            )
+        ],
         must_not=["mf-form.json this flow's run-saving", "mf-hook.json this flow's run-saving"],
     )
     check_out(
@@ -2364,7 +2369,10 @@ def main():
             0,
             must=[("  - ", "setting 'toEmail'"), ("  - ", want_)],
         )
-    for nm_, val_ in (("plain", "someone@example.test"), ("expression", "={{ $env.DESK_ALERT_TO }}")):
+    for nm_, val_ in (
+        ("plain", "someone@example.test"),
+        ("expression", "={{ $env.DESK_ALERT_TO }}"),
+    ):
         dm = f"{work}/mail-ok-{nm_}"
         shutil.copytree(only, dm)
         h = rj(dm + "/mf-form.json")
@@ -2383,7 +2391,10 @@ def main():
         0,
         must=[
             ("SQL columns compared with the --ddl file: 14 query string(s) read.", ""),
-            ("SQL WARNS: column WARNs=3 table WARNs=0 postgres steps with no query text (not compared)=0", ""),
+            (
+                "SQL WARNS: column WARNs=3 table WARNs=0 postgres steps with no query text (not compared)=0",
+                "",
+            ),
         ],
     )
     check_out(
@@ -2396,7 +2407,12 @@ def main():
         "r6_sql_counts_zero_for_the_v4_table",
         base5 + ["--ddl", ddl4],
         0,
-        must=[("SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)=0", "")],
+        must=[
+            (
+                "SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)=0",
+                "",
+            )
+        ],
         must_not=["SQL COLUMNS NOT CHECKED"],
     )
     nq = f"{work}/noquery"
@@ -2416,16 +2432,38 @@ def main():
         must=[
             ("SQL columns compared with the --ddl file: 0 query string(s) read.", ""),
             ("SQL COLUMNS NOT CHECKED: a --ddl file was given but 0 query strings were read", ""),
-            (f"SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)={npg}", ""),
+            (
+                f"SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)={npg}",
+                "",
+            ),
             ("WARN", "this postgres step has no query text"),
         ],
     )
+    check_out(
+        "r6_accept_if_that_matches_nothing_is_a_warn_and_counted",
+        [PRIS, "--quiet-info", "--accept-if", "mf-recovery.json=NoSuchNode:1"] + acc2,
+        0,
+        must=[
+            ("WARN", "accept-if: --accept-if mf-recovery.json=NoSuchNode:1 matched nothing"),
+            ("  - ", "accept-if: --accept-if mf-recovery.json=NoSuchNode:1 matched nothing"),
+        ],
+    )
+    check_out(
+        "r6_accept_if_that_matches_is_not_reported_stale",
+        base5,
+        0,
+        must_not=["matched nothing"],
+    )
     # --quiet-info hides the type table; without it the table is printed
-    _rc, out_q = run(["python3", "-I", CK, only, "--files", "mf-form.json", "--quiet-info"], "r6_quiet_on")
+    _rc, out_q = run(
+        ["python3", "-I", CK, only, "--files", "mf-form.json", "--quiet-info"], "r6_quiet_on"
+    )
     _rc, out_n = run(["python3", "-I", CK, only, "--files", "mf-form.json"], "r6_quiet_off")
     report(
         "r6_quiet_info_hides_the_type_table_and_without_it_the_table_is_printed",
-        "  types:" not in out_q and "  types:" in out_n and "credentials (node, kind, name, id):" in out_q,
+        "  types:" not in out_q
+        and "  types:" in out_n
+        and "credentials (node, kind, name, id):" in out_q,
         f"quiet_has_types={'  types:' in out_q} loud_has_types={'  types:' in out_n}",
     )
     # value_is_safe: a placeholder token or the AWS example key under a secret-looking key is not a secret; a real-looking literal is
@@ -2440,7 +2478,17 @@ def main():
         first_nt(h)["parameters"]["password"] = val_
         wj(dv + "/mf-form.json", h)
         _rc, out_v = run(
-            ["python3", "-I", CK, dv, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+            [
+                "python3",
+                "-I",
+                CK,
+                dv,
+                "--files",
+                "mf-form.json",
+                "--baseline",
+                PRIS,
+                "--quiet-info",
+            ],
             f"r6_secret_key_{nm_}",
         )
         got = "literal value under key 'password'" in out_v
@@ -2478,7 +2526,10 @@ def main():
         "r6_extra_json_file_not_utf8_says_unreadable",
         [bx, "--quiet-info"],
         1,
-        must=[("FAIL", "mf-bad.json extra file is unreadable or not valid JSON"), ("FAIL", "file list")],
+        must=[
+            ("FAIL", "mf-bad.json extra file is unreadable or not valid JSON"),
+            ("FAIL", "file list"),
+        ],
     )
     # internals: Python version branch, FAIL counter, deep_diff and the diff header
     spec = importlib.util.spec_from_file_location("fc_unit", CK)

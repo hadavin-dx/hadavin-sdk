@@ -59,7 +59,12 @@ OPTS = {
     "ddl": None,  # table name -> set of column names, from --ddl FILE
 }
 PARAM_PH = []  # placeholders found in node settings (not credential ids): they must be filled before import
-SQL_DONE = {"checked": 0, "col_warn": 0, "tbl_warn": 0, "no_query": 0}  # queries compared with the --ddl table definition, and what that comparison found
+SQL_DONE = {
+    "checked": 0,
+    "col_warn": 0,
+    "tbl_warn": 0,
+    "no_query": 0,
+}  # queries compared with the --ddl table definition, and what that comparison found
 CRED_PH = []  # credential ids and sub-workflow ids that are still placeholders (they must be replaced before import)
 ENV_USE = []  # steps that read environment variables: "file node: tokens"
 LEAD = {
@@ -86,7 +91,13 @@ PLACEHOLDERS = [
     "REPLACE_ME",
     "TODO",
 ]
-MAIL_KEYS = ("fromEmail", "toEmail", "ccEmail", "bccEmail", "replyTo")  # settings that must hold one e-mail address
+MAIL_KEYS = (
+    "fromEmail",
+    "toEmail",
+    "ccEmail",
+    "bccEmail",
+    "replyTo",
+)  # settings that must hold one e-mail address
 REF = re.compile(
     r"""\$\(\s*['"`]([^'"`]+)['"`]\s*\)|\$node\[\s*['"`]([^'"`]+)['"`]\s*\]|\$items\(\s*['"`]([^'"`]+)['"`]|\$node\.([A-Za-z_][A-Za-z0-9_]*)"""
 )
@@ -118,6 +129,7 @@ ENVTOK = re.compile(
 # every way a malformed (but parsable) flow file can make the checker's own code raise: reported as a FAIL, never a Traceback
 READ_ERRORS = (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError, RecursionError)
 FAILS, WARNS, KNOWN = [], [], []
+ACCEPT_USED = set()  # (file, node) pairs of --accept-if that matched an IF node with exactly that gap
 ACCEPTED_IF = []  # IF branches excused by a recorded --accept-if decision
 UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs (from memory of n8n): WARN only; --fail-unverified makes them FAIL
 
@@ -291,7 +303,9 @@ SQL_WORDS = {
     "json",
 }
 TABLE_AFTER = {"from", "update", "into", "join"}
-MAIL_SHAPE = re.compile(r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}")  # one plain e-mail address; the shape only, a filled-in wrong address still passes
+MAIL_SHAPE = re.compile(
+    r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}"
+)  # one plain e-mail address; the shape only, a filled-in wrong address still passes
 PH_WORD = re.compile(
     r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*"
 )
@@ -426,7 +440,10 @@ def load(path, tag):
         )
         return None
     except UnicodeDecodeError:
-        fail(tag, "parse failure UnicodeDecodeError: the file is unreadable (it is not valid UTF-8 text)")
+        fail(
+            tag,
+            "parse failure UnicodeDecodeError: the file is unreadable (it is not valid UTF-8 text)",
+        )
         return None
     except (OSError, ValueError, RecursionError) as e:
         fail(tag, f"parse failure {type(e).__name__}: the file is unreadable or not valid JSON")
@@ -871,10 +888,17 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                         for w_ in PH_WORD.findall(s_):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
-                if k_ in MAIL_KEYS and isinstance(v_, str) and not v_.startswith("="):
-                    if not MAIL_SHAPE.fullmatch(v_.strip()) and not PH_WORD.search(v_):
-                        PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {v_!r} is not an e-mail address")
-                        pph.append(f"{nm} {k_}: {v_!r} is not an e-mail address")
+                if (
+                    k_ in MAIL_KEYS
+                    and isinstance(v_, str)
+                    and not v_.startswith("=")
+                    and not MAIL_SHAPE.fullmatch(v_.strip())
+                    and not PH_WORD.search(v_)
+                ):
+                    PARAM_PH.append(
+                        f"{tag} node {nm} setting {k_!r}: {v_!r} is not an e-mail address"
+                    )
+                    pph.append(f"{nm} {k_}: {v_!r} is not an e-mail address")
         if short == "postgres":
             sql_check(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
@@ -1152,7 +1176,11 @@ def check_flow(d, tag, expect, baseline_d):
     extra_checks(d, tag, nodes, adj, trig_all, sticky)
     st_ = d.get("settings")
     if isinstance(st_, dict):
-        off = [k for k in ("saveDataSuccessExecution", "saveDataErrorExecution") if st_.get(k) == "none"]
+        off = [
+            k
+            for k in ("saveDataSuccessExecution", "saveDataErrorExecution")
+            if st_.get(k) == "none"
+        ]
         if st_.get("saveManualExecutions") is False:
             off.append("saveManualExecutions")
         if off:
@@ -1214,6 +1242,7 @@ def check_flow(d, tag, expect, baseline_d):
                     else "",
                 )
                 if accepted:
+                    ACCEPT_USED.add((tag.rsplit("/", 1)[-1], n["name"]))
                     ACCEPTED_IF.append(f"{tag}: IF node {n['name']} output(s) {miss}")
                     warn(tag, text, known=True)
                 elif base_missing:
@@ -1566,7 +1595,9 @@ def main(argv):
                     with open(val(), encoding="utf-8") as fh:
                         OPTS["ddl"] = parse_ddl(fh.read())
                 except (OSError, ValueError):
-                    print("usage error: --ddl file cannot be read (missing, or not valid UTF-8 text)")
+                    print(
+                        "usage error: --ddl file cannot be read (missing, or not valid UTF-8 text)"
+                    )
                     return 2
                 if not OPTS["ddl"]:
                     print("usage error: --ddl file holds no CREATE TABLE definition")
@@ -1643,7 +1674,9 @@ def main(argv):
         if have != sorted(dfiles):
             fail(dr, f"file list {have} != expected {sorted(dfiles)}")
             for xf in have:
-                if xf not in dfiles:  # an extra file is not checked as a flow, but say so when it cannot even be read
+                if (
+                    xf not in dfiles
+                ):  # an extra file is not checked as a flow, but say so when it cannot even be read
                     try:
                         with open(os.path.join(dr, xf), encoding="utf-8") as fh:
                             json.load(fh)
@@ -1712,6 +1745,12 @@ def main(argv):
                     f"INTERNAL ERROR (exit 3): could not write --diff-out file: {type(e).__name__}"
                 )
                 return 3
+    for fl_, nd_ in sorted(set(OPTS["accept_if"]) - ACCEPT_USED):
+        warn(
+            "accept-if",
+            f"--accept-if {fl_}={nd_} matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)",
+            known=True,
+        )
     if OPTS["ddl"] is None:
         warn(
             "sql",
