@@ -120,7 +120,7 @@ Name: `deadman_reader` (a proposed name). **Who runs these statements: the datab
 | Statement | It needs | Why (Postgres rule) | Tested? |
 |---|---|---|---|
 | S1 `CREATE ROLE` | a login with the `CREATEROLE` attribute, or a superuser | creating a role is a right of those attributes; the migrations login does not normally have it. At Postgres 15 and older a login with `CREATEROLE` may also change the password and settings of every non-superuser role, which is wider than at 16 (UNVERIFIED: from the manual, not run); prefer a superuser or the provider's top login there | only as a superuser on a throwaway (S1, S3, S4, S5 seen once); not tested with a plain `CREATEROLE` login |
-| S2 password procedure | the same login as row 1 (it must be allowed to change that role) | `\password` runs `ALTER ROLE ... PASSWORD` | not tested |
+| S2 password procedure | the same login as S1 (it must be allowed to change that role) | `\password` runs `ALTER ROLE ... PASSWORD` | not tested |
 | S3 `GRANT CONNECT ON DATABASE` | the database-owning login (normally the one that created the database), a superuser, or a login that holds `CONNECT` with the grant option | a grant needs the right to give it | only as a superuser |
 | S4 `GRANT USAGE ON SCHEMA public` | the schema-owning login (at Postgres 15 and later the schema `public` belongs to the built-in role `pg_database_owner`, which means the database-owning login), a superuser, or a login with the grant option | same | only as a superuser |
 | S5 `GRANT SELECT (...) ON tick_state` | the table-owning login (the migrations login, `store/migrate.py`), a superuser, or a login with the grant option on that column | same | only as a superuser |
