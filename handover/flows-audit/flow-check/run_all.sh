@@ -59,20 +59,34 @@ count_check() {
   echo "COUNTS match expected-counts.pin: self-test $e_ok as expected / $e_bad not / $e_skip skipped; take suite $e_tt of $e_tt cases"; return 0
 }
 # publish_raw SRC DST: copies every plain file of SRC into DST, each under a temporary name and then renamed (a reader never sees half a file); files of DST that SRC does not have are left alone; prints the number copied; returns 1 if one copy failed
+# f8-r12 (review f8-r12 M1): DST must be the raw/ folder next to THIS script (compared as physical paths), whoever calls this and however; any other folder is refused (return 2). The one writer of that folder is therefore this function; no environment variable or option can point it at another folder. After the copies, refresh-manifest.txt is written the same way: the run id, the time (UTC) and the sha256 of each file this run published, so a reader can tell which files of raw/ belong to one run (files of older runs that this run did not make are not listed).
 publish_raw() {
-  local src=$1 dst=$2 f b n=0 bad=0
+  local src=$1 dst=$2 f b n=0 bad=0 want got mf
+  want=$(realpath -m -- "$HERE/raw") && got=$(realpath -m -- "$dst") && [ -n "$want" ] && [ "$want" = "$got" ] || { echo "REFUSED: publishing is only allowed into the raw/ folder next to this script ($HERE/raw), not into $dst" >&2; return 2; }
   mkdir -p -- "$dst" || return 1
+  mf=$(mktemp "$dst/.refresh-manifest.tmp.XXXXXX") && chmod 644 -- "$mf" || return 1
+  { echo "# files published by one run_all.sh --refresh (run id $$-$(date -u +%Y%m%dT%H%M%SZ)); files of raw/ that are not listed here come from an older run"; } > "$mf"
   for f in "$src"/*; do
     [ -f "$f" ] || continue
     b=$(basename -- "$f")
-    if cp -- "$f" "$dst/.$b.tmp.$$" && mv -f -- "$dst/.$b.tmp.$$" "$dst/$b"; then n=$((n+1)); else bad=$((bad+1)); rm -f -- "$dst/.$b.tmp.$$"; echo "REFRESH FAILED for $b" >&2; fi
+    if cp -- "$f" "$dst/.$b.tmp.$$" && mv -f -- "$dst/.$b.tmp.$$" "$dst/$b"; then n=$((n+1)); echo "$(sha256sum -- "$dst/$b" | cut -c1-64)  $b" >> "$mf"; else bad=$((bad+1)); rm -f -- "$dst/.$b.tmp.$$"; echo "REFRESH FAILED for $b" >&2; fi
   done
+  if [ "$bad" = 0 ]; then mv -f -- "$mf" "$dst/refresh-manifest.txt" || bad=$((bad+1)); else rm -f -- "$mf"; fi
   echo "$n"; [ "$bad" = 0 ]
 }
 if [ "${1:-}" = "--publish-raw" ]; then publish_raw "${2:?SRC}" "${3:?DST}"; exit $?; fi
 if [ "${1:-}" = "--check-counts" ]; then count_check "${2:?SELFTEST_FILE}" "${3:?TTC_FILE}" "${4:-}"; exit $?; fi
-STRICT_IDS=""; ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
-for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; --refresh) REFRESH=1;; --keep) KEEP=1;; *) ARGS+=("$a");; esac; done
+STRICT_IDS=(); ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
+# f8-r12 (m6): an option that is not known is refused (it used to be taken as the work folder); at most one work folder; --raw-dir names the folder to lock
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --strict) STRICT_IDS=(--require-real-credential-ids);; --lock-only) LOCKONLY=1;; --refresh) REFRESH=1;; --keep) KEEP=1;;
+    --raw-dir) [ $# -ge 2 ] && [ -n "$2" ] || { echo "REFUSED: --raw-dir needs a folder name"; exit 2; }; RAWFINAL=$2; shift;;
+    -*) echo "REFUSED: unknown option $1 (known: --strict --refresh --keep --raw-dir FOLDER; a work folder whose name starts with - is not accepted)"; exit 2;;
+    *) ARGS+=("$1");;
+  esac; shift
+done
+[ "${#ARGS[@]}" -le 1 ] || { echo "REFUSED: more than one work folder given (${#ARGS[@]}); give none or one"; exit 2; }
 # f8-r11 (review f8-r10 M2, F12): the variables that change WHAT is checked or HOW MANY cases run are refused (exit 2) when they are set, whatever the caller meant: a stray one must never make this script pass without the whole suite. The names only are printed, never a value.
 # The test hooks of the nested failure tests are listed in the next block; these are the hooks of the other scripts.
 for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY; do
@@ -85,7 +99,7 @@ SCRUBBED=""
 SCRUB_PREFIX=(AWS_ AZURE_ ARM_ GOOGLE_ GCP_ GCLOUD_ CLOUDSDK_
   ANTHROPIC_
   OPENAI_
-  N8N_ HUBSPOT_ SLACK_ GITHUB_ GH_ SMTP_ POSTGRES PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSERVICE PGOPTIONS PGSSL
+  N8N_ HUBSPOT_ SLACK_ GITHUB_ GH_ GIT_ SMTP_ POSTGRES PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSERVICE PGOPTIONS PGSSL
   PYTHON)
 SCRUB_NAME=(DATABASE_URL LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT BASH_ENV ENV CDPATH GLOBIGNORE SHELLOPTS BASHOPTS PS4 IFS_DEBUG)
 for v in $(compgen -e); do
@@ -94,7 +108,8 @@ for v in $(compgen -e); do
   for x in "${SCRUB_NAME[@]}"; do [ "$v" = "$x" ] && hit=1; done
   case $v in *_API_KEY) hit=1;; *_TOKEN) hit=1;; *_SECRET) hit=1;; *_PASSWORD) hit=1;; *_CREDENTIALS) hit=1;; esac
   case $v in PYTHONDONTWRITEBYTECODE) hit="";; PYTHONHASHSEED) hit="";; esac
-  [ -z "$hit" ] || { SCRUBBED="$SCRUBBED $v"; unset "$v"; }
+  # f8-r12 (M3): the status of unset is checked. A variable that cannot be removed (SHELLOPTS and BASHOPTS are read-only in bash) is not reported as removed: the run is refused and the name is printed (never a value).
+  [ -z "$hit" ] || { if unset "$v" 2>/dev/null; then SCRUBBED="$SCRUBBED $v"; else echo "REFUSED: the environment variable $v would change how this script runs and cannot be removed here; start the script without it (env -u $v bash run_all.sh)"; exit 2; fi; }
 done
 [ -z "$SCRUBBED" ] || echo "environment variables removed for this run (names only):$SCRUBBED"
 # round 10d (Q: review f8-r10c): the test hooks are refused (not silently ignored) when RUN_ALL_NESTED is not set, so a stray variable in a person's shell can never change what is checked
