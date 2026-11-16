@@ -69,3 +69,13 @@ INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); se
 REFUSED: --sha 'cafe' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/dev7/s/toy/repo (unknown, ambiguous, not a commit, or the name of a branch or tag): 2279b7d3f9d3dcd0712709076
   PASS: T83 --sha cafe (a branch name made of hex digits, pointing at HEAD) is refused, exit 2 (got 2), no mutant run (r6: resolved the branch)
 == T84 (review r6 nit 8) --root renamed away and replaced by a decoy folder during the run: the run's restore must not report success on the decoy
+  exit code 3
+  PASS: T84a exit 3 (got 3), marker and backup kept, the planted file in the renamed folder is still planted (r6: restored on the decoy, exit 143, marker cleared)
+RESTORE FAILED: cannot write src/mod.py back: the folder now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/dev7/s/toy/root is not the folder the mutant was planted in (it
+  PASS: T84b --restore at the path that now holds the decoy: exit 3 (got 3), text names the renamed folder problem, marker kept
+  PASS: T84c renamed back: --restore works and the file is back
+== T85 (review r6 nit 8) a test that changes the mode of the file under test: the mode is set back
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T85 mode 640 before, a test chmods the file to 600: it is 640 again after the run (got 640), content restored
+FAILED CHECKS: 0 (of 35 checks run; skipped: none)
