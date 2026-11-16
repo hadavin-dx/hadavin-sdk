@@ -1,0 +1,21 @@
+# REVIEW.md lines 459-590 round 52 stranger read (agent aa99a90d, egm-comprehension), security path, uncapped
+Saved by flows-audit, condensed. Reviewer words unverified; static; snapshot snap-rv52 (post-r49). Range is decision, schedule and design text, not finding rows. NOT read: 1-85, 108-458, 591 on; decision-table header; 'Words and scales', 'Matter today', criteria text, finding tables, Z/O/T sub-blocks, hash table, 'Undeclared logins', glossary line 12, cited files. 0 Blockers, 7 Majors, 12 Minors. Held: 33 answers = 29 + 9b + 23b + Q1 + 5-K; Decision 20 option counts sum to 28; UTC/IST conversions correct; signing load 9+1+1=11; seven keys named and counted at 585; no secret or handle printed.
+M1 Line 522 contains a commit id (of the commit the patch was built on) although line 523 says the id is kept only in ../reviews/incident-g5-patch-copy.md (REVIEW.md commit-id line rule): replace with "the commit the patch was built on (id in the incident file)"; also say why "it would no longer apply".
+M2 585 says the counting job has a software key (Z4); 589 says job "holds no key, no signing socket": say "no signing key"; Z4 covers job-summary key of the counting-job identity outside the container.
+M3 520 Decision 21 Hold says criterion (8) unmet "until option (a) done, (b) built, or the note exists" vs REVIEW NOTE (3): one performed rotation only stop-gap, X-6.6c open or noted until (b): does (a) alone close it?
+M4 514 Decision 15 says release 2 must remove criterion (7) rights incl. SELECT on redaction_maps before the hold ends; 505, 459 say (7) may end on a note and Decision 8 only if note refused; row 474 lists no dependency on Decision 8 although 509 says removal comes "after Decision 8": state release 2 for (7) when Decision 8 is "no"; add 8 to 474.
+M5 Decision 5 and "does not checkpoint-sign" setting: 502 and 463 say option (i) signing program needs the setting; 494 says it does not; the setting is needed by the other programs' production start.
+M6 Where the next key is pinned stated three ways: 534, 563 list "next" among keys pinned inside (B); 105, 549, 537 say next key pinned by root pin (Z17): one statement.
+M7 Terms without definition in range and not in terms table: X-2, X-5, X-6.x, A-01, A-3, A-6, C-01, C-3, C-7, C-8, T1, T2, OL-7, OL-8, F2/F3/F7/F8, R373, Z1-Z17, "mode A / mode B" (468, Decision 9), "WHICH RUN CLOSES A CRITERION", "fix-do-not-defer rule exception (a)" (507), "Undeclared logins".
+m8 577 vs 574, 571: negative test 1 "change of (B) signed by release key alone is refused" but release-key-alone allowed for TIGHTENING: add "that changes a pin or loosens".
+m9 580 vs 526: client key confirmed "through a separate channel" vs client's signed contract schedule is the proof: align (557 sub-block C wins).
+m10 Size mismatches: Decision 11 block 510 "about 1 day" vs table 470 "1 to 2 days, low end"; Decision 21 520 "(a) small" vs 480 "small to medium"; Decision 22 481 "no source document exists" but borrows a figure from roles-proposal-summary.md; Decision 12 unclear if 3-5 days includes R2 extra day (511).
+m11 Check timing for 9a and 9b circular: 506 9a checks "with 9b"; 468 9b "with 9a"; 467 over-breadth proof before proposal.
+m12 462 "option 1 / option 2" for Decision 4 vs 501 "accept" and "build".
+m13 476 Decision 17 dependency "2(a)" vs 499 "(a) or (b) un-defers A-01".
+m14 477, 478: Decision 18 depends on 19 and 19 "decides with 18" circular; 478 names builder only but 518 says studio head gives the number.
+m15 552 counts 14 signatures per client and release over all file types; 587 calls 14 an estimate "for ONE key" though spread over several keys.
+m16 First-person voice with no stated author ("I did not verify" 529, "my reading" 506/507, "I advise against it" 518, "my count" 552, "TODAY: no file I read" 496); 529 points to "glossary line 12" not in terms table: write "the audit".
+m17 543 "Ask: which binding? OPTION (i)" inside "WHAT THIS DOES NOT STOP"; option (ii) only at 554: move Ask and options under 527.
+m18 467 "effective_problems already covers table, column, sequence, schema CREATE, ownership, superuser" source claim not marked "read, not run": add "(read, migrate.py:193-262; not run)".
+m19 459 says Q1 "not needed" while 465, 490 say Q1 "asked first": one line that Q1 gates only Decision 18.

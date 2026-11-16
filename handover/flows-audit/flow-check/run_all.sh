@@ -1,7 +1,7 @@
 #!/bin/bash
-# F8 runner (round 6; f8-r11: scratch raw folder; f8-r12: limits, clean-up of helper processes, narrower environment). Usage: bash run_all.sh [--strict] [--refresh] [--keep] [--raw-dir FOLDER] [WORKDIR]
+# F8 runner (round 6; f8-r11: scratch raw folder; f8-r12: limits, clean-up of helper processes, narrower environment; f8-r13: more steps limited, shell functions and relative PATH entries refused, RESULT line required). Usage: bash run_all.sh [--strict] [--refresh] [--keep] [--raw-dir FOLDER] [WORKDIR]
 #   --raw-dir : the folder that is LOCKED (default: raw/ next to this script). With --refresh only raw/ next to this script may be published into (exit 2 otherwise), whatever --raw-dir says.
-# f8-r12: every long step has a time limit (timeout -k 10, limits in ONE place below, a timeout is a failure), a run that is interrupted or aborted stops every process it started before it removes anything, an unknown option is refused (it used to be taken as the work folder), and --refresh publishes only after a run that passed.
+# f8-r12 + f8-r13: every step that starts a program has a time limit (timeout -k 10, limits in ONE place below, a timeout is a failure; the few quick shell-only steps such as mkdir and cp have none), a run that is interrupted or aborted stops every process it started before it removes anything, an unknown option is refused (it used to be taken as the work folder), and --refresh publishes only after a run that passed.
 #   --refresh : at the very end, and only when the run got that far, copy this run's raw files into the tracked folder raw/ (each file is written under a temporary name and then renamed, so a reader never sees half a file). Without --refresh the tracked raw/ folder is NOT touched (git status stays clean).
 #   --keep    : do not delete this run's scratch raw folder at the end (its path is printed). A run that fails keeps it anyway (except the nested test runs), so the raw output of a failure is never lost.
 # f8-r11 (the intermittent exit 1 'SELFTEST summary line missing'): every run writes ALL its raw output into its own new scratch folder (mktemp), never into a folder another run, another script or a reader can also touch. Before f8-r11 every run wrote into the one tracked raw/ folder; the lock made a second run refuse, but any other writer of those files (a person's or an agent's second run through another copy of the script, a reader that opens the file while it is rewritten) could mix with this run, and the run could only report 'line missing' without its raw output.
@@ -22,11 +22,16 @@
 set -u
 # f8-r12 (M3): SHELLOPTS and BASHOPTS can switch on tracing (xtrace) before the first line runs and cannot be unset here (read-only). If either one came in through the environment, stop now, before anything is traced, and say which.
 for v in SHELLOPTS BASHOPTS; do read -r _ DECLFLAGS _ < <(declare -p "$v" 2>/dev/null); [[ ${DECLFLAGS:-} == -*x* ]] && { echo "REFUSED: the environment variable $v is exported to this script and would change how it runs (for example switch on tracing); start the script without it (env -u $v bash run_all.sh)"; exit 2; }; done
+# f8-r13 (review f8-r12 design M1): a shell function that came in through the environment (export -f) would replace grep, python3, timeout or sha256sum below. Any imported function is refused (names only); an empty or relative entry in PATH is refused (it would run a program from the current folder).
+FUNCS=$(declare -F | sed 's/^declare -[a-zA-Z-]* //' | tr '\n' ' '); [ -z "$FUNCS" ] || { echo "REFUSED: shell functions came in through the environment (names: $FUNCS); start the script without them (env -i or unset -f)"; exit 2; }
+case ":${PATH:-}:" in *::*) echo "REFUSED: PATH has an empty entry (it means the current folder); fix PATH"; exit 2;; esac
+IFS=: read -r -a PATHPARTS <<< "${PATH:-}"; for v in "${PATHPARTS[@]}"; do case $v in /*) ;; *) echo "REFUSED: PATH has an entry that is not an absolute folder; fix PATH"; exit 2;; esac; done; unset PATHPARTS
 HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAWFINAL="$HERE/raw"   # RAWFINAL = the raw folder that is locked (default: the tracked raw/ next to this script; written only with --refresh, and only when it IS that folder); RAW (the scratch folder of this run) is made below   # f8-r12 (review f8-r12 M1): RUN_ALL_RAW is no longer an input of a plain run (refused); a person or a test names another folder to lock with --raw-dir. RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
 # f8-r12 (M2): time limits in seconds, ONE place. A step that runs longer is stopped (SIGTERM, then SIGKILL after 10 s) and counts as a failure (exit 124 or 137 is not 0). A limit is never a way to pass: a smaller number only makes a run fail sooner; each can be changed with the RUN_ALL_LIMIT_* variable of the same name (a whole number from 1 to 99999, else exit 2).
-LIM_CHECKER=${RUN_ALL_LIMIT_CHECKER:-300}; LIM_SELFTEST=${RUN_ALL_LIMIT_SELFTEST:-900}; LIM_TAKE=${RUN_ALL_LIMIT_TAKE:-300}; LIM_SUITE=${RUN_ALL_LIMIT_SUITE:-1200}; LIM_NESTED=${RUN_ALL_LIMIT_NESTED:-1800}
-for v in LIM_CHECKER LIM_SELFTEST LIM_TAKE LIM_SUITE LIM_NESTED; do [[ ${!v} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "REFUSED: the time limit $v (RUN_ALL_${v/LIM_/LIMIT_}) must be a whole number of seconds from 1 to 99999"; exit 2; }; done
-lim() { local l=$1; shift; timeout -k 10 "$l" "$@" & wait $!; }   # run in the background and wait, so that a signal sent to this script is handled at once (bash holds a signal until a foreground command ends); the status is the command's (124 / 137 = stopped by the limit)
+LIM_CHECKER=${RUN_ALL_LIMIT_CHECKER:-300}; LIM_SELFTEST=${RUN_ALL_LIMIT_SELFTEST:-900}; LIM_TAKE=${RUN_ALL_LIMIT_TAKE:-300}; LIM_SUITE=${RUN_ALL_LIMIT_SUITE:-1200}; LIM_NESTED=${RUN_ALL_LIMIT_NESTED:-1800}; LIM_BUILD=${RUN_ALL_LIMIT_BUILD:-300}
+for v in LIM_CHECKER LIM_SELFTEST LIM_TAKE LIM_SUITE LIM_NESTED LIM_BUILD; do [[ ${!v} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "REFUSED: the time limit $v (RUN_ALL_${v/LIM_/LIMIT_}) must be a whole number of seconds from 1 to 99999"; exit 2; }; done
+lim() { local l=$1; shift; timeout -k 10 "$l" "$@" <&0 & wait $!; }   # f8-r13: <&0 keeps a here-document given to the call (a background command would otherwise read /dev/null)
+#    # run in the background and wait, so that a signal sent to this script is handled at once (bash holds a signal until a foreground command ends); the status is the command's (124 / 137 = stopped by the limit)
 TCUNSET=(-u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT)   # round 10c (Q4): every take_check.sh call below starts from a clean TAKE_CHECK_* environment, whatever the caller exported
 # f8-r11: the pinned case counts, in ONE place (expected-counts.pin next to this script). count_check SELFTEST_FILE TTC_FILE [PIN]: prints one line, returns 0 when both programs ran exactly the pinned number of cases, 1 otherwise (the number drifted, a line is missing or printed twice, or a case was not as expected).
 count_check() {
@@ -65,7 +70,7 @@ count_check() {
 # publish_raw SRC DST: copies every plain file of SRC into DST, each under a temporary name and then renamed (a reader never sees half a file); files of DST that SRC does not have are left alone; prints the number copied; returns 1 if one copy failed
 # f8-r12 (review f8-r12 M1): DST must be the raw/ folder next to THIS script (compared as physical paths), whoever calls this and however; any other folder is refused (return 2). The one writer of that folder is therefore this function; no environment variable or option can point it at another folder. After the copies, refresh-manifest.txt is written the same way: the run id, the time (UTC) and the sha256 of each file this run published, so a reader can tell which files of raw/ belong to one run (files of older runs that this run did not make are not listed).
 publish_raw() {
-  local src=$1 dst=$2 f b n=0 bad=0 want got mf
+  local src=$1 dst=$2 f b n=0 bad=0 want got mf h
   want=$(realpath -m -- "$HERE/raw") && got=$(realpath -m -- "$dst") && [ -n "$want" ] && [ "$want" = "$got" ] || { echo "REFUSED: publishing is only allowed into the raw/ folder next to this script ($HERE/raw), not into $dst" >&2; return 2; }
   mkdir -p -- "$dst" || return 1
   mf=$(mktemp "$dst/.refresh-manifest.tmp.XXXXXX") && chmod 644 -- "$mf" || return 1
@@ -73,12 +78,16 @@ publish_raw() {
   for f in "$src"/*; do
     [ -f "$f" ] || continue
     b=$(basename -- "$f")
-    if cp -- "$f" "$dst/.$b.tmp.$$" && mv -f -- "$dst/.$b.tmp.$$" "$dst/$b"; then n=$((n+1)); echo "$(sha256sum -- "$dst/$b" | cut -c1-64)  $b" >> "$mf"; else bad=$((bad+1)); rm -f -- "$dst/.$b.tmp.$$"; echo "REFRESH FAILED for $b" >&2; fi
+    [ ! -L "$f" ] || { echo "REFRESH FAILED for $b: a symbolic link is not copied" >&2; bad=$((bad+1)); continue; }   # f8-r13: a link in the source would copy what it points at
+    if cp -- "$f" "$dst/.$b.tmp.$$" && mv -f -- "$dst/.$b.tmp.$$" "$dst/$b" && h=$(sha256sum -- "$dst/$b") && [ -n "${h:0:64}" ]; then n=$((n+1)); echo "${h:0:64}  $b" >> "$mf"; else bad=$((bad+1)); rm -f -- "$dst/.$b.tmp.$$"; echo "REFRESH FAILED for $b" >&2; fi
   done
   if [ "$bad" = 0 ]; then mv -f -- "$mf" "$dst/refresh-manifest.txt" || bad=$((bad+1)); else rm -f -- "$mf"; fi
   echo "$n"; [ "$bad" = 0 ]
 }
-if [ "${1:-}" = "--publish-raw" ]; then publish_raw "${2:?SRC}" "${3:?DST}"; exit $?; fi
+if [ "${1:-}" = "--publish-raw" ]; then   # f8-r13: the same lock as a run takes, so a hand-made publish cannot run beside a run
+  command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed"; exit 2; }
+  [ "$(realpath -m -- "$HERE/raw")" = "$(realpath -m -- "${3:?DST}")" ] && mkdir -p -- "$HERE/raw" && exec 9< "$HERE/raw" && { flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for $HERE/raw"; exit 2; }; }
+  publish_raw "${2:?SRC}" "${3:?DST}"; exit $?; fi
 if [ "${1:-}" = "--check-counts" ]; then count_check "${2:?SELFTEST_FILE}" "${3:?TTC_FILE}" "${4:-}"; exit $?; fi
 STRICT_IDS=(); ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
 # f8-r12 (m6): an option that is not known is refused (it used to be taken as the work folder); at most one work folder; --raw-dir names the folder to lock
@@ -104,8 +113,8 @@ SCRUB_PREFIX=(AWS_ AZURE_ ARM_ GOOGLE_ GCP_ GCLOUD_ CLOUDSDK_
   ANTHROPIC_
   OPENAI_
   N8N_ HUBSPOT_ SLACK_ GITHUB_ GH_ GIT_ SMTP_ POSTGRES PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSERVICE PGOPTIONS PGSSL
-  PYTHON)
-SCRUB_NAME=(DATABASE_URL LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT BASH_ENV ENV CDPATH GLOBIGNORE SHELLOPTS BASHOPTS PS4 IFS_DEBUG)
+  PYTHON LD_ SSL_CERT_ REQUESTS_CA CURL_CA NODE_ HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy)   # f8-r13: loader, certificate and proxy variables too; this is a deny-list (README says so): a variable not named here is passed on
+SCRUB_NAME=(DATABASE_URL LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT BASH_ENV ENV CDPATH GLOBIGNORE SHELLOPTS BASHOPTS PS4 IFS_DEBUG POSIXLY_CORRECT BASH_XTRACEFD)
 for v in $(compgen -e); do
   hit=""
   for x in "${SCRUB_PREFIX[@]}"; do case $v in "$x"*) hit=1;; esac; done
@@ -130,7 +139,7 @@ is_run_all_ancestor() { # PID: 0 when PID is an ancestor of this shell and its c
   for i in 1 2 3 4 5 6; do
     p=$(sed -n 's/^PPid:[[:space:]]*//p' "/proc/$p/status" 2>/dev/null)
     [[ $p =~ ^[1-9][0-9]*$ ]] && [ "$p" -gt 1 ] || return 1
-    if [ "$p" = "$want" ]; then tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q -F 'run_all.sh'; return $?; fi
+    if [ "$p" = "$want" ]; then tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q -E '(^| |/)run_all\.sh( |$)'; return $?; fi
   done
   return 1
 }
@@ -174,6 +183,7 @@ reap_children() {
 # f8-r12 (M2): a signal can arrive while a step runs with its output sent to a file (lim ... > file 2>&1); the handler would then write into that file. Descriptors 5 and 6 keep the real stdout and stderr, and the messages of the handlers and of cleanup use them.
 exec 5>&1 6>&2
 cleanup() {
+  trap '' INT TERM HUP   # f8-r13: a second signal while the clean-up runs must not start it again or cut it short
   reap_children
   [ -z "$MADE_W" ] || rm -rf -- "$W"   # only a folder this script made itself (mktemp below)
   # keep the scratch raw folder when --keep, or when a run that had started its work ended with a status other than 0 (never in the nested test runs, which fail on purpose)
@@ -198,19 +208,19 @@ cp -- "$D/VIDEO-RUNSHEET.md" "$W/c/handover/demo/" && cp -- "$D/n8n-mainframe/bu
 : > "$RAW/apply.log"; WORKSTARTED=1
 # f8-r12 (M3, m3): git reads settings from the user and the machine (GIT_* variables are removed above; here also the global and system config files are switched off) and every status is checked (git init used to be followed by "; true")
 GITENV=(env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_NOSYSTEM=1)
-( cd "$W/c" && "${GITENV[@]}" git init -q . ) >> "$RAW/apply.log" 2>&1 || { echo "ABORT: git init (see raw/apply.log)"; exit 3; }
+( cd "$W/c" && lim "$LIM_BUILD" "${GITENV[@]}" git init -q . ) >> "$RAW/apply.log" 2>&1 || { echo "ABORT: git init (see raw/apply.log)"; exit 3; }
 for p in F-002-take-key-check-and-claim-error-path F-008-save-runs-for-the-take; do
-  ( cd "$W/c" && "${GITENV[@]}" git apply --check "$PT/$p.patch" && "${GITENV[@]}" git apply "$PT/$p.patch" ) >> "$RAW/apply.log" 2>&1 || { echo "ABORT: git apply $p (see raw/apply.log)"; exit 3; }
+  ( cd "$W/c" && lim "$LIM_BUILD" "${GITENV[@]}" git apply --check "$PT/$p.patch" && lim "$LIM_BUILD" "${GITENV[@]}" git apply "$PT/$p.patch" ) >> "$RAW/apply.log" 2>&1 || { echo "ABORT: git apply $p (see raw/apply.log)"; exit 3; }
   echo "applied $p" | tee -a "$RAW/apply.log"
 done
 cd "$W/c/handover/demo/n8n-mainframe" || exit 3
-MF_REAL=1 MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 python3 build_mainframe.py "$W/g/real" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 HS_CRED_PLACEHOLDER > "$RAW/gen-real.log" 2>&1 || { echo "ABORT gen real (raw/gen-real.log)"; exit 3; }
-MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 python3 build_mainframe.py "$W/g/film" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 > "$RAW/gen-film.log" 2>&1 || { echo "ABORT gen film (raw/gen-film.log)"; exit 3; }
+MF_REAL=1 MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 lim "$LIM_BUILD" python3 build_mainframe.py "$W/g/real" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 HS_CRED_PLACEHOLDER > "$RAW/gen-real.log" 2>&1 || { echo "ABORT gen real (raw/gen-real.log)"; exit 3; }
+MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 lim "$LIM_BUILD" python3 build_mainframe.py "$W/g/film" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 > "$RAW/gen-film.log" 2>&1 || { echo "ABORT gen film (raw/gen-film.log)"; exit 3; }
 ( set -o pipefail; cd "$W/g" && find . -type f | sort | while IFS= read -r f; do h=$(sha256sum -- "$f") || exit 1; printf '%s  %s\n' "${h:0:16}" "$f"; done ) > "$RAW/patched-flows-list.txt" || { echo "ABORT: the list of generated flow files could not be made (raw/patched-flows-list.txt)"; exit 3; }
 cd "$HERE" || exit 3
-DDLF="$D/n8n-flows-v4/mf_leads.sql"; DDLO=(); [ -f "$DDLF" ] && DDLO=(--ddl "$DDLF")
+DDLF="$D/n8n-flows-v4/mf_leads.sql"; DDLO=(); [ -f "$DDLF" ] && DDLO=(--ddl "$DDLF")   # f8-r13: arrays that can be empty are expanded with the ${a[@]+"${a[@]}"} form (bash before 4.4 stops on an empty array under set -u)
 # f8-r12 (m7): argument lists are arrays (no word splitting of a text), so a folder name with a space cannot split an option
-E=("${DDLO[@]}" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token "${STRICT_IDS[@]}")
+E=(${DDLO[@]+"${DDLO[@]}"} --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token ${STRICT_IDS[@]+"${STRICT_IDS[@]}"})
 ACC=(--accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --accept-no-save mf-recovery.json)
 STRICT=(--require-webhook-auth --block-env-access)
 T0=$(date +%s)
