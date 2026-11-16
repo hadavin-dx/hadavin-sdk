@@ -1,5 +1,14 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:35 UTC / 13:05 IST: MASTER-MAP.md and AUDIT-FINDINGS.md merged; result review running
+Failed or weak first: (1) the seeded sampler returned finding pool=0 (it does not parse the merged AUDIT-FINDINGS format), only the map sample worked (173 ids; picked M-A-13, M-A-19, M-A-25, M-A-39, M-B-17, M-B-28, M-B-36, M-D2-17, M-D2-34, M-D2-89); I chose 14 findings by hand for the reviewer, which is not a seeded random sample. (2) Merged files are concatenations of builder text; lane D1 and D2 are condensed. (3) Still no verdict from any reviewer. (4) Plan v4 not re-reviewed.
+Register (all sonnet, read-only egm reviewers, started about 07:34 UTC, expected end about 07:50 UTC):
+- a897cb99650866572 egm-codebase-details: spot-check 14 findings and 10 map rows at file:line | running | collect, save as result-review-1a.md
+- a73d1e8b6643ed555 egm-zoom-out: what the audit missed | running | save result-review-1b.md
+- a4e4513613713fd61 egm-design: fix plan vs rules, choke point | running | save result-review-1c.md
+- a265765b029af4dbf egm-comprehension: can a non-engineer read it | running | save result-review-1d.md
+Next: collect reviews, egm-resolve (opus via Skill), fix blockers/majors in the two files, patches/, ledger rows, FINAL block. Hard stop part 1: 09:15 UTC.
+
 ## STATUS 07:25 UTC / 12:55 IST: all 6 lane builders and the cross-lane pass have reported; merge starting
 Failed or weak first: (1) Builders' own Writes were refused for A, B, C, D1, D2, D3, so I saved their returned text (A, B, C, D3 verbatim by script; D1 and D2 re-typed condensed, not verbatim). The cross-lane builder's Write worked. (2) My own audit files contained 3 banned vendor-brand strings (quoted from the repo) which would make the repo guard test fail; I replaced them with "[vendor-inspired name removed]" in findings-D3, claims-D3, handback-D3 (script check: 0 left in handover/core-hardening). (3) Coverage is partial: NOT-AUDITED lists per lane (A redact.py pattern table, B parts of k1b, C parts of tools.py, D2 validate.py rule bodies, D3 almost all of handover/ = 16,308 files). (4) No independent reviewer has read anything yet. Plan v4 rulings were not re-reviewed.
 Counts (builder claims, unverified): A 2 Blocker/8 Major/15 Nit; B 1/11/10; C 1/15/10; D1 0/3/9; D2 1/17/6; D3 0/12/13; cross X 0/14/2. The cross builder re-read the code for A-01, A-02, A-03, B-01, C-01, D2-01: all CONFIRMED on the facts (B-01 needs a runtime to know whether tick and agent are one process: UNVERIFIED). It found that lane C's limits.py line numbers are wrong (X-13) and 4 of 17 cites checked were off.
