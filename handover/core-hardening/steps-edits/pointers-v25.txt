@@ -1,3 +1,53 @@
+changes| 1 for the older key; sheet |8.2
+changes| RULE order | the plant | | |Q09
+changes| allow-list | the plant | | |Q22
+changes| every line | the plant | | |Q10
+changes| for the numbers message at |5.1
+changes| one must be cut elsewhere (|Open 75
+changes| the sheets | the plant | | |Q03
+changes| typed into WSL unchecked | |R6
+changes| | |---|---|---|---| | Q01, |Q02
+changes|, C36, C43 | | Stranger B3: |5.7
+changes|: Gmail conversation view | |R7
+changes|; the lead-side sentence in |section 9
+changes|; the pointer to check 1 of |section 3
+changes|B proof for the older key | |8.6
+changes|ate, rows 2, 31, 62); sheet |8.4
+changes|card step 3 | the plant | | |Q11
+changes|ct sentence | the plant | | |Q24
+changes|d v24, which lacks (i)) | | |Q12
+changes|d, sample line, compared at |6.3
+changes|dows page shows the values; |R10
+changes|e values; R10 now points to |7.9
+changes|el step changed | C52 exact |card step 3
+changes|en list rewritten (items 6, |8.4
+changes|et is not a one-person job (|Open 80
+changes|ey path | card trigger (i); |card step 2
+changes|f flipped to on | C54 exact |R4
+changes|ged: decision Q24 keeps it (|Open 77
+changes|gged, not changed: decision |Q24
+changes|he clean-up template fixed; |section 4
+changes|lants it again against v25 (|Q01
+changes|ls on | |---|---|---|---| | |Q01
+changes|m text | the plant | | Q15, |Q16
+changes|more digits | the plant | | |Q08
+changes|mple domain | the plant | | |Q20
+changes|n 71), the 7 day rule of A (|Open 78
+changes|n job (Open 80), M2 and M3 (|Open 72 and 73
+changes|n | the plant (and v24) | | |Q13
+changes|ncels the older key in 8.6; |R4
+changes|nd the owner: sheet A or B (|Open 71
+changes|nly copying the owner does (|6.4
+changes|pen 79), a smaller balance (|Open 77
+changes|random text | the plant | | |Q15
+changes|ranger minors: Gmail roles, |5.3
+changes|sample line | the plant | | |Q18
+changes|st, exit code first used in |R10
+changes|stranger secret on screen | |5.7
+changes|t again against v25 (Q01 to |Q24
+changes|tence | the plant | | Q24 | |R8
+changes|ways cancels the older key (|Open 79
+changes|ys cancels the older key in |8.6
 note| (c), in force (lead answer |Q22
 note| 0 accepted) | not read | | |G7
 note| 1a gate (G1 to G15, G17 to |G24

@@ -1,0 +1,7 @@
+OK   ruff check src tests demos | in ci.yml: True | in gate4.sh: True
+OK   ruff format --check src tests demos | in ci.yml: True | in gate4.sh: True
+OK   pytest -q -m "not live and not perf" -rs | in ci.yml: True | in gate4.sh: True
+OK   pytest -q -m perf -rs | in ci.yml: True | in gate4.sh: True
+OK   bandit -q -r src demos -ll | in ci.yml: True | in gate4.sh: True
+commands in gate4.sh with a redirect: 5
+rc=0

@@ -61,10 +61,14 @@ FAIL C46 A lacks 'send "none" for the time in 8.1'
 FAIL C46 B lacks 'send "none" for the time in 8.1'
 FAIL C47 A lacks 'a new try needs a new numbers message and yes'
 FAIL C47 B lacks 'a new try needs a new numbers message and yes'
+FAIL C61 B lacks 'Until then the older key stays valid and can spend; the card does not '
+FAIL C62 A lacks 'more than 7 days before the run day'
+FAIL C63 A lacks "otherwise describe each such key's name and time, cancel nothing, wait"
+FAIL C63 B lacks "otherwise describe each such key's name and time, cancel nothing, wait"
 FAIL C48 A holds amount 7.10 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00'])
 FAIL C48 B holds amount 7.10 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00'])
 FAIL C53 A card trigger letters (a) to (i) missing or out of order
 FAIL C53 B card trigger letters (a) to (i) missing or out of order
 FAIL C54 A lacks 'The account must be prepaid, auto-reload off, balance at least the exp'
 FAIL C54 B lacks 'The account must be prepaid, auto-reload off, balance at least the exp'
-ids that fail on v24: C26 C27 C28 C29 C30 C31 C32 C33 C34 C35 C36 C37 C38 C39 C40 C41 C42 C43 C44 C45 C46 C47 C48 C53 C54
+ids that fail on v24: C26 C27 C28 C29 C30 C31 C32 C33 C34 C35 C36 C37 C38 C39 C40 C41 C42 C43 C44 C45 C46 C47 C48 C53 C54 C61 C62 C63

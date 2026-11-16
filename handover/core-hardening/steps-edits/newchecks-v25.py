@@ -40,6 +40,8 @@ ban('C45', r'Filled example')                                                   
 need('C46', 'then send "none" for the time in 8.1'.replace('then send', 'send') , SH)                                  # card After-the-card none
 need('C47', 'a new try needs a new numbers message and yes')                                                            # key save failed path
 need('C61', 'Until then the older key stays valid and can spend; the card does not stop it.', (('B', B),))   # S Major 2: B card list (b) says what the card does not stop
+need('C62', 'more than 7 days before the run day', (('A', A),))                                                          # S/T older key A: recent use refuses the cancel
+need('C63', "otherwise describe each such key's name and time, cancel nothing, wait")                                    # S Major 3: no-key path cancels nothing the owner did not make
 # ---- Part 2: the 15 plants check-v24 missed (own25.py), each caught by its own check
 PRICES_OK = {'0.27', '0.81', '15.00', '189.00', '3.00'}
 for n, t in SH:                                                                                                         # Q01 Q02: wrong price or total anywhere
