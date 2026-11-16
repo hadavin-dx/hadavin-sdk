@@ -1,3 +1,4 @@
+Terms used here (take, DECISION line N, job keys, UNVERIFIED, mf_leads and others) are explained in work/GLOSSARY.md; read it first.
 Folded 16 Nov 2026 (system-map): 9 stacked notes moved to work/L5b-history.md; 1 labelled note(s) kept at the bottom are live. Line numbers in older text are void; cite finding ids or section names.
 
 Authority: the CURRENT STATE r11 note at the bottom of this file wins. Older notes are in work/L5b-history.md.
