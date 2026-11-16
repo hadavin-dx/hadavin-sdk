@@ -37,5 +37,5 @@ PUSHED_UTC: 2026-11-16T09:12:23Z
 
 ## LEAD ACTIONS NEEDED
 1. Run the patched flow files in n8n on the laptop and test T19 (no container daemon in this session).
-2. Decide the eight Blockers of drift/REPORT.md (D-01 to D-05, D-10, S-01, S-03) before the take; name who starts Docker and the first laptop test (OWNER-VIEW.md decision 0).
+2. Decide the seven Blockers of drift/REPORT.md (D-01 to D-05, D-10, S-03; S-01 is closed) before the take; name who starts Docker and the first laptop test (OWNER-VIEW.md decision 0).
 3. Confirm OWNER-STEPS Phase 0 steps 1 to 8 are really done (FACTS-ALREADY-DONE.md says so); OWNER-VIEW.md now shows them as done.

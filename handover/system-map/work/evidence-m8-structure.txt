@@ -1,0 +1,82 @@
+## top folders by tracked size (bytes)
+81185292 handover/demo
+46467429 handover/demo3
+3315295 handover/system-map
+831501 src/hadavin_sdk
+385765 demos/ask-your-data
+359087 uv.lock/
+251441 tests/demo_askdata
+113151 tests/warden_port
+106875 tests/contracts
+76038 tests/fixtures
+71118 .claude/rules
+67636 tests/test_mutation_runner.py
+58924 CHANGELOG.md/
+54949 tests/test_k5_tools.py
+35887 tests/test_k5_round5.py
+## tracked files over 1 MB
+3793943	handover/demo/pr-stack/raw-pulls-4-comments.json
+2257534	handover/demo3/evidence/raw/q3c-round-logs.tgz
+1664638	handover/demo3/evidence/raw/q3-round-logs.tgz
+## handover handoff-like names
+handover/BRIEF-PREAMBLE.md
+handover/CLOUD-EGM-SETUP-2026-11-12.md
+handover/EGM-CHILD-HOWTO.md
+handover/MODEL-ROUTING.md
+handover/RULE-R456-WORK-CONDUCT.md
+handover/demo/APPLY-LIST.md
+handover/demo/ORDERS.md
+handover/demo/REPORT.md
+handover/demo/coverage/PLAN.md
+handover/demo/coverage/REVIEW-1.md
+handover/demo/coverage/REVIEW-2.md
+handover/demo/coverage/REVIEW-3.md
+handover/demo/coverage/evidence-apply-check.txt
+handover/demo/coverage/evidence-coverage.xml
+handover/demo/coverage/evidence-gitleaks.txt
+handover/demo/coverage/evidence-lint-checks.txt
+handover/demo/coverage/evidence-patch-stat.txt
+handover/demo/coverage/evidence-pytest-coverage.txt
+handover/demo/coverage/evidence-r2-apply-check.txt
+handover/demo/coverage/evidence-r2-coverage-omit.txt
+handover/demo/coverage/evidence-r2-gitleaks.txt
+handover/demo/coverage/evidence-r2-hygiene-tests.txt
+handover/demo/coverage/evidence-r2-lint-checks.txt
+handover/demo/coverage/evidence-r2-literal-scan.txt
+handover/demo/coverage/evidence-r2-lock-regen.txt
+handover/demo/coverage/evidence-r2-lockdrift-test.txt
+handover/demo/coverage/evidence-r2-pip-install.txt
+handover/demo/coverage/evidence-r2-ruff-final.txt
+handover/demo/coverage/evidence-r3-apply-orders.txt
+handover/demo/coverage/evidence-r3-base-diff.txt
+## duplicate basenames in handover (count>1)
+04-hygiene.txt
+DECISION-one-store.md
+ORDERS.md
+PLAN.md
+REPORT.md
+RESULTS.md
+REVIEW-1.md
+REVIEW-2.md
+REVIEW-3.md
+REVIEW-4.md
+SUMMARY.md
+SUMMARY2.md
+__init__.py
+creds-lane.json
+crm.log
+drift-report.md
+events.jsonl
+evidence-1-gates.txt
+evidence-4-nodemo.txt
+evidence-6-workflow-mutants.txt
+evidence-b3-3-apply-matrix.txt
+evidence-b7-4-apply-matrix.txt
+hl_in.txt
+hl_out.txt
+inside.txt
+mails.jsonl
+matrix.py
+mf-form.json
+mf-hook.json
+mf-recovery.json
