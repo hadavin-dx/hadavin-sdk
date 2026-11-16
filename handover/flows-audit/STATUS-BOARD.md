@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:05:57Z
+UPDATED_UTC: 2026-11-16T11:06:19Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 5
 PERCENT: 95
-AGENTS_RUNNING: 4
-CAPACITY: 0.91 load of 4 cores, mem 0/15 GB, RAM 940/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 4 (light+heavy per list)
+AGENTS_RUNNING: 6
+CAPACITY: 0.94 load of 4 cores, mem 0/15 GB, RAM 933/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -52,8 +52,8 @@ Q18 applied; I reproduced run_all rc 0 (659/0/62) and check_patches PASS 4. NOTE
 ORDER 027: started 4 lanes (stranger+adversarial read of owner sheet, citation checker of new counts, one-place sweep of own outputs, contradiction re-read vs DECISIONS)
 F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB cap untested); --out via symlinked parent writes into target (unjudged): give to r8 fixer after a54491a8 reports
 FAILED: F8 evidence q18: ruff format --check rc=1 on check_flows.py+selftest.py; run_all.sh TCMISS unbound crash (line 76); mutants M2 M3 M7 M12 survive (fixer f8fix7 running)
-NEXT: Q21 answered and relayed to sweep fixer + owner-sheet fixer; contra2 landed (PASS 158 / 327 / 4 patches). 4 fixers running: sweep2, F3 tests, F8, owner sheet r5
-PUSHED_UTC: 2026-11-16T11:05:57Z
+NEXT: Started claims fixer (adversarial items) + naive reader of run sheet start. Running: sweep2, F3 tests, F8, owner sheet r5, claims fixer, reader
+PUSHED_UTC: 2026-11-16T11:06:19Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -76,6 +76,8 @@ PUSHED_UTC: 2026-11-16T11:05:57Z
 | f3tests9 | F3 test-gap fixer | sonnet | kill mutants 9,12,17; symlink-parent case (tests only) | 11:16 | 11:35 | 5 | running | fill_flows/fix-f3-r9.md |
 | f8fix7 | F8 fixer r7 | sonnet | format, TCMISS crash, mutants M2 M3 M7 M12 | 11:19 | 11:35 | 5 | running | flow-check/fix-f8-r7.md |
 | ownerfix5 | owner sheet fixer r5 | sonnet | placeholders, env route, port, prep rule (proposed) | 11:28 | 11:40 | 5 | running | fix-ownersteps-r5.md |
+| advfix1 | claims fixer (adversarial + cross-read) | sonnet | proof of once, scene 4 fallback, P4a, K1 wording | 11:33 | 11:48 | 5 | running | fix-adv1.md |
+| strng4 | naive reader run sheet start | sonnet | RW 1-120 + CT 1-70 | 11:33 | 11:45 | 5 | running | (inline) |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
