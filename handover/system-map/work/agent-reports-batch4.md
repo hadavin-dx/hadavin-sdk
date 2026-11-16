@@ -992,3 +992,10 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 716 L2c r9: not standalone. FIXED by STEPS r10.
 - 717 ARCHIVE-CUT-LIST r8: row C scope lost. FIXED by VERDICT r9.
 - 718 owner-timeline r9: still-works rule. FIXED by CURRENT r9.
+
+- 719 PLAN-002 r16: launch rule split over layers. FIXED by CURRENT RULINGS r16.
+- 720 BRIEF-LANE r10: replace order unclear. FIXED by BINDING r11.
+- 721 t19 r12: nothing current. Recorded in NOTHING CURRENT r12; needs a named person (studio head).
+- 722 critical-path r17: answer split. FIXED by CURRENT ANSWER r18.
+- 723 not-checked r9: no single schedule. FIXED by CURRENT r10; fill script owner not assigned.
+- 724 L2c r10, 725 ARCHIVE-CUT-LIST r9, 726 owner-timeline r10: finished; hand-back text not seen by me, NOT DIGESTED.
