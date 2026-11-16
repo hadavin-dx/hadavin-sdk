@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:42:58Z
+UPDATED_UTC: 2026-11-16T10:44:32Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
-PERCENT: 79
-AGENTS_RUNNING: 4
-CAPACITY: 3.57 load of 4 cores, mem 0/15 GB, RAM 957/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 634M /tmp/claude-0 871M /tmp/f3m , agents 4 (light+heavy per list)
+PERCENT: 80
+AGENTS_RUNNING: 3
+CAPACITY: 2.46 load of 4 cores, mem 0/15 GB, RAM 880/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 645M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -32,8 +32,10 @@ F8 r5 fixer own mutants: 2 equivalent survivors, 1 survivor line 353 not re-run 
 F8 r5 review (false all-clear angle): 2 Blockers + 10 Majors: top block hides missing-column WARN and saving-off on sub-flow/recovery, placeholders and credential ids only WARN exit 0, v4 table file missing = exit 0, run_all can never exit 0 after fixing, README over-claims; round 6 fixer after evidence runner
 patches r3 independent evidence: patch check PASS rc 0, 5 apply rc 0, totals 160 s agree; hits left: example.test in build_mainframe.py:13-14 (desk@/intake@/alerts@, F-002/F-008 target not touched), 'scenes 5 to 11' at run sheet 14/89/103 (labelled later video), 355/380 in changelog L8 on purpose; scene 4 viewer cell 180 words, voice 53 words and scene 2 voice 49 (long to read aloud); card wording still lead's choice
 claims r8 independent evidence: counts and paste checker agree (327; 124/69/54/29/51; PASS 157 rows); found and fixed the stale Part 7 lane B table (was 80/12/30/63, now 90/16/35/44 = 230 by independent script); B-214 no wording (HELD); take scripts unseen; Q-H re-pin date open
-NEXT: F3 r7 fixer; F8 evidence; citation and zoom-out reviews
-PUSHED_UTC: 2026-11-16T10:42:58Z
+F8 r5 independent evidence: 10 of 25 mutants survive (3 real gaps: lines 519, 62, 1508; 6 text only), non-UTF8 --ddl exit 3 internal error not 2, non-UTF8 flow file silent; --ddl missing alert columns only WARN exit 0; local ruff 0.16.9 vs repo pin 0.17.1; run_all rc 0 twice; r6 fixer running
+citation check patches r3: unsourced relayed figures stay labelled relayed (144.3 s n=1 at 120 s, 780 s, 8 of 18, T13 database kill); V7 L12 stale 'B90 n=2'; K4/K5 not-run scope v3 only; reviewer errors on AF1 and evidence file corrected by me
+NEXT: F3 r7 and F8 r6 fixers; zoom-out review
+PUSHED_UTC: 2026-11-16T10:44:32Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -54,9 +56,8 @@ PUSHED_UTC: 2026-11-16T10:42:58Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3fix7 | F3 round 7 fixer | sonnet | security review 4 Majors, 5 surviving mutants, noqa | 10:35 | 11:05 | 5 | running | fill_flows/fix-f3-r7.md |
-| f8ev5 | F8 r5 evidence runner | sonnet | run_all, 25 fresh mutants, hostile inputs | 10:48 | 11:05 | 5 | running | flow-check/evidence-r5.md |
-| patcite | citation checker patches r3 | sonnet | every number and cite vs source | 10:43 | 10:55 | 5 | running | patches/ |
 | zoomall | zoom-out on all deliverables | sonnet | right problem for one take, uncovered risks | 10:43 | 10:55 | 5 | running | REPORT.md |
+| f8fix6 | F8 round 6 fixer | sonnet | 2 Blockers + 10 Majors (false all-clear), 3 real mutant gaps, non-UTF8 | 10:46 | 11:15 | 5 | running | flow-check/fix-f8-r6.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
