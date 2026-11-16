@@ -18,8 +18,10 @@ Linux, macOS, or WSL (Windows Subsystem for Linux) using the Linux home folder (
 `/home/you/keep`), NOT `/mnt/c/...` (a Windows drive, where file permissions do not protect
 anything). Native Windows is not supported: the program checks this when it starts and refuses
 with a plain message if the system cannot open files without following symlinks.
-Python 3.9 or newer (run on 3.11, 3.12 and 3.13 only; 3.9 and 3.10 were not run: no such
-interpreter was available). Always use full paths (below); a relative `--in` path depends on the folder you are standing in.
+Python 3.11 or newer: the program refuses to start on an older Python. The tests were run on
+3.11, 3.12 and 3.13 (all three, last run recorded in `fix-f3-r7.md`); no older version and no
+Mac was ever run. Always use full paths (below); a relative `--in` path depends on the folder
+you are standing in.
 
 ## The values file
 A plain text file with one `KEY=VALUE` per line. Use only the keys of the flow set you are filling
@@ -74,10 +76,17 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
    note file and the exit code are the guards, not the file format.)
 
 2. Check (read-only; run it on the filled folder). It must say `0 problem(s)` before you import.
-   `--tokens-only` ignores placeholders. A folder with no `.json` file is an error. When the
-   fingerprint file (`NAME.manifest.json`) sits next to the folder, `check` also compares the
-   folder with it: a missing file, an extra file (any kind) or a changed file is a problem. An
-   input folder has no such file, so only the token scan runs there.
+   `--tokens-only` does not list placeholder names (it prints "placeholders: not checked"), but a
+   copy that is marked NOT READY is still refused. A folder with no `.json` file is an error (if
+   the not-ready note is there, the message names it). `check` always prints one line saying
+   whether the comparison with the fingerprint file (`NAME.manifest.json`) ran. When that file
+   sits next to the folder, a missing file, an extra file (any kind: also `.DS_Store`) or a
+   changed file is a problem. A folder that carries this program's marker file
+   (`.fill_flows-output`) but has NO fingerprint file next to it (a copied or moved folder) is a
+   problem too, as is a marker that names another folder, and a folder or file that is no longer
+   private (mode 0700 for the folder, 0600 for the files, yours): `cp -r` can loosen them.
+   An input folder has no marker and no fingerprint file, so only the token scan runs there.
+   Do not copy a filled folder to import it: import from the folder `fill` made.
 
        python3 -I "$TOOL" check "$HOME/keep/filled"
 
@@ -85,6 +94,12 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
    not an error: it says "nothing to delete" and ends with 0):
 
        python3 -I "$TOOL" delete --out "$HOME/keep/filled"
+
+   A stray file that the fingerprint file does not list (macOS `.DS_Store`, an editor's `.swp`
+   file) stops the delete and is named. Add `--remove-others` to remove stray plain files that
+   are yours; a folder, a link or a file of another user still stops it. If the folder cannot be
+   removed at the end (a file appeared while it ran), the message says `folder left behind`,
+   names what is in it, and the fingerprint file stays (when there is one): run delete again.
 
 Do not move or rename the output folder: its list of file fingerprints (`filled.manifest.json`)
 sits next to it, and `delete` finds it by that name.
@@ -123,6 +138,7 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 | 0 | Done: for `fill`, the copy is written and no placeholder is left; for `check`, nothing wrong; for `delete`, deleted or nothing was there. |
 | 1 | Refused, or `check` found problems (for example a placeholder is still there: `check` ends with 1 until every one is filled) (or the folder holds no `.json`). The message names the key, file or line, never a value. |
 | 2 | The command was typed wrongly (missing option). |
+| 130 | Stopped with Ctrl-C. The clean-up of a fill ran first; one plain line says so. |
 | 3 | `fill --allow-placeholders` wrote the copy, but placeholders are left (without the flag `fill` refuses with 1). `NOT READY TO IMPORT: N placeholders left` is printed on the error screen and the folder holds `NOT-READY-DO-NOT-IMPORT.txt`. Do not import this copy. |
 | 4 | Nothing to fill: the input has no marker and no placeholder you gave a value for (probably already filled, or the wrong folder). Nothing is written. |
 
@@ -141,7 +157,15 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 - "the name holds a path or control character": an input file name (or the output folder name)
   has a backslash, a control character or another look-alike character; rename it.
 - "cannot fill these names": a key is missing or empty in the values file, or the name is not
-  `DESK_*` / `MF_*`. Add it, or fix the flow.
+  `DESK_*` / `MF_*`. Add it, or fix the flow. (An empty value for one of the six placeholder
+  names is treated as no value: the name stays and the copy is NOT READY.)
+- "a $env token follows a name character or a dot": the marker is glued to another name (such as
+  `a$env.X` or `x.$env.X`), so it is not the n8n `$env`; it is not filled. Edit the flow.
+- "inside a cloud-synced or backed-up folder": the values file or the output sits under a folder
+  named like Dropbox, OneDrive, iCloud Drive, Google Drive and similar; those programs copy it
+  elsewhere. Use a plain folder such as `$HOME/keep`.
+- "larger than N bytes": a flow file or fingerprint file over 32 MB, or a values file over 1 MB,
+  is refused instead of read into memory.
 - "values file ...": follow the message (chmod, move out of git or /mnt, remove quotes, etc.).
 - "output ... already exists": delete the old output first (see above).
 - "output folder is the input folder or inside it": choose another `--out`.
@@ -210,14 +234,25 @@ A plain text is filled only in the address fields `url`, `toEmail`, `fromEmail`,
   user is refused for `fill` and `delete`, because it could send your files somewhere you did not
   choose.
 
-## Two limits to know
+## Limits to know
 - A `$env` name written with a JavaScript escape (for example `\u0024env`) is refused, but how
-  n8n itself reads such an escape was not tested; refusing is the safe side.
+  n8n itself reads such an escape was not tested; refusing is the safe side. A name built at run
+  time (for example `this["$"+"env"]`) cannot be found by reading the text at all (that is
+  impossible in general); it is not filled, so it simply stays and n8n handles it when the flow
+  runs. The flows are your own; do not fill flows from a source you do not trust.
+- The cloud-sync check goes by folder names. It cannot see a backup program (Time Machine, a
+  disk image tool) that copies a normal folder: keep the output folder out of every backup and
+  delete it after the take; after a backup ran, treat the values as exposed.
+- A key of a JSON object that equals one of the six placeholder names is replaced like a text
+  that equals it (the flows have none; two keys that become one are refused).
 - The fingerprint file sits next to the folder and holds SHA-256 fingerprints of the whole filled
   files. A short, guessable value could be tested offline against them. The statement "no extra
   exposure" is true only while the manifest and the folder stay together; do not send the
   manifest alone anywhere.
 - The values file must be owned by you (and mode 0600).
+- Stop signals (Ctrl-C, terminate, hang-up) are held back for the few lines that create the
+  folder and for the whole removal in `delete` (a few small files). A signal that comes in then
+  is acted on right after; if the removal had already finished, `delete` says so and ends with 0.
 
 ## What `delete --no-manifest` cannot tell
 It has no fingerprint to compare with. If someone who already controls your account edits a
@@ -240,7 +275,8 @@ you named. Use the normal `delete` (with the fingerprint file) when you have it.
   the output in one.
 
 ## Tests
-`python3 -I -m unittest` in this folder. They copy the real flows into a fresh temporary folder
+`python3 -I -m unittest` in this folder (the tests start child programs through `asyncio`'s
+process calls, with fixed argument lists and made-up files only). They copy the real flows into a fresh temporary folder
 (`FF_TEST_BASE` chooses where; `FF_DEMO_DIR` points at the flows). Values are made up and built
 from parts. Every run of the program in the tests goes through one helper that fails the test if
 any made-up value written by the tests appears in the screen output, also in its escaped forms
