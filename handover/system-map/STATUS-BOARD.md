@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 (5 earlier: SWEEP.md read, FINAL-CROSSCHECK rows 1-14 check, banned-claims lines 1-14 read, QUESTIONS.md read, README paths check; 3 started now: DECISIONS vs D04-D05 cite check, LEAD-PAGE numbers recount, tests dir run-through); digested through batch 122
+AGENTS_RUNNING: 8 (running: SWEEP.md read, banned-claims lines 1-14 read, D-04/D-05/M17 cite check, LEAD-PAGE number recount, tests dir run-through; 3 started now: ARCHIVE-CUT-LIST row sizes, OWNER-VIEW vs LEAD-PAGE overlap, TAKE-BLOCKERS count check); digested through batch 125
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
 CAPACITY: nproc 4, load 0.16 0.27 0.20, RAM 864/16087 MB used, disk / 42% used, 23G free, top3: work 2.1MB, flowcheck 0.5MB, reviews-of-core-hardening 0.4MB
