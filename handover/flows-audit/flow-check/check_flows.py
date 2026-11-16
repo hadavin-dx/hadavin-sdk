@@ -87,7 +87,7 @@ PLACEHOLDER_VALUE = re.compile(r"^[A-Z][A-Z0-9_]{5,}$")
 def kv_items(o, path=""):
     if isinstance(o, dict):
         for k, v in o.items():
-            yield from kv_items(v, path + "." + str(k)); 
+            yield from kv_items(v, path + "." + str(k))
             if isinstance(v, str): yield str(k), v, path + "." + str(k)
     elif isinstance(o, list):
         for i, v in enumerate(o):
@@ -140,7 +140,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             for lst in lists:
                 for c in lst or []:
                     if not isinstance(c, dict) or not isinstance(c.get("index"), int) or c.get("index") < 0 or not c.get("type"): fail(tag, "connection %s -> %s lacks a valid type/index" % (src, c.get("node") if isinstance(c, dict) else c))
-                    elif c.get("node") in trig and byname.get(c["node"], {}).get("type") != "n8n-nodes-base.executeWorkflowTrigger" or c.get("node") in trig: fail(tag, "incoming link %s -> %s into a trigger node (a trigger has no input)" % (src, c["node"]))
+                    elif c.get("node") in trig: fail(tag, "incoming link %s -> %s into a trigger node (a trigger has no input)" % (src, c["node"]))
     real = [n for n in nodes if n["type"] != STICKY]
     if sticky: print("  [%s] sticky notes: %d %s" % (tag, len(sticky), sorted(sticky)))
     if not real: fail(tag, "sticky-note-only file: no executable node")
@@ -148,10 +148,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
     ids = [n["id"] for n in nodes if "id" in n]
     di = sorted(k for k, v in collections.Counter(ids).items() if v > 1)
     if di: fail(tag, "duplicate node ids %s" % di)
-    low = collections.Counter(re.sub(r"\s+", " ", n["name"].strip().lower()) for n in nodes)
-    ln = sorted(k for k, v in low.items() if v > 1 and k not in [x.lower() for x in []])
-    names = [n["name"] for n in nodes]
-    near = sorted(k for k in ln if len({x for x in names if re.sub(r"\s+", " ", x.strip().lower()) == k}) > 1)
+    norm = collections.defaultdict(set)
+    for n in nodes: norm[re.sub(r"\s+", " ", n["name"].strip().lower())].add(n["name"])
+    near = sorted(k for k, v in norm.items() if len(v) > 1)
     if near: fail(tag, "names that differ only by case or spaces %s" % near)
     # per node settings
     noretry, silent = [], []
@@ -293,6 +292,8 @@ def info(d, tag):
         for e in ENVTOK.findall(s): where[e].add(n.get("name"))
     for k in sorted(where): print("  placeholder/env %-34s count=%d nodes=%s" % (k, len(re.findall(re.escape(k), raw)), sorted(where[k])))
     if not where: print("  placeholder/env: none")
+    cr = [(n.get("name"), k, (v or {}).get("name"), (v or {}).get("id")) for n in d.get("nodes", []) for k, v in (n.get("credentials") or {}).items() if isinstance(v, dict)]
+    print("  credentials (node, kind, name, id): " + ("; ".join("%s %s %s %s" % c for c in cr) if cr else "none"))
 
 def deep_diff(a, b, path=""):
     """Paths (no values) where a and b differ. Lists of dicts that carry 'name' are aligned by name."""
