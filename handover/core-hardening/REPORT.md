@@ -1,5 +1,9 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:51 UTC / 13:21 IST: plan review round 1 running
+- Register (sonnet, read-only egm reviewers, expected end +15 min): P1a egm-design on REVIEW-PLAN.md; P1b egm-implementation-readiness on REVIEW-PLAN.md. Last check: just started.
+- Next: resolve, then E1 evidence runner.
+
 ## STATUS 07:51 UTC / 13:21 IST: ORDER 005 task A started (flows-audit cross-review); task B waits for A
 - Done: fetched origin/cloud/flows-audit into a scratch copy (git archive, outside the repo); REVIEW-PLAN.md written in reviews-of-flows-audit/.
 - Register: (none running yet). Next: P1 plan review (egm-review-loop, sonnet reviewers), then E1 evidence runner, then 4 result reviewers.
