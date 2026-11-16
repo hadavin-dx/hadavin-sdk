@@ -5,7 +5,7 @@
 # are printed), M3 (a listed flow that is a folder or a dangling link is a FAIL), M4 (the pin header date and sha256 are checked), and a flow whose node count changed while everything
 # is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
-HERE=$(cd "$(dirname "$0")" && pwd); TAKE="$HERE/take_check.sh"
+HERE=$(cd "$(dirname "$0")" && pwd); TAKE="${TEST_TAKE_SCRIPT:-$HERE/take_check.sh}"   # TEST_TAKE_SCRIPT: only to run these cases against an older copy of the script (it must sit in a mirror folder like the one built below)
 P=${1:-}; [ -d "$P" ] || { echo "usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]"; exit 2; }
 P=$(cd "$P" && pwd)
 if [ -n "${2:-}" ]; then
@@ -19,17 +19,196 @@ BAD=0; N=0
 ok() { N=$((N+1)); if [ "$1" = 0 ]; then echo "ok   $2"; else echo "FAIL $2"; BAD=$((BAD+1)); fi; }
 # tk NAME ARGS...: run the take check with a clean environment (no override, no test flag) plus the extra variables given before "--"
 tk() { local nm=$1; shift; local ev=(); while [ "${1:-}" != "--" ]; do ev+=("$1"); shift; done; shift
-  env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT "${ev[@]}" bash "$TAKE" "$@" > "$S/$nm.txt" 2>&1; RC=$?; }
+  env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT ${ev[@]+"${ev[@]}"} bash "$TAKE" "$@" > "$S/$nm.txt" 2>&1; RC=$?; }
 has() { grep -q -F -- "$2" "$S/$1.txt"; }
 cmp_pins() { cmp -s <(grep -v '^#' "$1") <(grep -v '^#' "$2"); }
 PIN="$HERE/take-warns.pin"
 PINSUM=$(sha256sum < "$PIN" | cut -d' ' -f1)
+OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date cases are computed, never typed
 PD=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)   # f8-r6: the date used in every reviewer line below is the pin's own date line (never older than the pin, never in the future while the pin is not), so no test breaks when the calendar moves on
-TODAY=$(date -u +%Y-%m-%d); TOMORROW=$(date -u -d tomorrow +%Y-%m-%d); IN2DAYS=$(date -u -d "2 days" +%Y-%m-%d)
+TODAY=$(date -u +%Y-%m-%d); YESTERDAY=$(date -u -d "$TODAY -1 day" +%Y-%m-%d); TOMORROW=$(date -u -d "$TODAY +1 day" +%Y-%m-%d); IN2DAYS=$(date -u -d "$TODAY +2 days" +%Y-%m-%d)   # computed ONCE here; the word-check cases below give TODAY to the helper as its fixed today, so none of them can race UTC midnight
 [ -n "$PD" ] || { echo "no date line in the pin"; exit 2; }
+BEFOREPIN=$(date -u -d "$PD -1 day" +%Y-%m-%d)
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
 { echo "# reviewed by: Testonly Reviewer, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
 { echo "# reviewed by: flows-audit session, $PD, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
+
+# ---------------------------------------------------------------------------------------------
+# The reviewer-line word check, case by case (fast: it calls only `take_check.sh --check-reviewer-line`, nothing else runs). TODAY and the other dates are computed ONCE at the top of this
+# file and given to the helper as the fixed "today" (TAKE_CHECK_TODAY, honoured only with the test flag), so no case can race UTC midnight and no date is written into this file.
+# Each case reads: want (ok or no) | the line | text that must appear in the reason (for no) | the pin's own date (optional) | extra environment (optional).
+# {TODAY} {YESTERDAY} {TOMORROW} {IN2} {PD} {TAB} {ESC} {ZW} {CR} are replaced before the run.
+RV_CASES=$(cat <<'EOF'
+ok|Pat Smith, {TODAY}
+ok|Pat Smith, {YESTERDAY}
+ok|Pat Smith, {TOMORROW}
+ok|Pat Smith, {TODAY}, read all 4 WARN lines and the code
+ok|Pat Smith, {TODAY}, the lead read the sample code and the test notes
+ok|Pat Smith, {TODAY}  
+ok|Pat Smith, {TODAY}{CR}
+ok|Zed Smith, {TODAY}
+ok|Aaa Smith, {TODAY}
+ok|Al Lee, {TODAY}
+ok|Bo Ng, {TODAY}
+ok|O'Brien, {TODAY}
+ok|Mary-Jane O'Neil, {TODAY}
+ok|J.R.R. Tolkien, {TODAY}
+ok|Jane Q. Roe-Smith, {TODAY}, read all 4 WARN lines
+ok|John Smith Jr., {TODAY}
+ok|A. I. Walker, {TODAY}
+ok|T. B. Dee, {TODAY}
+ok|Pat L. L. M., {TODAY}
+ok|Bo Ta, {TODAY}
+ok|Jo To Do, {TODAY}
+ok|Claudette Smith, {TODAY}
+ok|Claudel Dupont, {TODAY}
+ok|Pat Robotham, {TODAY}
+ok|Pat Llamas, {TODAY}
+ok|Pat Geminiani, {TODAY}
+ok|Aiden Botha, {TODAY}
+ok|Sara Gentile, {TODAY}
+ok|Mara Gentry, {TODAY}
+ok|Sam Pleasant, {TODAY}
+ok|Bill Lamar, {TODAY}
+ok|Magenta Jones, {TODAY}
+ok|Pat Klaude, {TODAY}
+ok|Pat Cla.ude, {TODAY}
+ok|José Müller, {TODAY}
+ok|Zoë Nguyễn, {TODAY}
+ok|Søren Ørsted, {TODAY}
+ok|Иван Петров, {TODAY}
+ok|Pat O L L M, {TODAY}
+ok|Pat Smith, {TODAY}, read via O p e n A I
+ok|Pat Smith, {TODAY}, read it, all of it
+no|Pat Smith|rule: shape
+no|TBD|rule: shape
+no|, {TODAY}|rule: name characters
+no|Pat Smith,{TODAY}|rule: shape
+no|Pat Smith,  {TODAY}|rule: shape
+no|Pat Smith, 2026-1-5|rule: shape
+no|Pat Smith, {TODAY},|rule: shape
+no|Pat,Claude Bot, {TODAY}|rule: shape
+no|Pat,Gptbot, {TODAY}|rule: shape
+no|Pat,Claude, {TODAY}, read all lines|rule: shape
+no|Pat,Smith, {TODAY}|rule: shape
+no|Roe, Jane, {TODAY}|rule: shape
+no|John Smith, Jr., {TODAY}|rule: shape
+no|Pat Smith, {TODAY} later|rule: shape
+no|Pat Smith, 2026-13-45|rule: bad date
+no|Pat Smith, {IN2}|rule: future date
+no|Pat Smith, 2999-01-01|rule: future date
+no|Pat Smith, {YESTERDAY}|rule: old date|{TODAY}
+no|, {TODAY}, x|rule: name characters
+no|Pat{TAB}Smith, {TODAY}|rule: hidden character
+no|Pat {ESC}[31mSmith, {TODAY}|rule: hidden character
+no|Pat Cla{ZW}ude, {TODAY}|rule: hidden character
+no|Pat Smith, {TODAY}, ok{ESC}[2J|rule: hidden character
+no|R2D2 Four, {TODAY}|rule: name characters
+no|Pat O_L_L_M, {TODAY}|rule: name characters
+no|Pat C1aude, {TODAY}|rule: name characters
+no|Pat O’Neil, {TODAY}|rule: name characters
+no|1Pat Smith, {TODAY}|rule: name characters
+no|x, {TODAY}|rule: name too short
+no|Li, {TODAY}|rule: name too short
+no|Claude Monet, {TODAY}|rule: listed word claude
+no|Pat Claude, {TODAY}|rule: listed word claude
+no|Claude-Code, {TODAY}|rule: listed word claude
+no|Cláude Smith, {TODAY}|rule: listed word claude
+no|Pat Claudebot, {TODAY}|rule: listed word claudebot
+no|Pat Claude Bot, {TODAY}|rule: listed word bot
+no|P.a.t C.l.a.u.d.e, {TODAY}|rule: listed word claude
+no|Pat C.L.A.U.D.E. Smith, {TODAY}|rule: listed word claude
+no|Pat L.L.M., {TODAY}|rule: listed word llm
+no|Pat A.I., {TODAY}|rule: listed word ai
+no|TBD., {TODAY}|rule: listed word tbd
+no|Unknown-, {TODAY}|rule: listed word unknown
+no|Agent., {TODAY}|rule: listed word agent
+no|Pat Agents, {TODAY}|rule: listed word agents
+no|Pat Bots, {TODAY}|rule: listed word bots
+no|Pat Chatbot, {TODAY}|rule: listed word chatbot
+no|Pat Aibot, {TODAY}|rule: listed word aibot
+no|Pat Gptbot, {TODAY}|rule: listed word gptbot
+no|Pat Chatgpt, {TODAY}|rule: listed word chatgpt
+no|Pat Openai, {TODAY}|rule: listed word openai
+no|Pat Fable, {TODAY}|rule: listed word fable
+no|Pat Qwen, {TODAY}|rule: listed word qwen
+no|Pat Codex, {TODAY}|rule: listed word codex
+no|Pat Cursor, {TODAY}|rule: listed word cursor
+no|Pat Devin, {TODAY}|rule: listed word devin
+no|Pat Kimi, {TODAY}|rule: listed word kimi
+no|Pat Opus, {TODAY}|rule: listed word opus
+no|Sonnet Opus, {TODAY}|rule: listed word opus
+no|Pat Gemini, {TODAY}|rule: listed word gemini
+no|Pat Llama, {TODAY}|rule: listed word llama
+no|Pat Mistral, {TODAY}|rule: listed word mistral
+no|Pat Grok, {TODAY}|rule: listed word grok
+no|Pat Copilot, {TODAY}|rule: listed word copilot
+no|Pat Deepseek, {TODAY}|rule: listed word deepseek
+no|Pat Anthropic, {TODAY}|rule: listed word anthropic
+no|Pat Robot, {TODAY}|rule: listed word robot
+no|Some Assistant, {TODAY}|rule: listed word assistant
+no|Ai Nguyen, {TODAY}|rule: listed word ai
+no|Pat None, {TODAY}|rule: listed word none
+no|Pat Todo, {TODAY}|rule: listed word todo
+no|Name Placeholder, {TODAY}|rule: listed word placeholder
+no|Pat Sessions, {TODAY}|rule: listed word sessions
+no|Test Reviewer, {TODAY}|rule: listed word reviewer
+no|Runall Standin, {TODAY}|rule: listed word runall
+no|Pat Lead, {TODAY}|rule: listed word lead
+no|Pat Sample, {TODAY}|rule: listed word sample
+no|Testonly Reviewer, {TODAY}|rule: listed word reviewer
+no|Testonly Runall, {TODAY}|rule: listed word runall
+no|Testonly Claude, {TODAY}|rule: listed word claude|{PD}|TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN=/x/y
+ok|Testonly Reviewer, {TODAY}||{PD}|TAKE_CHECK_WARN_PIN=/x/y
+no|Clаude Smith, {TODAY}|rule: mixed alphabets
+no|Pat Smith, {TODAY}, written by Claude|rule: listed word claude
+no|Pat Smith, {TODAY}, note ChatGPT|rule: listed word chatgpt
+no|Pat Smith, {TODAY}, read with C.l.a.u.d.e|rule: listed word claude
+no|Pat Smith, {TODAY}, an LLM read it|rule: listed word llm
+no|Pat Smith, {TODAY}, an L.L.M. read it|rule: listed word llm
+no|Pat Smith, {TODAY}, A.I. wrote it|rule: listed word ai
+no|Pat Smith, {TODAY}, read Cl4ude|rule: listed word claude
+no|Pat Smith, {TODAY}, read Cláude|rule: listed word claude
+no|Pat Smith, {TODAY}, read with cl4ud3|rule: listed word claude
+no|Pat Smith, {TODAY}, read by 0pus|rule: listed word opus
+no|Pat Smith, {TODAY}, ch4tgpt|rule: listed word chatgpt
+no|Pat Smith, {TODAY}, gp7|rule: listed word gpt
+no|Pat Smith, {TODAY}, 5onnet|rule: listed word sonnet
+no|Pat Smith, {TODAY}, Clаude read it|rule: mixed alphabets
+no|Pat Smith, {TODAY}, my assistant helped|rule: listed word assistant
+no|Pat Smith, {TODAY}, no AI used|rule: listed word ai
+no|Pat Smith, {TODAY}, TBD|rule: listed word tbd
+no|Pat Smith, {TODAY}, not yet read|rule: note says not read
+no|Pat Smith, {TODAY}, not read|rule: note says not read
+no|Pat Smith, {TODAY}, will read later|rule: note says not read
+no|Pat Smith, {TODAY}, read it later|rule: note says not read
+no|Pat Smith, {TODAY}, to be read|rule: note says not read
+no|Pat Smith, {TODAY}, unread|rule: note says not read
+no|Pat Smith, {TODAY}, have not read it|rule: note says not read
+EOF
+)
+rv_n=0
+while IFS='|' read -r want line why pd envx; do
+  case "$want" in ok|no) ;; *) continue;; esac
+  for tok in TODAY:"$TODAY" YESTERDAY:"$YESTERDAY" TOMORROW:"$TOMORROW" IN2:"$IN2DAYS" PD:"$PD"; do line=${line//\{${tok%%:*}\}/${tok#*:}}; pd=${pd//\{${tok%%:*}\}/${tok#*:}}; done
+  line=${line//\{TAB\}/$'\t'}; line=${line//\{ESC\}/$'\033'}; line=${line//\{ZW\}/$'\342\200\213'}; line=${line//\{CR\}/$'\r'}
+  if [ -n "${RV_DUMP:-}" ]; then printf '%s\037%s\037%s\037%s\037%s\n' "$want" "$line" "$why" "$pd" "$envx" >> "$RV_DUMP"; continue; fi
+  rv_n=$((rv_n+1))
+  # shellcheck disable=SC2086
+  rvout=$(env -u TAKE_CHECK_WARN_PIN TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY="$TODAY" $envx bash "$TAKE" --check-reviewer-line "$line" ${pd:+"$pd"} 2>&1); rvrc=$?
+  if [ "$want" = ok ]; then [ "$rvrc" = 0 ] && [ "$rvout" = ok ]; else [ "$rvrc" = 1 ] && case "$rvout" in *"$why"*) true;; *) false;; esac; fi
+  ok $? "reviewer line [$want] '$(printf '%s' "$line" | tr -d '\000-\037')' ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
+done <<< "$RV_CASES"
+[ -n "${RV_DUMP:-}" ] && exit 0
+[ "$rv_n" -ge 130 ]; ok $? "reviewer line: at least 130 word-check cases ran (ran $rv_n)"
+# the word list lives in take_check.sh only; the README must print exactly the same two lines
+RVW=$(bash "$TAKE" --reviewer-words); RVWRC=$?
+[ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 2 ]; ok $? "word list: take_check.sh --reviewer-words prints two lines and exits 0 (got exit $RVWRC)"
+while IFS= read -r l; do grep -q -x -F -- "$l" "$HERE/README.md"; ok $? "word list: README has this line exactly as take_check.sh prints it: ${l:0:60}..."; done <<< "$RVW"
+# the other scripts that call take_check.sh must not hold a copy of the list: no listed tool name in run_all.sh outside comments about what a test does
+! grep -q -E 'REVIEWER_(WORDS|STANDINS)' "$HERE/run_all.sh"; ok $? "word list: run_all.sh does not keep its own copy of the list"
+if [ -n "${RV_ONLY:-}" ]; then echo "test_take_check (RV_ONLY: the word check only): $((N-BAD)) of $N cases as expected, $BAD not as expected"; [ "$BAD" = 0 ]; exit; fi   # a quick way to run just the word-check cases while editing the word list
+
 
 # the control: the plain take on the patched copy. Exit 0 only when the committed pin carries a reviewer line that is not a session (round 10c); until then exit 4 with the plain reason
 tk control -- --flows "$P"
@@ -211,13 +390,13 @@ tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "
 for pair in "b2-agent:claude agent, $PD" "b2-tbd:TBD" "b2-x:x, $PD" "b2-nodate:Testonly Reviewer" "b2-baddate:Testonly Reviewer, 2026-13-45" "b2-future:Testonly Reviewer, 2999-01-01" "b2-empty-name:, $PD" "b2-digits:R2D2 4, $PD" "b2-ai:Some Assistant, $PD" "b2-placeholder-word:Name Placeholder, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
-  [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
+  [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed|THE PIN HEADER STILL HAS THE PLACEHOLDER)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
 done
 { echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, $PD, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 # f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
-for pair in "m1-tbd-dot:TBD., $PD" "m1-claude-code:Claude-Code, $PD" "m1-agent-dot:Agent., $PD" "m1-unknown-dash:Unknown-, $PD" "m1-sonnet-opus:Sonnet Opus, $PD" "m1-aaa:Aaa, $PD" "m1-runall:Runall Standin, $PD" "m1-test-reviewer:Test Reviewer, $PD" "m1-testonly-no-flag-name:Testonly Reviewer, $PD" "m1-model-in-name:Jane Gemini, $PD" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15" "m1-dotted-llm:Pat O.L.L.M., $PD" "m1-dotted-claude:P.a.t C.l.a.u.d.e, $PD"; do
+for pair in "m1-tbd-dot:TBD., $PD" "m1-claude-code:Claude-Code, $PD" "m1-agent-dot:Agent., $PD" "m1-unknown-dash:Unknown-, $PD" "m1-sonnet-opus:Sonnet Opus, $PD" "m1-runall:Runall Standin, $PD" "m1-test-reviewer:Test Reviewer, $PD" "m1-testonly-no-flag-name:Testonly Reviewer, $PD" "m1-model-in-name:Jane Gemini, $PD" "m1-year-old:Jane Q. Roe-Smith, $OLDDATE" "m1-before-pin:Jane Q. Roe-Smith, $BEFOREPIN" "m1-dotted-llm:Pat L.L.M., $PD" "m1-dotted-claude:P.a.t C.l.a.u.d.e, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
@@ -231,7 +410,7 @@ for pair in "r5-pat-smith:Pat Smith, $PD" "r5-obrien:O'Brien, $PD" "r5-aiden-bot
 done
 # f8-r6 (review f8-r5): the reviewer name and note are squashed into lower-case letters and long stand-ins are refused wherever they sit; short stand-ins are refused as words or as joined 1-2 letter pieces. Dates use the pin's own date ($PD) so no test depends on today's date.
 # each line is refused with exit 4 and the reviewer-line message, even with the test flag and the pin override (these names do not start with Testonly)
-for pair in "f8r6-spaced-llm:Pat O L L M, $PD" "f8r6-spaced-claude:Pat C L A U D E, $PD" "f8r6-dot-space-llm:Pat L. L. M., $PD" "f8r6-dot-inside:Pat Cla.ude, $PD" "f8r6-hyphen-inside:Pat Cl-aude, $PD" "f8r6-dot-front:Pat C.laude, $PD" "f8r6-dot-back:Pat Clau.de, $PD" "f8r6-space-ude:Pat Cla Ude, $PD" "f8r6-claude-bot:Pat Claude Bot, $PD" "f8r6-claudebot:Pat Claudebot, $PD" "f8r6-chatgpt:Pat Chatgpt, $PD" "f8r6-openai:Pat Openai, $PD" "f8r6-gptbot:Pat Gptbot, $PD" "f8r6-bots:Pat Bots, $PD" "f8r6-agents:Pat Agents, $PD" "f8r6-grok:Pat Grok, $PD" "f8r6-llama:Pat Llama, $PD" "f8r6-mistral:Pat Mistral, $PD" "f8r6-deepseek:Pat Deepseek, $PD" "f8r6-copilot:Pat Copilot, $PD" "f8r6-anthropic:Pat Anthropic, $PD" "f8r6-robot:Pat Robot, $PD" "f8r6-o-l-l-m-lower:pat o.l.l.m., $PD" "f8r6-o-hyphen:Pat O-L-L-M, $PD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $PD" "f8r6-short-pieces:Pat Ol L M, $PD" "f8r6-underscore:Pat O_L_L_M, $PD" "f8r6-digit:Pat C1aude, $PD" "f8r6-accent:Jos$(printf '\303\251') Smith, $PD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $PD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $PD" "f8r6-note-claude:Pat Smith, $PD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $PD, note ChatGPT" "f8r6-note-dots:Pat Smith, $PD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $PD, an LLM read it" "f8r6-note-spaced:Pat Smith, $PD, via O p e n A I" "f8r6-two-days-ahead:Pat Smith, $IN2DAYS"; do
+for pair in "f8r6-claude-bot:Pat Claude Bot, $PD" "f8r6-claudebot:Pat Claudebot, $PD" "f8r6-chatgpt:Pat Chatgpt, $PD" "f8r6-openai:Pat Openai, $PD" "f8r6-gptbot:Pat Gptbot, $PD" "f8r6-bots:Pat Bots, $PD" "f8r6-agents:Pat Agents, $PD" "f8r6-grok:Pat Grok, $PD" "f8r6-llama:Pat Llama, $PD" "f8r6-mistral:Pat Mistral, $PD" "f8r6-deepseek:Pat Deepseek, $PD" "f8r6-copilot:Pat Copilot, $PD" "f8r6-anthropic:Pat Anthropic, $PD" "f8r6-robot:Pat Robot, $PD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $PD" "f8r6-underscore:Pat O_L_L_M, $PD" "f8r6-digit:Pat C1aude, $PD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $PD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $PD" "f8r6-note-claude:Pat Smith, $PD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $PD, note ChatGPT" "f8r6-note-dots:Pat Smith, $PD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $PD, an LLM read it"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "f8-r6: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
@@ -240,8 +419,8 @@ done
 { echo "# reviewed by: Pat Sessions, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/f8r6-sessions.pin"
 tk f8r6-sessions TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/f8r6-sessions.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has f8r6-sessions "pin not yet confirmed by the lead"; ok $? "f8-r6: 'Pat Sessions' is refused (exit 4, the session message: any line holding the word session is refused) (got exit $RC)"
-# names that must be accepted (would-be pass with the override: exit 5, never the reviewer-line message). 'Claudette' is allowed on purpose (REVIEWER_ALLOW); 'Ai Nguyen' is refused on purpose (the word ai is a stand-in), see the README
-for pair in "f8r6-al-lee:Al Lee, $PD" "f8r6-bo-ng:Bo Ng, $PD" "f8r6-mary-jane:Mary-Jane O'Neil, $PD" "f8r6-tolkien:J.R.R. Tolkien, $PD" "f8r6-botha:Aiden Botha, $PD" "f8r6-claudette:Claudette Smith, $PD" "f8r6-roe:Jane Q. Roe-Smith, $PD" "f8r6-note-ok:Pat Smith, $PD, read all 4 WARN lines and the code" "f8r6-tomorrow:Pat Smith, $TOMORROW" "f8r6-today:Pat Smith, $PD"; do
+# names that must be accepted (would-be pass with the override: exit 5, never the reviewer-line message). 'Claudette' passes because only whole words are listed; 'Ai Nguyen' is refused on purpose (the word ai is on the list), see the README
+for pair in "f8r6-al-lee:Al Lee, $PD" "f8r6-bo-ng:Bo Ng, $PD" "f8r6-mary-jane:Mary-Jane O'Neil, $PD" "f8r6-tolkien:J.R.R. Tolkien, $PD" "f8r6-botha:Aiden Botha, $PD" "f8r6-claudette:Claudette Smith, $PD" "f8r6-roe:Jane Q. Roe-Smith, $PD" "f8r6-note-ok:Pat Smith, $PD, read all 4 WARN lines and the code" "f8r6-today:Pat Smith, $TODAY" "f8r7-jose:Jos$(printf '\303\251') M$(printf '\303\274')ller, $PD" "f8r7-initials:A. I. Walker, $PD" "f8r7-bo-ta:Bo Ta, $PD" "f8r7-robotham:Pat Robotham, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r6: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
