@@ -1,5 +1,8 @@
 # T19 terms (one page for all T19 pages; written Mon 16 Nov 2026 by the system-map session)
-NOT RUNNABLE YET. Missing, owner of each = studio lead, due Tue 17 Nov 12:00 UTC / 17:30 IST (proposal): (1) POST address, (2) POST body, (3) SQL counting stored rows, (4) how mail and HubSpot writes are counted. Rule for the undefined terms (freeze input, STOP class, smk_count, drive.py, hex tool, CUT, EV, $T, c/c20, film-v5, F8, owner clean-up, 7.5 s): until the studio lead defines each, no page may use it, and pages that do must drop that sentence. Owner = the human who runs the studio (older pages also say studio head). Reading note: paths on this page are relative to handover/system-map/work/. studio lead = the Claude session that does the technical steps and messages the owner; system-map session = the Claude session that wrote this page and writes only in handover/system-map/. STATUS: T19 is NOT RUNNABLE from this page until the studio lead gives the POST address, the POST body, the SQL that counts stored rows, and how the mail and HubSpot write are counted (open item 2). Pages that use the undefined terms freeze input and STOP class: t19-gap-facts.md, t19-gaps-r2.md, t19-row-and-steps-r3.md. If the studio lead has not defined them by Tue 17 Nov 12:00 UTC / 17:30 IST (proposal), those pages drop every sentence that uses them. Every UNVERIFIED row below is checked by reading the named file or by running T19; no other check exists. C1 and E2: meaning not recorded.
+Who is who: owner = the human who runs the studio (older pages also say studio head). Studio lead = the Claude session that does the technical steps and messages the owner. System-map session = the Claude session that wrote this page and writes only in handover/system-map/. Paths on this page are relative to handover/system-map/work/.
+STATUS: T19 cannot be run yet. Four things are missing. The studio lead owes all four by Tue 17 Nov 12:00 UTC / 17:30 IST (a proposal, not agreed): A) the POST address, B) the POST body, C) the SQL that counts stored rows, D) how the mail and the HubSpot write are counted.
+RULE (one rule, one actor): the terms marked NOT RECORDED below stay undefined until the studio lead defines them. They are: freeze input, STOP class, smk_count, drive.py, hex tool, CUT, EV, $T, c/c20, film-v5, F8, owner clean-up, 7.5 s, C1, E2. If a term is still undefined at the due time, the system-map session removes every sentence that uses it from t19-gap-facts.md, t19-gaps-r2.md and t19-row-and-steps-r3.md.
+CHECK: an UNVERIFIED row is checked only by reading the file named in it or by running T19.
 Used by: t19-gap-facts.md, t19-gaps-r2.md, t19-row-and-steps-r3.md, t19-and-stored-data-steps.md, row-dm-plain.md. Only meanings found in files are given; every other term says NOT RECORDED and whom to ask (the studio lead, the Claude session doing the technical steps).
 
 ## Test in one sentence
@@ -23,10 +26,10 @@ T19 posts the same made-up lead twice to the demo's n8n form address and expects
 | HIT / MISSED (row DM) | HIT = the kill landed in the gap (under 7.5 s after the mail); MISSED = it did not; two MISSED = "not tested", never a pass | UNVERIFIED |
 | C1, E2, line 555 item 9 | labels into a plan file that this session has not seen | NOT RECORDED |
 
-Rule for the NOT RECORDED terms above: if the studio lead has not defined a term by the due time below, the pages that use it drop the term (the system-map session does this).
+Rule for the NOT RECORDED terms: see RULE under STATUS at the top.
 
 ## Open items for the studio lead (owner: the studio lead; due Tue 17 Nov 12:00 UTC / 17:30 IST; both proposed by the system-map session, not agreed)
 1. The studio lead names the patched copy's folder.
-2. Give the POST address, body and the SQL that counts rows.
+2. Give A, B and C (POST address, POST body, SQL that counts stored rows) and D (how the mail and the HubSpot write are counted).
 3. Say what "freeze input" and "STOP class" mean.
 4. Say who runs T19 and F8.
