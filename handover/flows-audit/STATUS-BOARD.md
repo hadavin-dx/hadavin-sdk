@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:58:50Z
+UPDATED_UTC: 2026-11-16T16:03:53Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 1.65 load of 4 cores, mem 1/15 GB, RAM 1362/16087 MB, disk 18G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 5.05 load of 4 cores, mem 1/15 GB, RAM 1418/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: no agent finished since 15:58Z; free 18G (56%); percent basis: 70 = 7 of 10 items verified by an independent check, none closed since 13:59Z
-PUSHED_UTC: 2026-11-16T15:58:50Z
+NEXT: free 17G (56%); percent basis: 70 = 7 of 10 items verified by an independent check, none closed since 13:59Z
+PUSHED_UTC: 2026-11-16T16:03:53Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,21 +30,21 @@ PUSHED_UTC: 2026-11-16T15:58:50Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| acf8ab59 | F8 fixer r11 | sonnet | run_all.sh intermittency, M1-M5 | 15:20Z | 16:30Z | WORKING | flow-check/run_all.sh edits, expected-counts.pin (unverified) |
-| a99ca468 | RW/CT reader r12 | sonnet | stranger read | 15:40Z | 16:10Z | WORKING | - |
+| acf8ab59 | F8 fixer r11 | sonnet | run_all.sh intermittency, M1-M5; rename selftest string | 15:20Z | 16:30Z | WORKING | flow-check edits (unverified) |
 | a15c1de2 | plan-files fixer r22 | sonnet | awk fix, clock, Q31 renumber | 15:45Z | 16:20Z | WORKING | - |
-| ad3f3fec | patch-copies fixer r7 | sonnet | bandit group, verdict -rfE, contradiction | 15:56Z | 16:25Z | WORKING | - |
 | ac32136a | REVIEW.md fixer r27 | sonnet | design/reader/citation fixes | 15:56Z | 16:40Z | WORKING | - |
-| a07a9cb4 | Q31 fixer r12 | sonnet | totals 104/96, item 50, readability M1-M6 | 15:58Z | 16:25Z | WORKING | - |
-| a64f2d28 | FINDINGS/LEDGER fixer r8 | sonnet | deadlines, runners, terms | 15:58Z | 16:20Z | WORKING | - |
-| a36d9924 | drift-007 refresh checker | sonnet | read-only drift-007-r2 | 15:58Z | 16:20Z | WORKING | - |
+| a1fc616a | RW/CT fixer r13 | sonnet | reader r12 B1-B2, M3-M19 | 15:59Z | 16:30Z | WORKING | - |
+| a594abf3 | Q31 stranger reader r12 | sonnet | Blockers/Majors | 16:01Z | 16:15Z | WORKING | - |
+| afe4a47b | patch-copies code reviewer r8 | sonnet | uncapped accuracy | 16:03Z | 16:20Z | WORKING | - |
+| a4ec6f66 | FINDINGS/LEDGER stranger r8 | sonnet | Blockers/Majors | 16:03Z | 16:15Z | WORKING | - |
+| a0dfe647 | patch-copies stranger r8 | sonnet | uncapped | 16:03Z | 16:15Z | WORKING | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 Citation fix pass on CLAIMS-TABLE soft rows 51,54 (after RW/CT reader r12)
-2 patch-copies round 8 reviews (code + stranger), uncapped, after ad3f3fe
-3 REVIEW.md round 28 reviewers (reader, design, citation), after ac32136
-4 F8 fresh evidence runner alone, then uncapped reviews, after acf8ab5
-5 plan-files round 23 stranger read, after a15c1de
+1 Q31 fixer r13: add plain critical-few front page (proposal) after reader a594abf and zoom-out q31-zoomout-r1
+2 REVIEW.md round 28 reviewers (reader, design, citation) after ac32136
+3 F8 fresh evidence runner alone, then uncapped reviews, after acf8ab5
+4 plan-files round 23 stranger read after a15c1de
+5 RW/CT round 14 reader after a1fc616
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
