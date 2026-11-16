@@ -1,0 +1,44 @@
+baseline unmutated copy: exit 1, FAIL lines 11
+M01 CAUGHT expected K02 | changed IST of latest start | new FAIL lines 2: FAIL K02 OWNER-NUMBERS-v28-A.md wrong IST: 11:30 UTC = 17:30 IST
+M02 CAUGHT expected K02 | changed IST of deadline | new FAIL lines 1: FAIL K02 OWNER-SHEET-v28-B.md wrong IST: 18:29 UTC = 23:29 IST
+M03 CAUGHT expected K02 | changed IST in the lead note | new FAIL lines 2: FAIL K02 LEAD-RELEASE-NOTE-v12.md wrong IST: 18:09:00 UTC = 23:49 IST
+M04 CAUGHT expected K02 | changed UTC of cancel-by | new FAIL lines 2: FAIL K02 OWNER-NUMBERS-v28-B.md wrong IST: 12:20 UTC = 17:40 IST
+M05 CAUGHT expected K03 | wrong weekday of run day | new FAIL lines 3: FAIL K03 OWNER-NUMBERS-v28-A.md wrong weekday/year: Tue 18 Nov 2026 (right: Wed)
+M06 CAUGHT expected K03 | wrong weekday of deadline | new FAIL lines 2: FAIL K03 OWNER-SHEET-v28-A.md wrong weekday/year: Sun 23 Nov 2026 (right: Mon)
+M07 CAUGHT expected K03 | wrong weekday of post-by | new FAIL lines 2: FAIL K03 OWNER-FILM-v28.md wrong weekday/year: Thu 25 Nov 2026 (right: Wed)
+M08 CAUGHT expected K03 | wrong weekday in date -u form | new FAIL lines 1: FAIL K03 OWNER-SHEET-v28-B.md wrong weekday: Thu Nov 18 (right: Wed)
+M09 CAUGHT expected K04 | 18:19 changed where revoke-by time is stated | new FAIL lines 1: FAIL K04 v28-OPEN-FOR-LEAD.md:107 revoke-by wording with an 18:xx time but no 18:19 UTC = 23:49 IST on the line
+M10 CAUGHT expected K04 | 18:19 paired with a wrong IST | new FAIL lines 3: FAIL K02 v28-OPEN-FOR-LEAD.md wrong IST: 18:19 UTC = 23:59 IST
+M11 CAUGHT expected K04 | 18:19 pair removed from the revoke-by line | new FAIL lines 1: FAIL K04 v28-OPEN-FOR-LEAD.md:107 revoke-by wording with an 18:xx time but no 18:19 UTC = 23:49 IST on the line
+M12 CAUGHT expected K04 | 18:04 time listed with no source | new FAIL lines 3: FAIL K04 LEAD-RELEASE-NOTE-v12.md:79 18:04 UTC listed with no source on the line
+M13 CAUGHT expected K05 | placeholder label removed | new FAIL lines 2: FAIL K05 OWNER-NUMBERS-v28-B.md unlabelled bracket placeholder [button words, cancelled word and source, older key]
+M14 CAUGHT expected K05 | unlabelled bracket placeholder | new FAIL lines 1: FAIL K05 OWNER-SHEET-v28-A.md unlabelled bracket placeholder [older key last-used time]
+M15 CAUGHT expected K05 | TBD left in a page | new FAIL lines 1: FAIL K05 OWNER-CARD-v28-B.md leftover marker 'TBD'
+M16 CAUGHT expected K05 | blank line outside the card | new FAIL lines 1: FAIL K05 OWNER-FILM-v28.md has a blank line ____ outside the card
+M17 CAUGHT expected K05 | sample no longer labelled made-up | new FAIL lines 1: FAIL K05 numbers A: sample not labelled made-up
+M18 CAUGHT expected K07 | broken link | new FAIL lines 2: FAIL K07 OWNER-SHEET-v28-A.md links to OWNER-NUMBERS-v28-Z.md which does not exist
+M19 CAUGHT expected K07 | sheet A points to card B | new FAIL lines 1: FAIL K07 OWNER-SHEET-v28-A.md points to the CARD page of the other letter: OWNER-CARD-v28-B.md
+M20 ANCHOR-NOT-FOUND v28-CHANGES.md in v28-OPEN-FOR-LEAD.md
+M21 CAUGHT expected K07 | step reference to a step that does not exist | new FAIL lines 1: FAIL K07 OWNER-SHEET-v28-A.md step reference 5.19 does not exist in sheet A (section has 9 items)
+M22 CAUGHT expected K07 | reference to a section that does not exist | new FAIL lines 1: FAIL K07 OWNER-SHEET-v28-B.md names section 4 which does not exist
+M23 CAUGHT expected K01 | sheet A over 6,300 words (400 words appended) | new FAIL lines 1: FAIL K01 sheet A page has 6454 words (max 6300)
+M24 MISSED expected K08 | B differs from A outside the older-key parts | new FAIL lines 0: none
+M25 MISSED expected K08 | B card differs from A card outside older-key parts | new FAIL lines 0: none
+M26 CAUGHT expected K09 | deletion sentence (sheet) | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-A.md sentence says the take deletes/archives contacts: At the end the test program deletes the three contacts.
+M27 CAUGHT expected K09 | archive sentence (numbers) | new FAIL lines 1: FAIL K09 OWNER-NUMBERS-v28-A.md sentence says the take deletes/archives contacts: **The take archives all contacts.
+M28 CAUGHT expected K09 | deletion sentence (film page) | new FAIL lines 1: FAIL K09 OWNER-FILM-v28.md sentence says the take deletes/archives contacts: Afterwards n8n deletes the contacts.
+M29 CAUGHT expected K09 | deletion sentence (lead note) | new FAIL lines 2: FAIL K04 LEAD-RELEASE-NOTE-v12.md:203 18:14 UTC listed with no source on the line
+M30 CAUGHT expected K09 | a fourth credential (token) | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-A.md names a further credential kind: GitHub token
+M31 CAUGHT expected K09 | a fourth credential (n8n API key) | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-B.md names a further credential kind: n8n API
+M32 CAUGHT expected K09 | fake model key built from parts | new FAIL lines 2: FAIL K09 OWNER-CARD-v28-A.md looks like a secret (pattern sk-ant-[A-Za-z)
+M33 CAUGHT expected K09 | fake AKIA-style key built from parts | new FAIL lines 1: FAIL K09 OWNER-NUMBERS-v28-A.md looks like a secret (pattern AKIA[0-9A-Z]{1)
+M34 CAUGHT expected K09 | long random-looking text | new FAIL lines 1: FAIL K09 OWNER-FILM-v28.md looks like a secret (pattern \b(?=[A-Za-z0-)
+M35 CAUGHT expected K09 | model key typed into n8n | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-A.md sentence puts a key/secret into n8n: Paste the model key into n8n at 6.4.
+M36 CAUGHT expected K09 | real-looking mail address | new FAIL lines 1: FAIL K09 OWNER-FILM-v28.md has an address that is not example.com: ann***
+M37 CAUGHT expected K06 | internal check id in owner text | new FAIL lines 1: FAIL K06 OWNER-CARD-v28-A.md internal id C07
+M38 CAUGHT expected K06 | undefined rule id R12 | new FAIL lines 1: FAIL K06 OWNER-SHEET-v28-B.md rule id R12 is not defined in the sheet (R1, R4 to R10 only)
+M39 CAUGHT expected K06 | internal tool name in owner text | new FAIL lines 2: FAIL K06 OWNER-FILM-v28.md internal tool word 'check-v28.py'
+M40 CAUGHT expected K04 | schedule arithmetic: alarm time wrong but pair correct | new FAIL lines 1: FAIL K04 numbers A lacks "Alarm time: 12:00 UTC = 17:30 IST"
+M41 CAUGHT expected K02 | UTC time with no IST in owner text | new FAIL lines 1: FAIL K02 OWNER-SHEET-v28-A.md UTC time(s) with no IST beside: 1 ['14:00 UTC']
+M42 CAUGHT expected K10 | price per call changed | new FAIL lines 1: FAIL K10 numbers A lacks USD 0.27
+TOTAL 42 plants: caught 39, missed 2, anchor-not-found 1

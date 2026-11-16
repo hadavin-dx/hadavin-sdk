@@ -179,7 +179,7 @@ for p in ('OWNER-SHEET-v28', 'OWNER-CARD-v28', 'OWNER-NUMBERS-v28'):
         la = '\n'.join(a[i1:i2]); lb = '\n'.join(b[j1:j2])
         wa, wb = la.split(), lb.split(); ws = difflib.SequenceMatcher(None, wa, wb, autojunk=False)
         seg = ' / '.join('[%s] -> [%s]' % (' '.join(wa[x1:x2])[:90], ' '.join(wb[y1:y2])[:90]) for t2, x1, x2, y1, y2 in ws.get_opcodes() if t2 != 'equal')
-        ok = bool(OLD.search(la + ' ' + lb)) or all(x1 == x2 or ' '.join(wa[x1:x2]).lower() in ('three', 'four') for t2, x1, x2, y1, y2 in [(0, 0, 0, 0, 0)])
+        ok = bool(OLD.search(la + ' ' + lb))
         if not ok: ok = all(' '.join(wa[x1:x2]).lower() in ('three', 'four') for t2, x1, x2, y1, y2 in ws.get_opcodes() if t2 != 'equal')
         info('K08', '%s hunk A%d-%d/B%d-%d older-key vocabulary=%s : %s' % (p, i1 + 1, i2, j1 + 1, j2, ok, seg[:300]))
         if not ok: fail('K08', '%s hunk at A line %d differs in a part with no older-key wording' % (p, i1 + 1))

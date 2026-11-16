@@ -1,0 +1,3 @@
+== T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped
+line hit: False SIG.allow: False first: None critical: True
+  FAIL: T65 planted: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
