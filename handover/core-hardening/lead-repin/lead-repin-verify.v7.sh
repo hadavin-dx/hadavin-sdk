@@ -154,8 +154,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1360
-SELFTEST_PLANNED=1386
+CANARY_PLANNED=1372
+SELFTEST_PLANNED=1398
 SOH=$(printf '\001')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -249,6 +249,7 @@ line_rules() {
   cat <<EOF
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
 s/(tok)(eniz|enis)/\1${SOH}\2/Ig
+s/((${ID})[[:space:]]*:=[[:space:]]*)(${STR}|[^[:space:]<"'][^[:space:]]*)/\1<masked>/Ig
 s/(<[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["'][[:space:]]+(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
 s/((${ID})${PRE}[[:space:]]*)(""")([^"]|"[^"]|""[^"])*"""/\1<masked>"""/Ig
 s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
@@ -305,7 +306,6 @@ s/((^|[^A-Za-z0-9_])htpasswd[^|;&]*[[:space:]]-[A-Za-z]*b[A-Za-z]*([[:space:]]+[
 s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd|sudo[[:space:]]+-S|kinit|ssh-add|passphrase-fd|cryptsetup))/\1<masked>\5/I
 s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
 s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
-s/((${ID})[[:space:]]*:=[[:space:]]*)(${STR}|[^[:space:]<"'][^[:space:]]*)/\1<masked>/Ig
 s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|apikey)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(IDENTIFIED[[:space:]]+(WITH[[:space:]]+[A-Za-z_]+[[:space:]]+)?BY[[:space:]]+)(${STR}|[^[:space:];<][^[:space:];]*)/\1<masked>/Ig
@@ -1019,6 +1019,8 @@ self_test() {
     v7; printf 'password = <%s>\n' "$vv"; v7_reg 'value that starts with an angle bracket' LS
     v7; printf 'if password == "%s":\n' "$vv"; v7_reg 'comparison of a password with a text' LS
     v7; printf 'x := password := "%s"\n' "$vv"; v7_reg 'name := value in the middle of a line' LS
+    v7; printf 'if ok { apikey := "%s" }\n' "$vv"; v7_reg 'name := value inside braces' LS
+    v7; printf 'foo := password := %s end\n' "$vv"; v7_reg 'name := unquoted value' LS
     v7; printf "CREATE USER u IDENTIFIED BY '%s';\n" "$vv"; v7_reg 'SQL IDENTIFIED BY' LS
     v7; printf 'password = "a" or "%s"\n' "$vv"; v7_reg 'second text after a hidden one' LS
     v7; printf 'note password is %s]%s end\n' "$hd" "$tl"; v7_reg 'closing bracket inside a mid-line value' LS

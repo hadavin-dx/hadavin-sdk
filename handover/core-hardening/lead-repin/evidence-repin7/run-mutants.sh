@@ -5,5 +5,6 @@ mkdir -p "$O"
 python3 -I "$M" "$S" "$O" "$SH" v01-no-pre-stage v02-pwcmds-list-unused v03-nonascii-noop v04-ml-start-off v05-length-guard-off > "$O/g1-$SH.txt" 2>&1 &
 python3 -I "$M" "$S" "$O" "$SH" v06-url-userinfo-off v07-canary-count-off-by-one v08-selftest-count-off-by-one v10-bearer-rule-off v11-jwt-rule-off v15-dotted-camel-rule-reverted v16-ml-continue-off > "$O/g2-$SH.txt" 2>&1 &
 python3 -I "$M" "$S" "$O" "$SH" v09-signal-kids-not-killed v12-recount-always-ok v13-watchdog-off v14-premain-not-background > "$O/g3-$SH.txt" 2>&1 &
+python3 -I "$M" "$S" "$O" "$SH" v17-escaped-quote-string-rule-off v18-unicode-escape-key-rule-off v19-shape-rule-separators-off v20-glued-names-off v21-git-safety-settings-off v22-relative-tmpdir-allowed v23-xml-text-rule-off v24-userinfo-no-scheme-rule-off v25-identified-by-rule-off v26-colon-equals-rule-off v27-requirepass-line-rule-off v28-second-literal-rule-off v29-escaped-slash-userinfo-off > "$O/g4-$SH.txt" 2>&1 &
 wait
-cat "$O/g1-$SH.txt" "$O/g2-$SH.txt" "$O/g3-$SH.txt"
+cat "$O/g1-$SH.txt" "$O/g2-$SH.txt" "$O/g3-$SH.txt" "$O/g4-$SH.txt"

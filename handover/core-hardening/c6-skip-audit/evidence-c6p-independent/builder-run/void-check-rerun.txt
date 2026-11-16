@@ -1,0 +1,12 @@
+rows in file: 128 | lease-45 rows: 23
+KEPT crash runs: 18 {'K2': 5, 'K1': 5, 'K3': 5, 'K6': 3}
+KEPT with reached_terminal true: 18
+kill_to_final_s min 60.1 max 61.9 median 60.85
+recovery_s (seconds from n8n coming back up) min 52.8 max 54.9
+restart_s min 6.6 max 8.8
+lease-45 rows that are neither kept crash runs nor void (the CRM-refuses case): [('fl45err2', 'error'), ('fl45err3', 'error'), ('fl45err1', 'error')]
+VOID rows in the whole file: 2
+ VOID VOID-fl45k6c K6 17:10:42Z 17:11:35Z error='RuntimeError: fakes_not_up' reached_terminal=None kill_to_final_s=None flows=873a908a-film-v4-lease45
+   kept runs overlapping its time window: 2 ['fl45k2e', 'fl45k6a']
+ VOID VOID-fl45k3b K3 17:09:59Z 17:16:35Z error=None reached_terminal=False kill_to_final_s=338.7 flows=873a908a-film-v4-lease45
+   kept runs overlapping its time window: 5 ['fl45k2d', 'fl45k2e', 'fl45k6a', 'fl45k3d', 'fl45k6b']

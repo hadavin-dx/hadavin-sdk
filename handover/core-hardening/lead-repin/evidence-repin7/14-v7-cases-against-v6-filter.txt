@@ -1262,6 +1262,18 @@ FAIL (secret still visible after the sed stage alone): name := value in the midd
 FAIL (secret still visible): name := value in the middle of a line (last 6 characters)
 FAIL (secret still visible in the line-only final filter): name := value in the middle of a line (last 6 characters)
 FAIL (secret still visible after the sed stage alone): name := value in the middle of a line (last 6 characters)
+FAIL (secret still visible): name := value inside braces (first 6 characters)
+FAIL (secret still visible in the line-only final filter): name := value inside braces (first 6 characters)
+FAIL (secret still visible after the sed stage alone): name := value inside braces (first 6 characters)
+FAIL (secret still visible): name := value inside braces (last 6 characters)
+FAIL (secret still visible in the line-only final filter): name := value inside braces (last 6 characters)
+FAIL (secret still visible after the sed stage alone): name := value inside braces (last 6 characters)
+PASS (hidden): name := unquoted value (first 6 characters)
+PASS (hidden, line-only final filter): name := unquoted value (first 6 characters)
+PASS (hidden, sed stage alone): name := unquoted value (first 6 characters)
+PASS (hidden): name := unquoted value (last 6 characters)
+PASS (hidden, line-only final filter): name := unquoted value (last 6 characters)
+PASS (hidden, sed stage alone): name := unquoted value (last 6 characters)
 FAIL (secret still visible): SQL IDENTIFIED BY (first 6 characters)
 FAIL (secret still visible in the line-only final filter): SQL IDENTIFIED BY (first 6 characters)
 FAIL (secret still visible after the sed stage alone): SQL IDENTIFIED BY (first 6 characters)
@@ -1355,5 +1367,5 @@ PASS (kept): file name with dots stays
 PASS (kept): a name followed by a full stop stays
 PASS (kept): a NUL byte is shown as ? (tr stage)
 PASS (kept): mkdir -p with a path stays
-SELF-TEST: passed=1171 failed=186 (the made-up input and output files were deleted)
+SELF-TEST: passed=1177 failed=192 (the made-up input and output files were deleted)
 exit code: 1
