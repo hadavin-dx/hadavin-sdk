@@ -15,12 +15,14 @@ Status: DRAFT, UNVERIFIED. Method: grep -n -i on `inputs/lead-reviews/LEAD-RUNBO
 | 272 (G13) | "read-only searches and never delete" | none; P81 note says the lead's search tool (HS-14, G13) stays read-only | COVERED (note only, no edit needed) |
 | 306 (HS-14) | "shows a read-only identity" | none; same P81 note (lead's search tool, not the take program) | COVERED (note only, no edit needed) |
 | 435 | "shows a read-only identity" (`<HS_SEARCH>`) | none; same P81 note | COVERED (note only, no edit needed) |
-| 453 | "no HubSpot write, delete or archive call and shows a read-only identity at start-up" | P35, P81 | COVERED |
-| 507 | "only reads HubSpot, never deletes" | P35, P81 | COVERED |
+| 453 | "no HubSpot write, delete or archive call and shows a read-only identity at start-up" | P35, P81 | NO CHANGE, v4.2 is right (lead retraction 17:46Z) |
+| 507 | "only reads HubSpot, never deletes" | P35, P81 | NO CHANGE, v4.2 is right (lead retraction 17:46Z) |
 | 514 | "the take identity stays read-only and the lead never deletes" | P08, P51, P53, P54, P82 list line 514; P82 keeps the order; sentence stays true | COVERED |
 | 515 | "does not delete it" (owner's n8n folder) | none | NOT LISTED, but about a folder, not contacts: no edit needed, no row added |
 
 ## NOT LISTED hits and rows added
+Note (2026-11-16, lead retraction 17:46Z): v4.2 lines 453 and 507 are CORRECT for the final program; NO CHANGE (rows P35 and P81 say the same). Patch rows P98 to P114 (round 38) were added after this check; they are texts of the take program, not v4.2 line edits, so the NOT LISTED result below is unchanged.
+
 Three lines (127, 183, 515) are not in any patch row. None is about the HubSpot archive or delete sentence, and the batch 3 sentence cannot apply to a folder or marker file. So I added NO row (P95 and later are unused) and made no history copy, because the patch file is unchanged. If the lead wants a no-edit row for them, say so.
 
 ## Not checked
