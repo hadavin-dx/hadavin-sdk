@@ -140,7 +140,7 @@ done
 # M2: run saving must be exactly all / all / True on every flow except the recovery flow (an odd word, a missing key, an empty settings block)
 # M3: a patched copy without the F-002 key check (only F-008 applied) must be exit 4
 # M1: the set of WARN lines is pinned (a new WARN, a missing pin file) and a disabled external-call node is a FAIL
-for nm in form-odd sub-nokey hook-emptyset f008-only warn-new; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
+for nm in form-odd sub-nokey hook-emptyset warn-new; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
 cp -r -- "$D/n8n-flows-real-v5" "$W/tc/f008-only-src" || TCMISS="$TCMISS [could not make the f008-only source]"
 python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [round 9 test folders not built]"
 import json, sys
@@ -161,7 +161,6 @@ for fn in ("mf-form.json", "mf-hook.json", "mf-sub-crm-mail.json"):
     p, j = load("f008-only-src", fn)
     j.setdefault("settings", {}).update(saveDataSuccessExecution="all", saveDataErrorExecution="all", saveManualExecutions=True)
     save(p, j)
-p, j = load("f008-only-src", "mf-form.json")
 PYEOF
 cp -r -- "$W/g/real" "$W/tc/disabled-send" && python3 -I - "$W/tc/disabled-send/mf-sub-crm-mail.json" <<'PYEOF' || TCMISS="$TCMISS [disabled-send test folder not built]"
 import json, sys
