@@ -169,8 +169,8 @@ def build(words):
     t = sub(t, "(G12 = YOUR gate, release note v14 line 33, LRN14:33; open)", "(G12 = YOUR gate, quoted under WORDS; open)", 1)
     t = sub(t, "- GATE = a run sheet step that blocks the take until a named person writes a result on it. G12 holds",
             "- GATE = a run sheet step that blocks the take until a named person writes a result on it. G12 is the row of your release note v14, line 33 (LRN14:33): '| G12 | Claims: the one sentence, the ban list of section 5 decided (the lease sentence is out of the public post, lead answer Q22c) | sentence in writing | sentence missing |'. I read it as OPEN: the sentence is not yet in writing; I do not approve it. To CLOSE it, type one of three lines on its own line in ORDERS.md: `## G12 (studio lead, <UTC> = <IST>): approved: the words 'processed once' beside the crash scene, the label 'setting: lease 45 s' and the words 'other lease settings' may be filmed` or `## G12 (studio lead, <UTC> = <IST>): not approved` or `## G12 (studio lead, <UTC> = <IST>): closed: line 33 of release note v14 is my approval`. G12 holds", 1)
-    t = sub(t, "Release note v14 (LRN14:33), your newest, still lists G12", "Release note v14 (LRN14:33; its lines 8, 33, 149 and 150 equal the newest rendered note) still lists G12", 1)
-    t = sub(t, "LRN14:33 in release note v14, the newest;", "LRN14:33 in release note v14 (lines 8, 33, 149, 150 equal the newest rendered note);", 1)
+    t = sub(t, "Release note v14 (LRN14:33), your newest, still lists G12", "Release note v14 (LRN14:33; its lines 33 and 150 equal the newest note; its lines 8 and 149 differ from the newest note in two small ways stated in section 0, so LRN14:8 and LRN14:149 are v14 cites) still lists G12", 1)
+    t = sub(t, "LRN14:33 in release note v14, the newest;", "LRN14:33 in release note v14 (lines 33 and 150 equal the newest note; lines 8 and 149 differ, see section 0);", 1)
     # ---------------- box trims (the box must stay under 2,500 words; the detail is in section 1c) and the naive-review fixes
     def setline(t, prefix, new):
         ls = t.split("\n")
@@ -243,6 +243,7 @@ def build(words):
     c6v_fail = ("- FAILURES FIRST IN c6v (my own, still open when I wrote this): (1) no EGM reviewer has read REPORT-c6v.md or the new checks; every statement here is a builder statement until the studio lead's reviewers have read it. "
         "(2) C-1 and C-1b are DONE on the scratchpad copy only: UNVERIFIED against the real files (99 of the 104 rows name files that the branch core-hardening lacks; the 9 flow and demo files the rows name and the 15 files the checks read are shipped in evidence-c6v/tree/ and were scanned for secret shapes); the builder confirms each old text in the real file before applying its row. "
         "(3) The c6u check script missed 24 of 103 independent mutations (evidence-c6u-independent/mutations-raw.tsv and mutations-raw-batch2.tsv), 12 of them reversing a safe default or widening a delete rule, each with exit 0. c6v adds the classes that were missing: class 1 (a safe-default phrase unchanged in every place it is quoted: a census frozen by the build, a list of phrases that must not occur, a list that must), class 2 (every count or version quoted twice is equal; the UNVERIFIED label count is unchanged), class 4 (every quoted copy of a card line equals the line in rows 13 and 14) and class 6 (a short old text occurs once in the whole file). "
+        "(3b) While I worked, another session wrote a newer release note (v18) and owner sheet. Against v14, release note lines 33 and 150 are the same; line 8 no longer lists the lease wording (G12) among the conflicts that need your decision, and line 149 (ban item 11) no longer says \"unless approved in writing\". The G12 row on line 33 is unchanged, so this report keeps G12 as your open gate. I did not read this as a decision. Please say if it is one. "
         "Run on REPORT-c6u.md the new checks fail where c6u had the defect (see verify-c6v-on-c6u.txt); class 4 and the must-not-occur list find no defect in c6u, so for those only the changed copies in neg-output.txt (lines starting W-) are the proof. "
         "(4) Older negative controls whose target text no longer exists are listed as PORT-SKIPPED in neg-output.txt and are not re-run; the verifiers of c6r, c6s and c6t were not re-run. "
         "(5) Five items are OPEN and nobody has answered them: L-SHEET and L-SAVEERR (the owner only), G12 (the studio lead), the meaning of Q27 (a), (b), (c) and the delete-path check (the owner's, ORD:232). "
@@ -271,6 +272,13 @@ def build(words):
         "| Independent run: symlinked steps-edits crashed build_c6u.py | static-checks.sh, run_all.sh and build_base.py stop with a message that names the cause | run_all.sh |\n\n")
     t = sub(t, "COVERAGE OF THE c6s REVIEWS (", cov + "COVERAGE OF THE c6s REVIEWS (", 1)
     t = sub(t, "## 9. Not covered here (each with the label and the exact next step)\n", "## 9. Not covered here (each with the label and the exact next step)\n- [needs-lead] L-APP2 (c6u design review m4): I did not check that the owner-sheet track carries L-APP2. Next step: the studio lead confirms it in the owner-sheet track before the final sheet is chosen.\n- [needs-lead] The deletion gate is told in four places (box, 1c, section 3 L-DEL, section 6; c6u naive review m): each place is held equal by the census of verify-c6v.py, but it is not yet told once with pointers. Next step: the reviewers decide whether to keep four checked copies.\n- [needs-lead] The card words 'lead' and 'contact' and 'other lease settings' (c6u naive review M7) are noted in the word list only; the card lines are NOT changed. Next step: the studio lead decides in L-CARD.\n", 1)
+    sys.path.insert(0, E)
+    import ctime_c6v
+    _ct = re.search(r"check time \(UTC\): (\S+)", open(E + "static-checks-output.txt", encoding="utf-8").read()).group(1)
+    _e1, _i1, _e2, _i2 = ctime_c6v.example_times(_ct)
+    t = sub(t, "2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST", "%s = %s IST" % (_e1, _i1), 1)
+    t = sub(t, "2026-11-16T18:50:00Z = 2026-11-17T00:20:00 IST", "%s = %s IST" % (_e2, _i2), 2)
+    t = t.replace("verify_c6u_part2.py", "verify_c6v_part2.py")
     # row 96 edits the rightmost cell of run sheet line 41; rows 12 to 15 consume the text around it, so it must apply first
     _L = t.split("\n")
     _i96 = [k for k, l in enumerate(_L) if l.startswith("| 96 | NOT APPLIED")]

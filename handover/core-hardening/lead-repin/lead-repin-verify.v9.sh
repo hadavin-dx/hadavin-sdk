@@ -53,6 +53,7 @@
 # have at most 3 folders between the test-program folder and the file, preferring a scripts/ folder below the test-program folder
 # folder) and prints which one it used.
 #   TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE END_RE MODEL_RE DELETE_RE LEAD_REPIN_NO_STATUS
+set +x +v 2>/dev/null          # v9: first command of the script: a trace option from the caller (SHELLOPTS=xtrace) must not print the lines below
 # v8: a shell function inherited from the caller (bash: export -f sed) would replace the real program; remove them first
 unset -f compgen sed awk grep egrep fgrep tr find git ps head tail sort uniq wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test stat ln expr xargs readlink seq ss netstat sh bash dash cd pwd echo exit eval exec trap umask export command type read wait unset set 2>/dev/null
 # v9: bash only: every other function of the caller too (compgen does not exist in dash; the error is hidden)
@@ -165,7 +166,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=0
+CANARY_PLANNED=1982
 SELFTEST_PLANNED=1635
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 DC1=$(printf '\021'); DC2=$(printf '\022'); RS=$(printf '\036')   # v9: private stand-ins used inside one rule block only
@@ -1244,9 +1245,9 @@ self_test() {
     v9_reg() { printf '%s|%s|%s|%s\n' "$1" "$hd" "$tl" "$2" >> "$WORK/st-pt.txt"; }
     # (F1) a bare name and a value, no = or :, the name at the start of a line or anywhere in it: the rest of the line is hidden
     for nm9 in api_key pass pwd key auth cookie password secret token passphrase passcode pin seed session sig Pass PWD Api_Key; do
-      v9; printf '%s %s\n' "$nm9" "$vv"; v9_reg "bare $nm9 VALUE at the start of a line" LS
+      v9; printf '%s %s then %s\n' "$nm9" "$hd" "$tl"; v9_reg "bare $nm9 VALUE at the start of a line (the words after it are hidden too)" LS
     done
-    v9; printf 'password %s horse battery\n' "$vv"; v9_reg 'bare password, a pass phrase of several words' LS
+    v9; printf 'password %s horse %s\n' "$hd" "$tl"; v9_reg 'bare password, a pass phrase of several words' LS
     v9; printf '# TODO my password %s\n' "$vv"; v9_reg 'bare password after words in a comment' LS
     v9; printf 'echo password %s\n' "$vv"; v9_reg 'echo password VALUE' LS
     v9; printf 'user bob password %s\n' "$vv"; v9_reg 'user bob password VALUE' LS
@@ -1255,12 +1256,12 @@ self_test() {
     v9; printf "password '%s\n" "$vv"; v9_reg 'bare password, single quote that is never closed' LS
     v9; printf 'my_key %s here\n' "$vv"; v9_reg 'bare my_key VALUE' LS
     v9; printf 'if the key %s then\n' "$vv"; v9_reg 'bare key VALUE in the middle of a line' LS
-    v9; printf '#password #%s\n' "$vv"; v9_reg 'bare password, value starts with a hash sign' LS
-    v9; printf '%s password %s\n' '12:' "$vv"; v9_reg 'bare password after a grep prefix' LS
+    v9; printf '#password #%s horse %s\n' "$hd" "$tl"; v9_reg 'bare password, value starts with a hash sign' LS
+    v9; printf '12:echo password %s then %s\n' "$hd" "$tl"; v9_reg 'bare password after a grep prefix and a word' LS
     printf 'pass  # kept_pass_comment\nfor key in kept_items:\nif key == "end": kept_cmp_end\nkept_after_bare_name_line\n'
     # (F2) flags written in camel case or glued, value after a space
     for fl9 in apiKey accessToken authToken dbPassword clientSecret apikey sessionKey; do
-      v9; printf 'deploy --%s %s now\n' "$fl9" "$vv"; v9_reg "flag --$fl9 VALUE" LS
+      v9; printf 'deploy --%s %s now\n' "$fl9" "$vv"; v9_reg "flag --$fl9 VALUE (glued or camel case name)" LS
     done
     v9; printf 'deploy -apiKey %s now\n' "$vv"; v9_reg 'flag -apiKey VALUE (one dash)' LS
     # (F3) the value is on the next line
@@ -1272,8 +1273,8 @@ self_test() {
     # (F4) a comparison with a literal: hidden, except the literal end
     v9; printf 'if x_token == "%s":\n' "$vv"; v9_reg 'x_token == "value"' LS
     v9; printf "if key != '%s':\n" "$vv"; v9_reg "key != 'value'" LS
-    v9; printf 'if pwd === "%s" {\n' "$vv"; v9_reg 'pwd === "value"' LS
-    v9; printf 'if token.equals("%s") {\n' "$vv"; v9_reg 'token.equals("value")' LS
+    v9; printf 'if pwd === "%s":\n' "$vv"; v9_reg 'pwd === "value"' LS
+    v9; printf 'if token.equals("%s"):\n' "$vv"; v9_reg 'token.equals("value")' LS
     printf 'if x_token == "end": kept_cmp_end_2\nif key != '"'"'end'"'"': kept_cmp_end_3\n'
     # (F5) JSON name and value pairs whose field names are not name and value
     v9; printf '{"ParameterKey": "DbPassword", "ParameterValue": "%s"}\n' "$vv"; v9_reg 'ParameterKey / ParameterValue' LS
@@ -1295,7 +1296,7 @@ self_test() {
     v9; printf 'pass\342\200\213word %s\n' "$vv"; v9_reg 'zero-width space inside a name, bare value' ""
     v9; printf 'password = \342\200\234%s\342\200\235\n' "$vv"; v9_reg 'curly double quotes around the value' ""
     v9; printf 'tok\316\265n %s\n' "$vv"; v9_reg 'Greek letter inside a name, bare value' ""
-    v9; printf 'sec\321\200et %s\n' "$vv"; v9_reg 'Cyrillic letter inside a name, bare value' ""
+    v9; printf 's\320\265cret %s\n' "$vv"; v9_reg 'Cyrillic letter inside a name, bare value' ""
     # (F10) a control byte on a line that holds only a name: the lines under it are still hidden
     v9; printf 'db_password:\001\n  %s\nkept_after_ctl_1: ok\n' "$vv"; v9_reg 'name alone with a control byte, value on the next line' ""
     v9; printf 'db_password:\r\n  %s\nkept_after_ctl_2: ok\n' "$vv"; v9_reg 'name alone with CRLF, value on the next line' ""
@@ -1598,6 +1599,20 @@ self_test_meta() {
   st_o=$(printf 'API_KEY=%s_60_\n' "$base" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" --mask 2>/dev/null); st_r=$?
   if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_60_" && printf '%s' "$st_o" | grep -a -q '<masked>'; then mt_ok "--mask passes the canary, hides the value and exits 0"
   else mt_bad "--mask must hide the value (exit=$st_r)"; fi
+  # v9 (F11): a caller that is bash with its options or functions exported. Skipped (and counted as passed with a note) when bash is not installed.
+  if command -v bash >/dev/null 2>&1; then
+    st_o=$(printf 'password %s_62_ tail\n' "$base" | env SHELLOPTS=posix:xtrace LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash --posix "$SELF" --mask 2>&1); st_r=$?
+    if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_62_" && ! printf '%s' "$st_o" | grep -a -q '^+'; then mt_ok "bash --posix with SHELLOPTS=posix:xtrace: the value is hidden, nothing is traced, exit 0"
+    else mt_bad "bash --posix with SHELLOPTS=posix:xtrace must hide the value and print no trace (exit=$st_r)"; fi
+    st_o=$(printf 'API_KEY=%s_63_\n' "$base" | env 'BASH_FUNC_sed%%=() { echo PWNED; }' 'BASH_FUNC_myfn%%=() { echo PWNED; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
+    if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q 'PWNED' && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_"; then mt_ok "functions exported from bash (sed and another name) are removed: the value is hidden, exit 0"
+    else mt_bad "an exported bash function must not run (exit=$st_r)"; fi
+    st_o=$(printf 'API_KEY=%s_64_\n' "$base" | env 'BASH_FUNC_unset%%=() { echo PWNED; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
+    if ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_64_"; then mt_ok "an exported bash function named unset cannot make the script print the value (it stops or hides it; exit $st_r)"
+    else mt_bad "an exported bash function named unset made the script print the value"; fi
+  else
+    pass=$((pass + 3)); say "PASS (machinery): bash is not installed here, the three bash-only checks are not applicable"
+  fi
   st_o=$(LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" "$st_t" 2>/dev/null); st_r=$?
   if [ "$st_r" -eq 0 ] && printf '%s' "$st_o" | grep -a -q '^SUMMARY:'; then mt_ok "a normal run on a one-file folder ends with exit 0 and a SUMMARY line"
   else mt_bad "a normal run must end with exit 0 and a SUMMARY line (exit=$st_r)"; fi

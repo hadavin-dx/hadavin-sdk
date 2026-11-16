@@ -2,6 +2,7 @@
 and the raw output. A control copy with no change must exit 0; every changed copy must exit non-zero. Fake key-shaped strings are built from parts here.
 Usage: python3 neg_controls_c6v.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
 import re, subprocess, sys, os, tempfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 E = os.path.dirname(os.path.abspath(__file__)) + "/"
 D = os.path.dirname(E.rstrip("/")) + "/"
 os.makedirs(E + "neg", exist_ok=True)
@@ -54,6 +55,9 @@ def run_block(src, name):
             SKIPPED_PORT.append("%s line %d: %s %s" % (name, node.lineno, type(e).__name__, str(e)[:70]))
 
 M = {}
+import ctime_c6v
+_ctn = re.search(r"check time \(UTC\): (\S+)", open(E + "static-checks-output.txt", encoding="utf-8").read()).group(1)
+EX1TXT = "%s = %s IST" % ctime_c6v.example_times(_ctn)[:2]
 box_end = rep.index("## Start here, part 2")
 run_block(open(E + "neg_ported_c6r.py", encoding="utf-8").read(), "neg_ported_c6r.py")
 run_block(open(E + "neg_new_c6s.py", encoding="utf-8").read(), "neg_new_c6s.py")

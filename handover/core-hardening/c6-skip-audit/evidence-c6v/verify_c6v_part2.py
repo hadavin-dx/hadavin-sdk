@@ -105,6 +105,8 @@ check("5a text equals each row's own 'what the viewer sees' cell", all(("| %d | 
 # owner sheets
 cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6v/static-checks-output.txt")
 ct = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
+import ctime_c6v
+EX = ctime_c6v.example_times(ct)[:2]   # the first example answer time of the box (UTC, IST), derived from the check time
 vs = sorted(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
 check("report names the check time %s and the newest sheet version on disk (v%s)" % (ct, vs[-1] if vs else "?"), bool(vs) and ("v%d" % vs[-1]) in full and ct[11:19] in full and ct[:10] in full, vs[-3:])
 import datetime
@@ -148,7 +150,7 @@ if os.path.exists(p):
 check("c6v N5: the start box is under 2,500 words (c6s: 3,488; %d words now) and states its own real count" % bw, bw < 2500 and len(boxs.split()) < 2500 and ("This box holds %d words" % bw) in boxs, bw)
 sets = re.findall(r"saveDataSuccessExecution|saveManualExecutions|EXECUTIONS_DATA_SAVE", box)
 check("box names no n8n setting", not sets, sets)
-check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
+check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", ("%s = %s IST" % (EX[0], EX[1])) in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
 W1 = len(ready) + len(onlyq)
 W1c = W1
 check("box wave 1 count equals ready + defaults (%d)" % W1, ("%d wave 1 rows" % W1) in box, W1)
@@ -231,8 +233,8 @@ check("naive M1: 'take' is defined as the filmed run and 'the recovery flow clai
 check("naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)", all(x in box for x in ["CLAIM TABLE", "G12 =", "K3B", "THE CHECKS", "CUT NUMBER"]), "")
 check("naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list", box.find("WHAT TO TYPE") >= 0 and box.find("WHAT TO TYPE") < box.find("WORDS YOU NEED (") and box.find("WORDS YOU NEED (") - box.find("WHAT TO TYPE") < 2400, "")
 # the box: UTC with IST on the example time (coordinator item 4); no time example without IST within 40 characters
-ex = [m.start() for m in re.finditer(r"00:10:00", box)]
-check("every '00:10:00' example time in the box has 'IST' within 40 characters (%d places)" % len(ex), ex and all("IST" in box[i:i + 40] for i in ex), len(ex))
+ex = [m.start() for m in re.finditer(re.escape(EX[1][-8:]), box)]
+check("every example time of day (the IST of the first example)  in the box has 'IST' within 40 characters (%d places)" % len(ex), ex and all("IST" in box[i:i + 40] for i in ex), len(ex))
 # the owner-sheet facts: the real v29 files, their times and the check time
 NEWV = max(vs)
 sw = glob.glob(STEPS + "/OWNER-SHEET-v%d-*.md" % NEWV)
@@ -403,7 +405,7 @@ check("E-mtime: the report names the SOURCE file of the newest release note with
 _rp = [n for n in ("run_all.sh", "static-checks.sh", "neg_controls_c6v.py", "build_c6v.py", "verify-c6v.py", "verify_c6v_part2.py") if re.search("/ho" + "me/user|/tm" + "p/claude|/ro" + "ot/", rd(os.path.dirname(os.path.abspath(__file__)) + "/" + n))]
 check("E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6V_TREE)", not _rp, _rp)
 # E-lrn: release note lines cited are the same in v14 and in the newest note (the check script compares whole lines)
-check("E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold", cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "")
+check("E-lrn: the check output says lines 33 and 150 are the same in release note v14 and the newest note and lines 8 and 149 differ, and the report says so", cs.count("the whole line is the same in v14 and in") == 2 and cs.count("the whole line DIFFERS between v14 and") == 2 and "lines 8 and 149 differ" in raw, "")
 # M1/M2 (design): the 45-second sentence is not claimed to be carried by the sheets; LRN14:149 and :150 are the evidence; lease words on the video are held under G12
 check("M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default", not re.search(r"(?i)lives in (the )?(one final )?owner sheet|then lives in the owner|must carry it when the card|the sheets carry", "\n".join(l for l in raw.split("\n") if not l.startswith("| Design M1"))) and any(l.startswith("| L-POST (new in c6q)") and "LRN14:150" in l and "LRN14:149" in l for l in txt), "")
 check("M1: TASK (9) is a question to you (yes or no), not an instruction", "TASK (9) A QUESTION TO YOU" in box and "(9) you (or a builder you name) add the 45-second limit sentence" not in raw, "")
@@ -485,7 +487,7 @@ _tie("alert delay minutes (claims-A.md says %d s)" % _dl_s, r"(\d+)-minute alert
 _tie("relayed runs behind the alert delay (claims-A.md says n=%d)" % _dl_n, r"alert delay \((\d+) relayed runs\)", (_dl_n,))
 _rn_ = rd(STEPS + "/" + max([f for f in os.listdir(STEPS) if re.fullmatch(r"LEAD-RELEASE-NOTE-v\d+\.md", f)], key=lambda f: int(re.search(r"v(\d+)", f).group(1)))).split("\n")
 _lrn = sorted(set(int(x) for x in re.findall(r"LRN14:(\d+)", raw)))
-check("c6v TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150): %s" % _lrn, set(_lrn) <= {8, 33, 149, 150} and len(_lrn) >= 3, _lrn)
+check("c6v TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150; 8 and 149 are v14 cites, stated as differing): %s" % _lrn, set(_lrn) <= {8, 33, 149, 150} and len(_lrn) >= 3, _lrn)
 _ob_ = []
 for _m in re.finditer(r"ORD:(\d+)", raw):
     _n = int(_m.group(1)); _c = raw[max(0, _m.start() - 70):_m.end() + 12]; _ln = _ord[_n - 1] if 0 < _n <= len(_ord) else ""

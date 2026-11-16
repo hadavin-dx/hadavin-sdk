@@ -320,7 +320,7 @@ _sb = F.get('sevenback', '?')
 if _sb not in NOTE:
     fail('C189', 'note: the 7-day time (%s) is missing (S M1)' % _sb)
 if _sb not in OPEN: fail('C189', 'open list lacks the 7-day time %s' % _sb)
-need('C190', 'if there is no such page this is a STOP')                                                                    # S m4: Recall
+need('C190', 'no such page: describe that there is no Recall page, then go on')                                                                    # S m4: Recall
 need('C191', 'no clipboard manager, remote-access or screen-capture tool running'); need('C191', 'every clipboard manager, remote-access tool or screen-capture tool')     # S m5
 need('C192', 'never a file manager, a second terminal window or the clipboard (no copy and paste)')                      # S m6 film person
 need('C192', "the From column of the mail list shows the sender's throwaway address: the film person does not stop for")   # N B1
@@ -503,7 +503,7 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
 # C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
 if not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-%s.md does not exist' % _V9)
 else:
-    for _s in (_FF['helper_scope'], 'The owner himself asks you', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'The last-resort step is the owner\'s, not yours', 'Never copy, type or photograph key text',
+    for _s in (_FF['helper_scope'], 'The owner asks you, by a call you start', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'do at once the last-resort step on your paper', 'Never copy, type or photograph key text',
                'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
         if _s not in _HP: fail('C230', 'helper page lacks %r' % _s[:70])
     if _HP.count('you called the owner twice, 5 minutes apart, with no answer') != 2: fail('C230', 'helper page: triggers (b) and (c) do not both need two calls to the owner')
@@ -621,7 +621,7 @@ for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
 for _n, _t in (('A', A), ('B', B)):
     if _t.count('18:31 UTC = 00:01 IST') < 3 or _t.count('18:41 UTC = 00:11 IST') < 3: fail('C246', '%s: a chain end (18:31 UTC = 00:01 IST, 18:41 UTC = 00:11 IST) is not stated in the card, the yes and part 10 (need 3 each)' % _n)
     if _t.count('at once after') < 3: fail('C246', '%s: "at once after" is not in the card, the yes and part 10' % _n)
-    if 'A helper path that fails also ends at your last-resort step: the helper has none' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
+    if 'A helper path that fails also ends at a last-resort step: the helper does the one on its paper' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
 if _FF['bm_chain'] != 'Mon 23 Nov 2026 18:31 UTC = 00:01 IST' or not _FF['bt_end'].endswith('18:41 UTC = 00:11 IST'): fail('C246', 'the chain end figures are not 18:31 UTC = 00:01 IST and 18:41 UTC = 00:11 IST')
 # C247 (S M2; class: a typed line wider than the shape that was checked): the cd line is `cd ` plus the Take folder, in 7.2, the rows rule and R6
 for _n, _t in (('A', A), ('B', B)):
@@ -635,7 +635,7 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
     if 'OWNER-HELPER-v34.md' not in _t: fail('C248', '%s does not list the helper page' % _n)
 # C249 (S m2-m8; class: a stop or a rule only in some places): the Sunday rule, the paper void step, helper trigger, the film stop
 for _n, _t in (('A', A), ('B', B)):
-    for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'a reminder never cancels a live run key'):
+    for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'so that no reminder or backstop time meets a live run key.'):
         if _s not in _t: fail('C249', '%s lacks %r' % (_n, _s[:70]))
 if _HP:
     for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'by a call you start to the phone number on your paper (a message is never enough', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):

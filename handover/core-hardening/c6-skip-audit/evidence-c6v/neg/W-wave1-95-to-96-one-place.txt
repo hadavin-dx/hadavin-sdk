@@ -1,4 +1,7 @@
- []
+mputed from the four quoted lines): every copy (3 found) equals the source value 90/36/40 :: []
+PASS c6v TIE card total words 'spoken card holds': every copy (1 found) equals the source value 90 :: []
+PASS c6v TIE card seconds 'at 150 words a minute': every copy (4 found) equals the source value 36 :: []
+PASS c6v TIE option (b) words (recomputed from its four quoted lines): every copy (2 found) equals the source value 74 :: []
 PASS c6v TIE option (b) title words: every copy (1 found) equals the source value 74 :: []
 PASS c6v TIE option (b) seconds and budget: every copy (1 found) equals the source value 30/30 :: []
 PASS c6v TIE lease seconds in '<n>-second limit/setting/sentence/window/lease/check': every copy (35 found) equals the source value 45 :: []
@@ -9,12 +12,12 @@ PASS c6v TIE kept stand-in crash runs: every copy (2 found) equals the source va
 PASS c6v TIE kept runs: every copy (7 found) equals the source value 18 :: []
 PASS c6v TIE alert delay minutes (claims-A.md says 780 s): every copy (7 found) equals the source value 13 :: []
 PASS c6v TIE relayed runs behind the alert delay (claims-A.md says n=2): every copy (1 found) equals the source value 2 :: []
-PASS c6v TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150): [8, 33, 149, 150] :: [8, 33, 149, 150]
+PASS c6v TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150; 8 and 149 are v14 cites, stated as differing): [8, 33, 149, 150] :: [8, 33, 149, 150]
 PASS c6v TIE ORDERS cites: every ORD:<n> next to 'Wed 18 Nov', 'Q21.1', '= line' or 'no takeover' points to the ORDERS.md line that says so :: []
 PASS c6v TIE ORDERS cite list: 'ORD:<n> = line <n> of ORDERS.md' names one number twice, and that line is Q21.1 :: ('150', '150')
 PASS c6v TIE row lists: no written list of row numbers is a near copy (same length, same first row, other rows) of the rows that wait for a check [23, 58, 59], wait for the owner, belong to L-ONEDB [90, 91] or to C-8 [58, 59] :: []
 PASS c6v names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry c6v) :: (0, 0)
-FAIL c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6v.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6v-output.txt', 'verify-c6v.py', 'verify_c6u_part2.py'] :: ['verify_c6u_part2.py']
+PASS c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6v.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6v-output.txt', 'verify-c6v.py', 'verify_c6v_part2.py'] :: []
 PASS c6v M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old words appear only quoted :: []
 PASS c6v naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted) :: []
 PASS class 1: the census file census-c6v.json exists (written by the build step of run_all.sh) :: /home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6v/census-c6v.json
@@ -24,14 +27,14 @@ PASS class 1: the fixed safe-default sentences each appear at least once in the 
 PASS class 1: the L-LEASE row of section 3 shows 'No' in the Confirmed? column and the G12 hold :: ["| L-LEASE | studio lead (his answers: ORD:151, Q21.2; ORD:186, Q22 (c) of 12:50 UTC = 18:20 IST; ORD:230, L-Q22c, the newest) | Which sentence about the 45-second setting goes on the closing card (line 1) and in the scene 3 caption? 1 and 2 count only if L-POST is answered 'no'. NONE (the default)
 PASS class 1: every line that quotes the G12 approval answer quotes 'I do not approve it' and never 'I approve it' (3 lines) :: 3
 FAIL class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted) :: [(46, 96)]
-PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v33) :: {'33'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:48:05']) :: {'18:48:05'}
+PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:52:51']) :: {'18:52:51'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
 PASS class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (4 lines) :: []
 PASS class 1: 'changes no running n8n' appears in the box and in section 1c :: (1, 1)
 PASS class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows excepted) :: []
-SUMMARY: 236 checks, 5 FAILED: every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (38 default-only, 95 wave 1); m4 every example answer time in the box is later than the check time 2026-11-16T18:48:05Z (and has its IST); E-numbers: every row count in the start box (all 104, ready 57, default 38, check 3, owner 6, wave 1 95) equals the recount from the table, in every place it is printed; c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6v.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6v-output.txt', 'verify-c6v.py', 'verify_c6u_part2.py']; class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted)
+SUMMARY: 236 checks, 3 FAILED: every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (38 default-only, 95 wave 1); E-numbers: every row count in the start box (all 104, ready 57, default 38, check 3, owner 6, wave 1 95) equals the recount from the table, in every place it is printed; class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted)
 
 EXIT CODE 1

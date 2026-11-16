@@ -2018,6 +2018,14 @@ if hasattr(r, "set_child_root"):
     expect("M1 ACCEPT /tmp/x/.venv/bin/python with the real pytest head (pytest_cmd)", outcome(good_pytest, {"env": E, "cwd": str(X)}), "started")
 else:
     wrong.append("M1: no set_child_root (r12 accepts any path ending in /.venv/bin/python)")
+# r13: the file at the trusted path must still be the file found at start: replaced after start (rename over it) = refused
+saved = (dict(r._TRUSTED), dict(r._FOUND))
+tg = X / "trusted-git"; tg.write_text("#!/bin/sh\nexit 0\n"); tg.chmod(0o755)
+r._TRUSTED["git"] = r._identity(str(tg)); r._FOUND["git"] = str(tg)
+expect("M1 ACCEPT the trusted file (a stand-in git found at start)", outcome([str(tg)] + GV[1:], {"env": E}), "started")
+tg2 = X / "trusted-git.new"; tg2.write_text("#!/bin/sh\nexit 1\n"); tg2.chmod(0o755); os.replace(tg2, tg)
+expect("M1 REFUSE the same path after another file was renamed over it", outcome([str(tg)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1])
 # the call must be refused by check_child_call itself (a test calls it directly), not only by Child
 for name, (args, kw) in {"env missing": (GV, {}), "unknown option": (GV, {"env": E, "bufsize": 1}), "other git": ([str(fake)] + GV[1:], {"env": E})}.items():
     try:

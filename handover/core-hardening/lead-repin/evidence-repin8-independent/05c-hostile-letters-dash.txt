@@ -1,0 +1,17 @@
+json-basic                   exit=0 hidden vlen=24 outlen=23
+json-nested                  exit=0 hidden vlen=24 outlen=38
+json-single-quote            exit=0 hidden vlen=24 outlen=20
+json-escaped-quote           exit=0 hidden vlen=24 outlen=23
+json-escaped-in-string       exit=0 hidden vlen=24 outlen=31
+json-unicode-escape-key      exit=0 hidden vlen=24 outlen=30
+yaml-basic                   exit=0 hidden vlen=24 outlen=19
+yaml-quoted                  exit=0 hidden vlen=24 outlen=17
+yaml-list                    exit=0 hidden vlen=24 outlen=18
+yaml-indented                exit=0 hidden vlen=24 outlen=33
+yaml-block-scalar            exit=0 hidden vlen=24 outlen=19
+yaml-flow                    exit=0 hidden vlen=24 outlen=32
+url-userinfo                 exit=0 hidden vlen=24 outlen=47
+url-userinfo-nouser          exit=0 hidden vlen=24 outlen=42
+url-userinfo-pct             exit=0 SHOWN vlen=10 outlen=37
+url-query-token              exit=0 hidden vlen=24 outlen=22
+url-query-apikey             exit=0 hidden vlen=24 outlen=42

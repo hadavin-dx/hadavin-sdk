@@ -45,7 +45,7 @@ assert RN, "FATAL: no LEAD-RELEASE-NOTE lines in static-checks-output.txt"
 RNV = max(int(re.search(r"-v(\d+)", n).group(1)) for n in RN if "SOURCE" not in n)
 assert RNV >= 14
 RNN, RNS = "LEAD-RELEASE-NOTE-v%d.md" % RNV, "LEAD-RELEASE-NOTE-v%d-SOURCE.md" % RNV
-assert cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "release note lines 8, 33, 149, 150 differ between v14 and the newest"
+assert cs.count("the whole line is the same in v14 and in") == 2 and cs.count("the whole line DIFFERS between v14 and") == 2 and re.search(r"line 8: the whole line DIFFERS", cs) and re.search(r"line 149: the whole line DIFFERS", cs), "FATAL: lines 33 and 150 must be equal and lines 8 and 149 different between release note v14 and the newest; the report text must be re-read"
 OLDCT, OLDCTI, OLDT, OLDTI = "17:13:05", "22:43:05", "17:12:09", "22:42:09"
 
 box_tpl = open(E + "c6u_box.txt", encoding="utf-8").read().rstrip("\n").split("\n")
