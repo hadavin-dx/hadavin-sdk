@@ -9,3 +9,6 @@ m4-abort-disabled-normal-run.sh bash exit=1 FAIL_lines=5 SELF-TEST: passed=295 f
 m5-abort-disabled-mask.sh dash exit=1 FAIL_lines=1 SELF-TEST: passed=298 failed=1 (the made-up i
 m5-abort-disabled-mask.sh bash exit=1 FAIL_lines=1 SELF-TEST: passed=298 failed=1 (the made-up i
 m6-bearer-rule-dropped.sh dash exit=1 FAIL_lines=7 SELF-TEST: passed=292 failed=6 (the made-up i
+m6-bearer-rule-dropped.sh bash exit=1 FAIL_lines=7 SELF-TEST: passed=292 failed=6 (the made-up i
+m7-self_test-0-and-aborts-disabled.sh dash exit=1 FAIL_lines=5 SELF-TEST: passed=295 failed=5 (the made-up i
+m7-self_test-0-and-aborts-disabled.sh bash exit=1 FAIL_lines=5 SELF-TEST: passed=295 failed=5 (the made-up i

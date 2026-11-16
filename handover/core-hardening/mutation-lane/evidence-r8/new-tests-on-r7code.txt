@@ -44,3 +44,25 @@ REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c46
 /tmp/safety-only.jwNpyo.sh: line 69: 10401 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/s3/tmpstate/hadavin-mutation-lane-0/0661a37097a4ced0.backup is not a regular file owned by this user: re
   FAIL: T87c the backup is a FIFO: exit 3 (got 2; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+/tmp/safety-only.jwNpyo.sh: line 69: 14159 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/s3/tmpstate/hadavin-mutation-lane-0/0661a37097a4ced0.planted.json is not valid JSON: refused
+  FAIL: T87d the marker is not valid JSON: exit 3 (got 2; r7: 2), file still planted, marker kept, no traceback
+/tmp/safety-only.jwNpyo.sh: line 69: 17813 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/s3/tmpstate/hadavin-mutation-lane-0/0661a37097a4ced0.planted.json lacks required fields: refused
+  FAIL: T87e the marker lacks required fields: exit 3 (got 2; r7: 2), file still planted, marker kept
+/tmp/safety-only.jwNpyo.sh: line 69: 18209 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/s3/tmpstate/hadavin-mutation-lane-0 is not a plain folder owned by this user with mode 700: refused (r
+  FAIL: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 2; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+/tmp/safety-only.jwNpyo.sh: line 69: 18336 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/s3/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611
+  FAIL: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 2; r7: 2), file still planted, marker kept
+  PASS: T87g genuine restore afterwards
+/tmp/safety-only.jwNpyo.sh: line 69: 20067 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  File "<frozen importlib._bootstrap>", line 810, in module_from_spec
+AttributeError: 'NoneType' object has no attribute 'loader'
+  FAIL: T87h an internal bug inside --restore (restore_target raises RuntimeError): exit 3 (got 1; r7: 2 with INTERNAL ERROR), file still planted, marker kept
+  PASS: T87h genuine restore afterwards
+/tmp/safety-only.jwNpyo.sh: line 69: 20162 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker is for another root ('/somewhere/else'): refused
+  PASS: T87i guard: a marker that names another root is a forged marker: exit 2 (got 2), nothing written, marker kept
