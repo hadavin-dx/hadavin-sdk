@@ -1,2 +1,2 @@
-# QUESTIONS from flows-audit to lead. The lead answers in ORDERS.md.
+# QUESTIONS from flows-audit
 (none)
