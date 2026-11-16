@@ -41,3 +41,40 @@ ok   D-limit: the run itself is still going (the limit stopped the step, not the
 ok   D-limit: no process of the run is left after SIGTERM
 test_run_all_stop: 25 of 25 cases as expected, 0 not as expected
 ```
+
+## 3-test_run_all_raw
+command: timeout 1500 bash test_run_all_raw.sh
+start UTC: 19:10:40  end UTC: 19:22:36  rc=1
+```
+ok   run exits 0 while another process truncates every file of its raw folder (got exit 0)
+ok   no 'summary line missing' text in the run output
+ok   the untouched sentinel file in the raw folder is unchanged
+ok   the raw folder holds exactly the same file names as before the run (before: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt | after: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt )
+FAIL phase 2: a passing run with --refresh exits 0 (got exit 1)
+ok   phase 2: the run's own raw folder is named in its output (--keep) (/tmp/fc8raw.tKTZty)
+FAIL phase 2: all 40 raw files of the run are in raw/ byte for byte (40 differ)
+FAIL phase 2: refresh-manifest.txt lists exactly the files of this run with their sha256 (not the older file)
+ok   phase 2: the file of an older run is left alone and no temporary file stays
+FAIL phase 2: the run says that raw/ was refreshed and prints exit status 0
+ok   phase 3: a failing run exits 1 (got exit 1)
+ok   phase 3: a failing run with --refresh publishes nothing (raw/ holds: older-run-only.txt )
+ok   phase 3: the run says raw/ was NOT refreshed and prints exit status 1
+test_run_all_raw: 9 of 13 cases as expected, 4 not as expected
+last lines of the run outputs:
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+raw/ was NOT refreshed: this run did not pass (its raw files are kept in /tmp/fc8raw.tKTZty)
+raw output of this run is kept in: /tmp/fc8raw.tKTZty   (it is not removed later by this script; delete it with rm -rf when it is no longer needed)
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+raw/ was NOT refreshed: this run did not pass (its raw files are kept in /tmp/fc8raw.cLT138)
+raw output of this run is kept in: /tmp/fc8raw.cLT138   (it is not removed later by this script; delete it with rm -rf when it is no longer needed)
+```
+
+## 4-test_take_check
+command: timeout 900 bash test_take_check.sh
+start UTC: 19:22:36  end UTC: 19:22:36  rc=2
+```
+script under test: /home/user/hadavin-sdk/handover/flows-audit/flow-check/take_check.sh
+usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]
+```
