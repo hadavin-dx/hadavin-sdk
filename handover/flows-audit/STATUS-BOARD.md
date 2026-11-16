@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:56:12Z
+UPDATED_UTC: 2026-11-16T10:56:16Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 3
 PERCENT: 91
 AGENTS_RUNNING: 3
-CAPACITY: 2.01 load of 4 cores, mem 0/15 GB, RAM 943/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 684M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
+CAPACITY: 2.01 load of 4 cores, mem 0/15 GB, RAM 942/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 684M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -47,7 +47,7 @@ q16 rows round 3 written (13 Majors addressed, not re-reviewed per round cap); o
 claims pointers done (checker PASS 157 rows, counter 327); 15 wording conflicts left for the lead in fix-sweep.md (Q19 has the 5 that matter); sweep reviewer's A-050c claim was wrong (only A-036b and N-1 match)
 F8 r6 evidence (10:50 version, files changed since): take_check printed 'key check present' with KeyOk node removed (text match), mutant M5 survives, saving 'all' gave no WARN line; forwarded to the Q18 fixer; re-run evidence after it
 NEXT: Q18 fixer (+3 evidence items); F3 last fix + r7 evidence; Q19 Q20 wait
-PUSHED_UTC: 2026-11-16T10:56:12Z
+PUSHED_UTC: 2026-11-16T10:56:16Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
