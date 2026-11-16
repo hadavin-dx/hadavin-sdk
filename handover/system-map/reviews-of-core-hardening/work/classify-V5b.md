@@ -161,8 +161,8 @@ Note: all of k1b is reached only through `cli.py` lines 213-254 (commands `repla
 
 Note on extract.py: no file in src/ or demos/ imports it (grep `hadavin_sdk.extract` and `import extract` hit only tests). Its output type `DeadLetter` is used by the stores, which have their own `add_dead_letter` (store/protocol.py:104), but nothing in the product calls `extract()` to produce one. Also its "one retry" is a same-model retry on a bad reply; check against the studio rule df5 (no call-then-retry for quality) before anyone wires it in. That is a read of the docstring only, not a check of the code.
 
-## Counts per class (modules rated, excluding 10 package __init__ files and the plain tests)
-- NEEDED: 85 (of which 26 are kind modules loaded only via table.py strings, 0 direct importers for 11 of them)
+## Counts per class (91 module files rated; 11 package __init__ files not rated)
+- NEEDED: 88 (of which 19 are kind modules loaded only through table.py strings, 10 of them with 0 direct importers)
 - DUPLICATE: 0 (candidates examined and rejected: approvals/gate.py vs guard/redact.py share `strip_ansi`; k1b/redaction.py calls `guard.runmap.redact_text`; k1b/atomic.py vs audit/local_dir.py are two different write guarantees: replace vs hard-link)
 - NOT-NEEDED (idle in product): 3: approvals/receiver.py, extract.py, guard/producers.py (the last is a test-only data list, so it is needed by the repo guard tests)
 - Flags: 1 real vendor import in a non-kind helper (store/auth_aws.py:12, allowed by name in test_lockin_guard.py:86); 1 layering smell (approvals/slack_channel.py:23 imports llm.common)
