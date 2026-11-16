@@ -263,9 +263,7 @@ STOP (other exit lines=0, literal 3 lines=0)
 input: -sys.exit(1)
 +sys.exit(3)
 +die() { exit 2; }
-beh.sh: line 35: printf: -s: invalid option
-printf: usage: printf [-v var] format [arguments]
-STOP (other exit lines=0, literal 3 lines=0)
+ACCEPT
 ## 6 gone() (unchanged code, rerun) with a fake n8n_kill.py; ss is not installed here, so the port-wait loop sees no listener
 --- fake exits 0, confirmed gone printed: yes
 ), confirmed gone
@@ -300,8 +298,8 @@ gone-rc=1
 ## 7 proposed P-4b.sh (LEAD-FILL-list.md), end to end with P-3b. Stub process: python as uid 65534, command line holds n8n-stub, not dumpable (environ unreadable); P-4b.sh run as uid 65534 with setpriv
 --- negative control (no stub process)
 exit=0
---- positive control, stub pid 24307
-P-4b-HIT pid=24307
+--- positive control, stub pid 25910
+P-4b-HIT pid=25910
 exit=0
 stub processes left: 0
 --- control file made as the list says (sha256sum pastes/P-4b.sh), then P-3b span
