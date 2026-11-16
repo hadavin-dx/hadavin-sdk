@@ -2,7 +2,7 @@
 Used by: t19-gap-facts.md, t19-gaps-r2.md, t19-row-and-steps-r3.md, t19-and-stored-data-steps.md, row-dm-plain.md. Only meanings found in files are given; every other term says NOT RECORDED and whom to ask (the studio lead, the Claude session doing the technical steps).
 
 ## Test in one sentence
-T19 posts the same made-up lead twice to the demo's n8n form address and expects exactly 1 mail, 1 HubSpot write (a contact create or update) and 1 stored row. It has not run. Passing is not yet defined for the whole row (NOT SET).
+T19 posts the same made-up lead twice to the demo's n8n form address and expects exactly 1 mail, 1 HubSpot write (a contact create or update) and 1 stored row. It has not run. Proposed pass rule (from the system-map session; the studio lead confirms or changes it by Tue 17 Nov 12:00 UTC / 17:30 IST): pass = 1 mail AND 1 HubSpot write AND 1 stored row after the two identical posts. Not confirmed.
 
 ## Terms
 | term | meaning | status |
@@ -22,8 +22,10 @@ T19 posts the same made-up lead twice to the demo's n8n form address and expects
 | HIT / MISSED (row DM) | HIT = the kill landed in the gap (under 7.5 s after the mail); MISSED = it did not; two MISSED = "not tested", never a pass | UNVERIFIED |
 | C1, E2, line 555 item 9 | labels into a plan file that this session has not seen | NOT RECORDED |
 
-## Open items for the studio lead (owner and due date: the studio lead, Tue 17 Nov 12:00 UTC / 17:30 IST, proposal by the system-map session)
-1. Name the patched copy's folder.
+Rule for the NOT RECORDED terms above: if the studio lead has not defined a term by the due time below, the pages that use it drop the term (the system-map session does this).
+
+## Open items for the studio lead (owner: the studio lead; due Tue 17 Nov 12:00 UTC / 17:30 IST; both proposed by the system-map session, not agreed)
+1. The studio lead names the patched copy's folder.
 2. Give the POST address, body and the SQL that counts rows.
 3. Say what "freeze input" and "STOP class" mean.
 4. Say who runs T19 and F8.
