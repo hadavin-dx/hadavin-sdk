@@ -1,5 +1,14 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## FINAL 08:30 UTC / 14:00 IST - ORDER 007 (backlog items 1-6) done
+Failed, not checked or open (first):
+- Round 2 fixes (about 17 edits from R3 and R4) were NOT re-reviewed: the round cap is 2. Own checks after them: citations 1020 of 1020 FOUND; FD rows 322 = 18 Blocker, 218 Major, 86 Nit (matches the Counts table, dedup 315); 0 hits of the old counter gate text.
+- Needs laptop reader: L4c-FD-001, 002, 003 (patch state, scripts/hubspot_probe.py are in the desk repository); the mf_leads and stage.journal facts of the take (repository not visible); whether stage.journal runs under the same user as n8n (L7-FD-007, fix-plan row 22); every dollar and time figure in Decisions A-D is an estimate (blanks for the laptop lead to fill).
+- Nothing run: no n8n, no network. Wording of new rows is long; a non-technical read of Decisions A-E by the studio head is the real test.
+Result: item 1 counter owner = independent count, false gate removed from 6 desk rows and row 8 (real gate L6-EX-11); item 2 Decisions A-E with options, cost, recommendation; item 3 re-rates (L1c-FD-001, 021, L6-FD-004 to Major), L6-FD-026 traced statically, duplicates merged, counts 322/315, scope stated; item 4 rows L7-FD-001..008 and fix-plan rows 19-22; item 5 L4c rows carry "needs laptop reader"; item 6 two reviewer rounds (R1 codebase-details, R2 design; R3 codebase-details, R4 zoom-out), egm:egm-resolve through the Skill tool (work/o7-resolve-1.md).
+Files: SWEEP.md, ONE-PLACE-TABLE.md, work/o7-review-R1..R4, work/o7-resolve-1.md, STATUS-BOARD.md.
+Agents: 4 started (R1-R4), 4 closed, 0 running.
+
 ## STATUS 08:25 UTC / 13:55 IST - ORDER 007 items 1-5 edited, review round 1 starting
 Failed, not checked or open (first): nothing from items 1-5 has been reviewed yet; no runtime; the take repository is not visible; the dollar, alert and Postgres numbers in Decisions are UNVERIFIED estimates; L6-FD-026 downstream nodes NOT traced (needs laptop reader).
 Done (evidence: citation check 1020 of 1020 FOUND on SWEEP.md and ONE-PLACE-TABLE.md; grep finds 0 "which counter the take proof reads"):

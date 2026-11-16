@@ -1,33 +1,30 @@
-UPDATED_UTC: 2026-11-16T08:27:31Z
+UPDATED_UTC: 2026-11-16T08:30:30Z
 SESSION: system-map
 ORDER: 007 (and 008 board)
-STATE: WORKING
+STATE: FINAL
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 6
-ITEMS_OPEN: 1
-PERCENT: 88
-AGENTS_RUNNING: 2
+ITEMS_OPEN: 0
+PERCENT: 100
+AGENTS_RUNNING: 0
 INTERRUPTED: none
-NEXT: round 2 reviewers R3, R4 report; fix Blockers and Majors only; write FINAL in REPORT.md
-PUSHED_UTC: 2026-11-16T08:27:31Z
+NEXT: waiting for the lead (new order); round 2 fixes were not re-reviewed (cap 2)
+PUSHED_UTC: 2026-11-16T08:30:30Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
 |---|---|---|---|---|---|
-| 1 | counter owner, false gate removed | done | 100 | SWEEP.md, ONE-PLACE-TABLE.md; work/o7-resolve-1.md | round 1 fixes applied |
-| 2 | decisions A-E | done | 100 | SWEEP.md section Decisions | |
-| 3 | re-rates, corrections, counts 322/315 | done | 100 | SWEEP.md Counts; citation check 1020 of 1020 FOUND | |
-| 4 | new rows L7-FD-001..008, fix-plan rows 25-28 | done | 100 | SWEEP.md | |
-| 5 | L4c Blockers | done | 100 | SWEEP.md L7-FD-008 | patch state needs laptop reader |
-| 6 | two-reviewer pass, resolve, FINAL | running | 60 | work/o7-review-R1-codebase-r1.md, o7-review-R2-design-r1.md, o7-resolve-1.md | round 2 running |
+| 1 | counter owner, false gate removed | done | 100 | SWEEP.md, ONE-PLACE-TABLE.md | |
+| 2 | decisions A-E | done | 100 | SWEEP.md section Decisions | estimates blank for laptop lead |
+| 3 | re-rates, corrections, counts 322/315 | done | 100 | SWEEP.md Counts, check 1020/1020 FOUND | |
+| 4 | new rows L7 and fix-plan 19-22 | done | 100 | SWEEP.md | |
+| 5 | L4c Blockers | done | 100 | SWEEP.md L4c rows, L7-FD-008 | patch state: needs laptop reader |
+| 6 | two-reviewer pass, resolve, FINAL | done | 100 | work/o7-review-R1..R4, o7-resolve-1.md, REPORT.md FINAL | round 2 fixes not re-reviewed |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| R1 af78050c | codebase-details r1 | sonnet | facts | 08:25 | 08:40 | 100 | done | work/o7-review-R1-codebase-r1.md |
-| R2 a05da4e5 | design r1 | sonnet | design | 08:25 | 08:40 | 100 | done | work/o7-review-R2-design-r1.md |
-| R3 a385b5f1 | codebase-details r2 | sonnet | facts, Blockers/Majors only | 08:27 | +15 min | 10 | running | none |
-| R4 aea8d096 | zoom-out r2 | sonnet | scope and items, Blockers/Majors only | 08:27 | +15 min | 10 | running | none |
+| R1-R4 | reviewers | sonnet | closed | 08:25 | 08:40 | 100 | done | work/o7-review-R*.md |
 
 ## LOST OR INTERRUPTED SINCE THE LAST BOARD
 | agent | what it was doing | cause | restarted? new id |
@@ -35,4 +32,4 @@ PUSHED_UTC: 2026-11-16T08:27:31Z
 | none | | | |
 
 ## LEAD ACTIONS NEEDED
-none
+Read REPORT.md FINAL; laptop reader for the L4c rows and L7-FD-007; fill the blanks in Decisions A and D.
