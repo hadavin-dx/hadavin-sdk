@@ -1,6 +1,4 @@
-# Gate rows re-test, second version (round-1 fixes). Each case run in bash and in dash. Made-up files; stub pgq prints a number the test chooses.
-# rc= is the exit code of the whole paste (the paste ends with an echo or if, so it is 0 unless a command in it fails); the verdict is the printed line.
-
+# Gate rows re-test, third version (fix pass 3). Blocks are extracted from the patched plan (fixes, repin-v6, gate-rows). Stand-in env.sh and pgq; made-up data. rc= is the paste's exit code; the verdict is the printed line.
 ######## SHELL: bash
 -- [bash] G1 pass RI=3 RIOK=yes
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
@@ -9,36 +7,42 @@ GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_tru
 GATE1-B PASS
 GATE1 ROW: PASS
 rc=0
--- [bash] G1 RIOK empty (unconfirmed)
-GATE1 RI=3 (from plan line 353, UNVERIFIED) not confirmed by the lead from drive.py (the lead sets RIOK=yes): STOP
+-- [bash] G1 RIOK empty
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+rc=0
+-- [bash] G1 RIOK=no
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
 rc=0
 -- [bash] G1 RI empty
-GATE1 RI= (from plan line 353, UNVERIFIED) not confirmed by the lead from drive.py (the lead sets RIOK=yes): STOP
+GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
 rc=0
--- [bash] G1 wrong index RI=4 (n8n_error slot)
-GATE1-A FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [bash] G1 RI=abc (not a number, inside the guard)
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 wrong index RI=2 (lead_key_ok slot, all true)
+-- [bash] G1 RI=-1
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 RI=4 (n8n_error slot)
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 RI=2 (all true)
 GATE1-A replies=2 repeat_false=0 repeat_true=2 first_repeat=True n8n_error_true=0
 GATE1-A FAIL: STOP
 GATE1-B replies=10 repeat_false=0 repeat_true=10 first_repeat=True n8n_error_true=0
-GATE1-B PASS
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 B all 10 repeat true (S10 rule allows 0 false)
+-- [bash] G1 B zero false (stale or reused id): must FAIL (R2-1)
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
 GATE1-A PASS
 GATE1-B replies=10 repeat_false=0 repeat_true=10 first_repeat=True n8n_error_true=0
-GATE1-B PASS
-GATE1 ROW: PASS
-rc=0
--- [bash] G1 A both false
-GATE1-A replies=2 repeat_false=2 repeat_true=0 first_repeat=False n8n_error_true=0
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
 -- [bash] G1 B two false
@@ -48,11 +52,11 @@ GATE1-B replies=10 repeat_false=2 repeat_true=8 first_repeat=False n8n_error_tru
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 A one reply
-GATE1-A replies=1 repeat_false=1 repeat_true=0 first_repeat=False n8n_error_true=0
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
+-- [bash] G1 B ten false
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=10 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
 -- [bash] G1 B nine replies
@@ -62,73 +66,178 @@ GATE1-B replies=9 repeat_false=1 repeat_true=8 first_repeat=False n8n_error_true
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 A first reply n8n_error true
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=1
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
-GATE1 ROW: FAIL: STOP
-rc=0
--- [bash] G1 B first reply n8n_error true
+-- [bash] G1 B one n8n_error
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
 GATE1-A PASS
 GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=1
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 A output file empty
-GATE1-A FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [bash] G1 A true then false
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=True n8n_error_true=0
+GATE1-A FAIL: STOP
 GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
 GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 B no replies key
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
-GATE1-A PASS
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [bash] G1 A both false
+GATE1-A replies=2 repeat_false=2 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
--- [bash] G1 B broken JSON
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
-GATE1-A PASS
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [bash] G1 A one reply
+GATE1-A replies=1 repeat_false=1 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
----- G2 [bash]
--- count stub='2'
+-- [bash] G1 A error reply
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=1
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 A dict replies
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 A 0/1 instead of false/true at RI
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 A 0 instead of false at n8n_error
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 B pass with trailing non-JSON lines (ignored)
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: PASS
+rc=0
+-- [bash] G1 B last line starts with { but is broken
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 B no JSON
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 B file missing
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G1 B replies not a list
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [bash] G2 pass: baseline 3, count 2
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 2
 GATE2 PASS
 rc=0
--- count stub='1'
-GATE2 count: 1
-GATE2 FAIL: STOP
+-- [bash] G2 count 2 with spaces and CR
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
 rc=0
--- count stub='0'
+-- [bash] G2 CRLF keys, baseline 0
+GATE2 keys.txt lines before S10: 0; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
+-- [bash] G2 no B line after baseline
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=0 B ids=0 KA=ida1 KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [bash] G2 A and B lines only BEFORE baseline (stale rows, R2-2)
+GATE2 keys.txt lines before S10: 3; after: A lines=0 A ids=0 B lines=0 B ids=0 KA=- KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [bash] G2 two different A ids after baseline
+GATE2 keys.txt lines before S10: 3; after: A lines=2 A ids=2 B lines=1 B ids=1 KA=ida2 KB=idb1
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [bash] G2 same A id twice and same B id twice (counts shown)
+GATE2 keys.txt lines before S10: 3; after: A lines=2 A ids=1 B lines=2 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
+-- [bash] G2 A and B same key
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=same KB=same
+GATE2 A and B have the same key: STOP
+rc=0
+-- [bash] G2 quote in key
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=id'b
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [bash] G2 baseline file missing
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [bash] G2 baseline file empty
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [bash] G2 baseline not a number
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [bash] G2 count '0'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 0
 GATE2 FAIL: STOP
 rc=0
--- count stub=''
+-- [bash] G2 count '1'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 1
+GATE2 FAIL: STOP
+rc=0
+-- [bash] G2 count '3'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 3
+GATE2 FAIL: STOP
+rc=0
+-- [bash] G2 count ''
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 
 GATE2 FAIL: STOP
 rc=0
--- count stub=' 2 ' with CR
-GATE2 count: 2
-GATE2 PASS
--- same key
-GATE2 A and B have the same key: STOP
--- bad character
-GATE2 key has an unexpected character: STOP
--- bad character (non-ASCII letter)
-GATE2 key has an unexpected character: STOP
--- empty keys.txt
-GATE2 key of A or B not in keys.txt: STOP
--- B key missing
-GATE2 key of A or B not in keys.txt: STOP
--- keys.txt missing
-awk: cannot open "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/gt/T/keys.txt" (No such file or directory)
-awk: cannot open "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/gt/T/keys.txt" (No such file or directory)
-GATE2 key of A or B not in keys.txt: STOP
-
+-- [bash] G2 count 'STOP'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: STOP
+GATE2 FAIL: STOP
+rc=0
+-- [bash] G2 pgq fails (stderr to gate2.err)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 
+GATE2 FAIL: STOP
+rc=0
+gate2.err holds: psql: stand-in error
+gate2.out saved: 2
+-- [bash] G2 keys.txt missing
+GATE2 keys.txt lines before S10: 3; after: A lines=0 A ids=0 B lines=0 B ids=0 KA=- KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [bash] baseline command as pasted in S10 (missing and present keys.txt)
+missing keys.txt -> '0'
+3-line keys.txt -> '3'
 ######## SHELL: dash
 -- [dash] G1 pass RI=3 RIOK=yes
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
@@ -137,36 +246,42 @@ GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_tru
 GATE1-B PASS
 GATE1 ROW: PASS
 rc=0
--- [dash] G1 RIOK empty (unconfirmed)
-GATE1 RI=3 (from plan line 353, UNVERIFIED) not confirmed by the lead from drive.py (the lead sets RIOK=yes): STOP
+-- [dash] G1 RIOK empty
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+rc=0
+-- [dash] G1 RIOK=no
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
 rc=0
 -- [dash] G1 RI empty
-GATE1 RI= (from plan line 353, UNVERIFIED) not confirmed by the lead from drive.py (the lead sets RIOK=yes): STOP
+GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
 rc=0
--- [dash] G1 wrong index RI=4 (n8n_error slot)
-GATE1-A FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [dash] G1 RI=abc (not a number, inside the guard)
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 wrong index RI=2 (lead_key_ok slot, all true)
+-- [dash] G1 RI=-1
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 RI=4 (n8n_error slot)
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 RI=2 (all true)
 GATE1-A replies=2 repeat_false=0 repeat_true=2 first_repeat=True n8n_error_true=0
 GATE1-A FAIL: STOP
 GATE1-B replies=10 repeat_false=0 repeat_true=10 first_repeat=True n8n_error_true=0
-GATE1-B PASS
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 B all 10 repeat true (S10 rule allows 0 false)
+-- [dash] G1 B zero false (stale or reused id): must FAIL (R2-1)
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
 GATE1-A PASS
 GATE1-B replies=10 repeat_false=0 repeat_true=10 first_repeat=True n8n_error_true=0
-GATE1-B PASS
-GATE1 ROW: PASS
-rc=0
--- [dash] G1 A both false
-GATE1-A replies=2 repeat_false=2 repeat_true=0 first_repeat=False n8n_error_true=0
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
 -- [dash] G1 B two false
@@ -176,11 +291,11 @@ GATE1-B replies=10 repeat_false=2 repeat_true=8 first_repeat=False n8n_error_tru
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 A one reply
-GATE1-A replies=1 repeat_false=1 repeat_true=0 first_repeat=False n8n_error_true=0
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
+-- [dash] G1 B ten false
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=10 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
 -- [dash] G1 B nine replies
@@ -190,69 +305,175 @@ GATE1-B replies=9 repeat_false=1 repeat_true=8 first_repeat=False n8n_error_true
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 A first reply n8n_error true
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=1
-GATE1-A FAIL: STOP
-GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
-GATE1-B PASS
-GATE1 ROW: FAIL: STOP
-rc=0
--- [dash] G1 B first reply n8n_error true
+-- [dash] G1 B one n8n_error
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
 GATE1-A PASS
 GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=1
 GATE1-B FAIL: STOP
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 A output file empty
-GATE1-A FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [dash] G1 A true then false
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=True n8n_error_true=0
+GATE1-A FAIL: STOP
 GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
 GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 B no replies key
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
-GATE1-A PASS
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [dash] G1 A both false
+GATE1-A replies=2 repeat_false=2 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
--- [dash] G1 B broken JSON
-GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
-GATE1-A PASS
-GATE1-B FAIL: output shape not as expected (no replies list, repeat flag or n8n_error not true/false): STOP
+-- [dash] G1 A one reply
+GATE1-A replies=1 repeat_false=1 repeat_true=0 first_repeat=False n8n_error_true=0
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
 GATE1 ROW: FAIL: STOP
 rc=0
----- G2 [dash]
--- count stub='2'
+-- [dash] G1 A error reply
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=1
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 A dict replies
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 A 0/1 instead of false/true at RI
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 A 0 instead of false at n8n_error
+GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 B pass with trailing non-JSON lines (ignored)
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False n8n_error_true=0
+GATE1-B PASS
+GATE1 ROW: PASS
+rc=0
+-- [dash] G1 B last line starts with { but is broken
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 B no JSON
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 B file missing
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G1 B replies not a list
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
+GATE1-A PASS
+GATE1-B FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
+GATE1 ROW: FAIL: STOP
+rc=0
+-- [dash] G2 pass: baseline 3, count 2
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 2
 GATE2 PASS
 rc=0
--- count stub='1'
-GATE2 count: 1
-GATE2 FAIL: STOP
+-- [dash] G2 count 2 with spaces and CR
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
 rc=0
--- count stub='0'
+-- [dash] G2 CRLF keys, baseline 0
+GATE2 keys.txt lines before S10: 0; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
+-- [dash] G2 no B line after baseline
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=0 B ids=0 KA=ida1 KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [dash] G2 A and B lines only BEFORE baseline (stale rows, R2-2)
+GATE2 keys.txt lines before S10: 3; after: A lines=0 A ids=0 B lines=0 B ids=0 KA=- KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [dash] G2 two different A ids after baseline
+GATE2 keys.txt lines before S10: 3; after: A lines=2 A ids=2 B lines=1 B ids=1 KA=ida2 KB=idb1
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [dash] G2 same A id twice and same B id twice (counts shown)
+GATE2 keys.txt lines before S10: 3; after: A lines=2 A ids=1 B lines=2 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
+-- [dash] G2 A and B same key
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=same KB=same
+GATE2 A and B have the same key: STOP
+rc=0
+-- [dash] G2 quote in key
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=id'b
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [dash] G2 baseline file missing
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [dash] G2 baseline file empty
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [dash] G2 baseline not a number
+GATE2 keys-before-s10.txt missing or not a number: STOP
+rc=0
+-- [dash] G2 count '0'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 0
 GATE2 FAIL: STOP
 rc=0
--- count stub=''
+-- [dash] G2 count '1'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 1
+GATE2 FAIL: STOP
+rc=0
+-- [dash] G2 count '3'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 3
+GATE2 FAIL: STOP
+rc=0
+-- [dash] G2 count ''
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
 GATE2 count: 
 GATE2 FAIL: STOP
 rc=0
--- count stub=' 2 ' with CR
-GATE2 count: 2
-GATE2 PASS
--- same key
-GATE2 A and B have the same key: STOP
--- bad character
-GATE2 key has an unexpected character: STOP
--- bad character (non-ASCII letter)
-GATE2 key has an unexpected character: STOP
--- empty keys.txt
-GATE2 key of A or B not in keys.txt: STOP
--- B key missing
-GATE2 key of A or B not in keys.txt: STOP
--- keys.txt missing
-awk: cannot open "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/gt/T/keys.txt" (No such file or directory)
-awk: cannot open "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/gt/T/keys.txt" (No such file or directory)
-GATE2 key of A or B not in keys.txt: STOP
+-- [dash] G2 count 'STOP'
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: STOP
+GATE2 FAIL: STOP
+rc=0
+-- [dash] G2 pgq fails (stderr to gate2.err)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 
+GATE2 FAIL: STOP
+rc=0
+gate2.err holds: psql: stand-in error
+gate2.out saved: 2
+-- [dash] G2 keys.txt missing
+GATE2 keys.txt lines before S10: 3; after: A lines=0 A ids=0 B lines=0 B ids=0 KA=- KB=-
+GATE2 not exactly one A id and one B id after the saved line count: STOP
+rc=0
+-- [dash] baseline command as pasted in S10 (missing and present keys.txt)
+missing keys.txt -> '0'
+3-line keys.txt -> '3'

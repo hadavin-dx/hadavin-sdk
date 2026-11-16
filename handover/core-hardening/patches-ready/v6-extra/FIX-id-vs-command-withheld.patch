@@ -1,24 +1,25 @@
 diff --git a/src/hadavin_sdk/approvals/gate.py b/src/hadavin_sdk/approvals/gate.py
-index 3ab558e..73df357 100644
+index 3ab558e..472f534 100644
 --- a/src/hadavin_sdk/approvals/gate.py
 +++ b/src/hadavin_sdk/approvals/gate.py
-@@ -668,7 +668,9 @@ _WRITE_SHAPES = re.compile(
+@@ -668,7 +668,10 @@ _WRITE_SHAPES = re.compile(
      + r"|\bMERGE\s+INTO\s+"
      + _ID
      + r"|\b(?:GRANT|REVOKE)\s+[A-Z][A-Z, ]{0,80}\bON\b"
 -    r"|\b(?i:(?!get-)[a-z]+-(?:az|azurerm|azuread|ec2|s3|iam|rds|lm|cfn|ecs|eks)[a-z]\w*)\b"
 +    # `(?![0-9a-f]{32,}\b)`: a Hadavin id (`pln-ec2a...`, 32 hex digits) or a hash is not a cmdlet name, even when its first
-+    # digits spell a module prefix; a real cmdlet noun always holds a letter outside a-f.
++    # digits spell a module prefix. Cmdlet names are readable words; the cases in tests/test_g4_ids_not_withheld.py show
++    # which names stay withheld (a letter outside a-f, fewer than 32 hex digits, a word character after the hex run).
 +    r"|\b(?i:(?!get-)[a-z]+-(?![0-9a-f]{32,}\b)(?:az|azurerm|azuread|ec2|s3|iam|rds|lm|cfn|ecs|eks)[a-z]\w*)\b"
      r"|\b(?i:remove-item|stop-service|stop-process|restart-service|restart-computer|stop-computer)\b"
      r"|\b(?i:invoke-(?:restmethod|webrequest|expression)|irm|iwr|iex)\b[^\n]{0,500}\|\s*(?i:iex|invoke-expression)\b"
      r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"
 diff --git a/tests/test_g4_ids_not_withheld.py b/tests/test_g4_ids_not_withheld.py
 new file mode 100644
-index 0000000..812b782
+index 0000000..8898a62
 --- /dev/null
 +++ b/tests/test_g4_ids_not_withheld.py
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,129 @@
 +"""G4 must never withhold a Hadavin id (`<prefix>-<32 hex digits>`) or a plan hash.
 +
 +Bug class: a pattern written for readable names (here the cloud-cmdlet shape `Verb-<module><Noun>`, for example
@@ -92,3 +93,59 @@ index 0000000..812b782
 +def test_a_name_that_is_not_all_hex_digits_is_never_mistaken_for_an_id():
 +    # a name that is not all hex digits is never mistaken for an id, even if it begins like one
 +    assert WITHHELD in withhold_commands("Remove-ec2abcdef0123456789abcdef0123456789Instance")
++
++
++_HEX32 = "0" * 28  # with the four digits `ec2a` this makes exactly 32 hex digits
++
++
++@pytest.mark.parametrize(
++    ("text", "kept"),
++    [
++        (
++            "pln-ec2a" + "0" * 27,
++            False,
++        ),  # 31 hex digits: too short to be an id, still reads as a cmdlet name
++        ("pln-ec2a" + _HEX32, True),  # exactly 32
++        ("pln-ec2a" + _HEX32 + "0", True),  # 33
++        (
++            "PLN-EC2A" + _HEX32.replace("0", "B"),
++            True,
++        ),  # upper-case hex digits: not a real cmdlet noun either
++        (
++            "pln-ec2a" + _HEX32 + "_x",
++            False,
++        ),  # an underscore after the hex run is a word character: one longer name
++        ("pln-ec2a" + _HEX32 + "g", False),  # a letter outside a-f after the hex run
++        (
++            "Remove-ec2a" + _HEX32 + "-suffix",
++            True,
++        ),  # hex run then a hyphen: not a cmdlet noun, released (pinned)
++        (
++            "Remove-ec2" + "0" * 32 + "-suffix",
++            True,
++        ),  # `ec2` then 32 digits (35 hex digits) then a hyphen: same
++    ],
++)
++def test_boundaries_of_the_id_exception(text, kept):
++    assert (withhold_commands(text) == text) is kept, text
++
++
++_LOWER_PREFIXES = ("run", "pln", "apr", "evt", "remove", "stop", "x", "ec", "new", "delete")
++
++
++def test_property_any_long_hex_token_after_a_lowercase_prefix_is_not_withheld():
++    # Every module word that can be spelled with hex digits only is `ec2` plus one of a-f; the other module words
++    # (az, s3, iam, rds, lm, cfn, ecs, eks, azurerm, azuread) each hold a letter outside a-f, so a hex token never
++    # starts one of them. Walk all six `ec2[a-f]` heads, ten lowercase prefixes and every length from 32 to 64.
++    for i in range(3000):
++        digest = (
++            hashlib.sha256(f"g4-prop-{i}".encode()).hexdigest()
++            + hashlib.sha256(f"g4-prop2-{i}".encode()).hexdigest()
++        )
++        head = "ec2" + "abcdef"[i % 6]
++        length = 32 + i % 33
++        token = (head + digest)[:length]
++        prefix = _LOWER_PREFIXES[i % len(_LOWER_PREFIXES)]
++        text = f"{prefix}-{token}"
++        assert withhold_commands(text) == text, text
++        assert withhold_commands(f"id {text} ok") == f"id {text} ok"

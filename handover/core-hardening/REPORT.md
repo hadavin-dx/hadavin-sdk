@@ -1,3 +1,15 @@
+# REPORT block 2026-11-16 10:50Z (core-hardening; newest on top; failures first)
+## FAILED / NOT RUN / UNVERIFIED (read first)
+- Nothing has been run with n8n, Postgres, HubSpot, mail, PowerShell, shellcheck or WSL. drive.py, fill_flows.py and the take scripts are not on this branch, so every statement about them is inferred.
+- Owner sheet: v11 failed the stranger test (3 blockers, 20 majors) and the security review (1 blocker, 9 majors). v12 is being built with the Q19 answers and the contradiction findings (steps-edits/review-contradictions-r1.md, 24 findings; five need the lead: Q20). The claim, the dates and the lease are not settled (Q21, cross-read/NOT-CHECKED-lane-c-r2.md): the money stop time of Mon 23 Nov 18:29 UTC may conflict with a take on Wed 25 Nov.
+- C13 gate rows v2 (round 2: 4 majors: G1-B can pass with no first-time reply, G2 can pass on stale rows, stale 172-minute notes, S10 heading): fix pass 3 running.
+- C7b fix: security angle found no bypass of the lookahead; evidence angle 2 majors (the uv run claim in the report is unsupported, the tested tree is not proven), W2/W3 logs lost for good, no mutation run, no Postgres: fix pass 2 running. The flaky test is a describe-only item (Q16; patches-ready/v6-extra/DESCRIBE-ONLY-flaky-id-test.md); nothing under src/ or tests/ was edited. BRANCH ARTEFACT guard failures: vendor string and non-UTF-8 file under handover/, non-proprietary LICENSE copies in promotion-inputs (decision 11).
+- Real-v5 edit list v7 (round 3: 3 majors in section 10b: a re-run can empty the contact deletion list, steps 2/3/5 have no command, mixed shells): v8 running.
+- C3b re-pin v5 fix (3+4 majors) and run.py round 3 (2 majors) still running.
+- Answers applied: Q15 to Q19 (ORDERS.md 123-143). Open for the lead: Q20 (stop cue, clean-start role and database, HubSpot scopes, exit code for C unknown, stale input lines) and Q21 (dates, lease, journal file, retake budget).
+## Hygiene
+Banned-word scans of saved files: 0 hits. No secrets, no spend, no pushes outside cloud/core-hardening. Scratch under /tmp kept until reviews end (about 15 GB total of which /tmp/claude-0 11 GB); disk 78% used.
+
 # REPORT block 2026-11-16 10:35Z (core-hardening; newest on top; failures first)
 ## FAILED / NOT RUN / UNVERIFIED (read first)
 - Nothing has been run with n8n, Postgres, HubSpot, mail, PowerShell, shellcheck or WSL. The narrow claim ("a lead sent twice with the same id inside the lease is processed once") rests on reading mf-form.json:97 (INSERT ... ON CONFLICT DO NOTHING) only. First real evidence will be the lead's rehearsal. Glue files fill_flows.py and drive.py are not on this branch.

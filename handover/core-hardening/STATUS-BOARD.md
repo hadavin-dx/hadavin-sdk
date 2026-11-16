@@ -3,7 +3,7 @@ SESSION: core-hardening
 ORDER: 021 + decisions 10:02Z; 024; lead answers Q14 to Q19 applied (Q16 as describe-only note)
 STATE: WORKING
 BOOT_ID: 3dcae981
-ITEMS_TOTAL: 13
+ITEMS_TOTAL: 11
 ITEMS_OPEN: 8
 PERCENT: 93
 AGENTS_RUNNING: 8

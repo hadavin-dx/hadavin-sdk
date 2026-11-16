@@ -50,3 +50,9 @@ Source: steps-edits/review-v11-security.md; builder questions Q1-Q11 in steps-ed
 3. How many HubSpot private apps exist and which scope has each (probe: create/change; n8n: write; take: read-only)? One line for the card.
 4. After re-pin: which exit code does the code give when case C ends done/unknown?
 5. Inputs S (AGENT-SCOPE) lines 5, 9, 13, 20 and X (DECISIONS) lines 2 and 9 are stale against your answers; I cannot edit inputs. Do you want a patch text for them?
+
+## Q21 (from lane c round 2, cross-read/NOT-CHECKED-lane-c-r2.md)
+1. Dates: which day is the take (post-by is Wed 25 Nov 15:00 UTC = 20:30 IST), and is the money stop time Mon 23 Nov 18:29 UTC (owner sheets v8/v11) still right? The sheets say the program refuses to start within about 14 minutes of it. Please give one line: take day, stop time, key-cancel time, post time.
+2. Claim and lease: please read mf-form.json:97 and the table definition and tell me what the lease is, where it expires, the longest allowed gap between the two sends, and whether the unique index exists. The claim has three wordings (REPORT Q15.3, DECISIONS 1, QUEUE rule 6): which is the one?
+3. Is 'stage.journal file (decision 10)' in QUEUE rule 6 a second store that records processing? If yes, 'Postgres is the one store' must not appear in the caption.
+4. Retake: how many full takes does the cumulative backstop cover?
