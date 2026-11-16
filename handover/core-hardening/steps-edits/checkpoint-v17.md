@@ -1,4 +1,4 @@
-# checkpoint v17 (written 2026-11-16, builder; no commit by order)
-done (30 min): read v16 sheet, CHANGES, OPEN, check-v16.py, the five v16 reviews, DECISIONS, FACTS, AGENT-SCOPE, ORDERS Q14-Q21 lines. Plan fixed: copy v16 to v17, apply edits by a script that asserts every old text occurs exactly once, then CHANGES, OPEN, check-v17.py.
-next: apply edits (3 batches), write v17-CHANGES.md, v17-OPEN-FOR-LEAD.md, check-v17.py, run it and save v17-check-output.txt.
+# checkpoint v17 (builder, 2026-11-16; overwrites the stopped builder's file; no commit by order)
+done (30 min): read both root-cause readers, v16 sheet, five v16 reviews, citation check, DECISIONS, FACTS, ORDERS Q14-Q21, ORDER 034, v16 OPEN. Wrote OWNER-SHEET-v17.md (shape: 8 headings, 10 rules in one table R1-R10).
+next: LEAD-RELEASE-NOTE-v1.md, v17-MAP.md, v17-OPEN-FOR-LEAD.md, check-v17.py, run it, v17-check-output.txt.
 blockers: none. commit SHA: none (not committed, by order).
