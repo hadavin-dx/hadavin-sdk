@@ -1,6 +1,6 @@
-"""check_runsheet_paste.py: static checker for flows-audit/RUNSHEET-WORDING.md (round 5).
+"""check_runsheet_paste.py: static checker for flows-audit/RUNSHEET-WORDING.md (round 6).
 Usage: python3 -I check_runsheet_paste.py RUNSHEET-WORDING.md [CLAIMS-TABLE.md]
-Reads the files only; writes nothing; exit 0 = all checks pass, 1 = a check failed.
+Reads the files only; writes nothing; exit 0 = all checks pass, 1 = a check failed, 2 = wrong usage or file not readable.
 Checks: (1) every table row has the right number of cells (a pipe sign inside a cell breaks this);
 (2) every Paste-this cell is NO PASTE, DELETE, or ONE string in double quotes with no quote mark,
 no apostrophe, no pipe sign and no backtick inside; (3) the banned words (approval, audit trail,
@@ -12,8 +12,20 @@ import sys
 BANNED = ("approval", "audit trail", "one database")
 
 
+USAGE = "usage: python3 -I check_runsheet_paste.py RUNSHEET-WORDING.md [CLAIMS-TABLE.md]"
+FLAGGED = re.compile(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE)")
+
+
 def main(argv):
-    text = open(argv[1], encoding="utf-8").read().split("\n")
+    if len(argv) not in (2, 3):
+        print(USAGE)
+        return 2
+    try:
+        text = open(argv[1], encoding="utf-8").read().split("\n")
+    except OSError as exc:
+        print(f"cannot read {argv[1]}: {exc.strerror}")
+        print(USAGE)
+        return 2
     sec, rows, bad, ids = "", {}, [], {}
     for n, line in enumerate(text, 1):
         if line.startswith("## "):
@@ -51,14 +63,27 @@ def main(argv):
     if len(argv) > 2:
         have = {re.match(r"([AB])-(\d+)", i).groups() for i in ids if re.match(r"[AB]-\d+", i)}
         want, untraced = set(), set()
-        for line in open(argv[2], encoding="utf-8"):
+        try:
+            table = open(argv[2], encoding="utf-8").read().split("\n")
+        except OSError as exc:
+            print(f"cannot read {argv[2]}: {exc.strerror}")
+            print(USAGE)
+            return 2
+        for line in table:
             m = re.match(r"\| ([AB])-(\d+) ", line)
-            if m:
-                c = [x.strip() for x in line.strip()[1:-1].split(" | ")]
-                if len(c) >= 7 and re.match(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE)", c[5]):
-                    want.add(m.groups())
-                elif len(c) >= 7 and c[5].startswith("UNTRACED"):
-                    untraced.add(m.groups())
+            if not m:
+                continue
+            c = [x.strip() for x in line.strip()[1:-1].split(" | ")]
+            if len(c) < 7:
+                continue
+            # the verdict is found by its words in the cells after the claim text (cells 4 to 6),
+            # not at a fixed cell number, so a moved or added column does not hide a verdict
+            verdict = next((x for x in c[3:7] if re.match(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE|UNTRACED|SUPPORTED)", x)), "")
+            if FLAGGED.match(verdict):
+                want.add(m.groups())
+            elif verdict.startswith("UNTRACED"):
+                untraced.add(m.groups())
+        want -= set()
         miss = sorted(want - have)
         print("claim ids marked UNSUPPORTED, OVERSTATED, DELETE or STALE in CLAIMS-TABLE.md:", len(want), "| with no row here:", [f"{a}-{b}" for a, b in miss])
         print("claim ids marked UNTRACED there:", len(untraced), "| with no row here:", len(untraced - have), "(scope: UNTRACED claims have no safe wording, so they get a row only when a file sentence had to change)")

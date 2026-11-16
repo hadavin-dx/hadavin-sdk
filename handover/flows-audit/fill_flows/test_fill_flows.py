@@ -72,10 +72,11 @@ def wtext(path, text, mode="w"):
         fh.write(text)
 
 
-def run_cli(*args):
-    """Run the CLI as a subprocess; returns (code, stdout, stderr)."""
+def run_cli(*args, command=None):
+    """Run the CLI as a subprocess; returns (code, stdout, stderr). `command` replaces the
+    program and its arguments (a driver script or a shell line) for tests that need one."""
     p = subprocess.run(  # noqa: S603
-        [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args],
+        command or [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args],
         capture_output=True,
         text=True,
         timeout=60,
@@ -1409,24 +1410,9 @@ class Hardening(Base):
             " '--out', sys.argv[6]]))\n"
         )
         out = self.out()
-        p = subprocess.run(  # noqa: S603
-            [
-                sys.executable,
-                "-I",
-                "-c",
-                driver,
-                HERE,
-                str(kill_at),
-                sig,
-                self.two_flows(),
-                self.vf,
-                out,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            check=False,
-        )
+        command = [sys.executable, "-I", "-c", driver, HERE, str(kill_at), sig]
+        code, so, se = run_cli(command=[*command, self.two_flows(), self.vf, out])
+        p = subprocess.CompletedProcess([], code, so, se)
         self.leak_check(p.stdout, p.stderr)
         return out, p
 
@@ -1959,7 +1945,8 @@ class Round5(Base):
         self.assertFalse(os.path.exists(out))
         # the credential walk-through asks for the NOT READY copy on purpose
         cmd2 = [*cmd[:2], cmd[2].replace("--out", "--allow-placeholders --out")]
-        p = subprocess.run(cmd2 + args, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
+        code, so, se = run_cli(command=cmd2 + args)
+        p = subprocess.CompletedProcess([], code, so, se)
         self.assertNotIn("IMPORTED", p.stdout)
         self.assertEqual(p.returncode, 3)
         self.assertIn("NOT READY TO IMPORT", p.stderr)

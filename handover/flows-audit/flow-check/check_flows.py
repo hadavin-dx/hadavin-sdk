@@ -6,7 +6,8 @@ Options:
   --expect FILE=NODES:CONNS     expected node and connection count of one flow file (repeatable), e.g. mf-form.json=12:11
   --expect-json PATH            same as JSON {"mf-form.json": {"nodes": 12, "connections": 11}, ...}
   --files a.json,b.json,...     exact list of *.json files each DIR must hold (default: the four mf-*.json flow files)
-  --baseline DIR                directory of the unpatched flows: an IF node that already lacks a branch there is only flagged (WARN), else FAIL
+  --baseline DIR                directory of the unpatched flows: an IF node that already lacks the SAME branch there is only a WARN, else FAIL. CAUTION: pointing it at the folder being checked excuses EVERY IF gap in it, so do not do that for the take; use --accept-if
+  --accept-if FILE=NODE:OUT[,OUT]  recorded decision (repeatable): this IF node of this file is accepted to lack exactly these outputs (0 or 1); it is a WARN and a known open problem. Any other missing branch, or a different one, is a FAIL
   --patch-checks F002,F008      assert the F-002 and/or F-008 patch content (names, links, settings) in the given DIRs
   --diff-base DIR --allow F002,F008 (--allow requires --patch-checks naming at least the same patches) [--diff-out FILE]
                                 node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
@@ -15,6 +16,8 @@ Options:
   --expect-credential KIND=NAME a node credential of this kind (for example postgres, smtp) must have exactly this name, else FAIL (repeatable)
   --block-env-access            a node that reads $env.X is a FAIL (default: WARN-LEAD-DECISION): use when the take switches off env access inside nodes
   --require-real-credential-ids a credential id or sub-workflow id that is still a placeholder is a FAIL (default: always printed as WARN, even with --quiet-info)
+  --fail-unverified             rules that come from memory of n8n (marked 'n8n rule UNVERIFIED') are WARN by default; this makes them FAIL
+Needs Python 3.10 or newer (the script says so and exits 3 on an older one).
 
 F8 EXTENSION (flow-check/): started from patch-apply/check_flows.py (F4 round 3), nothing removed. New checks are listed in
 flow-check/REPORT.md. New options: --require-webhook-auth (webhook without authentication = FAIL, default WARN), --table (print
@@ -29,8 +32,10 @@ Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigg
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
 F-002 Claim is printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
 WARN-LEAD-DECISION lines (webhook or form without authentication, nodes that read $env) keep exit 0 on purpose, but the closing block always prints 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)'.
-Webhook authentication must be none, basicAuth, headerAuth or jwtAuth (form trigger: none or basicAuth) and the credential block must hold the matching kind (httpBasicAuth, httpHeaderAuth, jwtAuth).
-Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error (unknown option, missing value, unknown patch name, bad --expect)."""
+Rules that come from MEMORY of n8n, not from a source in this repo (tag 'n8n rule UNVERIFIED'; WARN only unless --fail-unverified): webhook authentication values (none, basicAuth, headerAuth, jwtAuth;
+form trigger: none, basicAuth), the credential kind each of them needs (httpBasicAuth, httpHeaderAuth, jwtAuth), the credential kinds of postgres, smtp and hubspot nodes, the position of the error output,
+the default responseMode, and the rule that two webhooks may not share method+path or webhookId (checked across ALL folders given in one run, form triggers included).
+Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error (unknown option, missing value, unknown patch name, bad --expect); 3 when the checker itself broke or could not write its --diff-out file (never a FAIL verdict about the flows)."""
 
 import collections
 import json
@@ -38,12 +43,18 @@ import os
 import re
 import sys
 
+if sys.version_info < (3, 10):
+    print("check_flows.py needs Python 3.10 or newer; found " + sys.version.split()[0])
+    sys.exit(3)
+
 OPTS = {
     "webhook_auth": False,
     "table": False,
     "block_env": False,
     "real_ids": False,
+    "fail_unv": False,
     "cred_names": {},
+    "accept_if": {},
 }
 LEAD = {
     "webhook": 0,
@@ -98,7 +109,8 @@ ENVTOK = re.compile(
 # every way a malformed (but parsable) flow file can make the checker's own code raise: reported as a FAIL, never a Traceback
 READ_ERRORS = (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError, RecursionError)
 FAILS, WARNS, KNOWN = [], [], []
-UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs; they never FAIL a file, they only WARN
+ACCEPTED_IF = []  # IF branches excused by a recorded --accept-if decision
+UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs (from memory of n8n): WARN only; --fail-unverified makes them FAIL
 
 
 def fail(where, msg):
@@ -121,17 +133,35 @@ def lead(where, msg):
     print("WARN-LEAD-DECISION", where, msg)
 
 
+def unv(where, msg):
+    """A rule that comes from memory of n8n (UNVERIFIED): WARN with the tag, or FAIL with the tag under --fail-unverified."""
+    if OPTS["fail_unv"]:
+        fail(where, f"{msg} [{UNV}]")
+    else:
+        warn(where, f"{msg} [{UNV}; run with --fail-unverified to make it a FAIL]")
+
+
 def final_block():
     print(
         f"OPEN LEAD DECISIONS: {LEAD['webhook']} webhook(s) without auth, {LEAD['env']} $env node(s)"
         "  (exit 0 does NOT mean authentication was checked)"
     )
+    print(
+        "No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): "
+        "check it on the machine that films the take; run with --block-env-access to see which steps depend on it."
+    )
+    if ACCEPTED_IF:
+        print(f"IF branches accepted by a recorded decision (--accept-if): {len(ACCEPTED_IF)}")
+        for k in ACCEPTED_IF:
+            print("  - " + k)
     print(f"Known open problems: {len(KNOWN)}")
     for k in KNOWN:
         print("  - " + k)
     print(
         "Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; "
-        f"expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked '{UNV}' (retry limits, onError values, position of the error output)."
+        "who calls a web address, whether the flow is active, and test versus production web address; "
+        f"expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked '{UNV}' "
+        "(webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId)."
     )
     print("Passing this check does NOT mean the flows are ready to film.")
 
@@ -140,17 +170,12 @@ HEADER = """# ===== READ THIS FIRST (plain words; every line of this header star
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
 #   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
-# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
+# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line. 3 = the checker itself broke or could not write a file.
 # FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
-# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked: read 'OPEN LEAD DECISIONS' in the closing block.
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked.
+# Rules that come from memory of n8n (tag 'n8n rule UNVERIFIED') are WARN only; --fail-unverified makes them FAIL.
 # A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
-# "Known open problems" (closing block) counts WARN and WARN-LEAD-DECISION lines that are real defects we already know: no password on a web address,
-#   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
-#   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
-# Three decisions are open (details in REPORT.md, box "Start here"):
-#   1. Web addresses (webhooks) of mf-form and mf-hook have no password: accept for the take, or add one (run with --require-webhook-auth to see the effect).
-#   2. Four steps read environment variables ($env): allow that in the take, or change the steps (run with --block-env-access to see the effect).
-#   3. Two yes/no steps (StuckRow, AlertRow in mf-recovery) lack a second branch: project rule says FAIL; --baseline excuses them as WARN only because the unpatched flows already had it.
+# The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
 # =============================================================================
 """
 
