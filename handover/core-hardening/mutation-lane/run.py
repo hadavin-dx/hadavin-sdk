@@ -30,12 +30,17 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     prints how to restore (`run.py --root R --restore`), which also stops the orphaned test group.
   * Before the loop, for every target file the module is imported in the same environment and folder the
     tests use, and the imported file must be the one under `--root` (review 4 M5); `--skip-import-check`
-    turns this off and says so in every raw file. TESTS arguments that move the root, the config or the
-    import base (--basetemp, --rootdir, --junitxml, --confcutdir, -c, -o, ...) are refused.
+    turns this off and says so in every raw file. A target that is not a plain .py module path cannot be
+    checked and is REFUSED too (fail closed) unless --skip-import-check is given (review r2 nit).
+  * TESTS are an ALLOWLIST (review r2 safety M1): `-k EXPR`, `-m EXPR`, `-q`, `-x`, `-p no:NAME` and paths
+    (optionally `::node`) that resolve inside --root. Everything else is refused: any `@file` argument,
+    clustered short flags (-qc ...), --collect-only/--co/--setup-plan/--setup-only/--help/--version,
+    --noconftest, --ignore, -p with anything but `no:`, -c, -o, --rootdir, --basetemp, ...
   * While a mutant is planted a signal unwinds the run only while the tests are awaited; a signal at any other
     moment is remembered and delivered after the restore, and only the first signal ever acts (review 4 M3).
     No remaining window is known, but none is proven absent: T20 is a probabilistic burst test, T21 proves
-    only the handler logic (not the timing).
+    only the handler logic (not the timing). The cleanup after a failure (stop the test group, read what it
+    printed) is itself guarded: a failure to stop the group falls back to killing the leader (T29).
   * SIGTERM, SIGINT and SIGHUP restore the file, stop the test process group, remove the marker and
     exit with 128 + the signal number (143, 130, 129).
   * After the loop `raw/<prefix>-tree-diff.txt` records the differences between the scratch tree and
@@ -71,24 +76,22 @@ import tarfile
 import tempfile
 import time
 
-SKIP_DIRS = {".venv", "__pycache__", ".pytest_cache"}
+# skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
+# cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
+SKIP_TOP = {".venv"}
+SKIP_ANY = {"__pycache__", ".pytest_cache"}
 # outside every repository, one folder per user (a shared temp folder must not be shared) (review 4 M4)
 STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
 HANDLED_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
-# pytest options that move the test root, the config or the import base: refused after `--` (review 4 M5)
-BAD_LONG_ARGS = (
-    "--basetemp",
-    "--rootdir",
-    "--junitxml",
-    "--confcutdir",
-    "--override-ini",
-    "--config-file",
-    "--import-mode",
-    "--pyargs",
-)
-BAD_SHORT_ARGS = ("-c", "-o")
+# the only options a TESTS list may use (everything else is refused, see check_test_args)
+PLUGIN_OFF_RE = re.compile(r"no:[A-Za-z0-9_.-]+")
+STATE_PARENTS = (
+    "/tmp",
+    "/var/tmp",
+    "/dev/shm",
+)  # other places a run with another TMPDIR may have left a marker
 EXIT_REFUSED, EXIT_RESTORE_FAILED, EXIT_TREE_NOT_CLEAN = 2, 3, 4
 
 
@@ -161,7 +164,9 @@ def write_state(path: pathlib.Path, data: bytes) -> None:
 def read_state(path: pathlib.Path) -> bytes:
     """Read a state file: no symbolic link, a regular file, owned by this user."""
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        fd = os.open(
+            path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        )  # a FIFO must not block the open
     except OSError as e:  # a link (ELOOP), missing, no permission: a refusal, not a traceback
         raise Refused(f"state file {path} cannot be opened safely ({e.strerror}): refused") from e
     with os.fdopen(fd, "rb") as fh:
@@ -242,9 +247,12 @@ def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pat
 
 
 def tree_files(root: pathlib.Path) -> dict[str, str]:
+    """Hash of every regular file; links by target; any other kind of file (FIFO, socket, device) is
+    recorded by its mode and NEVER opened (opening a FIFO would block forever)."""
     out = {}
     for dp, dns, fns in os.walk(root):
-        dns[:] = [d for d in dns if d not in SKIP_DIRS]
+        top = pathlib.Path(dp) == root
+        dns[:] = [d for d in dns if d not in SKIP_ANY and not (top and d in SKIP_TOP)]
         for d in dns:
             dpath = pathlib.Path(dp) / d
             if dpath.is_symlink():  # os.walk lists but never enters it: record it (M-B)
@@ -252,7 +260,13 @@ def tree_files(root: pathlib.Path) -> dict[str, str]:
         for f in fns:
             p = pathlib.Path(dp) / f
             rel = str(p.relative_to(root))
-            out[rel] = "symlink:" + os.readlink(p) if p.is_symlink() else sha256(p.read_bytes())
+            mode = os.lstat(p).st_mode
+            if stat.S_ISLNK(mode):
+                out[rel] = "symlink:" + os.readlink(p)
+            elif stat.S_ISREG(mode):
+                out[rel] = sha256(p.read_bytes())
+            else:
+                out[rel] = f"special file, not read (mode {mode:o})"
     return out
 
 
@@ -271,7 +285,7 @@ def repo_toplevel(repo: str) -> pathlib.Path:
         raise Refused(
             f"git rev-parse failed for --repo {repo} (rc {cp.returncode}): {text_of(cp)[:200]}"
         )
-    return pathlib.Path(cp.stdout.decode().strip()).resolve()
+    return pathlib.Path(cp.stdout.decode(errors="replace").strip()).resolve()
 
 
 def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path) -> None:
@@ -356,15 +370,57 @@ def stop_orphan(m: dict, root: pathlib.Path) -> str:
     return f"stopped orphaned test group {pgid}"
 
 
+def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
+    """No marker in our state folder. A run that used another TMPDIR keeps its marker THERE: look in the usual
+    places. A marker found there whose backup differs from the file now on disk means the file is still
+    planted: not ok (exit 3). A stale marker (file already equals the backup) is reported, exit 0.
+    Anything that cannot be read safely fails closed (review r2 nit)."""
+    here = STATE.parent.resolve()
+    spots = {
+        pathlib.Path(x).resolve()
+        for x in (*STATE_PARENTS, *(os.environ.get(v) or "/tmp" for v in ("TMP", "TEMP")))
+    }
+    notes = []
+    for parent in sorted(spots - {here}):
+        folder = parent / STATE.name
+        if not os.path.lexists(folder / f"{key}.planted.json"):
+            continue
+        try:
+            st = os.lstat(folder)
+            if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.geteuid() or st.st_mode & 0o077:
+                raise Refused(
+                    f"state folder {folder} is not a plain folder owned by this user with mode 700"
+                )
+            m = load_marker(folder / f"{key}.planted.json")
+            if m.get("root") != str(root) or m.get("backup") != str(folder / f"{key}.backup"):
+                raise Refused("its marker does not belong to this root")
+            saved = read_state(folder / f"{key}.backup")
+            target = safe_rel(root, m["file"], "marker file")
+            differs = target.read_bytes() != saved
+        except (Refused, OSError) as e:
+            return (
+                False,
+                f"a marker exists in {folder} but cannot be read safely ({e}): not touched; check by hand",
+            )
+        if differs:
+            return False, (
+                f"STILL PLANTED: {m['file']} differs from the backup kept by a run that used another TMPDIR; "
+                f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore"
+            )
+        notes.append(
+            f"stale marker in {folder}: {m['file']} already equals its backup (remove it by hand)"
+        )
+    return True, "; ".join(
+        notes
+    ) or f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing to restore"
+
+
 def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
     if not os.path.lexists(marker):
-        return (
-            True,
-            f"no marker in {STATE}: nothing to restore (a run that used another TMPDIR keeps its marker there)",
-        )
+        return other_state_check(root, key)
     m = load_marker(marker)
     if m.get("root") != str(root):
         raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
@@ -395,14 +451,47 @@ def test_env(pythonpath: str | None) -> dict:
     return env
 
 
-def check_test_args(tests: list[str]) -> None:
-    for t in tests:
-        long_hit = any(t == o or t.startswith(o + "=") for o in BAD_LONG_ARGS)
-        short_hit = any(t.startswith(o) and not t.startswith("--") for o in BAD_SHORT_ARGS)
-        if long_hit or short_hit:
-            raise Refused(
-                f"TESTS argument {t!r} would move the test root, the config or the import base: refused"
-            )
+def check_test_args(tests: list[str], root: pathlib.Path) -> None:
+    """ALLOWLIST of what may follow `--` (review r2 safety M1): -k EXPR, -m EXPR, -q, -x, -p no:NAME and paths
+    (with an optional ::node) that resolve inside root. Anything else is refused, in particular every argument
+    starting with `@` (pytest reads options from that file), clustered short flags and every long option."""
+    allowed = "allowed: -k EXPR, -m EXPR, -q, -x, -p no:NAME, and paths inside --root"
+
+    def no(t: str, why: str) -> Refused:
+        return Refused(f"TESTS argument {t!r} {why}: refused ({allowed})")
+
+    def expr(flag: str, v: str | None) -> None:
+        if not v or v.startswith(("@", "-")) or "\0" in v:
+            raise no(f"{flag} {v or ''}".strip(), "needs a plain expression")
+
+    real_root = root.resolve()
+    i = 0
+    while i < len(tests):
+        t = tests[i]
+        nxt = tests[i + 1] if i + 1 < len(tests) else None
+        if not t or "\0" in t or t.startswith("@"):
+            raise no(t, "is empty or reads arguments from a file")
+        if t in ("-q", "-x"):
+            pass
+        elif t in ("-k", "-m"):
+            expr(t, nxt)
+            i += 1
+        elif t[:2] in ("-k", "-m") and not t.startswith("--"):  # attached form: -kEXPR
+            expr(t[:2], t[2:])
+        elif t == "-p":
+            if nxt is None or not PLUGIN_OFF_RE.fullmatch(nxt):
+                raise no(f"-p {nxt or ''}".strip(), "may only switch a plugin off (no:NAME)")
+            i += 1
+        elif t.startswith("-p") and not t.startswith("--"):
+            if not PLUGIN_OFF_RE.fullmatch(t[2:]):
+                raise no(t, "may only switch a plugin off (no:NAME)")
+        elif t.startswith("-"):
+            raise no(t, "is not an allowed option")
+        else:
+            path = t.split("::", 1)[0]
+            if not path or not (real_root / path).resolve().is_relative_to(real_root):
+                raise no(t, "is not a path inside --root")
+        i += 1
 
 
 def module_of(rel: str) -> str | None:
@@ -433,9 +522,13 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
     out = {}
     for rel in dict.fromkeys(files):
         mod = module_of(rel)
-        if mod is None:
-            out[rel] = "not checked (not a plain .py module path)"
-            continue
+        if (
+            mod is None
+        ):  # fail closed: an unchecked target could hide that the tests run another file
+            raise Refused(
+                f"import check: {rel!r} is not a plain .py module path, so the check cannot tell which file the "
+                f"tests import; pass --skip-import-check if that is intended (it is recorded in the raw file)"
+            )
         code = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
         try:
             cp = run_cmd(
@@ -447,7 +540,9 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
             raise Refused(
                 f"import check: `import {mod}` failed (rc {cp.returncode}): {text_of(cp)[-300:]}"
             )
-        got = cp.stdout.decode().strip().splitlines()[-1] if cp.stdout.strip() else ""
+        got = (
+            cp.stdout.decode(errors="replace").strip().splitlines()[-1] if cp.stdout.strip() else ""
+        )
         want = (root / rel).resolve()
         if not got or pathlib.Path(got).resolve() != want:
             raise Refused(
@@ -475,7 +570,7 @@ def run_tests(
 ):
     # stale .pyc files could hide a planted change (same size, same second): never write or reuse them
     for d in root.rglob("__pycache__"):
-        if ".venv" not in d.parts:
+        if d.relative_to(root).parts[0] != ".venv":
             shutil.rmtree(d, ignore_errors=True)
     py = root / ".venv/bin/python"
     if not py.exists():
@@ -490,6 +585,8 @@ def run_tests(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        encoding="utf-8",
+        errors="replace",  # bytes that are not UTF-8 must never turn a test run into an error
         start_new_session=True,
     )
     try:
@@ -501,17 +598,34 @@ def run_tests(
             out, _ = proc.communicate(timeout=timeout)
             result = (cmd, proc.returncode, out)
         except subprocess.TimeoutExpired:
+            SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
             stop_group(proc.pid)
-            reap(proc)
-            result = (cmd, None, f"TIMEOUT after {timeout} s")
+            rest = reap(proc)  # a second communicate() returns everything printed so far
+            result = (
+                cmd,
+                None,
+                f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}",
+            )
         SIG.allow = False
         return result
     except (
         BaseException
     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
-        SIG.allow = False
-        stop_group(proc.pid)  # a group that is already gone must not hide the signal
-        reap(proc)
+        SIG.allow = False  # first statement: nothing below can raise a second time
+        try:
+            stop_group(proc.pid)  # a group that is already gone must not hide the signal
+        except (
+            OSError
+        ):  # the group could not be stopped (e.g. no permission): at least stop the leader
+            try:
+                proc.kill()
+            except OSError:
+                pass
+        finally:
+            try:
+                reap(proc)
+            except OSError:
+                pass
         raise
 
 
@@ -611,7 +725,7 @@ def one(a, tests, m, results, ref):
         f"all failing tests ({len(failed)}): {'; '.join(failed) if failed else '-'}\n"
         f"--- OLD TEXT (full) ---\n{m['old']}\n--- NEW TEXT (full) ---\n{m['new']}\n--- PYTEST OUTPUT (full) ---\n{out}\n"
     )
-    (pathlib.Path(a.raw) / f"{a.prefix}-{m['id']}.txt").write_text(text)
+    (pathlib.Path(a.raw) / f"{a.prefix}-{m['id']}.txt").write_text(text, encoding="utf-8")
     results.append(
         {
             "id": m["id"],
@@ -628,7 +742,7 @@ def one(a, tests, m, results, ref):
 
 def load_mutants(a) -> list[dict]:
     if a.list:
-        ms = json.loads(pathlib.Path(a.list).read_text())
+        ms = json.loads(pathlib.Path(a.list).read_text(encoding="utf-8"))
     else:
         ms = [{"id": a.id, "file": a.file, "old": a.old, "new": a.new, "desc": a.desc}]
     if not isinstance(ms, list) or not ms:
@@ -653,9 +767,10 @@ def tree_check(a, root, fresh, marker) -> list[str]:
     leftover = marker.exists()
     (pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt").write_text(
         f"TREE CHECK after the loop\ncompared: <fresh git archive {a.sha} + patches {a.patch}> against {a.root} "
-        f"(skipping {sorted(SKIP_DIRS)}; symbolic links compared by target)\n"
+        f"(skipping {sorted(SKIP_TOP)} directly under the root only and {sorted(SKIP_ANY)} anywhere; symbolic links compared by target; special files recorded, never read)\n"
         f"declared extra files (allowed as 'only in root'): {a.extra}\n"
-        f"differing files ({len(diffs)}; 0 = clean): {diffs}\nmarker left behind: {leftover}\n"
+        f"differing files ({len(diffs)}; 0 = clean): {diffs}\nmarker left behind: {leftover}\n",
+        encoding="utf-8",
     )
     return [*diffs, *(["<marker left behind>"] if leftover else [])]
 
@@ -743,7 +858,7 @@ def main():
                 ok, text = restore_from_marker(root)
                 print(text)
                 sys.exit(0 if ok else EXIT_RESTORE_FAILED)
-            check_test_args(tests)
+            check_test_args(tests, root)
             if not NAME_RE.fullmatch(a.prefix):
                 raise Refused(f"--prefix is not a plain name: {a.prefix!r}")
             for x in a.extra:
@@ -778,13 +893,14 @@ def main():
                 cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout)
                 last, _ = summary(out)
                 (pathlib.Path(a.raw) / f"{a.prefix}-baseline.txt").write_text(
-                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\nsummary: {last}\n\n{out}"
+                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\nsummary: {last}\n\n{out}",
+                    encoding="utf-8",
                 )
                 print("baseline", rc, last)
             for m in ms:
                 one(a, tests, m, results, ref)
             if a.out_json:
-                pathlib.Path(a.out_json).write_text(json.dumps(results, indent=1))
+                pathlib.Path(a.out_json).write_text(json.dumps(results, indent=1), encoding="utf-8")
             # proof the scratch tree is unchanged: compare with a FRESH archive extract
             fresh = tmpref / "fresh"
             fresh.mkdir()
