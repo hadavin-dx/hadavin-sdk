@@ -1287,12 +1287,17 @@ def run_tests(
                 note = sweep_group(proc.pid)
             except OSError as e:
                 note = f"could NOT sweep the test group ({e.strerror or e})"
-            return (cmd, rc, out, note)
+            result = (cmd, rc, out, note)
         finally:
-            # review r5 nit 2: on EVERY way out of the body (also a failure that is no signal) a later signal must not
-            # raise again before the group is stopped below; a signal arriving inside this `finally` still lands in
-            # the outer `except`, which stops the group
+            # review r5 nit 2: on EVERY way out of the body (also a failure that is no signal) `allow` is off and later
+            # signals are only remembered, so none can raise again before the group is stopped below; a signal
+            # arriving inside this `finally` still lands in the outer `except`, which stops the group
             SIG.allow = False
+            SIG.critical = True
+        SIG.critical = was_critical
+        if not was_critical:  # a control run: nothing is planted, so a remembered signal is delivered now
+            deliver_pending()
+        return result
     except (
         BaseException
     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
@@ -1316,6 +1321,7 @@ def run_tests(
                 reap(proc)
             except (OSError, ValueError):
                 pass
+        SIG.critical = was_critical  # the group is stopped: the caller's state again
         raise
 
 
