@@ -143,6 +143,8 @@ edit_new('E-37', [
 # ---------------------------------------------------------------- Appendix K (outside the rows)
 sub("the 10 minutes between are only for the shred of the key copies (card step 2); the other owner items do not fit into them.",
     "the 10 minutes between go first to the key (card step 1), then to the quick web revokes of the app passwords and the HubSpot apps (card step 2), then to the shred of the key copies (card step 3); what is not finished by then you finish by " + LAST + ".")
+sub("then you have at most 10 minutes between 18:19 UTC = 23:49 IST and 18:29 UTC = 23:59 IST only for the shred of the key copies (card step 2).",
+    "then you have at most 10 minutes between 18:19 UTC = 23:49 IST and 18:29 UTC = 23:59 IST, and they go first to the key (card step 1), then to the quick web revokes (card step 2), then to the shred of the key copies (card step 3).")
 sub("the studio lead saves it as its own file next to the working copy of OWNER-STEPS and links it from step 22 item 3,",
     "the studio lead saves it as its own file `OWNER-APPENDIX-K.md` (the builder's copy is `r18-OWNER-APPENDIX-K.md`) next to the working copy of OWNER-STEPS and links it from step 22 item 3 by that name,")
 

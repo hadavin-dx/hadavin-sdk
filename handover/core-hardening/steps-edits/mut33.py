@@ -385,7 +385,7 @@ ALLCOPIES |= {'W05', 'W11', 'W12', 'W14', 'W15', 'W07', 'W06', 'W03'}
 X = [
 ('X01', S, 'the key list may show a last use hours late', 'the key list shows every use at once', '7-day lag sentence removed'),
 ('X02', S, 'then cancel anyway (the yes covers the cancel)', 'then cancel anyway unless you know something else uses it (the yes covers the cancel)', '7.11 escape put back'),
-('X03', S, '**Deadline backstop (Sun 22 Nov and Mon 23 Nov):**', '**Deadline note:**', 'deadline backstop removed from the sheet'),
+('X03', S, '**Deadline reminders (Sun 22 Nov and Mon 23 Nov):**', '**Deadline note:**', 'deadline backstop removed from the sheet'),
 ('X04', N, 'does NOT wait for a message from you', 'waits for a message from you', 'note says the older key in A waits for the lead'),
 ('X05', N, 'the 7-day time is {{sevenback}}', 'the 7-day time is long ago', '7-day warning removed from the default line'),
 ('X06', S, 'if there is no such page this is a STOP', 'if there is no such page go on', 'Recall page no longer a stop'),

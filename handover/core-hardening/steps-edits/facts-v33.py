@@ -78,4 +78,4 @@ ENTER = LS - dt.timedelta(minutes=5)                                           #
 MARGIN_END = ENTER + dt.timedelta(minutes=Y + RL + FP)                         # sample: when the longest planned path ends
 assert MARGIN_END < LF and (LF - MARGIN_END) == dt.timedelta(minutes=5)
 F.update({'bm_chain': 'Mon 23 Nov 2026 ' + pair(BM_CHAIN), 'rv22': 'Sun 22 Nov 2026 ' + pair(RV22), 'sun_cb': 'Sun 22 Nov 2026 ' + pair(SUN_CB), 'sun_ls': 'Sun 22 Nov 2026 ' + pair(SUN_LS),
-          'enter': pair(ENTER), 'margin_end': pair(MARGIN_END), 'sum_all': str(Y + RL + FP + MG)})
+          'enter': pair(ENTER), 'margin_end': pair(MARGIN_END)})

@@ -1202,9 +1202,9 @@ echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mo
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
   NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
-    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
+    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"
-    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
+    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99 T100 T101} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
   else
     echo "  (cannot switch to an unprivileged user here: the permission checks are UNVERIFIED)"; SKIPPED="$SKIPPED T88"
   fi
@@ -2166,5 +2166,29 @@ kill_planted; setmarker97 mode=511
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t100i.out" 2>&1; rci=$?
 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 chk "T100i independent r11 item 5: the 0777 refusal with --sha names the git HEADER mode 0o664 (git archive default), not the extracted 0o644 (exit $rci; r11: printed 0o644)" "[ $rci -eq 3 ] && grep -q 'execute bits' '$S/t100i.out' && grep -q '(0o664)' '$S/t100i.out'"
+echo "== T101 (r13, review r12: m2 a .. in --raw, m4 the total-size comment, m5 the limit (d) NOTE; each says whether it fails on r12)"
+# a) m2: a `..` anywhere in --raw is refused before any check and before any folder is made (r12 ran and created both folders)
+fresh_root; rm -rf "$S/rawdd101" "$S/rawdd101b"
+mut --raw "$S/rawdd101/../rawdd101b" -- tests/test_fast.py >"$S/t101a1.out" 2>&1; rc1=$?
+C1=0; [ -e "$S/rawdd101" ] || [ -e "$S/rawdd101b" ] && C1=1
+fresh_root; rm -rf "$S/rawdd101c"
+mut --raw "$S/../$(basename "$S")/rawdd101c" -- tests/test_fast.py >"$S/t101a2.out" 2>&1; rc2=$?
+C2=0; [ -e "$S/rawdd101c" ] && C2=1
+fresh_root; rm -rf "$T/root/newraw101"
+mut --raw "$S/nodir101/../toy/root/newraw101" -- tests/test_fast.py >"$S/t101a3.out" 2>&1; rc3=$?
+C3=0; [ -e "$T/root/newraw101" ] || [ -e "$S/nodir101" ] && C3=1
+cut -c1-200 "$S/t101a1.out" | tail -1
+chk "T101a m2 --raw with a .. part (three shapes: a folder that would be made and stepped out of; a .. through an existing folder; a .. that would end inside --root): all exit 2 (got $rc1 $rc2 $rc3), the text names the .., no folder made (flags $C1 $C2 $C3) (r12: the first two run and create their folders)" "[ $rc1 -eq 2 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $C1 -eq 0 ] && [ $C2 -eq 0 ] && [ $C3 -eq 0 ] && grep -q '\.\.' '$S/t101a1.out' && grep -q 'REFUSED' '$S/t101a1.out'"
+rm -rf "$S/rawdd101" "$S/rawdd101b" "$S/rawdd101c"
+# b) m4: the comment on the total size no longer claims the limit can never be reached
+RB=$(grep -c "can never be reached" "$RUN"); RB2=$(grep -c "REAL BOUND (r13 m4)" "$RUN")
+chk "T101b m4 TEXT CHECK the total-size comment says the real bound: the words 'can never be reached' appear $RB times (want 0), 'REAL BOUND (r13 m4)' appears $RB2 times (want 1) (r12: 1 and 0)" "[ $RB -eq 0 ] && [ $RB2 -eq 1 ]"
+# c) m5: the NOTE of a plain --restore that cut a bit off says the group-write and execute bits of a forged marker are still written (limit d)
+for MODEV in 511 2541; do   # 0777 (world-write cut) and 04755 (setuid cut)
+  kill_planted; forge97; setmarker97 mode=$MODEV
+  python3 "$RUN" --root "$T/root" --restore >"$S/t101c.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-500 "$S/t101c.out" | tail -1
+  chk "T101c m5 forged marker mode $(printf '%o' $MODEV), plain --restore: exit 0 (got $rc), mode $GOT, the NOTE says limit d and names the group-write and execute bits and --restore --sha (r12: no such sentence)" "[ $rc -eq 0 ] && grep -q 'limit d' '$S/t101c.out' && grep -q 'group-write and execute bits' '$S/t101c.out' && grep -q 'restore --sha' '$S/t101c.out'"
+  chmod 644 "$T/root/src/mod.py"
+done
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

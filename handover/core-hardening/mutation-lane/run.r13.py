@@ -367,7 +367,10 @@ CHILD_ENV_ALLOWED = frozenset({"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECOD
 CHILD_KW_ALLOWED = frozenset(
     {"stdin", "stdout", "stderr", "cwd", "env", "start_new_session", "text", "encoding", "errors"}
 )
-CHILD_PROGRAMS = ("git", "patch")  # found with shutil.which; the test interpreter is <root>/.venv/bin/python
+CHILD_PROGRAMS = (
+    "git",
+    "patch",
+)  # found with shutil.which; the test interpreter is <root>/.venv/bin/python
 # r13 (review r12 M1): the programs this run may start are the ONES IT FOUND AT START, not any file with the right name.
 # `git` and `patch`: the real path (and file identity) of what `tool()` found first; the interpreter: exactly
 # <resolved --root>/.venv/bin/python (set once by `set_child_root`, called by main after --root is checked).
@@ -457,9 +460,21 @@ def _python_shape_ok(a: list[str]) -> bool:
     followed by the test words."""
     if len(a) == 4 and a[1] == "-c":
         return a[2] == IMPORT_PROBE_CODE and not a[3].startswith("-")
-    root = os.path.dirname(os.path.dirname(os.path.dirname(a[0])))  # <root>/.venv/bin/python -> <root>
-    head = ["-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={root}", f"--confcutdir={root}"]
-    return a[1 : 1 + len(head)] == head and a[1 + len(head) : 3 + len(head)] == list(PYTEST_FIXED_TAIL)
+    root = os.path.dirname(
+        os.path.dirname(os.path.dirname(a[0]))
+    )  # <root>/.venv/bin/python -> <root>
+    head = [
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        f"--rootdir={root}",
+        f"--confcutdir={root}",
+    ]
+    return a[1 : 1 + len(head)] == head and a[1 + len(head) : 3 + len(head)] == list(
+        PYTEST_FIXED_TAIL
+    )
 
 
 def check_child_call(args, kwargs: dict) -> None:
@@ -518,7 +533,9 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused("program start refused: start_new_session must be True")
     shape = {"git": _git_shape_ok, "patch": _patch_shape_ok, "python": _python_shape_ok}[kind]
     if not shape(args):
-        raise Refused(f"program start refused: the arguments are not one of the {kind} calls this tool makes")
+        raise Refused(
+            f"program start refused: the arguments are not one of the {kind} calls this tool makes"
+        )
 
 
 class Child(subprocess.Popen):
@@ -1033,7 +1050,9 @@ def decode_text(b: bytes, rel: str) -> str:
 
 
 def tool(name: str) -> str:
-    found = trust_tool(name)  # r13: the first find is remembered; the guard in Child accepts only that file
+    found = trust_tool(
+        name
+    )  # r13: the first find is remembered; the guard in Child accepts only that file
     if found is None:
         raise Refused(f"required program not found: {name}")
     return found
@@ -2987,7 +3006,10 @@ def main():
     if a.raw and ".." in a.raw.split("/"):
         # r13 m2 (class: a path whose `..` is resolved by the operating system only after a folder on the way was created):
         # a `..` in --raw is refused BEFORE any check or any folder is made
-        print(f"REFUSED: --raw {shown(a.raw)} holds a `..` part: give the folder without it", file=sys.stderr)
+        print(
+            f"REFUSED: --raw {shown(a.raw)} holds a `..` part: give the folder without it",
+            file=sys.stderr,
+        )
         sys.exit(EXIT_REFUSED)
     # r10 m4 (class: a window between installing the handlers and the `try` that maps a signal to an exit code): the handled
     # signals are BLOCKED while the handlers are installed and the temporary folder is made, and unblocked inside the `try`,

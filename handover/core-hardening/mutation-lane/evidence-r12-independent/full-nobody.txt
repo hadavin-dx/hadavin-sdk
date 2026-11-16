@@ -743,3 +743,86 @@ RESTORE FAILED: state file /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutati
 /tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 16746 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: state file /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.backup cannot be opened safely (Too many levels of symbolic links): refused; the mutant m
   PASS: T87b the backup is a symbolic link (to a file with the right content): exit 3 (got 3; r7: 2), nothing written (file still planted), marker kept
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 16976 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.backup is not a regular file owned by this user: refused; the mutant may still be planted
+  PASS: T87c the backup is a FIFO: exit 3 (got 3; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 17315 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.planted.json is not valid JSON: refused; the mutant may still be planted; marker and backup k
+  PASS: T87d the marker is not valid JSON: exit 3 (got 3; r7: 2), file still planted, marker kept, no traceback
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 17548 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.planted.json lacks required fields: refused; the mutant may still be planted; marker and back
+  PASS: T87e the marker lacks required fields: exit 3 (got 3; r7: 2), file still planted, marker kept
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 17691 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state folder /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534 is not a plain folder owned by this user with mode 700: refused (remove it or fix it); the mutant may st
+  PASS: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 17942 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: --root /tmp/r12-indep-nobody/scratch/toy/root is, contains or lies inside the real repository /tmp/r12-indep-nobody/scratch/toy/root: use a scratch copy; the mutant may still be plante
+  PASS: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87g genuine restore afterwards
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 18149 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RuntimeError: an internal bug
+INTERNAL ERROR (RuntimeError: an internal bug); a marker exists (/tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.planted.json): a mutant may be planted, run --resto
+  PASS: T87h an internal bug inside --restore (restore_target raises RuntimeError): exit 3 (got 3; r7: 2 with INTERNAL ERROR), file still planted, marker kept
+  PASS: T87h genuine restore afterwards
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 18357 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker is for another root ("/somewhere/else"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87i guard: a marker that names another root is a forged marker: exit 2 (got 2), nothing written, marker kept
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 18541 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker names a backup other than /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.backup: refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87j guard: a marker that names another backup path is forged: exit 2 (got 2), nothing written, marker kept
+REFUSED: --root /tmp/r12-indep-nobody/scratch/toy/root is, contains or lies inside the real repository /tmp/r12-indep-nobody/scratch/toy/root: use a scratch copy
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87k guard: no marker anywhere and the real-repository check refuses: still exit 2 (got 2), nothing recorded as planted
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
+REFUSED: cannot plant into src/mod.py: Permission denied
+  PASS: T88a the file under test is read-only (444) when planting: clean refusal exit 2 (got 2), 'cannot plant', file and mode unchanged, state empty
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T88b a test makes the planted file read-only (444) (no baseline here, since the baseline run itself would change the mode: exit 5 is the no-baseline result): original text AND mode 644 written back, verdict SURVIVED, exit 5 (got 5; r7: exit 3, file left planted), state empty
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T88f a test makes the planted file mode 000 (neither readable nor writable): original text and mode 644 written back, verdict SURVIVED, exit 5 (got 5), state empty
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 19005 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.backup; hash matches saved original: True
+  PASS: T88c --restore of a planted file that is now read-only (444): restored, exit 0 (got 0; r7: 3), mode back to 644, state empty
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 19247 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.backup (it already held the original); hash matches saved origin
+  PASS: T88d guard: a read-only file that already holds the original: exit 0 (got 0), marker cleared, mode left at 444 (nothing needed changing)
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 27116 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: the file is read-only and differs from the original; the mutant may still be planted; marker and backup kept
+  PASS: T88e negative: a read-only file with TWO names and the planted text is never made writable: exit 3 (got 3), mode of both names still 444, other name untouched
+  PASS: T88e genuine restore afterwards
+== T89 (review r7 N5) a test process that leaves the process group (setsid) is NOT stopped: this is named in the docstring; the check pins what is true and the escapee is stopped here by the test
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T89 the escapee (setsid) outlived the run (documented): alive=1 (1), the run itself is clean: exit 0 (got 0), file restored, raw file says no process of the test group left
+  PASS: T89 the docstring of run.py names this limit (PROCESS GROUP ONLY)
+== T90 (review r7 N4) an output file that is also an input of the run (run.py itself, --list, --patch) or another output is refused before anything is planted
+REFUSED: --out-json /tmp/r12-indep-nobody/scratch/runcopy.py already exists and is not a result file of this tool (a JSON list of objects with id and verdict): refused, it would be overwritten. Use a 
+  PASS: T90a --out-json is the running script itself (another spelling of its path): exit 2 (got 2; r7: ran and truncated it), script unchanged, nothing planted
+REFUSED: --out-json /tmp/r12-indep-nobody/scratch/two.json already exists and is not a result file of this tool (a JSON list of objects with id and verdict): refused, it would be overwritten. Use a ne
+  PASS: T90b --out-json is the --list file: exit 2 (got 2; r7: the list was overwritten by the results), list unchanged
+REFUSED: --out-json /tmp/r12-indep-nobody/scratch/note90.patch already exists and is not a result file of this tool (a JSON list of objects with id and verdict): refused, it would be overwritten. Use 
+  PASS: T90c --out-json is a --patch file: exit 2 (got 2; r7: the patch was overwritten), patch unchanged
+REFUSED: two output files have the same path (--out-json is also a raw file): refused
+  PASS: T90d --out-json is the same path as a raw file of this run: exit 2 (got 2), file unchanged
+  PASS: T90e guard: an ordinary --out-json still works: exit 0 (got 0), the file exists
+== T91 (review r7 N6) a run with ANOTHER TMPDIR on the same root: its lock is found (TMP names the other place) and this run is refused
+REFUSED: another run holds the lock for /tmp/r12-indep-nobody/scratch/toy/root in /tmp/r12-indep-nobody/scratch/othertmp91/hadavin-mutation-lane-65534 (it uses another TMPDIR): two runs on one tree would plant over each other
+  PASS: T91a run A (TMPDIR=other) is in its baseline; run B (default TMPDIR, TMP=other) is refused: exit 2 (got 2; r7: B ran too), text names the other TMPDIR
+  PASS: T91b guard: after run A has ended its lock is free: the same B now runs, exit 0 (got 0)
+== T92 (review r7 N3) a signal that arrives AFTER the result 'clean, exit 0' is decided (while the folders are removed) cannot change it
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+MAIN RETURNED NORMALLY (exit 0 stands)
+  PASS: T92 SIGTERM during the final clean-up of a clean run: main returns normally, exit 0 (got 0; r7: KeyboardInterrupt out of main, exit 130/143)
+== T93 (review r7 N1, N2) --restore with a damaged control marker still restores the planted file; an orphaned test group that cannot be stopped keeps the marker
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 20285 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: control marker /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.control.json is not valid JSON: refused (remove it by hand); its test group may still run; the control marker /t
+  PASS: T93a a planted marker AND a control marker that is not valid JSON: the planted file IS restored (r7: refused, still planted), planted marker cleared, exit 3 (got 3), control marker KEPT
+/tmp/r12-indep-nobody/safety-tests.r12.sh: line 70: 29601 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: state file /tmp/r12-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/74c77a06bc3afefc.control.json cannot be opened safely (Too many levels of symbolic links): refused; its test group may still run; the
+  PASS: T93b the control marker is a symbolic link: the planted file IS restored, exit 3 (got 3), link kept

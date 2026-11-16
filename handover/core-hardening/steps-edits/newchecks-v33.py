@@ -248,7 +248,7 @@ need('C162', 'FREEZE is not a cancel: a live key is cancelled only by a danger s
 need('C162', '**Not danger signs (no card, no FREEZE):** a lead message "wait"')                                         # RC1: a wait is never a trigger
 need('C163', '"confirmed" (5.9)'); need('C163', 'the seven words, which alone start or end a step')                                    # N2: the new lead word and the count
 need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every live word')   # N2
-need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule below never applies to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
+need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule of 5.1 does not apply to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
 need('C166', 'except the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4')                              # N1: W7 exemption
 need('C167', 'the test program made no delete call')                                                                      # evidence-runner fix: the no-delete line in both sheets
 if 'Decision 2 stands: the test program never deletes' not in NOTE or 'the test program deletes;' in NOTE: fail('C167', 'N: the sentence "Decision 2 stands: the test program never deletes" is missing or turned into a delete instruction')   # evidence-runner fix: content check of the note
@@ -310,7 +310,7 @@ for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):             
     if 'unless you know something else uses' in _t: fail('C186', '%s holds the escape (describe the older key, then cancel anyway)' % _n)
 _i7 = A[A.find('Older key point (cannot be undone'):]; _i7 = _i7[:_i7.find('## 8.')] if '## 8.' in _i7 else _i7[:3000]
 if 'nothing else I know uses it' in _i7 or 'I cancel the older key <its name> now, the yes covers it' not in _i7: fail('C186', 'A 7.11: the forced cancel must use the phrase without the claim that nothing else uses the key')
-need('C187', 'Deadline backstop (Sun 22 Nov and Mon 23 Nov)'); need('C187', 'a person who may cancel only the keys named on the helper')       # S M3
+need('C187', 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'); need('C187', 'a person who may cancel only the keys named on the helper')       # S M3
 if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
 need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminders are not set'); need('C187', 'A missed 7.11: the reminders are the second and third chance')
 need('C187', 'set the two **deadline reminders**')
@@ -390,7 +390,7 @@ _FILM = _pg('OWNER-FILM-PERSON-%s.md' % _V)
 _BM = 'Mon 23 Nov 2026 18:09 UTC = 23:39 IST'
 if F.get('bm') != _BM: fail('C210', 'facts: the Monday reminder is not %s' % _BM)                                            # S M1: owner-side stop on deadline day
 for _nm, _t in (('A', A), ('B', B)):
-    for _s in (_BM, '18:19 UTC = 23:49 IST', '18:04 UTC = 23:34 IST', 'two **deadline reminders**', 'key of L1 that you find valid is cancelled at once by steps 2 to 4', 'Deadline backstop (Sun 22 Nov and Mon 23 Nov)'):
+    for _s in (_BM, '18:19 UTC = 23:49 IST', '18:04 UTC = 23:34 IST', 'two **deadline reminders**', 'key of L1 that you find valid is cancelled at once by steps 2 to 4', 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'):
         if _s not in _t: fail('C210', '%s lacks %r' % (_nm, _s))
     if 'If your run day is Mon 23 Nov' in _t: fail('C210', '%s keeps the dead Mon 23 Nov paragraph' % _nm)
     if _BM not in SHEETS_DISK[_nm]: fail('C210', 'sheet %s itself does not carry the Monday reminder' % _nm)

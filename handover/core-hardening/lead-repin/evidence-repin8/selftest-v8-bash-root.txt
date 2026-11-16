@@ -1,0 +1,2 @@
+/home/user/hadavin-sdk/handover/core-hardening/lead-repin/lead-repin-verify.v8.sh: line 65: unset: SHELLOPTS: cannot unset: readonly variable
+/home/user/hadavin-sdk/handover/core-hardening/lead-repin/lead-repin-verify.v8.sh: line 65: unset: BASHOPTS: cannot unset: readonly variable
