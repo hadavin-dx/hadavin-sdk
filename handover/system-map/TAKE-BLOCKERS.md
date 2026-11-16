@@ -7,7 +7,7 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 
 | # | what stops the take | next action, by whom | done when |
 |---|---|---|---|
-| 5 | No take date or start time (v5 gives none) | FIRST: studio lead picks the date after rows 2 and 1 are scheduled, then sends the owner date and start time in UTC and IST | the owner has a written date |
+| 5 | No take date or start time (v5 gives none) | LAST of the first group: after rows 3, 1 and 2 are decided or scheduled, the studio lead picks the date, then sends the owner date and start time in UTC and IST | the owner has a written date |
 | 3 | Scope: does the video need scenes 5 to 11 (film-v5)? A video with only the real-v5 scenes removes flow-set decisions A to D, the live switch between sets and row 4. Proposal from a reviewer, not decided | studio lead decides with the owner (what the video must show); answer in QUESTIONS.md item 8 | one written sentence: "film-v5 in / out" |
 | 1 | The `$env` values are not filled in (BL-wp6-G1); until a script writes them into a local copy of the flows, no flow set can run | builder (a session the studio lead starts) writes and tests that script; studio lead reviews | the script exists and one rehearsal run imports a filled copy |
 | 2 | The five changed flows (the four flows plus the shared sub-flow changed for v5; list in flowcheck/REPORT.md) have never run in n8n; nobody is named to start Docker and run the first rehearsal | studio lead names one person or session for it; rule: nobody touches Docker Desktop settings | a named person and a rehearsal result file |
@@ -15,7 +15,7 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 | 6 | Security edits S9-1 to S9-5 and S9-12 (a closed spend gate, printed money figures, model-key revoke, masked account marks, owner-steps protection rule, a MUST NOT list for the studio lead) are not in v5 or the scope sheet and cannot be applied as written; seven decisions are listed in the last paragraph of drift/APPLIED-S9.md and QUESTIONS.md item 6. S9-1 is new program work | studio lead answers the seven; then core-hardening edits; studio lead says whether S9-1 is in this take or deferred | v5 and the scope sheet carry the edits, tests pass |
 | 7 | HubSpot key must be able to delete contacts (drift R8-5); the HubSpot check and the login-key choice (OWNER-VIEW row 7) need the exact text the owner is to type or the row removed | studio lead writes the lines (text for the owner, not code) or removes the row | the owner has exact lines, or the row is gone |
 
-Row order is the order to act: 5 waits on 2 and 1; 3 can be decided now and makes 1 smaller (only real-v5 needs filling) and 4 vanish; 6 runs in parallel.
+The row numbers are ids, not the order. Order of work: 3 first (it can be decided now and makes 1 smaller and 4 vanish); 1 and 2 in parallel; then 5; then 7; 6 runs in parallel throughout; 4 only if row 3 keeps film-v5. This page wins over README.md's numbered list if they differ.
 
 **Before the post, not the take:** drift D-04 and D-05 (post wording rows), the exact post words, a named person who checks the post. **Not a take blocker:** the licence guard test failing on core-hardening (blocks a pull request only; QUESTIONS.md item 7); archive lists (after the take).
 
@@ -27,3 +27,12 @@ Row order is the order to act: 5 waits on 2 and 1; 3 can be decided now and make
 5. Row 7: write the HubSpot key scope (create and delete contacts in the demo account only) and the account check, without reading the secret.
 6. Row 6 split. Needed for the take: S9-1 or its fallback (closed spend gate plus the owner's written "typed y", which conflicts with v5 rule 2 and needs the lead's written acceptance), S9-2 (printed figures; do not call it an independent check: the program only repeats the lead's own settings), S9-12 (a text-only MUST NOT list). Text or hygiene, can follow: S9-3 (model-key revoke; the provider-side per-key limit may not exist), S9-5 (wording), S9-4 mask edge cases. S9-4 still needs a new step C.4 "confirm the sender account" so the owner cannot paste a real company mailbox password.
 7. Single points to accept or fix: the studio lead decides rows 3 to 7 and starts the rehearsal; the owner alone types `y` (state a backup window); one n8n on one laptop with no fallback if Docker fails on the day.
+
+## What "rehearsal passed" must mean (a draft; the studio lead chooses at each [choose] BEFORE saying it to the owner)
+No document defines it today: the owner steps (v5 line 74) only require "rehearsal passed, with its result file"; the plan inputs/plan-wp6-resmoke-v5.md section 7 (lines 464 to 486) has a 20-row PASS/FAIL table (classes STOP, GO, REC) but no overall rule, and its run is the loopback re-smoke, which by its own section 9 does NOT prove the real-v5 flows at run time. Draft rule:
+1. What runs: [choose] the loopback re-smoke of that plan AND one import and run of the filled copy of the flow set(s) the take uses.
+2. Result file: `evidence-2/INDEX.md` of that plan, plus a summary of at most 10 plain lines for the owner (the file itself is full of internal ids).
+3. Pass: every STOP row PASS; every GO finding listed with "accepted" or "fixed" beside it; REC rows only recorded. One STOP row failing = rehearsal failed and the whole plan runs again.
+4. Crash test (row DM): [choose] required / not required for the take. If DM is not PASS, the post must not say "crash-safe" and the studio lead tells the owner before the yes (v5 line 170).
+5. Who judges: the independent `egm:*` result review of the evidence and the resolve step (plan line 505); the runner never judges; only then the studio lead writes "rehearsal passed" and names the file.
+6. Time: the review round must end by [date]; reruns that fit before the 18:15 UTC latest start: [number].

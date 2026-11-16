@@ -15,7 +15,7 @@ Short version for the studio lead: TAKE-BLOCKERS.md (one page, same list plus th
 Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decision as a single yes or no; the decision list is in LEAD-PAGE.md section 3. For the lead: decide by Tue 17 Nov 12:29 UTC / 17:59 IST (a suggested time; if you cannot, the take moves, latest Mon 23 Nov 18:29 UTC / 23:59 IST): item 1 name the test owner and a start time; items 5 and 6a as written there (D-05 and L-01 are your decisions too). Item 3 (archive of extract.py) is a clean-up choice and can wait until after the take. The take time on Wed 18 is set by the lead at least 3 hours ahead.
 
 ## If you are the studio lead (the Claude session that does the technical steps)
-1. FIRST: the numbered list "BEFORE THE TAKE" above is your to-do list (the old block "LEAD ACTIONS NEEDED" exists only in STATUS-BOARD.template.md and is not used). Order: item 2 (a person with a laptop must start Docker and n8n; the cloud session has none, so you ask the studio head to name that person), then item 5 (HubSpot delete rights), then item 3 and 4.
+1. FIRST: TAKE-BLOCKERS.md is your to-do list and WINS over the numbered list above if they differ (the numbers differ: the list above is the older six items; TAKE-BLOCKERS has seven rows). Its order: decide the scope question (row 3), then rows 1 and 2 in parallel, then the date (row 5), HubSpot delete rights and exact lines (row 7), the security edits (row 6), and row 4 only if film-v5 stays. You name the person with a laptop who starts Docker and n8n; if you know nobody, you ask the studio head (the owner) once. The cloud session has no Docker.
 2. drift/REPORT.md: apply or reject the replacement texts for D-01 to D-05, D-10, S-03 and L-01 (Blockers).
 3. FINAL-CROSSCHECK.md sections 2, 4 and 5: ratings that disagree and fixes that collide.
 4. QUESTIONS.md: open questions to you.
@@ -29,4 +29,4 @@ Role of this folder: cloud session system-map writes only here, on branch cloud/
 
 ## Which page wins, and which to skip
 Owner steps: OWNER-VIEW.md and the two cards win over LEAD-PAGE.md section 2 (stale, v3-based). If two pages disagree on a number, v5 wins, then drift/APPLIED-S9.md once applied. Skip: work/, reviews-of-core-hardening/, flowcheck/in, egm-dryrun*, inputs/OWNER-STEPS-realrun-v3.md and the v4 difflist, and the Reference list above.
-Known conflict, not yet fixed: LEAD-PAGE.md rows 16 to 23 (v3) list different written-yes numbers, "archived" wording and a cleanup deadline of the stop time; the cards and OWNER-VIEW are the truth. The cleanup deadline is set by the studio lead and must be before the stop time.
+LEAD-PAGE.md section 2 was replaced on 16 Nov by a table of pointers to the cards (the old v3 rows are gone). The clean-up deadline is the studio lead's own and is NOT the stop time (v5 line 46).
