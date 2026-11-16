@@ -86,24 +86,25 @@ The Wednesday times above are the dated times: no start-state gates and no chang
 ## The six time statements that disagree with the clock (round 60, M15; the source is RUNBOOK section 8, "Time statements that disagree"; AUDIT PROPOSAL, lead to confirm; nothing here changes the Clock block above)
 | No. | Statement | Clock says | The operator follows |
 |---|---|---|---|
-| 1 | Latest end of the re-pin on the NO-GO path: Mon 23 Nov 07:00Z (12:30 IST) (ORDERS Q27 item 6), with the take by 12:00Z (17:30 IST) (Q27 item 7) | back to back the take would start 12:07Z (17:37 IST), 7 min late | 06:53Z (12:23 IST) as the latest END (Case A, no repeat); Case B 05:58Z (11:28 IST); lead decides which rule gives way |
+| 1 | Latest end of the re-pin on the NO-GO path: Mon 23 Nov 07:00Z (12:30 IST) (ORDERS Q27 item 6), with the take by 12:00Z (17:30 IST) (Q27 item 7) | back to back the take would start 12:07Z (17:37 IST), 7 min late: re-pin end 07:00Z (12:30 IST) + 60 min re-smoke + 60 min practice run + 30 min Row 4 + 127 min for the positive control and the rehearsal block with its gates (10 + 45 + 15 + 45 + 12) + 25 min sign-off + 5 min GO check = 307 min (5 h 7 min) = 12:07Z (17:37 IST) (RUNBOOK section 8, N5) | 06:53Z (12:23 IST) as the latest END when the re-pin runs once and recovery stays on in RUNBOOK step 22 (Wednesday Case A, no repeat of the re-pin); 05:58Z (11:28 IST) when recovery is switched off there (Wednesday Case B); lead decides which rule gives way |
 | 2 | "Rehearsal ending 09:30Z (15:00 IST)" (the end of the lead's 2 h block) | rehearsal 2 ends 09:25Z (14:55 IST); with the gates 09:37Z (15:07 IST) | the gated time, section "Gated Wednesday schedule" below |
 | 3 | "Recording-ready by 12:00Z (17:30 IST)" | Case B: about 12:22Z (17:52 IST) | the lead chooses which rule gives way (reviews/fix-planfiles37.md, decision 3) |
 | 4 | the run time of Block R3 | outside the Clock block | RUNBOOK step 1 starts when `evidence-sha-written` is printed; every Tuesday time moves by the late minutes; cut-off: FIX-PLAN Step R3 |
 | 5 | "Merges done about 04:00Z (09:30 IST)" | RUNBOOK step 1 needs FINAL_SHA | no minute is invented for the gap |
-| 6 | dated times quoted as current in TAKE-CHECKLIST.md (GO check 09:50Z (15:20 IST), take about 10:00Z (15:30 IST), Step D message 2 about 11:00Z (16:30 IST)) | with the gates: GO check 10:02 to 10:07Z (15:32 to 15:37 IST), take 10:07Z (15:37 IST), message 2 about 11:07Z (16:37 IST); Case B 10:57 to 11:02Z, 11:02Z, 12:02Z | the gated times; the dated times hold only with no gates and no change in RUNBOOK step 22 |
+| 6 | dated times quoted as current in TAKE-CHECKLIST.md (GO check 09:50Z (15:20 IST), take about 10:00Z (15:30 IST), Step D message 2 about 11:00Z (16:30 IST)) | with the gates: GO check 10:02 to 10:07Z (15:32 to 15:37 IST), take 10:07Z (15:37 IST), message 2 about 11:07Z (16:37 IST); Case B GO check 10:57 to 11:02Z (16:27 to 16:32 IST), take 11:02Z (16:32 IST), message 2 12:02Z (17:32 IST) | the gated times; the dated times hold only with no gates and no change in RUNBOOK step 22 |
 
-## Gated Wednesday schedule (round 60, M14; ONE table, the arithmetic written out here, outside the Clock block; derived from RUNBOOK section 6 and I20, lead to confirm)
-| What | Dated (UTC, IST) | Gated, Case A (UTC, IST) | Arithmetic |
+## Gated Wednesday schedule (ONE table, the arithmetic written out here, outside the Clock block; derived from RUNBOOK section 6 and I20, lead to confirm; every time is UTC then IST, IST = UTC + 5:30)
+Three start-state gates of 4 minutes each sit inside the 2 h block: (1) before the positive control, (2) before the first send of rehearsal 1, (3) before the first send of rehearsal 2 (RUNBOOK section 6 and RUNBOOK I20 (g); AUDIT PROPOSAL, lead to confirm which send each gate sits before). 3 x 4 = 12 min of shift.
+| What | Dated (UTC, IST) | Gated, Case A (UTC, IST) | Arithmetic (UTC, IST) |
 |---|---|---|---|
-| gate, then rehearsal 1 (45 min) | 07:40 to 08:25 (13:10 to 13:55) | 07:44 to 07:48 gate, 07:48 to 08:33 (13:18 to 14:03) | 07:40 + 4 min gate = 07:44; first send 07:48; 07:48 + 45 = 08:33 |
-| numbers (10) and recording test (5) | 08:25 to 08:40 (13:55 to 14:10) | 08:33 to 08:48 (14:03 to 14:18) | 08:33 + 15 = 08:48 |
-| gate, then rehearsal 2 (45 min) | 08:40 to 09:25 (14:10 to 14:55) | 08:48 to 08:52 gate, 08:52 to 09:37 (14:22 to 15:07) | 08:48 + 4 = 08:52; 08:52 + 45 = 09:37 |
-| sign-off with the start-state gate | 09:25 to 09:50 (14:55 to 15:20) | 09:37 to 10:02 (15:07 to 15:32) | 25 min |
-| GO check | 09:50 to 09:55 (15:20 to 15:25) | 10:02 to 10:07 (15:32 to 15:37) | 5 min |
-| the take (60 min) | 10:00 to 11:00 (15:30 to 16:30) | 10:07 to 11:07 (15:37 to 16:37) | 10:07 + 60 = 11:07 |
-| recording-ready message | about 11:20 | about 11:27 (16:57) | 11:07 + 20 min of watching |
-The total shift is 12 min: rehearsal 1 starts 4 min later than dated (07:44) and has a 4-min gate before its first send (07:48): 8 min; the gate before rehearsal 2 adds 4 more: 12 min (09:25 + 12 = 09:37). Case B (recovery switched off in RUNBOOK step 22 (ii)) adds 55 min from the take on: take 11:02 to 12:02Z (16:32 to 17:32 IST), recording-ready about 12:22Z (17:52 IST). The case of ONE rehearsal instead of two is a lead decision (Plan overview, open point) and no time is invented for it.
+| gate 1 (4 min), positive control (10 min), gate 2 (4 min), rehearsal 1 (45 min) | 07:30 to 08:25 (13:00 to 13:55): control 07:30 to 07:40 (13:00 to 13:10), rehearsal 1 07:40 to 08:25 (13:10 to 13:55) | 07:30 to 08:33 (13:00 to 14:03): gate 1 07:30 to 07:34 (13:00 to 13:04), control 07:34 to 07:44 (13:04 to 13:14), gate 2 07:44 to 07:48 (13:14 to 13:18), rehearsal 1 07:48 to 08:33 (13:18 to 14:03) | 07:30 (13:00) + 4 = 07:34 (13:04); + 10 = 07:44 (13:14); + 4 = 07:48 (13:18); + 45 = 08:33 (14:03) |
+| numbers (10) and recording test (5) | 08:25 to 08:40 (13:55 to 14:10) | 08:33 to 08:48 (14:03 to 14:18) | 08:33 (14:03) + 15 = 08:48 (14:18) |
+| gate 3, then rehearsal 2 (45 min) | 08:40 to 09:25 (14:10 to 14:55) | 08:48 to 08:52 gate (14:18 to 14:22), 08:52 to 09:37 (14:22 to 15:07) | 08:48 (14:18) + 4 = 08:52 (14:22); + 45 = 09:37 (15:07) |
+| sign-off with the start-state gate | 09:25 to 09:50 (14:55 to 15:20) | 09:37 to 10:02 (15:07 to 15:32) | 09:37 (15:07) + 25 = 10:02 (15:32) |
+| GO check | 09:50 to 09:55 (15:20 to 15:25) | 10:02 to 10:07 (15:32 to 15:37) | 10:02 (15:32) + 5 = 10:07 (15:37) |
+| the take (60 min) | 10:00 to 11:00 (15:30 to 16:30) | 10:07 to 11:07 (15:37 to 16:37) | 10:07 (15:37) + 60 = 11:07 (16:37) |
+| recording-ready message | about 11:20 (16:50) | about 11:27 (16:57) | 11:07 (16:37) + 20 min of watching = 11:27 (16:57) |
+The total shift is 12 min (three gates of 4 min): the rehearsal block ends 09:37Z (15:07 IST) instead of 09:25Z (14:55 IST). Wednesday Case B (recovery switched off in RUNBOOK step 22 (ii)) adds 55 min from the take on: take 11:02Z to 12:02Z (16:32 to 17:32 IST), recording-ready about 12:22Z (17:52 IST). The case of ONE rehearsal instead of two is a lead decision (Plan overview, open point) and no time is invented for it.
 
 ## Roles: who is who (round 60, M12; no name is invented: every name cell is filled by the lead)
 | Role | What the person does | Name | Needed by |
