@@ -61,7 +61,7 @@ for n, t in SH:                                                                 
     i = t.find('**When (any one'); j = t.find('**What you may cancel'); w = t[i:j]; w = w[w.find('):**') + 4:]
     pos = [w.find('W%d ' % c) for c in range(1, 10)]
     if min(pos) < 0 or pos != sorted(pos): fail('C53', n + ' card triggers W1 to W9 missing or out of order')
-need('C53', 'W6 the test terminal shows a prompt before you typed `end`')
+need('C53', 'W6 the test terminal shows a shell prompt before you typed `end`')
 need('C54', 'The account must be prepaid, auto-reload off, balance at least the expected total')                          # Q12
 ban('C54', r'auto-reload on\b')
 SEC = [r'\bsk-[A-Za-z0-9_-]{8,}', r'\bAKIA(?!IOSFODNN7EXAMPLE)[A-Z0-9]{12,}', r'\b[A-Za-z0-9+/_-]{40,}\b', r'\bgh[pousr]_[A-Za-z0-9]{20,}', r'\bxox[abp]-[A-Za-z0-9-]{10,}']
@@ -122,13 +122,14 @@ need('C89', 'only at 6.7, after 6.6 passed (new key saved, size checked)', (('A'
 s6 = A.find('## 6. The model key'); s7 = A.find('## 7. The run')
 i6 = A.find('\n7. **Last checks, then the older key.**', s6, s7); i66 = A.find('\n6. ', s6, s7)
 if i6 < 0 or i66 < 0 or i66 > i6: fail('C89', 'A: the older-key step is not after step 6.6 inside section 6')
-need('C90', '**Filled after you press create (6.3), not before:**'); need('C90', '**Filled during the card, just before each cancel (step 2):**')
+need('C90', '**Filled after you press create of the run key (6.3), not before:**'); need('C90', '**Filled during the card, just before each cancel (step 2):**')
 need('C91', '**FREEZE** (a key alive: the card first)')
 need('C92', 'the **backup person** (a human you can call'); need('C92', 'none named: no run')
 need('C93', 'the only valid answer is their own written words "matches the sentences"')
 need('C94', 'A differing printed count: send the counts, do not post, FREEZE.')
-for nm, t in SH:                                                                                                        # Gmail label and Chrome profile: how, or an explicit "ask the lead" (both places)
-    if t.count('how unknown: ask the lead') != 2: fail('C95', '%s: "how unknown: ask the lead" appears %d times (expected 2: Gmail label, Chrome profile)' % (nm, t.count('how unknown: ask the lead')))
+for nm, t in SH:                                                                                                        # Gmail label and Chrome profile: a click path (UNVERIFIED, tolerated) in both places, never "how unknown"
+    if 'how unknown' in t: fail('C95', nm + ': "how unknown" still present')
+    need('C95', 'Gmail on the web: gear icon, See all settings, Filters and Blocked Addresses', ((nm, t),)); need('C95', 'click your profile picture at the top right, Add profile, Continue without an account', ((nm, t),))
 need('C96', '**Deadline** = the end of the period your spending approval covers')
 need('C97', 'remove only that profile, never your normal profile')
 need('C98', '**Key** alone = a model key'); need('C98', 'a **run** = this one filmed attempt'); need('C98', '**Run day** = the one day of the run')

@@ -132,7 +132,7 @@ for n, t in (('A', A), ('B', B)):
     if bad: fail('C13', '%s yes pattern has characters %r' % (n, bad))
     if 'Deadline 2026-11-23' not in y and 'Deadline' not in y: fail('C13', n + ' yes lacks deadline')
 # C14 adversarial and stranger invariants
-INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), ('C14c', 'Three phone alarms'),
+INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), 
        ('C14d', 'Text between backticks is typed without the backticks'), ('C14e', 'only if the window\'s last line is `paste key, Enter:`'),
        ('C14f', '"READ" and "TEST"'), ('C14g', 'A **run name** is 4 to 12 lowercase letters and digits'), ('C14h', 'reverses `end` and the card'), ('C14i', 'minutes of the time `date -u` shows'),
        ('C14j', 'if 7.4 never happened, send "none"'), ('C14k', 'SAMPLE (made-up values'), ('C14l', 'no key was made'), ('C14m', 'never use rotate'),
@@ -142,7 +142,9 @@ INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), 
 for n, t in (('A', A), ('B', B)):
     for c, s in INV:
         if s not in t: fail(c, '%s lacks %r' % (n, s))
-if 'before the earliest' in A and 'wait until the earliest key time has come' not in A: fail('C14w', 'A older key cancel not after earliest key time')
+for n, t in (('A', A), ('B', B)):
+    if 'and not before the earliest key time' not in t: fail('C14w', n + ' 6.3 does not check the earliest key time')
+if 'Three phone alarms' not in A or 'Four phone alarms' not in B: fail('C14c', 'alarm count wording (A three, B four)')
 for n, t in (('A', A), ('B', B)):
     if 'sha256' in t.lower(): fail('C14x', n + ' has a checksum line that looks like a secret')
 # C15 bash -n on the key-save line (key file filled with a made-up path)
@@ -213,7 +215,7 @@ else:
 # C20 angle-bracket placeholders in the sheet come from one list
 PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
          '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
-         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>'}
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>', '<sample word or unknown>'}
 for n, t in (('A', A), ('B', B)):
     for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
         if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))
@@ -232,7 +234,7 @@ for n, t in (('A', A), ('B', B)):
         for k2, v2 in F.items():
             if k2.startswith('ph_') and k2 != ph and k2 not in ('ph_mkc', 'ph_nokey', 'ph_rs', 'ph_cf', 'ph_ksf', 'ph_tp', 'ph_msg') and 'send "%s"' % v2 in steps.get(k, ''): fail('C21', '%s: step %s tells the phrase of another step: %s' % (n, k, v2))
     i = t.find('### THE CARD'); card = t[i:t.find('### The rules')]
-    if 'Send exactly: %s. Only now' % F['ph_mkc'] not in card: fail('C21', n + ': card step 5 lacks its exact phrase')
+    if 'Send exactly: %s (not for a look key). Only now' % F['ph_mkc'] not in card: fail('C21', n + ': card step 5 lacks its exact phrase')
 PHS = [v for k, v in F.items() if k.startswith('ph_')]
 for n, t in TEXTS.items():
     for q in set(re.findall(r'"([^"\n]{6,70})"', t)):
@@ -267,7 +269,8 @@ if mr:
 else: fail('C24', 'R8 character list not found')
 # C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)
 for n, t in (('A', A), ('B', B)):
-    if t.count('one of the three alarms of 6.2') != 1 or 'Three phone alarms' not in t: fail('C25', n + ' alarm count wording')
+    w = 'three' if n == 'A' else 'four'
+    if t.count('one of the %s alarms of 6.2' % w) != 1 or ('Three' if n == 'A' else 'Four') + ' phone alarms' not in t: fail('C25', n + ' alarm count wording')
 exec(open(HERE + 'newchecks-v27.py', encoding='utf-8').read())
 print('check-v27: %d failure(s)' % len(FAILS))
 for f in FAILS: print('FAIL', f)
