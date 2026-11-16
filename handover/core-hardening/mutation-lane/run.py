@@ -155,6 +155,7 @@ import sys
 import tarfile
 import tempfile
 import time
+import traceback
 
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
@@ -524,11 +525,15 @@ def check_out_path(path: pathlib.Path, root: pathlib.Path | None = None) -> None
     if path.is_symlink() or (path.exists() and not path.is_file()):
         raise Refused(f"output path {path} is a symbolic link or not a regular file: refused")
     if not path.parent.is_dir():
-        raise Refused(f"the folder of output path {path} does not exist: refused (nothing is created for you)")
+        raise Refused(
+            f"the folder of output path {path} does not exist: refused (nothing is created for you)"
+        )
     if path.exists() and os.lstat(path).st_nlink != 1:
         raise Refused(f"output path {path} has more than one name (hard link): refused")
     if root is not None and (path.parent.resolve() / path.name).is_relative_to(root.resolve()):
-        raise Refused(f"output path {path} lies inside --root {root}: refused (it would change the scratch tree)")
+        raise Refused(
+            f"output path {path} lies inside --root {root}: refused (it would change the scratch tree)"
+        )
 
 
 def decode_text(b: bytes, rel: str) -> str:
@@ -564,7 +569,9 @@ def run_cmd(
     return subprocess.run(
         argv,
         input=input_bytes,
-        stdin=None if input_bytes is not None else subprocess.DEVNULL,  # no helper may read the caller's input
+        stdin=None
+        if input_bytes is not None
+        else subprocess.DEVNULL,  # no helper may read the caller's input
         capture_output=True,
         check=False,
         cwd=cwd,
@@ -715,8 +722,13 @@ def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path)
     try:
         with tarfile.open(fileobj=io.BytesIO(arc.stdout), mode="r:") as tf:
             tf.extractall(dest, filter="data")
-    except (tarfile.TarError, OSError) as e:  # FilterError is a TarError: a member the data filter refuses
-        raise Refused(f"the archive of {sha} cannot be extracted safely ({type(e).__name__}: {e}): refused") from e
+    except (
+        tarfile.TarError,
+        OSError,
+    ) as e:  # FilterError is a TarError: a member the data filter refuses
+        raise Refused(
+            f"the archive of {sha} cannot be extracted safely ({type(e).__name__}: {e}): refused"
+        ) from e
     for pf in patches:
         # --batch: never ask a question (stdin is /dev/null as well); --forward: a patch that looks reversed or already
         # applied is skipped and fails, never applied reversed; --no-backup-if-mismatch: no `.orig` file in the reference
@@ -1058,7 +1070,9 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
         orphan, _ = stop_orphan(m, root)
-        mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+        mode = (
+            m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+        )
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
             if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):
@@ -1375,7 +1389,9 @@ def run_tests(
     except BaseException:
         SIG.critical = was_critical
         raise
-    leader_start = (proc_stat(proc.pid) or {}).get("start")  # for the pid-reuse check in sweep_group
+    leader_start = (proc_stat(proc.pid) or {}).get(
+        "start"
+    )  # for the pid-reuse check in sweep_group
     try:
         try:
             SIG.critical = was_critical
@@ -1663,7 +1679,9 @@ def load_mutants(a) -> list[dict]:
         try:
             ms = json.loads(pathlib.Path(a.list).read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:  # missing, unreadable, not UTF-8, not JSON
-            raise Refused(f"--list {a.list} cannot be read as a JSON list ({type(e).__name__}: {e}): refused") from e
+            raise Refused(
+                f"--list {a.list} cannot be read as a JSON list ({type(e).__name__}: {e}): refused"
+            ) from e
     else:
         ms = [{"id": a.id, "file": a.file, "old": a.old, "new": a.new, "desc": a.desc}]
     if not isinstance(ms, list) or not ms:
@@ -1680,14 +1698,22 @@ def load_mutants(a) -> list[dict]:
                 f"{m['id']!r}"
             )
         seen.add(m["id"])
-        for k in ("id", "file", "old", "new", "desc"):  # review r6 nit 5: a lone surrogate cannot be written as UTF-8
+        for k in (
+            "id",
+            "file",
+            "old",
+            "new",
+            "desc",
+        ):  # review r6 nit 5: a lone surrogate cannot be written as UTF-8
             v = m.get(k, "")
             if not isinstance(v, str):
                 raise Refused(f"mutant {m['id']}: {k} is not a string: refused")
             try:
                 v.encode("utf-8")
             except UnicodeEncodeError as e:
-                raise Refused(f"mutant {m['id']}: {k} holds a character that is not valid text (a lone surrogate): refused") from e
+                raise Refused(
+                    f"mutant {m['id']}: {k} holds a character that is not valid text (a lone surrogate): refused"
+                ) from e
         if m["old"] == m["new"] or not m["old"]:
             raise Refused(f"mutant {m['id']}: old text is empty or equal to new text (a no-op)")
     return ms
@@ -1847,7 +1873,11 @@ def main():
     a.root = str(root)
     global ROOT_IDENT
     rst = os.stat(root)
-    ROOT_IDENT = (str(root), rst.st_dev, rst.st_ino)  # every later open of the root must find this very folder
+    ROOT_IDENT = (
+        str(root),
+        rst.st_dev,
+        rst.st_ino,
+    )  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
     for signum in HANDLED_SIGNALS:
@@ -1878,7 +1908,10 @@ def main():
                 ok, text = restore_from_marker(root)
                 print(text)
                 if SIG.first is not None:
-                    print(f"signal {SIG.first} arrived during the restore: the restore was finished first", file=sys.stderr)
+                    print(
+                        f"signal {SIG.first} arrived during the restore: the restore was finished first",
+                        file=sys.stderr,
+                    )
                 leave(0 if ok else EXIT_RESTORE_FAILED)
             check_test_args(tests, root)
             check_pytest_config(root, tests)
@@ -1929,7 +1962,9 @@ def main():
             if rawdir.is_symlink():
                 raise Refused(f"--raw {rawdir} is a symbolic link: refused")
             if rawdir.resolve().is_relative_to(root):
-                raise Refused(f"--raw {rawdir} lies inside --root {root}: refused (it would change the scratch tree)")
+                raise Refused(
+                    f"--raw {rawdir} lies inside --root {root}: refused (it would change the scratch tree)"
+                )
             rawdir.mkdir(parents=True, exist_ok=True)
             outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]
             outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]
@@ -2034,10 +2069,10 @@ def main():
         )
         print(f"INTERRUPTED (signal {signum}): {state}", file=sys.stderr)
         sys.exit(128 + signum)
-    except Exception as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
+    except (
+        Exception
+    ) as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
         SIG.exiting = True
-        import traceback
-
         traceback.print_exc()
         state = (
             f"a marker exists ({marker}): a mutant may be planted, run --restore"
@@ -2045,7 +2080,7 @@ def main():
             else "no marker: nothing is planted by this run"
         )
         print(f"INTERNAL ERROR ({type(e).__name__}: {e}); {state}", file=sys.stderr)
-        sys.exit(EXIT_REFUSED)
+        raise SystemExit(EXIT_REFUSED) from e
     finally:
         shutil.rmtree(tmpref, ignore_errors=True)
 

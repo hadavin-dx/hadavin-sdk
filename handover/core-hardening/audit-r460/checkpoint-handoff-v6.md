@@ -5,3 +5,5 @@ Done: read v5, both v5 reviews, citation check v5, ORDERS.md lines 185-198 (core
 Decisions taken (to be written in v6): per-attempt reservation inside the shared retry choke point; totals computed from append-only spend_op under a per-agent advisory lock; run cost in the same transaction; gate reaches kinds through Deps; k1b keeps its own Budget under a window-only scope.
 Next: write CORE-PR-HANDOFF-v6.md, v6-CHANGES.md, run banned-string count, report.
 Blockers: none. No commit (no git here; the lead commits).
+
+Checkpoint 2 (13:20 UTC): CORE-PR-HANDOFF-v6.md written (436 lines, sections 0-9), v6-CHANGES.md written, banned-string count 0 over the three v6 files. Nothing run beyond file reads and that count. Stopping here; report to lead. No agents, shells or processes started.
