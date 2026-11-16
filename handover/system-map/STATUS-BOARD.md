@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T18:53Z
+UPDATED_UTC: 2026-11-16T18:54Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -49,13 +49,13 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a8ddf93c14c56b4f3: round-4 reader, steps v5 (money path); started about 18:52Z; running; next: save findings, fix
-- ab4527ce665ce1da2: reader, drift/REPORT.md counts and stale cites; started about 18:58Z; running; next: findings
 - a15c35150ce684f67: round-3 reader, re-smoke list + M14 page; started about 18:58Z; running; next: findings
-- a6e753d5539793c34: reader, L-01 acceptance line and edited pages; started about 19:02Z; running; next: findings
-- aae1b0608ec6ffd07: fixer, store + scope pages (1 Blocker, 8 Major); started 2026-11-16T18:53Z; running; next: report
-- a4294914f8b3afcfe: fixer, v4.3 patch (P84 Major, Nits); started 2026-11-16T18:53Z; running; next: report
-EMPTY SLOTS: 2 of 8. Reason: every other open row waits on the lead (notice items, 6 steps v5 questions, r40-r42 landings, loopback re-smoke); S-03 lead item; M20 dropped.
+- aae1b0608ec6ffd07: fixer, store + scope pages (1 Blocker, 8 Major); started about 19:07Z; running; next: report
+- a4294914f8b3afcfe: fixer, v4.3 patch (P84 Major, Nits); started about 19:09Z; running; next: report
+- add071d893df5b2dd: fixer, steps v5 round 4 (5 Blocker, 22 Major; money path); started about 19:13Z; running; next: report, then round-5 reader
+- a00d9dca67a04e278: fixer, drift/REPORT.md (D-08 Blocker, 5 Major); started 2026-11-16T18:54Z; running; next: report, then v5 cite pass
+- a3918582cd452f108: fixer, L-01 pages (9 Major); started 2026-11-16T18:54Z; running; next: report, then one more reader
+EMPTY SLOTS: 2 of 8. Reason: all other open rows wait on the lead (notice items, STUDIO LEAD TO FILL questions, r40-r42 landings, loopback re-smoke); readers start the moment these fixers report (each edited page gets one fresh reader).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
