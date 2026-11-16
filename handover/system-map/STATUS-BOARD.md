@@ -5,7 +5,7 @@ ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead A
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
+ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
 AGENTS_RUNNING: 8 at 2026-11-16T11:16:42Z (ORDER 028), all started 11:16Z: TAKE-BLOCKERS cold read, 12-decisions contradiction check, run-day card steps 17-end read, LEAD-PAGE cold read, QUEUE vs board vs REPORT M-row check, banned-claims read, own-digest cite check, DECISION-one-store read. Digested through batch 150.
 INTERRUPTED: none

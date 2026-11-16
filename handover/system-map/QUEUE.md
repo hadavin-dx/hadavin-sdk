@@ -18,7 +18,7 @@ M6 [R460 review DONE (work/review-r460-tools.md); B1, B2 and B4 fixed, B3 row-nu
 M7 [APPLIED 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
 
 M8 [DRAFT cut list written (ARCHIVE-CUT-LIST.md); fact review running 2026-11-16] Lane: structure and size audit of the whole studio repo from your checkout (largest folders, duplicated documents, stale handoff-like files, files over 1 MB tracked in git) with an archive cut list (archive, never delete).
-M9 [DONE via M7 section 6, 2026-11-16] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
+M9 [DONE via M7 section 6, 2026-11-16; board 90 percent, same as M7 minus 5] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
 
 ## REFILL 09:42Z (lead): start these NOW, in parallel, you have 1 agent and 3 free cores (target 70-85 percent)
 M10 [PARTLY DONE 2026-11-16, ring log in rings/RING-LOG.md; fresh round running] SECOND-READER RING: for each deliverable already written (owner view, drift report, master map, ONE-PLACE-TABLE, cut list) start a FRESH naive reader (egm-comprehension) AND a facts-and-cites checker (egm-codebase-details) in parallel; log results in handover/system-map/rings/.
@@ -26,7 +26,7 @@ M11 [DONE 2026-11-16, results in drift/REPORT.md section 11] FACTS-ALREADY-DONE 
 M12 [DONE 2026-11-16, drift/REPORT.md section 11] VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (queue says Wed 18 morning IST, no owner-steps file gives a take date, deadline Wed 25 Nov 20:30 IST): list place, quote, fix.
 M13 [DONE 2026-11-16, drift/REPORT.md section 12] THREE-WAY CONSISTENCY: ports, folder names, file names, step ids that appear in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
 M14 [DONE 2026-11-16 earlier clone 14d8fe46d; re-run on new head 60338533: 1 failed (licence files), 9390 passed] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
-M15 [DONE: reconciliation note in ARCHIVE-CUT-LIST.md] Cut list (archive, never delete) for repo files not used by the take: next area under R460.
+M15 [reconciliation note written in ARCHIVE-CUT-LIST.md, the one list to sign is not built; board 80 percent] Cut list (archive, never delete) for repo files not used by the take: next area under R460.
 Keep at least 6 agents running, up to 8; when one finishes start the next in the same turn.
 
 ## REFILL 09:45Z (lead)
