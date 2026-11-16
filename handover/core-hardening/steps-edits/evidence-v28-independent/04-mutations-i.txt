@@ -31,7 +31,7 @@ M29 CAUGHT expected K09 | deletion sentence (lead note) | new FAIL lines 2: FAIL
 M30 CAUGHT expected K09 | a fourth credential (token) | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-A.md names a further credential kind: GitHub token
 M31 CAUGHT expected K09 | a fourth credential (n8n API key) | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-B.md names a further credential kind: n8n API
 M32 CAUGHT expected K09 | fake model key built from parts | new FAIL lines 3: FAIL K08 OWNER-CARD-v28 changed words [fails. Key: sk-ant-api03-Zq7Zq7Zq7Zq7Zq7Zq7Zq7Zq7Zq7Zq7Zq7Zq] -> [fails.**] (A line 17) have no older-key wordi
-M33 CAUGHT expected K09 | fake AKIA-style key built from parts | new FAIL lines 3: FAIL K08 OWNER-NUMBERS-v28 changed words [**Key AKIAQWERTY1234567890. Your] -> [**Your] (A line 24) have no older-key wording within 15 words
+M33 CAUGHT expected K09 | fake AKIA-style key built from parts | new FAIL lines 3: FAIL K08 OWNER-NUMBERS-v28 changed words [**Key AKIAIOSFODNN7EXAMPLE. Your] -> [**Your] (A line 24) have no older-key wording within 15 words
 M34 CAUGHT expected K09 | long random-looking text | new FAIL lines 1: FAIL K09 OWNER-FILM-v28.md looks like a secret (pattern \b(?=[A-Za-z0-)
 M35 CAUGHT expected K09 | model key typed into n8n | new FAIL lines 1: FAIL K09 OWNER-SHEET-v28-A.md sentence puts a key/secret into n8n: Paste the model key into n8n at 6.4.
 M36 CAUGHT expected K09 | real-looking mail address | new FAIL lines 1: FAIL K09 OWNER-FILM-v28.md has an address that is not example.com: ann***

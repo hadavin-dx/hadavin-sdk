@@ -28,3 +28,5 @@ n03 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=8 SELF-TEST: passed=1574 failed
 n04: PLANT-FAILED (found 0 times, expected 1)
 n05 [/bin/bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a failing stage of the masking filter must stop --mask with exit 4 (helper=0, exit=0)'] (90s)
 n06 [/bin/bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (88s)
+n07 [/bin/bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (96s)
+n08 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1578 failed=4 (the made-up input and output files were deleted) (3s)

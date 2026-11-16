@@ -447,6 +447,12 @@ def c6u_stage(L, find, patch):
         "| Late independent evidence on c6t, item 4 (the verifier exits 1 on REPORT-c6r.md and REPORT-c6s.md) | NOT FIXED ON PURPOSE: the verifier is written for this report; it also exits 1 on REPORT-c6t.md; this report does not claim a pass anywhere else | section 0, c6u-CHANGES.md |",
         "| Late independent evidence on c6t, item 5 (real-looking gmail.com address) | c6u searched c6-skip-audit: only masked fragments in the c6t copies of old owner sheets (not files of c6u); c6u's own files hold no such address | c6u-CHANGES.md |",
     ]
+    rep_all("After C-8 passes, the only wording allowed is the studio lead's own: 'one Postgres server, two databases' (Q21.3).",
+            "After C-8 passes AND the clean-start gate G19 is closed (release note v16 line 39: the caption 'one Postgres server, two databases' needs it), the only wording allowed is the studio lead's own: 'one Postgres server, two databases' (Q21.3).", 1)
+    rep_all("before any text says one Postgres server with two databases (decision 10) |", "before any text says one Postgres server with two databases (decision 10; the clean-start gate G19 must also be closed) |", 1)
+    i = find("- FAILURES FIRST IN c6u")
+    L[i] += (" (9) G12 STATUS, A QUESTION TO YOU (c6t design review m3): your release note line 33 words the G12 row 'the ban list of section 5 decided (the lease sentence is out of the public post, lead answer Q22c)' and line 150 says the plain sentence is in force. This report still treats G12 as OPEN (the safe reading: the lease words stay held until you write the approval). If you consider line 33 already your approval, say so in one sentence and G12 closes; then the gate is redundant, not wrong."
+             " (10) NOT FIXED, c6t design review m5: stale leftovers on the run sheet (rehearsal items 3, 5 and 6; risks item 7 on line 56; risks item 8 on line 57, 'which lease is shipped is not settled', against line 85, 'Shipped lease = 45 s (decided)') are not marked by any row; the lead marks them or asks for rows; no further row was added in this pass so that the row count stays at 96.")
     return L
 
 

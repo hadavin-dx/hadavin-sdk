@@ -47,7 +47,7 @@ C14-item15-without-real-value                    exit 1  OK  failed checks: 1 (n
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [852]
 C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2382 words now) and states its own real count :: 
-C18-check-time-not-in-report                     exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '48'), ('10', '00', '23', 
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '49'), ('10', '00', '23', 
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL section 3 'rows tied to it' column equals the recount
@@ -74,8 +74,8 @@ R11-source-copy-statement-gone                   exit 1  OK  failed checks: 4 (n
 R12-L-SAVEERR-default-yes                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL M-E: L-SAVEERR is in the box and in section 3 with default No
 R13-item12-made-up-domain-check-gone             exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 
 R14-IST-missing-next-to-22-10-example            exit 1  OK  failed checks: 6 (new vs unchanged: 6); first new: FAIL every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: [(9, 'lead, 2026-11-16T18:40
-O-REPORT-c6q-itself-must-fail                    exit 1  OK  failed checks: 153 (new vs unchanged: 153); first new: FAIL F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4
-O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 143 (new vs unchanged: 143); first new: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
+O-REPORT-c6q-itself-must-fail                    exit 1  OK  failed checks: 155 (new vs unchanged: 155); first new: FAIL F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4
+O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 145 (new vs unchanged: 145); first new: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
 S-F1a-C4a-says-failed-all                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
 S-F1b-C11-no-override                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
 S-F1c-C4-row-list-old                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
@@ -168,7 +168,7 @@ T-E19b-sheet-v32-SOURCE-newer                    exit 1  OK  failed checks: 3 (n
 T-E20-release-note-v16-newer                     exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check ti
 T-E20b-release-note-v16-SOURCE-newer             exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check ti
 T-E21-release-note-v17-exists                    exit 1  OK  failed checks: 4 (new vs unchanged: 4); first new: FAIL F4 the report names the newest owner sheet version (v32) and release note (v17) on disk, and the check ti
-T-E22-sheet-v33-exists                           exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL report names the check time 2026-11-16T18:18:05Z and the newest sheet version on disk (v33) :: [32, 32, 3
+T-E22-sheet-v33-exists                           exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL report names the check time 2026-11-16T18:19:44Z and the newest sheet version on disk (v33) :: [32, 32, 3
 T-E23-sheet-v32-B-missing                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL the real v32 files on disk are ['OWNER-SHEET-v32-A.md', 'OWNER-SHEET-v32-SOURCE.md'] and the report names
 T-E17b-sheet-v32-time-wrong                      exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '41')]
 T-E24-EGM-undefined-1c                           exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ..
@@ -204,7 +204,7 @@ U-kept-18-first                                  exit 1  OK  failed checks: 2 (n
 U-row95-gone                                     exit 1  OK  failed checks: 13 (new vs unchanged: 13); first new: FAIL C-1 old text occurs once on its stated line (95 rows) :: [53]
 U-row96-gone                                     exit 1  OK  failed checks: 10 (new vs unchanged: 10); first new: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
 U-row53-chain-broken                             exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL C-1 old text occurs once on its stated line (96 rows) :: [53]
-U-row76-audited-sentence-back                    exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
+U-row76-audited-sentence-back                    exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old word
 U-box-count-96-to-95                             exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL box says the row count of the table :: ('95', 96)
 U-box-too-long                                   exit 1  OK  failed checks: 4 (new vs unchanged: 4); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2771 words now) and states its own real count :: 
 U-two-statuses-L-SAVEERR-sec3-default-no         exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defaults: the default of each question in the start box starts with the same word as the default in sec
@@ -212,11 +212,11 @@ U-B4-unverified-gone                             exit 1  OK  failed checks: 3 (n
 U-B5-defaults-leave-gone                         exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2378 words now) and states its own real count :: 
 U-part2-card-words-wrong                         exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line ([11, 3
 U-L-SHEET-v32-time-missing                       exit 1  OK  failed checks: 4 (new vs unchanged: 4); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2375 words now) and states its own real count :: 
-U-steps-5-to-9-back                              exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
+U-steps-5-to-9-back                              exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted) :
 U-example-time-before-check                      exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
 U-row96-old-text-not-once                        exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL C-1 old text occurs once on its stated line (96 rows) :: [96]
 U-stale-evidence-c6t-name                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry 
 U-applied-rows-c6t-name                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry 
 U-evidence-file-missing                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: every evidence-c6u file the report names exists in this folder (neg-output.txt is written afte
 PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 35: AssertionError ('| C-6 |', 'a second person (someone who did not write the scan) test
-SUMMARY: 220 copies, 2 wrong
+SUMMARY: 220 copies, 0 wrong

@@ -145,3 +145,123 @@ M4d CAUGHT by C79 | yes-line deadline pair changed to another valid pair (securi
 M4e CAUGHT by C55 | secret-shaped text with a slash, 47 characters (C55 slash gap)
 R01 CAUGHT by C27,C86 | B older-key cancel time after 18:14 UTC
 R02 CAUGHT by C88 | B 7.11 title loses the irreversible warning
+R03 CAUGHT by C28,C87 | card proof uses N minus K again
+R04 CAUGHT by C89 | A older-key cancel before the key is saved
+R05 CAUGHT by C81 | one of the seven setting names dropped
+R06 CAUGHT by C83 | R7 prep prefix dropped
+R07 CAUGHT by C84 | 8.1 proof of the deleted key file weakened
+R08 CAUGHT by C60,C85 | R8 loses the restarted word (and its count stays six)
+R09 CAUGHT by C92 | backup person no longer a human you can call
+R10 CAUGHT by C93 | post checker valid answer removed
+R11 CAUGHT by C96 | deadline definition changed
+R12 CAUGHT by C94 | 7.10 mismatch action changed
+R13 CAUGHT by C97 | 8.7 profile removal widened
+R14 CAUGHT by C99 | sample numbers message loses the gap slot
+R15 CAUGHT by C100 | create-form scopes widened
+R16 CAUGHT by C28 | W9 older key exposure trigger weakened
+R17 CAUGHT by C101 | laptop sleep value dropped
+R18 CAUGHT by C91 | FREEZE is called a cancel
+R19 CAUGHT by C98 | word key given a second meaning
+R20 CAUGHT by C103 | profile name differs between steps
+R21 CAUGHT by C95 | Chrome profile how-to and ask-the-lead removed
+R22 CAUGHT by C104 | entry to revoke guessed
+W01 CAUGHT by C172 | A or B: the fourth alarm word removed
+W02 CAUGHT by C172 | older-key point step renamed
+W03 CAUGHT by C172 | FREEZE stops the older-key cancel
+W04 CAUGHT by C173 | sheet letter removed from the heading
+W05 CAUGHT by C174 | n8n slot by name removed
+W06 CAUGHT by C175 | look key scopes clause
+W07 CAUGHT by C176 | A/B condition reversed
+W08 CAUGHT by C177 | 18:14 without its label
+W09 CAUGHT by C178 | lease sentence put back in the public post
+W10 CAUGHT by C179 | latest start of 23 Nov changed
+W11 CAUGHT by C180 | placeholder label changed
+W12 CAUGHT by C181 | R8 word set changed
+W13 CAUGHT by C182 | 168 hours wording
+W14 CAUGHT by C183 | open question reference removed
+W15 CAUGHT by C184 | E-52 UNVERIFIED row changed
+W16 CAUGHT by C171 | sheet grows over 6,300 words
+X01 CAUGHT by C185 | 7-day lag sentence removed
+X02 CAUGHT by C186 | 7.11 escape put back
+X03 CAUGHT by C187 | deadline backstop removed from the sheet
+X04 CAUGHT by C188 | note says the older key in A waits for the lead
+X05 CAUGHT by C189 | 7-day warning removed from the default line
+X06 CAUGHT by C190 | Recall page no longer a stop
+X07 CAUGHT by C191 | clipboard manager rule removed
+X08 CAUGHT by C192 | film person restrictions removed
+X09 CAUGHT by C192 | film person stops for the From column
+X10 CAUGHT by C193 | revoke name rule removed
+X11 CAUGHT by C194 | gap cap changed in facts
+X12 CAUGHT by C195 | UTC time without its IST pair
+X13 CAUGHT by C196 | three waits not named
+X14 CAUGHT by C197 | failed cancel calls more than one person
+X15 CAUGHT by C198 | press Enter removed from 6.4
+X16 CAUGHT by C199 | orphaned appendix fragment
+X17 CAUGHT by C200 | double colon
+X18 CAUGHT by C201 | appendix part number gap
+X19 CAUGHT by C202 | retire check not defined
+X20 CAUGHT by C203 | at re-pin not explained
+X21 CAUGHT by C206 | placeholder spelling in the open list
+X22 CAUGHT by C207 | open row 109 missing
+X23 CAUGHT by C187 | deadline reminder not set after the yes
+X24 CAUGHT by C209 | 18:04 plan-fact sentence removed from the note
+X25 CAUGHT by C185 | 7-day rule worded twice
+X26 CAUGHT by C186 | 7.11 forced cancel uses the claim phrase
+X27 CAUGHT by C196 | 5-minute rule worded differently in 6.2
+Y01 CAUGHT by BUILD | Monday reminder time changed
+Y02 CAUGHT by C210 | dead Mon 23 Nov paragraph back
+Y03 CAUGHT by C212 | old default wording back in the open list
+Y04 CAUGHT by C213 | lead message releases the older-key cancel (H06 phrasing)
+Y05 CAUGHT by C213 | older-key cancel waits for a lead word (other phrasing)
+Y06 CAUGHT by C214 | numbers sample loses the row name
+Y07 CAUGHT by C215 | B warning of 5.1 shortened
+Y08 CAUGHT by C216 | card step 5 older-key sentence reversed
+Y09 CAUGHT by C217 | yes binding removed
+Y10 CAUGHT by C218 | guard honesty sentence reversed
+Y11 CAUGHT by C219 | run day for the first reading removed
+Y12 CAUGHT by C220 | last-5-minutes rule reversed
+Y13 CAUGHT by C221 | film page: how to show only the page area
+Y14 CAUGHT by C222 | sync path wording
+Y15 CAUGHT by C222 | definitions heading
+Y16 CAUGHT by C222 | owner-fill rows described as empty slots
+Y17 CAUGHT by C223 | open list: the minimum is said to be checked
+Y18 CAUGHT by C224 | a LEAD FILLS placeholder spelled differently (H09)
+Y19 CAUGHT by C225 | a fact no source uses (ls_t kind)
+Y20 CAUGHT by C226 | email-shaped text in the owner pages
+Y21 CAUGHT by C227 | hard-coded absolute path in a script
+Z01 CAUGHT by C235 | H33: 7-day time computed with 160 hours
+Z02 CAUGHT by C237 | H37: cancel-list label L5 renamed L4
+Z03 CAUGHT by C238 | H38: UNVERIFIED removed from the section 6 heading
+Z04 CAUGHT by C236 | H50: film pause 10 changed to 12 in one place
+Z05 CAUGHT by C236 | H51: call ceiling 3 changed to 4 in one place
+Z06 CAUGHT by C236 | H53: run length 15 changed to 12 in one place
+Z07 CAUGHT by C212 | H09: warning removed from one place of the lead note
+Z08 CAUGHT by C240 | H18: absolute path in the sheet
+Z09 CAUGHT by C240 | H20: internal code ORD: in the sheet
+Z10 CAUGHT by C240 | H21: internal code DEC: in the sheet
+Z11 CAUGHT by C241 | H25: one-letter rule shortened
+Z12 CAUGHT by C242 | H54: a lead message releases the older-key cancel
+Z13 CAUGHT by C228 | S M1: card L2 widened to any valid key
+Z14 CAUGHT by C229 | S M2: lead note says a failed key save cancels nothing
+Z15 CAUGHT by C230 | S M3: helper trigger (a) no longer the owner himself
+Z16 CAUGHT by C230 | S M3: helper may be released by the lead
+Z17 CAUGHT by C230 | S M3: helper role bar removed from the sheet
+Z18 CAUGHT by C233 | N M5: the typed yes loses the end of the last resort
+Z19 CAUGHT by C232 | S minor 5: the sixth alarm lost
+Z20 CAUGHT by C233 | N M7: yes binding removed
+Z21 CAUGHT by C234 | raw recording no longer secret
+Z22 CAUGHT by C244 | N B1: the unusable wording is back
+Z23 CAUGHT by C244 | N M1: "take B" is back (word with two meanings)
+Z24 CAUGHT by C245 | N minor 1: wrong pointer for the STOP RULE
+Z25 CAUGHT by C237 | label W9 defined as W8
+Z26 CAUGHT by C237 | label L1 defined as L2
+Z27 CAUGHT by C240 | absolute path in the helper page
+Z28 CAUGHT by C238 | UNVERIFIED removed from the section 7 heading
+Z29 CAUGHT by C230 | helper trigger (b) loses its two calls
+Z30 CAUGHT by C230 | helper trigger (d) widened
+TOTAL plants 260 (negative controls ok 1, not counted below):
+TOTAL plants 260: caught by the meant check 259, missed 0 (of them caught only by another check 0), anchor-not-found 0
+
+real	1m54.978s
+user	1m40.154s
+sys	0m5.147s

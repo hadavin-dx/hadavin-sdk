@@ -30,3 +30,8 @@ n05 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-
 n06 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (84s)
 n07 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (91s)
 n08 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1578 failed=4 (the made-up input and output files were deleted) (2s)
+n09 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a time limit of 26 digits must not end the run (exit=143)'] (95s)
+n10 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
+n11 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
+n12 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
+n13 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
