@@ -7,48 +7,52 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 ## Words box (read once; every word below keeps one meaning)
 
 - **The studio lead**: the Claude session that works with you. It is software. You never see its screen, and it never sees yours. Every value it needs you to know arrives as a message from it or as a named file. Where a step says "the studio lead tells you", a message is coming; if none has come, do nothing and ask.
-- **The recording run**: the one run you film, on your throwaway accounts. It uses 3 made-up people. "Run" means only this.
-- **Test person**: one made-up person. The recording run makes three: A, B and C. Their addresses are **test addresses** of the form `take-<run name>-a@example.com`, `-b@` and `-c@`. Nothing is ever really sent to an `example.com` address; the studio lead explains how the mails reach the receiver (open question in the lead's file).
+- **The recording run**: the one run you film, on your throwaway accounts. It uses 3 made-up people. "Run" (as in "run name", "run folder", "run day") means only this. For a command I write "start" or "type", never "run". **Executions**: n8n's own name for its saved list of past workflow runs.
+- **Lead (sales)**: in the title "lead desk video" and in "lead id", "lead" means a made-up sales enquiry (a possible customer asking about the product). It never means the studio lead. **Lead id**: the number of one made-up sales enquiry; the system gives one to each test person when it sends them in.
+- **Take**: in the program's screens and in file names ("take id", `--take`, `take-<run name>`), "take" means this recording run. It is not a film take.
+- **Filtered list**: a HubSpot contact list narrowed by a search text so that it shows only this run's contacts. Step F2 gives the text.
+- **Test person**: one made-up person. The recording run makes three: A, B and C. Their addresses are **test addresses** of the form `take-<run name>-a@example.com`, `-b@` and `-c@`. Nothing is ever really sent to an `example.com` address; the studio lead explains how the mails reach the receiver (open question in the studio lead's file).
 - **Send counts**: person A is sent in twice, B ten times at once, C once while n8n is stopped and started again. That is 13 sends in. The system must treat each person once, so you should see exactly 3 contacts and 3 mails (one per test person), not 13.
 - **Run name**: a short word you invent for each run and never use again. It is typed at the confirmation line (step E) and is NOT part of the command. The program's screens call it "take id". The studio lead tells you the pattern (a word plus 4 digits is likely, not confirmed). Whether the studio lead also needs it earlier is open; if so the studio lead asks you to send it.
 - **Settings file**: the small file with the settings for one run. The studio lead prepares it and tells you its path. You never edit it. The command you run points at it (`--take <settings file>`).
 - **Run folder**: the folder in WSL that holds the run's files. The studio lead sends you the exact `cd` line to type to go into it.
 - **WSL**: the Ubuntu terminal inside Windows. To open it: Windows Start menu, type `Ubuntu`, press Enter. The prompt ends with `$`. `~` means your Linux home folder.
-- **Stop time**: the time after which the run may not spend money or start. The program's screens call it "window end". Planned: 2026-11-23 18:29 UTC = 23:59 IST (Mon 23 Nov 2026). The program refuses a start that is too close to it (it needs about 14 minutes), so the latest start is before about 18:15 UTC = 23:45 IST; the studio lead gives you the exact latest start time.
+- **Stop time**: the time after which the run may not spend money or start. The program's screens call it "window end". Planned: 2026-11-23 18:29 UTC = 23:59 IST (Mon 23 Nov 2026). The program refuses a start that is too close to it: its own run takes about 49 minutes (2630 seconds plus 6 times the 45-second lease; computed by the program; UNVERIFIED). The hard latest start the program accepts is 17:40 UTC = 23:10 IST (49 minutes before the stop time). The program may check the 49 minutes a second time after you type your answers (planned about 5 minutes), so the safe latest start is 17:30 UTC = 23:00 IST (UNVERIFIED). The film pause (at most 10 minutes) is outside the 49 minutes. 12:00 UTC = 17:30 IST is the planned start, a comfort margin only, not a promise of a second try. The studio lead gives you the exact latest start time.
 - **Secret files**: the files in your WSL home folder that hold the app passwords and keys for this run. You made them. By procedure only you open them; nothing in the setup stops the studio lead's session from reading them (see the line below). The studio lead tells you their names.
-- **OWNER TO APPROVE (not assumed accepted): the studio lead's session and the secret files may run under the same Linux user in the same WSL home, so the rule "nobody else opens them" is a promise of procedure, not a block; if the lead's session were wrong or hijacked, it could read the secret files and n8n's key that decrypts the saved passwords. Do you accept this risk for this run, yes or no, in writing?**
+- **OWNER TO APPROVE (not assumed accepted)**: one risk you must accept or refuse in writing: the studio lead's program can open your secret files. It is asked and answered in step A, part 1, not here. Until you answer yes in writing, no run starts.
 - **App password**: a password Google makes for one program. **Private app (HubSpot)**: a named access setup in the HubSpot test account; each has a key (token).
 - **Key**: only a secret (a password, an app password, a token). It never means an id or an address.
 - **n8n**: the tool that takes the test people in, writes the HubSpot contact and sends the mail. **Workflows**: the saved step chains inside n8n. **Hook door**: a second web address n8n listens on; the program does not check it.
 - **Postgres**: the database program that stores the table of test people. It runs in a Docker container on this laptop.
-- **The program**: the checking program you start in WSL (`scripts/run_real_check_n8n.py`). **The model program**: a small program of ours that asks the AI model once per test person.
+- **The program**: the checking program you start in WSL (`scripts/run_real_check_n8n.py`). **The model program**: a small program of ours that is meant to ask the AI model once per test person (not yet shown to work).
 - **Receiver**: the throwaway Gmail account that only receives the demo mails. **Sender**: the throwaway Gmail account n8n sends from.
 - **The notice**: the screen of numbers the program prints before it asks you to type `y`.
-- **Rehearsal**: a practice run on this laptop with stand-in programs, made-up data, no live account, no key and no model call. It costs US$0. The studio lead runs it; you do nothing. **Trial run**: a practice run on your throwaway accounts. Whether one happens is open (see the lead's file); until told, none happens.
+- **Rehearsal**: a practice on this laptop with stand-in programs, made-up data, no live account, no key and no model call. It costs US$0. The studio lead runs it; you do nothing. **Trial**: a practice on your throwaway accounts. Whether one happens is open (see the studio lead's file); until told, none happens.
 - **Marker file**: `~/.hadavin-take-tags/<run name>.used`. The program makes it so a run name cannot be used twice. You never delete or edit it.
 - **Run lock file**: a file ending in `.lock` beside the run folder (the studio lead tells you the exact name). It tells the program that a run is going.
 - **Retire check**: a program command that tries to log in with the keys you cancelled and must be refused (step I).
 - **Exit code**: a number the program leaves behind when it ends. To see it, type `echo $?` and Enter in the same terminal right after the program ends, before any other command. 0 means success.
-- **Delete**: make it gone for good. Used for: HubSpot contacts, HubSpot private apps, secret files, and demo mails (move to Trash, then empty Trash). The program's own screens say "archive" for the contact deletion; it means delete. HubSpot may keep a recoverable copy for some time; the studio lead has not checked how long (open). **Archive**: only Gmail's own Archive button. This sheet never uses it. **Revoke**: cancel an app password so it stops working (the Google button is named "Remove"). This sheet uses no other word for these three acts.
+- **Delete**: make it gone for good. Used for: HubSpot contacts, HubSpot private apps, secret files, and demo mails (move to Trash, then empty Trash). The program never deletes contacts. You delete them by hand. HubSpot may keep a recoverable copy for some time (open, UNVERIFIED; the studio lead has not checked how long). **Archive**: only Gmail's own Archive button. This sheet never uses it. **Revoke**: cancel an app password so it stops working (the Google button is named "Remove"). This sheet uses no other word for these three acts.
 - **Browser profile**: a Chrome user profile (the round picture top right), never a Gmail menu.
 - **Edited video**: the finished video file you watch in step H.
 - **Live accounts**: your throwaway Gmail accounts and the HubSpot test account. Made-up data in them is still made up.
 
 ## Order of the day
 
-1. A: the studio lead sends the numbers; you answer with a written yes.
+1. A: the studio lead sends the password-risk question and the numbers; you give two written answers: the risk answer and the money yes.
 2. B: laptop settings.
 3. C: check the receiver mailbox, make the browser profile, n8n sign-in only if asked.
 4. D: check what the film may show.
 5. E: start the run; you type `y` and the confirmation line.
 6. F: the film pause; you type `end` only when filming of the contact list is done.
-7. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post).
+7. F2: delete this run's contacts and demo mails (after the studio lead says filming is finished).
+8. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post).
 
 **Date:** the studio lead gives the run date. Until it does, do nothing. Fixed times: stop time 18:29 UTC = 23:59 IST on Mon 23 Nov 2026. The stop time limits only the start and the spending of the run. Watching (H) and clean-up (I) have their own deadlines, which the studio lead gives you (open); they are not tied to the stop time. The post is planned for Wed 25 Nov 2026, 15:00 UTC = 20:30 IST.
 
 ## What the run can cost
 
-- The run makes at most 3 paid model calls (one per test person). The model program writes down each call before it is made, so one test person is never paid for twice.
+- The run makes at most 3 paid model calls (one per test person). The model program is meant to write down each call before it is made, so that one test person is not paid for twice (not yet shown to work).
 - The worst-case price per call: **the studio lead gives you the number before you say yes.** The total is 3 times that number. Your written yes names that total.
 - The program does NOT enforce a dollar ceiling. A spending backstop and the stop time sit in a settings file that a person checks (you do not enforce them either). If a number looks wrong to you, answer no.
 - A failed run still costs what it spent. Every new run needs its own yes (step A), with the money spent so far shown.
@@ -56,7 +60,7 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 ## Rules that hold in every step
 
 1. **Never send the studio lead** a password, token, key, mailbox address or the contents of any secret file. Short sentences only. A file path is fine.
-2. **The typed answers are yours alone:** the `y`, the 6-digit number with the run name, and `end`. The 6-digit number only blocks blind and piped answers. A tool that reads the screen and types the number back still passes. So never let a tool, script, assistant, agent or helper window type for you. Run the program only on your laptop, in your own terminal.
+2. **The typed answers are yours alone:** the `y`, the 6-digit number with the run name, and `end`. The 6-digit number only blocks blind and piped answers. A tool that reads the screen and types the number back still passes. So never let a tool, script, assistant, agent or helper window type for you. Start the program only on your laptop, in your own terminal.
 3. **Before every paid run you give a written yes WITH numbers** (step A). Your earlier go-ahead "once everything is ready" is a general go-ahead; it is not that yes, and the written yes does not exist yet. No numbers, no run.
 4. **You post. Claude never posts.**
 5. **Never point the run at your real company mailbox.** It uses only the throwaway receiver and sender.
@@ -65,8 +69,10 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 
 ## Before the run
 
-### Step A. The written yes with numbers (you, once per paid run)
-The studio lead sends one message with:
+### Step A. The written answers: the password risk and the yes with numbers (you, once per paid run)
+**Part 1. The password risk (answer this first).** The studio lead's program runs on your laptop under the same login as the files that hold your passwords. Nothing technical stops it opening them. If it went wrong or someone took it over, it could read the passwords of your throwaway accounts and use them. They hold made-up data only. (UNVERIFIED reading of the risk.) Do you accept this for this run, yes or no, in writing? Answer in one line, for example: "Yes, I accept the password risk for run <run name>." or "No." Until you answer yes in writing, no run starts. If you answer no, no run starts. This answer covers ONE run, like the money yes below; answer again for every new run (UNVERIFIED: the studio lead may offer one answer for all runs of this video; until it says so in writing, answer each time). It stays OWNER TO APPROVE, not assumed accepted.
+
+**Part 2. The written yes with numbers.** The studio lead sends one message with:
 - at most 3 model calls in this run;
 - the worst-case cost per call, and 3 times that figure;
 - the money spent so far;
@@ -97,7 +103,7 @@ Check in the `demo-take` profile that NONE of these shows an address other than 
 1. Receiver mailbox: do not click or hover your account picture. Do not open a mail or "show details". Look at the mail LIST only. If a list row shows another address (the sender column), tell the studio lead; the studio lead decides what is filmed.
 2. Do not film the sender mailbox or its "Send mail as" settings.
 3. Tab titles and the address bar, if they carry an address.
-4. n8n's list of runs: only made-up names and test addresses, and no old run. Do not film the detail of the mail-sending step (it may show the company address and the sender address). Until the studio lead says that detail is safe, do not open it.
+4. n8n's list of executions: only made-up names and test addresses, and no old run. Do not film the detail of the mail-sending step (it may show the company address and the sender address). Until the studio lead says that detail is safe, do not open it.
 5. The proof screen: you choose it in step E from the screens the studio lead offers. It may show test addresses and counts only.
 6. Terminal windows: no address in the prompt, history or settings output.
 7. Mail notifications, desktop pop-ups, the system tray.
@@ -112,30 +118,41 @@ Have ready: WSL open, the `cd` line from the studio lead typed (you are in the r
 3. "Type y to start".
 4. "Now type the confirmation number shown above, a space and the take id to confirm:".
 
-Read the notice: 3 test people, up to 3 model calls and the worst case, up to 3 contacts created and left in HubSpot for you to delete by a filtered list, up to 3 mails (one per test person; see "Send counts"), n8n stopped once. Compare the money figures with your written yes. If a number is not what you approved, type nothing and tell the studio lead.
+Read the notice: 3 test people, up to 3 model calls and the worst case, up to 3 contacts created and left behind in HubSpot for you to delete by a filtered list (step F2), up to 3 mails (one per test person; see "Send counts"), n8n stopped once. Compare the money figures with your written yes. If a number is not what you approved, type nothing and tell the studio lead.
 - Type `y` and Enter **yourself**. A piped or scripted `y` is refused on purpose. Closed input ends the run with exit code 2 and nothing is sent. The flags `--yes` and `-y` do not exist.
 - Then type the 6-digit number the notice showed (new every run), a space, your run name, and Enter. Example: `123456 <run name>`. An answer typed in under 2 seconds is refused. A wrong line ends the run with nothing sent.
 - Pick a NEW run name for every run, also after a failed one. After both typed answers the program writes the marker file in the Linux home folder. See which run names are used with `ls ~/.hadavin-take-tags`.
 - If a login line says anything other than "still works", nothing was sent. Tell the studio lead. Do not start again until the studio lead says so (repeated failed logins can trigger a Google sign-in alert).
-- **Exit codes of the run program** (see step "Refusals and exit codes" below). Tell the studio lead the number and the last line printed.
-- During the run: contacts appear in HubSpot and one mail per test person appears in the label `demo`. The studio lead's session stops and restarts n8n while person C is sent (who types the stop command is open in the lead's file). You touch nothing.
+- **Exit codes of the program** (see step "Refusals and exit codes" below). Tell the studio lead the number and the last line printed.
+- During the run: contacts appear in HubSpot and one mail per test person appears in the label `demo`. The studio lead's session stops and restarts n8n while person C is sent (who types the stop command is open in the studio lead's file). You touch nothing.
 - Stop and tell the studio lead: a number in the notice is not what you approved; a count is wrong; the laptop sleeps.
-- **The proof screen is your choice.** The studio lead offers candidate screens (n8n's list of runs, the rows of the people table, HubSpot, Gmail). You pick one and say which. The studio lead says what it shows. The video must not show or claim any portal, approval step or audit trail.
+- **The proof screen is your choice.** The studio lead offers candidate screens (n8n's list of executions, the rows of the people table, HubSpot, Gmail). You pick one and say which. The studio lead says what it shows. The video must not show or claim any portal, approval step or audit trail.
 
 > **WARNING before step F. When the program asks for `end`, closing the terminal, pressing Ctrl-C, or typing two wrong words in a row ENDS the pause, possibly BEFORE the contact list is filmed. The contacts stay in HubSpot (the program never deletes them). Type exactly `end` (three letters, lower case), and only when the filming of the contact list is done.**
 
 ### Step F. The film pause: type `end` (you)
-The program prints: "Film the contact list now: type `end` and press Enter". (UNVERIFIED: the exact words are checked at the studio lead's re-smoke; the old words said "archive".) The person who films (set before the run) films the HubSpot contact list. Type `end` and Enter yourself only when that person tells you the contact list is filmed (if you film, when you have filmed it). The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list. Only the exact word `end` ends the pause. Any other line makes the program print "type exactly: end" and ask once more; a second wrong line also ends the pause. Closed input on the first prompt ends the pause at once. In every case the contacts stay in HubSpot until you delete them.
-You should see HubSpot still show this run's contacts, and the program print its result and the list of contacts it left behind (the program does not delete them).
-- Stop and tell the studio lead: you closed the terminal or pressed Ctrl-C early. The filming pause ends; nothing is deleted by the program. The studio lead gives you the list of left-behind contacts and the count.
-- The HubSpot key the program uses is read-only: it cannot create, change or delete contacts. So the program never deletes contacts (status: UNVERIFIED until the studio lead's re-smoke on the merged program). Expect to delete this run's contacts yourself, from the filtered list the studio lead gives you (step G, point 2).
+The program prints: "Film the contact list now: type `end` and press Enter". (UNVERIFIED: the exact words are checked at the studio lead's check on the final program.) The person who films (set before the run) films the HubSpot contact list. Type `end` and Enter yourself only when that person tells you the contact list is filmed (if you film, when you have filmed it). The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list. Only the exact word `end` ends the pause. Any other line makes the program print "type exactly: end" and ask once more; a second wrong line also ends the pause. Closed input on the first prompt ends the pause at once. In every case the contacts stay in HubSpot until you delete them.
+You should see HubSpot still show this run's contacts, and the program print its result and the list of contacts it left behind (the program does not delete them). Contacts left behind are EXPECTED, not an error. The one source for them is the list the program prints on screen. (UNVERIFIED: whether left-behind contacts change the exit code; this sheet does not say.)
+- Stop and tell the studio lead: you closed the terminal or pressed Ctrl-C early. The filming pause ends; nothing is deleted by the program. If the printed list is lost, tell the studio lead; do not guess.
+- The program's own HubSpot key is read-only: it cannot create or delete contacts. n8n's key (a different key) is the one that creates them. So the program never deletes contacts (status: UNVERIFIED until the studio lead's check on the final program). You delete this run's contacts yourself, from the filtered list, in step F2.
+
+> **WARNING before step F2. The deletes in step F2 cannot be undone. Delete ONLY HubSpot contacts found by the search text below, and ONLY demo mails in the receiver account. Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
+
+### Step F2. Delete this run's contacts and demo mails (you)
+*Added 16 Nov at the studio lead's Batch 4 order; studio lead to confirm. This step is used after a run that succeeded. After a failed run use step G.*
+When: after you typed `end`, the program printed its result and its list of contacts left behind, and the studio lead has told you in a message that filming is finished. (UNVERIFIED: the studio lead has not named the time; if it wants the contacts kept longer, it says so and you wait.)
+1. Look at the list the program printed: how many contacts it left behind (up to 3).
+2. In HubSpot, open Contacts and search for each test address in turn. The search texts are `take-<run name>-a`, `take-<run name>-b` and `take-<run name>-c` (all at example.com). This is the filtered list. (UNVERIFIED: the search text comes from the studio lead's reading of the program; whether `<run name>` is exactly the text the program shows as "take id" is not confirmed. If a search shows nothing, tell the studio lead; do not search wider.) Tick only the contacts shown, then More, Delete. The number you delete must match the program's printed list; if it does not, stop and tell the studio lead.
+3. In the receiver Gmail, select the demo mails in the label `demo` and in the Inbox, click the Trash icon, open Trash, click "Empty Trash now". (This is "delete" in the Words box.)
+4. Tell the studio lead: "contacts and demo mails deleted" and the number of contacts you deleted.
+You should see the filtered list empty and the label `demo` and the Inbox empty.
 
 > **WARNING before step G. In step G delete ONLY mails in the receiver account and ONLY HubSpot contacts of the failed run (the studio lead gives you the count and the run name). Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
 
 ### Step G. If a run fails (you)
 The studio lead says why, by message. Then:
 1. In the receiver Gmail, select the demo mails in the label `demo` and in the Inbox, click the Trash icon, open Trash, click "Empty Trash now". (This is "delete" in the Words box.)
-2. In HubSpot, delete any leftover contacts the studio lead counted: Contacts, tick them, More, Delete. Delete only contacts whose name or address carries this run name.
+2. In HubSpot, delete any contacts left behind that the studio lead counted (the program's printed list is the source; use the search text of step F2): Contacts, tick them, More, Delete. Delete only contacts whose name or address carries this run name.
 3. Tell the studio lead: "demo mails deleted" and the number of contacts you deleted.
 4. Give a NEW written yes with numbers (step A) and pick a NEW run name. A run that got past both typed answers has used its name even if it failed.
 If the studio lead later says a new run is no longer possible before the stop time, no new run happens.
@@ -156,41 +173,46 @@ Starts when the studio lead says the last run is done. Order matters.
    - "STILL WORKS" (exit code 3): a key still works; revoke or delete it again (steps 1 and 2) and rerun.
    - "could not tell" (exit code 2): the studio lead tells you when to rerun.
    - Keep the secret files until the check passes. See the exit code with `echo $?`.
-5. Only after it passed, tell the studio lead "retire check passed". The studio lead then removes n8n's connections and saved runs (made-up data only) from n8n, turns the saving of executions off, stops n8n, and removes the run folder and the database container.
+5. Only after it passed, tell the studio lead "retire check passed". The studio lead then removes n8n's connections and saved executions (made-up data only) from n8n, turns the saving of executions off, stops n8n, and removes the run folder and the database container.
 6. Then delete the secret files in WSL. The studio lead sends the list of file names. Type `shred -u <the names, separated by spaces>`. If it says `shred: command not found`, type `rm <the same names>` instead. These deletes cannot be undone. Check with `ls -l` on the folder (the studio lead gives the folder) that the files are gone. Do NOT delete `~/.hadavin-take-tags/<run name>.used`.
 7. Set laptop sleep and lid settings back. Sign out of the `demo-take` browser profile.
 - The copy of the passwords inside n8n ends only by your revocation in step 1; you can only show that with a screenshot, not a check.
 
 ### Step J. Post on Wed 25 Nov 2026, 15:00 UTC = 20:30 IST (you)
-You post; Claude never posts. The post says only: contacts arrive through n8n; n8n writes the HubSpot contact and sends the mail; **"the same lead id sent twice is processed once"** ("lead id" here is the number the system gives each test person when it sends them in).
+You post; Claude never posts. The post says only: contacts arrive through n8n; n8n writes the HubSpot contact and sends the mail; **"the same lead id sent twice is processed once"** ("lead id" here is the number the system gives each test person when it sends them in; keep this claim wording exactly); plus the crash line the studio lead gives you (see "The crash line" below).
 It must NOT say:
 - that the same person through two doors is one contact;
 - that no contact data stays in n8n, or that recovery takes within 60 seconds, or that an alert comes within 30 seconds;
 - that a portal, an approval step or an audit trail exists or shows these rows;
 - that n8n cannot reach the internet (its outgoing traffic is switched off by settings and only watched, not blocked);
-- that the run is crash-safe. "Processed once" is not called crash-safe until the mail-crash test (a stop between the mail being sent and the program noting it as done) passes (plan lines 476 and 505). If that test ran twice and missed the moment both times, the post must say that window is "untested"; you may accept that limit in writing; the studio lead tells you the result of the test.
-- that the count is made with an independent login (until that login is built and shown to run).
+- any of the claims taken out of the post: a spending cap enforced by the program, that the AI model is asked once per test person, that a separate login does the counting, or that the mails and contacts are counted by our own independent check (until such a login is built and shown to work).
+
+**The crash line (it must be in the post).** The post must not call the run crash-safe. A crash test checks a stop between the mail being sent and the program noting it as done. The post carries one of two wordings only, and the studio lead gives you the exact words and the test result:
+- "does not hold": if the test shows 2 or more mails, the post says that "processed once" does NOT hold for a crash between sending the mail and the program noting it was sent.
+- "untested": if the test ran twice and missed that moment both times ("missed the moment" means the stop did not land in the gap between the mail being sent and the program noting it), the post says that window is "untested".
+In both cases you may accept the limit in writing; your written acceptance applies to both wordings. Only a pass of the mail-crash test lets the post say "processed once" also covers that crash. (Source: plan-wp6-resmoke-v5.md, lines 476 and 505, a studio file you do not need to read.)
 The exact final words come from the studio lead after the rehearsal. Until you have them, do not post. Someone other than the author of the words should check the post against this list before you post (the studio lead names who).
 
 ## What to send the studio lead (never a secret)
 
 | When | Send |
 |---|---|
-| Before a run | your answer on the run date; the run name you picked (a word, no secret); your written yes with numbers (step A) |
+| Before a run | your answer on the run date; the run name you picked (a word, no secret); your written answer on the password risk (step A, part 1) and your written yes with numbers (step A, part 2) |
 | Run day | "label and inbox empty"; "profile ready"; "done" for n8n, only if asked; any problem line from step C |
 | During a run | the exit code and the last printed line if the run stops; "closed the terminal early" if it happens; the proof screen you picked |
-| After a run | "accepted" or the bad seconds; "an address is visible" if you see one |
+| After a run that succeeded | "contacts and demo mails deleted" and the number of contacts deleted (step F2) |
+| After the edited video | "accepted" or the bad seconds; "an address is visible" if you see one |
 | After a failed run | "demo mails deleted" and the number of contacts deleted; a new written yes |
 | Clean-up | the names of the HubSpot private apps you made; the screenshots; the retire-check output (words and exit code only); "retire check passed"; "secret files deleted" |
 | Before posting | the post text, for comparison with the final claim |
 
 ## Refusals and exit codes you may meet
 
-Exit codes of the run program (step E):
+Exit codes of the program (step E):
 - 0: pass.
 - 1: your answer was not `y`, or the confirmation line did not match.
 - 2: the program refused to start or to go on (a setting, no keyboard, closed input, too fast, a run name used before, a lock file exists, the stop time too close).
-- 3: a count or verdict failed after the run.
+- 3: a count or verdict failed after the run. (Contacts left behind are expected; whether they change this code is UNVERIFIED.)
 
 Exit codes of the retire check (step I) are different:
 - 0: both logins refused (good).
@@ -199,7 +221,7 @@ Exit codes of the retire check (step I) are different:
 
 Other refusals:
 - **Run lock file:** if the program stops hard it may leave a `.lock` file beside the run folder; the next run with the same name is refused. Delete it by hand ONLY when the studio lead says so.
-- **Start deadline:** the program refuses to start unless it can finish about 14 minutes before the stop time. With stop time 18:29 UTC, the latest start is before about 18:15 UTC (23:45 IST). The studio lead gives the exact time.
+- **Start deadline:** the program refuses to start unless it can finish its own run (about 49 minutes; UNVERIFIED) before the stop time. With stop time 18:29 UTC, the hard latest start is 17:40 UTC (23:10 IST). If the program checks the 49 minutes again after your typed answers, a start at 17:40 UTC fails that second check, so 17:30 UTC (23:00 IST) is the safe latest start (UNVERIFIED). The film pause of up to 10 minutes is outside the 49 minutes. The studio lead gives the exact time.
 
 ## What is not proven yet (plain words)
 
