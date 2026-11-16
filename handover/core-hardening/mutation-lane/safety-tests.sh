@@ -1,7 +1,7 @@
 #!/bin/bash
-# Safety tests T1-T35 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T46 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T46 (round 4) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
 RUN=${RUN:-$(dirname "$(readlink -f "$0")")/run.py}
 S=${SCRATCH:?set SCRATCH to a scratch folder outside every repository}
 VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
@@ -14,6 +14,7 @@ printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    assert f() == 1\n' > tests/test_fast.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    open("junk.txt", "w").write("x")\n    assert f() == 1\n' > tests/test_junk.py
 mkdir docs; printf 'alpha\n' > docs/note.txt
+printf 'import subprocess, sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_spawn():\n    subprocess.Popen(["sleep", "3137"])\n    time.sleep(30)\n' > tests/test_spawn.py
 printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_a():\n    print("before-timeout-marker", flush=True)\n\ndef test_b():\n    time.sleep(30)\n' > tests/test_partial.py
 git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD); REALREPO=$T/repo   # the toy repository stands in for "the real repository" (this folder is not inside a git repository)
 reset_state() { pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; rm -rf "$STATE"; }
@@ -25,7 +26,8 @@ mut() { base --id m1 --file "${FILE:-src/mod.py}" --old 'return 1' --new 'return
 last() { tail -1 "$T/root/src/mod.py" | tr -d ' '; }
 real_last() { tail -1 "$T/repo/src/mod.py" | tr -d ' '; }
 state_files() { ls -A "$STATE" 2>/dev/null | grep -v lock | tr '\n' ' '; }
-chk() { if eval "$2"; then echo "  PASS: $1"; else echo "  FAIL: $1"; FAILS=$((FAILS+1)); fi; }
+CHECKS=0; SKIPPED=""
+chk() { CHECKS=$((CHECKS+1)); if eval "$2"; then echo "  PASS: $1"; else echo "  FAIL: $1"; FAILS=$((FAILS+1)); fi; }
 FAILS=0
 orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
 # waits for ANY marker AND the planted text, then 3 s so that pytest has really started (it does not wait for
@@ -161,6 +163,11 @@ refuse "--junitxml" --junitxml=/x/y.xml
 refuse "--confcutdir" --confcutdir=/x
 refuse "--override-ini" --override-ini=addopts=-x
 refuse "--import-mode" --import-mode=append
+for pl in runner skipping python terminal mark assertion capture fixtures logging main warnings debugging setuponly setupplan unittest faulthandler doctest monkeypatch recwarn stepwise junitxml pastebin; do refuse "-p no:$pl (core plugin)" -p "no:$pl"; done
+refuse "-pno:runner (attached form)" -pno:runner
+refuse "-p no:RANDOMLY (plugin names are exact)" -p no:RANDOMLY
+refuse "-p no:randomly.runner" -p no:randomly.runner
+refuse "-p no: (empty name)" -p no:
 refuse "path ../ outside root" ../repo/tests
 refuse "absolute path outside root" /etc
 refuse "path through a link out of the root" linkout
@@ -210,7 +217,7 @@ echo "== T34 test output that is not UTF-8 is replaced, not an error (fake pytho
 fresh_root; rm "$T/root/.venv"; mkdir -p "$S/fakevenv/bin"; printf '#!/bin/sh\nprintf "\\377\\n"\nexit 1\n' > "$S/fakevenv/bin/python"; chmod +x "$S/fakevenv/bin/python"; ln -s "$S/fakevenv" "$T/root/.venv"
 mut --skip-import-check -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T34 run ends normally (rc $rc) with verdict KILLED in the raw file" "[ $rc -eq 0 ] && grep -q 'VERDICT: KILLED' '$S/rawT/X-m1.txt'"; chk "T34 file restored" "[ '$(last)' = return1 ]"
 echo "== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted"
-if [ "${SKIP_T35:-0}" = 1 ]; then echo "  (T35 skipped on request: an older copy would write into a shared /tmp folder)"; elif [ -e "/tmp/hadavin-mutation-lane-$(id -u)" ]; then echo "  (skipped: /tmp/hadavin-mutation-lane-$(id -u) already exists and is not ours to touch)"; else
+if [ "${SKIP_T35:-0}" = 1 ]; then echo "  (T35 skipped on request: an older copy would write into a shared /tmp folder)"; SKIPPED="$SKIPPED T35"; elif [ -e "/tmp/hadavin-mutation-lane-$(id -u)" ]; then echo "  (skipped: /tmp/hadavin-mutation-lane-$(id -u) already exists and is not ours to touch)"; SKIPPED="$SKIPPED T35"; else
 fresh_root; ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!
 for _ in $(seq 120); do ls /tmp/hadavin-mutation-lane-$(id -u)/*.planted.json >/dev/null 2>&1 && [ "$(last)" = return2 ] && { sleep 3; break; }; sleep 0.5; done
 kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
@@ -219,5 +226,147 @@ TMPDIR=/tmp python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T35b
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; chk "T35c nothing planted anywhere: exit 0 (got $rc)" "[ $rc -eq 0 ]"
 rm -f "/tmp/hadavin-mutation-lane-$(id -u)/$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16).lock"; rmdir "/tmp/hadavin-mutation-lane-$(id -u)" 2>/dev/null   # remove only what this test made
 fi
+echo "== T36 hard links (review r3 safety Major B): a target with two names would plant the mutant in the other file"
+fresh_root; rm "$T/root/src/mod.py"; ln "$T/repo/src/mod.py" "$T/root/src/mod.py"; M0=$(stat -c %y "$T/repo/src/mod.py")
+out=$(mut -- tests/test_fast.py 2>&1); rc=$?; echo "$out" | cut -c1-200; hit=$(printf %s "$out" | grep -c 'exactly one name')
+chk "T36a target hard-linked to a real repository file: refused for that reason (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
+chk "T36a the real repository file was not even touched (content and modification time)" "[ '$(real_last)' = return1 -a '$(stat -c %y "$T/repo/src/mod.py")' = '$M0' ]"
+fresh_root; rm -rf "$S/plain"; mkdir "$S/plain"; git -C "$T/repo" archive "$SHA" | tar -x -C "$S/plain"; rm -rf "$T/root"; cp -al "$S/plain" "$T/root"; ln -s "$VENV" "$T/root/.venv"; M1=$(stat -c %y "$S/plain/src/mod.py")
+out=$(mut -- tests/test_fast.py 2>&1); rc=$?; hit=$(printf %s "$out" | grep -c 'exactly one name')
+chk "T36b tree built with cp -al: refused (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
+chk "T36b the linked original was not touched" "[ '$(stat -c %y "$S/plain/src/mod.py")' = '$M1' ]"
+rm -rf "$S/plain"
+python3 - "$RUN" "$S" <<'PY'
+import importlib.util, os, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+d = pathlib.Path(sys.argv[2]) / "hl"; d.mkdir(exist_ok=True)
+a, b, c = d / "a.txt", d / "b.txt", d / "c.txt"
+for x in (a, b, c): x.unlink(missing_ok=True)
+a.write_bytes(b"original"); os.link(a, b); c.write_bytes(b"single")
+try: r.write_target(a, b"CHANGED"); print("no refusal")
+except r.Refused as e: print("refused:", str(e)[:90])
+r.write_target(c, b"rewritten")
+ok = a.read_bytes() == b"original" and b.read_bytes() == b"original" and c.read_bytes() == b"rewritten"
+print("both names unchanged and a one-name file still written:", ok)
+sys.exit(0 if ok else 1)
+PY
+chk "T36c write_target itself refuses a two-name file before truncating it, and still writes a one-name file" "[ $? -eq 0 ]"
+echo "== T37 an ini file ABOVE --root would change what pytest runs (review r3 minor)"
+fresh_root; printf '[pytest]\naddopts = --collect-only\n' > "$T/pytest.ini"
+out=$(mut -- tests/test_fast.py 2>&1); rc=$?; echo "$out" | cut -c1-200; hit=$(printf %s "$out" | grep -c 'outside --root')
+chk "T37a pytest.ini above the root refused (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"; chk "T37a file unchanged, state empty" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
+rm -f "$T/pytest.ini"; fresh_root; printf '[tool.pytest.ini_options]\naddopts = "--collect-only"\n' > "$T/pyproject.toml"
+out=$(mut -- tests/test_fast.py 2>&1); rc=$?; hit=$(printf %s "$out" | grep -c 'outside --root'); chk "T37b pyproject.toml with a pytest section above the root refused (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
+rm -f "$T/pyproject.toml"; fresh_root; printf '[metadata]\nname = x\n' > "$T/setup.cfg"
+mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc $rc)" "[ $rc -eq 0 ]"; rm -f "$T/setup.cfg"
+echo "== T38 --restore re-creates a deleted target with its recorded mode (review r3 minor)"
+fresh_root; chmod 640 "$T/root/src/mod.py"; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+rm "$T/root/src/mod.py"; out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
+chk "T38 exit 0 and the file is back with the original text (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T38 mode 640 restored" "[ '$(stat -c %a "$T/root/src/mod.py" 2>/dev/null)' = 640 ]"; chk "T38 state empty" "[ -z '$(state_files)' ]"
+echo "== T39 the orphan cannot be stopped (no permission) during --restore: the file is still restored (review r3 minor)"
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
+out=$(python3 - "$RUN" "$T/root" <<'PY' 2>&1
+import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+def cannot(pgid): raise PermissionError(1, "Operation not permitted")
+r.stop_group = cannot
+ok, text = r.restore_from_marker(pathlib.Path(sys.argv[2]).resolve()); print(ok, text)
+sys.exit(0 if ok else 1)
+PY
+); rc=$?; echo "$out" | cut -c1-260 | tail -3
+chk "T39 restore finished although stop_group raised PermissionError (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T39 the report says the orphan was not stopped" "printf %s '$out' | grep -q 'could NOT stop'"
+pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+echo "== T40 a signal right after the leader was reaped must not signal its (maybe reused) number (review r3 minor)"
+fresh_root; python3 - "$RUN" "$T/root" <<'PY'
+import importlib.util, pathlib, signal, subprocess, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+root = pathlib.Path(sys.argv[2]); calls = []
+r.stop_group = lambda pgid: calls.append(pgid)
+Real = subprocess.Popen; state = {"n": 0}
+class P(Real):
+    def communicate(self, *a, **k):
+        res = super().communicate(*a, **k)               # the leader is waited for (reaped) here
+        state["n"] += 1
+        if state["n"] == 1: raise KeyboardInterrupt(int(signal.SIGTERM))   # the signal arrives just after
+        return res
+subprocess.Popen = P
+try: r.run_tests(root, ["tests/test_fast.py"], str(root / "src"), 60)
+except KeyboardInterrupt: print("interrupted as expected")
+print("stop_group calls:", calls)
+sys.exit(0 if not calls else 1)
+PY
+chk "T40 no signal was sent to the reaped leader's number" "[ $? -eq 0 ]"
+echo "== T41 control run: a signal right after the fork, before the handle is stored, must not leak the test group (review r3 minor)"
+fresh_root; python3 - "$RUN" "$T/root" <<'PY'
+import importlib.util, pathlib, signal, subprocess, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+root = pathlib.Path(sys.argv[2]); Real = subprocess.Popen
+def P(*a, **k):
+    proc = Real(*a, **k)
+    r._term(signal.SIGTERM, None)       # the handler runs here: after the fork, before `proc = ...` in run_tests
+    return proc
+subprocess.Popen = P
+try: r.run_tests(root, ["tests/test_slow.py"], str(root / "src"), 60)
+except KeyboardInterrupt as e: print("interrupted as expected", e.args)
+PY
+sleep 1; chk "T41 no orphan pytest left" "! orphan_alive"; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+echo "== T42 signals that used to kill run.py with the file still planted (review r3 minor): QUIT ABRT USR1 USR2 ALRM XCPU VTALRM PROF IO PWR"
+ulimit -c 0
+for sg in QUIT ABRT USR1 USR2 ALRM XCPU VTALRM PROF IO PWR; do
+  fresh_root; bg; waitplant; kill -s $sg $RP; wait $RP; rc=$?; exp=$((128 + $(kill -l $sg))); sleep 1
+  chk "T42 $sg exit $exp (got $rc)" "[ $rc -eq $exp ]"; chk "T42 $sg file restored" "[ '$(last)' = return1 ]"; chk "T42 $sg state empty" "[ -z '$(state_files)' ]"; chk "T42 $sg no orphan pytest" "! orphan_alive"
+  pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+done
+# edit the marker of a killed run: name=value sets a number, name= removes the field
+setmarker() { python3 - "$STATE" "$@" <<'PY'
+import glob, json, sys
+f = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(f))
+for a in sys.argv[2:]:
+    k, _, v = a.partition("=")
+    if v == "": m.pop(k, None)
+    else: m[k] = int(v)
+open(f, "w").write(json.dumps(m))
+PY
 }
-echo "FAILED CHECKS: $FAILS"
+echo "== T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)"
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py >/dev/null 2>&1 ) & DP=$!; sleep 3
+chk "T43 setup: the stranger (a pytest of its own that names the root) is its own group leader" "[ \"\$(ps -o pgid= -p $DP | tr -d ' ')\" = $DP ]"
+setmarker pgid=$DP
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
+chk "T43a restore exit 0 and the file is back (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T43a the stranger was left alone" "kill -0 $DP"
+kill -9 $DP 2>/dev/null; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; wait $DP 2>/dev/null
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
+setmarker start_ticks= argv=
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
+chk "T43b a marker with a group but no recorded identity: file restored (rc $rc), group not stopped on a guess" "[ $rc -eq 0 -a '$(last)' = return1 ] && orphan_alive"
+pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+echo "== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)"
+fresh_root; ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) >/dev/null 2>&1 & RP=$!
+waitplant; sleep 2
+LEADER=$(pgrep -f "$T/root/.venv/bin/python -m pytest" | head -1); kill -9 $RP; kill -9 $LEADER; sleep 1; wait $RP 2>/dev/null
+chk "T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs" "pgrep -f 'sleep 3137' >/dev/null && ! pgrep -f '$T/root/.venv/bin/python -m pytest' >/dev/null"
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-220; sleep 1
+chk "T44 restore exit 0, file back (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T44 the surviving member was stopped" "! pgrep -f 'sleep 3137' >/dev/null"; pkill -9 -f 'sleep 3137' 2>/dev/null
+echo "== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)"
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
+setmarker pgid= start_ticks= argv=
+chk "T45 setup: the orphan runs" "orphan_alive"
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200; sleep 1
+chk "T45 restore exit 0, file back (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T45 the orphan was stopped" "! orphan_alive"; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+echo "== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, leader still stopped (review r3 evidence Major 1)"
+fresh_root; python3 - "$RUN" "$T/root" <<'PY'
+import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+seen = []
+def cannot(pgid): seen.append(r.SIG.allow); raise PermissionError("not allowed")
+r.stop_group = cannot
+try: r.run_tests(pathlib.Path(sys.argv[2]), ["tests/test_slow.py"], sys.argv[2] + "/src", 3)
+except PermissionError as e: print("raised as expected:", type(e).__name__)
+print("SIG.allow seen inside stop_group:", seen, "after:", r.SIG.allow)
+sys.exit(0 if seen and seen[0] is False and r.SIG.allow is False else 1)
+PY
+chk "T46 SIG.allow was already False when the timeout branch called stop_group" "[ $? -eq 0 ]"
+sleep 1; chk "T46 no orphan pytest left although stop_group failed in the timeout branch" "! orphan_alive"; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+}
+echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"
