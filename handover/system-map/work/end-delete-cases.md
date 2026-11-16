@@ -20,3 +20,5 @@ Replacement text:
 - Clean-up card: new step 3a (only if the run-day steps 15 to 20 were not already done; they are the same deletes, never do them twice): "STOP. Do this only if the studio lead wrote 'contacts may be deleted'. Delete only the contacts the studio lead listed. Reply 'contacts deleted: N'."
 
 Note (digest 380): UNVERIFIED whether the program deletes anything. These texts say `end` deletes nothing only because decision 2 says so; do not put them on a card until someone has read the program. Use 'lead id', not 'lead key' (a key reads as a secret).
+
+ADDED 16 Nov 2026 (cold read): (1) Numbering: delete the old run-day steps 13 to 16 entirely; put the heading 'end ONLY CLOSES THE PAUSE (it deletes nothing)' over the new steps 13 and 14, then insert the new steps 15 to 20 after them (the real card titles must be checked at edit time by the card owner, the studio lead). (2) Add to step 20: 'If any listed contact is already gone before you delete it, stop and tell the studio lead; the program may have deleted it, which is a defect (line 5).' Whether the program deletes anything is UNVERIFIED until the rehearsal.

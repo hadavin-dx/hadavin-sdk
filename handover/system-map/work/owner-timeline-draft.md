@@ -14,7 +14,7 @@ The run never deletes anything. `end` only stops the run. Leftover made-up conta
 | 7 | Studio lead | "program paused" (draft card only; pause not confirmed) | Type nothing; film the HubSpot contact list; no Ctrl-C, do not close the terminal | yes |
 | 8 | You | "film done" | Only after you checked the film file exists and plays | yes |
 | 9 | Studio lead | a new message beginning exactly "film done, type end" | Type `end`, Enter. Deletes nothing. Screen says "delete" or "archive": type nothing, tell the studio lead | pause ends; nothing deleted |
-| 10 | Studio lead | [studio lead fills]; count of leftover made-up contacts | Delete by hand only contacts whose email is exactly one of the 3 test addresses named; reply "contacts deleted" and the number | NO (HubSpot may keep a recoverable copy: not checked) |
+| 10 | Studio lead | [studio lead fills]; count of leftover made-up contacts | The studio lead sends the list (lead key and contact id of each leftover made-up contact; the 3 test addresses are named to check each match); the owner deletes exactly those contacts by hand, then replies "contacts deleted" and the number | NO (HubSpot may keep a recoverable copy: not checked) |
 | 11 | Studio lead | "demo mails may be deleted" (failed run only) | Delete demo mails (Inbox, label `demo`), empty Trash; reply "demo mails deleted"; new run name and new yes | NO |
 | 12 | You | "accepted" (after watching the edited video twice) | Only if no further run is needed | NO: ends all runs |
 | 13 | Studio lead | "last run done" | With your "accepted": clean-up step 1 | NO |

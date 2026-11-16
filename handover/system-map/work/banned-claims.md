@@ -37,3 +37,10 @@ Open: mirror this list into OWNER-VIEW row 6 and run-day step 27 once the studio
 - Deleting: banned = any claim that the system deletes data (this covers "deleted", "cleaned up", "permanently deleted", "erased"). Allowed only as a spoken fact: "I delete the made-up contacts by hand after the take."
 - One condition for every "unless" in this list (crash-safe, nothing can spend, tested with real accounts): the claim is allowed only when the studio lead names a result file that proves it, and the checker reads that file. Otherwise it stays banned.
 - Who names the checker: the studio head, by Tue 17 Nov 12:00 UTC / 17:30 IST. Until a name is written here, nobody may post.
+
+## Added 16 Nov 2026, third pass (after a cold read)
+- Rule that wins over every earlier line of this page: any claim that the system deletes data is banned and no result file can unlock it (decision 2: the take never deletes). The only allowed delete sentence is the spoken fact above.
+- Rule that wins over every earlier 'unless' line (crash-safe, 'nothing can spend', 'closed gate', 'tested with real accounts'): the claim is allowed only when the studio lead names a result file that proves it AND the checker has read that file. 'D-05' (the crash-risk decision on the lead page) is not a condition. 'Tested with real accounts' is also banned for this video: decision 8 says no real-account smoke.
+- Anything not in the Allowed list is banned. Nobody posts until a named checker is written here. The owner does not post before that; the studio lead sends the final words.
+- Plain words: D-04 = the lead's decision to apply this narrow wording (not made yet); D-05 = the crash-risk decision on the lead page; step J = the post step of the owner steps file; core-hardening = the session that owns the owner steps file.
+
