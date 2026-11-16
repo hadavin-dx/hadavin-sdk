@@ -441,3 +441,5 @@ ok   f8-r8 M1: with 'REVIEWER_TODAY=2999-01-01 TAKE_CHECK_TODAY=2999-01-01' expo
 ok   f8-r8 M1: even with the test flag, TAKE_CHECK_TODAY and REVIEWER_TODAY do not move the date rule in a take (they are read only by --check-reviewer-line) (got exit 4)
 ok   f8-r8 M1: the README names REVIEWER_TODAY and says it has no effect
 ok   f8-r8: a reviewer line of 200 KiB is exit 4 with 'rule: too long', printed cut at 300 characters with its length (got exit 4)
+ok   f8-r8: a note holding $(...), backticks and quotes is accepted as plain text (exit 5 with the override) and nothing is executed (got exit 5)
+ok   f8-r8: a 400-character note is accepted and printed cut at 300 with '[cut: 300 of 444 characters shown]' (got exit 5)
