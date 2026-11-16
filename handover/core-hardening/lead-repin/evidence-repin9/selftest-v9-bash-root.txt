@@ -1,2 +1,1 @@
-heavy-slot: slot 1 taken at 2026-11-16T19:44:44Z
-rc=143
+heavy-slot: slot 3 taken at 2026-11-16T20:00:05Z

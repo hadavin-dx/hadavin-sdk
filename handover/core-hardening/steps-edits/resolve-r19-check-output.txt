@@ -244,3 +244,6 @@ NEG r14nd15 caught | FAIL r14 ND15 spots
 NEG r15B caught | FAIL r15 E-48 B lacks 'count only when you type them yourself, as a new message'
 NEG r15B2 caught | FAIL r15 E-48 B lacks 'never count'
 NEG r15e52 caught | FAIL r15 E-52 how you reply lacks 'Only you can write these words'
+NEG r15e12typed caught | FAIL r15 E-12 reply lacks 'typed by you yourself in a new message'
+NEG r15e16typed caught | FAIL r15 E-16 lacks 'Only messages that you type yourself count'
+NEG r15e16link caught | FAIL r15 E-16 path lacks 'if the path itself or any folder in front of it is a link'

@@ -1,59 +1,57 @@
-# v34 changes (round 6, builder evidence only)
+# v35 changes (round 7, builder evidence only)
 
-Builder evidence only. An independent evidence runner and fresh egm reviewers follow; nothing here is verified by anyone but me.
+Builder evidence only. An independent evidence runner and fresh egm reviewers must still run; nothing here is verified by anyone but me. Round 2 for the owner sheet, security uncapped.
 
 ## 1. Failures and open items first
 
-1. NOT fixed: stranger blocker B1 (the sheet cannot be followed alone; about 45 pointers; the five pages are mandatory). It needs the L-LEN split (open list rows 112 and 120); I did not build it. The five pages are lower than v33 (see section 2), but they are still long: the five pages hold 15,715 words on sheet A.
-2. NOT fixed, lead decisions (open list rows): 116 exit code rule (stranger M6), 118 the day clock (stranger M2: a key made near the latest start cannot reach Enter in time; I invented no number), 120 yes length, tolerated-items placement and reading load (M5, M8, M9). Stranger minors not touched: letter row mismatch, words with several meanings, Gmail filter wording, 13 submissions against call ceiling 3, allowed typed characters, the film person while the key is alive, 7.6 tab budget, alarm 4 position.
-3. Design choices I made that the owner or lead must confirm (row 119, row 117): the helper holds the last-resort step on its paper (or none) and acts on it after a second failed cancel; the helper paper has two blanks at hand-over (cancel button word, cancelled word) that the owner phones after 5.9, and until both are written the helper acts only on the owner's call or at a backstop time; a missing Recall page is no longer a stop (UNVERIFIED that no page means no Recall).
-4. UNVERIFIED and still open: whether the model account offers a cancel-only role and whether that role can do the last-resort step; how the lead starts and stops the model program; the vendor page paths. Nothing was run on a real service. No commit, no push, no spend.
-5. Own slips: my first edit of the lead note pointed to a section number the pointer ledger did not know (caught by C19, fixed); my first helper-page text broke the "exactly four triggers" check C230 (caught, reworded); two plants (P30, M28) lost their anchor because I removed the text they changed (re-pointed, see section 3).
-6. A person (me) read each pointer and fact-use diff before accepting the ledgers: 7 new pointers all name steps and rules that exist (5.1, 5.6, 5.9, 7.6, 7.9, 7.11, R8); fact-use rows changed for ek, last_day, ph_cf and rv22 because of the edits.
+1. NOT fixed, lead decision: stranger blocker B1 (the sheet cannot be followed alone; the five pages are still mandatory; about 15,000 words in one sitting). No page split was built. Next step: you decide the L-LEN split (open list rows 112 and 124). No word cap was raised; the five-page total fell from 15,715 to 15,577 (A) and the sheet from 6,277 to 6,274 (A).
+2. NOT fixed, lead decision (open list rows): 125 exit code rule (stranger M6), 126 the day clock (a key made near the latest start; I invented no number), 127 the length of the typed yes (about 450 words), 128 next-morning alarm (security m4, recommendation only), 129 helper minutes (m5), 130 revoke-name read-back on another channel (m6).
+3. NOT fixed, lead or owner: stranger B4 (three statements the owner cannot check: n8n credentials scoped, spend lock set, no model key outside the model program). The sheet already says an unchecked statement means no run; who verifies them is open list row 122. Security M3 (the film person sees the screen while a key is alive): three options are written in row 123 and I did not pick one.
+4. Design choice to confirm (row 121): from alarm 5 (Sunday) the owner cancels a still valid older key at once, with no 7-day check and no wait for the lead. It is the one place a key last used within 7 days is cancelled without the lead; the sheet says so in one sentence (5.1a, 6.7, L2, the yes, appendix 10).
+5. UNVERIFIED and third party: whether the model account offers a cancel-only role and whether that role can do the last-resort step (row 131); how the lead starts and stops the model program; every vendor page path and word. None was checked.
+6. Stranger minors NOT touched: the 55-minute window is not checked against a real run; the "describe" template; the Gmail filter wording; 13 typed submissions against a call ceiling of 3 (the readers' judgement, not a fact I can fix in the text). Each needs the owner's dry reading of the sheet; next step: the independent stranger round.
+7. Own slips: my first cut of the appendix words list removed the definition of "run name" (check C14g failed, restored); I used "tell" in the helper and film pages (check C36 failed, now "call the owner"); I put brackets inside the typed yes (check C13/C24 failed, removed); an unbalanced bracket in appendix 10 (C199, fixed). The new meaning checks found two more of my slips that no exact-sentence pin had: the old words "deadline reminders" and "live word" were still in the lead note and open list (C277, fixed).
+8. Heavy runs: mut35.py and v35-fail-proof.py waited in heavy-slot.sh because the three machine slots were held by other jobs; see section 5 for what ran and its exit codes.
 
-## 2. Reading load (wc -w, split on spaces; the checks print the same)
+## 2. Reading load (wc -w, split on spaces; check C07 and C273 print the same)
 
-| Page | v33 A | v34 A | v34 B |
+| Page | v34 A | v35 A | v35 B |
 |---|---|---|---|
-| Sheet | 6,286 | 6,277 | 6,078 |
-| Card | 2,215 | 2,211 | 2,126 |
-| Appendix | 5,823 | 5,753 | 5,684 |
-| Film page | 577 | 577 | 577 |
-| Helper page | 821 | 897 | 897 |
-| Total, five pages | 15,722 | 15,715 | 15,362 |
+| Sheet | 6,277 | 6,274 | 6,071 |
+| Card | 2,211 | 2,256 | 2,154 |
+| Appendix | 5,753 | 5,454 | 5,375 |
+| Film page | 577 | 608 | 608 |
+| Helper page | 897 | 985 | 985 |
+| Total, five pages | 15,715 | 15,577 | 15,193 |
 
-Rule followed: every added sentence was paid for by a cut of equal or greater length (sources of the cuts: appendix rationale sentences that no check pins, the second copy of the Key list definition on the card, the "Test terminal" definition on the card, the Tokens and Clean-up message definitions in the words list, the "alarm 4 reminds you" and FREEZE repeats, five sentences of the 5.1 background note). No word cap was raised: C07 now fails at 15,722 or more and new check C273 pins the sheet at 6,286 or fewer.
+Caps: C07 and C273 now require the five-page total below 15,715 (was 15,722); the sheet cap 6,286 for A is unchanged. Nothing was raised.
 
-## 3. Findings fixed (class, fix, check, plant)
+## 3. Findings and fixes
 
-| Finding | Fix | Check | Plant |
-|---|---|---|---|
-| Security M1 failed helper cancel ends with no step | helper page item 6 and paper item 1 carry the last-resort step (or none); card and 7.11 say the helper does the one on its paper; the typed yes names the case | C267 | AB05, AB06 |
-| Security M2 and minors 6, 7 lead pages | note: "one sentence (lead answer Q22c)", G12 struck from the open conflicts, ban item 11 without "unless approved in writing", row "B worse than A" replaced; open list row 7 one sentence; one 7-day wording (168 hours before the earliest key time) | C268 | AB07, AB08 |
-| Security minors 1, 2 | "a reminder never cancels a live run key" struck; the backstop time names Sun and Mon times | C249 (re-pinned), C271 | AB14, AB17 |
-| Security minors 3, 4, 5 | helper alarm and phone and first and second time blanks; phone fallback on the near-deadline line; 7.11 name or date mismatch now ends in "cancel failed" and the backup person | C269, C271 | AB11, AB15 |
-| Stranger B2 | helper paper completed by phone after 5.9; what the helper does until then | C269 | AB09 |
-| Stranger B3 | one exit for a missing Recall page | C270 | AB10 |
-| Stranger M1 | order of the 7-day check and how to get sheet B (appendix 6 note) | C09 and existing 7-day pins | none |
-| Stranger M3, M4 | reminder contradiction removed; card says up to 22 minutes (2 + 10 + 10) | C271 | AB13, AB14 |
-| Stranger M7 | 5.3 sets screen turn-off Never | C272 | AB12 |
-| Stranger minors | "himself" removed from the helper page, "nothing is missing" once | C230 (re-pinned) | Z15 (re-pointed) |
-| Evidence X03, X07, X08, X10 and the class "only a generator-compare check protects the sentence" | C263 to C266 count each protected sentence in the SOURCE and in each BUILT page A and B, and forbid the reversed wording (auto-reload on, contact search by the start of an address, no last-resort step in the ordinary chain, extra text or lease text in the post) | C263, C264, C265, C266 | AB01 to AB04 |
-| Reading load | no net words (section 2) | C273 | AB16 |
+| Finding | Fix | Check |
+|---|---|---|
+| Stranger B1 boundary at exactly 5 minutes | one rule: the Enter-by time = latest start minus 5 minutes (sample 11:25 UTC = 16:55 IST); Enter at or before it; used in the card words, W5, 6.2, 6.6, 7.3 | C274 (reads the facts and the structure) |
+| Check 2 on Sunday | the older-key time must be before alarm 5 (18:09 UTC = 23:39 IST) | C275 |
+| Sunday reminder wording, deadline reminders | alarm 5 (Sunday) and alarm 6 (Monday); the backstop time is ten minutes after either | C277, C187, C210, C232 |
+| W1 and W2 normal steps shown as danger signs | planned moments P1 and P2; danger signs W3 to W9; the card says nothing is missing | C276, C237, C53 |
+| Security M2: 7-day rule against 7.11 | one sentence: the rule only decides whether sheet A may cancel the older key at 6.7; it never stops 7.11 | C261, C182 |
+| Security M1: helper standing access | the helper calls the owner back on the paper's number; acts only on a key the owner names that is on the paper; the paper may say none for the last-resort step; the owner removes the cancel-only role and voids the paper at 8.7 | C278, C230, C249, C267 |
+| Security M3: film person exposure | options only, not picked (row 123); the film page defines the editor and says to check microphone and sound are OFF | C279, row 123 |
+| One word, one meaning (deadline, key, valid, card, none/never, live) | defined once; "live word" is "current state word"; none/never/unknown defined once | C277 |
+| Pointers: R8, appendix 7, check 2 sum 30 | R8 now carries the typing list; the sum is written inline (30 = 5 + 15 + 10) | C19, C236 |
+| Lead note title and stale line | title v19; section titles re-numbered; helper row added to the secrets table | C248 |
+| Section 9 and 10 loop | section 9 carries the posting rule itself; section 10 is the film rule only | C279 |
 
-Pins and ledgers changed: C190, C230, C246, C249 (new wording), plants X06, Z15, P30, M28 (anchors re-pointed), headings unchanged, pointers-v34.txt and factuse-v34.txt re-accepted after reading the diff (section 1 item 6), open list rows 115 (new figures) and 116 to 120 added.
+## 4. UNVERIFIED (kept from earlier rounds, nothing new checked)
 
-## 4. UNVERIFIED (not checked against a real page or account)
-The cancel-only role and whether it can do the last-resort step; how the lead starts or stops the model program; every vendor page path; the time a real cancel takes; that a missing Recall page means no Recall.
+Every vendor fact (the model account key list, roles, prepaid page, the cancel confirmation box, the clipboard behaviour of the terminal, the phone alarm behaviour) is UNVERIFIED. The lead statements on row 122 are UNVERIFIED by me.
 
-## 5. Evidence (builder, this session)
-Run 19:0x to 19:18 UTC, all heavy runs through heavy-slot.sh (slot wait: mut34 run 1 and 2 at once, gap-proof 11 minutes; my first mut34 started before the lead order and was stopped, then rerun in a slot).
-- check-v34.py: 0 failures after the ledgers were accepted.
-- mut34.py: 300 plants (17 new, AB01 to AB17), 299 caught by the meant check, 0 missed, 0 anchor-not-found, negative control ok (1 of the 300 is the control); baseline failures 0.
-- v34-fail-proof.py: 43 Part 9 checks (C228 to C273), 13 fail on built v33, none fail on v34; C263 to C266 cannot fail on v33 because the sentences were there (they are proven by plants AB01 to AB04 and by gap-proof-v34.py).
-- gap-proof-v34.py: the four evidence plants X03, X07, X08, X10 plus eleven earlier ones: the v33 checker misses 4 of 15 (X03, X07, X08, X10), the v34 checker misses 0 of 15.
-- Banned-string and secret-shape scans: part of check C06 and C05 (the list is read at run time): 0 hits.
-- A second mut34 run on the final head (after the last ledger and CHANGES edits): 300 plants, 299 caught, 0 missed, 0 anchor-not-found, baseline 0.
-Commands: build-v34.py, check-v34.py, v34-fail-proof.py, mut34.py, gap-proof-v34.py (all in this folder).
+## 5. Evidence (builder's own; the independent run is the lead's)
 
-Table pointer kept for plant M48: a failed key save skips 6.7 and 7.11 still cancels in A.
+See evidence-v35/ for the raw output files and the commands:
+- python3 check-v35.py: 0 failures after the edits (C01 to C280). After the source edits and before I updated the pins it printed 267 FAIL lines (stale pins, ledgers and the new content), which I fixed or re-pointed one class at a time.
+- mut35.py (308 plants, 32 of them re-pointed to reworded anchors, 8 new plants AC01 to AC08 for C274 to C280), v35-fail-proof.py and gap-proof-v35.py: results in section 6 below, written after they ran.
+
+## 6. Heavy-run results
+
+(filled in after the runs; if a run did not get a slot this says so)
