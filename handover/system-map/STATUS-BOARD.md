@@ -18,9 +18,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 7 of 8, counted from my launch list at 2026-11-16T15:39:00Z (the earlier 8 of 8 line was stale and wrong)
+AGENTS_RUNNING: 1 of 8 (abaf11fb032b0d6f6), counted at 2026-11-16T15:39:00Z
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: digested through 1835; launch reader 8 (L1c 100-200); then fix L1 status table
+NEXT: digested through 1843; per-page fix of L1, L2, L3, L4, L5a, L5b, L6 then one fresh reader per fixed page
 INTERRUPTED: none
 
 ## ITEMS
@@ -50,14 +50,9 @@ INTERRUPTED: none
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state |
 |---|---|---|---|---|---|---|---|
-| ac42aa1cc4c257c55 | cold reader | sonnet | reads L5a.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| ac814a9daa78f0336 | cold reader | sonnet | reads L5b.md lines 1-360 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| a6adcc49d94af1755 | cold reader | sonnet | reads merged-findings.md lines 1-240 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| a9bb7d37769e0f28e | cold reader | sonnet | reads L3.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| a8540f8f1c7253936 | cold reader | sonnet | reads L6.md lines 1-250 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| a484e2a4e85185666 | cold reader | sonnet | reads L1c.md lines 1-100 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-| a9b28c9e2ba4f86c5 | cold reader | sonnet | reads L5ac.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
-Slot 8 is empty: reader on L1c lines 100-200 starts next turn. Closed since the last board: af2d57a91b84fc4df, ab37f6d76bc78bc1a, a3dabedb8e193c912, a0291613dce3e85df, aeb2d461d458328bb, a4afde94ea2c39e4c (digested 1830-1835). Slip: about 40 minutes with 0 agents against the 14:48Z order; my earlier board edit failed on a script error and I did not notice until this beat.
+| abaf11fb032b0d6f6 | cold reader | sonnet | reads work/L1c.md lines 100-200 and lists what it cannot follow | about 15:50 | about 16:02 | 0 | running |
+Closed and digested (1830-1842): GLOSSARY, M17, STATUS-BOARD, L1 1-220, L2 1-360, L3 1-200, L4 1-200, L5a, L5ac, L5b 1-360, L6, L1c 1-100, merged-findings 1-240.
+Why 7 slots are empty: 13 readers just found the same six classes on every lane page (digest 1843). A new reader on an unfixed page repeats them. I am now fixing the pages by script; a fresh reader starts on each page as soon as it is fixed.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
