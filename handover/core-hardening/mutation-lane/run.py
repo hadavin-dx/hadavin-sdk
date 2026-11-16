@@ -457,8 +457,10 @@ def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tup
         return fd, False
     try:
         with os.fdopen(os.dup(fd), "rb") as probe:
-            if probe.read() == saved:  # nothing to write: a read-only file that holds the original is left alone
-                return fd, False
+            same = probe.read() == saved  # the duplicate shares the file offset: rewind below
+        os.lseek(fd, 0, os.SEEK_SET)
+        if same:  # nothing to write: a read-only file that holds the original is left alone
+            return fd, False
     except OSError:  # an O_PATH descriptor (mode 000) cannot be read: assume it differs
         pass
     os.chmod(f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode) | 0o600)  # works on O_PATH descriptors, follows the inode
