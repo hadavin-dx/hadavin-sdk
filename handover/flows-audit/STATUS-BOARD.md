@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:07:17Z
+UPDATED_UTC: 2026-11-16T13:12:46Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 14
-PERCENT: 77
+ITEMS_OPEN: 8
+PERCENT: 95
 AGENTS_RUNNING: 8
-CAPACITY: 0.97 load of 4 cores, mem 0/15 GB, RAM 968/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 937/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: collect 8; fresh review TAKE-CHECKLIST/FIX-PLAN r9; F8 egm review after evidence; drift-007 refresh; REPORT ORDER 037 file list
-PUSHED_UTC: 2026-11-16T13:07:17Z
+NEXT: collect fixers and reviewers; fresh reviews of fixed files; citation fix pass; drift-007; ORDER 037 file list
+PUSHED_UTC: 2026-11-16T13:12:46Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,14 @@ PUSHED_UTC: 2026-11-16T13:07:17Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a8aee16 | evidence | sonnet | citation checker QUESTIONS/RUNBOOK -> reviews/citation-r8.md | 13:00Z | 13:20Z | running | pending |
-| a09f239 | fixer | sonnet | FINDINGS r10 fixes (B1 guards, T21 text, M1-M7, N1-N5) | 13:04Z | 13:30Z | running | pending |
-| a3e0018 | fixer | sonnet | OWNER-STEPS owner part r18 fixes (M1-M9, N1-N10) | 13:05Z | 13:25Z | running | pending |
-| af16b9b | reviewer | sonnet | REVIEW.md r13 design review (approval guard bypasses) | 13:05Z | 13:20Z | running | pending |
-| a2612a6 | reviewer | sonnet | REVIEW.md r13 codebase review (cites, counts) | 13:05Z | 13:20Z | running | pending |
-| a57157e | evidence | sonnet | EVIDENCE RUNNER F8 r6 (independent) -> evidence-f8-r6-independent.md | 13:06Z | 13:25Z | running | pending |
-| a25e6f0 | reviewer | sonnet | RUNBOOK r9 fresh review | 13:06Z | 13:20Z | running | pending |
-| a786176 | fixer | sonnet | QUESTIONS r11 fixes + Q31 items 29-31 | 13:06Z | 13:30Z | running | pending |
+| a8752d8 | fixer | sonnet | RUNBOOK r9 fixes | 13:10Z | 13:30Z | running | pending |
+| a076382 | fixer | sonnet | REVIEW.md r13 fixes | 13:10Z | 13:30Z | running | pending |
+| afe9c35 | fixer | sonnet | OWNER-STEPS owner part r19 fixes | 13:10Z | 13:30Z | running | pending |
+| a3d2678 | reviewer | sonnet | F8 r6 codebase review | 13:10Z | 13:25Z | running | pending |
+| a062734 | reviewer | sonnet | F8 r6 design review | 13:10Z | 13:25Z | running | pending |
+| a601037 | reviewer | sonnet | FINDINGS r11 commands-vs-files | 13:11Z | 13:25Z | running | pending |
+| adbbdc7 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r10 fixes | 13:12Z | 13:30Z | running | pending |
+| new | reviewer | sonnet | QUESTIONS r12 review (Blocker/Major only) | 13:14Z | 13:30Z | running | pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
