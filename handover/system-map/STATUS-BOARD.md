@@ -1,18 +1,18 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T09:37:00Z (15:07 IST)
+UPDATED_UTC: 2026-11-16T09:40:42Z (IST = UTC+5:30)
 SESSION: system-map
-ORDER: 017, 018, 019 on top of 016; queue M10-M16; S9 answer applied to drift/APPLIED-S9.md
+ORDER: 017-020 on top of 016; queue M10-M16
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 2
+AGENTS_RUNNING: 3 reviewers + 1 heavy test run (4 lanes)
 INTERRUPTED: none
-NEXT: M16 flow-set report (agent aa5df73d running); APPLIED-S9 design review (ab55bb35); re-read of the owner cards; core-hardening picks up drift/APPLIED-S9.md (S9-1..5 edit list for v5)
-CAPACITY: cores about 1 of 4 busy (below the 70 percent target; light read-only agents only, 2 running and refilling); memory 1 of 15 GB; disk free 25 GB; heavy test slots free 3 of 3 (M14 finished). Launching more lanes this beat.
+NEXT: collect fresh reader, facts-and-cites and zoom-out reports; apply Blockers; read the M14 re-run on core-hardening head 60338533; fresh reader on flowset after its round 2; core-hardening still has to apply drift/APPLIED-S9.md (rows S9-1..S9-6, rebuilt after review)
+CAPACITY: 4 cores, load low before this beat, pytest on 3 slots now started; memory 1 of 15 GB; disk 25 GB free; heavy slots 1 of 3 used
 FAILED: (1) ORDER 019 CLOSED, real defect: fresh clone of cloud/core-hardening gives 2 failed, 9389 passed, 455 skipped (rc=1): vendor word 'Port.io' in handover/BRIEF-PREAMBLE-studio-2026-11-06.md and patch-test-runs logs, one non-UTF-8 file handover/reviews/P1a-idempotence-probe.txt; 10 handover/promotion-inputs/apexc files with a wrong licence text. None of those paths is on main, so a PR from this branch fails 2 guard tests. Fix owner: core-hardening. (2) Owner cards facts check had 5 Majors: fixed, re-read pending. (3) v5 still lacks the S9 edits (APPLIED-S9.md). (4) No take date in v5; no one named for Docker (R8-4).
-PUSHED_UTC: 09:37:00Z
+PUSHED_UTC: 09:40:42Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -26,29 +26,18 @@ PUSHED_UTC: 09:37:00Z
 | M7 | stale done items | applied | 95 | drift/REPORT.md section 6 | |
 | M8 | archive cut list | draft; two lists (39 vs 13 rows) not reconciled | 85 | ARCHIVE-CUT-LIST.md | |
 | M9 | done items listed open | covered by M7 | 90 | drift/REPORT.md section 6 | |
-| M10 | second-reader ring | running: drift report reader done (B1..B5 found, name table added); owner view round 3 running | 40 | rings/ (next beat) | |
+| M10 | second-reader ring | partly done, fresh round running | 60 | rings/RING-LOG.md | |
 | M11 | FACTS-ALREADY-DONE sweep | DONE (drift section 11) | 100 | | |
 | M12 | video-date sweep | DONE (drift section 11) | 100 | | |
 | M13 | three-way consistency | DONE (drift section 12) | 100 | | |
-| M14 | heavy lane in fresh clone | DONE: 2 real failures (see FAILED) | 100 | /tmp/sm-fresh.pytest.log | |
+| M14 | heavy lane in fresh clone | earlier head: 2 real failures; RE-RUN on new head 60338533 running | 70 | /tmp/sm-fresh2.pytest.log | |
 | M15 | cut list reconcile | reconciliation note added to ARCHIVE-CUT-LIST.md; one list to sign after the take | 80 | ARCHIVE-CUT-LIST.md | |
-| M16 | flow-set question | running | 10 | flowset/REPORT.md (next beat) | |
+| M16 | flow-set question | round 1 reviewed, fixes applied (NO-GO rule, credential risk); fresh reader running | 70 | flowset/REPORT.md | |
 
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| aa5df73d | egm-codebase-details | sonnet | M16 flow-set scenes research | 09:44 / 15:14 | 09:54 / 15:24 | 30 | running | none |
-| ab55bb35 | egm-design | sonnet | design review of drift/APPLIED-S9.md | 09:45 / 15:15 | 09:53 / 15:23 | 30 | running | none |
-| (done) | M10..M13, M15 lanes, card readers, facts checks, structural review | sonnet | all reports read; fixes applied | | | 100 | closed | |
-| (shell) | M14 heavy test | none | fresh clone full pytest finished: 2 failed, 9389 passed, 455 skipped | 09:35 / 15:05 | 09:41 / 15:11 | 100 | closed | /tmp/sm-fresh.pytest.log |
-
-## LOST OR INTERRUPTED
-| agent | what it was doing | cause | restarted? new id | ACK by lead |
-|---|---|---|---|---|
-| none | | | | |
-
-## LEAD ACTIONS NEEDED
-1. Name who starts Docker and who runs the first laptop test of the five changed flows in n8n, and when (UTC and IST); no file names anyone (OWNER-VIEW.md, section 3).
-2. Decide the open Blockers of drift/REPORT.md: D-01 (which n8n holds the take's credentials), D-02 (who makes the database passwords), D-03 (read-only archive code path or write scope for the HubSpot app), D-10 (real schedule; may be a false Blocker), S-03 (the take-time fill script), and L-01 (the operator can decrypt stored credentials: second Linux user, or the owner accepts it in writing).
-3. Check the rights of the saved HubSpot key (the take deletes its own contacts, which needs write) and whether the SENDER app password sits in a file the step 22 shred misses.
-4. Say yes or no to each row of ARCHIVE-CUT-LIST.md (archive only, never delete) and say whether the archive may live in this repository.
+| a4e8d0af | egm-comprehension | sonnet | fresh reader on owner view, S9 list, flowset | 09:50 / 15:20 | 09:55 / 15:25 | 20 | running | none |
+| ae7f3bc9 | egm-codebase-details | sonnet | facts and cites on S9 list and drift report | 09:50 / 15:20 | 09:56 / 15:26 | 20 | running | none |
+| aeaded8e | egm-zoom-out | sonnet | which documents the take does not need | 09:50 / 15:20 | 09:56 / 15:26 | 20 | running | none |
+| heavy-2 | pytest (shell, not an agent) | n/a | core test suite, fresh clone of core-hardening head 60338533 | 09:49 / 15:19 | 10:20 / 15:50 | 5 | running | log /tmp/sm-fresh2.pytest.log |
