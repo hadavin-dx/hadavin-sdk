@@ -35,7 +35,9 @@ Ran 170, 13 not passing: 10 FAIL + 3 ERROR. Failing on old code: test_a_manifest
 Pass on the old code (not behaviour tests of code): test_readme_names_the_signals... (the README is new in that run, so it checks the text only), F12 and F13 strengthened asserts, and the two re-based tests (they use a legitimate input case and also pass on old code). Raw log: scratchpad `old-code-run.log`.
 
 ## Mutants (12 hand-picked, F1/F2/F3/F5/F6/F9 code; full suite with -f, python3.12)
-MUTANTS_PLACEHOLDER
+12 mutants: 12 killed, 0 survived after one test fix. First run: 11 killed, 1 survived (F9 "warn every time": `if not _WARNED...` changed to `if True`); the test only called `check` once, so it could not see a second line. I added two more `_fd_path` calls in the same run that must print nothing; re-run of that mutant: killed (rc 1).
+Killed: F1 no problem counted for unmarked folder; F1 `marked = True`; F2 nlink `>1` to `>2` in check; F2 place check removed in check; F2 place problem not counted; F2 delete place warning removed; F2 delete nlink `>1` to `>5`; F3 `ready` always true; F3 `is not True` to `is False`; F5 clean-name check off; F6 abbreviation allowed on `check`; F9 warn every time.
+Gates re-run after that test change: 3.11, 3.12, 3.13 each rc 0, Ran 170 OK; ruff check 0; ruff format --check 0; bandit -ll 0; noqa/nosec/type: ignore count 0 in both files.
 
 ## Left as stated (one line each)
 - F7 (README "through that open folder" but the last rmdir/unlink go by name): fail-safe; the name-based final step can only fail, not touch another folder, because the open handle's contents were checked first.

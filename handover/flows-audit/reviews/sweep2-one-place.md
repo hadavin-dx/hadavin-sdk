@@ -1,0 +1,15 @@
+# One-place sweep of my own outputs, round 2 (egm-structural, agent af7ec1b0); saved condensed by flows-audit
+Verdict NOT CLEAN. Reviewer words unverified; read FINDINGS, FIX-PLAN, CUT-LIST, EXCEPTIONS, QUESTIONS, QUEUE, LEDGER-ROWS, README, ORDERS, DECISIONS in full, REPORT first 150 lines. Not read: CLAIMS-TABLE, RUNSHEET-WORDING, OWNER-STEPS, lanes7, patches, count_findings.py.
+Major (fix by pointer, never delete rows):
+1 Counts 5/7/33, BEFORE 13, AFTER 32 written ~12 times; stale old counts as "rated now" at QUESTIONS:18, :23 and FINDINGS:71/80/84. Canonical = FINDINGS counts table (FINDINGS:73-78); others point; tag old copies superseded.
+2 F-008 row FINDINGS:97 still says manual runs not saved / recovery none without ACCEPTED; FIX-PLAN item 4 canonical (Q18). Mark Q18 ANSWERED.
+3 "saved runs deleted at clean-up" still in FINDINGS:10, :97, FIX-PLAN:7, EXCEPTIONS:16, QUEUE:8 vs Q19-1 (take never deletes; not said in video). Needs lead: who deletes (lead clean-up, not owner step?).
+4 F-037/F-029/F-018 say set N8N_BLOCK_ENV_ACCESS_IN_NODE=false and read $env (T-ENV) while ORDER 017 says the take blocks env access and fill_flows writes literals. Opposite instructions; needs lead call; no place records the choice.
+5 Card retention line (FINDINGS:92, :126, LEDGER F-032) conflicts with Q15 and Q19-5 (notes only). Tag superseded.
+6 CUT-LIST:1,:22,:24-26 still has F-001 steps (dropped, Q17-3) and could move the take's table file; add gate: do not archive n8n-flows-v4 until the take folder has its own mf_leads.sql and the psql 4-column check passed. FINDINGS:9, :58 stale; QUESTIONS:47 says only v4 has the columns but F-001/CUT-LIST:6 say v3 and v4 are identical.
+7 FIX-PLAN item 7 (:10, :22) says F-023 not before the video then orders F-023 work; scene 10 is out. Say: after the video, nothing now.
+8 EXCEPTIONS:16 one-database paste claims role separation (n8n user cannot read lead table) not conditioned; roles are parked (decision 3). Add bracket; F-010 canonical for role count.
+9 QUEUE:8 (lead-owned) stale: journal-only exception, delete at clean-up.
+Answered but written open: Q18, Q19, Q20 (item 4 DESK_ALERT_TO stays open), Q1, Q4-Q9, Q10, Q11 headings; REPORT:12; REPORT:8 vs FIX-PLAN:1 (5 vs 4 patches); FINDINGS:100; QUEUE F1-F8 tags.
+No place: open lead decisions with no Q number (F-011/F-041 rating, F-002/F-031/F-007 Blocker vs Major, F-044 swallowing nodes, F-013, CUT-LIST single note, owner yes for cut list); take_check exit 4 + psql check not in FIX-PLAN item 3; decision 10 archive OWNER-STEPS v3; decision 2 owner deletes contacts has no FINDINGS/FIX-PLAN row; NOT COVERED lacks take scripts unseen / v4 columns / HubSpot id probe.
+Nits: 10 bare REPORT.md:622 etc cite other sessions' files (use full path); 11 rubric twice FINDINGS:27/:71; 12 T19-T21 pass lines twice; 13 decision-9 sentence 7 times; 14 "film-v5 not in this video" ~25 times; 15 EXCEPTIONS row 2 "delete this row" -> mark CLOSED; LEDGER F-001 OPEN vs FINDINGS DROPPED; 16 F-012 out of sort order, two tables under one H2, steps vs nodes.
