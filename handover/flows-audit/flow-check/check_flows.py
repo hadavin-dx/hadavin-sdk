@@ -8,6 +8,7 @@ Options:
   --files a.json,b.json,...     exact list of *.json files each DIR must hold (default: the four mf-*.json flow files)
   --baseline DIR                directory of the unpatched flows: an IF node that already lacks the SAME branch there is only a WARN, else FAIL. CAUTION: pointing it at the folder being checked excuses EVERY IF gap in it, so do not do that for the take; use --accept-if
   --accept-if FILE=NODE:OUT[,OUT]  recorded decision (repeatable): this IF node of this file is accepted to lack exactly these outputs (0 or 1); it is a WARN and a known open problem. Any other missing branch, or a different one, is a FAIL
+  --accept-no-save FILE         recorded decision (repeatable): this flow file (exact name, only a flow whose triggers are all schedule triggers, i.e. the recovery flow) may keep run saving off; printed as 'ACCEPTED: recovery flow not part of the take (decision 4)', not as a WARN. Any other flow, or a name that excuses nothing, stays a WARN
   --patch-checks F002,F008      assert the F-002 and/or F-008 patch content (names, links, settings) in the given DIRs
   --diff-base DIR --allow F002,F008 (--allow requires --patch-checks naming at least the same patches) [--diff-out FILE]
                                 node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
@@ -56,6 +57,7 @@ OPTS = {
     "fail_unv": False,
     "cred_names": {},
     "accept_if": {},
+    "accept_nosave": set(),  # flow file names whose "run saving is off" WARN is an accepted decision (--accept-no-save)
     "ddl": None,  # table name -> set of column names, from --ddl FILE
 }
 PARAM_PH = []  # placeholders found in node settings (not credential ids): they must be filled before import
@@ -106,6 +108,7 @@ DYNREF = re.compile(
 )  # a node name that is not one plain quoted text: cannot be checked statically
 PREV = re.compile(r"\$prevNode\b")
 STICKY = "n8n-nodes-base.stickyNote"
+SCHEDULE = "n8n-nodes-base.scheduleTrigger"
 KEY_COND = "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}"
 WANT_CONN = {
     "Valid": {"main": [[{"node": "KeyOk", "type": "main", "index": 0}]]},
@@ -145,6 +148,9 @@ ACCEPT_USED = (
     set()
 )  # (file, node) pairs of --accept-if that matched an IF node with exactly that gap
 ACCEPTED_IF = []  # IF branches excused by a recorded --accept-if decision
+ACCEPTED_SAVE = []  # flows whose "run saving is off" WARN is excused by a recorded --accept-no-save decision
+ACCEPT_SAVE_USED = set()  # flow file names of --accept-no-save that excused a real WARN
+SAVE_ACCEPT_REASON = "recovery flow not part of the take (decision 4)"
 UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs (from memory of n8n): WARN only; --fail-unverified makes them FAIL
 
 
@@ -188,6 +194,12 @@ def final_block():
     if ACCEPTED_IF:
         print(f"IF branches accepted by a recorded decision (--accept-if): {len(ACCEPTED_IF)}")
         for k in ACCEPTED_IF:
+            print("  - " + k)
+    if ACCEPTED_SAVE:
+        print(
+            f"Run-saving left off by a recorded decision (--accept-no-save), {SAVE_ACCEPT_REASON}: {len(ACCEPTED_SAVE)}"
+        )
+        for k in ACCEPTED_SAVE:
             print("  - " + k)
     if PARAM_PH:
         print(
@@ -1197,7 +1209,22 @@ def check_flow(d, tag, expect, baseline_d):
         ]
         if st_.get("saveManualExecutions") is False:
             off.append("saveManualExecutions")
-        if off:
+        fname_ = tag.rsplit("/", 1)[-1]
+        trig_types = {n["type"] for n in nodes if is_trigger(n["type"])}
+        if off and fname_ in OPTS["accept_nosave"] and trig_types == {SCHEDULE}:
+            ACCEPT_SAVE_USED.add(fname_)
+            ACCEPTED_SAVE.append(f"{tag}: {off}")
+            print(
+                f"ACCEPTED: {SAVE_ACCEPT_REASON}: {tag} keeps run-saving settings {off} off on purpose "
+                "(it fires every 30 s, so saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)"
+            )
+        elif off:
+            if fname_ in OPTS["accept_nosave"]:
+                warn(
+                    tag,
+                    "--accept-no-save names this file but it is not a flow that only has a schedule trigger, so the accept is refused here (only the recovery flow may keep saving off)",
+                    known=True,
+                )
             warn(
                 tag,
                 f"this flow's run-saving settings {off} are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened",
@@ -1461,6 +1488,12 @@ def patch_checks(d, fname, which, tag):
         for k in ("saveDataSuccessExecution", "saveDataErrorExecution"):
             if s.get(k) != want:
                 fail(tag, f"F-008 {k} is {s.get(k)!r} expected {want!r}")
+        want_manual = fname != "mf-recovery.json"
+        if s.get("saveManualExecutions") is not want_manual:
+            fail(
+                tag,
+                f"F-008 saveManualExecutions is {s.get('saveManualExecutions')!r} expected {want_manual!r}",
+            )
 
 
 ALLOW_NODES = {  # allowed changes by patch: (flow files, node, changed path prefixes or None for added)
@@ -1479,9 +1512,21 @@ ALLOW_NODES = {  # allowed changes by patch: (flow files, node, changed path pre
 ALLOW_CONN = {"F002": ("Valid", "KeyOk", "Claim")}
 ALLOW_SETTINGS = {
     "F008": {
-        "mf-form.json": ("saveDataSuccessExecution", "saveDataErrorExecution"),
-        "mf-hook.json": ("saveDataSuccessExecution", "saveDataErrorExecution"),
-        "mf-sub-crm-mail.json": ("saveDataSuccessExecution", "saveDataErrorExecution"),
+        "mf-form.json": (
+            "saveDataSuccessExecution",
+            "saveDataErrorExecution",
+            "saveManualExecutions",
+        ),
+        "mf-hook.json": (
+            "saveDataSuccessExecution",
+            "saveDataErrorExecution",
+            "saveManualExecutions",
+        ),
+        "mf-sub-crm-mail.json": (
+            "saveDataSuccessExecution",
+            "saveDataErrorExecution",
+            "saveManualExecutions",
+        ),
     }
 }
 
@@ -1616,6 +1661,14 @@ def main(argv):
                 if not OPTS["ddl"]:
                     print("usage error: --ddl file holds no CREATE TABLE definition")
                     return 2
+            elif a == "--accept-no-save":
+                nm_ = val()
+                if not nm_.endswith(".json") or "/" in nm_ or "\\" in nm_:
+                    print(
+                        "usage error: bad --accept-no-save value, want one exact flow file name like mf-recovery.json"
+                    )
+                    return 2
+                OPTS["accept_nosave"].add(nm_)
             elif a == "--accept-if":
                 try:
                     fl, rest = val().split("=", 1)
@@ -1763,6 +1816,12 @@ def main(argv):
         warn(
             "accept-if",
             f"--accept-if {fl_}={nd_} matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)",
+            known=True,
+        )
+    for nm_ in sorted(OPTS["accept_nosave"] - ACCEPT_SAVE_USED):
+        warn(
+            "accept-no-save",
+            f"--accept-no-save {nm_} excused nothing: that flow was not found, or its run-saving settings are not off, or it is not a schedule-only flow, so this decision does nothing (file name wrong, or the settings changed)",
             known=True,
         )
     if OPTS["ddl"] is None:
