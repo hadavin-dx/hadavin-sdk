@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:43:41Z
-PUSHED_UTC: 2026-11-16T12:43:41Z
+UPDATED_UTC: 2026-11-16T12:43:58Z
+PUSHED_UTC: 2026-11-16T12:43:58Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 780. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 782. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a0afc7923167a4f39 | L4c r9 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| a8bb04a3a6b0f815a | L5b r10 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| af5eee41a25819947 | L2c r12 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| ae3ab8011880d152b | banned-claims r7 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| afb02fc9fb74ed857 | rehearsal-limits r8 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| aa3b4894c43810f33 | t19 r13 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| ada280fbada7214c0 | decision-list r13 read | 2026-11-16T12:43:41Z | +2 min | running | nothing yet |
-| NEW1 | PLAN-002 r20 read | 2026-11-16T12:43:41Z | +2 min | launching | nothing yet |
+| a8bb04a3a6b0f815a | L5b r10 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| af5eee41a25819947 | L2c r12 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| ae3ab8011880d152b | banned-claims r7 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| afb02fc9fb74ed857 | rehearsal-limits r8 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| ada280fbada7214c0 | decision-list r13 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| ab7f567347fd61fa3 | PLAN-002 r20 read | 2026-11-16T12:43:58Z | +2 min | running | nothing yet |
+| NEW1 | L4c r10 read | 2026-11-16T12:43:58Z | +2 min | launching | nothing yet |
+| NEW2 | t19 r14 read | 2026-11-16T12:43:58Z | +2 min | launching | nothing yet |
 
-Running: 8. Digests done through 780.
+Running: 8. Digests done through 782.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

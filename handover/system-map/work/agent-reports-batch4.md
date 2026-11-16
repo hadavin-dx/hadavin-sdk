@@ -1075,3 +1075,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 779 BRIEF-LANE r13: line 48 status, labels, LANE line. FIXED by BINDING r14.
 
 - 780 L5ac r8: glossary stack, FD-001 unresolved, terms. FIXED by GLOSSARY r8; FD-001 table TO DO.
+
+- 781 L4c r9: live counts, who the lead is, quarantine owner. FIXED by CURRENT r9; markers TO DO.
+- 782 t19 r13: purpose, undefined terms, owners. FIXED by TERMS r13; owner NOT SET.
