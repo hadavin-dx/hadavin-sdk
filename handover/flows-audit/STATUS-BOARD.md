@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:46:24Z
+UPDATED_UTC: 2026-11-16T11:46:37Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
 PERCENT: 70
 AGENTS_RUNNING: 7
-CAPACITY: 0.70 load of 4 cores, mem 0/15 GB, RAM 937/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.0G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 0.84 load of 4 cores, mem 0/15 GB, RAM 942/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.0G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
 FAILED: F8 fixer says ruff format failure did not reproduce; not yet confirmed by evidence runner (a5a7e77 running)
 FAILED: evidence runner (independent): run_all.sh exit 1 (case new-warn-changes-the-pin missing FINAL text) - F8 fixer had reported exit 0; ruff format --check exit 1 only inputs/plan-wp6-resmoke-v5.md (lead file); TAKE_CHECK_FLOWS=/tmp/x gave exit 1 (a real FAIL stays 1, my expectation of 4 was wrong); fixer a8d895a running
-NEXT: RW/CT fixer for 1 Blocker + 5 Majors; 8th lane waits for RUNBOOK fixer. Disk 26G free 34pct
-PUSHED_UTC: 2026-11-16T11:46:24Z
+NEXT: OWNER-STEPS fixer after citation check lands; RW/CT fixer running. Disk 26G free 34pct
+PUSHED_UTC: 2026-11-16T11:46:37Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
