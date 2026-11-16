@@ -44,7 +44,7 @@ class PartitionKeepsStatus(unittest.TestCase):
         mf = [f for f in os.listdir(out) if f.startswith("manifest-")][0]
         p = os.path.join(out, mf); s = open(p).read().replace("NOT-READ", "READ"); open(p, "w").write(s)
         partition.main(root, out)
-        self.assertIn("\tREAD\n", open(p).read())
+        self.assertIn("\tREAD\t", open(p).read())
 
 
 if __name__ == "__main__":

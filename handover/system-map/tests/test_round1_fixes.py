@@ -135,10 +135,14 @@ class PartitionSize(unittest.TestCase):
         txt = open(mf).read().replace("NOT-READ", "READ")
         open(mf, "w").write(txt)
         partition.main(root, out)
-        self.assertIn("\tREAD\n", open(mf).read())          # same size: status kept
+        self.assertIn("\tREAD\t", open(mf).read())          # same content: status kept
+        open(p, "w").write("y")                               # same size, different content
+        partition.main(root, out)
+        self.assertIn("\t1\tNOT-READ\t", open(mf).read())   # content changed: read again
+        open(mf, "w").write(open(mf).read().replace("NOT-READ", "READ"))
         open(p, "w").write("xxxxx")
         partition.main(root, out)
-        self.assertIn("\t5\tNOT-READ\n", open(mf).read())   # size changed: read again
+        self.assertIn("\t5\tNOT-READ\t", open(mf).read())   # size changed: read again
 
 
 class CitationFixes(unittest.TestCase):
@@ -174,3 +178,22 @@ class SafeWriteCrlf(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ByteFixes(unittest.TestCase):
+    def test_force_backup_keeps_exact_bytes(self):
+        import safe_write
+        d = tempfile.mkdtemp()
+        self.assertTrue(safe_write.safe_write(d, "X.md", "generated\n"))
+        raw = b"hand edit \xe9 cp1252\n"
+        open(os.path.join(d, "X.md"), "wb").write(raw)
+        self.assertTrue(safe_write.safe_write(d, "X.md", "new\n", force=True))
+        baks = [f for f in os.listdir(d) if f.endswith(".bak")]
+        self.assertEqual(len(baks), 1)
+        self.assertEqual(open(os.path.join(d, baks[0]), "rb").read(), raw)
+
+    def test_citation_line_numbers_ignore_form_feed_and_lone_cr(self):
+        import check_citations as cc
+        d = tempfile.mkdtemp()
+        open(os.path.join(d, "f.txt"), "wb").write(b"one\x0ctwo\rthree\nTARGET LINE here\n")
+        self.assertEqual(cc.check(d, "f.txt", 2, "TARGET LINE here"), "FOUND")

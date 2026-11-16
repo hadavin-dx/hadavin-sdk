@@ -13,7 +13,7 @@ def check(root, path, line, quote, window=5):
     if os.path.isabs(path) or not full.startswith(base + os.sep) or not os.path.isfile(full):
         return "NO-FILE"
     try:
-        with open(full, "r", encoding="utf-8", errors="replace") as fh:
+        with open(full, "r", encoding="utf-8", errors="replace", newline="") as fh:
             lines = fh.read().split("\n")
     except OSError:
         return "NO-FILE"

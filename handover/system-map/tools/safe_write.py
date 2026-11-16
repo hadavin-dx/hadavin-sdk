@@ -45,11 +45,11 @@ def safe_write(base, name, text, force=False):
         return False
     path = _path(base, name)
     if force and os.path.exists(path):
-        with open(path, encoding="utf-8", errors="replace", newline="") as fh:
-            old = fh.read()
-        bak = "%s.%s.bak" % (path, _sha(old)[:8])  # one backup per distinct old text; never replaced
+        with open(path, "rb") as fh:
+            old = fh.read()  # raw bytes: a backup must hold the exact original, even if it is not valid UTF-8
+        bak = "%s.%s.bak" % (path, hashlib.sha256(old).hexdigest()[:8])  # one backup per distinct old file; never replaced
         if not os.path.exists(bak):
-            with open(bak, "w", encoding="utf-8", newline="") as fh:
+            with open(bak, "wb") as fh:
                 fh.write(old)
     with open(path, "w", encoding="utf-8", newline="") as fh:
         fh.write(text)

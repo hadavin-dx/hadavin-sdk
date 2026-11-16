@@ -1,6 +1,6 @@
 """Assign every file to exactly one lane (PLAN-002 section 3) and write manifests.
 Usage: python3 tools/partition.py <repo_root> <out_dir>   (exit 1 on REMAINDER or double assignment)"""
-import os, subprocess, sys
+import hashlib, os, subprocess, sys
 
 RULES = [  # (lane, prefix or exact path); first match wins; checked for double match separately
     ("L1", "handover/demo/ORDERS.md"), ("L1", "handover/demo/REPORT.md"),
@@ -54,14 +54,17 @@ def main(root, out):
         if os.path.exists(mp):  # keep the read status already recorded, but only for a file whose size is unchanged
             for line in open(mp, encoding="utf-8"):
                 c = line.rstrip("\n").split("\t")
-                if len(c) == 3:
-                    status[c[0]] = (c[1], c[2])  # size when the status was recorded, and the status
+                if len(c) == 4:  # file, size, status, sha256 of the content when the status was recorded
+                    status[c[0]] = (c[1], c[2], c[3])
         with open(mp, "w", encoding="utf-8") as fh:
             for f in fs:
-                size = os.path.getsize(os.path.join(root, f)) if os.path.exists(os.path.join(root, f)) else -1
+                fp = os.path.join(root, f)
+                size = os.path.getsize(fp) if os.path.isfile(fp) else -1
+                digest = hashlib.sha256(open(fp, "rb").read()).hexdigest() if os.path.isfile(fp) else "missing"
                 old = status.get(f)
-                keep = old[1] if old and old[0] == str(size) else "NOT-READ"  # a changed file must be read again
-                fh.write(f"{f}\t{size}\t{keep}\n")
+                # keep READ only if size AND content hash are unchanged; a missing file is never kept
+                keep = old[1] if old and old[0] == str(size) and old[2] == digest and digest != "missing" else "NOT-READ"
+                fh.write(f"{f}\t{size}\t{keep}\t{digest}\n")
     total = sum(len(v) for v in lanes.values())
     print({k: len(v) for k, v in sorted(lanes.items())}, "total", total, "of", len(files),
           "problems", len(problems))
