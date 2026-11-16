@@ -51,7 +51,7 @@ FAIL reviewer line [no] 'Pat ́́́, 2026-11-16' reason has 'rule: hidden charac
 FAIL reviewer line [no] '́́́, 2026-11-16' reason has 'rule: hidden character' (got exit 1: REFUSED (rule: name characters): the name must start with a letter)
 FAIL reviewer line [no] 'Pat Smith, 2026-11-16, ́ x' reason has 'rule: hidden character' (got exit 0: ok)
 FAIL reviewer line [no] 'Pat Smith, 2026-11-16, 5́' reason has 'rule: hidden character' (got exit 0: ok)
-FAIL reviewer line [no] 'Pat Smith, 2026-11-16, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+FAIL reviewer line [no] 'Pat Smith, 2026-11-16, xxxxxxxxxxxxxxxxxxxx[...152 x in all, cut in round f8-r9]
 FAIL reviewer line [no] 'Pat Cl-aude, 2026-11-16' reason has 'rule: listed word claude' (got exit 0: ok)
 FAIL reviewer line [no] 'Pat Cla'ude, 2026-11-16' reason has 'rule: listed word claude' (got exit 0: ok)
 FAIL reviewer line [no] 'Pat Bo.t, 2026-11-16' reason has 'rule: listed word bot' (got exit 0: ok)
