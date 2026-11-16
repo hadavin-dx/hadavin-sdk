@@ -1,2 +1,24 @@
 main-bash-INT: rc= leftover_work=lead-repin.mRtllY  files=lead-repin.mRtllY/named.crm_hubspot.py.txt lead-repin.mRtllY/named.run_real_check_n8n.py.txt lead-repin.mRtllY/lead-repin-verify-out.txt lead-repin.mRtllY/list-model-all.txt lead-repin.mRtllY/grep.err lead-repin.mRtllY/named.n8n.py.txt lead-repin.mRtllY/named.n8n_drive.py.txt lead-repin.mRtllY/m.txt lead-repin.mRtllY/named.one.txt lead-repin.mRtllY/list-model.txt lead-repin.mRtllY/list-test-all.txt lead-repin.mRtllY/four.txt lead-repin.mRtllY/list-code-rest.txt lead-repin.mRtllY/mask.sed lead-repin.mRtllY/mask-line.sed lead-repin.mRtllY/list-flows.txt lead-repin.mRtllY/list-code.txt 
    fragments in leftover: 0
+canary-bash-INT: rc= leftover_work=lead-repin.RM9IsQ  files=lead-repin.RM9IsQ/st-in.txt lead-repin.RM9IsQ/st-out.txt lead-repin.RM9IsQ/mask.sed lead-repin.RM9IsQ/mask-line.sed 
+   fragments in leftover: 46
+canarymain-bash-INT: rc= leftover_work=lead-repin.OFbY6F  files=lead-repin.OFbY6F/st-in.txt lead-repin.OFbY6F/st-out.txt lead-repin.OFbY6F/mask.sed lead-repin.OFbY6F/mask-line.sed 
+   fragments in leftover: 46
+main-bash-TERM: rc=rc=143 leftover_work=lead-repin.puMKtt  files=lead-repin.puMKtt/named.crm_hubspot.py.txt lead-repin.puMKtt/named.run_real_check_n8n.py.txt lead-repin.puMKtt/lead-repin-verify-out.txt lead-repin.puMKtt/list-model-all.txt lead-repin.puMKtt/grep.err lead-repin.puMKtt/named.n8n.py.txt lead-repin.puMKtt/named.n8n_drive.py.txt lead-repin.puMKtt/m.txt lead-repin.puMKtt/named.one.txt lead-repin.puMKtt/list-model.txt lead-repin.puMKtt/list-test-all.txt lead-repin.puMKtt/four.txt lead-repin.puMKtt/list-code-rest.txt lead-repin.puMKtt/mask.sed lead-repin.puMKtt/mask-line.sed lead-repin.puMKtt/list-flows.txt lead-repin.puMKtt/list-code.txt 
+   fragments in leftover: 0
+canary-bash-TERM: rc=rc=143 leftover_work= files=
+   fragments in leftover: 0
+canarymain-bash-TERM: rc=rc=143 leftover_work=lead-repin.JSpF1D  files=lead-repin.JSpF1D/st-in.txt lead-repin.JSpF1D/st-out.txt lead-repin.JSpF1D/mask.sed lead-repin.JSpF1D/mask-line.sed 
+   fragments in leftover: 46
+main-dash-INT: rc= leftover_work=lead-repin.vcQ9uy  files=lead-repin.vcQ9uy/named.crm_hubspot.py.txt lead-repin.vcQ9uy/named.run_real_check_n8n.py.txt lead-repin.vcQ9uy/lead-repin-verify-out.txt lead-repin.vcQ9uy/list-model-all.txt lead-repin.vcQ9uy/grep.err lead-repin.vcQ9uy/named.n8n.py.txt lead-repin.vcQ9uy/named.n8n_drive.py.txt lead-repin.vcQ9uy/m.txt lead-repin.vcQ9uy/named.one.txt lead-repin.vcQ9uy/list-model.txt lead-repin.vcQ9uy/list-test-all.txt lead-repin.vcQ9uy/four.txt lead-repin.vcQ9uy/list-code-rest.txt lead-repin.vcQ9uy/mask.sed lead-repin.vcQ9uy/mask-line.sed lead-repin.vcQ9uy/list-flows.txt lead-repin.vcQ9uy/list-code.txt 
+   fragments in leftover: 0
+canary-dash-INT: rc= leftover_work=lead-repin.pZ2Pax  files=lead-repin.pZ2Pax/st-in.txt lead-repin.pZ2Pax/st-out.txt lead-repin.pZ2Pax/mask.sed lead-repin.pZ2Pax/mask-line.sed 
+   fragments in leftover: 46
+canarymain-dash-INT: rc= leftover_work=lead-repin.TmDmYI  files=lead-repin.TmDmYI/st-in.txt lead-repin.TmDmYI/st-out.txt lead-repin.TmDmYI/mask.sed lead-repin.TmDmYI/mask-line.sed 
+   fragments in leftover: 46
+main-dash-TERM: rc=rc=143 leftover_work=lead-repin.JGV65c  files=lead-repin.JGV65c/named.crm_hubspot.py.txt lead-repin.JGV65c/named.run_real_check_n8n.py.txt lead-repin.JGV65c/lead-repin-verify-out.txt lead-repin.JGV65c/list-model-all.txt lead-repin.JGV65c/grep.err lead-repin.JGV65c/named.n8n.py.txt lead-repin.JGV65c/named.n8n_drive.py.txt lead-repin.JGV65c/m.txt lead-repin.JGV65c/named.one.txt lead-repin.JGV65c/list-model.txt lead-repin.JGV65c/list-test-all.txt lead-repin.JGV65c/four.txt lead-repin.JGV65c/list-code-rest.txt lead-repin.JGV65c/mask.sed lead-repin.JGV65c/mask-line.sed lead-repin.JGV65c/list-flows.txt lead-repin.JGV65c/list-code.txt 
+   fragments in leftover: 0
+canary-dash-TERM: rc=rc=143 leftover_work=lead-repin.Nmu4qe  files=lead-repin.Nmu4qe/st-in.txt lead-repin.Nmu4qe/st-out.txt lead-repin.Nmu4qe/mask.sed lead-repin.Nmu4qe/mask-line.sed 
+   fragments in leftover: 46
+canarymain-dash-TERM: rc=rc=143 leftover_work=lead-repin.hFCCC2  files=lead-repin.hFCCC2/st-in.txt lead-repin.hFCCC2/st-out.txt lead-repin.hFCCC2/mask.sed lead-repin.hFCCC2/mask-line.sed 
+   fragments in leftover: 46

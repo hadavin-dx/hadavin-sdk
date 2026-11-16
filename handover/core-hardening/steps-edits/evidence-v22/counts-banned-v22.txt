@@ -12,3 +12,5 @@ OWNER-SHEET-v21.md lines 118 words 7943
 OWNER-SHEET-v22.md lines 146 words 9267
 LEAD-RELEASE-NOTE-v5.md lines 147 words 7281
 LEAD-RELEASE-NOTE-v6.md lines 152 words 8349
+v22-CHANGES.md case-insensitive 0
+checkpoint-v22.md case-insensitive 0
