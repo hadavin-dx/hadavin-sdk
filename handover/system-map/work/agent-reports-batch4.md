@@ -1037,3 +1037,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 751 decision-list r11: deadlines, run (a). FIXED by CURRENT r11; row splits TO DO.
 - 752 merged-findings r9: Blocker count unreadable. FIXED by CURRENT LEGEND r9; lines 172-318 unreviewed.
+
+- 753 PLAN-002 r17: lead meaning, line 86. FIXED by CURRENT RULINGS r18.
+- 754 L4c r8: quarantine list missing. FIXED by CURRENT r8; markers not added.
+- 755 open-items-table r12: history contradicts. FIXED by CURRENT r12; cells TO DO.
