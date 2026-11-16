@@ -1,4 +1,6 @@
-S REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
+ written, card line 2 backed by stand-in tests only)
+PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
 PASS E-count: the start box states its own word count once and it equals the real count of the box (2495) :: (['2495'], 2495)
 PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2495
 PASS E-title: the title line says IST = UTC + 5:30 :: # REPORT-c6t: video audit fix pass, supersedes REPORT-c6s.md (2026-11-16, UTC; IST = UTC + 5:30)
@@ -11,8 +13,8 @@ PASS E-cardwords: every '(N words)' printed after a card line equals the real co
 PASS E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): 8 names :: []
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
-FAIL E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:41:44Z (read from the files at run time) :: []
+PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
 PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
@@ -30,6 +32,6 @@ PASS N3: in the start box 'row' means a row of the edit table (the box defines L
 PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
 PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
-SUMMARY: 196 checks, 10 FAILED: F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (3 files); recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68; table 3b equals the recount (14 lines); 3b TOTAL line equals the recount; section 3 'rows tied to it' column equals the recount; box wave 1 count equals ready + defaults (84); every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (35 default-only, 84 wave 1); C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each; E-numbers: every row count in the start box (all 94, ready 49, default 35, check 3, owner 7, wave 1 84) equals the recount from the table, in every place it is printed; E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md
+SUMMARY: 196 checks, 9 FAILED: F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (3 files); recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68; table 3b equals the recount (14 lines); 3b TOTAL line equals the recount; section 3 'rows tied to it' column equals the recount; box wave 1 count equals ready + defaults (84); every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (35 default-only, 84 wave 1); C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each; E-numbers: every row count in the start box (all 94, ready 49, default 35, check 3, owner 7, wave 1 84) equals the recount from the table, in every place it is printed
 
 EXIT CODE 1

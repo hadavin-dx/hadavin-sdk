@@ -81,3 +81,86 @@ WARNING: the state folder could not be synced after removing 5272eb0af8d3d6e2.pl
 WARNING: the state folder could not be synced after removing 5272eb0af8d3d6e2.backup (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
 test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; hash matches saved original: True
   PASS: T97j m11 --restore with a failing state-folder sync: exit 0 (got 0; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/safety-only.EJ4qKm.sh: line 70:  8795 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("evil\nPASSED: faked line\u001b[31m") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/in/run.r10.py --ro
+  PASS: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+REFUSED: this tool cannot start here: no usable temporary folder (FileNotFoundError: No usable temporary directory found)
+exit 2
+  PASS: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  PASS: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 0; r9: fails)
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+usage: run.r10.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r10.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r10.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r10.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r10.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+  PASS: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 0 of 5 wrong (r9: exit 1 or a traceback)
+  PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 0
+  PASS: T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
+/tmp/safety-only.EJ4qKm.sh: line 70: 11956 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/tmp/safety-only.EJ4qKm.sh: line 70: 14090 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; h
+  PASS: T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/safety-only.EJ4qKm.sh: line 70: 16743 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; h
+  PASS: T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0777 (got exit 0, mode 777; the special-bit case is T99b)
+missing [] no (d): False
+  PASS: T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 0; r9: fails)
+== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)
+ERROR: ld.so: object '/x.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+wrong: ['one shell string: started', 'tuple instead of list: started', 'relative program: started', 'empty list: IndexError instead of a refusal', 'NUL in an argument: ValueError instead of a refusal', 'a non-text argument: TypeError instead of a refusal', 'shell=True: started', 'preexec_fn: started', 'LD_PRELOAD in the environment: started', 'GIT_DIR in the environment: started', 'environment is not a dict of text: TypeError instead of a refusal', 'Child.__init__ does not call check_child_call']
+  FAIL: T99a S603: Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit 1; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)
+/tmp/safety-only.EJ4qKm.sh: line 70: 19195 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; hash matches saved original: True
+  FAIL: T99b MAJ-1 forged marker mode 4755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 4755 has at most 3 digits), the text says NOTE (r10: the file got mode 4755)
+/tmp/safety-only.EJ4qKm.sh: line 70: 20925 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; hash matches saved original: True
+  FAIL: T99b MAJ-1 forged marker mode 2755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 2755 has at most 3 digits), the text says NOTE (r10: the file got mode 2755)
+/tmp/safety-only.EJ4qKm.sh: line 70: 23134 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; hash matches saved original: True
+  FAIL: T99b MAJ-1 forged marker mode 4777 (plain --restore): exit 0 (got 0), no special bit on the file (mode 4777 has at most 3 digits), the text says NOTE (r10: the file got mode 4777)
+/tmp/safety-only.EJ4qKm.sh: line 70: 24594 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; hash matches saved original: True
+  FAIL: T99b MAJ-1 forged marker mode 7001 (plain --restore): exit 0 (got 0), no special bit on the file (mode 7001 has at most 3 digits), the text says NOTE (r10: the file got mode 7001)
+/tmp/safety-only.EJ4qKm.sh: line 70: 26631 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T99b2 MAJ-1 file deleted, marker mode 4755, plain --restore: re-created without the setuid bit (mode 4755, exit 0; r10: 4755)
+NOT refused: the file got mode 0o644
+  FAIL: T99b3 MAJ-1 the mode is checked AFTER the write: when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit 1; r10: returns normally)
+  FAIL: T99b4 TEXT CHECK the docstring no longer says a setuid bit is restored as recorded, and says plain --restore never writes one (exit 1; r10: fails)
+  FAIL: T99c m1 a 313-byte -k expression is not refused for its length (exit 2, no 'longer than'; r10: exit 2 'name longer than 255 bytes'); a 100001-byte one is refused, exit 2 (got 2); a 300-byte PATH is still refused, exit 2 (got 2)
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/in/run.r10.py", line 2761, in main
+    safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/in/run.r10.py", line 951, in safe_rel
+    if cur.is_symlink():
+       ~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/pathlib/_abc.py", line 518, in is_symlink
+    return S_ISLNK(self.lstat().st_mode)
+                   ~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/pathlib/_abc.py", line 437, in lstat
+    return self.stat(follow_symlinks=False)
+  FAIL: T99d m2 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): 0 wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit 2), a 300-byte --prefix (got 2) and a 300-byte --id (got 2) are refused with exit 2, no traceback, no INTERNAL ERROR
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/other-tmp/hadavin-mutation-lane-0/rawfolder99/X-baseline.txt lies in the state folder /tmp
+  FAIL: T99e m3 --raw inside the state folder of TMP: exit 2 (got 2) and the folder was NOT created (r10: created, then refused)
+/tmp/safety-only.EJ4qKm.sh: line 70: 28583 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; h
+  FAIL: T99f m6 marker mode 664 with --sha, git file 0644: exit 3 (got 0), nothing written (still planted) (r10: exit 0 for 0664, mode written)
+/tmp/safety-only.EJ4qKm.sh: line 70: 31873 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/t-r10/tmpstate/hadavin-mutation-lane-0/5272eb0af8d3d6e2.backup; h
+  FAIL: T99f m6 marker mode 660 with --sha, git file 0644: exit 3 (got 0), nothing written (still planted) (r10: exit 0 for 0664, mode written)
+/tmp/safety-only.EJ4qKm.sh: line 70:  3154 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1

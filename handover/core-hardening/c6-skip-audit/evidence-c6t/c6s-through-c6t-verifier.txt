@@ -1,0 +1,224 @@
+PASS short names found (at least 30) :: 40
+PASS rows parsed (at least 90) :: 94
+PASS C-1 old text occurs once on its stated line (94 rows) :: []
+PASS ids are exactly 1..N, no duplicate :: N=94
+PASS C-1b all rows apply in table order on copies, no mismatch :: []
+PASS C-1b table order is bottom-up within each file (highest line first) :: []
+PASS each file's rows form one block in the table :: ['handover/demo/VIDEO-RUNSHEET.md', 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md', 'handover/demo/n8n-flows/N8N-START.md', 'handover/demo/n8n-mainframe/mf.py', 'handover/demo/n8n-flows-real-v5/mf-form.json', 'handover/demo/n8n-flows-real-v5/mf-hook.json', 'handover/demo/n8n-flows-real-v5/mf-recove
+PASS cites exist (427 checked) :: 0
+PASS every cite key is defined in section 1 :: []
+PASS no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no file excluded) :: []
+PASS no stale phrase in new texts :: []
+PASS banned vendor strings in report: count 0 of 10 listed (names not printed) :: count=0
+PASS no secret-like or e-mail string in report :: 0
+PASS F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4 files) :: []
+PASS F1 C-4a after L-SAVEERR yes (all rows applied) the four flow files give all/all/manual-false once each (4 files) :: []
+PASS recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68 :: (49, 36, 3, 6, 0, 94)
+PASS table 3b equals the recount (14 lines) :: (14, 14)
+PASS 3b TOTAL line equals the recount :: ['| TOTAL | all rows | 94 | ready 49, on defaults only 36, with a check 3, waiting for the answer of L-SAVEERR 6 (default no), NOT FILMABLE until an answer 0 | |']
+PASS section 3 'rows tied to it' column equals the recount
+PASS figure 60.1 to 61.9 exact everywhere (20 occurrences) :: []
+PASS no '61.1' or other upper bound next to 60.1
+PASS figure 52.8 to 54.9 exact everywhere (5 occurrences) :: []
+PASS 61.9 only after 60.1 to
+PASS 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['10', '10'], ['8', '8'])
+PASS K1 5 and K2 5 everywhere :: [('5', '5'), ('5', '5'), ('5', '5')]
+PASS K3B 5 and K3 3 everywhere :: [('5', '3'), ('5', '3'), ('5', '3'), ('5', '3')]
+PASS 18 kept runs = K1 5 + K2 5 + K3B 5 + K3 3
+PASS every 'UTC = IST' pair is exactly UTC + 5:30 (61 pairs) :: []
+PASS every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: []
+PASS every new text with UTC also has IST :: []
+PASS in every new text each UTC has its own IST (UTC count <= IST count) :: []
+PASS IST given with the money stop
+PASS report prose lines with '18 runs' name both voided runs :: []
+PASS new texts with '18 runs' name both voided runs :: []
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS action box first (before section 0)
+FAIL part 2 statement at line 6 could not run on this report (ValueError: substring not found)
+FAIL part 2 statement at line 7 could not run on this report (NameError: name 'sec1c' is not defined)
+FAIL part 2 statement at line 8 could not run on this report (NameError: name 'box' is not defined)
+PASS no row is NOT FILMABLE :: []
+PASS rows 13+14 hold 4 spoken lines of 90 words :: [11, 35, 22, 22]
+FAIL part 2 statement at line 21 could not run on this report (NameError: name 'box' is not defined)
+PASS row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 
+FAIL part 2 statement at line 26 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 27 could not run on this report (NameError: name 'ql' is not defined)
+FAIL part 2 statement at line 28 could not run on this report (NameError: name 'ql' is not defined)
+FAIL part 2 statement at line 31 could not run on this report (NameError: name 'm1' is not defined)
+FAIL part 2 statement at line 33 could not run on this report (NameError: name 'ok' is not defined)
+FAIL part 2 statement at line 45 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 49 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 50 could not run on this report (NameError: name 'ok' is not defined)
+FAIL part 2 statement at line 51 could not run on this report (NameError: name 'ok' is not defined)
+FAIL part 2 statement at line 53 could not run on this report (NameError: name 'box' is not defined)
+PASS rows 11, 13, 14(not), 21 tie to L-POST and L-LEASE (13, 21) and the tied column lists them
+PASS section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, replacement, recommendation :: []
+FAIL part 2 statement at line 58 could not run on this report (NameError: name 'box' is not defined)
+PASS rows 17 and 81 say 'may' about the 45 s setting
+PASS rows 13 and 21 carry the plain statement and no 45-second sentence by default
+PASS C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
+FAIL part 2 statement at line 64 could not run on this report (NameError: name 'box' is not defined)
+PASS no 'Tuesday evening' or 'Tue evening' inference
+PASS every line that names plan line 1051 says it is UNVERIFIED :: []
+PASS departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+FAIL part 2 statement at line 69 could not run on this report (NameError: name 'box' is not defined)
+PASS L-SCENES appears only in coverage lines (section 8), never in a live table or row
+PASS row 6 item 11 has no 'needs n8n and is not run yet'
+PASS row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed, counts only)
+PASS no stale card word count (103, 75, 71) outside history lines :: []
+PASS row 6 item 13: the 30 s rule applies only if the card or caption carries the 45-second limit
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+PASS row 6 item 16 does not claim that deleting erases the data
+PASS row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: atabases: the claim database and, for n8n's own state, a SEPARATE database `n8n`
+PASS row 91 says the stage journal and some bookkeeping files stay files
+PASS row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
+PASS row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+PASS every new text with 144.3 labels it as from n8n coming back up :: []
+PASS no 'row N' reference in any new text :: []
+PASS no 'accepted' exit slip in any new text :: []
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+PASS 5a lists exactly the 37 viewer-visible run-sheet and page rows :: (37, 37)
+PASS 5a text equals each row's own 'what the viewer sees' cell
+FAIL report names the check time 2026-11-16T17:42:35Z and the newest sheet version on disk (v31) :: [31, 31, 31]
+PASS no owner sheet changed after the stated check time (C-10c is current) :: []
+PASS no claim that v25 or v26 is the newest
+FAIL L-SHEET reads 'confirm the one final sheet' and names the newest version (v31) A, B and SOURCE
+PASS section 9 has no duplicate bullet (29 bullets) :: []
+PASS G12 named as open with the studio lead in section 9
+FAIL part 2 statement at line 123 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 124 could not run on this report (NameError: name 'low' is not defined)
+FAIL part 2 statement at line 125 could not run on this report (NameError: name 'low' is not defined)
+FAIL part 2 statement at line 127 could not run on this report (NameError: name 'low' is not defined)
+PASS every word the box defines is defined in the word list and first used before that only inside the WHAT TO TYPE block, which points to the lists (22 terms) :: []
+FAIL part 2 statement at line 135 could not run on this report (NameError: name 'intro' is not defined)
+FAIL part 2 statement at line 136 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 137 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 138 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 139 could not run on this report (NameError: name 'lq' is not defined)
+FAIL c6t N5: the start box is under 2,500 words (c6s: 3,488; 3488 words now) and states its own real count :: 3488
+FAIL part 2 statement at line 147 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 148 could not run on this report (NameError: name 'sets' is not defined)
+FAIL part 2 statement at line 149 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 152 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 153 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 154 could not run on this report (NameError: name 'box' is not defined)
+PASS L-SCENES question is gone
+PASS rows 25, 37, 38 and 76 exist as rows
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS section 8 has the coverage of the c6p, c6o and c6n reviews
+PASS every weekday written with a date is the true weekday (19 pairs; year 2026 unless written; no pair outside old-text quotes is skipped) :: []
+PASS no 'Tue 23 Nov' and no 'Thu 18 Nov' anywhere
+PASS row 21 (scene 3 caption) carries no lease sentence (no 'lease', no '45', no 'longer than', no 'claim') :: Caption: "a lead sent twice with the same id is processed once". The screen is the evidence; the rehearsal must show the repeat reply and th
+PASS every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (36 default-only, 85 wave 1) :: []
+PASS no stale count 91 or 42 stated as a wave 1 or default-only count :: []
+FAIL part 2 statement at line 194 could not run on this report (NameError: name 'box' is not defined)
+PASS row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
+FAIL part 2 statement at line 196 could not run on this report (NameError: name 'box' is not defined)
+PASS M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory
+PASS M-A: the stop rules table has the lease wording approval entry
+FAIL part 2 statement at line 202 could not run on this report (NameError: name 'box' is not defined)
+PASS M-C: L-DEL rows say 'ANSWERED' only for the part that is answered and say the delete-path criterion is open :: 2
+PASS M-D: the key reaches the scan by a pattern file in memory or standard input from the key store; never a command line; never on disk; a hit means cancel or replace the key and treat the runs as compromised
+PASS M-D: item 16 repeats the search for real key values
+PASS M-E: rows 53, 55, 62, 64, 66, 68 wait for L-SAVEERR; row 92 keeps the failed-run setting none; row 44 says successful runs
+FAIL part 2 statement at line 211 could not run on this report (NameError: name 'box' is not defined)
+PASS C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each :: [('mf-form.json', 1, 0, 1), ('mf-hook.json', 1, 0, 1), ('mf-recovery.json', 1, 0, 1), ('mf-sub-crm-mail.json', 1, 0, 1)]
+FAIL part 2 statement at line 226 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 228 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 229 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 230 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 232 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 233 could not run on this report (NameError: name 'ex' is not defined)
+FAIL the real v31 files on disk are ['OWNER-SHEET-v31-A.md', 'OWNER-SHEET-v31-B.md', 'OWNER-SHEET-v31-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v31-A.md', 'OWNER-SHEET-v31-B.md', 'OWNER-SHEET-v31-SOURCE.md']
+INFO OWNER-SHEET-v31-A.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:42:35Z
+INFO OWNER-SHEET-v31-B.md last written 17:33:09 UTC; check time of the report 2026-11-16T17:42:35Z
+INFO OWNER-SHEET-v31-SOURCE.md last written 17:31:34 UTC; check time of the report 2026-11-16T17:42:35Z
+PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
+PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
+PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
+PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6t.md and holds its own title line)
+PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6t.md and holds its own title line)
+PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
+FAIL part 2 statement at line 251 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 254 could not run on this report (NameError: name '_bl' is not defined)
+FAIL F4 the report names the newest owner sheet version (v31) and release note (v15) on disk, and the check time :: (('30', '17:13:05', '22:43:05', '14'), 31, 15)
+PASS F4 no owner sheet or release note has a version higher than the one named :: []
+FAIL part 2 statement at line 264 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 265 could not run on this report (NameError: name 'box' is not defined)
+PASS F4 the owner-sheet check covers v19 and later (static-checks.sh globs v19 and v2x to v9x and lists a v31+ check)
+PASS F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
+PASS F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
+PASS F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
+FAIL part 2 statement at line 275 could not run on this report (NameError: name 'box' is not defined)
+PASS F1 the glossary says the take uses all for successful and none for failed runs
+PASS F2 card line 2 gate in row 8 (item 12) and in the stop-rule table
+FAIL part 2 statement at line 279 could not run on this report (NameError: name 'box' is not defined)
+PASS F3 item 15 runs after EVERY rehearsal with real accounts
+FAIL F3 the scanner is read by a second person and tested with a fake key before it touches a real key
+PASS F3 counts only; no file holds the key or matched lines; not in the process list or shell history
+PASS F3 searches in place or on a dump that is deleted and counted to 0
+PASS F3 swap point named
+PASS F3 item 16 scans BEFORE anything is deleted, writes counts, and scans once more after the deletion
+FAIL F3 the stop-rule row and check C-6 carry the same rules
+PASS F3 row 6 reason says items 11 to 16
+PASS m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
+PASS m2 row 13 says 'expected to be true until C-9 part 2'
+FAIL part 2 statement at line 295 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 296 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 297 could not run on this report (NameError: name 'exs' is not defined)
+FAIL part 2 statement at line 299 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 300 could not run on this report (NameError: name 'box' is not defined)
+PASS naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
+FAIL part 2 statement at line 302 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 303 could not run on this report (NameError: name 'box' is not defined)
+FAIL part 2 statement at line 304 could not run on this report (NameError: name 'sec1c' is not defined)
+FAIL part 2 statement at line 305 could not run on this report (NameError: name 'steps' is not defined)
+FAIL part 2 statement at line 306 could not run on this report (NameError: name 'box' is not defined)
+PASS naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation
+FAIL part 2 statement at line 308 could not run on this report (NameError: name 'box' is not defined)
+FAIL naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
+PASS naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
+PASS naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)
+FAIL part 2 statement at line 312 could not run on this report (NameError: name 'box' is not defined)
+PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
+PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
+PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
+FAIL E-count: the start box states its own word count once and it equals the real count of the box (3488) :: ([], 3488)
+FAIL N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 3488
+PASS E-title: the title line says IST = UTC + 5:30 :: # REPORT-c6s: video audit fix pass, supersedes REPORT-c6r.md (2026-11-16, UTC; IST = UTC + 5:30)
+PASS E-numbers: every row count in the start box (all 94, ready 49, default 36, check 3, owner 6, wave 1 85) equals the recount from the table, in every place it is printed :: []
+PASS E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 labels compared; L-SHEET has none and L-DEL is 'as answered') :: []
+FAIL part 2 statement at line 356 could not run on this report (NameError: name 'box' is not defined)
+PASS E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, AKIA other than the allowed literal, private key header) :: 0
+PASS E-rnum: the start box holds no R-number, WP number or ledger id (they are for studio notes, not for the person who answers) :: []
+FAIL part 2 statement at line 365 could not run on this report (NameError: name 'sec1c' is not defined)
+FAIL part 2 statement at line 366 could not run on this report (NameError: name '_pr' is not defined)
+FAIL E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): 7 names :: ['c6s-APPLIED-ROWS.md']
+PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
+PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
+PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
+FAIL E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
+FAIL E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
+PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
+PASS E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold
+FAIL M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default
+FAIL part 2 statement at line 407 could not run on this report (NameError: name 'box' is not defined)
+FAIL M2: the lease words that stay on the video (the label 'setting: lease 45 s', the words 'other lease settings') are held under gate G12 in the box and in section 3
+FAIL M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3)
+FAIL part 2 statement at line 411 could not run on this report (NameError: name 'sec1c' is not defined)
+FAIL part 2 statement at line 414 could not run on this report (NameError: name '_tb' is not defined)
+FAIL part 2 statement at line 421 could not run on this report (NameError: name 'sec1c' is not defined)
+PASS M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell) :: []
+FAIL M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 3488
+FAIL part 2 statement at line 428 could not run on this report (NameError: name 'sec1c' is not defined)
+FAIL N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim' :: ['ery 30 seconds) may claim the contact again. ', 'e recovery flow may claim a crashed contact a', " is you listing the claim table's rules (psql"]
+FAIL N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'
+PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
+FAIL N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
+FAIL m6: every 'second person' says who (someone who did not write the scan) :: 7
+SUMMARY: 220 checks, 89 FAILED: part 2 statement at line 6 could not run on this report (ValueError: substring not found); part 2 statement at line 7 could not run on this report (NameError: name 'sec1c' is not defined); part 2 statement at line 8 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 21 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 26 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 27 could not run on this report (NameError: name 'ql' is not defined); part 2 statement at line 28 could not run on this report (NameError: name 'ql' is not defined); part 2 statement at line 31 could not run on this report (NameError: name 'm1' is not defined); part 2 statement at line 33 could not run on this report (NameError: name 'ok' is not defined); part 2 statement at line 45 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 49 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 50 could not run on this report (NameError: name 'ok' is not defined); part 2 statement at line 51 could not run on this report (NameError: name 'ok' is not defined); part 2 statement at line 53 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 58 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 64 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 69 could not run on this report (NameError: name 'box' is not defined); report names the check time 2026-11-16T17:42:35Z and the newest sheet version on disk (v31); L-SHEET reads 'confirm the one final sheet' and names the newest version (v31) A, B and SOURCE; part 2 statement at line 123 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 124 could not run on this report (NameError: name 'low' is not defined); part 2 statement at line 125 could not run on this report (NameError: name 'low' is not defined); part 2 statement at line 127 could not run on this report (NameError: name 'low' is not defined); part 2 statement at line 135 could not run on this report (NameError: name 'intro' is not defined); part 2 statement at line 136 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 137 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 138 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 139 could not run on this report (NameError: name 'lq' is not defined); c6t N5: the start box is under 2,500 words (c6s: 3,488; 3488 words now) and states its own real count; part 2 statement at line 147 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 148 could not run on this report (NameError: name 'sets' is not defined); part 2 statement at line 149 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 152 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 153 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 154 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 194 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 196 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 202 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 211 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 226 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 228 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 229 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 230 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 232 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 233 could not run on this report (NameError: name 'ex' is not defined); the real v31 files on disk are ['OWNER-SHEET-v31-A.md', 'OWNER-SHEET-v31-B.md', 'OWNER-SHEET-v31-SOURCE.md'] and the report names every one of them; part 2 statement at line 251 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 254 could not run on this report (NameError: name '_bl' is not defined); F4 the report names the newest owner sheet version (v31) and release note (v15) on disk, and the check time; part 2 statement at line 264 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 265 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 275 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 279 could not run on this report (NameError: name 'box' is not defined); F3 the scanner is read by a second person and tested with a fake key before it touches a real key; F3 the stop-rule row and check C-6 carry the same rules; part 2 statement at line 295 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 296 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 297 could not run on this report (NameError: name 'exs' is not defined); part 2 statement at line 299 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 300 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 302 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 303 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 304 could not run on this report (NameError: name 'sec1c' is not defined); part 2 statement at line 305 could not run on this report (NameError: name 'steps' is not defined); part 2 statement at line 306 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 308 could not run on this report (NameError: name 'box' is not defined); naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16'); part 2 statement at line 312 could not run on this report (NameError: name 'box' is not defined); E-count: the start box states its own word count once and it equals the real count of the box (3488); N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted); part 2 statement at line 356 could not run on this report (NameError: name 'box' is not defined); part 2 statement at line 365 could not run on this report (NameError: name 'sec1c' is not defined); part 2 statement at line 366 could not run on this report (NameError: name '_pr' is not defined); E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): 7 names; E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC; E-mtime: the report names the SOURCE file of the newest release note with its real written time; M1: no text says the owner sheet or the release note carries the 45-second limit sentence; L-POST cites LRN14:150 and LRN14:149 item 11 as the evidence of its default; part 2 statement at line 407 could not run on this report (NameError: name 'box' is not defined); M2: the lease words that stay on the video (the label 'setting: lease 45 s', the words 'other lease settings') are held under gate G12 in the box and in section 3; M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3); part 2 statement at line 411 could not run on this report (NameError: name 'sec1c' is not defined); part 2 statement at line 414 could not run on this report (NameError: name '_tb' is not defined); part 2 statement at line 421 could not run on this report (NameError: name 'sec1c' is not defined); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 3488; part 2 statement at line 428 could not run on this report (NameError: name 'sec1c' is not defined); N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim'; N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'; N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops; m6: every 'second person' says who (someone who did not write the scan)

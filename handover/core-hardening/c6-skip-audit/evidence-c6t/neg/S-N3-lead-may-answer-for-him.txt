@@ -1,4 +1,6 @@
-S naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
+art 2 circle is explained
+PASS naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation
+PASS naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
 PASS naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
 PASS naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
 PASS naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)
@@ -19,8 +21,8 @@ PASS E-cardwords: every '(N words)' printed after a card line equals the real co
 PASS E-files: every file name in the start box is a real file (or the one this work writes, c6t-APPLIED-ROWS.md): 8 names :: []
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
-FAIL E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:41:44Z (read from the files at run time) :: []
+PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:42:35Z (read from the files at run time) :: []
 PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
@@ -38,6 +40,6 @@ PASS N3: in the start box 'row' means a row of the edit table (the box defines L
 PASS N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed
 PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
-SUMMARY: 196 checks, 2 FAILED: naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers; E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md
+SUMMARY: 196 checks, 1 FAILED: naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
 
 EXIT CODE 1
