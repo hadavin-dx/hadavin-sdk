@@ -87,17 +87,17 @@ sub('then flip 9; echo "ok A9: marker 9 flipped; left:"; grep -n -o \'LEAD-FILL 
 
 # ---------- B2 ----------
 sub('elif [ ! -f "$PF" ]; then echo "STOP B2: PF does not exist yet. Next: do A8 first."; else k=',
-    'elif ! pfok; then :; else k=')
+    'elif ! pfok; then false; else k=')
 sub('if [ "$k" = 1 ]; then sed -i "s|$OLDT|$NEWT|" "$PF" && echo "ok B2: outcome A written into PF"; fi; accept 2; fi; fi; }',
     'if [ "$k" = 1 ]; then if sed -i "s|$OLDT|$NEWT|" "$PF"; then echo "ok B2: outcome A written into PF"; accept 2; else echo "STOP B2: sed could not change PF. Next: close the editor; run the block again."; fi; else accept 2; fi; fi; fi; }')
 
 # ---------- C2 (observation 5, 1) ----------
 sub('hbok && { if [ "$FINAL5" != yes ] || [ "$NAMES_OK" != yes ]; then echo "STOP C2:',
-    'hbok && { if ! pfok; then :; elif [ "$FINAL5" != yes ] || [ "$NAMES_OK" != yes ]; then echo "STOP C2:')
+    'hbok && { if ! pfok; then false; elif [ "$FINAL5" != yes ] || [ "$NAMES_OK" != yes ]; then echo "STOP C2:')
 sub('grep -qE \'^[A-Za-z0-9._/-]+$\'; then echo "STOP C2: BR has unsafe characters or is empty.',
     'grep -qE \'^[A-Za-z0-9._/][A-Za-z0-9._/-]*$\'; then echo "STOP C2: BR has unsafe characters, starts with -, or is empty.')
 sub('"$PF"; flip 5 7; echo "ok C2"; left; echo "left placeholders (sha/branch must be 0): $(grep -c -E \'<FINAL-(SHA|BRANCH)\' "$PF"); table rows still open: $(grep -c \'<FINAL-LINES>\' "$PF") (must be 20 until C4)"; fi; }',
-    '"$PF" && flip 5 7; then echo "ok C2"; left; echo "left placeholders (sha/branch must be 0): $(grep -c -E \'<FINAL-(SHA|BRANCH)\' "$PF"); table rows still open: $(grep -c \'<FINAL-LINES>\' "$PF") (must be 20 until C4)"; else echo "STOP C2: the change of PF did not work. Next: close the editor and any program that holds PF; tell the builder; run C2 again (it is safe to repeat)."; fi; fi; }')
+    '"$PF" && flip 5 7; then echo "ok C2"; left; echo "left placeholders (sha/branch must be 0): $(grep -c -E \'<FINAL-(SHA|BRANCH)\' "$PF"); table rows still open: $(grep -c \'<FINAL-LINES>\' "$PF") (must be 20 until C4)"; else echo "STOP C2: the change of PF did not work. Next: close the editor and any program that holds PF; tell the builder; run C2 again (it is safe to repeat)."; fi; }')
 sub('else sed -i -e "s|<FINAL-SHA-FULL>|$PIN|g"', 'elif sed -i -e "s|<FINAL-SHA-FULL>|$PIN|g"')
 sub('The block does everything only when every check holds: 40 hex characters, a branch name with safe characters,',
     'The block does everything only when every check holds: PF exists and is not a symbolic link, 40 hex characters, a branch name with safe characters (not starting with `-`),')
@@ -126,7 +126,7 @@ sub(old, new)
 
 # ---------- C4 fill ----------
 sub('hbok && { if [ "$(cat "$W/rows.rc" 2>/dev/null)" != 0 ]; then echo "STOP C4: the rows block above has not run clean',
-    'hbok && { if ! pfok; then :; elif [ "$(cat "$W/rows.rc" 2>/dev/null)" != 0 ]; then echo "STOP C4: the rows block above has not run clean')
+    'hbok && { if ! pfok; then false; elif [ "$(cat "$W/rows.rc" 2>/dev/null)" != 0 ]; then echo "STOP C4: the rows block above has not run clean')
 sub('echo "ok C4: now run: accept 6"; fi; fi; }', 'echo "ok C4: now run: accept 6"; else echo "STOP C4: the rows are not all filled (open $o, bad $bad) or H1 or H2 is FILE-MISSING; question 6 stays closed. Next: tell the builder; C4 stays open."; fi; fi; }')
 
 # ---------- C6 (observation 2): text only; rc ----------
@@ -138,10 +138,11 @@ sub('(a) every `+` line with `exit` or `return` is one of `exit 2`, `exit 3`, `r
 
 # ---------- C8 (proof for C9) ----------
 sub('hbok && { if [ -z "$BR" ]; then echo "STOP C8: BR is empty. Next: do C2 (BR and WTN), then C8 again."; else bad=0;',
-    'hbok && { rm -f "$W/proof-c8.txt"; if ! pfok; then :; elif [ -z "$BR" ]; then echo "STOP C8: BR is empty. Next: do C2 (BR and WTN), then C8 again."; else bad=0;')
+    'hbok && { rm -f "$W/proof-c8.txt"; if ! pfok; then false; elif [ -z "$BR" ]; then echo "STOP C8: BR is empty. Next: do C2 (BR and WTN), then C8 again."; else bad=0;')
 sub('[ "$bad" = 0 ] && echo "ok C8"; fi; }', 'if [ "$bad" = 0 ]; then sha256sum "$PF" | cut -c1-64 > "$W/proof-c8.txt" && echo "ok C8"; else echo "STOP C8: see the lines above. Next: fix them, then C7 and C8 again."; fi; fi; }')
 sub('Expected: `ok C8`. (The plan', 'Expected: `ok C8` (it writes the proof file `proof-c8.txt` with the checksum of `PF`; C9 refuses without it and refuses if `PF` changed after it). (The plan')
 
+sub('then echo "STOP C8: the plan still names its guess $guess in $(printf \'%s\\n\' "$names" | grep -c -x -F -- "$guess") places,', 'then cnt=$(printf \'%s\\n\' "$names" | grep -c -x -F -- "$guess"); echo "STOP C8: the plan still names its guess $guess in $cnt places,')
 # ---------- C8b ----------
 old = 'hbok && { p4bcheck; if [ "$(cat "$PASTES/standin-gone.txt" 2>/dev/null)" = "gone control=$(sha256sum "$PASTES/P-4b.control.txt" | cut -c1-16)" ]; then echo "ok C8b: stand-in gone for the current control file"; else echo "STOP C8b: standin-gone.txt is missing or belongs to another control file. Next: run WSL-4 again."; fi; }'
 new = 'hbok && { r=0; p4bcheck || r=1; if [ -L "$PASTES/standin-gone.txt" ]; then echo "STOP LINK: standin-gone.txt is a symbolic link. Next: write nothing; tell the builder."; r=1; elif [ "$(cat "$PASTES/standin-gone.txt" 2>/dev/null)" = "gone control=$(sha256sum "$PASTES/P-4b.control.txt" | cut -c1-16)" ]; then echo "ok C8b: stand-in gone for the current control file"; else echo "STOP C8b: standin-gone.txt is missing or belongs to another control file. Next: run WSL-4 again."; r=1; fi; [ "$r" = 0 ]; }'
