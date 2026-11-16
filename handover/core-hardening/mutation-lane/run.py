@@ -1139,11 +1139,14 @@ def stop_orphan(m: dict, root: pathlib.Path) -> tuple[str, bool]:
     return "; ".join(notes), settled
 
 
-def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
+def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str, bool]:
     """No marker in our state folder. A run that used another TMPDIR keeps its marker THERE: look in the usual
     places. A marker found there whose backup differs from the file now on disk means the file is still
-    planted: not ok (exit 3). A stale marker (file already equals the backup) is reported, exit 0.
-    Anything that cannot be read safely fails closed (review r2 nit)."""
+    planted: not ok (exit 3). A stale marker (file already equals the backup) is reported (ok).
+    Anything that cannot be read safely fails closed (review r2 nit).
+    Returns (ok, text, found). `found` is False when NO marker was seen anywhere: planted-ness is then UNKNOWN (r8 M1:
+    a run with a TMPDIR outside the places searched keeps its marker where nobody looks), and the caller must not turn
+    that into "nothing is planted"."""
     here = STATE.parent.resolve()
     spots = {p.resolve() for p in STATE_PARENTS}
     spots |= {pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v}
@@ -1168,19 +1171,26 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
             return (
                 False,
                 f"a marker exists in {folder} but cannot be read safely ({e}): not touched; check by hand",
+                True,
             )
         if differs:
-            return False, (
+            return (
+                False,
                 f"STILL PLANTED: {m['file']} differs from the backup kept by a run that used another TMPDIR; "
-                f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore"
+                f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore",
+                True,
             )
         notes.append(
             f"stale marker in {folder}: {m['file']} already equals its backup (remove it by hand)"
         )
-    return True, "; ".join(notes) or (
+    if notes:
+        return True, "; ".join(notes), True
+    return (
+        True,
         f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing is recorded as planted, but WITHOUT a "
         f"marker this CANNOT TELL whether a file is still planted (a lost marker, or a run that used another state "
-        f"folder); a normal run compares the tree with the git archive and refuses if it differs"
+        f"folder, for example another TMPDIR)",
+        False,
     )
 
 
@@ -1255,15 +1265,43 @@ def link_hint(root: pathlib.Path, rel) -> str:
     return ""
 
 
-def restore_from_marker(
-    root: pathlib.Path, expected_ref: pathlib.Path | None = None
+def verify_against_git(
+    root: pathlib.Path, expected_ref: pathlib.Path, extra: set[str]
 ) -> tuple[bool, str]:
+    """r9 (r8 M1): with `--restore --sha` and no marker to go by, the files themselves decide: the tree under --root is
+    compared with the git archive named on the command line (same comparison as a normal run: `.venv` and the cache
+    folders are skipped, --extra files may exist). Equal: nothing is planted (exit 0). Different: a mutant may be planted
+    (exit 3) and the first differing files are named."""
+    diffs = diff_trees(expected_ref, root, extra)
+    if not diffs:
+        return True, "the tree equals the git archive given with --sha: no file is planted or changed"
+    return False, (
+        f"the tree differs from the git archive given with --sha in {len(diffs)} file(s), first: {diffs[:5]}: a mutant may "
+        f"still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each"
+    )
+
+
+def restore_from_marker(
+    root: pathlib.Path,
+    expected_ref: pathlib.Path | None = None,
+    extra: set[str] | frozenset[str] = frozenset(),
+) -> tuple[bool, str]:
+    """Returns (ok, text); ok means the file is KNOWN to hold the original. No marker found anywhere and no --sha to check
+    the files with: planted-ness is UNKNOWN, which is a refusal (Refused, exit 2), never ok (r8 M1)."""
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
     control_ok, control = settle_control(root, key)
     if not os.path.lexists(marker):
-        ok, text = other_state_check(root, key)
+        ok, text, found = other_state_check(root, key)
+        if expected_ref is not None and ok:  # git decides, whatever the state folders say
+            vok, vtext = verify_against_git(root, expected_ref, set(extra))
+            ok, text = vok, f"{text}; {vtext}" if found else vtext
+        elif not found and control_ok:
+            raise Refused(
+                f"{text}. Nothing was written. Do ONE of: run --restore again with the TMPDIR of the killed run (TMPDIR=<its "
+                f"folder>), or add --sha COMMIT [--repo R] [--patch F] [--extra F] so the files are compared with git"
+            )
         return ok and control_ok, f"{control}; {text}" if control else text
     m = load_marker(marker)
     # Class (r6 M1, r7 M1): an exit code that says "nothing planted" while the mutant is planted. Only a marker that names
@@ -1293,6 +1331,12 @@ def restore_from_marker(
             raise Refused(
                 f"the saved backup differs from {m['file']} in the git archive given with --sha: the state folder may be "
                 f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{m['file']} > the file"
+            )
+        ref_mode = stat.S_IMODE(os.stat(safe_rel(expected_ref, m["file"], "marker file")).st_mode)
+        if isinstance(m.get("mode"), int) and (m["mode"] & 0o111) != (ref_mode & 0o111):
+            raise Refused(
+                f"the mode in the marker ({oct(m['mode'])}) has other execute bits than {m['file']} in the git archive given "
+                f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
             )
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
@@ -1331,6 +1375,36 @@ def restore_from_marker(
         unlink_state(marker)
         unlink_state(bk)
     return ok and settled and control_ok, f"{control}; {text}" if control else text
+
+
+def discard_marker(
+    root: pathlib.Path, expected_ref: pathlib.Path, extra: set[str]
+) -> tuple[bool, str]:
+    """r9 minor 3: a marker that `--restore` can never use (the root folder was renamed and replaced, the marker names
+    another root or backup, it is damaged) used to strand the operator: exit 3 or 2 on every try and no command to remove it.
+    Deleting a marker is safe only when the files themselves are known to be original: the tree under --root must equal the
+    git archive named by --sha, and no orphaned test group of that marker may still run. Anything else: exit 3, nothing
+    removed. The folder a mutant was planted in before it was renamed is NOT looked at (that one is the operator's)."""
+    ensure_state()
+    key = key_for(root)
+    vok, vtext = verify_against_git(root, expected_ref, extra)
+    if not vok:
+        return False, f"marker NOT discarded: {vtext}"
+    notes = [vtext]
+    for path in (STATE / f"{key}.planted.json", control_marker_path(key)):
+        if not os.path.lexists(path):
+            continue
+        try:
+            m = loads_json(read_state(path))
+            note, settled = stop_orphan(m, root) if isinstance(m, dict) else ("no test group recorded", True)
+        except (Refused, ValueError, OSError):
+            note, settled = "the marker could not be read: its test group, if any, was not looked for", True
+        if not settled:
+            return False, f"marker NOT discarded: {note}; stop that test group by hand first"
+        notes.append(f"{path.name}: {note}")
+        unlink_state(path)
+    unlink_state(STATE / f"{key}.backup")
+    return True, "marker and backup discarded (" + "; ".join(notes) + "). A folder that was renamed away is NOT checked"
 
 
 def test_env(pythonpath: str | None) -> dict:
@@ -2041,7 +2115,12 @@ def may_be_planted(
 def reject_output_inputs(paths: list[pathlib.Path], inputs: list[pathlib.Path]) -> None:
     """r7 review N4: an output file (--out-json, raw files) must not be one of the files this run reads: run.py itself,
     --list, --patch. Compared by device and inode, so a different spelling or a hard link is caught too."""
+    state = STATE.resolve()
     for o in paths:
+        if pathlib.Path(os.path.abspath(o)).resolve().is_relative_to(state):
+            raise Refused(
+                f"output path {o} lies in the state folder {STATE}: refused (a file written there could pose as a marker)"
+            )
         if not os.path.lexists(o):
             continue
         for i in inputs:
@@ -2059,7 +2138,7 @@ def other_run_check(root: pathlib.Path, key: str) -> None:
     its lock and keeps its marker THERE: before this run starts, look in the usual places (the same list as `--restore`):
     a still planted file or a lock that is held now refuses this run. (A run that has not yet taken its lock cannot be
     seen: two runs started in the same instant with different TMPDIR remain a race, named in the docstring.)"""
-    ok, text = other_state_check(root, key)
+    ok, text, _found = other_state_check(root, key)
     if not ok:
         raise Refused(text)
     here = STATE.parent.resolve()
@@ -2098,6 +2177,7 @@ def restore_args(a, repo_given: bool) -> str:
 
 
 def main():
+    global HELPER_TIMEOUT
     sys.stdout, sys.stderr = (
         SafeOut(1),
         SafeOut(2),
@@ -2174,6 +2254,18 @@ def main():
         action="store_true",
         help="restore a file left planted by a killed run, then exit",
     )
+    ap.add_argument(
+        "--discard-marker",
+        action="store_true",
+        help="with --restore --sha: delete a marker and backup that cannot be used (the folder was renamed, the marker is "
+        "damaged or names another root) AFTER the tree under --root was compared with git and found equal",
+    )
+    ap.add_argument(
+        "--helper-timeout",
+        type=int,
+        default=HELPER_TIMEOUT,
+        help="seconds one git or patch call may take before it is stopped and refused (default %(default)s)",
+    )
     a = ap.parse_args(argv[: argv.index("--")] if "--" in argv else argv)
     if not sys.platform.startswith("linux") or not pathlib.Path("/proc/self/stat").is_file():
         print(
@@ -2182,6 +2274,11 @@ def main():
             file=sys.stderr,
         )
         sys.exit(EXIT_REFUSED)
+    if a.helper_timeout < 1:
+        ap.error("--helper-timeout must be at least 1")
+    HELPER_TIMEOUT = a.helper_timeout
+    if a.discard_marker and not (a.restore and a.sha):
+        ap.error("--discard-marker needs --restore and --sha (git must confirm the files are original)")
     repo_given = a.repo is not None
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha:
@@ -2224,16 +2321,21 @@ def main():
                 root, a.repo, a.real_repo
             )  # --restore too: it writes into --root (review 4 M4)
             if a.restore:
-                # review r6 nit 2: a signal during the restore is remembered, never raised: the restore ends first
-                SIG.critical = True
                 expected_ref = None
                 if (
                     a.sha
                 ):  # r8 (d): the commit named on the command line decides what the original is
+                    # r9 minor 1: nothing is written yet, so a signal here ends the run (128+N) with every state file untouched
                     expected_ref = tmpref / "ref"
                     expected_ref.mkdir()
                     build_reference(a.repo, resolve_commit(a.repo, a.sha), a.patch, expected_ref)
-                ok, text = restore_from_marker(root, expected_ref)
+                # review r6 nit 2: from the first write on, a signal during the restore is remembered, never raised
+                SIG.critical = True
+                if a.discard_marker:
+                    ok, text = discard_marker(root, expected_ref, set(a.extra))
+                    print(text)
+                    leave(0 if ok else EXIT_RESTORE_FAILED)
+                ok, text = restore_from_marker(root, expected_ref, set(a.extra))
                 print(text)
                 if SIG.first is not None:
                     print(

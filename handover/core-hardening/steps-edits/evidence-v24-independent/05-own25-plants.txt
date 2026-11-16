@@ -1,26 +1,51 @@
+   [in-built-output: True]
 Q01 MISSED wrong price per call hardcoded
+   [in-built-output: False]
 Q02 MISSED wrong total hardcoded
+   [in-built-output: True]
 Q03 MISSED wrong output tokens in sample
+   [in-built-output: True]
 Q04 CAUGHT wrong IST pair | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md bad pair 12:00 UTC = 17:00 IST
+   [in-built-output: True]
 Q05 CAUGHT wrong deadline IST pair | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md bad pair 18:29 UTC = 23:49 IST
+   [in-built-output: True]
 Q06 CAUGHT pointer to wrong step | rc=1 | FAIL C19 pointer not in the verified list: sheetA|test start**: see the card (|7.2
+   [in-built-output: True]
 Q07 CAUGHT pointer to wrong step in R8 | rc=1 | FAIL C19 pointer not in the verified list: sheetA| start or end a step: "go" (|5.7
+   [in-built-output: True]
 Q08 MISSED STOP RULE step deleted (key alive: card)
-Q09 ANCHOR-NOT-FOUND stray backtick
+   [in-built-output: True]
+Q09 MISSED stray backtick
+   [in-built-output: True]
 Q10 MISSED cancel rule changed
+   [in-built-output: True]
 Q11 MISSED card gate (f) deleted
+   [in-built-output: True]
 Q12 MISSED auto-reload rule flipped in R4
+   [in-built-output: True]
 Q13 MISSED secret-shaped string (built from parts) in sheet
+   [in-built-output: True]
 Q14 CAUGHT balance changed | rc=1 | FAIL C04 OWNER-SHEET-v24-A.md unexpected amount USD 180.90
+   [in-built-output: True]
 Q15 MISSED give-up minutes sample changed
+   [in-built-output: True]
 Q16 MISSED silence minutes sample changed
+   [in-built-output: True]
 Q17 CAUGHT expected count changed | rc=1 | FAIL C17 sheetA: 'B submitted 9 times' says 9, expected 10
+   [in-built-output: True]
 Q18 MISSED delete domain guard changed (one copy)
+   [in-built-output: True]
 Q19 CAUGHT pointer wrong in R1 | rc=1 | FAIL C19 pointer not in the verified list: sheetA|OFF (off in 6.1, back on in |8.6
+   [in-built-output: True]
 Q20 MISSED lead note limit wrong
+   [in-built-output: True]
 Q21 CAUGHT lead note minutes wrong | rc=1 | FAIL C17 note: '14.30 min' says 14.30, expected 14.33
+   [in-built-output: True]
 Q22 MISSED accepted exit codes widened
+   [in-built-output: True]
 Q23 CAUGHT rule priority order swapped | rc=1 | FAIL C19 pointer not in the verified list: sheetA| card first, then R10, then |R1
+   [in-built-output: True]
 Q24 MISSED word count in R8
+   [in-built-output: True]
 Q25 CAUGHT lead note last start IST wrong | rc=1 | FAIL C04 LEAD-RELEASE-NOTE-v8.md bad pair 18:14:40 UTC = 23:14:40 IST
-TOTAL own plants 25: caught 10, missed 14, anchor-not-found 1
+TOTAL own plants 25: caught 10, missed 15, anchor-not-found 0

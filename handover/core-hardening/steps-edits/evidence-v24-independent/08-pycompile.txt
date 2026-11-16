@@ -1,0 +1,4 @@
+py_compile build-v24.py rc=0
+py_compile facts-v24.py rc=0
+py_compile check-v24.py rc=0
+py_compile mut24b.py rc=0

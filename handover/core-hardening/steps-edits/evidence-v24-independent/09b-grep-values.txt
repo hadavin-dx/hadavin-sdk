@@ -1,0 +1,28 @@
+### OWNER-SHEET-v24-A.md
+  0.xx value 0.81 x4
+  0.xx value 0.27 x4
+  1x.xx value 15.00 x3
+### OWNER-SHEET-v24-B.md
+  0.xx value 0.81 x4
+  0.xx value 0.27 x4
+  1x.xx value 15.00 x3
+### LEAD-RELEASE-NOTE-v8.md
+  0.xx value 0.81 x3
+  0.xx value 0.27 x1
+  0.xx value 0.80 x1
+  1x.xx value 12.40 x2
+  1x.xx value 14.33 x3
+  1x.xx value 13.21 x1
+  1x.xx value 15.00 x1
+  1x.xx value 13.50 x1
+  1x.xx value 13.00 x1
+  minutes value 14.33 minutes x2
+  seconds value 860 s x4
+  12.x value 12.40 x2
+### v24-OPEN-FOR-LEAD.md
+  1x.xx value 14.33 x2
+  minutes value 14.33 minutes x1
+  minutes value 14.33 min x1
+  seconds value 860 s x1
+  seconds value 860 seconds x1
+### v24-CHANGES.md

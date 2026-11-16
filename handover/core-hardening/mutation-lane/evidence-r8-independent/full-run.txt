@@ -726,3 +726,43 @@ INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); se
 REFUSED: --sha 'cafe' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/repo (unknown, ambiguous, not a commit, or the name of a branch or tag): 5459125aa02785ee0e23e
   PASS: T83 --sha cafe (a branch name made of hex digits, pointing at HEAD) is refused, exit 2 (got 2), no mutant run (r6: resolved the branch)
 == T84 (review r6 nit 8) --root renamed away and replaced by a decoy folder during the run: the run's restore must not report success on the decoy
+  exit code 3
+  PASS: T84a exit 3 (got 3), marker and backup kept, the planted file in the renamed folder is still planted (r6: restored on the decoy, exit 143, marker cleared)
+RESTORE FAILED: cannot write src/mod.py back: the folder now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/root is not the folder the mutant was planted in
+  PASS: T84b --restore at the path that now holds the decoy: exit 3 (got 3), text names the renamed folder problem, marker kept
+  PASS: T84c renamed back: --restore works and the file is back
+== T85 (review r6 nit 8) a test that changes the mode of the file under test: the mode is set back
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T85 mode 640 before, a test chmods the file to 600: it is 640 again after the run (got 640), content restored
+== T86 (found while testing r7) a -q from the caller on top of the tool's own -q must not drop pytest's summary line (then no passed test is counted: a survivor became NO-TEST-PASSED and a baseline became 'no test passed')
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T86 a surviving mutant with the caller's -q: verdict SURVIVED, 'pytest summary line: 1 passed', exit 0 (got 0); the baseline counts the passed test too
+== T87 (review r7 M1, class: an exit code that says nothing is planted while the mutant is planted) --restore with a marker for this root: every failure exits 3, only a marker naming another root or backup path exits 2
+./safety-tests.sh: line 70:  4410 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.backup cannot be opened safely (No such
+  PASS: T87a the backup file is missing: exit 3 (got 3; r7: 2), file still planted, marker kept, text says RESTORE FAILED
+./safety-tests.sh: line 70:  4507 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.backup cannot be opened safely (Too man
+  PASS: T87b the backup is a symbolic link (to a file with the right content): exit 3 (got 3; r7: 2), nothing written (file still planted), marker kept
+./safety-tests.sh: line 70:  4623 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.backup is not a regular file owned by t
+  PASS: T87c the backup is a FIFO: exit 3 (got 3; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+./safety-tests.sh: line 70:  4827 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.planted.json is not valid JSON: refused; th
+  PASS: T87d the marker is not valid JSON: exit 3 (got 3; r7: 2), file still planted, marker kept, no traceback
+./safety-tests.sh: line 70:  4893 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.planted.json lacks required fields: refused
+  PASS: T87e the marker lacks required fields: exit 3 (got 3; r7: 2), file still planted, marker kept
+./safety-tests.sh: line 70:  4959 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0 is not a plain folder owned by this user with mode 700
+  PASS: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+./safety-tests.sh: line 70:  5146 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 2276
+    global HELPER_TIMEOUT
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: name 'HELPER_TIMEOUT' is used prior to global declaration
+  FAIL: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 1; r7: 2), file still planted, marker kept
+  FAIL: T87g genuine restore afterwards
