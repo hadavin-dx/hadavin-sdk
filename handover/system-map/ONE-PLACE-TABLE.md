@@ -4,7 +4,7 @@
 
 **Scope.** Cloud checkout of the public repository (branch cloud/system-map), not the whole studio folder: nothing under egm/, bible/, brain/, templates/ or _local/ is read; the take repository duplicate-proof-lead-desk is not visible; 183 files are NOT-READ (see SWEEP.md). 'Citation found' proves a quoted line exists, not that it supports the claim.
 
-Source of rows (row "DECISION line N" cites use the 20-line root copy, not the 28-line inputs copy, see L8-X-014): work/L6.md (proposals of the job pass; the laptop lead decides). Every copy except the job owner place, NEEDED rows and KEEP-CORE rows has a proposal. Nothing is deleted, and nothing with a caller is archived. 49 rows are in the job blocks, 10 build-process rows are in the appendix and 5 rows added on 2026-11-16 are in Appendix B.
+Source of rows (row "DECISION line N" cites use the 20-line root copy, not the 28-line inputs copy, see L8-X-014): work/L6.md (proposals of the job pass; the laptop lead decides). Every copy except the job owner place, NEEDED rows and KEEP-CORE rows has a proposal. Nothing is deleted, and nothing with a caller is archived. 49 rows are in the job blocks, 10 build-process rows are in the appendix and 10 rows are in Appendix B (L8-X-001, 004, 005, 013, 014, 020 to 024).
 
 ## How to read this file
 - **Take** = the lead-intake automation that Hadavin (the one-person AI studio this repository belongs to) will show in the video on Wed 18 Nov: n8n flows and one Postgres. Its code repository `duplicate-proof-lead-desk` is NOT in this box ("this box" = this checkout of the repository). The laptop lead checks the take repository locally, so a verdict about the take repository stays UNVERIFIED.
