@@ -17,8 +17,21 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAW="${RUN_ALL_RAW:-$HERE/raw}"   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
 TCUNSET=(-u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT)   # round 10c (Q4): every take_check.sh call below starts from a clean TAKE_CHECK_* environment, whatever the caller exported
-STRICT_IDS=""; ARGS=()
-for a in "$@"; do if [ "$a" = "--strict" ]; then STRICT_IDS="--require-real-credential-ids"; else ARGS+=("$a"); fi; done
+STRICT_IDS=""; ARGS=(); LOCKONLY=""
+for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; *) ARGS+=("$a");; esac; done
+# round 10d (Q: review f8-r10c): the test hooks are refused (not silently ignored) when RUN_ALL_NESTED is not set, so a stray variable in a person's shell can never change what is checked
+if [ -z "${RUN_ALL_NESTED:-}" ]; then
+  for v in RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_LOCKFILE; do
+    [ -z "${!v:-}" ] || { echo "REFUSED: $v is a test hook of the nested failure tests and is only honoured together with RUN_ALL_NESTED=1; unset it."; exit 2; }
+  done
+fi
+# round 10d (B4): one run at a time per raw folder. The raw folder is shared, so two runs at once would overwrite each other's files and mix their results. A lock (flock) is held until this script ends; a second run on the same raw folder is refused (exit 2). The lock file is in the temporary folder, so nothing is left in the raw folder.
+RAWABS=$(case $RAW in /*) printf '%s' "$RAW";; *) printf '%s/%s' "$PWD" "$RAW";; esac)
+command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed, so this script cannot make sure that no second run uses $RAWABS at the same time"; exit 2; }
+LOCKF="${RUN_ALL_LOCKFILE:-${TMPDIR:-/tmp}/run_all-$(printf '%s' "$RAWABS" | sha256sum | cut -c1-16).lock}"
+exec 9>"$LOCKF" || { echo "REFUSED: cannot open the lock file $LOCKF"; exit 2; }
+flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for the raw folder $RAWABS (lock file $LOCKF); wait for it to end, or use another raw folder (RUN_ALL_RAW is for the nested tests only)"; exit 2; }
+[ -z "$LOCKONLY" ] || { echo "lock acquired: $LOCKF (--lock-only: nothing else was run)"; exit 0; }
 if [ -n "${ARGS[0]:-}" ]; then
   W=${ARGS[0]}
   if [ -e "$W" ] && [ -n "$(ls -A -- "$W" 2>/dev/null)" ]; then echo "REFUSED: $W exists and is not empty; this script never deletes a folder it did not make"; exit 2; fi
@@ -74,8 +87,8 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
 # round 10c (Q1): the committed take-warns.pin keeps the flows-audit reviewer line, so a bare take exits 4 ("pin not yet confirmed by the lead") until the lead edits it. This script tests the FILES, so it runs the take with a copy of the pin whose reviewer line is a stand-in (same WARN lines, same hash); the committed pin's own state is printed near the end.
-mkdir -p "$W/tc" && { echo "# reviewed by: stand-in line written by run_all.sh for its own test runs, 2026-11-16"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
-env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # --flows is the documented way for the folder; the pin override needs the test flag (round 10, M1)
+mkdir -p "$W/tc" && { echo "# reviewed by: Runall Standin, $(date -u +%Y-%m-%d)"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
+env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # round 10d (B3): this call has an override (the stand-in pin), so a pass is exit 5, never 0; exit 5 is what is required below   # --flows is the documented way for the folder; the pin override needs the test flag (round 10, M1)
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
 grep -q -F "FINAL: take_check exit status $TC." "$RAW/take-check.txt" || TCMISS="$TCMISS [FINAL line does not print exit status $TC]"
@@ -113,7 +126,8 @@ tcfail() { # name expected-line env-assignments...
   if [ "$x" != 4 ]; then TCMISS="$TCMISS [take_check $nm: want exit 4, got exit $x; first FAIL or !!! line of $RAW/take-check-$nm.txt: $first]"
   elif [ ! -s "$RAW/take-check-$nm.txt" ]; then TCMISS="$TCMISS [take_check $nm: exit 4 but the output file $RAW/take-check-$nm.txt is empty]"
   else
-    grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the line '$want' is not in the output; first FAIL or !!! line: $first]"
+    # round 10d (A2): the wanted text must be on a line that starts with "!!! " or "FAIL " (the loud lines), not on any line: a line printed for another reason must not satisfy a case
+    grep -E '^(FAIL|!!!) ' "$RAW/take-check-$nm.txt" | grep -q -F -- "$want" || TCMISS="$TCMISS [take_check $nm: exit 4 but the text '$want' is not on a !!! or FAIL line; first FAIL or !!! line: $first]"
     grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the FINAL line does not say 4; first FAIL or !!! line: $first]"
   fi
 }
@@ -197,9 +211,12 @@ env "${TCUNSET[@]}" bash "$HERE/take_check.sh" --flows "$W/tc/disabled-send" > "
 bash "$HERE/test_take_check.sh" "$W/g/real" "$W/tc/ttc" > "$RAW/test-take-check.txt" 2>&1; TT=$?
 [ "$TT" = 0 ] || TCMISS="$TCMISS [test_take_check.sh exit $TT (see raw/test-take-check.txt)]"
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
-tcfail form-run-saving-off "mf-form.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
-tcfail sub-run-saving-off "mf-sub-crm-mail.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
-tcfail recovery-accept-idle "accept-no-save --accept-no-save mf-recovery.json excused nothing" TAKE_CHECK_FLOWS="$W/tc/rec-saves" TAKE_CHECK_FORM_EXPECT=15:14
+tcfail form-run-saving-off "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
+grep -q -F "WARN mf-form.json this flow's run-saving settings" "$RAW/take-check-form-run-saving-off.txt" || TCMISS="$TCMISS [take_check form-run-saving-off: the file-specific WARN line for mf-form.json is missing]"
+tcfail sub-run-saving-off "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
+grep -q -F "WARN mf-sub-crm-mail.json this flow's run-saving settings" "$RAW/take-check-sub-run-saving-off.txt" || TCMISS="$TCMISS [take_check sub-run-saving-off: the file-specific WARN line for mf-sub-crm-mail.json is missing]"
+tcfail recovery-accept-idle "excused nothing" TAKE_CHECK_FLOWS="$W/tc/rec-saves" TAKE_CHECK_FORM_EXPECT=15:14
+grep -q -F "WARN accept-no-save --accept-no-save mf-recovery.json excused nothing" "$RAW/take-check-recovery-accept-idle.txt" || TCMISS="$TCMISS [take_check recovery-accept-idle: the file-specific WARN line is missing]"
 tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
 tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
 tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
@@ -214,8 +231,8 @@ if [ -z "${RUN_ALL_NESTED:-}" ]; then
   TAKE_CHECK_TEST=1 TAKE_CHECK_DDL="$W/tc/does-not-exist.sql" TAKE_CHECK_WARN_PIN="$W/tc/does-not-exist.pin" TAKE_CHECK_FLOWS="$W/tc/does-not-exist" RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/disabled-send" RUN_ALL_RAW="$W/tc/nested-raw-c" FC_OUT="$W/tc/nested-selftest-out-c" bash "$HERE/run_all.sh" "$W/tc/nested-work-c" > "$W/tc/nested-c.txt" 2>&1 & NPIDC=$!
   wait "$NPID"; NX=$?; wait "$NPIDB"; NXB=$?; wait "$NPIDC"; NXC=$?
   [ "$NX" = 1 ] && grep -q -F "[take_check.sh exit=4] missing lines:" "$W/tc/nested.txt" && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested.txt" && ! grep -q -i "unbound variable" "$W/tc/nested.txt" || TCMISS="$TCMISS [nested run with a failing take check: want exit 1, a clean 'take_check.sh exit=4' report and no crash, got exit $NX]"
-  [ "$NXB" = 1 ] && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested-b.txt" && grep -q -F "OPEN LEAD DECISIONS (real-v5, the take): unknown" "$W/tc/nested-b.txt" && grep -q -F "[take_check.sh exit=0] missing lines: none" "$W/tc/nested-b.txt" || TCMISS="$TCMISS [nested run without the OPEN LEAD DECISIONS line: want real exit 1 AND the printed run_all exit status 1, got exit $NXB (see nested-take-failure-b.txt)]"
-  [ "$NXC" = 1 ] && grep -q -F "[take_check.sh exit=0] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of" "$W/tc/nested-c.txt" && grep -q -F "is an external-call node and is disabled" "$W/tc/nested-c.txt" && ! grep -q -F "does-not-exist" "$W/tc/nested-c.txt" || TCMISS="$TCMISS [nested run with exported TAKE_CHECK_* variables and one planted take case: want a clean take (exit=0), only the planted case missing, with its first FAIL line shown, got exit $NXC (see nested-take-failure-c.txt)]"
+  [ "$NXB" = 1 ] && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested-b.txt" && grep -q -F "OPEN LEAD DECISIONS (real-v5, the take): unknown" "$W/tc/nested-b.txt" && grep -q -F "[take_check.sh exit=5] missing lines: none" "$W/tc/nested-b.txt" || TCMISS="$TCMISS [nested run without the OPEN LEAD DECISIONS line: want real exit 1 AND the printed run_all exit status 1, got exit $NXB (see nested-take-failure-b.txt)]"
+  [ "$NXC" = 1 ] && grep -q -F "[take_check.sh exit=5] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of" "$W/tc/nested-c.txt" && grep -q -F "is an external-call node and is disabled" "$W/tc/nested-c.txt" && ! grep -q -F "does-not-exist" "$W/tc/nested-c.txt" || TCMISS="$TCMISS [nested run with exported TAKE_CHECK_* variables and one planted take case: want a clean take (exit=0), only the planted case missing, with its first FAIL line shown, got exit $NXC (see nested-take-failure-c.txt)]"
   cp -- "$W/tc/nested.txt" "$RAW/nested-take-failure.txt" 2>/dev/null; cp -- "$W/tc/nested-b.txt" "$RAW/nested-take-failure-b.txt" 2>/dev/null; cp -- "$W/tc/nested-c.txt" "$RAW/nested-take-failure-c.txt" 2>/dev/null
 fi
 # the take runs of the nested cases that must not be affected by the caller's variables: the caller's TAKE_CHECK_* above point at files that do not exist
@@ -231,7 +248,7 @@ for f in pristine-strict patched-strict; do   # real-v5 strict: 0 or 1 are both 
   for x in $(grep -h '^exit=' "$RAW/$f.txt" | cut -d= -f2); do case $x in 0|1) ;; *) RC=1;; esac; done
 done
 [ "$ST" = 0 ] || RC=1
-[ "$TC" = 0 ] && [ -z "$TCMISS" ] || RC=1
+[ "$TC" = 5 ] && [ -z "$TCMISS" ] || RC=1   # 5 = a would-be pass of a take call that has the test override (stand-in pin)
 show() { for f in "$@"; do echo "[$f]"; grep -h -E '^(######## |exit=|RESULT|Known open problems)' "$RAW/$f.txt"; done; }
 echo "==== real-v5 (THE TAKE) ===="
 echo "---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----"
@@ -239,7 +256,9 @@ show pristine patched pristine-strict patched-strict
 echo "[pristine-no-baseline] (information only: no excuse for the 2 IF gaps; exit 1 with 2 FAIL is expected)"; grep -h -E '^(exit=|RESULT)' "$RAW/pristine-no-baseline.txt"
 echo "==== film-v5 (NOT FOR THE TAKE; shown only, not gating, not added to the real-v5 numbers) ===="
 show pristine-film patched-film pristine-strict-film patched-strict-film
-echo "[selftest exit=$ST] $(tail -n 1 "$RAW/selftest-new.txt")"
+STLINE=$(grep -h '^SELFTEST: ' "$RAW/selftest-new.txt" | tail -n 1)   # round 10d: the summary line by its text, not the last line of the file
+[ -n "$STLINE" ] || { STLINE="SELFTEST summary line missing in raw/selftest-new.txt"; RC=1; }
+echo "[selftest exit=$ST] $STLINE"
 echo "[take_check.sh exit=$TC] missing lines:${TCMISS:- none}"
 LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/')
 [ -n "${RUN_ALL_NESTED:-}" ] && [ -n "${RUN_ALL_DROP_LEAD:-}" ] && LW=""   # test hook (round 10c, Q3)
