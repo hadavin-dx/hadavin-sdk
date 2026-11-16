@@ -2755,8 +2755,13 @@ class Round8(Base):
             mock.patch.dict(sys.modules, {"fcntl": types.SimpleNamespace()}),
         ):
             code, so, se = self.inproc("check", out)
-        self.assertEqual(code, 0, so)
-        self.assertEqual(se.count("cannot say where an open folder really is"), 1, se)
+            self.assertEqual(code, 0, so)
+            self.assertEqual(se.count("cannot say where an open folder really is"), 1, se)
+            be = io.StringIO()
+            with redirect_stderr(be):  # asked again in the same run: no second line
+                ff._fd_path(3, "fb")
+                ff._fd_path(3, "fb")
+            self.assertEqual(be.getvalue(), "")
         code, _, se = self.inproc("check", out)  # with /proc the warning is absent
         self.assertNotIn("cannot say where", se)
 
