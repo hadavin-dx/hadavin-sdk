@@ -154,7 +154,7 @@ p, j = load("hook-emptyset", "mf-hook.json"); j["settings"] = {}; save(p, j)
 p, j = load("warn-new", "mf-sub-crm-mail.json")
 for n in j["nodes"]:
     if n["name"] == "MarkDone":
-        n["parameters"]["maxTries"] = 3   # a plain WARN: maxTries is ignored without retryOnFail
+        n["maxTries"] = 3   # a plain WARN: maxTries is ignored without retryOnFail
 save(p, j)
 # a patched copy that has F-008 but NOT F-002: the committed unpatched flows with run saving switched on (all / all / True) on the three flows that need it
 for fn in ("mf-form.json", "mf-hook.json", "mf-sub-crm-mail.json"):
