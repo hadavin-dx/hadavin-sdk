@@ -36,9 +36,9 @@ PASS naive M5: the claim table is named in the box and every code word of the bo
 PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
 PASS every '22:10' example time in the box has 'IST' within 40 characters (2 places) :: 2
 FAIL the real v29 files on disk are ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md']
-INFO OWNER-SHEET-v29-A.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:51:19Z
-INFO OWNER-SHEET-v29-B.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:51:19Z
-INFO OWNER-SHEET-v29-SOURCE.md last written 16:41:12 UTC; check time of the report 2026-11-16T16:51:19Z
+INFO OWNER-SHEET-v29-A.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:52:47Z
+INFO OWNER-SHEET-v29-B.md last written 16:46:37 UTC; check time of the report 2026-11-16T16:52:47Z
+INFO OWNER-SHEET-v29-SOURCE.md last written 16:41:12 UTC; check time of the report 2026-11-16T16:52:47Z
 PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
 PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
 PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
@@ -46,6 +46,6 @@ PASS REPORT-c6q.md was not changed by this run (it is older than the build of RE
 PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)
 PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
 FAIL the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')] :: [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')]
-SUMMARY: 123 checks, 4 FAILED: report names the check time 2026-11-16T16:51:19Z and the newest sheet version on disk (v29); L-SHEET reads 'confirm the one final sheet' and says v29 is coming; the real v29 files on disk are ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md'] and the report names every one of them; the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')]
+SUMMARY: 123 checks, 4 FAILED: report names the check time 2026-11-16T16:52:47Z and the newest sheet version on disk (v29); L-SHEET reads 'confirm the one final sheet' and says v29 is coming; the real v29 files on disk are ['OWNER-SHEET-v29-A.md', 'OWNER-SHEET-v29-B.md', 'OWNER-SHEET-v29-SOURCE.md'] and the report names every one of them; the box line of L-SHEET and the section 0 bullet each print every real v29 file with its real written time (UTC): [('OWNER-SHEET-v29-A.md', '16:46:37'), ('OWNER-SHEET-v29-B.md', '16:46:37'), ('OWNER-SHEET-v29-SOURCE.md', '16:41:12')]
 
 EXIT CODE 1
