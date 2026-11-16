@@ -48,3 +48,26 @@ Backup: scratchpad bak-rev13.md. Not committed. Nothing was run against Postgres
 
 ## Changes
 REVIEW.md only (header, Short answer, counts line, evidence bullet, C-4, X-5 (c)(iii) and (i), X-6, single-dependency outline, Counts reading and effective-Major paragraph, Not checked, Open for the studio head). Counts unchanged: 26 rows; 0 Blocker, 12 Major, 4 Minor, 10 Nit; 23 PROPOSE FIX, 3 DECLINE. count_review.py not changed (the row parser needed nothing).
+
+# Round 14 (review-design-r14.md and review-codebase-r14.md; log appended here)
+
+Backup: scratchpad bak-rev14b.md. Not committed. Nothing was run against Postgres or the patches; every SQL statement is a proposal.
+
+## Unverified or not done (first)
+- All Postgres behaviour in the new text (function and operator lookup through the temporary schema, `session_replication_role` grant, BEFORE UPDATE on the upsert branch, `TG_TABLE_SCHEMA` with `EXECUTE format()`, `ENABLE ALWAYS TRIGGER` through the scanner, a changed `schema_version` failing `model_validate`, hash parity of SQL and Python JSON text) is the design reviewer's knowledge, not checked by me. No source or test was edited; nothing was built.
+- Not opened: how the plan hash is built (design point 3 says it covers placeholders; reviewer words); the other `runs` columns (point 2 names only `cost_usd`); the patched copies (still not on disk).
+- Round 13 log above, Findings, Design B1 line, still says the search "finds nothing relevant"; that wording is wrong (see below) and is corrected only in REVIEW.md, because this log is append-only history.
+
+## Findings, each opened in src
+- Design Major 1 (functions and operators): CONFIRMED in src for the part that can be read: `migrate.py:210-212` checks CREATE only on `current_schema()`. Written into X-6 fix (1) (now "and", with `SET search_path = pg_catalog, <schema>, pg_temp`), (3) (every schema on the search path) and test (f).
+- Design Major 2 (spend): CONFIRMED: key columns `0001_core.sql:87-91`, `0003_approvals_tick.sql:15-19`; grants `migrate.py:53-54`, `:47`; `postgres.py:433-442`; `limits.py:24-29`; `agent_loop.py:256-257`. Freeze keys, no decrease, monotonic `runs.cost_usd`, tests. Full `runs` column list not written.
+- Design Major 3 (approval binding): CONFIRMED in src: `agent_loop.py:845-867`, `:273-278`, `:292`; `migrate.py:57`, `:65`. Plan-hash coverage not opened. X-6 point 3 and the AUDIT WRITES choice (1) now say it is a bypass, not harmless; studio head choice (5)(g).
+- Design Major 4 (release A): CONFIRMED: `migrate.py:51`, `requests.py:97-107`. Written into X-6 point 4 and the CHANGELOG note.
+- Design Major 5 (INSERT and UPDATE rules): CONFIRMED with one correction: the update builders SET every column except `approval_id` (`postgres.py:316-326`, `:349-355`), so the reviewer's "written by update builders" is true for `schema_version` only; `approval_id` is the WHERE key. The denylist point stands. `requests.py:103` confirms the agent writes `step_expires_at`.
+- Minors 6 to 9: CONFIRMED in src (`requests.py:171`, `:211`; `chain.py:68-72`, `:397-410`; `postgres.py:349-355`; ENABLE ALWAYS needs a new migration because 0002 is released). Written as X-6 points 6 to 9.
+- Wrong-claim note: CONFIRMED: hits at `migrate.py:126`, `migration_numbers.py:12-14`, `:251`; `refused_statements` `:633-639`. REVIEW.md B1 wording now says migration-time only and that `REVOKE TEMPORARY` is an operator deployment step.
+- Codebase cites 1 to 7: all CONFIRMED and fixed: X-2 `record_decision` at `:337`; X-5 callers (`test_k5_fixes2.py:302`, `test_p3b_neutral_audit.py:324`, `test_k2_migrations.py:115,120,125`, `test_p2_postgres.py:78`; "completes" withdrawn); B1 wording; C-4 `tools.py:494`; G-2 `gate.py:59` (also `:42` found by me); C-3 `config.py:80-94`; X-6 (4) `agent_loop.py:809` loads, `:814` rechecks.
+- Contested: none outright; the one partial is the `approval_id` point above.
+
+## Changes
+REVIEW.md only: header status, round log sentence, Short answer (X-6 round 14), X-2, X-5, X-6 (status, B1 wording, fix (1) and (3), test (f), point (4) wording, AUDIT WRITES choice (1), new ROUND 14 block), C-3, C-4, G-2, Not checked, Open for the studio head (sub-choices (d) to (g)). Severity of X-6 kept Major: no defect in today's source or the three patches beyond what the row records. Counts unchanged: 26 rows; 0 Blocker, 12 Major, 4 Minor, 10 Nit; 23 PROPOSE FIX, 3 DECLINE.

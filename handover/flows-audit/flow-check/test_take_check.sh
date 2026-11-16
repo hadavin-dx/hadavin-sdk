@@ -408,7 +408,7 @@ for pair in "r5-pat-smith:Pat Smith, $PD" "r5-obrien:O'Brien, $PD" "r5-aiden-bot
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r5: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
-# f8-r6 (review f8-r5): the reviewer name and note are squashed into lower-case letters and long stand-ins are refused wherever they sit; short stand-ins are refused as words or as joined 1-2 letter pieces. Dates use the pin's own date ($PD) so no test depends on today's date.
+# f8-r6 (review f8-r5), updated in f8-r7: refusals of the reviewer-line check run through the whole take (the fuzzy cases of f8-r6 are replaced by the whole-word cases above); dates use computed values, never typed ones.
 # each line is refused with exit 4 and the reviewer-line message, even with the test flag and the pin override (these names do not start with Testonly)
 for pair in "f8r6-claude-bot:Pat Claude Bot, $PD" "f8r6-claudebot:Pat Claudebot, $PD" "f8r6-chatgpt:Pat Chatgpt, $PD" "f8r6-openai:Pat Openai, $PD" "f8r6-gptbot:Pat Gptbot, $PD" "f8r6-bots:Pat Bots, $PD" "f8r6-agents:Pat Agents, $PD" "f8r6-grok:Pat Grok, $PD" "f8r6-llama:Pat Llama, $PD" "f8r6-mistral:Pat Mistral, $PD" "f8r6-deepseek:Pat Deepseek, $PD" "f8r6-copilot:Pat Copilot, $PD" "f8r6-anthropic:Pat Anthropic, $PD" "f8r6-robot:Pat Robot, $PD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $PD" "f8r6-underscore:Pat O_L_L_M, $PD" "f8r6-digit:Pat C1aude, $PD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $PD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $PD" "f8r6-note-claude:Pat Smith, $PD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $PD, note ChatGPT" "f8r6-note-dots:Pat Smith, $PD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $PD, an LLM read it"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
@@ -432,7 +432,6 @@ for tr in "e7-comma:Pat,Claude Bot, $PD|rule: shape" "e7-comma-gpt:Pat,Gptbot, $
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -F -- "$why" "$S/$nm.txt"; ok $? "f8-r7: reviewer line '$line' is exit 4 and the message names '$why' (got exit $RC)"
 done
-# the same refusals with a lower-case placeholder word in the line (placeholder match is not case sensitive any more)
 # a trailing space, and a pin saved with Windows line ends (CR LF), are read like the plain form
 { printf '# reviewed by: Pat Smith, %s   \n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-trail.pin"
 tk e7-trail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-trail.pin" -- --flows "$P"
