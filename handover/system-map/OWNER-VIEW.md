@@ -7,7 +7,7 @@ Written Mon 16 Nov 2026 about 10:05 UTC / 15:35 IST; last changed Mon 16 Nov 202
 
 ## Words, one meaning each
 - **Take** = one recorded run of the lead-intake demo (the steps file says "run"; same meaning). The take sends 3 made-up test people through a web form. Expected result: 3 contacts in HubSpot and 3 mails in the Gmail label `demo`. The n8n flows write the contacts (with their own HubSpot key); the take program itself only reads HubSpot and never writes or deletes there. This has not been run yet.
-- **Lead** = the Claude engineering session that does the technical steps. It cannot see your screen and talks to you in the chat of this project. "Lead" has a second meaning in the demo: a made-up sales contact who sends a request through the web form. On this page "the lead" always means the Claude session; the made-up person is called a "test person" or "test contact".
+- **Lead** = the Claude engineering session that does the technical steps. It cannot see your screen (screens only: it can read files on the laptop, see row 8) and talks to you in the chat of this project. "Lead" has a second meaning in the demo: a made-up sales contact who sends a request through the web form. On this page "the lead" always means the Claude session; the made-up person is called a "test person" or "test contact".
 - **Run name** = a short name you pick fresh for each run, before you write your yes (the yes contains it). The lead confirms the name is unused. The program's own screens call it "take id".
 - **Linux window** = the Ubuntu terminal on your Windows laptop (WSL).
 - **Stop time** = the last minute the program allows: Mon 23 Nov 18:29 UTC / 23:59 IST.
