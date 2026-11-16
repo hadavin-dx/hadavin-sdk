@@ -159,8 +159,8 @@ ____________________ test_no_vendor_brand_string_is_tracked ____________________
                 continue
             bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
 >       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
-E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE-studio-2026-11-06.md: 'Port.io'; handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings; handover/demo/portal/portal-design-v2.md: 'Port.io'
-E       assert not ["handover/BRIEF-PREAMBLE-studio-2026-11-06.md: 'Port.io'", 'handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings', "handover/demo/portal/portal-design-v2.md: 'Port.io'"]
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE-studio-2026-11-06.md: '[BANNED-WORD-REDACTED]'; handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings; handover/demo/portal/portal-design-v2.md: '[BANNED-WORD-REDACTED]'
+E       assert not ["handover/BRIEF-PREAMBLE-studio-2026-11-06.md: '[BANNED-WORD-REDACTED]'", 'handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings', "handover/demo/portal/portal-design-v2.md: '[BANNED-WORD-REDACTED]'"]
 
 tests/test_no_reference_material.py:87: AssertionError
 ________________________ test_licences_are_proprietary _________________________
