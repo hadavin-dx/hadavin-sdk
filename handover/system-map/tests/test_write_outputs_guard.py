@@ -112,5 +112,65 @@ class WriteOutputsGuard(unittest.TestCase):
             self.assertEqual(rows[jid], name, "job %s was renamed or moved; re-check the id sets in tools/write_outputs.py lines 123-168" % jid)
 
 
+    def _copy_sm(self):
+        d = os.path.join(tempfile.mkdtemp(), "sm")
+        shutil.copytree(BASE, d, ignore=shutil.ignore_patterns(".git", "__pycache__", "archive"))
+        gen = os.path.join(d, "hand-kept", ".generated-hashes.json")
+        if os.path.exists(gen):
+            os.remove(gen)
+        return d
+
+    def _run(self, d):
+        return subprocess.run([sys.executable, os.path.join(d, "tools", "write_outputs.py"), d, "--force"], capture_output=True, text=True)
+
+    def test_block_follows_the_row_name_not_the_row_number(self):
+        """B3: a row renumbered into another number range must stay in the block its own name says (old code used number ranges)."""
+        d = self._copy_sm()
+        path = os.path.join(d, "work", "L6.md")
+        text = open(path, encoding="utf-8").read()
+        # L6-J-001 is a STORE row; give it a number inside the LOG range by swapping the ids of rows 1 and 15
+        text = text.replace("| L6-J-001 |", "| L6-J-TMP |").replace("| L6-J-015 |", "| L6-J-001 |").replace("| L6-J-TMP |", "| L6-J-015 |")
+        open(path, "w", encoding="utf-8").write(text)
+        r = self._run(d)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        block = None
+        for line in open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8"):
+            m = re.match(r"## Job: (\w+)", line)
+            if m:
+                block = m.group(1)
+            elif re.match(r"\| L6-J-\d+ \| (\w+) place:", line) and block:
+                self.assertEqual(re.match(r"\| L6-J-\d+ \| (\w+) place:", line).group(1), block, "row sits in the wrong block: " + line[:80])
+            elif line.startswith("## Appendix"):
+                block = None
+
+    def test_moved_row_keeps_its_own_result(self):
+        """B3: moving a job row to another place in work/L6.md must not change any row's result."""
+        d = self._copy_sm()
+        before = self._run(d)
+        self.assertEqual(before.returncode, 0, before.stdout + before.stderr)
+        want = open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8").read()
+        path = os.path.join(d, "work", "L6.md")
+        lines = open(path, encoding="utf-8").read().split("\n")
+        idx = [i for i, l in enumerate(lines) if l.startswith("| L6-J-")]
+        a, b = idx[7], idx[30]
+        lines[a], lines[b] = lines[b], lines[a]
+        open(path, "w", encoding="utf-8").write("\n".join(lines))
+        r = self._run(d)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8").read(), want)
+
+    def test_stale_row_id_is_an_error_not_a_silent_no_op(self):
+        """B3: a verdict table that names a row id which is not in work/L6.md must stop the tool with the id named."""
+        d = self._copy_sm()
+        path = os.path.join(d, "work", "L6.md")
+        lines = open(path, encoding="utf-8").read().split("\n")
+        lines = [l for l in lines if not l.startswith("| L6-J-059 |")]  # the last row goes away; tables still name it
+        open(path, "w", encoding="utf-8").write("\n".join(lines))
+        r = self._run(d)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("stale job row ids", r.stdout + r.stderr)
+        self.assertIn("L6-J-059", r.stdout + r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

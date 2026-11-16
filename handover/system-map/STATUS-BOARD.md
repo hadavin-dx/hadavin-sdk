@@ -13,7 +13,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
   0. CORRECTION 16:12Z: the v4.2 runbook (inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md) and LANE-D-13o/13p/13q/13r/13s.md ARE in the checkout; my earlier 'missing' claim was wrong. Nothing missing now except laptop-only files (run program, run sheet). Patch rebuilt against v4.2 (agents below).
   1. Start Docker and run the first rehearsal of the changed flows (steps: work/t19-and-stored-data-steps.md; about 1.5 h, my estimate, unverified). Start by Tue 17 Nov 03:30 UTC / 09:00 IST (decision 12).
   2. Yes or no. The one check that fails (M14) requires every licence file to be proprietary, but three folders under handover/promotion-inputs hold Apache-2.0 copies. YES = I change only the test so it accepts Apache-2.0 there; the licence files stay unchanged (decision 11: licence files are never changed). NO = the test keeps failing and the take can still go ahead, but the test keeps failing by it. Whether those folders may be relicensed is a separate question for the owner and is NOT asked here. Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
-  3. Yes or no: will you paste the SESSION-HANDOFF text (the notes about live state that exist only on your laptop) into inputs/? Row M20 checks the pages against it; without it M20 cannot be done and I drop it. Reply by Tue 17 Nov 12:00 UTC / 17:30 IST.
+  3. ANSWERED by the lead 18:29Z: no paste (SESSION-HANDOFF holds live laptop state and account names). M20 is dropped in the cloud.
   4. Answer the 8 open Blockers in drift/REPORT.md (row M3; they are where two files disagree about what the owner types or when; example: D-01 which n8n the owner types secrets into, D-02 which Postgres password). Default if you stay silent: they stay open and the take is not filmed on them. Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
   5. Answer D-04 and D-05 in work/decision-list-for-lead.md. D-04: the public post says more than the decisions and evidence allow (needs one agreed sentence plus a list of forbidden words). D-05: the result of the crash-after-mail test must reach the owner before the post. Default if silent: the post text stays unchanged and is not approved. Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
@@ -45,7 +45,7 @@ INTERRUPTED: none
 | M17 | end never deletes: replacement lines | written (not applied to v5 or the program) | 70 | decisions/M17-end-never-deletes.md | v5 and the program text still say delete |
 | M18 | D-04 and D-05 | written, awaiting the lead | 90 | decisions/D04-D05.md | |
 | M19 | independent read of the owner steps | cold reads of the card and OWNER-VIEW done, fixes applied; round 2 running | 60 | work/agent-reports-batch3.md | |
-| M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
+| M20 | SESSION-HANDOFF live state | DROPPED by lead 18:29Z (no paste; the lead checks the pages against it on the laptop later if time allows) | 0 | | none in the cloud |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS

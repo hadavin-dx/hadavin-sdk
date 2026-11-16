@@ -118,9 +118,15 @@ for l in open(os.path.join(base, "work/L6.md"), encoding="utf-8"):
 NJOBS = len(rows)
 _have = sorted(int(k.rsplit("-", 1)[1]) for k in rows)
 assert _have == list(range(1, NJOBS + 1)), "work/L6.md job rows are not contiguous L6-J-001..%03d" % NJOBS
-RANGES = [("STORE", 1, 12), ("LOG", 13, 23), ("FILTER", 24, 33), ("COUNTER", 34, 40), ("RETRY", 41, 50), ("NOTICE", 51, 57), ("OTHER", 58, 59)]
-assert RANGES[-1][2] == NJOBS and all(RANGES[i][2] + 1 == RANGES[i + 1][1] for i in range(len(RANGES) - 1)), "RANGES do not cover exactly the %d job rows in work/L6.md" % NJOBS
-APPX = {12, 18, 22, 33, 39, 40, 49, 50, 57, 59}
+KEYS = ["STORE", "LOG", "FILTER", "COUNTER", "RETRY", "NOTICE", "OTHER"]
+# A job row belongs to the block named by its own first words ("STORE place: ..."), not by its position or number.
+BLOCK_OF = {}
+for _jid, _c in rows.items():
+    _k = _c[1].split(" place:")[0]
+    if _k not in KEYS or not _c[1].startswith(_k + " place:"):
+        sys.exit("work/L6.md: job row %s name %r does not start with one of %s followed by ' place:'" % (_jid, _c[1][:40], KEYS))
+    BLOCK_OF[_jid] = _k
+APPX = {"L6-J-012", "L6-J-018", "L6-J-022", "L6-J-033", "L6-J-039", "L6-J-040", "L6-J-049", "L6-J-050", "L6-J-057", "L6-J-059"}
 OWNERLINE = {
  "STORE": "Postgres table mf_leads in the single Postgres of the take (written by the n8n Postgres nodes)",
  "LOG": "n8n execution history in Postgres (DECISION line 16)",
@@ -144,36 +150,40 @@ OWNEV = {
  "RETRY": "`handover/demo3/kill/flows-go1/mf-recovery.json:26 \"attempts=attempts+1\"`",
  "NOTICE": "`handover/demo3/kill/flows-go1/mf-recovery.json:196 \"mf-mail-smtp\"`",
  "OTHER": "`handover/system-map/DECISION-one-store.md:14 \"three least-privilege roles\"`"}
-CORE = {6, 7, 21, 31, 32, 38, 45, 46, 47, 56, 8, 9, 20, 30, 48, 50, 57}
-FORCE = {17: "NOT-NEEDED", 10: "NOT-NEEDED", 40: "DUPLICATE", 18: "DUPLICATE", 58: "NOT-NEEDED", 5: "DUPLICATE", 37: "DUPLICATE"}
+CORE = {"L6-J-006", "L6-J-007", "L6-J-021", "L6-J-031", "L6-J-032", "L6-J-038", "L6-J-045", "L6-J-046", "L6-J-047", "L6-J-056", "L6-J-008", "L6-J-009", "L6-J-020", "L6-J-030", "L6-J-048", "L6-J-050", "L6-J-057"}
+FORCE = {"L6-J-017": "NOT-NEEDED", "L6-J-010": "NOT-NEEDED", "L6-J-040": "DUPLICATE", "L6-J-018": "DUPLICATE", "L6-J-058": "NOT-NEEDED", "L6-J-005": "DUPLICATE", "L6-J-037": "DUPLICATE"}
 BLOCKED = "ARCHIVE BLOCKED until the laptop lead shows which counter the take proof reads, and the desk security patches are applied (L6-EX-11)"
 ASKDATA = "KEEP-CORE (callers: guard/producers.py lines 63 and 68, the askdata extra in pyproject.toml, tests/demo_askdata/); archive only after those references move"
-PROP = {10: "KEEP (test evidence; Fix plan rows need the rig)", 17: "KEEP (test evidence)", 22: "KEEP (CI)", 33: "KEEP (CI)",
-        58: "CHANGE (replace by three least-privilege roles plus a migrations identity, see Fix plan)", 59: "STOP (process waste, not a file)",
-        23: "FIX THE HARNESS (it recreates the empty files every run); no archive",
-        5: "MERGE-INTO core Limits, only after the place that holds the dollar cap is named; keep until then",
-        37: "MERGE-INTO core Limits, only after the place that holds the dollar cap is named; keep until then",
-        27: "KEEP until a dated source shows the CRM does this; the keyed upsert keeps crm_rows=1 under retries",
-        28: "MERGE-INTO mf-form AFTER THE VIDEO; the key must become source plus id (L2-FD-004: ids from two sources can collide and a request is dropped as a duplicate). The dead if-nodes UnknownNewA and UnknownNew are in mf-sub-crm-mail.json (lines 326 and 358, reviewer-read); both branches go to OutUnknown so they decide nothing: remove them in that file, a separate CHANGE after the video",
-        42: "AFTER THE VIDEO: n8n Retry On Fail cannot filter by error type (UNVERIFIED), so the trim is not implementable as written; removing it also makes recovery wait for the 120 s lease",
-        8: ASKDATA, 9: ASKDATA, 20: ASKDATA, 30: ASKDATA, 48: ASKDATA,
-        50: "CHANGE (keep the weekly cron and tools/mutation_runner.py, which tests use; bound the curl retry at ci.yml line 228 and add a failure notice)",
-        57: "KEEP (dependabot.yml and .coderabbit.yaml are live gates; CLAUDE.md lists CodeRabbit as a required pull request gate)",
-        4: BLOCKED, 16: BLOCKED, 29: BLOCKED, 36: BLOCKED, 44: BLOCKED, 54: BLOCKED}
-CONFLICT = {1, 4, 5, 16, 29, 36, 44, 54}; NOTDONE = {2, 13}; UNDEC = {58}; UNVER = {3, 14}
-TEXT = {23: "NOT-NEEDED: most of the 378 log files are empty (run folder fl45k6c has non-empty logs, work/L2.md:331-333); fakes write to events.jsonl",
-        20: "KEEP-CORE: has callers (see proposal); the take does not use it. Query text passes clean() (terminal escapes stripped, `ledger.py:3`); whether personal data is masked is UNVERIFIED",
-        35: "NEEDED for the per-lead repeat guard only: stage.journal stops a second model call for one request; it is NOT a dollar ceiling (`handover/system-map/DECISION-one-store.md:9 \"file in the take folder (qualify_stage.py)\"`); the place that holds the dollar cap is open",
-        47: "KEEP-CORE: no runtime caller in the take, but registered in the guard registry (`src/hadavin_sdk/guard/producers.py:36 \"extract validation errors\"`) and used by a test; never archive"}
-EVID = {11: "`handover/system-map/DECISION-one-store.md:11 \"HubSpot (CRM) and Gmail\"`; real HubSpot and Gmail NOT VISIBLE"}
+PROP = {"L6-J-010": "KEEP (test evidence; Fix plan rows need the rig)", "L6-J-017": "KEEP (test evidence)", "L6-J-022": "KEEP (CI)", "L6-J-033": "KEEP (CI)",
+        "L6-J-058": "CHANGE (replace by three least-privilege roles plus a migrations identity, see Fix plan)", "L6-J-059": "STOP (process waste, not a file)",
+        "L6-J-023": "FIX THE HARNESS (it recreates the empty files every run); no archive",
+        "L6-J-005": "MERGE-INTO core Limits, only after the place that holds the dollar cap is named; keep until then",
+        "L6-J-037": "MERGE-INTO core Limits, only after the place that holds the dollar cap is named; keep until then",
+        "L6-J-027": "KEEP until a dated source shows the CRM does this; the keyed upsert keeps crm_rows=1 under retries",
+        "L6-J-028": "MERGE-INTO mf-form AFTER THE VIDEO; the key must become source plus id (L2-FD-004: ids from two sources can collide and a request is dropped as a duplicate). The dead if-nodes UnknownNewA and UnknownNew are in mf-sub-crm-mail.json (lines 326 and 358, reviewer-read); both branches go to OutUnknown so they decide nothing: remove them in that file, a separate CHANGE after the video",
+        "L6-J-042": "AFTER THE VIDEO: n8n Retry On Fail cannot filter by error type (UNVERIFIED), so the trim is not implementable as written; removing it also makes recovery wait for the 120 s lease",
+        "L6-J-008": ASKDATA, "L6-J-009": ASKDATA, "L6-J-020": ASKDATA, "L6-J-030": ASKDATA, "L6-J-048": ASKDATA,
+        "L6-J-050": "CHANGE (keep the weekly cron and tools/mutation_runner.py, which tests use; bound the curl retry at ci.yml line 228 and add a failure notice)",
+        "L6-J-057": "KEEP (dependabot.yml and .coderabbit.yaml are live gates; CLAUDE.md lists CodeRabbit as a required pull request gate)",
+        "L6-J-004": BLOCKED, "L6-J-016": BLOCKED, "L6-J-029": BLOCKED, "L6-J-036": BLOCKED, "L6-J-044": BLOCKED, "L6-J-054": BLOCKED}
+CONFLICT = {"L6-J-001", "L6-J-004", "L6-J-005", "L6-J-016", "L6-J-029", "L6-J-036", "L6-J-044", "L6-J-054"}; NOTDONE = {"L6-J-002", "L6-J-013"}; UNDEC = {"L6-J-058"}; UNVER = {"L6-J-003", "L6-J-014"}
+TEXT = {"L6-J-023": "NOT-NEEDED: most of the 378 log files are empty (run folder fl45k6c has non-empty logs, work/L2.md:331-333); fakes write to events.jsonl",
+        "L6-J-020": "KEEP-CORE: has callers (see proposal); the take does not use it. Query text passes clean() (terminal escapes stripped, `ledger.py:3`); whether personal data is masked is UNVERIFIED",
+        "L6-J-035": "NEEDED for the per-lead repeat guard only: stage.journal stops a second model call for one request; it is NOT a dollar ceiling (`handover/system-map/DECISION-one-store.md:9 \"file in the take folder (qualify_stage.py)\"`); the place that holds the dollar cap is open",
+        "L6-J-047": "KEEP-CORE: no runtime caller in the take, but registered in the guard registry (`src/hadavin_sdk/guard/producers.py:36 \"extract validation errors\"`) and used by a test; never archive"}
+EVID = {"L6-J-011": "`handover/system-map/DECISION-one-store.md:11 \"HubSpot (CRM) and Gmail\"`; real HubSpot and Gmail NOT VISIBLE"}
+_TABLES = {"APPX": APPX, "CORE": CORE, "FORCE": FORCE, "PROP": PROP, "CONFLICT": CONFLICT, "NOTDONE": NOTDONE, "UNDEC": UNDEC, "UNVER": UNVER, "TEXT": TEXT, "EVID": EVID}
+_stale = sorted((name, k) for name, tab in _TABLES.items() for k in tab if k not in rows)
+if _stale:  # an id that no longer names a job row would otherwise be a silent no-op
+    sys.exit("tools/write_outputs.py: stale job row ids (no such row in work/L6.md): " + ", ".join("%s:%s" % s for s in _stale))
 def verdict(n, p):
     if n in CORE: return "KEEP-CORE"
     if n in FORCE: return FORCE[n]
     for v in ["OWNER", "CRM-COULD-DO", "DUPLICATE", "NOT-NEEDED", "NEEDED"]:
         if p.startswith(v) and not (v == "NEEDED" and p.startswith("NOT")): return v
-    raise ValueError("job row %d: unknown verdict word %r" % (n, p[:40]))
+    raise ValueError("job row %s: unknown verdict word %r" % (n, p[:40]))
 def info(n):
-    c = rows["L6-J-%03d" % n]; name, purpose, ev = c[1], TEXT.get(n, c[2]), EVID.get(n, c[14])
+    c = rows[n]; name, purpose, ev = c[1], TEXT.get(n, c[2]), EVID.get(n, c[14])
     v = verdict(n, c[2])
     ex = re.search(r"L6-EX-\d+", c[2])
     exid = ex.group(0) if (ex and v == "NEEDED") else "none"
@@ -183,18 +193,18 @@ def info(n):
     elif v == "KEEP-CORE": prop = "KEEP-CORE (out of take scope; no move)"
     elif v in ("OWNER", "NEEDED"): prop = "keep"
     else: prop = "MERGE-INTO " + m.group(1).strip() if m else "ARCHIVE (after the studio head says yes)"
-    assert not (prop.startswith("ARCHIVE") and v == "KEEP-CORE"), "row %d: KEEP-CORE code must not be archived" % n
+    assert not (prop.startswith("ARCHIVE") and v == "KEEP-CORE"), "row %s: KEEP-CORE code must not be archived" % n
     yes = "no" if re.match(r"(keep|KEEP|STOP|FIX)", prop) else "yes"
     st = ("CONFLICT" if n in CONFLICT else "PLAN NOT DONE" if n in NOTDONE else "UNDECIDED (DECISION line 20)" if n in UNDEC
           else "UNVERIFIED (file not read for this row)" if n in UNVER else "OK")
     if v == "KEEP-CORE" and n not in TEXT: purpose = "Result review: code with callers outside the take, never moved. Lane wording: " + purpose
-    if n == 42: purpose += "; the mail node has retryOnFail false (`mf-sub-crm-mail.json:230`), only lines 35 and 91 show 3 tries"
-    if n == 43: purpose += "; double-alert window if a send was in flight at a kill (not tested; two n8n at once not tested)"
+    if n == "L6-J-042": purpose += "; the mail node has retryOnFail false (`mf-sub-crm-mail.json:230`), only lines 35 and 91 show 3 tries"
+    if n == "L6-J-043": purpose += "; double-alert window if a send was in flight at a kill (not tested; two n8n at once not tested)"
     return [c[0], name, v, exid, prop, yes, st, purpose, ev]
 def render(n):
     return "| %s |" % " | ".join(esc(x) for x in info(n))
-def block_ns(key, a, b):
-    return [n for n in range(a, b + 1) if n not in APPX]
+def block_ns(key):
+    return sorted(n for n, k in BLOCK_OF.items() if k == key and n not in APPX)
 
 # ---- Fix plan
 W0 = "before Wed 18 Nov (a decision or a config change: no new node, no new identity)"
@@ -231,9 +241,9 @@ for c, s in blk:
     ev = esc(ACTIONS.get(c[0]) or first_sentence(c[3]))
     yes = "yes" if (c[0] in ACTIONS and re.search(r"credential|token|history", ACTIONS[c[0]], re.I)) or re.search(r"credential|spend|key|desk", ev, re.I) else "no"
     fixrows.append((W0 if yes == "no" else W3 if "desk" in ev.lower() else W0, c[0], ev, "laptop lead" if yes == "no" else "studio head", yes, "no"))
-for key, a, b in RANGES:
+for key in KEYS:
     todo = []
-    for n in range(a, b + 1):
+    for n in sorted(n for n, k in BLOCK_OF.items() if k == key):
         i = info(n)
         if re.match(r"(MERGE-INTO|CHANGE|FIX|ARCHIVE)", i[4]):
             todo.append("%s: %s" % (i[0], i[4].split(";")[0][:110]))
@@ -268,8 +278,8 @@ claims = [
  ("every file under handover/ was read", "lane Coverage tables", "%d files NOT-READ (%s)" % (NR_TOTAL, NR_LIST), "CONTRADICTED"),
 ]
 HEADLINE = ["## Headline", ""]
-for key, a, b in RANGES:
-    ns = block_ns(key, a, b)
+for key in KEYS:
+    ns = block_ns(key)
     vc = Counter(info(n)[2] for n in ns)
     HEADLINE.append("- %s: place = %s; %d rows (%s)." % (key, SHORT[key], len(ns), ", ".join("%s %d" % kv for kv in sorted(vc.items()))))
 HEADLINE += ["- Open for the laptop lead: the place that holds the dollar cap, the second alert channel and its watcher, what the take proof counter reads.",
@@ -322,17 +332,17 @@ SWEEP_TEXT = "\n".join(out)  # written together with ONE-PLACE-TABLE.md at the e
 
 # ---- ONE-PLACE-TABLE
 HDR = ["| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|"]
-nrows = sum(len(block_ns(k, a, b)) for k, a, b in RANGES)
+nrows = sum(len(block_ns(k)) for k in KEYS)
 op = ["# ONE-PLACE-TABLE: one place per job", "",
  "Source of rows: work/L6.md (proposals of the job pass; the laptop lead decides). Every copy except the job owner place, NEEDED rows and KEEP-CORE rows has a proposal. Nothing is deleted, and nothing with a caller is archived. %d rows are in the job blocks and %d build-process rows are in the appendix." % (nrows, len(APPX)), "", KEY_TEXT]
-for key, a, b in RANGES:
+for key in KEYS:
     op += ["## Job: " + key, "", "Owner: %s | %s | exception: none" % (OWNERLINE[key], OWNEV[key]), ""]
     if key in OPEN and key != "COUNTER":
         op += [OPEN[key], ""]
     if key == "NOTICE":
         op += ["Alert mail (L6-J-051) and request intake mail (L6-J-052) use ONE SMTP credential (mf-mail-smtp) and run inside the same n8n and the same Postgres. If mail, n8n or Postgres is down, nobody is told. Needed: a second channel with its own credential and a heartbeat watched from outside n8n. The second channel has no named responsible person yet: open question for the laptop lead.", ""]
-    ns = block_ns(key, a, b)
-    mc = [n for n in ns if key == "COUNTER" and n in (35, 37, 38)]
+    ns = block_ns(key)
+    mc = [n for n in ns if key == "COUNTER" and n in ("L6-J-035", "L6-J-037", "L6-J-038")]
     op += HDR + [render(n) for n in ns if n not in mc] + [""]
     if mc:
         op += ["### Money cap (a second job under the key COUNTER)", "", OPEN["COUNTER"], "",

@@ -92,7 +92,7 @@ M18 [CLOSED, settled by decisions 4 and 5 | 2026-11-16 | lead | was due Tue 17 N
   decisions/D04-D05.md (one page): was written, awaiting the lead.
 M19 [round 2 cold reads done | 2026-11-16 | system-map | due Tue 17 Nov 12:00 UTC / 17:30 IST | 60% | open: further rounds]
   Independent reader pass over the final owner-steps page (stranger test, 10 minutes of steps, no jargon).
-M20 [BLOCKED | 2026-11-16 | lead | due Tue 17 Nov 12:00 UTC / 17:30 IST | percent [LEAD FILLS at refill from the live state] | open: SESSION-HANDOFF must be pasted into inputs/ by that time, or M20 is dropped from the take]
+M20 [DROPPED by lead 18:29Z (SESSION-HANDOFF holds live laptop state and account names; the lead checks the pages against it on the laptop later if time allows) | 2026-11-16 | lead | no due | no percent | open: none in the cloud]
   Re-verify every number and date in SESSION-HANDOFF live state against files (claims check); list mismatches.
 
 M16 is CLOSED by decision 1. The flowset report is a repo file, not a HubSpot contact: it will go to the archive folder through the cut list, never be deleted. As of 16 Nov it has not been moved.
