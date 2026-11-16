@@ -1112,6 +1112,9 @@ def resolve_commit(repo: str, sha: str) -> str:
     return full
 
 
+REF_MODES: dict[str, dict[str, int]] = {}  # reference folder -> {file: mode in the git archive}
+
+
 def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path) -> None:
     """Fresh `git archive <sha>` extract (+ patches) into dest: the one source of truth for original bytes."""
     if not SHA_RE.fullmatch(sha):
@@ -1122,6 +1125,9 @@ def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path)
         raise Refused(f"git archive {sha} failed in {repo}: {text_of(arc)[:200]}")
     try:
         with tarfile.open(fileobj=io.BytesIO(arc.stdout), mode="r:") as tf:
+            # r11 m6: the extract filter below drops the group and other write bits, so the modes git itself gave (0664 by
+            # default: tar.umask 002) are noted here first; the `--sha` mode check compares with them
+            REF_MODES[str(dest)] = {mb.name: mb.mode for mb in tf.getmembers() if mb.isfile()}
             tf.extractall(dest, filter="data")
     except (
         tarfile.TarError,
@@ -1603,7 +1609,8 @@ def restore_from_marker(
         # 0664 (tar.umask default 002), so a genuine file may carry the group bit; a bit beyond what git gives is refused, and
         # a write bit for others is always refused (found by T95d3 in the first full run of r11: refusing every group bit
         # made the restore of a genuine 0664 file impossible)
-        if mm is not None and (mm & 0o002 or mm & 0o020 & ~ref_mode):
+        git_mode = REF_MODES.get(str(expected_ref), {}).get(m["file"], ref_mode)
+        if mm is not None and (mm & 0o002 or mm & 0o020 & ~git_mode):
             raise Refused(special)
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write

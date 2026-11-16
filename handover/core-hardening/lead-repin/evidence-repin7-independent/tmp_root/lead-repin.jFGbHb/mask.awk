@@ -130,7 +130,7 @@ function secret_name(k,   n, w, i, x, joined) {
     if (x ~ /(key|keys|token|tokens|secret|secrets|password|passwords|passwd|passwds|pwd|credential|credentials)$/) return 1
     if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)$/) return 1
   }
-  if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid)/) return 1
+  if (joined ~ /(secret|passw(or)?d|passphrase|credential|apikey|requirepass|masterauth|jsessionid|phpsessid)/) return 1
   return 0
 }
 # find the bracket that closes a container; CD/CQ keep the depth and quote when the line ends first

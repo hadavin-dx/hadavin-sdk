@@ -1,37 +1,42 @@
-changes| C180 | | 3 A aborted run | |7.11
-changes| page, 6.7 A phrase order | |6.7
-changes| re-checks | none new | | 9 |R8
-changes| release note section 5 and |G12
-changes| see m2 to m4 | C175 | | 12 |6.7
-changes| the plants for those (N01, |R18
-changes| time is the lead's choice (|Open 79
-changes| timeline | see failure 3 | |Open 104
-changes| while the word is unknown; |5.9
-changes| | C172 | | 4 B older key | |7.11
-changes| | Struck from release note |section 5
-changes|See failure 1 above | C171, |Open 102
-changes|as a fourth phone alarm; if |6.7
-changes|e carrier | none new | | m8 |Open 5
-changes|e; lead asked to name them (|Open 105
-changes|er for the post sentences | |R8
-changes|f 6.7 already cancelled it, |7.11
-changes|hes a rename; (b) the first |5.8
-changes|hole-balance exposure is in |R4
-changes|ls** (security M2, note G3, |Open 14
-changes|mbers page n8n slot and the |R1
-changes|nd appendix | C173 | | M4 B |7.11
-changes|ne new | | 9 R8 whole set | |R8
-changes|ntials** (security M2, note |G3
-changes|older; the lead names them (|Open 105
-changes|ps. Exact blocker, asked as |Open 102
-changes|r-side older-key end | Step |7.11
-changes|rd formatting, Recall page, |6.7
-changes|s pattern held a `;`, which |R8
-changes|state word, scopes, tokens, |7.6
-changes|t is 18:14:40 UTC. Asked as |Open 103
-changes|the post sentences | R8 and |section 10
-changes|ula is the lead's decision (|Open 104
-changes|y jot | text kept from v28 (|6.1
+changes| 6.1 timing: the intro says |5.1
+changes| and 6.1 may be done early; |5.7
+changes| labels W1 to W9, L1 to L5, |R1
+changes| meaning of Q27 (Open 109). |Open 96
+changes| no-yes path and the missed-|7.11
+changes| one wording in R1, 6.1 and |8.7
+changes| only; the forced cancel at |7.11
+changes| rule is worded the same in |6.2
+changes| sentence is one wording in |R1
+changes| waits for a lead message). |Open 103
+changes| window or clipboard (sheet |7.6
+changes|1 film rules contradiction: |R9
+changes|17. - retire check defined (|8.6
+changes|2 name rule used at 8.3 and |8.4
+changes|; "press Enter once" put in |6.4
+changes|C195/C199 on the text. - M2 |R10
+changes|creen-capture tool off (R1, |6.1
+changes|ding (in full once, at 5.1; |6.7
+changes|e deadline day: OWNER-OPEN (|Open 107
+changes|e intro says 5.1 to 5.8 and |6.1
+changes|e trigger is spelled out in |R10
+changes|e uses it" escape: removed; |7.11
+changes|e vendor page shows names). |Open 108
+changes|e) -> C192; plant X09. - M1 |5.7
+changes|h criterion, the meaning of |Q27
+changes|l, screen-capture tool off (|R1
+changes|ming: the intro says 5.1 to |5.8
+changes|name (8.2 name rule used at |8.3
+changes|names contain the run name (|8.2
+changes|plant X09. - M1 5.7 against |6.1
+changes|reminder set after the yes, |5.8
+changes|s W1 to W9, L1 to L5, R1 to |R10
+changes|s for the planned cancel at |6.7
+changes|ssed-7.11 path; Mon 23 Nov: |7.11
+changes|st -> C209; plant X24. - m3 |6.1
+changes|tence is one wording in R1, |6.1
+changes|terion, the meaning of Q27 (|Open 109
+changes|to do with the switches and |8.7
+changes|y wording (in full once, at |5.1
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5

@@ -1,3 +1,4 @@
 16:55 UTC checkpoint-v30: copied v29 to v30 names, baseline check 0 failures; next: edit sources
 17:10 UTC checkpoint-v30: sheet findings applied in OWNER-SHEET-v30-SOURCE (A 6284 words, B 6096), facts sevenback/bs added, check-v30 only C19 pointer list failing (126 new pointers, being read). next: note + open list edits, film page check, new Part 7 checks, mut plants, fail-proof, CHANGES
 17:11 UTC checkpoint-v30: note v14 + open list edited; Part 7 checks C185-C209 added, all pass on v30; mut30 re-anchored; C07 repaired (sheet A 6285, card 1777, appendix 3950, film 442). next: mut plants for Part 7, fail-proof vs v29, pointers accept, CHANGES, banned scan, pycache
+17:15 UTC checkpoint-v30: all work done: check 0 failures, 209 plants 208 caught 0 missed, fail-proof 23/23 fail on v29 none on v30, banned 0, CHANGES written. final: pycache sweep, report

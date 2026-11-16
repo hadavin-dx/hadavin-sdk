@@ -935,7 +935,7 @@ OLD (exact):
 ~~~~
 NEW (exact):
 ~~~~
-6. Only after the check passed, and after your `shred done` or `shred not done` of item 3 (key step G): delete the two secret files in the Linux part of your laptop (WSL), one at a time, each by the shred rule of key step G. The two files are the one with the app password of the receiver mailbox and the one with the HubSpot read secret key, both in the folder `~/take-secrets`; type `realpath ~/take-secrets` once to see the full path of that folder, and write the full path of each file on your own list. Do not use the sign `*`. If shred is not installed, run the same five checks and then `rm -- '<path>'`. Do NOT delete `~/.hadavin-take-tags/<id>.used`.
+6. Only after the check passed: delete the two secret files in the Linux part of your laptop (WSL), one at a time, each by the shred rule of key step G. The two files are the one with the app password of the receiver mailbox and the one with the HubSpot read secret key, both in the folder `~/take-secrets`; type `realpath ~/take-secrets` once to see the full path of that folder, and write the full path of each file on your own list. Do not use the sign `*`. If shred is not installed, run the same five checks and then `rm -- '<path>'`. These two files are part (c) of key step G: your `shred done` of item 3 includes them. Do NOT delete `~/.hadavin-take-tags/<id>.used`.
 ~~~~
 Why: Security m2 and naive M4 of round 14 (resolve-r14 question 4): item 6 said `shred -u ~/take-secrets/*`, which E-48 forbids (the sign `*`, `~`) and which has no path checks. The row replaces it by the one shred rule (key step G). The part "UNVERIFIED that shred is installed" is covered by the rule's fallback (`rm --`). It needs E-48 (key step G).
 
@@ -946,7 +946,7 @@ With the window end at 23 Nov 2026 18:29Z the last start is about 18:14Z (the re
 ~~~~
 NEW (exact):
 ~~~~
-With the window end at 23 Nov 2026 18:29 UTC = 23:59 IST the last start that the take program accepts is about 18:14 UTC = 23:44 IST (the refusal is now + 860 s >= end, so before 18:14:40 UTC = 23:44:40 IST at the default lease). The assistant asks for an earlier start: none after 18:00 UTC = 23:30 IST (the latest start we plan, step 16).
+With the window end at 23 Nov 2026 18:29 UTC = 23:59 IST the program refusal limit (the last start that the take program accepts) is about 18:14 UTC = 23:44 IST (the refusal is now + 860 s >= end, so before 18:14:40 UTC = 23:44:40 IST at the default lease). The assistant asks for an earlier start: none after 18:00 UTC = 23:30 IST (the latest start we plan, step 16).
 ~~~~
 Why: Security m2 (input line 171 had UTC times with no IST pair and no word for the earlier start the assistant asks for). The program refusal limit stays a reading, UNVERIFIED by code (confirmation h).
 

@@ -1,0 +1,53 @@
+## check time (UTC): 2026-11-16T17:14:54Z
+## C-10c: owner sheets, hits per phrase (grep -c -i: never deletes / read, create and change only / does not delete / read-only or read only any mention)
+OWNER-SHEET-v19.md: 1 / 0 / 0 / 1
+OWNER-SHEET-v20.md: 0 / 0 / 0 / 0
+OWNER-SHEET-v21.md: 0 / 0 / 0 / 0
+OWNER-SHEET-v22.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v23.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v24-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v24-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v24-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v25-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v25-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v25-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v26-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v26-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v26-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v27-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v27-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v27-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v28-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v28-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v28-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v29-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v29-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v29-SOURCE.md: 0 / 0 / 0 / 2
+OWNER-SHEET-v30-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v30-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v30-SOURCE.md: 0 / 0 / 0 / 2
+## newest owner sheet by modification time (UTC), at the check time
+2026-11-16T17:12:09Z OWNER-SHEET-v30-SOURCE.md
+2026-11-16T17:13:55Z OWNER-SHEET-v30-A.md
+2026-11-16T17:13:55Z OWNER-SHEET-v30-B.md
+## ORDERS: L-23NOV line and Q25 and Q27 lines
+189:Q25: cancel-by 18:19 UTC (23:49 IST), at least 10 minutes before the stop. Target take is Wed 18 Nov, so no take on 23 Nov unless Q27 is shown at the final head.
+191:Q27: UNVERIFIED: the lead reads run_real_check_n8n.py at the final head and answers (a), (b), (c) with line numbers at re-pin. Until then write 'lead verifies at re-pin'; use your defaults.
+229:- L-23NOV: confirmed as a plan fact: latest start Mon 23 Nov 18:04Z (23:34 IST), key revoked by 18:19Z even if a take runs. No take is planned on 23 Nov; the take targets Wed 18 Nov.
+## owner sheets with a version number above 30 (v31 or later)?
+none on disk at the check time
+## modification time of every v28, v29 and v30 file (UTC)
+2026-11-16T16:09:58Z OWNER-SHEET-v28-A.md
+2026-11-16T16:09:58Z OWNER-SHEET-v28-B.md
+2026-11-16T16:07:37Z OWNER-SHEET-v28-SOURCE.md
+2026-11-16T16:46:37Z OWNER-SHEET-v29-A.md
+2026-11-16T16:46:37Z OWNER-SHEET-v29-B.md
+2026-11-16T16:41:12Z OWNER-SHEET-v29-SOURCE.md
+2026-11-16T17:13:55Z OWNER-SHEET-v30-A.md
+2026-11-16T17:13:55Z OWNER-SHEET-v30-B.md
+2026-11-16T17:12:09Z OWNER-SHEET-v30-SOURCE.md
+## release notes: newest version on disk (LEAD-RELEASE-NOTE-v*.md, not SOURCE)
+LEAD-RELEASE-NOTE-v14.md
+## G12 rows in the newest release note (grep -n)
+8:3. Facts that conflict across the inputs and need your decision: the lease wording (G12), the exit code for person C (G6), US$180 against US$189 (G14), DECISION-one-store line 14 saying ONE database
+33:| G12 | Claims: the one sentence, the ban list of section 5 decided (the lease sentence is out of the public post, lead answer Q22c) | sentence in writing | sentence missing |

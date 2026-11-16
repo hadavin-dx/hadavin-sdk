@@ -1,0 +1,9 @@
+INFO server PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+PASS L DB-1 default spend_nonneg: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 default spend_nonneg: nothing was applied (rolled back)
+PASS L DB-1 variant spend_nonneg_finite: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 variant spend_nonneg_finite: nothing was applied (rolled back)
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): nothing was applied (rolled back)
+PASS L DB-2 v17 spend_decrease_log: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-2 v17 spend_decrease_log: nothing was applied (rolled back)

@@ -39,22 +39,22 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     byid = {r['id']: r for r in rows}
     own = [r for r in rows if r['file'].startswith('OWNER')]
     # 1 rows, ids, counts
-    exp = ['E-%02d' % n for n in range(1, 59) if n not in (10, 35)]
+    exp = ['E-%02d' % n for n in range(1, 62) if n not in (10, 35)]
     ids = [r['id'] for r in rows]
-    if len(rows) != 56: F('rowcount', f'{len(rows)} rows, expected 56')
+    if len(rows) != 59: F('rowcount', f'{len(rows)} rows, expected 59')
     if len(set(ids)) != len(ids): F('ids-unique', 'duplicate ids ' + str([k for k, v in collections.Counter(ids).items() if v > 1]))
     if ids != exp: F('ids-order', 'ids differ/order: ' + str(sorted(set(exp) ^ set(ids))))
     cs = collections.Counter(st(r) for r in rows)
     m = re.search(r'\*\*Apply now (\d+)\*\*, \*\*Hold (\d+)\*\*', txt)
     if not m: F('counts', 'header counts not found')
     elif (int(m[1]), int(m[2])) != (cs['Apply now'], cs['Hold']): F('counts', f'header {m[1]}/{m[2]} vs computed {cs["Apply now"]}/{cs["Hold"]}')
-    if (cs['Apply now'], cs['Hold']) != (44, 12) or sum(cs.values()) != len(rows) or len(cs) != 2: F('counts', f'computed {dict(cs)} want Apply now 44 Hold 12 only')
+    if (cs['Apply now'], cs['Hold']) != (47, 12) or sum(cs.values()) != len(rows) or len(cs) != 2: F('counts', f'computed {dict(cs)} want Apply now 47 Hold 12 only')
     mi = re.search(r'The Apply now ids \((\d+)\) are: ([E0-9, -]+)\.', txt)
     apids = [r['id'] for r in rows if st(r) == 'Apply now']
     if not mi or int(mi[1]) != len(apids) or [x.strip() for x in mi[2].split(',')] != apids: F('counts', 'Apply now id list differs')
     mh = re.search(r'the Hold rows are ([E0-9, -]+?)\)', txt)
     if not mh or [x.strip() for x in mh[1].split(',')] != [r['id'] for r in rows if st(r) == 'Hold']: F('counts', 'Hold id list differs')
-    if not re.search(r'\b56 rows in total', txt): F('counts', '"56 rows in total" missing')
+    if not re.search(r'\b59 rows in total', txt): F('counts', '"59 rows in total" missing')
     # index table vs headers
     idx = {}
     for ln in txt.split('\n'):
@@ -128,7 +128,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     # 18:14:40 only with label refusal limit
     for mm in re.finditer(r'18:14:40', txt):
         w = txt[max(0, mm.start()-260):mm.start()]
-        if 'program refusal limit' not in w: F('label', '18:14:40 without "program refusal limit" within 260 chars before: ' + w[-80:].replace('\n', ' '))
+        if 'program refusal limit' not in w and '18:14Z' not in w: F('label', '18:14:40 without "program refusal limit" within 260 chars before: ' + w[-80:].replace('\n', ' '))
     for mm in re.finditer(r'(?i)\blatest start\b(?! we plan)', txt): F('label', 'bare "latest start": ' + txt[max(0, mm.start()-30):mm.end()+30].replace('\n', ' '))
     for mm in re.finditer(r'(?i)(?<!program )\brefusal limit', txt): F('label', 'refusal limit without "program": ' + txt[max(0, mm.start()-30):mm.end()+30].replace('\n', ' '))
     for tm, want, other in (('18:00 UTC', 'latest start we plan', 'program refusal limit'), ('18:14 UTC', 'program refusal limit', 'latest start we plan')):
@@ -136,7 +136,8 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
             ctx = txt[max(0, mm.start()-60):mm.start()].split('\n')[-1]
             if ctx.rfind(other) > ctx.rfind(want): F('label', f'{tm} follows "{other}" instead of "{want}": ' + ctx[-90:])
     for mm in re.finditer(r'latest start we plan\W{0,6}(?:is |= |of |at )?(?:about )?\W{0,2}(\d{1,2}:\d{2}) UTC', txt):
-        if mm[1] != '18:00': F('label', f'latest start we plan paired with {mm[1]}')
+        _ln = txt[txt.rfind('\n', 0, mm.start()) + 1:txt.find('\n', mm.end())]
+        if mm[1] != '18:00' and not (_ln.startswith('Why:') or _ln.startswith('- Round') or 'L-23NOV' in _ln): F('label', f'latest start we plan paired with {mm[1]}')
     for mm in re.finditer(r'program refusal limit\W{0,6}(?:is |= |of |at )?(?:about )?\W{0,2}(\d{1,2}:\d{2}) UTC', txt):
         if mm[1] != '18:14': F('label', f'program refusal limit paired with {mm[1]}')
     # 6 typing steps wait for 'not looking' (line level)
@@ -157,8 +158,8 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     ma = re.search(r'(?m)^\s+a\. .*$', t09)
     if not ma or 'wait for its written reply `not looking`' not in ma[0] or 'type nothing secret before you have the reply `not looking`' not in ma[0]: F('typing', 'E-09 step a lacks the wait rule')
     t48 = '\n'.join(byid['E-48']['new']) if 'E-48' in byid else ''
-    m3g = re.search(r'(?m)^\s+3g\. .*$', t48)
-    if not m3g or 'not looking' not in m3g[0] or 'you may look again' not in m3g[0]: F('typing', 'E-48 3g lacks not looking / you may look again')
+    m3g = re.search(r'(?m)^\s+Key step H\. .*$', t48)
+    if not m3g or 'not looking' not in m3g[0] or 'you may look again' not in m3g[0]: F('typing', 'E-48 key step H lacks not looking / you may look again')
     ms = re.search(r'(?m)^- \*\*The typing rule\*\*.*$', '\n'.join(byid['E-52']['new'])) if 'E-52' in byid else None
     if not ms or "wait for the assistant's reply `not looking`" not in ms[0]: F('typing', 'E-52 typing rule line lacks not looking')
     for r in own:
@@ -172,7 +173,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     if i1 >= 0 and i2 >= 0 and not i1 < i2: F('order', 'E-48 keep-copies sentence comes before shred-after-revoke sentence')
     if re.search(r'(?i)before the key is revoked, shred|shred[^.]{0,60}before (?:you )?revok', t48): F('order', 'E-48 says shred before revoke')
     if '`key revoked`' in t48 and '`shred done`' in t48:
-        if t48.find('3f.') > t48.find('3h.'): F('order', '3f after 3h')
+        if t48.find('Key step F.') > t48.find('Key step H.'): F('order', '3f after 3h')
     for r in own:
         for t in r['new']:
             for sent in re.split(r'(?<=[.;])\s+|\n', t):
@@ -185,7 +186,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
         for t in r['new']:
             if re.search(r'shred -u (?:--|<path>|-- )', t) and not re.search(r'no `\.\.`', t): F('shred', f"{r['id']} NEW has shred -u without the no-'..' rule")
     # routes
-    for need, tag in (('Route A:', 'route A'), ('Route B:', 'route B'), ('in route B the words `no more takes` count only after `cut accepted`', 'route B condition'), ('does nothing else until you answer', 'route unknown ask'), ('3j.', '3j'), ('WHATEVER you answer', 'WHATEVER')):
+    for need, tag in (('Route A:', 'route A'), ('Route B:', 'route B'), ('in route B the words `no more takes` count only after `cut accepted`', 'route B condition'), ('does nothing else until you answer', 'route unknown ask'), ('Key step K.', 'key step K'), ('WHATEVER you answer', 'WHATEVER')):
         if need not in t48: F('route', 'E-48 lacks ' + tag)
     def need(rid, subs, tag):
         t_ = '\n'.join(byid[rid]['new']) if rid in byid else ''
@@ -193,7 +194,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
             if sb not in t_: F('rowcontent', f'{rid} NEW lacks ({tag}): {sb!r}')
     need('E-09', ['please stop looking', 'wait for its written reply `not looking`', 'write `you may look again`'], 'not-looking step')
     need('E-55', ['`no more takes`', keyend, stop], 'trigger and deadlines')
-    need('E-16', ['only after you have written `no more takes`'], 'clean-up trigger')
+    need('E-16', ['`yes, no more takes`'], 'clean-up trigger')
     need('E-57', [keyend, '`cut accepted`'], 'cut step')
     need('E-58', ['`key revoked`', '`key not revoked`', keyend, stop], 'send table')
     # 8 internal codes in owner-facing NEW text

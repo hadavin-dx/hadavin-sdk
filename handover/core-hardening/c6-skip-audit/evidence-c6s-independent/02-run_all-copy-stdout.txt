@@ -1,0 +1,9 @@
+built REPORT-c6s.md: 760 lines
+verify exit 0
+SUMMARY: 165 checks, 0 FAILED
+neg exit 0
+SUMMARY: 137 copies, 0 wrong
+
+real	0m23.889s
+user	0m20.483s
+sys	0m1.596s

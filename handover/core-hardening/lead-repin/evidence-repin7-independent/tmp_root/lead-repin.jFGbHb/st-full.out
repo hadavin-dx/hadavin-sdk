@@ -95,9 +95,9 @@ PASS (hidden, sed stage alone): triple-quoted value over several lines, line 2
 PASS (hidden): unterminated quote
 PASS (hidden, line-only final filter): unterminated quote
 PASS (hidden, sed stage alone): unterminated quote
-FAIL (secret still visible): e-mail address
-FAIL (secret still visible in the line-only final filter): e-mail address
-FAIL (secret still visible after the sed stage alone): e-mail address
+PASS (hidden): e-mail address
+PASS (hidden, line-only final filter): e-mail address
+PASS (hidden, sed stage alone): e-mail address
 PASS (hidden): JSON name/value pair
 PASS (hidden, line-only final filter): JSON name/value pair
 PASS (hidden, sed stage alone): JSON name/value pair
@@ -632,24 +632,24 @@ PASS (hidden, sed stage alone): name passwordHash 3 (first 6 characters)
 PASS (hidden): name passwordHash 3 (last 6 characters)
 PASS (hidden, line-only final filter): name passwordHash 3 (last 6 characters)
 PASS (hidden, sed stage alone): name passwordHash 3 (last 6 characters)
-PASS (hidden): name authTokenValue 1 (first 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 1 (first 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 1 (first 6 characters)
-PASS (hidden): name authTokenValue 1 (last 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 1 (last 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 1 (last 6 characters)
-PASS (hidden): name authTokenValue 2 (first 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 2 (first 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 2 (first 6 characters)
-PASS (hidden): name authTokenValue 2 (last 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 2 (last 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 2 (last 6 characters)
-PASS (hidden): name authTokenValue 3 (first 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 3 (first 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 3 (first 6 characters)
-PASS (hidden): name authTokenValue 3 (last 6 characters)
-PASS (hidden, line-only final filter): name authTokenValue 3 (last 6 characters)
-PASS (hidden, sed stage alone): name authTokenValue 3 (last 6 characters)
+FAIL (secret still visible): name authTokenValue 1 (first 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 1 (first 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 1 (first 6 characters)
+FAIL (secret still visible): name authTokenValue 1 (last 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 1 (last 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 1 (last 6 characters)
+FAIL (secret still visible): name authTokenValue 2 (first 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 2 (first 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 2 (first 6 characters)
+FAIL (secret still visible): name authTokenValue 2 (last 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 2 (last 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 2 (last 6 characters)
+FAIL (secret still visible): name authTokenValue 3 (first 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 3 (first 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 3 (first 6 characters)
+FAIL (secret still visible): name authTokenValue 3 (last 6 characters)
+FAIL (secret still visible in the line-only final filter): name authTokenValue 3 (last 6 characters)
+FAIL (secret still visible after the sed stage alone): name authTokenValue 3 (last 6 characters)
 PASS (hidden): name keyValue 1 (first 6 characters)
 PASS (hidden, line-only final filter): name keyValue 1 (first 6 characters)
 PASS (hidden, sed stage alone): name keyValue 1 (first 6 characters)
