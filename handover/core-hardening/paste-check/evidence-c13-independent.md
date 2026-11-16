@@ -22,7 +22,7 @@ Run 2026-11-16 on Linux (bash, dash, GNU patch, git). Raw output: `raw/c13i/` (t
 ## (c) Scratch harness (own build; scripts in `raw/c13i/harness/`)
 Setup: a scratch Git Bash-like tree (`HB`, `CH` with copies of `paste-check` and `inputs`), a git repo with a worktree-like folder holding two commits (old, new), the 5 script files that contain the 20 table strings, `strings.txt` (20 rows), CHAIN=4 (final plan). Each checklist block was run in a fresh `bash` with the section-1 variables and helper functions pasted in front, the way the checklist says.
 
-Positive flow (all `exit=0`, 0 STOP lines): A1, A2, A3, A4, A5b, A5b4, A5c, A6 ("ok A6 counts 24 10 2 1", chain mark ok), A7, A8, A9 (after I edited line 3 of PF to the stub path), B1 (`accept 3 4 8`), B2, C1 (20 rows), C2, C2b (extract `P-4b.sh`; syntax, CR, non-ASCII, word scan clean), C2c ("P-4b files ok"), C3, C3b, C4 rows + fill ("rows filled by this run: 20", "rows still open: 0"), `accept 1 1b`, `accept 6`, C5, C6 (ACCEPT), C7 ("ok C7"), C8 ("ok C8"), C8b ("ok C8b"), C9 (wrote the release line). Files: `pos-run-1.txt`, `pos-run-2a.txt`, `pos-run-2.txt`, `pos-run-3.txt`.
+Positive flow (all `exit=0`, 0 STOP lines): A1, A2, A3, A4, A5b, A5b4, A5c, A6 ("ok A6 counts 24 10 2 1", chain mark ok), A7, A8, A9 (after I edited line 3 of PF to the stub path), B1 (`accept 3 4 8`), B2, C1 (20 rows), C2, C2b (extract `P-4b.sh`; syntax, CR, non-ASCII, word scan clean), C2c ("P-4b files ok"), C3, C3b, C4 rows + fill ("rows filled by this run: 20", "rows still open: 0"), `accept 1 1b`, `accept 6`, C5, C6 (ACCEPT), C7 ("ok C7"), C8 ("ok C8"), C8b ("ok C8b"), C9 (wrote the release line). Files: `pos-run-0-chain.txt` (b02 to b13: 12 runs, 12 exit 0, 0 STOP), `pos-run-1.txt`, `pos-run-2a.txt`, `pos-run-2.txt`, `pos-run-3.txt`. (The chain file is from a second, identical run of A1 to A9's first half; the main flow's chain steps ran the same blocks earlier and were also all ok.)
 
 Negatives, each run from a fresh copy of a snapshot (`raw/c13i/negatives/*.txt`, one file per case, `SUMMARY.txt` lists the exit codes per block; 31 case files; control case N0 exits 0,0,0):
 
@@ -53,11 +53,11 @@ Negatives, each run from a fresh copy of a snapshot (`raw/c13i/negatives/*.txt`,
 | N9d | second 40-character sha in PF | C7 exit 1, C9 exit 1 |
 | N9e | `proof-c6.txt` missing | C9 exit 1 |
 
-Note on the N9 file name: the missing-`patch` case is saved separately as `raw/c13i/negatives/../N9-missing-patch.txt`; see `raw/c13i/N9-missing-patch.txt`.
+The missing-`patch` case (row N9) is saved as `raw/c13i/N9-missing-patch.txt` (not in `negatives/`). In it the plan file stayed at checksum 67a0a195537de875 (unchanged).
 
 ## Raw counts
 - Fenced blocks: 45; bash -n pass 45; dash -n pass 45.
-- Positive flow: 27 block runs, 27 exit 0, 0 STOP lines.
+- Positive flow: 32 block runs saved (12 + 7 + 4 + 8 + 1), all exit 0, 0 STOP lines.
 - Negative cases: 31 files in `negatives/`, incl. 1 control (N0). Every negative produced at least one STOP and exit 1 in its failing block; every later gating block I ran after the failure (C6, C9, C8b, C2c, C7 as listed) refused with exit 1, except the two read-only exceptions in items 1 and 2 above.
 - `acc5-cases.sh` (builder's file, run by me once): "cases ok=18 bad=0".
 - Banned-word scan of all my raw files against the BANNED list of `tests/test_no_reference_material.py` (13 words): 0 hits.

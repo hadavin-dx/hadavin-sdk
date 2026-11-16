@@ -1,0 +1,9 @@
+##### b05
+STOP A3: the program patch is not installed (command -v patch finds nothing in this shell). Next: nothing was changed. Install patch (Git for Windows has it under usr/bin; check PATH), open a new Git Bash window, set the variables, run this block again. There is no git apply fallback any more.
+##### b05 exit=1
+##### b06
+STOP A4: the plan in the work folder does not start from the checksum this step expects (it is 67a0a195537de875). If you are repeating a step you already did, go to A6: it names the state. Next: nothing was changed; move aside and start at A1 only if A6 also says STOP.
+##### b06 exit=1
+##### b10
+STOP A6: the counts differ. Next: aside "/z/hbroot/_local/scratch/lead-plan-work", then start at A1.
+##### b10 exit=1

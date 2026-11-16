@@ -1,0 +1,83 @@
+##### b02
+have git
+have sed
+have awk
+have grep
+have sha256sum
+have cygpath
+have patch
+have dash
+have python3
+have python
+##### b02 exit=0
+##### b03
+ok A1: made /z/hbroot/_local/scratch/lead-plan-work
+##### b03 exit=0
+##### b04
+ok plan-v5-fixes.patch (no CR, checksum)
+ok plan-v5-repin-v6.patch (no CR, checksum)
+ok plan-v5-gate-rows-v3.patch (no CR, checksum)
+ok apply-v10-after-chain.py (no CR, checksum)
+ok plan-v10-real-v5-edits.md (no CR, checksum)
+ok plan-v10-corrections-after-chain.md (no CR, checksum)
+ok acc5.sh (no CR, checksum)
+ok LEAD-FILL-list-v5.md (no CR, checksum)
+ok original checksum
+ok original no CR
+ok A2: every file checked, proof file written
+##### b04 exit=0
+##### b05
+ok A3
+##### b05 exit=0
+##### b06
+ok A4
+##### b06 exit=0
+##### b07
+ok A5b
+##### b07 exit=0
+##### b08
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing []
+written /z/hbroot/_local/scratch/lead-plan-work/real-v5-plan.md 28f92c5d1211207c 780 lines
+ok A5b4
+##### b08 exit=0
+##### b09
+plan-wp6-resmoke-v5.md
+plan-wp6-resmoke-v5.md.step3
+ok A5c
+##### b09 exit=0
+##### b10
+ok A6 counts 24 10 2 1
+ok A6 plan checksum and chain marks for CHAIN=4 (28f92c5d1211207c)
+##### b10 exit=0
+##### b11
+2:LEAD-FILL 7
+3:LEAD-FILL 5
+3:LEAD-FILL 6
+3:LEAD-FILL 9
+3:LEAD-FILL 7
+4:LEAD-FILL 8
+4:LEAD-FILL 3
+137:LEAD-FILL 4
+270:LEAD-FILL 1
+270:LEAD-FILL 1b
+270:LEAD-FILL 2
+270:LEAD-FILL 1b
+287:LEAD-FILL 6
+509:LEAD-FILL 4
+510:LEAD-FILL 4
+774:LEAD-FILL 7
+775:LEAD-FILL 1
+ok A7 marker lines are 2,3,4,137,270,287,509,510,774,775
+##### b11 exit=0
+##### b12
+ok A8 copied
+##### b12 exit=0
+##### b13
+windows form: Z:\hbroot\egm\duplicate-proof-lead-desk\wp6\plan-wp6-resmoke-v5.md
+mixed form (drive letter, forward slashes; the form the plan writes after PF=): Z:/hbroot/egm/duplicate-proof-lead-desk/wp6/plan-wp6-resmoke-v5.md
+string (1) found: 0 (must be 1)
+strings (2) and (3) found: 0 (must be 2)
+evidence folder named in plan: 0 (must be 1 or more)
+pastes folder named in plan: 0 (must be 1 or more)
+##### b13 exit=0
