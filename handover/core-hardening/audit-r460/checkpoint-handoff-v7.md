@@ -1,8 +1,8 @@
 # Checkpoint: hand-off v7 (2026-11-16)
 
-Start 13:24 UTC (18:54 IST). Checkpoint 1 at 13:37 UTC (19:07 IST).
+Start 13:24 UTC (18:54 IST). Checkpoint 1 at about 13:27 UTC (18:57 IST) (the first version of this file wrongly said 13:37). Checkpoint 2 (final) at 13:37 UTC (19:07 IST).
 Done: read the brief, the three v6 reviews, v6 in full, and these sources (all lines opened): llm/openai_compat.py (whole), llm/common.py (1-60, 150-330), llm/retry.py (whole), llm/protocol.py, llm/gemini.py (28-123), anthropic.py and bedrock.py constructors, llm/fake.py, limits.py, registry.py (1-60), store/postgres.py (130-160, 410-440), store/migrate.py (28-70, 140-200), app.py (55-200), cli.py (60-135, 200-262), agent_loop.py (184-204, 236-252, 304-324, 418-445), k1b/loop.py (30-216), extract.py, guard/judge.py, guard/bedrock_guardrail.py, backends/factory.py and table.py (ALLOWED, ChainSettings), tests/k5_support.py, tests/test_k5_tools.py (715-735), tests/contracts/kinds/llm_wire.py (builder lines).
 Ran one inline Python import-graph check (AST, read-only): the v6 shape (gate.py imports common.py) makes a cycle llm.gate <-> llm.common; the v7 shape (new pure module llm/spend.py, gate imports only spend and protocol, MeteredLLM in its own module) makes no new cycle. The one cycle that exists today (approvals package) is not touched.
 Decisions taken: settle per answered attempt from its own Answer (fixes the two-loop openai_compat double booking); attempt numbers come from one counter per CallBook; new PR M2-0 holds all pure types; operator-only spend_adjust table for relief of kept or orphan reservations; D5 default becomes integer nano-dollars (BIGINT); MeteredLLM only outside live stages.
-Next: write v7 sections, v7-CHANGES.md, banned-string count, report.
+Checkpoint 2: CORE-PR-HANDOFF-v7.md (634 lines) and v7-CHANGES.md written; banned-string count 0 in all three files (10 strings); no src/ or tests/ edit; no git; no agents or shells started. Not run: any test, Postgres, ruff. Next: report to the lead.
 Blockers: none. Nothing in src/ or tests/ touched. No git.

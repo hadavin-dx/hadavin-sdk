@@ -1,0 +1,9 @@
+== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+evidence-r7/t76-86-derived.sh: line 50: 16098 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
+evidence-r7/t76-86-derived.sh: line 50: 16265 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d7/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): no
+  PASS: T76b file with two names that still holds the planted text: exit 3 (got 3), marker and backup kept, the other name untouched
+  PASS: T76b genuine restore afterwards

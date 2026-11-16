@@ -49,7 +49,6 @@ waitplant() { for _ in $(seq 120); do ls "$STATE"/*.planted.json >/dev/null 2>&1
 bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
 kill_planted() { fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null; }
 keptstate() { [ -n "$(ls "$STATE"/*.planted.json 2>/dev/null)" ] && [ -n "$(ls "$STATE"/*.backup 2>/dev/null)" ]; }
-
 echo "== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker"
 kill_planted; mv "$T/root/src" "$T/root/src.moved"; mkdir -p "$S/decoy76/src"; ln -s "$S/decoy76/src" "$T/root/src"
 python3 "$RUN" --root "$T/root" --restore >"$S/t76b.out" 2>&1; rc=$?; cut -c1-200 "$S/t76b.out"
@@ -211,4 +210,9 @@ fresh_root; chmod 640 "$T/root/src/mod.py"
 mut -- tests/test_chmod.py >"$S/t85.out" 2>&1; rc=$?; cut -c1-200 "$S/t85.out" | tail -2
 chk "T85 mode 640 before, a test chmods the file to 600: it is 640 again after the run (got $(stat -c %a "$T/root/src/mod.py")), content restored" "[ '$(stat -c %a "$T/root/src/mod.py")' = 640 ] && [ '$(last)' = return1 ]"
 
+echo "== T86 (found while testing r7) a -q from the caller on top of the tool's own -q must not drop pytest's summary line (then no passed test is counted: a survivor became NO-TEST-PASSED and a baseline became 'no test passed')"
+fresh_root; NCF= base --skip-import-check --id m1 --file docs/note.txt --old alpha --new beta -- -q tests/test_fast.py >"$S/t86.out" 2>&1; rc=$?; cut -c1-200 "$S/t86.out" | tail -2
+chk "T86 a surviving mutant with the caller's -q: verdict SURVIVED, 'pytest summary line: 1 passed', exit 0 (got $rc); the baseline counts the passed test too" "[ $rc -eq 0 ] && grep -q 'VERDICT: SURVIVED' '$S/rawT/X-m1.txt' && grep -q 'pytest summary line: 1 passed' '$S/rawT/X-m1.txt'"
+
+}
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"
