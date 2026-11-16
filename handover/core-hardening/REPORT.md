@@ -1,5 +1,13 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:14 UTC / 12:44 IST: 5 of 6 lane builders reported, cross-lane pass started
+Failed or weak first: (1) the harness refused every builder's Write of findings, claims and walk files, so I saved their returned text by script from the transcripts (verbatim, not edited; D2 and D1 I re-typed in condensed form from the message, so those two are NOT verbatim). (2) Builders finished in about 10 to 12 minutes of this box's clock, far under the 60 minute box, and several lists say NOT-AUDITED (A: guard/redact.py lines 40-700 and 890-1050, the whole pattern table, and runmap 240-340; B: parts of k1b; C: parts of tools.py; D2: validate.py rule bodies). Coverage is therefore partial; the NOT-AUDITED lists are the gap. (3) None of the findings has had a reviewer yet. (4) Plan v4 rulings were not re-reviewed.
+Counts (builder claims): A 2 Blocker / 8 Major / 15 Nit; B 1 / 11 / 10; C 1 / 15 / 10; D1 0 / 3 / 9; D2 1 / 17 / 6; D3 not yet reported.
+My own spot check: I opened the cited code for 5 findings: A-01 (no production caller of the audit outbox reconcile: grep of src finds none), A-02 (G5 leak check named in gate.py:42,63 but no code), B-04 (trigger_ref stored, never read), C-01 (Route prices unchecked; only the replay refuses a zero price), C-09 (config.py:317 still accepts "dev"): all 5 match the builders' quotes. That is 5 of about 150 findings, not a verification of the rest.
+Agents running: 2 language-model: lane D3 builder (still writing), cross-lane builder (started 07:14Z, box 30 min, expected end 07:44Z). 0 script lanes.
+Register: builder D3 (sonnet) | docs/CI/hooks/root lane | 07:03Z | 08:03Z | running (map-D3 partial: checkpoint and claims files exist) | collect, save text if Write refused. cross-lane builder (sonnet) | parts/cross.md T1-T9 and X- findings | 07:14Z | 07:44Z | running | collect. Closed: builders A, B, C, D1, D2 (reported, files saved).
+Next block: 07:24 UTC. Hard stop for part 1: 09:15 UTC.
+
 ## STATUS 07:11 UTC / 12:41 IST: builders in progress, lane D2 reported
 Failed first: lane D2's Write of findings-D2.md was refused by the harness ("Subagents should return findings as text"); I saved its returned rows to parts/findings-D2.md myself (not edited, not yet spot-checked). Expect the same for other lanes: I will save returned text. D2 reported 24 findings (1 Blocker D2-01: demo `ask` command skips kill switch, meter, audit and ledger although README presents them as controls; 17 Major) and a NOT-AUDITED list (validate.py rule bodies and more). These are the builder's claims; none verified by me or an egm reviewer yet.
 Agents running: 5 language-model builders (A, B, C, D1, D3), 0 script lanes. Closed: builder D2 (reported).
