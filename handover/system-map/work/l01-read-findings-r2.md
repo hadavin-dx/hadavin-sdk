@@ -1,0 +1,10 @@
+# L-01 pages, reader round 2 (comprehension, security path) - findings as relayed by the reader
+Pages: work/L01-owner-acceptance-line.md, OWNER-VIEW.md (row 8, line ~72), LEAD-PAGE.md (LP-5, line ~97). Steps v5 line cites (77, 24) were right when read but the file has since been edited.
+BLOCKERS
+B1 The typed reply (OWNER-VIEW:72, L01:10-14) does not carry the model-key answer or a money figure; owner could type it before the lead fills the model-key answer. Fix: put the model-key answer and money figure in the reply line, or make the lead's written answer a precondition that appears in the line.
+B2 An unsure owner has no instruction (OWNER-VIEW:6 vs :72): if the lead has not answered by Tue 17 Nov 12:29 UTC / 17:59 IST, what to type? Say waiting is allowed and what happens at the deadline.
+MAJORS
+M1 Reader list may be incomplete (steps file says other readers UNVERIFIED); pages state the lead session's reach as fact. M2 Approved sentence omits n8n's stored logins (lead can probably decrypt). M3 Deletion presented as ending exposure; a read key stays valid until revoked; two places for the model-key revoke (cleanup card 6a vs run-day card 28) - check both cards. M4 Option (a) "second Linux user the lead's session cannot read" is an unproven promise; say how it would be proven or that it is not. M5 Two acceptance strings (steps A part 1 per run vs row 8) - say which binds, per run or all, and tell the owner the open question. M6 "No" consequence differs: steps says "studio lead proposes another way", pages fix option (a). M7 "masked outputs" unproven. M8 Model-key ceiling: auto-top-up or card on file unknown.
+CONTRADICTIONS/NITS
+C1 "studio lead" and "checking program" not in OWNER-VIEW Words box. C2 "row 8 below" is above. C3 heading "Security items decided on 16 Nov" does not say who. C4 one vs two HubSpot keys/app passwords (OWNER-VIEW:69 vs LEAD-PAGE:46,97). C5 US$189 "unsourced" at LEAD-PAGE:76 vs sourced at 47,99. C6 LP-4 and LP-5 both "accept in writing". C7 "typed" two meanings. C8 L01 line has no deadline.
+NOT CHECKED by reader: cleanup/run-day cards, LEAD-ANSWERS, drift REPORT, any behaviour.
