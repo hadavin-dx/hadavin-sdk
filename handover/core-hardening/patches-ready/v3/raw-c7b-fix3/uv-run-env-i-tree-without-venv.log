@@ -1,0 +1,120 @@
+DEBUG Found workspace root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q`
+DEBUG Adding root workspace member: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q`
+DEBUG Found workspace configuration at `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q/pyproject.toml`
+DEBUG Searching for user configuration in: `/root/.config/uv/uv.toml`
+DEBUG uv 0.11.32 (x86_64-unknown-linux-gnu)
+DEBUG Found project root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q`
+DEBUG Discovered project `hadavin-sdk` at: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG No Python version file found in workspace: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG Using Python request `>=3.12` from `requires-python` metadata
+DEBUG Checking for Python environment at: `.venv`
+DEBUG Searching for Python >=3.12 in managed installations or search path
+DEBUG Searching for managed installations at `/root/.local/share/uv/python`
+DEBUG Found `cpython-3.13.18-linux-x86_64-gnu` at `/usr/local/bin/python3` (first executable in the search path)
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+DEBUG Using base executable for virtual environment: /usr/local/bin/python3
+DEBUG Using request connect timeout of 10s and read timeout of 30s
+DEBUG Found static `requires-dist` for: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q/
+DEBUG Existing `uv.lock` satisfies workspace requirements
+Resolved 101 packages in 1ms
+DEBUG Identified uncached distribution: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG Registry requirement already cached: pytest==9.1.1
+DEBUG Registry requirement already cached: ruff==0.17.1
+DEBUG Registry requirement already cached: moto==5.2.4
+DEBUG Registry requirement already cached: pglast==8.7
+DEBUG Registry requirement already cached: markdown-it-py==4.2.0
+DEBUG Registry requirement already cached: pydantic==2.14.1
+DEBUG Registry requirement already cached: pydantic-settings==2.16.1
+DEBUG Registry requirement already cached: pyyaml==6.0.3
+DEBUG Registry requirement already cached: anthropic==2.1.0
+DEBUG Registry requirement already cached: psycopg==3.3.6
+DEBUG Registry requirement already cached: sqlglot==30.24.0
+DEBUG Registry requirement already cached: boto3==1.43.118
+DEBUG Registry requirement already cached: cryptography==50.0.2
+DEBUG Registry requirement already cached: azure-identity==1.26.0
+DEBUG Registry requirement already cached: azure-keyvault-keys==4.11.3
+DEBUG Registry requirement already cached: azure-keyvault-secrets==4.11.3
+DEBUG Registry requirement already cached: azure-storage-blob==12.31.0
+DEBUG Registry requirement already cached: google-cloud-kms==3.18.0
+DEBUG Registry requirement already cached: google-cloud-secret-manager==2.31.0
+DEBUG Registry requirement already cached: google-cloud-storage==3.17.1
+DEBUG Registry requirement already cached: iniconfig==2.3.1
+DEBUG Registry requirement already cached: packaging==26.3
+DEBUG Registry requirement already cached: pluggy==1.7.0
+DEBUG Registry requirement already cached: pygments==2.21.0
+DEBUG Registry requirement already cached: botocore==1.43.122
+DEBUG Registry requirement already cached: requests==2.34.2
+DEBUG Registry requirement already cached: responses==0.26.3
+DEBUG Registry requirement already cached: werkzeug==3.1.9
+DEBUG Registry requirement already cached: xmltodict==1.0.4
+DEBUG Registry requirement already cached: py-partiql-parser==0.6.3
+DEBUG Registry requirement already cached: mdurl==0.1.2
+DEBUG Registry requirement already cached: annotated-types==0.8.0
+DEBUG Registry requirement already cached: pydantic-core==2.50.1
+DEBUG Registry requirement already cached: typing-extensions==4.16.0
+DEBUG Registry requirement already cached: typing-inspection==0.4.4
+DEBUG Registry requirement already cached: python-dotenv==1.2.4
+DEBUG Registry requirement already cached: anyio==4.15.1
+DEBUG Registry requirement already cached: docstring-parser==0.18.0
+DEBUG Registry requirement already cached: httpx2==2.16.0
+DEBUG Registry requirement already cached: jiter==0.18.0
+DEBUG Registry requirement already cached: opentelemetry-api==1.45.2
+DEBUG Registry requirement already cached: sniffio==1.3.1
+DEBUG Registry requirement already cached: google-auth==2.62.0
+DEBUG Registry requirement already cached: psycopg-binary==3.3.6
+DEBUG Registry requirement already cached: jmespath==1.1.0
+DEBUG Registry requirement already cached: s3transfer==0.19.3
+DEBUG Registry requirement already cached: cffi==2.1.1
+DEBUG Registry requirement already cached: azure-core==1.41.0
+DEBUG Registry requirement already cached: msal==1.39.0
+DEBUG Registry requirement already cached: msal-extensions==1.3.1
+DEBUG Registry requirement already cached: isodate==0.7.2
+DEBUG Registry requirement already cached: google-api-core==2.43.0
+DEBUG Registry requirement already cached: grpc-google-iam-v1==0.14.6
+DEBUG Registry requirement already cached: grpcio==1.84.1
+DEBUG Registry requirement already cached: proto-plus==1.29.0
+DEBUG Registry requirement already cached: protobuf==7.36.2
+DEBUG Registry requirement already cached: google-cloud-core==2.8.0
+DEBUG Registry requirement already cached: google-crc32c==1.9.0
+DEBUG Registry requirement already cached: google-resumable-media==2.11.0
+DEBUG Registry requirement already cached: python-dateutil==2.9.0.post0
+DEBUG Registry requirement already cached: urllib3==2.8.0
+DEBUG Registry requirement already cached: certifi==2026.10.19
+DEBUG Registry requirement already cached: charset-normalizer==3.5.2
+DEBUG Registry requirement already cached: idna==3.20
+DEBUG Registry requirement already cached: markupsafe==3.0.4
+DEBUG Registry requirement already cached: httpcore2==2.16.0
+DEBUG Registry requirement already cached: truststore==0.10.5
+DEBUG Registry requirement already cached: pyasn1-modules==0.4.2
+DEBUG Registry requirement already cached: pycparser==3.12
+DEBUG Registry requirement already cached: pyjwt==2.15.1
+DEBUG Registry requirement already cached: googleapis-common-protos==1.76.0
+DEBUG Registry requirement already cached: grpcio-status==1.84.1
+DEBUG Registry requirement already cached: six==1.17.0
+DEBUG Registry requirement already cached: h11==0.16.0
+DEBUG Registry requirement already cached: pyasn1==0.6.5
+DEBUG Using request connect timeout of 10s and read timeout of 30s
+DEBUG Computed cache info: Timestamp(SystemTime { tv_sec: 1794826191, tv_nsec: 253660546 }), None, None, {}, {"src": Some(Timestamp(Timestamp(SystemTime { tv_sec: 1794826191, tv_nsec: 253660546 })))}. Most recently modified: pyproject.toml
+   Building hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG Building: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG Assessing Python executable as base candidate: /usr/local/bin/python3
+DEBUG Creating build environment for: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q
+DEBUG Using base executable for virtual environment: /usr/local/bin/python3
+DEBUG Resolving build requirements
+DEBUG Solving with installed Python version: 3.13.18
+DEBUG Solving with target Python version: >=3.13.18
+DEBUG Solving with exclude-newer: grpcio-status: 2026-10-24T00:00:00Z, grpcio: 2026-10-24T00:00:00Z, google-api-core: 2026-10-24T00:00:00Z
+DEBUG Adding direct dependency: uv-build>=0.12, <0.14
+DEBUG Found stale response for: https://pypi.org/simple/uv-build/
+DEBUG Sending revalidation request for: https://pypi.org/simple/uv-build/
+  × Failed to build `hadavin-sdk @
+  │ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q`
+  ├─▶ Failed to resolve requirements from `build-system.requires`
+  ├─▶ No solution found when resolving: `uv-build>=0.12, <0.14`
+  ├─▶ Failed to fetch: `https://pypi.org/simple/uv-build/`
+  ├─▶ error sending request for url (https://pypi.org/simple/uv-build/)
+  ├─▶ client error (Connect)
+  ╰─▶ invalid peer certificate: UnknownIssuer
+
+hint: Consider enabling use of system TLS certificates with the `--system-certs` command-line flag
