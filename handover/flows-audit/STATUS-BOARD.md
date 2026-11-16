@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:11:24Z
+UPDATED_UTC: 2026-11-16T12:11:49Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
 PERCENT: 85
 AGENTS_RUNNING: 8
-CAPACITY: 0.36 load of 4 cores, mem 0/15 GB, RAM 956/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.23 load of 4 cores, mem 0/15 GB, RAM 922/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -20,8 +20,8 @@ core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason,
 TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
 F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
 F8: take_check passes a changed flow with same counts (no enforced sha); pin reviewer line accepts any text; TAKE_CHECK_TEST leak exit 0; run_all.sh shared raw dir
-NEXT: 8 running (6 fixers, 1 readiness read, 1 REVIEW fixer); next 5 below
-PUSHED_UTC: 2026-11-16T12:11:24Z
+NEXT: 8 running; owner-part fixer a... done, re-read r9 started
+PUSHED_UTC: 2026-11-16T12:11:49Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -43,11 +43,11 @@ PUSHED_UTC: 2026-11-16T12:11:24Z
 | ae1e348 | fixer | sonnet | F8 flow-check Majors (pin, tcfail, flow sha, reviewer line, test flag leak, raw lock) | 12:11 | 12:50 | running | fix-f8-r10d.md |
 | a8cad4d | fixer | sonnet | F-003 patch Majors M1-M5 + FINDINGS row | 12:11 | 12:35 | running | fix-f003-r3.md |
 | a822207 | fixer | sonnet | RW/CT citation Majors 1-5 | 12:11 | 12:35 | running | fix-rwct7.md |
-| af16b54 | fixer | sonnet | OWNER-STEPS owner part 4 Majors | 12:11 | 12:35 | running | fix-ownersteps10.md |
 | a86affd | fixer | sonnet | QUESTIONS.md 3 Majors | 12:11 | 12:35 | running | fix-questions3.md |
 | a7775df | egm-impl-readiness | sonnet | RUNBOOK round 5 fresh read | 12:11 | 12:30 | running | read-only |
 | a28e9c0 | fixer | sonnet | core patches REVIEW.md round 5 (M1-M3) | 12:11 | 12:40 | running | fix-review4.md |
 | ab8bd88 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN M1-M6 | 12:11 | 12:35 | running | fix-tcfp4.md |
+| a2719df | egm-comprehension | sonnet | OWNER-STEPS owner part stranger read r9 (Blockers/Majors only) | 12:11 | +15 min | running | read-only |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
