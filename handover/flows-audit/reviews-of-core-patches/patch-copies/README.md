@@ -156,21 +156,30 @@ Known baseline failures at `b4cce5b` (seen in this pass in a repository with one
 Who must fix both: the lead (change or remove those studio copies, or tell the tests to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
 
 ### Proof that the new tests fail on the old code
-Run on the unpatched copy with only the two new test files copied in (copied from the patched copy):
+Run on the unpatched copy with only the two new test files copied in (copied from the patched copy; `git add -A` so the repository rule tests see them):
 ```
 cp "$W/patched/tests/test_a01_audit_reconcile.py" "$W/patched/tests/test_c01_route_limits.py" "$W/unpatched/tests/"
-cd "$W/unpatched" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider \
+cd "$W/unpatched" && git add -A && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider \
   tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rf ; echo "exit=$?"     # expected exit 1
 ```
-Seen in the first pass and again in the third pass with `C-01.patch`: exit 1, `13 failed, 19 passed`. With `C-01-price-only.patch` (fourth pass, same recipe): exit 1, `12 failed, 18 passed` (no ceiling test, so 6 price + 6 A-01 failures). Each failure is about behaviour, not a missing name:
+Seen in this pass (fifth), same recipe: with `C-01-price-only.patch`: exit 1, `12 failed, 18 passed`; with `C-01.patch`: exit 1, `13 failed, 19 passed`. Each failure is about behaviour, not a missing name.
+**Count of new tests (re-counted in this pass with `pytest --collect-only`; one table, the sums add up):**
+| Test file | `C-01-price-only.patch` | `C-01.patch` | what the cases are |
+|---|---|---|---|
+| `tests/test_c01_route_limits.py` | 24 | 26 | 6 zero or negative price (2 fields x 3 prices); 1 priced live route loads; 16 NaN or Infinity price (2 kinds x 2 fields x 4 values); 1 fake model at price 0 loads; and only in `C-01.patch` 2 `max_tokens` tests: `test_max_tokens_above_the_ceiling_is_refused` (1 case) and `test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused` (1 case holding two assertions: 200_000 loads, 0 is refused) |
+| `tests/test_a01_audit_reconcile.py` | 6 | 6 | step in the tick list; step drains the outbox and logs the count; kind without `reconcile` fails the step; 3 log tests |
+| total new test cases | **30** | **32** | |
+| fail on old code | 12 (6 price + 6 A-01) | 13 (6 price + 1 ceiling + 6 A-01) | |
+| pass on old code (controls) | 18 (1 priced route + 16 NaN/Infinity + 1 fake) | 19 (the same 18 + the 1 at-the-ceiling test) | |
+(The earlier text counted "three" `max_tokens` cases; the right figure is two tests, one of them with two assertions. `tests/test_p7_tick.py` is an existing file with 41 tests at `b4cce5b`; A-01 changes 2 assertions in it, not its count.)
+The failures on old code:
 - 6 price cases: `Failed: DID NOT RAISE ConfigError` (a price of 0 or -1 loads on old code).
 - `test_max_tokens_above_the_ceiling_is_refused` (only in `C-01.patch`): `DID NOT RAISE ConfigError` (200_001 loads on old code).
 - `test_the_step_is_in_the_tick_list`: `'audit_reconcile' in [...]` is false.
 - `test_the_step_drains_the_outbox_and_logs_the_count`: the real tick loop ran and logged only `tick ok=True failed=-`; nothing drained.
 - `test_a_kind_without_reconcile_fails_the_step_instead_of_recording_a_success`: `assert 0 == 1` (no step ran, so no failure was recorded).
 - 3 log tests (`..._never_the_body`, `..._an_error_line_is_logged`, `local_dir_sink_logs...`): the captured log text is empty.
-The 19 that pass on old code (18 with the price-only file) are controls: the priced live route and the fake model still load, `max_tokens=200_000` loads and `0` is refused (both true on old code),
-and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
+The passing controls: the priced live route and the fake model still load, the at-the-ceiling test (`max_tokens=200_000` loads and `0` is refused, both true on old code), and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
 ### Results of the fourth pass (2026-11-16): price-only patch and the stricter criterion
@@ -198,7 +207,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
 | Patch | Files | RUNG (tool ladder) | Tests added |
 |---|---|---|---|
 | `C-01-price-only.patch` | `config.py`, `tests/test_c01_route_limits.py` | as `C-01.patch`, without the ceiling | 24 cases (the 26 of `C-01.patch` minus the 2 `max_tokens` cases) |
-| `C-01.patch` | `config.py`, `defaults.py`, `tests/test_c01_route_limits.py` | existing code (the `Route` field and the `Config` validator already exist) + one documented default in `defaults.py`; CODE-LAST holds: a safety guarantee (no spend limit may be bypassed by price 0) | 26 cases (6 zero or negative price, 16 NaN or Infinity price, 1 priced route, 1 fake model, 2 `max_tokens`) |
+| `C-01.patch` | `config.py`, `defaults.py`, `tests/test_c01_route_limits.py` | existing code (the `Route` field and the `Config` validator already exist) + one documented default in `defaults.py`; CODE-LAST holds: a safety guarantee (no spend limit may be bypassed by price 0) | 26 test cases (6 zero or negative price, 16 NaN or Infinity price, 1 priced route, 1 fake model, 2 `max_tokens` tests); table under "Proof that the new tests fail on the old code" |
 | `A-01.patch` | `runtime/tick.py`, `audit/chain.py`, `audit/local_dir.py`, `tests/test_a01_audit_reconcile.py`, `tests/test_p7_tick.py` | existing code (`reconcile()` exists on the audit Protocol, `audit/protocol.py:27`; nothing in `src` calls it) + a short tick step and log lines | 6 new tests; `test_p7_tick.py` gets one hunk with 2 changed assertions |
 | (G5 wording, no patch file) | `guard/redact.py`, `approvals/gate.py`, `tests/warden_port/test_gate.py` | text only: comments and docstrings, no behaviour | none needed |
 | `DEAD-MAN-CHECK.md` | none (a documented check) | existing code: `tick_state` rows already exist | negative test described; seen once on a throwaway Postgres, not the real store |
@@ -230,7 +239,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
 - Which `llm.kind` values exist at `b4cce5b` (`backends/table.py:512-541`): `fake`, `anthropic`, `bedrock`, `openai_compat`, `gemini`. Only `fake` spends nothing; the
   recorded replay is not a kind but `fake` with `recorded_dir`. The one config in the tree that names an llm kind is `tests/fixtures/config/config.yaml` (kind `fake`).
 - Negative tests: price 0, 0.00 and -1 on input and on output are each refused for a live kind (6 cases, `match="zero or negative price"`); a priced live route loads; the fake kind with
-  price 0 still loads; `max_tokens` 200_001 is refused (`match="less than or equal to 200000"`), 0 is refused (`match="greater than 0"`), 200_000 loads.
+  price 0 still loads; `max_tokens` 200_001 is refused (`match="less than or equal to 200000"`; one test), and in a second test 200_000 loads and 0 is refused (`match="greater than 0"`). The count table is under "Proof that the new tests fail on the old code".
 - Cites at `b4cce5b`: `config.py:55-60` (Route), `:316` (Config), `:365` (`refused = []`, where the check goes), `defaults.py:104`.
 
 ## A-01: the tick drains the audit outbox and says when a write failed
@@ -267,7 +276,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
 
 ## G5 wording drop (text and comments only; no patch file: rebuild by hand from this list)
 The earlier patch file is gone on purpose (its context lines carried a personal handle). Exact old sentences, taken with `git show b4cce5b:<path>`; the new sentences are proposed
-text for the studio head to approve (decision table, row 7). Nothing else changes; the three guard-test files named in ORDER 009 are not touched. No code in `approvals/gate.py`
+text for the studio head to approve (decision table, row 7). Nothing else changes; the only test file touched is `tests/warden_port/test_gate.py` (one docstring line, item 5). ORDER 009 is said to name three guard-test files that must stay untouched; its text is not in this checkout (see the words table), so whether item 5 respects it is UNVERIFIED. No code in `approvals/gate.py`
 implements G5: its functions at `b4cce5b` are `sanitise_text`, `withhold_commands`, `normalise` and helpers; there is no leak-check function. So the old sentences claim a check that does not exist.
 1. `src/hadavin_sdk/guard/redact.py`, module docstring (lines 16-17 of `b4cce5b`).
    Old: "the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on everything that leaves."
