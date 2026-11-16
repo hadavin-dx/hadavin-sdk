@@ -191,7 +191,7 @@ V26 = [
 ('R06', S, '`-c@` or `prep-<run name>@example.com`', '`-c@`', 'R7 prep prefix dropped'),
 ('R07', S, 'in the read terminal must say no such file (', 'in the read terminal must say nothing (', '8.1 proof of the deleted key file weakened'),
 ('R08', S, '"restarted" (6.6), ', '', 'R8 loses the restarted word (and its count stays six)'),
-('R09', S, 'is a human you can call', 'is a person', 'backup person no longer a human you can call'),
+('R09', S, 'one named human you can call', 'one named person', 'backup person no longer a human you can call'),
 ('R10', S, 'the only valid answer is their own written words "matches the sentences"', 'the answer can be a thumbs-up', 'post checker valid answer removed'),
 ('R11', S, '**Deadline** = the end of the period your spending approval covers', '**Deadline** = the end of the run', 'deadline definition changed'),
 ('R12', S, 'A differing printed count: send the counts, do not post, FREEZE.', 'A differing printed count: post anyway.', '7.10 mismatch action changed'),

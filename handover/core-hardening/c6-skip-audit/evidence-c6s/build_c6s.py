@@ -224,6 +224,9 @@ patch("| Real-key scan (rehearsal list items 15 and 16)", "scans before the take
 ix = find("| Real-key scan (rehearsal list items 15 and 16)")
 L.insert(ix + 1, "| Card line 2, the alert sentence (risks list item 12) | the loopback re-smoke on the edited flows has shown an alert mail in the test mailbox, and the studio lead has written the date and time in UTC and IST, his name and that the alert mail was seen | studio lead | the owner, if card line 2 is cut | No for card line 2 only: it is cut and lines 3 and 4 stay |")
 
+for _i, _l in enumerate(L):
+    if "or takes the 45-second limit out of the card and the caption" in _l:
+        L[_i] = _l.replace("or takes the 45-second limit out of the card and the caption", "or removes the 45-second limit from the card and the caption")
 # ---------------------------------------------------------------- 5a and rows
 patch("5a. WHAT CHANGES FOR A PERSON", "the 36 rows of the run sheet and the page statements whose 'What the viewer sees' is not 'Nothing'", "the 37 rows of the run sheet and the page statements whose 'What the viewer sees' is not 'Nothing'; this group of 37 is a different group from the 36 rows that apply on the default of a question")
 # row 11
@@ -234,7 +237,7 @@ g[COL["view"]] = R11VIEW
 putrow(11, g)
 i4 = find("| 4 | run sheet, line 80 |")
 L.insert(i4 + 1, "| 11 | run sheet, line 44 | %s |" % R11VIEW)
-radd(11, "why", "c6s changes (c6r design review m3; c6r naive review M6): the cut-case totals (scenes 1, 2 and 4 = 125 s; card lines 2 to 4 = 79 words = 31.6 s, budget 35 s; total about 160 s) are given once, in the box (CUT CASE); the card's own Time cell on run sheet line 41 is a hand edit with a two-line replacement in the box (L-CARDLEN: old cell text 30 s EST, new cell text 40 s EST under the defaults, 35 s EST in the cut case); this row now appears in table 5a (its viewer cell no longer starts with 'Nothing').")
+radd(11, "why", "c6s changes (c6r design review m3; c6r naive review M6): the cut-case totals are given once, in the box (CUT CASE); the card's own Time cell on run sheet line 41 is a hand edit with a two-line replacement in the box (L-CARDLEN: old cell text 30 s EST, new cell text 40 s EST under the defaults, 35 s EST in the cut case); this row now appears in table 5a (its viewer cell no longer starts with 'Nothing').")
 # row 13
 rsub(13, "why", "so the plain statement is true for a second send;", "so the plain statement is expected to be true for a second send until C-9 part 2 has shown the table rule in the take's own database (the facts rest on files that are not in the repository);")
 # row 14
@@ -313,7 +316,7 @@ patch("- [needs-lead] The box is about 3,490 words", "- [needs-lead] The box is 
 patch("- [needs-lead] Section 0 starts with history before the how-to", "- [needs-lead] Section 0 starts with history before the how-to, and the words 'EGM' and 'KEY' (four meanings) are not defined in the box; fixing both means moving text between sections; the studio lead decides whether it is worth another round.",
       "- [done in c6s] Section 0 started with history before the how-to; the history is now section 1b after the how-to, and the words EGM and KEY are defined in the box.")
 patch("- [needs-lead] If scene 3 and card line 1 are cut", "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved), the run sheet totals (150 s of scenes, 90 spoken words) fall; row 11 does not cover that case. Next step: the studio lead says whether a second set of totals is wanted.",
-      "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved or the table rule not seen), the totals are in the box (CUT CASE: about 125 s of scenes 1, 2 and 4, 79 spoken words, card budget 35 s, total about 160 s); row 11 writes the defaults only. Next step: you apply the cut totals by hand, or name a builder who adds a row.")
+      "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved or the table rule not seen), the totals are in the box (CUT CASE, the one place that gives them); row 11 writes the defaults only. Next step: you apply the cut totals by hand, or name a builder who adds a row.")
 L.append("- [needs-lead] Failed-run saving, plan conflict: the re-smoke plan row PLAN:125 (an input; not edited here) sets EXECUTIONS_DATA_SAVE_ON_ERROR=all and cites the owner, but the owner's words cover successful runs only (ONE:22-27; DECISION-one-store.md lines 16 and 27). On that one point this report overrides the plan. Next step: you set EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and EXECUTIONS_DATA_SAVE_ON_ERROR=none in the environment that starts n8n, and have the plan row corrected when you next edit the plan; if the owner says yes to L-SAVEERR, the failed-run value becomes all.")
 L.append("- [needs-lead] The leak scan program (check C-6) does not exist, so the real-key scan of row 6 items 15 and 16 has never run. Next step: a builder you name writes it; a second person reads it and tests it with a fake key (counts only; no file holds the key or matched lines) before it touches a real key; searching n8n's own database in place or on a dump that is deleted and counted; the swap point is named in row 6 item 15.")
 L.append("- [needs-lead] Card line 2 (the alert sentence) is backed only by stand-in tests. Next step: the loopback re-smoke on the edited flows must show an alert mail in the test mailbox, with date and time in UTC and IST and a name, under risks list item 12 (row 8); otherwise card line 2 is cut.")

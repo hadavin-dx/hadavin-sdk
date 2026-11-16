@@ -79,11 +79,11 @@ s/(^|[^A-Za-z0-9_])(sk|pk|rk|pat)-[A-Za-z0-9_-]{8,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])(sk|pk|rk)_(live|test)_[A-Za-z0-9]{8,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])whsec_[A-Za-z0-9]{8,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])AIza[A-Za-z0-9_-]{20,}/\1<masked>/g
-s/(^|[^A-Za-z0-9_])(ghp|gho|ghs|ghu)_[A-Za-z0-9]{100,}/\1<masked>/g
+s/(^|[^A-Za-z0-9_])(ghp|gho|ghs|ghu)_[A-Za-z0-9]{10,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])github_pat_[A-Za-z0-9_]{10,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])xox[abprs]-[A-Za-z0-9-]{8,}/\1<masked>/g
 s/AKIAIOSFODNN7EXAMPLE/<<EXAMPLE-KEY>>/g
-s/(AKIA|ASIA)[0-9A-Z]{16}/<masked>/g
+s/(AKIA|ASIA)[0-9A-Z]{17}/<masked>/g
 s/<<EXAMPLE-KEY>>/AKIAIOSFODNN7EXAMPLE/g
 /(curl|wget|http)/I s/((^|[[:space:]])(-u|--user|--proxy-user)(=|[[:space:]]+))(("([^"\\]|\\.)*"|'([^'\\]|\\.)*')([[:space:]]*\+?[[:space:]]*("([^"\\]|\\.)*"|'([^'\\]|\\.)*'))*|[^[:space:]<][^[:space:]]*)/\1<masked>/Ig
 s/(^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]*(ENV|ARG|SET|SETENV|EXPORT|DECLARE)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?))[[:space:]]+)[^=[:space:]<].*/\1<masked>/I

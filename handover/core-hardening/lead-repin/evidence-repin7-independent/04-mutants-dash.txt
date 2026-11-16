@@ -2,3 +2,4 @@ m01 Bearer min 4->40: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=137
 m02 userinfo min 4->40: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1382 failed=15 (the made-up input and output files were deleted) (118s)
 m03 IDENTIFIED BY->BX: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1382 failed=15 (the made-up input and output files were deleted) (119s)
 m04 requirepass dropped from rootpw rule: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1382 failed=15 (the made-up input and output files were deleted) (118s)
+m05 ghp min 10->100: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1387 failed=10 (the made-up input and output files were deleted) (116s)

@@ -295,3 +295,81 @@ need('C181', 'the seven words, which alone start or end a step'); need('C181', '
 need('C182', 'The 7-day rule (worded the same everywhere in this package)')                                                                               # S: the 7-day rule stated once in full
 if 'Open 102' not in OPEN or 'Open 103' not in NOTE: fail('C183', 'the open questions about the card word count and the 18:04 derivation are missing')
 if 'UNVERIFIED' not in OPEN or 'E-52' not in OPEN: fail('C184', 'O: the L-APP2 / E-52 UNVERIFIED row is missing')
+
+# ---- Part 7 (v30, round 2): one check per finding of review-v29-security.md, review-v29-naive.md and review-v29-evidence.md that v30 fixed. v30-fail-proof.py runs this part on the built v29 files.
+_APP = {'A': A, 'B': B}
+for _nm in 'AB':
+    _t = _APP[_nm]
+    if _t.count('at least 168 hours (7 days)') != 1: fail('C185', '%s: the 7-day rule is not worded exactly once in full (count %d)' % (_nm, _t.count('at least 168 hours (7 days)')))      # S m1: one wording
+    if 'The key list may show a last use hours late' not in _t: fail('C185', '%s lacks the last-used lag sentence' % _nm)
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):                                                       # S M2: no "unless you know" escape in 7.11 and no "nothing else I know uses it"
+    for _p in ('unless you know something else uses', 'nothing else I know uses it'):
+        if _p in _t: fail('C186', '%s holds the escape %r (describe the older key, then cancel anyway)' % (_n, _p))
+need('C187', 'Deadline backstop (an owner action through Sun 22 Nov)'); need('C187', 'a person who may cancel the older key if you cannot')       # S M3
+if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
+need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminder is not set'); need('C187', 'A missed 7.11: this reminder is the second chance')
+need('C187', 'set the **deadline reminder**')
+if 'waits for your message "cancel the older key' in NOTE + OPEN or 'waits for your message "cancel the older key' in A: fail('C188', 'a text still says the older key in A waits for a lead message (S M1)')
+if 'does NOT wait for a message from you' not in NOTE: fail('C188', 'note: A older key still seems to wait for a lead message')
+_sb = F.get('sevenback', '?')
+if _sb not in NOTE or 'money-safe default if you do not choose' not in NOTE.lower().replace('money-safe default if you do not choose: a', 'money-safe default if you do not choose') or NOTE.find(_sb) > NOTE.find('Money-safe default if you do not choose') + 700 or NOTE.find(_sb) < NOTE.find('Money-safe default if you do not choose'):
+    fail('C189', 'note: the 7-day warning (%s) is not next to the money-safe default A (S M1)' % _sb)
+if _sb not in OPEN: fail('C189', 'open list lacks the 7-day time %s' % _sb)
+need('C190', 'if there is no such page this is a STOP')                                                                    # S m4: Recall
+need('C191', 'no clipboard manager, remote-access or screen-capture tool running'); need('C191', 'every clipboard manager, remote-access tool or screen-capture tool')     # S m5
+need('C192', 'never a file manager, a second terminal window or the clipboard (no copy and paste)')                      # S m6 film person
+need('C192', "the From column of the mail list shows the sender's throwaway address: the film person does not stop for")   # N B1
+need('C192', 'say aloud "film pause now"') if False else need('C192', 'aloud "film pause now"')
+need('C193', '**Name rule (8.3, 8.4):** revoke only an item whose exact name contains the run name')                      # S m7
+_gm = F.get('gap_max', '?')
+need('C194', 'the latest start is at most %s minutes after the earliest key time' % _gm)                                  # S m3: gap cap
+if 'at most %s minutes' % _gm not in OPEN or 'at most %s minutes' % _gm not in NOTE and ('%s-minute' % _gm) not in NOTE and ('at most %s minutes' % _gm) not in NOTE and (_gm + ' minutes') not in NOTE: fail('C194', 'note or open list lacks the gap cap of %s minutes' % _gm)
+_pair = re.compile(r'\b\d\d:\d\d(?::\d\d)? UTC(?! = \d\d:\d\d(?::\d\d)? IST)')                                           # EVIDENCE: every UTC time carries its IST pair
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
+    for _m in _pair.finditer(_t):
+        _ctx = _t[max(0, _m.start() - 25):_m.end() + 25].replace('\n', ' ')
+        fail('C195', '%s: a UTC time without its IST pair: %r' % (_n, _ctx))
+for _pg in ('OWNER-CARD-v30-A.md', 'OWNER-CARD-v30-B.md', 'OWNER-APPENDIX-v30-A.md', 'OWNER-APPENDIX-v30-B.md', 'OWNER-FILM-PERSON-v30.md'):
+    if not _os.path.exists(D + _pg): continue
+    for _m in _pair.finditer(open(D + _pg, encoding='utf-8').read()): fail('C195', '%s: a UTC time without its IST pair near %r' % (_pg, _m[0]))
+need('C196', 'the three waits of the message added')                                                                        # N M3: the three waits named
+for _nm in 'AB':
+    if _APP[_nm].count('at least 5 minutes before the latest start') < 3: fail('C196', '%s: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)' % _nm)
+need('C197', '(only that one person)')                                                                                     # N M5: one person for a failed cancel
+need('C198', 'press Enter once; the line `exit 0` appears')                                                                # N M6: press Enter in 6.4
+need('C198', 'press Enter once on the empty line')
+_bad = []
+for _nm in 'AB':                                                                                                           # N M6: no orphaned appendix fragment (every paragraph starts with a capital, a digit or a bold mark)
+    _ap = open(D + 'OWNER-APPENDIX-v30-%s.md' % _nm, encoding='utf-8').read(); _in = False
+    for _ln in _ap.split('\n'):
+        if _ln.startswith('```'): _in = not _in; continue
+        if _in or not _ln.strip() or _ln.startswith('#') or _ln.startswith('---') or _ln.startswith('- '): continue
+        if not (_ln[0].isupper() or _ln[0].isdigit() or _ln[0] in '*"'): fail('C199', 'appendix %s: a paragraph starts with %r (orphaned fragment)' % (_nm, _ln[:40]))
+    for _ln in _ap.split('\n'):
+        if _ln.count('(') != _ln.count(')') and not _ln.startswith('```'): fail('C199', 'appendix %s: unbalanced parentheses in %r' % (_nm, _ln[:50]))
+for _nm, _t in (('A', A), ('B', B)):
+    for _ln in _t.split('\n'):
+        if _ln.count('(') != _ln.count(')') and '```' not in _ln and not _ln.lstrip().startswith(('Run name', 'Start line')): fail('C199', '%s: unbalanced parentheses in a line starting %r' % (_nm, _ln[:50]))
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
+    if ': :' in _t or '::' in _t.replace('```', ''): fail('C200', '%s holds a double colon' % _n)
+for _nm in 'AB':                                                                                                           # N M7: appendix parts 1..N with no gap, and every sheet pointer exists
+    _ap = open(D + 'OWNER-APPENDIX-v30-%s.md' % _nm, encoding='utf-8').read()
+    _parts = [int(x) for x in re.findall(r'^## Appendix part (\d+):', _ap, re.M)]
+    if _parts != list(range(1, len(_parts) + 1)) or len(_parts) < 10: fail('C201', 'appendix %s parts are %r (must run 1..10 or more without a gap)' % (_nm, _parts))
+    for _k in re.findall(r'\(appendix (\d+)\)', SHEETS_DISK[_nm]) + re.findall(r'appendix part (\d+)', SHEETS_DISK[_nm]):
+        if int(_k) not in _parts: fail('C201', 'sheet %s points to appendix %s which does not exist' % (_nm, _k))
+need('C202', "Retire check (the lead's own test: it tries each revoked item and sees that it now refuses)")                # N M?: retire check defined
+need('C203', 'what "at re-pin" means')                                                                                     # N M8: placeholders explained
+if 'at re-pin' not in OPEN: fail('C203', 'open list lacks the exact spelling "at re-pin"')
+for _s in ('`[OWNER FILLS: ...]`', '`[LEAD FILLS at re-pin: ...]`'):                                                       # EVIDENCE: exact placeholder spellings in the open list
+    if _s not in OPEN: fail('C206', 'open list lacks the exact placeholder spelling %s' % _s)
+for _r in ('| 107 |', '| 108 |', '| 109 |'):
+    if _r not in OPEN: fail('C207', 'open list lacks row %s' % _r.strip('| '))
+for _w in ('L7', 'DB-2', 'delete-path', 'Q27', 'OWNER-OPEN'):
+    if _w not in OPEN: fail('C207', 'open list lacks %r (still OWNER-OPEN items)' % _w)
+for _nm, _t in (('A', A), ('B', B)):
+    if _t.count('deadline reminder') < 3: fail('C208', '%s: the deadline reminder is not set after the yes and named in the card words' % _nm)
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE)):                                                                       # S M1: the older-key line of the note and the 18:04 plan fact
+    pass
+if '18:04 is a plan fact' not in NOTE or '18:04 is a plan fact' not in OPEN: fail('C209', 'note or open list lacks the sentence that 18:04 is a plan fact, not a start that fits a run (S m2)')
+if 'Older key point (cannot be undone' not in A: fail('C209', 'sheet lacks the older key point')
