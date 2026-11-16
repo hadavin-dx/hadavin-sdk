@@ -1,0 +1,8 @@
+CMD: uv run --all-extras --group test ruff check (cwd p)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+rc=0
+CMD: ruff format --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+303 files already formatted
+rc=0

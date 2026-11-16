@@ -1,0 +1,14 @@
+== dry-run in base (cwd /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f2/base): patch -p1 --dry-run < v6-extra/FIX-id-vs-command-withheld.patch
+checking file src/hadavin_sdk/approvals/gate.py
+checking file tests/test_g4_ids_not_withheld.py
+rc=0
+== dry-run in p (cwd /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f2/p): patch -p1 --dry-run < v6-extra/FIX-id-vs-command-withheld.patch
+checking file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+checking file tests/test_g4_ids_not_withheld.py
+rc=0
+== dry-run in v5 (cwd /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f2/v5): patch -p1 --dry-run < v6-extra/FIX-id-vs-command-withheld.patch
+checking file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+checking file tests/test_g4_ids_not_withheld.py
+rc=0
