@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:40:18Z
+UPDATED_UTC: 2026-11-16T13:40:49Z
 PUSHED_UTC: 2026-11-16T13:29:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1187 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1194 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,14 +46,14 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a63a27f6c91c4661c | cold read BRIEF-EVIDENCE-2.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| a92036ba8f8469025 | cold read evidence-2.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| a3b34cb539c08783f | cold read evidence-patches-2.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| a4cd9aa7960df9d38 | cold read plan-resolve-r1.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| a666d4af058ce9475 | cold read plan-review-r2.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| ae23b96110fff0253 | cold read o7-review-R1-codebase-r1.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| (new, id in agent list) | cold read o7-review-R2-design-r1.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
-| (new, id in agent list) | cold read o7-review-R4-zoomout-r2.md | 2026-11-16T13:40:18Z | +5 min | running | nothing yet |
+| (see agent list) | cold read o7-review-R4-zoomout-r2.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read banned-claims-review-r1.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read archive-cut-list-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read decision-list-for-lead-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read open-items-table-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read end-delete-cases-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read premortem-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
+| (see agent list) | cold read critical-path-history.md | 2026-11-16T13:40:49Z | +5 min | running | nothing yet |
 
 Next 5 independent tasks: rewrite GLOSSARY.md as one table; Read-this-first blocks on L1c/L3c/L4c/L5b/L6; move stacked notes into *-history files; rewrite rehearsal-passed-limits-draft.md as one block; add purpose headers to evidence files.
 
