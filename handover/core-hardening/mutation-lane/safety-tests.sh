@@ -1,21 +1,24 @@
 #!/bin/bash
-# Safety tests T1-T28 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T35 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
-# Against an older copy of run.py: STATEDIR=<its state folder name> NEWTESTS=0 (T20-T29 test features the old copy lacks).
+# Against an older copy of run.py: STATEDIR=<its state folder name> NEWTESTS=0 (T20-T35 test features the old copy lacks).
 RUN=${RUN:-$(dirname "$(readlink -f "$0")")/run.py}
 S=${SCRATCH:?set SCRATCH to a scratch folder outside every repository}
 VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
 GIT=$(command -v git)
 T=$S/toy; export TMPDIR=$S/tmpstate; STATE=$TMPDIR/${STATEDIR:-hadavin-mutation-lane-$(id -u)}; NEWTESTS=${NEWTESTS:-1}
-REALREPO=$(git -C "$(dirname "$RUN")" rev-parse --show-toplevel)
 rm -rf "$T" "$TMPDIR"; mkdir -p "$T/repo/src" "$T/repo/tests" "$TMPDIR" "$S/wrap"
 cd "$T/repo" || exit 9; git init -q
 printf 'def f():\n    return 1\n' > src/mod.py
 printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    time.sleep(20)\n    assert f() == 1\n' > tests/test_slow.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    assert f() == 1\n' > tests/test_fast.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    open("junk.txt", "w").write("x")\n    assert f() == 1\n' > tests/test_junk.py
-git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD)
-fresh_root() { rm -rf "$T/root"; mkdir "$T/root"; git -C "$T/repo" archive "$SHA" | tar -x -C "$T/root"; ln -s "$VENV" "$T/root/.venv"; rm -rf "$S/rawT"; }
+mkdir docs; printf 'alpha\n' > docs/note.txt
+printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_a():\n    print("before-timeout-marker", flush=True)\n\ndef test_b():\n    time.sleep(30)\n' > tests/test_partial.py
+git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD); REALREPO=$T/repo   # the toy repository stands in for "the real repository" (this folder is not inside a git repository)
+reset_state() { pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; rm -rf "$STATE"; }
+# every scenario starts from a fresh state folder, so a crash in one cannot make the next ones fail (review r2 safety M2)
+fresh_root() { reset_state; rm -rf "$T/root"; mkdir "$T/root"; git -C "$T/repo" archive "$SHA" | tar -x -C "$T/root"; ln -s "$VENV" "$T/root/.venv"; rm -rf "$S/rawT"; }
 fresh_root
 base() { python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" "$@"; }
 mut() { base --id m1 --file "${FILE:-src/mod.py}" --old 'return 1' --new 'return 2' "$@"; }
@@ -122,13 +125,48 @@ python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]
 git -C "$T/repo" show "$SHA:src/mod.py" > "$BK"; MK=$(ls "$STATE"/*.planted.json); mv "$MK" "$S/marker.real"; ln -s "$S/marker.real" "$MK"
 python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23b marker as a link refused (got $rc)" "[ $rc -eq 2 ]"; chk "T23b file not written" "[ '$(last)' = return2 ]"
 rm "$MK"; mv "$S/marker.real" "$MK"; python3 "$RUN" --root "$T/root" --restore; chk "T23 genuine restore still works" "[ '$(last)' = return1 ]"
-python3 "$RUN" --root "$(dirname "$RUN")" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23c --restore in the real repository refused (got $rc)" "[ $rc -eq 2 ]"
+out=$(python3 "$RUN" --root "$T/repo" --repo "$T/repo" --restore 2>&1); rc=$?; echo "$out" | cut -c1-150; hit=$(printf %s "$out" | grep -c 'real repository'); chk "T23c --restore in the real repository refused for that reason (got $rc, reason hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
 echo "== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded"
 fresh_root; base --pythonpath "$T/repo/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py 2>&1 | cut -c1-220; rc=${PIPESTATUS[0]}; chk "T24a refused (got $rc)" "[ $rc -eq 2 ]"; chk "T24a file unchanged" "[ '$(last)' = return1 ]"
 fresh_root; mut -- tests/test_fast.py >/dev/null 2>&1; chk "T24b recorded in the raw file" "grep -q 'import check: import mod -> .*(== root/src/mod.py: True)' '$S/rawT/X-m1.txt'"; chk "T24b raw file lists 4 environment names" "grep -q 'environment: HOME, PATH, PYTHONDONTWRITEBYTECODE, PYTHONPATH only' '$S/rawT/X-m1.txt'"
-echo "== T25 pytest options that move the root, config or import base are refused after --"
-fresh_root; for o in --basetemp=/x --rootdir=/x --junitxml=/x/y.xml --confcutdir=/x --override-ini=addopts=-x -cfoo.ini -oaddopts=-x --import-mode=append; do mut -- tests/test_fast.py "$o" >/dev/null 2>&1; rc=$?; chk "T25 $o refused (got $rc)" "[ $rc -eq 2 ]"; done
+echo "== T25 TESTS is an allowlist: every bypass named in review r2 is refused by the argument check (exit 2, message 'TESTS argument'), one check each"
+fresh_root; printf -- '--collect-only\n' > "$S/args.txt"; ln -s "$T/repo/tests" "$T/linkout"
+refuse() { lbl=$1; shift; out=$(mut -- tests/test_fast.py "$@" 2>&1); rc=$?; hit=$(printf %s "$out" | grep -c 'TESTS argument'); chk "T25 $lbl refused by the argument check (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"; }
+refuse "@argsfile" "@$S/args.txt"
+refuse "-k @argsfile" -k "@$S/args.txt"
+refuse "-qc (clustered c)" -qc "$S/x.ini"
+refuse "-qo (clustered o)" -qo "addopts=-x"
+refuse "-qp (clustered p)" -qp "no:cacheprovider"
+refuse "-c" -c "$S/x.ini"
+refuse "-cfoo.ini" -cfoo.ini
+refuse "-oaddopts=-x" -oaddopts=-x
+refuse "--collect-only" --collect-only
+refuse "--co" --co
+refuse "--setup-plan" --setup-plan
+refuse "--setup-only" --setup-only
+refuse "--help" --help
+refuse "-h" -h
+refuse "--version" --version
+refuse "-V" -V
+refuse "--noconftest" --noconftest
+refuse "--ignore=tests" --ignore=tests
+refuse "--ignore tests" --ignore tests
+refuse "-p other" -p other
+refuse "-pother" -pother
+refuse "-p (no value)" -p
+refuse "-k (no value)" -k
+refuse "--basetemp" --basetemp=/x
+refuse "--rootdir" --rootdir=/x
+refuse "--junitxml" --junitxml=/x/y.xml
+refuse "--confcutdir" --confcutdir=/x
+refuse "--override-ini" --override-ini=addopts=-x
+refuse "--import-mode" --import-mode=append
+refuse "path ../ outside root" ../repo/tests
+refuse "absolute path outside root" /etc
+refuse "path through a link out of the root" linkout
+refuse "-- terminator" --
 chk "T25 file unchanged, state empty" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
+fresh_root; mut -- -q -x -p no:randomly -k test_f -m "not slow" tests/test_fast.py::test_f >/dev/null 2>&1; rc=$?; chk "T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got $rc)" "[ $rc -eq 0 ]"
 echo "== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)"
 fresh_root; python3 - "$RUN" "$T/root" <<'PY'
 import importlib.util, pathlib, sys
@@ -142,5 +180,44 @@ echo "== T27 a mutant whose new text equals the old text is refused (exit 2)"
 fresh_root; base --id m1 --file src/mod.py --old 'return 1' --new 'return 1' -- tests/test_fast.py 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T27 exit 2 (got $rc)" "[ $rc -eq 2 ]"
 echo "== T28 a clean run leaves no temporary file in the state folder"
 fresh_root; mut -- tests/test_fast.py >/dev/null 2>&1; chk "T28 state empty (ls -A)" "[ -z '$(state_files)' ]"
+echo "== T29 stopping the test group fails (no permission): the leader is still stopped and signals stay disarmed (review r2 nit)"
+fresh_root; python3 - "$RUN" "$T/root" <<'PY'
+import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+def boom(pid): raise RuntimeError("start hook failed")
+def cannot(pgid): raise PermissionError("not allowed")
+r.stop_group = cannot
+r.SIG.allow = True
+try: r.run_tests(pathlib.Path(sys.argv[2]), ["tests/test_slow.py"], sys.argv[2] + "/src", 60, boom)
+except (RuntimeError, PermissionError) as e: print("raised as expected:", type(e).__name__)
+print("SIG.allow after:", r.SIG.allow)
+sys.exit(0 if r.SIG.allow is False else 1)
+PY
+chk "T29 SIG.allow is False afterwards" "[ $? -eq 0 ]"
+sleep 1; chk "T29 no orphan pytest left although stop_group failed" "! orphan_alive"; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+echo "== T30 import check fails closed: a target that is not a .py module is refused unless --skip-import-check (recorded)"
+fresh_root; out=$(base --id m1 --file docs/note.txt --old alpha --new beta -- tests/test_fast.py 2>&1); rc=$?; echo "$out" | cut -c1-200; hit=$(printf %s "$out" | grep -c 'import check'); chk "T30a refused (rc $rc, 'import check' hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"; chk "T30a file unchanged" "[ \"\$(cat $T/root/docs/note.txt)\" = alpha ]"
+fresh_root; base --skip-import-check --id m1 --file docs/note.txt --old alpha --new beta -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T30b with --skip-import-check it runs (rc $rc) and the raw file says so" "[ $rc -eq 0 ] && grep -q 'SKIPPED by --skip-import-check' '$S/rawT/X-m1.txt'"
+echo "== T31 a timeout keeps the output printed before it"
+fresh_root; base --timeout 6 --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_partial.py >/dev/null 2>&1; chk "T31 raw file says TIMEOUT and holds the early output" "grep -q 'VERDICT: TIMEOUT' '$S/rawT/X-m1.txt' && grep -q 'before-timeout-marker\\|^\\.' '$S/rawT/X-m1.txt'"; grep -A3 'output printed before' "$S/rawT/X-m1.txt" | head -5
+chk "T31 file restored" "[ '$(last)' = return1 ]"
+echo "== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang"
+fresh_root; mkfifo "$T/root/fifo"; timeout 30 python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T32a FIFO in the tree refused, no hang (got $rc; 124 = hung)" "[ $rc -eq 2 ]"
+fresh_root; KEY=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16); mkdir -m 700 -p "$STATE"; mkfifo "$STATE/$KEY.planted.json"; timeout 30 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T32b FIFO as marker refused, no hang (got $rc; 124 = hung)" "[ $rc -eq 2 ]"
+echo "== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)"
+fresh_root; mkdir -p "$T/root/src/.venv"; echo x > "$T/root/src/.venv/hidden.py"; mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T33 nested .venv refused (got $rc)" "[ $rc -eq 2 ]"
+echo "== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)"
+fresh_root; rm "$T/root/.venv"; mkdir -p "$S/fakevenv/bin"; printf '#!/bin/sh\nprintf "\\377\\n"\nexit 1\n' > "$S/fakevenv/bin/python"; chmod +x "$S/fakevenv/bin/python"; ln -s "$S/fakevenv" "$T/root/.venv"
+mut --skip-import-check -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T34 run ends normally (rc $rc) with verdict KILLED in the raw file" "[ $rc -eq 0 ] && grep -q 'VERDICT: KILLED' '$S/rawT/X-m1.txt'"; chk "T34 file restored" "[ '$(last)' = return1 ]"
+echo "== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted"
+if [ -e "/tmp/hadavin-mutation-lane-$(id -u)" ]; then echo "  (skipped: /tmp/hadavin-mutation-lane-$(id -u) already exists and is not ours to touch)"; else
+fresh_root; ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!
+for _ in $(seq 120); do ls /tmp/hadavin-mutation-lane-$(id -u)/*.planted.json >/dev/null 2>&1 && [ "$(last)" = return2 ] && { sleep 3; break; }; sleep 0.5; done
+kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-220; chk "T35a exit 3 (got $rc) and the file is still planted" "[ $rc -eq 3 -a '$(last)' = return2 ]"
+TMPDIR=/tmp python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T35b restoring with the right TMPDIR works" "[ '$(last)' = return1 ]"
+out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; chk "T35c nothing planted anywhere: exit 0 (got $rc)" "[ $rc -eq 0 ]"
+rmdir /tmp/hadavin-mutation-lane-$(id -u) 2>/dev/null
+fi
 }
 echo "FAILED CHECKS: $FAILS"
