@@ -22,11 +22,3 @@ ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 
 ok   M1: TAKE_CHECK_FORM_EXPECT without the test flag is exit 4 and is printed (got exit 4)
 ok   M1: with the test flag the override is allowed but still printed (got exit 0)
 ok   M3: a folder named mf-hook.json is a FAIL, exit 1 (got exit 1)
-ok   M3: a dangling link named mf-recovery.json is a FAIL, exit 1 (got exit 1)
-ok   M4: a pin header with a broken sha256 line is exit 4 (got exit 4)
-ok   M4: a pin whose lines do not match its sha256 is exit 4 (got exit 4)
-ok   M4: a pin without a date is exit 4 (got exit 4)
-ok   M4: a pin with lines removed by hand is caught twice (hash and set) (got exit 4)
-ok   count: mf-form.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
-ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
-test_take_check: 31 of 31 cases as expected, 0 not as expected
