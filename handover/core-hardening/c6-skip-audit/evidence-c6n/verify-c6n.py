@@ -1,4 +1,4 @@
-"""Independent check: reads REPORT-c6n.md only (not build_c6m.py). 1) old text occurs once on its line; 2) apply all rows in table order
+"""Independent check: reads REPORT-c6n.md only (not build_c6n.py). 1) old text occurs once on its line; 2) apply all rows in table order
 to COPIES in a temp dir; 3) every cite KEY:line exists; 4) scan NEW texts for internal labels, stale phrases, banned strings."""
 import re, os, shutil, tempfile, sys
 H = "/home/user/hadavin-sdk"
@@ -18,7 +18,7 @@ for l in txt:
     m = re.match(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ([^|]*) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$", l)
     if m:
         i, st, f, ln, view, old, new, why, was = m.groups()
-        rows.append(dict(i=int(i), st=st, f=f, ln=int(ln), old=old.replace("<br>", "\n"), new=new.replace("<br>", "\n"), why=why))
+        rows.append(dict(view=view, i=int(i), st=st, f=f, ln=int(ln), old=old.replace("<br>", "\n"), new=new.replace("<br>", "\n"), why=why))
 print("rows parsed", len(rows)); bad = 0
 for r in rows:
     fl = rd(real(r["f"])).split("\n"); k = r["old"].count("\n") + 1
@@ -108,7 +108,7 @@ miss = [x for x in sorted(labs) if x not in gl and not (x.startswith("C-") and "
 print("labels missing from glossary:", miss or "none")
 shutil.rmtree(tmp)
 
-# extra c6m checks
+# extra c6m checks (kept)
 print("--- c6m extra checks ---")
 allnew = "\n".join(r["new"] + "\n" + r["why"] for r in rows)
 print("wrong-word slips 'studio lead' + made-up/table/name in new text or reason:", re.findall(r"studio lead(?:'s)? (?:made-up|table|name)", allnew) or "none")
@@ -120,3 +120,63 @@ for q in ("Q19", "Q22", "Q23", "Q25", "Q27", "Q21.1"):
 print("action box first (before section 0):", full.index("## Start here") < full.index("## 0. Failures"))
 print("every row has a viewer column text:", all(len(re.match(r"^\| %d \|.*" % r["i"], [l for l in txt if l.startswith("| %d | NOT APPLIED" % r["i"])][0]).group(0)) > 0 for r in rows))
 print("IST given with the money stop:", "23:59 IST" in full, "| take target:", "Wed 18 Nov" in full)
+
+# ================= c6n extra checks (new in this version) =================
+print("--- c6n extra checks ---")
+ALLOWED = re.compile(r"[Aa] lead sent twice with the same id is processed once")
+def bare_lead(s):
+    s = ALLOWED.sub("", s)
+    return [s[max(0, m.start()-25):m.end()+25] for m in re.finditer(r"(?<!studio )(?<!Studio )(?<!studio lead's )\blead\b(?!er)", s)]
+bl = [(r["i"], b) for r in rows for b in bare_lead(r["new"]) if r["i"] not in ()]
+print("bare 'lead' (not 'studio lead') in new texts, after removing the one exact decision sentence:", bl or "none")
+bl2 = [(r["i"], b) for r in rows for b in bare_lead(r["why"] + " " + r["view"])]
+print("bare 'lead' in reason or viewer column (informational; quotes of old file text are allowed):", len(bl2))
+# prose outside the edit table and the old-text quotes
+prose = "\n".join(l for l in txt if not re.match(r"^\| \d+ \| NOT APPLIED", l))
+pb = [b for b in bare_lead(prose)]
+print("bare 'lead' in report prose outside the edit table (informational):", len(pb), pb[:6])
+# 45 s measured from the first send
+fr = [r["i"] for r in rows if re.search(r"first reply", r["new"])]
+print("rows whose new text counts from the 'first reply':", fr or "none")
+need = [r["i"] for r in rows if "45 seconds" in r["new"] and "first send" not in r["new"] and r["i"] not in (6,)]
+print("rows saying 45 seconds without 'first send' in new text:", need or "none")
+r6 = rows[5]["new"]; r8 = rows[7]["new"]
+print("row 6 gap rule 'less than 30 seconds' present:", "less than 30 seconds" in r6, "| from the first send:", "first send" in r6 and "claim row" in r6)
+print("row 21 gap rule under 30 s from first send:", "less than 30 seconds after the first send" in rows[20]["new"])
+print("contact-deletion grep text only in row 8 (not in row 6):", "grep -n -i archive" in r8 and "grep -n -i archive" not in r6)
+print("row 6 and row 8 name their list:", "RISKS" in rows[5]["why"] and "REHEARSAL" in rows[5]["why"], "| row 8 why names both lists:", "RISKS LIST" in rows[7]["why"])
+print("rows 6 and 8 carry the words 'verifies at the re-pin' or 'verifies at re-pin':", [r["i"] for r in rows if re.search(r"verifies at (the )?re-pin", r["new"])])
+# no stores sentence in a viewer-facing new text
+print("new texts that say 'two stores' or 'one store':", [r["i"] for r in rows if re.search(r"two stores|one store", r["new"])] or "none")
+print("report prose mentions 'two stores' only as the rejected sentence (count):", full.count("two stores"))
+# IST with every UTC in new text
+noist = [r["i"] for r in rows if re.search(r"\bUTC\b", r["new"]) and "IST" not in r["new"]]
+print("new texts with UTC and no IST:", noist or "none")
+noist_p = [i+1 for i, l in enumerate(txt) if re.search(r"\d\d:\d\d(?::\d\d)? UTC|\d\dZ\b", l) and "IST" not in l and not l.startswith("| ") and not l.startswith("`")]
+print("prose lines with a clock time in UTC and no IST (informational):", noist_p[:20] or "none")
+# 18 runs lines (case-insensitive) name both voided labels
+b18 = [i+1 for i, l in enumerate(txt) if re.search(r"\b18 (kept )?(crash )?runs?\b|each of 18|all 18", l, re.I) and not ("VOID-fl45k3b" in l and "VOID-fl45k6c" in l)]
+print("c6n: lines with 18 runs (any case) and not naming both voided runs:", b18 or "none")
+# spoken length of the closing card
+W = []
+for r in (rows[12], rows[13]):
+    W += [len(q.split()) for q in re.findall(r'spoken: "([^"]*)"', r["new"])]
+print("closing card spoken words: %s total %d, about %d s at 150 words a minute; run sheet budget 30 s" % (W, sum(W), round(sum(W)/2.5)))
+sec0 = "\n".join(txt)
+print("section 0 states the word count:", ("hold %d words" % sum(W)) in sec0)
+# glossary / preface: terms defined before the first box table row
+box = sec0[sec0.index("## Start here"):sec0.index("| Label | Plain meaning")]
+for term in ["n8n is the tool", "TAKE is the one filmed run", "RUN SHEET is the file", "K3B and K3 are two crash tests", "LANE3", "LEASE is a setting", "ALERT is the one warning mail", "STUDIO LEAD and the OWNER", "RE-PIN is", "WAVE 1 is", "RISKS LIST", "REHEARSAL LIST"]:
+    print("preface defines %-32s before the box table: %s" % (term, term in box))
+tbl = sec0[sec0.index("| Label | Plain meaning"):sec0.index("HOW TO ANSWER")]
+bad = [w for w in ["item 14", "EXECUTIONS_DATA", "owner 2026-11-16"] if w in tbl]
+print("box table cells holding a term that is only explained later or a developer setting:", bad or "none")
+print("answer line is one line starting '## ANSWER (lead, ':", sum(1 for l in txt if l.startswith("`## ANSWER (lead, 2026-")) == 1)
+# 3e stop rules table present and every gate row names who stops
+st = [l for l in txt if l.startswith("| ") and ("rehearsal list item" in l or "risks list item" in l or "row 23" in l) and "If it fails" not in l and l.count("|") == 6]
+print("section 3e gate rows:", len(st), "(want 7: rehearsal list items 11 to 14 = 4, risks list items 11 and 12 = 2, row 23 = 1)")
+print("every 3e row has 'studio lead' or 'the person who sees it' in the 'who stops' cell:", all(("studio lead" in l.split("|")[3]) or ("person who sees it" in l.split("|")[3]) for l in st))
+# stale references
+print("report still saying 'owner 2026-11-16' as a quote:", full.count("'owner 2026-11-16'"))
+print("section 8 heading says c6m reviews:", "every item of the two c6m reviews" in full)
+print("L-ONEDB tied to no row:", "L-ONEDB" not in cnt)

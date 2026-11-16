@@ -1,0 +1,24 @@
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:759:16
+    |
+757 |     and the call is a refusal. A caller that passes its own `timeout` handles `TimeoutExpired` itself."""
+758 |     try:
+759 |         return subprocess.run(
+    |                ^^^^^^^^^^^^^^
+760 |             argv,
+761 |             input=input_bytes,
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+    --> run.py:1741:16
+     |
+1739 |     try:
+1740 |         # one process group, so a timeout or a signal can stop all of it
+1741 |         proc = subprocess.Popen(
+     |                ^^^^^^^^^^^^^^^^
+1742 |             cmd,
+1743 |             cwd=root,
+     |
+
+Found 2 errors.
+exit 1
