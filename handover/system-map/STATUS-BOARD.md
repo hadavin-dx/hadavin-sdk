@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:40:08Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:46:02Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 6 (af6377 T19 row and steps from plan lines 296-403; a6bff7 run-day card naive read; a5c8dc verdict conflicts L6-J-047/005/014/050/057/006; aa5fcb row 1 brief check; adc525 critical path zoom-out; a9b43c D-04/D-05 cite check). Six earlier agents finished and were read.
+AGENTS_RUNNING: 6 (abefd0 OWNER-VIEW wording read; a72757 fact check TAKE-BLOCKERS vs plan; a84015 v5 edits vs decision 2; ae9254 LEAD-PAGE comprehension; a963d7 clean-up card exact fixes; ab124a live card vs draft v2). Five earlier agents finished and were read (digest in work/agent-reports-batch4.md BATCH 26).
 INTERRUPTED: none
-NEXT: collect the 6 hand-backs, grep-verify, apply safe fixes; MASTER-MAP L8-X-020..024 rows by hand (also into hand-kept/MAP-ADDITIONS.md); PIN guard test; tell lead: generator-vs-JSON finding for row 1, T19 not runnable, zoom-out finding.
-CAPACITY: nproc 4, load 0.08, RAM 867/16087 MB used, DISK 24G free of 252G (40% used); top3 /tmp/claude-0 1.3G, /tmp/sm-fresh 624M, /tmp/pytest-of-root 616M; nothing removed
+NEXT: collect the 6 hand-backs, grep-verify, apply safe fixes; send the lead the decision list (23 items, work/agent-reports-batch4.md BATCH 26), the row 1 generator-vs-JSON finding, T19 not runnable, the zoom-out finding, and the F1 deadline self-release conflict in the clean-up card; MASTER-MAP L8-X-020..024 rows wait for the lead.
+CAPACITY: nproc 4, load 0.11, RAM 848/16087 MB used, DISK 24G free of 252G (40% used); top3 /tmp/claude-0 1.3G, /tmp/sm-fresh 624M, /tmp/pytest-of-root 616M; nothing removed
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:40:08Z
+PUSHED_UTC: 2026-11-16T10:46:02Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
