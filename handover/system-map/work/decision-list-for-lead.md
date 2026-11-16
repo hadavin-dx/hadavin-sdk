@@ -1,3 +1,5 @@
+Live text: lines 1-10 plus the table; blocks 108-132 are history. Deadlines: take notice before 15:14 UTC / 20:44 IST if A13 is no, before 11:14:40 UTC / 16:44:40 IST if A13 is yes; A13 undecided. D-04 = the rule that a lead sent twice is processed once; D-05, F-008 and LP-n: meaning not recorded. 'run (a)' = the loopback re-smoke only. A3, A9, E9 hold several questions each and are not split yet (TO DO); A10 and A11 are settled notes, not questions. Contact for core-hardening: none recorded; the owner relays.
+
 # Decisions the studio lead owes, one answer each
 Written Mon 16 Nov 2026 by the system-map session from digest entries 143-198 (work/agent-reports-batch4.md). Reader: the studio lead. Made-up data only. Every date and every default below is MY PROPOSAL, not a fact from a file; the lead may change any of them. Where a default says "if silent", it is only what this session suggests happens when no answer comes. No item here has been run or tested.
 

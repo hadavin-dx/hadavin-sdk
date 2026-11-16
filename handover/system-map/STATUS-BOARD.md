@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:51:52Z
-PUSHED_UTC: 2026-11-16T12:51:52Z
+UPDATED_UTC: 2026-11-16T12:52:45Z
+PUSHED_UTC: 2026-11-16T12:52:45Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 836. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 840. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,16 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a00014950690127fc | PLAN-002 re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| a0f9599eec0d71ee7 | L1c re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| a087ae45a6efbf593 | open-items re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| aca24edd897f26488 | premortem re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| aa0429caba37fed0b | row1-brief re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| ad4126666b10c18a1 | L3c cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| a93aad583d9901855 | t19 cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
-| aac24648635535d58 | decision-list cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| a8c9313a4730f8103 | L4c cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| aa9d2bba8b6f05f09 | L5ac cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| a30d73370063f98d1 | FINAL-CROSSCHECK cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| a7f927c37bddc6067 | BRIEF-LANE cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| ae872004f05951fdb | end-delete-cases cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| acd43fc8db069f73b | rehearsal-limits cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| af30284d2107e0dd1 | banned-claims cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
 
-Next 5 independent tasks: merged-findings, L5ac, L4c, FINAL-CROSSCHECK, BRIEF-LANE cold reads.
+Only 7 running (a ninth read, merged-findings, just ended; one replacement pending next beat: reason, the page was just folded and a re-read now would only re-flag old text).
+Next 5 independent tasks: re-reads of L3c, t19, decision-list, PLAN-002, open-items after this push.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

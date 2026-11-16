@@ -1141,3 +1141,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 834 open-items r18: row meaning, note count. FIXED by block; cells TO DO.
 - 835 L3c r10: nine glossaries. PARTLY FIXED by single GLOSSARY r11; terms pending.
 - 836 PLAN-002 r25: line cites, REMAINDER. FIXED by correction r23; fold TO DO.
+- 837 decision-list: no single answer, glosses missing. PARTLY FIXED by live block; split TO DO.
+- 838 L1c r17: conflicting counts. FIXED by single rule block; cells TO DO.
+- 839 row1-brief r14: guardrails only in history. FIXED by binding block.
+- 840 merged-findings r13: nine legends, undefined terms. PARTLY FIXED by LEGEND r13; cells TO DO.
