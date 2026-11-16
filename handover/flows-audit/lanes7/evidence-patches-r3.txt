@@ -1,0 +1,39 @@
+EVIDENCE patches r3 (fixer, scratch copy /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev, not a judgement; nothing in the real tree touched)
+--- check_patches.sh (copied patches) ---
+PASS 5 patches
+check rc=0
+--- patch sha256 (first 16) ---
+cf58ae2a907c5922  handover/flows-audit/patches/F-001-one-ddl.patch
+f5c34d37a0794bb5  handover/flows-audit/patches/F-002-take-key-check-and-claim-error-path.patch
+e94e586843d80aec  handover/flows-audit/patches/F-003-runsheet-claims.patch
+f8b1b13f97351c4c  handover/flows-audit/patches/F-004-page-statement-17.patch
+c9d61339d1619de9  handover/flows-audit/patches/F-008-save-runs-for-the-take.patch
+--- apply all 5 together ---
+together check rc=0
+together apply rc=0
+b6f95362e294d0ef 103 handover/demo/VIDEO-RUNSHEET.md
+a03155ab0efaec86 152 handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
+d45eb9ea4786e82b 19 handover/demo/n8n-flows/mf_leads.sql
+f1a1806980e3f365 130 handover/demo/n8n-mainframe/build_mainframe.py
+--- grep patched files (file:line, first 170 chars) ---
+## 60\.1
+## 61\.9
+## film-v5
+## scenes 5 to 11
+handover/demo/VIDEO-RUNSHEET.md:92:## LATER VIDEO (not for the take): rows for scenes 5 to 11
+## example\.test
+handover/demo/n8n-mainframe/build_mainframe.py:13:STAGE_ENV, TMO_ENV, FROM = ("DESK_URL", "DESK_TIMEOUT_MS", "FROM_ADDRESS_PLACEHOLDER") if REAL else ("MF_STAGE_URL", "MF
+handover/demo/n8n-mainframe/build_mainframe.py:14:MAIL_TO, ALERT_TO = ("INTAKE_ADDRESS_PLACEHOLDER", "={{ $env.DESK_ALERT_TO }}") if REAL else ("intake@example.test", "al
+## one database
+## approval
+## audit trail
+## claim row
+handover/demo/VIDEO-RUNSHEET.md:47:- One name each: lead ID (older text also says key or door id: the same thing); receiving mailbox (older text says intake mailbox); sta
+## intake
+handover/demo/VIDEO-RUNSHEET.md:47:- One name each: lead ID (older text also says key or door id: the same thing); receiving mailbox (older text says intake mailbox); sta
+handover/demo/VIDEO-RUNSHEET.md:55:5. (NOT FOR THIS VIDEO.) Scene 7 to 9 numbers: the drop fault has no measured row (T12 not run on v3), and the intake count (expected 1
+handover/demo/VIDEO-RUNSHEET.md:65:3. (NOT FOR THIS VIDEO) The stand-in drop on the film flows with .drop = 1: run it five times; note intake count (0 or 1), alert count,
+handover/demo/VIDEO-RUNSHEET.md:103:| 11. OPTIONAL: the alert mail is refused twice (UNDER REVIEW: audit advises cut) | Arms the alert-only refusal on the stand-in (AF1 f
+handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md:52:   Test: demo K3 (1 intake mail per lead) and K3B (0 intake mails per lead). n=20 each, lease 20 s. Alerts: 1 each, read 
+handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md:57:   Test: AF1 (alert-only mail refusal, two refusals). Result: state unknown unchanged, 1 alert, 1 intake mail, 0 lost, 0 
+handover/demo/n8n-mainframe/build_mainframe.py:14:MAIL_TO, ALERT_TO = ("INTAKE_ADDRESS_PLACEHOLDER", "={{ $env.DESK_ALERT_TO }}") if REAL else ("intake@example.test", "al

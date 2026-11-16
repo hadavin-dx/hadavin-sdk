@@ -1,10 +1,10 @@
 diff --git a/handover/demo/n8n-flows/mf_leads.sql b/handover/demo/n8n-flows/mf_leads.sql
-index 752c64e..33fbcc2 100644
+index 752c64e..0cbc286 100644
 --- a/handover/demo/n8n-flows/mf_leads.sql
 +++ b/handover/demo/n8n-flows/mf_leads.sql
 @@ -1,4 +1,4 @@
 --- NOTE: this table matches the CURRENT flows (mf-*.json in this folder, v2). They store no label column: the label only travels inside the run (stage answer -> CRM). The OLD flows in v1-superseded/ read and write a label column and need the v1 table (same DDL plus: label text); do not mix the two sets.
-+-- NOTE (current table, four alert columns at the end): matches the flows used in the take (n8n-flows-real-v5, n8n-flows-film-v5) and the older v3 and v4 flows. The flows in this folder (v2) ignore the extra columns, so this table also runs them (until they are archived, CUT-LIST.md). A table that already exists without the alert columns needs: ALTER TABLE mf_leads ADD COLUMN alert_sent boolean NOT NULL DEFAULT false, ADD COLUMN alert_token text, ADD COLUMN alert_until timestamptz, ADD COLUMN alert_attempts int NOT NULL DEFAULT 0 (one ALTER TABLE statement, comma between the four ADD COLUMN parts, then the semicolon).
++-- NOTE (current table, four alert columns at the end): matches the flows used in the take (n8n-flows-real-v5) and the older v3 and v4 flows. The flows in this folder (v2) ignore the extra columns, so this table also runs them (until they are archived, CUT-LIST.md). A table that already exists without the alert columns needs: ALTER TABLE mf_leads ADD COLUMN alert_sent boolean NOT NULL DEFAULT false, ADD COLUMN alert_token text, ADD COLUMN alert_until timestamptz, ADD COLUMN alert_attempts int NOT NULL DEFAULT 0 (one ALTER TABLE statement, comma between the four ADD COLUMN parts, then the semicolon).
  -- Design A lead table (Postgres). The insert is the claim. Created before the flows run.
  CREATE TABLE mf_leads(
    lead_key      text PRIMARY KEY,
