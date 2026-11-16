@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:03:14Z
+UPDATED_UTC: 2026-11-16T11:04:05Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 4
+ITEMS_OPEN: 5
 PERCENT: 94
 AGENTS_RUNNING: 8
-CAPACITY: 2.02 load of 4 cores, mem 0/15 GB, RAM 969/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 1.38 load of 4 cores, mem 0/15 GB, RAM 897/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 734M /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -51,8 +51,8 @@ Q20 applied to q16 rows (6 places); every fact is 'the lead verifies', none conf
 Q18 applied; I reproduced run_all rc 0 (659/0/62) and check_patches PASS 4. NOTE: take_check.sh on the committed UNPATCHED real-v5 now exits 4 by design: the take must run on the patched copy. n8n saving of manual runs unverified. No independent evidence run on the final F8 head yet.
 ORDER 027: started 4 lanes (stranger+adversarial read of owner sheet, citation checker of new counts, one-place sweep of own outputs, contradiction re-read vs DECISIONS)
 F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB cap untested); --out via symlinked parent writes into target (unjudged): give to r8 fixer after a54491a8 reports
-NEXT: Started owner-sheet fixer, adversarial reader, cross-read (8 agents). Next: collect, F3 survivors to r8 fixer
-PUSHED_UTC: 2026-11-16T11:03:14Z
+NEXT: Q21 asked (env route, saved runs). Contra fixer running; after cite checker: fixer for FINDINGS/FIX-PLAN/CUT-LIST/EXCEPTIONS/REPORT/QUESTIONS pointers
+PUSHED_UTC: 2026-11-16T11:04:05Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -77,11 +77,10 @@ PUSHED_UTC: 2026-11-16T11:03:14Z
 | q19fix | Q19 wording decisions fixer | sonnet | 5 answers applied to CT and RW | 11:00 | 11:20 | 5 | running | fix-q19.md |
 | f8ev7 | F8 final-head evidence (take_check) | sonnet | delta evidence after Q18 | 11:05 | 11:25 | 5 | running | flow-check/evidence-q18.md |
 | cite2 | citation checker, new counts and dates | sonnet | FINDINGS/FIX-PLAN/LEDGER/REPORT vs sources | 11:08 | 11:25 | 5 | running | (inline) |
-| sweep2 | one-place sweep of own outputs | sonnet | FINDINGS..README | 11:08 | 11:25 | 5 | running | (inline) |
-| contra | contradiction re-read vs DECISIONS | sonnet | all outputs vs 12 decisions + Q13-Q20 | 11:08 | 11:25 | 5 | running | (inline) |
 | a20a979e | owner-sheet fixer r4 | sonnet | Blockers 1-2 + Majors in OWNER-STEPS-q16-rows | 11:04 | 11:20 | 5 | running | fix-ownersteps-r4.md |
 | ad957e77 | adversarial take-day reader | sonnet | wrong-step scenarios (lane d) | 11:04 | 11:20 | 5 | running | (inline) |
 | a83c30f5 | cross-read other sessions | sonnet | contradictions with other sessions' files (lane e) | 11:04 | 11:20 | 5 | running | (inline) |
+| a2f2b789 | claims/readme contra fixer | sonnet | apply contra re-read items to CT, RW, flow-check README, F-008 patch comment | 11:12 | 11:30 | 5 | running | fix-contra2.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
