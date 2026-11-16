@@ -1,2 +1,4 @@
-ROW|H4|sig=TERM|mode=plain|delay=0.0|exit=-15|elapsed=0.00s|file_after_signal=return 2|marker_left=0|followup_restore_sha_exit=3|final_file=return 2|msg=
-ROW|H4|sig=TERM|mode=plain|delay=0.05|exit=-15|elapsed=0.05s|file_after_signal=return 2|marker_left=0|followup_restore_sha_exit=3|final_file=return 2|msg=
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  3392 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.0|exit=-15|elapsed=0.00s|file_after_signal=return 2|marker_left=1|followup_restore_sha_exit=0|final_file=return 1|msg=
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  3499 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.05|exit=-15|elapsed=0.05s|file_after_signal=return 2|marker_left=1|followup_restore_sha_exit=0|final_file=return 1|msg=

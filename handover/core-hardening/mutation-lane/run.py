@@ -1476,15 +1476,15 @@ def restore_from_marker(
                 f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{shown(m['file'])} > the file"
             )
         ref_mode = stat.S_IMODE(os.stat(safe_rel(expected_ref, m["file"], "marker file")).st_mode)
-        if isinstance(m.get("mode"), int) and m["mode"] & 0o7002:
-            raise Refused(
-                f"the mode in the marker ({oct(m['mode'])}) has a special bit (setuid, setgid, sticky) or is writable by "
-                f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
-            )
         if isinstance(m.get("mode"), int) and (m["mode"] & 0o111) != (ref_mode & 0o111):
             raise Refused(
                 f"the mode in the marker ({oct(m['mode'])}) has other execute bits than {shown(m['file'])} in the git archive given "
                 f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
+            )
+        if isinstance(m.get("mode"), int) and m["mode"] & 0o7002:
+            raise Refused(
+                f"the mode in the marker ({oct(m['mode'])}) has a special bit (setuid, setgid, sticky) or is writable by "
+                f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
             )
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write

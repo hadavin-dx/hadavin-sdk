@@ -1,1 +1,73 @@
 == T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+/tmp/safety-only.qJUy0y.sh: line 282: 23264 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; bb8751a7ecba28b6.planted.json: test group already gone). A folder that was renamed away is NOT checked
+usage: run.r9.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+                 [--out-json OUT_JSON] [--timeout TIMEOUT]
+                 [--pythonpath PYTHONPATH] [--repo REPO]
+                 [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                 [--skip-import-check] [--restore] [--discard-marker]
+                 [--helper-timeout HELPER_TIMEOUT]
+run.r9.py: error: unrecognized arguments: --accept-unchecked-folder
+  FAIL: T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got 0; r9: 0 and deleted marker and backup), marker kept (0), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got 2), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder
+/tmp/safety-only.qJUy0y.sh: line 70: 25023 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T97b M1 unreadable marker (garbage): --discard-marker exits 3 (got 0; r9: 0), marker kept (0), with --accept-unchecked-folder exit 0 (got 2) and state empty
+/tmp/safety-only.qJUy0y.sh: line 70: 25236 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T97b M1 unreadable marker (list): --discard-marker exits 3 (got 0; r9: 0), marker kept (0), with --accept-unchecked-folder exit 0 (got 2) and state empty
+/tmp/safety-only.qJUy0y.sh: line 70: 25525 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev1r9/tmpstate/hadavin-mutation-lane-0/bb8751a7ecba28b6.backup; hash mat
+  FAIL: T97c M2 --sha "" with a forged marker and backup: exit 2 (got 0; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept
+  FAIL: T97c2 siblings: --sha zz (got 2), --repo "" (got 2), --out-json "" (got 5) are all refused with exit 2, nothing planted
+exit 2 for an argparse error: named in row 2: False
+exit 2 for a state folder that is not mode 700: named in row 2: False
+exit 2 for a lock held by a live run: named in row 2: False
+exit 2 for a --sha that names no commit: named in row 2: False
+BAD: ['row 2 still says ONLY', 'an argparse error: exit 2 or not named in the row 2 text', 'a state folder that is not mode 700: exit 2 or not named in the row 2 text', 'a lock held by a live run: exit 2 or not named in the row 2 text', 'a --sha that names no commit: exit 2 or not named in the row 2
+  FAIL: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 1; r9: fails)
+/tmp/safety-only.qJUy0y.sh: line 70: 26076 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T97e m2 recorded mode 0 (decimal 0), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 644 (r9: 644)
+/tmp/safety-only.qJUy0y.sh: line 70: 26437 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T97e m2 recorded mode 4755 (decimal 2541), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 644 (r9: 644)
+/tmp/safety-only.qJUy0y.sh: line 70: 27407 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o4755) has other execute bits than src/mod.py in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be p
+  FAIL: T97e2 m2 marker mode 4755 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+/tmp/safety-only.qJUy0y.sh: line 70: 28671 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev1r9/tmpstate/hadavin-mutation-lane-0/bb8751a7ecba28b6.backup; hash mat
+  FAIL: T97e2 m2 marker mode 666 with --sha: exit 3 (got 0; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+  FAIL: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 5; r9: wrote it), file not created; an existing foreign file: exit 2 (got 5; r9: overwritten), still 'precious', no raw file written
+  PASS: T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got 0, 0)
+uncaught KeyboardInterrupt
+leaked ['/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev1r9/tmpstate/mutation-ref-affwyk84']
+  FAIL: T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)
+REFUSED: marker is for another root ('/nowhere/else'): refused
+REFUSED: marker is for another root ('/nowhere/else'): refused
+  FAIL: T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got 2), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got 2; r9: 2), marker kept
+m6 mode after a failed reopen: 0o644
+m7 tree_check: []
+m8 child of the helper still alive after the timeout: True
+BAD: ['m6: mode 0o644', 'm7: dangling marker not counted', "m8: the helper's child survived", 'm11: raised [Errno 5] Input/output error']
+  FAIL: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 1; r9: fails all four)
+/tmp/safety-only.qJUy0y.sh: line 70: 29368 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 2389, in main
+    ok, text = restore_from_marker(root, expected_ref, set(a.extra))
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 1417, in restore_from_marker
+    unlink_state(marker)
+    ~~~~~~~~~~~~^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 393, in unlink_state
+    fsync_state_dir()
+    ~~~~~~~~~~~~~~~^^
+  File "<stdin>", line 3, in boom
+OSError: [Errno 5] Input/output error
+INTERNAL ERROR (OSError: [Errno 5] Input/output error); no marker: nothing is planted by this run
+  FAIL: T97j m11 --restore with a failing state-folder sync: exit 0 (got 2; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/safety-only.qJUy0y.sh: line 70: 29554 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant (evil
+PASSED: faked line[31m) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py --root /tmp/claude-0/-home-user/957f9d59-4d7f-59
+  FAIL: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+uncaught FileNotFoundError
+  FAIL: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  FAIL: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 1; r9: fails)
+FAILED CHECKS: 18 (of 19 checks run; skipped: none)
