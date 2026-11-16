@@ -188,3 +188,51 @@ NEG r13reach caught | FAIL r12 E-09 lacks What the assistant can reach
 NEG r13always caught | FAIL r13 E-48 lacks WHATEVER you answer
 NEG r13alarm caught | FAIL r13 E-48 lacks `revoke the secret key for the model`
 NEG r13route caught | FAIL r13 E-48 lacks No default pick
+NEG r13shot caught | FAIL r13 E-48 lacks does not prove that the right key is gone
+NEG r13e55 caught | FAIL index mismatch E-55 ('OWNER-STEPS-realrun-v3.md', '119', 'Apply now', 'CONTRADICTION'
+NEG r13e16 caught | FAIL r13 E-16 trigger
+NEG r13above caught | FAIL r13 E-12 refers to unseen text: the sentence above
+NEG r13ph caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r13yes caught | FAIL r13 E-12 yes sentence form and bullet differ
+NEG r13nd15 caught | FAIL r13 ND15 both routes, no default
+NEG r13e52 caught | FAIL r13 E-52 studio lead defined once, next to the assistant
+NEG r13e37 caught | FAIL r13 E-37 lacks the number after the colon
+NEG r14m10 caught | FAIL r14 3h key end
+NEG r14m12f caught | FAIL r14 E-09 sub-step f does not wait for `not looking`
+NEG r14m12g caught | FAIL r14 E-09 sub-step g does not wait for `not looking`
+NEG r14m12h caught | FAIL r14 E-09 sub-step h does not wait for `not looking`
+NEG r14m22 caught | FAIL r14 3a key end
+NEG r14m23 caught | FAIL r14 wrong weekday: Thu 18 Nov 2026
+NEG r14m34 caught | FAIL r14 wrong weekday: Sun 16 Nov 2026
+NEG r14m29 caught | FAIL r14 internal code in owner text E-48: Q25
+NEG r14m30 caught | FAIL r14 internal code in owner text E-48: L-23NOV
+NEG r14nd caught | FAIL E-48 owner NEW text contains ND
+NEG r14route caught | FAIL r14 route selection message not in exactly one place
+NEG r14rec2 caught | FAIL r14 second recommendation spot
+NEG r14norec caught | FAIL r13 E-48 lacks No default pick
+NEG r14again caught | FAIL r14 3c lacks it asks again right after `cut accepted`
+NEG r14forced caught | FAIL r14 3c lacks `key revoked` is never a confirmation
+NEG r14real caught | FAIL r14 3f lacks realpath
+NEG r14link caught | FAIL r14 3f lacks the number `1` in its second column
+NEG r14slash caught | FAIL r14 3f lacks followed by `/`
+NEG r14wild caught | FAIL r14 3f lacks none of the signs `*`
+NEG r14star caught | FAIL r14 E-48 item 6 star rule
+NEG r14alarm2 caught | FAIL r14 3b lacks `is the secret key for the model still alive?`
+NEG r14promise caught | FAIL r14 3a honest label
+NEG r14default caught | FAIL r14 3h default when unsure
+NEG r14unless caught | FAIL r14 3j override sentence
+NEG r14e16 caught | FAIL r13 E-16 trigger
+NEG r14e55 caught | FAIL r14 E-55 lacks your items 2, 3, 4, 5 and 6
+NEG r14e37 caught | FAIL r14 E-37 note
+NEG r14consent caught | FAIL r14 E-12 consent reach
+NEG r14testitem caught | FAIL r14 E-12 test item
+NEG r14margin caught | FAIL r14 E-12 margin
+NEG r14fallback caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r14conf caught | FAIL confirmation letters
+NEG r14count caught | FAIL r14 counting check word
+NEG r14line30 caught | FAIL r14 18:14:40 pair missing
+NEG r14clip caught | FAIL r14 E-09 clipboard history
+NEG r14e57 caught | FAIL E-57 lacks step 22 item 3
+NEG r14forcedd caught | FAIL r14 3c lacks `key revoked` is never a confirmation
+NEG r14bareno caught | FAIL r14 3e bare no
+NEG r14g caught | FAIL r14 3g new key storage

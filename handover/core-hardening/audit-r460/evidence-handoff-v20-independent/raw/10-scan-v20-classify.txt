@@ -1,0 +1,2 @@
+hex run lengths: {64: 205}
+12-digit kinds: {'all-9s': 17, 'other:874817388459': 2, 'other:047900325967': 1, 'other:673611795664': 1}

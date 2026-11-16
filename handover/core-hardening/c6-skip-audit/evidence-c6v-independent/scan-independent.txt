@@ -1,0 +1,8 @@
+banned list entries read at run time: 10
+files scanned: 101
+mail-shaped but reserved/example domain (excluded): 54
+totals banned=0 secret-shape=0 mail-shape=28
+/handover/core-hardening/c6-skip-audit/evidence-c6v-independent/tree/handover/demo/n8n-flows/N8N-START.md banned=0 secret=0 mail=1
+/handover/core-hardening/c6-skip-audit/evidence-c6v-independent/tree/handover/demo/real-run/start-prompt-hardening-v1-to-v2.diff banned=0 secret=0 mail=13
+/handover/core-hardening/c6-skip-audit/evidence-c6v/tree/handover/demo/n8n-flows/N8N-START.md banned=0 secret=0 mail=1
+/handover/core-hardening/c6-skip-audit/evidence-c6v/tree/handover/demo/real-run/start-prompt-hardening-v1-to-v2.diff banned=0 secret=0 mail=13

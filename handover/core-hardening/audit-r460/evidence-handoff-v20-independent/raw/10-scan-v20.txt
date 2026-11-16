@@ -1,0 +1,13 @@
+files scanned 103; unreadable 0; banned strings checked 10; banned hits 0 in 0 files (after NFKC and zero-width removal)
+secret-shape aws-access-key-shape: 0 hits
+secret-shape private-key-block: 0 hits
+secret-shape github-token: 0 hits
+secret-shape api-key-sk: 0 hits
+secret-shape slack-token: 0 hits
+secret-shape google-key: 0 hits
+secret-shape url-with-password: 0 hits
+secret-shape long-hex-40plus: 205 hits at /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:309, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:310, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:325, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:513, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:514, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v20.md:515
+secret-shape email-address: 0 hits
+secret-shape twelve-digit-number: 21 hits at /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v18.py:190, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v18.py:199, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v19.py:197, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v19.py:229, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v20.py:200, /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v20.py:235
+secret-shape password-literal: 0 hits
+rc=1

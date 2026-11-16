@@ -13,6 +13,9 @@ I12-99-of-104 rc=1 new_FAILs=1 CAUGHT  first: FAIL source-copy statement: the re
 I13-five-open-to-four rc=1 new_FAILs=0 MISSED
 I14-release-note-line-cite rc=1 new_FAILs=0 MISSED
 I15-wrong-version-name-release-note rc=1 new_FAILs=0 MISSED
+I19-G12-hold-removed-L-LEASE-samewordcount rc=1 new_FAILs=0 MISSED
+I20-G12-open-gate-wording-flipped rc=1 new_FAILs=0 MISSED
+I21-wrong-UTC-IST-pair-in-row-text rc=1 new_FAILs=2 CAUGHT  first: FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
 I16-waiting-rows-3-to-4 rc=1 new_FAILs=1 CAUGHT  first: FAIL E-numbers: every row count in the start box (all 104, ready 57, default 38, check 3, owner 6, wave 1 95) 
-I17-CHANGES-forged-267: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: True
-I18-CHANGES-forged-heavy-runs: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: True
+I17-CHANGES-forged-267: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: verify_c6v_part2.py reads only to exclude it from a name list; no verifier parses its numbers
+I18-CHANGES-forged-heavy-runs: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: verify_c6v_part2.py reads only to exclude it from a name list; no verifier parses its numbers

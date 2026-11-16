@@ -1,4 +1,4 @@
--- HELD FILE 3 (v20) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
+-- HELD FILE 3 (v21) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
 -- (security major M1 of the v16 review). Needs Postgres 14 or newer: the function bodies use BEGIN ATOMIC, which Postgres
 -- parses AND binds at creation time, so a SECURITY DEFINER body names its tables by object, never by a name searched at
 -- call time (no search_path or temporary-table lookup is possible, and no schema name is written into this file). The
@@ -34,8 +34,16 @@ SET LOCAL lock_timeout = '5s';
 -- SELECT count(*) FROM spend WHERE agent_id !~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$' OR day < DATE '2020-01-01' OR day >= DATE '2100-01-01' (same for spend_month); it must be 0.
 -- (3) Cutover: existing rows get open_usd = 0 (the file cannot know what is open), so a reservation that is open at the moment of the cutover cannot be settled afterwards (23514, safe
 -- direction: the total stays high). The cutover is therefore done with the kill switch ON and no call in flight (5.6 item 1(o3)); pg_v20.py shows both outcomes.
+-- v21 (readiness B2 and security M1, M2, M3): (1) settle: the final SELECT now has the same guard as the two UPDATEs (p_worst >= 0 AND p_actual >= 0), so a settle that the guard rejects
+-- returns NO row even when the agent-day has rows (v20 returned the unchanged row and the reservation stayed open without an error; the store code must treat an empty result as an error, test E0-F5
+-- now uses an agent that has rows). (2) who may call what is ONE table, section 5.6c item 6 of the hand-off: runtime role = reserve, settle and engage; operator role = release only. (3) PSEUDO AGENT IDS:
+-- `-cli` and `-unattributed:<agent>` start with `-`, which the agent-id rule above refuses (23514), so with this file applied a store call under such an id fails closed and an existing row with such an id
+-- makes the file refuse at apply time. Lead choice L26b (hand-off section 10): default = the store does NOT call these functions for a pseudo id and keeps its ordinary write path for it.
+-- (4) every definer in this file runs with the rights of the role that applies the file; a dedicated NOLOGIN owner role is the design in 5.6c item 9 (lead choice L26, not built).
 -- v19 (security minor m7): the ADD CONSTRAINT ... CHECK lines below scan each table under an exclusive lock; lock_timeout bounds only the wait for the lock, so this
 -- second line bounds the scan itself (60 seconds is my number; the file fails and rolls back instead of holding the lock for ever).
+-- v21 (security minor m11): statement_timeout is a limit PER STATEMENT, not for the file: each of the ALTER lines below fails after 60 seconds, so the nine ALTER TABLE lines could together hold
+-- the locks for up to 9 minutes in the worst case (v20 said "the file fails at 60 seconds", which was wrong). Run the cutover in a quiet window (5.6 item 1(o3)); the scans are over two small tables.
 SET LOCAL statement_timeout = '60s';
 ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend ADD CONSTRAINT spend_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
@@ -77,7 +85,8 @@ BEGIN ATOMIC
     WHERE agent_id = p_agent AND month = date_trunc('month', p_day)::date AND p_worst >= 0 AND p_actual >= 0
       AND EXISTS (SELECT 1 FROM spend x WHERE x.agent_id = p_agent AND x.day = p_day);
   SELECT d.usd, m.usd FROM spend d, spend_month m
-    WHERE d.agent_id = p_agent AND d.day = p_day AND m.agent_id = p_agent AND m.month = date_trunc('month', p_day)::date;
+    WHERE d.agent_id = p_agent AND d.day = p_day AND m.agent_id = p_agent AND m.month = date_trunc('month', p_day)::date
+      AND p_worst >= 0 AND p_actual >= 0;
 END;
 -- Kill switch: engage (any caller that may run it: stopping is the safe direction) and release (operator only).
 -- `by` is session_user, never a caller-supplied value. Engage creates the row when it is missing (a missing row is read

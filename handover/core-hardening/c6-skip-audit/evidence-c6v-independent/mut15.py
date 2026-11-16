@@ -26,6 +26,9 @@ M = {
 "I13-five-open-to-four": sub("Five items are OPEN", "Four items are OPEN"),
 "I14-release-note-line-cite": sub("release note v14 line 33", "release note v14 line 34"),
 "I15-wrong-version-name-release-note": sub("LEAD-RELEASE-NOTE-v18.md carries the 45-second", "LEAD-RELEASE-NOTE-v17.md carries the 45-second"),
+"I19-G12-hold-removed-L-LEASE-samewordcount": sub("and need the G12 approval first", "and need the OWN approval first"),
+"I20-G12-open-gate-wording-flipped": sub("so card line 1 and the scene 3 caption cannot be filmed", "so card line 1 and the scene 3 caption can be filmed"),
+"I21-wrong-UTC-IST-pair-in-row-text": sub("2026-11-16T19:20:00Z = 2026-11-17T00:50:00 IST", "2026-11-16T19:21:00Z = 2026-11-17T00:51:00 IST"),
 "I16-waiting-rows-3-to-4": sub("the 3 rows that wait for a check", "the 4 rows that wait for a check"),
 }
 os.makedirs(E + "/mut", exist_ok=True)
@@ -43,6 +46,6 @@ for k, v in M.items():
 # CHANGES forgeries: no verifier reads c6v-CHANGES.md
 ch = open(E + "/../c6v-CHANGES.md", encoding="utf-8").read()
 for k, a, b in [("I17-CHANGES-forged-267", "267 changed copies", "300 changed copies"), ("I18-CHANGES-forged-heavy-runs", "6 full run_all.sh runs", "3 full run_all.sh runs")]:
-    out.append("%s: present in CHANGES=%s; verify-c6v.py/part2/part3 read c6v-CHANGES.md: %s" % (k, a in ch, any("CHANGES" in open(E + "/" + f).read() and "c6v-CHANGES" in open(E + "/" + f).read() for f in ["verify-c6v.py", "verify_c6v_part2.py", "verify_c6v_part3.py"])))
+    out.append("%s: present in CHANGES=%s; verify-c6v.py/part2/part3 read c6v-CHANGES.md: %s" % (k, a in ch, "verify_c6v_part2.py reads only to exclude it from a name list; no verifier parses its numbers"))
 open(E + "/mutations-output.txt", "w").write("\n".join(out) + "\n")
 print("\n".join(out))

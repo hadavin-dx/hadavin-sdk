@@ -1,0 +1,562 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Run started:2026-11-16 19:11:53.014367+00:00
+
+Test results:
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/patch_v19_main.py:59:11
+58	words = [ln for ln in lines0 if ln.startswith("Words such as reservation")][0]
+59	new0 = f"""## 0. What failed, what is uncertain, what was not run (read first)
+60	
+61	{words}
+62	
+63	0. **What v19 changes, what failed, what is uncertain (read first; failures and gaps first).** v18 failed two independent reviews (security: 0 blockers, 3 majors MA1 to MA3, 9 minors m1 to m9; readiness: 0 blockers, 4 majors Ma1 to Ma4, 8 minors) and the independent evidence run of v18 found one more hole the review had not named: a plain `CREATE VIEW` passed the v18 guard (1 of 30 spellings). Every finding, its fix, its place and its test: `v19-CHANGES.md` and `resolve-handoff-v19.md`; every question that is yours: `v19-OPEN-FOR-LEAD.md`.
+64	   - **(1) The v18 guard was not deny by default although the text said so (MA1).** A statement that matched none of its deny branches passed. I proved the security review's bypasses myself on a real 16.15 server, not only by reading: `SET "role"`, `SET session_authorization`, `SELECT set_config('role', ...)` change who the session is, a body calling `query_to_xml` runs a caller-chosen query as the function owner, and a `REVOKE`, `DROP FUNCTION`, `CREATE OR REPLACE FUNCTION` sequence leaves PUBLIC with `EXECUTE` (3 stated exploits and 20 identity or privilege checks in `pg_v19.py`, `raw/raw-pg-v19-run1.txt`). The v19 guard is a real allow-list (5.6 item 1(j)): 152 checks, 0 failed; of the 51 mutants new in v19 the v18 guard misses 49 and flags 2 (N35 and N49, flagged by v18 for a weaker reason: they differ in problem count, 3 against 1 and 2 against 1); the independent runner's 30 spellings are flagged 30 of 30 (the v18 guard misses the `CREATE VIEW`).
+65	   - **(2) Schema and case aliasing (MA2)** fixed in the same guard (N1) and in the start-up query (it now reads `proname`, not text parsed from `regprocedure`).
+66	   - **(3) The secret-check claims were overstated (MA3).** M3g, M3i and M3l pass because the agent's operating-system user READS the secret; nothing detects it today. Item 1(g2) now says so: the real protection is the operator keeping the agent on another OS user or container and setting the modes by hand; the planned detectors (a mode check on the file kind and an operator-side probe for the others) are text, and v18's plan that the agent asks for the secret once and discards it is withdrawn.
+67	   - **(4) Behaviour the runner observed, fixed in the held files (new hashes):** day `infinity`, `-infinity`, 1999-01-01 and 0001-01-01 were accepted (now a day window 2020-01-01 to 2099-12-31, `23514`); an amount of 0 created a 0 / 0 row (a reserve of 0 now writes nothing); agent names that differ by NFC or NFD form, leading or trailing blanks, a newline or tab were separate budgets (now refused); the DB-2 record missed the INSERT of a missing switch row (m1); a settle for a day that had no row lowered the month row (m2); `statement_timeout` was missing for the scan of the new checks (m7).
+68	   - **(5) Stated, not closed, with the reason (nothing here is a "known limitation" I chose to leave if I could fix it; each needs a design decision, the owner, or a person who runs something):** (a) the single runtime login can still settle a reservation under ANY agent name (cross-agent settle) and can reserve any amount below the 1,000,000,000,000 ceiling under any name and settle it back, so it can under-report; one login per agent (L-4) and the invoice comparison (7.3) are the controls; (b) agent ids that differ only in letter case or by an inner blank are separate budgets, and a hostile login can choose any name; (c) a settle with `actual` above `worst` (even `worst` 0, `actual` 5) raises a total: it can only over-report spend, and refusing it would lose a true cost; (d) row spam inside the day window: unlimited rows by name and day; (e) a DELETE of the switch row is not recorded: a missing row reads as ON, the safe direction; (f) the 60 s `statement_timeout` of the DB-3 file overrides a stricter value of the caller for that transaction; (g) the start-up query does not pin the function bodies (a hash of `prosrc` or `prosqlbody` would pin Postgres's own text, whose stability across 14, 16 and 17 I could not test: UNVERIFIED), and does not check that the runtime role is a member of any role other than the operator role beyond the rules in `secdef_audit_v19.py`; (h) the store must treat an empty result of `spend_reserve` or `spend_settle` as an error (T, L-2).
+69	   - **(6) Still NOT run:** any unit test of the product change (none is written), `bandit` of the change, CodeQL, Postgres 14 and 17.10 (only 16.15 exists here, L18), a Windows checkout, `gate4_v19.sh` (only its comparator `compare_gate4.py` ran, on four cases, `raw/raw-gate4-compare-v19.txt`), and the EGM skills (I cannot invoke them from the place I run; the lead runs the EGM steps).
+70	   - **(7) Every v19 check was run by the author (me).** No independent evidence runner has re-run v19; v18's independent run found the `CREATE VIEW` hole, so expect another hole until one has. The guard, the start-up query and the grants prototype are reference code in `evidence-handoff-v19/`, not product code.
+71	   - **(8) What is text only (T, product code not written):** the `function` kind of `GRANTS` and `PostgresStore.startup_checks` (the prototype `secdef_audit_v19.py` is tested, the product code is not), the store code L-2, the file-kind mode check `mode & 0o077` (prototype in `agent_probe_v19.py`; the product file kind `secrets_file.py` accepts mode 0440 by design), the pre-flight query of 5.6 item 1(e2) (SQL written, not run).
+72	   - **(9) Measured here, one machine, Postgres 16.15 only (all through `scram-sha-256` logins on a unix socket, made-up data, one scratch cluster at a time, removed afterwards):** `pg_v19.py` 120 safety checks, 24 controls (each fails on the old file) and 3 stated exploits, run twice with the same output apart from the timing line; the 175 v16 checks against the v19 files, run twice, 175 of 175 (one `ALLOWED` set edited for the new function, line 522 of the copy); `secdef_mutants_v19.py` 152 checks; `spell30_guard_v19.py` 30 of 30; `run_secrets_v19.sh` 12 of 12 plus a one-line pre-check when the OS user `nobody` cannot enter the folder (exit 3, `raw/raw-secrets-precheck-v19.txt`; the run before that pre-check wasted the runner's time). The cost of the DB-2 decrease trigger (not DB-1) was measured in v18: +0.05 to +0.08 ms per lowering of a total; not re-measured in v19 (the trigger text did not change).
+73	{item[1]}
+74	2. **What was run in v19, and what was not:** see item 0 (6) to (9) above and section 8; the older run lists (v16 item 2, v18 item 6) are history in `v19-CHANGES.md`.
+75	3. **Postgres behaviour: what is run and what is not (all 16.15).** Run: the held files apply through the real `store/migrate.py` as a non-superuser migration role; the runtime role is refused (`42501`) any direct write to the three tables once DB-3 is in; the functions behave as in 5.6 item 1(o); the lock, timeout and trigger behaviour of 5.6 items (i), (m), (n). Not run: Postgres 14 and 17.10, parallel load beyond the 400-call fuzz, a Windows checkout, the product tests. Details and raw files: section 8.
+76	{item[4]}
+77	{item[5]}
+78	6. **Why v12 to v18 failed:** history, moved to `v19-CHANGES.md` and the older `v1x-CHANGES.md` files (v19 removes it from this text so that no stale sentence can contradict a live one).
+79	7. **Code I read this pass** (opened by me unless marked "carried"): the five held files and the five product migrations of `store/migrations/` (guard input), `store/migrate.py` (grants), `app.py` lines 155 to 170 (the two `make(` calls: line 162 `make("llm"`, line 165 `make("detector"`; v18 gave three different ranges for them, readiness minor 3), `tests/test_no_reference_material.py` (the `BANNED` list, read at run time, never copied). **Carried, not re-opened in v19:** every other cite in this text is carried from v16 to v18 (the S-1 builder re-reads them, E0-S1-5).
+80	
+81	"""
+82	t = t[:i0] + new0 + t[i1:]
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/patch_v19_main.py:143:4
+142	t = t[:je] + (
+143	    "\n   **(e2) Pre-flight for DB-3 (security minor m7 of the v18 review: item (e) covers DB-1 only; UNVERIFIED text, not run).** DB-3's `usd` and `open_usd` checks are added without `NOT VALID`, so the file scans each table under an exclusive lock and one bad row aborts the whole file. Before the move the operator, as the migration role, reads: `SELECT agent_id, day, usd FROM spend WHERE usd < 0 OR usd >= 1000000000000 OR NOT (day >= DATE '2020-01-01' AND day < DATE '2100-01-01')` and the same on `spend_month` with `month`; a row it returns is repaired or reported by a person before the file is applied (the file itself never repairs a row). Two limits bound the file: `lock_timeout = 5s` bounds the wait for the lock; v19 adds `SET LOCAL statement_timeout = '60s'` (my number; the owner may change it) so that the scan cannot hold the lock for ever; the file then fails and rolls back." + t[je:])
+144	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/patch_v20_main.py:85:17
+84	# ---------------------------------------------------------------- the new subsection 5.6c, before 5.7
+85	five_six_c = f"""### 5.6c What v20 changed in the guard and in DB-3, and the specs the v19 review found missing (round 6)
+86	
+87	**1. The guard (`evidence-handoff-v20/secdef_guard_v20.py`; its docstring has the same list under "New in v20").** One tokenizer, as before; every item below was found by a reviewer or by the independent runner of v19, shown to work **on the real server (16.15)** in `pg_v20.py` (section "v20" of its output) and shown **missed by the v19 guard** (`secdef_mutants_v20.py`: {mut}).
+88	- **B1 (security blocker).** A `SECURITY DEFINER` function whose body is `RETURN <expression>` was never scanned. v20 scans the expression like any body, and refuses a definer whose head is not `BEGIN ATOMIC` or exactly one string or dollar-quoted body (a definer with nothing to scan is a problem, not a pass). Server proof: a `RETURN query_to_xml(...)` function handed the runtime login a row it cannot read directly.
+89	- **M1.** A call written as `%I.name(` inside an `EXECUTE` string is no longer skipped: the same call rules apply to the string. Server proof: a definer trigger ran a hidden call with the owner's rights.
+90	- **M2.** Triggers are pinned per file (`TRIGGER_PINS_BY_FILE` in `allow_v20.py`: ten in DB-2, four in `0002_audit_chain.sql`). `DROP TRIGGER` of an unpinned name, and any `CREATE OR REPLACE TRIGGER` whose text differs from the pin (for example `WHEN (false)`), are problems. Control K7 (a v19 check that passed by accident) is rewritten. Server proof: after `DROP TRIGGER IF EXISTS` a lowering wrote no record row; a `WHEN (false)` replacement did the same.
+91	- **M3.** `MERGE INTO`, `DELETE ... USING` and `TABLE x` inside an atomic body now count as touching the table they name. The server accepted all three.
+92	- **M4 and F1 (independent runner: 4 of 21 hostile replacement bodies of a listed function were clean).** Each listed definer has a **text fingerprint** (first 16 hex digits of sha256 over its tokens, `FN_PINS_BY_FILE`) and a **statement-kind pin** (`KINDS_BY_FILE`: for example `kill_switch_release` may contain only `UPDATE`; `DELETE`, `TRUNCATE`, `MERGE`, `COPY` and a `WITH` that writes are problems). A body that changes behaviour without changing tables (`... WHERE id = 1` instead of `... AND "on" = true`) now changes the fingerprint. **Why text and not a hash of the stored body (`pg_proc.prosrc`):** I did not test that the stored text is the same on 14, 16 and 17 (it should be, but I did not run it), so a catalog hash would be a claim without a run; the start-up query keeps checking the catalog for the properties that do not depend on text (owner, `SET search_path`, grants). **Cost, said plainly:** any edit of a pinned function, even a comment inside the body, needs the pin regenerated (`python -I -B chk.py` prints the new values) and a second independent review.
+93	- **m1 and F2.** Expressions inside the allowed shapes (`CHECK`, `DEFAULT`, `GENERATED ... AS`, index expressions, trigger `WHEN`) are read with the same call rules. Allowed calls are the dated list `CALLS_OK` plus `btrim`, `char_length`, `extract`. 5 of 91 spellings were clean before.
+94	- **m2.** `SET` is allowed after `UPDATE` only in the `SET column = ...` shape, decided by where the statement is, not by a position exemption.
+95	- **m3.** The tokenizer follows the server's own scanner: word characters include all non-ASCII characters, a dollar-quote tag may contain them, and the whitespace set is the server's. Compared with the server on six cases in `pg_v20.py` (m3 lines): the astral-character word and tag cases differed in v19 and agree now. **The form-feed and vertical-tab lines:** the server accepts form feed as a separator and **refuses** vertical tab (SQLSTATE 42601); my tokenizer treats both as separators, which is harmless (a file with a vertical tab cannot be applied anyway).
+96	- **Unit-test sentinel.** `PIN_ANY` switches one pin off in a test; `None` means nothing is pinned, so every listed item is a problem.
+97	
+98	**2. DB-3 text changes (held file hash in section 8).** (a) **Agent id (security minor m4):** the NFC and blank-edge rules are replaced by an ASCII allow-list, `CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{{0,199}}$')`, on both tables. Reason: `IS NFC NORMALIZED` needs a UTF8 server, and the v19 control-character rule depended on the database's locale. v19 accepted fullwidth letters, a zero-width space, a leading no-break space and a right-to-left override as separate budgets (independent runner, F5); v20 refuses all six with 23514. **This is my own choice of characters, not a lead answer: the lead must confirm that the real agent ids fit (hyphen, dot, colon, at, slash and plus are allowed; the pseudo agents of 5.1 item 5 start with `-` and are never written to this table).** Result on real databases: UTF8 with `C.utf8` and with `C` collation: plain id accepted and the U+0085 id refused in v19 and v20; LATIN1: **v19 refuses every id** (`IS NFC NORMALIZED` fails on a non-UTF8 database, 42601), v20 works; SQL_ASCII: the product's own `migrate()` stops with a `TypeError` before any held file (psycopg returns bytes for names), so a client on SQL_ASCII must be told. (b) **`NOT VALID` is removed** from the agent and day/month checks. `NOT VALID` checks every new version of an old row, so an old row that breaks the rule could never be settled again (shown on a real server in v20, control line m6); now the apply itself refuses (23514) and the whole transaction rolls back (nothing applied: shown). (c) `spend_settle`'s day update now also requires the month row to exist; v19 changed the day row and returned no row when the month row was missing (shown with a control).
+99	
+100	**3. Findings of the independent runner of v19 (F4, F5), as facts and tests.** **F5:** `spend_reserve` with amount 0, a negative number, `-Infinity` or `NULL` returns **no row and no error**; `spend_settle` with a negative worst or actual, `-Infinity` or `NULL` also returns no row. **The store code must treat an empty result as an error** (a refusal that is never booked), and the S-2b test list has a row for it (`E0-F5`, below). The day window is enforced at both ends (shown). **F4:** a runtime login can create a `TEMP` table named `spend` and a trigger or rule on it in its own session; the DB-3 functions still write the real table because their `search_path` is `pg_catalog, pg_temp` (temp last); that order is why the `SET search_path` rule of the guard (R2) is a safety rule, not a style rule. Both are tested in `pg_v20.py`.
+101	
+102	**4. Start-up check, product inputs (readiness major M4).** (a) **Where the list lives:** `src/hadavin_sdk/store/secdef.py` (new, S-2b), module constants `FUNCTION_POLICY` (name, argument types, owner role, whether it must be a definer, `SET search_path` value, who may execute) and `secdef_problems(connection, policy, roles)`; the prototype is `secdef_audit_v20.py`, which the builder copies, then renames nothing. (b) **Operator role name (L23):** config key `spend.operator_role` (a role name, no default; refused empty when DB-3 is applied). (c) **Owner role:** the role that owns the database (`pg_database.datdba`), read at start-up, never from config. (d) **Behaviour when no DB-2 or DB-3 function exists** (default today): the function checks pass vacuously and the output says so in one line (`no DB-2 or DB-3 function installed: nothing to check`); the L19 check still runs (5.6, L19). (e) It runs on the runtime connection and needs no table privilege (`pg_proc`, `pg_roles`, `aclexplode`).
+103	
+104	**5. `limits status --check` (readiness major M3).** Exit **0**: every check passes (or nothing is installed, said in one line). Exit **1**: at least one check fails; one line per check, `PASS name detail` or `FAIL name detail`, no secret and no agent id in a line. Exit **2**: it could not connect or the config is invalid (nothing was checked). Checks: the start-up check of item 4; the kill switch is not on for longer than `spend.kill_switch_alert_minutes` (default 60; my number, no source); the row counts of the two records against the L13 thresholds (1,000,000 rows or 400 days: warning only, exit 0, `WARN` line); the audit reader cannot write (a negative probe in a rolled-back transaction). **Volume (m5):** I measured it on 16.15 (`pg_v20.py`, m5 line): 1000 reserve and settle pairs with actual below the worst case wrote 2000 rows, 270,336 bytes, 135 bytes a row. **So every ordinary settle below its reservation writes two rows once DB-3 is applied: the decrease record is volume, not a tamper signal, and the thresholds above will be reached by volume alone at a few hundred thousand settles.** Default: keep the record as built and filter alerts to the kill-switch records and to decreases not made by `spend_settle`; the lead decides (L24, `v20-OPEN-FOR-LEAD.md`) between that and writing a decrease row only when the new total is lower than the old one (a change to DB-2, which needs a new review round).
+105	
+106	**6. DB-3 Grant function kind and the migrate keyword (readiness major M5).** `migrate()` gets one new keyword, `function_grants: Mapping[str, Sequence[str]] | None` (function signature to the roles that may execute it), applied after the files and in the same transaction through the one function `apply_function_grants` (prototype in `secdef_audit_v20.py`: `REVOKE ALL ... FROM PUBLIC`, then `GRANT EXECUTE` to exactly the listed roles, then a re-read of `pg_proc.proacl` that must equal the list, else the transaction fails). The runtime role gets `spend_reserve` and `spend_settle`; the operator role gets `kill_switch_engage` and `kill_switch_release`; nobody else. The store code (`PostgresStore`) calls the functions with `SELECT * FROM fn(...)` and treats an **empty result as a refusal** (item 3). The operator read path (how the operator sees the two records) is `limits status`, which uses the audit-reader login only; nothing else reads them. **What is still open here:** the L-2 store code (5.10b) is dated design only and has no spec beyond that section.
+107	
+108	**7. Cutover into DB-3 (security minor m6).** The migration runs inside one transaction (`migrate()` uses `db.transaction()` and an advisory lock; checked in `migrate.py`), so `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout` in the file take effect; **a runner that does not wrap each file in a transaction makes them do nothing (shown: the server only prints a notice)**. Procedure: (1) **drain**: stop the runtime or wait until no reservation is open (`open_usd` is 0 for every row) before applying; (2) before applying, run `SELECT agent_id FROM spend WHERE agent_id !~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{{0,199}}$'` and the same on `spend_month`; any row it lists must be fixed or removed by the owner, otherwise the apply stops with 23514 (shown on a real server) and **nothing is applied**; (3) apply; the new column `open_usd` starts at 0, so **a reservation made before the cutover is refused at its settle with 23514 and the total stays as booked (the safe direction: spend is never lowered by it)**; with nothing in flight, new reserves and settles work and the total is the old total plus the new amounts (shown); (4) **rollback:** before the commit, the transaction rolls back by itself on any error (shown for the agent-rule case); **after the commit there is no down file** and I did not write one: undoing DB-3 means a new reviewed file that drops the four functions and the two columns. That is stated here rather than built, because a down file for a money table needs its own review.
+109	
+110	**8. Hashes (readiness minor 5: v19 abbreviated two different files with similar prefixes).** Full values of the five held files are in section 8; in this section, short forms always carry the file name: DB-2 `spend_decrease_log.sql` `{hs.get('spend_decrease_log.sql', '?')[:16]}...` (unchanged from v19), DB-3 `spend_guarded_writes.sql` `{hs.get('spend_guarded_writes.sql', '?')[:16]}...` (changed in v20).
+111	
+112	"""
+113	rep("### 5.7 The guardrail call (paid, metered from S-2a)", five_six_c + "### 5.7 The guardrail call (paid, metered from S-2a)")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:77:43
+76	        k = DAY if key == "day" else MONTH
+77	        st = sqlstate(lambda: rt.execute(f"INSERT INTO {tbl} (agent_id, {key}, usd) VALUES (%s, %s, %s)", (f"h{v}", k, Decimal(v))))
+78	        check(f"A4 DEFAULT file: runtime role INSERT {v} into {tbl} -> {want or 'ACCEPTED (expected: the default lets it in)'}", st == want, str(st))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:126:44
+125	        k = DAY if key == "day" else MONTH
+126	        st = sqlstate(lambda: rtb.execute(f"INSERT INTO {tbl} (agent_id, {key}, usd) VALUES ('h', %s, %s)", (k, Decimal(v))))
+127	        check(f"B2 VARIANT: runtime role INSERT {v} into {tbl} -> 23514", st == "CheckViolation/23514", st)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:129:22
+128	    for v in ("-0.01", "NaN", "Infinity", "-Infinity"):
+129	        rtb.execute(f"INSERT INTO {tbl} (agent_id, {key}, usd) VALUES ('u', %s, 1)", (DAY if key == "day" else MONTH,)) if v == "-0.01" else None
+130	        st = sqlstate(lambda: rtb.execute(f"UPDATE {tbl} SET usd = %s WHERE agent_id = 'u'", (Decimal(v),)))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:130:44
+129	        rtb.execute(f"INSERT INTO {tbl} (agent_id, {key}, usd) VALUES ('u', %s, 1)", (DAY if key == "day" else MONTH,)) if v == "-0.01" else None
+130	        st = sqlstate(lambda: rtb.execute(f"UPDATE {tbl} SET usd = %s WHERE agent_id = 'u'", (Decimal(v),)))
+131	        check(f"B3 VARIANT: runtime role UPDATE to {v} on {tbl} -> 23514", st == "CheckViolation/23514", st)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:485:7
+484	st = sqlstate(lambda: rm_.execute("DELETE FROM kill_switch"))
+485	info(f"M4 INFO runtime role DELETE FROM kill_switch -> {st} (if allowed, a delete-and-reinsert is a state change the update trigger does not see)")
+486	rtm = connect(dsn("rtr_v16", "exp_m"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v16_regress.py:541:48
+540	mutants["spend_log_decrease: bare table (no %I)"] = base.replace("%I.spend_decrease_log", "spend_decrease_log")
+541	mutants["undeclared SECURITY DEFINER"] = base + "\nCREATE OR REPLACE FUNCTION sneaky() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$;\nREVOKE ALL ON FUNCTION sneaky() FROM PUBLIC;\n"
+542	for label, text in mutants.items():
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v18.py:172:12
+171	for t in ("spend", "spend_month", "kill_switch"):
+172	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+173	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v18.py:172:85
+171	for t in ("spend", "spend_month", "kill_switch"):
+172	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+173	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v19.py:177:12
+176	for t in ("spend", "spend_month", "kill_switch"):
+177	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+178	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v19.py:177:85
+176	for t in ("spend", "spend_month", "kill_switch"):
+177	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+178	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v20.py:180:12
+179	for t in ("spend", "spend_month", "kill_switch"):
+180	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+181	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v20.py:180:85
+179	for t in ("spend", "spend_month", "kill_switch"):
+180	    check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
+181	    check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/pg_v20.py:440:12
+439	    mgb.execute("CREATE FUNCTION public.evil_fn(int) RETURNS int LANGUAGE sql AS $f$ INSERT INTO public.secret_t VALUES ('written-by-definer') RETURNING 1 $f$")
+440	    M1F = f"CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SPX} AS $f$ BEGIN EXECUTE format('SELECT %I.evil_fn($1)', TG_TABLE_SCHEMA) USING NEW.a; RETURN NULL; END $f$;\nREVOKE ALL ON FUNCTION spend_log_decrease() FROM PUBLIC;\n"
+441	    mgb.execute(M1F.split("\nREVOKE")[0].replace("spend_log_decrease", "m1_trig")); mgb.execute("CREATE TRIGGER m1_t AFTER UPDATE ON public.tt FOR EACH ROW EXECUTE FUNCTION m1_trig()")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_guard_v19.py:253:29
+252	        if _is(tk, "SET") and not any(_is(x, "UPDATE") for x in toks[max(0, k - 4):k]):
+253	            out.append(f"{fn} body has a SET that is not part of an UPDATE (SET ROLE, SET \"role\", SET session_authorization or SET search_path)")
+254	        if _is(tk, "DO") and not (k + 1 < len(toks) and _is(toks[k + 1], "UPDATE", "NOTHING")): out.append(f"{fn} body has a DO block")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_guard_v20.py:307:29
+306	        if _is(tk, "SET") and not _set_follows_update(toks, k):
+307	            out.append(f"{fn} body has a SET that is not part of an UPDATE (SET ROLE, SET \"role\", SET session_authorization or SET search_path)")
+308	        if _is(tk, "DO") and not (k + 1 < len(toks) and _is(toks[k + 1], "UPDATE", "NOTHING")): out.append(f"{fn} body has a DO block")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:17:12
+16	def fn(name="evil", args="", hdr=f"LANGUAGE sql SECURITY DEFINER {SP}", body="AS $f$ SELECT 1 $f$"): return f"CREATE OR REPLACE FUNCTION {name}({args}) RETURNS int {hdr} {body};\n"
+17	RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, numeric")
+18	# (name, file, text, allowed-for-v18, expected: "flag" or "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:23:32
+22	add("S01 attributes after the body", "CREATE OR REPLACE FUNCTION evil() RETURNS trigger AS $f$ BEGIN RETURN NULL; END $f$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog;\n" + rev("evil"))
+23	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+24	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:24:57
+23	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+24	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+25	add("S04 schema-qualified name not on the list", fn("public.evil") + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:39:59
+38	add("S15 GRANT EXECUTE to PUBLIC after the REVOKE", TRIG() + "GRANT EXECUTE ON FUNCTION spend_log_decrease() TO PUBLIC;\n", DB2A, DB2)
+39	add("S16 lower-case token, name in a quoted identifier", f"create or replace function \"evil\"() returns int language sql security definer {SP} as $f$ select 1 $f$;\nrevoke all on function evil() from public;\n")
+40	add("S17 token in a function that is not OR REPLACE", f"CREATE FUNCTION evil() RETURNS int LANGUAGE sql SECURITY DEFINER {SP} AS $f$ SELECT 1 $f$;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:43:47
+42	add("S19 bare UPDATE ONLY in a dollar body", TRIG("BEGIN UPDATE ONLY spend SET usd = 0; RETURN NULL; END"), DB2A, DB2)
+43	add("S20 DB-3 style body without search_path", "CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER BEGIN ATOMIC UPDATE kill_switch SET \"on\" = true; END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3)
+44	# ---- MA1 spelling A: double-quoted names that look like comments
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:82:6
+81	# controls: must be clean
+82	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+83	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:82:114
+81	# controls: must be clean
+82	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+83	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:85:77
+84	add("K2 control: token only in a comment and in a string", "-- SECURITY DEFINER in a comment\nSELECT 'SECURITY DEFINER';\n", {}, "x.sql", "clean")
+85	add("K3 control: an atomic body with CASE ... END and a second statement", f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE kill_switch SET \"on\" = CASE WHEN true THEN true ELSE false END; UPDATE kill_switch SET ts = now(); END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3, "clean")
+86	add("K4 control: a listed invoker function (the DB-2 audit trigger)", "CREATE OR REPLACE FUNCTION audit_log_append_only() RETURNS trigger LANGUAGE plpgsql " + SP + " AS $f$ BEGIN RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = '42501'; END $f$;\n", ALLOWED_BY_FILE[DB2], DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v18.py:104:6
+103	# parser tests (a statement count that v17 gets wrong)
+104	T = f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE k SET a = CASE WHEN true THEN 1 ELSE 2 END; UPDATE k SET b = 1; END;\nSELECT 1;\n"
+105	n17 = len(g17.statements(g17.strip_comments(T))); n18 = len(g18.split_statements(g18.tokenize(T)))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:17:12
+16	def fn(name="evil", args="", hdr=f"LANGUAGE sql SECURITY DEFINER {SP}", body="AS $f$ SELECT 1 $f$"): return f"CREATE OR REPLACE FUNCTION {name}({args}) RETURNS int {hdr} {body};\n"
+17	RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, numeric")
+18	# (name, file, text, allowed-for-v18, expected: "flag" or "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:23:32
+22	add("S01 attributes after the body", "CREATE OR REPLACE FUNCTION evil() RETURNS trigger AS $f$ BEGIN RETURN NULL; END $f$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog;\n" + rev("evil"))
+23	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+24	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:24:57
+23	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+24	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+25	add("S04 schema-qualified name not on the list", fn("public.evil") + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:39:59
+38	add("S15 GRANT EXECUTE to PUBLIC after the REVOKE", TRIG() + "GRANT EXECUTE ON FUNCTION spend_log_decrease() TO PUBLIC;\n", DB2A, DB2)
+39	add("S16 lower-case token, name in a quoted identifier", f"create or replace function \"evil\"() returns int language sql security definer {SP} as $f$ select 1 $f$;\nrevoke all on function evil() from public;\n")
+40	add("S17 token in a function that is not OR REPLACE", f"CREATE FUNCTION evil() RETURNS int LANGUAGE sql SECURITY DEFINER {SP} AS $f$ SELECT 1 $f$;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:43:47
+42	add("S19 bare UPDATE ONLY in a dollar body", TRIG("BEGIN UPDATE ONLY spend SET usd = 0; RETURN NULL; END"), DB2A, DB2)
+43	add("S20 DB-3 style body without search_path", "CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER BEGIN ATOMIC UPDATE kill_switch SET \"on\" = true; END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3)
+44	# ---- MA1 spelling A: double-quoted names that look like comments
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:82:6
+81	# controls: must be clean
+82	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+83	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:82:114
+81	# controls: must be clean
+82	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+83	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:85:77
+84	add("K2 control: token only in a comment and in a string (v19: a COMMENT ON, because a bare SELECT is now refused)", "-- SECURITY DEFINER in a comment\nCOMMENT ON TABLE t IS 'SECURITY DEFINER';\n", {}, "x.sql", "clean")
+85	add("K3 control: an atomic body with CASE ... END and a second statement", f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE kill_switch SET \"on\" = CASE WHEN true THEN true ELSE false END; UPDATE kill_switch SET ts = now(); END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3, "clean")
+86	add("K4 control: a listed invoker function (the DB-2 audit trigger)", "CREATE OR REPLACE FUNCTION audit_log_append_only() RETURNS trigger LANGUAGE plpgsql " + SP + " AS $f$ BEGIN RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = '42501'; END $f$;\n", ALLOWED_BY_FILE[DB2], DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v19.py:177:6
+176	# parser tests (a statement count that v17 gets wrong)
+177	T = f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE k SET a = CASE WHEN true THEN 1 ELSE 2 END; UPDATE k SET b = 1; END;\nSELECT 1;\n"
+178	n17 = len(g17.statements(g17.strip_comments(T))); n18 = len(g19.split_statements(g19.tokenize(T)))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:19:12
+18	def fn(name="evil", args="", hdr=f"LANGUAGE sql SECURITY DEFINER {SP}", body="AS $f$ SELECT 1 $f$"): return f"CREATE OR REPLACE FUNCTION {name}({args}) RETURNS int {hdr} {body};\n"
+19	RESERVE = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE spend SET usd = usd + p_worst WHERE agent_id = p_agent; END;\n" + rev("spend_reserve", "text, date, numeric")
+20	# (name, file, text, allowed-for-v18, expected: "flag" or "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:28:32
+27	add("S01 attributes after the body", "CREATE OR REPLACE FUNCTION evil() RETURNS trigger AS $f$ BEGIN RETURN NULL; END $f$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog;\n" + rev("evil"))
+28	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+29	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:29:57
+28	add("S02 single-quoted body", f"CREATE OR REPLACE FUNCTION evil() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SP} AS 'BEGIN INSERT INTO t VALUES (1); RETURN NULL; END';\n" + rev("evil"))
+29	add("S03 BEGIN ATOMIC body, function not on the list", f"CREATE OR REPLACE FUNCTION evil() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE t SET a = 1; END;\n" + rev("evil"))
+30	add("S04 schema-qualified name not on the list", fn("public.evil") + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:44:59
+43	add("S15 GRANT EXECUTE to PUBLIC after the REVOKE", TRIG() + "GRANT EXECUTE ON FUNCTION spend_log_decrease() TO PUBLIC;\n", DB2A, DB2)
+44	add("S16 lower-case token, name in a quoted identifier", f"create or replace function \"evil\"() returns int language sql security definer {SP} as $f$ select 1 $f$;\nrevoke all on function evil() from public;\n")
+45	add("S17 token in a function that is not OR REPLACE", f"CREATE FUNCTION evil() RETURNS int LANGUAGE sql SECURITY DEFINER {SP} AS $f$ SELECT 1 $f$;\n" + rev("evil"))
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:48:47
+47	add("S19 bare UPDATE ONLY in a dollar body", TRIG("BEGIN UPDATE ONLY spend SET usd = 0; RETURN NULL; END"), DB2A, DB2)
+48	add("S20 DB-3 style body without search_path", "CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER BEGIN ATOMIC UPDATE kill_switch SET \"on\" = true; END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3)
+49	# ---- MA1 spelling A: double-quoted names that look like comments
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:87:6
+86	# controls: must be clean
+87	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+88	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:87:114
+86	# controls: must be clean
+87	OKD = "CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER " + SP + " AS $f$ BEGIN EXECUTE format('INSERT INTO %I.spend_decrease_log VALUES (1)', TG_TABLE_SCHEMA) USING OLD.usd; RETURN NULL; END $f$;\n" + rev("spend_log_decrease")
+88	add("K1 control: a correct listed function", OKD, DB2A, DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:90:77
+89	add("K2 control: token only in a comment and in a string (v19: a COMMENT ON, because a bare SELECT is now refused)", "-- SECURITY DEFINER in a comment\nCOMMENT ON TABLE t IS 'SECURITY DEFINER';\n", {}, "x.sql", "clean")
+90	add("K3 control: an atomic body with CASE ... END and a second statement", f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE kill_switch SET \"on\" = CASE WHEN true THEN true ELSE false END; UPDATE kill_switch SET ts = now(); END;\n" + rev("kill_switch_engage"), {ENG: "definer"}, DB3, "clean")
+91	add("K4 control: a listed invoker function (the DB-2 audit trigger)", "CREATE OR REPLACE FUNCTION audit_log_append_only() RETURNS trigger LANGUAGE plpgsql " + SP + " AS $f$ BEGIN RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = '42501'; END $f$;\n", ALLOWED_BY_FILE[DB2], DB2, "clean")
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:172:65
+171	add20("V02 definer RETURN expression calls set_config", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS text LANGUAGE sql SECURITY DEFINER {SP} RETURN set_config('role', 'postgres', true);\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+172	add20("V03 definer RETURN expression reads an unpinned table", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS text LANGUAGE sql SECURITY DEFINER {SP} RETURN (SELECT rolpassword FROM pg_authid LIMIT 1);\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+173	add20("V04 definer with no body at all (neither ATOMIC, RETURN nor one string)", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER {SP};\n" + rev("kill_switch_release"), {REL: "definer"}, DB3)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:204:88
+203	add20("V29 release body TRUNCATE spend (runner R15; the server refuses it)", RELF("TRUNCATE spend;"), {REL: "definer"}, DB3, opts=KIND_REL)
+204	add20("V30 release with the LEAKPROOF attribute (runner R10; the server refuses it)", f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER LEAKPROOF {SP} BEGIN ATOMIC UPDATE kill_switch SET \"on\" = false; END;\n" + rev("kill_switch_release"), {REL: "definer"}, DB3, opts=KIND_REL)
+205	add20("V31 control: release body UPDATE only", RELF("UPDATE kill_switch SET \"on\" = false WHERE id = 1;"), {REL: "definer"}, DB3, "clean", opts=KIND_REL)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/secdef_mutants_v20.py:256:6
+255	    print(("PASS " if good else "FAIL ") + f"{n}: v20 flags={len(p20)} ; v19 flags={len(p19)} ; v18 flags={len(p18)} ; v17 flags={len(p17)} ; v16 flags={len(p16)}" + ("  (v19 MISSES it)" if miss19 and n in NEWMUT20 else "") + ("  (v18 MISSES it)" if miss18 else "") + (f"  [{p20[0][:100]}]" if p20 and not good else ""))
+256	T = f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS void LANGUAGE sql SECURITY DEFINER {SP} BEGIN ATOMIC UPDATE k SET a = CASE WHEN true THEN 1 ELSE 2 END; UPDATE k SET b = 1; END;\nSELECT 1;\n"
+257	n20 = len(g20.split_statements(g20.tokenize(T)))
+
+--------------------------------------------------
+>> Issue: [B102:exec_used] Use of exec detected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b102_exec_used.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/spell30_guard_v19.py:9:24
+8	import types; sys.modules.setdefault("psycopg", types.ModuleType("psycopg"))  # the runner file imports it; this guard-only run never connects
+9	ns = {"__name__": "x"}; exec(compile(src, "runner", "exec"), ns)
+10	import secdef_guard_v19 as g19
+
+--------------------------------------------------
+>> Issue: [B102:exec_used] Use of exec detected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b102_exec_used.html
+   Location: ./handover/core-hardening/audit-r460/evidence-handoff-v20/spell30_guard_v20.py:9:24
+8	import types; sys.modules.setdefault("psycopg", types.ModuleType("psycopg"))  # the runner file imports it; this guard-only run never connects
+9	ns = {"__name__": "x"}; exec(compile(src, "runner", "exec"), ns)
+10	import secdef_guard_v20 as g19
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 4479
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 10
+		Medium: 49
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 40
+		Medium: 7
+		High: 12
+Files skipped (0):
+rc=1

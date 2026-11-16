@@ -1,0 +1,6 @@
+$ sh gen-guide-v9.sh --check
+CHECK OK: guide matches script (selftest=2019 canary=1982 sha256=94ecb20fb96aa2184c2841e8e23a0a7f3207ca01ab7fb7f75792458b8e26d70e)
+rc=0
+$ (script copy with SELFTEST_PLANNED=2020)
+CHECK FAIL: guide and script disagree (script says selftest=2020 canary=1982 sha256=43d41147c59233ba9c2938298c48a17c54a112d0841e75307a98705205117d1c)
+rc=1

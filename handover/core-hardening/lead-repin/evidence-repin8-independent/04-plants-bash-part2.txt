@@ -5,3 +5,6 @@ m24 [bash]: KILLED-phase1 exit=1 fail_lines=3 SELF-TEST: passed=1598 failed=3 (t
 n01 [bash]: KILLED-phase1 exit=1 fail_lines=13 SELF-TEST: passed=1588 failed=13 (the made-up input and output files were deleted) (3s)
 n02 [bash]: KILLED-phase1 exit=1 fail_lines=2 SELF-TEST: passed=1599 failed=2 (the made-up input and output files were deleted) (3s)
 n03 [bash]: KILLED-phase1 exit=1 fail_lines=8 SELF-TEST: passed=1593 failed=8 (the made-up input and output files were deleted) (3s)
+n04 [bash]: KILLED-phase1 exit=1 fail_lines=66 SELF-TEST: passed=1535 failed=66 (the made-up input and output files were deleted) (3s)
+n05 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a failing stage of the masking filter must stop --mask with exit 4 (helper=0, exit=0)'] (89s)
+n06 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (93s)

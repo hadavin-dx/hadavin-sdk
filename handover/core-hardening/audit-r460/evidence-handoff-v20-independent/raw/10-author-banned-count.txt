@@ -1,0 +1,2 @@
+files scanned 100; strings checked 10; hits 0
+rc=0
