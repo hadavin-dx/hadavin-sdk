@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T16:53Z
+UPDATED_UTC: 2026-11-16T17:34Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -50,7 +50,7 @@ INTERRUPTED: none
 
 ## AGENTS
 (none running)
-EMPTY SLOTS: 8. Reason: all ten held pages, my eight pages and the v4.3 patch carry batch 3; one fresh read each already done; the rest needs lead or owner facts (work/LEAD-NOTICE-batch-3.md) and the corrected sentence needs the lead's re-smoke; the cap bars another read.
+EMPTY SLOTS: 8. Reason: the 17:33Z r37 rows were a single edit to one capped page and are done by me; all other pages have had their one read; what is left needs lead or owner facts (work/LEAD-NOTICE-batch-3.md items 1-12) or lanes A and C to finish (r37 rows stay PENDING). No independent work for a free agent exists; I will refill when the lead adds rows or says final.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
