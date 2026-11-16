@@ -1,18 +1,18 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T09:55:50Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:05:00Z (IST = UTC+5:30)
 SESSION: system-map
-ORDER: 017-021 on top of 016; queue M10-M16
+ORDER: 017-021; lead DECISIONS 10:02Z (video is real-v5 only) read, being applied
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 8 (ListAgents, target 8 to 10, ORDER 021): adversarial take-day reader; citation checker of the lead pages; security read of cards and S9; builder for tools fixes (R460 items A1 to A5, B1 to B4); facts check of APPLIED-S9; evidence runner of cheap checks (patch dry-run, JSON load, grep of env names, other sessions status); readiness read for the rehearsal and fill script; naive new-lead read of README, TAKE-BLOCKERS, QUESTIONS
+AGENTS_RUNNING: 7 (ListAgents; target 8 to 10, refilling): security round 2 of cards; naive new-lead read round 2; result review of tools commit a3673f10e; zoom-out on what the real-v5-only decision makes wrong; adversarial reader (one-action-per-line split); readiness of fill-script row; cite check of cards against v5; what-not-checked ranked list (8th lane starts after this beat)
 INTERRUPTED: none
-NEXT: collect the 8 reports, fix Blockers and Majors (round 2 is the last outside security); apply the necessity finding only after the take (merge README, QUESTIONS and LEAD-PAGE into TAKE-BLOCKERS is a proposal for the lead); put the S9 design findings into the S9 rows; lead decides QUESTIONS items 6, 6a, 7, 8
-CAPACITY: 4 cores, load 0.12 (agents are model-bound, cores stay low; no heavy test queued), memory 0 of 15 GB used (free -g), disk 38 percent used; heavy slots 0 of 3
+NEXT: apply decisions (film-v5 out: row 3 decided, row 4 and the flow-set switch vanish; S9-1 and S9-4 deferred; S9-2 keeps the owner compare with the honest sentence; v3 archived); revert OWNER-VIEW row 1 wording on S9-2; split card steps into one action per line; check the open point 'take identity read-only vs end deletes contacts' with the lead; collect the 7 reports
+CAPACITY: 4 cores, load 0.03 (agents are model-bound), memory 0 of 15 GB used (free -g), disk 38 percent used; heavy slots 0 of 3
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T09:55:50Z
+PUSHED_UTC: 2026-11-16T10:05:00Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
