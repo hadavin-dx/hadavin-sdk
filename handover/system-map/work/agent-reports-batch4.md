@@ -2219,3 +2219,7 @@ CLASS NOTE 1843: digests 1830-1842 (13 readers) again found the same classes on 
 1897 | work/L2.md 1-120 (ad1abe699b14ab655): 3 Blockers (terms defined 2-3 times differently; PARTIAL heading not a status word; page purpose unclear) + 3 Majors (duplicate notes rows 41-120). TO FIX: one KEY, line 24 'Result: 1 file NOT-READ'.
 1898 | work/L4.md 1-120 (af10d179867825a15): 1 Blocker (SKIMMED means 3 things; 1659 vs 97 rows) + 4 Majors (findings table location; unlinked refs; run sheet path). TO FIX: define SKIMMED once in KEY.
 1899 | work/BRIEF-EVIDENCE-2.md (a33487e7ff07dae72): 2 Blockers (which preamble rules still apply; filter vs tools conflict) + 5 Majors (STEP 0 heading, /tmp write, report format). TO FIX: one ordered procedure.
+1900 | work/L1.md 1-120 (a1e0e7ec137bf34c7): 1 Blocker (counts cannot be checked in range) + 4 Majors (old status labels vs key; DECISION cite; job keys no column; no 'on the take path' column). TO FIX: KEY sentence 'PARTIAL = NOT-READ with note partly read'.
+1901 | work/L3.md 1-120 (a8542dc2103b369f4): 1 Blocker (L3's task, brief and allowance undefined) + 6 Majors (old status labels; Checkpoint undefined; patch chain family; cells cut length). TO FIX: one task line.
+1902 | work/BRIEF-EVIDENCE-1.md (a1d91591410eddad8): 0 Blockers + 4 Majors (path base; override rules list; listed argument skips whole command; delete 'page shows only tail'). TO FIX.
+1903 | work/L5.md (a689ab88ec31f877a): REVIEW INCOMPLETE. MY SLIP: I named a file that does not exist (pages are L5a, L5b, L5ac). No finding. Relaunched on L5a, L5b, L5ac.
