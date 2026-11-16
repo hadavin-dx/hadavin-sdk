@@ -808,3 +808,24 @@ MAIN RETURNED NORMALLY (exit 0 stands)
 safety-tests.sh: line 69: 21461 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 control run: RESTORE FAILED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.control.json is not valid JSON: refused (remove it by hand); its 
   PASS: T93a a planted marker AND a control marker that is not valid JSON: the planted file IS restored (r7: refused, still planted), planted marker cleared, exit 3 (got 3), control marker KEPT
+safety-tests.sh: line 69: 25089 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.control.json cannot be opened safely (Too many levels of symbolic lin
+  PASS: T93b the control marker is a symbolic link: the planted file IS restored, exit 3 (got 3), link kept
+safety-tests.sh: line 69: 28593 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.control.json is not for this root: refused; its test group may st
+  PASS: T93c the control marker names another root: the planted file IS restored, exit 3 (got 3), control marker kept
+safety-tests.sh: line 1331: 31829 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+could NOT stop test group 31887 (Operation not permitted): file restored anyway; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; hash matches saved original: True; the test group may S
+  PASS: T93d an orphaned test group that cannot be stopped: the file is restored, but exit 3 (got 3; r7: 0 and the marker cleared), marker and backup KEPT, text says the group may still run (orphan alive=1)
+  PASS: T93e the next --restore (nothing in the way) stops the orphan and clears the state: exit 0 (got 0), orphan gone
+== T94 (review r7 M1, sibling in a normal run) the restore at the end of a mutant fails with a bug that is no refusal: exit 3, file left planted, marker kept (r7: exit 2 'INTERNAL ERROR')
+baseline 0 1 passed in 0.01s
+RESTORE ERROR: an internal bug while writing the original back
+RESTORE FAILED m1 (marker and backup kept; run --restore)
+  PASS: T94 normal run, restore_target raises RuntimeError: exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T94 genuine restore afterwards
+== T95 (lead's four findings from the independent r7 run) (a) output that cannot be written, (b) a 200000-deep JSON, (c) a link left in place of the file, (d) forged marker with a swapped backup
+  PASS: T95a standard output is /dev/full (every write fails): the run ends with the tool's own code 0 (got 0; r7: 1), file restored, state empty, raw summary written
+  PASS: T95a2 standard output AND error closed: exit 0 (got 0), file restored, state empty
+REFUSED: --list /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/deep.json cannot be read as a JSON list (ValueError: nested too deeply): refused
+  PASS: T95b a mutants file nested 200000 deep: clean refusal exit 2 (got 2), REFUSED text, no INTERNAL ERROR, no Traceback, short output (1 lines; r7: INTERNAL ERROR with a traceback)
