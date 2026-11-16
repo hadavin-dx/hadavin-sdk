@@ -1150,3 +1150,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 843 FINAL-CROSSCHECK r16: nine stacked. PARTLY FIXED by status block.
 - 844 banned-claims r9: five winners. FIXED by status block.
 - 845 L5ac r9: eight glossaries. FIXED by single glossary; FD-001 table TO DO.
+- 846 BRIEF-LANE r16: eleven stacked overrides. FIXED by FINAL RULES block.
+- 847 L4c r11: nine stacked, stale counts. FIXED by CURRENT STATE; row markers TO DO.

@@ -1,3 +1,5 @@
+FINAL RULES (16 Nov 2026), the only live rules; lines 29-53 are history. The launch message's first line must be `LANE: <name>; FILE: <path>`, otherwise reply 'no LANE line' and stop. Scope = the Coverage table in your lane file; the launch message supplies it if the lane file lacks it. Write OUT-OF-SCOPE: <name> for film-v5 (scenes 5-11), group L and the roles proposal. Write NOT VISIBLE only for files missing from the checkout. Cite no R-numbers. Terms: lane = one read-only audit slice; take = the filmed run; EGM = the studio's review method; the lead = the Claude session; real-v5 = the version-5 n8n flows and steps files for scenes 1-4.
+
 STUDIO-PREAMBLE v1
 You are working for Hadavin (solo AI studio, owner the owner). These rules bind you; the studio folder is <studio>/.
 1. READ FIRST, DO NOT ANSWER FROM HABIT: Grep <studio>/bible\RULES.md and the matching bible\topics\NN-*.md for your subject and cite the R-numbers you used in your report. Check handoff\SESSION-HANDOFF.md and the memory index (memory\MEMORY.md) when the task touches decisions, money, clients or publishing.

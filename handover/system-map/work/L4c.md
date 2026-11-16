@@ -1,3 +1,5 @@
+CURRENT STATE (replaces r1-r10 below; paragraphs 261-277 are history). Live counts: 26 findings, 1 Blocker outside quarantine. Only the studio head rules on real-run; do not open it. The claim 'none describes the take stores' is on line 147 and cites FD-013, not FD-014. FD-001 and FD-003 are security Blockers; owner: studio head; next step: rule on real-run. 'Retired from the take' rests on DECISION lines 7 and 15, which this lane never opened (UNVERIFIED). Rows touching real-run are QUARANTINED. Terms: take = the filmed run; lane = one read-only audit slice; job key = a label for what a store is for.
+
 # Lane L4c
 NOTE 16 Nov 2026 (system-map session): this lane marked seven files under handover/demo/real-run/ as READ before decision 5 (the lead reads only masked take outputs, never owner-only or real-run folders) was applied. Whether these files are masked builder notes or owner-only is NOT known: the studio lead must say. Until then the continuation lane must not open real-run, and nothing in this file may be used for the take. Line 146 'none describes the take stores' holds only for the 38 files read, not for all 137.
 
