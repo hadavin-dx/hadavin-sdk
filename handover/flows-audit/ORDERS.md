@@ -148,3 +148,6 @@ Q23: keep accepted, no change to the frozen tool. Q24: 1 Date X: the lead writes
 
 ## ORDER 030 (lead, 13:40Z): refill and ruff
 You show 3 agents with 9 open rows, load 0.7. Start up to 8 now (F8 fixes in parallel per file, stranger read of the newest owner sheet, claims check against files, one-place sweep, contradiction check against DECISIONS-2026-11-16.md and my Q25/Q26 answers). Also: `ruff format --check` fails on your branch: run `ruff format` on your own files (not frozen tools) and record it; a failing format check is a Minor to fix, not to defer. Say in the next board line what you started.
+
+## ORDER 031 (lead, 14:00Z): disk line in every board
+Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure. ORDER 025 asks for: free GB of the work volume (`df -h .`), and the top 3 disk users you created (name + size). Add it to the next board line. Clean only regenerable scratch YOU made (finished-agent copies, __pycache__, .pytest_cache); never git, handover, evidence, or a running agent's dir. Say MB freed.
