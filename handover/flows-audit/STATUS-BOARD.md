@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:18:47Z
+UPDATED_UTC: 2026-11-16T19:25:04Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: 8.74 load of 4 cores, mem 1/15 GB, RAM 1219/16087 MB, disk 9.9G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 14G /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 5
+CAPACITY: 2.47 load of 4 cores, mem 1/15 GB, RAM 1271/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 8 of 8 slots used; disk 9.9G free (75%), above the 6G stop line
-PUSHED_UTC: 2026-11-16T19:18:47Z
+NEXT: see next5; disk and load order done (freed 8774 MB)
+PUSHED_UTC: 2026-11-16T19:25:04Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,21 +30,19 @@ PUSHED_UTC: 2026-11-16T19:18:47Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| aabf71c4 | evidence runner | sonnet | F8 r12 raw tests, new and old code (detached driver, on raw test since 19:10Z) | 19:09Z | about 19:55Z | running | stop test 25 of 25 saved; rest pending |
-| aa90da17 | fixer | sonnet | patch-copies README+DMC r21 fixer (uncapped) | 19:13Z | about 20:10Z | running | not yet |
-| a6bfb5b2 | fixer | sonnet | FINDINGS/LEDGER r29 fixer | 19:13Z | about 20:10Z | running | not yet |
-| ae6c4e98 | fixer | sonnet | RW/CT r43 fixer | 19:13Z | about 20:10Z | running | not yet |
-| aaf323f0 | reader | sonnet | TAKE-CHECKLIST 114-400 stranger read (snapshot) | 19:15Z | about 19:30Z | running | not yet |
-| ae00e37f | reader | sonnet | RUNBOOK 215-428 stranger read (snapshot) | 19:17Z | about 19:30Z | running | not yet |
-| a6c8a710 | reader | sonnet | REVIEW.md 133-332 stranger read (uncapped) | 19:18Z | about 19:35Z | running | not yet |
-| a0e35a22 | reader | sonnet | Q31 557-640 stranger read | 19:18Z | about 19:35Z | running | not yet |
+| ad8cc2b7 | fixer | sonnet | plan-files r41 (RUNBOOK, TAKE-CHECKLIST, FIX-PLAN) | 19:25Z | +60 min | working | - |
+| a07d45a1 | fixer | sonnet | Q31 r36 (QUESTIONS from line 420) | 19:25Z | +60 min | working | - |
+| a0cab3b9 | fixer | sonnet | FINDINGS/LEDGER r30 | 19:25Z | +60 min | working | - |
+| ae9180af | fixer | sonnet | REVIEW.md r47 (uncapped) | 19:25Z | +60 min | working | - |
+| aabf71c4 | evidence runner | sonnet | F8 r12 evidence (heavy; only heavy job) | 19:10Z | ~19:50Z | working | raw test run in progress |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 verify each fixer on hand-back with own commands (counts, checkers, ruff, sha, md5 clock block)
-2 one plan-files fixer for RUNBOOK/TAKE-CHECKLIST/FIX-PLAN after readers r41a/b and TAKE-CHECKLIST report
-3 one uncapped F8 fixer after the evidence driver finishes (reports saved: design r12, codebase r12)
-4 readers: REVIEW.md 408-451, 459-550, 580-884; Q31 641-805
-5 drift-007 r3 refresh and trigger-word grep before FINAL
+1 REVIEW.md readers 408-451, 459-550, 580-884 (after r47 fixer)
+2 Q31 reader lines 641-805
+3 RUNBOOK reader 1-214 and 233-428
+4 F8 fixer after evidence, then fresh reviewers
+5 verify r43/r21 outputs by fresh reviewers; drift-007 r3
+DISK 19G free (was 9.9G, freed 8774 MB). Top 5 users: scratchpad pc21 1455MB, six /tmp/tmp.* clones ~2.9G (not yet checked), /root/.claude 888MB, repo 773MB, p20 218MB. Load 3.6, heavy jobs 1 of 3.
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
