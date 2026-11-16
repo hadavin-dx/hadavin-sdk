@@ -9,7 +9,7 @@ Agents running: 6 language-model agents (sonnet builders, see register), 0 scrip
 | L2a (ab8d57b118be6e605) | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | reported, door URL + demo-clean spot-checked | checkpoint |
 | L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | reported, spot-checked (SetCrmId grep, check_names PASS) | checkpoint |
 | L2b-2 (a00b41f23f1263f79) | film family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
-| L2b-3 (a5f74ac38268fb2e4) | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L2b-3 (a5f74ac38268fb2e4) | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | reported, schema diff spot-checked | checkpoint |
 | L3 (a67e3bbe8d590c17a) | claims + store table | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
 (plan reviewers P1d P1r P2d P2r P3d P3r: all closed)
 

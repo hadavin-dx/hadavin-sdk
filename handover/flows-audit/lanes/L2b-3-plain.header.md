@@ -8,14 +8,14 @@ Rule used (PLAN-002 section 1, mechanical): a node gets full judgement when the 
 Generator side note: I did not run the generator (not my lane). build_mainframe_v1.py looks like the generator of v1-superseded (its text builds SaveLabel, SetCrm=crm_done, StoredState); only REPORT.md:526 and no script mentions it (UNVERIFIED that its output equals the saved v1 json).
 
 ## Inputs read and absent files
-Read: the 16 json files; tools/out diff files (17 used, one per file pair; the two table-screen diff files are the same content); n8n-flows/v1-superseded/README.txt; n8n-flows/mf_leads.sql, n8n-flows-v3/mf_leads.sql, n8n-flows-v4/mf_leads.sql; n8n-flows-v3/V3-README.md and n8n-flows-v4/V4-README.md only for their folder and generator statements (not as facts); n8n-table-screen/README.md and the first lines of n8n-table-screen-v2/README.md; build_mainframe_v1.py and mf.py (DDL lines only).
+Read: the 16 json files; tools/out diff files (16 pairs, plus a duplicate table-screen diff file with the same content); n8n-flows/v1-superseded/README.txt; n8n-flows/mf_leads.sql, n8n-flows-v3/mf_leads.sql, n8n-flows-v4/mf_leads.sql; n8n-flows-v3/V3-README.md and n8n-flows-v4/V4-README.md only for their folder and generator statements (not as facts); n8n-table-screen/README.md and the first lines of n8n-table-screen-v2/README.md; build_mainframe_v1.py and mf.py (DDL lines only).
 Absent: no v1 table DDL file (README.txt and mf_leads.sql both say v1 needs "the same DDL plus: label text" but no such file exists anywhere under handover/demo); DECISION-one-store.md (searched by the plan, absent); n8n-flows-v4/V4-README.md and n8n-flows-v3/V3-README.md exist (not absent). Everything else the brief listed is present.
 Not read on purpose: AUDIT-*.md, claims-audit.md, claims-audit/, claims-code-bugs.md. A grep hit line that sat inside HYGIENE-FINDINGS.md or PAGE-STATEMENTS-V4-DRAFT.md was shown only as a one-line hit.
 
 ## mf_leads.sql: three copies compared with diff and md5sum
-- n8n-flows/mf_leads.sql  md5 bd257c8e556a5942cbf8f01a7ec26ffd (11 columns, no alert columns).
-- n8n-flows-v3/mf_leads.sql md5 6cc7cf2daa4816cab951d15654a7ac1b.
-- n8n-flows-v4/mf_leads.sql md5 6cc7cf2daa4816cab951d15654a7ac1b (byte-identical to the v3 copy; `diff` printed nothing).
+- n8n-flows/mf_leads.sql  md5 starts bd257c8e (11 columns, no alert columns).
+- n8n-flows-v3/mf_leads.sql md5 starts 6cc7cf2d.
+- n8n-flows-v4/mf_leads.sql md5 starts 6cc7cf2d (byte-identical to the v3 copy; `diff` printed nothing).
 - `diff n8n-flows/mf_leads.sql n8n-flows-v3/mf_leads.sql` shows: a new first comment line and four new columns alert_sent, alert_token, alert_until, alert_attempts. So the schema of the one store exists in TWO versions, plus a fourth copy written inline in n8n-mainframe/mf.py lines 44-47 (same columns as v3, plus `DROP TABLE IF EXISTS mf_leads` before it). Findings L2b3-1 and L2b3-2.
 - No v1 DDL (the label column and the state crm_done are needed by v1 flows): L2b3-3.
 
