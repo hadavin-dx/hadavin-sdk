@@ -17,10 +17,12 @@ to start where the operating system cannot open files without following symlinks
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import re
+import signal
 import stat
 import sys
 import unicodedata
@@ -56,7 +58,22 @@ MANIFEST_FORMAT = "fill_flows-manifest-1"
 # lost fingerprint file cannot make an unrelated folder look like this tool's output.
 MARKER_NAME = ".fill_flows-output"
 MARKER_FORMAT = "fill_flows-output-1"
+# Written into a copy that still holds placeholder names, so nobody imports it by mistake.
+NOT_READY_NAME = "NOT-READY-DO-NOT-IMPORT.txt"
+# Plain (not `=`) fields where a $env token may be filled. n8n does not evaluate a plain field,
+# so a token there is only meaningful where the field is a literal address. The real v5 flows
+# hold no token in a plain field at all (every token is inside an `={{ }}` expression), so this
+# list is only room for new nodes; anywhere else a plain token is refused.
+PLAIN_KEYS = ("url", "toEmail", "fromEmail", "ccEmail", "bccEmail")
 DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+
+
+def _not_ready_bytes() -> bytes:
+    return (
+        "NOT READY TO IMPORT.\n"
+        "fill_flows wrote this copy but placeholder names are still in the files.\n"
+        "Do not import it. Add the missing values, fill again into a new folder, and run check.\n"
+    ).encode("utf-8")
 
 
 def _a(x) -> str:
@@ -81,6 +98,53 @@ def under_mnt(path: str) -> bool:
     return rp == "/mnt" or rp.startswith("/mnt/")
 
 
+def _fd_path(fd: int, fallback: str) -> str:
+    """The real place an OPEN file or folder lives, asked of the open handle (so a path swapped
+    after the lexical checks cannot fool the next check). Linux: /proc/self/fd; macOS:
+    F_GETPATH. Elsewhere the fallback (the checked path) is returned."""
+    try:
+        real = os.readlink(f"/proc/self/fd/{fd}")
+        if real.startswith("/"):
+            return real.removesuffix(" (deleted)")
+    except OSError:
+        pass
+    try:
+        import fcntl  # Unix only; imported here so the platform refusal can speak first
+
+        if hasattr(fcntl, "F_GETPATH"):
+            buf = fcntl.fcntl(fd, fcntl.F_GETPATH, b"\0" * 1024)
+            real = os.fsdecode(buf.split(b"\0", 1)[0])
+            if real.startswith("/"):
+                return real
+    except (ImportError, OSError):
+        pass
+    return fallback
+
+
+def _check_open_place(fd: int, lexical: str, what: str) -> None:
+    """Re-run the /mnt and git checks on the place the OPEN handle really is in."""
+    real = _fd_path(fd, os.path.realpath(lexical))
+    if under_mnt(real):
+        raise Refused(f"{what} is under /mnt (Windows drive): file modes do not protect it")
+    if inside_git(real):
+        raise Refused(f"{what} is inside a git repository (a parent folder has .git)")
+
+
+@contextlib.contextmanager
+def _sigint_blocked():
+    """Hold Ctrl-C back for a few lines, so 'create the file' and 'write it down for clean-up'
+    cannot be split by it. A Ctrl-C that comes in is delivered right after."""
+    mask = getattr(signal, "pthread_sigmask", None)
+    if mask is None:
+        yield
+        return
+    old = mask(signal.SIG_BLOCK, {signal.SIGINT})
+    try:
+        yield
+    finally:
+        mask(signal.SIG_SETMASK, old)
+
+
 def read_values(path: str) -> dict[str, str]:
     rp = os.path.realpath(path)
     if under_mnt(path):
@@ -96,6 +160,11 @@ def read_values(path: str) -> dict[str, str]:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode):
             raise Refused("values file is not a regular file")
+        real = _fd_path(fd, rp)  # the place of the OPEN file, in case the path was swapped
+        if under_mnt(real):
+            raise Refused("values file is under /mnt (Windows drive): file modes do not protect it")
+        if inside_git(os.path.dirname(real)):
+            raise Refused("values file is inside a git repository (move it out; it holds secrets)")
         if st.st_mode & 0o077:
             raise Refused("values file can be read by other users (run: chmod 600 on it)")
         with os.fdopen(fd, "rb") as fh:
@@ -171,6 +240,10 @@ def _js_literal(value: str) -> str:
     return json.dumps(value, ensure_ascii=True).replace("{", "\\u007b").replace("}", "\\u007d")
 
 
+TEMPLATE = (
+    "a $env token sits in an expression that holds a backtick or '${' (a template string; "
+    "not filled)"
+)
 QUOTED = "a $env token sits inside a quoted JS string in an expression (not filled; edit the flow)"
 OUTSIDE = "a $env token sits outside a clean {{ }} part of an expression (not filled)"
 
@@ -223,6 +296,8 @@ class Subst:
                 slash = True
             out.append(ch)
             i += 1
+        if hit and ("`" in part or "${" in part):
+            raise Refused(TEMPLATE)
         if hit and comment:
             raise Refused("a $env token sits in an expression that holds a // or /* comment")
         if hit and slash:
@@ -246,7 +321,7 @@ class Subst:
             raise Refused(OUTSIDE)
         return "".join(out) + tail
 
-    def string(self, s: str, ctx: str | None = None) -> str:
+    def string(self, s: str, ctx: str | None = None, field: str | None = None) -> str:
         if s in PLACEHOLDERS and s in self.values:
             if ctx in CODE_KEYS:
                 raise Refused(
@@ -262,22 +337,29 @@ class Subst:
         if ctx in CODE_KEYS:
             raise Refused(f"a $env token sits in a {ctx} field (program code; not filled)")
         if not s.startswith("="):  # plain field: n8n does not evaluate it
+            if field not in PLAIN_KEYS:
+                where = "a key name" if field is None else f"the field {_a(field)}"
+                raise Refused(
+                    f"a $env token sits in a plain text ({where}); plain fields are filled only "
+                    f"in: {', '.join(PLAIN_KEYS)}"
+                )
             return TOKEN.sub(lambda m: self._repl(m, False), s)
         return self._expr(s)
 
-    def walk(self, o, ctx: str | None = None):
+    def walk(self, o, ctx: str | None = None, field: str | None = None):
+        """`ctx`: the code key above (if any); `field`: the nearest key above this value."""
         if isinstance(o, dict):
             out = {}
             for k, v in o.items():
                 nk = self.string(k)
                 if nk in out:
                     raise Refused("two keys of one object become the same key after filling")
-                out[nk] = self.walk(v, k if k in CODE_KEYS else ctx)
+                out[nk] = self.walk(v, k if k in CODE_KEYS else ctx, k)
             return out
         if isinstance(o, list):
-            return [self.walk(v, ctx) for v in o]
+            return [self.walk(v, ctx, field) for v in o]
         if isinstance(o, str):
-            return self.string(o, ctx)
+            return self.string(o, ctx, field)
         return o
 
 
@@ -298,12 +380,19 @@ def _no_const(_name):
     raise ValueError("NaN or Infinity")
 
 
+def _no_float(text):
+    value = float(text)
+    if value in (float("inf"), float("-inf")):  # 1e999 reads as infinity, which JSON cannot hold
+        raise ValueError("number too large")
+    return value
+
+
 def load_json(raw: bytes):
-    return json.loads(raw.decode("utf-8"), parse_constant=_no_const)
+    return json.loads(raw.decode("utf-8"), parse_constant=_no_const, parse_float=_no_float)
 
 
 def dump(obj) -> bytes:
-    return (json.dumps(obj, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    return (json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
 def shape(obj) -> tuple[int, dict]:
@@ -356,11 +445,18 @@ def inside_git(path: str) -> bool:
         p = parent
 
 
-def _write_new(name: str, data: bytes, dir_fd: int) -> None:
+def _write_new(name: str, data: bytes, dir_fd: int, created: list | None = None) -> None:
     """Create `name` inside the open folder `dir_fd` (never through a path that could be
     swapped), then check on the open file that it really is 0600 and ours: on a disk that
-    ignores file modes this refuses and leaves nothing."""
-    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd)
+    ignores file modes this refuses and leaves nothing. The new file is added to `created`
+    (the clean-up list) in the same step as its creation, with Ctrl-C held back, so no
+    interrupt can leave a file that the clean-up does not know."""
+    with _sigint_blocked():
+        fd = os.open(
+            name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd
+        )
+        if created is not None:
+            created.append((dir_fd, name))
     try:
         os.fchmod(fd, 0o600)
         st = os.fstat(fd)
@@ -372,6 +468,8 @@ def _write_new(name: str, data: bytes, dir_fd: int) -> None:
         with os.fdopen(fd, "wb") as fh:
             fd = -1
             fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
     except BaseException:
         # the file is ours (O_EXCL made it): remove it so a re-run is not blocked by a stub
         if fd >= 0:
@@ -380,6 +478,8 @@ def _write_new(name: str, data: bytes, dir_fd: int) -> None:
             os.unlink(name, dir_fd=dir_fd)
         except OSError:
             pass
+        if created is not None and (dir_fd, name) in created:
+            created.remove((dir_fd, name))
         raise
 
 
@@ -414,6 +514,12 @@ def _plain_name(n) -> bool:
     return isinstance(n, str) and n not in ("", ".", "..") and not any(c in n for c in "/\\\0")
 
 
+def _clean_file_name(n) -> bool:
+    """A file name safe to carry into the output and the manifest: one plain name, no control,
+    look-alike or lone-surrogate characters."""
+    return _plain_name(n) and not any(_bad_char(c) or unicodedata.category(c) == "Cs" for c in n)
+
+
 def _marker_bytes(folder_name: str) -> bytes:
     return f"{MARKER_FORMAT}\n{folder_name}\n".encode("utf-8", "surrogateescape")
 
@@ -427,17 +533,25 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     if inside_git(os.path.dirname(out_dir)):
         raise Refused("output path is inside a git repository (a parent folder has .git)")
     if os.path.lexists(out_dir) or os.path.lexists(manifest_path):
-        raise Refused("output folder or its manifest already exists (delete it first)")
+        raise Refused(
+            "output folder or its manifest already exists (run delete --out on it first; add "
+            "--force-hash if a kill cut the manifest short)"
+        )
     if not os.path.isdir(os.path.dirname(out_dir)):
         raise Refused("output parent folder does not exist")
     rin, rout = os.path.realpath(in_dir), os.path.realpath(out_dir)
     if rout == rin or rout.startswith(rin.rstrip(os.sep) + os.sep):
         raise Refused("output folder is the input folder or inside it")
 
+    if not _clean_file_name(os.path.basename(out_dir)):
+        raise Refused("output folder name is not a plain name (path or control character)")
     values = read_values(values_path)
     names = list_json(in_dir)
     if not names:
         raise Refused("input folder has no .json files")
+    for n in names:
+        if not _clean_file_name(n):
+            raise Refused(f"input file {_a(n)}: the name holds a path or control character")
     sub = Subst(values)
     outputs: dict[str, bytes] = {}
     found_any = False
@@ -474,6 +588,8 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     marker = _marker_bytes(folder_name)
     hashes = {n: hashlib.sha256(d).hexdigest() for n, d in outputs.items()}
     hashes[MARKER_NAME] = hashlib.sha256(marker).hexdigest()
+    if ph_left:
+        hashes[NOT_READY_NAME] = hashlib.sha256(_not_ready_bytes()).hexdigest()
     manifest = {"format": MANIFEST_FORMAT, "files": dict(sorted(hashes.items()))}
     manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode()
     manifest_name = folder_name + MANIFEST_SUFFIX
@@ -482,12 +598,15 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     dfd = -1
     made_dir = False
     try:
+        # the paths were checked by name above; check again on the folder we really opened
+        _check_open_place(pfd, os.path.dirname(out_dir), "output path")
         # the manifest goes first: if this stops half way, `delete` can still find every file
-        _write_new(manifest_name, manifest_bytes, pfd)
-        created.append((pfd, manifest_name))
-        os.mkdir(folder_name, 0o700, dir_fd=pfd)
-        made_dir = True
+        _write_new(manifest_name, manifest_bytes, pfd, created)
+        with _sigint_blocked():  # the folder and the note that it exists, in one step
+            os.mkdir(folder_name, 0o700, dir_fd=pfd)
+            made_dir = True
         dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
+        _check_open_place(dfd, out_dir, "output folder")
         os.fchmod(dfd, 0o700)
         dst = os.fstat(dfd)
         if dst.st_uid != os.getuid() or stat.S_IMODE(dst.st_mode) != 0o700:
@@ -495,11 +614,11 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
                 "file modes do not hold on this disk (the new folder is not private); "
                 "use a folder on a normal Linux or macOS disk"
             )
-        _write_new(MARKER_NAME, marker, dfd)
-        created.append((dfd, MARKER_NAME))
+        _write_new(MARKER_NAME, marker, dfd, created)
+        if ph_left:
+            _write_new(NOT_READY_NAME, _not_ready_bytes(), dfd, created)
         for n, d in outputs.items():
-            _write_new(n, d, dfd)
-            created.append((dfd, n))
+            _write_new(n, d, dfd, created)
     except BaseException:
         for fd, nm in reversed(created):
             try:
@@ -520,7 +639,8 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     if ph_left:
         print(
             f"NOT READY TO IMPORT: {ph_left} placeholders left "
-            "(create the credentials, import the sub-flow, fill again, then run check)",
+            f"(the folder holds {NOT_READY_NAME}; create the credentials, import the sub-flow, "
+            "fill again, then run check)",
             file=sys.stderr,
         )
         return EXIT_INCOMPLETE
@@ -555,6 +675,9 @@ def do_check(directory: str, tokens_only: bool) -> int:
             for p, c in sorted(ph.items()):
                 print(f"{_a(n)}: placeholder {p} x{c}")
                 bad += c
+    if not tokens_only and os.path.lexists(os.path.join(directory, NOT_READY_NAME)):
+        print(f"{NOT_READY_NAME} is in the folder: fill left placeholders; do not import")
+        bad += 1
     print(f"check: {len(names)} files, {bad} problem(s)")
     return EXIT_REFUSED if bad else EXIT_OK
 
@@ -609,7 +732,8 @@ def _signature_ok(dfd: int, folder_name: str, present: set, force_hash: bool) ->
         )
     for n in sorted(present):
         ls = os.lstat(n, dir_fd=dfd)
-        if not stat.S_ISREG(ls.st_mode) or not (n == MARKER_NAME or n.endswith(".json")):
+        own = (MARKER_NAME, NOT_READY_NAME)
+        if not stat.S_ISREG(ls.st_mode) or not (n in own or n.endswith(".json")):
             raise Refused(f"{_a(n)}: not a plain .json file; nothing deleted")
         if ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600:
             raise Refused(
@@ -622,6 +746,10 @@ def _signature_ok(dfd: int, folder_name: str, present: set, force_hash: bool) ->
         if n == MARKER_NAME:
             if raw != _marker_bytes(folder_name):
                 raise Refused("the marker file is not this tool's, or is for another folder name")
+            continue
+        if n == NOT_READY_NAME:
+            if raw != _not_ready_bytes():
+                raise Refused("the not-ready note is not this tool's; nothing deleted")
             continue
         if force_hash:
             continue
@@ -658,15 +786,23 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         if has_man and not stat.S_ISREG(mst.st_mode):
             raise Refused("manifest is a symlink or not a file; nothing deleted")
         if not has_dir and not has_man:
-            raise Refused("output folder and manifest are both missing; nothing to delete")
+            print("nothing to delete: the output folder and its manifest are both missing")
+            return EXIT_OK
         files: dict = {}
         if not no_manifest and not has_man:
             raise Refused(
                 "manifest is missing; nothing deleted (to remove the folder anyway, use "
                 "--no-manifest: it removes only the files this tool writes)"
             )
-        if has_man and (not no_manifest or not has_dir):
-            files = _load_manifest(manifest_name, pfd)  # a manifest we rely on or remove is valid
+        if has_man:
+            # A manifest we rely on or remove must be valid, unless --force-hash says the person
+            # knows it is cut short (a kill during its write); then it must at least be a plain
+            # file of ours.
+            if force_hash and (no_manifest or not has_dir):
+                if mst.st_uid != me:
+                    raise Refused("manifest is not owned by you; nothing deleted")
+            else:
+                files = _load_manifest(manifest_name, pfd)
         if not has_dir:  # a fill was stopped after the manifest and before the folder
             os.unlink(manifest_name, dir_fd=pfd)
             print("deleted the manifest (the folder was not there)")
@@ -708,7 +844,7 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         os.rmdir(folder_name, dir_fd=pfd)
         if has_man:
             os.unlink(manifest_name, dir_fd=pfd)
-        count = len([n for n in todo if n != MARKER_NAME])
+        count = len([n for n in todo if n not in (MARKER_NAME, NOT_READY_NAME)])
         print(f"deleted {count} files, the folder and the manifest")
         return EXIT_OK
     finally:
