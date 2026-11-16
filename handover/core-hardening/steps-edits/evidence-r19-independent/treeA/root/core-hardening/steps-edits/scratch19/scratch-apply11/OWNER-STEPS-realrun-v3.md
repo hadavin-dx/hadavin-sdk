@@ -302,7 +302,7 @@ NEEDS-OWNER. You post; Claude never posts. The post says only: leads arrive thro
 | Each take | your yes with numbers (step 16); "label and inbox empty" |
 | After a take | "accepted" or the bad seconds |
 | Right after `key revoked` (by Mon 23 Nov 2026 18:19 UTC = 23:49 IST at the latest) | the words `key revoked` and the screenshot of the list of secret keys for the model (key names and dates only, step 22 item 3 key step I). If you could not revoke the key by then, send the words `key not revoked` and the reason instead |
-| Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST (what is still open then is finished by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (this date is to be confirmed by the studio lead before you rely on it)) | the other retirement screenshots and the retire-check output (counts and words only) |
+| Mon 23 (what is still open then is finished by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (this date is to be confirmed by the studio lead before you rely on it)) | the other retirement screenshots and the retire-check output (counts and words only) |
 
 ## Status of the code behind these steps (read before you trust them)
 
