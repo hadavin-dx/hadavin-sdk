@@ -181,35 +181,35 @@ Each step starts with the person who does it: [LEAD], [PRESENTER] or [WHO: Q-A].
 
 **Roll-up of every input that is NOT WRITTEN, UNANSWERED or a BLOCKER (read r42 B2; one table; the table above and the open items of the list at the top of this section are the sources; "stops filming" says what cannot be done while the input is open; a time written LEAD DECIDES is the lead's to set, from ORDERS.md line 160 and QUESTIONS.md, none is invented).**
 
-| input | who supplies it | answer by (UTC and IST) | stops filming? (yes or no) |
-|---|---|---|---|
-| (a) intake e-mail address and setting name | the lead | Tue 17 Nov 05:00Z = 10:30 IST (Q31 item 77) | yes: steps 3 and 7 |
-| (b) the two mailbox words and the tag of row N-12 | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); the two default words stand until then | no for filming; yes for the scoped sentence (STEP-15 LIST item 7) |
-| (c) who types the machine actions (default: the lead) and who speaks the voice rows (no default) | the lead names the speaker | Tue 17 Nov 14:00Z = 19:30 IST (Q31 items 76 (a) and 100 (a)) | yes: scenes 1 to 4 (the speaker) |
-| (d) the send command of P4a | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 94) | yes: step 3 and everything after it |
-| (e) the check of the HubSpot property hadavin_label | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 95) | yes: step 3 |
-| (f) the Gmail filter and label demo | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 96) | yes: step 4 |
-| (g) who runs the saved select (0 rows) | the lead names the person (Select before scene 2, WL-3) | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 39 (c)) | no: the lead runs it until then |
-| (h) the positive-control send script | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 87) | yes: step 4 |
-| (i) the prepared send note (one post per run) | the lead | Tue 17 Nov 09:00Z = 14:30 IST (Q31 item 58) | yes: steps 6, 11, 12 |
-| (j) who checks the model-cost setting and where the result is written (Q-J) | the lead names the person | Tue 17 Nov 08:00Z = 13:30 IST (Q31 items 73 (c), 76 (e)) | yes: no send starts before step 2a is written |
-| (k) the ceiling for the sends and the cap | the lead | Tue 17 Nov 06:45Z = 12:15 IST (Q31 item 3) | yes: step 2a |
-| (l) the prepared screen set | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 98) | yes: steps 6 and 10 to 15 |
-| (m) the six-column preview: way and person | the lead | Tue 17 Nov 04:16Z = 09:46 IST (Q31 item 81) | no for scenes 1 to 3; yes for the scoped sentence |
-| (n) how the lead ID shows in the mailbox pane | the lead, at the rehearsal | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 99) | no; if it fails the scoped sentence is not used |
-| (o) the four human roles (speak, hold the screen recording, empty the intake mailbox, arrange the windows; Q-A for the typing, Q-G for the captions) | the lead names them | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 100) | yes: scenes 1 to 4 (BLOCKER) |
-| (p) the spelling of the session name in the APPROVED blank | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 100 (d)) | no: no row can be marked APPROVED until it is written, so yes for marking |
-| (q) the setting the model-cost check reads | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 104) | yes: step 2a, so no send |
-| (r) how scene 4 is done: stop script, trigger, moment, start script | the lead | Tue 17 Nov 06:20Z = 11:50 IST (Q31 item 105) | scene 4 only |
-| (s) the wait, the expected attempts value, the cut limit and what shows that a second send happened (Q-I for who is told) | the lead, at the rehearsal | Wed 18 Nov rehearsal 1, 07:30Z (13:00 IST) or 07:40Z (13:10 IST); the second-send item: Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 114); Q-I: Tue 17 Nov 06:30Z = 12:00 IST (Q31 item 76 (d)) | scene 4 and the scoped sentence only |
-| (t) the n8n port of the take | the lead | Tue 17 Nov 03:30Z = 09:00 IST (Q31 item 106) | yes: steps 2, 3, 6 to 13 |
-| (u) whether scene 4 is kept and sped up words shown | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); default: scene 4 removed, nothing sped up | no (the default stands) |
-| (v) the latest time for delete request 1 | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160) | no |
-| (w) the window and moment of the replies of the first and second send | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160) | the scoped sentence only |
-| Q-F (does the video end with the closing card) | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); default: no card | no |
-| Q-H (date and hour of the re-pin) | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160) | yes: no step 8 before it |
-| NQ-1 (the scene of the studio owner's typed answers) | the lead | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 113) | no: nothing waits |
-| NQ-3 (does P4a move before the practice run) | the lead | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 115) | no: P4a does not move by default |
+| input | who supplies it | answer by (UTC and IST); stops filming? (yes or no) |
+| --- | --- | ---; stops filming? --- |
+| (a) intake e-mail address and setting name | the lead | Tue 17 Nov 05:00Z = 10:30 IST (Q31 item 77); stops filming? yes: steps 3 and 7 |
+| (b) the two mailbox words and the tag of row N-12 | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); the two default words stand until then; stops filming? no for filming; yes for the scoped sentence (STEP-15 LIST item 7) |
+| (c) who types the machine actions (default: the lead) and who speaks the voice rows (no default) | the lead names the speaker | Tue 17 Nov 14:00Z = 19:30 IST (Q31 items 76 (a) and 100 (a)); stops filming? yes: scenes 1 to 4 (the speaker) |
+| (d) the send command of P4a | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 94); stops filming? yes: step 3 and everything after it |
+| (e) the check of the HubSpot property hadavin_label | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 95); stops filming? yes: step 3 |
+| (f) the Gmail filter and label demo | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 96); stops filming? yes: step 4 |
+| (g) who runs the saved select (0 rows) | the lead names the person (Select before scene 2, WL-3) | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 39 (c)); stops filming? no: the lead runs it until then |
+| (h) the positive-control send script | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 87); stops filming? yes: step 4 |
+| (i) the prepared send note (one post per run) | the lead | Tue 17 Nov 09:00Z = 14:30 IST (Q31 item 58); stops filming? yes: steps 6, 11, 12 |
+| (j) who checks the model-cost setting and where the result is written (Q-J) | the lead names the person | Tue 17 Nov 08:00Z = 13:30 IST (Q31 items 73 (c), 76 (e)); stops filming? yes: no send starts before step 2a is written |
+| (k) the ceiling for the sends and the cap | the lead | Tue 17 Nov 06:45Z = 12:15 IST (Q31 item 3); stops filming? yes: step 2a |
+| (l) the prepared screen set | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 98); stops filming? yes: steps 6 and 10 to 15 |
+| (m) the six-column preview: way and person | the lead | Tue 17 Nov 04:16Z = 09:46 IST (Q31 item 81); stops filming? no for scenes 1 to 3; yes for the scoped sentence |
+| (n) how the lead ID shows in the mailbox pane | the lead, at the rehearsal | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 99); stops filming? no; if it fails the scoped sentence is not used |
+| (o) the four human roles (speak, hold the screen recording, empty the intake mailbox, arrange the windows; Q-A for the typing, Q-G for the captions) | the lead names them | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 100); stops filming? yes: scenes 1 to 4 (BLOCKER) |
+| (p) the spelling of the session name in the APPROVED blank | the lead | Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 100 (d)); stops filming? no: no row can be marked APPROVED until it is written, so yes for marking |
+| (q) the setting the model-cost check reads | the lead | Tue 17 Nov 08:00Z = 13:30 IST (Q31 item 104); stops filming? yes: step 2a, so no send |
+| (r) how scene 4 is done: stop script, trigger, moment, start script | the lead | Tue 17 Nov 06:20Z = 11:50 IST (Q31 item 105); stops filming? scene 4 only |
+| (s) the wait, the expected attempts value, the cut limit and what shows that a second send happened (Q-I for who is told) | the lead, at the rehearsal | Wed 18 Nov rehearsal 1, 07:30Z (13:00 IST) or 07:40Z (13:10 IST); the second-send item: Wed 18 Nov 05:45Z = 11:15 IST (Q31 item 114); Q-I: Tue 17 Nov 06:30Z = 12:00 IST (Q31 item 76 (d)); stops filming? scene 4 and the scoped sentence only |
+| (t) the n8n port of the take | the lead | Tue 17 Nov 03:30Z = 09:00 IST (Q31 item 106); stops filming? yes: steps 2, 3, 6 to 13 |
+| (u) whether scene 4 is kept and sped up words shown | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); default: scene 4 removed, nothing sped up; stops filming? no (the default stands) |
+| (v) the latest time for delete request 1 | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); stops filming? no |
+| (w) the window and moment of the replies of the first and second send | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); stops filming? the scoped sentence only |
+| Q-F (does the video end with the closing card) | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); default: no card; stops filming? no |
+| Q-H (date and hour of the re-pin) | the lead | LEAD DECIDES: lead, due 08:00Z (13:30 IST) Tue 17 Nov (ORDERS.md line 160); stops filming? yes: no step 8 before it |
+| NQ-1 (the scene of the studio owner's typed answers) | the lead | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 113); stops filming? no: nothing waits |
+| NQ-3 (does P4a move before the practice run) | the lead | Tue 17 Nov 14:00Z = 19:30 IST (Q31 item 115); stops filming? no: P4a does not move by default |
 
 Who the lead is in the steps below: the lead is a Claude session (a program). It can read and write files and run scripts, but it cannot speak aloud, hold a recording, empty a mailbox by hand in a mail program, or arrange, refresh and frame the program windows on the filming screen. Where a step below needs one of those actions, its tag names the human role of input-table row (o) next to [LEAD] (steps 5, 7 and 9); where a step is tagged [PRESENTER: UNNAMED, BLOCKER] or [WHO: Q-A, the lead until another person is named] (steps 10 to 14), the words the lead until another person is named (in the WHO tag only) cover only typing the machine actions and file work; the lead never speaks, so a PRESENTER step cannot be done until a person is named in row (o); speaking, holding the screen capture, or arranging, refreshing and framing the windows (steps 10, 12a (3) and 16) needs the person of row (o). Until that person is named the step cannot be done from this text (row (o) is a BLOCKER).
 
