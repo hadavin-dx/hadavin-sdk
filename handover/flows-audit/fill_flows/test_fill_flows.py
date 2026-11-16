@@ -996,6 +996,40 @@ class Hardening(Base):
             self.assertEqual(os.listdir(real), [])
             self.assertEqual(self.inproc("delete", "--out", out)[0], 1)
 
+    # ---- round 4: tests for three more surviving mutants
+    def test_values_file_must_be_a_regular_file(self):
+        d = os.path.join(self.t, "vdir")
+        os.mkdir(d, 0o700)
+        code, _, se = self.fill(vf=d)
+        self.assertEqual((code, "not a regular file" in se), (1, True), se)
+        self.assertFalse(os.path.exists(self.out()))
+
+    def test_delete_refuses_a_parent_link_made_by_another_user(self):
+        real = os.path.join(self.t, "real-parent")
+        os.mkdir(real, 0o700)
+        link = os.path.join(self.t, "link-parent")
+        os.symlink(real, link)
+        self.assertEqual(self.fill(out=os.path.join(real, "sub"))[0], 3)
+        real_lstat = os.lstat
+
+        def other_owner(path, *a, **k):
+            st = real_lstat(path, *a, **k)
+            if os.fspath(path) == link:
+                return os.stat_result((st.st_mode,) + tuple(st)[1:4] + (4242,) + tuple(st)[5:])
+            return st
+
+        with mock.patch.object(ff.os, "lstat", other_owner):
+            code, _, se = self.inproc("delete", "--out", os.path.join(link, "sub"))
+        self.assertEqual((code, "symlink made by another user" in se), (1, True), se)
+        self.assertEqual(sorted(os.listdir(real)), ["sub", "sub.manifest.json"])
+        self.assertEqual(len(os.listdir(os.path.join(real, "sub"))), 4)
+
+    def test_check_reports_every_one_of_the_six_placeholder_names(self):
+        for name in ff.PLACEHOLDERS:
+            d = self.flow_dir({"a": name})
+            code, so, _ = self.cli("check", d)
+            self.assertEqual((code, f"placeholder {name} x1" in so), (1, True), name)
+
 
 if __name__ == "__main__":
     unittest.main()
