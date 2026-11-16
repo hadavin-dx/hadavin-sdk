@@ -1,0 +1,57 @@
+# fresh scratch tree for fix3 hashes, 2026-11-16T10:59:33Z
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c
+git archive tree id (git rev-parse b4cce5b^{tree}): 00c5cffdcccbab0f9b131be5e6d5cf3f60939a71
+git archive tar sha256 (with handover/): 5925df2db2affef6bc5a660159b652aaf997d5660d02133c21b79e1943c84c22  -
+== sha256sum -c of the three v3 patches
+C-01.patch: OK
+A-01.patch: OK
+G5-wording.patch: OK
+rc=0
+== fix patch
+FIX-id-vs-command-withheld.patch: OK
+rc=0
+CMD patch v3/C-01
+patching file src/hadavin_sdk/config.py
+patching file src/hadavin_sdk/defaults.py
+patching file src/hadavin_sdk/backends/table.py
+patching file src/hadavin_sdk/k1b/replay.py
+patching file tests/test_c01_route_limits.py
+patching file tests/test_k1b_replay.py
+rc=0
+CMD patch v3/A-01
+patching file src/hadavin_sdk/runtime/tick.py
+patching file src/hadavin_sdk/audit/protocol.py
+patching file src/hadavin_sdk/audit/chain.py
+patching file src/hadavin_sdk/audit/local_dir.py
+patching file src/hadavin_sdk/audit/spill.py
+patching file src/hadavin_sdk/backends/table.py
+Hunk #1 succeeded at 196 (offset 5 lines).
+patching file src/hadavin_sdk/k1b/audit_sink.py
+patching file tests/test_a01_audit_reconcile.py
+patching file tests/test_p7_tick.py
+rc=0
+CMD patch v3/G5-wording
+patching file src/hadavin_sdk/approvals/gate.py
+patching file src/hadavin_sdk/guard/redact.py
+patching file tests/warden_port/test_gate.py
+rc=0
+gate.py after v3 patches: 8baee5702e06d3d482c08cc9e77df171979510c9fb7d09c4d5f9aec6edb88b0a  src/hadavin_sdk/approvals/gate.py
+CMD forward apply fix
+patching file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+patching file tests/test_g4_ids_not_withheld.py
+rc=0
+gate.py after forward apply: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+CMD patch -R fix
+patching file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+patching file tests/test_g4_ids_not_withheld.py
+rc=0
+gate.py after patch -R: 8baee5702e06d3d482c08cc9e77df171979510c9fb7d09c4d5f9aec6edb88b0a  src/hadavin_sdk/approvals/gate.py
+tests/test_g4_parity.py
+CMD forward re-apply
+patching file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+patching file tests/test_g4_ids_not_withheld.py
+rc=0
+gate.py after forward re-apply: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
