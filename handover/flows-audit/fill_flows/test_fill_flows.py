@@ -1263,6 +1263,8 @@ class Hardening(Base):
     def test_placeholder_name_inside_a_code_field_is_refused(self):
         write_values(self.vf, {**VALS, "SMTP_CREDENTIAL_ID": "phv-smtp-2"})
         self.refuse({"jsCode": "SMTP_CREDENTIAL_ID"}, "jsCode")
+        se = self.refuse({"jsCode": "return $env.DESK_URL"}, "jsCode")
+        self.assertIn("sits in a jsCode field", se)
 
     def test_no_manifest_with_no_folder_still_validates_the_manifest(self):
         out = self.out()
@@ -1292,6 +1294,263 @@ class Hardening(Base):
             code, _, se = self.inproc("delete", "--out", out)
         self.assertEqual((code, "not owned by you" in se), (1, True), se)
         self.assertEqual(len(os.listdir(out)), 6)
+
+    # ---- round 6: tests that kill the mutants that survived evidence round 5
+    def test_check_refuses_a_not_ready_note_even_with_no_placeholders(self):
+        d = os.path.join(self.t, "clean")
+        os.mkdir(d)
+        jdump({"name": "t", "nodes": [{"name": "n1", "parameters": {}}]}, os.path.join(d, "a.json"))
+        self.assertEqual(self.cli("check", d)[0], 0)
+        wtext(os.path.join(d, NOT_READY), "not ready")
+        code, so, _ = self.cli("check", d)
+        self.assertEqual(code, 1, so)
+        self.assertIn(f"{NOT_READY} is in the folder", so)
+        self.assertIn("1 problem(s)", so)
+
+    def test_delete_never_closes_a_handle_it_did_not_open(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")  # refused before the folder is opened
+        closed = []
+        real_close = os.close
+
+        def spy(fd):
+            closed.append(fd)
+            if fd > 2:
+                real_close(fd)
+
+        with mock.patch.object(ff.os, "close", spy):
+            code, _, se = self.inproc("delete", "--out", out)
+        self.assertEqual((code, "manifest is missing" in se), (1, True), se)
+        self.assertTrue(closed)
+        self.assertTrue(all(fd > 2 for fd in closed), closed)
+
+    def _other_owner_files(self):
+        real = ff._lstat_or_none
+
+        def other(name, fd):
+            st = real(name, fd)
+            if st is not None and stat_is(st, "reg"):
+                return os.stat_result(
+                    (st.st_mode, *tuple(st)[1:4], os.getuid() + 1, *tuple(st)[5:])
+                )
+            return st
+
+        return mock.patch.object(ff, "_lstat_or_none", other)
+
+    def test_delete_names_a_file_and_a_manifest_that_are_not_yours(self):
+        out = self.made()
+        with self._other_owner_files():
+            code, _, se = self.inproc("delete", "--out", out)
+            self.assertEqual((code, ": not owned by you; nothing deleted" in se), (1, True), se)
+            code, _, se = self.inproc("delete", "--out", out, "--no-manifest", "--force-hash")
+            self.assertEqual((code, "manifest is not owned by you" in se), (1, True), se)
+        self.assertEqual(len(os.listdir(out)), 6)
+
+    def test_fill_refuses_a_disk_that_ignores_file_modes_in_plain_words(self):
+        real = os.fchmod
+
+        def loosen_folders(fd, mode):
+            real(fd, 0o755 if mode == 0o700 else mode)
+
+        with mock.patch.object(ff.os, "fchmod", loosen_folders):
+            code, _, se = self.inproc(
+                "fill", "--in", self.copy_flows("film"), "--values", self.vf, "--out", self.out()
+            )
+        self.assertEqual(code, 1, se)
+        self.assertIn("file modes do not hold on this disk (the new folder is not private)", se)
+        self.assertIn("a normal Linux or macOS disk", se)
+        self.assertFalse(os.path.exists(self.out()))
+
+    def test_fd_path_reads_the_macos_place_of_an_open_handle(self):
+        class FakeFcntl:
+            F_GETPATH = 50
+
+            def __init__(self, reply):
+                self.reply = reply
+
+            def fcntl(self, fd, op, buf):
+                assert op == self.F_GETPATH
+                return self.reply
+
+        def no_proc(_):
+            raise OSError
+
+        for reply, want in ((b"/real/place\0junk\0more", "/real/place"), (b"relative\0", "fb")):
+            with (
+                mock.patch.object(ff.os, "readlink", no_proc),
+                mock.patch.dict(sys.modules, {"fcntl": FakeFcntl(reply)}),
+            ):
+                self.assertEqual(ff._fd_path(3, "fb"), want)
+
+    # ---- security review r3 (findings 1 to 7)
+    def full_vals(self):
+        write_values(self.vf, {**VALS, **PH_VALS})
+
+    def two_flows(self):
+        d = self.flow_dir({"u": "={{ $env.DESK_URL }}"})
+        shutil.copy(os.path.join(d, "mf-x.json"), os.path.join(d, "mf-y.json"))
+        return d
+
+    def killed_fill(self, sig, kill_at=4):
+        """Run a fill in a child process that sends itself `sig` after `kill_at` file writes."""
+        driver = (
+            "import os, sys, signal\n"
+            "sys.path.insert(0, sys.argv[1])\n"
+            "import fill_flows as ff\n"
+            "real, n = ff._write_new, [0]\n"
+            "def w(name, data, fd, created=None):\n"
+            "    real(name, data, fd, created)\n"
+            "    n[0] += 1\n"
+            "    if n[0] == int(sys.argv[2]):\n"
+            "        os.kill(os.getpid(), getattr(signal, sys.argv[3]))\n"
+            "ff._write_new = w\n"
+            "sys.exit(ff.main(['fill', '--in', sys.argv[4], '--values', sys.argv[5],"
+            " '--out', sys.argv[6]]))\n"
+        )
+        out = self.out()
+        p = subprocess.run(  # noqa: S603
+            [sys.executable, "-I", "-c", driver, HERE, str(kill_at), sig, self.two_flows(), self.vf, out],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        self.leak_check(p.stdout, p.stderr)
+        return out, p
+
+    def test_terminate_and_hangup_signals_clean_up_the_copy(self):
+        self.full_vals()
+        for sig in ("SIGTERM", "SIGHUP"):
+            out, p = self.killed_fill(sig)
+            self.assertEqual(p.returncode, 1, (sig, p.returncode, p.stderr))
+            self.assertFalse(os.path.exists(out), sig)
+            self.assertFalse(os.path.exists(out + ".manifest.json"), sig)
+
+    def test_a_kill_that_cannot_be_caught_leaves_a_copy_that_check_refuses(self):
+        self.full_vals()
+        out, p = self.killed_fill("SIGKILL")
+        self.assertEqual(p.returncode, -9)
+        self.assertTrue(os.path.isdir(out))
+        code, so, _ = self.cli("check", out)
+        self.assertEqual(code, 1, so)
+        self.assertIn(f"{NOT_READY} is in the folder", so)
+        self.assertEqual(self.cli("delete", "--out", out)[0], 0)  # and delete still clears it
+        self.assertFalse(os.path.exists(out))
+
+    def test_the_not_ready_note_goes_in_first_and_out_last(self):
+        self.full_vals()
+        order = []
+        real = ff._write_new
+
+        def spy(name, data, fd, created=None):
+            order.append(name)
+            return real(name, data, fd, created)
+
+        out = self.out()
+        with mock.patch.object(ff, "_write_new", spy):
+            self.assertEqual(self.inproc("fill", "--in", self.two_flows(), "--values", self.vf, "--out", out)[0], 0)
+        self.assertEqual(order[1:3], [NOT_READY, ff.MARKER_NAME])  # manifest, note, marker, files
+        self.assertNotIn(NOT_READY, os.listdir(out))  # a complete copy has no note
+        self.assertEqual(self.cli("check", out)[0], 0)
+
+    def test_check_compares_the_folder_with_its_manifest(self):
+        self.full_vals()
+        for damage in ("missing", "extra", "changed", "non-json"):
+            out = self.out(damage)
+            self.assertEqual(self.fill(src=self.two_flows(), out=out)[0], 0)
+            self.assertEqual(self.cli("check", out)[0], 0)
+            if damage == "missing":
+                os.unlink(os.path.join(out, "mf-y.json"))
+            elif damage == "extra":
+                jdump({"nodes": []}, os.path.join(out, "z.json"))
+            elif damage == "non-json":
+                wtext(os.path.join(out, "notes.txt"), "x")
+            else:
+                with open(os.path.join(out, "mf-y.json"), "ab") as fh:
+                    fh.write(b" ")
+            code, so, _ = self.cli("check", out)
+            self.assertEqual(code, 1, (damage, so))
+            self.assertIn("manifest", so, damage)
+
+    def test_fill_refuses_by_default_when_a_placeholder_value_is_missing(self):
+        self.strict = True
+        out = self.out()
+        code, _, se = self.fill(src=self.copy_flows("real"), out=out)
+        self.assertEqual(code, 1, se)
+        self.assertIn("--allow-placeholders", se)
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+        self.strict = False
+        self.assertEqual(self.fill(src=self.copy_flows("real"), out=out)[0], 3)
+
+    def test_delete_no_manifest_keeps_a_file_the_manifest_does_not_list(self):
+        self.full_vals()
+        out = self.out()
+        self.assertEqual(self.fill(src=self.two_flows(), out=out)[0], 0)
+        extra = os.path.join(out, "mine.json")
+        jdump({"keep": 1}, extra)
+        os.chmod(extra, 0o600)
+        for flags in (("--no-manifest",), ("--no-manifest", "--force-hash")):
+            code, _, se = self.cli("delete", "--out", out, *flags)
+            self.assertEqual((code, "not in the manifest" in se), (1, True), se)
+            self.assertTrue(os.path.exists(extra))
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest-typo")
+        self.assertEqual(code, 2)
+        os.unlink(os.path.join(out + ".manifest.json"))
+        code, _, se = self.cli("delete", "--out", out)
+        self.assertEqual(code, 1)
+        self.assertIn("only the marker, the not-ready note and .json files", se)
+        self.assertNotIn("removes only the files this tool writes", se)
+
+    def test_values_file_must_be_yours(self):
+        with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
+            code, _, se = self.inproc(
+                "fill", "--in", self.copy_flows("film"), "--values", self.vf, "--out", self.out()
+            )
+        self.assertEqual((code, "values file is not owned by you" in se), (1, True), se)
+        self.assertFalse(os.path.exists(self.out()))
+
+    def test_delete_takes_the_note_and_the_marker_last(self):
+        out = self.made("real")
+        order = []
+        real = os.unlink
+
+        def spy(name, *a, **k):
+            order.append(name)
+            return real(name, *a, **k)
+
+        with mock.patch.object(ff.os, "unlink", spy):
+            self.assertEqual(self.inproc("delete", "--out", out)[0], 0)
+        folder_files = [n for n in order if not n.endswith(".manifest.json")]
+        self.assertEqual(folder_files[-2:], [NOT_READY, ff.MARKER_NAME])
+        self.assertTrue(order[-1].endswith(".manifest.json"))
+
+    def test_delete_stopped_half_way_leaves_a_marked_folder(self):
+        out = self.made("real")
+        real, count = os.unlink, [0]
+
+        def stop(name, *a, **k):
+            count[0] += 1
+            if count[0] == 2:
+                raise KeyboardInterrupt
+            return real(name, *a, **k)
+
+        with mock.patch.object(ff.os, "unlink", stop):
+            with self.assertRaises(KeyboardInterrupt):
+                self.inproc("delete", "--out", out)
+        self.assertIn(ff.MARKER_NAME, os.listdir(out))  # still marked: a re-run finds it
+        self.assertEqual(self.cli("delete", "--out", out)[0], 0)
+        self.assertFalse(os.path.exists(out))
+
+    def test_escaped_spellings_of_the_env_name_are_refused(self):
+        for esc in ("\\u0024env.DESK_URL", "$\\u0065nv.DESK_URL", "\\x24env.DESK_URL", "\\u{24}env.DESK_URL"):
+            se = self.refuse({"u": "={{ " + esc + " }}"}, "escape")
+            self.assertIn("written with an escape", se)
+        self.refuse({"jsCode": "return \\u0024env.DESK_URL"}, "escape")
+        d = os.path.join(self.t, "chk")
+        os.mkdir(d)
+        jdump({"nodes": [{"name": "n", "parameters": {"u": "={{ \\u0024env.DESK_URL }}"}}]}, os.path.join(d, "a.json"))
+        self.assertEqual(self.cli("check", d, "--tokens-only")[0], 1)
 
     # ---- security review minor 4: the expression lexer against a real JavaScript engine
     @unittest.skipUnless(shutil.which("node"), "node (a JavaScript engine) is not installed")
@@ -1668,6 +1927,14 @@ class Round5(Base):
         self.leak_check(p.stdout, p.stderr)
         self.assertNotIn("IMPORTED", p.stdout)
         self.assertNotEqual(p.returncode, 0)
+        # by default a missing placeholder value is a refusal and nothing is written
+        self.assertIn("--allow-placeholders", p.stderr)
+        self.assertFalse(os.path.exists(out))
+        # the credential walk-through asks for the NOT READY copy on purpose
+        cmd2 = [*cmd[:2], cmd[2].replace("--out", "--allow-placeholders --out")]
+        p = subprocess.run(cmd2 + args, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
+        self.assertNotIn("IMPORTED", p.stdout)
+        self.assertEqual(p.returncode, 3)
         self.assertIn("NOT READY TO IMPORT", p.stderr)
 
     def test_delete_handles_the_not_ready_note(self):
