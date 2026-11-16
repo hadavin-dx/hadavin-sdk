@@ -1,21 +1,17 @@
 banned strings in test list: 10
-OWNER-STEPS-realrun-v15.md: banned=0 PENDING/TBD/TODO=0 bytes=35875 UNVERIFIED=9
+OWNER-STEPS-realrun-v15.md: banned=0 PENDING/TBD/TODO=0 bytes=35882 UNVERIFIED=9
 OWNER-DAY-CARD-v15.md: banned=0 PENDING/TBD/TODO=0 bytes=12537 UNVERIFIED=3
-OWNER-STEPS-v15-APPENDIX.md: banned=0 PENDING/TBD/TODO=0 bytes=32020 UNVERIFIED=7
-v15-CHANGES.md: banned=0 PENDING/TBD/TODO=0 bytes=15305 UNVERIFIED=8
+OWNER-STEPS-v15-APPENDIX.md: banned=0 PENDING/TBD/TODO=0 bytes=32027 UNVERIFIED=7
+v15-CHANGES.md: banned=0 PENDING/TBD/TODO=0 bytes=15449 UNVERIFIED=8
 v15-OPEN-FOR-LEAD.md: banned=0 PENDING/TBD/TODO=0 bytes=5063 UNVERIFIED=1
 blank list numbers: 1 .. 29 count 29
 card rows with an underline: 50
-FAIL S: forbidden "run folder" (renamed program folder) x1
-FAIL A: forbidden "run folder" (renamed program folder) x1
 S 18:29 UTC = 23:59 IST 2
 S 25 Nov 2026 15:00 UTC = 20:30 IST 2
-FAIL S: bare "lead" x2: ['# Your steps for the lead desk video rec', 'e, contact-owner change, lead-status change ']
-finding ids expected: 144 rows in CHANGES: 0 missing: ['SE-N1', 'SE-N2', 'SE-N3', 'SE-N4', 'SE-N5', 'SE-N6', 'SE-N7', 'SE-N8', 'SE-M3', 'SE-M4', 'SE-M5', 'SE-M6', 'SE-M7', 'SE-n1', 'SE-n2', 'SE-n3', 'SE-O1', 'SE-O2', 'SE-O3', 'SE-O4', 'SE-O5', 'SE-D', 'ST-B', 'ST-1', 'ST-2', 'ST-3', 'ST-4', 'ST-5', 'ST-6', 'ST-7', 'ST-8', 'ST-9', 'ST-10', 'ST-11', 'ST-12', 'ST-13', 'ST-14', 'ST-15', 'ST-16', 'ST-17', 'ST-n1', 'ST-n2', 'ST-n3', 'ST-n4', 'ST-n5', 'ST-n6', 'ST-n7', 'ST-n8', 'ST-n9', 'ST-n10', 'ST-n11', 'ST-n12', 'CI-1', 'CI-2', 'CI-3', 'CI-4', 'CI-5', 'CI-6', 'CI-U1', 'CI-U2', 'CI-U3', 'CI-U4', 'CI-U5', 'CI-U6', 'CI-U7', 'CI-U8', 'CI-U9', 'AD-1', 'AD-2', 'AD-3', 'AD-4', 'AD-5', 'AD-6', 'AD-7', 'AD-8', 'AD-9', 'AD-10', 'AD-11', 'AD-12', 'AD-13', 'AD-14', 'AD-15', 'AD-16', 'AD-17', 'AD-18', 'AD-19', 'AD-20', 'AD-21', 'AD-22', 'AD-23', 'AD-24', 'AD-25', 'AD-26', 'AD-27', 'AD-28', 'AD-29', 'AD-30', 'AD-31', 'AD-32', 'AD-33', 'AD-34', 'AD-35', 'AD-36', 'AD-37', 'AD-38', 'AD-39', 'AD-40', 'AD-41', 'AD-42', 'AD-43', 'CO-1', 'CO-2', 'CO-3', 'CO-4', 'CO-5', 'CO-6', 'CO-7', 'CO-8', 'CO-9', 'CO-10', 'CO-11', 'CO-12', 'R2-1', 'R2-2', 'R2-3', 'R2-4', 'R2-5', 'R2-6', 'R2-7', 'R2-8', 'R2-F', 'NC-5', 'NC-6', 'NC-7', 'NC-8', 'NC-15', 'NC-19', 'NC-20', 'OR-1', 'OR-2', 'OR-3', 'OR-4', 'OR-5', 'OR-6']
-FAIL findings without a row: ['SE-N1', 'SE-N2', 'SE-N3', 'SE-N4', 'SE-N5', 'SE-N6', 'SE-N7', 'SE-N8', 'SE-M3', 'SE-M4', 'SE-M5', 'SE-M6', 'SE-M7', 'SE-n1', 'SE-n2', 'SE-n3', 'SE-O1', 'SE-O2', 'SE-O3', 'SE-O4', 'SE-O5', 'SE-D', 'ST-B', 'ST-1', 'ST-2', 'ST-3', 'ST-4', 'ST-5', 'ST-6', 'ST-7', 'ST-8', 'ST-9', 'ST-10', 'ST-11', 'ST-12', 'ST-13', 'ST-14', 'ST-15', 'ST-16', 'ST-17', 'ST-n1', 'ST-n2', 'ST-n3', 'ST-n4', 'ST-n5', 'ST-n6', 'ST-n7', 'ST-n8', 'ST-n9', 'ST-n10', 'ST-n11', 'ST-n12', 'CI-1', 'CI-2', 'CI-3', 'CI-4', 'CI-5', 'CI-6', 'CI-U1', 'CI-U2', 'CI-U3', 'CI-U4', 'CI-U5', 'CI-U6', 'CI-U7', 'CI-U8', 'CI-U9', 'AD-1', 'AD-2', 'AD-3', 'AD-4', 'AD-5', 'AD-6', 'AD-7', 'AD-8', 'AD-9', 'AD-10', 'AD-11', 'AD-12', 'AD-13', 'AD-14', 'AD-15', 'AD-16', 'AD-17', 'AD-18', 'AD-19', 'AD-20', 'AD-21', 'AD-22', 'AD-23', 'AD-24', 'AD-25', 'AD-26', 'AD-27', 'AD-28', 'AD-29', 'AD-30', 'AD-31', 'AD-32', 'AD-33', 'AD-34', 'AD-35', 'AD-36', 'AD-37', 'AD-38', 'AD-39', 'AD-40', 'AD-41', 'AD-42', 'AD-43', 'CO-1', 'CO-2', 'CO-3', 'CO-4', 'CO-5', 'CO-6', 'CO-7', 'CO-8', 'CO-9', 'CO-10', 'CO-11', 'CO-12', 'R2-1', 'R2-2', 'R2-3', 'R2-4', 'R2-5', 'R2-6', 'R2-7', 'R2-8', 'R2-F', 'NC-5', 'NC-6', 'NC-7', 'NC-8', 'NC-15', 'NC-19', 'NC-20', 'OR-1', 'OR-2', 'OR-3', 'OR-4', 'OR-5', 'OR-6']
+finding ids expected: 144 rows in CHANGES: 144 missing: []
 card underline rows still open (lead fills): 50
 sheet markers "THE STUDIO LEAD FILLS THIS IN": 1 | proposals listed in OPEN: 12
-OWNER-STEPS-realrun-v15.md bytes 35875
+OWNER-STEPS-realrun-v15.md bytes 35882
 OWNER-DAY-CARD-v15.md bytes 12537
-OWNER-STEPS-v15-APPENDIX.md bytes 32020
-TOTAL PROBLEMS 4
+OWNER-STEPS-v15-APPENDIX.md bytes 32027
+TOTAL PROBLEMS 0

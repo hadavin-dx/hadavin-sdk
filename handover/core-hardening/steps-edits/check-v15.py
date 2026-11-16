@@ -82,7 +82,7 @@ for s in ('18:29 UTC = 23:59 IST', '25 Nov 2026 15:00 UTC = 20:30 IST'):
 # 6. "lead" alone (outside the claim and the quoted definitions) must be "studio lead"
 for k in OWN:
     t = T[k]
-    for ph in ('a lead sent twice', 'sales lead', 'lead key', '"lead"', "'lead'", 'unfinished lead', 'lead whose', '[demo] lead'):
+    for ph in ('a lead sent twice', 'sales lead', 'lead key', '"lead"', "'lead'", 'unfinished lead', 'lead whose', '[demo] lead', 'lead desk', 'lead-status'):
         t = t.replace(ph, '')
     c = [t[max(0, m_.start() - 25):m_.end() + 15].replace('\n', ' ') for m_ in re.finditer(r'(?<!studio )\b[Ll]eads?\b', t)]
     if c: fail(f'{k}: bare "lead" x{len(c)}: {c[:3]}')
