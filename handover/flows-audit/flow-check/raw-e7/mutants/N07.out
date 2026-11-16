@@ -1,0 +1,55 @@
+applied F-002-take-key-check-and-claim-error-path
+applied F-008-save-runs-for-the-take
+checker runs wall time: 0 s; self-test wall time: 12 s
+==== real-v5 (THE TAKE) ====
+---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
+[pristine]
+######## pristine real
+RESULT: 0 FAIL, 23 WARN
+Known open problems: 17
+exit=0
+[patched]
+######## patched real
+RESULT: 0 FAIL, 22 WARN
+Known open problems: 16
+exit=0
+[pristine-strict]
+######## pristine-strict real
+RESULT: 4 FAIL, 19 WARN
+Known open problems: 13
+exit=1
+[patched-strict]
+######## patched-strict real
+RESULT: 4 FAIL, 18 WARN
+Known open problems: 12
+exit=1
+[pristine-no-baseline] (information only: no excuse for the 2 IF gaps; exit 1 with 2 FAIL is expected)
+RESULT: 2 FAIL, 23 WARN
+exit=1
+==== film-v5 (NOT FOR THE TAKE; shown only, not gating, not added to the real-v5 numbers) ====
+[pristine-film]
+######## pristine film
+RESULT: 0 FAIL, 21 WARN
+Known open problems: 15
+exit=0
+[patched-film]
+######## patched film
+RESULT: 0 FAIL, 20 WARN
+Known open problems: 14
+exit=0
+[pristine-strict-film]
+######## pristine-strict film
+RESULT: 4 FAIL, 17 WARN
+Known open problems: 11
+exit=1
+[patched-strict-film]
+######## patched-strict film
+RESULT: 4 FAIL, 16 WARN
+Known open problems: 10
+exit=1
+[selftest exit=1] SELFTEST: 656 as expected, 6 not as expected, 62 skipped (not applicable)
+[take_check.sh exit=0] missing lines: none
+run_all exit status (real-v5 default runs + self-test): 1
+real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+RUN_ALL_RC=1
