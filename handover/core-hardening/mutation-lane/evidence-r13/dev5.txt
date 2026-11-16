@@ -1,0 +1,25 @@
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+  PASS: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 0 of 5 wrong (r9: exit 1 or a traceback)
+  PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 0
+  PASS: T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
+/tmp/safety-only.6m2osE.sh: line 70: 13681 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/tmp/safety-only.6m2osE.sh: line 70: 21195 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13/dev5/tmpstate/hadavin-mutation-lane-0/4d2c238c2b4feb85.backup; hash mat
+  PASS: T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0

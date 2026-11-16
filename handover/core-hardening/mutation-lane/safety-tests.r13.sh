@@ -1749,7 +1749,7 @@ L1=$(last)
 chk "T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got $rc1), nothing written (last '$L1' = return2)" "[ $rc1 -eq 3 ] && [ '$L1' = return2 ]"
 python3 "$RUN" --root "$T/root" --restore >"$S/t98e2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98e2.out" | tail -2
 M2=$(stat -c %a "$T/root/src/mod.py")
-chk "T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0775: a write bit for others is taken away (r12 m5; r11 wrote 0777) (got exit $rc2, mode $M2; the special-bit case is T99b)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ] && [ \"$M2\" = 775 ]"
+chk "T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0755: the write bits for the group and for others are taken away (r13 relay item 4; r12 wrote 0775, r11 0777) (got exit $rc2, mode $M2; the special-bit case is T99b)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ] && [ \"$M2\" = 755 ]"
 python3 - "$RUN" <<'PY' >"$S/t98f.out" 2>&1; rc=$?
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
@@ -1979,7 +1979,15 @@ fake_patch = X / "patch"; fake_patch.write_text("#!/bin/sh\nexit 0\n"); fake_pat
 PA = ["-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch", "-d", "/", "-i", "/dev/null"]
 expect("M1 /tmp/x/patch (a different file named patch)", outcome([str(fake_patch)] + PA, {"env": E}), "refused", "is not the git or patch this run found")
 link = X / "git-link"; link.mkdir(); lk = link / "git"; os.symlink(os.path.realpath(G), lk)
-expect("M1 ACCEPT /tmp/x/git-link/git (a link to the real git: same file)", outcome([str(lk)] + GV[1:], {"env": E}), "started")
+expect("M1 REFUSE /tmp/x/git-link/git (a link to the real git: not the text tool() returned)", outcome([str(lk)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+shl = X / "sh-link"; shl.mkdir(); sg = shl / "git"; os.symlink(os.path.realpath("/bin/sh"), sg)
+expect("M1 REFUSE a link named git to /bin/sh", outcome([str(sg)] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+dd = os.path.dirname(G) + "/../" + os.path.basename(os.path.dirname(G)) + "/git"   # e.g. /usr/bin/../bin/git
+expect("M1 REFUSE a path with .. that reaches the real git (" + dd + ")", outcome([dd] + GV[1:], {"env": E}), "refused", "is not the git or patch this run found")
+cl = X / "cwdlink"; os.symlink("/", cl)
+expect("M1 REFUSE cwd through a symbolic link", outcome(GV, {"env": E, "cwd": str(cl)}), "refused", "cwd must be the real path")
+expect("M1 REFUSE cwd with a .. part", outcome(GV, {"env": E, "cwd": "/tmp/../tmp"}), "refused", "cwd must be the real path")
+expect("M1 ACCEPT cwd that is a real path", outcome(GV, {"env": E, "cwd": "/"}), "started")
 expect("M1 ACCEPT the git that tool() found", outcome(GV, {"env": E}), "started")
 # arguments of the fixed calls: the shape is checked (no -c, no --exec-path, no other sub-command, no extra option)
 for name, args in {
@@ -2150,7 +2158,7 @@ chk "T100g T99g cause: no import of argparse, tarfile, subprocess or json stands
 for MODEV in 438 511; do   # 0666 0777
   kill_planted; forge97; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore >"$S/t99h.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-300 "$S/t99h.out" | tail -1
-  chk "T99h m5 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), file written WITHOUT the write bit for others (mode $GOT has no 2 in the last digit), the text says NOTE (r11: written as recorded)" "[ $rc -eq 0 ] && [ \"\${GOT: -1}\" != 6 ] && [ \"\${GOT: -1}\" != 7 ] && [ \"\${GOT: -1}\" != 2 ] && [ \"\${GOT: -1}\" != 3 ] && grep -q 'writable by others' '$S/t99h.out'"
+  chk "T99h m5 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), file written WITHOUT the write bit for others (mode $GOT has no 2 in the last digit), the text says NOTE (r11: written as recorded)" "[ $rc -eq 0 ] && [ \"\${GOT: -1}\" != 6 ] && [ \"\${GOT: -1}\" != 7 ] && [ \"\${GOT: -1}\" != 2 ] && [ \"\${GOT: -1}\" != 3 ] && grep -q 'writable by the group or by others' '$S/t99h.out'"
   chmod 644 "$T/root/src/mod.py"
 done
 git -C "$T/repo" config tar.umask 022
@@ -2177,7 +2185,18 @@ C2=0; [ -e "$S/rawdd101c" ] && C2=1
 fresh_root; rm -rf "$T/root/newraw101"
 mut --raw "$S/nodir101/../toy/root/newraw101" -- tests/test_fast.py >"$S/t101a3.out" 2>&1; rc3=$?
 C3=0; [ -e "$T/root/newraw101" ] || [ -e "$S/nodir101" ] && C3=1
+mkdir -p "$S/dot101"; rm -f "$S/dot101"/*
+fresh_root; ( cd "$S/dot101" && python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw . --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t101a4.out" 2>&1 ); rc4=$?
+C4=$(ls -A "$S/dot101" | wc -l)
+# the two top-level cases are run only against a run.py that has the refusal (otherwise they would write into /tmp and /)
+if grep -q "top-level folder" "$RUN"; then
+  fresh_root; mut --raw /tmp -- tests/test_fast.py >"$S/t101a5.out" 2>&1; rc5=$?
+  C5=0; [ -e /tmp/X-m1.txt ] && C5=1
+  fresh_root; mut --raw / -- tests/test_fast.py >"$S/t101a6.out" 2>&1; rc6=$?
+  C6=0; [ -e /X-m1.txt ] && C6=1
+else rc5=99; rc6=99; C5=9; C6=9; echo "  (not run: this run.py has no refusal of top-level --raw folders; running it would write into /tmp and /)"; fi
 cut -c1-200 "$S/t101a1.out" | tail -1
+chk "T101a2 relay item 1: --raw . (exit $rc4, files made there: $C4), --raw /tmp (a top-level folder: exit $rc5, X-m1.txt made: $C5) and --raw / (exit $rc6, X-m1.txt made in /: $C6) are refused with exit 2 and nothing is written (r12: --raw . and --raw /tmp write their raw files; --raw / as root wrote 3 files into the filesystem root, which this check never lets r12 do: it is only run on r13 code)" "[ $rc4 -eq 2 ] && [ $C4 -eq 0 ] && [ $rc5 -eq 2 ] && [ $C5 -eq 0 ] && [ $rc6 -eq 2 ] && [ $C6 -eq 0 ]"
 chk "T101a m2 --raw with a .. part (three shapes: a folder that would be made and stepped out of; a .. through an existing folder; a .. that would end inside --root): all exit 2 (got $rc1 $rc2 $rc3), the text names the .., no folder made (flags $C1 $C2 $C3) (r12: the first two run and create their folders)" "[ $rc1 -eq 2 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $C1 -eq 0 ] && [ $C2 -eq 0 ] && [ $C3 -eq 0 ] && grep -q '\.\.' '$S/t101a1.out' && grep -q 'REFUSED' '$S/t101a1.out'"
 rm -rf "$S/rawdd101" "$S/rawdd101b" "$S/rawdd101c"
 # b) m4: the comment on the total size no longer claims the limit can never be reached
@@ -2187,7 +2206,7 @@ chk "T101b m4 TEXT CHECK the total-size comment says the real bound: the words '
 for MODEV in 511 2541; do   # 0777 (world-write cut) and 04755 (setuid cut)
   kill_planted; forge97; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore >"$S/t101c.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-500 "$S/t101c.out" | tail -1
-  chk "T101c m5 forged marker mode $(printf '%o' $MODEV), plain --restore: exit 0 (got $rc), mode $GOT, the NOTE says limit d and names the group-write and execute bits and --restore --sha (r12: no such sentence)" "[ $rc -eq 0 ] && grep -q 'limit d' '$S/t101c.out' && grep -q 'group-write and execute bits' '$S/t101c.out' && grep -q 'restore --sha' '$S/t101c.out'"
+  chk "T101c m5 forged marker mode $(printf '%o' $MODEV), plain --restore: exit 0 (got $rc), mode $GOT, the mode has no write bit for group or others (755), the NOTE says limit d and names the execute and read bits and --restore --sha (r12: no such sentence; mode 775 for 0777)" "[ $rc -eq 0 ] && [ \"$GOT\" = 755 ] && grep -q 'limit d' '$S/t101c.out' && grep -q 'execute bits and the read bits' '$S/t101c.out' && grep -q 'restore --sha' '$S/t101c.out'"
   chmod 644 "$T/root/src/mod.py"
 done
 }

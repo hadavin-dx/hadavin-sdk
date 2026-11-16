@@ -66,7 +66,7 @@ _ten = re.findall(r"\bto (\d+|ten|twelve|eleven) files\b", raw)
 _tw = re.findall(r"\b(\d+|ten|twelve|eleven) (?:numbered )?TASKS\b", raw)
 check("class 2: 'to N files' is 10 everywhere (found %s) and the number of TASKS is twelve everywhere (found %s)" % (sorted(set(_ten)), sorted(set(_tw))), set(_ten) <= {"10"} and set(_tw) <= {"twelve"}, (sorted(set(_ten)), sorted(set(_tw))))
 _two = re.findall(r"\b(two|three|four|five|six) OPEN( \(OWNER ONLY\) questions| items)?", raw)
-_osq = [l for l in txt if (l.startswith("| L-SHEET (was Q10) |") or l.startswith("| L-SAVEERR | studio lead")) and "OWNER ONLY" in l]
+_osq = [l for l in txt if (l.startswith("| L-SHEET (was Q10) |") or l.startswith("| L-SAVEERR | OWNER ONLY")) and "OWNER ONLY" in l]
 check("class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found %s)" % sorted(set(_two)), all((w, q) in {("two", " (OWNER ONLY) questions"), ("five", " items")} for w, q in _two) and len(_osq) == 2, (sorted(set(_two)), len(_osq)))
 _tn = [int(x) for x in re.findall(r"TASK \((\d+)\)", raw)]
 check("class 2: no TASK number above twelve (the list has 12 tasks)", max(_tn) <= 12, max(_tn))

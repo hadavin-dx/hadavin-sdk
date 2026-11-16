@@ -14,3 +14,16 @@ PASS L DB-2 v19 spend_decrease_log: the same file without the lock DOES change t
 PASS L DB-3 v19 spend_guarded_writes: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
 PASS L DB-3 v19 spend_guarded_writes: nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(29, 1, 4, 105, 5) -> (29, 1, 4, 105, 5)]
 PASS L DB-3 v19 spend_guarded_writes: the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(29, 1, 4, 105, 5) -> (37, 5, 4, 107, 6)]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) L v16 DB-2 file under the same lock: no 55P03  [57014 after 12.0s (waits until the 12s statement cap)]
+INFO L: every file in held-sql/ has a lock check above; the lead's gate is `grep -c lock_timeout` plus this run (PR DB-1 test)
+PASS L text: the FIRST statement of spend_decrease_log.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_guarded_writes.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg_finite.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg_upgrade.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the position check itself refuses a file that sets the timeout AFTER an ALTER
+PASS K m5: with the record unwritable, switching ON still works  [err=None]
+PASS K m5: with the record unwritable, switching OFF is refused (fail closed) and the switch stays ON  [err=42P01]
+PASS K m5: with the record writable again a switch OFF is recorded (1 row)  [1]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) K m5: v16 file: switching ON with the record unwritable  [err=42P01]
+PASS H1 (a fact about Postgres, NOT a test of the code fix; that is a Python PR test): with no held file, a positive reserve (INSERT ... ON CONFLICT branch) on a NaN row RETURNS NaN, so the code check after RETURNING is needed in the INSERT branch too  [NaN]
