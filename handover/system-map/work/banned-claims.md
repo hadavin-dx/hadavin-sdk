@@ -1,3 +1,4 @@
+USE work/banned-claims-clean.md. This file is history: the eight 'this wins' passes below disagree on who unlocks the post (studio lead, a checker, or studio head) and on the deadline; the clean file is the only live text.
 # Do not use this file. Read work/banned-claims-clean.md. This file is kept only as the record of passes 1 to 7.
 
 SUPERSEDED. Use work/banned-claims-clean.md. Everything below is history; passes that say "wins" no longer do.

@@ -42,11 +42,11 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (UPDATED_UTC 2026-11-16T14:34:30Z; PUSHED_UTC 2026-11-16T14:34:30Z)
+## AGENTS (UPDATED_UTC 2026-11-16T14:34:53Z; PUSHED_UTC 2026-11-16T14:34:53Z)
 | id | task | state |
 |---|---|---|
-| a60a7c578c1b80a9e | cold read banned-claims | running |
-| a492430d71809b8e6 | cold read L1 | running |
+| aaa67b2bece938d78 | cold read banned-claims-clean | running |
+| a314603255fd9f0e2 | cold read L2 | running |
 
 CAPACITY: 2 of 8 slots used. Missing 6: remaining pages (L5ac, L5b, L6 table, checklist, v5-edits-for-M17, decision list, t19 step tables) await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
 NEXT 5: fix L5ac; fix L5b; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST; fix decision-list rows.
