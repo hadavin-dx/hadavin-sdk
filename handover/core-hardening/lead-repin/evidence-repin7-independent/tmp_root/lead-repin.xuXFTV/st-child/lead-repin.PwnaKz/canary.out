@@ -1,5 +1,0 @@
-FAIL (secret still visible): bare Bearer value
-FAIL (secret still visible in the line-only final filter): bare Bearer value
-FAIL (secret still visible after the sed stage alone): bare Bearer value
-FAIL (secret still visible): UUID
-FAIL (secret still visible after the awk stage alone): UUID

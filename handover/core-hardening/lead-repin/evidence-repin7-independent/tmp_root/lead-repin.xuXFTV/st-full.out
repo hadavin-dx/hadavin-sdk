@@ -1375,3 +1375,15 @@ PASS (machinery): an identity filter (cat) makes --self-test fail with a non-zer
 PASS (machinery): filter_ready refuses the useless rule file st-bad1.sed
 PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
 PASS (machinery): filter_ready refuses a useless awk program
+PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
+FAIL (machinery): --mask must hide the value (exit=3)
+FAIL (machinery): a normal run must end with exit 0 and a SUMMARY line (exit=3)
+FAIL (machinery): a normal run must keep exactly one work folder (found 0)
+PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
+PASS (machinery): the filter runs with LC_ALL=C (byte-wise matching)
+PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
+PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
+PASS (machinery): the left-out report counts one name with a line break and one symbolic link
+FAIL (machinery): a file name with # & and a backslash must be printed as file:line:word (exit=3)
+PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
+PASS (machinery): sh -x does not print a value (the script turns the trace off)

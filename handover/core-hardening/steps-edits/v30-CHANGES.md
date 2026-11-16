@@ -16,7 +16,7 @@ SECURITY
 - M1 stale lead text: release note v14 and open list say A's older key does NOT wait for a lead message; the 7-day warning (last used before Wed 11 Nov 2026 10:30 UTC = 16:00 IST, from facts) sits next to "money-safe default: A"; if used less than 7 days ago the owner takes B (L-A/B) -> C188, C189; plants X04, X05.
 - M2 "unless you know something else uses it" escape: removed; 7.11 describes, then cancels anyway; forced-cancel phrase without the claim -> C186; plants X02, X26.
 - M3 deadline-day stop: owner action through Sun 22 Nov (deadline reminder set after the yes, 5.8; cancel any still-valid older key by Sun 22 Nov 2026 18:09 UTC = 23:39 IST, or the last-resort step); appendix part 10 holds who acts, the no-yes path and the missed-7.11 path; Mon 23 Nov: 7.11 and alarm 4 apply, no take planned -> C187, C208; plants X03, X23.
-- m1 one 7-day wording (in full once, at 5.1; 6.7 points to it) and the last-used lag sentence (appendix part 6) -> C185; plants X01, X25.
+- m1 one 7-day wording (in full once, at 5.1; 6.7 in A now reads the last-used time again and points to it) and the last-used lag sentence (appendix part 6) -> C185; plants X01, X25.
 - m2 18:04 is a plan fact, not a start that fits a run (18:04 + 5 + 15 + 10 = 18:34 UTC = 00:04 IST; deadline 18:29 UTC = 23:59 IST; gap to the refusal limit 18:14:40 UTC = 23:44:40 IST is 10 min 40 s): note and open list -> C209; plant X24.
 - m3 6.1 Recall page: STOP (no tolerated difference) -> C190; plant X06.
 - m4 clipboard: any clipboard manager, remote tool, screen-capture tool off (R1, 6.1) -> C191; plant X07.
