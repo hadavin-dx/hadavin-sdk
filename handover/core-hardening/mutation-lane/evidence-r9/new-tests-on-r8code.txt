@@ -82,3 +82,26 @@ exit 0: the docstring rows that contain 'when the tree differs from git': []
 exit 2: the docstring rows that contain 'names another root or another backup path': ['2']
 BAD: ["exit 0 observed, but the docstring puts 'NO marker for this root exists anywhere' under []", "exit 0 observed, but the docstring puts 'found the whole tree equal' under []", "exit 0 observed, but the docstring puts 'when the tree differs from git' under []", 'option --discard-marker is not in
   FAIL: T96d the exit-code table of the docstring is parsed; every code in the code has a row, and four observed --restore results (no marker, --sha equal, --sha different, marker for another root) sit in the row that says so; the new options are named (exit 1; r8: fails)
+/tmp/safety-only.zzdK3x.sh: line 70: 31574 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.r8.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+                 [--out-json OUT_JSON] [--timeout TIMEOUT]
+                 [--pythonpath PYTHONPATH] [--repo REPO]
+                 [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                 [--skip-import-check] [--restore]
+run.r8.py: error: unrecognized arguments: --discard-marker
+  FAIL: T96e stale folder identity in the marker: --restore exits 3 for ever (got 3); --discard-marker without --sha is refused, exit 2 (got 2); with --sha and an equal tree it removes marker and backup: exit 0 (got 2; r8: unknown option, exit 2), state empty
+/tmp/safety-only.zzdK3x.sh: line 70: 13406 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.r8.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+                 [--out-json OUT_JSON] [--timeout TIMEOUT]
+                 [--pythonpath PYTHONPATH] [--repo REPO]
+                 [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                 [--skip-import-check] [--restore]
+run.r8.py: error: unrecognized arguments: --discard-marker
+  FAIL: T96e2 --discard-marker while the file is STILL planted (tree differs from git): exit 3 (got 2; r8: 2), nothing removed, file still planted
+/tmp/safety-only.zzdK3x.sh: line 297: 22291 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/big.py --old 'X = 1' --new 'X = 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/big.py back: File too large; the mutant may still be planted; marker and backup kept
+  PASS: T96f GUARD (passes on r8 too: it pins the behaviour): the write is cut short by a 1 KiB file-size limit: exit 3 (got 3), 'RESTORE FAILED', the file holds only a part (1024 bytes), marker and backup KEPT (1); the second restore without the limit: exit 0 (got 0), file equals git, state empty
