@@ -21,10 +21,18 @@ if ! ls "$S"/OWNER-SHEET-v[0-9]*-[AB].md >/dev/null 2>&1; then echo "MISSING INP
 need "$R/tests/test_no_reference_material.py" "tests/test_no_reference_material.py (the list of banned names)"
 need "$H/c6-skip-audit/REPORT-c6s.md" "c6-skip-audit/REPORT-c6s.md (the report the base build starts from)"
 if [ "$miss" -ne 0 ]; then echo "run_all.sh stopped: fix the missing input(s) above"; exit 2; fi
-# FREEZE: the owner sheets and release notes are still being rewritten by another session while this report is checked, so every check reads a FROZEN copy of the files written up to the freeze time; later files are named in the report and compared by the build (see 'FILES WRITTEN AFTER THE FREEZE')
+# FREEZE (c6x, deterministic): the owner sheets and release notes are still being rewritten by another session, so the checks read PINNED copies made once (PIN-TIME.txt):
+#   steps-pinned/ = the 70 files written up to the freeze time (the frozen copy c6w used, modification times kept); late-pinned/ = the 5 files written after it, copied once;
+#   STEPS-PIN.txt and LATE-PIN.txt hold their sha256 hashes. This run copies steps-pinned to steps-frozen and verifies both hash lists; the LIVE folder $S is NOT read by any gating check
+#   (so the unchanged report and every changed copy behave the same on every run). live-drift-output.txt only REPORTS how the live folder differs from the pin; it never fails the run.
 FREEZE="${C6V_FREEZE:-2026-11-16T19:30:00Z}"
-rm -rf "$E/steps-frozen" && mkdir "$E/steps-frozen" && find "$S" -maxdepth 1 -type f \( -name 'OWNER-SHEET-v*.md' -o -name 'LEAD-RELEASE-NOTE-v*.md' \) ! -newermt "$FREEZE" -exec cp -p {} "$E/steps-frozen"/ \;
-C6V_STEPS_LIVE="$S"; S="$E/steps-frozen"
+( cd "$E/steps-pinned" && sha256sum -c --quiet "$E/STEPS-PIN.txt" ) || { echo "run_all.sh stopped: steps-pinned does not match STEPS-PIN.txt"; exit 2; }
+( cd "$E/late-pinned" && sha256sum -c --quiet "$E/LATE-PIN.txt" ) || { echo "run_all.sh stopped: late-pinned does not match LATE-PIN.txt"; exit 2; }
+rm -rf "$E/steps-frozen" && cp -a "$E/steps-pinned" "$E/steps-frozen"
+{ echo "live folder vs the pin, at $(date -u +%FT%TZ) (information only):"; for f in $(ls "$S" 2>/dev/null | grep -E '^(OWNER-SHEET|LEAD-RELEASE-NOTE)-v[0-9]+.*\.md$'); do
+    if [ -e "$E/steps-pinned/$f" ]; then p="$E/steps-pinned/$f"; elif [ -e "$E/late-pinned/$f" ]; then p="$E/late-pinned/$f"; else echo "NOT IN THE PIN: $f"; continue; fi
+    cmp -s "$S/$f" "$p" || echo "CHANGED SINCE THE PIN: $f"; done; echo "(end)"; } > live-drift-output.txt 2>&1
+C6V_STEPS_LIVE="$E/late-pinned"; S="$E/steps-frozen"
 export C6V_TREE C6V_STEPS="$S" C6V_STEPS_LIVE C6V_FREEZE="$FREEZE"
 cd "$E"
 echo "run_all.sh start $(date -u +%FT%TZ)" >> run-log.txt   # one line per full run; the check script counts these lines and compares them with the run count in the report and in c6x-CHANGES.md

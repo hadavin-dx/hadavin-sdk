@@ -1,5 +1,5 @@
-## NEWEST VERSIONS FOUND: owner sheet v35 (A and B), release note v19
-## check time (UTC): 2026-11-16T20:12:20Z
+## NEWEST VERSIONS FOUND: owner sheet v34 (A and B), release note v18
+## check time (UTC): 2026-11-16T20:15:23Z
 ## C-10c: owner sheets, hits per phrase (grep -c -i: never deletes / read, create and change only / does not delete / read-only or read only any mention)
 OWNER-SHEET-v19.md: 1 / 0 / 0 / 1
 OWNER-SHEET-v20.md: 0 / 0 / 0 / 0
@@ -39,13 +39,10 @@ OWNER-SHEET-v33-SOURCE.md: 0 / 0 / 0 / 2
 OWNER-SHEET-v34-A.md: 0 / 0 / 0 / 1
 OWNER-SHEET-v34-B.md: 0 / 0 / 0 / 1
 OWNER-SHEET-v34-SOURCE.md: 0 / 0 / 0 / 2
-OWNER-SHEET-v35-A.md: 0 / 0 / 0 / 1
-OWNER-SHEET-v35-B.md: 0 / 0 / 0 / 1
-OWNER-SHEET-v35-SOURCE.md: 0 / 0 / 0 / 2
 ## newest owner sheet by modification time (UTC), at the check time
-2026-11-16T19:47:39Z OWNER-SHEET-v35-SOURCE.md
-2026-11-16T19:49:39Z OWNER-SHEET-v35-A.md
-2026-11-16T19:49:39Z OWNER-SHEET-v35-B.md
+2026-11-16T18:54:55Z OWNER-SHEET-v34-SOURCE.md
+2026-11-16T19:27:29Z OWNER-SHEET-v34-A.md
+2026-11-16T19:27:29Z OWNER-SHEET-v34-B.md
 ## ORDERS: L-23NOV line and Q25 and Q27 lines
 189:Q25: cancel-by 18:19 UTC (23:49 IST), at least 10 minutes before the stop. Target take is Wed 18 Nov, so no take on 23 Nov unless Q27 is shown at the final head.
 191:Q27: UNVERIFIED: the lead reads run_real_check_n8n.py at the final head and answers (a), (b), (c) with line numbers at re-pin. Until then write 'lead verifies at re-pin'; use your defaults.
@@ -72,11 +69,8 @@ OWNER-SHEET-v35-SOURCE.md: 0 / 0 / 0 / 2
 2026-11-16T19:27:29Z OWNER-SHEET-v34-A.md
 2026-11-16T19:27:29Z OWNER-SHEET-v34-B.md
 2026-11-16T18:54:55Z OWNER-SHEET-v34-SOURCE.md
-2026-11-16T19:49:39Z OWNER-SHEET-v35-A.md
-2026-11-16T19:49:39Z OWNER-SHEET-v35-B.md
-2026-11-16T19:47:39Z OWNER-SHEET-v35-SOURCE.md
 ## release notes: newest version on disk (LEAD-RELEASE-NOTE-v*.md, not SOURCE)
-LEAD-RELEASE-NOTE-v19.md
+LEAD-RELEASE-NOTE-v18.md
 ## modification time of every release note v13 and later (UTC)
 2026-11-16T18:46:25Z LEAD-RELEASE-NOTE-v13-SOURCE.md
 2026-11-16T18:46:25Z LEAD-RELEASE-NOTE-v13.md
@@ -90,27 +84,25 @@ LEAD-RELEASE-NOTE-v19.md
 2026-11-16T18:46:25Z LEAD-RELEASE-NOTE-v17.md
 2026-11-16T18:52:25Z LEAD-RELEASE-NOTE-v18-SOURCE.md
 2026-11-16T19:27:29Z LEAD-RELEASE-NOTE-v18.md
-2026-11-16T19:49:39Z LEAD-RELEASE-NOTE-v19-SOURCE.md
-2026-11-16T19:49:39Z LEAD-RELEASE-NOTE-v19.md
 ## G12 rows in the newest release note (grep -n)
 33:| G12 | Claims: the one sentence, the ban list of section 5 decided (the lease sentence is out of the public post, lead answer Q22c) | sentence in writing | sentence missing |
-## the release note lines the report cites (lines 8, 33, 149, 150): first 60 characters, in release note v14 and in the newest (LEAD-RELEASE-NOTE-v19.md)
+## the release note lines the report cites (lines 8, 33, 149, 150): first 60 characters, in release note v14 and in the newest (LEAD-RELEASE-NOTE-v18.md)
 v14 8: 3. Facts that conflict across the inputs and need your decis
 newest 8: 3. Facts that conflict across the inputs and need your decis
-line 8: the whole line DIFFERS between v14 and LEAD-RELEASE-NOTE-v19.md
+line 8: the whole line DIFFERS between v14 and LEAD-RELEASE-NOTE-v18.md
 v14 33: | G12 | Claims: the one sentence, the ban list of section 5 
 newest 33: | G12 | Claims: the one sentence, the ban list of section 5 
-line 33: the whole line is the same in v14 and in LEAD-RELEASE-NOTE-v19.md
+line 33: the whole line is the same in v14 and in LEAD-RELEASE-NOTE-v18.md
 v14 149: - **Ban list** (the post and every spoken or written word of
 newest 149: - **Ban list** (the post and every spoken or written word of
-line 149: the whole line DIFFERS between v14 and LEAD-RELEASE-NOTE-v19.md
+line 149: the whole line DIFFERS between v14 and LEAD-RELEASE-NOTE-v18.md
 v14 150: - **Claim wording (c), in force (lead answer Q22):** the DEC
 newest 150: - **Claim wording (c), in force (lead answer Q22):** the DEC
-line 150: the whole line is the same in v14 and in LEAD-RELEASE-NOTE-v19.md
+line 150: the whole line is the same in v14 and in LEAD-RELEASE-NOTE-v18.md
 ## the 45-second limit sentence: hits of 'within 45' / '45 seconds' in the newest owner sheets A and B and the newest release note (grep -c -i)
-OWNER-SHEET-v35-A.md: 0
-OWNER-SHEET-v35-B.md: 0
-LEAD-RELEASE-NOTE-v19.md: 0
+OWNER-SHEET-v34-A.md: 0
+OWNER-SHEET-v34-B.md: 0
+LEAD-RELEASE-NOTE-v18.md: 0
 ## sha256 content hash of every owner sheet and release note file at the check time (a file written again with identical content is not a change)
 59dc44311f815adde17340deb9a90be14187cd1b66eba306a9c0b05f77a26783  OWNER-SHEET-v16.md
 2b14065a5a10586bad7ebab3af32c74a50dcfedc95203c223e2313483dae2d63  OWNER-SHEET-v17.md
@@ -153,9 +145,6 @@ ad04264c44de8878beefbb997fba90ece90759afd171db66481d42c9e3d64228  OWNER-SHEET-v3
 81ee6afca3c82a51122bb0dbef4b70e4d8fa3bca489b77b92610a2289882aa58  OWNER-SHEET-v34-A.md
 2654befeb6870fe5d2bc5e3b8d47b93ebd314d21c0224ae2de83c5f0a768c190  OWNER-SHEET-v34-B.md
 525078f279d78b4e14bd84cc335cd6650f09b3e8be27fbb3ec59589191a90e51  OWNER-SHEET-v34-SOURCE.md
-55a401ed36d2e15d517ee52465c5f1f972d85d3250d9268bbe3b8903dbb0c336  OWNER-SHEET-v35-A.md
-a7a86e1fd1505582236d354ac749419409378956fec4887a660a0ec1ac6beb8c  OWNER-SHEET-v35-B.md
-c8fe557acf32ac776f95b55352f369e10a2581b9d339a87f9e96054226dff173  OWNER-SHEET-v35-SOURCE.md
 c812e5e72f059d52368c6650e682f7353d48aa2bf4ea2fd34332312b49146e3b  LEAD-RELEASE-NOTE-v1.md
 418e488ba00f83ca2f215f839d83258001ad5014884ac630f1711171741687c7  LEAD-RELEASE-NOTE-v10-SOURCE.md
 de7b85b11ea3db17c078765056ae0116fd76b542a6b1c502d3844bb6008c2919  LEAD-RELEASE-NOTE-v10.md
@@ -175,8 +164,6 @@ fdc23cee0a306328d3fff3509bba60967e385a82453e8c2928910d96fdc5cad3  LEAD-RELEASE-N
 a06c78d64b6c3a33eab163e3f9493fe742ad8cc7e46fc9bb1363bc598b341456  LEAD-RELEASE-NOTE-v17.md
 04430c86d76cd71e9a67be11c5d4fe28a947672260d75a46d953fe6ee1987e89  LEAD-RELEASE-NOTE-v18-SOURCE.md
 0323cc93d667e68d6c958b9d6ebf3b8e012865395bf740c2d3c8569c240078a9  LEAD-RELEASE-NOTE-v18.md
-692c36d898e2f2deaa69d2ff2c5d43be604099d512caeb388da982da2b343ad7  LEAD-RELEASE-NOTE-v19-SOURCE.md
-38b0788889e7edcd334780dd0f618748bcd18129a19ed12a831cd16b622c4aca  LEAD-RELEASE-NOTE-v19.md
 2c2d6d44743739b684c82e242142448a063e3c4ed8e0b99cc173f4609dda4eed  LEAD-RELEASE-NOTE-v2.md
 7ddd7df4c5adea808008707dbdd8c47f1fb06e264e483dbbb2ef0e88e3ce8b26  LEAD-RELEASE-NOTE-v3.md
 986b3bdb5ef56eb82f2b5b2a47be37c041ca16bed858b1681de6a4b9208154c4  LEAD-RELEASE-NOTE-v4.md

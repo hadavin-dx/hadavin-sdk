@@ -163,7 +163,37 @@ def patches3(t, ct):
     return t_ref[0]
 
 
+def late_paragraph(t):
+    """the sentence 'FILES WRITTEN AFTER THE FREEZE ...' is rebuilt from the PINNED files (late-pinned and steps-pinned), never from the live folder"""
+    import filecmp, glob
+    frz = os.environ.get("C6V_FREEZE", "2026-11-16T19:30:00Z")
+    late = sorted(os.listdir(E + "late-pinned"))
+    parts = []
+    for n in late:
+        fp = E + "late-pinned/" + n
+        d = datetime.datetime.fromtimestamp(os.path.getmtime(fp), datetime.timezone.utc)
+        u, i = d.strftime("%H:%M:%S"), (d + datetime.timedelta(hours=5, minutes=30)).strftime("%H:%M:%S")
+        m = re.match(r"(OWNER-SHEET|LEAD-RELEASE-NOTE)-v(\d+)(.*)\.md$", n)
+        prev = "%s-v%d%s.md" % (m.group(1), int(m.group(2)) - 1, m.group(3))
+        pp = E + "steps-pinned/" + prev
+        if "SOURCE" in n:
+            how = "a draft that was not compared"
+        elif not os.path.exists(pp):
+            how = "no file of the previous version to compare"
+        else:
+            a_ = open(pp, encoding="utf-8").read().replace("v%d" % (int(m.group(2)) - 1), "v%d" % int(m.group(2)))
+            how = ("equal to %s after the version number is changed" % prev) if a_ == open(fp, encoding="utf-8").read() else ("DIFFERENT from %s beyond the version number" % prev)
+        parts.append("%s was written %s UTC = %s IST; %s" % (n, u, i, how))
+    pin = open(E + "PIN-TIME.txt").read().strip()
+    new = (" FILES WRITTEN AFTER THE FREEZE (%s = 01:00:00 IST on 2026-11-17, the time up to which this report reads the files; copied ONCE at %s and read from that copy by every check, evidence-c6x/late-pinned/): %s. This report names the newest version before the freeze and reads none of these; if the lead finishes a later version, the version numbers named here need a new check. "
+           "COMPARISON BY SCRIPT (evidence-c6x/compare-late-files-output.txt): all three pairs are DIFFERENT (the line 'v35 equals v34, v19 equals v18' of c6w-CHANGES.md 6a was wrong).") % (frz, pin, "; ".join(parts))
+    a = t.index(" FILES WRITTEN AFTER THE FREEZE (")
+    b = t.index("need a new check.", a) + len("need a new check.")
+    return t[:a] + new + t[b:]
+
+
 def patches2(t, ct):
+    t = late_paragraph(t)
     # =============== SECTION 3: the question rows (design M?, naive M5) ===============
     t = sub(t, "| L-CARDLEASE (new in c6w) | studio lead | Card line 4 (row 14) says 'other lease settings'. Keep these three words, held under G12 (they are filmed only after your written G12 line), or drop them? Facts: no viewer is told what a lease is; release note v18 line 150 says nothing about a lease; a card line 4 without them is the same line minus those three words (the card then holds 87 words, about 34.8 s, budget 40 s).",
             "| L-CARDLEASE (new in c6w) | studio lead | Card line 4 (row 14) says 'other lease settings'. Keep these three words, held under G12 (they are filmed only after your written G12 line), or drop them? Facts: no viewer is told what a lease is; release note v18 line 150 says nothing about a lease; a card line 4 without them is the same line minus those three words (the card then holds 87 words, about 34.8 s, budget 40 s). The words are ONE of the four held items (box item 6); they are the reason card line 4 is cut by hand when G12 stays open (76 words with line 1 also cut).")
