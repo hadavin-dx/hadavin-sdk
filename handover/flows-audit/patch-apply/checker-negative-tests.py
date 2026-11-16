@@ -213,7 +213,7 @@ def run(c, name):
     r = subprocess.run(c, capture_output=True, text=True)
     out = r.stdout + r.stderr
     open(f"{OUT}/{name}.out", "w").write(
-        "$ " + " ".join(c) + "\n" + out + "exit=%d\n" % r.returncode
+        "$ " + " ".join(c) + "\n" + out + f"exit={r.returncode}\n"
     )
     return r.returncode, out
 
@@ -238,8 +238,8 @@ def main():
         rc, out = run(c, name)
         ok = rc == want_rc and (text is None or text in out)
         print(
-            "%-18s %s exit=%d want_exit=%d named_line_present=%s"
-            % (name, "OK  " if ok else "BAD ", rc, want_rc, None if text is None else text in out)
+            f"{name:<18} {'OK  ' if ok else 'BAD '} exit={rc} want_exit={want_rc} "
+            f"named_line_present={None if text is None else text in out}"
         )
         if ok:
             good += 1
@@ -267,8 +267,8 @@ def main():
     judge("usage_allow_no_pc", 1, "needs --patch-checks", cmd(NEG + "/control", patch_checks=False))
     total = len(MUTANTS) + 3
     print(
-        "CASES: %d total = %d mutants + 1 control + 2 usage; %d as expected, %d not as expected %s"
-        % (total, len(MUTANTS), good, len(bad), bad)
+        f"CASES: {total} total = {len(MUTANTS)} mutants + 1 control + 2 usage; "
+        f"{good} as expected, {len(bad)} not as expected {bad}"
     )
     return 0 if not bad else 1
 

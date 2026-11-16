@@ -157,9 +157,9 @@ def check_flow(d, tag, expect, baseline_d):
         fail(tag, f"unreachable from any trigger {unreach}")
     if expect:
         if "nodes" in expect and len(nodes) != expect["nodes"]:
-            fail(tag, "node count %d != expected %d" % (len(nodes), expect["nodes"]))
+            fail(tag, f"node count {len(nodes)} != expected {expect['nodes']}")
         if "connections" in expect and ncon != expect["connections"]:
-            fail(tag, "connection count %d != expected %d" % (ncon, expect["connections"]))
+            fail(tag, f"connection count {ncon} != expected {expect['connections']}")
     base_nodes = {n.get("name"): n for n in (baseline_d or {}).get("nodes", [])}
     base_conns = (baseline_d or {}).get("connections", {})
     for n in nodes:
@@ -225,7 +225,7 @@ def check_flow(d, tag, expect, baseline_d):
 def info(d, tag):
     tc = collections.Counter((n.get("type"), n.get("typeVersion")) for n in d.get("nodes", []))
     print(
-        "  types:", "; ".join("%s v%s x%d" % (t, v, c) for (t, v), c in sorted(tc.items(), key=str))
+        "  types:", "; ".join(f"{t} v{v} x{c}" for (t, v), c in sorted(tc.items(), key=str))
     )
     raw = json.dumps(d)
     where = collections.defaultdict(set)
@@ -238,8 +238,8 @@ def info(d, tag):
             where[e].add(n.get("name"))
     for k in sorted(where):
         print(
-            "  placeholder/env %-34s count=%d nodes=%s"
-            % (k, len(re.findall(re.escape(k), raw)), sorted(where[k]))
+            f"  placeholder/env {k:<34} count={len(re.findall(re.escape(k), raw))}"
+            f" nodes={sorted(where[k])}"
         )
     if not where:
         print("  placeholder/env: none")
@@ -269,10 +269,10 @@ def deep_diff(a, b, path=""):
                 else:
                     out += deep_diff(da[k], db[k], p)
         elif len(a) != len(b):
-            out.append(path + " (list length %d -> %d)" % (len(a), len(b)))
+            out.append(f"{path} (list length {len(a)} -> {len(b)})")
         else:
             for i, (x, y) in enumerate(zip(a, b)):
-                out += deep_diff(x, y, "%s[%d]" % (path, i))
+                out += deep_diff(x, y, f"{path}[{i}]")
     elif a != b:
         out.append(path)
     return out
@@ -306,7 +306,7 @@ def patch_checks(d, fname, which, tag):
                 ]
                 for s, i, want in links:
                     if tg(s, i) != want:
-                        fail(tag, "F-002 link %s out%d -> %s expected %s" % (s, i, tg(s, i), want))
+                        fail(tag, f"F-002 link {s} out{i} -> {tg(s, i)} expected {want}")
                 for nm, want in WANT_CONN.items():
                     if d["connections"].get(nm) != want:
                         fail(
@@ -345,8 +345,8 @@ def patch_checks(d, fname, which, tag):
                     if p.get("options", {}).get("responseCode") != code:
                         fail(
                             tag,
-                            "F-002 %s responseCode is %r expected %d"
-                            % (nm, p.get("options", {}).get("responseCode"), code),
+                            f"F-002 {nm} responseCode is "
+                            f"{p.get('options', {}).get('responseCode')!r} expected {code}",
                         )
                 if "$('Valid')" not in str(
                     get(d, "ReplyStoreFail")["parameters"].get("responseBody")
@@ -522,15 +522,10 @@ def main(argv):
             r = check_flow(d, tag, expect.get(fn), bd)
             if r:
                 print(
-                    "%s nodes=%d connections=%d triggers=%s saveDataSuccess=%s saveDataError=%s"
-                    % (
-                        fn,
-                        r["nodes"],
-                        r["connections"],
-                        r["triggers"],
-                        d.get("settings", {}).get("saveDataSuccessExecution"),
-                        d.get("settings", {}).get("saveDataErrorExecution"),
-                    )
+                    f"{fn} nodes={r['nodes']} connections={r['connections']} "
+                    f"triggers={r['triggers']} "
+                    f"saveDataSuccess={d.get('settings', {}).get('saveDataSuccessExecution')} "
+                    f"saveDataError={d.get('settings', {}).get('saveDataErrorExecution')}"
                 )
             if r and not quiet:
                 info(d, tag)
@@ -547,7 +542,7 @@ def main(argv):
             open(diffout, "w", encoding="utf-8").write(
                 "# node-level diff, unpatched generator output vs patched (paths only, no values)\n# allowed patches: {}\n{}".format(",".join(allow) or "none", text)
             )
-    print("RESULT: %d FAIL, %d WARN" % (len(FAILS), len(WARNS)))
+    print(f"RESULT: {len(FAILS)} FAIL, {len(WARNS)} WARN")
     return 1 if FAILS else 0
 
 

@@ -11,16 +11,42 @@
 # film-v5 is NOT FOR THE TAKE and is not checked here.
 # The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
 # Round 9 (review f8-design-r3, 4 Majors): (M1) the top block and the FINAL line print RESULT and the WARN count; the set of WARN lines is pinned in take-warns.pin (folder paths removed) and ANY change is exit 4; (M2) every flow except mf-recovery.json must have run saving exactly all / all / True (a missing settings block, a missing key or an odd word is exit 4, not only "none"/false); (M3) a key check that is ABSENT is exit 4, and when both entry flows have it the checker's F-002 content check (--patch-checks F002) runs on them; (M4) the patched copy is detected by the KeyOk node: the node:connection count 15:14 is then expected without any environment variable (12:11 for an unpatched file).
-# Usage with a new pin file (after a person read and accepted a changed WARN set): bash take_check.sh --write-warn-pin FILE   (writes the set and then exits like a normal run; the pin used is take-warns.pin next to this script, or TAKE_CHECK_WARN_PIN).
+# Round 10 (review f8-r10): (B1) --write-warn-pin refuses a file that exists (so it can never overwrite the pin in use), writes only when the run has no FAIL and a RESULT line, writes AFTER the comparison, prints the difference and always exits 4: a run that writes a pin is never a pass; a person installs the pin by hand (see README). (M1) the top block and the FINAL line print an OVERRIDES line; an environment override (TAKE_CHECK_CK, TAKE_CHECK_WARN_PIN, TAKE_CHECK_FLOWS, TAKE_CHECK_DDL, TAKE_CHECK_FORM_EXPECT) is exit 4 unless the test flag TAKE_CHECK_TEST=1 is set (only selftest and run_all.sh set it); the documented way to check another folder is the option --flows DIR, which is printed. (M3/M5) the checker FAILs a listed flow that is not a regular file; the F-002 content check also asserts the reply steps and lead_key. F-008 content check (--patch-checks F008) is NOT used here: it would turn the planted run-saving cases (exit 4 by design) into exit 1; the exact run-saving check below judges F-008 instead. (M4) the pin header carries a date and the sha256 of the WARN lines; a pin that does not match its own hash is exit 4; the pinned WARN count is printed and said to stand for known defects. (N1-N4) LC_ALL=C sort, helper exit statuses checked, closing-block lines must appear once, absolute paths before the cd, one temp folder removed on exit.
+# Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script)
+LC_ALL=C; export LC_ALL
 HERE=$(cd "$(dirname "$0")" && pwd)
-WRITEPIN=""
-if [ "${1:-}" = "--write-warn-pin" ]; then WRITEPIN="${2:-}"; [ -n "$WRITEPIN" ] || { echo "usage: take_check.sh [--write-warn-pin FILE]"; exit 2; }; elif [ $# -gt 0 ]; then echo "usage: take_check.sh [--write-warn-pin FILE]"; exit 2; fi
+USAGE="usage: take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]"
+abspath() { case "$1" in /*) printf '%s' "$1";; *) printf '%s/%s' "$PWD" "$1";; esac; }   # before the cd below, so a relative path means what the person typed
+WRITEPIN=""; FLOWSARG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --write-warn-pin) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; WRITEPIN=$(abspath "$2"); shift 2;;
+    --flows) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; FLOWSARG=$(abspath "$2"); shift 2;;
+    *) echo "$USAGE"; exit 2;;
+  esac
+done
+OVR=()   # active environment overrides (each one changes what is checked)
+for v in TAKE_CHECK_CK TAKE_CHECK_WARN_PIN TAKE_CHECK_FLOWS TAKE_CHECK_DDL TAKE_CHECK_FORM_EXPECT; do
+  if [ -n "${!v:-}" ]; then
+    case "$v" in TAKE_CHECK_FORM_EXPECT) OVR+=("$v=${!v}");; *) OVR+=("$v=$(abspath "${!v}")");; esac
+  fi
+done
+[ -n "${TAKE_CHECK_CK:-}" ] && TAKE_CHECK_CK=$(abspath "$TAKE_CHECK_CK")
+[ -n "${TAKE_CHECK_WARN_PIN:-}" ] && TAKE_CHECK_WARN_PIN=$(abspath "$TAKE_CHECK_WARN_PIN")
+[ -n "${TAKE_CHECK_FLOWS:-}" ] && TAKE_CHECK_FLOWS=$(abspath "$TAKE_CHECK_FLOWS")
+[ -n "${TAKE_CHECK_DDL:-}" ] && TAKE_CHECK_DDL=$(abspath "$TAKE_CHECK_DDL")
+PIN="${TAKE_CHECK_WARN_PIN:-$HERE/take-warns.pin}"   # the expected set of WARN lines for the take (path prefix removed)
+if [ -n "$WRITEPIN" ]; then
+  if [ -e "$WRITEPIN" ] || [ -L "$WRITEPIN" ] || [ "$WRITEPIN" = "$PIN" ]; then
+    echo "REFUSED: $WRITEPIN already exists (or is the pin in use). --write-warn-pin writes a NEW file only, so the pin in use can never be overwritten by the run that is judged against it."; exit 2
+  fi
+fi
 cd "$HERE/../.." || exit 3   # the handover folder: paths printed below are short and relative to it
-D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CHECK_DDL (absolute paths) exist only so run_all.sh can test the failure exits; the take uses the defaults. TAKE_CHECK_CK (another checker script) and TAKE_CHECK_FORM_EXPECT exist only for selftest.py and run_all.sh
-OUT=$(mktemp /tmp/take-check.XXXXXX) || exit 3
-trap 'rm -f -- "$OUT"' EXIT
+D="${TAKE_CHECK_FLOWS:-${FLOWSARG:-demo/n8n-flows-real-v5}}"
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/take-check.XXXXXX") || exit 3
+trap 'rm -rf -- "$TMP"' EXIT
+OUT="$TMP/out"; NORM="$TMP/norm"
 DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
-PIN="${TAKE_CHECK_WARN_PIN:-$HERE/take-warns.pin}"   # the expected set of WARN lines for the take (path prefix removed); TAKE_CHECK_WARN_PIN exists only so selftest and run_all.sh can test the pin
 has_keyok() { python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$1" 2>/dev/null; }   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
 # node:connection count of mf-form and mf-hook, detected per file: 15:14 when the file holds the F-002 key check (it adds 3 nodes), else 12:11. TAKE_CHECK_FORM_EXPECT (test hook) overrides both.
 FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15:14 || echo 12:11)}"
