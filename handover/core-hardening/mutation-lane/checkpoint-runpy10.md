@@ -6,3 +6,4 @@
 14:42 T96 now 20 checks, 0 fail on r9 code; waiting for independent r8 full run (other agent, running from frozen run.r8.py) before my ONE final full run
 14:47 independent r8 run: 0 of 395 failed (frozen r8 copies). FINAL full run started on run.py/safety-tests.sh in evidence-r9/hashes.txt; no edits until it ends
 14:50 first final full run aborted by me at T42: T35c (older test) expected exit 0 for --restore with no marker; updated to 2 (+T35d). Second FINAL full run started on hashes in evidence-r9/hashes.txt; no edits until it ends
+15:01 full run 2 had 5 failures (my regressions: nlink check refused an already-original two-name file; control-only restore turned into exit 2). Fixed run.py only (tests were right). FINAL full run 3 from frozen copies evidence-r9/frozen/, no edits

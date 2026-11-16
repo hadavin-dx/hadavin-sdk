@@ -631,20 +631,23 @@ def restore_target(
     if not stat.S_ISREG(st.st_mode):
         os.close(fd)
         raise Refused(f"{path} is not a regular file: not written")
-    if writable and not created and st.st_nlink != 1:
-        # r9 minor 6: checked BEFORE the mode is touched (the other name may be a file outside the scratch tree)
-        os.close(fd)
-        raise Refused(
-            f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written, mode not changed"
-        )
     with os.fdopen(fd, "r+b" if writable else "rb") as fh:
+        already = fh.read() == saved
+        need_mode = (
+            not created and mode is not None and writable and stat.S_IMODE(st.st_mode) != mode
+        )
+        if writable and not created and st.st_nlink != 1 and (need_mode or not already):
+            # r9 minor 6: checked BEFORE the mode is touched or anything is written (the other name may be a file
+            # outside the scratch tree). A file with two names that already holds the original needs neither.
+            raise Refused(
+                f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written, mode not changed"
+            )
         if created:
             os.fchmod(
                 fh.fileno(), mode or 0o644
             )  # the umask of the caller must not change the recorded mode
-        elif mode is not None and writable and stat.S_IMODE(st.st_mode) != mode:
+        elif need_mode:
             os.fchmod(fh.fileno(), mode)  # a test changed the mode of the file under test
-        already = fh.read() == saved
         if not already:
             if not writable:
                 raise PermissionError(
@@ -1330,7 +1333,8 @@ def restore_from_marker(
         if expected_ref is not None and ok:  # git decides, whatever the state folders say
             vok, vtext = verify_against_git(root, expected_ref, set(extra))
             ok, text = vok, f"{text}; {vtext}" if found else vtext
-        elif not found and control_ok:
+        elif not found and control_ok and control is None:
+            # a settled CONTROL marker is knowledge: a control run plants nothing, so its group is stopped and nothing is open
             raise NoMarker(
                 f"{text}. Nothing was written. Do ONE of: run --restore again with the TMPDIR of the killed run (TMPDIR=<its "
                 f"folder>), or add --sha COMMIT [--repo R] [--patch F] [--extra F] so the files are compared with git"
