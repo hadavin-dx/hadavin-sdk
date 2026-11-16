@@ -371,8 +371,9 @@ if os.path.exists(p):
 check("whole box is at most 3,600 words (%d words; c6p %s; it is LONGER than c6p because the naive review asked for the what-to-type block and for every internal word to be explained: a lead question)" % (bw, pw), bw <= 3600, bw)
 sets = re.findall(r"saveDataSuccessExecution|saveManualExecutions|EXECUTIONS_DATA_SAVE", box)
 check("box names no n8n setting", not sets, sets)
-check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "T16:40:00Z = 22:10:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "L-SHEET cannot be put on this line" in box)
+check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "T16:40:00Z = 22:10:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "L-SHEET cannot be put on the line" in box and box.count("## ANSWER (studio lead,") == 1)
 W1 = len(ready) + len(onlyq)
+W1c = W1
 check("box wave 1 count equals ready + defaults (%d)" % W1, ("%d wave 1 rows" % W1) in box, W1)
 check("box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows", "changes no running n8n" in box and "no row edits them" in box)
 check("box says steps 4 to 6 have no duration", "No file gives a duration for steps 4 to 6" in box)
@@ -384,5 +385,91 @@ check("section 8 has the coverage of the c6p, c6o and c6n reviews", "COVERAGE OF
 import hashlib
 for nm in ("REPORT-c6o.md", "REPORT-c6p.md"):
     pass
+
+# ---------------------------------------------------------------- c6r checks (the c6q reviews and the independent evidence of c6q)
+import datetime as _dt
+WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+MON = {"Nov": 11, "Dec": 12}
+wbad = []
+wn = 0
+for m in re.finditer(r"\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]* (\d{1,2}) (Nov|Dec)\b(?: (\d{4}))?", raw):
+    yr = int(m.group(4)) if m.group(4) else 2026
+    wn += 1
+    if WD[_dt.date(yr, MON[m.group(3)], int(m.group(2))).weekday()] != m.group(1):
+        wbad.append(m.group(0))
+check("every weekday written with a date is the true weekday (%d pairs; year 2026 unless written; no pair outside old-text quotes is skipped)" % wn, not wbad and wn >= 8, wbad[:4])
+# the independent evidence named 'Tue 23 Nov' and 'Thu 18 Nov' as missed mutations: both are checked here as absent
+check("no 'Tue 23 Nov' and no 'Thu 18 Nov' anywhere", "Tue 23 Nov" not in raw and "Thu 18 Nov" not in raw)
+# caption row 21: no lease sentence by default
+r21 = bylead[21]["new"]
+check("row 21 (scene 3 caption) carries no lease sentence (no 'lease', no '45', no 'longer than', no 'claim')", not re.search(r"(?i)lease|\b45\b|longer than|we make this claim|for a longer gap", r21), r21[:140])
+# counts: every statement of a count equals the computed value
+cnt_bad = []
+for m in re.finditer(r"(\d+) (?:rows )?(?:apply on the default|apply on the default of)", raw):
+    if int(m.group(1)) != len(onlyq):
+        cnt_bad.append(m.group(0))
+for m in re.finditer(r"\b(\d+) (?:wave 1 rows|rows in all)", raw):
+    if int(m.group(1)) != W1c:
+        cnt_bad.append(m.group(0))
+for m in re.finditer(r"wave 1 \((?:[^)]*?)\), (\d+) rows", raw):
+    if int(m.group(1)) != W1c:
+        cnt_bad.append(m.group(0))
+check("every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (%d default-only, %d wave 1)" % (len(onlyq), W1c), not cnt_bad, cnt_bad[:5])
+check("no stale count 91 or 42 stated as a wave 1 or default-only count", not re.search(r"\b91 (?:wave 1 )?rows\b|\b42 apply|\bthe 42 rows\b|\bon defaults only 42\b", raw), re.findall(r".{20}\b91 (?:wave 1 )?rows\b.{10}|.{20}\b42 apply.{10}", raw)[:3])
+check("the box does not carry the old '58 s' card length", "58 s" not in box and "about 58" not in box)
+check("row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'", all("within 45" not in bylead[k]["new"] for k in (13, 14, 21)))
+check("'one alert' is not stated as a fact about the take's flows in any new text (rows 13, 14, 74 and the box card text)", all(("sends one alert" not in bylead[k]["new"]) for k in bylead) and "it sends one alert" not in box, "")
+# M-A: the approval gate and the mandatory repeat
+i12 = bylead[8]["new"]
+check("M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory", "lease wording approved" in i12 and "UTC and IST" in i12 and "more than 45 seconds after the first send" in i12 and "mandatory" in bylead[8]["why"], "")
+check("M-A: the stop rules table has the lease wording approval entry", "| Lease wording approval (risks list item 12) |" in raw)
+# M-C: Q27 reading is labelled the report's assumption; L-DEL does not say the open part is answered
+check("M-C: Q27 reading labelled as the report's own assumption and OWNER-OPEN (ORD:232) in the box, row 8 and section 9", "MY ASSUMPTION" in box and "ORD:232" in box and "strictest reading" in bylead[8]["new"] and "OWNER-OPEN" in raw.split("## 9.")[1], "")
+ldel = [l for l in txt if l.startswith("| L-DEL")]
+check("M-C: L-DEL rows say 'ANSWERED' only for the part that is answered and say the delete-path criterion is open", all("Still open" in l or "open" in l for l in ldel) and any("ORD:232" in l for l in ldel), len(ldel))
+# M-D: the real-key scan
+i15 = bylead[6]["new"]
+check("M-D: the key reaches the scan by a pattern file in memory or standard input from the key store; never a command line; never on disk; a hit means cancel or replace the key and treat the runs as compromised", all(x in i15 for x in ["pattern file that exists only in memory or through standard input", "never on a command line", "never saved to disk", "cancels or replaces that key at once", "compromised"]), "")
+check("M-D: item 16 repeats the search for real key values", "This third scan also searches for the real key values" in i15, "")
+# M-E: successful runs apply, failed runs wait, row 92 sets error none
+check("M-E: rows 53, 55, 62, 64, 66, 68 wait for L-SAVEERR; row 92 keeps the failed-run setting none; row 44 says successful runs", all("waits for the answer of L-SAVEERR" in bylead[k]["st"] for k in (53, 55, 62, 64, 66, 68)) and '"saveDataErrorExecution": "none"' in bylead[92]["new"] and "successful run" in bylead[44]["new"], "")
+check("M-E: L-SAVEERR is in the box and in section 3 with default No", any(l.startswith("| L-SAVEERR |") for l in box.split("\n")) and any(l.startswith("| L-SAVEERR | studio lead") and "| No |" in l for l in txt), "")
+# C-4a on the default application: the failed-run setting stays none
+d2 = {}
+for r in rows:
+    if "n8n-flows-real-v5/mf-" in r["f"] and r["f"].endswith(".json") and r["i"] not in waits:
+        d2.setdefault(r["f"], rd(real(r["f"])))
+        fl = d2[r["f"]].split("\n")
+        k = r["old"].count("\n") + 1
+        seg = "\n".join(fl[r["ln"] - 1:r["ln"] - 1 + k])
+        if seg.count(r["old"]) == 1:
+            fl[r["ln"] - 1:r["ln"] - 1 + k] = [seg.replace(r["old"], r["new"], 1)]
+            d2[r["f"]] = "\n".join(fl)
+dd = [(os.path.basename(f), t.count('"saveDataSuccessExecution": "all"'), t.count('"saveDataErrorExecution": "all"'), t.count('"saveManualExecutions": false')) for f, t in d2.items()]
+check("C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each", len(dd) == 4 and all(x[1:] == (1, 0, 1) for x in dd), dd)
+# M-F: one construction
+check("M-F: one construction (checked above); the box says so", "one construction" in box.lower(), "")
+# naive M1/M5/M6
+check("naive M1: 'take' is defined as the filmed run and 'the recovery flow claims the contact again' is used instead of 'takes over'", "TAKE = the one filmed run" in box and "claim" in box and "take over" not in raw.replace("Take over", ""), "")
+check("naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)", all(x in box for x in ["CLAIM TABLE", "G12 =", "K3B AND K3 =", "THE CHECKS", "CUT NUMBER"]), "")
+check("naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list", box.find("WHAT TO TYPE") >= 0 and box.find("WHAT TO TYPE") < box.find("WORDS YOU NEED FIRST") and box.find("WORDS YOU NEED FIRST") - box.find("WHAT TO TYPE") < 2200, "")
+# the box: UTC with IST on the example time (coordinator item 4); no time example without IST within 40 characters
+ex = [m.start() for m in re.finditer(r"22:10", box)]
+check("every '22:10' example time in the box has 'IST' within 40 characters (%d places)" % len(ex), ex and all("IST" in box[i:i + 40] for i in ex), len(ex))
+# the owner-sheet facts: the real v29 files, their times and the check time
+sw = glob.glob(H + "/handover/core-hardening/steps-edits/OWNER-SHEET-v29-*.md")
+sw_names = sorted(os.path.basename(f) for f in sw)
+check("the real v29 files on disk are %s and the report names every one of them" % sw_names, sw_names == ["OWNER-SHEET-v29-A.md", "OWNER-SHEET-v29-B.md", "OWNER-SHEET-v29-SOURCE.md"] and all(n in raw for n in sw_names), sw_names)
+for f in sorted(sw):
+    t_ = _dt.datetime.fromtimestamp(os.path.getmtime(f), _dt.timezone.utc)
+    print("INFO %s last written %s UTC; check time of the report %s" % (os.path.basename(f), t_.strftime("%H:%M:%S"), ct))
+check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository", "scratchpad/c6/tree/handover" in raw.split("## 1.")[0] and "UNVERIFIED" in raw.split("## 1.")[0] and "89 of the 94 rows" in raw.split("## 1.")[0], "")
+nrepo = sum(1 for r in rows if os.path.exists(H + "/" + r["f"]))
+check("89 rows of 94 name a file that is not in the repository (recounted: %d rows readable in the repo)" % nrepo, nrepo == 5 and N - nrepo == 89, nrepo)
+# no pipe-in-cell: no row text holds a raw table border
+check("no row old or new text holds a raw '|' (it would break its table cell)", all("|" not in r["rawold"] and "|" not in r["rawnew"] for r in rows), [r["i"] for r in rows if "|" in r["rawold"] or "|" in r["rawnew"]])
+# untouched files
+for nm in ("REPORT-c6q.md", "REPORT-c6p.md"):
+    check("%s was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)" % nm, os.path.getmtime(H + "/handover/core-hardening/c6-skip-audit/" + nm) < os.path.getmtime(R) and rd(H + "/handover/core-hardening/c6-skip-audit/" + nm).startswith("# REPORT-" + nm[7:10]), "")
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

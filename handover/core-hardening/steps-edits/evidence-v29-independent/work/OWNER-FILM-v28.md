@@ -1,0 +1,7 @@
+# Film and post page (v28): read with the sheet and the card
+Same words as the sheet. **R9 (the film rule).** Recording is ON only in the film pause, and records only the page area of the film profile's browser window (no tab strip, address bar or profile menu) showing HubSpot Contacts (search `take-<run name>`) and the receiver Gmail list of label `demo`; the test terminal is minimised and never recorded. The video shows none of: (a) a mail address other than the three made-up ones (the editor cuts the From column); (b) a number that identifies an account (account id, contact id in an address); (c) key text; (d) masked account text; (e) a file path; (f) a tab title or profile name with your mail address. If it fails: An item (a) to (f) in the video: do not post; describe the times (8.8).
+
+**Step 8.8 (the video).** The video reaches you the way the message names (it names the place and file). Watch it twice and check R9 items (a) to (f). Send "accepted" or the bad seconds with times.
+
+**9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST)**
+Start only after the lead's word "post" (it means the lead has the printed result and the video is accepted). You post the video and the lead's exact sentences, in the place the message names; the lead never does. Post only the lead's exact sentences for this run. First give your text to the post checker the way the message names; the only valid answer is their own written words "matches the sentences": no answer or any other: no post. A post cannot be taken back. Then send "posted".
