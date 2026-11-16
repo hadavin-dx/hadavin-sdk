@@ -114,8 +114,9 @@ def inputs_from_config(spend, postgres) -> dict:
 
 def secdef_problems(db, *, roles: dict[str, str], policy: dict | None = None, owner: str | None = None) -> list[str]:''')
 rep('''    owner = owner or db.execute("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()").fetchone()[0]''',
-    '''    explicit_owner = bool(owner)
-    owner = owner or db.execute("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()").fetchone()[0]''')
+    '''    dba = db.execute("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()").fetchone()[0]
+    explicit_owner = bool(owner) and owner != dba   # a dedicated owner (L26) is a role that is NOT the database owner; passing the database owner's own name is the default path
+    owner = owner or dba''')
 rep('''problems.append(f"{where}: owned by {own}{' (a superuser)' if is_super else ''}, expected the migration role {owner}")''',
     '''problems.append(f"{where}: owned by {own}{' (a superuser)' if is_super else ''}, expected {owner} ({'the dedicated owner role you passed' if explicit_owner else 'the database owner, pg_database.datdba'}) and not a superuser: on a database owned by a superuser, or a managed database whose migration role is not the database owner, the default owner can never pass; use the dedicated NOLOGIN owner role (lead choice L26)")''')
 rep('''    return problems

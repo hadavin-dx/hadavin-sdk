@@ -1,3 +1,4 @@
 uptime before: 2.18 2.45 2.75 3/133 8843
 load after: 2.39 2.03 2.19 3/169 15681
 load before signals: 2.36 2.03 2.19 3/170 16077
+load after signals: 2.83 2.69 2.44 5/204 3820

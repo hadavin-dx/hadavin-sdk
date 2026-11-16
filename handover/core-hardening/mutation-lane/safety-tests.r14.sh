@@ -2337,6 +2337,7 @@ if P:
     no_start("patch-shape", "a relative -i file", PA[:9] + ["rel.patch"], "are not one of the patch calls")
     no_start("patch-shape", "the options in another order", [P, "-s", "-p1", "--batch", "--forward", "--no-backup-if-mismatch", "-d", str(X), "-i", "/dev/null"], "are not one of the patch calls")
     no_start("patch-shape", "an extra option at the end", PA + ["-R"], "are not one of the patch calls")
+    no_start("patch-shape", "another option instead of -i (-o)", PA[:8] + ["-o", "/dev/null"], "are not one of the patch calls")
     no_start("patch-shape", "-i before -d", [P, "-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch", "-i", "/dev/null", "-d", str(X)], "are not one of the patch calls")
 else:
     res.setdefault("patch-shape", []).append((False, "patch is not installed: cannot test", None))
@@ -2359,7 +2360,7 @@ no_start("python-shape-probe", "-m http.server", [pyx, "-m", "http.server"], "ar
 good = r.pytest_cmd(X, ["--version"])
 ok_start("python-shape-pytest", "the real pytest head (pytest_cmd)", good, cwd=str(X))
 no_start("python-shape-pytest", "another rootdir", [pyx, "-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={Y}", f"--confcutdir={X}", "--tb=line", "-rfp"], "are not one of the python calls")
-no_start("python-shape-pytest", "the fixed tail --tb=line -rfp missing", good[:7] + ["--version"], "are not one of the python calls")
+no_start("python-shape-pytest", "the fixed tail --tb=line -rfp missing", good[:8] + ["--version"], "are not one of the python calls")
 # the interpreter file is pinned (r14 m1): edited in place or replaced after set_child_root = refused
 Z = pathlib.Path(tempfile.mkdtemp(prefix="t102-z-")); (Z / ".venv/bin").mkdir(parents=True); shutil.copy2(sys.executable, Z / ".venv/bin/python")
 r.set_child_root(Z); pz = str(Z / ".venv/bin/python")
@@ -2512,7 +2513,7 @@ pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 kill_planted; setmarker97 mode=436
 python3 "$RUN" --root "$T/root" --restore >"$S/t103d.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py")
 NL=$(grep -o 'NOTE.*' "$S/t103d.out" | head -1 | wc -c); cut -c1-300 "$S/t103d.out" | tail -1
-chk "T103d m5 genuine mode 0664: plain --restore exit 0 (got $rc), mode $GOT (want 644), the NOTE is $NL characters (want under 110) and does not repeat the limit (d) text (r13: about 330 characters with limit d)" "[ $rc -eq 0 ] && [ '$GOT' = 644 ] && [ $NL -lt 110 ] && ! grep -q 'limit d' '$S/t103d.out' && grep -q 'group write bit' '$S/t103d.out'"
+chk "T103d m5 genuine mode 0664: plain --restore exit 0 (got $rc), mode $GOT (want 644), the NOTE is $NL characters (want under 110) and does not repeat the limit (d) text (r13: about 330 characters with limit d)" "[ $rc -eq 0 ] && [ '$GOT' = 644 ] && [ $NL -lt 110 ] && ! grep -q 'limit d' '$S/t103d.out' && grep -q 'writable by the group or by others' '$S/t103d.out'"
 chmod 644 "$T/root/src/mod.py"
 # e) m4 the docstring names the group write bit in both places
 M4A=$(grep -c "a write bit for the group and for others is also taken away" "$RUN"); M4B=$(grep -c "the write bits for the group and for others are taken away" "$RUN")

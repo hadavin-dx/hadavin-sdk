@@ -43,3 +43,6 @@ heavy-slot: slot 3 taken at 2026-11-16T20:02:28Z
 ('raw-dots', 'T103', 'ONLY=T103 RUN=<run.mut-raw-dots.py> bash safety-tests.r14.sh', 'T103a.raw-dots, T103a.outjson-dots', '26', 'KILLED - as expected', 22)
 ('raw-symlink', 'T103', 'ONLY=T103 RUN=<run.mut-raw-symlink.py> bash safety-tests.r14.sh', 'T103a.raw-symlink, T103a.outjson-symlink, T103b.4, T103b.5, T103b.8, T103b.9', '26', 'KILLED - as expected', 22)
 ('raw-levels', 'T103', 'ONLY=T103 RUN=<run.mut-raw-levels.py> bash safety-tests.r14.sh', 'T103a.raw-levels, T103a.outjson-levels, T103b.1, T103b.2, T103b.6', '26', 'KILLED - as expected', 23)
+('raw-no-toplevel (uid 65534 run T103b)', 'T103', 'ONLY=T103 RUN=<run.mut-raw-no-toplevel.py> bash safety-tests.r14.sh', 'T103a.raw-levels, T103a.outjson-levels, T103b.2, T103b.6', '26', 'KILLED - as expected', 23)
+('raw-system', 'T103', 'ONLY=T103 RUN=<run.mut-raw-system.py> bash safety-tests.r14.sh', 'T103a.raw-system, T103a.outjson-system, T103b.3, T103b.7', '26', 'KILLED - as expected', 22)
+('raw-var-tmp-not-allowed', 'T103', 'ONLY=T103 RUN=<run.mut-raw-var-tmp-not-allowed.py> bash safety-tests.r14.sh', 'T103a.raw-system, T103a.raw-sharedtmp', '26', 'KILLED - as expected', 22)

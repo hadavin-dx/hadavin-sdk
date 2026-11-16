@@ -161,8 +161,9 @@ def secdef_problems(db, *, roles: dict[str, str], policy: dict | None = None, ow
     An unset operator role is a problem when a listed function needs it (v20 raised KeyError). Returns problems (empty = clean)."""
     problems, seen = [], set()
     policy = policy_for_applied(db) if policy is None else policy
-    explicit_owner = bool(owner)
-    owner = owner or db.execute("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()").fetchone()[0]
+    dba = db.execute("SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()").fetchone()[0]
+    explicit_owner = bool(owner) and owner != dba   # a dedicated owner (L26) is a role that is NOT the database owner; passing the database owner's own name is the default path
+    owner = owner or dba
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     for nsp, name, regproc, own, is_super, config, atomic, grantees, grantable, dep_schemas, dep_other in db.execute(SECDEF_SQL).fetchall():
         sig = _sig(regproc, name); where = f"{nsp}.{sig}"

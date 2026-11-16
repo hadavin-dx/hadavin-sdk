@@ -55,7 +55,7 @@ P = [
 ('P32', 'OWNER-SHEET-v35-SOURCE.md', '**STOP RULE.**', '**RULE.**', 'STOP RULE renamed'),
 ('P33', 'OWNER-SHEET-v35-SOURCE.md', "`. _ / - : = @ + , '` only", "`. _ / - : = @ + , ' !` only", 'R8 character list gets a character'),
 ('P34', 'OWNER-SHEET-v35-SOURCE.md', 'I accept these risks: the look key', 'I accept these risks (ok): the look key', 'yes pattern gets a bracket char'),
-('P35', 'OWNER-SHEET-v35-SOURCE.md', 'echo "exit $?"', 'echo exit', 'key-save line loses exit report'),
+('P35', 'OWNER-SHEET-v35-SOURCE.md', '; echo "exit $?"`. Paste once', '; echo exit`. Paste once', 'key-save line loses exit report'),
 ('P36', 'OWNER-SHEET-v35-SOURCE.md', 'set -C; umask 077; read -rs', 'set -C; umask 077; read -rs; (', 'key-save line breaks bash -n'),
 ('P37', 'LEAD-RELEASE-NOTE-v19-SOURCE.md', 'the final check', 'the re-pin', 'stale word back in note'),
 ('P38', 'LEAD-RELEASE-NOTE-v19-SOURCE.md', '14.33', '14.4', 'old minutes figure in note'),
@@ -142,7 +142,7 @@ M = [
 ('M45', S, 'you read both at 6.2 and 6.7', 'you read both at 6.2 and 6.8', 'R4 pointer 6.7 to 6.8'),
 ('M46', S, 'after the model key\'s cancel press, card step 3)', 'after the model key\'s cancel press, card step 5)', '8.1 card step 3 to 5'),
 ('M47', S, '## 9. Posting (by {{postby}}', '## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:00 IST', 'post-by IST in sheet'),
-('M48', C, 'a failed key save skips 6.7 and 7.11 still cancels in A', 'a failed key save skips 6.9 and 7.11 still cancels in A', 'CHANGES table pointer 6.7 to 6.9'),
+('M48', C, 'may cancel the older key at 6.7; it never stops 7.11', 'may cancel the older key at 6.9; it never stops 7.11', 'CHANGES table pointer 6.7 to 6.9'),
 ('M49', O, "the sheet's 7.8 error sentence stays", "the sheet's 7.7 error sentence stays", 'open row pointer 7.8 to 7.7'),
 ('M50', N, 'gives 0.27; ceiling 3 gives expected total 0.81', 'gives 0.28; ceiling 3 gives expected total 0.81', 'note worked price'),
 ('M51', S, 'send "{{ph_dmd}}"', 'send "all done"', 'unlisted set phrase sent in 8.5'),
@@ -271,7 +271,7 @@ EXPECT = {
   'P02': ['C03'],
   'P03': ['C03'],
   'P04': ['C03', 'C79'],
-  'P05': ['C03', 'C04', 'C18', 'C79', 'C86'],
+  'P05': ['C03', 'C04', 'C18', 'C79', 'C86', 'BUILD'],   # round 7: facts-v35.py asserts the sample pairs, so the build stops first
   'P06': ['C04'],
   'P07': ['C03', 'C04', 'C73'],
   'P09': ['C14a'],
@@ -541,6 +541,7 @@ V35 = [
 ]
 P = P + V35
 EXPECT.update({'AC01': ['C274'], 'AC02': ['C274'], 'AC03': ['C275'], 'AC04': ['C276'], 'AC05': ['C277'], 'AC06': ['C278'], 'AC07': ['C279'], 'AC08': ['C280']})
+EXPECT['X27'] = ['C196', 'C274']; EXPECT['Y12'] = ['C220', 'C274']; EXPECT['X23'] = ['C187']   # round 7: the Enter-by rule is also read by C274
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'

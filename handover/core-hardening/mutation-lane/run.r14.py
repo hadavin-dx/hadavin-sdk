@@ -1869,7 +1869,7 @@ def restore_from_marker(
                     f"the file got {oct(mode & ~0o022)}{LIMIT_D_NOTE}"
                 )
             else:  # r14 m5: a genuine 0664 file (only the group bit): one short sentence, not the limit (d) text
-                mode_note += f"; NOTE {oct(mode)} became {oct(mode & ~0o022)}: --restore never writes a group write bit"
+                mode_note += f"; NOTE mode {oct(mode)} was writable by the group or by others and became {oct(mode & ~0o022)}"
             mode &= ~0o022
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)

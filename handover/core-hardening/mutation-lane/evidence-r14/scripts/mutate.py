@@ -39,7 +39,7 @@ MUT = [
  ("child-patch-abs-i", C, 'and os.path.isabs(a[9])', 'and True', {"T102.patch-shape"}),
  ("child-patch-order", C, 'and a[8] == "-i"', 'and True', {"T102.patch-shape"}),
  ("child-set-root-none", C, '    _CHILD_PYTHON = None if root is None else os.path.join(os.fspath(root), ".venv/bin/python")', '    if root is None:\n        return\n    _CHILD_PYTHON = os.path.join(os.fspath(root), ".venv/bin/python")', {"T102.python-root-none"}),
- ("child-python-endswith", C, 'prog == _CHILD_PYTHON and _CHILD_PYTHON_ID is not None', 'prog.endswith("/.venv/bin/python") and _CHILD_PYTHON_ID is not None', {"T102.python-other-root", "T102.python-path-text"}),
+ ("child-python-endswith", C, 'prog == _CHILD_PYTHON and _CHILD_PYTHON_ID is not None', 'prog.endswith("/.venv/bin/python") and _CHILD_PYTHON_ID is not None', {"T102.python-path-text"}),
  ("child-python-probe-any", C, 'return a[2] == IMPORT_PROBE_CODE and not a[3].startswith("-")', 'return True', {"T102.python-shape-probe"}),
  ("child-python-probe-option", C, 'return a[2] == IMPORT_PROBE_CODE and not a[3].startswith("-")', 'return a[2] == IMPORT_PROBE_CODE', {"T102.python-shape-probe"}),
  ("child-python-pytest-head", C, 'return a[1 : 1 + len(head)] == head and', 'return a[1:3] == head[:2] and', {"T102.python-shape-pytest"}),

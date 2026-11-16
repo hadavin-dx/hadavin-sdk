@@ -1,0 +1,182 @@
+### S signals during --restore, uid 65534; 5 repeats each of 2 signals x 6 delays
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 16115 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S1|uid=65534|rep=1|sig=INT|delay=0|exit=-2 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 16309 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S2|uid=65534|rep=1|sig=INT|delay=0.01|exit=1 elapsed=0.042|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 16715 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S3|uid=65534|rep=1|sig=INT|delay=0.02|exit=1 elapsed=0.053|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 16979 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S4|uid=65534|rep=1|sig=INT|delay=0.05|exit=130 elapsed=0.054|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 17274 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S5|uid=65534|rep=1|sig=INT|delay=0.08|exit=130 elapsed=0.085|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 17514 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S6|uid=65534|rep=1|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 17861 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S7|uid=65534|rep=1|sig=TERM|delay=0|exit=-15 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 18126 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S8|uid=65534|rep=1|sig=TERM|delay=0.01|exit=-15 elapsed=0.024|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 18479 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S9|uid=65534|rep=1|sig=TERM|delay=0.02|exit=-15 elapsed=0.022|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 18685 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S10|uid=65534|rep=1|sig=TERM|delay=0.05|exit=143 elapsed=0.077|traceback_lines=0|marker=kept|file_after=return2|msg=INTERRUPTED (signal 15): a marker exists (/tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane-65534/020 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 19051 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S11|uid=65534|rep=1|sig=TERM|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 19967 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S12|uid=65534|rep=1|sig=TERM|delay=0.2|exit=0 elapsed=0.202|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 21092 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S13|uid=65534|rep=2|sig=INT|delay=0|exit=-2 elapsed=0.005|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 22286 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S14|uid=65534|rep=2|sig=INT|delay=0.01|exit=1 elapsed=0.047|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 23393 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S15|uid=65534|rep=2|sig=INT|delay=0.02|exit=1 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 24156 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S16|uid=65534|rep=2|sig=INT|delay=0.05|exit=130 elapsed=0.066|traceback_lines=0|marker=kept|file_after=return2|msg=INTERRUPTED (signal 2): a marker exists (/tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane-65534/0205 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 24344 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S17|uid=65534|rep=2|sig=INT|delay=0.08|exit=-2 elapsed=0.082|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 24567 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S18|uid=65534|rep=2|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 24755 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S19|uid=65534|rep=2|sig=TERM|delay=0|exit=-15 elapsed=0.004|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 25004 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S20|uid=65534|rep=2|sig=TERM|delay=0.01|exit=-15 elapsed=0.019|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 25293 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S21|uid=65534|rep=2|sig=TERM|delay=0.02|exit=-15 elapsed=0.022|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 25533 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S22|uid=65534|rep=2|sig=TERM|delay=0.05|exit=143 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 25721 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S23|uid=65534|rep=2|sig=TERM|delay=0.08|exit=0 elapsed=0.080|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 26007 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S24|uid=65534|rep=2|sig=TERM|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 26250 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S25|uid=65534|rep=3|sig=INT|delay=0|exit=-2 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 26466 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S26|uid=65534|rep=3|sig=INT|delay=0.01|exit=1 elapsed=0.042|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 26621 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S27|uid=65534|rep=3|sig=INT|delay=0.02|exit=1 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 26828 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S28|uid=65534|rep=3|sig=INT|delay=0.05|exit=0 elapsed=0.101|traceback_lines=0|marker=gone|file_after=return1|msg=signal 2 arrived during the restore: the restore was finished first 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 27056 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S29|uid=65534|rep=3|sig=INT|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 27349 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S30|uid=65534|rep=3|sig=INT|delay=0.2|exit=0 elapsed=0.207|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 27704 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S31|uid=65534|rep=3|sig=TERM|delay=0|exit=-15 elapsed=0.003|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 28061 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S32|uid=65534|rep=3|sig=TERM|delay=0.01|exit=-15 elapsed=0.012|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 28253 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S33|uid=65534|rep=3|sig=TERM|delay=0.02|exit=-15 elapsed=0.026|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 28580 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S34|uid=65534|rep=3|sig=TERM|delay=0.05|exit=143 elapsed=0.056|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 28781 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S35|uid=65534|rep=3|sig=TERM|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 29096 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S36|uid=65534|rep=3|sig=TERM|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 29314 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S37|uid=65534|rep=4|sig=INT|delay=0|exit=-2 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 29624 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S38|uid=65534|rep=4|sig=INT|delay=0.01|exit=1 elapsed=0.044|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 30034 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S39|uid=65534|rep=4|sig=INT|delay=0.02|exit=1 elapsed=0.053|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 30228 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S40|uid=65534|rep=4|sig=INT|delay=0.05|exit=1 elapsed=0.106|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 30651 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S41|uid=65534|rep=4|sig=INT|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 30799 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S42|uid=65534|rep=4|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 31135 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S43|uid=65534|rep=4|sig=TERM|delay=0|exit=-15 elapsed=0.006|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 31442 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S44|uid=65534|rep=4|sig=TERM|delay=0.01|exit=-15 elapsed=0.011|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 31872 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S45|uid=65534|rep=4|sig=TERM|delay=0.02|exit=-15 elapsed=0.021|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 32024 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S46|uid=65534|rep=4|sig=TERM|delay=0.05|exit=143 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 32371 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S47|uid=65534|rep=4|sig=TERM|delay=0.08|exit=0 elapsed=0.080|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9: 32560 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S48|uid=65534|rep=4|sig=TERM|delay=0.2|exit=0 elapsed=0.203|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:   390 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S49|uid=65534|rep=5|sig=INT|delay=0|exit=-2 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:   601 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S50|uid=65534|rep=5|sig=INT|delay=0.01|exit=1 elapsed=0.043|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:   880 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S51|uid=65534|rep=5|sig=INT|delay=0.02|exit=1 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  1042 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S52|uid=65534|rep=5|sig=INT|delay=0.05|exit=0 elapsed=0.069|traceback_lines=0|marker=gone|file_after=return1|msg=signal 2 arrived during the restore: the restore was finished first 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  1264 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S53|uid=65534|rep=5|sig=INT|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  1556 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S54|uid=65534|rep=5|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  1808 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S55|uid=65534|rep=5|sig=TERM|delay=0|exit=-15 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  2056 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S56|uid=65534|rep=5|sig=TERM|delay=0.01|exit=-15 elapsed=0.012|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  2224 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S57|uid=65534|rep=5|sig=TERM|delay=0.02|exit=-15 elapsed=0.022|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  2468 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S58|uid=65534|rep=5|sig=TERM|delay=0.05|exit=143 elapsed=0.073|traceback_lines=0|marker=kept|file_after=return2|msg=INTERRUPTED (signal 15): a marker exists (/tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane-65534/020 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  2683 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S59|uid=65534|rep=5|sig=TERM|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+/tmp/r13-indep-nobody/h/neg/lib.sh: line 9:  2909 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S60|uid=65534|rep=5|sig=TERM|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/h/neg/tmpstate/hadavin-mutation-lane 
+    followup_exit=0 final_file=return1
+DONE

@@ -1,0 +1,119 @@
+== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)
+fatal: not a git repository (or any of the parent directories): .git
+wrong: []
+  PASS: T99a S603 (r12: now with a real allowed program as the base, git): Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit 0; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)
+/tmp/safety-only.RMBb5P.sh: line 70:  4419 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE the marker mode 0o4755 had a setuid, setgid or sticky bit: --restore
+  PASS: T99b MAJ-1 forged marker mode 4755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 4755)
+/tmp/safety-only.RMBb5P.sh: line 70:  4527 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE the marker mode 0o2755 had a setuid, setgid or sticky bit: --restore
+  PASS: T99b MAJ-1 forged marker mode 2755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 2755)
+/tmp/safety-only.RMBb5P.sh: line 70:  4760 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE the marker mode 0o4777 had a setuid, setgid or sticky bit: --restore
+  PASS: T99b MAJ-1 forged marker mode 4777 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 4777)
+/tmp/safety-only.RMBb5P.sh: line 70:  4903 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE the marker mode 0o7001 had a setuid, setgid or sticky bit: --restore
+  PASS: T99b MAJ-1 forged marker mode 7001 (plain --restore): exit 0 (got 0), no special bit on the file (mode 1 has at most 3 digits), the text says NOTE (r10: the file got mode 7001)
+/tmp/safety-only.RMBb5P.sh: line 70:  5021 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T99b2 MAJ-1 file deleted, marker mode 4755, plain --restore: re-created without the setuid bit (mode 755, exit 0; r10: 4755)
+refused: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/t99b3/f.py: the mode after the write is 0o644, not the recorded 0o666 (the sys
+  PASS: T99b3 MAJ-1 the mode is checked AFTER the write, CREATED-file path only (the existing-file path is T100e): when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit 0; r10: returns normally)
+  PASS: T99b4 TEXT CHECK the docstring no longer says a setuid bit is restored as recorded, and says plain --restore never writes one (exit 0; r10: fails)
+  PASS: T99c m1 a 313-byte -k expression is not refused for its length (exit 5, no 'longer than'; r10: exit 2 'name longer than 255 bytes'); a 100001-byte one is refused, exit 2 (got 2); a 300-byte PATH is still refused, exit 2 (got 2)
+REFUSED: mutant m1 file: root plus relative path is too long: it is 4155 bytes long (the limit is 4095)
+usage: run.r14.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+                  [--out-json OUT_JSON] [--timeout TIMEOUT]
+                  [--pythonpath PYTHONPATH] [--repo REPO]
+                  [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                  [--skip-import-check] [--restore] [--discard-marker]
+                  [--accept-unchecked-folder]
+                  [--helper-timeout HELPER_TIMEOUT]
+run.r14.py: error: argument --prefix: not usable as a path or name: one name in it is longer than 255 bytes
+usage: run.r14.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+  PASS: T99d m2 (what discriminates r10 here is ONLY the root-plus-relative case; the 4095 and 4096 roots below do not exist as folders, so they end in exit 2 on r10 too: real 4093/4094-byte roots are T100f) 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): 0 wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit 2), a 300-byte --prefix (got 2) and a 300-byte --id (got 2) are refused with exit 2, no traceback, no INTERNAL ERROR
+REFUSED: --raw /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/other-tmp/hadavin-mutation-lane-0/rawfolder99 lies in the state folder /tmp/claude-0/-home-user/957f9d5
+  PASS: T99e m3 --raw inside the state folder of TMP: exit 2 (got 2) and the folder was NOT created (r10: created, then refused)
+/tmp/safety-only.RMBb5P.sh: line 70:  5291 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o664) is writable by the group, but the file in the git archive given with --sha has mode 0o644, without that bit: the marker may be forged; nothing written; t
+  PASS: T99f m6 marker mode 664 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/safety-only.RMBb5P.sh: line 70:  5490 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o660) is writable by the group, but the file in the git archive given with --sha has mode 0o644, without that bit: the marker may be forged; nothing written; t
+  PASS: T99f m6 marker mode 660 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/safety-only.RMBb5P.sh: line 70:  5612 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o632) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T99f m6 marker mode 632 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/safety-only.RMBb5P.sh: line 70:  6065 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T99f2 GUARD m6 with the default git archive (file 0664) a marker mode 0666 is still refused (write for others), exit 3 (got 3)
+  PASS: T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got 130), no traceback, no KeyboardInterrupt text (r10, measured in r12: exit 130 TOO, but with a KeyboardInterrupt traceback, so the no-traceback part of this check is what tells r10 from r11; the exit code alone does not)
+== T102 (r14, review r13 M1: ONE check per Child guard, so a mutant that removes a single guard is named by its own check id; each case says what it wants)
+  PASS: T102.args-type Child guard 'args-type' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.abs-program Child guard 'abs-program' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.program-file Child guard 'program-file' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.program-pathtext Child guard 'program-pathtext' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.identity-compare Child guard 'identity-compare' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.identity-fields Child guard 'identity-fields' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.identity-ctime Child guard 'identity-ctime' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.trust-first-find Child guard 'trust-first-find' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.seal-missing Child guard 'seal-missing' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.nul-arg Child guard 'nul-arg' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.shell Child guard 'shell' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.kw-allowed Child guard 'kw-allowed' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.env-none Child guard 'env-none' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.env-type Child guard 'env-type' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.env-allowlist Child guard 'env-allowlist' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.env-value-nul Child guard 'env-value-nul' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.cwd-abs Child guard 'cwd-abs' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.cwd-real Child guard 'cwd-real' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.start-new-session Child guard 'start-new-session' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-show-toplevel Child guard 'git-show-toplevel' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-is-inside Child guard 'git-is-inside' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-verify Child guard 'git-verify' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-archive Child guard 'git-archive' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-C Child guard 'git-C' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.git-subcommand Child guard 'git-subcommand' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.patch-shape Child guard 'patch-shape' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-root-none Child guard 'python-root-none' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-other-root Child guard 'python-other-root' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-path-text Child guard 'python-path-text' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-shape-probe Child guard 'python-shape-probe' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-shape-pytest Child guard 'python-shape-pytest' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-pin Child guard 'python-pin' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+  PASS: T102.python-pin-ctime Child guard 'python-pin-ctime' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)
+== T103 (r14, review r13 M2 output paths, M3 forged-marker kill, m4 text, m5 short NOTE; each says whether it fails on r13)
+  PASS: T103a.raw-dots output path / leader refusal 'raw-dots' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.raw-levels output path / leader refusal 'raw-levels' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.raw-system output path / leader refusal 'raw-system' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.raw-sharedtmp output path / leader refusal 'raw-sharedtmp' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.raw-symlink output path / leader refusal 'raw-symlink' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.raw-ok output path / leader refusal 'raw-ok' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.outjson-levels output path / leader refusal 'outjson-levels' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.outjson-system output path / leader refusal 'outjson-system' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.outjson-symlink output path / leader refusal 'outjson-symlink' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.outjson-dots output path / leader refusal 'outjson-dots' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.outjson-ok output path / leader refusal 'outjson-ok' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103a.leader-shape output path / leader refusal 'leader-shape' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)
+  PASS: T103b.1 as uid 65534: run.py --raw /: exit 2 (got 2) with the refusal text 'fewer than two levels', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: cases 4 and 5 are accepted past the first guard; --out-json has no guard)
+  PASS: T103b.2 as uid 65534: run.py --raw /etc: exit 2 (got 2) with the refusal text 'fewer than two levels', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: cases 4 and 5 are accepted past the first guard; --out-json has no guard)
+  PASS: T103b.3 as uid 65534: run.py --raw /etc/r14zz: exit 2 (got 2) with the refusal text 'system folder', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: cases 4 and 5 are accepted past the first guard; --out-json has no guard)
+  PASS: T103b.4 as uid 65534: run.py --raw /tmp/r14nr.VelVps/lnkroot/r14zz: exit 2 (got 2) with the refusal text 'symbolic link', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: cases 4 and 5 are accepted past the first guard; --out-json has no guard)
+  PASS: T103b.5 as uid 65534: run.py --raw /tmp/r14nr.VelVps/lnketc/r14zz: exit 2 (got 2) with the refusal text 'symbolic link', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: cases 4 and 5 are accepted past the first guard; --out-json has no guard)
+  PASS: T103b.6 as uid 65534: run.py --raw /tmp/r14nr.VelVps/rawok --out-json /r14zz.json: exit 2 (got 2) with the refusal text 'fewer than two levels', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: --out-json has no guard)
+  PASS: T103b.7 as uid 65534: run.py --raw /tmp/r14nr.VelVps/rawok --out-json /etc/r14zz.json: exit 2 (got 2) with the refusal text 'system folder', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: --out-json has no guard)
+  PASS: T103b.8 as uid 65534: run.py --raw /tmp/r14nr.VelVps/rawok --out-json /tmp/r14nr.VelVps/lnkroot/r14zz.json: exit 2 (got 2) with the refusal text 'symbolic link', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: --out-json has no guard)
+  PASS: T103b.9 as uid 65534: run.py --raw /tmp/r14nr.VelVps/rawok --out-json /tmp/r14nr.VelVps/lnketc/r14zz.json: exit 2 (got 2) with the refusal text 'symbolic link', nothing written outside (0), no folder /tmp/r14nr.VelVps/rawok made (r13: --out-json has no guard)
+/tmp/safety-only.RMBb5P.sh: line 567:  6305 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 6428 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE mode 0o664 was wri
+  PASS: T103c M3 forged marker naming a process group whose leader is a plain sleep (its pid, start time and argv copied from /proc): plain --restore exit 0 (got 0), the file is restored (return1), the decoy group is STILL ALIVE (1, want 1), the text says it was left alone (r13: the decoy is killed)
+/tmp/safety-only.RMBb5P.sh: line 567:  6462 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+no process is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE mode 0o664 was writa
+  PASS: T103c3 M3 forged marker with no process group, only a recorded command that a plain sleep in --root matches: plain --restore leaves it alive (alive 1, want 1; exit 0) (r13: the sleep is killed)
+/tmp/safety-only.RMBb5P.sh: line 567:  6578 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 6591; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE mode 0o664 was writable by the group or by others and becam
+  PASS: T103c2 M3 control: a REAL orphaned pytest group of this root is still stopped by plain --restore: exit 0 (got 0), file restored (return1), orphan alive: 0 (want 0), text says 'stopped orphaned test group'
+/tmp/safety-only.RMBb5P.sh: line 70:  6704 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev5/tmpstate/hadavin-mutation-lane-0/994214993e892a2a.backup; hash matches saved original: True; NOTE mode 0o664 was writable by the group or by others and became 0o644
+  PASS: T103d m5 genuine mode 0664: plain --restore exit 0 (got 0), mode 644 (want 644), the NOTE is 72 characters (want under 110) and does not repeat the limit (d) text (r13: about 330 characters with limit d)
+  PASS: T103e m4 TEXT CHECK both docstring sentences name the group write bit (counts 1 and 1, want 1 and 1; r13: 0 and 0)
+FAILED CHECKS: 0 (of 75 checks run; skipped: none)

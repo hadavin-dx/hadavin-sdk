@@ -313,7 +313,7 @@ if 'nothing else I know uses it' in _i7 or 'I cancel the older key <its name> no
 need('C187', 'Alarm 5 (Sun 22 Nov) and alarm 6 (Mon 23 Nov)'); need('C187', 'a person who may cancel only the keys named on the helper')       # S M3
 if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
 need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: alarms 5 and 6 are not set'); need('C187', 'a missed 7.11: they are the second and third chance')
-need('C187', 'alarm 5 and alarm 6 of 5.8 are the fifth and sixth')
+need('C187', 'Right after the yes, set **alarm 5** at'); need('C187', 'alarm 5 and alarm 6 of 5.8 are the fifth and sixth')
 if 'waits for your message "cancel the older key' in NOTE + OPEN or 'waits for your message "cancel the older key' in A: fail('C188', 'a text still says the older key in A waits for a lead message (S M1)')
 if 'does NOT wait for a message from you' not in NOTE: fail('C188', 'note: A older key still seems to wait for a lead message')
 _sb = F.get('sevenback', '?')
@@ -774,7 +774,7 @@ def _min(p): _h, _m = re.match(r'(\d\d):(\d\d)', p).groups(); return int(_h) * 6
 # C274 (stranger B1, evidence): one boundary rule at exactly 5 minutes before the latest start
 if _min(_FF['ls']) - _min(_FF['enter']) != 5 or _FF['enter'] != '11:25 UTC = 16:55 IST': fail('C274', 'facts: the Enter-by time is not the latest start minus 5 minutes (11:25 UTC = 16:55 IST)')
 for _n, _t in (('A', A), ('B', B)):
-    for _m in re.finditer(r'(?i)(?:from|at least|within|less than|fewer than) 5 minutes (?:before|of|away from|from) the latest start|5 minutes away|before the latest start[^.\n]{0,30}press Enter', _t): fail('C274', '%s: a second wording of the 5-minute boundary: %r' % (_n, _m[0]))
+    for _m in re.finditer(r'(?i)(?:from|at least|within|less than|fewer than) \d+ minutes (?:before|of|away from|from) the latest start|5 minutes away|before the latest start[^.\n]{0,30}press Enter', _t): fail('C274', '%s: a second wording of the 5-minute boundary: %r' % (_n, _m[0]))
     if _CARD[_n].count('**Enter-by time** = the latest start minus 5 minutes') != 1: fail('C274', 'card %s does not define the Enter-by time exactly once' % _n)
     if SHEETS_DISK[_n].count('Enter-by time') < 3 or SHEETS_DISK[_n].count('at or before the Enter-by time') < 2 or 'no "restarted" by the Enter-by time' not in SHEETS_DISK[_n]: fail('C274', 'sheet %s: 6.6 ("restarted" by the Enter-by time) and 7.3 (Enter at or before it) do not both use the one rule' % _n)
 # C275 (security M2, evidence): the Sunday timeline of check 2 is consistent with the facts

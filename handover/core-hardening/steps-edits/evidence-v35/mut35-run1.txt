@@ -275,3 +275,40 @@ AA12 CAUGHT by C257 | H35: helper told to keep key text
 AA13 CAUGHT by C262 | H38: backstop with an exception for a run
 AA14 CAUGHT by C246 | M1: card waits the ordinary chain near the deadline
 AA15 CAUGHT by C247 | M2: cd line may hold more
+AA16 CAUGHT by C247 | M2: R6 cd rule dropped
+AA17 CAUGHT by C248 | M3: Default A back in the open list
+AA18 CAUGHT by C249 | helper paper VOID step removed
+AA19 CAUGHT by C249 | helper backstop date dropped
+AA20 CAUGHT by C249 | W3 film person stop removed
+AA21 CAUGHT by C250 | card step 4 same named row removed
+AA22 CAUGHT by C250 | 8.8 edited video wording
+AA23 CAUGHT by C257,C262 | key text rule reversed
+AB01 CAUGHT by C263 | X03: auto-reload rule reversed in the appendices
+AB02 CAUGHT by C264 | X07: contact delete rule widened
+AB03 CAUGHT by C265 | X08: ordinary waiting chain loses the last-resort step
+AB04 CAUGHT by C266 | X10: public post allows extra text
+AB05 CAUGHT by C267 | M1: the yes no longer names the failed helper case
+AB06 CAUGHT by C267 | M1: failed helper cancel ends with no step
+AB07 CAUGHT by C268 | M2: lead note claim wording back to two sentences
+AB08 CAUGHT by C268 | M2: open list row 7 back to two sentences
+AB09 CAUGHT by C269 | B2: helper paper completion time removed
+AB10 CAUGHT by C270 | B3: Recall page missing is a stop again
+AB11 CAUGHT by C271 | minor 4: near-deadline line drops the phone fallback
+AB12 CAUGHT by C272 | M7: screen turn-off not set
+AB13 CAUGHT by C271 | M4: card says 20 minutes for a 22-minute chain
+AB14 CAUGHT by C271 | minor 1: the reminder contradiction back
+AB15 CAUGHT by C271 | minor 5: 7.11 mismatch dead end back
+AB16 CAUGHT by C07,C273 | reading load: 400 words added
+AB17 CAUGHT by C271 | minor 2: card backstop time loses the Sunday time
+AC01 CAUGHT by C274 | Enter-by time defined with 6 minutes (C274: the card definition is the one rule)
+AC02 CAUGHT by C274 | a second wording of the 5-minute boundary at 7.3 (C274)
+AC03 CAUGHT by C275 | Sunday older-key bound moved to the backstop time (C275)
+AC04 CAUGHT by C276 | planned moment P2 relabelled W2 (C276)
+AC05 CAUGHT by C277 | the old word deadline reminders is back (C277)
+AC06 CAUGHT by C278 | helper callback to the paper number removed (C278)
+AC07 CAUGHT by C279 | film page cites an undefined label (C279)
+AC08 CAUGHT by C280 | film person exposure row picks an option (C280)
+TOTAL plants 308 (negative controls ok 1, not counted below):
+TOTAL plants 308: caught by the meant check 301, missed 5 (of them caught only by another check 3), anchor-not-found 1
+heavy-slot: slot 1 freed, exit 1
+exit 1
