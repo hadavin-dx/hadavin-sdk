@@ -1097,3 +1097,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 796 end-delete r13: not self-contained, no VERIFIED owner. FIXED by CURRENT r13; owner NOT SET.
 - 797 FINAL-CROSSCHECK r15: decisions status contradicts. FIXED by STATUS r15.
 - 798 BRIEF-LANE r15: effective rule set. FIXED by BINDING r15.
+
+- 799 premortem r13: no single winning paragraph, owners. FIXED by STATE r13.
+- 800 row1-builder-brief r10: history revived, exit code, result location. FIXED by CURRENT ONLY r10.
+- 801 M17 r10: HOLD r9 unusable alone, terms. FIXED by HOLD r10; replacement text TO DO.
