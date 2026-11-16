@@ -18,3 +18,12 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 Row order is the order to act: 5 waits on 2 and 1; 3 can be decided now and makes 1 smaller (only real-v5 needs filling) and 4 vanish; 6 runs in parallel.
 
 **Before the post, not the take:** drift D-04 and D-05 (post wording rows), the exact post words, a named person who checks the post. **Not a take blocker:** the licence guard test failing on core-hardening (blocks a pull request only; QUESTIONS.md item 7); archive lists (after the take).
+
+## Minimum path (an architect reviewer's reading, 16 Nov; NOT decided; the studio lead confirms or rejects)
+1. Decide row 3 first (cut or keep scenes 5 to 11). Cutting leaves ONE flow set to fill in, import and rehearse, and removes rows 4 and the live switch. If scenes 5 to 11 stay: row 4 becomes a requirement (a separate n8n session that holds only stand-in credentials, one identity per flow set), and the rehearsal must include the switch.
+2. Row 1: name the builder and a date for the `$env` filling script. It is the critical path; both the rehearsal and the take wait on it.
+3. Row 2: name the person who starts Docker and runs the first rehearsal. Only about one fail-fix-rerun cycle fits before Mon 23 Nov.
+4. Row 5: fix the date working back from the 18:29 UTC stop; state how many reruns fit between the start and the 18:15 UTC latest start (typing `end` early, Ctrl-C or two wrong words at the film pause deletes the contacts and costs a whole rerun with a new written yes).
+5. Row 7: write the HubSpot key scope (create and delete contacts in the demo account only) and the account check, without reading the secret.
+6. Row 6 split. Needed for the take: S9-1 or its fallback (closed spend gate plus the owner's written "typed y", which conflicts with v5 rule 2 and needs the lead's written acceptance), S9-2 (printed figures; do not call it an independent check: the program only repeats the lead's own settings), S9-12 (a text-only MUST NOT list). Text or hygiene, can follow: S9-3 (model-key revoke; the provider-side per-key limit may not exist), S9-5 (wording), S9-4 mask edge cases. S9-4 still needs a new step C.4 "confirm the sender account" so the owner cannot paste a real company mailbox password.
+7. Single points to accept or fix: the studio lead decides rows 3 to 7 and starts the rehearsal; the owner alone types `y` (state a backup window); one n8n on one laptop with no fallback if Docker fails on the day.
