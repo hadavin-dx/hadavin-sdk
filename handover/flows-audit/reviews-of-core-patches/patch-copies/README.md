@@ -68,8 +68,8 @@ Date of this text: 2026-11-16, third fixer pass, static for databases: no databa
 Needs: `git`, `uv` (it installs the Python and the packages), and either network access once or a warm `uv` cache. Python 3.12 or newer (`pyproject.toml`
 `requires-python`; CI uses 3.12 and 3.13). Repository source: the GitHub repository `https://github.com/hadavin-dx/hadavin-sdk` (the commit is on its branch
 `cloud/core-hardening`), or, as the fallback, the checkout this working copy lives in (`/home/user/hadavin-sdk` in the session that wrote this).
-A tree with no git history (a plain archive of the files) can run the patches but fails the repository rule test `test_licences_are_proprietary`
-(it calls `git ls-files`), so use a clone.
+Use a clone, not a plain `git archive` of the files: the repository rule tests ask git for the list of tracked files (`tests/test_repo_rules.py`, `tracked_files`), which a folder without
+git data cannot answer (the first pass ran in such a folder, so its numbers are not comparable with this recipe).
 ```
 P=/home/user/hadavin-sdk/handover/flows-audit/reviews-of-core-patches/patch-copies   # absolute path of THIS folder
 SRC=https://github.com/hadavin-dx/hadavin-sdk                                         # or the fallback path of a local checkout
