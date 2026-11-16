@@ -48,14 +48,14 @@ ListAgents not re-called after the 8 launches at this beat; ids are the ones the
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a2a6e3c63c56801ea | cold read of OWNER-VIEW.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| a2d5679cbc732755e | cold read of OWNER-RUN-DAY-CARD.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| afbe817dcaf6ddd9e | cold read of OWNER-CLEANUP-CARD.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| a7538c70ba516539f | cold read of LEAD-PAGE.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| afac81ea7a96ded1a | cold read of SWEEP.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| a4b138594c970b515 | cold read of MASTER-MAP.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| ae5fd73603721c5b3 | cold read of QUESTIONS.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
-| afd802ea9c226af07 | cold read of QUEUE.md (sonnet, read-only) | 13:20 | 13:24 | running | nothing yet |
+| a2a6e3c63c56801ea | cold read of OWNER-VIEW.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| a2d5679cbc732755e | cold read of OWNER-RUN-DAY-CARD.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| afbe817dcaf6ddd9e | cold read of OWNER-CLEANUP-CARD.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| a7538c70ba516539f | cold read of LEAD-PAGE.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| afac81ea7a96ded1a | cold read of SWEEP.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| a4b138594c970b515 | cold read of MASTER-MAP.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| ae5fd73603721c5b3 | cold read of QUESTIONS.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
+| afd802ea9c226af07 | cold read of QUEUE.md (sonnet, read-only) | 13:05 | 13:09 | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
