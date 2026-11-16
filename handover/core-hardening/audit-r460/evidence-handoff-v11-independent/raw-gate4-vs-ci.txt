@@ -1,0 +1,19 @@
+ci.yml:79 -> 'run: ruff check src tests demos'
+ci.yml:81 -> 'run: ruff format --check src tests demos'
+ci.yml:88 -> 'run: pytest -q -m "not live and not perf" -rs'
+ci.yml:94 -> 'run: pytest -q -m perf -rs'
+ci.yml:119 -> 'run: bandit -q -r src demos -ll'
+gate4 commands:
+   ruff check src tests demos
+   ruff format --check src tests demos
+   pytest -q -m "not live and not perf" -rs
+   pytest -q -m perf -rs
+   bandit -q -r src demos -ll
+line 79: ci='ruff check src tests demos' gate4='ruff check src tests demos' SAME
+line 81: ci='ruff format --check src tests demos' gate4='ruff format --check src tests demos' SAME
+line 88: ci='pytest -q -m "not live and not perf" -rs' gate4='pytest -q -m "not live and not perf" -rs' SAME
+line 94: ci='pytest -q -m perf -rs' gate4='pytest -q -m perf -rs' SAME
+line 119: ci='bandit -q -r src demos -ll' gate4='bandit -q -r src demos -ll' SAME
+count ci=5 gate4=5
+gate4 mentions HADAVIN_TEST_PG_DSN: False VAULT_ADDR: False
+ALL SAME

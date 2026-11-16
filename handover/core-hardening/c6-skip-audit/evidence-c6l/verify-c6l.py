@@ -60,7 +60,8 @@ STALE = ["52.9", "0 rows", "shows 0", "never deletes", "70 to 75", "80 kills"]
 for s in STALE:
     hits = [r["i"] for r in rows if s in r["new"]]
     print("stale phrase %r in new texts of rows: %s" % (s, hits or "none"))
-B = ["getport.io", "demo.port.io", "app.port.io", "Port.io", "Port MCP", "Agent Control Center", "Skills Marketplace", "MCP Hub", "Context Lake", "Golden Path"]
+import re as _re
+B = list(eval(_re.search(r"BANNED\s*=\s*(\(.*?\n\))", open("/home/user/hadavin-sdk/tests/test_no_reference_material.py").read(), _re.S).group(1)))
 full = "\n".join(txt)
 print("banned strings in report:", [b for b in B if b.lower() in full.lower()] or "none")
 sec = re.findall(r"AKIA[A-Z0-9]{8,}|sk-[A-Za-z0-9]{10,}|ghp_[A-Za-z0-9]{10,}|[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[a-z]{2,}", full)

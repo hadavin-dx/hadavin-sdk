@@ -1,0 +1,2 @@
+A wc -w: 6495  python split: 6495  python regex \w+ tokens: 6520
+B wc -w: 6467  python split: 6467  python regex \w+ tokens: 6490

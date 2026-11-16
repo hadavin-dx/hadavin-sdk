@@ -1,1 +1,11 @@
 1 MB single line through --mask, three runs (wall clock seconds), 14:55Z, dash, nothing else running (the canary self-test inside --mask is included)
+run 1: 10.66 s
+run 2: 10.77 s
+run 3: 10.75 s
+output length (bytes): 307
+lines in the output that show the fake secret fragment: 0
+tiny input through --mask (canary only), 3 runs
+run 1: 1.36 s
+run 2: 1.28 s
+run 3: 1.40 s
+Reading: the 1 MB line costs the difference between the two tables; the rest is the start-up canary test (which v4 also had, smaller).

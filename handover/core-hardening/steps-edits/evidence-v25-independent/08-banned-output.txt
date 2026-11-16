@@ -1,0 +1,2 @@
+banned entries: 10
+total hits 0
