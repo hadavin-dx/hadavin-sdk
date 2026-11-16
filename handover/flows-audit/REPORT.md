@@ -1,5 +1,27 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## FINAL 2026-11-16 07:34 UTC / 13:04 IST: ORDER 002 (with ORDER 003) finished, waiting for the lead
+Agents running: 0. All register rows are CLOSED (EV1, EV2, RV-cb, RV-d, RV-z, RV2-d, RV2-cb, six builder lanes). No helper shells or background processes are left. Only tools/scratch/ is untracked on purpose (scripts and scratch builds, never committed).
+
+What failed, in order of weight:
+1. Round 1 of the result review found real faults in my work (patches left the sheets contradicting each other, a false "not_stored" reply, a cut list that could archive the only correct table definition, wrong severity order, duplicated text). Fixed and recorded in reviews/result-r1-resolve.md.
+2. Round 2 found more: my scene 4 caption pooled four kill points and hid that the runs were on older stand-in flows; patch F-004 moved a contradiction instead of removing it; the cut list wanted to archive dn1_common.py (which mf.py imports) and other files that live documents still name; F-013 proposed a fix the stand-in already has; F-002 (empty lead_key) can lose a lead, so it is now a Blocker. All fixed in text and patches (reviews/result-r2-resolve.md).
+3. Clock slip: some earlier status blocks carry times later than the real `date -u`; use the commit times. I also wrote reviewer report times before checking the clock and corrected them to "before 07:32".
+
+Result: FINDINGS.md has 34 findings = 2 Blocker (F-001 table definition without alert columns; F-002 missing lead key can lose a lead), 23 Major, 9 Nit. Four patches (F-001 to F-004) apply cleanly and are text or generator changes only; nothing outside handover/flows-audit changed (evidence-2.md (p)). Rebuild with patch F-002: 3 new nodes (KeyOk, ReplyBadKey, ReplyStoreFail), Valid changed, recovery and sub flows unchanged, no dangling edge (evidence-2.md (m)); the generator without the patch reproduces the saved real-v5 and film-v5 node sets.
+
+Reports in EGM order: PLAN-002.md and reviews/plan-r1..r3 (plan review, resolve); evidence-1.md and evidence-2.md (EVIDENCE RUNNER, raw); reviews/result-r1-*.md and result-r2-*.md (egm-design, egm-codebase-details, egm-zoom-out, fresh each round); result-r1-resolve.md and result-r2-resolve.md; reviews/drift-report.md. Checks I re-ran after the last edit: check_counts PASS 52 files / 655 nodes, check_names PASS 655 rows, check_refs PASS 5118, check_secrets PASS 0 hits in 173 files, check_patches PASS 4, test_dump_nodes PASS 8/8.
+
+Not done and why:
+- Nothing was run in n8n, HubSpot or SMTP (the order forbids it): the 422/503 replies, item pairing on the Claim error output, the sender retry and every lane3 number are UNVERIFIED (raw lane3 files are not in this repository).
+- Escalated to the lead: QUESTIONS.md Q2 (does "one database = n8n Postgres" also cover n8n's own SQLite? F-011). Owner decisions are listed in FIX-PLAN.md (O).
+- Result review is at its 2-round cap for non-mail paths. F-002 touches intake; if you want a round 3 on F-002 only, say so. The round-2 fixes to the cut list and F-013 have no third independent read.
+- The studio ledger tool (ledger_check) is not in this repository; LEDGER-ROWS.md rows are all OPEN because applying the patches happens on the laptop.
+- Duplicate notes and DRAFT page statements are my reading of names and first lines, not a line-by-line diff (UNVERIFIED).
+
+Token use (sub-agents, from the harness): EV2 about 103k, RV2-d about 159k, RV2-cb about 177k; earlier rounds are in their earlier blocks. Main session: not measurable from here.
+Next: the lead reads FINDINGS.md (short answer first), FIX-PLAN.md and CUT-LIST.md, answers Q2, and orders the apply steps on the laptop. I stop here.
+
 ## STATUS 2026-11-16 07:32 UTC / 13:02 IST: round 2 running
 Agents running: 3 (EV2 evidence runner, RV2-d design reviewer, RV2-cb codebase reviewer), all started 07:30 UTC. Nothing failed since the last block. Not yet checked: any round-2 result. Next: read reports, save to reviews/result-r2-*.md, resolve, drift report, FINAL block.
 
@@ -19,9 +41,9 @@ Agents running: 4 language-model agents (1 evidence runner, 3 result reviewers: 
 | RV-cb (a52c620d686a34950) | result review codebase-details | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-d (a737211799b7fc972) | result review design | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-z (a7518d3448ebfabf1) | result review zoom-out | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
-| EV2 (a026774cb604af485) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | CLOSED (reported 07:36, evidence-2.md read: all checks exit 0; patched rebuild adds KeyOk, ReplyBadKey, ReplyStoreFail to mf-form and mf-hook, no dangling edges) | none |
-| RV2-d (ad46b354c5fb12696) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | CLOSED (reported 07:41, saved to reviews/result-r2-design.md; 7 Majors) | resolve after RV2-cb |
-| RV2-cb (a33d32a4f58af3185) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | CLOSED (reported 07:43, saved to reviews/result-r2-codebase.md; 4 Majors, 7 Nits; resolved) | none |
+| EV2 (a026774cb604af485) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | CLOSED (reported (clock time not recorded; before 07:32), evidence-2.md read: all checks exit 0; patched rebuild adds KeyOk, ReplyBadKey, ReplyStoreFail to mf-form and mf-hook, no dangling edges) | none |
+| RV2-d (ad46b354c5fb12696) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | CLOSED (reported (before 07:32), saved to reviews/result-r2-design.md; 7 Majors) | resolve after RV2-cb |
+| RV2-cb (a33d32a4f58af3185) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | CLOSED (reported (before 07:32), saved to reviews/result-r2-codebase.md; 4 Majors, 7 Nits; resolved) | none |
 Builders L1, L2a, L2b-1, L2b-2, L2b-3, L3: closed (reported, files read, no helper shells).
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next

@@ -6,7 +6,7 @@ Static review: nothing was run in n8n. `UNVERIFIED` marks what needs a running n
 You asked why there are so many duplicates, idle parts and inconsistencies. The answer in six sentences:
 1. There are 52 flow files (655 steps). The filmed run uses the 8 files in n8n-flows-real-v5 and n8n-flows-film-v5, plus the table screen (1 file); 3 more files are the old desk entry flows. The other 40 files in 11 older folders hold 525 of the 655 steps, so about four steps in five are old copies that no script or flow uses (list: CUT-LIST.md, nothing is deleted, you say yes first).
 2. The form entry and the hook entry are the same flow written twice: 10 of their 12 steps are identical (F-017).
-3. The lead table definition exists in four places (three files and a copy inside the test script mf.py), and the file named for the current flows is the one that is wrong: it lacks the columns that alerts need, so alerts would never send (F-001, the one Blocker).
+3. The lead table definition exists in four places (three files and a copy inside the test script mf.py), and the file named for the current flows is the one that is wrong: it lacks the columns that alerts need, so alerts would never send (F-001, one of two Blockers; the other is F-002, the missing lead key).
 4. The old desk entry flows and the desk database still write leads into a second place; the order says one database, so they are to be retired (F-019). n8n itself also keeps lead data in its own small database (F-011).
 5. Several test scripts and notes only serve the old versions and are idle (CUT-LIST.md, last block).
 6. The inconsistencies are mostly in the video run sheet and the page statements, which still carry old numbers and contradict each other (F-003, F-004, F-006, F-007).
