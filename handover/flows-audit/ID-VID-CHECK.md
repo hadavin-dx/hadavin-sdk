@@ -47,19 +47,19 @@ In every failing case the contact already exists in HubSpot, and SetCrmId has al
 
 | File and line | Claim (short) | Status |
 |---|---|---|
-| `CLAIMS-TABLE.md:19` (P3) | "HubSpot answers an all-digit id (A-012, node CrmIdOk) before any real-v5 scene is filmed." | Right: it is a condition, unverified |
-| `CLAIMS-TABLE.md:163` (A-012, run sheet line 31) | "CRM list shows 1 row (real CRM service)"; marked SUPPORTED (read only) | Does not say the id; "SUPPORTED" is read-only |
-| `CLAIMS-TABLE.md:270` | "whether HubSpot answers an all-digit id (scenes 2 and 4) was not observed" | Correct and honest |
-| `CLAIMS-TABLE.md:309-313` | CrmIdOk regex; BM:26 comment says answer `{vid, isNew}` | Source of the `vid` belief; a comment, not a measurement |
-| `CLAIMS-TABLE.md:325` (B-006), `:372` (B-053), `:526-534` (B-171..B-181) | v5 fix `id ?? vid ?? ''` plus CrmIdOk, "SUPPORTED", "not yet run" | Flow text only |
-| `CLAIMS-TABLE.md:370` (B-051) | "done = ... has_crm true (numeric id)"; SUPPORTED "statically consistent" | Needs the take script (absent) and the real answer |
-| `CLAIMS-TABLE.md:359` (B-040) | `has_crm` SQL `crm_id ~ '^[0-9]+$'` | Take-side; script absent |
-| `CLAIMS-TABLE.md:595` (B-224) | "the CRM id read back from HubSpot" is NOT checked by the take | Correct |
+| `CLAIMS-TABLE.md`, the section "Checks (P1, P2, P4a, P4b, P4c)" (check P4a, the all-digit id condition; the cite 'P3' named a check that no longer exists there) | "HubSpot answers an all-digit id (A-012, node CrmIdOk) before any real-v5 scene is filmed." | Right: it is a condition, unverified |
+| `CLAIMS-TABLE.md`, claim A-012 (row 7, run sheet line 31) | "CRM list shows 1 row (real CRM service)"; marked SUPPORTED (read only) | Does not say the id; "SUPPORTED" is read-only |
+| `CLAIMS-TABLE.md`, row 78 (VIDEO-RUNSHEET.md, before scene 1) | "whether HubSpot answers an all-digit id (scenes 2 and 4) was not observed" | Correct and honest |
+| `CLAIMS-TABLE.md`, claims B-179 (CrmIdOk regex) and the line "Real HubSpot node (BM:25-30)" under "Node facts checked in text" | CrmIdOk regex; BM:26 comment says answer `{vid, isNew}` | Source of the `vid` belief; a comment, not a measurement |
+| `CLAIMS-TABLE.md` claims B-006, B-053 and B-171 to B-181 | v5 fix `id ?? vid ?? ''` plus CrmIdOk, "SUPPORTED", "not yet run" | Flow text only |
+| `CLAIMS-TABLE.md` claim B-051 | "done = ... has_crm true (numeric id)"; SUPPORTED "statically consistent" | Needs the take script (absent) and the real answer |
+| `CLAIMS-TABLE.md` claim B-040 | `has_crm` SQL `crm_id ~ '^[0-9]+$'` | Take-side; script absent |
+| `CLAIMS-TABLE.md` claim B-224 | "the CRM id read back from HubSpot" is NOT checked by the take | Correct |
 | `SCENE-FLOW-MAP.md:23, 38` | CrmIdOk "checks the CRM answer is all digits" | Describes the file |
 | `SCENE-FLOW-MAP.md:53` | Kind A (scenes 1 to 4): "one real CRM service (the CrmUpsert node is the CRM node)" | Says real service, not the id |
 | `SCENE-FLOW-MAP.md:69` (C4) | "a real CRM answer that is not all digits would send the lead to OutStage ... can break scenes 2 to 4. The real answer is unmeasured. Rehearse first." | Correct, matches section B |
-| `RUNSHEET-WORDING.md:16, 25, 27` (R3, A-001, A-008) | "real CRM service" for scenes 1 to 4 | Names the service, not the id; still true only if HubSpot answers a digit-only id |
-| `RUNSHEET-WORDING.md:88` (B-062) | "v5 changes SetCrmId, adds CrmIdOk, sets the HubSpot credential id" | Accurate |
+| `RUNSHEET-WORDING.md` entries R3, A-001, A-008 | "real CRM service" for scenes 1 to 4 | Names the service, not the id; still true only if HubSpot answers a digit-only id |
+| `RUNSHEET-WORDING.md` entry B-062 | "v5 changes SetCrmId, adds CrmIdOk, sets the HubSpot credential id" | Accurate |
 | `demo/VIDEO-RUNSHEET.md:4` | "real mail service and real CRM service in scenes 1 to 5" | Overstated (scene 5 is the stand-in; patch F-003 fixes it) |
 | `demo/VIDEO-RUNSHEET.md:11` | "flows real-v4, v5 changes only the CRM id step" | Overstated: v5 also adds CrmIdOk and the credential id (patch F-003, B-062) |
 | `demo/VIDEO-RUNSHEET.md:31` | scene 2: "CRM list shows 1 row (real CRM service)" | Shows a row count from the CRM list, not an id; passes only if CrmIdOk passed |

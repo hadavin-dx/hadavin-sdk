@@ -12,7 +12,7 @@ All of these contradict an answered Q25 item and are lead-owned or owned by othe
 1. QUEUE.md:8 and ORDERS.md:20: say saved runs are 'deleted at clean-up'. Rule: no deletion promise anywhere (Q19-1, Q21, Q25-13a).
 2. PLAN-4-NLITE-FROM-LEAD.md:106: 'up to 3 HubSpot contacts archived at the end' contradicts lead decision 2 (the take never deletes contacts) (Q25-14).
 3. inputs/DECISION-one-store.md lines 7 ('film-v5 and real-v5 flows': film-v5 is not in this video), 14 ('app' schema: decision 10 says one Postgres server with two databases), 23 and 27 ('deleted at clean-up') (Q25-13d).
-4. take_check.sh:60 and the fill_flows README:240: 'deleted at clean-up' (Q25-13a).
+4. take_check.sh and the fill_flows README: 'deleted at clean-up' (Q25-13a). Re-read 2026-11-16: that exact text is no longer found in flow-check/take_check.sh or fill_flows/README.md, so this item is probably already fixed; not re-verified beyond that text search.
 5. The other sessions' owner sheets: cleanup card step 5 and OWNER-STEPS v14 step I.5 promise a deletion (Q25-13a).
 6. STATUS-BOARD: the old count tag (the canonical counts are the FINDINGS counts table) (Q25-14).
 
@@ -148,5 +148,5 @@ ORDER 037 item 3, files with stale stand-in HubSpot text (grep -niE 'stand-in|st
 - OWNER-STEPS-q16-rows.md lines 34, 42 and 238: STILL TO FIX by the owner-sheet file's owner (they describe the practice run and clean-up as run against stand-in programs that answer like HubSpot; ORDER 037 item 3 says one filled flow set with the real trial credential in every phase).
 - inputs/DECISIONS-2026-11-16.md item 8 ("replaced by the loopback re-smoke") and inputs/plan-wp6-resmoke-v5.md (loopback re-smoke with throw-away stub services): STILL TO FIX by the lead (lead-owned input files; this audit does not edit them; RUNBOOK.md round 6 records them as superseded).
 - QUESTIONS.md lines 155 (loopback) and 224 to 225: FIXED, already carry a PARTLY SUPERSEDED / ORDER 037 note.
-- RUNBOOK.md (lines 50, 204, 298), TAKE-CHECKLIST.md (lines 67, 86), fill_flows/README.md (line 126): FIXED, they state there is no stand-in HubSpot.
+- RUNBOOK.md (the 'take' glossary entry, the ORDER 037 item 3 paragraphs and the line about 'one database' wording), TAKE-CHECKLIST.md (Inputs item 9 'SETTLED by ORDER 037 item 3' and the 'Runs' line, 're-smoke'), fill_flows/README.md (the text 'There is no stand-in HubSpot credential'): FIXED, they state there is no stand-in HubSpot. Line numbers dropped (recheck after edits stop).
 - Not stale (the stand-in is the film-only stand-in CRM of scene 5, cut, or a reviewer's word): CLAIMS-TABLE.md, RUNSHEET-WORDING.md, FLOWS-AUDIT.md, FINDINGS.md (F-006, F-033), LEDGER-ROWS.md, ID-VID-CHECK.md, SCENE-FLOW-MAP.md, CITATION-CHECK.md, F6-AUDIT.md, F6B-AUDIT.md, EXCEPTIONS.md, CUT-LIST.md, QUEUE.md, ORDERS.md, FIX-PLAN.md, flow-check scripts and README (hits read for context by grep line only, not every line fully read).

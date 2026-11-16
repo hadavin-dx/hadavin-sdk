@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:06:53Z
+UPDATED_UTC: 2026-11-16T14:07:14Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,12 +7,12 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 0.37 load of 4 cores, mem 0/15 GB, RAM 990/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 970/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check (checker run or fresh reviewer): see items.txt; no item closed since 13:59Z, so percent unchanged; agents finishing do not count.
 NEXT: 1. Fixer for r14 part 2 findings (waits on ae4c858 and aad5a30, same files) 2. Evidence runner for F8 round 9 final head, then fresh uncapped review (waits on abfcd0a) 3. Fresh REVIEW.md round 18 review, uncapped (waits on a50b314) 4. Claims round 8 fixer, Blockers/Majors only (waits on a4c6372 and a442038) 5. Post-twice script review (waits on lead, Q29-4) 
-PUSHED_UTC: 2026-11-16T14:06:53Z
+PUSHED_UTC: 2026-11-16T14:07:14Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
