@@ -850,3 +850,21 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 610 L1c r4: FD-021 unread bodies, PR state. FIXED by CORRECTION.
 - 611 critical-path r13: firm date overstated. FIXED by FINAL paragraph.
 - 612 open-items r7: row 12/16 cite, answerer column. FIXED by FINAL paragraph.
+
+- 613 FINAL-CROSSCHECK r6: stacked paragraphs, status unclear. FIXED by ADDED paragraph (table rebuild TO DO).
+- 614 banned-claims-clean r2: two vs three items, who tells the head. FIXED by FINAL paragraph.
+- 615 rehearsal-limits r3: layered wins, four sentences. FIXED by FINAL paragraph.
+
+- 616 premortem r5: stacked paragraphs, risk 7 meaning. FIXED by CURRENT paragraph.
+- 617 t19 r6: no step table, KeyOk. PARTLY FIXED (table rows all BLOCKED).
+- 618 PLAN-002 r11: line 40 not edited, read counts. FIXED by ADDED paragraph (lines 40, 5, 93-97 not edited).
+- 619 decision-list r5: patches vs rows. PARTLY FIXED; row splits TO DO.
+- 620 BRIEF-LANE r7: stacked paragraphs. FIXED by CURRENT RULES.
+- 621 owner-timeline r4: pause contradiction. FIXED by FINAL paragraph.
+
+- 622 L2c r4: stacked corrections, dropped owner and command. FIXED by CORRECTION paragraph.
+
+- 623 L4c r3: real-run findings unusable? FIXED by QUARANTINE paragraph (the possible breach stays raised to the lead).
+- 624 L3c r4: stacked glossary, FD-001 cell. FIXED by TERMS block.
+
+- 625 M17 r3: stacked STATUS, proposed vs applied, term meanings. FIXED by STATUS paragraph (table not rebuilt).
