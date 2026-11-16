@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:45:29Z
+UPDATED_UTC: 2026-11-16T19:47:19Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 9.87 load of 4 cores, mem 1/15 GB, RAM 1216/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 4.37 load of 4 cores, mem 1/15 GB, RAM 1112/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: RUNBOOK fixer after reader
-PUSHED_UTC: 2026-11-16T19:45:29Z
+NEXT: F8 fixer held until load under 6
+PUSHED_UTC: 2026-11-16T19:47:19Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,22 +30,22 @@ PUSHED_UTC: 2026-11-16T19:45:29Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a1bdef8f | fixer | sonnet | FINDINGS/LEDGER r31 | 19:41Z | 20:41Z | working | - |
-| acf7be5f | fixer | sonnet | QUESTIONS Q31 r49 | 19:46Z | 20:46Z | working | - |
-| a4341ca7 | fixer | sonnet | TAKE-CHECKLIST + FIX-PLAN r43 | 19:48Z | 20:48Z | working | - |
-| a7013236 | fixer | sonnet | REVIEW.md r49 (uncapped) | 19:49Z | 20:49Z | working | - |
-| ab296e5f | fixer | sonnet | CLAIMS-TABLE r45 | 19:45Z | 20:45Z | working | - |
-| a7b8dca1 | reader | sonnet | patch-copies README 1-330 r23 (uncapped) | 19:49Z | 20:05Z | working | - |
-| aa80a521 | reader | sonnet | RUNBOOK 220-433 | 19:46Z | 20:05Z | working | - |
-| ae4f196d | reader | sonnet | REVIEW.md 1-132 (uncapped) | 19:47Z | 20:05Z | working | - |
+| a1bdef8f | fixer | sonnet | FINDINGS/LEDGER r31 (light, edits only) | 19:41Z | 20:41Z | working | - |
+| acf7be5f | fixer | sonnet | QUESTIONS Q31 r49 (light) | 19:46Z | 20:46Z | working | - |
+| a4341ca7 | fixer | sonnet | TAKE-CHECKLIST + FIX-PLAN r43 (light) | 19:48Z | 20:48Z | working | - |
+| a7013236 | fixer | sonnet | REVIEW.md r49 (uncapped, light) | 19:49Z | 20:49Z | working | - |
+| ab296e5f | fixer | sonnet | CLAIMS-TABLE r45 (light) | 19:45Z | 20:45Z | working | - |
+| a4e60b74 | reader | sonnet | patch-copies README 330-641 (uncapped) | 19:51Z | 20:10Z | working | - |
+| a6725e95 | reader | sonnet | RUNBOOK 227-244 | 19:52Z | 20:10Z | working | - |
+| a9f34c77 | reader | sonnet | REVIEW.md 333-407 (uncapped) | 19:52Z | 20:10Z | working | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 RUNBOOK fixer after reader 220-433 (batch with r50 report)
-2 REVIEW.md readers 333-407, 459-590, 633-884 (uncapped)
-3 F8 uncapped fixer: evidence runner finished, numbers still unconfirmed; then fresh reviewers
+1 F8 fixer (HEAVY: reruns test_run_all_raw.sh about 12 min): HOLD until load under 6; evidence: new test_run_all_raw.sh phase 2 fails 4 of 13 (exit 1 not 0, raw files differ, manifest, refreshed message); old code 7/13 and stop test 16/25 as planned
+2 RUNBOOK fixer after readers 227-433 finish (batch r50, r51); more RUNBOOK readers for 245-433
+3 REVIEW.md readers 459-590, 633-884 (uncapped)
 4 RUNSHEET-WORDING reader round 2 and CLAIMS-TABLE 600-1052 reader
 5 drift-007 r3 and trigger-word grep before FINAL
-DISK 19G free; load 9.9 (over 6, no new heavy runs); top users: pc21 1.4G, tmp clones 2.9G unconfirmed, /root/.claude 888M, repo 773M, p20 218M
+HEAVY RUNS NOW: none (F8 evidence runner finished 19:46Z; 0 test processes). Max 3 heavy at once. DISK 19G free; top users: pc21 1.4G, tmp clones 2.9G unconfirmed, /root/.claude 888M, repo 773M, p20 218M; 6 /tmp/fc8raw.* folders left by F8 runner (kept on purpose)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
