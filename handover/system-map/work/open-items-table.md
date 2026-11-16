@@ -1,4 +1,5 @@
 # Open items still blank or unknown in the owner and lead pages (agent table, unverified; written 16 Nov 2026 about 13:45 UTC / 19:15 IST by the system-map session)
+See also work/decision-list-for-lead.md: it holds the questions with proposed owners and dates (sections A-F); this table does not yet list its rows A-E.
 Source: a read-only agent sweep of README.md, LEAD-PAGE.md, TAKE-BLOCKERS.md, OWNER-VIEW.md and the two cards. Line numbers can shift after edits. The sweep was case-sensitive, so lowercase "open" is not covered. No single file lists all blockers.
 
 | # | Item | Where | Who supplies | Blocks the take start? | Listed twice? |

@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:25:35Z
+UPDATED_UTC: 2026-11-16T11:27:05Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 running (ORDER 028), all started this beat; the earlier 8 reported and are digested. Digested through batch 206. Decision list for the lead: work/decision-list-for-lead.md (proposals only).
+AGENTS_RUNNING: 8 running (ORDER 028), all started this beat. Digested through batch 214. Decision list: work/decision-list-for-lead.md (sections A-G, proposals only).
 INTERRUPTED: none
-NEXT: collect and digest the 8 new hand-backs (OWNER-VIEW, cleanup card, run-day card, decision list, open-items-table, ONE-PLACE-TABLE 1-30 cites, SWEEP 200-end, core-hardening REVIEW cites); fix open-items-table; next beat in 5 minutes.
-CAPACITY: nproc 4, load 0.07 0.21 0.21, RAM 866/16087 MB used, disk / 43% used (23G free); top disk users: /tmp/claude-0 1.3 GB (session scratch, not mine to clear), /home/user/hadavin-sdk (not measured this beat), my folder 4.4 MB.
+NEXT: digest the 8 new hand-backs (decision list re-read, core-hardening PLAN, REVIEW, T19 steps, patches vs ledger, LEAD-PAGE vs list, QUEUE vs board, ONE-PLACE-TABLE 31-end cites); send the list to the lead; next beat in 5 minutes.
+CAPACITY: nproc 4, load 0.2, RAM about 900/16087 MB, disk / 43% used (23G free); top disk users: /tmp/claude-0 1.3 GB (session scratch, not mine to clear), /home/user/hadavin-sdk 304 MB, my folder 4.5 MB.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:25:35Z
+PUSHED_UTC: 2026-11-16T11:27:05Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -41,11 +41,11 @@ PUSHED_UTC: 2026-11-16T11:25:35Z
 ## AGENTS (ORDER 028: 8 running, all started this beat)
 | id | purpose | state |
 |---|---|---|
-| aae7fff84a449f668 | OWNER-VIEW cold read | running, read-only |
-| aec7511583c0c3715 | cleanup card cold read | running, read-only |
-| a05cb2663a5f3fd4e | run-day card cold read | running, read-only |
-| a8583f22552acfaed | decision list cold read | running, read-only |
-| a41647c48c6880758 | open-items-table vs decision list | running, read-only |
-| a55b39d9b8b8d325c | ONE-PLACE-TABLE L-J-001..030 cites | running, read-only |
-| a77e4b55fd09245ca | SWEEP 200-end cold read | running, read-only |
-| a5f05ec9d32342d88 | core-hardening REVIEW/LEDGER cites | running, read-only |
+| a860b81bfce5d497a | decision list re-read | running, read-only |
+| aeabdca645f09245b | core-hardening PLAN cold read | running, read-only |
+| a2878dbd29b269000 | core-hardening REVIEW cold read | running, read-only |
+| a069efe5bfff78c63 | T19 steps cold read | running, read-only |
+| a560e1624166be961 | patches vs ledger check | running, read-only |
+| ae47d8b3d64a86b98 | LEAD-PAGE vs decision list | running, read-only |
+| ac9c5158e3bc31575 | QUEUE vs board | running, read-only |
+| aa4eceede4525a8d0 | ONE-PLACE-TABLE 31-end cites | running, read-only |
