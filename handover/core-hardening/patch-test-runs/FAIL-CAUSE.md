@@ -25,3 +25,22 @@ Subprocess error text: none in the fresh clones (git ls-files works there; failu
 In the original base-pytest.log, test 2 failed with `subprocess.CalledProcessError: Command '['git', 'ls-files']' returned non-zero exit status 128`
 (git says not a repository / no usable .git in that folder) and test 1 failed in the same scratch run. That subprocess error is a scratch-only artefact;
 the assertion failures above are the real tree defects. Step 3 not run: no scratch path for the C7 baseline run is recorded in raw/ or checkpoint notes (do not guess).
+
+## UPDATE after lead answer (2026-11-16)
+Edits (working tree of cloud/core-hardening, not committed by the builder):
+- handover/BRIEF-PREAMBLE-studio-2026-11-06.md line 17: the vendor name (Po..., banned) replaced by "the dashboard quality of a well-known developer-portal vendor and of Datadog"; nothing else changed.
+- handover/demo/portal/portal-design-v2.md line 234: the vendor name (Po...) replaced by "a well-known developer-portal vendor"; nothing else changed.
+- handover/reviews/P1a-idempotence-probe.txt: converted from ISO-8859 to UTF-8, invalid bytes replaced by ?, one header line added ("Converted to UTF-8 on 2026-11-16; invalid bytes replaced by ?").
+- handover/core-hardening/patches-ready/v2/README.md: third hit named by the test (our own folder, contains the banned word); cleaned by the redact script, not by hand.
+- handover/promotion-inputs/: untouched.
+
+Vendor test (test_no_vendor_brand_string_is_tracked), fresh clone /tmp/h1/clone of cloud/core-hardening:
+- BEFORE: 1 failed (4 files named: the three above plus patches-ready/v2/README.md).
+- AFTER copying the 3 edited files: 1 failed (only patches-ready/v2/README.md, committed version still has the word).
+- AFTER also copying the redacted README: 1 passed.
+Licence test (test_licences_are_proprietary) on the same clone: still fails: BRANCH ARTEFACT. The core sdk tests are meant to run on the sdk tree, not on the studio branch (handover/promotion-inputs/ holds copies of demo LICENSE and pyproject files).
+
+Clean sdk-core run: `git archive b4cce5b` into /tmp/h1/sdk, git init + add + commit (git ls-files works). Both guard tests (vendor test and licence test):
+- Archive as is (it still contains handover/): 2 failed (same handover files; promotion-inputs licences). Only the vendor test touches the 3 files edited above.
+- Same tree with handover/ removed (pure sdk tree): 2 passed.
+- Whole test_no_reference_material.py + test_lockin_guard.py on the archive as is: 1 failed, 58 passed.

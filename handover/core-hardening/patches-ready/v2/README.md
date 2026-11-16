@@ -4,7 +4,7 @@
 - Full suite on the scratch copy (`b4cce5b` plus all three patches): 2 tests FAIL, both also fail on a pristine `b4cce5b`
   extract, so they are not caused by these patches: `tests/test_repo_rules.py::test_licences_are_proprietary` (needs a git
   repo; the scratch folder has none) and `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`
-  (reports the text 'Port.io' in two `handover/` notes and one non-UTF-8 file already in the repo; this needs the studio
+  (reports the text '[BANNED-WORD-REDACTED]' in two `handover/` notes and one non-UTF-8 file already in the repo; this needs the studio
   head's attention: it will fail the repo guard on the real repo too, unless those files are handled). Raw: `raw/`.
 - The G5 guard tests (ORDER 009 files) were not run separately and not read again; they are part of the full run above only.
 - Postgres tests were skipped (455 skipped in the full run; no Postgres here). The dead-man query was never run.
