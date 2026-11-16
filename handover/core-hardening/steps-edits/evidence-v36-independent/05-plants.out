@@ -1,0 +1,20 @@
+P01 | safety sentence: Recording switch OFF -> leave it | check rc=1; build rc=0; caught_by=C14 | FAIL C14b A lacks 'switch it OFF yourself at once'
+P02 | safety sentence: lead word resumes run | check rc=1; build rc=0; caught_by=C23 | FAIL C23 A lacks the fixed sentence 'No word of the lead resumes a run whose key was alive'
+P03 | safety: Select all rule weakened | check rc=1; build rc=0; caught_by=C14,C23 | FAIL C14s A lacks 'Never "Select all", never empty Trash'
+P04 | safety: card first order flipped | check rc=1; build rc=0; caught_by=C19,C23 | FAIL C19 pointer not in the verified list: sheetA|alive: the card second. | | |R9
+P05 | balance sentence dropped | check rc=1; build rc=0; caught_by=C23 | FAIL C23 A lacks the fixed sentence 'The balance is at least the expected total.'
+P06 | alarm count four->three | check rc=1; build rc=0; caught_by=C138,C14,C172,C25 | FAIL C14c alarm count wording (A three, B four)
+P07 | HubSpot rotate allowed | check rc=1; build rc=0; caught_by=C14,C44 | FAIL C14m A lacks 'never use rotate'
+P08 | typed-word: set phrase in facts changed | check rc=0; build rc=0; caught_by=NONE | 
+P09 | typed-word: set phrase near-miss in facts | check rc=1; build rc=0; caught_by=C105,C21 | FAIL C21 sheetA: quoted words 'run started' look like the set phrase 'run starts' but differ
+P10 | time: deadline 18:29 -> 18:39 in facts | check rc=1; build rc=1 AssertionError; caught_by=C00 | FAIL C00 facts or build stopped: AssertionError: 
+P11 | time: earliest key time 10:30 -> 10:45 | check rc=1; build rc=0; caught_by=C18,C235 | FAIL C18 fact ek is '10:45 UTC = 16:15 IST', expected '10:30 UTC = 16:00 IST'
+P12 | time: IST pair broken in source (text) | check rc=1; build rc=0; caught_by=C04,C239 | FAIL C04 OWNER-SHEET-v36-A.md bad pair 11:30 UTC = 16:30 IST
+P13 | weekday wrong in source text | check rc=1; build rc=0; caught_by=C04,C239,C96 | FAIL C04 OWNER-SHEET-v36-A.md wrong weekday Tue 23 Nov 2026
+P14 | cap: token ceiling 3 -> 4 | check rc=1; build rc=0; caught_by=C03,C04,C17,C236,C48 | FAIL C03 facts money differs
+P15 | cap: price out 1500 -> 1600 | check rc=1; build rc=1 AssertionError; caught_by=C00 | FAIL C00 facts or build stopped: AssertionError: 
+P16 | cap: balance 18900 -> 19900 | check rc=1; build rc=0; caught_by=C04,C48 | FAIL C04 OWNER-SHEET-v36-A.md unexpected amount USD 199.00
+P17 | typed word: backtick rule changed | check rc=1; build rc=0; caught_by=C14 | FAIL C14d A lacks 'Text between backticks is typed without the backticks'
+P18 | typed word: key-save prompt line changed | check rc=1; build rc=0; caught_by=C14 | FAIL C14e A lacks "only if the window's last line is `paste key, Enter:`"
+P19 | R8 safety sentence in open list (lead file) | check rc=1; build rc=0; caught_by=C16,C19 | FAIL C16 open list rows are not 1..n in order with only the removed row 59 missing (rows are quoted as Open N)
+P20 | banned-style: secret-shaped string added | check rc=1; build rc=0; caught_by=C55 | FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)

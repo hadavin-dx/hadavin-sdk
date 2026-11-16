@@ -1,2 +1,0 @@
-heavy-slot: no free slot after 25 minutes, command NOT run
-exit 75

@@ -1,4 +1,4 @@
- (wave 1 95 rows, 90 on branch cloud/flows-audit, 5 rows [70, 71, 72, 90, 91] on cloud/core-hardening) :: ('95', '90', '5', '70, 71, 72, 90, 91')
+/core-hardening) :: ('95', '90', '5', '70, 71, 72, 90, 91')
 PASS N-M3: section 0 says who has read what (review-c6v-design.md and review-c6v-naive.md read REPORT-c6v.md only)
 PASS N-M6: no 'sheet A' or 'sheet B' (the A and B owner-sheet files are RENDERING A and B; the older-key ways are KEY ROUTE A and B); outside quoted history: [] :: []
 PASS N-M7: the box says every answer other than the default needs a further round
@@ -13,7 +13,7 @@ PASS C7-1 every owner sheet file named in the start box and in section 1c is the
 PASS C7-2 the release note file named in the start box and every 'newest' release note statement is the newest version v18 (box [14, 18]; statements [18]) :: ([14, 18], [18])
 FAIL C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found ['33', '34']) :: (['34', '33', '33', '33'], ['33', '33'])
 PASS C7-4 'N items are OPEN' says Five in every place (found ['Five']) :: ['Five', 'Five']
-PASS C7-5 every place that names the check time names 20:23:50 (found ['20:23:50']) :: ['20:23:50', '20:23:50', '20:23:50', '20:23:50', '20:23:50']
+PASS C7-5 every place that names the check time names 20:37:33 (found ['20:37:33']) :: ['20:37:33', '20:37:33', '20:37:33', '20:37:33', '20:37:33']
 PASS C7-6 every question line of L-LEASE (3) carries the G12 hold :: 3
 PASS C7-7 no sentence says that anything held under G12 can be filmed while G12 is open; 'cannot be filmed' stays in the box (1 times) :: []
 PASS C8-1 the start box alone says that no reviewer has read this report and that the reach of G12 is this report's own reading
@@ -25,14 +25,15 @@ PASS C8-6 card line 3 names one place ('n8n's own database') and no number of da
 PASS C8-7 the start box says that builder-A, reviewer-B and reviewer-C are names the studio lead chooses and that no program reads the line
 PASS C8-8 section 3e has 11 gate rows; section 1c-K says ELEVEN and SEVEN, and the section 9 reconciliation says eleven :: 11
 PASS C8-9 the first lines of the report say what failed, what is uncertain and what was not run, and that no reviewer has read it :: WHAT FAILED, WHAT IS UNCERTAIN, WHAT I DID NOT RUN (first, i
-PASS C8-10 the report is split into the main file and two appendix files, each under 200,000 bytes, the assembled text holds all 104 rows ([]) :: []
+PASS C8-10 the assembled text holds all 104 rows and the two appendix sections; when it is read from the split files, each file is under 200,000 bytes ([]) :: (True, [])
 PASS C8-11 for every late file (3 compared) the report says 'equal to' only if the file is equal after the version number is changed, and 'DIFFERENT from' otherwise (recomputed now) :: [('LEAD-RELEASE-NOTE-v19.md', False, False, True), ('OWNER-SHEET-v35-A.md', False, False, True), ('OWNER-SHEET-v35-B.md', False, False, True)]
 PASS C8-12 section 9 holds one statement of each run of run_all.sh, names the build that wrote the report and says that the output files are written after the report :: 1
 PASS C8-13 the words 'tonight or tomorrow morning IST' stand only with their dates, and the report names no 'drift report for c6v' (stale label)
 PASS C8-14 no text calls a version 'the newest at the check time' (the newest is named 'before the freeze')
 PASS C8-15 the census holds the count of every copy of each card number and of 'lease wording approved' ({'90 words': 14, 'about 36 s': 11, 'budget 40 s': 6, '87 words': 3, '34.8 s': 3, '79 words': 3, '31.6 s': 3, '76 words': 5, '30.4 s': 4, '74 words': 2, '29.6 s': 1, 'lease wording approved': 1}) :: {}
+PASS C8-16 row 8 (the gate for the contact-deletion check) names G12 and the table rule seen in the re-smoke database in its new text cell
 PASS V13: every COUNT line of c6x-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6x-output.txt) and the run count in the report equals the run-log lines (differences: []) :: []
-SUMMARY: 287 checks, 3 FAILED: class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell equals the census of the build (67 items); D-m5: the report names the number of full runs of run_all.sh and the cap; C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found ['33', '34'])
+SUMMARY: 288 checks, 2 FAILED: class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell equals the census of the build (67 items); C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found ['33', '34'])
 /home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6x/verify_c6x_part4.py:49: DeprecationWarning: 'maxsplit' is passed as positional argument
   check("D-m6: option (b) of L-CARDLEN states its 0.4 s margin and that it may run over until a stopwatch run", bool(re.search(r"(?<![\d.])0\.4 s", raw)) and "stopwatch" in re.split(r"(?<![\d.])0\.4 s", raw, 1)[1][:400], "")
 

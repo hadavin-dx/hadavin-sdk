@@ -1,0 +1,6 @@
+banned list size 10
+files scanned 25
+banned-word hits: files 0 total 0
+secret-shaped hits (pattern,file,count):
+   long-b64-40+ check-v36.py 1
+literal AKIAIOSFODNN7EXAMPLE count 0
