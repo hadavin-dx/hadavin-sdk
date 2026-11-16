@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:50:59Z
+UPDATED_UTC: 2026-11-16T15:53:49Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 1.44 load of 4 cores, mem 1/15 GB, RAM 1371/16087 MB, disk 8.9G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 16G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 4.26 load of 4 cores, mem 1/15 GB, RAM 1337/16087 MB, disk 8.8G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 16G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: see next5; patch-copies r6 fix verified by me: git apply --check rc 0 on C-01, C-01-price-only, A-01 at b4cce5b; checks pass; percent 70 unchanged
-PUSHED_UTC: 2026-11-16T15:50:59Z
+NEXT: see next5; verified by me: FINDINGS/LEDGER r7 counts 45 rows 5/5/35, RW/CT checks PASS (330 claims, 195 RW rows); percent 70 unchanged until independent reviews close an item
+PUSHED_UTC: 2026-11-16T15:53:49Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,21 +30,21 @@ PUSHED_UTC: 2026-11-16T15:50:59Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a0e9ee50 | FINDINGS/LEDGER round 7 fixer | sonnet | clocks, who runs greps, F-002 inputs; ratings unchanged | 15:44Z | 16:10Z | running | none yet |
-| ab348158 | plan-files round 22 stranger read | sonnet | fresh operator read RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 15:47Z | 16:05Z | running | none yet |
 | acf8ab59 | F8 round 11 fixer | sonnet | run_all.sh intermittent exit 1 (3 of 6 runs), M1-M5, F1-F12 (uncapped) | 15:48Z | 16:30Z | running | none yet |
-| a207900c | RW/CT round 12 fixer | sonnet | B1-B4, M1-M5 plus 2 SOFT cites | 15:49Z | 16:15Z | running | none yet |
-| a18a4e2d | Q31 round 11 fixer | sonnet | fix 11 Majors + 6 readability Majors, add 4 new items (QUESTIONS.md Q31 only) | 15:49Z | 16:15Z | running | none yet |
-| afdcb78f | REVIEW.md round 26 stranger read | sonnet | fresh read of whole REVIEW.md incl. Decisions 26-29 (uncapped) | 15:50Z | 16:10Z | running | none yet |
-| abb2c71f | REVIEW.md round 26 design/security review | sonnet | rating rule, least-privilege of proposed fixes, Decisions 26-29 (uncapped) | 15:51Z | 16:10Z | running | none yet |
-| a55f3104 | patch-copies round 7 code review | sonnet | accuracy of README verdict script, counts, SQL rights (uncapped) | 15:52Z | 16:12Z | running | none yet |
+| a18a4e2d | Q31 round 11 fixer | sonnet | 11+6 Majors, 12 new items (QUESTIONS.md Q31 only) | 15:49Z | 16:15Z | running | none yet |
+| abb2c71f | REVIEW.md round 26 design/security review | sonnet | rating rule, least-privilege of fixes, Decisions 26-29 (uncapped) | 15:51Z | 16:10Z | running | none yet |
+| a55f3104 | patch-copies round 7 code review | sonnet | verdict script, counts, SQL rights (uncapped) | 15:52Z | 16:12Z | running | none yet |
+| a99ca468 | RW/CT round 12 stranger read | sonnet | RW 305-end and CT 120-end not yet read | 15:53Z | 16:12Z | running | none yet |
+| ae473f2d | FINDINGS/LEDGER round 7 reader | sonnet | fresh read of 45 rows | 15:55Z | 16:12Z | running | none yet |
+| a15c1de2 | plan-files round 22 fixer | sonnet | 2 Blockers x2 + 7 Majors + 4 cites + awk pattern (RUNBOOK/FIX-PLAN/TAKE-CHECKLIST) | 15:57Z | 16:25Z | running | none yet |
+| ac7d38d2 | REVIEW.md round 26 citation checker | sonnet | cites of Decisions 26-29, counts, 9394 quote | 15:57Z | 16:10Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 patch-copies round 7 stranger read of README + DEAD-MAN-CHECK (needs a free slot; second angle for ORDER 018)
-2 Plan-files round 22 fixer: citation mismatches (TAKE-CHECKLIST:118, RUNBOOK:15, FIX-PLAN Step 12) + r22 stranger findings (waits on ab348158)
-3 REVIEW.md round 26 citation checker (free slot)
-4 FINDINGS/LEDGER round 7 fresh reader (after a0e9ee50)
-5 F8 fresh evidence runner + uncapped reviews (after acf8ab59)
+1 REVIEW.md round 27 fixer: reader r26 (B1-B4, M1-M13) + design r26 + citation r4 in one batch (waits on abb2c71f and ac7d38d2; one editor per file)
+2 patch-copies round 7 stranger read (second angle; needs a free slot)
+3 plan-files round 23 stranger read (after a15c1de2)
+4 F8 fresh evidence runner + uncapped reviews (after acf8ab59)
+5 RW/CT round 13 fixer for r12 reader findings (after a99ca468)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
