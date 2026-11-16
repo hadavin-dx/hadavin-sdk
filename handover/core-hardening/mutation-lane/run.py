@@ -444,6 +444,23 @@ def tree_files(root: pathlib.Path) -> dict[str, str]:
     return out
 
 
+def refuse_hard_links(root: pathlib.Path) -> None:
+    """Every regular file in the tree (not just the target) must have exactly one name: a tree built with
+    `cp -al` or a bind mount of another tree shares files that a test or a mutant could change in place
+    (review r4 nit 4). `.venv` directly under the root and the cache folders are skipped as everywhere else."""
+    for dp, dns, fns in os.walk(root):
+        top = pathlib.Path(dp) == root
+        dns[:] = [d for d in dns if d not in SKIP_ANY and not (top and d in SKIP_TOP)]
+        for f in fns:
+            p = pathlib.Path(dp) / f
+            st = os.lstat(p)
+            if stat.S_ISREG(st.st_mode) and st.st_nlink != 1:
+                raise Refused(
+                    f"{p.relative_to(root)} is not a regular file with exactly one name (links: {st.st_nlink}): "
+                    f"a hard-linked scratch tree shares files with another tree: refused"
+                )
+
+
 def diff_trees(ref: pathlib.Path, root: pathlib.Path, extra: set[str]) -> list[str]:
     a, b = tree_files(ref), tree_files(root)
     return [
@@ -486,11 +503,16 @@ def script_repo_root() -> pathlib.Path | None:
     return next((p for p in (here, *here.parents) if (p / ".git").exists()), None)
 
 
-def refuse_real_repo(root: pathlib.Path, repo: str, extra_real: list[str]) -> None:
+def refuse_real_repo(root: pathlib.Path, repo: str | None, extra_real: list[str]) -> None:
+    """`repo` None (only for --restore with no --repo given): the repository of --repo is not looked up, so a
+    restore needs no git repository; the other checks (this script's repository, --real-repo, a .git entry in or
+    above the root, git's own answer for the root) still apply."""
     if not root.is_dir():
         raise Refused(f"--root {root} is not a folder")
     root = root.resolve()
-    real = {repo_toplevel(repo), *(pathlib.Path(x).resolve() for x in extra_real)}
+    real = {*(pathlib.Path(x).resolve() for x in extra_real)}
+    if repo is not None:
+        real.add(repo_toplevel(repo))
     mine = script_repo_root()
     if mine is not None:
         real.add(mine)
@@ -1100,7 +1122,12 @@ def summary(out: str):
     return last, failed
 
 
-def one(a, tests, m, results, ref):
+def tree_digest(files: dict[str, str]) -> str:
+    return sha256(json.dumps(sorted(files.items())).encode())[:16]
+
+
+def one(a, tests, m, results, ref) -> list[str]:
+    """Runs one mutant. Returns the files that differ from the reference after the restore (must be empty)."""
     root = pathlib.Path(a.root)
     p = safe_rel(root, m["file"], f"mutant {m['id']} file")
     refp = safe_rel(ref, m["file"], f"mutant {m['id']} reference file")
@@ -1109,8 +1136,8 @@ def one(a, tests, m, results, ref):
     sp, sr = os.lstat(p), os.lstat(refp)
     if (sp.st_dev, sp.st_ino) == (sr.st_dev, sr.st_ino):
         raise Refused(f"mutant {m['id']}: {m['file']} and its reference are the same file")
-    orig = p.read_bytes()
-    ref_bytes = refp.read_bytes()
+    orig = read_regular(p)
+    ref_bytes = read_regular(refp)
     if orig != ref_bytes:  # hash baseline from git archive, not from the file on disk
         raise Refused(
             f"{m['file']} differs from the git archive reference (sha256 {sha256(orig)[:12]} vs {sha256(ref_bytes)[:12]}): refusing"
@@ -1120,6 +1147,7 @@ def one(a, tests, m, results, ref):
     backup = STATE / f"{key}.backup"
     marker = STATE / f"{key}.planted.json"
     n = decode_text(orig, m["file"]).count(m["old"])
+    sweep = "not run"
     if n != 1:
         verdict, out, cmd, rc = f"COULD-NOT-PLANT (old text occurs {n} times)", "", [], None
         restore = "no change made"
@@ -1133,6 +1161,7 @@ def one(a, tests, m, results, ref):
             "mode": stat.S_IMODE(sp.st_mode),
             # first marker (before the tests start): what to look for if SIGKILL comes before the second one
             "cmd_head": [str(root / ".venv/bin/python"), "-m", "pytest"],
+            "cmd_argv": pytest_cmd(root, tests),
             "run_start_ticks": (proc_stat(os.getpid()) or {}).get("start"),
         }
 
@@ -1144,24 +1173,23 @@ def one(a, tests, m, results, ref):
         # awaited (see SigState): a second signal cannot cut the restore short.
         SIG.critical = True
         try:
-            wrote = False
             try:
                 write_state(backup, orig)
                 write_state(marker, json.dumps(info).encode())
                 planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
-                wrote = True
                 try:
-                    write_target(p, planted)
-                except Refused:
-                    wrote = False  # refused on the open file before any byte was changed
-                    raise
-                cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
+                    write_target(p, planted, root=root)
+                except OSError as e:  # e.g. a read-only file: a refusal, the restore below checks the bytes
+                    raise Refused(f"cannot plant into {m['file']}: {e.strerror or e}") from e
+                cmd, rc, out, sweep = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
             finally:
                 try:
                     p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
-                    if wrote:
-                        write_target(p2, orig)
-                    back = p2.read_bytes()
+                    # write only if the bytes differ (review r4 nit 1): a file that was never touched (refused
+                    # open, read-only) is not written again, so a refusal is not reported as a failed restore
+                    if read_regular(p2) != orig:
+                        write_target(p2, orig, root=root)
+                    back = read_regular(p2)
                     same_hash = back == orig and back == ref_bytes
                 except (Refused, OSError) as e:
                     print("RESTORE ERROR:", e, file=sys.stderr)
@@ -1190,6 +1218,19 @@ def one(a, tests, m, results, ref):
             if rc == 1
             else f"ERROR rc={rc}"
         )
+    # integrity of the whole scratch tree after this mutant (review r4 M3): every file but .venv and the caches
+    # against the fresh git archive; a test that wrote a conftest.py, an ini file or data would contaminate the
+    # next mutant. Files declared with --extra are allowed to exist (their content is not compared).
+    now, extra = tree_files(root), set(a.extra)
+    diffs = [
+        f
+        for f in sorted(set(a.ref_files) | set(now))
+        if a.ref_files.get(f) != now.get(f) and not (f in extra and f not in a.ref_files)
+    ]
+    integrity = (
+        f"{len(now)} files compared with the git archive (all but .venv directly under the root and the cache "
+        f"folders), digest {tree_digest(now)}; differing files ({len(diffs)}; 0 = clean): {diffs}"
+    )
     last, failed = summary(out)
     text = (
         f"MUTANT {a.prefix}-{m['id']}  VERDICT: {verdict}\n"
@@ -1199,12 +1240,14 @@ def one(a, tests, m, results, ref):
         f"import check: {a.imports.get(m['file'], 'not run')}\n"
         f"rc: {rc}\n"
         f"restore check: {restore}\n"
+        f"tree integrity after this mutant: {integrity}\n"
+        f"test group after the leader ended: {sweep}\n"
         f"pytest summary line: {last}\n"
         f"first failing test: {failed[0] if failed else '-'}\n"
         f"all failing tests ({len(failed)}): {'; '.join(failed) if failed else '-'}\n"
         f"--- OLD TEXT (full) ---\n{m['old']}\n--- NEW TEXT (full) ---\n{m['new']}\n--- PYTEST OUTPUT (full) ---\n{out}\n"
     )
-    (pathlib.Path(a.raw) / f"{a.prefix}-{m['id']}.txt").write_text(text, encoding="utf-8")
+    write_out(pathlib.Path(a.raw) / f"{a.prefix}-{m['id']}.txt", text)
     results.append(
         {
             "id": m["id"],
@@ -1214,9 +1257,11 @@ def one(a, tests, m, results, ref):
             "first": failed[0] if failed else "",
             "n_failed": len(failed),
             "summary": last,
+            "tree_differences": diffs,
         }
     )
     print(m["id"], verdict, failed[0] if failed else "", flush=True)
+    return diffs
 
 
 def load_mutants(a) -> list[dict]:
