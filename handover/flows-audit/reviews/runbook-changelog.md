@@ -147,3 +147,96 @@ Line numbers are those of RUNBOOK.md before this round's insertions. Each entry 
 - line 470: (round 7, M4)
 - line 471: (round 7, M7)
 - line 472: (round 7, M7)
+
+## fix-runbook54c: round and finding labels removed from RUNBOOK.md (line numbers are of RUNBOOK.md before this pass)
+- line 11: removed: (round 48, reader a M1: a
+- line 15: removed: 6; round 8, nit).
+- line 17: removed: (round 38, reader M16)
+- line 19: removed: check (round 4):
+- line 26: removed: (round 5; I24), | Round 5: | Round 5: | Round 5: | Round 5: | Round 5: | Round 5: | Round 5:
+- line 29: removed: **Round 5: two
+- line 48: removed: IST); round 22, finding 7), | (round 41, reader M6; the
+- line 52: removed: TAKE-CHECKLIST; round 38, reader M9)
+- line 56: removed: round 48:
+- line 64: removed: gives, round 38, reader M10): | receipt, round 33 B1),
+- line 68: removed: (round 48, in | (round 18, M8: check | (round 7, N3: the | (round 21, M9; AUDIT | round 41, reader M3: | **Round 7, M4: the
+- line 73: removed: (round 48, reader a M8; AUDIT
+- line 77: removed: 8, B1; round | round 7:
+- line 81: removed: (round 19, operator M2/M3: type
+- line 83: removed: (round 4; each
+- line 86: removed: (round 41, reader M4; not
+- line 87: removed: (round 8, B1; round 11: it | (round 41, reader M2: Block | (round 7, B1; the
+- line 91: removed: (round 9, M1: this
+- line 92: removed: round 16, M3:
+- line 94: removed: (round 9, B1; shell | `bash`; round 19) | (round 38, reader M8: the
+- line 98: removed: round 23, M8, | either (round 11, TAKE-CHECKLIST/FIX-PLAN review M2): | (round 38: Block | Round 38, reader M5: | file; round 21, M6) | (round 41: this | round 41:
+- line 190: removed: (round 20, M8; the
+- line 192: removed: (Round 38, reader M3: `input_ready
+- line 194: removed: Round 41:
+- line 196: removed: (round 23, M11: 13 | round 41: | `$JUDGELOG`, round 41), | (round 41: with | (round 16, M5: the | round 23, M11 and M12:
+- line 200: removed: (round 20, M7; TAKE-CHECKLIST | there; round 22, finding 3), | (round 14: `KEYF`
+- line 202: removed: (round 12, M4: it | skeleton (round 11, TAKE-CHECKLIST/FIX-PLAN review M1):**
+- line 204: removed: (round 22, finding 4; AUDIT | itself; round 38, reader M6), | file; round 48, reader b B1)
+- line 206: removed: (round 22, finding 5; AUDIT | (round 41, M12: the | Round 26, finding 7:
+- line 208: removed: (round 8, m3; `$PIN_FILE` | each, round 41)
+- line 212: removed: (round 48, reader a M4; AUDIT | (round 9, M5; no
+- line 216: removed: (round 22, finding 1; AUDIT | (round 23, M5; the
+- line 220: removed: (round 19, M1: the | (round 32, finding 1: each | round 7, B1;
+- line 221: removed: (round 10, M1: `git | round 18, M3:
+- line 222: removed: (round 54; mine, | (round 9, M3: the | (round 20, M5: after | matter; round 8, m2) | (round 21, M2: the
+- line 223: removed: round 32, finding 1: | (round 11, TAKE-CHECKLIST/FIX-PLAN review M7: with | (round 8, m4; the | round 16, M6: | (round 20, M5: the | (round 21, M2: the | line, round 21, M6)
+- line 224: removed: **First (M10): | (round 41: "the | `$PATCH_BRANCH` (B1): | (round 41, reader: the
+- line 225: removed: otherwise; round 19). | file (m3); | `sed`; round 19, M6); round 41, reader: | (round 41: the | `sha-written` (finding 8);
+- line 226: removed: (round 20, M5: one | round 32, finding 9: | only; round 8, m6) | round 9, N3: | (round 21, M12: mixing
+- line 227: removed: own (M5). | (round 41, reader: 04:54 | files; round 18, M1). | Round 41, reader: | IST); round 19, consistency M6). | (round 41, FIX-PLAN reader finding 6; it | (round 41, reader; the | IST) (M1),
+- line 228: removed: Postgres, round 21, M8) | **Round 21, M8 (F-011 | (round 22, finding 1: the | file, round 23). | (round 54, bash | (round 30, nit: the
+- line 229: removed: yet (M7), | (round 41: in | round 41: | (round 41: LEAD | **Passwords (M7):** | database; round 21, M8): | rule, round 41); | Postgres (M8): | Round 41, reader: | `$TESTLOG` (M11),
+- line 230: removed: BLOCKED-by-I8 | 7 (finding 2):** | round 18, M6, | fi` (m5). | 9 (M11):** | (finding 1) | (M3)
+- line 231: removed: (round 26, finding 6: a | (Round 8, m1: the
+- line 232: removed: (round 30, M7: typing | (round 21, M18; ported | (round 41, reader: the | (round 21, M18; round 41: the
+- line 233: removed: (round 22, finding 10; its
+- line 234: removed: (round 19, M4: a | round 32, finding 9: | (round 9, M3: every
+- line 235: removed: SAVE (finding 5): | line (Form 2): | O'Brien; round 7) | repository (m6), | 13 (M11):** | round 41, reader: | (finding 3) (round 41, M10: control
+- line 236: removed: (round 7, M10; F-004 | round 26, finding 6; | (round 6: the | round 8, m1: | Round 12, C3: | (round 16, M6: the | round 20, M5: | (round 32, finding 9: the | round 11,
+- line 237: removed: (round 30, M7: the | 18, round 7, N7);
+- line 238: removed: logs (M4).** | file (B2).** | Tuesday (M3): | (round 41, FIX-PLAN reader finding 2; lead | I1; round 8, m8. | `KEYS`; round 32, finding 10).<br>**16.9 | (round 41, reader B1: ONE | bytes (M5): | `KEYS`; round 32, finding 10) | time; round 10, M6):
+- line 239: removed: (round 6, M4; commands | round 8, M1: | (round 21, M4: the | round 32, finding 10: | rule, Form 2; round 8, M4; | (round 10, M9: the | round 7, M1; | (round 7, B1: steps | (round 8, M4: a | round 32, finding 2: | allowed; round 21, M3) | (round 32, finding 2: the | (round 34: the | round 32, finding 2: | (round 23, M11: the | round 26, finding 7; | Round 34, reader finding 2 | (round 10, M9: Block | (round 33: proof | round 34: | (round 34: it | FINDINGS.md, round 16Z rating change; | (round 8, nit; round 41, M11: after | (round 32, finding 10: a | (round 8, M3: the
+- line 243: removed: time (round 8, nit):
+- line 247: removed: ONCE (finding 4):** | Then (M5): | else (M4).
+- line 250: removed: (M10)
+- line 251: removed: I18; round 22, finding 4); | (round 8, m8: the
+- line 252: removed: `$TESTLOG`; round 22, finding 5).
+- line 253: removed: Round 6 (ORDER | 3): | Round 8, m9: | Round 10, M7: | (round 34, reader finding 9; AUDIT
+- line 254: removed: round 22, finding 5; round 23, M11:
+- line 255: removed: Round 6 (M2): | 23, round 5):** | round 16, M3: | (round 19, M4: `need_new` | 0`; round 22, finding 5);
+- line 256: removed: (round 23, M11: its | (round 8, M6; the
+- line 257: removed: (round 21, B2: `need_set | round 33, reader M3: | (round 16, M4: (c), | round 6: | (round 5; OWNER-STEPS | round 8, M6: | round 22, finding 5, Form 2:
+- line 258: removed: line (round 22, finding 5, Form 2): | 8, N7),
+- line 259: removed: M3, round 19, M4: | `failed`; round 22, finding 5); | (round 5: the | schedule; round 7, N4). | `$POSTLOG.mail2`; round 22, finding 5); | (round 10, M9: `RESULT_JSON` | (round 21, M5: the | 1`, round 21, M5); | (round 41, M2: a
+- line 262: removed: (round 5: this | (round 41, M9; lead | here; round 7, N4). | line (round 22, finding 5, Form 2):
+- line 263: removed: control; round 48, reader b M3); | Round 48, reader b M7:
+- line 293: removed: (round 6; ORDER
+- line 308: removed: round 48: | round 41, M8:
+- line 314: removed: (round 23, M12; no
+- line 315: removed: (round 22, finding 1: step
+- line 317: removed: (round 26, finding 2; mine, | round 41:
+- line 318: removed: 5; round | Round 6: | (round 7, M6; 146
+- line 320: removed: (a), round 7, M4) | 1 (M4).
+- line 323: removed: **Round 7, M1: this
+- line 324: removed: **Round 7, M6: if
+- line 326: removed: (round 6: the | (round 6, M2 and M3; python3 | window; round 22, finding 7), | round 7, N4:
+- line 346: removed: (round 23 lock
+- line 367: removed: line, round 21, M6),
+- line 372: removed: (round 54; THIS
+- line 381: removed: message (N2);
+- line 383: removed: (round 48, reader b M8; AUDIT | decision (N1). | (round 22, finding 8; the | (round 26, finding 10; planned | (round 33; the
+- line 384: removed: round 7, N6:
+- line 386: removed: round 23,
+- line 396: removed: rule (b3):
+- line 406: removed: Round 6,
+- line 410: removed: Round 7:
+- line 416: removed: **Round 33, M7, extended in round 34 (reader findings 1 to 7): ONE
+- line 418: removed: once (readers r62 M1, M2, M12, M13).**
+- line 420: removed: Round 16, M1:
+- line 483: removed: (readers r62 M4, M5, M9, M10, M14; each
+- input-table cells rewritten in this pass (lines 431-481 before): see reviews/fix-runbook54c.md; the old cells held these labels: I13 "Round 10, M5", I47 "round 8, m7", I51 "round 21/28", I53 "round 21, M7", I8 "round 22, finding 2".
