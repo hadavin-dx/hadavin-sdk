@@ -380,18 +380,14 @@ class Subst:
     def _expr_part(self, part: str) -> str:
         """Text between '{{' and '}}': fill tokens outside JS strings, refuse inside them."""
         out: list[str] = []
-        i, quote, comment, hit, slash = 0, None, False, False, False
+        i, quote, comment, hit, slash, glued = 0, None, False, False, False, False
         while i < len(part):
             m = TOKEN.match(part, i)
             if m:
                 if quote is not None:
                     raise Refused(QUOTED)
                 before = part[:i].rstrip()[-1:]
-                if before and (before.isalnum() or before in "_$."):
-                    raise Refused(
-                        "a $env token follows a name character or a dot (a different name such "
-                        "as a$env or x.$env, not the n8n one; not filled)"
-                    )
+                glued = glued or bool(before and (before.isalnum() or before in "_$."))
                 hit = True
                 out.append(self._repl(m, True))
                 i = m.end()
@@ -420,6 +416,11 @@ class Subst:
             raise Refused(
                 "a $env token sits in an expression with a '/' outside a string "
                 "(a division or a regex literal; not filled)"
+            )
+        if glued:
+            raise Refused(
+                "a $env token follows a name character or a dot (a different name such as "
+                "a$env or x.$env, not the n8n one; not filled)"
             )
         return "".join(out)
 
