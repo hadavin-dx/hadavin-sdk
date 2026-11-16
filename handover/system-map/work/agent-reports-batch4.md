@@ -2191,3 +2191,17 @@ CLASS NOTE 1843: digests 1830-1842 (13 readers) again found the same classes on 
 1869 | ARCHITECTURE-AUDIT-CHECKLIST.md (a36ea7728d84e7d25): 2 Blockers (no template or columns to fill; 9 ledger columns not named) + 4 Majors (R460, R454, take, lenses undefined). TO FIX (mine).
 1870 | work/row-dm-plain.md (a85cb8a89d2cf6357): 3 Blockers (C1, E2, F, 'line 555 item 9' undefined; PASS rule unclear; relies on glossary) + 5 Majors. Reader rewrite of PASS rule usable. TO FIX.
 1871 | work/banned-claims-clean.md (a487b67c817da9c8f): 1 Blocker ('the program' and its end step undefined) + 5 Majors (count check, spend check, two doors; roles; 'lead' vs 'contact record'). TO FIX. Note: owner-view and steps v5 readers (1857, 1861) both say the end step may still delete; same open fact as M17.
+1872 | work/t19 ... drift research D-01, D-02 (a856d48264dc3ccb0): both recommend the plan text; steps v3 lines 75, 78 stale (v5 replaces v3). Written into work/decision-list-for-lead.md.
+1873 | research D-03, D-04 (a0a79e4211d9872d3): D-03 row out of date by decision 2, program end step still unverified; D-04 keep the one claim only; steps v5 line 164 still overclaims vs its own line 171. In decision list. FIX NEEDED on v5 (held; lead).
+1874 | research D-05, D-06 (a9cf97ec96cfb05d1): D-05 keep plan text, tell owner crash-test result before post; D-06 is Major, global setting. In decision list.
+1875 | research D-07, D-08 (a608475e73239803f): both Major; plan text current; DECISION-one-store line 14 stale. In decision list.
+1876 | research D-09, D-10 (add2fab471c357e69): D-09 Major (missing list entry); D-10 false Blocker. In decision list.
+1877 | drift/REPORT.md 1-120 (aee981aeb4d7e0b7e): 2 Blockers (stale banner cites wrong lines; Blocker counts 6, 7, 8 on lines 65, 68, 103) + 4 Majors. File is mine; TO FIX: one count line, D-10 pending.
+1878 | work/review-r460-tools.md (aecc2df90e350d290): 1 Blocker (cannot be understood alone; findings are semicolon lists) + 4 Majors. TO FIX: one entry per finding, 3-line intro.
+1879 | LEAD-PAGE.md (a529387b5dfc8816b), HELD: 2 Blockers (OS means stale v3; who 'you' is) + 5 Majors. To LEAD-NOTICE.
+1880 | ONE-PLACE-TABLE.md (a44bd4335c1c7e347), HELD: 2 Blockers (COUNTER owner line unreadable; yes cells contradict) + 4 Majors. To LEAD-NOTICE.
+1881 | work/merged-findings.md (aba3b10f6a87800d0): 4 Blockers (18 Blocker rows vs 'zero confirmed'; undefined GREP, PRUNE, GO-1, k1b; bare quote L3-FD-040; DECISION line cites unquoted) + 3 Majors. TO FIX.
+1882 | SWEEP.md (a06750509475afee0), HELD: 3 Blockers (counts do not reconcile; rig vs take; L1-FD-021 counts) + 3 Majors. To LEAD-NOTICE.
+1883 | README.md (a3090971229709eaa), HELD: 3 Blockers (no plain statement of project; row 1 cannot start; chat-only instruction) + 5 Majors. To LEAD-NOTICE.
+1884 | QUESTIONS.md (ac25e218c8f152af5), HELD: 2 Blockers (open D-04/D-05 undefined; item 2 contradicts itself) + 6 Majors. To LEAD-NOTICE.
+1885 | FINAL-CROSSCHECK.md (a015332f8613c2c76), HELD: 3 Blockers (terms undefined but used; summary says your yes is needed though unreliable; line numbers void vs cited) + 5 Majors. To LEAD-NOTICE.
