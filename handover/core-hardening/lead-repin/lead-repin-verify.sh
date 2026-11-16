@@ -90,6 +90,7 @@ cleanup() {
 # grep, sed, awk and git programs of a stopped pipeline do not keep running. It only ever touches PID and its descendants.
 kill_tree() {
   kt_all=$1; kt_new=$1; kt_i=0
+  [ "${2:-}" = kids ] && kt_all=   # kids: only the programs below PID, not PID itself
   while [ -n "$kt_new" ] && [ "$kt_i" -lt 8 ]; do
     kt_new=$(ps -A -o pid= -o ppid= 2>/dev/null | awk -v roots="$kt_new" 'BEGIN { n = split(roots, r, " "); for (i = 1; i <= n; i++) R[r[i]] = 1 } ($2 in R) && !($1 in R) { print $1 }')
     kt_all="$kt_all $kt_new"; kt_i=$((kt_i + 1))
@@ -104,7 +105,7 @@ start_watchdog() { # ends the whole run (as a TERM signal) after LEAD_REPIN_MAX_
   ( sleep "$MAXSEC"; : > "$WORK/timeout.flag"; kill -TERM "$MAINPID" 2>/dev/null ) &
   WDPID=$!
 }
-on_signal() { [ -f "$WORK/timeout.flag" ] && echo "STOP: the run took longer than ${MAXSEC:-1200} seconds (LEAD_REPIN_MAX_SECONDS) and was ended; the work folder was removed" >&2; CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; cleanup; exit "$1"; }
+on_signal() { [ -f "$WORK/timeout.flag" ] && echo "STOP: the run took longer than ${MAXSEC:-1200} seconds (LEAD_REPIN_MAX_SECONDS) and was ended; the work folder was removed" >&2; CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; kill_tree "$MAINPID" kids; cleanup; exit "$1"; }
 trap cleanup EXIT
 trap 'on_signal 130' INT
 trap 'on_signal 143' TERM

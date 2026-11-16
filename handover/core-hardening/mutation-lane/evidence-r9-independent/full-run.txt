@@ -1,0 +1,5 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/full/toy/repo is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-5
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted

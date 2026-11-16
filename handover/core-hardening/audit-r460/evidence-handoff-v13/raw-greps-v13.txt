@@ -1,0 +1,91 @@
+# raw-greps-v13.txt: greps run 2026-11-16T15:25:31Z on the live tree (read only). Method printed with each.
+## G1 test lines that call build( and mention llm (method for the 'which tests pass a NetworkLLM into app.build' count):
+19
+grep: tests/__pycache__/test_k3_review_fixes.cpython-313-pytest-9.1.1.pyc: binary file matches
+18
+## G1b lines in tests containing 'llm=' near build( (same line):
+tests/test_k5_fixes1.py:80:        app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_review.py:464:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_review.py:472:    app_mod.build(signed, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_review.py:520:    app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([{"tool": "app"}] * 6))
+tests/test_k5_round9b.py:370:        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_round5.py:117:    app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
+tests/test_k5_round5.py:135:            app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
+tests/test_k5_round5.py:207:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
+tests/test_k5_round5.py:215:    app_mod.build(ok, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
+tests/test_k5_round5.py:745:    app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS_PLUS, llm=ScriptLLM([]))
+tests/test_k5_round10.py:80:        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_tools.py:848:    app = app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=llm)
+tests/test_k5_tools.py:857:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_tools.py:863:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_tools.py:888:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]))
+tests/test_k5_tools.py:1031:        app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]), sources={"k8s": bad})
+tests/test_k5_tools.py:1033:    app_mod.build(cfg, ["test-agent"], secrets=SECRETS, llm=ScriptLLM([]), sources={"k8s": good})
+tests/test_k3_pilot.py:643:    app = app_mod.build(cfg, ["test-agent"], channel=channel, llm=llm, secrets=SECRETS)
+## G2 agent ids starting with '-' in tests/src (registry ids):
+(end)
+## G3 'unmetered' in src tests demos:
+2
+## G4 make("llm" / make('llm' sites in tests (M2 of readiness):
+tests/warden_port/test_bedrock_provider_r16.py:74:        make("llm", BedrockSettings(kind="bedrock", region="contract-r
+tests/warden_port/test_bedrock_provider_r16.py:79:    client = make("llm", settings, routes=ROUTES)._client
+tests/warden_port/test_bedrock_provider_r16.py:90:    client = make("llm", settings, routes=ROUTES)._client
+tests/warden_port/test_providers.py:65:    llm = make("llm", settings, routes=ROUTES)
+tests/warden_port/test_providers.py:123:    llm = make("llm", settings, FakeSecretProvider({"k": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:148:    llm = make("llm", settings, FakeSecretProvider({"g": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:172:    llm = make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:198:        make("llm", settings, routes=routes)
+tests/test_p5p6_followups.py:300:        make("llm", settings, provider, routes=_route(moving))
+tests/test_p5p6_followups.py:302:        make("llm", settings, provider, routes=_route(pinned_id)).routes["default"].mod
+tests/test_p5p6_followups.py:417:        make("llm", settings, routes=_route(model_id))
+tests/contracts/kinds/builtin.py:53:    llm = make("llm", FakeLLMSettings(kind="fake", recorded_dir=tmp_path), routes=RO
+tests/test_p5_llm.py:230:    llm = make("llm", settings, routes=ROUTES)
+tests/test_p5_llm.py:301:        make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+## G5 make("llm"/"detector" sites in src:
+src/hadavin_sdk/cli.py:150:            make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+src/hadavin_sdk/cli.py:221:    llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+src/hadavin_sdk/cli.py:222:    detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector]
+src/hadavin_sdk/app.py:162:    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+src/hadavin_sdk/app.py:165:        members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+## G6 qualify callers:
+src/hadavin_sdk/evals.py:109:            ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
+src/hadavin_sdk/guard/judge.py:100:def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]:
+## G7 `dev` stage literal in src (H-0 hot files):
+grep: src/hadavin_sdk/__pycache__/config.cpython-313.pyc: binary file matches
+src/hadavin_sdk/config.py:317:    environment: Literal["dev", "pilot", "prod"]
+src/hadavin_sdk/config.py:366:        if self.environment != "dev":
+src/hadavin_sdk/guard/redact.py:1162:        "dev",
+## G8 call_too_large occurrences in v12 doc (to rename where it means retry budget):
+127:**Types.** `SpendRefused(Exception)` is defined in `erro
+202:1. `admit(ctx) -> Ticket | None`, in this order, all bef
+246:| `call_too_large`, `call_retry_budget`, `prompt_too_lar
+379:| E0-S2-4 | `pytest tests/test_spend_reserve.py -q` with
+## G9 _ABANDONED / status_of / retryable in src:
+grep: src/hadavin_sdk/__pycache__/tools.cpython-313.pyc: binary file matches
+grep: src/hadavin_sdk/__pycache__/config.cpython-313.pyc: binary file matches
+grep: src/hadavin_sdk/__pycache__/defaults.cpython-313.pyc: binary file matches
+src/hadavin_sdk/config.py:223:    max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, g
+src/hadavin_sdk/defaults.py:77:MAX_ABANDONED_TOOL_THREADS = (
+src/hadavin_sdk/llm/anthropic.py:67:def retryable(exc: BaseException) -> bool | None:
+src/hadavin_sdk/llm/bedrock.py:104:def retryable(exc: BaseException) -> bool | None:
+src/hadavin_sdk/llm/retry.py:39:def retryable_status(code: int) -> bool:
+src/hadavin_sdk/tools.py:1057:        max_abandoned: int = defaults.MAX_ABANDONED_TOOL_THREADS,
+## G10 build_runtime signature:
+160:def build_runtime(
+161-    cfg_dir: Path,
+162-    llm,
+163-    *,
+164-    store: MemoryStore | None = None,
+165-    validate: bool = True,
+166-    secrets=SECRETS,
+167-    do_qualify: bool = True,
+168-):
+169-    """A Runtime wired as app.build wires it (the toolbox, the proposal check), with cards captured."""
+170-    cfg = load_config(cfg_dir)
+171-    reg = load_registry(cfg)
+172-    if do_qualify:
+## G11 Hooks=None in test_s5_runtime:
+15:from hadavin_sdk.runtime.agent_loop import Hooks, Runtime, Unqualified
+69:    rt, cfg = build(cfg_dir, Hooks(request_approval=lambda p, d, r: seen.append((p, d))))
+95:    rt, cfg = build(cfg_dir, Hooks(tools={"echo": lambda inp: inp["text"]}))
+102:    rt, cfg = build(cfg_dir, Hooks(tools={"echo": lambda inp: "x"}))
