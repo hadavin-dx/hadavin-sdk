@@ -103,7 +103,7 @@ Name: `deadman_reader` (a proposed name). **Who runs these statements: the datab
 Rows 3 and 4 change nothing while the group `PUBLIC` still holds `CONNECT` on the database and `USAGE` on the schema `public`, which is the default (UNVERIFIED on the real store); they stay so that the login keeps working if `PUBLIC` is tightened later.
 **Plainly:** the only rows tested were run on a throwaway where the login was almost certainly a superuser. What the manual says, not what was seen, is in this table. One sentence decides: a superuser login (or, on a managed database service, the provider's top login) can run all eight rows alone; any other login can run only the rows its right allows in the table above (for row 5 the table-owning login), so then two logins are needed. A managed database service may not allow a superuser at all: then the provider's administrator login stands in, and what it may do is the provider's documentation (not read here).
 
-**How the database administrator finds which login to use** (read-only queries; run each as the login you are considering, in `psql`; this was NOT run against a database in this pass):
+**How the database administrator finds which login to use** (read-only queries; run each as the login you are considering, in `psql`; this was NOT run against a database in any pass):
 ```
 SELECT current_user, rolsuper, rolcreaterole FROM pg_roles WHERE rolname = current_user;      -- row 1, 2, 6, 7, 8: rolsuper = t, or rolcreaterole = t
 SELECT pg_get_userbyid(datdba) AS database_owner FROM pg_database WHERE datname = current_database();   -- row 3
