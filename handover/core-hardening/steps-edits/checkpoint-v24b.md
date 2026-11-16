@@ -1,4 +1,3 @@
-# checkpoint v24b (builder), written 14:2x UTC
-Done: source cut from 7,849 to about 6,900 words; sheets A 6,862 and B 6,806 (limit 6,500); all other checks pass.
-Next: about 400 more words to cut; then CHANGES mapping table; then v24b plants (port of the 54 v23 plants); evidence-v24b/.
-Not done yet: mapping table, plants, evidence. No commit (lead commits).
+# checkpoint v24b (builder), final, Mon 16 Nov 2026 about 14:30 UTC = 20:00 IST
+Done (with the command output in evidence-v24b/): word cut (A 6,489, B 6,445; limit 6,500); check-v24.py 0 failures incl. C07; new checks C16 to C25; mut24b.py = 42 v24 plants + the 54 v23 plants ported: 96 planted, 96 caught, 0 missed (plants-final.txt; first run before the checker fixes: 57 caught, 37 missed, plants-before-fixes.txt); mapping table in v24-CHANGES.md; stale note and open-list items fixed (G5, `ps` item, row 67).
+Not done: independent review; M2/M3 decisions (rows 72, 73, for the lead); stranger M4 (yes sentence length) not shortened; all vendor behaviour UNVERIFIED. No commit (lead commits).

@@ -1,6 +1,7 @@
 """check-v24.py: rebuilds every generated v24 file from its source and facts-v24.py, compares it with the file on disk,
 then checks facts across ALL files. Usage: python3 check-v24.py   (folder: env V24_DIR, default this folder). Exit 0 = no failure.
-It reports failures; it never says a file is good beyond the checks it runs."""
+It reports failures; it never says a file is good beyond the checks it runs.
+C19 compares every pointer with pointers-v24.txt; after a person has read the new pointers: ACCEPT_POINTERS=1 python3 check-v24.py rewrites that list."""
 import os, re, sys, datetime as dt, subprocess
 D = os.environ.get('V24_DIR') or os.path.dirname(os.path.abspath(__file__))
 if not D.endswith('/'): D += '/'

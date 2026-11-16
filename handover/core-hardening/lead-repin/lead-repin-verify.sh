@@ -1033,7 +1033,7 @@ self_test_meta() {
   st_pf=$WORK/st-pid; sh -c 'echo $$ > "$1"; exec sleep 29' sh "$st_pf" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
   st_p=$!; sleep 3
   kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; sleep 1
-  st_stray=$(ps -A -o args= 2>/dev/null | grep -c -F -- "$st_child")
+  st_stray=$(ps -A -o args= 2>/dev/null | grep -c -- "$st_child/[l]ead-repin")
   [ -s "$st_pf" ] && kill "$(cat "$st_pf")" 2>/dev/null
   if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ]; then mt_ok "signal TERM in --mask with the input still open: exit 143 and the masking sed and awk are gone"
   else mt_bad "signal TERM in --mask (exit=$st_r, masking programs left=$st_stray)"; fi

@@ -1,0 +1,4 @@
+OWNER-SHEET-v24-A.md 6489 words
+OWNER-SHEET-v24-B.md 6445 words
+LEAD-RELEASE-NOTE-v8.md 9263 words
+v24-OPEN-FOR-LEAD.md 4279 words

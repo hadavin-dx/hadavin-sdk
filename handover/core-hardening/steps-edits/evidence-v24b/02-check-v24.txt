@@ -1,0 +1,2 @@
+check-v24: 0 failure(s)
+rc=0
