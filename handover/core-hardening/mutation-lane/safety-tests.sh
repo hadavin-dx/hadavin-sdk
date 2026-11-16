@@ -654,6 +654,7 @@ rm -rf "$S/mntsrc"
 python3 - "$RUN" <<'PY'
 import importlib.util, pathlib, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+real_mp = r.mount_points
 r.mount_points = lambda: [pathlib.Path("/"), pathlib.Path("/a/root"), pathlib.Path("/a/root/.venv"), pathlib.Path("/a/root/with space/m"), pathlib.Path("/a/root2/x")]
 root = pathlib.Path("/a/root")
 ok = True
@@ -661,7 +662,7 @@ try: r.refuse_mounts(root); ok = False; print("no refusal for a mount inside")
 except r.Refused as e: print("refused:", str(e)[:80])
 r.mount_points = lambda: [pathlib.Path("/"), pathlib.Path("/a/root"), pathlib.Path("/a/root/.venv"), pathlib.Path("/a/root2/x")]
 r.refuse_mounts(root); print("root itself, .venv and a sibling prefix (/a/root2) are no refusal")
-got = r.mount_points("36 25 0:31 / /a/root/with\\040space/m rw - tmpfs tmpfs rw\n37 25 0:32 / /a/root/back\\134slash rw - tmpfs tmpfs rw\n")
+got = real_mp("36 25 0:31 / /a/root/with\\040space/m rw - tmpfs tmpfs rw\n37 25 0:32 / /a/root/back\\134slash rw - tmpfs tmpfs rw\n")
 print("parsed:", [str(x) for x in got])
 ok = ok and [str(x) for x in got] == ["/a/root/with space/m", "/a/root/back\\slash"]
 sys.exit(0 if ok else 1)
