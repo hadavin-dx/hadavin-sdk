@@ -1388,3 +1388,9 @@ PASS (machinery): the left-out report counts one name with a line break and one 
 PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
 PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
 PASS (machinery): sh -x does not print a value (the script turns the trace off)
+PASS (machinery): signal TERM in the main phase: exit 143, no program of the run left running, no folder left
+PASS (machinery): signal HUP in the main phase: NOT TESTED (the program that started this self-test ignores HUP, for example nohup; start it without nohup to test this case)
+PASS (machinery): signal TERM while the file lists are made: exit 143 within 5 seconds, no program left
+PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left
+FAIL (machinery): a git call is missing one of the safety settings (log.showSignature, gpg.program, core.hooksPath, core.fsmonitor)
+PASS (machinery): a relative TMPDIR is refused with exit 2

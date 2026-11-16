@@ -1,0 +1,29 @@
+checks in Part 7: 23 (C185 to C209)
+fail on built v29: 23
+  v29 fails C185 (4 line(s)); first: A: the 7-day rule is not worded exactly once in full (count 0)
+  v29 fails C186 (3 line(s)); first: A holds the escape (describe the older key, then cancel anyway)
+  v29 fails C187 (12 line(s)); first: A lacks 'Deadline backstop (an owner action through Sun 22 Nov)'
+  v29 fails C188 (2 line(s)); first: a text still says the older key in A waits for a lead message (S M1)
+  v29 fails C189 (2 line(s)); first: note: the 7-day warning (Wed 11 Nov 2026 10:30 UTC = 16:00 IST) is not next to the money-safe defaul
+  v29 fails C190 (2 line(s)); first: A lacks 'if there is no such page this is a STOP'
+  v29 fails C191 (4 line(s)); first: A lacks 'no clipboard manager, remote-access or screen-capture tool running'
+  v29 fails C192 (6 line(s)); first: A lacks 'never a file manager, a second terminal window or the clipboard (no co'
+  v29 fails C193 (2 line(s)); first: A lacks '**Name rule (8.3, 8.4):** revoke only an item whose exact name contain'
+  v29 fails C194 (5 line(s)); first: A lacks 'the latest start is at most 60 minutes after the earliest key time'
+  v29 fails C195 (8 line(s)); first: A: a UTC time without its IST pair: "y** is a UTC date: after 18:30 UTC your phone's IST date is"
+  v29 fails C196 (2 line(s)); first: A: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)
+  v29 fails C197 (2 line(s)); first: A lacks '(only that one person)'
+  v29 fails C198 (2 line(s)); first: A lacks 'press Enter once; the line `exit 0` appears'
+  v29 fails C199 (6 line(s)); first: appendix A: unbalanced parentheses in '7.3: a masked address looks like `de…1@gmail.com`;'
+  v29 fails C200 (2 line(s)); first: A holds a double colon
+  v29 fails C201 (2 line(s)); first: appendix A parts are [1, 2, 3, 4, 5, 7, 8, 9, 10] (must run 1..10 or more without a gap)
+  v29 fails C202 (2 line(s)); first: A lacks "Retire check (the lead's own test: it tries each revoked item and sees"
+  v29 fails C203 (3 line(s)); first: A lacks 'what "at re-pin" means'
+  v29 fails C206 (2 line(s)); first: open list lacks the exact placeholder spelling `[OWNER FILLS: ...]`
+  v29 fails C207 (6 line(s)); first: open list lacks row 107
+  v29 fails C208 (2 line(s)); first: A: the deadline reminder is not set after the yes and named in the card words
+  v29 fails C209 (1 line(s)); first: note or open list lacks the sentence that 18:04 is a plan fact, not a start that fits a run (S m2)
+do NOT fail on built v29 (cannot prove a change; reason in v30-CHANGES.md): none
+fail on built v30: none
+v30-fail-proof: 0 problem(s)
+rc=0
