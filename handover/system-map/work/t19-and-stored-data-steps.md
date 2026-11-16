@@ -1,4 +1,10 @@
 Terms for this page: see work/t19-terms.md (one glossary for all T19 pages).
+Terms used on this page (copied from work/t19-terms.md, 16 Nov 2026; the studio lead owes the missing meanings by Tue 17 Nov 12:00 UTC / 17:30 IST, a proposal):
+- T19 = the test that posts the same made-up lead twice to the demo's n8n form address and expects exactly 1 mail, 1 HubSpot write and 1 stored row. It has not run.
+- take = the one filmed run of the lead-intake demo on made-up data. film-v5 = the unpatched set of n8n flow files the plan imports. patched copy = the same files with the patches applied (folder NOT RECORDED).
+- mf_leads = probably the table that stores leads, in the demo's own Postgres database (unverified). state = its status column.
+- NOT RECORDED (no file gives a meaning; do not guess; ask the studio lead, the Claude session doing the technical steps): freeze input, STOP class, F8, smk_count, drive.py, hex tool, CUT, EV, $T, c/c20, C1, E2.
+- plan = handover/system-map/inputs/plan-wp6-resmoke-v5.md (cites like "plan:316" mean its line 316).
 Fix block (16 Nov 2026, from cold read 832): the real owner of both checks is NOT SET; the lead assigns one (no date). T19 proposal: studio lead sends one made-up lead twice with the same lead id through the take's webhook; expected 1 mail, 1 HubSpot write, 1 stored row in the stored-leads table (name NOT SET); run command NOT SET (fill_flows.py not built). F8 proposal: after clean-up (clean-up = the steps on OWNER-CLEANUP-CARD.md, done by the owner), a query returns 0 rows for the test lead id in each n8n table; the table list is NOT SET. Pass rule for F8: that 0-row result; it has not run. Words not used below (KeyOk, Claim, recovery, F-002, T1-8) are not defined; ignore them.
 
 # T19 and stored-data steps: CURRENT (16 Nov 2026). Nothing here has run. History: work/t19-history.md (not current; do not run it).

@@ -1,6 +1,8 @@
 # Glossary for the system-map pages (live text; no amendment paragraphs live here)
 Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say studio head). Two copies of a file: quote both side by side and say current copy unknown.
 This glossary serves the pages in handover/system-map/. They map what the lead-intake demo needs before one filmed run (the take) can happen, for the studio lead (a Claude session) and the owner (the human).
+What the demo does: the lead-intake demo takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. The take is the filmed run that shows one claim: a lead sent twice with the same id is processed once.
+More terms: V5 = the run sheet of the version real-v5 (its location is not recorded). Held pages = pages another session owns; the system-map session reads them but never edits them (list in ORDERS.md). Digest = my one-line note of a helper agent's report, in work/agent-reports-batch4.md. Cold read = a helper agent that reads one page with no other context and lists what it cannot follow. Real-run file = a file from a run on real accounts; no helper opens one (the OWNER-ONLY gate). UNVERIFIED (from a hand-back) = a helper agent said it, and nobody has checked the file. T19 = see work/t19-terms.md. D-04 = the question about the post wording in work/decision-list-for-lead.md.
 Written Mon 16 Nov 2026 by the system-map session.
 
 ## Rules for writing pages
