@@ -1,8 +1,8 @@
 lead-repin-verify.sh v3  (reads only; prints, never judges; the lead reads this output before sharing it)
-masking self-test (canary) before any file was opened: SELF-TEST: passed=114 failed=0 (the made-up input and output files were deleted)
+masking self-test (canary) before any file was opened: SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
 take folder: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir
-private work folder (made by mktemp; it stays after this run; delete it yourself): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/bash/lead-repin.otpeVc
-copy of this output (masked): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/bash/lead-repin.otpeVc/lead-repin-verify-out.txt
+private work folder (made by mktemp; it stays after this run; delete it yourself): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/bash/lead-repin.YZJtuC
+copy of this output (masked): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/bash/lead-repin.YZJtuC/lead-repin-verify-out.txt
 Nothing below was checked against a real take program by the builder of this script.
 Q27 a, b and c stay UNVERIFIED until the lead shows them at the final head; this script only finds text.
 Files used:
@@ -70,15 +70,15 @@ _local flow json files: 1, delete-word matching lines inside them: 1 (these line
 1075:archive_token:
 1076-<masked>
 1077:archive_next: stays_visible
-1078:archive_pw = """Zq9xW4kL7pR2mN5v_6_
-1079-Zq9xW4kL7pR2mN5v_7_
-1080:""" # archive end of block
+1078:archive_pw = <masked>"<masked>
+1079-<masked>
+1080:<masked>""" # archive end of block
 1081:headers = {"Authorization": "<masked>"}  # archive
 1082:if token:  # archive path stays readable
 1083-    pass
 1084:url = "https://user:<masked>@host.example/x"  # archive
 1085:desk-aaaaaaaaaaaa archive
-    (a value was hidden on 8 line(s) above; 1 of them were hidden whole)
+    (a value was hidden on 11 line(s) above; 2 of them were hidden whole)
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/crm_hubspot.py: 2 match line(s)
 500:def cleanup_contacts(ids):
 501-    for i in ids:
@@ -151,15 +151,15 @@ QUESTION: Do the notice or the printed result still say deleted or archived, or 
 1075:archive_token:
 --
 1077:archive_next: stays_visible
-1078:archive_pw = """Zq9xW4kL7pR2mN5v_6_
---
-1080:""" # archive end of block
+1078:archive_pw = <masked>"<masked>
+<masked>
+1080:<masked>""" # archive end of block
 1081:headers = {"Authorization": "<masked>"}  # archive
 1082:if token:  # archive path stays readable
 --
 1084:url = "https://user:<masked>@host.example/x"  # archive
 1085:desk-aaaaaaaaaaaa archive
-    (a value was hidden on 7 line(s) above; 0 of them were hidden whole)
+    (a value was hidden on 10 line(s) above; 1 of them were hidden whole)
     [search "delete or archive wording in the take program": matching lines=15 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
 [block Q23-4] total over all searches in this block: matching lines=15 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
 
@@ -182,13 +182,13 @@ QUESTION: After the take program reads the word end, can it still call the model
 1075-archive_token:
 1076-<masked>
 1077-archive_next: stays_visible
-1078-archive_pw = """Zq9xW4kL7pR2mN5v_6_
-1079-Zq9xW4kL7pR2mN5v_7_
-1080-""" # archive end of block
+1078-archive_pw = <masked>"<masked>
+1079-<masked>
+1080-<masked>""" # archive end of block
 1081-headers = {"Authorization": "<masked>"}  # archive
 1082-if token:  # archive path stays readable
 1083-    pass
-    (a value was hidden on 7 line(s) above; 1 of them were hidden whole)
+    (a value was hidden on 10 line(s) above; 2 of them were hidden whole)
     [search "end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
 --- search: model-call words in the take program, n8n_drive.py and n8n.py
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 1 match line(s)
@@ -317,24 +317,24 @@ QUESTION: Does line 14 still say ONE database?
 [block G20] information block (not a search with hits): files_read=1 missing=0 unreadable=0
 
 SUMMARY: blocks=16 search_blocks=13 with_hits=9 zero_hits=4 information_blocks=3 files_missing=0 files_unreadable=0 (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)
-Hidden by the masking filter in search results: 24 line(s) had a value hidden, 2 of them were hidden whole (next-line rule).
+Hidden by the masking filter in search results: 33 line(s) had a value hidden, 5 of them were hidden whole (next-line rule).
 Files left in the work folder (names and sizes; none holds an unmasked line of a searched file):
   total 96
-  -rw------- 1 root root   469 Nov 16 13:24 four.txt
-  -rw------- 1 root root     0 Nov 16 13:24 grep.err
-  -rw------- 1 root root 24576 Nov 16 13:24 lead-repin-verify-out.txt
-  -rw------- 1 root root   113 Nov 16 13:24 list-code-rest.txt
-  -rw------- 1 root root   582 Nov 16 13:24 list-code.txt
-  -rw------- 1 root root   108 Nov 16 13:24 list-flows.txt
-  -rw------- 1 root root   208 Nov 16 13:24 list-model-all.txt
-  -rw------- 1 root root   104 Nov 16 13:24 list-model.txt
-  -rw------- 1 root root   700 Nov 16 13:24 list-test-all.txt
-  -rw------- 1 root root    24 Nov 16 13:24 m.txt
-  -rw------- 1 root root  5863 Nov 16 13:24 mask-line.sed
-  -rw------- 1 root root  8387 Nov 16 13:24 mask.sed
-  -rw------- 1 root root   118 Nov 16 13:24 named.crm_hubspot.py.txt
-  -rw------- 1 root root   110 Nov 16 13:24 named.n8n.py.txt
-  -rw------- 1 root root   116 Nov 16 13:24 named.n8n_drive.py.txt
-  -rw------- 1 root root   117 Nov 16 13:24 named.one.txt
-  -rw------- 1 root root   125 Nov 16 13:24 named.run_real_check_n8n.py.txt
+  -rw------- 1 root root   469 Nov 16 13:25 four.txt
+  -rw------- 1 root root     0 Nov 16 13:25 grep.err
+  -rw------- 1 root root 24576 Nov 16 13:25 lead-repin-verify-out.txt
+  -rw------- 1 root root   113 Nov 16 13:25 list-code-rest.txt
+  -rw------- 1 root root   582 Nov 16 13:25 list-code.txt
+  -rw------- 1 root root   108 Nov 16 13:25 list-flows.txt
+  -rw------- 1 root root   208 Nov 16 13:25 list-model-all.txt
+  -rw------- 1 root root   104 Nov 16 13:25 list-model.txt
+  -rw------- 1 root root   700 Nov 16 13:25 list-test-all.txt
+  -rw------- 1 root root    24 Nov 16 13:25 m.txt
+  -rw------- 1 root root  6067 Nov 16 13:25 mask-line.sed
+  -rw------- 1 root root  8727 Nov 16 13:25 mask.sed
+  -rw------- 1 root root   118 Nov 16 13:25 named.crm_hubspot.py.txt
+  -rw------- 1 root root   110 Nov 16 13:25 named.n8n.py.txt
+  -rw------- 1 root root   116 Nov 16 13:25 named.n8n_drive.py.txt
+  -rw------- 1 root root   117 Nov 16 13:25 named.one.txt
+  -rw------- 1 root root   125 Nov 16 13:25 named.run_real_check_n8n.py.txt
 Masking is a safety net: read this output yourself before you share it.

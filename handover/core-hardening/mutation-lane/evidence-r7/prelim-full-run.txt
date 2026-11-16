@@ -297,3 +297,7 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 USR2 file restored
   PASS: T42 USR2 state empty
   PASS: T42 USR2 no orphan pytest
+  PASS: T42 ALRM exit 142 (got 142)
+  PASS: T42 ALRM file restored
+  PASS: T42 ALRM state empty
+  PASS: T42 ALRM no orphan pytest
