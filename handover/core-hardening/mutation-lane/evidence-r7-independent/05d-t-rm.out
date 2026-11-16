@@ -1,0 +1,2 @@
+RESTORE ERROR: mutant m1 file (before restore): 'src/mod.py' is not a regular file under /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hostile/h/toy/root
+RESTORE FAILED m1 (marker and backup kept; run --restore)

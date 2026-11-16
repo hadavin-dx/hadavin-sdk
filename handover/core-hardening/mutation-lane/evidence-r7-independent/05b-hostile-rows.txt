@@ -1,0 +1,65 @@
+ROW|K-INT-at-plant-instant|exit=130 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-INT-3s-after-plant|exit=130 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-TERM-at-plant-instant|exit=143 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-TERM-3s-after-plant|exit=143 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-HUP-at-plant-instant|exit=129 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-HUP-3s-after-plant|exit=129 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-QUIT-at-plant-instant|exit=131 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-QUIT-3s-after-plant|exit=131 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-USR1-at-plant-instant|exit=138 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-USR1-3s-after-plant|exit=138 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-USR2-at-plant-instant|exit=140 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-USR2-3s-after-plant|exit=140 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-ALRM-at-plant-instant|exit=142 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-ALRM-3s-after-plant|exit=142 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-INT-to-whole-group-at-plant|exit=130 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-TERM-to-whole-group-at-plant|exit=143 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-HUP-to-whole-group-at-plant|exit=129 | original text back: YES | marker/backup left: [] | stray pytest: 0 | last line: return1
+ROW|K-KILL-at-plant (expected: planted, restore needed)|exit=137 | original text back: NO | marker/backup left: [5ea7ca685e9a4cf3.backup 5ea7ca685e9a4cf3.planted.json ] | stray pytest: 1 | last line: return2
+ROW|K-KILL-at-plant (expected: planted, restore needed) +--restore|exit=0 | original text back: YES | state: []
+ROW|K-multi TERM,TERM,INT,HUP back-to-back|exit=129 | original text back: YES | state: [] | stray: 0
+ROW|K-spray-TERM (13 delays 0.05..3.5s after start)|cases where original text NOT back and no marker kept with exit 3: 0 | cases left planted-but-recoverable (exit 3, marker kept): 0
+ROW|K-spray-INT (13 delays 0.05..3.5s after start)|cases where original text NOT back and no marker kept with exit 3: 0 | cases left planted-but-recoverable (exit 3, marker kept): 0
+ROW|K-spray-HUP (13 delays 0.05..3.5s after start)|cases where original text NOT back and no marker kept with exit 3: 0 | cases left planted-but-recoverable (exit 3, marker kept): 0
+ROW|F1 forged marker: file field = ../../victim.txt|exit=3 | victim file overwritten: NO | msg: RESTORE FAILED: cannot write ../../victim.txt back: marker file: must be relative to the root and contain no '..': '../.
+ROW|F2 forged marker (needs write access to the private state folder): file=docs/note.txt, backup swapped, hash matched|exit=0 | docs/note.txt now: EVIL | msg: test group already gone; restored docs/note.txt from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scrat
+ROW|F3 marker is not JSON|exit=2 | traceback: 0 | file still planted: yes | msg: REFUSED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hostile/h/tmpst
+ROW|F4 marker with absolute paths (/etc/hostname, /etc/passwd)|exit=2 | traceback: 0 | /etc/hostname unchanged: yes
+ROW|F5 marker is a symlink to /etc/hostname|exit=2 | traceback: 0 | /etc/hostname unchanged: yes
+ROW|R1 --root replaced by a symlink to the moved folder, then SIGTERM|exit=143 | moved folder original text back: YES | state: []
+ROW|R1 +--restore after renaming back|original text back: YES | state: []
+ROW|R2 src/ folder swapped for a symlink mid-run, then SIGTERM|exit=3 | real file text back: NO | state: [5ea7ca685e9a4cf3.backup 5ea7ca685e9a4cf3.planted.json ]
+ROW|R3 --root given as a symlink to the real folder|exit=5 | traceback: 0 | file back: YES | msg: INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line a
+ROW|O1 --out-json is a symlink to another file|exit=2 | victim text now: victim-o  | file back: YES | traceback: 0
+ROW|O2 --out-json inside --root (src/)|exit=2 | out file exists: no | mutant ran: no | file back: YES
+ROW|O3 control: --out-json outside (normal)|exit=5 | json written: yes | file back: YES
+ROW|O4 --out-json /dev/full (write fails)|exit=2 | traceback: 0 | file back: YES | state: []
+ROW|L1 file under test has a second name outside root (normal run)|exit=2 | traceback: 0 | second name text: return1 | mutant ran: no | msg: REFUSED: src/mod.py is not a regular file with exactly one name (links: 2): a hard-linked 
+ROW|L2 file under test has a second name INSIDE root|exit=2 | both names back: YES/YES | traceback: 0
+ROW|J-deep mutants file|exit=2 | traceback: 1 | target file back: YES | state: [] | etc/hostname changed: no | last: INTERNAL ERROR (RecursionError: maximum recursion depth exceeded while decoding a JSON array from a 
+ROW|J-obj mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: the mutant list is empty or not a list
+ROW|J-dup mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant id is not a plain unique name (and not one of ['baseline', 'summary', 'tree-diff'], 
+ROW|J-escape mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant m1 file: must be relative to the root and contain no '..': '../../etc/hostname'
+ROW|J-abs mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant m1 file: must be relative to the root and contain no '..': '/etc/hostname'
+ROW|J-nul mutants file|exit=5 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line a
+ROW|J-bignew mutants file|exit=5 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line a
+ROW|J-idweird mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant id is not a plain unique name (and not one of ['baseline', 'summary', 'tree-diff'], 
+ROW|J-types mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant needs string fields id, file, old, new: {'id': 5, 'file': ['a'], 'old': None, 'new':
+ROW|J-bigint mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: --list /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hosti
+ROW|J-empty mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: the mutant list is empty or not a list
+ROW|J-bom mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: --list /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hosti
+ROW|J-nan mutants file|exit=2 | traceback: 0 | target file back: YES | state: [] | etc/hostname changed: no | last: REFUSED: mutant needs string fields id, file, old, new: {'id': 'm1', 'file': 'src/mod.py', 'old': 'r
+ROW|J-many 20000 mutants (3 plantable, rest do not apply)|exit=5 | traceback: 0 | file back: YES | state: [] | last: INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|I1 standard input closed, normal run|exit=5 | traceback: 0 | file back: YES | msg: INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMM
+ROW|I2 standard input closed, SIGTERM at plant|exit=143 | original text back: YES | state: []
+ROW|I3 standard output and error closed, normal run|exit=5 | file back: YES | state: []
+ROW|I4 standard output is /dev/full|exit=1 | file back: YES | state: []
+ROW|P1 src dir 555 and file 444 (running as uid 0: root ignores modes)|exit=5 | traceback: 0 | file back: YES | mode: 444
+ROW|P2 file immutable (chattr +i)|exit=2 | traceback: 0 | file back: YES | state: [] | msg: REFUSED: cannot plant into src/mod.py: Operation not permitted
+ROW|P3 src/ is a read-only mount (unshare -m)|exit=2 | traceback: 0 | file back: YES | state: [] | msg: REFUSED: src is a mount point inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c
+ROW|T-rm test rm changes the file/dir under test during the run|exit=3 | traceback: 0 | file is symlink: no | file back: NO | state: [5ea7ca685e9a4cf3.backup 5ea7ca685e9a4cf3.planted.json ] | msg: RESTORE ERROR: mutant m1 file (before restore): 'src/mod.py' is not a regular file under /tmp/claude
+ROW|T-ln test ln changes the file/dir under test during the run|exit=3 | traceback: 0 | file is symlink: yes | file back: NO | state: [5ea7ca685e9a4cf3.backup 5ea7ca685e9a4cf3.planted.json ] | msg: RESTORE ERROR: mutant m1 file (before restore): 'src/mod.py' passes through a symbolic link (mod.py)
+ROW|T-perm test perm changes the file/dir under test during the run|exit=5 | traceback: 0 | file is symlink: no | file back: YES | state: [] | msg: 
+ROW|T-corrupt test corrupt changes the file/dir under test during the run|exit=5 | traceback: 0 | file is symlink: no | file back: YES | state: [] | msg: 
+ROW|S1 state folder is a symlink to another folder|exit=2 | files created in the target folder: 0 | traceback: 0 | msg: REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind
+ROW|S2 --restore with no marker at all|exit=0 | traceback: 0 | msg: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hostile/
