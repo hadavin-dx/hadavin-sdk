@@ -31,7 +31,7 @@ index bfdb85e..97369d7 100644
              return None
  
 diff --git a/src/hadavin_sdk/audit/local_dir.py b/src/hadavin_sdk/audit/local_dir.py
-index 24e5102..8264ab1 100644
+index 24e5102..0e8ae52 100644
 --- a/src/hadavin_sdk/audit/local_dir.py
 +++ b/src/hadavin_sdk/audit/local_dir.py
 @@ -12,6 +12,7 @@ from __future__ import annotations
@@ -51,7 +51,7 @@ index 24e5102..8264ab1 100644
  
  class LocalDirSink:
      def __init__(self, root: Path) -> None:
-@@ -113,7 +116,12 @@ class LocalDirSink:
+@@ -113,13 +116,23 @@ class LocalDirSink:
              return self._write(event)
          except DuplicateEvent:
              return f"{event.event_id}.json"
@@ -65,6 +65,18 @@ index 24e5102..8264ab1 100644
              try:
                  self.outbox.mkdir(parents=True, exist_ok=True)
                  tmp = self.outbox / f".tmp-{event.event_id}"
+                 tmp.write_text(event.model_dump_json(), encoding="utf-8")
+                 os.replace(tmp, self.outbox / f"{event.event_id}.json")  # never a half file
+-            except Exception:  # noqa: BLE001
++            except Exception as exc2:  # noqa: BLE001
++                _LOG.error(
++                    "audit outbox not written (%s): event %s is held in memory only",
++                    type(exc2).__name__,
++                    event.event_id,
++                )
+                 self._pending.append(event)
+             return None
+ 
 diff --git a/src/hadavin_sdk/runtime/tick.py b/src/hadavin_sdk/runtime/tick.py
 index b580c24..ef46ded 100644
 --- a/src/hadavin_sdk/runtime/tick.py
@@ -105,10 +117,10 @@ index b580c24..ef46ded 100644
  STORE_NOT_READY = (
 diff --git a/tests/test_a01_audit_reconcile.py b/tests/test_a01_audit_reconcile.py
 new file mode 100644
-index 0000000..a929281
+index 0000000..bc1ad54
 --- /dev/null
 +++ b/tests/test_a01_audit_reconcile.py
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,92 @@
 +"""Audit A-01: nothing drained the audit outbox, and a failed audit write left no log line.
 +
 +The tick step `audit_reconcile` calls the audit kind's `reconcile` and logs how many events it wrote. The chain
@@ -117,6 +129,7 @@ index 0000000..a929281
 +import logging
 +
 +from hadavin_sdk.audit import chain as audit
++from hadavin_sdk.audit.local_dir import LocalDirSink
 +from hadavin_sdk.models import AuditEvent
 +from hadavin_sdk.runtime import tick
 +from hadavin_sdk.runtime.tick import TickContext
@@ -183,6 +196,23 @@ index 0000000..a929281
 +    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.audit.chain"):
 +        log.write_outcome(_event(3))
 +    assert "held in memory only" in caplog.text and len(log._pending) == 1
++
++
++def test_local_dir_sink_logs_a_warning_and_then_an_error_when_the_outbox_fails_too(
++    tmp_path, caplog
++):
++    sink = LocalDirSink(tmp_path / "audit")
++    sink.root.mkdir(parents=True, exist_ok=True)
++    blocker = sink.root / "outbox"
++    blocker.write_text("a file where the outbox folder should be", encoding="utf-8")
++    sink._write = lambda e: (_ for _ in ()).throw(OSError("secret-looking detail"))
++    ev = _event(4)
++    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.audit.local_dir"):
++        assert sink.write_outcome(ev) is None
++    assert "goes to the outbox" in caplog.text and "held in memory only" in caplog.text
++    assert ev.event_id in caplog.text and "OSError" in caplog.text
++    assert "secret-looking detail" not in caplog.text and "run-4" not in caplog.text
++    assert len(sink._pending) == 1
 diff --git a/tests/test_p7_tick.py b/tests/test_p7_tick.py
 index 3dcc8a9..c9c3423 100644
 --- a/tests/test_p7_tick.py

@@ -1,0 +1,9 @@
+# RUNBOOK / FIX-PLAN / TAKE-CHECKLIST round 16 stranger read (agent aa375d4). Saved by flows-audit; reviewer words unverified. 0 Blockers, 6 Majors.
+Clean: clock block identical, all sums and IST right; Q31 items exist; no secret printed; destructive commands guarded.
+M1 Two answer-by times for same inputs: RUNBOOK 339-342, 373 (I2,I3,I5,I36) say 04:00-04:26 vs line 86 / TAKE-CHECKLIST 58 item 59 due 03:30Z; I36 PIN_NAME 04:26 vs item 48 and skeleton line 112 03:30Z. Item 58 post-twice script answer-by Wed 05:45Z but GO row 2 needs it Tue 09:00Z so GO row 2 cannot pass; BLOCKED line has two literal forms (RUNBOOK 257 appends "answer-by Wed 05:45Z"; 207, 370, TAKE-CHECKLIST 58 do not).
+M2 RESULT_JSON tagged Q31_38 (RUNBOOK 153) but item 38 never names a result file; RECORDING tagged Q31_4 (line 99) but item 4 is ready time/place and post text, not path, start/stop commands, length tool (I39). I39, I18 have no item.
+M3 RECORDING is one fixed path (line 99); step 26 guards RESULT_JSON with test -e but not RECORDING; step 22 test recording uses same path; retake can overwrite the raw take (unrecoverable). Fix: test -e "$RECORDING" then REFUSED.
+M4 Pass lines with no saved log: step 11 (no [step log], no $TESTLOG); steps 15, 17 ((1),(3),(6a)); steps 16, 19(a)(b), 24(a)-(e) say read from $TESTLOG/$GATELOG but psql commands have no >> wrapper. Steps 5, 13(a)(e) print take_check exit N outside redirect (minor).
+M5 Step-log list differs: FIX-PLAN 72 (4d,5,8a = RUNBOOK 7,8,11) vs RUNBOOK section 4 list (1,2,3,4,4a,4b,6,9,10,14); "the same steps" untrue.
+M6 RUNBOOK step 4: git add two paths then git commit with no -- pathspec; FIX-PLAN Step 3 uses commit -- paths; git checkout SHA -- pin stages the pin; staged files get swept into SHA_FOLDER.
+Not read: FIX-PLAN 78-178; TAKE-CHECKLIST 139-407.
