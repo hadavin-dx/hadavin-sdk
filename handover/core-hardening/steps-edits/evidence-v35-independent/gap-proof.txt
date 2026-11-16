@@ -1,0 +1,20 @@
+heavy-slot: slot 2 taken at 2026-11-16T20:41:46Z
+baseline FAIL lines: v34 0, v35 0 (v35 baseline counts only what is not yet written when this runs)
+X03  v34 checker: caught (6 new FAIL line(s))        v35 checker: caught (6 new FAIL line(s))
+X07  v34 checker: caught (9 new FAIL line(s))        v35 checker: caught (9 new FAIL line(s))
+X08  v34 checker: caught (3 new FAIL line(s))        v35 checker: caught (3 new FAIL line(s))
+X10  v34 checker: caught (5 new FAIL line(s))        v35 checker: caught (5 new FAIL line(s))
+H04  v34 checker: caught (8 new FAIL line(s))        v35 checker: caught (9 new FAIL line(s))
+H05  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (2 new FAIL line(s))
+H07  v34 checker: caught (1 new FAIL line(s))        v35 checker: caught (1 new FAIL line(s))
+H14  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (2 new FAIL line(s))
+H17  v34 checker: caught (1 new FAIL line(s))        v35 checker: caught (1 new FAIL line(s))
+H18  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (2 new FAIL line(s))
+H19  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (2 new FAIL line(s))
+H20  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (4 new FAIL line(s))
+H23  v34 checker: caught (4 new FAIL line(s))        v35 checker: caught (4 new FAIL line(s))
+H35  v34 checker: caught (1 new FAIL line(s))        v35 checker: caught (1 new FAIL line(s))
+H38  v34 checker: caught (2 new FAIL line(s))        v35 checker: caught (2 new FAIL line(s))
+v34 checker misses 0 of 15; v35 checker misses 0 of 15
+heavy-slot: slot 2 freed, exit 0
+exit 0

@@ -4,3 +4,7 @@ built; sizes in bytes: {'REPORT-c6x.md': 189024, 'REPORT-c6x-TABLE.md': 113604, 
 census written: 58 phrases
 scan exit 0
 SCANNED 410 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+neg exit 1
+SUMMARY: 367 copies, 2 wrong
+verify exit 1
+SUMMARY: 288 checks, 1 FAILED: V13: every COUNT line of c6x-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6x-output.txt) and the
