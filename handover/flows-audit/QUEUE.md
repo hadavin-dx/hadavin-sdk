@@ -19,3 +19,6 @@ F7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: never write an owner s
 
 F8 [RUNNING 09:15Z] [ORDER 016] SECOND TOOL LANE: a stronger JSON checker for the flows (connections, orphan nodes, expression references, error-path settings, credential names) with a self-test; run it on pristine and patched flows in parallel lanes; compare with M1/M3 outputs of system-map (read via git show) and list differences.
 F9 [RUNNING 09:15Z] [ORDER 016] Paste-ready run-sheet sentences for the 3 scenes that use real-v5 vs film-v5 (which flow each scene runs), checked against the node names. [DONE 2026-11-16: SCENE-FLOW-MAP.md, 2 review rounds; static, nothing run]
+
+## REFILL 09:45Z (lead)
+F10 Answer for F5/F1: local check confirms NO take script switches flow sets; any switch is a manual step by the lead with scripts/n8n_api.py (import/activate/deactivate). Put that fact in the run sheet wording and the claims table (UNSUPPORTED if a claim assumes automatic switching). system-map item M16 decides which scenes are in the video: read its report via git show origin/cloud/system-map when pushed.
