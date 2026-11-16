@@ -5,3 +5,6 @@ In progress: mut35.py and v35-fail-proof.py wait in heavy-slot.sh for a free slo
 Next: re-point mut35 and gap-proof anchors lost by the edits, plants for C274 to C280, write v35-CHANGES.md, final report.
 Open (lead): L-LEN, exit-code rule, day clock, yes length, Sunday at-once rule, film person exposure options (rows 121 to 131).
 Mon Nov 16 19:58:33 UTC 2026
+
+## Final (about 20:15 UTC = 01:45 IST)
+Done: all findings fixed; check 0 failures; mut35 307/307 caught; fail-proof exit 0; gap-proof 0/15 missed. Open: rows 121-131 for the lead. No commits. No processes of mine left.

@@ -1,0 +1,11 @@
+# v12 citation check (codebase-details, read-only, static), condensed copy, 2026-11-16
+No Blocker, 4 Majors, minors. Not checked: byte sizes (S said 26294 B vs 25 KB target), "about 30 row N references", writer suggestions without source (20 min margin, 5 min limit, 4-12 char run name, 3 retire-check runs, exit 120, 60 s / 30 s ban items, shot list), any command or click path, row 19 commit code, 180/189, mf-form.json and mf_leads.sql (relied on inputs-patch-Q20-5.md), sources outside core-hardening.
+## Major
+1 S:128 lease sentence ("crashes ... picks it up again ... up to three times") contradicts ORDERS Q21.2 (151-152) and is not flagged as a deviation needing the lead's written approval before the owner posts it; CHANGES Q21.2 says "fixed". (Also wording is off by one: three tries in total.)
+2 S:40 go item 7 contradicts itself and ORDERS Q20.4 (148): states success "0, or 3 only when A and B are right and C is unknown" yet "no exit code stated for C unknown"; A:93 defines 3 as a failed count/verdict; card F.3 says any other number FREEZE.
+3 S:129 "full list of 12" but appendix 8 has 13 items (item 13 "Postgres is the one store" added per Q21.3).
+4 S money rule item 5 cites F.2 for the usage page; the card reads it in F.4 (C:31). F.2 is "filmed ... type end".
+## Minor
+5 C:42 still "or 60 minutes after F.4" vs S:106 same day and NOTES s4. 6 "E.0" does not resolve to a card heading (card has an unlabeled "Before E (tick each)" block, 10 ticks). 7 "appendix G" (S:65) is appendix section 12 "Step G". 8 CHANGES F11 points at heading A:89 (text at A:90); SM1 cites A:141 which is "Open items". 9 A:101 says F.1 look at contact list; card puts it in F.2. 10 NOTES s2 "row 2" is order-table row 2, not run card row 2. 11 word PENDING in A:141 and CHANGES 105-106 (meta statements) would trip a literal grep gate.
+## Verified OK
+Weekdays/times (Mon 23 Nov 18:29 UTC = 23:59 IST; 18:14:40 = 23:44:40; Wed 25 Nov 15:00 UTC = 20:30 IST); ports 5678/5679; counts (23 rows, 13 sends, 3 calls, nine go items, 17 appendix sections, 129/42/142 lines, card 10 ticks); decision labels; Q19.1-5, Q20.1-5 applied; every row N resolves; about 95% of CHANGES anchors; no TBD/TODO; zero banned strings.

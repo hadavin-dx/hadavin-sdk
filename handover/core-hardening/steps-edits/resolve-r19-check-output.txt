@@ -324,3 +324,4 @@ NEG r17pin-B05ste caught | FAIL r17 pin B05 step 21 heading lacks '### Step 21. 
 NEG r17pin-B08nev caught | FAIL r17 pin B08 never opens lacks 'The assistant never opens the key file (this is a proc
 NEG r17pin-B09def caught | FAIL r17 F-8 D.3 lacks 'no reply counts as `another take`'
 NEG r17pin-B10for caught | FAIL r17 pin B10 forced revoke lacks 'revoke the key at that time anyway (key step I)'
+exit 124

@@ -6,7 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 E = os.path.dirname(os.path.abspath(__file__)) + "/"
 D = os.path.dirname(E.rstrip("/")) + "/"
 os.makedirs(E + "neg", exist_ok=True)
-rep = open(D + "REPORT-c6x.md", encoding="utf-8").read()
+import assemble_c6x
+rep, _inc = assemble_c6x.assemble(D + "REPORT-c6x.md")
 import ast
 PAT = re.compile(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ([^|]*) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$")
 L = rep.split("\n")

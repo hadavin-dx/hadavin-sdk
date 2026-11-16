@@ -35,6 +35,10 @@ R("'m34 word list': ('the key is gone AND there are no more takes AND the cut is
 R("neg('r14rec2', 'Route B: you have not written', 'Route B (the one the assistant recommends): you have not written', 'r14 second recommendation spot')", "neg('r14rec2', 'Route B: you have not yet typed', 'Route B (the one the assistant recommends): you have not yet typed', 'r14 second recommendation spot')")
 # the negative controls may run in anchor-only mode (cheap check that every planted string still exists)
 R("    src = open(E, encoding='utf-8').read()\n    if src.count(old) < 1:\n        F('negative control anchor missing: ' + name); return\n", "    src = open(E, encoding='utf-8').read()\n    if src.count(old) < 1:\n        F('negative control anchor missing: ' + name); return\n    if os.environ.get('NEG_ANCHOR_ONLY'): return\n")
+# resume mode for a negative-control run that a time limit cut off: skip every control up to and including the one named in NEG_AFTER
+R("def neg(name, old, new, expect, count=1):\n    src = open(E, encoding='utf-8').read()\n", "_negskip = [bool(os.environ.get('NEG_AFTER'))]\ndef neg(name, old, new, expect, count=1):\n    if _negskip[0]:\n        if name == os.environ.get('NEG_AFTER'): _negskip[0] = False\n        return\n    src = open(E, encoding='utf-8').read()\n")
+# round 19 changed the E-58 text: the old label 'E-58 times' is superseded; the mutation is still caught, by the round 19 count of 18:29 UTC = 23:59 IST
+R("neg('r11e58', 'Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST', 'Mon 23', 'E-58 times')", "neg('r11e58', 'Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST', 'Mon 23', 'r19 count applied')")
 # swap the round 18 section and plants
 sec = open('r19-section.py', encoding='utf-8').read() + '\n' + open('r19-golden.py', encoding='utf-8').read(); pl = open('r19-plants.py', encoding='utf-8').read()
 a = s.index('# ================= round 18 checks'); b = s.index("print('round 18 checks done')") + len("print('round 18 checks done')")

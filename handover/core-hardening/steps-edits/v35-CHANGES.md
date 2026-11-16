@@ -54,4 +54,11 @@ See evidence-v35/ for the raw output files and the commands:
 
 ## 6. Heavy-run results
 
-(filled in after the runs; if a run did not get a slot this says so)
+All runs went through heavy-slot.sh and got a slot. Raw output is in evidence-v35/.
+
+- check-v35.py: 0 failures (C01 to C280), after re-accepting the pointer list for this file.
+- mut35.py (evidence-v35/mut35-run2.txt): 308 plants, baseline failures 0, 1 negative control ok, 307 caught by the meant check, 0 missed, 0 anchors not found. The first run (mut35-run1.txt) missed 6 plants (P05, P35, M48, X23, X27, Y12); their anchors and expected checks were fixed and the run repeated.
+- v35-fail-proof.py (evidence-v35/fail-proof-run1.txt): exit 0, 0 problems. The new checks C274 to C280 fail on built v34. Some older Part 9 checks also pass on v34 where v34 already met them; this is not claimed otherwise.
+- gap-proof-v35.py (evidence-v35/gap-proof-run1.txt): v34 checker misses 0 of 15; v35 checker misses 0 of 15.
+
+Not run by me: the independent evidence run and the EGM review (lead step).

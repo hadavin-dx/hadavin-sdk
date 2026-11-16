@@ -1,0 +1,30 @@
+checks in Part 9: 50 (C228 to C280)
+fail on built v34: 24
+  v34 fails C230 (7 line(s)); first: helper page lacks 'The owner asks you, by call or message. Never act on the ask itself'
+  v34 fails C232 (4 line(s)); first: sheet A lacks 'alarm 5 and alarm 6 of 5.8 are the fifth and sixth'
+  v34 fails C233 (2 line(s)); first: A lacks 'this yes binds me to step 7.11 and to alarms 5 and 6'
+  v34 fails C236 (2 line(s)); first: no place found for 'film pause = \\d+ \\+ \\d+ \\+ (\\d+) in the sample' (a changed sentence?)
+  v34 fails C237 (2 line(s)); first: sheet A names a W label that does not exist (there is no W1 or W2)
+  v34 fails C238 (24 line(s)); first: heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v34, sheet A: one filmed run
+  v34 fails C239 (37 line(s)); first: fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|a_cut|1
+  v34 fails C241 (2 line(s)); first: A lacks the one-letter rule in full
+  v34 fails C248 (2 line(s)); first: NOTE does not list the helper page
+  v34 fails C249 (4 line(s)); first: A lacks 'so that no alarm 5 or backstop time meets a live run key.'
+  v34 fails C257 (1 line(s)); first: the "close it and tell the owner it appeared" sentence is not present exactly once
+  v34 fails C260 (1 line(s)); first: "A difference ... is never tolerated." is not present exactly once (sheet; the appendix duplicate wa
+  v34 fails C267 (1 line(s)); first: helper page or source lacks 'the last-resort step on your paper (model account only) at once, but on
+  v34 fails C269 (3 line(s)); first: source holds 'give your cancel helper (if any) their page and paper (first' 0 times (need 1)
+  v34 fails C270 (3 line(s)); first: source holds 'no such page: describe that, then go on; UNVERIFIED that no ' 0 times (need 1)
+  v34 fails C271 (1 line(s)); first: the backstop time definition does not name alarm 5, alarm 6 and both times
+  v34 fails C273 (1 line(s)); first: sheet A: five pages hold 15715 words, not lower than 15715 (round 7 cap; v33 was 15722)
+  v34 fails C274 (16 line(s)); first: A: a second wording of the 5-minute boundary: 'at least 5 minutes before the latest start'
+  v34 fails C275 (2 line(s)); first: sheet A: check 2 does not name the Sunday older-key bound 18:09 UTC = 23:39 IST
+  v34 fails C276 (6 line(s)); first: card A: P1 is not defined exactly once
+  v34 fails C277 (24 line(s)); first: A: the old word 'deadline reminder' is back (alarm 5, alarm 6, current state word)
+  v34 fails C278 (6 line(s)); first: helper page lacks 'call the owner yourself on the phone number on your paper'
+  v34 fails C279 (2 line(s)); first: the film page cites a label (W, L, P or R number) it does not define
+  v34 fails C280 (12 line(s)); first: open list row 121 is missing
+do NOT fail on built v34 (cannot prove a change; reason in v35-CHANGES.md): ['C228', 'C229', 'C231', 'C234', 'C235', 'C240', 'C242', 'C243', 'C244', 'C245', 'C246', 'C247', 'C250', 'C251', 'C255', 'C256', 'C258', 'C259', 'C261', 'C262', 'C263', 'C264', 'C265', 'C266', 'C268', 'C272']
+fail on built v35: none
+v35-fail-proof: 0 problem(s)
+exit 0

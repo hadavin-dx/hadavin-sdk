@@ -1,0 +1,6 @@
+heavy-slot: slot 2 taken at 2026-11-16T20:12:27Z
+BASE-SHA256 09258d05fb8172699038eda0ce5ecc9e4fa2e1158d26eada1bdf827ced97f8b8
+n01 [dash]: KILLED-phase1 exit=1 fail_lines=13 SELF-TEST: passed=2041 failed=13 (the made-up input and output files were deleted) (3s)
+n02 [dash]: KILLED-phase1 exit=1 fail_lines=2 SELF-TEST: passed=2052 failed=2 (the made-up input and output files were deleted) (3s)
+n03 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+n05 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=2093 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a failing stage of the masking filter must stop --mask with exit 4 (helper=0, exit=0)'] (125s)

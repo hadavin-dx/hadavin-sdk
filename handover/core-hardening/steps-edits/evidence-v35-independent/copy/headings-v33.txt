@@ -1,0 +1,50 @@
+OWNER-SHEET-vNN-A.md|# Owner sheet v33, sheet A: one filmed run
+OWNER-SHEET-vNN-A.md|## 1. What happens, and the words
+OWNER-SHEET-vNN-A.md|## 2. The card, then the rules
+OWNER-SHEET-vNN-A.md|### THE CARD, sheet A (a separate printed page OWNER-CARD-v33-A.md)
+OWNER-SHEET-vNN-A.md|### The rules (each has a short label: R1 and R4 to R10; this sheet has no R2 or R3, nothing is missing)
+OWNER-SHEET-vNN-A.md|## 3. The numbers message (sheet A; sample with made-up values) and your checks
+OWNER-SHEET-vNN-A.md|## 5. Before the yes (UNVERIFIED)
+OWNER-SHEET-vNN-A.md|## 6. The model key (R1 applies; UNVERIFIED)
+OWNER-SHEET-vNN-A.md|## 7. The run (UNVERIFIED)
+OWNER-SHEET-vNN-A.md|## 8. After the run (UNVERIFIED; page paths tolerated)
+OWNER-SHEET-vNN-A.md|## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST)
+OWNER-SHEET-vNN-A.md|## 10. Film and post rules (sheet A; the film person has their own page OWNER-FILM-PERSON-v33.md)
+OWNER-SHEET-vNN-B.md|# Owner sheet v33, sheet B: one filmed run
+OWNER-SHEET-vNN-B.md|## 1. What happens, and the words
+OWNER-SHEET-vNN-B.md|## 2. The card, then the rules
+OWNER-SHEET-vNN-B.md|### THE CARD, sheet B (a separate printed page OWNER-CARD-v33-B.md)
+OWNER-SHEET-vNN-B.md|### The rules (each has a short label: R1 and R4 to R10; this sheet has no R2 or R3, nothing is missing)
+OWNER-SHEET-vNN-B.md|## 3. The numbers message (sheet B; sample with made-up values) and your checks
+OWNER-SHEET-vNN-B.md|## 5. Before the yes (UNVERIFIED)
+OWNER-SHEET-vNN-B.md|## 6. The model key (R1 applies; UNVERIFIED)
+OWNER-SHEET-vNN-B.md|## 7. The run (UNVERIFIED)
+OWNER-SHEET-vNN-B.md|## 8. After the run (UNVERIFIED; page paths tolerated)
+OWNER-SHEET-vNN-B.md|## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST)
+OWNER-SHEET-vNN-B.md|## 10. Film and post rules (sheet B; the film person has their own page OWNER-FILM-PERSON-v33.md)
+OWNER-CARD-vNN-A.md|### THE CARD, sheet A (print the copy OWNER-CARD-v33-A.md; no printer: copy it by hand; fill the blanks before you press create of the run key)
+OWNER-CARD-vNN-B.md|### THE CARD, sheet B (print the copy OWNER-CARD-v33-B.md; no printer: copy it by hand; fill the blanks before you press create of the run key)
+OWNER-APPENDIX-vNN-A.md|# Owner appendix v33, sheet A: the long detail (it binds you the same as the sheet; each part says where the sheet points to it)
+OWNER-APPENDIX-vNN-A.md|## Appendix part 1: The words in full (every definition of the sheet)
+OWNER-APPENDIX-vNN-A.md|## Appendix part 2: The sample numbers message (made-up values, never real)
+OWNER-APPENDIX-vNN-A.md|## Appendix part 3: Rules in full - the longer rule details
+OWNER-APPENDIX-vNN-A.md|## Appendix part 4: Steps 5 and 6 - click paths and page names (all UNVERIFIED, tolerated)
+OWNER-APPENDIX-vNN-A.md|## Appendix part 5: Steps 7 to 10 - page and screen details
+OWNER-APPENDIX-vNN-A.md|## Appendix part 6: Why and background (rationale that is not a step)
+OWNER-APPENDIX-vNN-A.md|## Appendix part 7: Steps 6 and 7 - small notes
+OWNER-APPENDIX-vNN-A.md|## Appendix part 8: The yes sentence pattern
+OWNER-APPENDIX-vNN-A.md|## Appendix part 9: What you may type outside the shell
+OWNER-APPENDIX-vNN-A.md|## Appendix part 10: Deadline backstop
+OWNER-APPENDIX-vNN-B.md|# Owner appendix v33, sheet B: the long detail (it binds you the same as the sheet; each part says where the sheet points to it)
+OWNER-APPENDIX-vNN-B.md|## Appendix part 1: The words in full (every definition of the sheet)
+OWNER-APPENDIX-vNN-B.md|## Appendix part 2: The sample numbers message (made-up values, never real)
+OWNER-APPENDIX-vNN-B.md|## Appendix part 3: Rules in full - the longer rule details
+OWNER-APPENDIX-vNN-B.md|## Appendix part 4: Steps 5 and 6 - click paths and page names (all UNVERIFIED, tolerated)
+OWNER-APPENDIX-vNN-B.md|## Appendix part 5: Steps 7 to 10 - page and screen details
+OWNER-APPENDIX-vNN-B.md|## Appendix part 6: Why and background (rationale that is not a step)
+OWNER-APPENDIX-vNN-B.md|## Appendix part 7: Steps 6 and 7 - small notes
+OWNER-APPENDIX-vNN-B.md|## Appendix part 8: The yes sentence pattern
+OWNER-APPENDIX-vNN-B.md|## Appendix part 9: What you may type outside the shell
+OWNER-APPENDIX-vNN-B.md|## Appendix part 10: Deadline backstop
+OWNER-FILM-PERSON-vNN.md|# Film person page (v33): for the film person only; the same for sheet A and sheet B
+OWNER-HELPER-vNN.md|# Cancel helper page (v33): for the cancel helper only; the same for sheet A and sheet B

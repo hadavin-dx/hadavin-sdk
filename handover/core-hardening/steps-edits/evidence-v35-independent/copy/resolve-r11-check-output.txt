@@ -1,0 +1,144 @@
+rows parsed 56
+E-01 old1 count 1 lines [3] stated [3] OK
+E-02 old1 count 1 lines [3] stated [3] OK
+E-03 old1 count 1 lines [5] stated [5] OK
+E-04 old1 count 1 lines [69] stated [69] OK
+E-05 old1 count 1 lines [95] stated [95] OK
+E-06 old1 count 1 lines [75] stated [75] OK
+E-07 old1 count 1 lines [75] stated [75] OK
+E-08 old1 count 1 lines [187] stated [187] OK
+E-09 old1 count 1 lines [78] stated [78] OK
+E-11 old1 count 1 lines [87] stated [87] OK
+E-12 old1 count 1 lines [92] stated [92] OK
+E-13 old1 count 1 lines [99] stated [99, 11] OK
+E-13 old2 count 1 lines [11] stated [99, 11] OK
+E-14 old1 count 1 lines [107] stated [107] OK
+E-15 old1 count 1 lines [107] stated [107] OK
+E-16 old1 count 1 lines [121] stated [121] OK
+E-17 old1 count 1 lines [131] stated [131] OK
+E-18 old1 count 1 lines [131] stated [131] OK
+E-19 old1 count 1 lines [159] stated [159] OK
+E-20 old1 count 1 lines [162] stated [162] OK
+E-21 old1 count 1 lines [164] stated [164] OK
+E-22 old1 count 1 lines [166] stated [166] OK
+E-23 old1 count 1 lines [151] stated [151] OK
+E-24 old1 count 1 lines [178] stated [178] OK
+E-25 old1 count 1 lines [193] stated [193] OK
+E-26 old1 count 1 lines [2] stated [2] OK
+E-27 old1 count 1 lines [5] stated [5] OK
+E-28 old1 count 1 lines [9] stated [9] OK
+E-29 old1 count 1 lines [9] stated [9] OK
+E-30 old1 count 1 lines [7] stated [7] OK
+E-31 old1 count 1 lines [20] stated [20] OK
+E-32 old1 count 1 lines [23] stated [23] OK
+E-33 old1 count 1 lines [23] stated [23] OK
+E-34 old1 count 1 lines [27] stated [27] OK
+E-36 old1 count 1 lines [131] stated [131] OK
+E-37 old1 count 1 lines [27] stated [27] OK
+E-38 old1 count 1 lines [9] stated [9] OK
+E-39 old1 count 1 lines [23] stated [23] OK
+E-40 old1 count 1 lines [20] stated [20] OK
+E-41 old1 count 1 lines [103] stated [103] OK
+E-42 old1 count 1 lines [104] stated [104] OK
+E-43 old1 count 1 lines [14] stated [14] OK
+E-44 old1 count 1 lines [20] stated [20] OK
+E-45 old1 count 1 lines [23] stated [23] OK
+E-46 old1 count 1 lines [14] stated [14] OK
+E-47 old1 count 1 lines [1] stated [1] OK
+E-48 old1 count 1 lines [123] stated [123] OK
+E-49 old1 count 1 lines [87] stated [87] OK
+E-50 old1 count 1 lines [92] stated [92] OK
+E-51 old1 count 1 lines [92] stated [92] OK
+E-52 old1 count 1 lines [16] stated [16] OK
+E-53 old1 count 1 lines [28] stated [28] OK
+E-54 old1 count 1 lines [85] stated [85] OK
+E-55 old1 count 1 lines [119] stated [119] OK
+E-56 old1 count 1 lines [20] stated [20] OK
+E-57 old1 count 1 lines [116] stated [116, 117] OK
+E-58 old1 count 1 lines [147] stated [147] OK
+old texts 57
+overlaps 0
+apply-now rows applied to scratch copies 44
+apply-now + hold rows with text applied to scratch copies 55
+status {'Apply now': 44, 'Hold': 12} files {'OWNER-STEPS-realrun-v3.md': 37, 'AGENT-SCOPE-DO-AND-DONT.md': 15, 'DECISION-one-store.md': 4} types {'STALE': 15, 'UNCLEAR WORD': 10, 'MISSING STEP': 14, 'CONTRADICTION': 16, 'DEFERRED': 1}
+index rows 56
+banned vendor strings found (indexes): [] of 10
+secret-like matches: []
+owner NEW texts containing login: []
+owner NEW texts containing Re-checked: []
+owner NEW texts containing WP6: []
+owner NEW texts containing UNVERIFIED: ['E-01', 'E-12', 'E-16', 'E-24', 'E-48']
+owner NEW texts containing "the lead" used: ['E-01', 'E-52']
+owner NEW texts containing rehearsal (not flow rehearsal): []
+owner NEW texts containing bare key (not secret/lead/encryption/Code-node key): ['E-04', 'E-09', 'E-11', 'E-12', 'E-15', 'E-37', 'E-42', 'E-48', 'E-51', 'E-52', 'E-55', 'E-57', 'E-58']
+owner NEW texts containing token: ['E-52']
+owner NEW texts containing E-nn code: []
+owner NEW texts containing ND code: []
+owner NEW texts containing lead key: ['E-52']
+E-36 NEW blocks 1
+scratch OWNER-STEPS lines 267 (original 193; E-03 adds 7 lines, E-25 adds 4, E-37 adds 2)
+E-25 end of file: ['15. That n8n (release number 2.46.6) run', '16. That the saved runs are kept in Post', '17. That n8n sends nothing out. Its outg', '18. Whether a crash between sending the ', '']
+counts text (56, 37, 15, 4) computed (56, 37, 15, 4)
+hold rows ['E-04', 'E-05', 'E-13', 'E-39', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-49', 'E-50', 'E-53'] apply-now 44 hold 12
+gates used ['G1', 'G2', 'G3', 'G4', 'G5'] defined ['G1', 'G2', 'G3', 'G4', 'G5']
+G1 named ['E-04', 'E-05', 'E-12', 'E-37', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-56'] in headers ['E-04', 'E-05', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45']
+G2 named ['E-07', 'E-08'] in headers ['E-07', 'E-08']
+G3 named ['E-13'] in headers ['E-13']
+G4 named ['E-39'] in headers ['E-39']
+G5 named ['E-49', 'E-50', 'E-53'] in headers ['E-49', 'E-50', 'E-53']
+ND numbers [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+confirmation letters ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+E-nn named but not rows: []
+ND numbers named [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+scratch 'Then comes the preparation' apply-now False all True
+scratch 'a fifth fact' apply-now False all True
+scratch 'does not print these two values' apply-now True all True
+scratch 'Words used (read once)' apply-now True all True
+scratch '**A secret key**' apply-now True all True
+scratch '**A database user**' apply-now True all True
+4b in apply-now False in all True
+scratch apply-now OWNER-STEPS lines 267
+scratch all OWNER-STEPS lines 274
+fence lines 228
+UTC time without IST pairing (check): 18:29 UTC
+apply-now ids 44
+older word lead key context: aive A5, five meanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this
+older word lead key context:  the take program gives to an enquiry (the older text says "lead key" or "lead id"). **The table of enquirie
+older word lead key context: iden the HubSpot key. - MAY: post this take's own generated lead keys (L plus hex); ~~~~ Why: Design M4 of r
+older word table of leads context: so call an enquiry a "lead" and the table of enquiries the "table of leads". The other new words are explained
+older word table of leads context: eanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this line so that the
+older word table of leads context: take's table with one row per enquiry (the older text says "table of leads"). - **A secret key**: a long text 
+banned list size 10 hits in EDITS.md 0
+HOLD-labelled blocks 13
+round 11 checks done
+---- negative controls
+NEG r11hold caught | FAIL hold row NEW without label E-13
+NEG r11e53 caught | FAIL E-53 unless clause
+NEG r11e09 caught | FAIL E-09 credentials
+NEG r11addr caught | FAIL E-06 bare address: the address the assis
+NEG r11slot caught | FAIL E-12 lacks crash check: tested or untested
+NEG r11e36 caught | FAIL E-36 text N not quoted in why
+NEG r11e58 caught | FAIL E-58 times
+NEG nd14 caught | FAIL ND14 missing
+NEG e17lease caught | FAIL E-17 lease sentence added
+NEG e22 caught | FAIL crash check untested missing in E-22
+NEG e43 caught | FAIL E-43 lacks stage.journal
+NEG e49 caught | FAIL E-49 consent not tied to message (a) to (d)
+NEG e49day caught | FAIL E-49 lacks day format example
+NEG e53 caught | FAIL E-53 lacks override of line 27
+NEG e51 caught | FAIL E-51 wording
+NEG e52 caught | FAIL E-52 new word not once: A mail address
+NEG e04 caught | FAIL E-04 no final full stop
+NEG e07 caught | FAIL E-07 lacks "nobody on this branch"
+NEG e08 caught | FAIL E-08 lacks "nobody on this branch"
+NEG record caught | FAIL old record format
+NEG nd8date caught | FAIL ND record carries a date: ND8: A|B <date and time in UTC and IST>
+NEG rehearsal caught | FAIL rehearsal alone: hing leaves the laptop. - The rehearsal comes aft
+NEG q195 caught | FAIL E-48 Q19.5 wording
+NEG m4 caught | FAIL E-12 lacks what happens next
+NEG e31 caught | FAIL E-31 unproven claim
+NEG line14 caught | FAIL line 14 lacks search path =
+NEG e14 caught | FAIL E-14 post meaning
+NEG rowcount caught | FAIL ids differ {'E-58', 'E-59'}
+NEG conf caught | FAIL confirmation letters
+FAILURES 0

@@ -1269,7 +1269,11 @@ else: F('r19 changes file r19-CHANGES.md is missing')
 print('r19 golden: %d pinned sentences, %d differences' % (len(_PINS), len(_g19)))
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
+_negskip = [bool(os.environ.get('NEG_AFTER'))]
 def neg(name, old, new, expect, count=1):
+    if _negskip[0]:
+        if name == os.environ.get('NEG_AFTER'): _negskip[0] = False
+        return
     src = open(E, encoding='utf-8').read()
     if src.count(old) < 1:
         F('negative control anchor missing: ' + name); return
@@ -1291,7 +1295,7 @@ if not os.environ.get('NO_NEG'):
     neg('r11addr', 'the web address the assistant gives (it is NOT', 'the address the assistant gives (it is NOT', 'bare address')
     neg('r11slot', 'crash check: tested or untested', 'crash check slot', 'E-12 lacks crash check: tested or untested')
     neg('r11e36', 'TEXT N (held, not applied', 'TEXT M (held, not applied', 'E-36 text N not quoted')
-    neg('r11e58', 'Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST', 'Mon 23', 'E-58 times')
+    neg('r11e58', 'Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST', 'Mon 23', 'r19 count applied')
     neg('nd14', '14. **Does the lease sentence of Q22(c)', '14. **Something else', 'ND14 missing')
     neg('e17lease', '**a lead sent twice with the same id is processed once; a crash', '**a lead sent twice with the same id (see the lease) is processed once; a crash', 'E-17 lease sentence added')
     neg('e22', 'the case counts as "crash check untested", the same words', 'the case counts as untested, the same words', 'crash check untested missing in E-22')

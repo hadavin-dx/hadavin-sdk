@@ -295,3 +295,20 @@ AB09 CAUGHT by C269 | B2: helper paper completion time removed
 AB10 CAUGHT by C270 | B3: Recall page missing is a stop again
 AB11 CAUGHT by C271 | minor 4: near-deadline line drops the phone fallback
 AB12 CAUGHT by C272 | M7: screen turn-off not set
+AB13 CAUGHT by C271 | M4: card says 20 minutes for a 22-minute chain
+AB14 CAUGHT by C271 | minor 1: the reminder contradiction back
+AB15 CAUGHT by C271 | minor 5: 7.11 mismatch dead end back
+AB16 CAUGHT by C07,C273 | reading load: 400 words added
+AB17 CAUGHT by C271 | minor 2: card backstop time loses the Sunday time
+AC01 CAUGHT by C274 | Enter-by time defined with 6 minutes (C274: the card definition is the one rule)
+AC02 CAUGHT by C274 | a second wording of the 5-minute boundary at 7.3 (C274)
+AC03 CAUGHT by C275 | Sunday older-key bound moved to the backstop time (C275)
+AC04 CAUGHT by C276 | planned moment P2 relabelled W2 (C276)
+AC05 CAUGHT by C277 | the old word deadline reminders is back (C277)
+AC06 CAUGHT by C278 | helper callback to the paper number removed (C278)
+AC07 CAUGHT by C279 | film page cites an undefined label (C279)
+AC08 CAUGHT by C280 | film person exposure row picks an option (C280)
+TOTAL plants 308 (negative controls ok 1, not counted below):
+TOTAL plants 308: caught by the meant check 307, missed 0 (of them caught only by another check 0), anchor-not-found 0
+heavy-slot: slot 1 freed, exit 0
+exit 0

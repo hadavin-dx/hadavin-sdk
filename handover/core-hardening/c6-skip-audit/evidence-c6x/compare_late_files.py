@@ -3,7 +3,15 @@ Words changed (inserted or deleted, after the version numbers are made equal) ar
 Usage: python3 -B -I compare_late_files.py [steps-edits folder]   Reads only; writes nothing. Exit 0 always (it states a result, it is not a gate)."""
 import difflib, re, sys, os
 H = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-S = sys.argv[1] if len(sys.argv) > 1 else os.path.join(H, "core-hardening", "steps-edits")
+_E = os.path.dirname(os.path.abspath(__file__))
+if len(sys.argv) > 1:
+    S = sys.argv[1]
+else:   # c6x: the PINNED files only (steps-pinned = the frozen copy, late-pinned = the files written after the freeze, copied once at the time in PIN-TIME.txt)
+    import tempfile, shutil
+    S = tempfile.mkdtemp()
+    for _d in ("steps-pinned", "late-pinned"):
+        for _f in os.listdir(os.path.join(_E, _d)):
+            shutil.copy(os.path.join(_E, _d, _f), S)
 TOPICS = ("lease", "g12", "closing card", "card line", "45-second", "45 s", "database", "n8n", "hubspot", "read-only", "alert", "processed once")
 pairs = [("OWNER-SHEET-v34-A.md", "OWNER-SHEET-v35-A.md"), ("OWNER-SHEET-v34-B.md", "OWNER-SHEET-v35-B.md"), ("LEAD-RELEASE-NOTE-v18.md", "LEAD-RELEASE-NOTE-v19.md")]
 for a, b in pairs:

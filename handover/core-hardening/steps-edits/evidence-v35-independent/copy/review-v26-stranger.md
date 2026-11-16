@@ -1,0 +1,33 @@
+# Owner sheet v26 stranger (naive-reader) review (egm-comprehension, condensed copy of the inline report), 2026-11-16
+Target: steps-edits/OWNER-SHEET-v26-A.md (line numbers are A's), B differences at the end. Date arithmetic, weekdays and 0.27/0.81 checked and correct. Verdict: 2 blockers, 19 majors, 15 minors. The reader took no action and saw no secret.
+
+## BLOCKERS
+- BL1 The silence rule contradicts the normal wait (R10 line 51 vs lines 18, 68, 104, 105). Sample silence minutes = 3, but the test program is silent at "Type y to start" for up to 5 minutes, after "run started" until the film cue, and after the film pause until `end`. With a key alive FREEZE means "do the card first", so literal obedience cancels a paid key and ends the run. Say silence at "Type y", before the film cue and while waiting for `end` is exempt (or give those waits their own bounds).
+- BL2 Card blanks cannot be filled before pressing create (lines 25, 82, 94, 61): the "cancel button word", "confirmation box word" and "cancelled word" appear only after pressing cancel on a real key; the only key to try is the older key, whose cancel is irreversible and forbidden until 6.7. Line 61 says "seen by the lead", but the lead is an AI with no stated way to have seen it. This gates the whole run.
+
+## MAJOR
+- M1 6.3 (line 94) never checks the earliest key time (line 18 says not before it).
+- M2 A 6.7 (line 98) cancels the older key irreversibly before the new key is shown to work (6.6 checks only file size and that the list shows the name; scopes are "describe them"). A failed run leaves no valid key. "Nothing else I know uses it" (lines 53, 98) has no step to find out. Suggest cancel after the run or after a proven test call.
+- M3 A line 39: no last resort for a failed older-key cancel (B has it); R4 line 45 does not cover it.
+- M4 6.3/6.4 (lines 94-95): the live key sits on the clipboard while the owner types a long command by hand (a missing `-s` echoes the key). Safer order: type the command first, then create and copy. Unclear whether the printed command is exempt from R6 (line 47), which forbids `$ ( ) ' "` in filled-in parts.
+- M5 The "valid" key state word may be unknown at key-list checks 1 and 2 (lines 82, 87, 93, 13); 5.1 says "read at 6.3", after the checks.
+- M6 No vendor or page named for the model account and key list; "ask the lead" cannot see the owner's screen.
+- M7 5.4 and 5.5 (lines 85-86) cannot be carried out: Gmail label with filter, conversation view off, Chrome profile `demo-take` with no Google account all say "how unknown: ask the lead"; 5.3 "the Windows page" unnamed; 6.1 "no such page: describe, proceed".
+- M8 Sender Gmail login never set up; 8.3 revokes app passwords in it, 5.5 signs the film profile in only to HubSpot and the receiver Gmail; risk of mixing with the real mailbox (R1, line 15).
+- M9 Phone fallback (line 39) is not prepared anywhere.
+- M10 The last-resort step is unknown until the numbers message (lines 17, 39); line 76 only checks it is non-empty; the owner cannot judge an irreversible step in time.
+- M11 `Spend lock` never defined (lines 64, 89); no guidance whether NOT SHOWN is acceptable; the key could spend after "restarted" and before "y".
+- M12 The two programs and "restarted" are not explained (model program vs test program; how an AI chat restarts software on the owner's machine).
+- M13 Undefined terms in the expected result (line 71): "person id", "unknown: accepted", "submitted N times", "HubSpot app secrets", "the flows' HubSpot apps" (line 15).
+- M14 Timing window tight and time zones guessed: sample earliest key 11:00, latest start 11:30 UTC; "restarted" has no bound; how large a time difference counts is not said; `date -u` in WSL trusted with no second clock.
+- M15 7.7 asks for counts the owner may not see (lines 106-107); during the film pause the owner touches nothing and the film person drives; the film person is in the room while the key is alive.
+- M16 "Prompt" has three meanings (W6 line 27, 7.3 "Type y to start", 6.4 `paste key, Enter:`, 7.9 shell prompt) and one is a card trigger.
+- M17 No bound on a hung finish: after the card 7.9 waits for the prompt; silence rule R10 (BL1) says FREEZE; line 73 only a blank.
+- M18 Post step unclear (line 124): whether the video is posted, where, and what the lead's "post" word does (step 9 never mentions waiting for it); a post cannot be undone.
+- M19 If the run stops before 6.7, nothing says whether to cancel the older key later; it stays valid indefinitely.
+
+## MINOR
+m1 no section 4, R2 and R3 never mentioned (lines 2, 41). m2 "Read terminal" defined three ways (lines 10, 18, 24, 51). m3 "tolerated" items marked only at 8 and R7, so a different button name at 6.3 always means STOP (a card with a key alive) (lines 8, 18, 48). m4 R8's six words vs 6.6 "wait", no "post" word at step 9, "none" not in set phrases (lines 37, 49, 53). m5 words with several meanings: run, key, step, message, list, prompt, cancel, window, profile, alarm, deadline, Take, UNVERIFIED. m6 R9(a) vs the sender Gmail in the From column: the video needs editing (lines 9, 50). m7 "Wait 10 seconds" with no reason; hard-coded "5 minutes" in 7.4 vs numbers message (line 104). m8 8.7 restores Privacy switches only post-run; 8.1 `rm` of a key file that may not exist (lines 114, 120). m9 run name "never used before" cannot be checked (line 9). m10 how many days between 5 and 6 is not said (lines 85, 89). m11 5.7 settings check called "not controls" with no reason (line 88, 45). m12 L1 mixes two time zones and two states (line 29). m13 W9: unclear whether the own key's card is also done (line 27). m14 FREEZE: unclear whether the older-key cancel counts as "the card" (line 18). m15 after `exit 0` "copy one harmless word" with no source (line 95).
+
+## Variant B differences
+B line 59 older key "left alone and valid during the run" (no "unknown means no run" at line 76); B cancels the older key at 7.11 after the run, "always by 16:00 UTC = 21:30 IST even if the lead is silent": the older key can spend during the whole run and B drops A's 5.6 check (last use never or more than 7 days earlier); 7.11 contradiction ("declined" happens before a yes; the cancel is irreversible even if no run happened; which day is not said; a FREEZE can block 7.11); B's last resort covers a failed older-key cancel (better than A); B's card step 5 wording is right for B and false for A; B's yes sentence drops two A phrases and adds the older-key spending sentence; B has no pre-run irreversible cancel but 7.11 has the same unproven "nothing else I know uses it". BL1, BL2, M1, M4-M18 and the minors apply to B too.

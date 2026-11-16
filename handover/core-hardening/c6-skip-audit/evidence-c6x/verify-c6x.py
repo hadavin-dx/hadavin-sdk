@@ -12,7 +12,8 @@ H = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirn
 STEPS = os.environ.get("C6V_STEPS", H + "/handover/core-hardening/steps-edits")  # the negative controls point this at a changed copy
 T = os.environ.get("C6V_TREE") or os.environ.get("C6U_TREE") or (os.path.dirname(os.path.abspath(__file__)) + "/tree/handover")  # default: the 9 demo files shipped in evidence-c6x/tree
 R = sys.argv[1] if len(sys.argv) > 1 else H + "/handover/core-hardening/c6-skip-audit/REPORT-c6x.md"
-raw = open(R, encoding="utf-8").read()
+import assemble_c6x
+raw, INCLUDED = assemble_c6x.assemble(R)   # c6x: the appendix files are put back at their markers, so every check reads the same text as before the split
 txt = raw.split("\n")
 FAILS = []
 TOTAL = [0]
