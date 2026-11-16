@@ -85,7 +85,7 @@ Two choices only the lead can make; both sit in FINDINGS/FIX-PLAN today as oppos
 4. Proof for "processed once" in the edit: mailbox exactly 1 mail + the mf_leads row + the POST 2 reply under 10 s; the CRM row count alone is not proof. Recommendation: yes; I will change the claims table so.
 5. Re-pin date (Q-H), real-take port, and the missing take scripts/n8n_api.py: one list with a name and a time each is needed from the lead.
 
-## Q23 (11:15Z, from the F3 test-gap fixer, fill_flows/fix-f3-r9.md)
+## Q23 (11:15Z, from the F3 test-gap fixer, fill_flows/fix-f3-r9.md) - ANSWERED (lead, ORDERS.md line 141, 11:55Z): keep accepted, no change to the frozen tool (fill_flows)
 fill_flows (frozen) accepts an output path whose parent folder is a symbolic link made by you or root, and writes into the link target; it refuses a link made by another user, and still checks the real target for /mnt, git and cloud-synced folders (README section "Folders that are links"). A test now documents this. Question for the lead: keep it accepted? Recommendation: keep (refusing every parent link would break macOS /tmp); no change to the frozen tool.
 
 ## Q22b (open decisions without number; the second list that was first headed Q22, renamed 2026-11-16; items cited elsewhere as 'Q22-1' or 'Q22-2' in older logs mean THIS list) (after the 11:25Z answer, open lead decisions that had no number; pointers only, nothing here blocks the take)
@@ -96,7 +96,9 @@ Each is already written in a file; this list only gives it a place.
 4. ANSWERED (lead, ORDERS.md line 138, item 4): Q20 item 4: the lead sets DESK_ALERT_TO at take prep and verifies the value at re-pin; never typed in a file.
 5. CONFIRMED (lead, ORDERS.md line 138, item 5): Lead decision 2: the take never deletes contacts; the owner deletes the leftovers by hand (Q13; FIX-PLAN, line 'Not a numbered item').
 
-## Q24 (gate 2 r2 fixer, 2026-11-16 UTC; from reviews/adversarial-gate-r2.md; pointers, nothing here blocks the take until the date is missing)
+## Q24 (gate 2 r2 fixer, 2026-11-16 UTC; from reviews/adversarial-gate-r2.md) - ANSWERED (lead, ORDERS.md line 141, 11:55Z; items 1 to 5 below)
+Lead text: Q23: keep accepted, no change to the frozen tool. Q24: 1 Date X: the lead writes the re-pin time after the merge, review and final evidence are done; hard latest = Mon 23 Nov before 18:29 UTC; write 'lead sets, not before the final evidence'; never invent a date. 2 N and the 10 s line: the rehearsal measures both; the lead sets them after; write 'measured at rehearsal, lead sets'. 3 Yes: 'never typed in a file' = set in the lead's own values file outside the repository, made-up address. 4 Keep the narrowing (counts read after the take with a SELECT-only login). 5 The lead applies the A-016f caption change at re-pin ('one mail sent, one row in state done'); you list it in the lead steps.
+The five questions as asked:
 1. Date X: no re-pin time written by date X means the take is postponed. Date X: lead to set. I did not invent one.
 2. The 45 s lease threshold N (the rehearsal step time above which recovery is off for the take) and the 'under 10 s' line for the POST 2 reply: lead to set before the rehearsal; the rehearsal measures both. Today neither is measured (n8n never ran).
 3. DESK_ALERT_TO: the files show the unfilled real-v5 has 3 $env reads (DESK_ALERT_TO, DESK_URL, DESK_TIMEOUT_MS) and fill_flows writes literals for all three, so the gate is '0 reads after fill'. Please confirm that 'never typed in a file' (Q20 item 4) means: set in the lead's own values file outside the repository, made-up address.

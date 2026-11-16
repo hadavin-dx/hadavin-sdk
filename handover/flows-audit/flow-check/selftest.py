@@ -30,7 +30,9 @@ import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CK = os.environ.get("FC_CK") or HERE + "/check_flows.py"
-OUT = os.environ.get("FC_OUT") or ""  # round 8: empty = a new temporary folder is made in main(); the committed selftest-output/ is rewritten only when FC_OUT names it
+OUT = (
+    os.environ.get("FC_OUT") or ""
+)  # round 8: empty = a new temporary folder is made in main(); the committed selftest-output/ is rewritten only when FC_OUT names it
 args = [a for a in sys.argv[1:]]
 if not args:
     print(__doc__)
@@ -1629,7 +1631,14 @@ def main():
     def one(name, mut, level, text, extra, also, tv, src, f):
         nonlocal skipped
         n = f"{name}@{tv}-{f}"
-        d, sk, exp = make(n, mut, work, src, f, keep_counts=(name in ("wrong_count", "wrong_count_more_connections")))
+        d, sk, exp = make(
+            n,
+            mut,
+            work,
+            src,
+            f,
+            keep_counts=(name in ("wrong_count", "wrong_count_more_connections")),
+        )
         if sk:
             skipped += 1
             skipnames[name] = skipnames.get(name, 0) + 1
@@ -2623,7 +2632,9 @@ def main():
     vs = {
         "": um.value_is_safe("abc"),  # no block, nothing 6+ characters long
         "ref": um.value_is_safe("={{ $env.SOME_NAME }}"),
-        "other_block": um.value_is_safe("={{ foo.bar }}"),  # a block that is not a reference, no quoted text
+        "other_block": um.value_is_safe(
+            "={{ foo.bar }}"
+        ),  # a block that is not a reference, no quoted text
         "mixed": um.value_is_safe("={{ $json.a }}{{ foo.bar }}"),
     }
     report(
