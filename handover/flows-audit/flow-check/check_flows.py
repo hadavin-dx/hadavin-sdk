@@ -339,7 +339,18 @@ TABLE_AFTER = {"from", "update", "into", "join"}
 MAIL_SHAPE = re.compile(
     r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}"
 )  # one plain e-mail address; the shape only, a filled-in wrong address still passes
-PH_WORD = re.compile("|".join(re.escape(x) for x in PLACEHOLDERS))  # f8-r11 (M4): only the placeholder word itself is ever printed, never the text around it (it may be a real value)
+PH_WORD = re.compile("|".join(re.escape(x) for x in PLACEHOLDERS))
+PH_TOKEN = re.compile(r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*")
+PH_LABEL = re.compile(r"[A-Z]+(?:_[A-Z]+)*")
+
+
+def ph_labels(text):
+    """What may be PRINTED about a placeholder in a text (f8-r11, review f8-r10 M4): the whole token around the placeholder word only when it is a plain label (capital letters and underscores, at most 40 characters, such as FROM_ADDRESS_PLACEHOLDER); any other token (it has digits or lower-case letters, so it may be a real value) is cut to the placeholder word itself. Never the text around it."""
+    out = []
+    for m in PH_TOKEN.finditer(text):
+        tok = m.group(0)
+        out.append(tok if len(tok) <= 40 and PH_LABEL.fullmatch(tok) else PH_WORD.search(tok).group(0))
+    return out
 
 
 def parse_ddl(text):
@@ -973,7 +984,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         for k, v in (cr or {}).items():
             idv = str((v or {}).get("id") or "") if isinstance(v, dict) else ""
             if idv and any(p in idv for p in PLACEHOLDERS):
-                phw = PH_WORD.search(idv).group(0)  # f8-r11 (M4): the placeholder word only, never the rest of the id
+                phw = ph_labels(idv)[0]  # f8-r11 (M4): a plain label or the placeholder word only, never the rest of the id
                 phs.append(f"{nm} credential {k} id {phw}")
                 CRED_PH.append(f"{tag} node {nm} credential {k} id: {phw}")
         wf = (
@@ -983,7 +994,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         )
         for wv in list(strings(wf)) if wf is not None else []:
             if any(p in wv for p in PLACEHOLDERS):
-                phw = PH_WORD.search(wv).group(0)  # f8-r11 (M4)
+                phw = ph_labels(wv)[0]  # f8-r11 (M4)
                 phs.append(f"{nm} sub-workflow id {phw}")
                 CRED_PH.append(f"{tag} node {nm} sub-workflow id: {phw}")
         secret_scan(n, tag)
@@ -992,7 +1003,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             for k_, v_ in prm_.items():
                 if k_ != "workflowId":
                     for s_ in strings(v_):
-                        for w_ in PH_WORD.findall(s_):
+                        for w_ in ph_labels(s_):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
             for k_, v_ in mail_fields(prm_):  # f8-r11 (M5): at any depth (parameters.options.ccEmail, replyTo, ...), not only the top level
