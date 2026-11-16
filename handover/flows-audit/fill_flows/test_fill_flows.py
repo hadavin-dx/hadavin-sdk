@@ -58,7 +58,7 @@ def wtext(path, text, mode="w"):
         fh.write(text)
 
 
-def run(*args):
+def run_cli(*args):
     """Run the CLI as a subprocess; returns (code, stdout, stderr)."""
     p = subprocess.run(  # noqa: S603
         [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args],
@@ -70,7 +70,11 @@ def run(*args):
     return p.returncode, p.stdout, p.stderr
 
 
+WRITTEN: list[str] = []  # every value written by write_values; no output may show one
+
+
 def write_values(path, vals):
+    WRITTEN.extend(v for v in vals.values() if len(v) >= 4)
     with open(path, "w") as fh:
         fh.write("# made-up\n" + "".join(f"{k}={v}\n" for k, v in vals.items()))
     os.chmod(path, 0o600)
@@ -95,17 +99,29 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.t = tempfile.mkdtemp(prefix="ff13-", dir=os.environ.get("FF_TEST_BASE"))
         self.addCleanup(shutil.rmtree, self.t, True)
+        WRITTEN.clear()
         self.vf = os.path.join(self.t, "flow-values.env")
         write_values(self.vf, VALS)
         self.nflow = 0
 
-    def cli(self, *args):
-        """Run the CLI; fail the test if ANY made-up value shows in stdout or stderr."""
-        code, so, se = run(*args)
-        for v in (*VALS.values(), *PH_VALS.values()):
+    def leak_check(self, so, se):
+        for v in (*VALS.values(), *PH_VALS.values(), *WRITTEN):
             self.assertNotIn(v, so, "a value reached stdout")
             self.assertNotIn(v, se, "a value reached stderr")
+
+    def cli(self, *args):
+        """Run the CLI; fail the test if ANY made-up value shows in stdout or stderr."""
+        code, so, se = run_cli(*args)
+        self.leak_check(so, se)
         return code, so, se
+
+    def inproc(self, *args):
+        """Same as cli, but in this process (so a test can patch the module)."""
+        bo, be = io.StringIO(), io.StringIO()
+        with redirect_stdout(bo), redirect_stderr(be):
+            code = ff.main(list(args))
+        self.leak_check(bo.getvalue(), be.getvalue())
+        return code, bo.getvalue(), be.getvalue()
 
     def fill(self, src=None, vf=None, out=None):
         return self.cli(
@@ -161,7 +177,7 @@ class Positive(Base):
             src = self.copy_flows(flavor)
             out = self.out("o-" + flavor)
             code, so, se = self.fill(src=src, out=out)
-            self.assertEqual(code, 0, se)
+            self.assertEqual(code, 3, se)  # written, but placeholders are left
             self.assertEqual(sorted(os.listdir(out)), sorted(os.listdir(src)))
             for n in os.listdir(src):
                 a = jload(os.path.join(src, n))
@@ -175,14 +191,15 @@ class Positive(Base):
             # the unused keys of the other flavor produce only a key-name warning
             self.assertIn("warning: key", se)
             # six placeholders are still in the files and the values file has no key for them
-            self.assertIn("NOT READY TO IMPORT: ", so)
+            self.assertIn("NOT READY TO IMPORT: ", se)
+            self.assertNotIn("NOT READY", so)
             # source untouched
             self.assertIn("$env", rtext(os.path.join(src, "mf-sub-crm-mail.json")))
 
     def test_real_expressions(self):
         src = self.copy_flows("real")
         out = self.out()
-        self.assertEqual(self.fill(src=src, out=out)[0], 0)
+        self.assertEqual(self.fill(src=src, out=out)[0], 3)
         found = all_strings(out)
         self.assertIn("={{ " + json.dumps(URL) + " }}/qualify", found)
         self.assertIn('={{ Number("2500" || 10000) }}', found)
@@ -191,7 +208,7 @@ class Positive(Base):
     def test_film_expressions(self):
         src = self.copy_flows("film")
         out = self.out()
-        self.assertEqual(self.fill(src=src, out=out)[0], 0)
+        self.assertEqual(self.fill(src=src, out=out)[0], 3)
         found = all_strings(out)
         self.assertIn('={{ "http://127.0.0.1:9/stage" }}/qualify', found)
         self.assertIn('={{ Number("3000" || 10000) }}', found)
@@ -213,7 +230,7 @@ class Positive(Base):
         o = jload(p)
         o["nodes"][0]["name"] = "node $env.DESK_ALERT_TO"
         jdump(o, p)
-        self.assertEqual(run("check", src, "--tokens-only")[0], 1)
+        self.assertEqual(self.cli("check", src, "--tokens-only")[0], 1)
         out = self.out()
         code, _, se = self.fill(src=src, out=out)
         self.assertEqual(code, 0, se)
@@ -228,13 +245,13 @@ class Positive(Base):
             "x " + VALS["DESK_ALERT_TO"],
         ):
             self.assertIn(want, found)
-        self.assertEqual(run("check", out, "--tokens-only")[0], 0)
+        self.assertEqual(self.cli("check", out, "--tokens-only")[0], 0)
 
     def test_idempotent_same_bytes(self):
         src = self.copy_flows("film")
         o1, o2 = self.out("a"), self.out("b")
-        self.assertEqual(self.fill(src=src, out=o1)[0], 0)
-        self.assertEqual(self.fill(src=src, out=o2)[0], 0)
+        self.assertEqual(self.fill(src=src, out=o1)[0], 3)
+        self.assertEqual(self.fill(src=src, out=o2)[0], 3)
         self.assertEqual(tree_hash(o1), tree_hash(o2))
         self.assertEqual(rtext(o1 + ".manifest.json"), rtext(o2 + ".manifest.json"))
 
@@ -257,30 +274,30 @@ class Positive(Base):
         )
         self.assertGreater(left, 0)
         out1 = self.out("one")
-        code, so, _ = self.fill(src=src, out=out1)
-        self.assertEqual(code, 0)
-        self.assertIn(f"NOT READY TO IMPORT: {left} placeholders left", so)
+        code, _, se = self.fill(src=src, out=out1)
+        self.assertEqual(code, 3)
+        self.assertIn(f"NOT READY TO IMPORT: {left} placeholders left", se)
         write_values(self.vf, {**VALS, **PH_VALS})
         out2 = self.out("two")
         code, so, se = self.fill(src=src, out=out2)
         self.assertEqual(code, 0, se)
-        self.assertNotIn("NOT READY", so)
+        self.assertNotIn("NOT READY", so + se)
         found = all_strings(out2)
         self.assertFalse([t for t in found if t in ff.PLACEHOLDERS])
         self.assertIn("phv-pg-1", found)
         self.assertIn(PH_VALS["FROM_ADDRESS_PLACEHOLDER"], found)
-        self.assertEqual(run("check", out2)[0], 0)
-        self.assertEqual(run("check", out1)[0], 1)
+        self.assertEqual(self.cli("check", out2)[0], 0)
+        self.assertEqual(self.cli("check", out1)[0], 1)
 
     def test_check_mode(self):
         src = self.copy_flows("real")
-        code, so, _ = run("check", src)
+        code, so, _ = self.cli("check", src)
         self.assertEqual(code, 1)
         for w in ("DESK_URL", "DESK_ALERT_TO", "SUB_WORKFLOW_ID", "PG_CREDENTIAL_ID"):
             self.assertIn(w, so)
         out = self.out()
         self.fill(src=src, out=out)
-        code, so, _ = run("check", out, "--tokens-only")
+        code, so, _ = self.cli("check", out, "--tokens-only")
         self.assertEqual((code, "token" in so), (0, False))
         code, so, _ = self.cli("check", out)
         self.assertEqual(code, 1)  # placeholders remain
@@ -294,7 +311,7 @@ class Positive(Base):
                 "c": "={{ $env[name] }}",  # dynamic form
             }
         )
-        code, so, _ = run("check", d)
+        code, so, _ = self.cli("check", d)
         self.assertEqual(code, 1)
         self.assertIn("token $env DESK_URL", so)
         self.assertIn("token $env DESK_TIMEOUT_MS", so)
@@ -305,7 +322,7 @@ class Positive(Base):
         d = self.flow_dir({})
         wtext(os.path.join(d, "bad.json"), "{nope")
         wtext(os.path.join(d, "nan.json"), '{"nodes": [], "x": NaN}')
-        code, so, _ = run("check", d)
+        code, so, _ = self.cli("check", d)
         self.assertEqual(code, 1)
         self.assertIn("bad.json", so)
         self.assertIn("nan.json", so)
@@ -333,13 +350,13 @@ class Negative(Base):
     def test_extra_unknown_key_warns_only(self):
         write_values(self.vf, {**VALS, "MF_UNUSED_KEY": "abc"})
         code, _, se = self.fill()
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         self.assertIn("MF_UNUSED_KEY", se)
         self.assertNotIn("abc", se.replace("MF_UNUSED_KEY", ""))
 
     def test_other_name_refused_even_with_value(self):
         # a clean flow, so the refusal can only come from the name rule
-        self.refuse({"x": "$env.PATH"}, "PATH", vals={**VALS, "PATH": "xyz"})
+        self.refuse({"x": "$env.PATH"}, "PATH", vals={**VALS, "PATH": "/opt/pathv-q9k"})
 
     def test_leftover_token_unknown_name(self):
         self.refuse({"x": "={{ $env.DESK_OTHER_THING }}"}, "DESK_OTHER_THING")
@@ -393,7 +410,7 @@ class Negative(Base):
         self.assertEqual(os.listdir(self.out()), [])
         src = self.copy_flows("real")
         o = self.out("second")
-        self.assertEqual(self.fill(src=src, out=o)[0], 0)
+        self.assertEqual(self.fill(src=src, out=o)[0], 3)
         self.assertEqual(self.fill(src=src, out=o)[0], 1)  # second run refuses, no overwrite
 
     def test_bad_values(self):
@@ -426,7 +443,7 @@ class Negative(Base):
             with open(self.vf, "w", newline="") as fh:
                 fh.writelines(f"{k}={bad if k == 'DESK_URL' else v}\n" for k, v in VALS.items())
             code = self.fill()[0]
-            self.assertEqual(code, 0, bad)
+            self.assertEqual(code, 3, bad)
             self.assertIn("={{ " + json.dumps(bad) + " }}/qualify", all_strings(self.out()))
             shutil.rmtree(self.out())
             os.unlink(self.out() + ".manifest.json")
@@ -434,7 +451,7 @@ class Negative(Base):
     def test_inline_comment_marker_warns(self):
         write_values(self.vf, {**VALS, "MF_CRM_URL": "http://127.0.0.1:9/crm #old"})
         code, _, se = self.fill()
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         self.assertIn("value of MF_CRM_URL contains ' #'", se)
 
     def test_bom_refused(self):
@@ -515,13 +532,12 @@ class Negative(Base):
             return real(path, data)
 
         out = self.out()
-        buf = io.StringIO()
-        with mock.patch.object(ff, "_write_new", flaky), redirect_stderr(buf):
-            code = ff.main(
-                ["fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out]
+        with mock.patch.object(ff, "_write_new", flaky):
+            code, _, se = self.inproc(
+                "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
             )
         self.assertEqual(code, 1)
-        self.assertIn("failed: OSError", buf.getvalue())
+        self.assertIn("failed: OSError", se)
         self.assertEqual(len(calls), 3)
         self.assertTrue(calls[0].endswith(".manifest.json"))
         self.assertFalse(os.path.exists(out))
@@ -654,22 +670,22 @@ class Unit(Base):
         self.assertEqual(s.string("plain $env.DESK_URL", "other"), "plain x")
 
     def test_exit_codes_are_literal(self):
-        self.assertEqual(run()[0], 2)  # command-line mistake
-        self.assertEqual(run("fill", "--in", self.t)[0], 2)
+        self.assertEqual(self.cli()[0], 2)  # command-line mistake
+        self.assertEqual(self.cli("fill", "--in", self.t)[0], 2)
         self.assertEqual(ff.EXIT_OK, 0)
         self.assertEqual(ff.EXIT_REFUSED, 1)
+        self.assertEqual(ff.EXIT_INCOMPLETE, 3)
         self.assertEqual(ff.EXIT_NOTHING, 4)
 
     def test_values_never_in_messages_in_process(self):
         with open(self.vf, "w", newline="") as fh:
             fh.write("DESK_URL=" + CANARY + "\r\n")
-        buf = io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(buf):
-            code = ff.main(
-                ["fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", self.out()]
-            )
+        WRITTEN.append(CANARY)
+        code, so, se = self.inproc(
+            "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", self.out()
+        )
         self.assertEqual(code, 1)
-        self.assertNotIn(CANARY, buf.getvalue())
+        self.assertNotIn(CANARY, so + se)
 
     def test_property_roundtrip_random_values(self):
         rnd = random.Random(7)  # noqa: S311 - test data only
@@ -681,6 +697,207 @@ class Unit(Base):
             lit = ff._js_literal(v)
             self.assertNotIn("}}", lit)
             self.assertEqual(json.loads(lit.replace("\\u007b", "{").replace("\\u007d", "}")), v)
+
+
+class Hardening(Base):
+    """Review round 2: exit code 3, the no-manifest signature, cleanup of a stub, and more."""
+
+    def made(self):
+        out = self.out()
+        self.fill(src=self.copy_flows("film"), out=out)
+        return out
+
+    def raw_values(self, **kv):
+        with open(self.vf, "w", newline="") as fh:
+            fh.writelines(f"{k}={kv.get(k, v)}\n" for k, v in VALS.items())
+
+    # ---- M2: written but incomplete
+    def test_placeholder_inside_longer_string_counts(self):
+        d = self.flow_dir({"to": "Name <FROM_ADDRESS_PLACEHOLDER>", "u": "$env.DESK_URL"})
+        out = self.out()
+        code, so, se = self.fill(src=d, out=out)
+        self.assertEqual(code, 3)
+        self.assertIn("NOT READY TO IMPORT: 1 placeholders left", se)
+        self.assertNotIn("NOT READY", so)
+        self.assertTrue(os.path.isdir(out))  # the copy is written; it is just not ready
+        code, so, _ = self.cli("check", out)
+        self.assertEqual(code, 1)
+        self.assertIn("placeholder FROM_ADDRESS_PLACEHOLDER x1", so)
+
+    def test_exit_0_only_when_nothing_is_left(self):
+        d = self.flow_dir({"u": "$env.DESK_URL"})
+        self.assertEqual(self.fill(src=d)[0], 0)
+
+    # ---- M4: platform
+    def test_platform_check_refuses_plainly(self):
+        d = self.flow_dir({"u": "$env.DESK_URL"})
+        with mock.patch.object(ff, "HAS_NOFOLLOW", False):
+            code, so, se = self.inproc("check", d)
+        self.assertEqual(code, 1)
+        self.assertIn("Linux, macOS or WSL", se)
+        self.assertEqual(so, "")
+
+    # ---- M1 / F3: --no-manifest needs the tool's signature
+    def test_no_manifest_refuses_a_plain_input_folder(self):
+        src = self.copy_flows("real")  # modes 0755 / 0644, still holds $env text
+        before = tree_hash(src)
+        code, _, se = self.cli("delete", "--out", src, "--no-manifest")
+        self.assertEqual(code, 1)
+        self.assertIn("not marked as this tool's output", se)
+        self.assertEqual(tree_hash(src), before)
+
+    def test_no_manifest_refuses_wrong_file_mode_folder_mode_and_owner(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        p = os.path.join(out, "mf-form.json")
+        os.chmod(p, 0o644)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "mf-form.json" in se), (1, True))
+        os.chmod(p, 0o600)
+        os.chmod(out, 0o500)
+        self.assertEqual(self.cli("delete", "--out", out, "--no-manifest")[0], 1)
+        os.chmod(out, 0o700)
+        with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
+            self.assertEqual(self.inproc("delete", "--out", out, "--no-manifest")[0], 1)
+        self.assertEqual(len(os.listdir(out)), 4)
+        self.assertEqual(self.cli("delete", "--out", out, "--no-manifest")[0], 0)
+
+    def test_no_manifest_refuses_non_json_and_env_text(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        p = os.path.join(out, "mf-form.json")
+        wtext(p, "{cut short")
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "does not parse as JSON" in se), (1, True))
+        self.assertTrue(os.path.exists(p))
+        wtext(p, '{"nodes": [], "u": "$env.DESK_URL"}')
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "holds $env text" in se), (1, True))
+        wtext(p, "{cut short")  # a killed run leaves a cut file: --force-hash allows it
+        self.assertEqual(self.cli("delete", "--out", out, "--no-manifest", "--force-hash")[0], 0)
+        self.assertFalse(os.path.exists(out))
+
+    def test_symlinked_out_dir_with_no_manifest_and_with_copied_manifest(self):
+        out = self.made()
+        link = self.out("link")
+        os.symlink(out, link)
+        code, _, se = self.cli("delete", "--out", link, "--no-manifest")
+        self.assertEqual((code, "symlink" in se), (1, True))
+        shutil.copy(out + ".manifest.json", link + ".manifest.json")
+        self.assertEqual(self.cli("delete", "--out", link)[0], 1)
+        self.assertEqual(len(os.listdir(out)), 4)
+        self.assertTrue(os.path.exists(out + ".manifest.json"))
+
+    def test_delete_of_a_half_filled_folder(self):
+        out = self.made()
+        os.unlink(os.path.join(out, "mf-form.json"))
+        code, so, _ = self.cli("delete", "--out", out)
+        self.assertEqual((code, "deleted 3 files" in so), (0, True))
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+
+    # ---- F1: a cut file made by this run is removed
+    def test_write_cut_in_the_middle_leaves_nothing_and_rerun_works(self):
+        real_fdopen = os.fdopen
+        count = {"n": 0}
+
+        class Half:
+            def __init__(self, fh):
+                self.fh = fh
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_a):
+                self.fh.close()
+                return False
+
+            def write(self, data):
+                self.fh.write(data[:10])
+                self.fh.flush()
+                raise OSError("disk full (test)")
+
+        def fake(fd, mode="r", *a, **k):
+            fh = real_fdopen(fd, mode, *a, **k)
+            if mode == "wb":
+                count["n"] += 1
+                if count["n"] == 3:  # manifest, first file, then a file cut in the middle
+                    return Half(fh)
+            return fh
+
+        out, src = self.out(), self.copy_flows("real")
+        args = ("fill", "--in", src, "--values", self.vf, "--out", out)
+        with mock.patch.object(ff.os, "fdopen", fake):
+            code, _, se = self.inproc(*args)
+        self.assertEqual((code, "failed: OSError" in se), (1, True))
+        self.assertFalse(os.path.exists(out))
+        self.assertFalse(os.path.exists(out + ".manifest.json"))
+        self.assertEqual(self.inproc(*args)[0], 3)  # the re-run is not blocked
+        self.assertEqual(len(os.listdir(out)), 4)
+
+    # ---- F5: forms and values
+    def test_odd_spellings(self):
+        self.refuse({"u": "={{ $env . DESK_URL }}"}, "$env token is left")
+        self.refuse({"u": "={{ /* c */ $env.DESK_URL }}"}, "comment")
+        self.refuse({"u": "={{ // c\n$env.DESK_URL }}"}, "comment")
+        s = ff.Subst({"DESK_URL": "x"})
+        self.assertEqual(s.string('={{ "$" + "env.DESK_URL" }}'), '={{ "$" + "env.DESK_URL" }}')
+
+    def test_more_bad_values(self):
+        for bad, msg in {
+            "nel\x85x": "control or line-break",
+            "=1+1": "starts with '='",
+        }.items():
+            self.raw_values(DESK_URL=bad)
+            code, so, se = self.fill()
+            self.assertEqual(code, 1, repr(bad))
+            self.assertIn(msg, se)
+            self.assertNotIn(bad, so + se)
+
+    def test_values_file_mode_0604_refused(self):
+        os.chmod(self.vf, 0o604)
+        code, _, se = self.fill()
+        self.assertEqual((code, "chmod 600" in se), (1, True))
+
+    # ---- F7, F8
+    def test_check_on_empty_folder_fails(self):
+        d = os.path.join(self.t, "empty")
+        os.mkdir(d)
+        code, _, se = self.cli("check", d)
+        self.assertEqual((code, "no .json files" in se), (1, True))
+
+    def test_output_inside_input_refused(self):
+        src = self.copy_flows("real")
+        for sub in ("o", os.path.join("a", "o")):
+            os.makedirs(os.path.join(src, os.path.dirname(sub)), exist_ok=True)
+            code, _, se = self.fill(src=src, out=os.path.join(src, sub))
+            self.assertEqual((code, "inside it" in se), (1, True))
+            self.assertFalse(os.path.exists(os.path.join(src, sub)))
+        self.assertEqual(self.fill(src=src, out=src)[0], 1)
+
+    # ---- F10: a regex or division next to a token
+    def test_slash_outside_a_string_refused(self):
+        self.refuse({"u": "={{ /x/.test($env.DESK_URL) }}"}, "'/' outside a string")
+        self.refuse({"u": "={{ /'/.test('a') + $env.DESK_URL }}"})  # mis-lexed quote: refused
+        self.refuse({"u": "={{ $env.DESK_TIMEOUT_MS / 2 }}"}, "'/' outside a string")
+
+    # ---- N2: a code key higher up still counts
+    def test_code_key_carried_down(self):
+        self.refuse({"jsCode": {"a": {"b": "return $env.DESK_URL"}}}, "jsCode")
+        self.refuse({"pythonCode": [{"b": ["x $env.DESK_URL"]}]}, "pythonCode")
+
+    # ---- N4: digits only, trailing slash
+    def test_ms_keys_digits_only(self):
+        for bad in ("25s", "-5", "2500.5", "\uff12\uff15", "1e3", "0x10"):
+            self.raw_values(DESK_TIMEOUT_MS=bad)
+            code, _, se = self.fill()
+            self.assertEqual((code, "digits only" in se), (1, True), repr(bad))
+            self.assertFalse(os.path.exists(self.out()))
+
+    def test_trailing_slash_in_url_warns(self):
+        self.raw_values(DESK_URL="http://127.0.0.1:9/")
+        code, _, se = self.fill()
+        self.assertEqual(code, 3)
+        self.assertIn("value of DESK_URL ends with '/'", se)
 
 
 if __name__ == "__main__":

@@ -59,3 +59,6 @@ Demos and any other live-kind config (no demos folder in the scratch trees); the
 
 ## Open for the studio head
 The ceiling number for max_tokens (C-2) and whether K1bAudit gets a `reconcile()` (A-2). Neither blocks the other fixes.
+
+## Update 09:25 UTC: full-repository run (heavy lane H1)
+A full worktree run at b4cce5b is in ../heavy-test-lane/SUMMARY.md. Baseline and patched both show 2 failed (two guard tests that scan handover/ files; not caused by the patches), 9389 vs 9404 passed. ruff, format and bandit rc 0 both times. The 5 scratch-tree failures named above do not occur in a full worktree. Still not checked: Postgres behaviour, demos' live-kind configs, real provider output limits. The review fixes (C-1..A-9) were not applied or re-tested in this run.
