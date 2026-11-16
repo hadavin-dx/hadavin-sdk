@@ -1128,3 +1128,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 821 PLAN-002 r22: gate not folded, three 'lead' meanings. FIXED by CURRENT STATE block at top; lines 40, 86 UNVERIFIED.
 - 822 L1c r13: cells vs notes, FD-016 severity. FIXED by CURRENT STATE block at top.
 - 823 open-items r15: bare rows, stale cells. PARTLY FIXED: line 3 and row 6 cells edited, CURRENT STATE block at top; column 6 TO DO.
+- 824 critical-path r23: opening, row 1, glossary. FIXED by opening block at top.
+- 825 M17 r12: baseline unknown, VERIFIED undefined. PARTLY FIXED by baseline block; owner and date NOT SET.
+- 826 ARCHIVE-CUT-LIST r14: row table missing. PARTLY FIXED: pointer to history lines 6-20; table copy TO DO. Lead notice written: work/LEAD-NOTICE-batch-1.md.

@@ -1,0 +1,5 @@
+# For the lead, from the system-map session, 16 Nov 2026. Four items that need a decision or a fact. Nothing here is verified.
+1. POSSIBLE BREACH: the L4c lane read seven files in the real-run folder before decision 5 (the lead reads only masked take outputs). Which files: see work/L4c.md. Please decide: is that acceptable, and who records it.
+2. work/OWNER-ONLY.txt does not exist. partition.py exits 1 without it, and no lane may start. The studio head names the owner-only paths; the lead writes the file.
+3. Held pages (OWNER-VIEW, RUN-DAY-CARD, CLEANUP-CARD, LEAD-PAGE, TAKE-BLOCKERS, SWEEP, MASTER-MAP, README, QUESTIONS, QUEUE): their digests are in work/agent-reports-batch4.md and were NOT applied. They still say `end` deletes contacts (UNVERIFIED either way; see decisions/M17-end-never-deletes.md).
+4. Unknowns only you or the studio head can fill: who writes fill_flows.py and scripts/n8n_api.py; the take port; the two Postgres database names; the post checker's name; the A4 answer; the rehearsal 'passed' rule; who 'laptop lead' is.

@@ -1,3 +1,5 @@
+This is the 15th version; ignore all earlier ones; no file has been moved. The row table (rows K, M, C, ids and paths) is in work/archive-cut-list-history.md lines 6-20; it is not copied here (TO DO). 'A session's own' files = files written by a Claude session of this project; if the files are a session's own, the laptop lead must also say yes; who that is: NOT RECORDED.
+
 # ARCHIVE CUT LIST: CURRENT VERDICT r15 (16 Nov 2026). Nothing has moved. History: work/archive-cut-list-history.md (twelve older verdicts; apply nothing).
 Words: archive = move files out of the repo to a place outside it (studio head names it). Studio head = the human who runs the studio (name NOT RECORDED). Laptop lead = NOT RECORDED. lane3-fix-1 = a series of patch files from an earlier lane; paused-b21, b22, b23 and register.md = notes about those rounds; all UNVERIFIED here.
 Keep rows K and M in place. Hold every other row. Only row C may be archived: the lane3-fix-1 patch files for rounds r2, r3, r4 and r5 (folder handover/demo3/evidence/, UNVERIFIED). Keep r6. Keep lane3-fix-5 r8 to r11.
