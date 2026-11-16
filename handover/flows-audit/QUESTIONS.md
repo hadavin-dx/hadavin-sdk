@@ -45,3 +45,12 @@ Decisions name scenes 1-4. CLAIMS-TABLE rows 14-17 edit the closing card: if it 
 
 ## Q16 ANSWERED (lead 10:29Z; see ORDERS.md "ANSWER (lead, 10:29Z): Q16"; applied to CLAIMS-TABLE to-do rows 85, 86 and 87 and OWNER-STEPS-q16-rows.md; log reviews-f1/fix-q16.md; the lead verifies at re-pin). Answer in plain words: the take uses the newer table file demo/n8n-flows-v4/mf_leads.sql (it has the four alert columns that mf-recovery.json needs), copied into the take folder. Before the first send, a psql check must show the four alert_* columns. The two address placeholders are filled by the lead with fill_flows from the owner's settings; the owner types nothing. (flows-audit, 2026-11-16 10:55 UTC): which table definition does the take use? (F8 reviewer, UNVERIFIED, read only)
 The real-v5 folder holds no SQL file. demo/n8n-flows/mf_leads.sql (the one run_all.sh copies) is the older table without alert_sent, alert_token, alert_until, alert_attempts; mf-recovery.json uses those columns (lines 124, 204, 228). Only demo/n8n-flows-v4/mf_leads.sql has them. On the older table the alert step fails every 30 s and the failure is swallowed, so no alert would ever send. Also real-v5 mail steps still hold FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER (fill_flows or the owner fills them). Recommendation: add the v4 table file to the take folder and name it in OWNER-STEPS v4. Needs the lead: the file lives outside handover/flows-audit.
+
+## Q17 (flows-audit, 2026-11-16 UTC): scope of the queue against the one take (zoom-out review, reviews/zoom-out-take.md)
+A fresh reviewer says about a third of the effort serves no take claim. I have NOT changed the queue: the items come from your orders. Please decide (yes/no each):
+1. Freeze fill_flows (F3) at the current round and stop further rounds, using the env setting plus generator arguments for the placeholders? (My view: the security path rule says uncapped rounds, so I keep going until you say freeze.)
+2. Park F8 beyond take_check.sh (--baseline, --strict, film-v5 block, run_all.sh) and F2/F6? F2 is already cut by decision 4.
+3. Drop the F-001 patch (changes n8n-flows/mf_leads.sql) now that Q16 says use v4 mf_leads.sql as is?
+4. Run T19 and T20 on UNPATCHED real-v5 first and apply the F-002 patch only if T20 shows a hole?
+5. Add ONE made-up lead through the real HubSpot trial before the rehearsal (id shape, credential), as a named step in OWNER-STEPS v4? (Decision 8 allows it.)
+6. Answer Q14 (re-rate F-005, F-006, F-023, F6B-01, F6B-13 to Nit)?
