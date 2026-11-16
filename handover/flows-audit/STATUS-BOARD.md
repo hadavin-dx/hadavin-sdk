@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:11:06Z
+UPDATED_UTC: 2026-11-16T11:11:46Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 87
-AGENTS_RUNNING: 6
-CAPACITY: 0.53 load of 4 cores, mem 0/15 GB, RAM 857/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 735M /tmp/claude-0 , agents 6 (light+heavy per list)
+PERCENT: 88
+AGENTS_RUNNING: 7
+CAPACITY: 0.55 load of 4 cores, mem 0/15 GB, RAM 912/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 735M /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -53,8 +53,8 @@ ORDER 027: started 4 lanes (stranger+adversarial read of owner sheet, citation c
 F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB cap untested); --out via symlinked parent writes into target (unjudged): give to r8 fixer after a54491a8 reports
 gap lane G1-G9 (reviews/notchecked-lane-r1.md): take start-state gate, 'processed once' counts wording, screen scan for personal data, abort rule: Q22 answers applied to owner sheet by osfix6; FIX-PLAN/CT application waits for sweepfix2 and frontfix to finish
 F8 r7 fixer: ruff format not reproduced (passes with repo config); TCMISS, M2 M3 M7 M12 fixed per own report, my rerun run_all rc 0, check_patches PASS; M10 equivalent; independent evidence on final head running (f8ev)
-NEXT: 6 running: owner sheet r6, front matter, G1-G9 fixer, F8 evidence, sweep2 citation check; next: second-angle read, one-place sweep, drift report
-PUSHED_UTC: 2026-11-16T11:11:06Z
+NEXT: 7 running (front matter, G1-G9, F8 evidence, sweep2 cites, owner sheet stranger read, branch cross-read, patch second review). ORDER 028 text not on origin yet; refill to 8 when it lands
+PUSHED_UTC: 2026-11-16T11:11:46Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -74,10 +74,12 @@ PUSHED_UTC: 2026-11-16T11:11:06Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | frontfix | front-matter fixer | sonnet | RW/CT status table, definitions | 11:12 | 11:35 | 5 | running | fix-front.md
-| osfix6 | owner sheet fixer r6 | sonnet | citations + Q22 + abort/retake steps | 11:14 | 11:30 | 5 | running | fix-ownersteps-r6.md
 | gfix | G1-G9 fixer | sonnet | FIX-PLAN/FINDINGS/flow-check README | 11:20 | 11:40 | 5 | running | fix-g1-g9.md
 | f8ev | EVIDENCE RUNNER F8 final | sonnet | gates, 15 new mutants, hostile inputs | 11:20 | 11:45 | 5 | running | flow-check/evidence-f8-r7.md
 | cite4 | citation checker sweep2 | sonnet | check fix-sweep2 edits | 11:20 | 11:35 | 5 | running | reviews/citations-sweep2-r1.md
+| osread6 | stranger read owner sheet r6 | sonnet | egm-comprehension | 11:24 | 11:35 | 5 | running | reviews/
+| xread2 | cross-read system-map+core-hardening branches | sonnet | contradictions with our files | 11:27 | 11:40 | 5 | running | reviews/crossread-branches-r1.md
+| patrev2 | second reviewer F-002/F-008 patches (egm-codebase-details) | sonnet | technical accuracy | 11:27 | 11:40 | 5 | running | (inline)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

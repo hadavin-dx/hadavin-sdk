@@ -1,0 +1,3 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --ddl /tmp/fc-selftest-trn7nf1p/bad-utf8.sql
+usage error: --ddl file cannot be read (missing, or not valid UTF-8 text)
+exit=2
