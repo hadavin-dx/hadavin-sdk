@@ -14,7 +14,7 @@ def subn(old, new, what=''):
 
 LAST = "Tue 24 Nov 2026 18:29 UTC = 23:59 IST"
 TBC_OLD = " (this date is to be confirmed by the studio lead before you rely on it)"
-TBC = " (this date is a proposal: it stands unless the assistant tells you another date before your first take)"
+TBC = " (this date is a proposal: it stands if the assistant names no other date before your first take)"
 KS = ("The key is revoked by 18:19 UTC = 23:49 IST; the last 10 minutes (18:19 UTC = 23:49 IST to 18:29 UTC = 23:59 IST) are for card steps 2 and 3; "
       "if the key is still live at 18:19 UTC = 23:49 IST it comes first.")
 TW = ("`no more takes` alone is never final; the confirmation is `yes, no more takes`; "
@@ -33,7 +33,7 @@ OLD_AL = ("Set four alarms on your own phone or computer. Alarm 1: Mon 23 Nov 20
           "Alarm 4: Tue 24 Nov 2026 06:00 UTC = 11:30 IST" + TBC_OLD + ", named `if the secret key for the model is still not revoked, revoke it now`; it is only for the case that you missed alarms 1 to 3 (key step D.5). "
           "Turn alarm 2 off when you have written `key revoked` or `key gone, no more decisions`.")
 NEW_AL = ("Set five alarms on your own phone or computer. Alarm 1: Mon 23 Nov 2026 17:49 UTC = 23:19 IST, named `revoke the secret key for the model`. "
-          "Alarm 2: a repeating alarm every day from the day of your first take until Mon 23 Nov 2026, always at 06:30 UTC = 12:00 IST (a fixed time in the daytime, when you are awake; this time is a proposal and stands unless the assistant tells you another time before your first take), named `is the secret key for the model still alive?`. "
+          "Alarm 2: a repeating alarm every day from the day of your first take until Mon 23 Nov 2026, always at 06:30 UTC = 12:00 IST (a fixed time in the daytime, when you are awake; this time is a proposal and stands if the assistant names no other time before your first take), named `is the secret key for the model still alive?`. "
           "Alarm 3: Mon 23 Nov 2026 18:09 UTC = 23:39 IST, named `last chance: revoke the secret key for the model now`. "
           "Alarm 4: Mon 23 Nov 2026 18:24 UTC = 23:54 IST, named `still not revoked: revoke the secret key for the model now`; it rings 5 minutes after the last time to revoke. "
           "Alarm 5: Tue 24 Nov 2026 00:30 UTC = 06:00 IST" + TBC + ", named `the secret key for the model must be revoked now`; you set it in every case, and it is not conditional on anything: if you have already written `key revoked` or `key gone, no more decisions` it costs you nothing and you switch it off (key step D.5). "
@@ -50,7 +50,7 @@ edit_new('E-48', [
 # other copies of the alarm list
 sub("Set four alarms on your own phone or computer (step 22 item 3, key step C): alarm 1 for 17:49 UTC = 23:19 IST on Mon 23 Nov 2026,", "Set five alarms on your own phone or computer (step 22 item 3, key step C): alarm 1 for 17:49 UTC = 23:19 IST on Mon 23 Nov 2026,")
 sub("alarm 2, which repeats every evening from the day of your first take (your own phone time), named `is the secret key for the model still alive?`; and alarm 4 for Tue 24 Nov 2026 06:00 UTC = 11:30 IST" + TBC_OLD + ", named `if the secret key for the model is still not revoked, revoke it now`, for the case that you missed the others.",
-    "alarm 2, which repeats every day from the day of your first take at 06:30 UTC = 12:00 IST (a proposal that stands unless the assistant tells you another time), named `is the secret key for the model still alive?`; alarm 4 for Mon 23 Nov 2026 18:24 UTC = 23:54 IST, named `still not revoked: revoke the secret key for the model now`; and alarm 5 for Tue 24 Nov 2026 00:30 UTC = 06:00 IST" + TBC + ", named `the secret key for the model must be revoked now`, which you set in every case.")
+    "alarm 2, which repeats every day from the day of your first take at 06:30 UTC = 12:00 IST (a proposal that stands if the assistant names no other time), named `is the secret key for the model still alive?`; alarm 4 for Mon 23 Nov 2026 18:24 UTC = 23:54 IST, named `still not revoked: revoke the secret key for the model now`; and alarm 5 for Tue 24 Nov 2026 00:30 UTC = 06:00 IST" + TBC + ", named `the secret key for the model must be revoked now`, which you set in every case.")
 sub("In short: set four alarms (key step C);", "In short: set five alarms (key step C);")
 sub("Facts: key step A is a promise by the owner backed by his four alarms; the program has no timer; all four alarms are on one person's device;", "Facts: key step A is a promise by the owner backed by his five alarms; the program has no timer; all five alarms are on one person's device;")
 sub("The owner's four alarms (key step C: 17:49 UTC = 23:19 IST and 18:09 UTC = 23:39 IST on 23 Nov, a repeating evening alarm from the first take, and 06:00 UTC = 11:30 IST on Tue 24 Nov, a date that the studio lead still has to confirm) are the only reminders",
@@ -65,6 +65,7 @@ edit_new('E-48', [
      "The exceptions are alarm 1, alarm 3, alarm 4 and alarm 5 (key step C), the last time to revoke (key step D.5) and " + EMERG + ". In every exception you revoke first and write `key gone, no more decisions`."),
     ("normally you revoke it after your confirmation (key step D.3); alarm 1, alarm 3 and the last time to revoke (key step D.5) are the exceptions.",
      "normally you revoke it after your confirmation (key step D.3); alarm 1, alarm 3, alarm 4, alarm 5, an emergency (key step D.3) and the last time to revoke (key step D.5) are the exceptions."),
+    ("write `key gone, no more decisions` instead (key step D.5). " + TW + " " + WARN3, "write `key gone, no more decisions` instead (key step D.5). " + WARN3),
     ("If you could not revoke it by the deadline, write `key not revoked` and the reason; the assistant lists it in the handoff with a date to finish it.",
      "If you could not revoke it by the deadline, write `key not revoked` and the reason. " + NOKEYDATE),
     ("Use it only when all three are true, or when you revoke at the last time to revoke. It counts as `key revoked` and as the confirmation, so after it you do not type `key revoked` again.",
@@ -81,7 +82,7 @@ edit_new('E-48', [
      "What you have not finished by 18:29 UTC = 23:59 IST you finish yourself by " + LAST + TBC + ": you act, and nobody does an owner item for you. The key is never one of these items. The assistant lists each open item other than the key in the handoff"),
     # G.2 (security M1, M2; stranger M-C)
     ("If by 18:29 UTC = 23:59 IST (the assistant has no timer: it reads the time shown on your last message in the chat, and a message with no time shown counts as late) you have not written ALL of these, the assistant does not start item 1 in that session; it lists in the handoff every item that is left, with you as its owner and the date " + LAST + TBC_OLD + " (or a later date that you give) as the date to finish, and asks you at your next session. Item 1 may start in a later session, but still only when ALL of these are true.",
-     "If on Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST (the assistant has no timer: on that day start every message that you write with the time in UTC, for example `17:20 UTC`, because the assistant cannot be sure that your chat shows times; it reads that time, and a message that has no time at its start counts as late) you have not written ALL of these, the assistant does not start item 1 in that session; it lists in the handoff every item that is left, except the key (the key has no date: key step D.5), with you as its owner and the date " + LAST + TBC + " as the date to finish (no later date), and asks you at your next session. On any other day this time rule does not apply. Item 1 may start in a later session, but still only when ALL of these are true."),
+     "If on Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST (the assistant has no timer: on that day start every message that you write with the time in UTC, for example `17:20 UTC = 22:50 IST`, because the assistant cannot be sure that your chat shows times; it reads that time, and a message that has no time at its start counts as late) you have not written ALL of these, the assistant does not start item 1 in that session; it lists in the handoff every item that is left, except the key (the key has no date: key step D.5), with you as its owner and the date " + LAST + TBC + " as the date to finish (no later date), and asks you at your next session. On any other day this time rule does not apply. Item 1 may start in a later session, but still only when ALL of these are true."),
     ("counts as done in this list once you wrote `web revokes not done`, its name and the reason.",
      "counts as done in this list once you wrote `web revokes not done`, its name and the reason, and so does item 5 for the login that it concerns (the retire check is not run for it; item 6 for that login waits)."),
     # shred rule (security m8)
@@ -90,7 +91,7 @@ edit_new('E-48', [
      "For a file of part (b) or (d): you copy its path from your own list, sign for sign (the assistant cannot check these two parts, they rest on your handwritten list, and a file that is not on that list is never shredded)."),
 ])
 sub("The exceptions to the waiting are alarm 1, alarm 3 and the last time to revoke the secret key for the model:", "The exceptions to the waiting are alarm 1, alarm 3, alarm 4, alarm 5, an emergency (key step D.3) and the last time to revoke the secret key for the model:")
-sub("If you could not revoke the key by then, send the words `key not revoked` and the reason instead |", "If you could not revoke the key by then, send the words `key not revoked` and the reason instead (the key has no later date: send `key revoked` as soon as it is revoked) |")
+sub("If you could not revoke the key by then, send the words `key not revoked` and the reason instead |", "If you could not revoke the key by then, send the words `key not revoked` and the reason instead (the key has no later date than 18:19 UTC = 23:49 IST, so send `key revoked` as soon as it is revoked) |")
 
 # ---------------------------------------------------------------- 3. route B: the real latest time to confirm (stranger M-B), E-57, K-D, ND15
 sub("### Step 21. Watch the cut by Mon 23 Nov 2026 18:19 UTC = 23:49 IST", "### Step 21. Watch the cut by Mon 23 Nov 2026 17:49 UTC = 23:19 IST (alarm 1)")
@@ -104,7 +105,7 @@ sub("(the assistant plans for you to watch the cut before the last time to revok
 edit_new('E-48', [
     ("1. You: make sure that you have confirmed your last take", "1. You: before 18:19 UTC = 23:49 IST on the last day (key step D.5), make sure that you have confirmed your last take"),
     ("if the key is still live at 18:19 UTC = 23:49 IST it comes first. What you have not finished by 18:29 UTC = 23:59 IST you finish by " + LAST,
-     "if the key is still live at 18:19 UTC = 23:49 IST it comes first. In plain words: before 18:19 UTC = 23:49 IST the key is revoked; from then until 18:29 UTC = 23:59 IST you do the quick web revokes and the shred of the key copies; card steps 4 to 6 have no time of their own, you do them in order after card step 3. What you have not finished by 18:29 UTC = 23:59 IST you finish by " + LAST),
+     "if the key is still live at 18:19 UTC = 23:49 IST it comes first. In plain words: the key is revoked before 18:19 UTC = 23:49 IST, and the quick web revokes and the shred of the key copies follow before 18:29 UTC = 23:59 IST; card steps 4 to 6 have no time of their own, you do them in order after card step 3. What you have not finished by 18:29 UTC = 23:59 IST you finish by " + LAST),
     ("Item 2 (app passwords): on the page of app passwords of each throwaway mailbox,", "Item 2 (app passwords): at myaccount.google.com, Security, App passwords (this click path is not checked), on the page of app passwords of each throwaway mailbox,"),
 ])
 OLD_WD = "the retirement is the whole of step 22."
@@ -140,7 +141,7 @@ rsub('E-59', "If you wrote `web revokes not done` for the mailbox or for HubSpot
 
 # typed-word table: the replies of key step F (stranger M-G)
 edit_new('E-48', [
-    ("| `start clean-up` |", "| `yes`, `no, other things use it` or `not sure` | your answer to question 1 of key step F: is the secret key for the model one that you made only for this take | F |\n| `same key`, `different key` or `not sure` | your answer to question 2 of key step F: is the saved key the one that is stored in your own n8n | F |\n| `start clean-up` |"),
+    ("| `start clean-up` |", "| `yes`, `no, other things use it`, `same key`, `different key` or `not sure` | your answer to a question of key step F (question 1: is the secret key for the model one that you made only for this take; question 2: is the saved key the one that is stored in your own n8n); `not sure` is a valid answer to both | F |\n| `start clean-up` |"),
 ])
 
 # ---------------------------------------------------------------- 5. lead-facing: ND18 to ND20, headers, rounds
@@ -150,7 +151,7 @@ else:
     _ls[_i17[0] + 1:_i17[0] + 1] = [
         "18. **Alarm 2 time and the Tue 24 Nov 2026 date.** (E-48 key step C, D.5; round 20, security M5, stranger M-D.) Who answers: the studio lead. Proposals in the owner text: alarm 2 every day at 06:30 UTC = 12:00 IST (a fixed daytime time, so that a missed alarm is not left to the evening); the last prompt (alarm 5) on Tue 24 Nov 2026 at 00:30 UTC = 06:00 IST, and Tue 24 Nov 2026 18:29 UTC = 23:59 IST as the day for what is still open. Rule if no answer comes: the owner text says that each proposal stands unless the assistant tells the owner another one before his first take. Default: the proposals. Record: `ND18: <time of alarm 2> <date for the open items>`.",
         "19. **Typed word `lists written` and the rule for exact typing.** (E-48 key step B; round 20, security m5.) Who answers: the studio lead. Option (a): no new word (today): rule R10 of the studio lead cannot see the paper lists in the chat record, so it checks only that the assistant asked for them. Option (b): the owner types `lists written` once, before the take, after he has written the paper lists of the Phase 0 note (points (2), (4), (5)); the assistant then does not ask for the take until it has seen it (cost: one more word in the table; benefit: the chat record shows that the lists were made). Also: the exactness rule of key step B (type the word without backticks, capitals and a final full stop do not matter, any other change is not that word) is the builder's proposal; the studio lead confirms it. Default: (a) and the rule as written. Record: `ND19: a|b`.",
-        "20. **L-LEN: one sheet of at most 6,300 words (ORDERS.md line 227): option 1 or option 2, and a recommendation question.** (round 20; round 19 stranger L-LEN text.) Who answers: the studio lead. Numbers (computed by `verify20.py`): the applied sheet has LENSHEET words, 6,300 words are allowed, so it is LENOVER words over; the day page has LENDAY words and Appendix K has LENAPP words. Option 1: cut the sheet itself to 6,300 words: about LENOVER words go to appendix files; every Apply now row is re-cut; the day page and appendix are regenerated; the exact-copy pins are rebuilt (the pins are the list of every sentence of the sheet with its number of copies, `r20-pins.txt`); a new full review round is needed; risk: the safety sentences must stay on the one sheet. Option 2: name the day page as the ONE sheet (it holds the card, the alarms, key steps B to D and G and I, the identification check and the table of typed words, and it says plainly which other key steps and notes of the owner sheet the owner also needs); the long text stays as the detail file; needs only the studio lead's written reading of ORDERS.md line 227; risk: a reader may take the long text for the sheet that counts. The question for the studio lead: 'does ORDERS.md line 227 mean the day page that the owner reads on the take day, or the whole retirement text?' The builder recommends option 2 (it is the smaller change and keeps the exact-copy rule), but the builder does not decide. Default: not decided. Record: `ND20: 1|2`.",
+        "20. **L-LEN: one sheet of at most 6,300 words (ORDERS.md line 227): option 1 or option 2, and a recommendation question.** (round 20; round 19 stranger L-LEN text.) Who answers: the studio lead. Numbers: the applied sheet is far over 6,300 words; the exact counts of the sheet, the day page and Appendix K are in `r20-CHANGES.md` (computed by `verify20.py`, never typed by hand). Option 1: cut the sheet itself to 6,300 words: every word over 6,300 goes to appendix files; every Apply now row is re-cut; the day page and appendix are regenerated; the exact-copy pins are rebuilt (the pins are the list of every sentence of the sheet with its number of copies, `r20-pins.txt`); a new full review round is needed; risk: the safety sentences must stay on the one sheet. Option 2: name the day page as the ONE sheet (it holds the card, the alarms, key steps B to D and G and I, the identification check and the table of typed words, and it says plainly which other key steps and notes of the owner sheet the owner also needs); the long text stays as the detail file; needs only the studio lead's written reading of ORDERS.md line 227; risk: a reader may take the long text for the sheet that counts. The question for the studio lead: 'does ORDERS.md line 227 mean the day page that the owner reads on the take day, or the whole retirement text?' The builder recommends option 2 (it is the smaller change and keeps the exact-copy rule), but the builder does not decide. Default: not decided. Record: `ND20: 1|2`.",
     ]
     T = '\n'.join(_ls)
 sub("(numbered 1 to 17 in the list below the gates)", "(numbered 1 to 20 in the list below the gates)")
@@ -173,6 +174,16 @@ why_add('E-57', "Round 20 (stranger M-B): the real latest time to confirm in rou
 why_add('E-58', "Round 20 (security M1): the key has no later date; the row says so.")
 why_add('E-59', "Round 20 (security M2): item 5 counts as done for a login that carries `web revokes not done`, and item 1 does not wait for it.")
 why_add('E-37', "Round 20 (security M3, m4): the list holds `take-only` or `used` for each of the four; five things are asked or written, named as three questions and two lists.")
+
+
+# ---------------------------------------------------------------- 6. file names, round history, the hedge replaced everywhere
+sub("(the builder's copy is `r19-OWNER-APPENDIX-K.md`)", "(the builder's copy is `r20-OWNER-APPENDIX-K.md`)")
+sub("(L-LEN is not met: see `r19-CHANGES.md`, section 1, item 1)", "(L-LEN is not met: see `r20-CHANGES.md`, section L-LEN)")
+sub("round 19 writes `r19-OWNER-DAY-SHEET.md` and `r19-OWNER-APPENDIX-K.md`)", "round 19 writes `r19-OWNER-DAY-SHEET.md` and `r19-OWNER-APPENDIX-K.md`; round 20 writes `r20-OWNER-DAY-SHEET.md` and `r20-OWNER-APPENDIX-K.md`)")
+sub("Round 19 (`r19-CHANGES.md`, same paths: no round cap) applies all of those findings in one batch. The result of round 19 is NOT reviewed yet.",
+    "Round 19 (`r19-CHANGES.md`, same paths: no round cap) applied the findings of round 18; its result was reviewed (`review-r19-security.md`: 0 Blockers, 5 Majors, 9 Minors; `review-r19-stranger.md`: 0 Blockers, 7 Majors; independent evidence in `evidence-r19-independent/`). Round 20 (`r20-CHANGES.md`, same paths: no round cap) applies all of those findings in one batch. The result of round 20 is NOT reviewed yet.")
+sub("## Counts (computed by script, `r19-CHANGES.md` and `resolve-r19-check-output.txt`)", "## Counts (computed by script, `r20-CHANGES.md` and `resolve-r20-check-output.txt`)")
+subn(TBC_OLD, TBC)
 
 if errs:
     print('ERRORS', len(errs))
@@ -202,10 +213,8 @@ _ci = _E48.index('The one order (the card; read it first).'); _cj = _E48.index('
 _cj = _E48.index('\n', _cj) if '\n' in _E48[_cj:] else len(_E48)
 _card = '\n'.join(l.strip() for l in _E48[_ci:_cj].split('\n'))
 DAY = ("# OWNER-DAY-SHEET: the page for the take day (saved in the same folder as the owner sheet)\n\n"
-       "This page is for the day of the take. Everything on it is the same text as in step 22 item 3 of the owner sheet (the card, the alarms, key steps B to D, G and I, the identification check and the table of typed words), and the full reasons are in `OWNER-APPENDIX-K.md`. "
-       "This page is NOT the whole retirement: besides this page you also need, from the owner sheet, key step A (the fixed rule), key step E (what the assistant gives you), key step F (the two questions), key step H (new keys, only if you need them), key step J (other keys) and key step K (a take still running); "
-       "the Phase 0 note (under NOT YET CONFIRMED in the owner sheet, the note that you write before the take: its points (2), (4) and (5) are the key name note, your own list of files and your list of app passwords and apps); "
-       "and the full text of items 2 to 6 of step 22 (this page gives one line for each). Read those parts before the take day. "
+       "This page is for the day of the take. It holds the same text as step 22 item 3 of the owner sheet (the card, the alarms, key steps B to D, G and I, the identification check and the table of typed words); the reasons are in `OWNER-APPENDIX-K.md`. "
+       "It is NOT the whole retirement: from the owner sheet you also need key steps A, E, F, H, J and K, the Phase 0 note (the note that you write before the take: its points (2), (4) and (5)) and the full text of items 2 to 6 of step 22 (here one line each). Read them before the take day. "
        "Only messages that you type yourself, as a new message in your chat with the assistant, count.\n\n"
        "## Words used on this page\n" + _wd + "\n\n"
        "## The card\n" + _card + "\n\n"

@@ -184,7 +184,7 @@ for nm, t in SH:                                                                
     for m in re.finditer(r'(?<![Ss]hell )(?<!\*\*)prompt', t): fail('C123', '%s holds "prompt" without "shell" at %d' % (nm, m.start()))
 need('C124', 'none within the silence minutes: describe, FREEZE; no key is alive then')                                                  # T M17
 need('C125', 'Start only after the lead\'s word "post" (it means the lead has the printed result and the video is accepted)')           # T M18
-need('C126', 'If the run ends before 6.7 the older key is still valid: you cancel it at 7.11', (('A', A),))                     # T M19
+need('C126', 'If 6.7 cancelled the older key (or the message says none): describe that it is done. Otherwise it is still valid.', (('A', A),))                     # T M19
 need('C127', 'a second Ubuntu window where you only type `date -u`, `ls -l`, `clear` and the grep of 5.7')                                                                                     # T m2
 need('C128', '"none" only at 8.1')                                                                                                       # T m4
 need('C129', 'Minimum think time: [LEAD FILLS at re-pin: minimum think time] seconds'); need('C129', 'Run length: [LEAD FILLS at re-pin: run length] minutes')                                                   # S M2, S m10
@@ -208,8 +208,8 @@ need('C141', 'Test program asks you to type a figure: no'); need('C141', 'the ro
 need('C142', 'this cancel cannot be undone', (('B', B),)); need('C142', 'first read its last-used time in the key list and describe it to the lead (a use after your run key\'s create time', (('B', B),))   # S M5
 need('C143', 'Model key outside the model program: none (the lead checked n8n\'s credential store and shows it)'); need('C143', 'a model key stored in n8n would spend without the spend lock')   # S M6
 need('C144', 'Anything else (no `exit` line, or no shell prompt after it): the card first (the key is alive; STOP RULE), then FREEZE')                                                                       # S m2
-need('C145', 'put the Privacy switches back as the first sentence of 8.7 says')                                                                                # S m3
-need('C146', 'else no run today on this sheet: describe it and wait. What then:', (('A', A),)); need('C146', 'the lead sends a new numbers message with a later run day, at least 7 days after that use', (('A', A),))   # S M4: what happens when the 7-day rule fails
+need('C145', 'on an earlier day put the Privacy switches back to the values on your paper when 5.7 is finished')                                                                                # S m3
+need('C146', 'else no run today on this sheet: describe it and wait. What then:', (('A', A),)); need('C146', 'the lead sends a new numbers message with a later run day, late enough for the 7-day rule (8 days after a use that shows only a date, 5.1)', (('A', A),))   # S M4: what happens when the 7-day rule fails
 need('C147', '5.1 to 5.8 (and 6.1, which 5.7 needs) may be done on earlier days, 5.9 and the rest of sections 6 to 8 only on the run day')                                      # T m10 and v36 T M1
 need('C148', 'or no sentence "the test program made no delete call": skip only the contact deleting of this step and describe which')                  # S m14
 need('C159', 'all in IST: alarm 1 at the latest start'); need('C159', 'alarm 2 at the alarm time'); need('C159', 'alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
@@ -424,7 +424,7 @@ for _nm in 'AB':                                                                
     _t = SHEETS_DISK[_nm]; _i = _t.find('1. **Which sheet, then run name and key-list facts.**'); _j = _t.find('2. **People:**')
     _b = _t[_i:_j]
     if _i < 0 or not all(('\n   %s) ' % x) in _b for x in 'abc'): fail('C219', 'sheet %s: 5.1 is not split into a), b), c)' % _nm)
-    if 'never later than ' + F['last_day'] not in _b or 'a later use: use sheet B' not in _b: fail('C219', 'sheet %s: 5.1a lacks the last run day or the later-use route (B1)' % _nm)
+    if 'never later than ' + F['last_day'] not in _b or 'a later use: use sheet B' not in open(D + 'OWNER-APPENDIX-%s-%s.md' % (_V, _nm), encoding='utf-8').read(): fail('C219', 'sheet %s: 5.1a lacks the last run day or the later-use route (B1)' % _nm)
     if 'today plus 7 days' in _b or 'before any message from the lead' in _b: fail('C219', 'sheet %s: 5.1a keeps the unusable v31 wording (B1)' % _nm)
     if _b.count('your first action') != 1: fail('C219', 'sheet %s: 5.1a first-action wording count %d' % (_nm, _b.count('your first action')))
     if any(len(_p.split()) > 230 for _p in _b.split('\n')): fail('C219', 'sheet %s: a paragraph of 5.1 has more than 230 words' % _nm)
@@ -503,14 +503,14 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
 # C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
 if not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-%s.md does not exist' % _V9)
 else:
-    for _s in (_FF['helper_scope'], 'The owner asks you, by call or message. Never act on the ask itself', 'Never act for the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'the last-resort step on your paper (model account only) at once, but only if your cancel-only role can do it', 'Never copy, type or photograph key text',
+    for _s in (_FF['helper_scope'], 'The owner asks you, by call or message. Never act on the ask itself', 'Never act for the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'do nothing more: look for no other login, role or step', 'Never copy, type or photograph key text',
                'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
         if _s not in _HP: fail('C230', 'helper page lacks %r' % _s[:70])
     if _HP.count('you called the owner twice, 5 minutes apart, with no answer') != 2: fail('C230', 'helper page: triggers (b) and (c) do not both need two calls to the owner')
     if len(re.findall(r'\(([a-d])\) ', _HP)) != 4: fail('C230', 'helper page does not have exactly the four triggers (a) to (d)')
     if re.search(r'(?i)\blead (?:may|can) (?:ask|tell|release)', _HP): fail('C230', 'helper page lets the lead release a cancel')
 for _n, _t in (('A', A), ('B', B)):
-    for _s in ('OWNER-HELPER-v36.md', 'give your cancel helper (if any) their page and paper', 'is never the film person, editor, post checker, backup person or lead'):
+    for _s in ('OWNER-HELPER-v36.md', 'give your cancel helper (if any) their page and paper', 'cancel helper (never the film person, editor, post checker or backup person of the numbers message)'):
         if _s not in _t: fail('C230', '%s lacks %r' % (_n, _s))
 # C231 (S minor; N M5; class: a time named two ways): the backstop time and the end of the last resort
 for _n, _t in (('A', A), ('B', B)):
@@ -547,7 +547,7 @@ _TT = A + '\n' + B + '\n' + _APP9['A'] + '\n' + _APP9['B']
 for _pat, _want in ((r'Film pause: (\d+)', '10'), (r'film pause = \d+ \+ \d+ \+ (\d+) in the sample', '10'), (r'the sample says (\d+) minutes', '10'), (r"Call ceiling \(the lead's figure\): (\d+)", '3'), (r'call ceiling x that = (\d+) x', '3'),
                     (r'sample assume (\d+)\)', '15'), (r'run length \+ film pause = \d+ \+ (\d+) \+ \d+ in the sample', '15'), (r'Run length: \[?[^\n]{0,60}? assume (\d+)', '15')):
     _ms = re.findall(_pat, _TT)
-    if not _ms and _pat != r'Run length: \[?[^\n]{0,60}? assume (\d+)': fail('C236', 'no place found for %r (a changed sentence?)' % _pat)
+    if not _ms and _pat not in (r'Run length: \[?[^\n]{0,60}? assume (\d+)', r'film pause = \d+ \+ \d+ \+ (\d+) in the sample', r'run length \+ film pause = \d+ \+ (\d+) \+ \d+ in the sample'): fail('C236', 'no place found for %r (a changed sentence?)' % _pat)
     for _v in _ms:
         if _v != _want: fail('C236', '%r reads %s, the figure is %s' % (_pat, _v, _want))
 # C237 (evidence H37; class: a structural label defined twice or not at all): labels L1 to L5 and W1 to W9 are each defined once on the card
@@ -619,9 +619,9 @@ def _occ(t, s): return [m.start() for m in re.finditer(re.escape(s), t)]
 for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
     if 'do the last-resort step at once after your first "cancel failed"' not in _t: fail('C246', '%s lacks the near-deadline last-resort rule' % _n)
 for _n, _t in (('A', A), ('B', B)):
-    if _t.count('18:31 UTC = 00:01 IST') < 3 or _t.count('18:41 UTC = 00:11 IST') < 3: fail('C246', '%s: a chain end (18:31 UTC = 00:01 IST, 18:41 UTC = 00:11 IST) is not stated in the card, the yes and part 10 (need 3 each)' % _n)
+    if _t.count('18:31 UTC = 00:01 IST') < 2 or _t.count('18:41 UTC = 00:11 IST') < 2: fail('C246', '%s: a chain end (18:31 UTC = 00:01 IST, 18:41 UTC = 00:11 IST) is not stated in the card and the yes (need 2 each; part 10 no longer repeats it)' % _n)
     if _t.count('at once after') < 3: fail('C246', '%s: "at once after" is not in the card, the yes and part 10' % _n)
-    if 'the helper does the last-resort step on its paper (none: only yours is left); call the backup person at once' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
+    if 'only your last-resort step is left (the helper never does it); call the backup person at once' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
 if _FF['bm_chain'] != 'Mon 23 Nov 2026 18:31 UTC = 00:01 IST' or not _FF['bt_end'].endswith('18:41 UTC = 00:11 IST'): fail('C246', 'the chain end figures are not 18:31 UTC = 00:01 IST and 18:41 UTC = 00:11 IST')
 # C247 (S M2; class: a typed line wider than the shape that was checked): the cd line is `cd ` plus the Take folder, in 7.2, the rows rule and R6
 for _n, _t in (('A', A), ('B', B)):
@@ -638,7 +638,7 @@ for _n, _t in (('A', A), ('B', B)):
     for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'so that no alarm 5 or backstop time meets a live run key.'):
         if _s not in _t: fail('C249', '%s lacks %r' % (_n, _s[:70]))
 if _HP:
-    for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'call the owner yourself on the phone number on your paper', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):
+    for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'call the owner yourself on the phone number on your paper', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'look for no other login, role or step'):
         if _s not in _HP: fail('C249', 'the helper page lacks %r' % _s[:70])
 if 'Your "stop" tells the owner to cancel the key at once' not in _FILM9 and _FILM9: fail('C249', 'the film person page lacks the "stop" effect')
 for _n, _t in (('A', A), ('B', B)):
@@ -656,13 +656,13 @@ _cg = _p9('v36-CHANGES.md')
 if _V9 == 'v36' and not re.search(r'five pages[^\n]{0,80}\d\d,\d\d\d', _cg): fail('C251', 'v36-CHANGES.md does not state the five-page word count')
 # --- source-level content checks (evidence C01-only gap): the 11 sentences the independent run mutated, each at every occurrence, on the SOURCE
 # C255 (H04) the chain-end figures are placeholders at every occurrence in the source and no literal time follows "would end at" / "until about"
-if len(_occ(_S10, '{{bm_chain}}')) < 3 or len(_occ(_S10, '{{bt_end}}')) < 3: fail('C255', 'the source holds {{bm_chain}} %d and {{bt_end}} %d times (need 3 each: card, yes, part 10)' % (len(_occ(_S10, '{{bm_chain}}')), len(_occ(_S10, '{{bt_end}}'))))
+if len(_occ(_S10, '{{bm_chain}}')) < 2 or len(_occ(_S10, '{{bt_end}}')) < 2: fail('C255', 'the source holds {{bm_chain}} %d and {{bt_end}} %d times (need 2 each: card, yes)' % (len(_occ(_S10, '{{bm_chain}}')), len(_occ(_S10, '{{bt_end}}'))))
 for _m in re.finditer(r'(?:would end at|until about|ends? at) (?:Mon 23 Nov 2026 )?\d\d:\d\d UTC', _S10): fail('C255', 'a chain end typed as a literal time: %r' % _m[0])
 for _m in re.finditer(r'(?:\{\{bm_chain\}\}|\{\{bt_end\}\})', _S10):
     _w = _S10[_m.end():_m.end() + 160]
     if re.search(r'\d\d:\d\d UTC', _w.split('\n')[0][:60]): fail('C255', 'a literal time right after a chain end placeholder: %r' % _w[:60])
 # C256 (H05) every chain-end sentence says AFTER the deadline
-if len(_occ(_S10, 'both after the deadline')) < 2: fail('C256', 'the source says "both after the deadline" %d times (need 2)' % len(_occ(_S10, 'both after the deadline')))
+if len(_occ(_S10, 'both after the deadline')) < 1: fail('C256', 'the source says "both after the deadline" %d times (need 2)' % len(_occ(_S10, 'both after the deadline')))
 for _m in re.finditer(r'(?:\{\{bm_chain\}\}|\{\{bt_end\}\})[^\n]{0,260}', _S10):
     if re.search(r'before the deadline', _m[0]): fail('C256', 'a chain end described as before the deadline: %r' % _m[0][:80])
 for _m in re.finditer(r'(?i)last[- ]resort[^.\n]{0,80}before the deadline', _S10): fail('C256', 'the last resort set before the deadline: %r' % _m[0][:80])
@@ -737,10 +737,10 @@ _pin('C266', 'no other words may be posted', 1, 1)
 _ban('C266', r'(?i)\b(?:lease|crash recovery|recovery after a crash)\b', {'A': A, 'B': B, 'helper': _HELP, 'film': _FILM})
 _ban('C266', r'(?i)post (?:also|as well|any other|extra|additional)\b[^.]{0,30}(?:text|words|sentence|line|caption)', {'A': A, 'B': B})
 # C267 (security M1) a failed helper cancel ends at a last-resort step (on the helper paper or none) and the typed yes names the case
-for _p in ('the last-resort step on your paper (model account only) at once, but only if your cancel-only role can do it', "the last-resort step in the owner's words (or none"):
+for _p in ('do nothing more: look for no other login, role or step',):
     if _p not in _HELP or len(_occ(_S10, _p)) != 1: fail('C267', 'helper page or source lacks %r' % _p)
-_pin('C267', 'the helper does the last-resort step on its paper (none: only yours is left); call the backup person at once')
-_pin('C267', 'a helper whose cancel fails does only the last-resort step on its paper or none', 1, 1)
+_pin('C267', 'only your last-resort step is left (the helper never does it); call the backup person at once')
+_pin('C267', 'a helper whose cancel fails does nothing more than call me', 1, 1)
 _ban('C267', r'(?i)the helper has (?:none|no last-resort)|you have none, so if your cancel fails and the owner', {'A': A, 'B': B, 'helper': _HELP.replace('Paper says none: you have none, so if the owner cannot be reached', 'X')})
 # C268 (security M2 and minor 7) the lead pages: one claim sentence, no open lease wording, one 7-day wording
 for _n, _t in (('note', NOTE), ('open list', OPEN)):
@@ -798,7 +798,7 @@ for _n, _t in (('A', A), ('B', B)):
     if _t.count('**None** = "there is no such thing" in every slot') != 1: fail('C277', '%s: none/never/unknown is not defined exactly once' % _n)
 # C278 (security M1, M9, M10): the cancel helper has no standing access, calls back, is limited to its role, and is removed
 if _HELP:
-    for _s in ('call the owner yourself on the phone number on your paper', 'only if your cancel-only role can do it', 'VOID'):
+    for _s in ('call the owner yourself on the phone number on your paper', 'VOID'):
         if _s not in _HELP: fail('C278', 'helper page lacks %r' % _s)
 for _n in 'AB':
     if 'the paper is void (the helper writes VOID on it)' not in SHEETS_DISK[_n]: fail('C278', 'sheet %s: 8.7 does not void the helper paper' % _n)
@@ -816,3 +816,53 @@ for _n in 'AB':
 for _r in (121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131):
     if not re.search(r'(?m)^\| %d \|' % _r, OPEN): fail('C280', 'open list row %d is missing' % _r)
 if not re.search(r'(?m)^\| 123 \|[^\n]*no pick', OPEN): fail('C280', 'open list row 123 (film person exposure) must say it does not pick')
+# ---- Part 11 (v36, round 8): C281 to C297. One or more checks per finding of review-v35-security (S1 to S4, m1 to m6) and review-v35-stranger (M2, M3, M5 to M9, M11, M12, M14). Each fails on the built v35 pages.
+def _must(code, texts, phrases, what):
+    for _nm2, _tx in texts:
+        for _ph in phrases:
+            if _ph not in _tx: fail(code, '%s lacks %r (%s)' % (_nm2, _ph[:80], what))
+_AB = (('A', A), ('B', B))
+# C281 (security S1; class: a step that makes money-bearing key text with no stop in front of it): the create press waits for the helper's call or the card saying none
+_must('C281', _AB, ("Your cancel helper has phoned that the cancel button word and the cancelled word are both written on the paper, or the card's helper blank says none", 'ask the helper to phone you back once both are written on the paper'), 'S1 gate before the create press')
+if _HP and 'phone the owner at once on the number on your paper and say so: the owner makes no key before that call' not in _HP: fail('C281', 'helper page does not tell the helper to phone the owner once both words are written')
+# C282 (security S2; class: a permission sentence that reads as advice): an explicit rule with the none route
+_must('C282', _AB, ('**Rule:** the role may do one thing, cancel keys.', 'or no such role exists, write "none" for the helper and give no paper', 'the helper never does the last-resort step', 'Never give the helper your login.'), 'S2 permission rule')
+# C283 (security S3; class: an alarm that can be missed once): alarms 5 and 6 repeat, Do-not-disturb off, second device, in the right-after-yes step and in part 10
+_must('C283', _AB, ('phone alarms with sound that repeat every 5 minutes, with Do-not-disturb OFF and the same two alarms on a second device', 'Alarms 5 and 6 repeat every 5 minutes until 7.11 is done or no key is valid, Do-not-disturb is OFF, and a second device rings the same times'), 'S3 alarm repeat')
+if not re.search(r'(?m)^\| 132 \|[^\n]*LEAD DECISION[^\n]*named cancel helper[^\n]*earlier human stop time', OPEN): fail('C283', 'open list row 132 (named helper or earlier human stop time) is missing or is not a lead decision')
+# C284 (security S4; class: an untrue sentence kept in a decision row): row 121 no longer says the 7-day-use sentence as true; row 133 says 7.11 cancels whatever the use
+if re.search(r'(?m)^\| 121 \|[^\n]*the one place a key last used within 7 days is cancelled without your word[^\n]*\|', OPEN) and 'was untrue' not in OPEN: fail('C284', 'open row 121 still carries the untrue sentence as a claim')
+if not re.search(r'(?m)^\| 133 \|[^\n]*7\.11 cancels the older key by the older-key time whatever its last use', OPEN): fail('C284', 'open row 133 (7.11 cancels whatever the use) is missing')
+_must('C284', _AB, ('it never stops 7.11, which cancels the older key by the older-key time whatever its last use',), 'S4 sentence in 5.1a')
+# C285 (security m1; class: one time for two days): alarm 5 names the Sunday backstop, alarm 6 the Monday one
+_must('C285', _AB, ('its time for alarm 5 is ' + F['rv22'] + ', for alarm 6 ' + F['rv23'],), 'm1 two backstop times')
+# C286 (security m2; class: a sample figure stated as a fact): the cut for sheet A is stated for the sample earliest key time and with the rule for another one
+_must('C286', (('A', A),), ('with an earliest key time of ' + F['ek'] + ' as in the sample, sheet A fits only a key last used at or before ' + F['a_cut'], 'count 168 hours back from it'), 'm2 sample cut')
+# C287 (security m3 and stranger M11; class: a removal or a switch back reached on one path only): the role removal and the Privacy switches come back on every end, also without section 8
+_must('C287', _AB, ('or after 7.11 when the run ends without section 8', 'Every way the run ends', 'the helper\'s role removed and the paper voided by phone'), 'm3 and M11 every end reaches the removal')
+# C288 (security m4; class: two rules for one list): the revoke list and the secrets table say the same
+if 'an app of another use is never revoked unless the clean-up message names it' not in NOTE: fail('C288', 'the lead note secrets table does not say that only an app made for this run is revoked')
+# C289 (security m5): the Recall row says what is checked and when
+if not re.search(r'(?m)^\| 117 \|[^\n]*Recall is checked at 6\.1, before any key exists', OPEN): fail('C289', 'open row 117 does not say when Recall is checked')
+# C290 (security m6): the film page says the microphone and sound must be OFF, else stop
+_must('C290', (('film page', _FILM9 or A),), ('its microphone and sound must be OFF', 'if you cannot see that or switch them off, stop and call the owner'), 'm6 film page 3(a)')
+# C291 (stranger M2): the Enter-by time is explained where it is first used on the sheet and card
+_must('C291', _AB, ('the Enter-by time (the latest start minus 5 minutes)',), 'M2 Enter-by explained')
+# C292 (stranger M3): the y-question time is inclusive
+_must('C292', _AB, ('(exactly that many minutes is still in time)',), 'M3 inclusive minutes')
+# C293 (stranger M5): no card line runs over 350 words (v35 had 488)
+for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
+    _mx = max(len(_l.split()) for _l in _t.split('\n'))
+    if _mx > 350: fail('C293', '%s has a paragraph of %d words (limit 350)' % (_n, _mx))
+# C294 (stranger M6): owner-facing text carries no Open row labels
+for _n, _t in _AB:
+    if re.search(r'\bOpen (?:1[0-9][0-9])\b', _t): fail('C294', 'page %s names an Open row label (the owner cannot see the Open list)' % _n)
+# C295 (stranger M7 and M8): the card says what the Sunday rule is, and numbers check 2 gives the real 10 minutes before alarm 5
+_must('C295', _AB, ('no run is planned on Mon 23 Nov', 'a run on Sun 22 Nov is allowed only under numbers check 2', '10 minutes before alarm 5'), 'M7, M8 Sunday wording')
+# C296 (stranger M9, M12, M14): 5.1a order, one 7-day wording, the delete rule, and the check names
+_must('C296', _AB, ('The run day is agreed at b)', 'delete exactly those as R7 says', 'Your numbers checks (1 to 8)', 'key-list check 3'), 'M9, M12, M14')
+if '8 days after a use that shows only a date' not in A: fail('C296', 'A does not state the 8-day case for a use that shows only a date')
+if re.search(r'(?<!\d)at least 7 days after that use', A + B): fail('C296', 'the old 7-day wording is still in a page')
+# C297 (stranger BL1 to BL3, M1, M4 and security S3, S4; class: a decision left unowned): each lead decision is an Open row with a recommendation or a missing input
+for _r, _k in ((132, 'missing input'), (133, 'LEAD DECISION'), (134, 'LEAD DECISION'), (135, 'LEAD DECISION'), (136, 'LEAD DECISION'), (137, 'LEAD DECISION'), (138, 'LEAD DECISION')):
+    if not re.search(r'(?m)^\| %d \|[^\n]*%s' % (_r, _k), OPEN): fail('C297', 'open list row %d (a lead decision) is missing or lacks %r' % (_r, _k))

@@ -62,7 +62,7 @@ for n, t in ALL.items():
         if m[2] not in ('0.27', '0.81', '13.21', '0.10', '0.50', '2.00', '10.00', '3.00', '15.00', '189.00', '180.00', '12.40', '0.00') and n.startswith('OWNER'): fail('C04', n + ' unexpected amount ' + m[0])
     if re.search(r'\b14\.4\b', t): fail('C04', n + ' says 14.4 (the figure is 14.33)')
 # C05 stale references
-STALE = [r'card Part 2', r'\bPart 2\b', r'(?<!at )re-pin', r'check 5\b', r'sha256', r'\(v2[0-3]\b', r'OWNER-SHEET-v2[0-3]', r'LEAD-RELEASE-NOTE-v[1-7]\b', r'\bR[23] (is|are) kept']
+STALE = [r'card Part 2', r'\bPart 2\b', r'(?<!at )re-pin', r'(?<!Numbers )check 5\b', r'sha256', r'\(v2[0-3]\b', r'OWNER-SHEET-v2[0-3]', r'LEAD-RELEASE-NOTE-v[1-7]\b', r'\bR[23] (is|are) kept']
 for n, t in ALL.items():
     if n == 'v36-CHANGES.md': continue
     for p in STALE:
