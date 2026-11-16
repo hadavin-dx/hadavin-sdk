@@ -23,3 +23,7 @@ ok   M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the
 ok   M1: TAKE_CHECK_FLOWS without the test flag is exit 4 and is printed (got exit 4)
 ok   M1: TAKE_CHECK_DDL without the test flag is exit 4 and is printed (got exit 4)
 ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_FORM_EXPECT without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: with the test flag the override is allowed but still printed (got exit 0)
+ok   M3: a folder named mf-hook.json is a FAIL, exit 1 (got exit 1)
+ok   M3: a dangling link named mf-recovery.json is a FAIL, exit 1 (got exit 1)
