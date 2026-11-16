@@ -40,8 +40,11 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     --noconftest, --ignore, -p with anything but `no:`, -c, -o, --rootdir, --basetemp, ...
   * Every signal that can be sent and that ends a process by default is handled (all of signal.valid_signals() except
     SIGKILL, SIGSTOP, SIGCHLD, SIGCONT, SIGWINCH, SIGURG, SIGTSTP, SIGTTIN, SIGTTOU, SIGPIPE, SIGXFSZ; review r4 M1),
-    in every window: planting, tests awaited, restore (T47), also `--restore` itself and the exit after exit code 3, 4 or 5
-    (a signal there is remembered and cannot change the result). A real memory fault inside this very process (SIGSEGV,
+    in every window of a normal run: planting, tests awaited, restore (T47), and the exit after exit code 3, 4 or 5
+    (a signal there is remembered and cannot change the result). `--restore` itself: from the first write on (the marker
+    is read, the file is written back, the state files are removed) a signal is remembered and the restore ends first;
+    BEFORE that (state folder, lock, real-repository check, and the `git archive` of `--sha`) nothing has been written,
+    so a signal ends it at once with 128+N and every state file untouched (r9 minor 1; T96). A real memory fault inside this very process (SIGSEGV,
     SIGBUS, SIGFPE, SIGILL raised by the CPU, not sent by kill) is NOT recovered by that handler: the handler returns
     to the faulting instruction, the process spins at full speed and keeps the lock and the planted file until it is
     killed by hand (it does NOT act like SIGKILL; measured, T64). Then: `kill -9` it and run `--restore`.
@@ -105,7 +108,16 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * Two runs on one root with DIFFERENT TMPDIR do not share a lock folder: a normal run looks in the usual other places
     (/tmp, /var/tmp, /dev/shm, TMP, TEMP) at the start and refuses when another run holds its lock there or left a
     planted file (r7 N6); two runs started within the same instant, before either has taken its lock, can still race
-    (the refusal is tested in T91; the race is not).
+    (the refusal is tested in T91; the race is not). A run whose TMPDIR is outside those places is NOT seen by another
+    run or by `--restore`; what is still true: `--restore` without a marker exits 2 (not 0), `--restore --sha` compares
+    the files with git, and a normal run compares the tree with the git archive before it plants (r9 M1).
+  * A marker that can never be used (the root folder renamed and replaced, a damaged marker, a marker for another root)
+    is removed with `--restore --sha COMMIT --discard-marker`, only after the tree under --root equals the git archive
+    and no test group of the marker still runs (r9 minor 3; T96). `--helper-timeout S` (default 300) stops a `git` or
+    `patch` call that does not end and refuses (r9 minor 2).
+  * Not a target: a file under `.venv` (directly under the root) or in a cache folder (`__pycache__`, `.pytest_cache`) is
+    refused as the file under test, an `--extra` or a marker file, because the tree comparison skips those folders (r9).
+  * State files are made durable: the state folder is synced after every write and removal (r9).
 Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --root (they would dirty the tree), an
 output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
 checked before anything is planted. The folder --root is identified by device and inode when the run starts and
@@ -121,11 +133,16 @@ are trusted as a whole: `.venv` (directly under the root) and the cache folders 
 planted into, or a test that changes, files in them is not detected; other test files in --root run too.
 Exit codes (round 8, reviews r6 M1/M2 and r7 M1):
   0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag), a baseline of the unmutated tree
-       ran and passed, and the tree is clean
-  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable; a normal run
-       that finds the marker of an EARLIER killed run refuses with 2, this run planted nothing). With --restore: 2 ONLY
-       when the marker names another root or another backup path (it is not this run's marker; nothing is written), or
-       when no marker for this root exists at all (then nothing is recorded as planted)
+       ran and passed, and the tree is clean. With --restore: the file is KNOWN to hold the original (a marker was found
+       and its file written back or already original, and every test group settled), or `--restore --sha` found the
+       whole tree equal to the git archive; also `--discard-marker` after that same comparison
+  2    refused: this run wrote nothing and planted nothing. 2 NEVER says "nothing is planted": the planted-ness of an
+       earlier run is either shown by its marker (then 3, or 0 after a good restore) or it is unknown. In a normal run: the
+       baseline of the unmutated tree is not usable, a bad argument, or the marker of an EARLIER killed run (this run
+       planted nothing). With --restore: 2 ONLY when the marker names another root or another backup path (it is not this
+       run's marker; nothing is written), or when NO marker for this root exists anywhere searched and no --sha was
+       given to check the files (r9: before, this was exit 0; the files are unknown). With --restore --sha and no marker:
+       the files are compared with git, equal is 0, different is 3
   3    restore failed (marker and backup kept; run --restore): the class is "an exit code that says nothing is planted
        while the mutant is planted", fixed in ONE place (may_be_planted in main): with --restore, EVERY failure once a
        planted or control marker for this root exists exits 3: invalid or damaged marker, missing, linked, FIFO or
@@ -133,7 +150,8 @@ Exit codes (round 8, reviews r6 M1/M2 and r7 M1):
        held by a live run, an unwritable file, a link or swapped folder on the way, two names, a root folder that is no
        longer the one the mutant was planted in, an internal bug; in a normal run, any exit while this run's own marker
        still exists. Also: --restore could not settle a control run, a control marker that cannot be read, or an
-       orphaned test group that could not be stopped (the file is still written back; marker and backup are kept)
+       orphaned test group that could not be stopped (the file is still written back; marker and backup are kept); `--restore --sha` with no marker
+       when the tree differs from git; `--discard-marker` when the tree differs or a test group still runs
   4    tree not clean (before the first mutant, after a mutant, or after the loop) or marker left behind
   5    INCOMPLETE: at least one mutant has no clean verdict (COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED,
        or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran, or
@@ -156,6 +174,7 @@ line says `NO BASELINE ... INCOMPLETE` (never COMPLETE) and the exit code is 5 e
 Usage:
   run.py --root /tmp/c8/wC --sha b4cce5b --prefix C-01 --raw DIR --list mutants.json -- TESTS...
   run.py --root ... --sha ... --prefix C-01 --raw DIR --id m01 --file src/x.py --old "a" --new "b" -- TESTS...
+  run.py --root R --restore [--sha COMMIT [--repo R] [--patch F] [--extra F]] [--discard-marker]
 mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": "..."}, ...]
 The unmutated tree is run once first (default; `--no-control` turns it off) and recorded as <prefix>-baseline.txt.
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:

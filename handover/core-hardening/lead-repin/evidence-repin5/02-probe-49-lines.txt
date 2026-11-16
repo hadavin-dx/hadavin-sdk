@@ -1,0 +1,11 @@
+PROBE: 49 new lines (generated from parts, seed fixed), fragments = 6-char head and tail of each fake value
+lines=56 fragments=98
+== dash: exit code 0; lines still showing a fragment:
+2
+passwd <FRAG>
+-p <FRAG>
+== bash: exit code 0; lines still showing a fragment:
+2
+passwd <FRAG>
+-p <FRAG>
+Reading: 2 leaks are by design. 'passwd NAME' is a user-name argument, and a bare '-p VALUE' with no known command is ambiguous. Both are listed in the guide as limits (safety net, not a guarantee).

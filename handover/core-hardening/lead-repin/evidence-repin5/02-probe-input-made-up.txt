@@ -1,0 +1,56 @@
+mysql -u root -pzq01abrm01cd
+sshpass -p 'zq02abrm02cd' ssh h
+<add key="ApiKey" value="zq03abrm03cd"/>
+machine h login bob password zq04abrm04cd
+Passw0rd list: alice=zq05ab,rm05cd, bob=zq05ab,rm05cd
+db_secretValue = zq06ab-rm06cd
+tokenString: zq07ab-rm07cd
+export PasswordHash=zq08ab-rm08cd
+authTokenValue => zq09ab-rm09cd
+cfg.keyValue = 'zq10ab-rm10cd'
+secretdata=zq11ab-rm11cd
+Cookie: sessionid=zq12ab-rm12cd; theme=dark
+sessionId: zq13ab-rm13cd
+"signature": "zq14ab-rm14cd"
+hmac = zq15ab-rm15cd
+dsn: https://zq16ab-rm16cd@sentry.host/1
+webhook_url = https://hooks.host/zq17ab/rm17cd
+salt: zq18ab-rm18cd
+otp = zq19ab-rm19cd
+cert_file: zq20ab-rm20cd
+curl --user admin:zq21ab-rm21cd https://h/
+psql postgresql://u:zq22ab@rm22cd@db/x
+password: zq23ab rm23cd
+the password is zq24ab rm24cd ok
+secret: |
+   zq25ab-rm25cd
+   more
+secret: &x |2 # c
+  zq26ab-rm26cd
+secret: !!binary |
+  zq27ab-rm27cd
+secret: >-
+  zq28ab-rm28cd
+secret: 'zq29ab-rm29cd
+  more'
+api_key = "zq30ab-rm30cd"  # trailing
+TOKEN=zq31ab;rm31cd
+passwd zq32ab-rm32cd
+Authorization: Basic zq33abrm33cd
+url = 'https://user:zq34ab@rm34cd@h/p'
+x-api-key: zq35ab-rm35cd
+PRIVATE_KEY=zq36ab/rm36cd
+client_secret: zq37ab,rm37cd
+db.password=zq38ab-rm38cd
+AWS_SECRET_ACCESS_KEY=zq39ab/rm39cd
+slack token xoxb-zq40ab-rm40cd
+JSON {"password":"zq41ab-rm41cd","u":1}
+  - name: DB_PASSWORD
+    value: zq42ab-rm42cd
+env: [ 'API_TOKEN=zq43ab-rm43cd' ]
+--password=zq44ab-rm44cd
+-p zq45ab-rm45cd
+proxy_pass_word: zq46ab-rm46cd
+jwtSecret = zq47ab-rm47cd
+bearerToken: zq48ab-rm48cd
+Set-Cookie: sid=zq49ab-rm49cd; Path=/
