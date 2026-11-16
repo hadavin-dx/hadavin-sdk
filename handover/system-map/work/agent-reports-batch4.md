@@ -971,3 +971,24 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 701 ARCHIVE-CUT-LIST r6: competing verdicts. FIXED by VERDICT ONLY r7.
 - 702 FINAL-CROSSCHECK r10: proposed decisions dropped. FIXED by STATUS r11.
 - 703 not-checked r7: not standalone, no IST. FIXED by CURRENT r8.
+
+- 704 open-items r10 read: stacked paragraphs, column 6 undefined. FIXED by CURRENT r10 (table TO DO).
+- 705 L5b read: unresolved references. FIXED by CURRENT STATE r8.
+
+- 706 L2c: spread steps, no pass rule. FIXED by STEPS r9.
+- 707 BRIEF-LANE: precedence unclear. FIXED by BINDING r10.
+- 708 critical-path: seven stacked paragraphs. FIXED by CURRENT r16.
+
+- 709 t19 steps r10: r9 states no steps. FIXED by HISTORY r10.
+- 710 ARCHIVE-CUT-LIST r7: rows C to M missing. FIXED by VERDICT r8.
+- 711 owner-timeline r8: row numbers, words. FIXED by CURRENT r8.
+
+- 712 PLAN-002 r15: line 40 still old. FIXED by CURRENT RULINGS r15 (line 40 text TO DO).
+- 713 not-checked r8: not standalone. FIXED by CURRENT r9.
+
+- 714 critical-path r16: no pointer to the answer. FIXED by CURRENT ANSWER r17.
+- 715 t19 r11: terms undefined, no unblock owner. RECORDED in NOTHING CURRENT r11 (needs the studio head).
+
+- 716 L2c r9: not standalone. FIXED by STEPS r10.
+- 717 ARCHIVE-CUT-LIST r8: row C scope lost. FIXED by VERDICT r9.
+- 718 owner-timeline r9: still-works rule. FIXED by CURRENT r9.
