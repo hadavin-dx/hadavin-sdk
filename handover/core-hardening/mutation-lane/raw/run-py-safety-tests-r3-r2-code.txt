@@ -205,3 +205,19 @@ tree diff: 0 difference(s)
   FAIL: T31 raw file says TIMEOUT and holds the early output
   PASS: T31 file restored
 == T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
+./safety-tests.sh: line 222: 16913 Killed                  timeout -s KILL 30 python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py > /dev/null 2>&1
+  FAIL: T32a FIFO in the tree refused, no hang (got 137; 124 = hung)
+./safety-tests.sh: line 222: 18066 Killed                  timeout -s KILL 30 python3 "$RUN" --root "$T/root" --restore > /dev/null 2>&1
+  FAIL: T32b FIFO as marker refused, no hang (got 137; 124 = hung)
+== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
+  FAIL: T33 nested .venv refused (got 0)
+== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
+  FAIL: T34 run ends normally (rc 1) with verdict KILLED in the raw file
+  PASS: T34 file restored
+== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
+./safety-tests.sh: line 222: 18896 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0: nothing to restore (a run that used another TMPDIR keeps its marker there)
+  FAIL: T35a exit 3 (got 0) and the file is still planted
+  PASS: T35b restoring with the right TMPDIR works
+  PASS: T35c nothing planted anywhere: exit 0 (got 0)
+FAILED CHECKS: 32

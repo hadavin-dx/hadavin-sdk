@@ -11,4 +11,6 @@ Check and apply, from the root of a clean tree at base b4cce5b, or one with the 
     patch -p1 --dry-run -r - --no-backup-if-mismatch < <path>/v6-extra/FIX-id-vs-command-withheld.patch
     patch -p1 -r - --no-backup-if-mismatch < <path>/v6-extra/FIX-id-vs-command-withheld.patch
 
-`-r -` and `--no-backup-if-mismatch` stop `patch` leaving `.orig` and `.rej` files. Needs the lead's independent result review (security path, no round cap). Evidence and report: `../v3/REPORT-c7b-fix2.md` and `../v3/raw-c7b-fix2/`.
+`-r -` and `--no-backup-if-mismatch` stop `patch` leaving `.orig` and `.rej` files. Needs the lead's independent result review (security path, no round cap). Evidence and report: `../v3/REPORT-c7b-fix3.md` and `../v3/raw-c7b-fix3/` (the patch bytes are unchanged since pass 2: same sha256 `12e4be6f...`; pass 2 report `../v3/REPORT-c7b-fix2.md` has a withdrawal banner).
+
+What the exception covers: it only stops the approval card showing `[command withheld (G4)]` in place of a long run of hex digits (32 or more, ending at a non-word character) after a hyphen. It is display only and does not widen what the gate approves: no command is newly approved, and the other gate rules still apply to the same text.

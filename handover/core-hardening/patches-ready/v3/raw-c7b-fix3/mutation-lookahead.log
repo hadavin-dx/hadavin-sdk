@@ -1,0 +1,34 @@
+mutation check on lookahead, scratch tree /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3b/t, 2026-11-16T10:59:41Z
+== unmutated: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3b/t/src/hadavin_sdk/approvals/gate.py
+.......................                                                  [100%]
+23 passed in 1.28s
+== mutant {33,}: grep count 2, dd13fd83135b76bcbf89f10501228482ba37e8fc62f0ba16158c4122cb1a19a3  src/hadavin_sdk/approvals/gate.py
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3b/t/src/hadavin_sdk/approvals/gate.py
+=========================== short test summary info ============================
+FAILED tests/test_g4_ids_not_withheld.py::test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[run]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[pln]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[apr]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[evt]
+FAILED tests/test_g4_ids_not_withheld.py::test_pseudo_random_ids_and_plan_hashes_are_never_withheld
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[PLN-EC2ABBBBBBBBBBBBBBBBBBBBBBBBBBBB-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[Remove-ec2a0000000000000000000000000000-suffix-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_property_any_long_hex_token_after_a_lowercase_prefix_is_not_withheld
+10 failed, 13 passed in 0.94s
+== mutant {31,}: grep count 2, 18a4be0e43a65cef5a6c4769c955a2f64323a90549604e5695833baff21cc57e  src/hadavin_sdk/approvals/gate.py
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3b/t/src/hadavin_sdk/approvals/gate.py
+    )
+    def test_boundaries_of_the_id_exception(text, kept):
+>       assert (withhold_commands(text) == text) is kept, text
+E       AssertionError: pln-ec2a000000000000000000000000000
+E       assert ('pln-ec2a0000...0000000000000' == 'pln-ec2a0000...0000000000000'
+E         
+E           pln-ec2a000000000000000000000000000) is False
+
+tests/test_g4_ids_not_withheld.py:108: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a000000000000000000000000000-False]
+1 failed, 22 passed in 1.24s
+== restored: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
