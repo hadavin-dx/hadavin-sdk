@@ -42,7 +42,7 @@ for l in txt:
     m = ROWPAT.match(l)
     if m:
         i, st, f, ln, view, old, new, why, was = m.groups()
-        rows.append(dict(view=view, i=int(i), st=st, f=f, ln=int(ln), old=old.replace("<br>", "\n"), new=new.replace("<br>", "\n"), why=why, rawold=old, rawnew=new))
+        rows.append(dict(view=view, i=int(i), st=st, f=f, ln=int(ln), old=old.replace("<br>", "\n").replace("\\|", "|"), new=new.replace("<br>", "\n").replace("\\|", "|"), why=why, rawold=old, rawnew=new))
 N = len(rows)
 check("rows parsed (at least 90)", N >= 90, N)
 # 1 C-1
@@ -254,12 +254,13 @@ check("box says the ready count", bool(m), len(ready))
 check("action box first (before section 0)", full.index("## Start here") < full.index("## 0. Failures"))
 # 14.. content checks of c6q, c6r and c6s live in verify_c6v_part2.py; each top-level statement runs on its own, a crash is a FAIL
 import ast
-_p2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verify_c6v_part2.py")
-_src2 = open(_p2, encoding="utf-8").read()
-for _node in ast.parse(_src2).body:
-    try:
-        exec(compile(ast.Module([_node], []), _p2, "exec"), globals())
-    except Exception as _e:
-        check("part 2 statement at line %d could not run on this report (%s: %s)" % (_node.lineno, type(_e).__name__, str(_e)[:80]), False)
+for _pn in ("verify_c6v_part2.py", "verify_c6v_part3.py"):
+    _p2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), _pn)
+    _src2 = open(_p2, encoding="utf-8").read()
+    for _node in ast.parse(_src2).body:
+        try:
+            exec(compile(ast.Module([_node], []), _p2, "exec"), globals())
+        except Exception as _e:
+            check("%s statement at line %d could not run on this report (%s: %s)" % (_pn, _node.lineno, type(_e).__name__, str(_e)[:80]), False)
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

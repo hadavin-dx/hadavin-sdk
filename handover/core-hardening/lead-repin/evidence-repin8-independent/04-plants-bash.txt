@@ -11,3 +11,8 @@ m10 [bash]: KILLED-startcheck (exit 3, the script refuses to run) STOP: the mask
 m11 [bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (3s)
 m12 [bash]: KILLED-phase1 exit=1 fail_lines=10 SELF-TEST: passed=1591 failed=10 (the made-up input and output files were deleted) (3s)
 m13 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1633 failed=2 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a run started with umask 022 left a file that is not private (exit=0, entries not private=4)'] (92s)
+m14 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (100s)
+m15 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)'] (116s)
+m16 [bash]: KILLED-phase1 exit=1 fail_lines=5 SELF-TEST: passed=1597 failed=4 (the made-up input and output files were deleted) (6s)
+m17 [bash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1589 failed=12 (the made-up input and output files were deleted) (6s)
+m18 [bash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1597 failed=4 (the made-up input and output files were deleted) (5s)

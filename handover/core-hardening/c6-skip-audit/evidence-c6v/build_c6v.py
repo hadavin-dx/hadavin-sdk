@@ -83,13 +83,13 @@ def build(words):
     # ---- m1 (design review): row 76 carries the relayed tag
     edit_row(L, 76, "new", lambda s: s.replace(" Final states: 10 runs done", " Final states (relayed from the lane3 session's results, not run for this audit): 10 runs done", 1) if " Final states: 10 runs done" in s else (FAILS.append("row 76 anchor") or s))
     # ---- M4 + m2: row 96, unique anchor, the Time cell of the state the defaults leave (G12 open: card line 1 cut by hand = 79 words = 35 s)
-    edit_row(L, 96, "old", lambda s: "own runs. | 30 s EST")
-    edit_row(L, 96, "new", lambda s: "own runs. | 35 s EST")
+    edit_row(L, 96, "old", lambda s: "own runs. \\| 30 s EST")
+    edit_row(L, 96, "new", lambda s: "own runs. \\| 35 s EST")
     edit_row(L, 96, "view", lambda s: "Nothing on screen (the planned time of the closing card in the run sheet table).")
 
     def r96why(s):
         a = s.index("The card row's own Time cell")
-        return ("The card row's own Time cell on run sheet line 41 said 30 s EST while row 11 sets the card to the budget of the whole card (c6t design review M3). c6v (c6u design review M4, m2): the old text now includes the words before the cell ('own runs. | 30 s EST'), because '30 s EST' alone occurs 3 times in the file (lines 36, 39 and 41); the new cell is 35 s EST, the budget of the state the defaults leave: G12 is open, so card line 1 is cut by hand and the card is lines 2 to 4 = 79 words = 31.6 s, budget 35 s (Table B, section 1c; an ESTIMATE until the stopwatch run). "
+        return ("The card row's own Time cell on run sheet line 41 said 30 s EST while row 11 sets the card to the budget of the whole card (c6t design review M3). c6v (c6u design review M4, m2): the old text now includes the words before the cell ('own runs. \\| 30 s EST'), because '30 s EST' alone occurs 3 times in the file (lines 36, 39 and 41); the new cell is 35 s EST, the budget of the state the defaults leave: G12 is open, so card line 1 is cut by hand and the card is lines 2 to 4 = 79 words = 31.6 s, budget 35 s (Table B, section 1c; an ESTIMATE until the stopwatch run). "
                 "If you approve G12 and the alert mail is seen, the card keeps line 1 (90 words, 36.0 s, budget 40 s): the builder then changes the cell to 40 s EST by hand. Other cut cases: Table B. Sources: RS:41, L-CARDLEN")
     edit_row(L, 96, "why", r96why)
     edit_row(L, 96, "was", lambda s: "new in c6u; text and anchor changed in c6v")
@@ -229,6 +229,13 @@ def build(words):
     t = sub(t, "; this report is on branch cloud/core-hardening, which holds only one of them)", ")", 1)
     t = sub(t, "reading the final take files. PUBLIC POST = your phrase in ORDERS.md ('the lease sentence stays out of the public post').", "reading the final take files. PUBLIC POST = the post that goes out with the video (your ruling is quoted in section 1c).", 1)
     t = sub(t, "L-SHEET and L-SAVEERR (OWNER ONLY, in the table); G12", "the two OWNER ONLY questions of the table; G12", 1)
+    t = sub(t, "a builder writes the leak scan C-6, a second person tests it with a fake key", "a builder writes the leak scan C-6, a second person (someone who did not write the scan) tests it with a fake key", 1)
+    t = sub(t, "The c6t box states its real count in its second paragraph and verify-c6v.py recounts it.\n", "The c6t box states its real count in its second paragraph and verify-c6v.py recounts it.\n\n1c-H. THE SAVING PLAN LINE. The plan line PLAN:125 sets both n8n saving settings to all and cites the owner; the owner's words cover successful runs only, so on failed runs the plan line is overridden here (failed runs are not saved unless L-SAVEERR is answered yes by the owner).\n", 1)
+    t = sub(t, "L-DEL is ANSWERED (no, never).", "The deletion question is ANSWERED (no, never).", 1)
+    t = sub(t, "folder handover/ (the files the rows change)", "folder handover/", 1)
+    t = sub(t, "and stops and reports any row where it does not.", "and stops at any row where it does not.", 1)
+    t = sub(t, "the old text '30 s EST' has no table border and occurs once on that line; row 96 edits it", "the old text 'own runs. \\| 30 s EST' (the words before the cell make it unique; '30 s EST' alone occurs 3 times in the file) occurs once on that line; row 96 edits it", 1)
+    t = sub(t, "4. The two OPEN questions: ask", "4. The two OPEN (OWNER ONLY) questions: ask", 1)
     # row 96 edits the rightmost cell of run sheet line 41; rows 12 to 15 consume the text around it, so it must apply first
     _L = t.split("\n")
     _i96 = [k for k, l in enumerate(_L) if l.startswith("| 96 | NOT APPLIED")]

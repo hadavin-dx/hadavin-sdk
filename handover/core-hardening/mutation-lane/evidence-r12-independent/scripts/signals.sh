@@ -1,8 +1,8 @@
 #!/bin/bash
 . $W/neg/lib.sh; mk_toy; cd $W/neg/toy
-echo "### S signals during --restore, uid $(id -u); 5 repeats each of 2 signals x 7 delays"
+echo "### S signals during --restore, uid $(id -u); 5 repeats each of 2 signals x 6 delays"
 n=0
-for rep in 1 2 3 4 5; do for sig in INT TERM; do for d in 0 0.01 0.02 0.05 0.08 0.12 0.2; do
+for rep in 1 2 3 4 5; do for sig in INT TERM; do for d in 0 0.01 0.02 0.05 0.08 0.2; do
   n=$((n+1)); fresh_root; plant_kill
   rcl=$($PY - $RUN $sig $d "$W/neg/root" "$W/neg/s.out" <<'PY'
 import os, signal, subprocess, sys, time

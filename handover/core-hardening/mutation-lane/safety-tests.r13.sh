@@ -2038,7 +2038,7 @@ shutil.rmtree(X, ignore_errors=True); shutil.rmtree(Y, ignore_errors=True)
 print("wrong:", wrong); sys.exit(1 if wrong else 0)
 PY
 cat "$S/t100a.out"
-chk "T100a M1 Child cannot be walked round (r13: each case names its exact cause; another folder's git, patch and python are refused, a link to the real git and the root's own python are accepted; argument shapes of the fixed calls): about 60 cases, among them the old 18 (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit $rc; r11: fails, most of them start)" "[ $rc -eq 0 ]"
+chk "T100a M1 Child cannot be walked round (r13: each case names its exact cause; another folder's git, patch and python are refused, a link to the real git and the root's own python are accepted; argument shapes of the fixed calls): 40 named cases and 6 direct checks, among them the old 18 (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit $rc; r11: fails, most of them start)" "[ $rc -eq 0 ]"
 # b) m1: --raw is created after every output check; an OSError of mkdir is a refusal
 fresh_root; RAWNEW="$S/rawnew100"; rm -rf "$RAWNEW"
 mut --raw "$RAWNEW" --out-json "$S/no-such-folder-100/o.json" -- tests/test_fast.py >"$S/t100b1.out" 2>&1; rc1=$?

@@ -1,3 +1,17 @@
+changes| decision for the lead (see |section 6
+changes| is inside the sentence "no |section 4
+changes| plus the Take folder only; |R6
+changes|2, the delete criterion and |Q27
+changes|48: a failed key save skips |6.7
+changes|DB-2, the delete criterion, |Q27
+changes|N reading load | NOT fixed (|section 1
+changes|NER-OPEN; Open 71 (A or B); |Open 102, 103, 107, 110, 111
+changes|W and L are explained once (|section 1
+changes|er than the checked shape | |7.2
+changes|es or sections that exist ("|section 4
+changes|iled key save skips 6.7 and |7.11
+changes|ive minor 3 (6.3b, 6.3c and |6.4
+changes|on and Q27 stay OWNER-OPEN; |Open 71
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5

@@ -1,4 +1,4 @@
-"""v19 Postgres checks (v18 checks kept, fixed or extended; new: real-server proofs of the MA1 and MA2 bypasses, m1 INSERT record, m2 settle without a day row, m6 separate counts, m7 statement_timeout) on the real migrate() code of src/ (read only), throwaway cluster, password logins only.
+"""v20 Postgres checks (v19 checks kept; the section "v20" before the SUMMARY adds the real-server proofs of the round-6 findings; the one v19 check that is now wrong, the NFC spelling, is rewritten) -- v19 Postgres checks (v18 checks kept, fixed or extended; new: real-server proofs of the MA1 and MA2 bypasses, m1 INSERT record, m2 settle without a day row, m6 separate counts, m7 statement_timeout) on the real migrate() code of src/ (read only), throwaway cluster, password logins only.
 Usage: python pg_v18.py <socket_dir> <src_dir> <held_dir_v18> <held_dir_v16> (the v17 held files are read from ../evidence-handoff-v17/held-sql as the CONTROL) (admin password in HV_ADMIN_PW). One line per check: PASS/FAIL/INFO.
 Prototype checks, made-up data. The v16 DB-2 file is run as a CONTROL: a new check must FAIL on it (line starts CONTROL)."""
 import atexit, sys, os, tempfile, shutil, time, secrets, random
@@ -42,6 +42,7 @@ import secdef_audit_v20 as au
 import secdef_guard_v18 as g18, secdef_guard_v19 as g19, secdef_guard_v20 as g20
 import allow_v20 as A20
 from allow_v19 import ALLOWED_BY_FILE, ATOMIC_TABLES_BY_FILE
+import shutil
 ROLES = {'runtime': 'rt17', 'operator': 'op17'}
 def build(db, files, base=True):
     """files: list of (path, number-name). Fresh database owned by the non-superuser migration role; real 0001-0005 then the files."""
@@ -219,7 +220,10 @@ check("G12 a reserve of 0 writes no row and returns no row", rt.execute("SELECT 
 import unicodedata
 for lbl, nm in (("NFD cafe + combining accent", unicodedata.normalize("NFD", "caf\u00e9")), ("whitespace only", "   "), ("leading blank", " a1"), ("newline", "a\nb"), ("tab and quote", "a\t\"b")):
     check(f"G12 the agent id {lbl} is refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (nm, D, Decimal("1")))) == "23514")
-check("G12 the NFC spelling of the same name is accepted (one budget)", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (unicodedata.normalize("NFC", "caf\u00e9"), D, Decimal("1")))) is None)
+for lbl, nm in (("NFC cafe (non-ASCII)", unicodedata.normalize("NFC", "caf\u00e9")), ("fullwidth A", "\uff21b"), ("zero-width space", "a\u200bb"), ("NBSP at the start", "\u00a0a"), ("right-to-left override", "a\u202eb"), ("NEL control U+0085", "a\u0085b"), ("a space inside", "a b"), ("DEL", "a\x7fb"), ("201 characters", "a" * 201), ("empty", "")):
+    check(f"G12 v20 the agent id {lbl} is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (nm, D, Decimal("1")))) == "23514")
+for nm in ("a", "Agent_1.x:y@z/q+w-1", "a" * 200):
+    check(f"G12 v20 the agent id {nm[:20]!r} ({len(nm)} characters) is accepted", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (nm, D, Decimal("1")))) is None)
 rt.execute("SELECT * FROM spend_reserve('Case', %s, %s)", (D, Decimal("1"))); rt.execute("SELECT * FROM spend_reserve('case', %s, %s)", (D, Decimal("1")))
 stated("G12 agent ids that differ only in letter case ('Case' and 'case') are two budgets (names come from configuration in our code; a hostile login can pick any name anyway)", mg.execute("SELECT count(*) FROM spend WHERE lower(agent_id)='case'").fetchone()[0] == 2)
 tb = mg.execute("SELECT usd FROM spend WHERE agent_id='victim'").fetchone()
@@ -402,5 +406,195 @@ mgp.execute("GRANT USAGE ON SCHEMA other_schema TO rt17"); runs = rtp.execute("S
 SP2 = "CREATE OR REPLACE FUNCTION other_schema.spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp BEGIN ATOMIC SELECT 1; END;\nREVOKE ALL ON FUNCTION spend_reserve(text, date, numeric) FROM PUBLIC;\n"
 f18, f19 = both(SP2, {"spend_reserve(text,date,numeric)": "definer"}, "spend_guarded_writes.sql")
 check(f"MA2 real server: a definer function in another schema with the listed name has default PUBLIC execute and the runtime role runs it ({runs}); v18 guard flags the text = {f18}; v19 guard flags it = {f19}", runs == 1 and f19 and not f18)
+
+# ================================================================== v20 (round 6): real-server proofs. Each "v19 guard clean" claim is computed here with the v19 guard module; each fix is computed with the v20 guard.
+import warnings
+def g20f(text, allowed, file="x.sql", **kw): return bool(g20.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file), **kw))
+def g19f(text, allowed, file="x.sql"): return bool(g19.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file)))
+PIN = g20.PIN_ANY
+SPX = "SET search_path = pg_catalog, pg_temp"
+def section(name):
+    info("---- " + name)
+def fresh_g(tag, files=None):
+    db = tag + "_" + secrets.token_hex(3)
+    files = files or [(H17 / "spend_decrease_log.sql", "0006_dec"), (H17 / "spend_guarded_writes.sql", "0007_guard")]
+    t, mgx, _, _ = new_g(db, files)
+    return db, mgx, psycopg.connect(dsn("rt17", db), autocommit=True), psycopg.connect(dsn("op17", db), autocommit=True)
+try:
+    section("B1 RETURN-form definer (security B1): the v19 guard passes it, the server runs it as the owner")
+    dbb, mgb, rtb, opb = fresh_g("b1")
+    mgb.execute("CREATE TABLE public.secret_t (v text)"); mgb.execute("INSERT INTO public.secret_t VALUES ('made-up-secret')")
+    B1 = f"CREATE OR REPLACE FUNCTION leak2(q text) RETURNS xml LANGUAGE sql SECURITY DEFINER {SPX} RETURN query_to_xml(q, true, false, '');\nREVOKE ALL ON FUNCTION leak2(text) FROM PUBLIC;\n"
+    mgb.execute(B1.split("\n")[0]); mgb.execute("REVOKE ALL ON FUNCTION leak2(text) FROM PUBLIC"); mgb.execute("GRANT EXECUTE ON FUNCTION leak2(text) TO rt17")
+    direct = st(lambda: rtb.execute("SELECT * FROM public.secret_t")); via = str(rtb.execute("SELECT leak2('select * from public.secret_t')").fetchone()[0])
+    f19, f20 = g19f(B1, {"leak2(text)": "definer"}), g20f(B1, {"leak2(text)": "definer"}, fn_pins=PIN, kinds=PIN, trigger_pins=PIN)
+    check(f"B1 real server: a RETURN-form definer hands the runtime role a row it cannot read ({direct} direct); v19 guard flags it = {f19}; v20 guard flags it = {f20}", direct == "42501" and "made-up-secret" in via and not f19 and f20)
+    RESB = f"CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS xml LANGUAGE sql SECURITY DEFINER {SPX} RETURN query_to_xml(p_agent, true, false, '');\nREVOKE ALL ON FUNCTION spend_reserve(text, date, numeric) FROM PUBLIC;\n"
+    f19, f20 = g19f(RESB, {"spend_reserve(text,date,numeric)": "definer"}, "spend_guarded_writes.sql"), g20f(RESB, {"spend_reserve(text,date,numeric)": "definer"}, "spend_guarded_writes.sql", fn_pins=PIN, kinds=PIN, trigger_pins=PIN)
+    check(f"B1 the reviewer's exact case (RETURN query_to_xml(p_agent, ...) as spend_reserve in the DB-3 file): v19 guard flags it = {f19}; v20 guard flags it = {f20}", not f19 and f20)
+
+    section("M1 %I.name( in an EXECUTE string (security M1)")
+    mgb.execute("CREATE TABLE public.tt (a int, b int)"); mgb.execute("INSERT INTO public.tt VALUES (1, 1)"); mgb.execute("GRANT SELECT, UPDATE ON public.tt TO rt17")
+    mgb.execute("CREATE FUNCTION public.evil_fn(int) RETURNS int LANGUAGE sql AS $f$ INSERT INTO public.secret_t VALUES ('written-by-definer') RETURNING 1 $f$")
+    M1F = f"CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER {SPX} AS $f$ BEGIN EXECUTE format('SELECT %I.evil_fn($1)', TG_TABLE_SCHEMA) USING NEW.a; RETURN NULL; END $f$;\nREVOKE ALL ON FUNCTION spend_log_decrease() FROM PUBLIC;\n"
+    mgb.execute(M1F.split("\nREVOKE")[0].replace("spend_log_decrease", "m1_trig")); mgb.execute("CREATE TRIGGER m1_t AFTER UPDATE ON public.tt FOR EACH ROW EXECUTE FUNCTION m1_trig()")
+    d_before = st(lambda: rtb.execute("INSERT INTO public.secret_t VALUES ('x')")); rtb.execute("UPDATE public.tt SET b = 2")
+    wrote = mgb.execute("SELECT count(*) FROM public.secret_t WHERE v = 'written-by-definer'").fetchone()[0]
+    f19, f20 = g19f(M1F, {"spend_log_decrease()": "definer"}, "spend_decrease_log.sql"), g20f(M1F, {"spend_log_decrease()": "definer"}, "spend_decrease_log.sql", fn_pins=PIN, kinds=PIN, trigger_pins=PIN)
+    check(f"M1 real server: a definer trigger runs the hidden call `%I.evil_fn` with the owner's rights (the runtime role cannot insert into secret_t: {d_before}; one row written by the trigger: {wrote}); v19 guard flags it = {f19}; v20 guard flags it = {f20}", d_before == "42501" and wrote == 1 and not f19 and f20)
+
+    section("M2 trigger drop and neutering (security M2)")
+    dbm, mgm, rtm, opm = fresh_g("m2")
+    mgm.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('t1', %s, 10)", (D,)); mgm.execute("UPDATE spend SET usd = 7 WHERE agent_id = 't1'")
+    n1 = mgm.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
+    DT = "DROP TRIGGER IF EXISTS spend_log_decrease ON spend;\n"; txt2 = open(H17 / "spend_decrease_log.sql").read()
+    f19 = bool(g19.check_sql_text("spend_decrease_log.sql", txt2 + DT, ALLOWED_BY_FILE["spend_decrease_log.sql"], atomic_tables=None)); f20 = bool(A20.check(g20, "spend_decrease_log.sql", txt2 + DT))
+    mgm.execute(DT); mgm.execute("UPDATE spend SET usd = 3 WHERE agent_id = 't1'")
+    n2 = mgm.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
+    check(f"M2 real server: before the DROP a lowering writes a record row ({n1}); after `DROP TRIGGER IF EXISTS` (clean in v19) the next lowering writes none ({n2}); v19 guard flags the file = {f19}; v20 guard flags it = {f20}", n1 == 1 and n2 == 1 and not f19 and f20)
+    NEU = txt2 + "\nCREATE OR REPLACE TRIGGER spend_month_log_decrease AFTER UPDATE ON spend_month FOR EACH ROW WHEN (false) EXECUTE FUNCTION spend_log_decrease();\n"
+    f19 = bool(g19.check_sql_text("spend_decrease_log.sql", NEU, ALLOWED_BY_FILE["spend_decrease_log.sql"], atomic_tables=None)); f20 = bool(A20.check(g20, "spend_decrease_log.sql", NEU))
+    mgm.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('t1', %s, 10)", (MO,)); mgm.execute("CREATE OR REPLACE TRIGGER spend_month_log_decrease AFTER UPDATE ON spend_month FOR EACH ROW WHEN (false) EXECUTE FUNCTION spend_log_decrease()")
+    k1 = mgm.execute("SELECT count(*) FROM spend_decrease_log WHERE scope='spend_month'").fetchone()[0]; mgm.execute("UPDATE spend_month SET usd = 1"); k2 = mgm.execute("SELECT count(*) FROM spend_decrease_log WHERE scope='spend_month'").fetchone()[0]
+    check(f"M2 real server: CREATE OR REPLACE TRIGGER ... WHEN (false) neuters the month record (rows {k1} then {k2} after a lowering); v19 guard flags the file = {f19}; v20 guard flags it = {f20}", k1 == k2 and not f19 and f20)
+
+    section("M3 MERGE INTO / DELETE USING / TABLE in an atomic body (security M3)")
+    for lbl, body in (("MERGE INTO secret_t USING kill_switch", "MERGE INTO secret_t s USING kill_switch k ON true WHEN MATCHED THEN DELETE;"), ("DELETE FROM kill_switch USING secret_t", "DELETE FROM kill_switch USING secret_t WHERE true;"), ("TABLE secret_t", "TABLE secret_t;")):
+        T = f"CREATE OR REPLACE FUNCTION kill_switch_engage() RETURNS {'void' if 'TABLE' not in lbl else 'text'} LANGUAGE sql SECURITY DEFINER {SPX} BEGIN ATOMIC {body} END;\nREVOKE ALL ON FUNCTION kill_switch_engage() FROM PUBLIC;\n"
+        err = st(lambda: mgb.execute(T.split("\nREVOKE")[0].replace("kill_switch_engage", "m3f")))
+        f19, f20 = g19f(T, {"kill_switch_engage()": "definer"}, "spend_guarded_writes.sql"), g20f(T, {"kill_switch_engage()": "definer"}, "spend_guarded_writes.sql", fn_pins=PIN, kinds=PIN, trigger_pins=PIN)
+        info(f"M3 {lbl}: the server {'accepts it' if err is None else 'refuses it with ' + str(err)}; v19 guard flags it = {f19}; v20 guard flags it = {f20}")
+        check(f"M3 {lbl}: v20 guard flags it, and the v19 guard did not (server verdict above)", f20 and not f19)
+        if err is None: mgb.execute("DROP FUNCTION m3f()")
+
+    section("M4 / F1 a replacement body of a listed definer (independent runner of v19)")
+    txt3 = open(H17 / "spend_guarded_writes.sql").read()
+    REPL = {"R01 DELETE FROM spend": 'DELETE FROM spend;', "R14 WITH d AS (DELETE ...) SELECT 1": "WITH d AS (DELETE FROM spend RETURNING 1) SELECT 1;"}
+    dbf, mgf, rtf, opf = fresh_g("f1")
+    rtf.execute("SELECT * FROM spend_reserve('victim', %s, %s)", (D, Decimal("4")))
+    for lbl, body in REPL.items():
+        T = txt3.replace('UPDATE kill_switch SET "on" = false, "by" = session_user, ts = clock_timestamp() WHERE id = 1 AND "on" = true;', body)
+        f19 = bool(g19.check_sql_text("spend_guarded_writes.sql", T, ALLOWED_BY_FILE["spend_guarded_writes.sql"], atomic_tables=ATOMIC_TABLES_BY_FILE["spend_guarded_writes.sql"])); f20 = bool(A20.check(g20, "spend_guarded_writes.sql", T))
+        body_sql = body
+        mgf.execute(f"CREATE OR REPLACE FUNCTION kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER {SPX} BEGIN ATOMIC {body_sql} END")
+        opf.execute("SELECT kill_switch_release()"); left = mgf.execute("SELECT count(*) FROM spend").fetchone()[0]
+        check(f"F1 real server: {lbl} as the body of kill_switch_release is accepted and the OPERATOR role's call leaves {left} rows in spend; v19 guard flags it = {f19}; v20 guard flags it = {f20}", left == 0 and not f19 and f20)
+        rtf.execute("SELECT * FROM spend_reserve('victim', %s, %s)", (D, Decimal("4")))
+    T = txt3.replace('WHERE id = 1 AND "on" = true;', "WHERE id = 1;")
+    f19 = bool(g19.check_sql_text("spend_guarded_writes.sql", T, ALLOWED_BY_FILE["spend_guarded_writes.sql"], atomic_tables=ATOMIC_TABLES_BY_FILE["spend_guarded_writes.sql"])); f20 = bool(A20.check(g20, "spend_guarded_writes.sql", T))
+    check(f"M4 a release without its `AND on = true` (same tables, other behaviour): v19 guard flags it = {f19}; v20 guard flags it (head/body fingerprint) = {f20}", not f19 and f20)
+
+    section("m1 / F2 expressions inside allowed shapes")
+    mgb.execute("ALTER TABLE public.tt ADD COLUMN x text DEFAULT current_setting('server_version')"); xv = mgb.execute("SELECT x FROM public.tt LIMIT 1").fetchone()[0]
+    for lbl, T in (("DEFAULT current_setting(..)", "ALTER TABLE tt ADD COLUMN y text DEFAULT current_setting('server_version');\n"), ("CHECK (pg_read_file(..))", "ALTER TABLE tt ADD CONSTRAINT c CHECK (pg_read_file('x') = 'y');\n"), ("index on evil(a)", "CREATE INDEX i ON tt (evil(a));\n"), ("GENERATED ALWAYS AS (evil())", "ALTER TABLE tt ADD COLUMN g int GENERATED ALWAYS AS (evil(a)) STORED;\n")):
+        check(f"m1 {lbl}: v19 guard flags it = {g19f(T, {})}; v20 guard flags it = {g20f(T, {}, fn_pins=PIN, kinds=PIN, trigger_pins=PIN)}", not g19f(T, {}) and g20f(T, {}, fn_pins=PIN, kinds=PIN, trigger_pins=PIN))
+    info(f"m1 the server accepted DEFAULT current_setting('server_version') as the migration role and stored {xv!r}")
+
+    section("m3 tokenizer against the server")
+    cases = [("NBSP inside a word", "SELECT 1 AS x", "colname"), ("U+3000 inside a word", "SELECT 1 AS　x", "colname"), ("U+0085 inside a word", "SELECT 1 AS\u0085x", "colname"), ("U+2028 inside a word", "SELECT 1 AS x", "colname"),
+             ("astral character starts a word", "SELECT 1 AS \U0001F600y", "colname"), ("astral dollar tag", "SELECT $\U0001F600$a;b$\U0001F600$", "value")]
+    for lbl, q, how in cases:
+        try:
+            cur = admin.execute(q); sv = cur.description[0].name if how == "colname" else cur.fetchone()[0]
+        except psycopg.Error as e: sv = "ERR " + str(e.sqlstate)
+        toks = g20.tokenize(q); t19 = g19.tokenize(q)
+        if how == "colname": mine = [t[1] for t in toks if t[0] == "word"][-1]; old = [t[1] for t in t19 if t[0] == "word"][-1]
+        else: mine = (g20._body_source(toks[1]) if len(toks) > 1 and toks[1][0] == "dollar" else None); old = (g19._body_source(t19[1]) if len(t19) > 1 and t19[1][0] == "dollar" else None)
+        check(f"m3 {lbl}: the server reads {sv!r}; v20 tokenizer reads {mine!r}; v19 tokenizer read {old!r}", sv == mine and sv != old)
+    for lbl, q in (("form feed", "SELECT\f1"), ("vertical tab", "SELECT\v1")):
+        try: admin.execute(q).fetchone(); sv = "accepted"
+        except psycopg.Error as e: sv = "ERR " + str(e.sqlstate)
+        check(f"m3 {lbl} is a separator for the server ({sv}) and for the v20 tokenizer ({len(g20.tokenize(q))} tokens)", sv == "accepted" and len(g20.tokenize(q)) == 2)
+
+    section("m4 agent-id rule: locale and encoding")
+    for enc, extra in (("SQL_ASCII", "LC_COLLATE 'C' LC_CTYPE 'C'"), ("LATIN1", "LC_COLLATE 'C' LC_CTYPE 'C'"), ("UTF8", "LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8'"), ("UTF8", "LC_COLLATE 'C' LC_CTYPE 'C'")):
+        for tag, hold in (("v19", HOLD19), ("v20", H17)):
+            dbn = "e_" + secrets.token_hex(3); admin.execute(f"CREATE DATABASE {dbn} TEMPLATE template0 ENCODING '{enc}' {extra} OWNER migr17")
+            try:
+                tmpn, _ = build(dbn, [(hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")], base=False)
+                mgn = psycopg.connect(dsn("migr17", dbn), autocommit=True); grants_select_only(); m.migrate(dsn("migr17", dbn), runtime_role="rt17"); au.apply_function_grants(mgn, roles=ROLES)
+                rtn = psycopg.connect(dsn("rt17", dbn), autocommit=True)
+                good = st(lambda: rtn.execute("SELECT * FROM spend_reserve('plain1', %s, %s)", (D, Decimal("1"))))
+                nel = st(lambda: rtn.execute("SELECT * FROM spend_reserve(%s, %s, %s)", ("a\u0085b" if enc == "UTF8" else "a", D, Decimal("1"))))
+                info(f"m4 {tag} database {enc} / {extra}: ordinary id 'plain1' -> {good}; id with U+0085 (or 'a' in a one-byte database) -> {nel}")
+                if tag == "v19" and enc in ("SQL_ASCII", "LATIN1"): control(f"m4 v19 file in a {enc} database: even a plain agent id fails ({good})", good is not None)
+                if tag == "v20": check(f"m4 v20 file in a {enc} / {extra} database: a plain id works and the U+0085 id is refused", good is None and (nel == "23514" if enc == "UTF8" else nel is None))
+                if tag == "v19" and enc == "UTF8": info(f"m4 v19 U+0085 result in {extra}: {nel} (locale dependence shows when the two UTF8 lines differ)")
+            except Exception as e: check(f"m4 {tag} {enc} test ran", False, type(e).__name__ + " " + str(e)[:150])
+            m.migrate  # noqa
+
+    section("m6 cutover: open reservations, apply-time refusal, rollback, month row, timeouts")
+    # (1) rows before DB-3: open_usd = 0 afterwards, a settle of a reservation made before the cutover is refused
+    dbc = "cut_" + secrets.token_hex(3); tmpc, _ = build(dbc, []); mgc = psycopg.connect(dsn("migr17", dbc), autocommit=True)
+    mgc.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('old1', %s, 5)", (D,)); mgc.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('old1', %s, 5)", (MO,))
+    for p, n in ((H17 / "spend_decrease_log.sql", "0006_dec"), (H17 / "spend_guarded_writes.sql", "0007_guard")): shutil.copy(p, tmpc / f"{n}.sql")
+    set_log_grants(H17 / "spend_decrease_log.sql"); grants_select_only(); m.migrate(dsn("migr17", dbc), runtime_role="rt17"); au.apply_function_grants(mgc, roles=ROLES); rtc = psycopg.connect(dsn("rt17", dbc), autocommit=True)
+    o = mgc.execute("SELECT open_usd FROM spend WHERE agent_id='old1'").fetchone()[0]
+    e = st(lambda: rtc.execute("SELECT * FROM spend_settle('old1', %s, %s, %s)", (D, Decimal("5"), Decimal("1"))))
+    check(f"m6 cutover: a row that held a reservation of 5 before the file gets open_usd = {o}; the later settle of that reservation is refused ({e}) and the total stays 5 (safe direction)", o == 0 and e == "23514" and mgc.execute("SELECT usd FROM spend WHERE agent_id='old1'").fetchone()[0] == 5)
+    rtc.execute("SELECT * FROM spend_reserve('old1', %s, %s)", (D, Decimal("3"))); rtc.execute("SELECT * FROM spend_settle('old1', %s, %s, %s)", (D, Decimal("3"), Decimal("1")))
+    check("m6 cutover with nothing in flight (the drain procedure): a NEW reserve and settle on the old row work and the total is 5 + 1 = 6", mgc.execute("SELECT usd, open_usd FROM spend WHERE agent_id='old1'").fetchone() == (Decimal("6"), Decimal("0")))
+    # (2) an old row that breaks the agent rule: v19 applies the file (NOT VALID) and the settle is stuck; v20 refuses at apply time and rolls back
+    for tag, hold in (("v19", HOLD19), ("v20", H17)):
+        dbx = "bad_" + secrets.token_hex(3); tmpx, _ = build(dbx, []); mgx = psycopg.connect(dsn("migr17", dbx), autocommit=True)
+        mgx.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('bad name', %s, 5)", (D,)); mgx.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('bad name', %s, 5)", (MO,))
+        for p, n in ((hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")): shutil.copy(p, tmpx / f"{n}.sql")
+        set_log_grants(hold / "spend_decrease_log.sql"); grants_select_only()
+        err = st(lambda: m.migrate(dsn("migr17", dbx), runtime_role="rt17"))
+        has_col = mgx.execute("SELECT count(*) FROM information_schema.columns WHERE table_name='spend' AND column_name='open_usd'").fetchone()[0]
+        has_fn = mgx.execute("SELECT count(*) FROM pg_proc WHERE proname='spend_reserve'").fetchone()[0]
+        ledger = mgx.execute("SELECT count(*) FROM schema_migrations WHERE version LIKE '0007%'").fetchone()[0]
+        if tag == "v19":
+            au19 = None
+            stuck = None
+            try:
+                mgx.execute("UPDATE spend SET open_usd = 5 WHERE agent_id='bad name'"); mgx.execute("UPDATE spend_month SET open_usd = 5 WHERE agent_id='bad name'")
+            except psycopg.Error as e2: stuck = e2.sqlstate
+            control(f"m6 v19 file with an old row 'bad name': the file APPLIES (error {err}); the row can no longer be changed at all (settling it fails {stuck}) because NOT VALID checks every new row version", err is None and stuck == "23514")
+        else:
+            check(f"m6 v20 file with an old row 'bad name': migrate refuses at apply time ({err}), nothing is applied (open_usd column {has_col}, function {has_fn}, ledger rows {ledger}): the whole transaction rolled back", err == "23514" and has_col == 0 and has_fn == 0 and ledger == 0)
+    # (3) day row without a month row
+    for tag, hold in (("v19", HOLD19), ("v20", H17)):
+        dby, mgy, rty, opy = fresh_g("dm", [(hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")])
+        mgy.execute("INSERT INTO spend (agent_id, day, usd, open_usd) VALUES ('dm', %s, 5, 5)", (D,))
+        r = rty.execute("SELECT * FROM spend_settle('dm', %s, %s, %s)", (D, Decimal("5"), Decimal("0"))).fetchall(); u = mgy.execute("SELECT usd, open_usd FROM spend WHERE agent_id='dm'").fetchone()
+        if tag == "v19": control(f"m6 v19 file: a settle for a day row WITHOUT a month row changes the day row ({u}) and returns no row ({r}) and commits", u == (Decimal("0"), Decimal("0")) and r == [])
+        else: check(f"m6 v20 file: the same settle changes neither table (day row {u}) and returns no row", u == (Decimal("5"), Decimal("5")) and r == [])
+    # (4) SET LOCAL outside a transaction
+    with warnings.catch_warnings():
+        cz = psycopg.connect(dsn("migr17", dbc), autocommit=True); msgs = []; cz.add_notice_handler(lambda d: msgs.append(d.message_primary))
+        cz.execute("SET LOCAL lock_timeout = '5s'"); lt = cz.execute("SHOW lock_timeout").fetchone()[0]
+    check(f"m6 SET LOCAL outside a transaction does nothing (lock_timeout stays {lt!r}; server notice {msgs[:1]}): the runner MUST run each file in one transaction; migrate() does (db.transaction())", lt == "0" and msgs)
+    holder = psycopg.connect(dsn("migr17", dbc)); holder.execute("LOCK TABLE spend_month IN ACCESS EXCLUSIVE MODE")
+    dbl = "lk_" + secrets.token_hex(3); tmpl, _ = build(dbl, [])
+    holder2 = psycopg.connect(dsn("migr17", dbl)); holder2.execute("LOCK TABLE spend IN ACCESS EXCLUSIVE MODE")
+    for p, n in ((H17 / "spend_decrease_log.sql", "0006_dec"), (H17 / "spend_guarded_writes.sql", "0007_guard")): shutil.copy(p, tmpl / f"{n}.sql")
+    set_log_grants(H17 / "spend_decrease_log.sql"); t0 = time.time(); errl = st(lambda: m.migrate(dsn("migr17", dbl), runtime_role="rt17")); dt = time.time() - t0
+    check(f"m6 inside migrate() the 5 s lock_timeout of the file works: a held lock makes the apply fail with {errl} after {dt:.1f} s and nothing is applied", errl == "55P03" and 4 < dt < 12)
+    holder.rollback(); holder2.rollback()
+
+    section("m5 volume of the decrease record")
+    dbv, mgv, rtv, opv = fresh_g("vol")
+    t0 = time.time()
+    for i in range(1000): rtv.execute("SELECT * FROM spend_reserve('vol', %s, %s)", (D, Decimal("2"))); rtv.execute("SELECT * FROM spend_settle('vol', %s, %s, %s)", (D, Decimal("2"), Decimal("1")))
+    nrows = mgv.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]; sz = mgv.execute("SELECT pg_total_relation_size('spend_decrease_log')").fetchone()[0]
+    info(f"m5 1000 reserve+settle pairs with actual below worst wrote {nrows} rows to spend_decrease_log ({sz} bytes, {sz / max(nrows, 1):.0f} bytes per row, {time.time() - t0:.1f} s)")
+    check("m5 every ordinary settle below its reservation writes one row per table (2 per settle): the record is NOT a signal of tampering any more once DB-3 is applied; it is volume, STATED in the text with this number", nrows == 2000)
+
+    section("F4 / F5 observations of the independent runner of v19, as checks")
+    dbo, mgo, rto, opo = fresh_g("obs")
+    for lbl, amt in (("0", "0"), ("-0.01", "-0.01"), ("-1e30", "-1e30"), ("-Infinity", "-Infinity"), ("NULL", None)):
+        try: rr = rto.execute("SELECT * FROM spend_reserve('obs', %s, %s::numeric)", (D, amt)).fetchall(); e5 = None
+        except psycopg.Error as e2: rr, e5 = None, e2.sqlstate
+        check(f"F5 a reserve of {lbl} returns no row and no error (the store code must treat an empty result as an error): rows={rr} error={e5}", rr == [] and e5 is None)
+    for lbl, w, a in (("worst -1", "-1", "0"), ("actual -1", "1", "-1"), ("worst -Infinity", "-Infinity", "0"), ("worst NULL", None, "0"), ("actual NULL", "1", None)):
+        try: rr = rto.execute("SELECT * FROM spend_settle('obs', %s, %s::numeric, %s::numeric)", (D, w, a)).fetchall(); e5 = None
+        except psycopg.Error as e2: rr, e5 = None, e2.sqlstate
+        check(f"F5 a settle with {lbl} returns no row and no error: rows={rr} error={e5}", rr == [] and e5 is None)
+    rto.execute("CREATE TEMP TABLE spend (agent_id text, day date, usd numeric, open_usd numeric)"); rto.execute("SELECT * FROM spend_reserve('tmpcase', %s, %s)", (D, Decimal("2")))
+    check("F4 a runtime login can create a TEMP table named spend (and, in the same session, a trigger on it), but the DB-3 function still writes the real table (pg_catalog first, pg_temp last in its search_path)", mgo.execute("SELECT usd FROM spend WHERE agent_id='tmpcase'").fetchone()[0] == 2 and rto.execute("SELECT count(*) FROM pg_temp.spend").fetchone()[0] == 0)
+except Exception as e:
+    import traceback; traceback.print_exc(); check("v20 section ran to its end", False, type(e).__name__ + " " + str(e)[:200])
+
 print(f"SUMMARY safety checks {sum(res)} of {len(res)} passed; controls {sum(resc)} of {len(resc)} showed the old behaviour; stated exploits shown {sum(ress)} of {len(ress)}")
 sys.exit(0 if all(res) and all(resc) and all(ress) else 1)

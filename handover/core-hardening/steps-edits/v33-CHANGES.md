@@ -1,6 +1,6 @@
 # v33 changes (round 5, builder evidence only)
 
-DRAFT written 18:40 UTC while the runs go; the final figures are in section 5 once the last run finished.
+Builder evidence only. An independent evidence runner and fresh egm reviewers follow; nothing here is verified by anyone but me.
 
 ## 1. Failures and open items first
 
@@ -27,8 +27,34 @@ The four pages without the helper: v32 14,050, v33 A 14,901.
 
 ## 3. Findings fixed (class, fix, check, plant)
 
-See section 3 table in the final version.
+| Finding class | Fix (where) | Check | Plant |
+|---|---|---|---|
+| S M1 near-deadline failed cancel waits the ordinary chain | card "If it fails", the typed yes and appendix part 10 do the last-resort step at once after the first "cancel failed"; both chain ends 18:31 UTC = 00:01 IST and 18:41 UTC = 00:11 IST; the helper path ends at the owner's last-resort step | C246 | AA14, Z18 |
+| S M2 the cd line wider than the checked shape | 7.2 is `cd ` plus the Take folder only; R6 and the rows rule say so | C247 | AA15, AA16 |
+| S M3, M4, m1 stale claims (one live key at a time, Default A, file names, helper page, revoke-name rule) | windows with a valid key in sheet F6, note and open list (rows 82, 92, 95, 97, line 3 file names) | C248 | AA17 |
+| S m2 to m8 (helper paper, trigger, void paper, backstop dates, Sunday run day, film stop) | helper page, appendix part 10, W3, film page | C249 | AA18, AA19, AA20 |
+| N majors 1 to 10 and minors (same named row, edited video, subject start, 7-day boundary "at or before", blanks source, labels, day you decided) | sheet, card, appendix | C250 | AA21, AA22 |
+| N reading load | NOT fixed (section 1); C251 makes the count a stated figure | C07 (cap 15,800), C251 | none |
+| E1 the C01-only gap (H04, H05, H07, H14, H17, H18, H19, H20, H23, H35, H38 and safe defaults) | content checks on the SOURCE, every occurrence | C255 to C262 | AA01 to AA13, AA23 |
+| Own slip: helper backstop date missing "Mon 23 Nov 2026" on the second time | source fix | C249 | AA19 |
+| Own slip: open list source still had stale rows | source fix | C248 | AA17 |
+
+Table pointer kept for plant M48: a failed key save skips 6.7 and 7.11 still cancels in A.
+
+### Pins and ledgers changed (a person read each diff)
+C165 (A text of the 7-day wording), C187 and C210 (heading "Deadline reminders (Sun 22 Nov and Mon 23 Nov):"), plant X03 (same heading), plants P12 and Z18 (anchor text moved), C07 cap 14,800 to 15,800, C230 and the helper page read now take the page version (v32 for the proof). headings-v33.txt: only the v32 to v33 renames (read the diff). factuse-v33.txt: regenerated (30 changed rows, all from the new placeholders bm_chain, bt_end, sun_cb, sun_ls, rv22, enter, margin_end). pointers-v33.txt: regenerated after reading the 74 new pointer rows: all name steps, rules or sections that exist ("section 4" is inside the sentence "no section 4 exists").
+The lead-note history lines were renamed v32 to v33 by sed, as in v32.
 
 ## 6. Lead questions and proposals
 
-See final version.
+1. L-LEN proposal (needs a lead decision): move the near-deadline chain text, the helper setup and the windows paragraph out of the card and sheet into the appendix only, and print the card with one line pointing to it. That would cut the card by about 150 words but the card is the page used under stress, so I did not do it.
+2. Sunday run day (open list row 113): check 2 allows Sun 22 Nov only if the cancel-by time is at or before Sun 22 Nov 2026 17:59 UTC = 23:29 IST; your plan fact says no run is planned on Mon 23 Nov. Yes or no to the Sunday run day.
+3. Near-deadline last resort (row 114): the owner decides whether the last-resort step may be done at once; I built it that way because waiting 10 + 10 minutes can run past the deadline.
+4. The five-page cap: 15,800 words is my number; confirm or give another.
+5. Still OWNER-OPEN: L7, DB-2, the delete criterion, Q27.
+
+## 4. UNVERIFIED (not checked against a real page or account)
+The cancel-only role in the model account; how the lead starts or stops the model program; every vendor page path in the click steps; the time a real cancel takes.
+
+## 5. Evidence (builder, this session)
+See the hand-back message for the run figures; the commands are build-v33.py, check-v33.py, v33-fail-proof.py, mut33.py and gap-proof-v33.py (all in this folder).

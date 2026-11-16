@@ -107,3 +107,6 @@ L-DEL, L-SAVE, L-ONEDB, L-CARD (c6): unchanged from the earlier list.
 Hand-off v13/v14: L2-L7 unchanged; L7 Infinity clause needs an explicit yes (silence is not a yes); DB-2 needs its own yes (L9); which role reads the decrease log; scope of the DB-1 migrate seam; D5 stays OWNER-OPEN and non-blocking.
 Re-pin: what the delete-path criterion is, what "Q27 is shown" means, whether Q27 b alone makes 23 Nov possible.
 run.py: a fixed pointer file for the state folder.
+
+## 2026-11-16T18:42:48Z re-pin v8: permission change outside my folder (needs the lead, then the owner)
+The v8 builder ran chmod 755 on /home/user and /home/user/hadavin-sdk to let a test user read the script; the earlier modes were not recorded; both are 755 now. I cannot restore them (outside handover/core-hardening/). Please run: stat -c '%a %U' /home/user /home/user/hadavin-sdk, decide the mode to restore (probably 750 or 700), and check whether .git or other readable files hold anything that should not be world-readable.

@@ -201,3 +201,57 @@ NEG r14m10 caught | FAIL r14 3h key end
 NEG r14m12f caught | FAIL r14 E-09 sub-step f does not wait for `not looking`
 NEG r14m12g caught | FAIL r14 E-09 sub-step g does not wait for `not looking`
 NEG r14m12h caught | FAIL r14 E-09 sub-step h does not wait for `not looking`
+NEG r14m22 caught | FAIL r14 3a key end
+NEG r14m23 caught | FAIL r14 wrong weekday: Thu 18 Nov 2026
+NEG r14m34 caught | FAIL r14 wrong weekday: Sun 16 Nov 2026
+NEG r14m29 caught | FAIL r14 internal code in owner text E-48: Q25
+NEG r14m30 caught | FAIL r14 internal code in owner text E-48: L-23NOV
+NEG r14nd caught | FAIL E-48 owner NEW text contains ND
+NEG r14route caught | FAIL r14 route selection message not in exactly one place
+NEG r14rec2 caught | FAIL r14 second recommendation spot
+NEG r14norec caught | FAIL r13 E-48 lacks No default pick
+NEG r14again caught | FAIL r14 3c lacks it asks again right after `cut accepted`
+NEG r14forced caught | FAIL r14 3c lacks `key revoked` is never a confirmation
+NEG r14real caught | FAIL r14 3f lacks realpath
+NEG r14link caught | FAIL r14 3f lacks the number `1` in its second column
+NEG r14slash caught | FAIL r14 3f lacks followed by `/`
+NEG r14wild caught | FAIL r14 3f lacks none of the signs `*`
+NEG r14star caught | FAIL r14 E-48 item 6 star rule
+FAIL negative control anchor missing: r14alarm2
+NEG r14promise caught | FAIL r14 3a honest label
+NEG r14default caught | FAIL r14 3h default when unsure
+NEG r14unless caught | FAIL r14 3j override sentence
+FAIL negative control anchor missing: r14e16
+NEG r14e55 caught | FAIL r14 E-55 lacks your items 2, 3, 4, 5 and 6
+NEG r14e37 caught | FAIL r14 E-37 note
+NEG r14consent caught | FAIL r14 E-12 consent reach
+NEG r14testitem caught | FAIL r14 E-12 test item
+NEG r14margin caught | FAIL r14 E-12 margin
+NEG r14fallback caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r14conf caught | FAIL confirmation letters
+NEG r14count caught | FAIL r14 counting check word
+NEG r14line30 caught | FAIL r14 18:14:40 pair missing
+NEG r14clip caught | FAIL r14 E-09 clipboard history
+NEG r14e57 caught | FAIL E-57 lacks step 22 item 3
+NEG r14forcedd caught | FAIL r14 3c lacks `key revoked` is never a confirmation
+NEG r14bareno caught | FAIL r14 3e bare no
+NEG r14g caught | FAIL r14 3g new key storage
+NEG r14opt caught | FAIL r14 3i options
+NEG r14nd15 caught | FAIL r14 ND15 spots
+NEG r15B caught | FAIL r15 E-48 B lacks 'count only when you type them yourself, as a new message'
+NEG r15B2 caught | FAIL r15 E-48 B lacks 'never count'
+NEG r15e52 caught | FAIL r15 E-52 how you reply lacks 'Only you can write these words'
+NEG r15e12typed caught | FAIL r15 E-12 reply lacks 'typed by you yourself in a new message'
+NEG r15e16typed caught | FAIL r15 E-16 lacks 'Only messages that you type yourself count'
+NEG r15e16link caught | FAIL r15 E-16 path lacks 'if the path itself or any folder in front of it is a link'
+NEG r15e16slash caught | FAIL r15 E-16 path lacks '/x/take-10'
+NEG r15own caught | FAIL r15 E-48 G lacks 'you copy its path from your own list'
+NEG r15deny caught | FAIL r15 E-48 G lacks 'Never shred a recording, a video file'
+NEG r15path caught | FAIL r15 E-48 E lacks 'it must be exactly the folder `<folder>` that you copied fro'
+NEG r15list caught | FAIL r15 E-37 list lacks 'your own list of every file in which you saved a secret'
+NEG r15old1804 caught | FAIL r13 "latest start we plan" followed by time 18:04
+NEG r15bare caught | FAIL r15 E-12 margin lacks '18:15:20 UTC = 23:45:20 IST'
+NEG r15studio caught | FAIL r15 E-12 third party still has 'asks the studio lead to confirm this margin'
+NEG r15alarm caught | FAIL r15 E-48 C lacks 'If a take is running when alarm 1 rings'
+NEG r15alarm1 caught | FAIL r15 E-48 C lacks 'if no session is open or it does not ask, go straight to key'
+NEG r15app caught | FAIL r15 E-09 h lacks 'There are two different HubSpot keys'
