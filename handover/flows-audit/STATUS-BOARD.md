@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:09:49Z
+UPDATED_UTC: 2026-11-16T17:14:41Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 7
-CAPACITY: 2.20 load of 4 cores, mem 1/15 GB, RAM 1347/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 2.27 load of 4 cores, mem 1/15 GB, RAM 1337/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 8th slot empty: next job (patch-copies citation check) waits for r13 reader to avoid two agents on the same files; ITEMS_OPEN 30, 70 percent = 7 of 10 verified, none closed since 13:59Z
-PUSHED_UTC: 2026-11-16T17:09:49Z
+NEXT: 8th slot empty: every remaining independent job reads a file an agent is editing now (drift-007 r3 and citation checks wait for the fixers); ITEMS_OPEN 30, 70 percent = 7 of 10 verified, none closed since 13:59Z
+PUSHED_UTC: 2026-11-16T17:14:41Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,19 +31,19 @@ PUSHED_UTC: 2026-11-16T17:09:49Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:30Z | running | run_all.sh intermittency work |
-| a0a16684 | plan-files r30 fixer | sonnet | 8 Majors + stray fragment from reader r29 | 17:06Z | 17:25Z | running | editing RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
-| a89dbf18 | Q31 r22 reader | sonnet | stranger read of Q31 | 17:06Z | 17:20Z | running | reading |
-| a7ac5d80 | RW/CT r26 reader | sonnet | stranger read of unread RW/CT parts | 17:07Z | 17:20Z | running | reading |
 | ab0a31d9 | FINDINGS/LEDGER r16 fixer | sonnet | 6 Majors from reader r15 | 17:08Z | 17:25Z | running | editing |
 | afb10ffb | REVIEW.md r37 fixer | sonnet | design r36 B1+M, reader r36 M, citation caveats (uncapped) | 17:09Z | 17:35Z | running | editing REVIEW.md |
-| a6b0babc | patch-copies r13 reader | sonnet | stranger read README+DEAD-MAN-CHECK (uncapped) | 17:09Z | 17:20Z | running | reading |
+| a8c4d118 | Q31 r23 fixer | sonnet | 6 Majors from reader r22 + 4 new items | 17:11Z | 17:30Z | running | editing QUESTIONS.md |
+| a45191d1 | RW/CT r28 reader | sonnet | stranger read of parts not yet read | 17:12Z | 17:25Z | running | reading |
+| a0007ab5 | plan-files r31 reader | sonnet | stranger read RUNBOOK steps 1-17, FIX-PLAN, TAKE-CHECKLIST | 17:13Z | 17:28Z | running | reading |
+| a17610d4 | patch-copies r13 fixer | sonnet | 6 Majors from reader r13 (uncapped) | 17:14Z | 17:35Z | running | editing README/DEAD-MAN-CHECK |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Verify REVIEW.md r37 fixer report, then design + reader + citation round 38 (uncapped)
-2. Patch-copies r13 reader report, then fixer, then citation check
-3. Q31 r22 reader report, then one batched Q31 fixer (scene 2 item, item 100 extension, REPO eighth value of item 59)
-4. RW/CT r26 reader report, then fixer if Majors; FINDINGS/LEDGER r17 reader
-5. F8 r11 report, then evidence runner alone plus fresh uncapped reviews
+1. FINDINGS/LEDGER r16 fixer report: verify (compare14 0 differences), then r17 reader
+2. REVIEW.md r37 fixer report: verify counts, then design + reader + citation round 38 (uncapped)
+3. Q31 r23 fixer report: verify label counts, then fresh reader
+4. RW/CT r28 and plan-files r31 reader reports: save, then one fixer each
+5. F8 r11 report: evidence runner alone plus fresh uncapped reviews; patch-copies r13 fixer report then citation check
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
