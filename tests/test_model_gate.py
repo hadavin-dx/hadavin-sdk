@@ -4,6 +4,7 @@ known values are replaced, nothing is refused because a pattern matched). Fake c
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import copy
 import inspect
@@ -12,6 +13,7 @@ import logging
 import threading
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -230,7 +232,13 @@ def test_worst_case_is_computed_on_the_enforced_copies():
         seen.append(json.dumps(messages) + b"".join(documents).decode())
         return WORST
 
-    bound, _, _, _ = build(worst_case=spy, mapping={"<SECRET_1>": TOKEN})
+    objects = []
+
+    def spy_objects(route, system, messages, tools, documents, output_schema):
+        objects.append((messages, documents))
+        return spy(route, system, messages, tools, documents, output_schema)
+
+    bound, client, _, _ = build(worst_case=spy_objects, mapping={"<SECRET_1>": TOKEN})
     bound.chat(
         [{"role": "user", "content": f"token {TOKEN}"}],
         system="s",
@@ -238,6 +246,8 @@ def test_worst_case_is_computed_on_the_enforced_copies():
         documents=[TOKEN.encode()],
     )
     assert TOKEN not in seen[0] and seen[0].count("<SECRET_1>") == 2
+    # ... and it is the very lists the client is then sent
+    assert objects[0][0] is client.sent[0]["messages"] and objects[0][1] is client.sent[0]["docs"]
 
 
 def test_a_settle_above_the_reservation_is_passed_through():
@@ -456,7 +466,8 @@ def test_a_bad_map_means_no_call(bad):
     refused(*build(mapping=bad))
 
 
-def test_a_map_changed_by_another_thread_during_the_step_is_a_refusal_not_a_crash():
+def test_a_map_whose_iteration_raises_is_a_refusal_not_a_crash():
+    """No thread here: a Mapping whose `__iter__` raises what a dict raises when it changes under a reader."""
     from collections.abc import Mapping
 
     class Moving(Mapping):
@@ -486,6 +497,63 @@ def test_the_callers_messages_dicts_and_documents_are_not_mutated():
     assert (
         sent["messages"][0] is not messages[0] and sent["messages"][0]["content"] == "host <IPV4_1>"
     )
+
+
+# --- lead review round 1, B1: the traps of the enforce build, seen from the client's side -------------------------
+
+
+def test_b1_a_placeholder_inserted_in_this_pass_is_not_rewritten_by_a_later_shorter_original():
+    mapping = runmap.RunMap({"<SECRET_2>": TOKEN, "<SECRET_1>": "SECRET", "<TENANT_1>": "UUID_1"})
+    bound, client, _, _ = build(mapping=mapping)
+    bound.chat(
+        [{"role": "user", "content": f"a {TOKEN} b SECRET c UUID_1 d <UUID_1>"}],
+        system="s",
+        route="main",
+        documents=[f"{TOKEN} SECRET".encode()],
+    )
+    sent = client.sent[0]
+    assert sent["messages"][0]["content"] == "a <SECRET_2> b <SECRET_1> c <TENANT_1> d <UUID_1>", (
+        "a placeholder inserted in this pass was rewritten"
+    )
+    assert sent["docs"] == [b"<SECRET_2> <SECRET_1>"]
+
+
+def test_b1_stated_limit_a_partial_overlap_leaves_a_tail_in_what_is_sent():
+    """`abcd` and `cdef` known, `abcdef` in the text: `<SECRET_1>ef` is sent. A stated limit, pinned."""
+    bound, client, _, sink = build(mapping={"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"})
+    bound.chat([{"role": "user", "content": "abcdef"}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == "<SECRET_1>ef"
+    assert sink.codes() == [("ok", None)]
+
+
+def test_b1_seed_entries_of_the_map_cause_no_refusal_and_no_change():
+    seeded = runmap.RunMap({"<IPV4_1>": "\0seed<IPV4_1>", "<IPV4_2>": IP})
+    message = {"role": "user", "content": "host <IPV4_1> was named, seed"}
+    doc = b"about <IPV4_1> and <IPV4_2>"
+    bound, client, _, sink = build(mapping=seeded)
+    bound.chat([message, {"role": "user", "content": f"raw {IP}"}], system="s", route="main", documents=[doc])  # fmt: skip
+    sent = client.sent[0]
+    assert sent["messages"][0] is message and sent["docs"][0] is doc
+    assert sent["messages"][1]["content"] == "raw <IPV4_2>"
+    assert sink.codes() == [("ok", None)] and dict(seeded) == {"<IPV4_1>": "\0seed<IPV4_1>", "<IPV4_2>": IP}  # fmt: skip
+
+
+def test_b1_the_callers_cache_is_not_written_by_a_call_through_the_gate():
+    mapping = runmap.RunMap({"<IPV4_1>": IP, "<SECRET_1>": TOKEN})  # an empty cache: the sweep must build
+    cache = mapping.redact_cache
+    bound, client, _, _ = build(mapping=mapping)
+    bound.chat([{"role": "user", "content": f"at {IP}"}], system="s", route="main", documents=[TOKEN.encode()])  # fmt: skip
+    assert client.sent[0]["docs"] == [b"<SECRET_1>"]
+    assert mapping.redact_cache is cache and cache == {}, "the caller's cache was written"
+
+
+def test_b1_an_unchanged_document_with_bad_bytes_is_the_callers_own_object_beside_a_changed_one():
+    """Trap 5: nothing replaced means no decode-and-encode round trip, so invalid bytes stay as they are."""
+    bad = b"\xff\xfe not utf-8 \x80 <SECRET_1>"
+    docs = [bad, TOKEN.encode()]
+    bound, client, _, _ = build(mapping=known())
+    bound.chat(CLEAN, system="s", route="main", documents=docs)
+    assert client.sent[0]["docs"][0] is bad and client.sent[0]["docs"][1] == b"<SECRET_1>"
 
 
 # --- the live map (cb-1-M9, I3, I10) ------------------------------------------------------------------------------
@@ -580,7 +648,32 @@ def test_t12_reserve_raises_no_client_call_and_the_same_error_comes_out(error, c
     assert client.sent == [], "a client call without a reservation"
     assert meter.settles == []
     assert sink.codes() == [("refused", code)]
+    assert sink.rows[0].object_ref is None  # no reservation was made
     assert not isinstance(error, ProviderError | GateRefused)
+
+
+def test_m4_only_the_published_reasons_become_an_audit_code():
+    """The allowlist: a `.reason` that merely looks like a code (urllib's URLError has a `.reason`) is not copied."""
+    assert model_gate.SPEND_REASONS == {
+        "kill_switch",
+        "daily_budget",
+        "monthly_budget",
+        "limits_unavailable",
+        "bad_amount",
+    }
+    for reason in sorted(model_gate.SPEND_REASONS):
+        bound, _, _, sink = build(meter=Meter(reserve_raises=SpendRefused(reason)))
+        with pytest.raises(SpendRefused):
+            bound.chat(CLEAN, system="s", route="main")
+        assert sink.codes() == [("refused", reason)]
+    for reason in ("timed_out", "provider_refused", "ok", "", None, 7, ["daily_budget"], b"daily_budget"):
+        error = OSError("network")
+        error.reason = reason
+        bound, client, _, sink = build(meter=Meter(reserve_raises=error))
+        with pytest.raises(OSError):
+            bound.chat(CLEAN, system="s", route="main")
+        assert sink.codes() == [("refused", "reserve_refused")], "a reason that is not published was copied"
+        assert client.sent == []
 
 
 def test_worst_case_raising_is_a_reserve_refusal_too():
@@ -597,24 +690,75 @@ def test_worst_case_raising_is_a_reserve_refusal_too():
     )
 
 
-@pytest.mark.parametrize(
-    ("error", "settled", "code"),
-    [
-        (ProviderError("bad key"), Decimal(0), "provider_error"),  # refused before any work
-        (ProviderExhausted("throttled"), WORST, "provider_exhausted"),
-        (ValueError("a billed reply that did not parse"), WORST, "call_failed"),
-        (TimeoutError(), WORST, "call_failed"),
-    ],
-    ids=["provider-error", "provider-exhausted", "value-error", "timeout"],
-)
-def test_t13_the_client_raises_settle_once_and_the_same_error_comes_out(error, settled, code):
+class Marked(ProviderError):
+    """A ProviderError carrying the mark core-b is asked for (requests/2-refused-before-response.md)."""
+
+    refused_before_response = True
+
+
+def _flagged(error: BaseException, value: object = True) -> BaseException:
+    error.refused_before_response = value
+    return error
+
+
+UNSETTLED = [
+    (ProviderError("bad key"), "provider_error"),  # unmarked: may be a billed reply that did not parse
+    (ProviderExhausted("throttled"), "provider_exhausted"),
+    (_flagged(ProviderExhausted("throttled, flagged")), "provider_exhausted"),  # exhausted is never (b)
+    (_flagged(ProviderError("truthy, not True"), 1), "provider_error"),
+    (_flagged(ProviderError("a str"), "yes"), "provider_error"),
+    (_flagged(ValueError("flag on an error that is not the adapter's")), "call_failed"),
+    (ValueError("a billed reply that did not parse"), "call_failed"),
+    (TimeoutError(), "call_failed"),
+    (OSError("connection reset"), "call_failed"),
+]
+
+
+@pytest.mark.parametrize(("error", "code"), UNSETTLED, ids=[f"{c}-{i}" for i, (_, c) in enumerate(UNSETTLED)])
+def test_t13_rule_c_a_failed_call_is_not_settled_and_the_same_error_comes_out(error, code):
+    """ORDER 011 rule (c): cost unknown, so the worst case stays booked; the store's sweep closes it."""
     bound, client, meter, sink = build(Client(raises=error))
     with pytest.raises(type(error)) as caught:
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error
-    assert meter.settles == [("res_1", settled)], "wrong settle after a client error"
+    assert meter.settles == [], "a failed call with no mark was settled"
+    assert meter.open() == {"res_1"}, "the worst case does not stay booked"
     assert len(client.sent) == 1
     assert sink.codes() == [("failed", code)]
+    assert sink.rows[0].object_ref == "res_1"
+
+
+@pytest.mark.parametrize(
+    "error", [Marked("bad key"), _flagged(ProviderError("bad request"))], ids=["subclass", "flag"]
+)
+def test_t13_rule_b_an_error_marked_refused_before_response_is_settled_at_zero(error):
+    """ORDER 011 rule (b), with a fake exception carrying the mark: llm/retry.py does not set it yet."""
+    bound, client, meter, sink = build(Client(raises=error))
+    with pytest.raises(ProviderError) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    assert caught.value is error
+    assert meter.settles == [("res_1", Decimal(0))], "a marked refusal was not settled at 0"
+    assert sink.codes() == [("failed", "provider_refused")]
+    assert sink.rows[0].object_ref == "res_1"
+
+
+def test_no_error_the_adapters_raise_today_carries_the_mark():
+    """Until core-b adds it, rule (b) never fires: every error `with_retry` can raise is unmarked."""
+    from hadavin_sdk.llm import retry
+
+    def boom(exc):
+        def call():
+            raise exc
+
+        return call
+
+    raised = []
+    for inner in (ValueError("did not parse"), OSError("reset"), ProviderError("inner")):
+        with pytest.raises(ProviderError) as caught:
+            retry.with_retry(boom(inner), label="x", max_attempts=1, sleep=lambda s: None)
+        raised.append(caught.value)
+    assert [model_gate.refused_before_response(e) for e in raised] == [False, False, False]
+    assert not hasattr(ProviderError("x"), "refused_before_response")
 
 
 @pytest.mark.parametrize("error", [KeyboardInterrupt(), SystemExit(1)], ids=["interrupt", "exit"])
@@ -627,25 +771,70 @@ def test_t14_a_base_exception_is_not_settled_the_worst_case_stays_booked(error):
     assert meter.settles == [], "settled after a KeyboardInterrupt or SystemExit"
     assert meter.open() == {"res_1"}
     assert sink.codes() == [("failed", "call_interrupted")]
+    assert sink.rows[0].object_ref == "res_1"
 
 
-def test_settle_raising_after_a_paid_call_still_returns_the_reply():
+def test_m2_settle_raising_after_a_paid_call_returns_the_reply_and_the_row_says_ok():
+    """Minor m2: the call was paid and answered, so it is counted as `ok`; the code says what went wrong."""
     meter = Meter(settle_raises=RuntimeError(f"store down {TOKEN}"))
     bound, client, _, sink = build(meter=meter)
     assert bound.chat(CLEAN, system="s", route="main") is client.reply
     assert (
         meter.log.count("reserve") == 1 and len(meter.settles) == 1
     )  # no second reserve, no retry
-    assert sink.codes() == [("failed", "settle_failed")]
+    assert sink.codes() == [("ok", "settle_failed")], "a paid call was written as failed"
+    assert sink.rows[0].object_ref == "res_1"
 
 
-def test_settle_raising_after_a_failed_call_does_not_hide_the_clients_error():
-    error = ProviderExhausted("throttled")
+def test_settle_raising_after_a_marked_refusal_does_not_hide_the_clients_error():
+    error = Marked("bad key")
     meter = Meter(settle_raises=RuntimeError("store down"))
     bound, _, _, sink = build(Client(raises=error), meter=meter)
-    with pytest.raises(ProviderExhausted) as caught:
+    with pytest.raises(ProviderError) as caught:
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error and sink.codes() == [("failed", "settle_failed")]
+    assert len(meter.settles) == 1  # one try, no retry
+
+
+BAD_COSTS = {
+    "none": None,
+    "negative": Decimal("-0.01"),
+    "nan": Decimal("NaN"),
+    "snan": Decimal("sNaN"),
+    "infinite": Decimal("Infinity"),
+    "float": 0.01,
+    "str": "0.01",
+}
+
+
+@pytest.mark.parametrize("cost", BAD_COSTS.values(), ids=BAD_COSTS.keys())
+def test_m5_a_reply_with_no_usable_cost_is_returned_and_not_settled(cost):
+    """Minor m5 (decision): the call happened, so the reply is returned; the gate settles nothing (never 0,
+    never a made-up amount), the worst case stays booked, and the row is `ok` with code `cost_unknown`."""
+    client = Client()
+    client.reply = SimpleNamespace(text="done", cost_usd=cost)
+    bound, _, meter, sink = build(client)
+    assert bound.chat(CLEAN, system="s", route="main") is client.reply
+    assert meter.settles == [], "a reply with no usable cost was settled"
+    assert meter.open() == {"res_1"}
+    assert sink.codes() == [("ok", "cost_unknown")]
+    assert sink.rows[0].object_ref == "res_1"
+
+
+def test_m5_a_reply_object_without_a_cost_attribute_is_returned_and_not_settled():
+    client = Client()
+    client.reply = object()
+    bound, _, meter, sink = build(client)
+    assert bound.chat(CLEAN, system="s", route="main") is client.reply
+    assert meter.settles == [] and sink.codes() == [("ok", "cost_unknown")]
+
+
+def test_m5_a_zero_cost_reply_is_settled_at_zero():
+    client = Client()
+    client.reply = Reply(model_id="fake-model")  # cost_usd defaults to Decimal(0): a real, known cost
+    bound, _, meter, sink = build(client)
+    bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [("res_1", Decimal(0))] and sink.codes() == [("ok", None)]
 
 
 class Blocked(Client):
@@ -740,15 +929,35 @@ def test_pin_no_settle_on_keyboard_interrupt():
     assert meter.open() == {"res_1"}, "the worst case does not stay booked"
 
 
-def test_pin_the_settle_amount_after_a_client_error():
-    for error, amount in [
-        (ProviderError("bad key"), Decimal(0)),
-        (ProviderExhausted("throttled"), WORST),
-    ]:
+def test_pin_an_unmarked_provider_error_is_not_settled():
+    for error in (ProviderError("bad key"), ProviderExhausted("throttled")):
         bound, _, meter, _ = build(Client(raises=error))
         with pytest.raises(ProviderError):
             bound.chat(CLEAN, system="s", route="main")
-        assert meter.settles == [("res_1", amount)], "wrong settle after a client error"
+        assert meter.settles == [], "an unmarked provider error was settled"
+
+
+def test_pin_a_generic_exception_is_not_settled():
+    for error in (ValueError("did not parse"), TimeoutError()):
+        bound, _, meter, _ = build(Client(raises=error))
+        with pytest.raises(type(error)):
+            bound.chat(CLEAN, system="s", route="main")
+        assert meter.settles == [], "a generic exception was settled"
+
+
+def test_pin_a_marked_refusal_is_settled_at_zero():
+    bound, _, meter, _ = build(Client(raises=Marked("bad key")))
+    with pytest.raises(ProviderError):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [("res_1", Decimal(0))], "a marked refusal was not settled at 0"
+
+
+def test_pin_a_reply_with_no_usable_cost_is_not_settled():
+    client = Client()
+    client.reply = SimpleNamespace(text="done", cost_usd=Decimal("NaN"))
+    bound, _, meter, _ = build(client)
+    bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [], "a reply with no usable cost was settled"
 
 
 # --- audit (T16 to T18) -------------------------------------------------------------------------------------------
@@ -776,7 +985,13 @@ def test_a_raising_audit_sink_does_not_change_a_refusal_or_an_error():
     bound, _, meter, _ = build(Client(raises=error), sink=Sink(raises=RuntimeError("audit down")))
     with pytest.raises(ProviderExhausted):
         bound.chat(CLEAN, system="s", route="main")
-    assert meter.settles == [("res_1", WORST)]
+    assert meter.settles == [] and meter.open() == {"res_1"}
+    bound, _, meter, _ = build(
+        Client(raises=Marked("bad key")), sink=Sink(raises=RuntimeError("audit down"))
+    )
+    with pytest.raises(ProviderError):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [("res_1", Decimal(0))]
 
 
 def test_audit_may_be_none_on_every_path():
@@ -809,8 +1024,33 @@ def test_the_audit_row_has_the_agreed_fields_and_nothing_else():
         "replay",
         "ok",
     )
-    assert row.object_ref is None and row.inputs_hash is None and row.decision is None
+    assert row.object_ref == "res_1"  # minor m3: the reservation id, to match the row to the spend row
+    assert row.inputs_hash is None and row.decision is None
     assert row.rule_id is None and row.error_code is None
+    assert row.output_hash is None and row.restored_hash is None and row.rows is None
+
+
+def test_m3_a_row_written_before_any_reservation_has_no_object_reference():
+    bound, _, _, sink = build()
+    with pytest.raises(UnmaskedInput):
+        bound.chat([{"role": "user", "content": 7}], system="s", route="main")
+    assert sink.codes() == [("refused", "mask_refused")] and sink.rows[0].object_ref is None
+
+
+def test_m3_a_reservation_id_that_is_not_a_str_does_not_lose_the_row():
+    class OddMeter(Meter):
+        def reserve(self, agent_id, worst_usd, *, run_id=None):
+            super().reserve(agent_id, worst_usd, run_id=run_id)
+            return 17
+
+        def settle(self, reservation_id, actual_usd):
+            self.settles.append((reservation_id, actual_usd))
+            return Decimal(0)
+
+    bound, _, meter, sink = build(meter=OddMeter())
+    bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [(17, COST)]
+    assert sink.codes() == [("ok", None)] and sink.rows[0].object_ref is None
 
 
 def test_t18_no_secret_in_any_audit_row_exception_or_log_record(caplog):
@@ -846,7 +1086,7 @@ def test_t18_no_secret_in_any_audit_row_exception_or_log_record(caplog):
         ("refused", "mask_refused"),
         ("refused", "reserve_refused"),
         ("failed", "call_failed"),
-        ("failed", "settle_failed"),
+        ("ok", "settle_failed"),
     ]
     assert caplog.records == []  # the module has no logger
     blob = "\n".join(captured)
@@ -854,27 +1094,121 @@ def test_t18_no_secret_in_any_audit_row_exception_or_log_record(caplog):
         assert secret not in blob
 
 
+GATE_SOURCE = Path(model_gate.__file__)
+# What an exception variable may be handed to, and nothing else: a type test, one attribute read by name, the
+# rule (b) predicate. Never str(), repr(), format, an f-string, `raise ... from`, an audit row or a constructor.
+EXC_MAY_GO_TO = {"isinstance", "getattr", "refused_before_response"}
+BANNED_NAMES = {"logging", "getLogger", "print", "warnings", "traceback", "repr", "format", "vars", "ContextVar"}  # fmt: skip
+BANNED_ATTRS = {"__cause__", "__context__", "__traceback__", "args", "with_traceback", "add_note", "__notes__", "__dict__", "local"}  # fmt: skip
+ROW_VALUES = {
+    "run_id": "self._run_id",
+    "domain": "AUDIT_DOMAIN",
+    "operation": "AUDIT_OPERATION",
+    "principal": "self._principal",
+    "source": "self._source",
+    "object_ref": "reservation if isinstance(reservation, str) else None",
+    "result": "result",
+    "error_code": "error_code",
+}
+
+
+def gate_source_problems(source: str) -> list[str]:
+    """Every place in the WHOLE module (every function body, not only its head) where a logger, a print,
+    exception text, an exception chain, message text in a row or in a raised error, or module state could
+    get in. Walks the syntax tree, so a docstring or a comment that names a banned word does not count and
+    code anywhere in the file does."""
+    tree = ast.parse(source)
+    parent = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    problems: list[str] = []
+    exc_names = {"exc"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ExceptHandler) and node.name:
+            exc_names.add(node.name)
+    for node in ast.walk(tree):
+        line = getattr(node, "lineno", 0)
+        if isinstance(node, ast.Import | ast.ImportFrom):
+            names = {a.name.split(".")[0] for a in node.names} | {(getattr(node, "module", "") or "").split(".")[0]}  # fmt: skip
+            names |= {a.name for a in node.names}
+            if names & (BANNED_NAMES | {"threading", "contextvars"}):
+                problems.append(f"line {line}: banned import")
+        elif isinstance(node, ast.Name) and node.id in BANNED_NAMES:
+            problems.append(f"line {line}: banned name {node.id}")
+        elif isinstance(node, ast.Attribute) and node.attr in BANNED_ATTRS:
+            problems.append(f"line {line}: banned attribute {node.attr}")
+        elif isinstance(node, ast.Global | ast.Nonlocal):
+            problems.append(f"line {line}: module state")
+        elif isinstance(node, ast.Name) and node.id in exc_names and isinstance(node.ctx, ast.Load):
+            call = parent.get(node)
+            target = call.func.id if isinstance(call, ast.Call) and isinstance(call.func, ast.Name) else None  # fmt: skip
+            if target not in EXC_MAY_GO_TO or node not in call.args:
+                problems.append(f"line {line}: exception text could leave through {node.id}")
+        elif isinstance(node, ast.Raise):
+            bare_or_fixed = node.exc is None or (isinstance(node.exc, ast.Name) and node.cause is None)
+            fixed_type_error = (
+                isinstance(node.exc, ast.Call)
+                and ast.unparse(node.exc.func) == "TypeError"
+                and all(isinstance(a, ast.Constant) for a in node.exc.args)
+                and node.cause is None
+            )
+            if not (bare_or_fixed or fixed_type_error):
+                problems.append(f"line {line}: a raise that could carry text")
+        elif isinstance(node, ast.Call) and ast.unparse(node.func) == "AuditEvent":
+            row = {k.arg: ast.unparse(k.value) for k in node.keywords}
+            if node.args or row != ROW_VALUES:
+                problems.append(f"line {line}: an audit row field that is not a fixed code or id")
+        elif isinstance(node, ast.Call) and ast.unparse(node.func) == "str":
+            problems.append(f"line {line}: str() call")
+    return problems
+
+
 def test_i9_the_module_has_no_logger_no_exception_text_and_no_module_state():
-    source = Path(model_gate.__file__).read_text(encoding="utf-8")
-    code = "\n".join(line.split("#")[0] for line in source.split('"""')[2].splitlines())
-    for banned in (
-        "logging",
-        "getLogger",
-        "print(",
-        "str(exc",
-        "repr(exc",
-        "__cause__",
-        "exc.args",
-    ):
-        assert banned not in code, banned
-    for banned in ("ContextVar", "threading.local", "global "):
-        assert banned not in source, banned
+    """Major M1: the guard reads the whole module's syntax tree, and tests/gate_mutants.py proves it can
+    fail (mutants G7a to G7d put a str(exc), a logger, a `__cause__` and message text into method bodies)."""
+    problems = gate_source_problems(GATE_SOURCE.read_text(encoding="utf-8"))
+    assert problems == [], f"exception text, a logger or message text in the gate: {problems}"
+    audit_calls = [
+        n
+        for n in ast.walk(ast.parse(GATE_SOURCE.read_text(encoding="utf-8")))
+        if isinstance(n, ast.Call) and ast.unparse(n.func) == "AuditEvent"
+    ]
+    assert len(audit_calls) == 1  # the one row writer the check above looked at
     mutable = {
         name
         for name, value in vars(model_gate).items()
         if not name.startswith("__") and isinstance(value, dict | list | set)
     }
     assert mutable == set()  # I10: no module-level state
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ("            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n", "            self._note(RESULT_FAILED, str(exc), reservation)\n"),
+        ("        except Exception:  # rule (c): may", "        except Exception as err:  # {err} may"),
+        ("            raise UnmaskedInput  #", "            raise UnmaskedInput(messages)  #"),
+        ("            raise\n        except Exception:  # rule (c)", "            raise RuntimeError from exc\n        except Exception:  # rule (c)"),
+        ("                    error_code=error_code,\n", "                    error_code=error_code,\n                    rule_id=self._agent_id,\n"),
+        ("                    result=result,\n", "                    result=f\"{result}\",\n"),
+        ("        if self._audit is None:\n            return\n", "        if self._audit is None:\n            return\n        import logging\n"),
+        ("        mapping = self._mapping\n", "        mapping = self._mapping\n        print(messages)\n"),
+        ("            code = CODE_SETTLE_FAILED\n", "            code = CODE_SETTLE_FAILED\n            self.last = exc.__cause__\n"),
+    ],
+    ids=["str-exc", "fstring-exc", "raise-with-text", "raise-from", "extra-row-field", "fstring-row", "import-logging", "print", "cause"],
+)  # fmt: skip
+def test_i9_the_guard_fails_on_each_planted_leak_anywhere_in_the_module(old, new):
+    """The guard itself, tried here on edited copies of the source (in memory): each plant sits inside a
+    method body, where the old text-slice check never looked."""
+    source = GATE_SOURCE.read_text(encoding="utf-8")
+    assert source.count(old) == 1
+    planted = source.replace(old, new)
+    if "as err" in new:  # the handler now binds a name: use it in an f-string in its body
+        planted = planted.replace(
+            "            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n",
+            "            self.seen = f\"{err}\"\n            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n",
+        )
+        assert planted.count("self.seen") == 1
+    ast.parse(planted)  # a plant that does not parse proves nothing
+    assert gate_source_problems(planted) != []
 
 
 # --- structure (T19, T20) -----------------------------------------------------------------------------------------
@@ -948,7 +1282,7 @@ def test_the_gate_in_front_of_script_llm_replaces_a_known_value_a_step_forgot_to
     assert len(meter.settles) == 2
 
 
-def test_the_gate_in_front_of_fake_llm_settles_the_worst_case_when_the_recording_is_missing(
+def test_the_gate_in_front_of_fake_llm_keeps_the_worst_case_booked_when_the_recording_is_missing(
     tmp_path,
 ):
     routes = {
@@ -964,7 +1298,7 @@ def test_the_gate_in_front_of_fake_llm_settles_the_worst_case_when_the_recording
     bound = ModelGate(llm, meter=meter, audit=sink, worst_case=worst).bind("agent-1", "run-1")
     with pytest.raises(UnknownRecording):
         bound.chat(CLEAN, system="s", route="main", documents=[b"a clean doc"])
-    assert len(llm.calls) == 1 and meter.settles == [("res_1", WORST)]
+    assert len(llm.calls) == 1 and meter.settles == [] and meter.open() == {"res_1"}
     assert sink.codes() == [("failed", "call_failed")]
 
 

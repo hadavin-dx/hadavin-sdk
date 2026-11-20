@@ -2,16 +2,32 @@
 
 Guarantee: values the run has identified as sensitive are replaced by their placeholders in everything sent to a model; detection of new values is done by the producers' pattern redactor.
 
+Stated limits of that sentence (lead review round 1; each is pinned by the test named, T = tests/test_model_gate.py,
+E = tests/test_runmap_enforce_map.py). The replace is the redactor's own sweep and follows its rule (`redact._sweep`):
+- A known value under 3 characters is never replaced. A known value that is all digits and under 6 characters, or
+  a common word (`redact._COMMON`: prod, test, web ...), is never replaced UNLESS it is a secret kind of 4
+  characters or more (those are replaced in every copy).
+  E::test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_swept
+- Any value that is not a secret kind of 4 or more (an identifier: tenant, host, address, id) is replaced only
+  where no ASCII letter or digit touches it: `abc123` inside `xabc1234` stays.
+  E::test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept
+- Only the spelling the map holds is replaced: a percent-, entity- or backslash-encoded copy, a full-width or
+  other look-alike spelling and a copy split by a zero-width character pass as written.
+  T::test_t7_stated_limit_a_hidden_spelling_of_a_known_value_is_not_replaced_by_the_gate
+- Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in `abcdef`):
+  one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left.
+  E::test_stated_limit_partial_overlap_leaves_a_tail
+- The gate runs no pattern: a value that is in no map passes as written, also a clean key and a clean value that
+  only match a pattern once composed (`"user_id": "abc123"`).
+  T::test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_are_not_touched
+- With no map (`mapping=None`: the eval and replay command lines, the judge with its own map) there is no enforce
+  step. `system` and `tools` are operator text and are not touched.
+
 Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
 of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then reserves the
 worst-case cost. The client gets the enforced copies. After the call the gate settles the real cost and writes
 one audit row. If the enforce step or the reservation fails, no call is made. The gate holds no money logic and
 no redaction logic of its own: it only orders the steps.
-
-Stated limits. The gate runs no pattern: a value that is in no map (also a clean key and a clean value that
-only match a pattern once composed, such as `"user_id": "abc123"`) passes as written. With no map
-(`mapping=None`: the eval and replay command lines, the judge with its own map) there is no enforce step.
-`system` and `tools` are operator text and are not touched.
 
 No logger, no module-level state, and no message text, no exception text and no exception chain in any audit
 row or in any exception raised here. The caller's messages, dicts and documents are never changed in place.
@@ -20,7 +36,6 @@ row or in any exception raised here. The caller's messages, dicts and documents 
 from __future__ import annotations
 
 import contextlib
-import re
 from collections.abc import Callable, Mapping
 from decimal import Decimal
 from typing import Any, Protocol
@@ -38,9 +53,15 @@ from hadavin_sdk.models import AuditEvent, Reply
 # method, an audit string or the worst_case arguments.
 # ------------------------------------------------------------------------------------------------------
 # reserve: returns a reservation id only after the worst case is booked; ANY exception means no model call.
-# settle: returns the overshoot; the first call for a reservation wins. Real cost known -> settle it (0 for
-# a request the provider refused). Real cost unknown and the process is going down -> do not settle: the
-# worst case stays booked and the store's sweep closes it.
+# settle: returns the overshoot; the first call for a reservation wins.
+# THE ONE SETTLE RULE (ORDER 011; it replaces ORDER 006 item 8):
+#   (a) a reply came back with a usable cost            -> settle that cost;
+#   (b) the adapter MARKED the error as refused before any response (`refused_before_response`)
+#                                                       -> settle 0;
+#   (c) everything else (a timeout, used-up retries, a billed reply that failed to parse, any other
+#       exception, KeyboardInterrupt / SystemExit, an abandoned thread, a reply whose cost is missing,
+#       negative or not a number)                       -> NO settle: the worst case stays booked and the
+#                                                          store's sweep closes the reservation.
 # worst_case: supplied by the installer; it resolves the route name and covers the client's retries.
 
 
@@ -72,14 +93,38 @@ RESULT_REFUSED = "refused"
 RESULT_FAILED = "failed"
 CODE_GATE_REFUSED = "gate_refused"
 CODE_MASK_REFUSED = "mask_refused"
-CODE_RESERVE_REFUSED = "reserve_refused"  # used when the meter's exception has no usable `.reason`
-CODE_PROVIDER_ERROR = "provider_error"  # refused before any work: settled at 0
-CODE_PROVIDER_EXHAUSTED = "provider_exhausted"  # retries used up: settled at the worst case
-CODE_CALL_FAILED = "call_failed"  # any other Exception from the client: settled at the worst case
-CODE_CALL_INTERRUPTED = "call_interrupted"  # KeyboardInterrupt, SystemExit: NOT settled
-CODE_SETTLE_FAILED = "settle_failed"
-# A meter's `.reason` becomes the audit error code only when it is shaped like a code (never free text).
-REASON_CODE = re.compile(r"[a-z][a-z0-9_.]{0,63}")
+CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
+CODE_PROVIDER_REFUSED = "provider_refused"  # rule (b): marked refused before any response, settled at 0
+CODE_PROVIDER_ERROR = "provider_error"  # rule (c): an unmarked ProviderError, NOT settled
+CODE_PROVIDER_EXHAUSTED = "provider_exhausted"  # rule (c): retries used up, NOT settled
+CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the client, NOT settled
+CODE_CALL_INTERRUPTED = "call_interrupted"  # rule (c): KeyboardInterrupt, SystemExit, NOT settled
+CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
+CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
+# The reasons INTERFACE (ii) publishes for `SpendRefused.reason`. Only these become an audit error code: a
+# `.reason` on any other exception (urllib's URLError has one) is never copied.
+SPEND_REASONS = frozenset(
+    {"kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount"}
+)
+
+
+def refused_before_response(exc: BaseException) -> bool:
+    """Rule (b). True only for a ProviderError (not ProviderExhausted: its attempts may have been answered)
+    that the adapter marked with `refused_before_response = True`. llm/retry.py sets no such mark yet
+    (handover/core-c/requests/2-refused-before-response.md), so today this is False for every real error
+    and every failed call keeps its worst case booked."""
+    marked = getattr(exc, "refused_before_response", False) is True
+    return marked and isinstance(exc, ProviderError) and not isinstance(exc, ProviderExhausted)
+
+
+def usable_cost(reply: Any) -> Decimal | None:
+    """Rule (a): the reply's cost when it is a finite Decimal that is not negative, else None."""
+    cost = getattr(reply, "cost_usd", None)
+    if isinstance(cost, Decimal) and cost.is_finite() and cost >= 0:
+        return cost
+    return None
+
+
 # END OF ASSUMED INTERFACE (ii)
 # ======================================================================================================
 
@@ -135,7 +180,8 @@ class ModelGate:
 
 
 class BoundGate:
-    """Satisfies `llm.protocol.LLM`. Order: enforce the map, reserve, provider call, settle, audit row."""
+    """Satisfies `llm.protocol.LLM`. Order: enforce the map, reserve, provider call, settle (by the one
+    settle rule in the interface block above), audit row."""
 
     def __init__(
         self,
@@ -171,8 +217,8 @@ class BoundGate:
             reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
         except Exception as exc:
             reason = getattr(exc, "reason", None)
-            known = isinstance(reason, str) and REASON_CODE.fullmatch(reason) is not None
-            self._note(RESULT_REFUSED, reason if known else CODE_RESERVE_REFUSED)
+            published = isinstance(reason, str) and reason in SPEND_REASONS
+            self._note(RESULT_REFUSED, reason if published else CODE_RESERVE_REFUSED)
             raise
         try:
             reply = self._llm.chat(
@@ -183,33 +229,36 @@ class BoundGate:
                 documents=documents,
                 output_schema=output_schema,
             )
-        except ProviderExhausted:
-            self._failed(reservation, reserved, CODE_PROVIDER_EXHAUSTED)
+        except ProviderError as exc:
+            if refused_before_response(exc):  # rule (b): it cost nothing
+                self._settle(reservation, Decimal(0), RESULT_FAILED, CODE_PROVIDER_REFUSED)
+            else:  # rule (c): the cost is unknown, the worst case stays booked
+                exhausted = isinstance(exc, ProviderExhausted)
+                code = CODE_PROVIDER_EXHAUSTED if exhausted else CODE_PROVIDER_ERROR
+                self._note(RESULT_FAILED, code, reservation)
             raise
-        except ProviderError:  # refused before any work was done: it cost nothing
-            self._failed(reservation, Decimal(0), CODE_PROVIDER_ERROR)
+        except Exception:  # rule (c): may have been billed (a reply that fails to parse, a timeout)
+            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)
             raise
-        except Exception:  # may have been billed (a reply that fails to parse): hold the worst case
-            self._failed(reservation, reserved, CODE_CALL_FAILED)
+        except BaseException:  # rule (c): going down, cost unknown
+            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation)
             raise
-        except BaseException:  # going down, cost unknown: not settled, the store's sweep closes it
-            self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED)
-            raise
-        try:
-            self._meter.settle(reservation, reply.cost_usd)
-        except Exception:  # noqa: BLE001 - the call is paid: the reply is never lost to a meter failure
-            self._note(RESULT_FAILED, CODE_SETTLE_FAILED)
-            return reply
-        self._note(RESULT_OK, None)
+        cost = usable_cost(reply)
+        if cost is None:  # rule (c): the call is paid and its reply is returned; nothing to settle with
+            self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation)
+        else:  # rule (a)
+            self._settle(reservation, cost, RESULT_OK, None)
         return reply
 
-    def _failed(self, reservation: str, usd: Decimal, code: str) -> None:
-        """Settle after a failed call and write its row. A failing settle never hides the client's error."""
+    def _settle(self, reservation: str, usd: Decimal, result: str, code: str | None) -> None:
+        """Settle once and write the row. A raising meter never loses a paid reply and never hides the
+        client's error: the row then says `settle_failed` (with the call's own result, so a paid call is
+        still counted as `ok`) and the worst case stays booked."""
         try:
             self._meter.settle(reservation, usd)
-        except Exception:  # noqa: BLE001 - the worst case stays booked; the caller sees the client's error
+        except Exception:  # noqa: BLE001 - see the docstring
             code = CODE_SETTLE_FAILED
-        self._note(RESULT_FAILED, code)
+        self._note(result, code, reservation)
 
     def _enforced(
         self, messages: list[dict[str, Any]], documents: list[bytes] | None
@@ -251,8 +300,10 @@ class BoundGate:
             return None
         return sent, docs
 
-    def _note(self, result: str, error_code: str | None) -> None:
-        """One audit row: codes only. A missing, parking (None) or raising sink never changes the outcome."""
+    def _note(self, result: str, error_code: str | None, reservation: str | None = None) -> None:
+        """One audit row: codes only, and the reservation id (when one was made) as the object reference, so
+        a row can be matched to the spend row. A missing, parking (None) or raising sink never changes the
+        outcome."""
         if self._audit is None:
             return
         with contextlib.suppress(Exception):
@@ -263,6 +314,7 @@ class BoundGate:
                     operation=AUDIT_OPERATION,
                     principal=self._principal,
                     source=self._source,
+                    object_ref=reservation if isinstance(reservation, str) else None,
                     result=result,
                     error_code=error_code,
                 )

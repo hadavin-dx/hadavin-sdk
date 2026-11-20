@@ -524,7 +524,9 @@ def redact_text(
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
     out, current = _scan(text, mapping, neutralise, getattr(mapping, "redact_cache", None))
-    mapping.clear()
+    # No `clear()` first: another thread (the model gate holds this map by reference) must never read it
+    # empty. `current` is always the old map plus new entries: the redactor copies the map, only ever adds
+    # to its copy, and numbers a new placeholder above every number already held (`redact._Redactor`).
     mapping.update(current)
     return out
 
@@ -570,6 +572,10 @@ def is_masked(
     return current == before and held_after == held_before
 
 
+# Any substring of a placeholder token (`<KIND_12>`) is made of these characters only: the cheap first test.
+_TOKEN_PART = re.compile(r"<?[A-Z0-9]*_?[0-9]*>?")
+
+
 def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     """`text` with every raw copy of a value the map already holds replaced by that value's EXISTING
     placeholder. No pattern is run: nothing new is found, no entry is added, no placeholder is invented,
@@ -578,20 +584,48 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
 
     The replace is the redactor's own final sweep (`guard/redact.py` `_Redactor.sweep`), so the rules are
     the ones every producer's output already follows: longest originals first (a value that contains
-    another is replaced whole); nothing is replaced inside a placeholder already in the text; every copy of
-    a secret is replaced, and an identifier where no ASCII letter or digit touches it.
+    another is replaced whole); nothing is replaced inside a placeholder already in the text. Which copies
+    (`redact._sweep`): a value of a secret kind of 4 characters or more, every copy; any other value, only
+    where no ASCII letter or digit touches it.
 
-    Limit, on purpose: only the spelling held in the map is replaced. A copy hidden by full-width letters,
-    a zero-width space or an escape is NOT found here: finding those is the pattern redactor's work
-    (`redact_text`), and returning a decoded view from here could turn a look-alike into a real placeholder.
+    One thing is added to the sweep. Inside one stretch of text the sweep replaces value after value and
+    does not look again at the placeholders it has just written, so a shorter known value that is itself a
+    piece of a placeholder of this map (`SECRET`, `UUID_1`) would be replaced INSIDE a placeholder written
+    a moment before (`<<SECRET_1>_2>`). Such values are therefore held back and swept afterwards, one at a
+    time, longest first: each of those sweeps starts by setting every placeholder in the text aside.
+
+    Limits, on purpose (each pinned by a test in tests/test_runmap_enforce_map.py):
+    - NOT replaced at all: a value under 3 characters; and, unless it is a secret kind of 4 characters or
+      more, a value that is all digits and under 6 characters or a common word (`redact._COMMON`).
+    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit touches it.
+    - Only the spelling held in the map is replaced. A copy hidden by full-width letters, a zero-width
+      space or an escape is NOT found here: finding those is the pattern redactor's work (`redact_text`),
+      and returning a decoded view from here could turn a look-alike into a real placeholder.
+    - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in
+      `abcdef`): the longer one (the earlier in the map when equal) is replaced and the rest of the other
+      stays (`<A_1>ef`); when neither is a secret kind, neither is replaced there.
 
     Same input cap as `redact_text` (`InputTooLarge`); any other failure (a map that is not text to text)
     is a RedactionError that names the error's type and never the text."""
     _within_cap(text)
     try:
-        # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
-        cache = dict(getattr(mapping, "redact_cache", None) or {})
-        return _Redactor(dict(mapping), cache).sweep(text)
+        known = dict(mapping)
+        tokens = "\n".join(known)
+        late = {
+            ph: original
+            for ph, original in known.items()
+            if _TOKEN_PART.fullmatch(original) and original in tokens
+        }
+        if not late:
+            # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
+            cache = dict(getattr(mapping, "redact_cache", None) or {})
+            return _Redactor(known, cache).sweep(text)
+        first = {ph: original for ph, original in known.items() if ph not in late}
+        out = _Redactor(first, None).sweep(text)
+        for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1])):
+            if original in out:
+                out = _Redactor({ph: original}, None).sweep(out)
+        return out
     except Exception as exc:  # noqa: BLE001 - whatever the sweep raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
 
