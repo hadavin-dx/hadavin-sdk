@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Thirty-one groups, one per guarantee:
+first failing line that holds `expect`. Thirty-two groups (G32 is E1: ten mutants), one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -42,6 +42,7 @@ first failing line that holds `expect`. Thirty-one groups, one per guarantee:
     G29 `check_senders`: agent not qualified, principal unknown, principal not of kind service
     G30 the size cap is on the raw body bytes (the guard itself; not a cap on the decoded document), G31 an empty document
         is a document (`parse_body` does not refuse it)
+    G32 E1 (d-fix6, d-fix8): the 409 audit event and its cap, /health, the degraded start and its recovery, the no-audit warning
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
@@ -120,6 +121,8 @@ ENDPOINT = "src/hadavin_sdk/triggers/endpoint.py"
 WORKER = "src/hadavin_sdk/triggers/worker.py"
 CRASH = "src/hadavin_sdk/testing/crash.py"
 SERVER = "src/hadavin_sdk/triggers/server.py"
+T6 = "tests/triggers/test_d_fix6_e1.py"
+T8 = "tests/triggers/test_d_fix8_e1fix.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -201,7 +204,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW]
+TESTS = [TE, TC, TS, TP, TW, T6, T8]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1117,6 +1120,99 @@ M = [
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-service]",
         "DID NOT RAISE ConfigError",
+    ),
+    # --- G32 E1: the 409 audit event, /health, the degraded start (killers need no conftest fixture: `rt` is local)
+    mutant(
+        "G32a the per-minute cap of the 409 audit events is never reached",
+        WORKER,
+        "            if seen > self._cap:\n",
+        "            if False:\n",
+        T6,
+        "test_e1_the_11th_conflict_in_a_minute_writes_no_event_but_is_still_409_and_counted",
+        "assert (10 == 10 and 0 == 1)",
+    ),
+    mutant(
+        "G32b the conflict event result carries the payload text",
+        WORKER,
+        '        result="conflict",\n',
+        '        result="conflict:" + req.document.decode(),\n',
+        T6,
+        "test_e1_a_409_writes_one_audit_event_with_exactly_ids_and_both_hashes",
+        "AssertionError: assert {'run_id'",  # same first line as G32c: the dict compare, told apart by pinned only
+    ),
+    mutant(
+        "G32c the stored hash of the conflict event is taken from the new request",
+        WORKER,
+        "output_hash=_hash_of(found.trigger_ref)",
+        "output_hash=_hash_of(ref)",
+        T6,
+        "test_e1_a_409_writes_one_audit_event_with_exactly_ids_and_both_hashes",
+        "AssertionError: assert {'run_id'",
+    ),
+    mutant(
+        "G32d the /health body gets an extra key",
+        ENDPOINT,
+        '"store_failures": failures}',
+        '"store_failures": failures, "extra": 1}',
+        T6,
+        "test_e1_start_with_the_store_down_starts_and_health_is_503",
+        "'extra': 1} == {'status'",
+    ),
+    mutant(
+        "G32e /health is answered with no health callable (the path is not an ordinary 404)",
+        ENDPOINT,
+        'health_app is not None and environ.get("PATH_INFO") == HEALTH_PATH',
+        'environ.get("PATH_INFO") == HEALTH_PATH',
+        T6,
+        "test_e1_without_a_health_callable_the_path_is_an_ordinary_404",
+        "'NoneType' object is not callable",
+        allow_crash=True,
+        crash_type="TypeError",
+    ),
+    mutant(
+        "G32f the degraded worker never starts its re-check thread",
+        WORKER,
+        "    degraded.start()\n",
+        "    pass\n",
+        T8,
+        "test_e1fix_a_worker_started_with_the_store_down_recovers_in_the_same_process",
+        "no 503 then 202 in one process",
+    ),
+    mutant(
+        "G32g the recovery does not ping the store before it takes the real app",
+        WORKER,
+        "    up, _failures = runner.health()\n",
+        "    up = True\n",
+        T8,
+        "test_e1fix_a_worker_started_with_the_store_down_recovers_in_the_same_process",
+        "assert 1 > 2",
+    ),
+    mutant(
+        "G32h Runner.health starts a new ping thread on every call",
+        WORKER,
+        "            if ping is None or ping.done.is_set():\n",
+        "            if True:\n",
+        T8,
+        "test_e1fix_the_health_ping_is_bounded_and_never_leaks_more_than_one_thread",
+        "assert 2 == 1",
+    ),
+    mutant(
+        "G32i Runner.health never times the ping out (a hung store reads as up)",
+        WORKER,
+        "        if not ping.done.wait(HEALTH_PING_TIMEOUT_S):\n",
+        "        if not (ping.done.wait(HEALTH_PING_TIMEOUT_S) or True):\n",
+        T8,
+        "test_e1fix_the_health_ping_is_bounded_and_never_leaks_more_than_one_thread",
+        "_failures': 0} == {",
+    ),
+    mutant(
+        "G32j _prepare does not warn that the App has no audit",
+        WORKER,
+        "    wsgi, runner, app = _build_app(args)\n    _warn_no_audit(app)\n    port",
+        "    wsgi, runner, app = _build_app(args)\n    port",
+        T8,
+        "test_e1fix_main_warns_once_when_the_app_has_no_audit_and_make_app_does_not",
+        "assert (0 == 1)",
     ),
 ]
 
