@@ -135,12 +135,9 @@ class _DeadlineReader:
         return out
 
     def readline(self, size: int | None = -1) -> bytes:
-        left = self._head_left
-        if left is not None and (size is None or size < 0 or size > max(left, 0) + 1):
-            size = max(left, 0) + 1  # never buffer a line past what is left, plus one byte
         line = self._readline(size)
-        if left is not None:
-            self._head_left = left - len(line)
+        if self._head_left is not None:
+            self._head_left -= len(line)
             if self._head_left < 0:
                 raise _HeadersTooLarge
         return line

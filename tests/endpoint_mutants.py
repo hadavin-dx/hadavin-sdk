@@ -298,7 +298,7 @@ M = [
         "            self._jobs.add(job)\n            self._slots.release()\n",
         TW,
         "test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken",
-        "assert not True",
+        "the slot was given back before the loop ended",
     ),
     mutant(
         "G3c no free slot answers 503 at once",
@@ -761,7 +761,7 @@ M = [
         "        for number, handler in previous.items():\n",
         TW,
         "test_serve_gives_the_previous_sigterm_handler_back",
-        "assert (False)",
+        "serve returned without closing the runner",
     ),
     mutant(
         "G18d close writes no warning for a loop still going",
@@ -845,7 +845,7 @@ M = [
         "",
         TW,
         "test_bad_arguments_are_refused",
-        "Regex pattern did not match.",
+        "bound {'max_running': 0} refused with another text",
     ),
     mutant(
         "G20b ack_wait_s of zero is accepted",
@@ -863,7 +863,7 @@ M = [
         ":",
         TW,
         "test_bad_arguments_are_refused",
-        "Regex pattern did not match.",
+        "bound {'poll_s': 0} refused with another text",
     ),
     mutant(
         "G20d max_running has no ceiling",
@@ -1299,7 +1299,7 @@ M = [
         "            if False:\n                raise _HeadersTooLarge\n",
         T18,
         "test_m1_many_small_headers_over_16_kb_are_431_in_one_write",
-        "EXPECT_A",
+        "assert b'HTTP/1.0 20",
     ),
     mutant(
         "G36b the memory store is accepted at every stage",
@@ -1308,7 +1308,7 @@ M = [
         "    if False and is_live(\n",
         T18,
         "test_m4_make_app_refuses_a_memory_store_at_pilot",
-        "EXPECT_B",
+        "DID NOT RAISE ConfigError",
     ),
     mutant(
         "G36c hmac_v0 compares the signature with == (not compare_digest)",
@@ -1317,7 +1317,7 @@ M = [
         "    return _sig(body, ts, secret) == sig\n",
         T18,
         "test_m6_the_signature_is_compared_with_compare_digest",
-        "EXPECT_C",
+        "assert (0 == 1)",
     ),
     mutant(
         "G36d hmac_v0 has no age window",
@@ -1326,7 +1326,7 @@ M = [
         ":\n",
         T18,
         "test_m6_the_five_minute_window[1301-False]",
-        "EXPECT_D",
+        "AssertionError: 1301",
     ),
     mutant(
         "G36e hmac_v0 window refuses at exactly 300 s",
@@ -1335,7 +1335,7 @@ M = [
         "abs(now_ts - int(ts)) >= MAX_AGE_S",
         T18,
         "test_m6_the_five_minute_window[1300-True]",
-        "EXPECT_E",
+        "AssertionError: 1300",
     ),
     mutant(
         "G36f send_error writes its answer in two writes",
@@ -1344,7 +1344,7 @@ M = [
         '        raw = head.encode("latin-1", "strict")\n        self.wfile.write(raw[:10])\n        self.wfile.write(raw[10:])\n',
         T18,
         "test_m6_send_error_is_exactly_one_write",
-        "EXPECT_F",
+        "AssertionError: [b'HTTP/1.0 4', b'31 Request Header",
     ),
     mutant(
         "G36g HTTP/0.9 alone no longer closes quietly (G16b first half)",
@@ -1353,7 +1353,7 @@ M = [
         "",
         T18,
         "test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer",
-        "EXPECT_G",
+        "has no attribute 'base_environ'",
     ),
     mutant(
         "G36h a header block that is not a Message no longer closes quietly (G16b second half)",
@@ -1362,7 +1362,7 @@ M = [
         "",
         T18,
         "test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer",
-        "EXPECT_H",
+        "TypeError: 'object' object is not iterable",
     ),
 ]
 
