@@ -1402,7 +1402,10 @@ def test_readme_has_the_answer_table_in_plain_words():
         'NOT the end. Goes on to the state check "Run still going?"'
     )
     flat = " ".join(part.split())
-    assert 'UNVERIFIED: the "no answer" row and the 502 and 504 part of the row above it.' in flat
+    assert (
+        'stub-only in record 2; behind a real proxy UNVERIFIED: the "no answer" row and the 502 and 504 part of the row above it.'
+        in flat
+    )
     assert f"`{EVIDENCE_2}`" in flat
     for phrase in (
         "A refused connection (ECONNREFUSED, line 117)",
