@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:57:37Z
+UPDATED_UTC: 2026-11-20T13:59:40Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.15 of 4 cores (1-minute average), mem 1.0/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 4
+CAPACITY: load 0.02 of 4 cores (1-minute average), mem 1.0/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 631M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:54:52Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:57:41Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,20 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| rev-b-G | fresh independent reviewer (codebase-details), read-only | sonnet | core-b G: step 4 grants flip, M3 purge, M7 writer check, test_money_step4_grants.py | 14:03 | 15 min | 5 | running | 1 | 0 | lead 13:59: result reviews of core-b landed work |
+| rev-b-H1 | fresh independent reviewer (codebase-details), read-only | sonnet | core-b H1/B3: day window, min_expiry_age, CHECK usd, migration checksums | 14:03 | 15 min | 5 | running | 1 | 0 | lead 13:59: result reviews of core-b landed work |
+| rev-b-H2 | fresh independent reviewer (codebase-details), read-only | sonnet | core-b H2: isolation pin, mark narrowing, AuditEvent limits, outbox leap year + re-check of tamper-evidence wording | 14:03 | 15 min | 5 | running | 1 | 0 | lead 13:59: result reviews of core-b landed work |
+| rev-b-F6I1 | fresh independent reviewer (codebase-details), read-only | sonnet | core-b F6 check_caps/caps table + I1 idempotent reserve, settle needs agent, memory parity | 14:03 | 15 min | 5 | running | 1 | 0 | lead 13:59: result reviews of core-b landed work |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27789s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 27789s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 27789s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 27789s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27789s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27789s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27912s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 27912s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 27912s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 27912s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27912s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27912s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +181,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 14:03 lead order 13:59: four fresh sonnet reviewers on core-b head a25f6858d (G, H1/B3, H2, F6+I1), trees and per-merge diffs unpacked in scratch (they have no shell). Reports go to handover/core-a/reviews/rev-b-<item>.md + summary handover/core-b/requests/xr-from-core-a-reviews.md when they return. Already done from your list: (3) wip branches reviewed (c, ci x3 rounds, b, e14, grant; e19 is docstring+xfail only, not reviewed), (4) strict_switch passes 22/22 on 3.12/3.13.12/3.13.18, (2) runs 1-4 delivered (evidence/c-run-1..4). Harness trailer: 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>' (the attribution reminder I receive now); the Fable one came from my board.py string (fixed).
 - 14:12 core-c item 2 (E19 N2/N3) DONE on wip/core-a-for-c-e19: N3 has NO small safe fix in _canonical_view (per-character NFKC is deliberate: offset map): '<<'+U+0338+'TOOL RESULT', '<'+U+0338+'<TOOL RESULT', '<<T'+U+0338+'OOL RESULT' and precomposed U+226E all survive escape_markers/neutralise_untrusted (model-visible spoof only, never a run-map key); a real fix belongs in replace_canonical/escape_markers (held by core-c): decision for core-c. Pushed: docstrings (+9/-2 in runmap.py) + tests/test_runmap_e19_combining_marker.py (8 strict xfails + control). The builder's broader run found 6 failures at baseline too (3 seen: test_p1d_a_rows PU1_card/PU1_model, test_k5_tools keyed-by-redacted-document, test_runmap_enforce_map e5b = the known TB-2.11): not caused by this change, 3 not named. No agents running now; waiting for the lead.
 - 14:10 grant tests reviewed fresh: NO Blocker/Major; nothing weakened; one nit (a relaxed exact call-list equality in the limits-reset test) restored and pushed (wip/core-a-for-grant-tests). NOTE: the SECURITY DEFINER / PUBLIC-EXECUTE pins need a PG DSN (skip without one: no proof on a box without Postgres); trigger functions (EXCLUDED_FUNCTIONS) and definer search_path are not pinned in that file. Running: c-e19 only.
 - 14:06 MAJOR (money, core-b, found while reviewing d-fix22): with max_running one source = core-b default 4, NOTHING in the run loop calls limits.reserve (agent_loop.py:371/531 only charge AFTER the model call; grep finds no .reserve( caller): up to 4 parallel runs of one agent can each pass the budget check before any is booked. The worker's check_spend is silent because the method exists. The old worker default 1 hid this. Options in handover/core-a/requests/to-core-b.md: wire reserve/settle into the loop, or ship default 1 until it is wired, or make check_spend test the loop. Until then operators should set triggers.max_running: 1. d-fix22 itself reviewed: no Blocker. Running: c-e19, rev-grants.
