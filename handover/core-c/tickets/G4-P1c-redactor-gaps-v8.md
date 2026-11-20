@@ -1622,7 +1622,8 @@ Create:
 Modify:
 - `src/hadavin_sdk/guard/runmap.py`:
   - add `_ScanBudget`, `_B64Unit`, `_B64_RUN`, `_B64_TOKEN_SKIP`, `_B64_SEP`, `_b64_units`, `_b64_text`, `_b64_held`, `_b64_hits`,
-    `_b64_place`, `_pass_one`, `_scan`; import `base64`, `binascii`, `dataclasses.dataclass`, `typing.NamedTuple`;
+    `_b64_place`, `_pass_one`, `_scan`; import `base64`, `binascii`, `dataclasses.dataclass`, `typing.NamedTuple`; CHANGED in v8:
+    and `_B64_LINE`, `_b64_lines`, `import bisect` (3.1 point 3), `_ScanBudget.part_chars` and `take(chars, part=False)` (2.2);
   - change `redact_text` (2.3), and add this paragraph to its docstring, after the paragraph on the cap (no host, no long run in it):
     "Base64 step (G4): every run of the base64 alphabet that pass one did not mask as a secret and that decodes to text is decoded;
     the decoded texts are scanned as ONE text by this same procedure (escaped with `neutralise_untrusted` whatever the caller's hook
@@ -1631,6 +1632,9 @@ Modify:
     At most `defaults.B64_MAX_UNITS` units and `defaults.B64_MAX_DECODED_CHARS` decoded characters per call, the deadline read before
     each unit; past either, `InputTooLarge`; the decoded texts are scanned joined by a line holding `;`, and a decoded value of a kind
     that is never stored stays in the run's map (its plain copies are masked)."
+    CHANGED in v8: insert before "At most": "A wrapped block (lines of one length) is decoded joined; when the join holds nothing, its
+    lines are decoded one by one, and those lines are not counted as units (their decoded characters have a count of their own
+    under the same limit)."
   - CHANGED in v6 (N1): the one clause of `enforce_map`'s docstring (runmap.py 732; text in 4 point 5);
   - import `place_encoded` and `strip_ansi` from redact (the import block, 25-38).
 - `src/hadavin_sdk/guard/redact.py`:
@@ -1871,7 +1875,7 @@ the code lines named in `old` VERBATIM (they are the anchors; 2.x and 3.x give t
 puts the formatted text in `old` and records it. `expect` is the TB/TG id the killer's assertion message starts with. File: RM =
 src/hadavin_sdk/guard/runmap.py, RD = src/hadavin_sdk/guard/redact.py, CH = src/hadavin_sdk/approvals/channel.py. Killer file: B =
 tests/test_b64_scan.py, G = tests/test_p1c_gaps.py, H = tests/test_host_names.py.
-CHANGED in v8 (readiness round 7 M3, N1): every `expect` below is the killer's message id plus ONE SPACE, written quoted (`"TB-3.1 "`, 7 characters); v7's `I2`, `I3` and `I12` (2-3 characters: `tools.mutation_runner` raises `ValueError` under 4) are now `"TG-I2 "`, `"TG-I3 "`, `"TG-I12 "` (10, MESSAGE IDS). Every `old` of an RM row whose code v7 did not write out is now in the code of 2.2 (`take`), 2.5 step 5b or 3.1 point 3, at the indentation shown there; the builder copies those lines verbatim, or, when the final code differs (`ruff format`, a rename), writes `old` from the FINAL code and records old and new in the evidence (the rule above). Rows marked CHANGED in v8 changed their `old` or are new; the other rows changed only their `expect`.
+CHANGED in v8 (readiness round 7 M3, N1): every `expect` below is the killer's message id plus ONE SPACE, written quoted (`"TB-3.1 "`, 7 characters); v7's `I2`, `I3` and `I12` (2-3 characters: `tools.mutation_runner` raises `ValueError` under 4) are now `"TG-I2 "`, `"TG-I3 "`, `"TG-I12 "` (10, MESSAGE IDS). Every `old` of an RM row whose code v7 did not write out is now in the code of 2.2 (`take`), 2.5 step 5b or 3.1 point 3, at the indentation of the FILE (those code blocks are shifted right by their list item: `_pass_one`'s and `_b64_units`'s bodies are at 4 spaces, `take`'s at 8); the builder copies those lines verbatim, or, when the final code differs (`ruff format`, a rename), writes `old` from the FINAL code and records old and new in the evidence (the rule above). Rows marked CHANGED in v8 changed their `old` or are new; the other rows changed only their `expect`.
 | name | file | old -> new | killer (file::test) | expect |
 |---|---|---|---|---|
 | `b64 skip the printable rule` | RM | `if s and sum(c.isprintable() or c in "\t\n\r" for c in s) >= defaults.B64_PRINTABLE_SHARE * len(s):` -> `if s:` | B::test_b64_text_rules (`bytes(range(256))`) | `"TB-3.1 "` |
@@ -2008,6 +2012,7 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
   - every phase green, FULL suite included;
   - FAIL-BEFORE recorded (76 ids);
   - every mutant of 13.3 good (against the Phase 0 (g) record); CHANGED in v7: R8 KEPT and killed by TB-2.11, `MIN_MUTANTS` 105;
+    CHANGED in v8: including the four new parts mutants, every `expect` at least 5 characters (id plus a space), R8's `"TB-2.11 "`;
   - CHANGED in v7: when G8 is merged, `python tests/g8_mutants.py` `N of N good`, N = the count in the merged tests/g8_mutants.py
     (G8 v4: 34); when G9 is merged, 0.3b's checks done and the order-dependent rows pinned to the G9 + G4 column;
   - snippet counts equal;
@@ -2143,6 +2148,24 @@ wrap widths and the 27-character pair against a stdlib copy of 3.2 (`wrap.py`); 
 on the G9 v2 drafter's prototype (`g9v2/proto/src`, a DRAFT, imported, ENCODED added to `SECRET_KINDS` in-process): the
 read-back cost table (`g9cost.py`, `g9edge.py`) and the tie-break table of 0.3b (`g9tie.py`). BY READING: TB-3.2 rows 9-10,
 TB-3.37, TB-3.38 end to end (no G4 prototype was rebuilt), L-B7's xfail, every G9 v2 name and the refusal class.
+CHANGED in v8: MEASURED by the v8 drafter (read-only; scratch `g4v8_work/`, a `git archive` of HEAD 3f2d8901b in `head/`;
+`.venv/bin/python -B`; load 1 to 2.5 on the box; no pytest):
+- through `proto.py` (v8's 2.5 / 3.1-3.4 in-process on HEAD; MEASURED (v8)): TB-3.2's 10 rows with parts (`m5.py`); TB-3.37 at
+  widths 16, 18, 30, 32, 34, 38, 50, 64 (`<ENCODED_1>`, one `_b64_text` call) and 70, 76, 90 (held, `<HIGHENTROPY_1>\n<HIGHENTROPY_2>`,
+  none), both functions (`m1.py`, `m6.py`); TB-3.38; TB-3.39 (three texts); TB-3.40; TB-3.41 and the all-full and prose variants;
+  TB-3.29b; TB-3.16 (f) and (g); the six in-process mutants of 13.3 (`v6_rule`, `no_fallback`, `parts_of_hits`, `parts_unheld`,
+  `any_length`, `parts_as_units`), each killed by the row 13.3 names; sanity rows TB-3.5, TB-3.6, TB-3.13 (equal to v5's values);
+- the probe through `proto.py` vs HEAD (`m3.py`); the privacy corpus, 7 identifier texts and the snake_case text, outputs, maps,
+  blocks, parts and the step's ratio (`m4.py`);
+- map memory and build time with long originals (`m2.py` traced, `m2b.py` untraced);
+- on G9 v2's current prototype: `g9tie.py` and `g9cost.py` re-run, `g9reach.py` (new);
+- `_HOST_ARCH` v7 / v8 / generic and L-H5 (`g4c8.py`);
+- mutant counts at HEAD (`count.py` re-run: 144; redact_mutants 94);
+- `grep -n` of every 0.1 name at aa3b7ffdf.
+BY READING in v8: the v7 refusal of TB-3.41's text (v7's eager parts were not emulated); the snippet count 160 and `EXPECTED_COUNT`
+110 after G9; the builder's `_scan` path (the prototype scans decoded texts through HEAD's `redact_text`, not `_scan`); `TooDeep`
+and the size pre-check with parts (not exercised); the I2 digests (the probe prints outputs and kinds only).
+NOT MEASURED: the perf test I16 on the builder's code; the G4 + G9 + parts combination (G9's prototype has no G4a).
 
 ## (D) Plan review round 2 (tickets/G4-review-2.md): every finding (carried; all TAKEN, three contested in part)
 Readiness: B1 (p1d L2/L3 and JSON; JSON part CONTESTED: the JSON records base 2742c1b and is read only for `BS0` cells) -> 9.3;
@@ -2258,3 +2281,29 @@ CHANGED in v7: settled in v7 as far as G9 v2 goes: 0.3b (read-back, class, tie-b
 Open for the lead: L24 (R8 kept with a new killer, or the branch deleted with the gate owner), L26 (accept the long-ENCODED read-back
 refusal under G9, or cap units at `1 << 14` and refuse longer ones), L27 (loose blocks, or v6's rule as a stated limit), and the
 order with G9 (L25: the second lander re-pins TB-2.8 / TB-2.11 / test_e5).
+CHANGED in v8: superseded by the "Open for the lead" list at the end of section I.
+
+## (I) Plan review round 7 (tickets/G4-review-7-readiness.md, tickets/G4-review-7-design.md) and the G8 v4 / G9 v2 reconciliation: every finding (CHANGED in v8, new)
+| id | state | where |
+|---|---|---|
+| readiness M1 TB-3.37 at w=70/90: every line HIGHENTROPY, block HELD; premise measured on a stdlib copy without pass 1 | TAKEN, MEASURED (v8) through `redact_text` / `redact_untrusted` on HEAD with v8's design in-process | TB-3.37 rewritten: widths 18, 30, 34, 38, 50 pinned with measured strings (`<ENCODED_1>`, map, 1 `_b64_text` call); 70 and 90 pinned as HELD and unchanged (`<HIGHENTROPY_1>\n<HIGHENTROPY_2>`, 0 calls); the rule "a block whose lines are all HIGHENTROPY originals is held and unchanged" stated in 3.1 point 3 and 3.3; no row of v8 is "by reading, run first" |
+| readiness M2 parts of a HELD loose block still decoded on a later call | TAKEN, MEASURED (v8) | 2.5 steps 4 and 5b (parts only from non-held, non-hit blocks), 3.3, TB-3.29b (second call 0 `_b64_text` calls), TB-3.40, mutant `b64 parts not held-filtered` |
+| readiness M3 mutant `expect` under 4 characters (`I2`, `I3`, `I12`, R8's `E5b`) | TAKEN | 10 (MESSAGE IDS: `TG-I<n>` / `TB-x.y` plus a space), 13.3 (every expect quoted with its space; `"TG-I2 "`, `"TG-I3 "`, `"TG-I12 "`), 9.3 and 11 (R8 `"TB-2.11 "`), TB-2.11's message and outcome-string assert (0.3b) |
+| readiness N1 anchors not code (`width`, `chosen`, `hit_of`, `unit.parts`, `if len(taken) >= 2:`); `parts` used twice | TAKEN | code in 2.2 (`take`, `_B64Unit`, `_B64_LINE`), 2.5 step 5b (steps 4-8), 3.1 point 3 (`_b64_units`), 3.3 (`_b64_held`); the JWT/PRIVKEY tuple renamed `wholes`; 13.3 rows re-anchored, and the rule "old from the final code, recorded" restated |
+| readiness N2 "parts are v6's RUN units" vs row 10's 10-character part | TAKEN | 3.1 point 3: a part is a line of 12 or more characters (without `=`); row 10 has one part; TB-3.2; mutant `b64 parts of any length` |
+| readiness N3 wider block rule with no new measurement; no rule for a changed I2 digest or a perf miss | TAKEN, MEASURED (v8) | 3.1 point 3 (probe: exactly 9.1's 57 rows change; 62 privacy + 7 identifier texts and the snake_case text unchanged); 12 Phase 3 (changed I2/I4 digest = STOP; perf miss = L22 then STOP); 8 (x 1.081) |
+| readiness N4 cites 1 too low from `_OWN_OUTPUT` on; header "G8 v4 may still change" | TAKEN | 0.1 re-derived at aa3b7ffdf (a further +1 commit, header), 0.3b, 4, 5, 9.3 lines corrected and marked; header: G8 v4 final, 34 |
+| design M1 no line fallback for blocks of width 4k (blob + `Thanks`, hex line + blob) | TAKEN, MEASURED (v8) | every block has parts, fallback whenever the join is not a hit: 2.5 step 5b, 3.1 point 3, TB-3.39 (both cases and a prose variant), L27 |
+| design M2 parts always decoded and charged; 2,500 lines at width 50 refused; over-cap join still decodes parts | TAKEN, MEASURED (v8) | lazy parts, not units, own decoded-character count: 2.2 `take`, 2.5 step 5b, 2.6, 3.4 point 0, 7 (two comments), 8, TB-3.16 (f) (g), TB-3.41 (one unit, `<ENCODED_1>`), L28, mutants `b64 parts counted as units` and `... a hit are tried too` |
+| design N1 part minimum length | TAKEN | as readiness N2 |
+| design N2 cost of large ENCODED originals; map memory per character | TAKEN, MEASURED (v8) | 8 (memory table), 0.3b point 3 (G9 v2's reach re-measured: 500-1,000 mentions for any value over 2 KB), L26 rewritten, 15, SECURITY |
+| design N3 R8 / TB-2.11 pin an incidental effect; under G9 a refusal; L25 rested on unwritten G9 sections | TAKEN, MEASURED on G9 v2's current prototype | 0.3b (price named; G9 v2 7-15 read: they name no G4 row), L24, L25 |
+| design N4 `_HOST_ARCH` partial | TAKEN (closed list), MEASURED (v8) | 5.3, TB-4.2, L13, SECURITY; the generic exclusion measured and not taken (fail-open for `srv64`) |
+| design N5 L-H5 readable | NOTED: already named in SECURITY (v7); the cheaper option weighed and not taken | 5.2 point 6 |
+| G9 v2 complete (`SPELLED_READBACK_REACH`, 7.3 test edits, 16 mutants, `EXPECTED_COUNT` 110) | TAKEN | header, 0.3b, 8 |
+| G8 v4 final 34; G8 v5 in drafting | TAKEN (v5 not read) | header, 0.3 step 3 |
+Open for the lead (CHANGED in v8): L24 (keep R8's branch at the price named in 0.3b under G9, or delete it with the gate owner);
+L25 (G9 v2 carries none of G4's re-pin list and still states the identifier-first rule: ask G9's owner for a v3 line, or leave it
+to G4's builder); L26 (accept the memory of long ENCODED originals, about 0.46 KB per character per redactor build, or cap a unit
+at `1 << 14` and refuse longer); L27 / L28 (every block with a lazy line fallback, parts outside the unit cap with their own
+character count; or the fallbacks listed); L13 (`_HOST_ARCH` closed list).
