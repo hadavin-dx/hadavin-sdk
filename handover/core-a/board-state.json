@@ -761,19 +761,6 @@
    "reason": "lead run 5"
   },
   {
-   "id": "xr-g1g2",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "cross review of core-c 7c31dbc97: the G1 fold and G2 P1d-a",
-   "started UTC": "12:28",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1 (cross review)",
-   "retries so far": 0,
-   "reason": "lead order 12:23, second batch"
-  },
-  {
    "id": "door-docs",
    "role": "builder",
    "model": "sonnet",
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:36 XREVIEW core-c G1 fold + G2 P1d-a DONE: reviews/xreview-g1g2.md + NEW FILE handover/core-c/requests/xr-g1g2.md (copy into cloud/core-c). No Blocker; 1 Major (error_reason crash on lone surrogate), accepted xfail leaks, test exemption too wide.",
   "12:29 Lead verdicts on review-door-1 received. Docs batch running (door-docs). Code fixes M1 (431 header cap), M3 start check, M4 memory-store refusal, M6 mutants queue behind nits16 (same files server.py/endpoint_mutants.py); then a fresh review of the diff.",
   "12:33 XREVIEWS DONE: core-b F-store (reviews/xreview-fstore.md + handover/core-b/requests/xr-fstore.md): no Blocker; 6 Majors (M1 release has no age floor: money lost on a settle after an operator release; M2 the runtime still has UPDATE on the spend tables: the H1/H2 bypass is LIVE; M3 reserve takes the caps from the CALLER; M4 purge role keeps table DELETE; M5 reserve not idempotent after a lost reply; M6 memory vs Postgres differ for add_spend and the day window). core-b D-config + provider mark (reviews/xreview-dconfig.md + handover/core-b/requests/xr-dconfig.md): no Blocker, no provable Major; a test gap (registry._trigger_problems unpinned), the mark has no reader in that tree. core-c G7 + gate (reviews/xreview-gate-g7.md + handover/core-c/requests/xr-gate-g7.md). The request files are NEW FILES IN MY BRANCH: copy them into cloud/core-b and cloud/core-c. xr-g1g2 (core-c G1 fold + G2 P1d-a) started 12:33.",
   "12:30 xreview core-c 7c31dbc97 (G7 redactor + gate) DONE: report handover/core-a/reviews/xreview-gate-g7.md + handover/core-c/requests/xr-gate-g7.md (files in MY branch: copy them to cloud/core-c): no Blocker; for core-c: G7-F3 still open (a phone number before a full stop leaks: redact.py:531 and :539, fix `(?!\\w|\\.\\w)`), G7-F4 no change found, an unbounded single regex scan (about 7 s per 256 KB hostile document), nits on Decimal(0) worst case and BaseException in _settle. MY side: my gate contract test is stale against bind(mapping=RunMap): maint-gate fixes it (12:30).",
@@ -3045,6 +3033,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "gate contract test now wraps dicts as RunMap; 201 passed, 1 skipped, 0 failed on core-c a60da3394 (raw/MAINT-gate-2.log); before-count not measured; no finding"
+  },
+  {
+   "id": "xr-g1g2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "cross review of core-c 7c31dbc97: the G1 fold and G2 P1d-a",
+   "started UTC": "12:28",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 (cross review)",
+   "retries so far": 0,
+   "reason": "core-c G1 fold + G2 P1d-a: no Blocker; Major: error_reason encodes un-sanitised str(exc) (lone surrogate + secret -> UnicodeEncodeError); accepted xfail leaks listed; slice-before-redact tools.py:1011 is a false positive but the test exempts all of tools.py; reports reviews/xreview-g1g2.md + handover/core-c/requests/xr-g1g2.md"
   }
  ]
 }

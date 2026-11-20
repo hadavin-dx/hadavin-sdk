@@ -37,7 +37,7 @@ RUNG TABLE (CODE-LAST v1, scale 1 to 5 of 2026-11-06)
 | Verify the signature | no forged start | 2 (`approvals/hmac_v0.verify`) | hmac_v0.py:37-51, read 2026-11-20 | two valid secrets during a swap (about 10 lines) | CUT-TO-CONFIG+GLUE |
 | One run per request key | no doubled work | 2 (`Runtime.handle(run_id=...)`) | agent_loop.py:363-393; tests/test_peel_run_id.py:96, 114, 224 | the key-to-run-id rule (5 lines) | CUT-TO-CONFIG+GLUE |
 | Same key, other payload answers conflict | no silent swap | 2 (`trigger_ref` compare, StaleState) | agent_loop.py:343-348 | payload hash put into `trigger_ref` (1 line) | CUT-TO-CONFIG+GLUE |
-| Crash after "received" ends with a person | no lost request | 2 (tick `stuck`) | tick.py:112-145 | nothing | CUT (reused as is) |
+| Crash after "received" ends as NEEDS_PERSON (state only; no notification, no stored document; sender polls) | acknowledged, then NEEDS_PERSON | 2 (tick `stuck`) | tick.py:112-145 | nothing | CUT (reused as is) |
 | HTTP entry + process | a way in | 1 n8n cannot host Python; 3 none; 4 a WSGI server library (waitress, gunicorn) is a new dependency, not tested, not licence-checked: UNVERIFIED; 5 stdlib `wsgiref` + our callable | atlas 155; pyproject.toml:14-19 (four base dependencies, none a server) | the checked path from bytes to `handle` | KEEP-CODE (thin) |
 | Report a failed hand-over | a person hears of it | 1 (n8n error workflow) | atlas lines 36, 109 | nothing | CUT (template only) |
 | Receipt ledger, work items, door role (step H) | none proven | 2 covers it | section 4 | nothing | CUT |
