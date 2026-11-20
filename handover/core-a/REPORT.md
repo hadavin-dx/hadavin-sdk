@@ -1,5 +1,8 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## OWN SESSION MODEL: NOT FABLE, proof 07:22 UTC / 12:52 IST
+Output of get_session for this session (own id), after the owner's /model claude-sonnet-5-5 typed in this session: session_context.model = claude-sonnet-5-5; external_metadata.model = claude-sonnet-5-5; external_metadata.last_served_model = claude-sonnet-5-5; user_switched_model = claude-sonnet-5-5. configured_model = claude-fable-5-2 is only the value stored at creation and cannot be edited by me. The owner's switch was done before this lead message; no action by me was needed. Agents started since: sonnet (haiku for lookups; opus only inside brainstorm/draft/resolve skill files).
+
 ## EGM MODEL LINES REVERTED, 06:41 UTC / 12:11 IST. Done on the owner's own instruction typed in THIS session ("change the egm and others and continue with the reverted models only"). Supersedes the "NOT done" block below.
 
 Command output, run in my container after the edit:

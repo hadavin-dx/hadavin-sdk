@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:21:48Z
+UPDATED_UTC: 2026-11-20T07:22:06Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 70
 ITEMS_OPEN: 20
 PERCENT: 81
 AGENTS_RUNNING: 4
-CAPACITY: load 0.83 of 4 cores (1-minute average), mem 0.9/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.59 of 4 cores (1-minute average), mem 0.9/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 542M /home/user/hadavin-sdk; 453M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:21:18Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:21:50Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -167,12 +167,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4038s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4038s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4038s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4038s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4038s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4038s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4057s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4057s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4057s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4057s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4057s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4057s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -234,6 +234,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.
 - MODEL CHECK (lead message 07:20): this session runs claude-sonnet-5-5 now (get_session: model and last_served_model both sonnet-5-5; configured_model at creation was fable-5-2, switched by the owner with /model). All my agents are sonnet/haiku/opus-for-skills, none Fable. Opus lines only in brainstorm/draft/resolve skill files, as the owner set.
 - For core-c: ModelGate.bind() now requires a keyword-only 'mapping' argument (161 of my gate contract tests fail with TypeError on core-c 49013c787): I treat it as an interface change if their ticket says so; the maintenance agent decides by reading it. For core-b: settle('') now raises ValueError instead of NotFound (3c033b209), and a secret name with a slash is refused: same decision. Findings fixed since my last run (4 groups): see TRIAL-RERUN.md
 - ORDER 020 read at 07:17Z (your ledger rows D-R3-1, D-R3-2). Two points I decide the way I read them, say CHANGE if wrong: (a) core-b's settings have NO host, port, allow_non_loopback, poll_s or max_waiting: those become worker command-line options and named constants, not settings read with getattr; the fields core-b has (tenant, senders, max_body_bytes, max_running, ack_wait_s) are read directly; (b) with HADAVIN_REQUIRE_PG=1 the main-start tests FAIL on my own branch (core-b's config is not here), so my evidence batch runs them on the combined scratch tree. The cap on connections: I had declined it (README only) in my own review; your Major 2 overrules it and I build it
