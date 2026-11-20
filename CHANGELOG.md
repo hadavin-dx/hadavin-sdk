@@ -9,7 +9,8 @@
     it has no right to clear one and no longer holds UPDATE on `kill_switch`. Only a separate login, the reset role,
     can clear stops, and its reset is written to the audit log first. The stop state reads ON when the `kill_switch`
     row is missing, or its flag is on, or any stop has no clear.
-  - **Upgrade steps, in this order.** (1) Create a LOGIN role for resets (migrate never creates roles). (2) Run
+  - **Upgrade steps, in this order.** (0) Stop every runtime process first: old and new code must never share one
+    database. (1) Create a LOGIN role for resets (migrate never creates roles). (2) In ONE command run
     `hadavin-sdk migrate --runtime-role R --portal-role P --purge-role U --reset-role X`; without `--reset-role` migrate
     warns that nobody but the owner can reset. (3) Store the reset login's connection string as a secret on the
     operator's machine only, and name it in `backends.store.reset_credential_ref`. The runtime process never reads it.
