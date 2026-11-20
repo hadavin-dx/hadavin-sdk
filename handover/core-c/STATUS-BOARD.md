@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:38:46Z
+UPDATED_UTC: 2026-11-20T16:40:30Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:41Z agents 4 (G12d, G9c, G4d builders; docs style reviewer round 3), load 4.7. Lead 16:38: C4 (K5) CLOSED, nothing owed; C6 base = wip/cloud-core-c/grants b55d21865. DOCS3 merged (docs tests 71 passed; textnorm/mutation_runner/meta/brand 189 passed, 1 failed = lead-file vendor string). ANSWERS file written. 1630Z agents 4, load 4.59 3.49 2.22 (/proc/loadavg), head 0e33c0641. C1-C6 rows and agent list in handover/core-c/ANSWERS-1630Z.md. 16:31Z agents 4 (G12d, G9c, G4d, DOCS3 builders), load 3.1. Root docs style review round 2 recorded: still 2 Blocker, 7 Major (labels vs definitions, remaining internal codes, brand list check, README/CHANGELOG decode mismatch). EGM needs two clean rounds, cap 5: DOCS
+STATE: 16:47Z agents 4 (G12d, G9c, G4d, DOCS4 builders), load 4.4. Root docs style round 3: 0 Blocker, 8 Major (recorded tickets/DOCS-style-review-3.md) -> DOCS4; round 4 next (cap 5, need two clean rounds). 16:41Z agents 4 (G12d, G9c, G4d builders; docs style reviewer round 3), load 4.7. Lead 16:38: C4 (K5) CLOSED, nothing owed; C6 base = wip/cloud-core-c/grants b55d21865. DOCS3 merged (docs tests 71 passed; textnorm/mutation_runner/meta/brand 189 passed, 1 failed = lead-file vendor string). ANSWERS file written. 1630Z agents 4, load 4.59 3.49 2.22 (/proc/loadavg), head 0e33c0641. C1-C6 rows and agen
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 4.7 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+CAPACITY: load 4.4 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 57; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:38:43+00:00
+PUSHED_UTC: 2026-11-20T16:40:27+00:00
 
-(22:08 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:10 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -44,7 +44,8 @@ PUSHED_UTC: 2026-11-20T16:38:43+00:00
 | a56a54a7 | builder | claude-sonnet-5-5 | BUILDS DOCS2: fixes the root-docs style review (4 Blocker, 7 Major); /tmp/core-c-docs2 | 16:42 | 17:10 | 1 | done | 1 | 0 | docs only |
 | g4d | builder | claude-sonnet-5-5 | BUILDS G4d: G4c review fixes (trailing glue, HOSTKEY, label-internal non-ASCII limit, TB-4.13); /tmp/core-c-g4d | 16:43 | 17:10 | 1 | running | 1 | 0 |  |
 | a3142375 | builder | claude-sonnet-5-5 | BUILDS DOCS3: root docs style review round 2 fixes (2 Blocker, 7 Major); /tmp/core-c-docs3 | 16:30 | 17:00 | 1 | done | 1 | 0 | docs only |
-| docs-rev3 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 3 of root docs after DOCS3 | 16:41 | 16:55 | 1 | running | 1 | 0 | EGM style |
+| docs-rev3 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 3 of root docs after DOCS3 | 16:41 | 16:55 | 1 | done | 1 | 0 | EGM style |
+| docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | running | 1 | 0 | docs only |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
