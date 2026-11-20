@@ -341,3 +341,15 @@ B5 A-audit-rights (0012 outbox functions, checkpoint role) | local/code-MAB5 (wo
 B6 B2 live path | merged 5931cf3b3, d070fda3d, a34597a4a (review-2 fixes) | DONE
 B7 fresh reviewers | done on every merged diff so far (last: H3+F8 -> 1 Major, M6+B2 fix rounds -> 1 Major, both fixed/queued); next: reviewer on H3's round 2, AB5's diff
 RUNNING: AB5 (audit rights), H3 round 2 (NOINHERIT closure, owner per table, nits), MT1R (test_t1_reserve_cap.py port of core-a's cases). core-a rev-b-newest2.md: answered in handover/core-b/ANSWERS/rev-b-newest2.md. HEAD a34597a4a.
+
+16:24Z LOAD (/proc/loadavg) 1.53 1.84 1.86. HEAD 491aaff0e. ROWS (branch | sha | state):
+B1 stop-state failures | cloud/core-b 6a688ae57 | DONE
+B2 money_definer failures + mutant baselines | cloud/core-b e337feb6e, 84fa98213 | DONE
+B3 audit_drain 7 + spend_reservations_pg 6 | cloud/core-b (T1/T2/F7/R1) | DONE
+B4 parallel-run isolation (W1) | cloud/core-b (inside 6a688ae57) | DONE
+B5 A-audit-rights | local/code-MAB5 (worktree MAB5, base wip/cloud-core-b/merge-migrate 55df54150) | BUILDING (AB5 sonnet)
+B6 B2 live path reserve/settle | cloud/core-b 5931cf3b3, d070fda3d, a34597a4a | DONE
+B7 fresh reviewers | done for every merged diff (last: H3 round 2 clean, 5 minors); next: AB5's diff when it lands
+Also merged since 15:57Z: H3 (7a6d74f2f) + round 2 (9b7610007), M6 round 2 (fbebb390f), T1 contract cases (a1b9b077e), B2 review-2 fixes (a34597a4a).
+core-a rev-b-newest2.md: answered in handover/core-b/ANSWERS/rev-b-newest2.md (Major 1 and 2 FIXED in 9b7610007; Major 3 partly covered by M6, rest queued after the migrate.py merge). T1 decision: tests/contracts/test_t1_reserve_cap.py is core-b's base file; core-a's extra cases ported (25 passed with PG, no divergence), merged a1b9b077e; core-c drops its copy.
+Waiting for the lead's 'clean': wip/lead-b-migrate (merge prepared as wip/cloud-core-b/merge-migrate), wip/lead-b-ts-watermark (fix round 4 on the laptop). RUNNING: 1 agent (AB5).
