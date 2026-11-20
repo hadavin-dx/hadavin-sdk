@@ -62,3 +62,9 @@ Yes: tests/test_limits_reserve.py (28 tests, Limits on the memory store: refusal
 ## Our corrections to our own test file
 1. Removed the stale conditional "NOT BUILT N1" xfail (Budget is built now); replaced by skipif(not built). No assertion changed.
 2. ruff check and ruff format: clean.
+
+## Update after the newest heads (core-b c4c7b5522; run 2026-11-20, log raw/MAINT-core-b.log)
+- M1 (Limits on the memory store leaves a booking when run_id is not text): FIXED, same cause and fix as store finding F1 (memory store builds the row first), commit f40d28f0b. Verified by reading `MemoryStore.reserve_spend`. The strict marker is removed from the 3 ids (int, float, tuple); they are normal tests.
+- NEW, not a finding (INTERFACE CHANGE, core-b 3c033b209, handover/core-b/interfaces/README.md: "reservation id not a str of 1 to 200 characters from A-Z a-z 0-9 . _ : - is a ValueError, checked before the lookup"): `settle("")` raises ValueError from the store-backed meter instead of NotFound. Our test `test_settle_with_an_unknown_id_is_not_found_from_both_meters` no longer lists "" (it still checks two valid unknown ids); a new test `test_settle_with_an_empty_id_is_refused_and_books_nothing` accepts NotFound or ValueError from either meter and checks that nothing moves and the open reservation still settles. Note: the Budget meter still raises NotFound for "" (not part of the published text; allowed by the new test).
+- Still open: none.
+- Result on c4c7b5522: all passed (see the F-store update for the totals).

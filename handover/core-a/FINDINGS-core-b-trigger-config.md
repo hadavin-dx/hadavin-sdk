@@ -23,3 +23,9 @@ Test file: tests/test_trigger_config.py (new, mine). Run against core-b's tree u
 
 ## What this means for my worker (ORDER 013 item 3)
 endpoint.py accepts the map form already. worker.py reads the secrets through `trigger_resolve` and stops with a clear config error while it is missing, so against core-b's code AS IT IS the worker refuses to start. I keep it that way until core-b answers request 001 (the lead said a reader bound to the sender names is coming); switching to `app.secrets` now would build on finding F3.
+
+## Update after the newest heads (core-b c4c7b5522; run 2026-11-20, log raw/MAINT-core-b.log)
+- T1 (env-kind alias of a secret name): FIXED. core-b compares secret names in one canonical form (`secret_name.canonical_secret_name`, config.py `_trigger_refusals`), so the 4 alias cases are now refused at start. Verified by reading the code, not only the test. Commit: 6cc472c0a (a commit titled "board" that carries the code; the plan is in handover/core-b/requests/001.answer.md DRAFT 3). The strict marker is removed; the 4 cases are normal tests.
+- NEW, not a finding (INTERFACE CHANGE, decided by core-b in requests/001.answer.md DRAFT 3, built in 6cc472c0a): "/" left the secret-name characters (`^[A-Za-z0-9_.:-]{1,128}$`); "." and ".." and a name with ".." or without a letter or digit are refused. Our test `test_secret_name_characters_allowed_as_built[all]` now uses `Key_one.v2:eu.primary-1`; a new test `test_secret_name_with_a_slash_or_a_path_trick_or_no_letter_refused` pins the new refusal.
+- Still open: none from this file. The 20 skips (fields not built on core-b: senders limit, poll_s, port, allow_non_loopback) are unchanged.
+- Result on c4c7b5522: 696 passed, 20 skipped for the four core-b files together.

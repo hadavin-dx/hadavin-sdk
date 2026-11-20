@@ -36,3 +36,10 @@ Notes, not findings: **N1** core-b's own contract and T1 tests for this step are
 
 ## 5. Still not testable here
 A skewed database clock; a mixed outcome of the settle-against-expiry race; crash cases and the tick step (need core-b's install code); role fixtures for the reset and portal logins in core-b's test support (our tests create those logins by hand).
+
+## Update after the newest heads (core-b c4c7b5522; run 2026-11-20, log raw/MAINT-core-b.log)
+- F1 (memory store books before it builds the row): FIXED. `MemoryStore.reserve_spend` now builds the `SpendReservation` row first and books after ("the row is built first" comment), and checks ids and caps before the lock. Commit f40d28f0b. The strict marker is removed from the 3 memory ids; they are normal tests.
+- F2 (no upper bound on a cap): FIXED. `check_spend_cap` (store/protocol.py) now has the exponent window of an amount (-12 to 9), so 1E+200000 is a ValueError on both stores. Commit f40d28f0b (the function came with ba70e0fe2; the exponent window is probably from f40d28f0b: not isolated). The marker is removed from the postgres id.
+- New: none. Interface change seen in the same file group: the reservation id is validated by both stores before the lookup (3c033b209, interfaces/README.md); see the meter update.
+- test_t1_reserve_cap.py: 11 passed, nothing to change.
+- Result on c4c7b5522: file group green (696 passed, 20 skipped for the four files).
