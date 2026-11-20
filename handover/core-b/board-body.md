@@ -1,21 +1,18 @@
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a0f43330 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/B-stop-state.md: 0 Blockers, 8 Majors, 6 Nits; built source matches the ticket | 05:43 | done | 100 | done | 1 of 1 | 0 | gaps are in the test plan, mutant runner and separate migrate runs |
-| ac4fc2b1 | reviewer (egm-codebase-details) | fable | same round; also hunts for ways the runtime login could still clear or block a stop | 05:43 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | security path |
-| B-tests | builder (tests) | fable | tests/test_stop_state_roles.py with real database logins, and mutants; worktree /tmp/core-b-wt/B-tests | 05:38 | +30 min | UNVERIFIED | running | none | 0 | the B builder proved nothing under a real non-owner login |
-| a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py: commit 737c93c, 246 tests | 05:36 | done | 100 | done | none | 0 | 246 passed; fail-before proven on the old code; 20 of 20 mutants killed; evidence/C-tests-evidence.txt |
-| a27419bd | builder | fable | D-config: commit on cloud/core-b (95 lines added in 4 files) | 05:36 | done | 100 | done | none | 0 | 577 passed, 17 skipped on the config, registry, app files; no new tests yet; full suite NOT run |
-| a6122910 | builder (fix) | fable | step B fix round 2: commit 6662afe (76 added, 16 removed in 9 files); 449 passed on 12 test files, owner login only | 05:37 | done | 100 | done | none | 1 | ticket check found the serial id lets the runtime login block a later stop |
-| a86102dd | builder (tests) | fable | tests/test_audit_drain.py: commit 3394b2c, 26 tests | 05:32 | done | 100 | done | none | 0 | 26 passed with PostgreSQL 16, 22 passed and 4 skipped without; mutants M1 to M9 all killed |
-| a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md: NOT ready, 1 Blocker, 12 Majors, 8 Nits | 05:33 | done | 100 | done | 1 of 1 | 0 | Blocker: the ticket has no list of files to create, change, delete |
-| adaa7521 | reviewer (egm-codebase-details) | fable | EGM round 1 of 1 on tickets/F-store.md: 1 Blocker, 7 Majors, 11 Nits | 05:33 | done | 100 | done | 1 of 1 | 0 | Blocker: one planned test contradicts how migrate works |
-| af8c3d3b | lookup | fable | tickets/B-stop-state.md (191 lines) | 05:27 | done | 100 | done | 0 of 1 | 0 | corrected the lead draft in 5 places; see DECISIONS.md |
-| a5a79255 | builder | fable | step B source: commit 80a07ce (11 files, 225 added, 41 removed) | 05:32 | done | 100 | done | review alongside | 0 | 304 passed on 6 test files with the owner login; reset path under a real reset login NOT proven |
-| a862ea5f | builder | fable | step C source: commit eb775a8 (59 lines added) | 05:32 | done | 100 | done | review alongside | 0 | 725 passed, 4 skipped on 14 test files; full suite NOT run |
-| a64fad56 | builder | fable | step A source: commit 5eb1e7e; docs commit e5a64ee by me | 05:27 | done | 100 | done | none | 0 | 127 passed, 5 skipped |
-| a2c397e1, ae122278, a367057d, a468ce14 | lookups | fable | ticket C, notes, lane map | 05:19 | done | 100 | done | n/a | 0 | |
-| a65b1e8c, ab7f938c | reviewers (egm) | fable | ORDER 001 dry run | 04:10 | done | 100 | done | 1 of 1 | 0 | proof only |
+| abc08a01 | builder | fable | F-store: migration 0007, store reserve/settle/expire/purge, Limits.reserve and settle, sweep tick step; worktree F | 05:50 | +30 min | UNVERIFIED | running | round 2 alongside | 0 | lead ORDER 010 GO BUILD F-store |
+| a52e1b89 | builder (fix) | fable | step B fix round 3 (LAST): schema-qualified stop state, who-else-can-clear check, reset reports the real state, lead findings B-2 B-4 B-8; worktree B | 05:50 | +20 min | UNVERIFIED | running | none | 2 | ticket B review Blocker (temporary tables) and lead ORDER 011 |
+| ade5688d | builder (fix) | fable | step A fix round 1: a drain failure that is not an outage fails the step (lead A-1, A-2, A-4); worktree A2 | 05:50 | +12 min | UNVERIFIED | running | none | 0 | lead ORDER 011 |
+| adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py and tests/price_mutants.py in the runner format; worktree M | 05:50 | +20 min | UNVERIFIED | running | none | 0 | lead ORDER 008: a guarantee with no mutant script counts as not run |
+| a9de240c | reviewer (egm-implementation-readiness) | fable | EGM round 2 of 3 on the RESOLUTION section of tickets/F-store.md | 05:51 | +6 min | UNVERIFIED | running | 2 of 3 | 0 | lead ORDER 010 item 5 |
+| a3b14e25 | reviewer (egm-codebase-details) | fable | same round: checks the changed settle design for deadlocks and replay | 05:51 | +8 min | UNVERIFIED | running | 2 of 3 | 0 | same stage |
+| a0f43330, ac4fc2b1 | reviewers (egm) | fable | ticket B round 1: 1 Blocker, 18 Majors, 15 Nits; report tickets/B-review-1.md | 05:43 | done | 100 | done | 1 of 1 | 0 | answered in the ticket (S1 to S12) and in fix round 3 |
+| a86831dc | builder (tests) | fable | step B role tests and mutants: 7afdab2 | 05:38 | done | 100 | done | none | 0 | 218 passed on the fixed code; mutants on the fixed code: 17 killed, 1 survived (ON CONFLICT removed) |
+| a87e21e9, a86102dd | builders (tests) | fable | step C tests 737c93c (246), step A tests 3394b2c (26) | 05:32 | done | 100 | done | none | 0 | |
+| a6122910, a5a79255, a862ea5f, a64fad56, a27419bd | builders | fable | B fix 2, B, C, A, D-config source commits | 05:27 | done | 100 | done | | | |
+| a5de8cd7, adaa7521 | reviewers (egm) | fable | F-store round 1: tickets/F-store-review-1.md | 05:33 | done | 100 | done | 1 | 0 | |
+| 5 lookups, 2 dry-run reviewers | | fable | notes, lane map, tickets B and C, ORDER 001 | 04:10 | done | 100 | done | | | |
 
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
@@ -34,6 +31,7 @@
 | test_k5_producers, test_k5_round9 | cloud/core-b a1c1013 | 1 | 107 passed / 0 / 0 | none | done | producers rows for core-c's gate module |
 | tests/test_price_constraint.py (new, 246 tests) | local/code-C-tests 35304a2 (737c93c) | 1 | 246 passed / 0 / 0 | none | done | evidence/C-tests-evidence.txt |
 | test_stop_state_roles, test_stop_state_loop, test_stage_names, test_no_hardcoded_values | cloud/core-b 7afdab2 | 1 | 218 passed / 0 / 0 | none | done | evidence/B-tests-after-fix.txt; real non-superuser logins on PostgreSQL 16; before the fix: 5 failed, 99 passed (evidence/B-tests-evidence-before-fix.txt) |
+| step B mutants by hand (tests/stop_state_mutants.py --hand) | cloud/core-b 2110ab3 | 2 | 17 killed / 1 SURVIVED | reset: ON CONFLICT is removed | done | evidence/B-mutants-after-fix.log; the survivor needs a two-resets test with the flag row missing (ticket S6); 2 pending mutants (serial id, loop hunk) still not in the list |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
@@ -46,10 +44,11 @@
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
-| BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
-| BUILD B stop state | RUNNING | 90 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
+| BUILD A audit drain | RUNNING (fix round 1) | 85 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
+| BUILD F-store | RUNNING | 5 | none yet | 1 | lead GO BUILD F-store |
+| BUILD B stop state | RUNNING | 80 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
-| T3 one EGM review round per ticket | RUNNING | 30 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
+| T3 EGM review rounds | RUNNING | 55 | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
 ## RESTARTS
