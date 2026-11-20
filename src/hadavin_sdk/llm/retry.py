@@ -31,7 +31,7 @@ Stated limit (UNVERIFIED for every network kind): the list follows the HTTP mean
 the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
 429 was not verified against its billing rules. A provider that bills one of them is under-counted by that call.
 For a kind whose base_url can be any router or proxy (openai_compat) a 400, 413 or 422 may come from the
-router after the upstream model consumed tokens, so only 401, 403 and 404 count there. The anthropic kind
+router after the upstream model consumed tokens, so only 401, 403 and 404 count there. The Claude kind
 narrows the same way unless it is built for the direct Claude API (``direct_api``): on Vertex or Foundry a
 gateway can answer after the model started.
 """
