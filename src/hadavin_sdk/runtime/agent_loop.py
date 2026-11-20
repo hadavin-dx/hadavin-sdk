@@ -48,7 +48,7 @@ from hadavin_sdk.registry import Registry
 from hadavin_sdk.runtime.evidence import Validator, identifier_inputs, with_evidence
 from hadavin_sdk.runtime.plan import build_plan
 from hadavin_sdk.runtime.runs import advance
-from hadavin_sdk.store.protocol import NotFound, StaleState, Store
+from hadavin_sdk.store.protocol import NotFound, StaleState, Store, is_connectivity_error
 from hadavin_sdk.tools import (
     END_MARKER,
     ERROR_PREFIX,
@@ -390,26 +390,35 @@ class Runtime:
 
     def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> Run | None:
         """Replace the held worst case of one model call with its real cost; the store books the run cost with
-        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable` when the
-        cost cannot be booked at all (a bad amount). A failure keeps the hold at the worst case (an over-count,
-        the safe direction; an operator releases it, see the runbook). A DEFINITE refusal (ValueError, NotFound:
-        nothing committed) books the run cost directly; an ambiguous failure (a lost connection) books nothing
-        more, since the settle may have committed and booked it already. Never raises."""
+        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable`.
+        A failure keeps the hold at the worst case (an over-count, the safe direction; an operator releases it,
+        see the runbook). AMBIGUOUS failures are exactly the connectivity errors (`is_connectivity_error`:
+        StoreUnavailable, OSError and its subclasses, psycopg OperationalError and InterfaceError): the settle
+        may have committed and booked the run cost, so nothing more is booked and the run ends. EVERY other
+        failure rolled back: the run cost is booked directly (a bad amount cannot be booked: the run ends).
+        Never raises: if the run cannot be ended either, the failure is logged and the run is returned."""
         try:
             self.limits.settle_for(run.agent_id, rid, cost_usd)
             return None
-        except (ValueError, NotFound):
-            _LOG.warning("run %s: settle refused; the hold stays at the worst case", run.run_id)
-            try:
-                self.store.add_cost(run.run_id, cost_usd)
-            except Exception:  # noqa: BLE001 - a bad amount: nothing can be booked, a person looks
-                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
-            return None
-        except Exception:  # noqa: BLE001 - ambiguous: the settle may have committed
+        except Exception as exc:  # noqa: BLE001
+            ambiguous = is_connectivity_error(exc)
             _LOG.warning(
-                "run %s: settle failed (unknown outcome); run cost left to the settle", run.run_id
+                "run %s: settle failed (%s, %s); the hold stays at the worst case",
+                run.run_id,
+                type(exc).__name__,
+                "unknown outcome: run cost left to the settle" if ambiguous else "rolled back",
             )
-            return None
+            if not ambiguous:
+                try:
+                    self.store.add_cost(run.run_id, cost_usd)
+                    return None
+                except Exception:  # noqa: BLE001 - a bad amount, or the store is down
+                    _LOG.warning("run %s: the run cost could not be booked", run.run_id)
+        try:
+            return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
+        except Exception:  # noqa: BLE001 - the store is down: nothing more can be written
+            _LOG.warning("run %s: could not end the run after a failed settle", run.run_id)
+            return run
 
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)

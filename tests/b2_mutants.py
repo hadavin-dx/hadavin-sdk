@@ -20,7 +20,7 @@ RESERVE = "                rid = self.limits.reserve(run.agent_id, worst, run_id
 SETTLE = "            self.limits.settle_for(run.agent_id, rid, cost_usd)\n"
 ERR = '                self._note(run, "llm", "chat", result="failed", error_code=code)\n'
 
-FALLBACK = "                self.store.add_cost(run.run_id, cost_usd)\n"
+FALLBACK = "                    self.store.add_cost(run.run_id, cost_usd)\n"
 KILL = '                    return self._to(run, S.STOPPED, "kill_switch")\n'
 
 M = [
@@ -58,7 +58,7 @@ M = [
         "B2-4 settle fallback removed",
         LOOP,
         FALLBACK,
-        "                pass\n",
+        "                    pass\n",
         "assert",
         test_file=T,
     ),
@@ -66,9 +66,29 @@ M = [
     Mutant(
         "B2-5 fallback on ambiguous failure",
         LOOP,
-        "            return None\n\n    def _to(",
-        "            self.store.add_cost(run.run_id, cost_usd)\n            return None\n\n    def _to(",
+        "            ambiguous = is_connectivity_error(exc)\n",
+        "            ambiguous = False\n",
         "assert",
+        test_file=T,
+    ),
+    # only ValueError / NotFound count as definite: a RuntimeError rollback loses the run cost
+    Mutant(
+        "B2-7 definite set too small",
+        LOOP,
+        "            ambiguous = is_connectivity_error(exc)\n",
+        "            ambiguous = not isinstance(exc, (ValueError, NotFound))\n",
+        "assert",
+        test_file=T,
+    ),
+    # the method raises when the run cannot be ended
+    Mutant(
+        "B2-8 settle helper raises",
+        LOOP,
+        "            return run\n\n    def _to(",
+        "            raise\n\n    def _to(",
+        "RuntimeError",
+        allow_crash=True,
+        crash_type="RuntimeError",
         test_file=T,
     ),
     # kill switch at reserve mapped to NEEDS_PERSON
