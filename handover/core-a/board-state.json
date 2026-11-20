@@ -752,19 +752,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "A-repro",
-   "role": "reproducer",
-   "model": "sonnet",
-   "what exactly it is doing": "lead order: the pg-kill id 20 runs (pass/fail counts, raw log) + a 40-run harness counting complete 2xx / truncated / no answer with the old client behaviour",
-   "started UTC": "11:07",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead 11:07: treat as a real defect until proven otherwise"
-  },
-  {
    "id": "C-single-write",
    "role": "builder",
    "model": "sonnet",
@@ -1148,6 +1135,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "11:10 REPRO COUNTS (A-repro): the pg-kill id: 20 runs 20 PASS 0 FAIL (log raw/REPRO-pgkill-20.log); 40-run harness with the OLD client behaviour (truncated 2xx returned as 2xx + partial body): 40 complete answers, 0 truncated, 0 no answer (raw/REPRO-pgkill-incomplete.log). So the failure is NOT reproducible serially (60 runs), only seen once under -n 3 load in BATCH9; the mechanism (4 separate writes, a kill between them) is shown by reading the stdlib and our server, not by a run. C-single-write removes the mechanism anyway; I will then run the 40-run harness UNDER CPU LOAD before and after (the load case A did not try) and post both counts.",
   "11:09 pg-kill empty-body 2xx: CAUSE found by reading (B-read): the server sends each answer as 4 separate writes (wsgiref, wbufsize 0); a kill after the status line leaves a bare 'HTTP/1.0 202 Accepted' and http.client returns 2xx with an empty body, no exception. NOT a lost-answer path for the guarantee (the run row is created before the answer is written, in every interleaving) but a real wire-level defect (a client cannot tell a truncated 2xx from a complete one). FIX: one write per answer (C-single-write, started 11:09, 3rd agent). A-repro: 20 of 20 PASS with the client guard in place (that masks it); its 40-run harness with the OLD client behaviour is still running. After the fix: 20-run count + a mutant G34 (if the permission classifier lets me edit the mutants file; the earlier edit was denied) will be on the board.",
   "11:07 ORDER taken: pg-kill empty-body 2xx = REAL defect until proven otherwise. A-repro and B-read started 11:07 (3rd agent, the fix builder C-single-write, starts when A has its baseline: it edits server.py while A runs tests: about 11:20). 'C e1-fix2' of your list is long done (10:03). Report on the board when closed: cause, fix, 20-run count after the fix, mutant. D not tagged green until then.",
   "Answer 11:03 (your READY list is stale, all of it is DONE): e1-fix2, e1-fix3, e1-fix4 builders: done 10:03-10:40; mutant run 17/18: 109 of 109 (run 18 10:38); README-trigger.md notes from evidence-n8n-4: done 11:02 (n8n-fix6, 92 tests); fresh E1 review: 4 rounds, round 4 clean (10:42). Running now: n8n-rev6 (fresh read-only review of the n8n pack after your run, since 11:03). Nothing else is READY: the only open item is BLOCKED mutant run 19 (one anchor line + a re-run: denied by the permission classifier for my builder; I wait for the owner). Next: REPORT.md final block and the commit range for D and E (posted on the board in a few minutes).",
@@ -2821,6 +2809,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "CAUSE (by reading stdlib + our server, file:line cites): wbufsize=0 and wsgiref sends status line, Date line, header block and body as 4 separate sendall calls; a kill after the status line leaves 'HTTP/1.0 202 Accepted' + EOF: http.client returns status 202, body empty, NO exception (no Content-Length: read to EOF): exactly the BATCH9 symptom; no empty-2xx path without a kill (empty bodies are only 4xx/5xx); the row is read BEFORE the answer is written in every interleaving (worker.py _decide/_answered) so the guarantee 'a complete 2xx implies the row' holds; smallest fix: ONE write per answer (buffer in QuietWSGIHandler._write, send in finish_response)"
+  },
+  {
+   "id": "A-repro",
+   "role": "reproducer",
+   "model": "sonnet",
+   "what exactly it is doing": "lead order: the pg-kill id 20 runs (pass/fail counts, raw log) + a 40-run harness counting complete 2xx / truncated / no answer with the old client behaviour",
+   "started UTC": "11:07",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "NOT reproduced: 20 of 20 PASS (pytest, one process each, with the signed_post guard) + 40 of 40 harness runs with the OLD client behaviour: all 40 replies complete (HTTP/1.0 202, Content-Length 71, 71 of 71 body bytes, run_id matched): 0 truncated, 0 no answer. So the kill usually lands after the answer is fully written; the BATCH9 failure is rare and was seen under whole-suite -n 3 load; the serial runs do not recreate that timing; the mid-answer mechanism is shown by reading only. Not tried: the harness under CPU load"
   }
  ]
 }
