@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:16:43Z
+UPDATED_UTC: 2026-11-20T09:20:46Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,24 +7,24 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 4, heavy agents 0
+CAPACITY: load 1.7 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 4, heavy agents 0
 DISK: / 58G free, 17% used; git worktrees 17; 947M	/tmp/claude-0;259M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none in merged-tree batch 4 (15 files: 2672 passed, 2 skipped, 5 xfailed). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. Merged-tree batch 4 (15 files, -n 3) running now (core-c). G7 round 6 builder waits for the box before its batch.
-PUSHED_UTC: 2026-11-20T09:16:41+00:00
+NEXT: LIVE only. Review rounds: gate = result review 3 done, fix round 4 landed (b83accc); G7 = result review 5 done, fix round 6 running; P1d-a = result review 2 done, round 3 landed (61ff6e7); G4 = plan review 4 (readiness done NOT READY, codebase running), then v5; G8 = plan review 2 (readiness done NOT READY, codebase running), then v3; wording v5 = final review waits for G7 round 6. Landed and tested: gate round 4 b83accc, G7 rounds 3-5 da0f71f/6783535/d1384342, merged-tree batch 4: 2672 passed 2 skipped 5 xfailed.
+PUSHED_UTC: 2026-11-20T09:16:43+00:00
 
-(14:46 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:50 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) g4C4 | reviewer | claude-sonnet-5-5 | G4 v4 PLAN review round 4: codebase details | 09:13 | 09:28 | 2 | running | 4 | 0 | same |
-| (new) q9 | builder | claude-sonnet-5-5 | Q9: a test and a mutant for each of the 30 code points; fix 3 wrong-reason and 4 surviving textnorm mutants; stale N15 snippet | 09:11 | 09:50 | 1 | running | 1 | 0 | ORDER 022 Q9; evidence G1-mutants-run.md |
-| (new) g8C2 | reviewer | claude-sonnet-5-5 | G8 v2 PLAN review round 2: codebase details | 09:15 | 09:30 | 2 | running | 2 | 0 | same |
-| (new) g7fix6 | builder | claude-sonnet-5-5 | G7 fix round 6 (bank_near hole in redact(), P x S walk, raw overlap, cross-round overlap fail-closed, growth trigger, wording, scripts) | 09:17 | 09:55 | 1 | running | 6 | 0 | from G7-result-review-5.md |
+| (new) g4C4 | reviewer | claude-sonnet-5-5 | G4 v4 plan review round 4 (codebase) | G4 v4 PLAN review round 4: codebase details | 09:13 | 09:28 | 2 | running | 4 | 0 | same |
+| (new) q9 | builder | claude-sonnet-5-5 | Q9 mutants and tests (after the 240-mutant run) | Q9: a test and a mutant for each of the 30 code points; fix  | 09:11 | 09:50 | 1 | running | 1 | 0 | ORDER 022 Q9; evidence G1-mutants-run.md |
+| (new) g8C2 | reviewer | claude-sonnet-5-5 | G8 v2 plan review round 2 (codebase) | G8 v2 PLAN review round 2: codebase details | 09:15 | 09:30 | 2 | running | 2 | 0 | same |
+| (new) g7fix6 | builder | claude-sonnet-5-5 | G7 fix round 6 (after result review round 5) | G7 fix round 6 (bank_near hole in redact(), P x S walk, raw  | 09:17 | 09:55 | 1 | running | 6 | 0 | from G7-result-review-5.md |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
