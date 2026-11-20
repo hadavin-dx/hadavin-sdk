@@ -707,19 +707,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "E-fix6",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "step E round-6 Major (directory flag on Windows) and nits, then tests and callers once; round 7 fresh review follows",
-   "started UTC": "09:37",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "6 fix (no cap)",
-   "retries so far": 0,
-   "reason": "after E-rev6"
-  },
-  {
    "id": "e1-fix",
    "role": "builder",
    "model": "sonnet",
@@ -731,6 +718,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after e1"
+  },
+  {
+   "id": "E-rev7",
+   "role": "fresh reviewer (zoom-out)",
+   "model": "sonnet",
+   "what exactly it is doing": "step E round 7: fixes correct? do the new tests fail on revert? simplicity (delete Windows-rumour branches no test or caller needs)",
+   "started UTC": "09:41",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "7, no cap (lead ruling)",
+   "retries so far": 0,
+   "reason": "after E-fix6"
   }
  ],
  "tests": [
@@ -2490,6 +2490,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "E1a/E1b built: trigger.conflict audit event (AuditEvent domain=trigger operation=conflict via app.audit.write_outcome, fields: ids + both hashes, never payload), per-sender cap 10/min (keyword, counter, one WARNING/min), request 005 (config field triggers.conflict_events_per_minute); GET /health 200/503 + store_failures, no exit code 4; 10 new tests with kill checks; tests/triggers+crash 1341 passed 5 skipped (own run). Gaps: degraded worker never recovers, /health ping has no timeout, silent drop without app.audit"
+  },
+  {
+   "id": "E-fix6",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "step E round-6 Major (directory flag on Windows) and nits, then tests and callers once; round 7 fresh review follows",
+   "started UTC": "09:37",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "6 fix (no cap)",
+   "retries so far": 0,
+   "reason": "round-6 Major (directory flag + Windows PermissionError) and nits fixed; test_testing_crash 111 passed 2 skipped; callers 429 passed; revert checks for the new tests NOT run (round 7 reviewer judges by reading)"
   }
  ]
 }
