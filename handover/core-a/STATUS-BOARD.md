@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:25:07Z
+UPDATED_UTC: 2026-11-20T07:25:16Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -14,7 +14,7 @@ FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my t
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:24:35Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:25:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -169,20 +169,61 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4238s ago | running | matched by name in ps |
-| 22784 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 63s ago | running | matched by name in ps |
-| 22785 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 63s ago | running | matched by name in ps |
-| 27009 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 27022 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 27023 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 27478 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 3s ago | running | matched by name in ps |
-| 27503 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 27613 | postgres: postgres postgres 127.0.0.1(48704) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4246s ago | running | matched by name in ps |
+| 22784 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 72s ago | running | matched by name in ps |
+| 22785 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 72s ago | running | matched by name in ps |
+| 27009 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 36s ago | running | matched by name in ps |
+| 27022 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 35s ago | running | matched by name in ps |
+| 27023 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 35s ago | running | matched by name in ps |
+| 27478 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 27503 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 11s ago | running | matched by name in ps |
+| 27972 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34256) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27973 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34258) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27974 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34268) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27975 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34272) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27976 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34282) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27977 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34284) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27978 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34288) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27979 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34298) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27980 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34308) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27981 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34320) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27982 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34322) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27983 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34330) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27984 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34332) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27985 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34342) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27986 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34346) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27987 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34356) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27988 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34372) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27989 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34380) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27990 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34396) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27991 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34400) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27992 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34410) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27993 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34422) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27994 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34434) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27995 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34444) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27996 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34458) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27997 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34460) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27998 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34464) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 27999 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34466) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28000 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34468) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28001 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34480) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28002 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34494) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28003 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34506) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28004 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34520) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28005 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34534) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28006 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34542) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28007 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34552) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28008 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34556) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28009 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34568) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28010 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34570) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28011 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34578) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28012 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34590) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 28014 | postgres: rt_e6bd8d820d30 postgres 127.0.0.1(34592) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
