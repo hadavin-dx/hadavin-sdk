@@ -6,7 +6,9 @@ answer is always decided from the ROW, never from which exception the loop raise
 WORKING, 200 = any later state, 409 = a row exists for the same key but another document (nothing is written),
 503 = store not reachable, or no row within `ack_wait_s` (no ack; the sender retries with the same key). A
 request that finds no free slot is not refused at once: it waits for the row like any other, because another
-request for the same key may be writing it right now; with no row by the end of `ack_wait_s` it gets 503. At most
+request for the same key may be writing it right now. While it waits it takes a slot as soon as one is free, and
+it looks at the store less and less often (the pause doubles up to one second, about ten reads in five seconds);
+with neither a slot nor a row by the end of `ack_wait_s` it gets 503. At most
 one run per key rests on the primary key of the runs table, and every answer on the stored row: nothing in this
 process remembers keys.
 
