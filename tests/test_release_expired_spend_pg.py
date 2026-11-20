@@ -404,6 +404,60 @@ def test_the_command_runs_on_the_release_login_only_and_prints_what_it_changed(
     assert w.run("SELECT count(*) FROM kill_switch_clears") == [(0,)]  # no reset ran
 
 
+def _fail_appends_after(monkeypatch, n):
+    """The real chain audit, whose `_append` works n times and then raises (the intent lands, the outcome fails)."""
+    real = cli.make
+
+    def fake(capability, settings, *a, **k):
+        made = real(capability, settings, *a, **k)
+        if capability == "audit":
+            orig, calls = made._append, {"n": 0}
+
+            def flaky(event):
+                calls["n"] += 1
+                if calls["n"] > n:
+                    raise RuntimeError("append down")
+                return orig(event)
+
+            made._append = flaky
+        return made
+
+    monkeypatch.setattr(cli, "make", fake)
+
+
+def test_a_lost_outcome_with_the_real_chain_is_not_reported_as_audited(w):
+    """The real chain never raises: it parks the event (the release login has no INSERT on audit_outbox, so in
+    memory) and returns None. That must show as outcome_audited False."""
+    _world_with_holds(w)
+    rl = w.store(w.release)
+    audit = _audit(w, rl)
+    orig, calls = audit._append, {"n": 0}
+
+    def flaky(event):
+        calls["n"] += 1
+        if calls["n"] > 1:
+            raise RuntimeError("append down")
+        return orig(event)
+
+    audit._append = flaky
+    done = rl.release_expired_spend(AGENT, DAY, "user:op", audit)
+    assert done.outcome_audited is False and len(audit._pending) == 1
+    assert _counters(w) == (D("4.00"), D("12.00"))  # the release itself did commit
+    assert len(_release_rows(w)) == 1  # only the intent row is in the chain
+
+
+def test_the_command_exits_5_and_names_the_intent_when_the_real_chain_loses_the_outcome(
+    w, monkeypatch, capsys
+):
+    _world_with_holds(w)
+    _provide(w, monkeypatch, {REL_REF: w.dsn_of(w.release), "pg-dsn": w.dsn_of(w.runtime)})
+    _fail_appends_after(monkeypatch, 1)
+    assert cli.release_expired_cmd(_cfg(), AGENT, DAY, "user:op") == 5
+    intent_id = _release_rows(w)[0][1]["event_id"]
+    assert intent_id in capsys.readouterr().err
+    assert len(_release_rows(w)) == 1
+
+
 def test_the_command_with_the_runtime_dsn_as_its_reference_is_refused_before_any_connection(
     w, monkeypatch, capsys
 ):

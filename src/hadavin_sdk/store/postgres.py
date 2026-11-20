@@ -809,11 +809,16 @@ def _release_event(actor: str, ref: str, result: str, error: str | None = None) 
 
 
 def _write_outcome(audit: Any, event: AuditEvent) -> bool:
-    """True when the outcome row was handed to the audit; False when it raised (the release is already committed
-    or already failed, so the error is logged, not raised)."""
+    """True only when the outcome row reached the chain. The audit contract is "never raises": a failed append is
+    parked (outbox table, which the release login cannot write, or memory of this process) and `write_outcome`
+    returns None, so a None key means the row is NOT in the chain and the process may end before it is drained.
+    An exception is the same answer (the release is already committed or already failed: logged, not raised)."""
     try:
-        audit.write_outcome(event)
+        key = audit.write_outcome(event)
     except Exception as exc:  # noqa: BLE001
         _LOG.warning("release outcome not audited error_kind=%s", type(exc).__name__)
+        return False
+    if key is None:
+        _LOG.warning("release outcome parked, not in the chain event_id=%s", event.event_id)
         return False
     return True
