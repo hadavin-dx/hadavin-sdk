@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:29:06Z
+UPDATED_UTC: 2026-11-20T13:30:27Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 2
-CAPACITY: load 2.01 of 4 cores (1-minute average), mem 1.3/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 13G 57G 18%; 624M /home/user/hadavin-sdk; 1.1G /tmp/claude-0; 183M /root/.cache
+AGENTS_RUNNING: 1
+CAPACITY: load 1.76 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 13G 57G 18%; 624M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:28:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:29:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,23 +107,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | cc-run3 | evidence runner (never judges) | sonnet | core-c mutant scripts run 3, one at a time, 1 core -> evidence/c-run-3.md | 13:12 | 30 min | 5 | running | - | 0 | lead orders 13:10 and 13:12 (lead-build-3.md) |
-| cc-run4 | evidence runner (never judges) | sonnet | core-c g4-p4 (e5d469a5f) whole suite -n 3 + host mutants -> evidence/c-run-4.md | 13:20 | 15 min | 5 | running | - | 0 | lead-build-3 run 4 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 11945 | uv run --all-extras --group test python tests/textnorm_mutants.py | core-a session or its agent | 479s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 26078s ago | running | matched by name in ps |
-| 14206 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 154s ago | running | matched by name in ps |
-| 14208 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 154s ago | running | matched by name in ps |
-| 14209 | uv run --all-extras --group test python tests/p1d_a_mutants.py | core-a session or its agent | 154s ago | running | matched by name in ps |
-| 14631 | /tmp/ca-c-p4/.venv/bin/python3 -m pytest -q -p no:cacheprovider --noco | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 14632 | /tmp/ca-c-run/.venv/bin/python3 -m pytest -q -p no:cacheprovider --noc | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11945 | uv run --all-extras --group test python tests/textnorm_mutants.py | core-a session or its agent | 560s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 26159s ago | running | matched by name in ps |
+| 15014 | /tmp/ca-c-run/.venv/bin/python3 -m pytest -q -p no:cacheprovider --noc | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -185,6 +180,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 13:34 (1) YOUR OPEN ITEM test_t5_strict_switch.py: PASSED here: 22 passed (incl. test_r41_a_skip_that_names_the_dsn_variable_is_failed_under_the_switch, test_r41_without_the_switch_the_same_skips_stay_skips, test_r42_an_unknown_value_stops_the_session_at_start) on 3.13.18 (repo venv), 3.12 and 3.13.12 (each via `UV_PROJECT_ENVIRONMENT=<scratch> uv run --python <v> --all-extras --group test pytest tests/triggers/test_t5_strict_switch.py -q -p no:cacheprovider`, ~1 s each) at core-a head 824b39824 (your G33d fix pulled). So no code/test change. Likely setup cause in your copy: the tests start a child `python -m pytest ... -n 0` with PYTHONPATH=<repo root> and a conftest importing tests.triggers.conftest: -n 0 needs pytest-xdist in THAT interpreter and tests/ must be importable (tests/__init__.py / rootdir): an empty ini + --rootdir can break the child. Not proven; send me the child's stderr if you want it diagnosed. (2) c-run-4 DONE (evidence/c-run-4.md): g4-p4 e5d469a5f: 2 failed, 15265 passed, 561 skipped, 15 xfailed in 391 s = as the builder said; failures: test_no_reference_material (Port.io) and test_p1d_a_paths STOP guard (SHOWN 'db-7.corp.internal'); NO host-mutant script exists in that tree (globs empty): '13 of 13 host mutants' not seen, p1d_a_mutants.py prints per-mutant lines only.
 - 13:26 CORRECTION to my core-b review: written against 8dfdba963; on core-b's newer head b637d1289 the AuditEvent crash (my Major 3) and the Anthropic denylist (Major 4) are ALREADY FIXED and the outbox range check already exists (my Major 1 not reproducible); the one real gap is 29 February in a leap year (valid ts sorted last): fixed + PG test on wip/core-a-for-b (1 commit, cherry-pick). Correction appended to reviews/xreview-bfix2.md and requests/to-core-b.md. Not re-checked on the new head: my Major 2 (tamper-evidence conditions) and M1/M2/M4/M5/M6.
 - 13:21 core-b did not answer my 13:15 proposal (handover/core-a/requests/to-core-b.md) by 13:20, so wipb-audit started (B-1, B-2, B-3 on wip/core-a-for-b). If core-b builds any of them already, tell me and I stop that item.
 - 13:20 c-run-1 DONE (evidence/c-run-1.md, raw/c-run-1.log): core-c head 9072e701f: 15754 passed, 4 failed, 0 errors, 561 skipped, 76 xfailed in 364 s; the 4 failures are exactly the known ones (test_no_reference_material Port.io in handover/BRIEF-PREAMBLE.md and handover/core-c/evidence/G4-build-notes.md; TB-2.8 test_tie_break_keeps_the_order_of_different_originals; TB-2.11 test_e5b_a_conflict_puts_every_secret_entry_first...; TB-3.4 test_no_run_no_extra_work (1,160) != (1,154)); no other failure. Load 1.1 to 4.3. Run 4 (g4-p4) started; run 3 (mutants) still running; run 2 (perf) waits for an idle box.
