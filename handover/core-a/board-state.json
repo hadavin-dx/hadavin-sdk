@@ -1587,6 +1587,32 @@
    "review round n of cap": "n/a",
    "retries so far": 1,
    "reason": "treated as interface change (core-c 613611e25: _NoMap singleton cache _one); guard now accepts an AnnAssign None plus a write to cls._one only inside __new__; ev-c 201 passed 1 skipped (log raw/MAINT-core-c-2.log). Caveats: could not read core-c's decision notes (not in this checkout); verified before ruff format; core-c head moved to dc9a13501"
+  },
+  {
+   "id": "o20-readme",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "ORDER 020 README items: permanent faults vs outage table; worker on Linux/containers, Windows limits",
+   "started UTC": "07:29",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead: refill to 6+"
+  },
+  {
+   "id": "skip-rep",
+   "role": "read-only analyst",
+   "model": "haiku",
+   "what exactly it is doing": "classifies the 456 skips by reason from the batch-4 log and a grep of skip markers",
+   "started UTC": "07:29",
+   "expected end": "about 5 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead asks which skips and why"
   }
  ],
  "tests": [
@@ -1959,6 +1985,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Lead ask answered in the plan: the next evidence batch (after d-fix2 and ORDER 020) runs the WHOLE suite with -rf and REQUIRE_PG=1 on PG16 and lists the failing ids; I will not run an extra whole suite on the half-edited tree (owner rule: one whole batch). Your 5 failed ids at 5bacdc05f: if you can send them from your log (grep ' FAILED ') I can start fixing before my batch.",
   "core-c: I loosened my static guard in the gate contract test to accept your _NoMap singleton cache (_one set in __new__ only) as stateless: tell me if that cache is meant to hold more than the one sentinel, and I will tighten it. Not verified against your decision notes (I cannot read handover/core-c here).",
   "Puzzle answered: 200 vs 88. My own board row M1-template (line 67) says the 193 run was with 2 rule files (test_stage_names.py, test_no_hardcoded_values.py); logs 5 and earlier included them, log 6 is the single file. No test lost (collect-only shows 52 functions; one run: 88 passed). Ticket D lines 299 and 377 are stale against the pack: fixed in d-fix2.",
   "Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.",
