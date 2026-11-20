@@ -259,16 +259,20 @@ def _shift(store, rid, column, by):
         "created_at": "UPDATE spend_reservations SET created_at = created_at - %s WHERE reservation_id = %s",
         "closed_at": "UPDATE spend_reservations SET closed_at = closed_at - %s WHERE reservation_id = %s",
     }[column]
-    with store._lock:
-        # the 0010 money guard refuses a changed closed_at on a closed row for every login but the function owner's
-        # SECURITY DEFINER body: this test helper ages rows to exercise purge, so it switches the guard off around its UPDATE
-        store._exec("ALTER TABLE spend_reservations DISABLE TRIGGER spend_reservations_money_guard")
-        try:
-            done = store._exec(query, (by, rid)).rowcount
-        finally:
-            store._exec(
-                "ALTER TABLE spend_reservations ENABLE TRIGGER spend_reservations_money_guard"
-            )
+    # 0010 money guard (`spend_reservations_money_guard`) refuses a changed closed_at on a closed row for every login
+    # but the SECURITY DEFINER function owner, and the store's login is a non-owner (it cannot ALTER TABLE): this
+    # helper ages rows to exercise purge, so it goes through the owner DSN with the guard disabled around the UPDATE.
+    import os
+
+    from psycopg import connect
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+
+    options = conninfo_to_dict(store._db.info.dsn).get("options")
+    owner = make_conninfo(os.environ["HADAVIN_TEST_PG_DSN"], options=options)
+    with store._lock, connect(owner, autocommit=False) as db:
+        db.execute("ALTER TABLE spend_reservations DISABLE TRIGGER spend_reservations_money_guard")
+        done = db.execute(query, (by, rid)).rowcount
+        db.execute("ALTER TABLE spend_reservations ENABLE TRIGGER spend_reservations_money_guard")
     assert done == 1, f"row {rid!r} is not in the table"
 
 
