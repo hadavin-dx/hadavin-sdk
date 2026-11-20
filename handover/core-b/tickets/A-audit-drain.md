@@ -52,3 +52,9 @@ A8. FIX ROUND 5 (review A-review-4; code commit "code A: ..."), wins over A7 whe
 - (k) `_outbox_dirty` clears only when the SELECT finds no rows: unreadable rows or rows refused with 42501 keep it True, so every write in the process runs a drain pass until an operator mends them.
 - (l) Older-first covers only outbox rows this process parked, not `_pending` memory events or rows of an earlier process (those reconcile by ts on the tick). A benign race on the `_outbox_dirty` flag can skip the guard for one row until the next tick; the row is never lost.
 - Missing tests (to add in A9): a drain that raises or stalls on the write path; the release role keeping `_outbox_dirty` False.
+
+### A9 review 7: CLEAN (nothing above Minor). Minors recorded
+- A future quoted or already-qualified name would be double-qualified by the `_t` regex (`"s".audit_entries`): harden with a lookbehind and add a `_t` unit test when a statement needs it (no current statement does).
+- No test uses a mixed-case or quote-bearing schema name.
+- `test_unqualified_names_fail_this_test` catches any Exception and returns, so it also passes on an unrelated break; the decoy test itself is the one that fails under the unqualified mutant (checked in review 7).
+- tests/test_release_expired_spend_pg.py:428-450 (real role without INSERT on audit_outbox) asserts `_pending` but not `_outbox_dirty is False`: one added assert closes it.
