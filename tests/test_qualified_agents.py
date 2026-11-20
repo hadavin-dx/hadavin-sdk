@@ -50,11 +50,14 @@ def test_empty_registry(monkeypatch):
     assert seen == []
 
 
-def test_exception_is_unqualified_and_text_never_leaks(monkeypatch):
+def test_an_error_other_than_unqualified_propagates_and_is_not_reported(monkeypatch):
+    # a bad golden reference (ConfigError) must still stop the caller with its own error, as the tick did before
     _patch(monkeypatch, boom={"b"})
     seen = []
-    assert qualified_agents(_reg("a", "b", "c"), seen.append) == ["a", "c"]
-    assert seen == ["b"]
+    with pytest.raises(Exception) as ei:
+        qualified_agents(_reg("a", "b", "c"), seen.append)
+    assert not isinstance(ei.value, Unqualified)
+    assert seen == []
 
 
 def test_runtime_stays_strict(monkeypatch):

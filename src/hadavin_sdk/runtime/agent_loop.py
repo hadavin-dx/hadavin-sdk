@@ -174,15 +174,16 @@ def qualified_agents(
     """Every agent id (registry order) for which `assert_qualified` passes.
 
     The lenient loop for callers that must keep going (the tick command, the trigger worker). Each other agent
-    is reported once, in order, to `on_unqualified(agent_id)`: only the id, never the reason. Any exception from
-    `assert_qualified` (not only `Unqualified`, e.g. a bad golden reference) counts as unqualified; its text
-    is dropped, never logged or passed on. `Runtime.__init__` does not use this: it must refuse start-up.
+    is reported once, in order, to `on_unqualified(agent_id)`: only the id, never the reason. Only `Unqualified`
+    counts as "not qualified"; any other error from `assert_qualified` (a bad golden reference is a ConfigError)
+    propagates, as it did in the tick before this helper existed, so a broken config still stops the command with
+    its own exit code. `Runtime.__init__` does not use this: it must refuse start-up.
     """
     agents: list[str] = []
     for agent_id in registry.agents:
         try:
             assert_qualified(registry, agent_id)
-        except Exception:  # noqa: BLE001 - any failure to qualify means "not qualified"; the text is dropped
+        except Unqualified:
             if on_unqualified is not None:
                 on_unqualified(agent_id)
         else:
