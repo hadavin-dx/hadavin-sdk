@@ -40,7 +40,7 @@ from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.migrate import GRANTS
 from hadavin_sdk.store.protocol import NotFound
 from tests.contracts.test_store_spend import _older, _rows
-from tests.money_caps_seed import seed_caps
+from tests.money_caps_seed import seed_caps, widen_day_window
 from tests.test_limits_reserve import Sink, _registry
 from tests.test_stop_state_roles import World
 
@@ -161,6 +161,9 @@ class Child:
 
     def __init__(self, w, rid, usd):
         seed_caps(w.scoped, w.schema, AGENT, BIG, BIG)  # the child's own store has no test hook
+        widen_day_window(
+            os.environ["HADAVIN_TEST_PG_DSN"], w.schema
+        )  # nor does it open the day window
         self.proc = subprocess.Popen(  # noqa: S603 - this interpreter, a fixed script
             [sys.executable, "-c", CHILD, rid, AGENT, DAY.isoformat(), usd],
             stdout=subprocess.PIPE,
@@ -703,6 +706,12 @@ def test_a_runtime_role_that_inherits_delete_through_another_role_is_refused_by_
     ):
         w.migrate()
     w.grant("REVOKE {} FROM {}", extra, w.runtime)
+    # the DELETE stays with `extra`: any role other than the owner that can write a money table is refused too (step 4)
+    with pytest.raises(
+        ConfigError, match=r"can write a money table.*can DELETE spend_reservations"
+    ):
+        w.migrate()
+    w.grant("REVOKE DELETE ON spend_reservations FROM {}", extra)
     assert w.migrate() == []
 
 
