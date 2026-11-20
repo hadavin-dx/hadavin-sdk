@@ -29,7 +29,7 @@ of this page is done.
 - agent: the Hadavin agent (a record in its registry) that does the work for one sender; the sender's entry names it.
 - principal: the identity the run acts as, taken from the sender's entry in Hadavin's configuration, never from the request.
 - ack_wait_s: how many seconds the worker waits for a stored run before it answers 503 (no acknowledgement).
-- max_running: how many runs the worker does at the same time (default 1); a request above that gets 503.
+- max_running: how many runs the worker does at the same time (the default is the one in Hadavin's configuration, `triggers.max_running`); a request above that gets 503.
 - max_steps: the most steps one run of the agent may take; it is a field of the agent's record.
 - registry: Hadavin's list of agents and their settings.
 
@@ -591,10 +591,11 @@ SEEN IN n8n 2.47.7 (fourth record, once each, lines 47, 58, 112 to 118): "Run st
 
 ## One run at a time: what the sender must do when it is not acknowledged
 
-In plain words: with the default setting the worker handles ONE run at a time.
+In plain words: the worker handles as many runs at a time as `triggers.max_running` says.
 
-- The setting is `max_running`, and its default is 1. It stays 1 until Hadavin can reserve spend before a model
-  call; until then two runs side by side could together go over a spending limit.
+- The setting is `max_running`; the worker has no number of its own, it reads `triggers.max_running` from the
+  configuration (default in `defaults.py`). Set it to 1 until Hadavin can reserve spend before a model
+  call; until then two runs side by side could together go over a spending limit (the worker warns at start).
 - A second event that arrives while a run is going is not queued. The worker holds the request for up to
   `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503.
 - Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:110, 329-331); a request over that gets an immediate 503.
@@ -722,9 +723,9 @@ These are known limits of this version. They are written down so that nobody ass
    control characters are not removed. Removing NUL characters before sending stays the simple way.
 7. The worker has no fallback numbers for the `triggers` block of the configuration. If the block is missing, or a
    field it reads (`max_running`, `ack_wait_s`, the senders, the trigger secret) is missing or misspelled, the worker
-   refuses to start with a configuration error and exit code 2; it never runs on silent defaults. The memory store is refused unless the stage is demo (`check_store_stage` in `worker.py`, same exit 2): pilot and prod need the PostgreSQL store. Exit codes: 0 clean stop, 2 configuration refused at start, 3 any other start failure; a store that is down at start is NOT an exit: the worker starts degraded, /health answers 503 and it recovers without restart. The defaults 1 for
-   `max_running` and 5 seconds for `ack_wait_s` named in this README are the defaults of the worker's `Runner`
-   class, not a fallback for a missing setting. Only the address and port have defaults, and they are command-line
+   refuses to start with a configuration error and exit code 2; it never runs on silent defaults. The memory store is refused unless the stage is demo (`check_store_stage` in `worker.py`, same exit 2): pilot and prod need the PostgreSQL store. Exit codes: 0 clean stop, 2 configuration refused at start, 3 any other start failure; a store that is down at start is NOT an exit: the worker starts degraded, /health answers 503 and it recovers without restart. `max_running`
+   has no default in the worker at all (a missing `triggers.max_running` is a configuration error); the 5 seconds
+   for `ack_wait_s` named in this README is the default of the worker's `Runner` class, not a fallback for a missing setting. Only the address and port have defaults, and they are command-line
    options (address `127.0.0.1`, port 8081: `--host`, `--port`). Check the worker's start line for the port it serves on.
 8. The tick must run next to the worker. Without it, a run that was cut off stays in its last state and never
    reaches a person. The worker warns once at its start when it finds no recent tick, and starts anyway.

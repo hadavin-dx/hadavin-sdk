@@ -1292,7 +1292,7 @@ def test_readme_numbers_are_the_code_numbers():
     from hadavin_sdk import defaults
 
     readme = " ".join(_readme().split())
-    assert worker.MAX_RUNNING == 1 and "its default is 1" in readme
+    assert not hasattr(worker, "MAX_RUNNING") and "`triggers.max_running`" in readme
     assert f"`ack_wait_s` (default {worker.ACK_WAIT_S:g} seconds)" in readme
     assert f"at most {defaults.MAX_DOCUMENT_BYTES} bytes" in readme
     assert f"{2 * defaults.MAX_DOCUMENT_BYTES} bytes" in readme
