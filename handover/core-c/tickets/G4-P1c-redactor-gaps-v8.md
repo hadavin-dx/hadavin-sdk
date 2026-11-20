@@ -377,7 +377,11 @@ re-run on G9 v2's CURRENT prototype (it now holds the reach): the tie-break tabl
   map rows, its fifth map, TB-2.11 and test_e5's three asserts are ORDER-DEPENDENT: the values of 4 point 5 and 10.2 hold on a tree
   without G9 (MEASURED at 944d143db, `r8.py`); on a tree with G9 they are the G9 + G4 column above. The second lander writes the
   column of the tree it lands on and records the other in the evidence. A `RedactionError("SpelledOverlap")` row is asserted with
-  `pytest.raises(RedactionError, match="SpelledOverlap")`.
+  `pytest.raises(RedactionError, match="SpelledOverlap")`. CHANGED in v8 (readiness round 7 M3): NOT for a mutant's killer, whose
+  failure line must hold its id: TB-2.11 (R8's killer) asserts an OUTCOME string, `outcome = f"{type(e).__name__}({e})"` when
+  `_enforce` raises, else the output, and `assert outcome == want, "TB-2.11 E5b ..."` with `want = "RedactionError(SpelledOverlap)"`
+  on a tree with G9 (R8 then gives `x <SECRET_1><TENANT_1> y`, so the failure line starts `AssertionError: TB-2.11`; a bare
+  `pytest.raises` would fail with `DID NOT RAISE` and the runner would judge it WRONG_REASON).
   CHANGED in v8: the whole table above was RE-MEASURED on G9 v2's current prototype (with the reach; `g9tie.py` re-run,
   `g9v2/proto/src`): every cell is the same, including the R8 rows (G9 + R8 and G9 + G4 + R8: `x <SECRET_1><TENANT_1> y` for the R8
   killer map). G9 v2 4.6 still holds the "FIRST one's rule" sentence and its section 11's last bullet says "the identifier's rule
@@ -451,10 +455,20 @@ class _ScanBudget:
     started: float           # redact_text's `started`; the deadline is started + defaults.REDACT_BUDGET_S
     units: int = 0           # units decoded or masked unread so far (decodable, not held), all views and depths
     decoded_chars: int = 0   # characters of decoded text read so far (len of each _b64_text result)
+    part_chars: int = 0      # CHANGED in v8 (design round 7 M2): decoded characters of PARTS (a block's lines tried alone)
 
     def clock(self) -> None: ...             # ONE time.thread_time() read; past the deadline: InputTooLarge("InputTooLarge")
-    def take(self, chars: int) -> None: ...  # units += 1, decoded_chars += chars; over B64_MAX_UNITS or
-                                             # B64_MAX_DECODED_CHARS: InputTooLarge("InputTooLarge")
+
+    def take(self, chars: int, part: bool = False) -> None:   # CHANGED in v8: written out (the mutant anchors of 13.3)
+        if part:
+            self.part_chars += chars
+            if self.part_chars > defaults.B64_MAX_DECODED_CHARS:
+                raise InputTooLarge("InputTooLarge")
+            return
+        self.units += 1
+        self.decoded_chars += chars
+        if self.units > defaults.B64_MAX_UNITS or self.decoded_chars > defaults.B64_MAX_DECODED_CHARS:
+            raise InputTooLarge("InputTooLarge")
 
 class _B64Unit(NamedTuple):
     start: int               # offset in the ANSI-stripped text (3.1 point 5)
@@ -462,16 +476,24 @@ class _B64Unit(NamedTuple):
     written: str             # the unit as written, line breaks included: the ENCODED original
     joined: str              # its lines, stripped, joined with nothing between: what _b64_text decodes
     lines: tuple[str, ...]   # its lines as written (stripped), for the held rule
-    parts: tuple["_B64Unit", ...] = ()   # CHANGED in v7 (M3): a LOOSE block's lines as RUN units (3.1 point 3); () otherwise
+    parts: tuple["_B64Unit", ...] = ()   # CHANGED in v8 (design round 7 M1, readiness N2): EVERY block's lines of at least
+                                         # B64_MIN_CHARS characters (padding not counted), each a one-line unit; () for a RUN unit
+
+_B64_LINE = re.compile(r"[A-Za-z0-9+/_\-]+={0,2}")   # CHANGED in v8: one line of a block, matched whole (fullmatch)
 
 def _scan(text, mapping, cache, neutralise, budget, depth) -> tuple[str, dict[str, str]]
 def _pass_one(text, mapping, cache, budget, depth) -> RedactionResult
+def _b64_lines(search: str) -> list[tuple[int, int]]          # CHANGED in v8: (start, end) of each line's content (3.1 point 3)
 def _b64_units(text: str) -> tuple[str, list[_B64Unit]]     # (the ANSI-stripped text, its units); (text, []) with no run
-def _b64_held(unit: _B64Unit, secret: frozenset[str], parts: tuple[str, ...]) -> bool   # 3.3; the sets built once per _pass_one
+def _b64_held(unit: _B64Unit, secret: frozenset[str], wholes: tuple[str, ...]) -> bool   # 3.3; the sets built once per _pass_one
+                             # CHANGED in v8 (readiness round 7 N1): v7's `parts` argument (JWT and PRIVKEY originals) is renamed
+                             # `wholes`; `parts` now means only `_B64Unit.parts`
 def _b64_text(joined: str) -> str | None                      # 3.2
-def _b64_hits(units, known, budget, depth) -> tuple[list[bool], dict[str, str]]   # 3.4; (hits, kept entries)
+def _b64_hits(units, known, budget, depth, part=False) -> tuple[list[bool], dict[str, str]]   # 3.4; (hits, kept entries);
+                             # CHANGED in v8: `part=True` for the parts' call (2.5 step 5b): each `budget.take(n)` is `take(n, part)`
 def _b64_place(stripped: str, units: list[_B64Unit], placeholders: dict[str, str]) -> str
 ```
+CHANGED in v8: runmap.py also imports `bisect` (3.1 point 4).
 Changed from v4 (review B2): `_pass_one` and `_b64_hits` take NO `neutralise`: a decoded text is always scanned with
 `runmap.neutralise_untrusted` (3.4 point 7, L19), whatever the caller's hook is. `_scan` keeps `neutralise` for the text and its views.
 - `_scan` is the whole of today's `redact_text` body except the cap, the exception wrapper and the map write. It returns the output
@@ -542,9 +564,61 @@ Changed from v4 (review B2): `_pass_one` and `_b64_hits` take NO `neutralise`: a
    3.3). (The prototype built the set per unit; a builder must not: with 2,000 map entries and 2,600 units that is 5 million steps.)
    For the decision, keep one unit per distinct `written`; every copy is still replaced in step 8. None left: return `first`.
    CHANGED in v7 (review round 6 design M3): the candidates are the units AND the `parts` of every loose block (3.1 point 3), each
-   through the same held filter and dedupe; a part costs a unit of the budget like any other.
+   through the same held filter and dedupe; a part costs a unit of the budget like any other. CHANGED in v8 (readiness round 7 M2,
+   design round 7 M2): WITHDRAWN. Step 4's candidates are the units only; parts are tried LAZILY in step 5b, only for a block that
+   step 5 found NOT to be a hit. The JWT/PRIVKEY tuple is named `wholes` (v7: `parts`). A block dropped here as HELD gives no
+   parts: its lines are never decoded, in this call or in a later call under the same map (TB-3.29b, MEASURED (v8)).
 5. `hits, kept = _b64_hits(distinct_units, first.mapping, budget, depth)`. No hit: return `first`, whose output and map are
-   byte-identical to the base commit's for that text.
+   byte-identical to the base commit's for that text. CHANGED in v8: "No hit" is checked AFTER step 5b.
+5b. CHANGED in v8 (design round 7 M1 and M2, readiness M2). The line fallback, for EVERY block (not only a loose one) whose join
+   is not a hit (its join did not decode to text, or decoded to text in which the scan found nothing). A block that is a hit,
+   including a hit UNREAD (over `B64_MAX_UNIT_CHARS`, at the depth limit, or in a fallen-back join), gives no parts. Parts are
+   held-filtered with the same `secret` / `wholes`, deduped, and a part whose `written` already has a verdict (it is also a unit)
+   keeps that verdict. They are decoded and scanned in ONE more `_b64_hits` call with `part=True`: no part is a unit of
+   `B64_MAX_UNITS`, and their decoded characters are counted in `budget.part_chars` against `B64_MAX_DECODED_CHARS` (a count of
+   their own, the same limit; L28). The code of steps 4-8 (the anchors of the mutants of 13.3; the builder copies it):
+   ```python
+       secret = frozenset(v.rstrip("=") for k, v in first.mapping.items() if kind_of(k) in SECRET_KINDS)
+       wholes = tuple(v for k, v in first.mapping.items() if kind_of(k) in ("JWT", "PRIVKEY"))
+       units = [u for u in units if not _b64_held(u, secret, wholes)]
+       distinct = list({u.written: u for u in units}.values())
+       if not distinct:
+           return first
+       hits, kept = _b64_hits(distinct, first.mapping, budget, depth)
+       hit_of = {u.written: hit for u, hit in zip(distinct, hits)}
+       fallback: dict[str, _B64Unit] = {}
+       for unit in distinct:
+           if unit.parts and not hit_of[unit.written]:
+               for p in unit.parts:
+                   if p.written not in hit_of and not _b64_held(p, secret, wholes):
+                       fallback.setdefault(p.written, p)
+       if fallback:
+           part_hits, part_kept = _b64_hits(list(fallback.values()), first.mapping, budget, depth, part=True)
+           hit_of.update(zip(fallback, part_hits))
+           have = set(kept.values())
+           kept.update((k, v) for k, v in part_kept.items() if v not in have)
+       if not any(hit_of.values()):
+           return first
+       base = dict(mapping)
+       counters = _Redactor(dict(base)).counters
+       for placeholder, original in kept.items():
+           kind = kind_of(placeholder)
+           counters[kind] += 1
+           base[f"<{kind}_{counters[kind]}>"] = original
+       chosen: list[_B64Unit] = []
+       for unit in units:
+           if hit_of[unit.written]:
+               chosen.append(unit)
+           elif unit.parts:
+               chosen.extend(p for p in unit.parts if hit_of.get(p.written))
+       runs = list(dict.fromkeys(u.written for u in chosen))
+       placeholders = dict(zip(runs, place_encoded(base, runs)))
+       t2 = _b64_place(stripped, chosen, placeholders)
+   ```
+   (`kept.update` with a generator over `part_kept` while `have` is a separate set: no dict is changed while it is read.) A part's
+   kept entry whose value the block scan already kept is dropped, so a value is never kept twice. The block scan's own kept entries
+   come only from OTHER units of the same joined scan (a block that is not a hit added nothing), so step 7's v7 note "a part's kept
+   entries stay kept even when its block wins" no longer applies: a part is never scanned when its block wins.
 6. `base = dict(mapping)` (the INCOMING map; pass 1's additions are dropped: they hold junk such as one HIGHENTROPY entry per wrapped
    line of a blob that is now one ENCODED). Then the kept entries are RENUMBERED into `base` (decision L20, review round 4 readiness
    Major 5): for each kept entry in the order of `kept`, its kind `k` gets `<k_{n+1}>` where `n` starts at
@@ -555,10 +629,14 @@ Changed from v4 (review B2): `_pass_one` and `_b64_hits` take NO `neutralise`: a
    hits. So a loose block is replaced whole when its join decodes to a hit, else line by line (as v6 did for those lines); chosen
    units never overlap. `placeholders = dict(zip(runs, place_encoded(base, runs)))`, with `runs` the distinct `written` of the
    chosen units, in order. (A part's kept entries stay kept even when its block wins: an over-mask of a plain copy at most.)
+   CHANGED in v8: the rule is now the `chosen` loop of step 5b's code, for EVERY block, not only a loose one; the parenthesis above
+   is withdrawn (step 5b). `chosen` walks `units` (after the held filter, before the dedupe), so every copy of a chosen `written` is
+   in it, in text order; a part is chosen only when its block is not.
 8. `T2 = _b64_place(stripped, copies, placeholders)`, where `copies` are all units of `stripped` (step 3, after the held filter, before
    the dedupe) whose `written` is a key of `placeholders`. Every copy is replaced by position; units do not overlap. CHANGED in v7
    (M3): `copies` are the chosen units of step 7 and their copies (the same `written`, chosen by the same rule), never a part of a
-   block that is itself replaced.
+   block that is itself replaced. CHANGED in v8: `copies` is `chosen` (step 5b's code): `t2 = _b64_place(stripped, chosen,
+   placeholders)`.
 9. `return redact(T2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)`. Pass 1 leaves a placeholder
    alone, so the result holds `<ENCODED_n>` where the blob stood. Nothing is mapped back by position.
 
@@ -584,6 +662,7 @@ Settle and fold interplay:
 | `TooDeep` from `_views` / `undo` | propagates: refused, as today | caught in `_b64_hits`: every unit of that decoded view is a hit unread (L4) |
 | the decoded join over `MAX_REDACT_CHARS` after NFKD (`_expanded_len`) | - | checked before the recursive call: every unit of that view is a hit unread |
 | `InputTooLarge("InputTooLarge")` from the clock, `_ScanBudget.take`, `_decoded_masks`, `fits_after_nfkc` of a view, or the redactor's own cap check of a decoded view | propagates: refused | propagates: refused (`_b64_hits` catches only `TooDeep`) |
+| CHANGED in v8: `InputTooLarge("InputTooLarge")` from `_ScanBudget.take(n, part=True)`: the parts' decoded characters past `B64_MAX_DECODED_CHARS` (their own count, 2.5 step 5b) | propagates: refused | propagates: refused |
 | `InputTooLarge("SpelledWorkTooMuch")` from the spelled-form scan of either `redact()` of `_pass_one` (new route through G4: a compound SECRET value that holds a blob's `<ENCODED_n>` registers a form under that token in step 9; many copies of the token then cost one unit each, or more; MEASURED, TB-3.33) | propagates: refused, map not written; a card raises (no `SETTLE_NOTE`, as 8) | propagates: refused |
 | `RedactionError("NotSettled")` | propagates (as raised, 2.3 step 5) | propagates |
 | CHANGED in v6: `InputTooLarge("SpelledMemoryTooMuch")` (G7 r7, in the tree at bff88a7a1: the spelled-form registry past `SPELLED_MAX_CHARS` in either `redact()` of `_pass_one`; BY READING) | propagates: refused, map not written; a card raises (as 8) | propagates: refused |
@@ -642,6 +721,86 @@ The alphabet is `[A-Za-z0-9+/_\-]`. One `=`, two `=` or none may end a run.
    NOT decode, while each line does (MEASURED, `wrap.py`). Blocks whose width is a multiple of 4 have no parts: every v6 result
    for them stands. Cost: a loose block costs its join plus at most one decode per line.
 
+   CHANGED in v8 (design round 7 M1, readiness round 7 N1/N2/N3, M1). The sentence "Blocks whose width is a multiple of 4 have no
+   parts" is WITHDRAWN, and so is "LOOSE" as a separate kind of block: EVERY block carries `parts`, and the line fallback runs for
+   every block whose join is not a hit (2.5 step 5b). Why: a line that is not part of the blob joins the block and spoils the join
+   at ANY width. MEASURED (v8) through `redact_text` (`proto.py`): `SB + "\nThanks"` (28 + 6 characters, `Thanks` is alphabet
+   only, so a valid last line) and `"6357439f97a0c2d3b1c4c669712c8e3c\n" + SB` (a 32-character hex digest line, then the blob) are
+   blocks whose join does not decode; v7 gave them no parts, so `SB` stayed readable (it is under 40 characters: no HIGHENTROPY);
+   v8 gives `<ENCODED_1>\nThanks` and `6357439f97a0c2d3b1c4c669712c8e3c\n<ENCODED_1>` (TB-3.39).
+   - A PART is a line of the block whose length without trailing `=` is at least `defaults.B64_MIN_CHARS` (12), as a one-line unit
+     (`written` = `joined` = the line, `lines` = `(line,)`). A shorter line is no part (v7 row 10 listed a 10-character part:
+     withdrawn; it is the same minimum as a RUN unit). So "every line is a part" holds only for lines of 12 or more.
+   - HIGHENTROPY-HELD BLOCKS (readiness round 7 M1). Pass 1 masks every line of 40 characters or more that has the entropy shape
+     as one HIGHENTROPY value each (a secret kind). A block ALL of whose lines are such originals is HELD (3.3: every line in
+     `secret`) and is not decoded at all: its output is pass 1's, line by line HIGHENTROPY, no ENCODED entry, no `_b64_text` call
+     (MEASURED (v8): TB-3.37's blob wrapped at 70 (lines 70 / 66), 76 (76 / 60) and 90 (90 / 46) gives
+     `<HIGHENTROPY_1>\n<HIGHENTROPY_2>`, 0 `_b64_text` calls; HEAD's pass 1 gives the same). No leak either way. A block with ONE
+     line under 40 characters (or without the entropy shape) is not held: at width 50 (lines 50 / 50 / 36) pass 1 gives
+     `<HIGHENTROPY_1>\n<HIGHENTROPY_2>\nIHJldmlldyBvZiB0aGUgY2hhbmdlIHNldA==`, the block is decoded and the output is `<ENCODED_1>`
+     (pass 1's HIGHENTROPY entries are dropped, 2.5 step 6).
+   - The block rule is written as code (the mutant anchors of 13.3; readiness round 7 N1). `_b64_lines` gives each line's content
+     span; `_b64_units` is:
+     ```python
+     def _b64_units(text: str) -> tuple[str, list[_B64Unit]]:
+         stripped = strip_ansi(text)
+         search = stripped
+         if "<" in search or "‹" in search:
+             search = _B64_TOKEN_SKIP.sub(lambda m: " " * len(m.group()), search)
+         if not _B64_RUN.search(search):
+             return stripped, []
+         spans = _b64_lines(search)
+         blocks: list[_B64Unit] = []
+         i = 0
+         while i < len(spans):
+             first_start, first_end = spans[i]
+             width = first_end - first_start
+             line = search[first_start:first_end]
+             if width < defaults.B64_WRAP_MIN_CHARS or "=" in line or not _B64_LINE.fullmatch(line):
+                 i += 1
+                 continue
+             taken = [i]
+             for j in range(i + 1, len(spans)):
+                 s, e = spans[j]
+                 line = search[s:e]
+                 if not line or len(line) > width or not _B64_LINE.fullmatch(line):
+                     break
+                 taken.append(j)
+                 if len(line) < width or "=" in line:
+                     break  # a shorter or padded line is the last
+             if len(taken) >= 2:
+                 start, end = spans[taken[0]][0], spans[taken[-1]][1]
+                 lines = tuple(search[s:e] for s, e in (spans[k] for k in taken))
+                 parts = tuple(
+                     _B64Unit(s, e, search[s:e], search[s:e], (search[s:e],))
+                     for s, e in (spans[k] for k in taken)
+                     if len(search[s:e].rstrip("=")) >= defaults.B64_MIN_CHARS
+                 )
+                 blocks.append(_B64Unit(start, end, stripped[start:end], "".join(lines), lines, parts))
+                 i = taken[-1] + 1
+             else:
+                 i += 1
+         starts = [b.start for b in blocks]
+         units = list(blocks)
+         for m in _B64_RUN.finditer(search):
+             k = bisect.bisect_right(starts, m.start()) - 1
+             if k < 0 or m.start() >= blocks[k].end:  # a run inside a block is not a unit
+                 units.append(_B64Unit(m.start(), m.end(), m.group(), m.group(), (m.group(),)))
+         units.sort(key=lambda u: u.start)
+         return stripped, units
+     ```
+     `_b64_lines(search)`: split on `\n`; for each line, `(start, end)` of its content after dropping one trailing `\r` and spaces
+     and tabs at both ends (offsets in `search`). A line of a block is alphabet only, so `search[s:e] == stripped[s:e]`. The block
+     search is one pass over the lines (each line looked at once as a candidate first line or inside one block); the run lookup is
+     a `bisect`, so the whole is O(n log n) in the number of runs (v7's prose said "linear"; a quadratic "is this run inside any
+     block" check is what the `bisect` avoids).
+   - Measured that the wider block rule (any width of 16 or more, since v7) and the parts change nothing else (readiness round 7
+     N3; MEASURED (v8), `m3.py`, `m4.py`): the probe through `proto.py` changes exactly the 48 + 9 rows of 9.1 (0 leaks, 83 held by
+     HIGHENTROPY, every other row the same cell and kinds as HEAD); the 62 privacy-corpus texts (`privacy_corpus.MASKED` and `KEPT`)
+     and 7 multi-line identifier texts (equal-length lines of `get_user_by_id_x`-style names, `warden-dev-lab-tick-silent`,
+     paths, `getImplementationsForKind`) give HEAD's output and map; the 100,000-character snake_case text of 13.4 has 2,573 units,
+     24 of them blocks with 39 parts in all, output and map equal to HEAD's, 2,523 `_b64_text` calls and no part decoded to text.
+
    It is one top-to-bottom pass, and each line is in at most one block. A block is maximal: it ends at the first line that breaks a
    rule, and that line is included if it is a valid shorter last line (a full-length line continues the block). It is linear. The
    cases, with the strings TB-3.2 uses (MEASURED on the prototype; `(start, end)` in the joined text):
@@ -658,20 +817,37 @@ The alphabet is `[A-Za-z0-9+/_\-]`. One `=`, two `=` or none may end a run.
 | 9 (CHANGED in v7, new) | `A18` / `B18` | (0, 37) one LOOSE block; parts (0, 18), (19, 37) |
 | 10 (CHANGED in v7, new) | `A18` / `B10` | (0, 29) one LOOSE block; parts (0, 18), (19, 29) |
 
+   CHANGED in v8: every block now has parts, and a line under 12 characters is no part. MEASURED (v8) with `_b64_units` above
+   (`m5.py`; `written == text[start:end]` asserted for every unit), the PARTS column TB-3.2 pins:
+| # | units (start, end) | parts of each block |
+|---|---|---|
+| 1 | (0, 27) block | (0, 16) (`B10` is under 12) |
+| 2 | (0, 50) block | (0, 16), (17, 33), (34, 50) |
+| 3 | (0, 27) block; (28, 44) run | (0, 16) |
+| 4 | (0, 16) run; (17, 37) run | - |
+| 5 | (0, 15) run; (16, 31) run | - |
+| 6 | (0, 33) block; (34, 50) run | (0, 16), (17, 33) (`B15 + "="`: 15 without the `=`) |
+| 7 | (0, 25) block; (26, 51) block | (0, 16); (26, 46) (`B8`, `D4` are under 12) |
+| 8 | (2, 24) block | (2, 18) |
+| 9 | (0, 37) block | (0, 18), (19, 37) |
+| 10 | (0, 29) block | (0, 18) (v7's (19, 29) withdrawn: `B10` is under 12) |
+
    The strings (TB-3.2, review nit "the table is symbolic"): `A16 = "QUJDREVGR0hJSktM"`, `A15 = "QUJDREVGR0hJSkt"`,
    `B4 = "TU5P"`, `B8 = "TU5PUFFS"`, `B10 = "TU5PUFFSU1"`, `B15 = "TU5PUFFSU1RVVld"`, `B16 = "TU5PUFFSU1RVVldY"`,
    `B20 = "TU5PUFFSU1RVVldYWVph"`, `C16 = "WVphYmNkZWZnaGlq"`, `C20 = "WVphYmNkZWZnaGlqa2xt"`, `D4 = "bm9w"`; each row is
    `"\n".join(row)`. Expected `written` is `text[start:end]`. CHANGED in v7: `A18 = A16 + "TU"` (`"QUJDREVGR0hJSktMTU"`),
    `B18 = "5PUFFSU1RVVldYWVph"`; rows 1-8 have no parts (widths 16), rows 9 and 10 are BY READING (derived from the rule; the v5
-   prototype that measured rows 1-8 is not rebuilt).
+   prototype that measured rows 1-8 is not rebuilt). CHANGED in v8: withdrawn; the units column is MEASURED (v8) again for all 10
+   rows (equal to v5's for rows 1-8) and the parts are the table above.
    Note (MEASURED): identical consecutive lines of one blob (a log that prints the same 28-character blob on 3 lines) form ONE
    block whose join is the three blobs glued; it decodes and is one `<ENCODED_n>`.
 4. A unit is a block, or a RUN that does not start inside a block. `written` is the stretch of the stripped text from the unit's first
-   character to its last.
+   character to its last. CHANGED in v8: "does not start inside a block" is a `bisect` over the block starts (the code above).
 5. ANSI: units are found on `strip_ansi(text)`, and T2 is built from that stripped text.
 6. Offset 0 only. A run glued to other alphabet characters is one longer run that does not decode: stated limit L-B1, pinned by a
    strict xfail (MEASURED leak, 10.3).
-7. Duplicates: units with the same `written` are decoded once and count once against the budget.
+7. Duplicates: units with the same `written` are decoded once and count once against the budget. CHANGED in v8: the same for
+   parts (deduped by `written`; a part equal to a unit takes the unit's verdict); a part never counts against `B64_MAX_UNITS`.
 8. The card text `Plan <12 hex>.` (requests.py 42) holds a 12-character run on every card: it is a unit (MEASURED) that decodes to
    bytes that are not text, so it is never a hit; it costs one `_b64_text` call per card. TB-3.4's "no run" texts do not include it.
 
@@ -694,6 +870,18 @@ The alphabet is `[A-Za-z0-9+/_\-]`. One `=`, two `=` or none may end a run.
 `SECRET_KINDS` (ENCODED included), each with its trailing `=` stripped. A unit is HELD when `written.rstrip("=") in secret`
 (CHANGED in v5, decision L21: padding is ignored, review round 4 readiness Major 6), or when every line of the unit is in `secret`
 or is a substring of the original of a JWT or PRIVKEY placeholder.
+CHANGED in v8 (readiness round 7 M1, M2): the code is
+```python
+def _b64_held(unit: _B64Unit, secret: frozenset[str], wholes: tuple[str, ...]) -> bool:
+    if unit.written.rstrip("=") in secret:
+        return True
+    return all(line.rstrip("=") in secret or any(line in w for w in wholes) for line in unit.lines)
+```
+(`wholes`: the JWT and PRIVKEY originals; v7 called the argument `parts`.) Consequences, MEASURED (v8): a block every line of which
+pass 1 masked as HIGHENTROPY is held and UNCHANGED (3.1 point 3: widths 70, 76, 90 of TB-3.37's blob; 0 `_b64_text` calls), and
+a held block's parts are never tried (2.5 step 5b takes parts only from non-held, non-hit blocks). A part goes through this same
+function (`_b64_held(p, secret, wholes)`), so a line of a non-held block that pass 1 masked alone (a 50-character HIGHENTROPY line
+beside a 36-character last line) is not decoded again (TB-3.40).
 
 Why padding is ignored: in a view, `%3D` becomes `=`, so the unit there is the body plus `=`; the stored ENCODED original is the body
 as written in T (the `%` ended the run). With an exact compare the unit is decoded again and becomes a second ENCODED entry, and the
@@ -715,6 +903,9 @@ pinned by the strict xfail `test_limit_jwt_segment_copy` (10.3), BY READING: the
 it; when it does not fail, the builder records the output and makes it a plain assert of the measured string instead.
 
 ### 3.4 The decoded view and the hit rule (`_b64_hits`), numbered (CHANGED in v5: the decoded view is always neutralised with `neutralise_untrusted`)
+0. CHANGED in v8: every `budget.take(n)` below is `budget.take(n, part)` (`part` is True only for the parts' call, 2.5 step 5b:
+   then nothing counts against `B64_MAX_UNITS` and the decoded characters go to `part_chars`). The rest of the call is the same,
+   including one joined recursive `_scan` of the parts' pieces.
 1. For each unit, in order: `budget.clock()`.
 2. `len(u.joined) > defaults.B64_MAX_UNIT_CHARS`: no decode; `budget.take(0)`; a hit unread.
 3. `d = _b64_text(u.joined)`. None: not a hit, not counted.
@@ -1001,8 +1192,8 @@ They are placed right after `SPELLED_MAX_WORK = 4_000_000` (CHANGED in v7: defau
 | `B64_WRAP_MIN_CHARS` | 16 | "# shortest first line of a wrapped base64 block; every line but the last has its length". Source: chosen; the probe wraps at 32, 64 and 76. |
 | `B64_PRINTABLE_SHARE` | 0.90 | "# share of printable characters a decoded run needs to count as text". Source: chosen; Phase 4 sweeps 0.85 to 0.95. |
 | `B64_UTF16_ZERO_SHARE` | 0.90 | "# share of zero bytes at the odd (LE) or even (BE) positions that reads a decoded run as UTF-16". Source: chosen; ASCII in UTF-16 has 1.0. |
-| `B64_MAX_UNITS` | `MAX_MAP_ENTRIES` (2000) | "# decodable, not held base64 units per redact_text call (all views, all depths); one more is refused (InputTooLarge)". Source: the run map's default ceiling (L9). |
-| `B64_MAX_DECODED_CHARS` | `MAX_REDACT_CHARS` (262,144) | "# decoded characters per redact_text call; past it the call is refused (InputTooLarge)". Source: the redactor's own cap. |
+| `B64_MAX_UNITS` | `MAX_MAP_ENTRIES` (2000) | CHANGED in v8: "# decodable, not held base64 units per redact_text call (all views, all depths; a wrapped block counts once, its lines tried alone do not count); one more is refused (InputTooLarge)". Source: the run map's default ceiling (L9). |
+| `B64_MAX_DECODED_CHARS` | `MAX_REDACT_CHARS` (262,144) | CHANGED in v8: "# decoded characters per redact_text call, and again for the lines of blocks tried alone; past either the call is refused (InputTooLarge)". Source: the redactor's own cap; the second count (L28) keeps a large block whose join is no hit from refusing the text because its lines are read too (a block's join and its lines decode to about 0.75 x its length each). |
 | `B64_MAX_UNIT_CHARS` | `1 << 16` (65,536) | "# longest base64 unit that is decoded; a longer one that pass one did not hold is masked unread". Source: a quarter of the cap. Written `1 << 16`: tests/test_no_hardcoded_values.py (about 164) forbids the literal `= 65536` in the `K5_FILES`. |
 | `B64_MAX_DEPTH` | 3 | "# levels of base64 decoded and read; a unit found at this depth is masked unread". Source: the probe's double rows need 2, plus one of slack. |
 
@@ -1045,6 +1236,40 @@ in Phase 3).
 A text with a hit pays `redact()` twice per scanned spelling, plus one recursive `_scan` per spelling with units. Held units are
 swept, never decoded twice.
 
+CHANGED in v8 (design round 7 M2; the parts). Parts add at most one more joined recursive `_scan` per spelling, and only when a
+block is not a hit and at least one of its lines decodes to text. MEASURED (v8), `proto.py` on HEAD (not the builder's code; read
+the ratio): the snake_case text of 13.4, step off -> on, best of 3: 0.157 s -> 0.169 s (x 1.081; 24 blocks, 39 parts, no part
+decoded to text). A 2,500-line block at width 50 (127,469 characters; base64 of random bytes, last line 20 characters, so pass 1
+masks 2,499 lines as HIGHENTROPY and the block is not held): ONE unit, joined 125,000+ characters > `B64_MAX_UNIT_CHARS`, masked
+unread as `<ENCODED_1>`, map exactly one entry (the block, 127,469 characters), 0 `_b64_text` calls, 1.17 s of thread time with the
+step-9 build of a map holding that original. Under v7 the same text was 2,501 units (its join plus 2,500 parts, all charged to
+`B64_MAX_UNITS` = 2,000) and refused `InputTooLarge` (BY READING v7's 2.5 step 4; TB-3.41 pins v8). The same block with every line
+50 characters is held line by line (2,500 HIGHENTROPY entries, 0.72 s). The base64 of 93,700 characters of prose at width 50
+(2,500 lines) is masked unread too (over `B64_MAX_UNIT_CHARS`, 0.62 s): an over-mask of benign text, as v7's 3.4 point 2 already
+says for any unit over 65,536 characters.
+
+CHANGED in v8 (design round 7 N2): MEMORY of long originals, MEASURED (v8) on HEAD with ENCODED added in-process (`m2.py` with
+`tracemalloc`, `m2b.py` without it for the times): `_build` holds one dict node per character of every rule original
+(`_trie`, `_prefixes`, the finder regex), so a redactor built from a map costs about 0.46 KB per character of its values, whatever
+the kind:
+| map | characters of values | `redact("see the log now", mapping=m)` | `enforce_map` | traced peak |
+|---|---|---|---|---|
+| 1 ENCODED of 4,096 (wrapped at 64) | 4,159 | 0.06 s (traced) | 0.11 s (traced) | 2 MB |
+| 1 ENCODED of 65,536 | 66,559 | 0.09 s | 0.21 s | 30 MB |
+| 1 ENCODED of 127,450 (wrapped at 50) | 129,998 | 0.19 s | 0.41 s | (not traced) |
+| 1 ENCODED of 262,144 | 266,239 | 0.52 s | 1.11 s | 122 MB |
+| 4 ENCODED of 65,536 | 266,236 | (traced 5.9 s) | (traced: refused `InputTooLarge` at the enforce budget under tracemalloc only) | 122 MB |
+| 8 ENCODED of 65,536 | 532,472 | (traced 10.0 s) | (traced: refused as above) | 245 MB |
+| 2,000 HIGHENTROPY of 131 (no G4) | 266,000 | 0.71 s | 1.17 s | 123 MB |
+| 2,500 HIGHENTROPY of 50 (pass 1 on a held block, no G4) | 125,000 | 0.34 s | 0.65 s | (not traced) |
+Untraced times are thread CPU, single runs; traced runs are 2-10 times slower and the two traced refusals are tracemalloc's
+slowdown hitting the 6 s budget (untraced, 1 x 262,144 passes `enforce_map` in 1.11 s). Reading: the cost is per CHARACTER of the
+map, not per entry, and G4 does not add characters for a block pass 1 already masked line by line (2,500 HIGHENTROPY entries of
+50 hold the same characters as the one ENCODED of the block). G4 ADDS characters for units pass 1 left readable or masked only in
+part: at most the input's length per `redact_text` call (`MAX_REDACT_CHARS`, so about 122 MB and about 1 s per later build in the
+worst single call), and across a run without a character bound (the run map is bounded by `MAX_MAP_ENTRIES` entries only, as
+before G4). Decision L26.
+
 MAX_MAP_ENTRIES: `defaults.MAX_MAP_ENTRIES` = 2000 (defaults.py 24) is `config.evidence.max_map_entries` (config.py 245).
 agent_loop.py 427 and 547 end the run `NEEDS_PERSON` / `document_too_complex` when the map is over it.
 - Per `redact_text` call, G4 adds one ENCODED entry per hit unit (at most `B64_MAX_UNITS`) plus the kept decoded entries (L8:
@@ -1064,7 +1289,9 @@ Refusals G4 can cause, and what each caller does (review M4 of round 3, round 4 
 - CHANGED in v7 (only when G9 is merged; 0.3b point 3, L26): a LATER text that mentions a long `<ENCODED_n>` many times (MEASURED on
   the G9 v2 prototype: a 65,536-character blob at 30 mentions, a 16,384-character one at 119) is refused
   `InputTooLarge("SpelledWorkTooMuch")` by G9's read-back: at the gate `mask_budget_exceeded`; on a producer path refused, map not
-  written;
+  written; CHANGED in v8: with G9 v2's read-back reach the numbers are 500 to 1,000 mentions for any value over about 2 KB (4 KB
+  and 64 KB alike; MEASURED on the current prototype, 0.3b point 3);
+- CHANGED in v8: the parts' decoded characters past `B64_MAX_DECODED_CHARS` (their own count, L28): `InputTooLarge("InputTooLarge")`;
 - then: a document ends `NEEDS_PERSON` `document_too_large`; a tool result becomes a tool error (`redact_layered` catches only
   `TooDeep`); a k1b bundle raises `InputTooLarge`;
 - a CARD is NOT shown `SETTLE_NOTE`. The first `redact_text` calls of `channel.clean` (channel.py 37 and 44) and `cards._card`
@@ -1139,7 +1366,7 @@ Totals: 19 closed (13 part rows, 6 whole rows); 3 limits, 4 kept, 18 unchanged. 
 | `ROW_BY_ID["L3"]` card | `SAME` | ```` ```\nping <HOSTNAME_1>\n```\nthen evil[.]com ```` (MEASURED by v4) | Modify `after` from SAME to this literal |
 | tests/warden_port/privacy_corpus.py rows at lines 36, 37 | (kind only) | `db at <HOSTNAME_1>:5432`, `smb://<HOSTNAME_1>/share` (MEASURED by v4, both functions) | stay green (kind assertions); carved out of I4 into I12b |
 | tests/test_runmap_enforce_map.py `test_e5_one_original_under_two_placeholders_follows_the_stronger_rule`, its first assert (line 523) `_one_sweep(f"a{value}b", mapping) == f"a{value}b"  # FAIL-BEFORE: the weaker rule won` | the redactor's own sweep keeps the weaker (TENANT) rule | `_one_sweep(...) == "a<SECRET_1>b"`: the `_build` tie-break (4 point 5) makes the redactor's own sweep follow the stronger rule. MEASURED on the prototype: RED as written (`'a<SECRET_1>b' == 'aZq9xLm4wb'`); the other two asserts stay green | Modify that one line (Phase 2) to `assert _one_sweep(f"a{value}b", mapping) == "a<SECRET_1>b"  # since G4 the redactor's own sweep follows the stronger rule (tie-break in _build)`; NEW in v5, found by the prototype run (decision L24) |
-| tests/gate_mutants.py `R8 one original under two placeholders keeps the weaker rule (E5)` (old `        if _rules_conflict(known):\n`, killer test_e5) | KILLED | CHANGED in v7 (review round 6 design M2): equivalent for test_e5's input ONLY (MEASURED again at 944d143db, `r8.py`: with G4's tie-break, R8 applied still gives `a<SECRET_1>b <SECRET_1>`), NOT equivalent in general: for the map `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}` (V = `"Zq9x" + "Lm4w"`, one same-original conflict plus two DIFFERENT overlapping originals, the identifier listed first) `enforce_map("x ab-cd-ef y", m)` gives `x <SECRET_1>-ef y` with G4 and `x ab-<TENANT_1> y` with G4 + R8 (MEASURED; at 944d143db without G4: the same two strings). | CHANGED in v7, L24 default: R8 STAYS in `M`; its killer is RE-POINTED to the new test `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals` (TB-2.11, in tests/test_runmap_enforce_map.py, Phase 2) with `expect` `"E5b"`; v6's removal, its comment line and the `MIN_MUTANTS` 105 -> 104 edit are WITHDRAWN (`len(gate_mutants.M)` stays 105, its runmap.py count 24). test_e5's FAIL-BEFORE line is still changed (row above) and the `snapshot` comment of 4 point 5 is edited. With G9 merged the killer's expected value is the G9 + G4 column of 0.3b (`RedactionError("SpelledOverlap")`; with R8 `x <SECRET_1><TENANT_1> y`: still killed) |
+| tests/gate_mutants.py `R8 one original under two placeholders keeps the weaker rule (E5)` (old `        if _rules_conflict(known):\n`, killer test_e5) | KILLED | CHANGED in v7 (review round 6 design M2): equivalent for test_e5's input ONLY (MEASURED again at 944d143db, `r8.py`: with G4's tie-break, R8 applied still gives `a<SECRET_1>b <SECRET_1>`), NOT equivalent in general: for the map `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}` (V = `"Zq9x" + "Lm4w"`, one same-original conflict plus two DIFFERENT overlapping originals, the identifier listed first) `enforce_map("x ab-cd-ef y", m)` gives `x <SECRET_1>-ef y` with G4 and `x ab-<TENANT_1> y` with G4 + R8 (MEASURED; at 944d143db without G4: the same two strings). | CHANGED in v7, L24 default: R8 STAYS in `M`; its killer is RE-POINTED to the new test `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals` (TB-2.11, in tests/test_runmap_enforce_map.py, Phase 2) with `expect` `"E5b"` (CHANGED in v8, readiness round 7 M3: `"TB-2.11 "`, 8 characters; the runner and tests/test_gate_mutants_picked_up.py need 4 or more); v6's removal, its comment line and the `MIN_MUTANTS` 105 -> 104 edit are WITHDRAWN (`len(gate_mutants.M)` stays 105, its runmap.py count 24). test_e5's FAIL-BEFORE line is still changed (row above) and the `snapshot` comment of 4 point 5 is edited. With G9 merged the killer's expected value is the G9 + G4 column of 0.3b (`RedactionError("SpelledOverlap")`; with R8 `x <SECRET_1><TENANT_1> y`: still killed) |
 | tests/fixtures/p1d_a_base_rows.json `L2/card`, `L3/card` | base record | not changed | contested in round 2 (the JSON records base 2742c1b and is read only for `BS0` cells) |
 | tests/test_p1d_a_paths.py property `_PIECES` (`HOST = "db-7.corp.internal"`, about 26) | no host shown | stays green: with v3's start look-behind it went RED (v4, measured); v5's start (5.2 point 1) masks it | the reason for the start change; Phase 4 STOP if red |
 | tests/test_text_parts_together.py about 242 (`db-7.corp`), tests/test_k1b_redaction.py 18 (`db01.corp.local`), tests/test_model_gate.py about 1744 (`db1.corp.example.org` map entry) | masked whole / unchanged | unchanged | stay green (v4's pre-final run: 710 passed, 1 failed, the perf row of 5.2 point 1); NOT RE-RUN on the final look-behind |
@@ -1168,6 +1395,12 @@ Two kinds of test:
   They live in tests/test_b64_scan.py (G4a/G4b) and tests/test_host_names.py (G4c). `redact_mod` is
   `importlib.import_module("hadavin_sdk.guard.redact")` (`from hadavin_sdk.guard import redact` gives the FUNCTION: the package
   re-exports it, MEASURED).
+- CHANGED in v8 (readiness round 7 M3): MESSAGE IDS. Every assertion of a TG test carries a message that starts with `TG-` and its
+  invariant id and a space (`assert ..., "TG-I2 digest of " + row_id`; ids `TG-I1` .. `TG-I25`); every TB assertion with its TB id
+  and a space (`"TB-3.13 percent padding"`). A mutant's `expect` (13.3) is that id followed by ONE SPACE (`"TG-I2 "`, `"TB-3.1 "`):
+  at least 5 characters (tools.mutation_runner `Mutant` and src/hadavin_sdk/testing/mutation.py `judge` raise `ValueError` under
+  4; tests/test_gate_mutants_picked_up.py fails a gate mutant under 4), and the space keeps `TB-3.1 ` from matching a `TB-3.13`
+  line. A killer that expects a raise asserts an outcome string (0.3b) so its failure line still starts with the id.
 Fixtures a TB test reaches (review round 4 nit): `from tests.k5_support import k5_cfg, build_runtime, handle` (TB-3.28, as
 tests/test_k5_round5.py does); `from tests.test_redact_idempotent_property import CONSTRUCTED` (TB-3.19, TB-3.20; importing it builds
 that module's corpus once, about 2 s: import it inside the two tests, not at module level).
@@ -1226,7 +1459,7 @@ Phase 4 the 19 G4c keys, Phase 5 deletes `OPEN_ROWS` itself. Every commit of the
 | TB-2.8 | `test_tie_break_keeps_the_order_of_different_originals` | `runmap.enforce_map("x ab-cd-ef y", m)` for the 4 maps of 4 point 5; CHANGED in v6 (N1): plus the fifth map of 4 point 5 through `runmap._Redactor(m, None).sweep("x ab-cd-ef y")` and through `enforce_map` | the 4 outputs of that table, in order (MEASURED, base = prototype); the fifth map: `x <SECRET_1>-ef y` both ways (CHANGED in v7: MEASURED at 944d143db with the tie-break patched in; base of the redactor's own sweep `x ab-<TENANT_1> y`, so that row is FAIL-BEFORE). CHANGED in v7: ORDER-DEPENDENT with G9 (0.3b): on a tree with G9 every row takes the G9 + G4 column there (maps 2 and 4 `pytest.raises(RedactionError, match="SpelledOverlap")`) |
 | TB-2.9 | `test_encoded_is_never_restored_or_stored` (I6) | `m={"<ENCODED_1>": SB}` | `runmap.restore_text("x <ENCODED_1>", m) == "x <ENCODED_1>"`; the same with `kinds=frozenset({"ENCODED"})`; `runmap.storable(m) == {}`; `runmap.storable(m, frozenset({"ENCODED"})) == {}` |
 | TB-2.10 | `test_assignment_kinds_hold_encoded` | - | `"ENCODED" in channel._ASSIGNMENT_KINDS` |
-| TB-2.11 (CHANGED in v7, new; R8's killer, review round 6 design M2) | `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals`, in tests/test_runmap_enforce_map.py (the gate test file, so gate_mutants runs it), using that file's `_enforce` | `m = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}`, `V = "Zq9x" + "Lm4w"`; text `x ab-cd-ef y` | `assert out == "x <SECRET_1>-ef y", "E5b the secret entries were not put first"` (MEASURED at 944d143db with and without the tie-break; R8 gives `x ab-<TENANT_1> y`). Green at the base too (not FAIL-BEFORE: it pins existing gate behaviour). With G9: `pytest.raises(RedactionError, match="SpelledOverlap")` (0.3b), R8 then `x <SECRET_1><TENANT_1> y` |
+| TB-2.11 (CHANGED in v7, new; R8's killer, review round 6 design M2) | `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals`, in tests/test_runmap_enforce_map.py (the gate test file, so gate_mutants runs it), using that file's `_enforce` | `m = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}`, `V = "Zq9x" + "Lm4w"`; text `x ab-cd-ef y` | `assert out == "x <SECRET_1>-ef y", "E5b the secret entries were not put first"` (CHANGED in v8: the message is `"TB-2.11 E5b the secret entries were not put first"`, so R8's `expect` `"TB-2.11 "` is its start) (MEASURED at 944d143db with and without the tie-break; R8 gives `x ab-<TENANT_1> y`). Green at the base too (not FAIL-BEFORE: it pins existing gate behaviour). With G9: `pytest.raises(RedactionError, match="SpelledOverlap")` (0.3b), R8 then `x <SECRET_1><TENANT_1> y` |
 
 ### 10.3 TB, Phase 3 part (appended to tests/test_b64_scan.py in Phase 3)
 Every assertion of a TB or TG test carries a message that starts with its id (`assert out == want, "TB-3.13 percent padding"`):
@@ -1388,7 +1621,7 @@ Modify:
 - `tests/test_runmap_enforce_map.py`: the one line of `test_e5_...` (9.3; Phase 2, L24); CHANGED in v6 (N1): and the sentence added
   to `test_e5_...`'s docstring (4 point 5); CHANGED in v7 (M2): and the new test TB-2.11 `test_e5b_...` after `test_e5_...`.
 - CHANGED in v7 (M2): `tests/gate_mutants.py`: R8 KEPT; its killer re-pointed: test `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals`,
-  expect `"E5b"` (Phase 2, L24). v6's removal of R8 and its `MIN_MUTANTS = 105` -> `104` edit of tests/test_gate_mutants_picked_up.py are
+  expect `"E5b"` (CHANGED in v8: `"TB-2.11 "`, readiness round 7 M3) (Phase 2, L24). v6's removal of R8 and its `MIN_MUTANTS = 105` -> `104` edit of tests/test_gate_mutants_picked_up.py are
   WITHDRAWN: that file is not edited.
 - CHANGED in v7 (readiness N4): `src/hadavin_sdk/guard/runmap.py`: the `snapshot` comment under `if _rules_conflict(known):` (907-909;
   text in 4 point 5), Phase 2.

@@ -256,7 +256,7 @@ def test_a_bad_budget_is_refused_before_any_reading(monkeypatch):
 
 def test_the_injection_check_flags_a_run_past_its_budget(monkeypatch, caplog):
     """D-8. With a budget of 0.5 (stepping clock: reading 1 sets the check's deadline 1.5, reading 2 gives the fold -0.5 s left, the fold's start
-    is reading 3 and its first reading after the size rule raises) a clean text is flagged ``guard_unavailable`` because of ``DeadlinePassed``, for
+    is reading 3 and its first reading after the size rule, reading 4, raises) a clean text is flagged ``guard_unavailable`` because of ``DeadlinePassed``, for
     the detector alone and inside an ``AnyOf`` list (``AnyOf.check``, injection.py, is one of the six call sites of ``injection_check``); with the
     budget None the verdicts are today's."""
     for detector in (injection.RegexDetector(0.5), injection.AnyOf([injection.RegexDetector(0.5)])):
@@ -272,6 +272,10 @@ def test_the_injection_check_flags_a_run_past_its_budget(monkeypatch, caplog):
         )
         assert "DeadlinePassed" in caplog.text, (
             f"DEADLINE-INJECTION: {kind}: flagged for another reason: {caplog.text}"
+        )
+        assert clock.where == ["check", "_read", "scan_views_no_value", "scan_views_no_value"], (
+            f"DEADLINE-INJECTION: {kind}: the readings are {clock.where}, not the check's start, the seconds left, the fold's start and the fold's"
+            " reading after its size rule"
         )
     monkeypatch.setattr(defaults, "INJECTION_BUDGET_S", None)
     monkeypatch.setattr(textnorm, "time", time)
