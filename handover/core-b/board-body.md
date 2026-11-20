@@ -366,3 +366,5 @@ b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook)
 8296038d3 Merge origin/cloud/core-b into merge-migrate (keep caps role + M6/H3 round 2)
 8273ff1d0 docs core-b: audit rights build review 1
 wip/lead-b-ts-watermark 5c4d1faf8: NOT merged by me; assigned to P5 as the ONE builder (after its review fixes: strict NULL checksum, idempotent 0011 tables, quoting, dependent-object error, docs); I tell P5 the later commit when the lead says. P6 batch 3: waits for P1.
+
+17:17Z LOAD 2.54 2.53 2.08, pytest procs 7. P1 tip: 8c5569fad docs F-install: status, SECURITY.md spend-limits sentence follows the install | P5 tip: b2cdc2941 docs F-store: draft upgrade path (migration-checksums, runbook). Both still running (P1 F-install gate/meter integration; P5 review fixes then the ts-watermark merge). Nothing newly merged on cloud/core-b since 5d2095124.
