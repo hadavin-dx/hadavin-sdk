@@ -2,11 +2,28 @@
 
 ## Unreleased
 
+### Money status (read this first)
+Exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+- In force: exact decimal money; on PostgreSQL the runtime login cannot lower a booked amount or change a cap (grants flip in `migrate`, migrations 0010 and 0011); caps live in `hadavin_caps`; `Limits.reserve` and `Limits.settle` exist and are tested.
+- NOT in force: the live path does not reserve before a model call (it calls `Limits.blocked()` before and books after), so concurrent runs can each pass the check and overshoot a cap by up to (concurrent runs x one call's cost). Nothing in this changelog should be read as a hard spend cap until F-install lands.
+- Migrations in this release: 0006 `stop_state`, 0007 `spend_reservations`, 0008 `release_expired_spend`, 0009 `stop_state_hardening`, 0010 `money_guard`, 0011 `money_definer` (0007 to 0011 are unreleased and may still change; see `handover/core-b/MIGRATIONS.md`).
+- Operator sequence: stop the tick scheduler and every runtime-side process; `hadavin-sdk migrate` naming ALL roles (including `--reset-role`); `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke `tick`. Every run is refused (`limits_unavailable`) until `sync-caps` has completed. There is no rolling upgrade.
+
 ### Added
 - `limits set-cap AGENT --day --month --by`, `limits sync-caps --by` and `limits check-caps` (F-money-definer step 6): the spend caps live in the table `hadavin_caps`, written only under the reset login (intent audited first, one intent and one outcome per agent, stop at the first failure, idempotent re-run). `check-caps` exits 1 on any difference or missing row. New tick step `check_caps` (runtime login, read-only) fails the tick while a live or draft agent's registry caps differ from the table. `limits stop` and `limits reset` are unchanged.
 - `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
 
 ### Upgrade steps
+- **Breaking: the runtime login loses INSERT and UPDATE on the money tables (F-money-definer step 4, `migrate`).**
+  - **What changed.** After `migrate` the runtime login holds only SELECT on `spend` and `spend_month` (`spend_totals`
+    reads them) and no right at all on `spend_reservations`; the purge login holds no right on it either (the purge is
+    the function `hadavin_purge_spend_reservations`, EXECUTE only). Reserve, settle, expire and add-spend run as
+    SECURITY DEFINER functions (0011) the runtime may EXECUTE. A hand GRANT of any write right on these tables is
+    repaired by the next `migrate`, and a role that inherits one is refused.
+  - **Upgrade: stop, migrate, start.** Stop the tick scheduler and every runtime process first (old code writes
+    these tables directly and would be refused); run `migrate` naming ALL roles; start; run one smoke `tick`. Anything
+    of yours that read `spend_reservations` or wrote a money table as the runtime login must use the store methods or
+    an admin login.
 - **Every Postgres deployment now needs a reset login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
   - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`;
     set `backends.store.reset_credential_ref`; `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke tick.
@@ -79,7 +96,7 @@
 - **Breaking: the worst-case cost of a model call can be booked before the call (migration `0007_spend_reservations.sql`).**
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
-    and refuses at the cap (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
+    and refuses at the cap (the function does this; the live run path does not call it yet, so this is not an enforced cap today) (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
     `limits_unavailable`, `bad_amount`; a sixth, `usd_cap`, comes with the in-memory meter of the eval and replay
     commands). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
     real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
@@ -109,8 +126,8 @@
   - **Rollback.** Revert only the Python code. Keep the file `0007_spend_reservations.sql`, its grant row and its
     manifest entry: `migrate` refuses a database whose ledger names a migration that has no file. The table is then
     unused.
-  - **Behaviour changes.** (a) A call whose worst case does not fit under the day or month cap is refused even when
-    some budget is left (before, one call could pass the cap). (b) The day and month totals now include the amounts
+  - **Behaviour changes.** (a) Once the model call sites use `reserve` (not yet: see "Money status"), a call whose worst case does not fit under the day or month cap is refused even when
+    some budget is left (before, one call could pass the cap). (b) The day and month totals (as `Limits.blocked` reads them) now include the amounts
     held for calls that are still running and for expired reservations, so a run can end with `daily_budget` or
     `monthly_budget` while another call's hold is open. (c) The same totals feed the two other readers of
     `Limits.blocked`: the action authorizer (it denies with `limits.*`) and the check just before an approved action

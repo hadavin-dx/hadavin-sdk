@@ -15,7 +15,7 @@ from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import Config
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.models import AuditEvent
+from hadavin_sdk.models import AuditEvent, audit_code
 
 DOMAIN = "k1b"
 MEMORY_WARNING = (
@@ -43,9 +43,12 @@ class K1bAudit:
             run_id=run_id,
             domain=DOMAIN,
             operation=operation,
-            principal=self.principal,
+            principal=audit_code(self.principal),
             source="cli",
-            **fields,
+            **{
+                k: (audit_code(v) if isinstance(v, str) and k != "inputs_hash" else v)
+                for k, v in fields.items()
+            },
         )
 
 

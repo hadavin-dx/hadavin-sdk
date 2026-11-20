@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:45:33Z
+UPDATED_UTC: 2026-11-20T13:52:57Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.32 of 4 cores, mem 1/15 GB, disk 46G free, 34% used, agents light 4 heavy 2
-DISK: / 46G free, 34% used; worktrees /tmp/core-b-wt 3.8G
+CAPACITY: load 2.73 of 4 cores, mem 1/15 GB, disk 43G free, 38% used, agents light 4 heavy 2
+DISK: / 43G free, 38% used; worktrees /tmp/core-b-wt 4.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:44:45Z (previous push; this board is pushed right after writing)
-IST: 18:15 IST
+PUSHED_UTC: 2026-11-20T13:52:50Z (previous push; this board is pushed right after writing)
+IST: 19:22 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -260,3 +260,50 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 MONEY B1 step 4 grants flip + docs: G (since 11:49Z, running; migrate.py GRANTS, tests) | B2 live path gate on reserve/settle: NOT DONE TODAY, needs core-c (F-install); decision sent to lead: PR text says "no-overspend not in force; exact money and the no-lowering wall are" | B3 p_day window: H1 (since 12:53Z, 0011 + defaults.py + date-dependent tests) | M1 min_expiry_age: H1 | M2 p_agent NOT NULL, agent-less settle removed from Meter/Limits: H1 | M3 purge="": G | M4 own role for set_cap: QUEUED after G (migrate.py conflict), default decision "own role" | M5 stale 0011 text + HD005 list: DONE (D6 docs merged 929b08d7c) except HD005 list: H1 | M6 manifest rows 0008-0011 + per-file checksum: QUEUED after G (merge-time item) | M7 unnamed roles' table write rights: G. Nits: N1 CHECK usd>=0: H1 | N2,N3(watermark: cut only if no reader, decide after H2),N8: QUEUED | N4..N7: one sentence in DECISIONS.
 ABC M1 isolation pin: H2 (since 12:53Z; postgres.py _SESSION_PINS + PG test) | M2 delete both mark tests: H2 | M3 narrow Anthropic mark to 401/403/404: H2 | nit 2 AuditEvent limits, nit 3 outbox order, nit 1/6 docs: H2 | rest one sentence each in DECISIONS.
 Also running: F6 (step 6 review fixes, since 12:41Z, worktree MF6). After all land: fresh re-review of each diff, ONE evidence batch (cap 2).
+
+13:05Z requests/lead-build-1.md written for the laptop (item 1 lead-b-ts-watermark: 0009 ts CHECK validation + watermark table; item 2 lead-b-price-guard: non-fake route price guard). Builders running (sonnet): G, H1, H2 (see 12:55Z lines). Stale 07:12 rows: the AGENTS table above is history; the live list is the latest dated paragraph.
+
+12:48Z LOAD 1.6 of 4 cores. AGENTS (5 live + 2 started now): G step 4 (sonnet, MG) | H1 0011 findings (sonnet, MH1) | H2 ABC findings (sonnet, MH2) | R7 fresh review of F6 diff, read-only (sonnet, since 12:47Z) | E10 non-PG mutant batteries + unit tests (haiku, since 12:47Z, evidence/batch-10-nonpg.md). PG evidence waits for the laptop (evidence-bpg, PG 15 and 17). Reviews of H1/H2/G diffs start the moment each reports.
+
+12:58Z DONE since 12:48Z: F6 merged; R7 fresh review of F6 found a Blocker (Limits log carried the store message: breaks the pinned "class not message" test) + 2 Majors (unbounded ids in logs): FIXED by me (log names class only plus one fixed sync-caps hint; ids cut to 64), 79 tests green, pushed. E10 non-PG evidence (evidence/batch-10-nonpg.md): mutant baselines of reserve_mutants/audit_drain_mutants broken since the check_caps step was added (steps picked by position) + price M6b/stage M4d harness misses + tests/test_money_definer_pg.py stale unpack (7 MONEY_FUNCTIONS) -> agents below. AGENTS (sonnet, load target 3.5): G step 4 (MG, running) | H1 resumed: B3 -> M1 -> N1 -> M5 in MH1, one pytest at a time (M2 deferred to a separate agent after H1, 124 call sites) | H2 ABC findings (MH2) | T1 tick-step-by-name + mutant baselines (MT1, since 12:58Z, tests only).
+
+13:08Z H2 MERGED (714bd9f7f, pushed): ABC M1 isolation pin (+PG test), M2 mark tests deleted, M3 Anthropic mark narrowed unless direct_api, nit 2 AuditEvent limits (128 + charset, audit_ref hashing), nit 3 outbox order, nit 1/6 docs. Left in DECISIONS: isolation in check_role_settings/verify (migrate.py: after G), N4/5/7/8. AGENTS (sonnet): G step 4 (MG, running since 11:49Z, long overdue: will ask for its state next) | H1 B3 -> M1 -> N1 -> M5 (MH1) | T1 tick-by-name + mutant baselines (MT1) | R8 fresh review of H2 diff (since 13:07Z, writes tickets/ABC-H2-review-1.md). Queued: M2, M4, M6, isolation check_role_settings (all after G/H1 because of migrate.py/tests overlap).
+
+13:25Z DEPENDENCY LIST (every open item; files; waits for; agent now). Same-file items go to ONE builder in sequence.
+| item | files | waits for | agent now |
+|---|---|---|---|
+| money B1 step 4 grants flip; M3 purge=""; M7 unnamed-role write check | migrate.py GRANTS/checks, tests step4 | nothing | G (MG, since 11:49Z; asked for commit-now at 13:08Z) |
+| money B3 p_day window | 0011, defaults.py, migrate.py money_limits seed, test seed wrapper | - | H1 (MH1): COMMITTED ca1dc459e, to merge |
+| money M1 min_expiry_age (expire + release); N1 CHECK usd; M5 HD005 + stale text; (core-a M1) | 0011 SQL, tests | B3 (done) | H1 (MH1), in sequence, now |
+| core-a M5 reserve idempotent retry (23505 same args = success) | 0011 reserve, postgres.py reserve_spend, tests | H1 (same 0011 file) | READY after H1; builder named I1 starts when H1 reports |
+| money M2 p_agent NOT NULL, agent-less settle removed (Meter/Limits/protocol/memory/postgres + ~124 test call sites); core-a M6 memory parity (add_spend day/id checks, check_spend_day) | limits.py, store/protocol.py, memory.py, postgres.py, 0011 settle, many tests | H1 and I1 (0011, postgres.py) | READY after I1: builder P1 |
+| money M4 own role for hadavin_set_cap | migrate.py GRANTS/FUNCTION_GRANTS, cli.py | G (migrate.py) | queued after G |
+| money M6 checksum ledger + manifest procedure | migrate.py ledger functions, tests/fixtures | none (separate region) | M6 (MM6, since 13:15Z) |
+| isolation check in check_role_settings/verify (ABC M1 rest); A-audit-rights migrate change (runtime no DELETE audit_outbox, no INSERT audit_checkpoints, refuse owning runtime) | migrate.py | G | queued after G (ticket A-audit-rights.md written by A2) |
+| N2 ts CHECK validation, N3 watermark table | 0009, postgres.py watermark code | - | LAPTOP lead-b-ts-watermark (requests/lead-build-1.md) |
+| ABC nit 7/H6 route price guard | config.py, llm/common.py | - | LAPTOP lead-b-price-guard |
+| ABC M1 isolation pin, M2 mark tests, M3 mark narrow, nits 1,2,3,6 | postgres.py, llm, models, chain.py | - | DONE (H2 merged 714bd9f7f) |
+| core-a bfix2 F1 outbox ts range | chain.py | - | DONE (976e938fb+: calendar-valid regex, PG test of 2026-02-30/hour 25/year 0000); the offset +99:99 and month 13 are covered by the same regex |
+| core-a bfix2 F2 tamper-evidence wording + runtime rights test | README, SECURITY, new test | - | A2 (MA2, since 13:20Z) |
+| core-a bfix2 F3 sanitise outside text before AuditEvent | agent_loop.py, models.py | - | A3 (MA3, since 13:20Z) |
+| core-a bfix2 F4 Anthropic allowlist; isolation test honesty | llm/anthropic.py, tests | - | A4 (MA4, since 13:20Z) |
+| tick tests need cap rows | tests only | - | T2 (MT2, since 13:15Z) |
+| fresh reviews: G, H1, H2 (done: R8), F6 (done: R7), step 4 | read-only | each builder's report | start the minute each reports |
+| B2 live path reserve/settle in agent_loop.py | agent_loop.py, limits.py | H1/P1 (Meter changes), core-c mark semantics | answer below; builder B2 after P1 |
+| F-install (gate install) | guard/model_gate (core-c) | core-c: NO_MAP request 3, usd_cap, mark on ProviderExhausted, K5 | BLOCKED by core-c |
+| evidence PG 15/17 + mutants on PG | - | the lead's laptop (about 40 min) | waiting on lead |
+B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the model call and Limits.settle after, in agent_loop.py, without core-c's gate: where the gate later arrives it moves that call. Without core-c's provider mark every failed call stays booked at the worst case (over-count, the safe direction). It waits for M2 (Meter signature). Builder B2 starts after P1; until then the PR text says what the lead requires: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+
+13:35Z MERGED on cloud/core-b since 13:25Z: A2 (audit rights test + conditional wording + ticket A-audit-rights.md), A4 (Anthropic allowlist), G (step 4: runtime SELECT only on counters, nothing on spend_reservations, purge EXECUTE-only, writer check; lead B1, M3, M7), A3 (audit_code sanitiser, _note never raises), H1 (B3 day window, M1 min_expiry_age, N1 CHECK usd, M5 header; core-a M1). RUNNING: merged-head money batch (mine, one process), R9 fresh review of step 4 (since 13:30Z), M6 checksum ledger (MM6), T2 cap rows in full-tick tests (MT2). NEXT (READY now): I1 idempotent reserve retry (core-a M5: 0011 reserve + postgres.py), then P1 (M2 p_agent NOT NULL + memory parity core-a M6), then B2 (reserve/settle in agent_loop), M4 own role for set_cap + A-audit-rights migrate change (migrate.py, after M6 merges). Fresh review of H1 diff next.
+
+13:50Z G is DONE and merged (not running): lead-build-4.md written for the laptop with the remaining migrate.py items (M4, isolation check, A-audit-rights). Chain H1 (merged, 096c0f870) -> I1 (idempotent reserve, then M2/parity; MI1, since 13:36Z) -> B2 (after I1). Reviews running: step 4 (R9), H1 diff (R10). M6 (MM6), T2 (MT2) running.
+
+13:32Z LOAD 2.0 of 4 (my count, after killing three orphaned test runs of finished agents). AGENTS 6 live (all sonnet): I1 idempotent reserve then M2/parity (MI1; files: 0011 reserve+settle, postgres.py, memory.py, protocol.py, limits.py, contract tests, test call sites) | R11 reviewer M6 ledger (read-only, writes tickets/M6-review-1.md) | R12 reviewer A3+A4+outbox regex (read-only, tickets/A3A4-review-1.md) | TB2 B2 failing-first tests, NEW file tests/test_live_path_reserve_settle.py only (MB2T) | DOC honest money wording README/SECURITY/CHANGELOG/docs + handover/core-b/PR-TEXT-money.md (MDOC; docs only) | contract-spend diagnosis run (mine, one pytest). Stopped: H1 (finished, resent its report four times). Merged since 13:25Z: G step 4, A2, A3, A4, H1, M6, T2, H2. Reviews done: step 4 (2 Majors: 1 fixed docs, 1 on laptop list), H1 (minors fixed). Tickets without a builder: F-install (blocked by core-c), A-audit-rights (laptop), lead-b items (laptop); N4/5/7/8 are DECISIONS sentences only (accepted residuals, no code).
+
+13:50Z contract spend tests on the merged head: 202 passed (5 min). Reviews in: M6 (0 Blocker, 4 Major: false warning text, warning shows once, operator recipe incomplete, TOFU hides a changed released file) -> M6 fix round running (MM6); A3/A4/outbox (0 Blocker, 3 Major: audit_code vs pydantic ASCII \w, leap-year 29 Feb sorts last, _note fallback drops content) -> A3 fix round running (MA3). AGENTS live (sonnet): I1 (MI1), M6 fix (MM6), A3 fix (MA3), TB2 B2 failing-first tests (MB2T). Docs honest money wording + PR-TEXT-money.md merged (45d266d8a).
+
+13:58Z THE FOUR ORDERED AGENTS ALL RAN AND ARE DONE: (1) step 4 reviewer R9 -> tickets/F-money-definer-step4-review-1.md; (2) H1/B3 reviewer R10 -> F-money-definer-h1-review-1.md; (3) B2 failing tests TB2 -> tests/test_live_path_reserve_settle.py merged (3347b7d76; 16 strict xfails + 2 baseline); (4) docs builder merged (45d266d8a). AGENTS LIVE NOW (4, sonnet): I1 idempotent reserve then M2/parity (MI1; files 0011, postgres.py, memory.py, protocol.py, limits.py, contract tests) | B2 builder (MB2; file agent_loop.py model-call sites + the B2 test file xfail marks; started 13:55Z) | M6 fix round (MM6; migrate.py ledger region, docs/migration-checksums.md, package hash data) | A3 fix round (MA3; models.py, audit/chain.py _TS_SHAPE, agent_loop.py _note fallback). Conflict note: B2 and A3 both touch agent_loop.py (different functions); B2 and I1 both touch the settle call (one helper in B2).
+
+14:10Z MERGED since 13:58Z: A3 fix round (23aaddb6b: ASCII audit patterns, leap-year ts regex, _note fallback keeps fields), price guard from the laptop (wip/lead-b-price-guard, ledger row FIXED-UNVERIFIED), M6 fix round (repeating warning, --accept-changed-draft/--reset-draft, packaged released hashes), limits-test fix, I1 (db9cd8c58: reserve idempotent retry = core-a M5; settle requires agent_id everywhere = lead M2; memory add_spend/reserve parity = core-a M6; ~130 test call sites). Lead items status: B1 DONE (G), B2 IN PROGRESS (builder MB2), B3 DONE, M1 DONE, M2 DONE, M3 DONE, M4 laptop, M5 DONE, M6 DONE (fixed after review), M7 DONE except column grants (laptop), N1 DONE, N2/N3 laptop (lead-b-ts-watermark), N8 DECISIONS. ABC: M1 DONE, M2 DONE, M3 DONE + allowlist, nit 2/3 DONE, nit 7 merged. AGENTS LIVE (sonnet, 4): B2 builder (MB2) | F7 regression fixer for the 16 PG failures I1 found on the base (MF7; tests only; own database hadavin_test_mf7) | R13 reviewer of I1 diff (read-only; own database) | none else. Known open: laptop evidence PG15/17 pending; evidence batch 11 on the merged head to start after F7 and B2 land (cap 2 heavy).
+
+13:52Z MODEL CHECK (get_session on core-b): configured_model=claude-sonnet-5-5, session_context.model=claude-sonnet-5-5, external_metadata.model=claude-sonnet-5-5, last_served_model=claude-sonnet-5-5. NOT FABLE-SERVED. Running agents (B2 builder, F7 fixer, R13 reviewer): model sonnet set explicitly, none inherited.

@@ -38,8 +38,13 @@ What this release does and does not promise, in one place.
 - `caught_by=guard` is set when a guard stopped a concrete proposal (ungrounded, uncited, invalid_proposal, run_budget, injection_suspected); failures (tool, redaction, evidence, a guard outage, the provider) are not catches.
 - A tooled agent's action contracts must set `additionalProperties: false`; an undeclared input is refused as `invalid_proposal`.
 - A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_SLACK_S`).
-- Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
+- Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Tamper evidence of past rows holds only when the runtime login does not own the audit tables and has no UPDATE, DELETE or TRUNCATE on `audit_entries` (`migrate --runtime-role` grants it SELECT and INSERT there, and the append-only triggers refuse the rest even to a role that owned them; migrate does not yet refuse a runtime role that owns the tables); it is not proof of authenticity (a taken-over runtime can still append rows), and two runtime rights are wider than needed today (see SECURITY.md). Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
+
+## Spend limits: what is in force today
+Status, in one sentence: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+- In force: money is exact decimal (no floats); on PostgreSQL after migration 0011 the runtime login cannot lower a booked amount or change a cap; the caps live in the table `hadavin_caps`, written only under the reset login; `Limits.reserve` and `Limits.settle` exist and are tested.
+- NOT in force: the live run path does not reserve before a model call. It still calls `Limits.blocked()` before the call and books the cost afterwards, so concurrent runs can each pass the check and overshoot a cap by up to (number of concurrent runs x the cost of one call). Do not rely on a hard spend cap or on "cannot exceed the budget" until the model gate installs reserve/settle (F-install).
 
 ## Running the tests
 

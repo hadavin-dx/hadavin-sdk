@@ -53,7 +53,7 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
-from hadavin_sdk.models import AuditEvent, new_id
+from hadavin_sdk.models import AuditEvent, audit_code, new_id
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.stages import is_live
@@ -192,6 +192,18 @@ def _main(argv: list[str] | None = None) -> int:
         help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant the reset role to itself); "
         "repeat for several; named in the output and logged; never excuses a grant on the stop tables",
     )
+    mig.add_argument(
+        "--accept-changed-draft",
+        action="append",
+        default=[],
+        help="an UNRELEASED migration (0008-0011) whose file changed but whose database already matches it: record "
+        "the file's checksum; repeat for several",
+    )
+    mig.add_argument(
+        "--reset-draft",
+        help="an UNRELEASED migration: delete its ledger row and every later one, then apply again (drop what the "
+        "draft made first); refused for a released migration",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -233,6 +245,8 @@ def _main(argv: list[str] | None = None) -> int:
             args.release_role,
             args.no_roles,
             tuple(args.accept_admin_role),
+            tuple(args.accept_changed_draft),
+            args.reset_draft,
             args.validate_constraints,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
@@ -489,6 +503,8 @@ def _migrate(
     release_role: str | None = None,
     no_roles: bool = False,
     accepted_admin_roles: tuple[str, ...] = (),
+    accept_changed_draft: tuple[str, ...] = (),
+    reset_draft: str | None = None,
     validate_constraints: bool = False,
 ) -> int:
     store = cfg.backends.store
@@ -501,6 +517,14 @@ def _migrate(
     dsn = os.environ.get("HADAVIN_MIGRATE_DSN")
     if not dsn:
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
+        return 2
+    if validate_constraints and (
+        no_roles or accepted_admin_roles or any((runtime_role, portal_role, purge_role, reset_role, release_role))
+    ):
+        print(
+            "refused: --validate-constraints only validates; do not combine it with a role flag, --no-roles or --accept-admin-role",
+            file=sys.stderr,
+        )
         return 2
     if not (
         validate_constraints
@@ -534,6 +558,8 @@ def _migrate(
             release_role=release_role,
             no_roles=no_roles,
             accepted_admin_roles=accepted_admin_roles,
+            accept_changed_draft=accept_changed_draft,
+            reset_draft=reset_draft,
             iam_auth=store.iam_auth,
             region=store.region,
             sslmode=store.sslmode,
@@ -836,11 +862,11 @@ def _cap_event(by: str, agent: str, result: str, error: str | None = None) -> Au
         run_id="-",
         domain="limits",
         operation="set_cap",
-        principal=by,
+        principal=audit_code(by),
         source="cli",
-        object_ref=agent,
-        result=result,
-        error_code=error,
+        object_ref=audit_code(agent),
+        result=audit_code(result),
+        error_code=audit_code(error) if error is not None else None,
     )
 
 

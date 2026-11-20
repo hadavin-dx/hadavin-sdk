@@ -16,6 +16,7 @@ from hadavin_sdk.models import (
     AuditEvent,
     GateDecision,
     Plan,
+    audit_code,
     canonical_json,
     now,
 )
@@ -84,11 +85,11 @@ class Approvals:
                 run_id=req.run_id,
                 domain="approval",
                 operation=operation,
-                principal=principal,
+                principal=audit_code(principal),
                 source=self.channel.name,
-                object_ref=req.approval_id,
+                object_ref=audit_code(req.approval_id),
                 inputs_hash=req.plan_hash,
-                **kw,
+                **{k: (audit_code(v) if isinstance(v, str) else v) for k, v in kw.items()},
             )
         )
 

@@ -35,6 +35,34 @@ def seed_caps(dsn_or_conn, schema: str | None, agent: str, day_cap, month_cap) -
         dsn_or_conn.execute(query, args)
 
 
+_WIDENED: set[tuple[str, str]] = set()
+WIDE_SKEW_DAYS = 100_000
+
+
+def widen_day_window(dsn: str, schema: str | None) -> None:
+    """Raise `max_day_skew` of `hadavin_limits` as the OWNER, once per schema. `hadavin_reserve_spend` refuses a day more
+    than `max_day_skew` days from the database's UTC date (review B3), and `hadavin_expire_spend_reservations` refuses an
+    age below `min_expiry_age` (review M1: also set to 0 here); the contract and money tests reserve on fixed past
+    days (month rollovers, a settle on another day) that the store contracts need, so the test-only wrapper below widens
+    the window. Never in `src`. The tests of the window itself carry `no_cap_seed` and keep the real value."""
+    import psycopg
+    from psycopg import sql
+
+    key = (dsn, str(schema))
+    if key in _WIDENED:
+        return
+    name = sql.Identifier("hadavin_limits")
+    table = sql.SQL("{}.{}").format(sql.Identifier(schema), name) if schema else name
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(
+            sql.SQL("UPDATE {} SET value = %s WHERE name = 'max_day_skew'").format(table),
+            (WIDE_SKEW_DAYS,),
+        )
+        # the tests expire a hold at age 0 and release it at once (review M1: the real minimum is 3600 s)
+        db.execute(sql.SQL("UPDATE {} SET value = 0 WHERE name = 'min_expiry_age'").format(table))
+    _WIDENED.add(key)
+
+
 def seeding_reserve(original):
     """Wrap `PostgresStore.reserve_spend`: seed the caps the caller passes, then delegate. The owner DSN is the test
     DSN (`HADAVIN_TEST_PG_DSN`) scoped to the schema of the store; the pair is written once per (schema, agent)
@@ -55,6 +83,11 @@ def seeding_reserve(original):
                 pass
             else:
                 seed_caps(dsn, self._schema, agent_id, *pair)
+        if dsn:
+            try:
+                widen_day_window(dsn, self._schema)
+            except Exception:  # noqa: BLE001, S110 - no limits table yet: the store refuses below
+                pass
         return original(
             self,
             reservation_id,
@@ -67,3 +100,13 @@ def seeding_reserve(original):
         )
 
     return reserve_spend
+
+
+def seed_registry_caps(dsn_or_conn, schema: str | None, registry) -> None:
+    """Seed the caps of every non-retired agent of `registry` with the registry's own budget, as the owner: the
+    state `limits sync-caps` leaves, so a FULL tick (step `check_caps`) finds no drift."""
+    for agent in registry.agents.values():
+        if agent.status != "retired":
+            seed_caps(
+                dsn_or_conn, schema, agent.id, agent.budget_usd.daily, agent.budget_usd.monthly
+            )

@@ -16,7 +16,7 @@ import psycopg
 from psycopg import sql
 
 from hadavin_sdk.store import migrate as mig
-from tests.test_money_guard_pg import lowering_attacks, seed
+from tests.test_money_guard_pg import lowering_attacks, seed, trigger_role
 from tests.test_release_expired_spend_pg import (
     _expire,
     _release,
@@ -117,5 +117,6 @@ def test_the_attack_battery_kills_every_mutant_of_the_guard(name, scratch, tmp_p
             _release(w)
         return
     opened, settled = seed(w)
-    went_through = lowering_attacks(w, opened, settled)
+    # the battery runs as a login that holds the table rights, so the trigger (not the missing GRANT) decides
+    went_through = lowering_attacks(w, opened, settled, role=trigger_role(w))
     assert bool(went_through) is expect, f"{name}: {went_through}"

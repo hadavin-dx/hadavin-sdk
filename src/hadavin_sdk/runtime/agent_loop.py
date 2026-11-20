@@ -39,6 +39,8 @@ from hadavin_sdk.models import (
     RunState,
     ToolCall,
     ToolCallRecord,
+    audit_code,
+    audit_ref,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
@@ -253,17 +255,48 @@ class Runtime:
 
     # --- audit helpers ---------------------------------------------------------------------------
     def _event(self, run: Run, domain: str, operation: str, **kw: Any) -> AuditEvent:
+        # Provider, tool, user and executor text can reach these fields: sanitise them all here.
+        for key in ("object_ref", "rule_id", "result", "error_code"):
+            if isinstance(kw.get(key), str):
+                kw[key] = audit_code(kw[key])
         return AuditEvent(
-            run_id=run.run_id,
-            domain=domain,
-            operation=operation,
-            principal=run.principal_id,
+            run_id=audit_code(run.run_id),
+            domain=audit_code(domain),
+            operation=audit_code(operation),
+            principal=audit_code(run.principal_id),
             source="runtime",
             **kw,
         )
 
     def _note(self, run: Run, domain: str, operation: str, **kw: Any) -> None:
-        self.audit.write_outcome(self._event(run, domain, operation, **kw))
+        try:
+            event = self._event(run, domain, operation, **kw)
+        except Exception as exc:  # noqa: BLE001 - a refused event must never kill the run: audit a sanitised one
+            _LOG.warning(
+                "run %s: audit event refused error_kind=%s", run.run_id, type(exc).__name__
+            )
+            keep = {
+                k: audit_code(kw[k])
+                for k in (
+                    "object_ref",
+                    "result",
+                    "error_code",
+                    "inputs_hash",
+                    "output_hash",
+                    "decision",
+                )
+                if kw.get(k) is not None
+            }
+            event = AuditEvent(
+                run_id=audit_code(run.run_id),
+                domain=audit_code(domain),
+                operation=audit_code(operation),
+                principal=audit_code(run.principal_id),
+                source="runtime",
+                rule_id="audit_event_refused",
+                **keep,
+            )
+        self.audit.write_outcome(event)
 
     def _note_card(self, run: Run, operation: str, **kw: Any) -> None:
         """Audit a card post. The card is already out, so a failing audit write is logged and never raised."""
@@ -730,7 +763,7 @@ class Runtime:
             call = checked.call
             if checked.cited:
                 cited = checked.cited  # the cards list the evidence the proposal rests on
-                self._note(run, "proposal", "cited", object_ref=",".join(cited))
+                self._note(run, "proposal", "cited", object_ref=audit_ref(",".join(cited)))
             if checked.reason is not None:
                 return self._abstain(run, S.NEEDS_PERSON, checked.reason, cited)
         try:  # model output: a float or a non-string id must not strand the run
@@ -922,7 +955,7 @@ class Runtime:
             run,
             "action",
             "result",
-            object_ref=result.external_ref,
+            object_ref=audit_ref(result.external_ref),
             result=result.outcome,
             error_code=result.error_code,
         )

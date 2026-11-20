@@ -143,7 +143,14 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
     return auth_aws.rds_iam(region)
 
 
-_SESSION_PINS = (("default_transaction_read_only", "off"), ("synchronous_commit", "on"))
+# default_transaction_isolation is also set by SET SESSION CHARACTERISTICS above; listing it here reads it back, and
+# the audit chain relies on it: its advisory-lock wait must end with a fresh snapshot (a repeatable-read snapshot
+# taken before the wait would see a stale last seq: duplicate seq 23505 / guard 23514, quarantined as a poison row).
+_SESSION_PINS = (
+    ("default_transaction_read_only", "off"),
+    ("synchronous_commit", "on"),
+    ("default_transaction_isolation", "'read committed'"),
+)
 
 
 def connect(
@@ -179,7 +186,7 @@ def connect(
     for setting, value in _SESSION_PINS:
         conn.execute(f"SET {setting} = {value}")
         got = conn.execute(f"SHOW {setting}").fetchone()[0]
-        if got != value:
+        if got != value.strip("'"):
             conn.close()
             raise ConfigError(f"the database session did not take {setting} = {value}")
     return conn
@@ -634,6 +641,8 @@ class PostgresStore:
         """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency. The
         bookings are done by the definer function `hadavin_add_spend` (the function is the authority; the Python
         check is the early, friendly refusal)."""
+        check_store_id(agent_id, "agent_id")  # the same early refusals as the memory store
+        check_spend_day(day)
         usd = clean_spend_amount(usd)  # a bad amount is a ValueError before any SQL; -0 becomes 0
         try:
             with self._lock, self._db.transaction():
@@ -923,12 +932,11 @@ class PostgresStore:
             raise _money_error(exc, reservation_id) from None
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
-        if agent_id is not None:
-            check_store_id(agent_id, "agent_id")
+        check_store_id(agent_id, "agent_id")
         try:
             with self._lock, self._db.transaction():
                 # The claim comes first, inside the function: a second caller waits on the row lock, finds the

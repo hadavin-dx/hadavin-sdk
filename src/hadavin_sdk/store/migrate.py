@@ -7,6 +7,8 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import re
 import unicodedata
@@ -17,6 +19,7 @@ from typing import Literal
 
 from psycopg import errors, sql
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import MAX_SPEND_DECIMALS, MAX_SPEND_USD
 from hadavin_sdk.store.postgres import connect, names_of
@@ -74,10 +77,13 @@ GRANTS: dict[str, Grant] = {
     "approval_requests": Grant("table", _RW, portal=True),
     "approval_decisions": Grant("table", _APPEND, portal=True),
     "dead_letters": Grant("table", _APPEND),
-    # Spend reservations (0007): the runtime books and closes them; only the purge role deletes closed rows.
-    "spend_reservations": Grant("table", _RW, purge="DELETE", purge_cols=("status", "closed_at")),
-    "spend": Grant("table", _RW),
-    "spend_month": Grant("table", _RW),
+    # Step 4 of F-money-definer: no table of the money family is written by the runtime login; every booking is a
+    # SECURITY DEFINER function (0011). `spend` and `spend_month` stay readable (`spend_totals` reads them as the
+    # runtime); `spend_reservations` is not even readable (the ids of other agents' open holds stay private). The purge
+    # role holds nothing on it: it runs the purge function.
+    "spend_reservations": Grant("table", ""),
+    "spend": Grant("table", "SELECT"),
+    "spend_month": Grant("table", "SELECT"),
     # Stop state (0006): the runtime may add a stop and read; it holds no right that turns the switch off. Only
     # the reset role clears stops (and turns the old flag off), and it writes the reset into the audit chain.
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
@@ -347,6 +353,8 @@ def money_limits() -> dict[str, int]:
         "max_decimals": MAX_SPEND_DECIMALS,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
+        "min_expiry_age": defaults.MIN_EXPIRY_AGE_S,
+        "max_day_skew": defaults.MAX_RESERVE_DAY_SKEW_DAYS,
     }
 
 
@@ -988,6 +996,32 @@ def _unnamed_money_executors(db, named: list[str]) -> list[str]:
     return problems
 
 
+def _money_table_writers(db) -> list[str]:
+    """Every role other than the table owner and superusers that holds INSERT, UPDATE, DELETE or TRUNCATE on one of
+    the three money tables (PUBLIC included), named in this command or not, by a direct grant or a membership. Only
+    the definer functions (run as the owner) may write them. Names only."""
+    problems: list[str] = []
+    for table in ("spend", "spend_month", "spend_reservations"):
+        oid = db.execute("SELECT to_regclass(%s)::oid", (table,)).fetchone()[0]
+        if oid is None:
+            continue
+        if db.execute(
+            "SELECT EXISTS (SELECT 1 FROM pg_class c, pg_catalog.aclexplode(c.relacl) a WHERE c.oid = %s "
+            "AND a.grantee = 0 AND a.privilege_type IN ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'))",
+            (oid,),
+        ).fetchone()[0]:
+            problems.append(f"PUBLIC can write {table}")
+        for role, priv in db.execute(
+            "SELECT r.rolname, p.priv FROM pg_roles r, pg_class c, "
+            "(VALUES ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE')) AS p(priv) "
+            "WHERE c.oid = %s AND NOT r.rolsuper AND r.oid <> c.relowner AND r.rolname !~ '^pg_' "
+            "AND has_table_privilege(r.oid, c.oid, p.priv) ORDER BY 1, 2",
+            (oid,),
+        ).fetchall():
+            problems.append(f"role {role} can {priv} {table}")
+    return problems
+
+
 def _seed_limits(db) -> None:
     """The rows the money functions read, from the Python constants, on every run (a changed default reaches the
     functions at the next migrate). A database without 0011 has no table, and nothing is done."""
@@ -1064,6 +1098,141 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
             raise ConfigError(f"{role} can run {RELEASE_FUNCTION}: only the release role may")
 
 
+# Unreleased migrations: a file here may still change before its release. A changed unreleased file is NOT re-run
+# and nothing of it reaches a database that already applied it; migrate warns on EVERY run while the file and the
+# ledger disagree (the ledger keeps the checksum of what was applied). The operator ends the warning with
+# `reset_draft` (after dropping what the draft made) or `accept_changed_draft` (the database is known to match).
+# A file NOT here must match store/migrations_released.json (shipped; tests/fixtures/migrations_released.json is
+# a copy kept equal by a test). At merge of the release that ships them, the lead adds their hashes to both copies
+# and empties this set (see docs/migration-checksums.md).
+UNRELEASED_MIGRATIONS = frozenset(
+    {
+        "0008_release_expired_spend",
+        "0009_stop_state_hardening",
+        "0010_money_guard",
+        "0011_money_definer",
+    }
+)
+RELEASED_MANIFEST = Path(__file__).parent / "migrations_released.json"
+
+
+def _released_hashes() -> dict[str, str]:
+    return json.loads(RELEASED_MANIFEST.read_text(encoding="utf-8"))
+
+
+def _read_migration(path: Path) -> tuple[str, str]:
+    """(text to execute, checksum), from ONE read of the file. The checksum is SHA-256 of the bytes with Windows line
+    endings read as Unix ones (the released manifest's rule); the text is decoded the way `read_text` does it."""
+    data = path.read_bytes()
+    text = data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return text, hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _ensure_ledger(db) -> None:
+    """The ledger table and its checksum column. The column is added here, not by a numbered migration, and only when
+    it is missing (ALTER TABLE needs ownership and a heavy lock even when the column exists)."""
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS schema_migrations "
+        "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+    has = db.execute(
+        "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() "
+        "AND table_name = 'schema_migrations' AND column_name = 'checksum'"
+    ).fetchone()
+    if has:
+        return
+    try:
+        db.execute("ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT")
+    except errors.InsufficientPrivilege as exc:
+        raise ConfigError(
+            "the schema_migrations ledger has no checksum column and this login may not add it: run migrate once "
+            "as the owner of schema_migrations"
+        ) from exc
+
+
+def _check_released(files: dict[Path, str]) -> None:
+    """Every file of the shipped manifest must still hash to it, fresh install or not."""
+    manifest = _released_hashes()
+    for path, digest in files.items():
+        want = manifest.get(path.stem)
+        if want is not None and digest != want:
+            raise ConfigError(
+                f"migration {path.name} was changed after its release (hash {digest[:12]}, released {want[:12]}). "
+                "A released migration never changes: restore the file, and put the change in a new numbered migration"
+            )
+
+
+def _reset_draft(db, version: str, files: list[Path]) -> None:
+    """Delete the ledger rows of an UNRELEASED version and every later one, so the next step applies them again.
+    It does not drop anything the draft made: do that first (the files would fail on what already exists)."""
+    stems = [p.stem for p in files]
+    if version not in UNRELEASED_MIGRATIONS or version not in stems:
+        raise ConfigError(
+            f"reset_draft {version!r}: only an unreleased migration can be reset "
+            f"({', '.join(sorted(UNRELEASED_MIGRATIONS))})"
+        )
+    later = [v for v in stems if v >= version]
+    db.execute("DELETE FROM schema_migrations WHERE version = ANY(%s)", (later,))
+    _log.warning(
+        "migrate: ledger rows deleted for %s; they are applied again now", ", ".join(later)
+    )
+
+
+def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None:
+    """Compare every applied file with the checksum recorded when it was applied (`files` maps path to its current
+    checksum). A released file must also match the shipped manifest (a NULL checksum, from before checksums existed,
+    is filled only from a file that does). A changed file that is not in UNRELEASED_MIGRATIONS is refused. For an
+    unreleased file the ledger KEEPS the checksum of what was applied and migrate warns on every run while the file
+    differs; nothing of the changed file reaches the database. A NULL checksum on an unreleased file is trusted on
+    first use (logged). `accept` names unreleased versions whose recorded checksum is set to the file's now."""
+    rows = dict(db.execute("SELECT version, checksum FROM schema_migrations").fetchall())
+    for bad in sorted(set(accept) - UNRELEASED_MIGRATIONS):
+        raise ConfigError(
+            f"accept_changed_draft {bad!r}: only an unreleased migration can be accepted"
+        )
+    for path, new in files.items():
+        old = rows.get(path.stem, False)
+        if old is False:
+            continue
+        if path.stem in accept:
+            db.execute(
+                "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
+            )
+            continue
+        if old == new:
+            continue
+        if old is None:
+            if path.stem in UNRELEASED_MIGRATIONS:
+                _log.warning(
+                    "migrate: %s was applied before checksums were recorded; trusting the current file",
+                    path.name,
+                )
+            db.execute(
+                "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
+            )
+        elif path.stem in UNRELEASED_MIGRATIONS:
+            _log.warning(
+                "migrate: UNRELEASED migration %s differs from what this database applied (applied %s, file now "
+                "%s). NOTHING of the changed file reaches this database: the file is not run again, and its tables, "
+                "functions and constraints stay as the old draft made them. To bring the database up to date: drop "
+                "what %s and every later migration made, then run migrate with --reset-draft %s; if the database "
+                "already matches the file, run migrate with --accept-changed-draft %s. This warning repeats on "
+                "every run until then",
+                path.name,
+                old[:12],
+                new[:12],
+                path.stem,
+                path.stem,
+                path.stem,
+            )
+        else:
+            raise ConfigError(
+                f"applied migration {path.name} was changed after it was applied (recorded checksum {old[:12]}, "
+                f"file now {new[:12]}). A released migration never changes: restore the file, and put the change in "
+                "a new numbered migration"
+            )
+
+
 def migrate(
     dsn: str,
     *,
@@ -1080,6 +1249,8 @@ def migrate(
     accepted_admin_roles: tuple[str, ...] = (),
     on_role_change: Callable[[str], None] | None = None,
     notes: list[str] | None = None,
+    accept_changed_draft: tuple[str, ...] = (),
+    reset_draft: str | None = None,
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
@@ -1095,7 +1266,10 @@ def migrate(
     example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
     nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
     them (`notes`, when given, receives that line). Their members are still listed. It needs named roles, and a
-    name that is also a named role is refused."""
+    name that is also a named role is refused.
+    `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
+    operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
+    to the file's (the database is known to match). Both refuse a released version."""
     roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
@@ -1144,10 +1318,7 @@ def migrate(
         db.transaction(),
     ):
         db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-        )
+        _ensure_ledger(db)
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
             raise ConfigError(
@@ -1156,11 +1327,23 @@ def migrate(
                 "schema_migrations table to the new file name); if its content changed too, drop what it made and "
                 "run migrate again"
             )
+        texts = {
+            p: _read_migration(p) for p in files
+        }  # each file read ONCE: what is hashed is what runs
+        _check_released({p: t[1] for p, t in texts.items()})
+        if reset_draft is not None:
+            _reset_draft(db, reset_draft, files)
+            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+        _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
         for path in files:
             if path.stem in done:
                 continue
-            db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
-            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
+            text, digest = texts[path]
+            db.execute(text)  # a file shipped in this package
+            db.execute(
+                "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                (path.stem, digest),
+            )
             applied.append(path.stem)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
@@ -1249,6 +1432,11 @@ def migrate(
                 raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
+        if any(roles) and (writers := _money_table_writers(db)):
+            raise ConfigError(
+                "a role other than the owner can write a money table (only the definer functions may): "
+                + "; ".join(writers[:20])
+            )
         note = ""
         if named:
             for note in check_role_settings(db, named):

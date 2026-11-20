@@ -42,12 +42,26 @@ def seed(w):
     rt = w.store(w.runtime)
     opened = _reserve(rt, "2.00")
     settled = _reserve(rt, "1.00")
-    rt.settle_spend(settled, D("0.40"))
+    rt.settle_spend(settled, D("0.40"), agent_id=AGENT)
     return opened, settled
 
 
-def lowering_attacks(w, opened, settled):
-    """Statements of the runtime login that lower a booked amount; returns those that did NOT raise."""
+def trigger_role(w):
+    """A login made for the trigger tests: not the owner, not a definer, and holding the table rights the runtime held
+    before F-money-definer step 4 (SELECT, INSERT, UPDATE). The missing GRANT no longer decides for it, so the
+    trigger of 0010 does (and a trigger mutant is killed through it). Dropped with the world's roles."""
+    role = w.new_role("tg")
+    w.grant("GRANT USAGE ON SCHEMA {} TO {}", w.schema, role)
+    for table in ("spend", "spend_month", "spend_reservations"):
+        w.grant(f"GRANT SELECT, INSERT, UPDATE ON {table} TO {{}}", role)
+    return role
+
+
+def lowering_attacks(w, opened, settled, role=None):
+    """Statements of `role` (default: the runtime login) that lower a booked amount; returns those that did NOT
+    raise. Run as the runtime login, the missing GRANT refuses every one before any trigger runs; run as the
+    trigger role, the trigger refuses them."""
+    role = role or w.runtime
     by = (AGENT, DAY)
     attacks = {
         "spend": ("UPDATE spend SET usd = usd - 0.5 WHERE agent_id = %s AND day = %s", by),
@@ -73,7 +87,7 @@ def lowering_attacks(w, opened, settled):
         ),
     }
     went_through = []
-    with w.as_(w.runtime) as db:
+    with w.as_(role) as db:
         for guc in (
             False,
             True,
@@ -94,7 +108,8 @@ def lowering_attacks(w, opened, settled):
     return went_through
 
 
-def test_the_runtime_login_cannot_lower_any_booked_amount(w):
+def test_n1_the_runtime_login_cannot_lower_any_booked_amount(w):
+    """Step 4: every attack as the runtime login is refused by the missing GRANT (before any trigger runs)."""
     opened, settled = seed(w)
     before = (_counters(w), _status(w, opened), _status(w, settled))
     assert before[0] == (D("2.40"), D("2.40"))
@@ -102,20 +117,49 @@ def test_the_runtime_login_cannot_lower_any_booked_amount(w):
     assert (_counters(w), _status(w, opened), _status(w, settled)) == before
 
 
-def test_the_refusal_is_insufficient_privilege_and_names_the_table(w):
+def test_n2_the_runtime_login_cannot_raise_a_booked_amount_either(w):
+    seed(w)
+    with w.as_(w.runtime) as db:
+        for stmt in (
+            "UPDATE spend SET usd = usd + 1",
+            "UPDATE spend_month SET usd = usd + 1",
+            "INSERT INTO spend (agent_id, day, usd) VALUES ('other', '2026-01-01', 1)",
+        ):
+            with pytest.raises(errors.InsufficientPrivilege):
+                db.execute(stmt)
+    assert _counters(w) == (D("2.40"), D("2.40"))
+
+
+def test_n3_the_trigger_still_stops_a_login_that_holds_the_table_right(w):
+    """The trigger of 0010 is the second wall: a login that did get UPDATE (a hand grant, a later bug) still cannot
+    lower a booked amount."""
+    opened, settled = seed(w)
+    before = (_counters(w), _status(w, opened), _status(w, settled))
+    assert lowering_attacks(w, opened, settled, role=trigger_role(w)) == []
+    assert (_counters(w), _status(w, opened), _status(w, settled)) == before
+
+
+def test_n4_the_refusal_is_insufficient_privilege_and_names_the_table(w):
     seed(w)
     with w.as_(w.runtime) as db, pytest.raises(errors.InsufficientPrivilege, match="spend_month"):
+        db.execute("UPDATE spend_month SET usd = 0 WHERE agent_id = %s", (AGENT,))
+    with (
+        w.as_(trigger_role(w)) as db,
+        pytest.raises(errors.InsufficientPrivilege, match="spend_month"),
+    ):
         db.execute("UPDATE spend_month SET usd = 0 WHERE agent_id = %s", (AGENT,))
 
 
 def test_the_runtime_login_can_still_raise_and_book_and_settle(w):
     opened, _settled = seed(w)
     rt = w.store(w.runtime)
-    with w.as_(w.runtime) as db:
+    with w.as_(trigger_role(w)) as db:
         db.execute("UPDATE spend SET usd = usd + 1 WHERE agent_id = %s", (AGENT,))
         db.execute("UPDATE spend SET usd = usd WHERE agent_id = %s", (AGENT,))  # equal is not lower
     assert _counters(w)[0] == D("3.40")
-    row, first = rt.settle_spend(opened, D("5.00"))  # NULL -> amount, and above the reserved amount
+    row, first = rt.settle_spend(
+        opened, D("5.00"), agent_id=AGENT
+    )  # NULL -> amount, and above the reserved amount
     assert first is True and row.settled_usd == D("5.00")
     _expire(w, _reserve(rt, "1.00"))  # open -> expired: settled_usd NULL -> reserved
 
@@ -125,7 +169,7 @@ def test_a_late_settle_of_an_expired_hold_still_works_through_the_guard(w):
     rid = _reserve(rt, "1.00")
     _expire(w, rid)
     row, first = rt.settle_spend(
-        rid, D("0.10")
+        rid, D("0.10"), agent_id=AGENT
     )  # delta 0: the booking stays at the reserved amount
     assert first is True and row.settled_usd == D("1.00")
     assert _counters(w) == (D("1.00"), D("1.00"))
@@ -176,7 +220,7 @@ def test_a_settle_in_the_same_transaction_does_not_open_the_counter_further(w):
     login words its own UPDATE after it."""
     rt = w.store(w.runtime)
     rid = _reserve(rt, "2.00")
-    with w.as_(w.runtime, autocommit=False) as db:
+    with w.as_(trigger_role(w), autocommit=False) as db:
         db.execute(
             "UPDATE spend_reservations SET status = 'settled', settled_usd = 0.50, closed_at = clock_timestamp() "
             "WHERE reservation_id = %s",

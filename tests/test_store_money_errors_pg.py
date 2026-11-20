@@ -20,7 +20,12 @@ from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import new_id
 from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState
 from tests.money_caps_seed import seed_caps
-from tests.test_spend_reservations_pg import AGENT, DAY, reservation_world  # noqa: F401  (the "w" fixture)
+from tests.money_days import today_utc
+from tests.test_spend_reservations_pg import (  # noqa: F401  (the "w" fixture)
+    AGENT,
+    DAY,
+    reservation_world,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
@@ -49,7 +54,7 @@ def _raw(store, query, params):
 
 def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
     rt = w.store(w.runtime)
-    args = (new_id("res"), AGENT, DAY, D("1.00"), None)
+    args = (new_id("res"), AGENT, today_utc(), D("1.00"), None)
     _seed(w, AGENT, "0", "100")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(rt, rt._reserve_call(), args)
@@ -57,7 +62,7 @@ def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
     assert caught.value.diag.message_primary == "day"
     _seed(w, AGENT, "100", "0")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1.00"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, today_utc(), D("1.00"), None))
     assert (caught.value.sqlstate, caught.value.diag.message_primary) == ("HD001", "month")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(
@@ -84,14 +89,14 @@ def test_a_duplicate_id_is_stale_state_an_unknown_id_is_not_found(w):
     rt = w.store(w.runtime)
     rid = _reserve(rt)
     with pytest.raises(StaleState, match=f"spend reservation exists: {rid}"):
-        _reserve(rt, rid=rid)
+        _reserve(rt, "2.00", rid=rid)
     with pytest.raises(NotFound):
-        rt.settle_spend("unknown-id", D("1.00"))
+        rt.settle_spend("unknown-id", D("1.00"), agent_id=AGENT)
     with pytest.raises(NotFound):
         rt.settle_spend(rid, D("1.00"), agent_id="another-agent")
-    row, applied = rt.settle_spend(rid, D("0.50"))
+    row, applied = rt.settle_spend(rid, D("0.50"), agent_id=AGENT)
     assert applied and row.settled_usd == D("0.50")
-    again, applied = rt.settle_spend(rid, D("0.10"))
+    again, applied = rt.settle_spend(rid, D("0.10"), agent_id=AGENT)
     assert not applied and again == row
 
 
@@ -100,7 +105,7 @@ def test_a_missing_counter_row_is_a_runtime_error_and_the_claim_rolls_back(w):
     rid = _reserve(rt)
     w.do("DELETE FROM spend")
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        rt.settle_spend(rid, D("0.50"))
+        rt.settle_spend(rid, D("0.50"), agent_id=AGENT)
     assert w.run("SELECT status FROM spend_reservations")[0][0] == "open"
 
 
@@ -111,7 +116,7 @@ def test_a_missing_limit_row_fails_closed_for_every_call(w, limit):
     w.run("DELETE FROM hadavin_limits WHERE name = %s RETURNING 1", (limit,))
     calls = (
         lambda: _reserve(rt),
-        lambda: rt.settle_spend(rid, D("0.50")),
+        lambda: rt.settle_spend(rid, D("0.50"), agent_id=AGENT),
         lambda: rt.add_spend(AGENT, DAY, D("1.00")),
     )
     for call in calls:
@@ -130,10 +135,8 @@ def test_a_missing_expiry_limit_row_fails_closed_for_expire(w):
 
 def test_an_argument_the_python_check_lets_through_is_a_value_error_from_the_function(w):
     rt = w.store(w.runtime)
-    with pytest.raises(ValueError, match="refused by the database"):
-        rt.add_spend(
-            "bad\x01agent", date(2024, 1, 31), D("1.00")
-        )  # add_spend checks the amount only
+    with pytest.raises(ValueError, match="agent_id"):
+        rt.add_spend("bad\x01agent", date(2024, 1, 31), D("1.00"))  # refused before any SQL
     assert w.count("spend") == 0
 
 
@@ -153,5 +156,5 @@ def test_an_unmapped_hd_code_is_not_mistaken_for_a_lost_connection(w):
     with pytest.raises(
         psycopg.OperationalError
     ) as caught:  # the premise: psycopg's class for the family
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, today_utc(), D("1"), None))
     assert caught.value.sqlstate == "HD001"

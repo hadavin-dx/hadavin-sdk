@@ -29,7 +29,9 @@ FUNCTION_NAMES = (
 )
 # Added by the caps work (builder E1): not called by the money paths of the store, but the same static rules apply.
 CAP_FUNCTION_NAMES = ("hadavin_set_cap", "hadavin_cap_matches")
-ALL_FUNCTION_NAMES = FUNCTION_NAMES + CAP_FUNCTION_NAMES
+# 0011 replaces the release function of 0008 (review M1: the minimum age); the same static rules apply to it.
+RELEASE_FUNCTION_NAMES = ("hadavin_release_expired_spend",)
+ALL_FUNCTION_NAMES = FUNCTION_NAMES + CAP_FUNCTION_NAMES + RELEASE_FUNCTION_NAMES
 # The defaults the limits are seeded with: none of them may appear as a literal in a function (parity with the
 # defaults would hide a hard-coded limit from every behavioural test that leaves the limits alone). A neighbouring
 # hyphen excludes the parts of a date literal such as DATE '9999-12-31' (the day window is not a limit).
@@ -90,7 +92,12 @@ def static_problems(text: str) -> list[str]:
         problems.append("the file grants a right (grants are migrate's)")
     if not re.search(r"REVOKE ALL ON hadavin_limits FROM PUBLIC;", code):
         problems.append("hadavin_limits is not revoked from PUBLIC")
-    if "SECURITY DEFINER" in code and re.search(r"\bALTER\s+(?:FUNCTION|TABLE)\b", code):
+    # the one allowed ALTER: the usd range CHECKs of the counter tables (review N1), added NOT VALID and validated
+    allowed = re.compile(
+        r"ALTER\s+TABLE\s+spend(?:_month)?\s+(?:ADD\s+CONSTRAINT\s+\w+\s+CHECK\s*\([^;]*\)\s+NOT\s+VALID|VALIDATE\s+CONSTRAINT\s+\w+)\s*;"
+    )
+    rest = allowed.sub("", code)
+    if "SECURITY DEFINER" in code and re.search(r"\bALTER\s+(?:FUNCTION|TABLE)\b", rest):
         problems.append("the file alters an object (owner and pins are migrate's)")
     return problems
 

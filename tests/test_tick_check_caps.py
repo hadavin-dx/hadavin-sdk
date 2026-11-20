@@ -115,12 +115,14 @@ def test_a_raised_registry_cap_alerts_too_documented_divergence_from_t13(w):
 @needs_pg
 def test_a_database_error_for_one_agent_names_it_and_the_others_are_still_checked(w):
     _seed(w, "a", "1", "10")
-    bad_id = "x" * 5000  # the database refuses it (22023); the other agents are still compared
+    bad_id = (
+        "x" * 5000
+    )  # check_store_id refuses it in Python; the message carries only 64 characters of it
     app = _app(w.store(w.runtime), _agent("a", "9", "10"), _agent(bad_id, "1", "10"))
     with pytest.raises(tick.CapsDrift) as caught:
         tick.check_caps(tick.TickContext(app, now()))
     text = str(caught.value)
-    assert "a:differs" in text and f"{bad_id}:error" in text
+    assert "a:differs" in text and f"{bad_id[:64]}:error" in text and bad_id not in text
 
 
 @needs_pg

@@ -2,11 +2,9 @@
 F-money-definer, step 5, test writer C). Real PostgreSQL 16, a throwaway schema and logins with unique names, dropped
 after. Needs HADAVIN_TEST_PG_DSN.
 
-THE RUNTIME LOGIN HERE IS THE FINAL DESIGN'S. `migrate` still gives the runtime SELECT, INSERT and UPDATE on the three
-money tables today (step 4 removes that); `build_world` therefore takes INSERT, UPDATE, DELETE, TRUNCATE (and the
-rest) away from the runtime on `spend`, `spend_month` and `spend_reservations` and leaves it SELECT on the two
-counters and nothing on the reservations, exactly the grant map of step 4. After that the runtime holds EXECUTE on the
-four runtime functions and nothing else on the money tables.
+THE RUNTIME LOGIN HERE IS WHAT `migrate` MAKES (step 4 shipped): SELECT on `spend` and `spend_month`, nothing on
+`spend_reservations`, nothing else on the money tables, EXECUTE on the four runtime functions. The world no longer
+strips any right by hand: the tests prove what migrate produces.
 
 The attacks H1, H2 (insert), H2 (inflate) of tickets/migrations-0009-0010-review-1.md, and the shared-owner login of
 L2, are run against that login below (`test_attack_*`, `test_L2_*`) and are REFUSED. They REPLACE the four
@@ -40,6 +38,7 @@ from psycopg import sql
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState
+from tests.money_caps_seed import seed_caps
 from tests.test_stop_state_roles import World
 
 D = Decimal
@@ -49,7 +48,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 MONEY_TABLES = ("spend", "spend_month", "spend_reservations")
-RESERVE, SETTLE, EXPIRE, PURGE, ADD = mig.MONEY_FUNCTIONS
+RESERVE, SETTLE, EXPIRE, PURGE, ADD = mig.MONEY_FUNCTIONS[:5]  # the five booking functions
 NAMES = {
     "reserve": "hadavin_reserve_spend",
     "settle": "hadavin_settle_spend",
@@ -58,7 +57,13 @@ NAMES = {
     "add": "hadavin_add_spend",
 }
 TYPES = {
-    "reserve": ("text", "text", "date", "numeric", "numeric", "numeric", "text"),
+    "reserve": (
+        "text",
+        "text",
+        "date",
+        "numeric",
+        "text",
+    ),  # step 6: the caps are rows of hadavin_caps
     "settle": ("text", "numeric", "text"),
     "expire": ("integer",),
     "purge": ("timestamptz",),
@@ -85,15 +90,6 @@ def build_world() -> World:
     return w
 
 
-def apply_final_grants(w: World) -> None:
-    rt = sql.Identifier(w.runtime)
-    with w.admin() as db:
-        for t in MONEY_TABLES:
-            db.execute(sql.SQL("REVOKE ALL ON {} FROM {}").format(sql.Identifier(t), rt))
-        for t in ("spend", "spend_month"):
-            db.execute(sql.SQL("GRANT SELECT ON {} TO {}").format(sql.Identifier(t), rt))
-
-
 def teardown_world(w: World) -> None:
     for s in w.stores:
         s._db.close()
@@ -110,7 +106,6 @@ def world():
     w = build_world()
     try:
         w.migrate(release_role=w.release)
-        apply_final_grants(w)
         yield w
     finally:
         teardown_world(w)
@@ -121,7 +116,10 @@ def reset(w: World) -> None:
     with w.admin() as db:
         db.execute("TRUNCATE spend, spend_month, spend_reservations, runs CASCADE")
         db.execute("DELETE FROM hadavin_limits")
-        for name, value in mig.money_limits().items():
+        # this file reserves on fixed days and expires at age 0: the day window and the minimum age are opened here, as
+        # the owner (their own tests are in tests/test_money_h1_pg.py)
+        limits = {**mig.money_limits(), "max_day_skew": 100_000, "min_expiry_age": 0}
+        for name, value in limits.items():
             db.execute("INSERT INTO hadavin_limits VALUES (%s, %s)", (name, value))
 
 
@@ -146,10 +144,23 @@ def _call_sql(w: World, key: str) -> sql.Composed:
     )
 
 
+def _seed_caps_for(w: World, args):
+    rid, agent, day, usd, day_cap, month_cap, run_id = args
+    try:
+        seed_caps(w.scoped, w.schema, agent, day_cap, month_cap)
+    except Exception:  # noqa: BLE001, S110 - a cap the table refuses: the call below must be refused too
+        pass
+    return (rid, agent, day, usd, run_id)
+
+
 def call(w: World, key: str, *args, db=None):
     """Rows of one call (a void function gives one empty row). Raises the psycopg error."""
     own = db is None
     db = db or rt_conn(w)
+    if key == "reserve" and len(args) == 7:
+        # the old seven-argument form: the caps become the agent's row in hadavin_caps (written by the owner), the
+        # function takes five arguments (step 6)
+        args = _seed_caps_for(w, args)
     try:
         return db.execute(_call_sql(w, key), args).fetchall()
     finally:
@@ -202,7 +213,7 @@ def snapshot(w):
 def check_execute_map(w):
     """EXECUTE: the runtime holds the four runtime functions, not the purge; PUBLIC, portal, reset, release hold none
     of the five; a fresh login of no role gets 'permission denied'."""
-    for key, sig in zip(NAMES, mig.MONEY_FUNCTIONS, strict=True):
+    for key, sig in zip(NAMES, mig.MONEY_FUNCTIONS[:5], strict=True):
         runtime = key in RUNTIME_FUNCS
         want = {
             w.runtime: runtime,
@@ -224,7 +235,7 @@ def check_execute_map(w):
 
 def _ok_args(key):
     return {
-        "reserve": ("a1", "ag", DAY, D(1), BIG, BIG, None),
+        "reserve": ("a1", "ag", DAY, D(1), None),
         "settle": ("a1", D(1), "ag"),
         "expire": (0,),
         "purge": (datetime.now(UTC),),
@@ -417,7 +428,7 @@ def check_hostile_arguments(w):
                 (1, D(10**9)),
             ],
         ),
-        ("settle", ("r", D(1), "ag"), "p_agent", [(2, ""), (2, "a" * 201), (2, "a\nb")]),
+        ("settle", ("r", D(1), "ag"), "p_agent", [(2, None), (2, ""), (2, "a" * 201), (2, "a\nb")]),
         ("expire", (0,), "p_age_s", [(0, None), (0, -1), (0, 10**7 + 1), (0, 2**31 - 1)]),
         (
             "purge",
@@ -811,7 +822,7 @@ def test_month_cap_refuses_and_rolls_the_day_back(w):
 
 def test_duplicate_reservation_id_is_23505_and_books_nothing_twice(w):
     reserve(w, "dup", usd="1")
-    assert refused(w, "reserve", "dup", "ag", DAY, D(1), BIG, BIG, None)[0] == "23505"
+    assert refused(w, "reserve", "dup", "ag", DAY, D(2), BIG, BIG, None)[0] == "23505"
     assert refused(w, "reserve", "dup", "other", DAY, D(1), BIG, BIG, None)[0] == "23505"
     assert counters(w) == (1, 1) and w.count("spend_reservations") == 1
 
@@ -849,11 +860,15 @@ def test_settle_by_another_agent_and_by_an_unknown_id_is_the_same_hd002(w):
     assert w.run("SELECT status FROM spend_reservations") == [("open",)]
 
 
-def test_settle_with_a_null_agent_settles_any_agents_hold_the_documented_residual(w):
-    """HONEST RESIDUAL named in 0011's header: p_agent NULL means any agent. Do not 'fix' this silently."""
+def test_settle_with_a_null_agent_is_refused_and_settles_nothing(w):
+    """M2 (lead): p_agent is required; there is no agent-less settle that could close any agent's hold."""
     reserve(w, "o1", agent="victim", usd="5")
-    row = call(w, "settle", "o1", D(0), None)[0]
-    assert (row[1], row[9]) == ("victim", True) and counters(w, "victim") == (0, 0)
+    state, message = refused(w, "settle", "o1", D(0), None)
+    assert state == "22023" and "p_agent" in message
+    assert counters(w, "victim") == (5, 5) and w.run("SELECT status FROM spend_reservations") == [
+        ("open",)
+    ]
+    assert refused(w, "settle", "o1", D(0), "other")[0] == "HD002"  # another agent's id: not found
 
 
 def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
@@ -864,7 +879,7 @@ def test_the_runtime_can_lower_only_by_settling_a_named_open_hold_once(w):
     for _ in range(3):
         assert settle(w, "h", "0")[9] is False
     assert counters(w) == (90, 90)
-    assert refused(w, "settle", "unknown-guess", D(0), None)[0] == "HD002"
+    assert refused(w, "settle", "unknown-guess", D(0), "ag")[0] == "HD002"
 
 
 def test_missing_counter_row_is_hd003_and_the_claim_rolls_back(w):
@@ -1015,9 +1030,7 @@ def _script(seed, n):
                 )
             )
         elif kind == "settle":
-            ops.append(
-                ("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice((*AGENTS, None)))
-            )
+            ops.append(("settle", rnd.choice(IDS), D(rnd.choice(AMOUNTS)), rnd.choice(AGENTS)))
         elif kind == "add":
             ops.append(("add", rnd.choice(AGENTS), rnd.choice(DAYS), D(rnd.choice(AMOUNTS))))
         else:

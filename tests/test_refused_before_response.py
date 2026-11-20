@@ -406,7 +406,6 @@ def test_bedrock_client_errors_through_the_retry(bedrock):
 # Added by a different agent than the builders. Existing tests above are unchanged.
 
 import itertools
-from pathlib import Path
 
 from hadavin_sdk.llm import retry as retry_mod
 from hadavin_sdk.llm.common import NetworkLLM
@@ -498,7 +497,11 @@ def test_every_kind_but_openai_compat_keeps_the_default_list():
             if isinstance(v, type) and issubclass(v, NetworkLLM) and v is not NetworkLLM
         )
     for name, kind in kinds.items():
-        expected = frozenset(ROUTER_REFUSED) if name == "openai_compat" else REFUSED_STATUSES
+        narrow = name in (
+            "openai_compat",
+            "anthropic",
+        )  # anthropic: widened per instance for the direct API
+        expected = frozenset(ROUTER_REFUSED) if narrow else REFUSED_STATUSES
         assert kind.refused_statuses == expected, name
 
 
@@ -623,22 +626,6 @@ def test_exhausted_is_marked_iff_every_attempt_was_never_sent_or_429(combo):
     assert error.refused_before_response is all(c in "RT" for c in combo)
 
 
-def test_the_docstring_says_the_exhausted_mark_is_inert_until_the_gate_honours_it():
-    doc = retry_mod.__doc__
-    assert "INERT" in doc
-    assert "ProviderExhausted" in doc
-
-
-GATE = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "guard" / "model_gate.py"
-
-
-@pytest.mark.skipif(not GATE.exists(), reason="gate not in this tree")
-def test_the_gate_reads_the_mark_on_provider_exhausted():
-    text = GATE.read_text(encoding="utf-8")
-    assert "refused_before_response" in text
-    assert "ProviderExhausted" in text
-
-
 def test_a_provider_error_raised_by_the_adapters_own_call_passes_through_unmarked():
     """N5 (corrected after the test writer's finding): `except ProviderError: raise` in with_retry is kept; a
     ProviderError the adapter's own call raises passes through UNCHANGED and unmarked, whatever it carries
@@ -659,3 +646,65 @@ def test_a_provider_error_raised_by_the_adapters_own_call_passes_through_unmarke
     error, _, _ = _run([raised])
     assert error is raised
     assert error.refused_before_response is False
+
+
+class _AnthropicClient:
+    """Stands in for the SDK client: `messages.create` raises the scripted error."""
+
+    def __init__(self, code):
+        self.code = code
+        self.messages = self
+
+    def create(self, **_):
+        raise _Status(self.code)
+
+
+def _anthropic_error(code, **kw):
+    pytest.importorskip("anthropic")
+    from hadavin_sdk.llm.anthropic import AnthropicLLM
+
+    llm = AnthropicLLM(_AnthropicClient(code), {"r": ROUTE}, 1, sleep=lambda s: None, **kw)
+    with pytest.raises(ProviderError) as caught:
+        llm.chat([{"role": "user", "content": "q"}], system="s", route="r")
+    return caught.value
+
+
+@pytest.mark.parametrize("code", ALL_REFUSED)
+def test_anthropic_direct_api_marks_all_six_statuses(code):
+    assert _anthropic_error(code, direct_api=True).refused_before_response is True
+
+
+@pytest.mark.parametrize("code", ROUTER_REFUSED)
+def test_anthropic_behind_a_gateway_marks_only_401_403_404(code):
+    assert _anthropic_error(code).refused_before_response is True
+
+
+@pytest.mark.parametrize("code", ROUTER_NOT_REFUSED)
+def test_anthropic_behind_a_gateway_does_not_mark_400_413_422(code):
+    """Vertex and Foundry (and an unknown platform) may answer these after the model started."""
+    assert _anthropic_error(code).refused_before_response is False
+
+
+@pytest.mark.parametrize(
+    ("platform", "direct"),
+    [
+        ("vertex", False),
+        ("foundry", False),
+        ("api", True),
+        ("bedrock", False),
+        ("API", False),
+        ("apii", False),
+        ("", False),
+        (None, False),
+    ],
+)
+def test_make_wide_list_only_for_the_exact_api_platform(monkeypatch, platform, direct):
+    pytest.importorskip("anthropic")
+    from types import SimpleNamespace
+
+    from hadavin_sdk.llm import anthropic as mod
+
+    monkeypatch.setattr(mod, "client", lambda settings, key: object())
+    settings = SimpleNamespace(platform=platform, api_key_secret_name="k", max_attempts=1)  # noqa: S106
+    llm = mod.make(settings, SimpleNamespace(routes={}, resolve=lambda n: "x"))
+    assert (llm.refused_statuses == REFUSED_STATUSES) is direct

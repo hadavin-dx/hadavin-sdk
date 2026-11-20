@@ -20,7 +20,11 @@ from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
 from hadavin_sdk.models import new_id
-from tests.test_spend_reservations_pg import AGENT, DAY, reservation_world  # noqa: F401  (the "w" fixture)
+from tests.test_spend_reservations_pg import (  # noqa: F401  (the "w" fixture)
+    AGENT,
+    DAY,
+    reservation_world,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
@@ -108,7 +112,7 @@ def test_spend_and_reservation_statements_never_touch_a_same_named_table_elsewhe
 
         rid = new_id("res")
         rt.reserve_spend(rid, AGENT, DAY, D("2.00"), day_cap=D("100"), month_cap=D("100"))
-        rt.settle_spend(rid, D("1.50"))
+        rt.settle_spend(rid, D("1.50"), agent_id=AGENT)
         assert rt.add_spend(AGENT, DAY, D("1.00")) == (D("2.50"), D("2.50"))
         assert rt.spend_totals(AGENT, DAY) == (D("2.50"), D("2.50"))
         assert rt.spend_totals(DECOY_AGENT, DAY) == (D(0), D(0))
@@ -155,7 +159,7 @@ def test_the_money_function_calls_name_their_schema_so_a_temporary_function_neve
         db.execute(sql.SQL("SET search_path = pg_temp, {}").format(sql.Identifier(w.schema)))
     rid = new_id("res")
     rt.reserve_spend(rid, AGENT, DAY, D("2.00"), day_cap=D("100"), month_cap=D("100"))
-    row, applied = rt.settle_spend(rid, D("1.50"))
+    row, applied = rt.settle_spend(rid, D("1.50"), agent_id=AGENT)
     assert applied and row.settled_usd == D("1.50")
     assert rt.add_spend(AGENT, DAY, D("1.00")) == (D("2.50"), D("2.50"))
     rt.reserve_spend(new_id("res"), AGENT, DAY, D("1.00"), day_cap=D("100"), month_cap=D("100"))

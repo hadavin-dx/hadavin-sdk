@@ -196,17 +196,15 @@ runtime and not the reset login):
    `applied_usd` (what the day counter really fell by); applied lower than requested is drift to look into.
    The function runs as the migration owner with its search path pinned to `pg_catalog, <schema>, pg_temp` by
    `migrate` (so a temp table of the release login cannot stand in for a money table).
-   Money guard (migration 0010, E11 M4) is a TRIPWIRE, not a wall: a BEFORE UPDATE trigger on `spend`, `spend_month` and
-   `spend_reservations` refuses, for every login but the function's owner, an UPDATE that lowers a booked amount. It
-   stops a plain lowering UPDATE and a naive plant. It does NOT stop a runtime login that writes its own SQL: (1) it
-   settles a hold (legal) and then lowers the counter with plain UPDATEs in the same transaction (the allowed fall is
-   not consumed, so any `add_spend` charge of the day can be erased); (2) it forges a settled hold (INSERT of a row
-   already settled, or raising `reserved_usd` of a settled row) and lowers the counter by the difference; (3) it shares
-   a login with the migration owner (or is a member of the owner role): then there is no guard at all. All three were
-   reproduced in review. Do not rely on the guard against a hostile runtime login; the evidence is the audit chain and
-   the release outcome rows. The real fix is a planned redesign: the runtime gets no UPDATE/INSERT on the money tables,
-   and reserve/settle/expire become SECURITY DEFINER functions. Until then keep the runtime login separate from the
-   migration owner. A superuser owner is not stopped. `migrate` pins the trigger function's search path too.
+   Money guard (migration 0010, E11 M4): a BEFORE UPDATE trigger on `spend`, `spend_month` and `spend_reservations`
+   that refuses, for every login but the function's owner, an UPDATE that lowers a booked amount. Since the grants flip
+   (step 4, migration 0011 and `migrate`) it is a TRIPWIRE behind the wall, not the wall: the runtime login holds only
+   SELECT on `spend` and `spend_month` and nothing on `spend_reservations`; it books money only through the SECURITY
+   DEFINER functions. `migrate` refuses any role other than the table owner and superusers that can INSERT, UPDATE,
+   DELETE or TRUNCATE a money table (PUBLIC and inherited memberships included, when roles are named). Residuals: a
+   login that shares the migration owner (or is a member of the owner role) has no guard at all, so keep the runtime
+   login separate from the owner; a superuser owner is not stopped; the runtime can still settle an open hold it can
+   name. `migrate` pins the trigger function's search path too.
    Drift: when a counter is already below the booked holds, a legal settle that lowers it is refused (fail closed) until
    the counter is repaired; `applied_usd` of a release shows such drift.
    Emergency switch-off (the OWNER only; the guards then do nothing until switched back on): `ALTER TABLE spend
@@ -238,7 +236,12 @@ The runtime login has no right on that table and cannot run `hadavin_set_cap`; o
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
+Status: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
 The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
+This does NOT mean a run cannot exceed a cap today: the live path still calls `Limits.blocked()` before a model call and books the cost after it (it does not reserve), so concurrent runs can each pass the check and overshoot by up to (concurrent runs x one call's cost). This wall is true from step 4 of the money-definer change (migration 0011 plus the grant flip in `migrate`): the runtime
+login holds no INSERT, UPDATE or DELETE on `spend`, `spend_month` or `spend_reservations`, SELECT on the two
+counters only, and nothing on the reservations; every booking is a SECURITY DEFINER function it may EXECUTE. The
+purge login holds no table right either and may only EXECUTE the purge function.
 
 Deploy, in this order (there is no rolling upgrade):
 1. Stop the tick scheduler and every runtime-side process.

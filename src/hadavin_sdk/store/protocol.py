@@ -99,9 +99,12 @@ def check_store_id(value: object, what: str) -> str:
 
 
 def check_spend_day(day: object) -> date:
-    """A booking day is a plain date: a datetime or a string would be kept under another key than the row."""
+    """A booking day is a plain date: a datetime or a string would be kept under another key than the row. A day
+    before 1970-01-01 is refused as the database does (0011); 9999-12-31 is the last date there is."""
     if type(day) is not date:
         raise ValueError("a spend day must be a date")
+    if day < date(1970, 1, 1):
+        raise ValueError("a spend day must not be before 1970-01-01")
     return day
 
 
@@ -325,9 +328,9 @@ class Store(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
-        """With `agent_id`, a reservation of another agent is NotFound (the same as an unknown id). The stored row and `applied` (true only for the call that changed it). The first call closes an open
+        """`agent_id` is required (there is no agent-less settle): a reservation of another agent is NotFound (the same as an unknown id); a missing or empty agent is a ValueError (TypeError when omitted). The stored row and `applied` (true only for the call that changed it). The first call closes an open
         or an expired row: the counters of the row's own day and month move by actual minus reserved (after
         expiry only upward), `settled_usd` becomes what stays booked (the actual amount; for a row that was
         expired the larger of actual and reserved) and the real actual amount is added to the run's cost when
