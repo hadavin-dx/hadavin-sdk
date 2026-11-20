@@ -10,109 +10,37 @@ Reports are answered within 5 working days.
 
 Redaction is pattern based and treats the end of a value the way the redactor's own value pattern does. Two consequences are known and stated:
 
-- An unquoted secret value that itself contains a plain (not encoded) space or `;` (for example `password=my secret phrase`) is masked only up to that character in pass one: its tail is shown, because by the redactor's definition the value ended there. A quoted value with spaces (`password="my secret phrase"`) is masked whole. A `,` or `&` inside a `key=value` value does not end it either, but then the plain copy of that value elsewhere in the text can stay readable (see the entry on punctuation inside a stored secret below). Put a secret that holds a space in quotes handled by the pattern, or do not hand it to a tool.
+- An unquoted secret value that itself contains a plain (not encoded) space or `;` is masked only up to that character in pass one. Example: `password=my secret phrase`. Its tail is shown, because by the redactor's definition the value ended there.
+  - A quoted value with spaces (`password="my secret phrase"`) is masked whole.
+  - A `,` or `&` inside a `key=value` value does not end it either. Then the plain copy of that value elsewhere in the text can stay readable (see the entry on punctuation inside a stored secret below).
+  - Put a secret that holds a space in quotes handled by the pattern, or do not hand it to a tool.
 - A form-encoded `;` or `&` inside a value is ambiguous: `password%3Dab%3Bzq9` can be one secret or a key and a value followed by more text. The redactor decodes it, masks what its value pattern reaches, and keeps what pass one masked whole when the decoded view would mask less; it cannot know which reading the sender meant.
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
 
 ## What the tests show and what is still open
 
-As of 2026-11-20 15:44 UTC (commit 2552bcc95).
-
 > **These items describe what tests showed on the gate, the secret finder and text folding, each run on its own. No test of the store ran on this branch. None of this describes an agent in use going through the gate. The shared branch is not the product's main line.**
 
-### Words used here
-
-Evidence words. Every claim carries one of these:
-
-- TESTED: a named test ran and passed in a recorded batch of tests. A recorded batch is one whose result line is written in a file of the project. Each TESTED claim names the test or the batch.
-- MEASURED: a recorded run measured the number given, or a direct call printed the output given.
-- UNVERIFIED: the only basis is someone reading the code or the text. Nothing was run to show it.
-- NOT REPRODUCED: a fault was reported. A later run of the reported case, as it was understood, did not show it. The exact case of the report is not on file.
-- NOT RUN: the check was not run at all, or no recorded result exists. Nothing is claimed about its result.
-- NONE: no test, run or reading is named. The gap is written down from a plan, an order or the published SECURITY.md only.
-
-Status words (one per known gap):
-
-- FIXED: changed, and a test fails without the change. The change is on the shared branch. A recorded batch that holds that test passed on the builder's copy or on the merged code. It is not on the main line.
-- PINNED: not fixed, on purpose. A named test fails if the behaviour changes. This includes a "strict expected failure": a test that records the gap and fails once the gap closes. The team whose change closes the gap removes that mark.
-- STATED: accepted and written down, with no test. Each STATED line names its source. Nobody is asked to act.
-- WAITING: another team must act, and a written request or a written order exists.
-- OPEN: nobody has fixed or decided it yet. The line names who must act.
-
-People and code:
-
-- The owner: the person who owns Hadavin and has the final say. The owner decides the open questions named below.
-- The connector and store team: the team that owns the model connectors, the store, the agent loop and the approval-message code. It must install the gate.
-- The text and masking team: the team that built the gate, the secret finder changes and text folding.
-- Builder: a worker of the text and masking team that writes code and runs the tests. Reviewer: an independent checker who only reads.
-- Operator: the person who installs and runs the kit for a client. The kit: this software package. Stages: demo (made-up data), pilot (a first, limited use with a real client) and prod (normal live use).
-- The shared branch: the text and masking team's pushed line of changes. The main line: what clients get.
-- Test: a small program that checks one behaviour. Batch: one recorded run of many tests.
-- Deliberate code break: a planted fault in the code, used to prove a test can fail. A break that no test catches "survives". A break that cannot change any output is "equivalent".
-- Kn: the number of a known gap in this list. A known gap is a weakness we know about, or a gap fixed in this work.
-
-Model and run words:
-
-- Model: the outside AI service that reads text and answers. A model call is one request to it. The system prompt holds the standing instructions sent with each model call.
-- Guardrail call: a separate request to the cloud vendor's safety service. It is not a model call.
-- Route: which AI service and which model a call goes to. Model connector: the code that talks to one AI service and reports the cost of each call.
-- Run: one job of one agent, from start to finish. The agent loop is the code that drives a run step by step.
-- Tool: an action an agent may use, such as a search. A tool result is the text a tool returns. Each tool call gets a call number. The tool list holds the tools' names and descriptions, sent with a model call.
-- Calling code: the program code that hands a call to the gate. Test and replay command lines: two staff programs that run saved test cases or re-play a stored case.
-- Judge: a model call that rates a text. The planted-instruction check and the approval code use it. Prompt registry: the fixed list of system prompts that ship with the kit.
-- Planted text: text an attacker put into a document or tool result so that the agent reads it.
-- Planted-instruction check: the check that looks for planted orders such as "ignore previous instructions". Guard failure: its report that it could not finish.
-- Grounding check: the check that a name an agent proposes to act on appears in a tool result it cites.
-- Approval message: the message that asks a person to approve an action an agent proposes. Slack: the chat service where approval messages are posted. Admin page: the staff web page that shows stored approval summaries.
-
-Masking words:
-
-- Sensitive value: a secret (password, key, token) or an identifier (e-mail address, host name, account number). Known value: a sensitive value already in the run map.
-- Mask: put a placeholder where a sensitive value was. Placeholder: a fixed text, such as `<SECRET_1>`, that the model sees in place of the value.
-- Run map: one table per run, kept in memory, that records which real value each placeholder stands for. Restore: put the real value back for a tool that needs it.
-- The secret finder: the code that searches new text for sensitive values by their shape and masks them. Only it adds to the run map.
-- Search round: one pass of the secret finder's patterns, then one masking of every copy of the known values. One call of the secret finder runs up to 5 search rounds.
-- Kind: the type the secret finder gives each value it finds, such as password, key, token, e-mail or host name.
-- Withheld: the secret finder hides a whole line it cannot mask in place, and shows a fixed note. Glued: written directly against another character, with no space between.
-- Fail closed: when in doubt, refuse the text or the call rather than let it through.
-- Text folding: turning look-alike letters, invisible characters and accents into one plain spelling before searching. Unicode: the world standard list of characters; each Python version carries one edition of it.
-- base64: a common way of writing any data as letters and digits. The base64 view: the secret finder's step that decodes base64 text and searches the decoded text.
-- The gate: one wrapper meant to sit in front of every model call. It masks known values, reserves money, makes the call, settles and writes an audit row. It searches for no new values.
-- Installed: placed at every point in the code that calls a model. The gate is not installed yet.
-- Held back: a known value at a placeholder's edge (it starts with `>` or ends with `<`), or a piece of a placeholder. The gate masks it last.
-- Safety net: the gate's last check on each stretch of text before it is sent. It refuses the call when it finds a known secret that is still readable.
-- Framing marker: the fixed line the agent loop puts around each tool result. It holds fixed words, the call number and the tool's name. A forged marker is a copy of that line written by planted text.
-
-Money and record words:
-
-- All amounts are in US dollars (USD).
-- The store: the database that records spending, reservations, the stop switch and the audit record. The secrets vault is the separate place where secrets are kept.
-- Cap: the most money one agent may spend in a day and in a month. Worst case: the most a model call could cost.
-- Reserve: before a call, count its worst case against the cap. Settle: after the call, book the real cost instead of the worst case. Booked: the amount counted against the cap at any moment.
-- Empty cost field: a reply whose cost was never filled in; it reads as 0.00 USD. Unreadable cost: a cost that is absent, negative or not a number.
-- Price table: the list of prices per AI service used to work out the worst case.
-- Stop switch: a flag in the store. While it is on, the store is meant to refuse every new reservation. A stop record says who turned it on.
-- Database login: a named account the software uses to reach the store. The grant map on this branch names a runtime login.
-- Audit row: one line in the permanent record of what happened. It holds short codes, not message text. Refusal word: the exact short word the gate or store prints when it refuses.
+As of 2026-11-20 15:44 UTC (commit 2552bcc95). The words TESTED, MEASURED and the others are defined in the appendix, [Words used here](#words-used-here).
 
 ### 2.0 State of the work
 
 - WAITING: the gate is not installed. No point in the code that calls a model goes through it yet. The connector and store team must install it.
 - NONE (the project's written order of 2026-11-20 06:30 UTC): the connector and store team will not install the gate before the model connectors can say "refused before any answer".
 - TESTED: a batch of the whole test suite, without the slow-timing and live tests, gave 15,955 passed, 561 skipped, 74 expected failures and 10 failures. It ran on the merged code from 14:06 to 14:17 UTC on 2026-11-20.
-- Of the 10 failures, 6 were a fault of a secret finder change; it was fixed, and its 4 test files then passed (297 passed). Two were approval-message rows, re-recorded twice since, from the measured output. One is a project file that names a vendor. One failed on the older code too.
-- TESTED (a line on the project's status board): a later batch of the same kind gave 16,071 passed and 2 failed. The board names the vendor-string file and a recording that was re-keyed since. UNVERIFIED: the commit of that batch (the board names 2552bcc95 only for the next batch).
+- TESTED (the notes of that batch): of the 10 failures, 6 were a fault of a secret finder change; it was fixed, and its 4 test files then passed (297 passed). Two were approval-message rows, re-recorded twice since, from the measured output. One is a project file that names a vendor. One failed on the older code too.
+- TESTED (a line on the project's status board): a later batch of the same kind gave 16,071 passed and 2 failed. The 2 failures were the vendor-string test and a recording that was re-keyed since. UNVERIFIED: the commit of that batch (the board names 2552bcc95 only for the next batch).
 - TESTED (the same board line): the slow-timing tests on a quiet machine at commit 2552bcc95 gave 96 passed, 1 skipped and 0 failed in 427 seconds.
-- One repository-rule test still fails: it checks every file of the project for a vendor's brand string, and some working notes outside the code hold one. It is not a security finding (MEASURED here: it is the only test that fails in a run of the documentation and brand tests on this head).
-- TESTED: since the first batch the gate's safety net, the secret finder's punctuation, overlap and host-name rules, and four of the gate's deliberate code breaks changed. The builders' own batches for each are named in 4.2.
+- The vendor-string test is a repository rule, not a security finding. It checks every file of the project for a vendor's brand string, and one working note outside the code holds one. MEASURED here: in a run of the documentation and brand tests on this head, it is the only one of 72 that fails.
+- TESTED: since the first batch the gate's safety net, the secret finder's punctuation, overlap and host-name rules, and four of the gate's deliberate code breaks changed. The builders' own batches for each are listed in 2.10.
 - NOT RUN: a batch of the whole test suite whose commit is named and is the code this file describes.
 - UNVERIFIED (read in the test file): five install tests are marked as strict expected failures until the gate is installed. Once it is installed, they pass, and that pass fails the batch. Then the connector and store team removes the five marks.
-- An independent review of the gate as changed in its fourth fix round exists only as a summary of another team's review. FIXED on the gate means the builder's tests pass, unless a review is named.
+- UNVERIFIED: an independent review of the gate as changed in its fourth fix round exists only as a summary of another team's review. FIXED on the gate means the builder's tests pass, unless a review is named.
 
 ### 2.1 Masking before a model call (the gate)
 
-Shown by tests (TESTED here means: test_model_gate.py and test_runmap_enforce_map.py passed in the batches named in 2.0; the tests added since passed in their builders' batches, named in 4.2):
+Shown by tests (TESTED here means: test_model_gate.py and test_runmap_enforce_map.py passed in the batches named in 2.0; the tests added since passed in their builders' batches, listed in 2.10):
 
 - TESTED: before a call, the gate masks each known value with its placeholder. This covers message text and documents only. K8 lists what it skips.
 - TESTED: the gate searches for no new values. The secret finder does that (K1).
@@ -170,7 +98,7 @@ Known gaps and fixed findings:
   - Status: FIXED. Evidence: TESTED. Who acts: nobody.
 - **K12. Fixed:** a secret at a held-back value's edge could leave its tail beside a placeholder.
   - Example: known `S3cr3t` and `>abcdef`. A reviewer read that `S3cr3t>abcdef` becomes `<SECRET_1>abcdef`. A run gave `<SECRET_1><SECRET_2>`, with no leak.
-  - TESTED: the safety net now refuses a call whose text holds `<SECRET_1>abcdef`, a piece of 4 or more characters of a known secret beside a placeholder. That test failed before the change.
+  - TESTED (the builder's batch is not on file; see 2.10): the safety net now refuses a call whose text holds `<SECRET_1>abcdef`. That is a piece of 4 or more characters of a known secret beside a placeholder. That test failed before the change.
   - Status: FIXED. Evidence: TESTED. Who acts: nobody.
 - **K13. Not fully limited:** the time the gate spends on one model call. One budget per call covers the characters, the steps and two time limits of 6.0 seconds each. The first is processor time, read inside the masking step. The second is wall-clock time, read only between values and after each sweep.
   - TESTED: a deadline that passes inside the masking step refuses the call with the code `mask_budget_exceeded`.
@@ -236,17 +164,24 @@ Known gaps and fixed findings:
   - A copy in several stacked escape layers that crosses a window edge of a text over 65,536 characters.
   - Example: with known `abcdefghijkl` and two placeholders, a text that keeps `defghi` between them is sent.
   - The rest of a held-back identifier passes too, because the safety net checks secrets only (K5).
-  - Not a limit any more: a known secret made only of punctuation (`!!!!!!!!`). A piece of 4 or more of its characters that starts or ends it beside a placeholder is now read and refuses the call (MEASURED here: `!!!!<HOST_1>` and `<HOST_1>!!!!` are refused). Separators that start a private key's header line stay exempt.
-  - Not read as a piece, in any letter case: the public words that start an authorization value. They are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`, `AWS4-HMAC-SHA256`, `Bot` and `Key`. The same word plus one more character of the secret is read.
-  - Status: STATED (the gate's own code notes). Evidence: TESTED (the punctuation and word-list lines); UNVERIFIED (the rest, read in the code; one limit is pinned in K79). Who acts: nobody.
+  - Status: STATED (the gate's own code notes). Evidence: UNVERIFIED (read in the code; one limit is pinned in K79). Who acts: nobody.
+- **K80a. Fixed:** a known secret made only of punctuation (`!!!!!!!!`) is now read as a piece. A piece of 4 or more of its characters that starts or ends it beside a placeholder refuses the call.
+  - Example (MEASURED here): `!!!!<HOST_1>` and `<HOST_1>!!!!` are refused.
+  - Separators that start a private key's header line stay exempt.
+  - Status: FIXED. Evidence: TESTED (the builder's batch is not on file; see 2.10); MEASURED. Who acts: nobody.
+- **K80b. Not read as a piece, in any letter case:** the public words that start an authorization value. They are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`, `AWS4-HMAC-SHA256`, `Bot` and `Key`.
+  - The same word plus one more character of the secret is read.
+  - Status: PINNED. Evidence: TESTED (the builder's batch is not on file; see 2.10). Who acts: nobody.
 - **K85. Refused more than needed:** the safety net can refuse ordinary text beside a placeholder. One planted value can make every later call of a run refuse.
   - Example: a known secret `the quick brown fox` makes the text `the <HOST_1>` look like a leak (MEASURED here: the net answers "leak"). The gate reports that as the code `held_value_left`, the same code as a real leak. The message stays in the run's history, so each later call refuses.
-  - TESTED: the refusal is pinned as it is. A strict expected failure records the wanted behaviour (ordinary words beside a placeholder sent). The letter-only minimum and a refusal code of its own are not built.
-  - TESTED: a bare web address start (`https://`) beside a placeholder is not read as a piece. So are the public authorization words, in any letter case (K80).
-  - TESTED: one key of the map reads at most 4,096 hits of its first characters (both sides together). A dense hostile text is refused with `mask_budget_exceeded` after about 4,096 lookups, in 0.02 s. The shape: a value `aaaa` followed by 16,380 `c`, beside eight runs of 16,000 `a` and a placeholder. Before, it was accepted after about 16,000 lookups per key and 0.54 s (MEASURED by the builder). The refusal stays while the text is in the run's history. On 1,978 ordinary inputs the cap was never reached (builder's measurement).
-  - TESTED and MEASURED by the builder: the lookups no longer cut a slice before the first-characters test. A 65,536-character value beside 16 placeholders took 1.74 s before and 0.13 s after.
-  - TESTED and MEASURED by the builder: long pieces already looked up are kept as a 16-byte digest. The peak memory of the builder's worst shape was 367 MB before and 7.1 MB after.
-  - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody. The letter-only minimum and a refusal code of its own are decisions the lead has not made (OPEN); the cap of 4,096 is the builder's number.
+  - TESTED (the builder's batch is not on file; see 2.10): the refusal is pinned as it is. A strict expected failure records the wanted behaviour (ordinary words beside a placeholder sent).
+  - TESTED (same): a bare web address start (`https://`) beside a placeholder is not read as a piece. So are the public authorization words, in any letter case (K80b).
+  - TESTED (same): one key of the map reads at most 4,096 hits of its first characters (both sides together). A dense hostile text is refused with `mask_budget_exceeded` after about 4,096 lookups, in 0.02 s. The shape: a value `aaaa` followed by 16,380 `c`, beside eight runs of 16,000 `a` and a placeholder. Before, it was accepted after about 16,000 lookups per key and 0.54 s (MEASURED by the builder). The refusal stays while the text is in the run's history. On 1,978 ordinary inputs the cap was never reached (builder's measurement).
+  - TESTED (same) and MEASURED by the builder: the lookups no longer cut a slice before the first-characters test. A 65,536-character value beside 16 placeholders took 1.74 s before and 0.13 s after.
+  - TESTED (same) and MEASURED by the builder: long pieces already looked up are kept as a 16-byte digest. The peak memory of the builder's worst shape was 367 MB before and 7.1 MB after.
+  - Status: PINNED (the refusal as it is). Evidence: TESTED; MEASURED. Who acts: nobody.
+- **K85a. Decisions not made on K85:** whether to add a letter-only minimum for a piece, whether to give this refusal a code of its own, and whether the per-key cap of 4,096 stays. None is built. The cap is the builder's number.
+  - Status: OPEN. Evidence: NONE (no decision is written). Who acts: the owner decides.
 
 ### 2.2 Spending cap
 
@@ -274,7 +209,7 @@ Known gaps:
   - Example: attempt 1 times out but was billed 0.40 USD; attempt 2 costs 0.30 USD; only 0.30 USD is booked.
   - Status: WAITING. Evidence: UNVERIFIED (read from the code). Who acts: the connector and store team (written order).
 - **K24. The gate passes a higher real cost to settle:** a call that costs more than its worst case is passed to settle at the real cost, on purpose. How the store books it is the store's code, which is not on this branch.
-  - Example: the gate side is TESTED. The store side is not shown on this branch.
+  - Detail: the gate side is TESTED. The store side is not shown on this branch.
   - Status: PINNED (the gate's side). Evidence: TESTED. Who acts: nobody (as built). How often this happens depends on the worst-case formula, which does not exist yet (K25).
 - **K25. Not written:** the worst-case formula for the gate. The gate takes the function from the installer. It must cover the system prompt, the messages, the tool schemas and the documents, and the attempts. No function in this tree does that.
   - Example: the one worst-case function in the tree prices only the system prompt and the messages, and only the replay command line uses it.
@@ -332,7 +267,7 @@ Known gaps:
 
 ### 2.5 The secret finder (what enters the run map)
 
-Shown by tests (TESTED here means: in the batches named in 2.0; the tests added since passed in their builders' batches, named in 4.2):
+Shown by tests (TESTED here means: in the batches named in 2.0; the tests added since passed in their builders' batches, listed in 2.10):
 
 - TESTED: it finds the kinds it knows: addresses, keys, tokens, e-mail, passwords in web addresses and command lines, and supplier payment details (a bank account beside its bank code).
 - TESTED: it decodes base64 text and masks the whole base64 text when the decoded text holds a value it knows (K37).
@@ -347,8 +282,8 @@ Known gaps and fixed findings:
   - Status: STATED (the published README, section "Limits and trust", since 2026-11-04). Evidence: NONE. Who acts: nobody.
 - **K35. Not masked:** a bare number with no label.
   - Example: `ref 55556666 paid` stays as written (MEASURED here). On the main line, 24 of 43 such test lines were not masked (MEASURED).
-  - Status: STATED (an evidence file and a ticket of the text and masking team, 2026-11-20, call it accepted). Evidence: MEASURED. Who acts: nobody.
-  - The written order those two files cite as the acceptance was not found. So that acceptance is UNVERIFIED.
+  - An evidence file and a ticket of the text and masking team (2026-11-20) call this accepted. The written order they cite as the acceptance was not found. So the acceptance is UNVERIFIED.
+  - Status: OPEN. Evidence: MEASURED (the gap); UNVERIFIED (the acceptance). Who acts: the owner confirms the acceptance, or the text and masking team finds the order.
 - **K36. Fixed:** host names with no "host" word in front. A name under a private suffix is now masked whole. So is a label after the word `host` or `hostname` that ends in two digits or in a hyphen and a digit. The private suffixes are `.corp`, `.lan`, `.intranet`, `.intra`, `.localdomain`, `.home.arpa`, and `.internal` or `.local` when no label or call follows.
   - Example: `db01.corp.example` becomes `<HOSTNAME_1>` (before: `<HOSTNAME_1>.example`); `host db01 is down` becomes `host <HOSTNAME_1> is down`; `hostname=db01 state=down` becomes `hostname=<HOSTNAME_1> state=down` (MEASURED here).
   - On the main line, 28 of 44 test lines left a label of the name readable (MEASURED). On this branch 7 of the same 44 do (MEASURED here: the 44 lines through `redact_text`); 19 lines are pinned as closed.
@@ -364,14 +299,14 @@ Known gaps and fixed findings:
     - a name glued after a non-Latin letter is masked from its first Latin letter, digit, `_` or `-`; up to two characters before it can go into the placeholder.
   - A list of CPU and platform names after `host` (`host x86_64`, `host arm64 runner`) is kept.
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody. Whether to send clients a note on host names is OPEN (the owner decides).
-- **K37. Fixed:** base64 text under 40 characters was not masked. Now the secret finder decodes base64 text of 12 or more characters. It masks the whole text as `<ENCODED_n>` when the decoded text holds a value it knows.
+- **K37. Fixed:** base64 text under 40 characters was not masked. Now the secret finder decodes base64 text of 12 or more characters. It masks the whole text as `<ENCODED_n>` when the decoded text holds a value it knows. It decodes to a depth of 3 levels (`defaults.B64_MAX_DEPTH`).
   - Example: `secret is cGFzc3dvcmQ9aHVudGVyMnp6` (base64 of `password=hunter2zz`) becomes `secret is <ENCODED_1>` (MEASURED here).
   - On the main line, 41 of 41 such test lines leaked (MEASURED). The limits that stay are in K82.
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
 - **K38. Fixed:** a letter or `_x` glued behind an IPv4 address, a UUID, a phone number written with `+` or an IBAN beside `_` kept it unmasked. Now each is masked, and the glued text stays outside the placeholder.
   - Example: `10.20.30.40_x` now becomes `<IPV4_1>_x` (MEASURED here). An IBAN with `_x` glued behind it becomes `<IBAN_1>_x`. Shapes that are still not masked are in K70 and K71.
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
-- **K39. Not proven:** that the repeated search finds every value. Each call repeats the patterns and the masking until a round changes no text. A call that still changes a text in the fourth repeat round (round 5 of the call) is refused.
+- **K39. Not proven:** that the repeated search finds every value. Each call repeats the patterns and the masking until a round changes no text. A call has 5 rounds in total: the first pass and 4 repeat rounds. A text still changing in round 5 is refused.
   - Example: planted text glues a bank code to a secret, then puts the account after that code elsewhere. This needed a third round and is masked.
   - Status: OPEN. Evidence: TESTED (the chain; the loop to a fixed point). Who acts: the text and masking team.
 - **K40. Fixed:** the last part, up to 7 characters, of a longer token stayed readable in its other copies. This happened when the token was found only after a shorter known secret inside it.
@@ -416,9 +351,9 @@ Known gaps and fixed findings:
   - Example: `x4155550132` and `acct_iban_DE89370400440532013000` go out as written (MEASURED here).
   - Masked more than before (as built): a number of 10 to 16 digits before a full stop and a space is now masked as a phone number (`ref 1234567890. Next`). Later copies of it glued to a dot are then masked too (`1234567890.tar`).
   - A card number written as one run beside `_` (`card_4242424242424242`) is masked as a phone number and kept in the run's map as one.
-  - A phone number with a country code and spaced groups before a full stop and a letter or digit is masked only in part: `call +44 20 7946 0958.Thanks` becomes `call <PHONE_1> 0958.Thanks`, and `call 0044 20 5550 1234.5` becomes `call <PHONE_1> 1234.5` (MEASURED here). A strict expected failure pins each (the earlier code did the same).
+  - A phone number with a country code and spaced groups before a full stop and a letter or digit is masked only in part. `call +44 20 7946 0958.Thanks` becomes `call <PHONE_1> 0958.Thanks`, and `call 0044 20 5550 1234.5` becomes `call <PHONE_1> 1234.5` (MEASURED here). A strict expected failure pins each (the earlier code did the same).
   - Masked more than before (as built): `tok 4155550132.-Ab9 x` becomes `tok <PHONE_1>.-Ab9 x` (MEASURED here); the earlier code left it. A test pins this output and a strict expected failure records the wanted one.
-  - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody. The defaults are as built; the lead has not decided them in writing.
+  - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody. The defaults are as built; the owner has not decided them in writing (OPEN).
 - **K71. Readable remainder of a long token:** a UUID or a number of 10 or 11 digits is cut out of a long token. It must be set off by `_` or a letter. The rest of the token stays readable when it is under 40 characters. Before the change, the whole token was masked as one value.
   - Example (MEASURED here): `tok_<uuid>_` followed by 32 characters becomes `tok_<UUID_1>_` and the same 32 characters, readable. A remainder of 40 characters or more is masked too.
   - A letter does the same: `tok_<uuid>x` followed by the same 32 characters becomes `tok_<UUID_1>x` and the 32 characters (MEASURED here).
@@ -440,12 +375,12 @@ Known gaps and fixed findings:
   - Example (MEASURED by the builder): a text that names one known value of 4,900 characters 1,800 times is masked; 1,900 times is refused.
   - All clocks of these limits read the processor time of the thread (`time.thread_time()`). The "10 seconds" in an older note of the overlap work is a wall-clock figure of one measuring run on a loaded machine, not a limit.
   - Status: STATED (written in the code's own notes). Evidence: MEASURED. Who acts: nobody.
-- **K74. Fixed:** the memory the secret finder held for very large plain values had no limit. Eight values of 260,000 characters in one call peaked at 956 MB.
+- **K74. Fixed:** the memory the secret finder held for very large plain values had no limit. Eight values of 260,000 characters in one call peaked at about 960 MB and took about 9 s. MEASURED: 960 MB and 9.17 s in one run; another recorded run printed 956 MB.
   - Now one build of the finder is refused past 786,432 entries of its search tree (about 360 MB, worked out from measured rates). The refusal word is `FinderMemoryTooMuch`.
   - A run whose map holds more than 524,288 characters of values stops and asks for a person.
   - TESTED: the eight-value shape above is now refused.
   - Not bounded: the pattern passes before the build, finders kept from earlier builds, and the extra spellings of values that are not plain ASCII.
-  - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody. The two limits are the plan's defaults; the lead has not approved them.
+  - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody. The two limits are the plan's defaults; the owner has not approved them (OPEN).
 - **K75. Extra map entry, accepted:** a tool's error text read twice can make one extra map entry for each distinct token of another kind written after a key. The model sees a secret placeholder instead of the kind. Nothing real is stored in that entry.
   - Example: `password=‹EMAIL_1› host` becomes `password=<SECRET_1> host`, and `<SECRET_1>` stands for `‹EMAIL_1›` (MEASURED here).
   - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody. The alternative (exempt the escaped tokens of other kinds on the tool-error path only) is not built.
@@ -457,7 +392,7 @@ Known gaps and fixed findings:
 - **K77. Fixed:** a password stored with punctuation, a wrapper or an escaped edge at its ends left its plain copy readable.
   - Example: `password=hunter22, hunter22` used to leave the second `hunter22` readable. It now becomes `password=<SECRET_1> <SECRET_2>` (MEASURED here).
   - The same holds for a leading bracket (`password=(hunter22), hunter22`) and a wrapper such as `**hunter22**`.
-  - It also holds for an escaped or encoded edge: `%0A`, `%XX`, a backslash-u or backslash-x code, `&quot;`, `&#10;`, a tag such as `<br/>` or `</b>`, at the start or the end (`hunter22%0A then hunter22`, `<br/>hunter22 then hunter22`). At the end only, a cut-short form from a closed list (`<br`, `&quot`) is read too.
+  - It also holds for an escaped or encoded edge, at the start or the end: `%0A`, `%XX`, a backslash-u or backslash-x code, `&quot;`, `&#10;`, a tag such as `<br/>` or `</b>` (`hunter22%0A then hunter22`, `<br/>hunter22 then hunter22`). At the end only, a cut-short form from a closed list (`<br`, `&quot`) is read too.
   - An all-capital value of the shape `ADMIN_1` or `DB_PASS_2` now gets its plain copy too (`password=ADMIN_1, ADMIN_1` becomes `password=<SECRET_1> <SECRET_2>`, MEASURED here). A value that holds one stray `‹` or `›` keeps its plain copy as well (`password=hunter22!› then hunter22`, MEASURED here).
   - One secret then has two placeholders. Both restore to their own text.
   - No plain copy is made when the value is a "no value" word with punctuation (`none!`).
@@ -488,7 +423,7 @@ Known gaps and fixed findings:
     - a mixed-case cut-short entity (`&QUOT`);
     - a tag longer than 16 characters at an edge.
   - Closed since the last version (see K77): `%0A`, `&quot;` and `<br/>` at an edge, an all-capital value such as `ADMIN_1`, and a value with one stray `‹` or `›`. Still open by design of the fix: a password wrapped in a look-alike token (`‹SECRET_x›`) gets no second entry.
-  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text and masking team; no fix for interior punctuation is built, and whether to accept it as a stated limit is the lead's to decide (OPEN).
+  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text and masking team; no fix for interior punctuation is built, and whether to accept it as a stated limit is the owner's to decide (OPEN).
 
 ### 2.6 Text folding (look-alike and hidden characters)
 
@@ -576,7 +511,7 @@ Read, not tested:
 Known gaps and fixed findings:
 
 - **K59. Not masked:** the "requested by" line and other id fields.
-  - Example (UNVERIFIED: read from the code, not tried on Slack): a requester id `slack:U1|<!channel>` could make Slack notify everyone in the channel.
+  - Example (UNVERIFIED: read from the code, not tried on a real chat tool): a requester id such as `chat:U1|<!channel>` could make the chat tool notify everyone in the channel.
   - Status: WAITING. Evidence: UNVERIFIED. Who acts: the connector and store team (written request).
 - **K60. Not proven:** that no clickable link remains. The old test used the same patterns as the code it tested. A new test uses its own patterns and also checks against a link-finding library.
   - Example (UNVERIFIED): a link whose end is not in the test's own, finite list of web-address endings could still slip past both.
@@ -608,3 +543,115 @@ MEASURED slowdown of approval-message masking on the joined code (median, on the
 - Any live call to an AI service. Any end-to-end stop of a live run. The gate installed at any call point.
 - The long-token change (not built).
 - The whole files of deliberate code breaks for text folding (268 breaks), the gate (140) and the finder (130) on this code. The files for the base64 and host-name change (58), the glued-text change (43) and the punctuation change (35) ran whole on their builders' branches before they merged.
+
+### 2.10 Builders' batches on file
+
+Each row is a batch a builder ran on the builder's own copy. The last column names the file that holds the result line. None of these is a batch of the whole suite.
+
+| Change | Tests in the batch | Result | Result line in |
+|---|---|---|---|
+| The gate honours "refused before any answer" on an exhausted call | gate tests, install-callers test, picked-up test | 267 passed, 1 skipped, 5 expected failures. The whole file of deliberate breaks was NOT RUN. | `handover/core-c/evidence/GATE-C-build-notes.md` |
+| Merge of the gate and secret finder changes | base64, run-map, gate, repeat-round and break-list tests | 495 passed, 1 skipped, 4 expected failures | `handover/core-c/evidence/MIX-build-notes.md` |
+| Punctuation at the end of a secret value | five test files named in the note | 2,760 passed, 41 expected failures. One earlier run had a timing test red under load. | `handover/core-c/evidence/G12-build-notes.md` |
+| Glued text, remaining cases | three test files | 2,544 passed, 46 expected failures | `handover/core-c/evidence/G8T-build-notes.md` |
+| Overlaps and repeat rounds | ten test files, timing tests included | 2,498 passed in 197.9 s | `handover/core-c/evidence/G9b-build-notes.md` |
+| Host-name patterns | host-name and approval-path test files | 53 passed, 1 expected failure | `handover/core-c/evidence/G4C-build-notes.md` |
+| Time budget of the planted-instruction read | text-folding test files; then the timing rows | 1,247 passed in 238 s; 19 timing rows passed in 52 s | `handover/core-c/evidence/G10-build-notes.md` |
+| Gate safety net, first round of fixes | a broad run at commit d462a4c80 | 8 failed, 10,608 passed. The note lists the 8. | `handover/core-c/evidence/G13b-build-notes.md` |
+| Gate safety net: piece lookups, per-key cap, separator-only values, authorization words | new tests named in the note | TESTED (batch not on file): the note names the tests and the measured figures but holds no result line | `handover/core-c/evidence/G13c-build-notes.md` |
+
+## Words used here
+
+Evidence words. Each finding, and each statement about a test or a measurement, carries one of these. Plain explanations do not:
+
+- TESTED: a named test ran and passed in a recorded batch of tests. A recorded batch is one whose result line is written in a file of the project. Each TESTED claim names the test or the batch.
+- MEASURED: a recorded run measured the number given, or a direct call printed the output given.
+- UNVERIFIED: the only basis is someone reading the code or the text. Nothing was run to show it.
+- NOT REPRODUCED: a fault was reported. A later run of the reported case, as it was understood, did not show it. The exact case of the report is not on file.
+- NOT RUN: the check was not run at all, or no recorded result exists. Nothing is claimed about its result.
+- NONE: no test, run or reading is named. The gap is written down from a plan, an order or the published SECURITY.md only.
+
+Status words (one per known gap):
+
+- FIXED: changed, and a test fails without the change. The change is on the shared branch. A recorded batch that holds that test passed on the builder's copy or on the merged code. It is not on the main line.
+- PINNED: not fixed, on purpose. A named test fails if the behaviour changes. This includes a "strict expected failure": a test that records the gap and fails once the gap closes. The team whose change closes the gap removes that mark.
+- STATED: accepted and written down, with no test. Each STATED line names its source. Nobody is asked to act.
+- WAITING: another team must act, and a written request or a written order exists.
+- OPEN: nobody has fixed or decided it yet. The line names who must act.
+
+People and code:
+
+- The owner: the person who owns Hadavin and has the final say. The owner decides the open questions named below.
+- The connector and store team: the team that owns the model connectors, the store, the agent loop and the approval-message code. It must install the gate.
+- The text and masking team: the team that built the gate, the secret finder changes and text folding.
+- Builder: a worker of the text and masking team that writes code and runs the tests.
+- Reviewer: an independent checker who only reads.
+- Operator: the person who installs and runs the kit for a client.
+- The kit: this software package.
+- Stages: demo (made-up data), pilot (a first, limited use with a real client) and prod (normal live use).
+- The shared branch: the text and masking team's pushed line of changes.
+- The main line: what clients get.
+- Test: a small program that checks one behaviour.
+- Batch: one recorded run of many tests.
+- Deliberate code break: a planted fault in the code, used to prove a test can fail. A break that no test catches "survives". A break that cannot change any output is "equivalent".
+- Kn: the number of a known gap in this list. A known gap is a weakness we know about, or a gap fixed in this work.
+
+Model and run words:
+
+- Model: the outside AI service that reads text and answers. A model call is one request to it. The system prompt holds the standing instructions sent with each model call.
+- Guardrail call: a separate request to the cloud vendor's safety service. It is not a model call.
+- Route: which AI service and which model a call goes to.
+- Model connector: the code that talks to one AI service and reports the cost of each call.
+- Run: one job of one agent, from start to finish. The agent loop is the code that drives a run step by step.
+- Tool: an action an agent may use, such as a search. A tool result is the text a tool returns. Each tool call gets a call number. The tool list holds the tools' names and descriptions, sent with a model call.
+- Calling code: the program code that hands a call to the gate.
+- Test and replay command lines: two staff programs that run saved test cases or re-play a stored case.
+- Judge: a model call that rates a text. The planted-instruction check and the approval code use it.
+- Prompt registry: the fixed list of system prompts that ship with the kit.
+- Planted text: text an attacker put into a document or tool result so that the agent reads it.
+- Planted-instruction check: the check that looks for planted orders such as "ignore previous instructions".
+- Guard failure: the planted-instruction check's report that it could not finish.
+- Grounding check: the check that a name an agent proposes to act on appears in a tool result it cites.
+- Approval message: the message that asks a person to approve an action an agent proposes.
+- Chat channel: the chat tool where approval messages are posted.
+- Admin page: the staff web page that shows stored approval summaries.
+
+Masking words:
+
+- Sensitive value: a secret (password, key, token) or an identifier (e-mail address, host name, account number).
+- Known value: a sensitive value already in the run map.
+- Mask: put a placeholder where a sensitive value was.
+- Placeholder: a fixed text, such as `<SECRET_1>`, that the model sees in place of the value.
+- Run map: one table per run, kept in memory, that records which real value each placeholder stands for.
+- Restore: put the real value back for a tool that needs it.
+- The secret finder: the code that searches new text for sensitive values by their shape and masks them. Only it adds to the run map.
+- Search round: one pass of the secret finder's patterns, then one masking of every copy of the known values. One call of the secret finder runs up to 5 search rounds.
+- Kind: the type the secret finder gives each value it finds, such as password, key, token, e-mail or host name.
+- Withheld: the secret finder hides a whole line it cannot mask in place, and shows a fixed note.
+- Glued: written directly against another character, with no space between.
+- Fail closed: when in doubt, refuse the text or the call rather than let it through.
+- Text folding: turning look-alike letters, invisible characters and accents into one plain spelling before searching.
+- Unicode: the world standard list of characters; each Python version carries one edition of it.
+- base64: a common way of writing any data as letters and digits. The base64 view: the secret finder's step that decodes base64 text and searches the decoded text.
+- The gate: one wrapper meant to sit in front of every model call. It masks known values, reserves money, makes the call, settles and writes an audit row. It searches for no new values.
+- Installed: placed at every point in the code that calls a model. The gate is not installed yet.
+- Held back: a known value at a placeholder's edge (it starts with `>` or ends with `<`), or a piece of a placeholder. The gate masks it last.
+- Safety net: the gate's last check on each stretch of text before it is sent. It refuses the call when it finds a known secret that is still readable.
+- Framing marker: the fixed line the agent loop puts around each tool result. It holds fixed words, the call number and the tool's name. A forged marker is a copy of that line written by planted text.
+
+Money and record words:
+
+- All amounts are in US dollars (USD).
+- The store: the database that records spending, reservations, the stop switch and the audit record. The secrets vault is the separate place where secrets are kept.
+- Cap: the most money one agent may spend in a day and in a month.
+- Worst case: the most a model call could cost.
+- Reserve: before a call, count its worst case against the cap.
+- Settle: after the call, book the real cost instead of the worst case.
+- Booked: the amount counted against the cap at any moment.
+- Empty cost field: a reply whose cost was never filled in; it reads as 0.00 USD.
+- Unreadable cost: a cost that is absent, negative or not a number.
+- Price table: the list of prices per AI service used to work out the worst case.
+- Stop switch: a flag in the store. While it is on, the store is meant to refuse every new reservation. A stop record says who turned it on.
+- Database login: a named account the software uses to reach the store. The grant map on this branch names a runtime login.
+- Audit row: one line in the permanent record of what happened. It holds short codes, not message text.
+- Refusal word: the exact short word the gate or store prints when it refuses.
