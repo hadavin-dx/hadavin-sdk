@@ -32,7 +32,8 @@
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
     and refuses at the cap (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
-    `limits_unavailable`, `bad_amount`). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
+    `limits_unavailable`, `bad_amount`; a sixth, `usd_cap`, comes with the in-memory meter of the eval and replay
+    commands). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
     real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
     reservation nobody settled (a crash, a timeout) is marked expired by the new tick step `expire_reservations` after
     3600 seconds (`defaults.RESERVATION_EXPIRE_S`), or after the stuck-run age when that is longer; it stays booked at
@@ -46,6 +47,17 @@
     the model calls use `reserve` every call is refused as `limits_unavailable`. (3) A custom store must add four
     methods (`reserve_spend`, `settle_spend`, `expire_spend_reservations`, `purge_spend_reservations`); without them
     the app refuses to start and names them (`ConfigError`).
+  - **Stated limits (found by a hostile re-read).** (a) The day is chosen from the clock before the booking; a reserve
+    that waits on a row lock across 00:00 UTC books and checks the previous day. (b) If the database commits a
+    reservation and the connection drops before the caller sees it, the call is refused (`limits_unavailable`) but the
+    booking exists with no id returned; it is closed only by the expiry step and the counters never go down, so the
+    worst case of a call that never started stays counted for the rest of the day and month; a flapping network can use
+    up a tight daily cap this way. (c) A model adapter must not stream: a stream needs its own rule for the
+    "refused before any response" mark. (d) A sender of the signed trigger endpoint whose agent is retired after the
+    app started keeps being served until the next restart, and the next start then refuses (remove or repoint the
+    sender first, then retire the agent). (e) The store connection sets a lock timeout of
+    `defaults.STORE_LOCK_TIMEOUT_MS` (10 seconds): a store call that waits longer for a row lock fails with
+    `limits_unavailable`; a statement's own run time is not limited.
   - **Rollback.** Revert only the Python code. Keep the file `0007_spend_reservations.sql`, its grant row and its
     manifest entry: `migrate` refuses a database whose ledger names a migration that has no file. The table is then
     unused.
