@@ -65,8 +65,9 @@ def _decoys(w, store):
     for t in TABLES:
         ident = sql.Identifier(t)
         store._db.execute(
-            sql.SQL("CREATE TEMPORARY TABLE {} (LIKE {}.{} INCLUDING DEFAULTS)").format(
-                ident, real, ident
+            # LIKE the public decoy: the runtime has no right on the real money tables (step 4)
+            sql.SQL("CREATE TEMPORARY TABLE {} (LIKE public.{} INCLUDING DEFAULTS)").format(
+                ident, ident
             )
         )
     for target in (sql.SQL("public."), sql.SQL("")):

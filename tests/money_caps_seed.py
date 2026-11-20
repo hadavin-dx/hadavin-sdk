@@ -82,7 +82,12 @@ def seeding_reserve(original):
             except ValueError:  # an id the store refuses itself below: nothing to seed
                 pass
             else:
-                seed_caps(dsn, self._schema, agent_id, *pair)
+                import psycopg
+
+                try:
+                    seed_caps(dsn, self._schema, agent_id, *pair)
+                except psycopg.errors.DataError:
+                    pass  # a cap the numeric type cannot hold (1E+999999): the store refuses it itself below
         if dsn:
             try:
                 widen_day_window(dsn, self._schema)

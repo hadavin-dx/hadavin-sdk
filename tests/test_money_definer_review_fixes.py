@@ -36,13 +36,15 @@ SETTLE = "SELECT * FROM hadavin_settle_spend(%s, %s, %s)"
 def test_m1_the_header_does_not_claim_the_runtime_already_lost_its_write_rights():
     head = SQL_FILE.read_text(encoding="utf-8")[:3000]
     assert "After this migration the ONLY writers" not in head
-    assert "step 4" in head
+    # the wall is built by `migrate` when roles are named (step 4), never claimed by the file alone
+    assert "THE WALL IS BUILT BY `migrate`" in head
 
 
 def test_m2_the_header_states_the_expire_then_release_residual():
     head = SQL_FILE.read_text(encoding="utf-8")[:6000].lower()
     assert "release" in head and "late settle" in head
-    assert "safe (holds stay booked" not in head
+    # the guard that bounds it: a hold is expired only past min_expiry_age (H1), and a late settle still finds it
+    assert "min_expiry_age" in head
 
 
 # --- static checks (m4, m5, limits) -------------------------------------------------------------------------------
@@ -111,6 +113,10 @@ def review_world():
     world.release = world.new_role("rl")
     try:
         world.migrate(release_role=world.release)
+        # these tests book on a fixed day through raw calls: open the day window (the real skew is 1; its own tests
+        # are in tests/test_money_h1_pg.py)
+        with world.admin() as db:
+            db.execute("UPDATE hadavin_limits SET value = 100000 WHERE name = 'max_day_skew'")
         yield world
     finally:
         for s in world.stores:

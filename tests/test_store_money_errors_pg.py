@@ -68,7 +68,7 @@ def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
         _raw(
             rt,
             rt._money_call("hadavin_settle_spend", "%s::text, %s::numeric, %s::text"),
-            ("nope", D(1), None),
+            ("nope", D(1), AGENT),
         )
     assert caught.value.sqlstate == "HD002"
 
