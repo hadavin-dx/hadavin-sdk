@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:34:20Z
+UPDATED_UTC: 2026-11-20T12:35:44Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 0.89 of 4 cores, mem 1/15 GB, disk 46G free, 34% used, agents light 4 heavy 2
+CAPACITY: load 1.01 of 4 cores, mem 1/15 GB, disk 46G free, 34% used, agents light 4 heavy 2
 DISK: / 46G free, 34% used; worktrees /tmp/core-b-wt 3.7G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:33:03Z (previous push; this board is pushed right after writing)
-IST: 18:04 IST
+PUSHED_UTC: 2026-11-20T12:35:27Z (previous push; this board is pushed right after writing)
+IST: 18:05 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -253,3 +253,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 12:32Z E2 (step 6 second half) MERGED on cloud/core-b (adbe00f3c); focused run 139 passed, 1 failed (test_store_schema_qualified_pg: a stray public.spend table in the shared test DB, recreated by another run; not code). RUNNING: G step 4 (sonnet, since 11:49Z, files: migrate.py GRANTS rows, tests/test_money_step4_grants.py, test_migrations_0009_0010_round2.py + re-pointed tests; expected end 12:45Z). NEXT (starting now, sonnet): fresh reviewer step 6 (E2+F+E1), docs round (0011 header, TODO-E2 lines, runbook), one evidence batch after G merges.
 
 12:38Z E2 pushed (6b5436c66); stray public.spend tables dropped, test_store_schema_qualified_pg 2 passed. AGENTS (sonnet): G step 4 (since 11:49Z; migrate.py GRANTS rows + step-4 tests; end ~12:50Z) | R6 fresh reviewer step 6 (since 12:37Z; writes tickets/F-money-definer-step6-review-1.md only; end 12:57Z) | D6 docs round (since 12:37Z; 0011 header comments, runbook, CHANGELOG, worktree /tmp/core-b-wt/MD; end 12:55Z). core-a xreviews: none landed.
+
+12:42Z R6 step 6 review DONE: 0 Blocker, 2 Major (stale cap text in 0011/0010/runbook/CHANGELOG -> D6 docs agent extended; check_caps alerts on a raised registry cap, ticket T13 says no alert -> fix), 3 Minors. AGENTS (sonnet): G step 4 (since 11:49Z, end ~12:50Z) | D6 docs round (since 12:37Z, files: 0011/0010 comments, runbook, CHANGELOG, SECURITY.md; worktree MD; end 12:55Z) | F6 fixer (since 12:41Z, files: runtime/tick.py check_caps, limits.py log line, tests/conftest.py seed fixture, tests/test_money_caps_mutants.py, tick/caps tests; worktree MF6; end 13:05Z).
