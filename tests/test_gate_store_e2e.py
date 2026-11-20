@@ -254,8 +254,8 @@ def test_reply_with_a_planted_secret_is_not_stored_and_the_reservation_is_settle
     with psycopg.connect(w.dsn, autocommit=True) as db:  # nor in any table the call touched
         for table in ("spend_reservations", "spend", "spend_month"):
             assert "Zx9qPlantedSecret77" not in repr(
-                db.execute(f"SELECT * FROM {table}").fetchall()
-            )  # noqa: S608
+                db.execute(f"SELECT * FROM {table}").fetchall()  # noqa: S608 - fixed table names
+            )
 
 
 @pytest.mark.xfail(

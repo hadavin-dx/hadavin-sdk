@@ -43,10 +43,13 @@ INSTALLED = {
 BYPASS = {
     "guard/bedrock_guardrail.py": "vendor detector call (apply_guardrail) outside the gate by design: not on the LLM protocol, not metered",
     "guard/model_gate.py": "the gate itself: the one place that calls the inner client, after reserve and enforce",
-    "extract.py": "no caller in src; F-install deletes it (draft section 8): drop this row with the file",
 }
 # NO_MAP may be named only here (the eval and replay command lines have no run and no map), besides its definition in the gate module.
-NO_MAP_ALLOWED = {"evals.py", "k1b/replay.py"}
+NO_MAP_ALLOWED = {
+    "evals.py",
+    "k1b/replay.py",
+    "k1b/loop.py",
+}  # k1b/loop.py is the replay command line's case loop
 
 # Where the judge (`injection_check(detector, ...)`, which reaches `JudgeDetector.llm.chat`) is called from, module -> why it
 # matters for the install (code review round 3, M3/M4). The `Detector` protocol has no map argument, so a judge built
@@ -127,7 +130,10 @@ def _bad_gate_arguments(tree: ast.AST) -> list[str]:
         for k in c.keywords:
             if k.arg == "enforce":
                 bad.append("enforce= given (non-default)")
-            if k.arg == "worst_case" and not isinstance(k.value, ast.Name | ast.Attribute):
+            named = isinstance(k.value, ast.Name | ast.Attribute) or (
+                isinstance(k.value, ast.Call) and _name(k.value) == "worst_case_for"
+            )  # `worst_case_for(routes, llm)` is the one named factory of the closure
+            if k.arg == "worst_case" and not named:
                 bad.append("worst_case= is not a named function")
     return bad
 
@@ -198,6 +204,8 @@ def test_the_gate_argument_check_catches_the_bad_shapes():
     assert bad("ModelGate(llm, meter=m, audit=a, worst_case=lambda **k: 1)")
     assert not bad("ModelGate(llm, meter=m, audit=a, worst_case=worst_case_usd)")
     assert not bad("ModelGate(llm, meter=m, audit=a, worst_case=prices.worst_case)")
+    assert not bad("ModelGate(llm, meter=m, audit=a, worst_case=worst_case_for(routes, llm))")
+    assert bad("ModelGate(llm, meter=m, audit=a, worst_case=make_it(routes, llm))")
     assert not bad("ModelGate(llm, meter=m, audit=a)")
 
 

@@ -128,7 +128,7 @@ def run_case(
     case_run_id = f"{run_id}:{bundle.case_id}"
     try:
         llm = gate.bind(agent_id, case_run_id, mapping=NO_MAP)
-        bound = bind_detector(detector, wrap, agent_id, case_run_id)
+        bound = bind_detector(detector, wrap, agent_id, case_run_id, NO_MAP)
         _steps(
             out,
             llm,
