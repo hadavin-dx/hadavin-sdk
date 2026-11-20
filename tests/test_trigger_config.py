@@ -358,7 +358,9 @@ def test_secret_name_characters_allowed_as_built(cfg_dir, name):
     assert sender.secret_names == (name,)
 
 
-@pytest.mark.parametrize("name", ["Key_one.v2:eu/primary-1", "a/b", "/", ".", "..", "a..b", "-", "_.:"])
+@pytest.mark.parametrize(
+    "name", ["Key_one.v2:eu/primary-1", "a/b", "/", ".", "..", "a..b", "-", "_.:"]
+)
 def test_secret_name_with_a_slash_or_a_path_trick_or_no_letter_refused(cfg_dir, name):
     """Case: interface change (core-b DRAFT 3, requests/001.answer.md): "/" is no longer a secret-name character,
     and "." / ".." / a name holding ".." / a name with no letter or digit are refused (a file-backed provider

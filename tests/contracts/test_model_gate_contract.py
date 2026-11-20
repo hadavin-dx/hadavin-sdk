@@ -75,6 +75,7 @@ def _assert_code_only(error: BaseException, code: str) -> None:
     assert error.code == code and error.args == (code,)
     assert error.__cause__ is None and error.__context__ is None
 
+
 REASONS = ("kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount")
 AGENT = "agent-" + "a1"
 RUN = "run-" + "r1"
@@ -370,7 +371,9 @@ def test_point1_an_unknown_agent_is_refused_with_a_code_and_never_with_its_text(
     """Contract point 1 (KeyError: still no call) and ticket I9: the row holds a code, not the exception text."""
     rig = Rig(meter_cls)
     rig.meter.reserve_raises = KeyError(ERROR_TEXT)
-    with pytest.raises(_refusal_of(KeyError(AGENT))) as caught:  # GateRefused since ORDER 017 item 5
+    with pytest.raises(
+        _refusal_of(KeyError(AGENT))
+    ) as caught:  # GateRefused since ORDER 017 item 5
         rig.chat()
     if GateRefused is not None:
         _assert_code_only(caught.value, "reserve_refused")
@@ -414,7 +417,9 @@ def test_point1_a_worst_case_that_cannot_be_computed_means_no_reservation_and_no
     rig = Rig(meter_cls, worst_case=broken)
     with pytest.raises(_refusal_of(ArithmeticError("no price"))) as caught:
         rig.chat()
-    if GateRefused is not None:  # its error is NOT passed on (it may carry text): the code `worst_case_failed`
+    if (
+        GateRefused is not None
+    ):  # its error is NOT passed on (it may carry text): the code `worst_case_failed`
         _assert_code_only(caught.value, "worst_case_failed")
     assert rig.meter.reserve_calls == [] and rig.inner.calls == 0 and rig.meter.settle_calls == []
 
@@ -1425,9 +1430,7 @@ def test_m1_the_module_keeps_no_state_between_calls():
                         and not b.value.elts
                         for b in c.body
                     )
-                    and all(
-                        isinstance(b, ast.FunctionDef | ast.Assign | ast.Expr) for b in c.body
-                    )
+                    and all(isinstance(b, ast.FunctionDef | ast.Assign | ast.Expr) for b in c.body)
                 ]
                 assert name == "frozenset" or is_compile or stateless, (
                     f"line {node.lineno}: module-level call of {name}"
