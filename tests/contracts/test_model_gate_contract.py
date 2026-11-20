@@ -50,6 +50,10 @@ ModelGate = model_gate.ModelGate
 Reply = model_gate.Reply
 ProviderError = model_gate.ProviderError
 ProviderExhausted = model_gate.ProviderExhausted
+# core-c ORDER 017 item 1 (handover/core-c/requests/3-bind-mapping-required.md): `bind` has a REQUIRED keyword
+# `mapping`; "no run map" is said with the constant NO_MAP (before: `mapping=None`, or left out). Older heads have
+# no NO_MAP and take None, so the same cases run on both.
+NO_MAP = getattr(model_gate, "NO_MAP", None)
 
 REASONS = ("kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount")
 AGENT = "agent-" + "a1"
@@ -87,6 +91,13 @@ def _spend_refused() -> type[Exception]:
 
 
 SpendRefused = _spend_refused()
+
+
+def _bind(gate, agent, run, **kwargs):
+    """`gate.bind` with the run map said in the call: a missing or None `mapping` means "no run map" (NO_MAP)."""
+    if kwargs.get("mapping") is None:
+        kwargs["mapping"] = NO_MAP
+    return gate.bind(agent, run, **kwargs)
 
 
 def good_amount(value: object) -> bool:
@@ -270,7 +281,7 @@ class Rig:
         self.gate = ModelGate(
             self.inner, meter=self.meter, audit=self.sink, worst_case=self._worst_step, **kwargs
         )
-        self.bound = self.gate.bind(AGENT, RUN, **bind)
+        self.bound = _bind(self.gate, AGENT, RUN, **bind)
 
     def _worst_step(self, route, system, messages, tools, documents, output_schema):
         self.events.append("worst")
@@ -1118,7 +1129,7 @@ def test_i10_an_unbound_gate_cannot_call_a_model_and_two_bound_gates_keep_their_
     reserves under its own agent and run, also when the calls alternate."""
     rig = Rig(meter_cls)
     assert not hasattr(rig.gate, "chat")
-    other = rig.gate.bind("agent-" + "b2", "run-" + "r2")
+    other = _bind(rig.gate, "agent-" + "b2", "run-" + "r2")
     rig.chat()
     other.chat(HELLO, system="s", route=ROUTE)
     rig.chat()
@@ -1206,7 +1217,7 @@ def test_threads_reserve_and_settle_counts_match_and_no_reservation_gets_another
 
     inner = Inner(events, reply=reply)
     gate = ModelGate(inner, meter=meter, audit=Sink(events), worst_case=worst_case)
-    shared = gate.bind("agent-shared", "run-shared")
+    shared = _bind(gate, "agent-shared", "run-shared")
     barrier = threading.Barrier(2 * THREADS)
     problems: list[str] = []
 
@@ -1220,7 +1231,7 @@ def test_threads_reserve_and_settle_counts_match_and_no_reservation_gets_another
                 problems.append(f"thread {thread} got the reply of another call: {answer.text}")
 
     workers = [
-        threading.Thread(target=work, args=(n, gate.bind(f"agent-{n}", f"run-{n}")))
+        threading.Thread(target=work, args=(n, _bind(gate, f"agent-{n}", f"run-{n}")))
         for n in range(THREADS)
     ]
     workers += [threading.Thread(target=work, args=(THREADS + n, shared)) for n in range(THREADS)]
