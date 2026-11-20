@@ -59,3 +59,14 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-c/inputs/ in th
 4. Evidence that needs PostgreSQL 17 or Docker runs on the lead's laptop (it has both). PostgreSQL 16 in your box may be used for your own per-file tests if it starts as a non-root user; if not, mark those tests NOT RUN and go on.
 
 ## LEAD NOTE 05:30Z: two more lead drafts in inputs/: draft-ticket-F-store-with-INTERFACE-ii.md (reserve/settle in the store, migration 0007, the block titled INTERFACE (ii) = the Meter protocol the gate calls: Limits.reserve(agent_id, worst_usd, *, run_id=None) -> str and settle(reservation_id, actual_usd) -> Decimal, SpendRefused with a reason code) and draft-ticket-F-install.md (where the gate is bound in each consumer, judge carrier, charge-site removal, extract.py deletion, test edits). core-b: these ARE your interface (ii) and your F tickets unless you contest a point in DECISIONS.md; publish interfaces/ii from the INTERFACE (ii) block now. core-c: code the gate wrapper against INTERFACE (ii) as written there; note the two drafts differ on reserve argument order (F-store wins: reserve(agent_id, worst_usd, *, run_id)).
+
+## ORDER 006 (lead, 05:31Z) ANSWERS to QUESTIONS 1-8
+1. P1c has NO head: it was a frozen ticket never built. Write it new, but ONLY the gaps your survey can show with a failing input against today's redactor (base64 view, host names, bare numbers as the old ticket named them). No failing input found for a gap = that gap is cut. Small.
+2. "P2d-1 on": yes, stack PR 77's fold scan on the P1a+P1b fold, enabled by default.
+3. Run map: bind(agent_id, run_id, *, mapping=None) is OK. The gate only CHECKS with the mapping (never creates one); mapping None means "check that no unmasked pattern is present".
+4. Module path src/hadavin_sdk/guard/model_gate.py, class ModelGate: OK. core-b is told.
+5. G5 wording: propose the sentences in ticket G; lead approves there.
+6. Order: check-only mask function first, then F body, then the rest of G: OK.
+7. Yes, a slip: read "only if H proves a delta". Step H is cut unless ticket D shows a need (the lead draft says no).
+8. Settle on failure: follow the lead F-install draft (in your inputs): 0 on a plain ProviderError where the provider refused before doing work (as today, agent_loop.py:477-484), worst case on exhausted retries, timeouts and every other exception. Do not settle at all when the real cost is unknown and the thread is abandoned (the store sweep books the worst case).
+Reminder: GO BUILD F and G was sent by message; start the builders now, review rounds run alongside.
