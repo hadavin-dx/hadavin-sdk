@@ -180,11 +180,12 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
 
 `migrate` with roles named refuses a database whose 0010 or 0011 was applied from an older draft (recorded checksum
 differs from the file): the old function bodies would keep running, and a draft's 7-argument `hadavin_reserve_spend`
-lets the caller pick its caps. The error names the file. Fix: drop what the draft made and run
-`hadavin-sdk migrate ... --reset-draft 0011_money_definer` with all the roles (recipe and the
-`--accept-changed-draft` caveat: docs/migration-checksums.md). A leftover `hadavin_*` function outside the function
+lets the caller pick its caps. The error names the file. A NULL recorded checksum is refused the same way. Fix: back up `hadavin_caps` (`CREATE TABLE hadavin_caps_backup AS
+SELECT * FROM hadavin_caps`), then run `hadavin-sdk migrate ... --reset-draft 0011_money_definer` with all the roles (0010
+and 0011 re-apply over what the draft made, no manual drops, caps rows kept; the `--accept-changed-draft` caveat:
+docs/migration-checksums.md). A leftover `hadavin_*` function outside the function
 maps also refuses migrate, listing each with its argument types and a `DROP FUNCTION` statement; `--reset-draft` drops
-those the migrating login owns. Afterwards run `limits sync-caps` (the cap table was recreated empty).
+those the migrating login owns. Afterwards run `limits check-caps`.
 
 ## Release expired spend holds
 
