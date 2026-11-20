@@ -391,7 +391,9 @@ def test_b4_no_answer_is_sent_before_the_row_was_read(dsn, tmp_path):
         _killed(child)
     assert status is None, (status, data)
     rows = _rows(dsn)
-    assert [row[:4] for row in rows] == [(run_id, AGENT, PRINCIPAL, _ref(SENDER, "key-1", DOCUMENT))]
+    assert [row[:4] for row in rows] == [
+        (run_id, AGENT, PRINCIPAL, _ref(SENDER, "key-1", DOCUMENT))
+    ]
     with _child(tmp_path, "w", dsn, ONE, crash=True) as child:
         status, data = signed_post(child.port, body, SECRET)
         assert status in OK and json.loads(data)["run_id"] == run_id
@@ -435,9 +437,7 @@ def test_c2_two_processes_and_two_documents_give_one_run_and_one_409(dsn, tmp_pa
     """C2 (ticket C4 with P3). Two worker processes on one schema. Request: one key with two
     different documents, one to each process at once, three keys in a row. Expected: exactly one
     2xx and one 409 (never 503). Store: one row per key, with the ref of the document that won."""
-    refs = {
-        _ref(SENDER, f"key-{n}", doc) for n in range(3) for doc in (DOCUMENT, OTHER_DOCUMENT)
-    }
+    refs = {_ref(SENDER, f"key-{n}", doc) for n in range(3) for doc in (DOCUMENT, OTHER_DOCUMENT)}
     with _child(tmp_path, "w1", dsn, ONE) as first, _child(tmp_path, "w2", dsn, ONE) as second:
         for n in range(3):
             key = f"key-{n}"

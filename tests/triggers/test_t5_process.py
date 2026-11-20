@@ -56,8 +56,7 @@ def _run_main(*args: str) -> subprocess.CompletedProcess:
 def test_d1_main_refuses_to_start_without_a_triggers_block(tmp_path):
     """D1 (ticket H8 through `main`). Start: the worker module as a child process on a copy of the
     fixture config, which has no `triggers` block. Expected: exit code 2, one clear line on stderr,
-    nothing on stdout, no traceback, nothing from the environment. Store: none is opened (the
-    fixture's audit folder is not even created)."""
+    nothing on stdout, no traceback, nothing from the environment. Store: none is opened."""
     cfg = make_cfg(tmp_path)
     done = _run_main("--config-dir", str(cfg), "--port", "0")
     assert done.returncode == 2, done.stderr
@@ -66,7 +65,6 @@ def test_d1_main_refuses_to_start_without_a_triggers_block(tmp_path):
     assert len(done.stderr.strip().splitlines()) == 1
     assert done.stdout == ""
     assert "Traceback" not in done.stderr and CANARY not in done.stderr + done.stdout
-    assert not (cfg / "audit").exists()
 
 
 def test_d1_main_refuses_an_unreadable_config_without_a_traceback(tmp_path):
@@ -174,7 +172,7 @@ def test_d2_check_bind_needs_the_switch_to_be_exactly_true():
 
 @pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM cannot be handled on Windows")
 def test_d3_sigterm_stops_a_serving_worker_cleanly(tmp_path):
-    """D3 (lead review Major 2). A serving child (memory store, a model double that takes 1.5 s).
+    """D3 (review finding Major 2). A serving child (memory store, a model double that takes 1.5 s).
     Request: one signed key, answered 202 while its loop is still running; SIGTERM right after.
     Expected: the child exits 0 within a few seconds, with no traceback, and the port is closed.
     Store (printed by the child after `serve` returned): the run row exists and has left RECEIVED

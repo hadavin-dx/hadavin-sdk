@@ -32,6 +32,7 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Self
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.models import Reply, RunState, now
@@ -113,23 +114,37 @@ class Child:
     """One launcher process. Its output goes to two files, so a full pipe never blocks it. Use it
     in a `with` block: the process is killed at the end whatever happened."""
 
-    def __init__(self, work_dir: Path, config_dir: Path, secrets: dict[str, str], *args: str,
-                 dsn: str | None = None) -> None:
+    def __init__(
+        self,
+        work_dir: Path,
+        config_dir: Path,
+        secrets: dict[str, str],
+        *args: str,
+        dsn: str | None = None,
+    ) -> None:
         work_dir.mkdir(parents=True, exist_ok=True)
         self._out, self._err = work_dir / "stdout.txt", work_dir / "stderr.txt"
         env = {**os.environ, SECRETS_ENV: json.dumps(secrets)}
         if dsn is not None:
             env[DSN_ENV] = dsn
         store = "postgres" if dsn is not None else "memory"
-        command = [sys.executable, "-m", "tests.triggers.crash_launcher", "--config-dir",
-                   str(config_dir), "--store", store, *args]
+        command = [
+            sys.executable,
+            "-m",
+            "tests.triggers.crash_launcher",
+            "--config-dir",
+            str(config_dir),
+            "--store",
+            store,
+            *args,
+        ]
         with self._out.open("wb") as out, self._err.open("wb") as err:
             self.proc = subprocess.Popen(  # noqa: S603 - this interpreter, this repo's launcher, no shell
                 command, cwd=ROOT, env=env, stdout=out, stderr=err, stdin=subprocess.DEVNULL
             )
         self.port = 0
 
-    def __enter__(self) -> Child:
+    def __enter__(self) -> Self:
         try:
             self.port = self._wait_for_port()
         except BaseException:
