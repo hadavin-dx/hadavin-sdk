@@ -306,9 +306,16 @@ def test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip(monkey
 
 
 def test_dm_2_257_decomposed_names_refuse_the_text_and_256_do_not():
-    def names(n):
+    # Ported onto the fold (ticket G part G3): on P2d-1's base `runmap.canonical` composed a letter with its accent, so `undo` changed an NFD
+    # name and each one took a slot of MAX_DECODED_MASKS. On the fold `canonical` is NFKC of one character at a time and composes nothing: an
+    # NFD name is its own decoded spelling and takes no slot (second half of this test). A full-width first letter is still decoded, so the
+    # names carry one and the 257 / 256 edge is the one P2d-1 pinned.
+    wide_z = chr(0xFF3A)
+
+    def names(n, first=wide_z):
         return [
-            unicodedata.normalize("NFD", f"Zoé{chr(0x41 + i % 26)}{i:04d} Müller") for i in range(n)
+            unicodedata.normalize("NFD", f"{first}oé{chr(0x41 + i % 26)}{i:04d} Müller")
+            for i in range(n)
         ]
 
     def run(n):
@@ -319,6 +326,11 @@ def test_dm_2_257_decomposed_names_refuse_the_text_and_256_do_not():
     with pytest.raises(InputTooLarge):
         run(257)
     run(256)
+    # NFD names without a compatibility character: nothing to pair, so no refusal, and every name is masked
+    plain = names(257, first="Z")
+    assert all(runmap.undo(v) == v for v in plain)
+    out = redact_text(" ; ".join(plain), {f"<NAME_{i + 1}>": v for i, v in enumerate(plain)})
+    assert not any(v in out for v in plain) and "ller" not in out, out[:200]
 
 
 @pytest.mark.perf

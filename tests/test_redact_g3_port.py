@@ -111,3 +111,53 @@ def test_views_an_ascii_text_without_a_modifier_symbol_gets_no_new_view():
     text = "pw=ab%41 x end"
     assert without_spacing_marks(text) == text
     assert runmap._views(text) == [runmap.canonical(runmap.undo(text))]
+
+
+# ---- 3. fold5 reads a dash and a typographic quote as ASCII (the one place the port's code differs from P2d-1's) --------------------
+def test_fold5_a_dash_or_a_typographic_quote_on_a_line_does_not_withhold_it():
+    """On P2d-1's base (fold4) the fold left these characters alone. fold5 writes them as ``-``, ``'`` and ``"``; unported, every line
+    with one of them and a fold hit was withheld whole. They are ordinary typography: the value is masked in the line as written."""
+    out = redact("“alice@example.com” wrote — josé@example.com")
+    assert out.text == "“<EMAIL_1>” wrote — <EMAIL_2>"
+    assert out.mapping == {"<EMAIL_1>": "alice@example.com", "<EMAIL_2>": "josé@example.com"}
+    minus = redact("ip 10−1 josé@example.com − 5")
+    assert minus.text == "ip 10−1 <EMAIL_1> − 5"
+
+
+def test_fold5_a_value_written_with_typographic_dashes_is_masked_in_place_as_written():
+    uid = "123e4567–e89b–12d3–a456–426614174000"  # en dashes: not a UUID as written, one after the fold
+    out = redact(f"uid {uid} end")
+    assert out.text == "uid <UUID_1> end" and out.mapping == {"<UUID_1>": uid}
+
+
+def test_fold5_a_full_width_hyphen_is_still_a_compatibility_character_and_withholds_the_line():
+    key = "AKIA－IOSFODNN7EXAMPLE"
+    out = redact(f"key {key} and josé@example.com").text
+    assert out.startswith(FOLD_NOTE) and "IOSFODNN7EXAMPLE" not in out and "example.com" not in out
+
+
+def test_fold5_the_class_of_every_dash_quote_and_slash_of_the_fold_table_is_pinned():
+    import importlib
+    import unicodedata
+
+    module = importlib.import_module("hadavin_sdk.guard.redact")
+    typed = {}
+    for cp in range(0x80, 0x110000):
+        ch = chr(cp)
+        if 0xD800 <= cp <= 0xDFFF:
+            continue
+        f = fold(ch)
+        if f in ("-", "'", '"', "/") and f != ch:
+            typed[cp] = module._char_class(ch)
+    plain = {cp for cp, cls in typed.items() if cls is not None and cls[1] == 0}
+    # masked around or inside: the dashes (Pd) that are not compatibility forms, the minus sign, the six typographic quotes
+    assert all(
+        unicodedata.category(chr(cp)) in ("Pd", "Pi", "Pf") or cp == 0x2212 for cp in plain
+    ), sorted(map(hex, plain))
+    assert {0x2010, 0x2013, 0x2014, 0x2212, 0x2018, 0x2019, 0x201C, 0x201D} <= plain
+    assert len(plain) == 26, len(plain)
+    # a slash: only the fraction slash is read (masked around, never inside); every other one is refused
+    assert typed[0x2044] == ("/", 1)
+    assert all(typed[cp] is None for cp in (0x2215, 0x29F8, 0xFF0F, 0x2571))
+    # a compatibility dash is refused
+    assert typed[0xFF0D] is None and typed[0xFE63] is None and typed[0x2011] is None

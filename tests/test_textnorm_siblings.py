@@ -3,7 +3,8 @@
 Several places read untrusted text: ``runmap.canonical`` / ``_canonical_view`` (redaction maps), the grounding check of ``runtime/evidence.py``,
 ``guard/injection.py`` and ``guard/egress.py``. What each does now, pinned here so a later change shows up as a failing test that someone reads:
 (1) ``runmap.canonical`` and ``_canonical_view`` are one text (FIXED in P1b); (2) the injection detector reads every ``scan_views`` view (FIXED in
-P1b; ``guard/injection.py`` and ``app.py`` (the pinned-Unicode guard) are the only modules that import ``textnorm``); (3) the evidence grounding key stays exact on purpose (an ALLOW comparison) and now uses ``runmap.composed``, the one composed form; (4) egress is
+P1b; ``guard/injection.py`` and ``app.py`` (the pinned-Unicode guard) were the only modules that import ``textnorm`` until ticket G part G3, which
+ported the fold scan of the redactor: ``guard/redact.py`` and ``guard/runmap.py`` import it too, see the record test); (3) the evidence grounding key stays exact on purpose (an ALLOW comparison) and now uses ``runmap.composed``, the one composed form; (4) egress is
 an ALLOW comparison that refuses a look-alike host (its IDNA question belongs to V1.1 item V11-1); (5) ``runmap.canonical`` and the grounding key
 do NOT find a secret hidden with an Mc, Lm or Sk code point (a KNOWN GAP, recorded, with the count). The look-alike placeholder marker belongs to P1c.
 """
@@ -51,7 +52,10 @@ def test_the_corpus_is_the_corpus_rows_the_table_sources_and_the_marks():
 
 def test_only_the_guard_and_the_injection_detector_import_textnorm():
     """The record of who consumes what: ``app.build`` imports ``textnorm`` (the pinned-Unicode guard) and ``guard/injection.py`` (the
-    steering-phrase detector reads every scan view). ``runmap``, the evidence grounding and egress do not (see their tests below)."""
+    steering-phrase detector reads every scan view). Since ticket G part G3 (the fold scan of the redactor, P2d-1): ``guard/redact.py``
+    (``fold`` and ``fold_view``, one named view at a time, to mask a value in the text as written, and ``SPACING_CATEGORIES``) and
+    ``guard/runmap.py`` (``without_spacing_marks`` only, for its two marks-dropped views; its other views stay its own). The evidence
+    grounding and egress do not (see their tests below)."""
     users = sorted(
         p.relative_to(SRC).as_posix()
         for p in SRC.rglob("*.py")
@@ -62,9 +66,14 @@ def test_only_the_guard_and_the_injection_detector_import_textnorm():
         )
         and p.name != "textnorm.py"
     )
-    assert users == ["app.py", "guard/injection.py"], users
-    for rel in ("guard/runmap.py", "runtime/evidence.py", "guard/egress.py"):
+    assert users == ["app.py", "guard/injection.py", "guard/redact.py", "guard/runmap.py"], users
+    for rel in ("runtime/evidence.py", "guard/egress.py"):
         assert "textnorm" not in (SRC / rel).read_text(encoding="utf-8"), rel
+    runmap_src = (SRC / "guard/runmap.py").read_text(encoding="utf-8")
+    assert re.findall(
+        r"^from hadavin_sdk\.guard\.textnorm import (.+)$", runmap_src, re.MULTILINE
+    ) == ["without_spacing_marks"], "runmap takes ONE name from textnorm"
+    assert "textnorm." not in runmap_src, "runmap calls nothing else of textnorm"
 
 
 def test_runmap_canonical_and_its_per_character_view_are_the_same_text_on_the_whole_corpus():
@@ -284,6 +293,7 @@ def test_the_counts_of_mc_lm_and_sk_are_the_ones_the_notes_measured():
 # The code (not the docstrings) of src/ that normalises or case-folds text, outside the fold itself: file -> (what it does, why it is not the fold).
 RECORDED_SIBLINGS = {
     "guard/runmap.py": "the redaction views (canonical, composed): the choke point of every redaction; NFKC on purpose, positions stay exact",
+    "guard/redact.py": "the fold scan (ticket G part G3, P2d-1): NFD, NFKC and NFKD of ONE character, to class what the fold did to it (_char_class, _mark_flags); the fold itself is textnorm's",
     "guard/egress.py": "host names: NFKC + IDNA, an ALLOW comparison that refuses a look-alike (tested above)",
     "runtime/evidence.py": "the grounding key: runmap.composed + case fold, an ALLOW comparison (tested above)",
     "k1b/causelist.py": "NFC of a court case-list value for display and exact matching; not a scan for a protected value",
