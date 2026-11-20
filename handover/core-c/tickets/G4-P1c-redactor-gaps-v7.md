@@ -16,7 +16,8 @@ of a long ENCODED value and the tie-break interplay (0.3b). Nothing was run as a
 CHANGED in v6: version 6 is v5 with ONLY the findings of plan review round 5 (codebase details, tickets/G4-review-5-codebase.md:
 M1, M2, M3, N1, N2 and the L8 kind list) and the reconciliation with G8 v3 (tickets/G8-glued-rest-gap-v3.md; G8-review-3
 M1/M2 and G8-review-3-codebase M3: PHONE entries 6-8, `python tests/g8_mutants.py` 30 of 30, oracle line 141, docstring
-placement; G8-glued-rest-gap-v4.md, in draft while v6 was written, says the same on these four points) applied. A table of
+placement; G8-glued-rest-gap-v4.md, in draft while v6 was written, says the same on these four points; CHANGED in v7: not true
+of the mutant count, which G8 v4 (final) gives as 34: see 0.3) applied. A table of
 every round 5 finding is section G at the end. Every changed paragraph is marked "CHANGED in v6"; everything else is v5's text. The v6 drafter verified each
 changed claim by READING the tree at bff88a7a1 (and by importing the five mutant lists to count their entries); nothing was run
 as a test and nothing new was measured. Section F (round 4) stays; round 5's findings are resolved where each is marked.
@@ -187,10 +188,10 @@ The same order is written in G8 v3 (handover core-c reconciles the two tickets).
      measured output into that cell, records old and new in evidence/G4-1.md, and reports it (a leak in the new output is a STOP);
   3. adds the two G8 files to the run lists of Phases 3, 4 and 5 (12), and CHANGED in v6 (G8 v3 8.1 G4-2, G8-review-3 M1): the
      mutant run `python tests/g8_mutants.py` to Phase 4 step 4 and to Phase 5. CHANGED in v7 (review round 6 readiness M1):
-     Expected: `N of N good`, where N is `len(M)` of the MERGED tests/g8_mutants.py, read by import in Phase 0 (g) (G8 v3: 30;
-     G8 v4 8.1 G4-2: 32, two mutants added in its 8.2; G8 v4's sections 8-9 and appendix C still print v3's 30 from its last run,
-     so the merged file decides); a BAD is a finding (the G4 regex moved a G8 row), reported, not edited away. G8 v4 8.1 G4-2 also
-     puts tests/test_redact_glued_rest.py in G4's Phase 4 step 1 run list (12).
+     Expected: `N of N good`, N = the count in the MERGED tests/g8_mutants.py, read by import in Phase 0 (g) (G8 v3: 30; G8 v4,
+     final, 8.1 G4-2 and appendix C: 34, four mutants added; its section 9's runs still print v3's 30 and its 9.1 says the 34 were
+     emulated, not run by the runner, so the merged file decides); a BAD is a finding (the G4 regex moved a G8 row), reported, not
+     edited away. G8 v4 8.1 G4-2 also puts tests/test_redact_glued_rest.py in G4's Phase 4 step 1 run list (12).
 - G4a against G8's must-keep rows (G8-review-2 Major 2): Phase 3 runs tests/test_redact_glued_rest.py. A must-keep row that
   changes under G4a (G8 names K60 (base64url) and K66 (base64) as candidates) is a finding: the builder records the old and new
   output; if the new output masks a base64 blob that decodes to text holding a secret, it is intended and the row's expected cell
@@ -211,8 +212,13 @@ The same order is written in G8 v3 (handover core-c reconciles the two tickets).
 - CHANGED in v7 (G8 v4 read by name): G8 v4 4.1 numbers the new PHONE entries 6-8 (6 `+`-led, 7 contiguous beside `_`, 8 after a
   phone word; entry 5 is CREDITCARD); its oracle edit is still the `raw_copies` line 141 of tests/test_redact_idempotent_property.py;
   its module-docstring paragraph is placed as above (G8 v4 4.3). G8 v4 also edits the `enforce_map` docstring at runmap.py 699 and
-  718 (the PHONE `_joins` clauses) and model_gate.py 12-13: different sentences from G4's clause (runmap.py 732), so a textual merge
-  only.
+  718 (the PHONE `_joins` clauses) and model_gate.py 12-14: different sentences from G4's clause (runmap.py 732), so a textual merge
+  only. G8 v4 (final) also adds the module constants `_IBAN_START` / `_IBAN_END` (IBAN entry; `_` counts beside a short word, and
+  the end refuses a following base64 character `[A-Za-z0-9+/=_\-]`) and gives entry 7's end class a `›`. Neither touches a G4 name
+  (0.2: a table update). By reading: an IBAN glued by `_` inside a base64url run is masked by pass 1 when G8's context rule takes
+  it; the run itself is not HELD (its `written` is not the IBAN original) and is decoded like any unit; a run that only holds an
+  IBAN and `_` text does not decode to text (3.2), so it is no hit and pass 1's output stands. K60/K66-style must-keep rows are
+  handled by the G4a rule above.
 
 ### 0.3b Order with G9 (CHANGED in v6, new: review round 5 M3; decision L25; CHANGED in v7: rewritten against G9 v2)
 CHANGED in v7 (review round 6 design M1, readiness N3). Source: tickets/G9-spelled-fixed-point-v2.md (DRAFT v2; its sections 1-6
@@ -790,7 +796,7 @@ SECRET.
 `_HOST_BARE = "internal|local"` and `_HOST_TAIL = "corp|lan|intranet|intra|localdomain|home" + _HOST_DOT + "arpa"`, beside the pattern.
 `defaults.PRIVATE_SUFFIX_LABELS` is a different job and is not used. A `#` comment beside each names the other.
 
-### 5.2 The main pattern (replaces redact.py 407-414; same place; no capture group). MEASURED in-process by v4 (cd8d375).
+### 5.2 The main pattern (replaces redact.py 407-413 (CHANGED in v7: the tuple ends at 413); same place; no capture group). MEASURED in-process by v4 (cd8d375).
 ```
 _HOST_LABEL = r"[A-Za-z0-9_-]+"
 _HOST_DOT = r"(?:\.|\[\.\])"
@@ -969,7 +975,12 @@ Refusals G4 can cause, and what each caller does (review M4 of round 3, round 4 
   `InputTooLarge("SpelledMemoryTooMuch")` (G7 r7, in the tree; 2.6, BY READING);
 - CHANGED in v6 (review round 5 M3; only when G9 is merged, 0.3b): a sweep of either `redact()` of `_pass_one` not settled in
   `SPELLED_MAX_PASSES` passes: `InputTooLarge("SpelledNotSettled")`; at the gate (`enforce_map`, `held_value_left`'s checker, not
-  `redact_text`), an overlap the gate's redactor may not register: `InputTooLarge("SpelledOverlap")` (G9 L-D1);
+  `redact_text`), an overlap the gate's redactor may not register: CHANGED in v7: `RedactionError("SpelledOverlap")` (a
+  RedactionError, gate code `mask_refused`; G9 v2 4.5, L-D1, L-D1b);
+- CHANGED in v7 (only when G9 is merged; 0.3b point 3, L26): a LATER text that mentions a long `<ENCODED_n>` many times (MEASURED on
+  the G9 v2 prototype: a 65,536-character blob at 30 mentions, a 16,384-character one at 119) is refused
+  `InputTooLarge("SpelledWorkTooMuch")` by G9's read-back: at the gate `mask_budget_exceeded`; on a producer path refused, map not
+  written;
 - then: a document ends `NEEDS_PERSON` `document_too_large`; a tool result becomes a tool error (`redact_layered` catches only
   `TooDeep`); a k1b bundle raises `InputTooLarge`;
 - a CARD is NOT shown `SETTLE_NOTE`. The first `redact_text` calls of `channel.clean` (channel.py 37 and 44) and `cards._card`
@@ -1044,7 +1055,7 @@ Totals: 19 closed (13 part rows, 6 whole rows); 3 limits, 4 kept, 18 unchanged. 
 | `ROW_BY_ID["L3"]` card | `SAME` | ```` ```\nping <HOSTNAME_1>\n```\nthen evil[.]com ```` (MEASURED by v4) | Modify `after` from SAME to this literal |
 | tests/warden_port/privacy_corpus.py rows at lines 36, 37 | (kind only) | `db at <HOSTNAME_1>:5432`, `smb://<HOSTNAME_1>/share` (MEASURED by v4, both functions) | stay green (kind assertions); carved out of I4 into I12b |
 | tests/test_runmap_enforce_map.py `test_e5_one_original_under_two_placeholders_follows_the_stronger_rule`, its first assert (line 523) `_one_sweep(f"a{value}b", mapping) == f"a{value}b"  # FAIL-BEFORE: the weaker rule won` | the redactor's own sweep keeps the weaker (TENANT) rule | `_one_sweep(...) == "a<SECRET_1>b"`: the `_build` tie-break (4 point 5) makes the redactor's own sweep follow the stronger rule. MEASURED on the prototype: RED as written (`'a<SECRET_1>b' == 'aZq9xLm4wb'`); the other two asserts stay green | Modify that one line (Phase 2) to `assert _one_sweep(f"a{value}b", mapping) == "a<SECRET_1>b"  # since G4 the redactor's own sweep follows the stronger rule (tie-break in _build)`; NEW in v5, found by the prototype run (decision L24) |
-| tests/gate_mutants.py `R8 one original under two placeholders keeps the weaker rule (E5)` (old `        if _rules_conflict(known):\n`, killer test_e5) | KILLED | EQUIVALENT under G4: MEASURED in-process, `_rules_conflict` patched to False on the prototype still gives `a<SECRET_1>b <SECRET_1>` and `a<SECRET_1>b` (the tie-break orders the rules); at the base the same patch gives `aZq9xLm4wb <TENANT_1>` | L24 default: remove R8 from `M` in Phase 2 and add a comment line at its place naming it "equivalent since G4 (`_build` tie-break, ticket G4 v6 9.3; CHANGED in v6: v6); `_rules_conflict` stays as defence in depth"; gate_mutants' runmap.py count becomes 23. CHANGED in v6 (review round 5 M1): `len(gate_mutants.M)` goes from 105 to 104, and tests/test_gate_mutants_picked_up.py `MIN_MUTANTS = 105` (line 20; `test_the_gate_mutant_list_imports_and_is_not_shrunk` asserts `len(M) >= MIN_MUTANTS`) would go red: in the same Phase 2 commit it becomes `MIN_MUTANTS = 104  # R8 retired as equivalent since G4 (_build tie-break, ticket G4 v6 9.3)` |
+| tests/gate_mutants.py `R8 one original under two placeholders keeps the weaker rule (E5)` (old `        if _rules_conflict(known):\n`, killer test_e5) | KILLED | CHANGED in v7 (review round 6 design M2): equivalent for test_e5's input ONLY (MEASURED again at 944d143db, `r8.py`: with G4's tie-break, R8 applied still gives `a<SECRET_1>b <SECRET_1>`), NOT equivalent in general: for the map `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}` (V = `"Zq9x" + "Lm4w"`, one same-original conflict plus two DIFFERENT overlapping originals, the identifier listed first) `enforce_map("x ab-cd-ef y", m)` gives `x <SECRET_1>-ef y` with G4 and `x ab-<TENANT_1> y` with G4 + R8 (MEASURED; at 944d143db without G4: the same two strings). | CHANGED in v7, L24 default: R8 STAYS in `M`; its killer is RE-POINTED to the new test `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals` (TB-2.11, in tests/test_runmap_enforce_map.py, Phase 2) with `expect` `"E5b"`; v6's removal, its comment line and the `MIN_MUTANTS` 105 -> 104 edit are WITHDRAWN (`len(gate_mutants.M)` stays 105, its runmap.py count 24). test_e5's FAIL-BEFORE line is still changed (row above) and the `snapshot` comment of 4 point 5 is edited. With G9 merged the killer's expected value is the G9 + G4 column of 0.3b (`RedactionError("SpelledOverlap")`; with R8 `x <SECRET_1><TENANT_1> y`: still killed) |
 | tests/fixtures/p1d_a_base_rows.json `L2/card`, `L3/card` | base record | not changed | contested in round 2 (the JSON records base 2742c1b and is read only for `BS0` cells) |
 | tests/test_p1d_a_paths.py property `_PIECES` (`HOST = "db-7.corp.internal"`, about 26) | no host shown | stays green: with v3's start look-behind it went RED (v4, measured); v5's start (5.2 point 1) masks it | the reason for the start change; Phase 4 STOP if red |
 | tests/test_text_parts_together.py about 242 (`db-7.corp`), tests/test_k1b_redaction.py 18 (`db01.corp.local`), tests/test_model_gate.py about 1744 (`db1.corp.example.org` map entry) | masked whole / unchanged | unchanged | stay green (v4's pre-final run: 710 passed, 1 failed, the perf row of 5.2 point 1); NOT RE-RUN on the final look-behind |
@@ -1128,9 +1139,10 @@ Phase 4 the 19 G4c keys, Phase 5 deletes `OPEN_ROWS` itself. Every commit of the
 | TB-2.5 | `test_place_encoded_identifier_original_gets_a_new_entry` | `m={"<TENANT_1>": X}`, runs `[X]` | `["<ENCODED_1>"]`; `m == {"<TENANT_1>": X, "<ENCODED_1>": X}` |
 | TB-2.6 | `test_place_encoded_reuses_an_encoded_original` | `m={"<ENCODED_3>": X}`, runs `[X]` | `["<ENCODED_3>"]`; `len(m) == 1` |
 | TB-2.7 | `test_tie_break_same_original_secret_rule_first` (I7b) | `redact_mod.redact("pre"+X+"post and "+X+" alone", mapping={"<TENANT_1>": X, "<ENCODED_1>": X}).text` | `pre<ENCODED_1>post and <ENCODED_1> alone` (MEASURED; base with SECRET standing in: `preQUJDREVGR0hJpost and <TENANT_1> alone`) |
-| TB-2.8 | `test_tie_break_keeps_the_order_of_different_originals` | `runmap.enforce_map("x ab-cd-ef y", m)` for the 4 maps of 4 point 5; CHANGED in v6 (N1): plus the fifth map of 4 point 5 through `runmap._Redactor(m, None).sweep("x ab-cd-ef y")` and through `enforce_map` | the 4 outputs of that table, in order (MEASURED, base = prototype); the fifth map: `x <SECRET_1>-ef y` both ways (BY READING; base of the redactor's own sweep `x ab-<TENANT_1> y`, so that row is FAIL-BEFORE) |
+| TB-2.8 | `test_tie_break_keeps_the_order_of_different_originals` | `runmap.enforce_map("x ab-cd-ef y", m)` for the 4 maps of 4 point 5; CHANGED in v6 (N1): plus the fifth map of 4 point 5 through `runmap._Redactor(m, None).sweep("x ab-cd-ef y")` and through `enforce_map` | the 4 outputs of that table, in order (MEASURED, base = prototype); the fifth map: `x <SECRET_1>-ef y` both ways (CHANGED in v7: MEASURED at 944d143db with the tie-break patched in; base of the redactor's own sweep `x ab-<TENANT_1> y`, so that row is FAIL-BEFORE). CHANGED in v7: ORDER-DEPENDENT with G9 (0.3b): on a tree with G9 every row takes the G9 + G4 column there (maps 2 and 4 `pytest.raises(RedactionError, match="SpelledOverlap")`) |
 | TB-2.9 | `test_encoded_is_never_restored_or_stored` (I6) | `m={"<ENCODED_1>": SB}` | `runmap.restore_text("x <ENCODED_1>", m) == "x <ENCODED_1>"`; the same with `kinds=frozenset({"ENCODED"})`; `runmap.storable(m) == {}`; `runmap.storable(m, frozenset({"ENCODED"})) == {}` |
 | TB-2.10 | `test_assignment_kinds_hold_encoded` | - | `"ENCODED" in channel._ASSIGNMENT_KINDS` |
+| TB-2.11 (CHANGED in v7, new; R8's killer, review round 6 design M2) | `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals`, in tests/test_runmap_enforce_map.py (the gate test file, so gate_mutants runs it), using that file's `_enforce` | `m = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": V, "<SECRET_2>": V}`, `V = "Zq9x" + "Lm4w"`; text `x ab-cd-ef y` | `assert out == "x <SECRET_1>-ef y", "E5b the secret entries were not put first"` (MEASURED at 944d143db with and without the tie-break; R8 gives `x ab-<TENANT_1> y`). Green at the base too (not FAIL-BEFORE: it pins existing gate behaviour). With G9: `pytest.raises(RedactionError, match="SpelledOverlap")` (0.3b), R8 then `x <SECRET_1><TENANT_1> y` |
 
 ### 10.3 TB, Phase 3 part (appended to tests/test_b64_scan.py in Phase 3)
 Every assertion of a TB or TG test carries a message that starts with its id (`assert out == want, "TB-3.13 percent padding"`):
@@ -1138,7 +1150,7 @@ the mutants of 13.3 use the id as their `expect` text.
 | id | name | input recipe | exact expected |
 |---|---|---|---|
 | TB-3.1 | `test_b64_text_rules` | `_b64_text` of: `b64("status ok here")`; `b64(bytes(range(256)))`; `"QUJD+REVG_R0hJ"`; `"QUJDREVGR0hJS"` (13); `b64("10.20.30.40".encode("utf-16-le"))`; `b64("10.20.30.40".encode("utf-16-be"))` = `ADEAMAAuADIAMAAuADMAMAAuADQAMA==`; `b64(b"\xff\xfe" + "ok".encode("utf-16-le"))`; `b64("unpadded!!")`.rstrip("=") | `"status ok here"`; None; None; None; `"10.20.30.40"`; `"10.20.30.40"`; `"ok"`; `"unpadded!!"` |
-| TB-3.2 | `test_b64_units_wrapped_block_table` | the 8 rows of 3.1 point 3, with the strings given there | exactly the `(start, end)` of that table, `written == text[start:end]` (MEASURED on the prototype) |
+| TB-3.2 | `test_b64_units_wrapped_block_table` | the 8 rows of 3.1 point 3, with the strings given there | exactly the `(start, end)` of that table, `written == text[start:end]` (MEASURED on the prototype); CHANGED in v7: plus rows 9 and 10 (loose blocks) and their `parts` `(start, end)`, BY READING |
 | TB-3.3 | `test_b64_units_placeholders_are_never_runs` (I19) | `x <HIGHENTROPY_7> y`, `card <CREDITCARD_12> ok`, `<SECRET_REDACTED>`, `‹HIGHENTROPY_7›`, `<GCPRESOURCE_1>`, `<AZURERESOURCE_12>`, `"<SECRET_REDACTED> " * 20_000` | `_b64_units(t)[1] == []`; `redact_text` / `redact_untrusted` output and map equal to the build with `runmap._B64_RUN = re.compile(r"(?!)")` |
 | TB-3.3b | `test_marker_shaped_blobs_are_blanked` (L-B6 pin) | `<cGFzc3dvcmQ_12>`, `<ABCDEFGHIJKLMNOP>`, `‹ABCDEFGHIJKLMNOP›`; control `"<" + SB + ">"` | `[]` for the three; `[SB]` for the control (MEASURED) |
 | TB-3.4 | `test_no_run_no_extra_work` (I5) | `pw=ab%41 here`, `pw=ab%41 x A` (tests/test_redact_fold_budget.py budget_1b and budget_2 texts), 100,000 characters of prose, a 48-character HIGHENTROPY blob, the rows of TB-3.3 | `runmap.redact` calls (a counting wrapper on `runmap.redact`), `time.thread_time` reads (a counting wrapper on `runmap.time.thread_time`), text and map equal to the step-off build |
@@ -1174,21 +1186,24 @@ the mutants of 13.3 use the id as their `expect` text.
 | TB-3.34 | `test_url_credential_blob_kept_entry` (NEW) | `redact_text(b64("http://u:" + PW + "@h.io"), m)` | `<ENCODED_1>`; `dict(m) == {"<URLCRED_1>": PW, "<ENCODED_1>": blob}` (MEASURED) |
 | TB-3.35 | `test_decoded_text_is_neutralised` (NEW, pins L19's hook) | `redact_text(b64("password=<FOO_1>"), RunMap())` and `redact_untrusted` of it | `<ENCODED_1>` both (MEASURED: the escaped `‹FOO_1›` after a key is masked since E9; with no hook the older all-placeholder rule leaves it, no hit: BY READING) |
 | TB-3.36 | `test_decoded_text_gets_its_views` (NEW) | `redact_text(b64("password%3D" + S12), m)` | `<ENCODED_1>`; `m["<SECRET_1>"] == S12` (MEASURED) |
+| TB-3.37 (CHANGED in v7, new, M3) | `test_wrapped_at_a_loose_width` | for `w` in 50, 70, 90: `"\n".join(textwrap.wrap(b64("2026-11-20 deploy db_password=" + S12 + " applied to the cluster after the review of the change set"), w))`, through `redact_text` and `redact_untrusted` | exactly `<ENCODED_1>`; `m["<SECRET_1>"] == S12`; `leak_of(S12, out)[0] == "no"` (BY READING; the per-line and joined decodes MEASURED with a stdlib copy of 3.2, 3.1 point 3; under v6 line 2 stayed undecoded) |
+| TB-3.38 (CHANGED in v7, new, M3) | `test_loose_block_falls_back_to_its_lines` | `a + "\n" + b` with `a = b64("pwd=" + S12 + "abcd").rstrip("=")`, `b = b64("pwd=" + S12[::-1] + "wxyz").rstrip("=")` (27 characters each) | `<ENCODED_1>\n<ENCODED_2>` (BY READING; MEASURED with the stdlib copy: the join does not decode, each line decodes to `pwd=...`) |
 | xfail strict | `test_limit_glued_prefix` (L-B1), `test_limit_split_fields` (L-B4), `test_limit_log_prefixed_lines` (L-B5) | `"/v1/blob/" + SB`; `json.dumps({"a": SB[:14], "b": SB[14:]})`; `"\n".join("2026-11-20 INFO " + w for w in textwrap.wrap(b64("2026-11-20 deploy db_password=" + S12 + " applied"), 16))` | each asserts `leak_of(S12, out)[0] == "no"`. MEASURED on the prototype, both functions: `YES (whole)`; `YES (part, 9 of 12 chars)` (the first half decodes to `password=Z`, becomes `<ENCODED_1>`, the second half stays); `YES (part, 6 of 12 chars)`. All FAIL, so strict xfails hold; an XPASS means the limit closed (report it) |
 | xfail strict | `test_limit_base32_hex` (L-B2, CHANGED assertion) | `b = base64.b32encode(("password=" + S12).encode()).decode()`; `h = ("password=" + S12).encode().hex()` | asserts `b not in out and h not in out` for `out = redact_text(b + " " + h, {})`. MEASURED: both shown, the assertion fails. (v4 asserted `leak_of(...) == "no"`, which PASSES because `leak_of` does not decode base32 or hex: that row would XPASS and turn a phase red) |
 | (no xfail) | L-B6 | - | pinned by TB-3.3b; no input found that a real secret would produce (3.1 point 2) |
+| xfail strict (CHANGED in v7, new, design N2) | `test_limit_jwt_segment_copy` (L-B7) | `J` = MUST_KEEP_B64 row 06's JWT built with payload `{"pwd":"` + S12 + `"}`; `t = J + " and later " + J.split(".")[1]` | asserts `leak_of(S12, redact_text(t, {}))[0] == "no"`. BY READING: the lone payload copy is a substring of the JWT original, so HELD and not decoded (3.3), and it is under 40 characters, so no HIGHENTROPY: the assertion fails. The builder runs it in Phase 3 before marking it (3.3) |
 
 ### 10.4 TB, Phase 4 part (tests/test_host_names.py, created in Phase 4)
 | id | name | input recipe | exact expected |
 |---|---|---|---|
 | TB-4.1 | `test_host_key_masks_db01` | the rows 33-36 of 5.3, plus `host web-1 down` | the 5.3 outputs; `host <HOSTNAME_1> down` |
-| TB-4.2 | `test_host_key_keeps_tech_words` | the 10 kept rows of 5.3, `host s3 bucket`, `server db01 down` (the `server` key is not a host key) and `host db01.example ok` (a dotted value is not a host-key value) | each unchanged |
+| TB-4.2 | `test_host_key_keeps_tech_words` | the 10 kept rows of 5.3, `host s3 bucket`, `server db01 down` (the `server` key is not a host key) and `host db01.example ok` (a dotted value is not a host-key value); CHANGED in v7 (N3): plus `host x64 build`, `host win32 target`, `host win64 target`, `host x86-64 runner` | each unchanged (the four new rows MEASURED, 5.3) |
 | TB-4.3 | `test_host_key_sweep_side_effect` | `host ec2 failed; see ec2.internal, k8s.io, s3://b and x86_64 builds`; `host db01 down; tail db01.log` | unchanged; `host <HOSTNAME_1> down; tail <HOSTNAME_1>.log` |
 | TB-4.4 | `test_host_key_two_digit_words_are_masked` (stated) | `host py311 image`, `host sha256 sum` | `host <HOSTNAME_1> image`, `host <HOSTNAME_1> sum` |
 | TB-4.5 | `test_host_suffix_hyphen_rest` | the 5 rows of 5.2 point 5 | each `<HOSTNAME_1>` |
 | TB-4.6 | `test_host_start_after_a_bracket_or_a_lone_dot` | `(x<HOSTNAME_1>&.]db-7.corp.internalx`, `x/.db01.corp.example`, `..db01.corp` (with `RunMap({"<HOSTNAME_1>": "\0seed"})` for the first) | `db-7` not in the output; `x/.<HOSTNAME_1>`; `..<HOSTNAME_1>` |
 | TB-4.7 | `test_host_whole_names` | `db01.corp.example`, `db01.corp.example.`, `com.acme.corp.billing.Service` (L-H1, a plain assert of the over-mask), `db_01.corp.example`, `db01[.]corp[.]example`, `x[.]svc[.]cluster[.]local`, `db01.corp.example.com_x` | `<HOSTNAME_1>`, `<HOSTNAME_1>.`, and `<HOSTNAME_1>` for each of the other five |
-| TB-4.8 | `test_host_kept_names` | the 6 rows of 5.2 point 6 | each unchanged |
+| TB-4.8 | `test_host_kept_names` | the 6 rows of 5.2 point 6; CHANGED in v7 (N1): plus `dial db01.corp.example.svc.cluster.local now` (L-H5) | each unchanged (the new row MEASURED, 5.2 point 6) |
 | TB-4.9 | `test_host_privacy_rows_new_strings` (I12b) | privacy_corpus.py rows at lines 36, 37 | `db at <HOSTNAME_1>:5432`, `smb://<HOSTNAME_1>/share` (both functions) |
 | TB-4.10 | `test_host_patterns_are_linear` (`@pytest.mark.perf`) | each of `"a[.]"*12500`, `"a.-_"*12500`, `"a-"*25000+".corp"`, `"a."*25000`, `"ab-cd."*8000` | each HOSTNAME pattern's `findall` under 0.05 s |
 | TB-4.11 | `test_host_label_class_is_ascii` (L11) | `"dial dbа" + "01.corp.example now"` (Cyrillic `а` in the first label) | the builder MEASURES the base output in Phase 4 and pins it; if the output equals the one with `_HOST_LABEL = r"[\w-]+"`, the Unicode-class mutant is declared equivalent (the fold scan masks the line first) in the evidence. UNMEASURED |
@@ -1287,10 +1302,12 @@ Modify:
 - `tests/fixtures/p1d_cases.py`: the `after` cells of H27, L2 and L3 (Phase 4).
 - `tests/p1d_a_mutants.py`: the killers of A4, A5, A38 and A6 (9.3 table; Phase 4).
 - `tests/test_runmap_enforce_map.py`: the one line of `test_e5_...` (9.3; Phase 2, L24); CHANGED in v6 (N1): and the sentence added
-  to `test_e5_...`'s docstring (4 point 5).
-- `tests/gate_mutants.py`: R8 removed from `M`, with the comment of 9.3 (Phase 2, L24).
-- CHANGED in v6 (review round 5 M1): `tests/test_gate_mutants_picked_up.py`: `MIN_MUTANTS = 105` -> `104` with the comment of 9.3
-  (Phase 2, same commit as R8's removal; the reason: R8 is retired as equivalent, not lost).
+  to `test_e5_...`'s docstring (4 point 5); CHANGED in v7 (M2): and the new test TB-2.11 `test_e5b_...` after `test_e5_...`.
+- CHANGED in v7 (M2): `tests/gate_mutants.py`: R8 KEPT; its killer re-pointed: test `test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals`,
+  expect `"E5b"` (Phase 2, L24). v6's removal of R8 and its `MIN_MUTANTS = 105` -> `104` edit of tests/test_gate_mutants_picked_up.py are
+  WITHDRAWN: that file is not edited.
+- CHANGED in v7 (readiness N4): `src/hadavin_sdk/guard/runmap.py`: the `snapshot` comment under `if _rules_conflict(known):` (907-909;
+  text in 4 point 5), Phase 2.
 - `tests/redact_mutants.py`:
   - R3's `old` AND `new` re-indented: `old = "            time.thread_time() - started > defaults.REDACT_BUDGET_S\n        ):  # a hostile text"`,
     `new = "            False\n        ):  # a hostile text"`. v4 MEASURED that `ruff format` (line-length 100) writes a loop at the top
@@ -1331,8 +1348,12 @@ Must stay green UNCHANGED (run, do not edit; a red one is a finding: report it):
 - CHANGED in v6 (review round 5 N2): tests/test_g4_parity.py and test_s4_llm_guard.py (call `channel.clean` directly),
   test_s6_approvals.py, test_gate_install_callers.py and test_review_pr3_round2.py (reach it through `FakeChannel` / cards);
   in Phase 3 step 2 and Phase 4 step 2
-- tests/test_no_hardcoded_values.py, test_lockin_guard.py, test_gate_mutants_picked_up.py (CHANGED in v6: after its
-  `MIN_MUTANTS` edit), and the mutant runs of 13.3.
+- CHANGED in v7 (review round 6 readiness N6): tests/test_client_profile.py, test_k3_leftovers.py, test_k3_pilot.py and
+  test_k3_pilot_env.py (they import `FakeChannel`, so card text reaches `channel.clean`); in Phase 3 step 2 and Phase 4 step 2
+- CHANGED in v7 (tree, header): tests/test_redact_mutants_meta.py (R3's re-indented `old` must occur once in runmap.py and mutant
+  21's twice, `EXPECTED_COUNT = 94`); in Phase 2 step 2 and Phase 3 step 2
+- tests/test_no_hardcoded_values.py, test_lockin_guard.py, test_gate_mutants_picked_up.py (CHANGED in v7: unchanged, `MIN_MUTANTS`
+  stays 105), and the mutant runs of 13.3.
 MEASURED on the prototype (G4a + G4b, no G4c) with `-n 3 -m "not perf"`: tests/test_redact_context_after_sweep.py,
 test_redact_own_output.py, test_redact_own_output_hardening.py, test_runmap_map_write.py, test_k5_tools.py, test_redact_fold_budget.py,
 test_k5_fixes7.py, test_k5_fixes9.py, test_k5_round11.py, test_k5_round5.py, test_runmap_enforce_map.py, test_k1b_redaction.py,
@@ -1374,9 +1395,13 @@ Phase 0 (no src code):
   CHANGED in v6 (review round 5 M2): at bff88a7a1 (Q9 in the tree) the count is 146 mutants on runmap.py/redact.py: redact_mutants
   88 redact.py + 7 runmap.py (`len(M)` = 96: 63 `m(` + 3 E9 + 30 Q9; one entry is on another file), p1d_a_mutants 18 + 1,
   gate_mutants 24 (of 105), stage_mutants 3, textnorm_mutants 5; every `old` exactly once except mutant 21 (2, as intended).
-  N15 occurs ONCE (re-pointed by 4fb0b5154 to `_build`'s alias loop, redact.py 1958-1960): it is no longer `ERROR SNIPPET NOT
+  N15 occurs ONCE (re-pointed by 4fb0b5154 to `_build`'s alias loop, redact.py 1958-1960 at bff88a7a1, 1955-1957 at 944d143db): it is no longer `ERROR SNIPPET NOT
   FOUND`, and L18 is closed. Counted by the v6 drafter by importing the five `M` lists and counting each `old` in its file (a
   scratch copy of the snippet script's logic); no mutant was run. The builder's Phase 0 (g) record on its base is the reference.
+  CHANGED in v7 (header): at 944d143db the count is 144 (MEASURED by import, `count.py`): redact_mutants 86 redact.py + 7
+  runmap.py (`len(M)` = 94; N1 and N14 deleted), p1d_a_mutants 18 + 1, gate_mutants 24 (of 105), stage_mutants 3, textnorm_mutants
+  5; every `old` exactly once except mutant 21 (2). When G8 is merged, also record `len(g8_mutants.M)` by import (the N of 0.3
+  step 3).
 - (h) The full suite at the base: `pytest -q -n 3 -m "not live and not perf"`, recorded (its failures are the allowed set).
 Commit: the four new test files, the digest JSON and script, the property-test change, evidence/G4-1.md and g4_snippets.py. On the
 branch, the 76 ids of 13.1 are strict xfails. Run `pytest tests/test_p1c_gaps.py -q` on the branch: 76 xfailed, the rest pass.
@@ -1385,15 +1410,18 @@ Phase 1, defaults.py (SPINE commit): the 8 constants and the 2 comment sentences
 - `pytest tests/test_no_hardcoded_values.py tests/test_k5_review.py tests/test_lockin_guard.py -q`. Expected red: none.
 
 Phase 2, G4b (redact.py `_LABELS`, `SECRET_KINDS`, `place_encoded`, the `_build` rules loop; channel.py `_ASSIGNMENT_KINDS`;
-tests/test_runmap_enforce_map.py's one line; gate_mutants R8 (L24)). CHANGED in v6: also tests/test_gate_mutants_picked_up.py
-`MIN_MUTANTS` 105 -> 104 (M1, 9.3), the runmap.py `enforce_map` docstring clause and test_e5's docstring sentence (N1, 4 point 5).
+tests/test_runmap_enforce_map.py's one line; gate_mutants R8 (L24)). CHANGED in v6: the runmap.py `enforce_map` docstring clause
+and test_e5's docstring sentence (N1, 4 point 5). CHANGED in v7: R8 is KEPT and re-pointed to TB-2.11 (`test_e5b_...`, added to
+tests/test_runmap_enforce_map.py); tests/test_gate_mutants_picked_up.py is NOT edited (`MIN_MUTANTS` stays 105); the `snapshot`
+comment (runmap.py 907-909, 4 point 5).
 Create tests/test_b64_scan.py with TB-2.1 .. TB-2.10.
 1. `pytest tests/test_b64_scan.py -q`. Expected red: none.
 2. `pytest tests/test_runmap_enforce_map.py tests/test_redact_context_after_sweep.py tests/test_redact_own_output.py tests/test_redact_own_output_hardening.py tests/test_k5_classes.py tests/test_redact_settle_loop.py tests/test_redact_idempotent_property.py tests/test_runmap_map_write.py tests/test_redact_fold_budget.py tests/warden_port tests/test_k5_tools.py tests/test_k5_round5.py tests/test_k5_round6.py tests/test_k5_round7.py tests/test_k5_round8.py tests/test_k5_round9.py tests/test_k5_round9b.py tests/test_k5_round10.py tests/test_k5_round11.py tests/test_k5_fixes1.py tests/test_k5_fixes2.py tests/test_k5_fixes3.py tests/test_k5_fixes5.py tests/test_textnorm_order137.py tests/test_textnorm_meta.py tests/test_textnorm_fixbatch.py tests/test_textnorm_siblings.py tests/test_p7_store.py tests/test_p7_tick.py tests/test_model_gate.py -q -n 3 -m "not perf"`.
-   CHANGED in v6: plus `tests/test_gate_mutants_picked_up.py` (M1: green only with `MIN_MUTANTS = 104`).
+   CHANGED in v6: plus `tests/test_gate_mutants_picked_up.py` (CHANGED in v7: green unchanged, 105). CHANGED in v7: plus
+   `tests/test_redact_mutants_meta.py`.
    Expected red: none.
-3. `python tests/redact_mutants.py`, `python tests/gate_mutants.py` (R8 gone; CHANGED in v6: 104 mutants), `python tests/stage_mutants.py`. Expected: the Phase 0
-   (g) verdict for every mutant.
+3. `python tests/redact_mutants.py`, `python tests/gate_mutants.py` (CHANGED in v7: 105 mutants, R8 killed by TB-2.11), `python tests/stage_mutants.py`. Expected: the Phase 0
+   (g) verdict for every mutant (R8: KILLED, now by `test_e5b_...`).
 4. FULL: `pytest -q -n 3 -m "not live and not perf"`.
 
 Phase 3, G4a (runmap.py refactor and step; R3 and mutant 21 text in redact_mutants.py; tests/b64_mutants.py with the `b64 ` mutants;
@@ -1406,9 +1434,11 @@ Phase 3, G4a (runmap.py refactor and step; R3 and mutant 21 text in redact_mutan
    plus, when G8 is merged, `tests/test_redact_glued_rest.py` (a changed must-keep row: 0.3).
    CHANGED in v6 (review round 5 N2): plus `tests/test_g4_parity.py tests/test_s4_llm_guard.py tests/test_s6_approvals.py
    tests/test_gate_install_callers.py tests/test_review_pr3_round2.py` (they reach `channel.clean`, so the base64 step).
+   CHANGED in v7 (readiness N6, tree): plus `tests/test_client_profile.py tests/test_k3_leftovers.py tests/test_k3_pilot.py
+   tests/test_k3_pilot_env.py tests/test_redact_mutants_meta.py`.
    Expected red: none.
 3. `pytest tests/test_b64_scan.py -m perf -p no:xdist -q` (I16).
-4. `python tests/redact_mutants.py` (CHANGED in v6: 96 mutants at bff88a7a1, `len(M)` by import; 66 at e8ff6de2b), `python tests/b64_mutants.py b64`,
+4. `python tests/redact_mutants.py` (CHANGED in v7: 94 mutants at 944d143db, `len(M)` by import; 96 at bff88a7a1, 66 at e8ff6de2b), `python tests/b64_mutants.py b64`,
    `python tests/textnorm_mutants.py runmap`, `python tests/gate_mutants.py`, and
    `python handover/core-c/evidence/g4_snippets.py .`. Expected: the Phase 0 (g) verdicts (R3 now found once again under its new
    text), every b64 mutant good, snippet counts equal to the base except R3's text.
@@ -1416,12 +1446,14 @@ Phase 3, G4a (runmap.py refactor and step; R3 and mutant 21 text in redact_mutan
 
 Phase 4, G4c (the host patterns, p1d_cases.py, p1d_a_mutants.py, gate.py comment; tests/test_host_names.py; host mutants in
 b64_mutants.py; `OPEN_ROWS` loses its 19 G4c ids; tests/g8_cases.py `G4C_MERGED = True` when G8 is merged, 0.3).
-1. `pytest tests/test_host_names.py tests/test_p1c_gaps.py tests/test_b64_scan.py -q -n 3 -m "not perf"`. Expected red: none, no xfail
-   left in test_p1c_gaps.py.
+1. `pytest tests/test_host_names.py tests/test_p1c_gaps.py tests/test_b64_scan.py -q -n 3 -m "not perf"`, CHANGED in v7 (G8 v4 8.1
+   G4-2): plus `tests/test_redact_glued_rest.py` when G8 is merged. Expected red: none, no xfail left in test_p1c_gaps.py.
 2. `pytest tests/warden_port tests/test_p1d_a_rows.py tests/test_p1d_a_paths.py tests/test_p1d_link_oracle.py tests/test_text_parts_together.py tests/test_model_gate.py tests/test_k1b_redaction.py tests/test_no_hardcoded_values.py tests/test_lockin_guard.py tests/test_redact_fold_budget.py tests/test_k5_tools.py tests/test_p7_store.py tests/test_p7_tick.py -q -n 3 -m "not perf"`,
    and, when G8 is merged, `tests/test_redact_glued_rest.py tests/test_redact_g3_port.py`.
    CHANGED in v6 (review round 5 N2): plus `tests/test_g4_parity.py tests/test_s4_llm_guard.py tests/test_s6_approvals.py
    tests/test_gate_install_callers.py tests/test_review_pr3_round2.py` (card and channel text: the host patterns reach them).
+   CHANGED in v7 (readiness N6): plus `tests/test_client_profile.py tests/test_k3_leftovers.py tests/test_k3_pilot.py
+   tests/test_k3_pilot_env.py`.
    The property cases of tests/test_p1d_a_rows.py (`test_no_link_outside_code_on_card`, `test_card_masks_what_model_masks`,
    `test_stored_card_round_trip`, lines 68-166) and of tests/test_p1d_a_paths.py are the guard of the final HOSTNAME start
    look-behind (5.2 point 1): A RED IN ANY OF THEM IS A STOP (review round 4 codebase B5): record the failing input, do not tune the
@@ -1431,13 +1463,13 @@ b64_mutants.py; `OPEN_ROWS` loses its 19 G4c ids; tests/g8_cases.py `G4C_MERGED 
    `test_secret_patterns_are_linear_on_a_50000_character_run` is the guard of 5.2 point 1.
 4. `python tests/p1d_a_mutants.py` (every mutant good; A4, A5, A38 and A6 killed by the 9.3 killers), `python tests/b64_mutants.py host`,
    and `python handover/core-c/evidence/g4_share_sweep.py` (no row changes verdict).
-   CHANGED in v6 (0.3 step 3; G8 v3 8.1 G4-2): when G8 is merged, also `python tests/g8_mutants.py`. Expected: `30 of 30 good`.
+   CHANGED in v6 (0.3 step 3; G8 v3 8.1 G4-2): when G8 is merged, also `python tests/g8_mutants.py`. CHANGED in v7: Expected: `N of N good`, N = the count in the merged tests/g8_mutants.py (G8 v4: 34).
 5. FULL: `pytest -q -n 3 -m "not live and not perf"`.
 
 Phase 5, G4d and documents (the redact.py docstring paragraph and sentence, CHANGELOG.md, SECURITY.md; `OPEN_ROWS` deleted).
 - FULL `pytest -q -n 3 -m "not live and not perf"`, `pytest -m perf -p no:xdist -q`, `pytest tests/test_k5_review.py -q`, ruff and
-  bandit (13.5), the probe on the G4 head, and CHANGED in v6: when G8 is merged, `python tests/g8_mutants.py` (`30 of 30 good`;
-  the run G8 v3 8.1 G4-2 asks of G4's phase 5). Then push; CI on the branch; merge after the result review.
+  bandit (13.5), the probe on the G4 head, and CHANGED in v6: when G8 is merged, `python tests/g8_mutants.py` (CHANGED in v7:
+  `N of N good`, N = the count in the merged tests/g8_mutants.py (G8 v4: 34); the run G8 v4 8.1 G4-2 asks of G4's phase 5). Then push; CI on the branch; merge after the result review.
 - Green: all. The probe shows 0 base64 leaks, 7 host rows readable (6, 8, 9, 10, 15, 16, 42), and numbers 24 / 2 / 17 (or the
   classes Phase 0 (b) re-derived).
 
@@ -1463,12 +1495,13 @@ test exists since G7 r5).
 ### 13.3 Mutants
 Pins that already exist: every `old` text of tests/redact_mutants.py, p1d_a_mutants.py, gate_mutants.py, stage_mutants.py and
 textnorm_mutants.py whose file is guard/runmap.py or guard/redact.py occurs after G4 as many times as at the base, except R3 (re-indented,
-section 11) and gate R8 (removed, L24). MEASURED at e8ff6de2b by the snippet script: 116 such mutants (13.1 (g)), every `old` once
+section 11) (CHANGED in v7: gate R8 is no longer removed, L24). MEASURED at e8ff6de2b by the snippet script: 116 such mutants (13.1 (g)), every `old` once
 except mutant 21 (twice, as intended) and N15 (zero: stale at the base, L18). MEASURED on the prototype: the same, plus R3 at 0
 (its old text not yet re-indented in the scratch code), as expected.
 CHANGED in v6 (review round 5 M2): at bff88a7a1 there are 146 such mutants (Phase 0 (g): the 30 Q9 mutants are on redact.py),
 every `old` once except mutant 21 (twice); N15 occurs ONCE (re-pointed; L18 closed). Counted by import, not by the runner. After
-G4: 145 (R8 removed), with R3 once under its new text. G4 edits none of the 30 Q9 anchors (they are in `_char_class`, at
+G4: 145 (R8 removed), with R3 once under its new text. CHANGED in v7: at 944d143db 144 (N1, N14 deleted; MEASURED by import);
+after G4 also 144 (R8 kept, L24), with R3 once under its new text, which tests/test_redact_mutants_meta.py checks too. G4 edits none of the 30 Q9 anchors (they are in `_char_class`, at
 `    f = fold(ch)\n    flag = 0\n`).
 
 Literals G4 must keep at their counts:
@@ -1507,6 +1540,8 @@ tests/test_b64_scan.py, G = tests/test_p1c_gaps.py, H = tests/test_host_names.py
 | `b64 no size pre-check of the decoded join` | RM | `    if _expanded_len(joined) > defaults.MAX_REDACT_CHARS:` -> `    if False:` | B::test_caps_fail_closed (e) | TB-3.16 |
 | `b64 no held rule` | RM | `    units = [u for u in units if not _b64_held(u, secret, parts)]` -> `    units = list(units)` | G::test_base64_row (I2) | I2 |
 | `b64 no wrapped blocks` | RM | `                if len(taken) >= 2:` -> `                if False:` | B::test_b64_units_wrapped_block_table | TB-3.2 |
+| CHANGED in v7 (M3): `b64 loose widths not joined (v6 rule)` | RM | `        if width < defaults.B64_WRAP_MIN_CHARS:` -> `        if width < defaults.B64_WRAP_MIN_CHARS or width % 4:` | B::test_wrapped_at_a_loose_width | TB-3.37 |
+| CHANGED in v7 (M3): `b64 loose block has no line fallback` | RM | `            chosen.extend(p for p in unit.parts if hit_of[p.written])` -> `            pass` | B::test_loose_block_falls_back_to_its_lines | TB-3.38 |
 | `b64 no separator fallback` | RM | `    if len(after) != len(pieces):\n        return all_hit()` -> `    if False:\n        return all_hit()` (the hit loop is `for i, a, s in zip(idx, after, seen):`, so fewer pieces give fewer hits) | B::test_separator_fallback | TB-3.17 |
 | `b64 separator of v3` | RM | `_B64_SEP = "\n\n;\n\n"` -> `_B64_SEP = "\n\x1e\n"` | B::test_separator_survives_every_neutralise (the `channel._neutralise` row; MEASURED: `\n\x1e\n` survives `neutralise_untrusted` but not the card hook) | TB-3.18 |
 | `b64 decoded view not neutralised (L19)` | RM | `_scan(joined, dict(known), None, neutralise_untrusted, budget, depth + 1)` -> `_scan(joined, dict(known), None, None, budget, depth + 1)` | B::test_decoded_text_is_neutralised | TB-3.35 |
@@ -1582,14 +1617,16 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
 | L15 | how the decoded texts are scanned | one joined scan with the separator `"\n\n;\n\n"`, every unit a hit when a separator is lost | one `_scan` per decoded text (v4 measured 6.4 s per 300 hitting pieces against a 1,000-entry map) |
 | L16 | `_build` tie-break | for the same original only (rules loop) | v3's sort key `(-len, kind not in SECRET_KINDS)`: also reorders different equal-length originals; the `enforce_map` docstring sentence is then changed |
 | L17 | a card whose text passes a base64 cap (or `SpelledWorkTooMuch`) | refused as today for any over-cap text: no card posted, the event recorded undelivered (8) | `cards._card` catches `RedactionError` and shows a fixed text (a change to approvals/cards.py) |
-| L18 (CHANGED in v6: CLOSED) | redact_mutants N15's stale `old` text | no longer stale: 4fb0b5154 (Q9) re-pointed N15 to `_build`'s alias loop (`            if deadline is not None:\n                self._over_budget(deadline)\n            for key in _alias_keys(original):\n`, redact.py 1958-1960 at bff88a7a1, found once); G4 does not touch those lines and compares N15 with the base verdict like every other mutant | none needed |
+| L18 (CHANGED in v6: CLOSED) | redact_mutants N15's stale `old` text | no longer stale: 4fb0b5154 (Q9) re-pointed N15 to `_build`'s alias loop (`            if deadline is not None:\n                self._over_budget(deadline)\n            for key in _alias_keys(original):\n`, redact.py 1958-1960 at bff88a7a1, CHANGED in v7: 1955-1957 at 944d143db, found once); G4 does not touch those lines and compares N15 with the base verdict like every other mutant | none needed |
 | L19 (new, B2) | how a decoded text is neutralised before its scan | always `runmap.neutralise_untrusted` (markers and placeholder look-alikes only), whatever the caller's hook; MEASURED: closes the URL-credential blob on cards (TB-3.31) | the caller's hook (v4): a short blob of a URL credential is shown on a card (MEASURED); stated in SECURITY ("a credential inside a link, written in base64, is not found on an approval card") |
 | L20 (new, readiness Major 5) | numbering of kept decoded entries | renumbered against the incoming map in `_pass_one` (2.5 step 6): no gaps; a value numbered before the blob is renumbered after the kept entries (TB-3.19 measured) | inner numbers kept (numbered against pass 1's map): numbering gaps in the map (accepted; TB-3.19 expects `<SECRET_3>` and keys without SECRET_1) |
 | L21 (new, readiness Major 6) | held test and `=` padding | the whole-unit test ignores trailing `=` on both sides (TB-3.13 measured: one ENCODED entry, `%3D` kept) | exact compare: TB-3.13 expects `data=<ENCODED_2>` and two ENCODED entries |
 | L22 (new, B6) | cost of the step on texts with many non-base64 runs | no pre-filter; `PLAIN_RATIO = 1.15` (MEASURED 1.06-1.07) | pre-filter: decode a unit only if its body holds an upper-case letter or a digit (MEASURED: drops all 2,599 snake_case units); stated limit for an all-lower-case blob |
 | L23 (new, order) | order with G8 | G8 first (`G4C_MERGED = False`), then G4; the G4 builder flips the flag, checks rows 60-62/66, runs the two G8 test files, and owns the rebase of the property test and the redact.py docstring (0.3) | G4 first; G8 v3's builder sets `G4C_MERGED = True` from the start and owns both rebases |
-| L24 (new, found by the prototype run) | the `_build` tie-break makes gate round 4's `_rules_conflict` reorder in `snapshot` redundant | keep the gate code (defence in depth); change the FAIL-BEFORE line of `test_e5_...` to the new redactor behaviour; remove gate mutant R8 (equivalent, MEASURED) with a comment, and (CHANGED in v6, M1) lower `MIN_MUTANTS` in tests/test_gate_mutants_picked_up.py from 105 to 104 with the reason | delete the redundant `_rules_conflict` branch of `snapshot` and R8 with it (a change to gate round 4's code; needs the gate owner's review) |
-| L25 (CHANGED in v6, new: review round 5 M3) | order with G9 | either side (0.3b): no dependency; the second lander rebases by name and runs 0.3b's checks; ENCODED tokens are outside G9 v1's read-back unless the same redactor writes them | G9 first, G4 rebased onto it (the same checks, G4 owns them) |
+| L24 (new, found by the prototype run; CHANGED in v7, review round 6 design M2) | gate round 4's `_rules_conflict` re-sort in `snapshot` under the `_build` tie-break | keep the gate code; change the FAIL-BEFORE line of `test_e5_...`; KEEP gate mutant R8 and re-point its killer to the new TB-2.11 `test_e5b_...` (a different-original overlap beside a same-original conflict: MEASURED, R8 gives `x ab-<TENANT_1> y` instead of `x <SECRET_1>-ef y`); `MIN_MUTANTS` stays 105; edit the `snapshot` comment. v6's "R8 equivalent, removed" is WITHDRAWN (equivalent on test_e5's input only) | delete the `_rules_conflict` branch of `snapshot` and R8 with it, with the gate owner's review: then different overlapping originals at the gate follow the map order (TB-2.11 then pins `x ab-<TENANT_1> y`). Note for that choice (MEASURED on the G9 v2 prototype, 0.3b): under G9 the re-sort turns TB-2.11's map into a `SpelledOverlap` refusal, while without it the gate masks `x <SECRET_1><TENANT_1> y` |
+| L25 (CHANGED in v6, new: review round 5 M3; CHANGED in v7) | order with G9 | either side (0.3b): no dependency; the second lander rebases by name, runs 0.3b's checks and re-pins the order-dependent rows (TB-2.8, TB-2.11, test_e5) to the column of the tree it lands on; under G9 v2 every `<ENCODED_n>` is read back (D-4), `SpelledOverlap` is a `RedactionError` | G9 first, G4 rebased onto it (the same checks, G4 owns them) |
+| L26 (CHANGED in v7, new: review round 6 design M1) | a long ENCODED value read back by G9 at every mention (0.3b point 3: a 65,536-character blob refuses a later text at 30 mentions, MEASURED on the G9 v2 prototype) | ACCEPT and state: fail closed (`SpelledWorkTooMuch`; gate `mask_budget_exceeded`), the same cost as any long HIGHENTROPY value under G9; SECURITY names it; G9's owner may bound the read-back of one token (G9's call, not G4's) | G4 lowers `B64_MAX_UNIT_CHARS` to `1 << 14` and REFUSES (`InputTooLarge`) a non-held unit over it instead of masking it unread: the longest ENCODED value is then about 17,000 characters (119 mentions, MEASURED); a longer wrapped blob refuses its first text |
+| L27 (CHANGED in v7, new: review round 6 design M3) | wrapped base64 at a width that is not a multiple of 4 | LOOSE blocks: the join is decoded first, the lines alone as a fallback (3.1 point 3, 2.5 steps 4 and 7; TB-3.37, TB-3.38, two mutants) | v6's rule kept: stated limit L-B8 "a block wrapped at a width that is not a multiple of 4 is read line by line and may stay partly unread", pinned by a strict xfail with TB-3.37's recipe, and SECURITY says "wrapped at a width that is a multiple of 4" |
 
 ## 15. Security notes, what stays out, rollback, reviewers, done
 - No secret value is logged or put in an exception.
@@ -1599,7 +1636,10 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
 - The decoded text is scanned after `neutralise_untrusted` only (L19): it is never shown, so card sanitising (links, HTML, commands)
   would only hide what it holds.
 - A hostile document can now turn a blob into a genuine `<ENCODED_n>` token, and with a compound value force a
-  `SpelledWorkTooMuch` refusal of the whole text (fail closed; MEASURED, TB-3.33). Honest text cannot (2.6).
+  `SpelledWorkTooMuch` refusal of the whole text (fail closed; MEASURED, TB-3.33). Honest text cannot (2.6), within one
+  `redact_text` call. CHANGED in v7: under G9, a later text that mentions a long `<ENCODED_n>` 10 to 30 times is refused (L26).
+- CHANGED in v7 (design N5): the base64 view finds what honest tools and people write; a writer who shapes the text can pass it
+  (L-B1, L-B4, L-B6, L-B7). It is not an adversary-proof gate.
 - Stays out: `redact()` / `redact_many` called directly; offsets other than 0; base32, hex, gzip; blobs glued to a prefix, split
   across fields or log prefixes; marker-shaped blobs (L-B6); `tools.py` and `k1b/redaction.py`; HIGHENTROPY in
   `_ASSIGNMENT_KINDS`; a refused card (L17).
@@ -1608,8 +1648,9 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
 - Done:
   - every phase green, FULL suite included;
   - FAIL-BEFORE recorded (76 ids);
-  - every mutant of 13.3 good (against the Phase 0 (g) record), R8 retired with its reason (CHANGED in v6: and `MIN_MUTANTS` 104);
-  - CHANGED in v6: when G8 is merged, `python tests/g8_mutants.py` 30 of 30 good; when G9 is merged, 0.3b's checks done;
+  - every mutant of 13.3 good (against the Phase 0 (g) record); CHANGED in v7: R8 KEPT and killed by TB-2.11, `MIN_MUTANTS` 105;
+  - CHANGED in v7: when G8 is merged, `python tests/g8_mutants.py` `N of N good`, N = the count in the merged tests/g8_mutants.py
+    (G8 v4: 34); when G9 is merged, 0.3b's checks done and the order-dependent rows pinned to the G9 + G4 column;
   - snippet counts equal;
   - the must-stay-green list green;
   - ruff, bandit, CodeQL, SonarCloud and CodeRabbit green;
@@ -1618,11 +1659,16 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
 ## For SECURITY wording and CHANGELOG (after the build, through the security wording review)
 SECURITY.md, "Stated limits of redaction":
 - Base64. A value written only in base64 is masked whole as ENCODED by the redactor's decoded view, when it is standard or URL-safe,
-  padded or not, UTF-8 or UTF-16, wrapped at a fixed width, and up to three levels deep.
+  padded or not, UTF-8 or UTF-16, wrapped in lines of one length of 16 characters or more (any width; CHANGED in v7: v6 said "at a
+  fixed width", which held only for multiples of 4), and up to three levels deep.
   - An ENCODED value is never stored or restored.
   - A secret found inside it is also masked where it is written plainly elsewhere in the same run.
   - Not found: a blob glued to other base64 characters, split across fields or across lines with a prefix; a blob written between
-    `<` and `>` that looks like a marker (all capitals, or ending in `_` and digits); base32; hex.
+    `<` and `>` that looks like a marker (all capitals, or ending in `_` and digits); base32; hex. CHANGED in v7: a copy of one
+    segment of a JWT (or one line of a key block) written apart from it; lines wrapped under 16 characters.
+  - CHANGED in v7: the decoded view is made for what tools and people write; text shaped on purpose can pass it.
+  - CHANGED in v7 (L26, when G9 is merged): a text that mentions a placeholder of a very long masked value many times (a 64 KiB
+    blob about 30 times) is refused, not sent.
   - A text with more than 2,000 distinct decodable base64 values is refused; a card with such a text is not posted. A document built
     to make the redactor's compound-value scan too long is refused as a whole.
 - Host names.
@@ -1632,7 +1678,9 @@ SECURITY.md, "Stated limits of redaction":
     standalone copy of it in the run. That includes a non-host word of that shape (`py311`); CPU architecture names are not masked.
   - A label with one trailing digit (`web1`) is not masked.
   - A dotted name with no private suffix is not masked.
-  - `.svc` short names, `.cluster.local` and AWS's own names are kept on purpose.
+  - `.svc` short names, `.cluster.local` and AWS's own names are kept on purpose. CHANGED in v7: a private name that goes on into
+    `.svc.cluster.local` (`db01.corp.example.svc.cluster.local`) is kept whole, as before G4.
+  - CHANGED in v7: CPU and platform names after `host` (`x86_64`, `x86-64`, `x64`, `arm64`, `win32`) are not masked.
   - A Java package under a private suffix (`com.acme.corp.billing.Service`) is masked whole.
 
 CHANGELOG.md, Unreleased, Upgrade steps: "**Redaction: base64 and host names (G4).** A value hidden in base64 is now masked as
@@ -1723,6 +1771,13 @@ kinds neither secret nor stored (L8); `MIN_MUTANTS = 105`; runmap.py 732 and tes
 `channel.clean`; G8 v3's entry numbers, oracle line 141 and 8.1; G9 v1's edit list (0.3b). The fifth TB-2.8 map, the G9 /
 ENCODED interplay and the `SpelledMemoryTooMuch` / G9 refusal routes are BY READING. v5's MEASURED items were measured on
 e8ff6de2b and are not re-measured on bff88a7a1 (header).
+CHANGED in v7: MEASURED by the v7 drafter (read-only; scripts `g4v7_r8/*.py`; `uv run python -B` from the repo, nothing
+written there): the fifth TB-2.8 map and TB-2.11's map with G4's rules loop patched into `_Redactor._build` and R8 patched into
+`snapshot` at 944d143db (`r8.py`); N1's row and N3's four rows with v6's 5.2/5.3 patterns in `redact.PATTERNS` (`g4c.py`); the
+wrap widths and the 27-character pair against a stdlib copy of 3.2 (`wrap.py`); the mutant counts by import (`count.py`: 144);
+on the G9 v2 drafter's prototype (`g9v2/proto/src`, a DRAFT, imported, ENCODED added to `SECRET_KINDS` in-process): the
+read-back cost table (`g9cost.py`, `g9edge.py`) and the tie-break table of 0.3b (`g9tie.py`). BY READING: TB-3.2 rows 9-10,
+TB-3.37, TB-3.38 end to end (no G4 prototype was rebuilt), L-B7's xfail, every G9 v2 name and the refusal class.
 
 ## (D) Plan review round 2 (tickets/G4-review-2.md): every finding (carried; all TAKEN, three contested in part)
 Readiness: B1 (p1d L2/L3 and JSON; JSON part CONTESTED: the JSON records base 2742c1b and is read only for `BS0` cells) -> 9.3;
@@ -1809,9 +1864,32 @@ Counts:
 | N3 the b64 tie-break mutant's `old` is over 100 columns | NOTED | 13.3 already lets `ruff format` rewrite an `old`, recorded |
 | L8 kinds neither secret nor stored | TAKEN | 3.4 point 10, L8 |
 | G8 v3: PHONE entries 6-8 (not 5-7) | TAKEN | 6 |
-| G8 v3: `python tests/g8_mutants.py` (30 of 30) | TAKEN | 0.3 step 3, 12 Phase 4 step 4 and Phase 5, 15 Done |
+| G8 v3: `python tests/g8_mutants.py` (30 of 30; CHANGED in v7: N of N, G8 v4: 34) | TAKEN | 0.3 step 3, 12 Phase 4 step 4 and Phase 5, 15 Done |
 | G8 v3: oracle at line 141 (not about 121) | TAKEN | 0.3, 11 |
 | G8 v3: docstring placement | TAKEN | 0.3, 6 (after the "(A re-scan inside redact() ...)" sentence, as G8 v3 4.3) |
 Not settled by v6 (stated for the lead and round 6): G9 v2 does not exist yet; its read-back rule (written set or map keys) and
 union kind decide whether a G9 union can make an ENCODED entry (0.3b); the fifth TB-2.8 map and the new refusal routes are
 BY READING; v5's measurements are of e8ff6de2b, not bff88a7a1.
+CHANGED in v7: settled in v7 as far as G9 v2 goes: 0.3b (read-back, class, tie-break, cost); the fifth map is MEASURED (4 point 5).
+
+## (H) Plan review round 6 (tickets/G4-review-6-readiness.md, tickets/G4-review-6-design.md) and the G8 v4 / G9 v2 reconciliation: every finding (CHANGED in v7, new)
+| id | state | where |
+|---|---|---|
+| readiness M1 G8 mutant count stale ("30 of 30"), header sentence, "entries 6-8" | TAKEN | 0.3 step 3 ("N of N, N = the count in the merged tests/g8_mutants.py", G8 v4 final: 34, per the coordinator and G8 v4 8.1 G4-2 / appendix C), 12 Phase 4 step 4 and Phase 5, 15 Done; entries 6-8 cited to G8 v4 4.1 (0.3); the v6 header sentence is v6's record and is superseded by the v7 header |
+| readiness N2 redact.py cites 3 too high; section 4 not updated; defaults.py 112 | TAKEN | header, 0.1 (re-derived at 944d143db), 4 points 1-3 and 5, 5.2 point 2, 5.3, 7 (defaults.py 115) |
+| readiness N3 G9 v2 exists; D-4; first-rule line | TAKEN | 0.3b rewritten |
+| readiness N4 `snapshot` comment 907-909 stale | TAKEN | 4 point 5, 11 Modify, 12 Phase 2 |
+| readiness N5 M1 fix accurate | NOTED, then superseded: R8 is kept (design M2), so `MIN_MUTANTS` is not edited | 9.3, L24 |
+| readiness N6 FakeChannel importers | TAKEN | 11 must-stay, 12 Phase 3 step 2 and Phase 4 step 2 |
+| design M1 refusal class, ENCODED read-back, first-rule vs tie-break, cost | TAKEN | 0.2 step 2, 0.3b (MEASURED tables on the G9 v2 prototype), 2.6, 8, 15, L25, L26 (open) |
+| design M2 R8 not equivalent in general | TAKEN, MEASURED | 4 point 5, 9.3, TB-2.11, 11, 12, 13.3, L24 (R8 kept with a different-original-overlap killer) |
+| design M3 loose wrap widths | TAKEN (decode the joined block, lines as fallback) | 2.2, 2.5, 3.1 point 3, TB-3.2, TB-3.37, TB-3.38, 13.3, L27, SECURITY |
+| design N1 `.svc.cluster.local` after a private name | TAKEN as limit L-H5, MEASURED | 5.2 point 6, TB-4.8, SECURITY |
+| design N2 substring held rule for blocks only | CONTESTED in part (it would decode a JWT's own segments); limit L-B7 with a strict xfail | 3.3, 10.3, SECURITY |
+| design N3 `_HOST_ARCH` lacks x64, win32, x86-64 | TAKEN, MEASURED | 5.3, TB-4.2, SECURITY |
+| design N4 G8c vs 0.2 STOP | TAKEN: G8c not taken | 0.3 |
+| design N5 natural text only | TAKEN | 3.1 point 2, 15, SECURITY |
+| coordinator: G8 v4 final (34 of 34; PHONE 6/7/8; `_IBAN_START` / `_IBAN_END`; entry 7 end `›`) | TAKEN | 0.3 (re-checked by name against the committed file) |
+Open for the lead: L24 (R8 kept with a new killer, or the branch deleted with the gate owner), L26 (accept the long-ENCODED read-back
+refusal under G9, or cap units at `1 << 14` and refuse longer ones), L27 (loose blocks, or v6's rule as a stated limit), and the
+order with G9 (L25: the second lander re-pins TB-2.8 / TB-2.11 / test_e5).
