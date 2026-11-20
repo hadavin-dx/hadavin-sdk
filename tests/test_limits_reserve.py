@@ -218,6 +218,22 @@ def test_the_refusal_log_line_names_the_error_class_and_not_its_message(caplog):
     assert "RuntimeError" in caplog.text and "host=db" not in caplog.text
 
 
+def test_a_refused_booking_day_logs_the_clock_hint_and_never_the_message(caplog):
+    err = ValueError("spend argument refused by the database (p_day) host=db user=u")
+    limits = _limits(Spy(MemoryStore(), fail={"reserve_spend": err}))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
+        _refused(limits, "limits_unavailable")
+    assert "hint=check the app clock against the database clock" in caplog.text
+    assert "host=db" not in caplog.text and "p_day" not in caplog.text
+
+
+def test_another_value_error_gets_no_clock_hint(caplog):
+    limits = _limits(Spy(MemoryStore(), fail={"reserve_spend": ValueError("bad p_usd")}))
+    with caplog.at_level("WARNING", logger="hadavin_sdk.limits"):
+        _refused(limits, "limits_unavailable")
+    assert "clock" not in caplog.text
+
+
 HOSTILE = {
     "nan": D("NaN"),
     "signalling_nan": D("sNaN"),

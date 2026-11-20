@@ -478,7 +478,9 @@ def _money_error(
         # OperationalError (looks like a lost connection), so it is named here and fails closed
         return ConfigError(f"store postgres: unexpected money function error ({code})")
     if code == "22023":  # the function refused an argument the Python check let through
-        return ValueError("spend argument refused by the database")
+        # only a fixed token for the day argument is passed on, never the message: Limits turns it into the clock hint
+        day = " (p_day)" if "p_day" in str(exc.diag.message_primary or "") else ""
+        return ValueError("spend argument refused by the database" + day)
     return exc
 
 

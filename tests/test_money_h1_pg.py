@@ -141,7 +141,8 @@ def check_m1_add_spend_window(w):
         today.replace(year=today.year + 73),
     ):
         # the message names the argument (a fixed token), which is what the Limits clock hint keys on
-        with pytest.raises(ValueError, match="refused by the database"):
+        # the message names the argument (a fixed token), which is what the Limits clock hint keys on
+        with pytest.raises(ValueError, match=r"refused by the database \(p_day\)"):
             rt.add_spend(AGENT, day, D(1))
         assert (
             _sqlstate_of_call(w, "SELECT * FROM hadavin_add_spend(%s, %s, 1)", (AGENT, day))
