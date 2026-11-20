@@ -56,3 +56,10 @@ Tests were not changed. Not pushed from the Y worktree yet.
 
 ## E8 (2026-11-20 07:12Z) full suite on integration tree Y: 13506 passed, 14 failed, 1 error
 Mine, being fixed (local/code-GR): grants tests 2,4,5 (purge DELETE on spend_reservations was deliberate). Lead's (step B, reset_role, kill_switch grants): test_grants_negative_roles identities, stop-table, runtime-role switch tests. core-c's: model_gate mark, usd_cap, K5 import chain. Environment: two tests ignore HADAVIN_TEST_PG_DSN and use the default socket (test_step_b_the_runtime_role_cannot_switch_the_stop_off, demo_askdata dblink). Lead's: handover/BRIEF-PREAMBLE.md vendor string. Open: test_runmap_is_masked (owner being found), a setup error in test_spend_reservations_pg[TRUNCATE spend] under -n 3 only (to check).
+
+## E9 (2026-11-20 07:19Z) step A: hostile review 2 finds two Majors after the 3-try cap (fix rounds 1-3 are used)
+Input: tickets/A-hostile-review-2.md (repros in /tmp/core-b-scratch-A/, not tracked).
+1. MAJOR chain.py:76-90 + 263-280: a transient database error that is not class 08/57P (57014 statement timeout, 55P03, 40001/40P01, 53300, 25006) is treated as "not writable": the event is parked in memory and never retried by the inline flush, so it is lost at process exit. Fix round 3 narrowed the outage rule on purpose (a data error must not look like an outage); the review suggests inverting it: only known permanent classes (22, 23, 42501, 54000) are "not writable".
+2. MAJOR chain.py:303-306: the outbox SELECT still uses is_connectivity_error: a statement or lock timeout there returns quietly, drained=0 for ever.
+Minor: poison row fails the step every tick (no quarantine); the outbox is read whole (20000 rows x 5KB = 45 s, 106 MB).
+The cap is reached, so no builder is started. Lead: decide (a) the inverted classifier and one classifier for append and SELECT, (b) inline flush retries _unwritable, (c) LIMIT per tick, (d) poison-row quarantine. I can build it as a new ticket on your word.
