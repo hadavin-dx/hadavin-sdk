@@ -663,9 +663,9 @@ def test_the_hebrew_word_for_password_is_refused_as_too_short():
 
 
 def test_the_module_docstring_lists_every_public_name():
-    """Item 8. The 33 names are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
+    """Item 8. The 36 names (33 of the fold, 3 for the fold scan of the redactor) are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
     doc = textnorm.__doc__
-    assert len(textnorm.__all__) == 33
+    assert len(textnorm.__all__) == 36
     for name in textnorm.__all__:
         assert f"``{name}``" in doc, f"{name} is not documented in the module docstring"
 

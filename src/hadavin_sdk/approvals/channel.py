@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import re
+import time
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.approvals import hmac_v0
-from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
+from hadavin_sdk.approvals.gate import (
+    defang_text,
+    sanitise_text,
+    undefang_text,
+    withhold_commands,
+)
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -22,9 +29,10 @@ def clean(text: str) -> str:
     # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
     # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
     # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
-    # or a mention. Nothing transforms the text after its final redaction. Placeholders already in the text
+    # or a mention. After the final redaction only `defang_text` runs: it writes `.` as `[.]` and wide dots as `.`. Placeholders already in the text
     # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
     text = text.replace("\x00", "")
+    started = time.thread_time()
     mapping = _seeded(text)
     out = runmap.redact_text(text, mapping, neutralise=_neutralise)
     # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
@@ -35,8 +43,54 @@ def clean(text: str) -> str:
         joined_map = _seeded(joined)
         alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
         if _assignment_originals(joined_map) - _assignment_originals(mapping):
-            return alt
-    return out
+            return settled(defang_text(alt), started=started)
+    shown = defang_text(out)
+    # Nothing was masked, neutralised or defanged and no `[.]` was there to read back: the check pass would read the
+    # very text pass 1 read (same seeds), so it cannot differ (review M5).
+    if shown == text and "[.]" not in shown:
+        return shown
+    return settled(shown, started=started)
+
+
+# One pass is no fixed point. A placeholder the redactor writes can end a name or start a value for a pattern that ran
+# before it (`08::<HOSTNAME_2>` reads as an IPv6 address, `password=<SECRET_2>&<EMAIL_4>=...` as one value), and the
+# wide dot `defang_text` writes as `.` can complete a link the cleaning did not see (`//x<U+3002>_`). A channel that
+# reads the stored text again (`SlackChannel._blocks`) then showed another card than the one stored and hashed. So
+# `clean` reads its own result again, exactly as that channel does (undefang, withhold, redact, defang last), until
+# nothing changes. The bound keeps a text that never settles from looping; the seeded texts of the P1d-a properties
+# need at most one more pass.
+_MAX_REREADS = 3
+
+
+# What a card shows when it does not settle inside the bound, or the re-read is refused (too large, past the time budget):
+# a fixed text, never the unsettled one (fail closed, review M4). It holds no name, dot or placeholder, so it reads the same twice.
+SETTLE_NOTE = "[card withheld: its text did not settle]"
+
+
+def _reread(shown: str) -> str:
+    """One read of a stored card, exactly as `SlackChannel._blocks` reads it: undefang, withhold, redact, defang last."""
+    withheld = withhold_commands(undefang_text(shown))
+    return defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))
+
+
+def settled(shown: str, *, started: float | None = None) -> str:
+    """`shown` read again until a read changes nothing, at most `_MAX_REREADS` times. A text that is still changing at the
+    last read, a re-read the redactor refuses (the undefanged text can be longer than the first input) or one that starts
+    after `REDACT_BUDGET_S` CPU seconds of the calling thread since `started` (one budget for all the passes of a card)
+    gives `SETTLE_NOTE`, never the unsettled text. The one function `clean` and `SlackChannel._blocks` share."""
+    if started is None:
+        started = time.thread_time()
+    try:
+        for _ in range(_MAX_REREADS):
+            if time.thread_time() - started > defaults.REDACT_BUDGET_S:
+                return SETTLE_NOTE
+            again = _reread(shown)
+            if again == shown:
+                return shown
+            shown = again
+    except runmap.RedactionError:
+        return SETTLE_NOTE
+    return SETTLE_NOTE
 
 
 # A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
@@ -45,7 +99,7 @@ _ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
 def _neutralise(text: str) -> str:
-    return withhold_commands(sanitise_text(text))
+    return withhold_commands(sanitise_text(text, defang=False))
 
 
 def _seeded(text: str) -> runmap.RunMap:
@@ -101,7 +155,8 @@ class FakeChannel:
         self.notices: list[tuple[str, str]] = []
 
     def send(self, req: ApprovalRequest, approver_ids: list[str]) -> str:
-        self.sent.append((req.approval_id, clean(req.summary), list(approver_ids)))
+        # A summary stored by the old code holds defanged, unmasked addresses (as in `SlackChannel._blocks`).
+        self.sent.append((req.approval_id, clean(undefang_text(req.summary)), list(approver_ids)))
         return f"fake-{len(self.sent)}"
 
     def update(self, req: ApprovalRequest) -> None:

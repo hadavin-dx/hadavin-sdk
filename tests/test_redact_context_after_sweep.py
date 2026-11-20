@@ -312,7 +312,8 @@ def test_public_signatures_are_unchanged():
 
     assert str(inspect.signature(R.redact)) == (
         "(text: 'str', *, mapping: 'dict[str, str] | None' = None, near: 'tuple[str, ...]' = (), "
-        "_sweep_copies: 'bool' = True, _cache: 'dict | None' = None) -> 'RedactionResult'"
+        "_sweep_copies: 'bool' = True, _cache: 'dict | None' = None, _deadline: 'float | None' = None) "
+        "-> 'RedactionResult'"
     )
     assert str(inspect.signature(R.redact_many)) == (
         "(items: 'list[str]', mapping: 'dict[str, str] | None' = None, *, near: 'tuple[str, ...]' = ()) "

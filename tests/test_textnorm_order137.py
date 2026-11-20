@@ -264,9 +264,14 @@ BUILDERS = frozenset(
         "scan_keyset",
         "squeeze",
         "fold",
+        "fold_view",
         "identity_keys",
     }
 )
+# The ONE module that may ask for single views, with its reason (the same row as ``EXEMPTIONS`` of ``tests/test_textnorm_meta.py``, the ban by
+# lint): the fold scan of the redactor (ticket G part G3, P2d-1) masks a value in the text AS WRITTEN, so it needs the position map of one
+# named view at a time and runs every view of a line in turn (``redact._view_specs``). Only these names, only this file.
+BUILDER_EXEMPTIONS = {"redact.py": frozenset({"fold", "fold_view"})}
 
 
 def _textnorm_builder_calls():
@@ -304,11 +309,14 @@ def _textnorm_builder_calls():
 
 def test_no_module_outside_textnorm_builds_its_own_views():
     """Killer: ``injection: a module builds its own views``. Outside ``textnorm.py`` only the choke points may be called: ``scan_holds``, ``scan_views``,
-    ``scan_views_no_value``, ``register_value``, ``scan_cache``. (``runmap.redact_text`` keeps its own position-exact views and does not call
-    ``textnorm`` at all; the CHANGELOG states that as a limit.)"""
-    assert _textnorm_builder_calls() == [], (
-        f"a module builds its own views: {_textnorm_builder_calls()}"
-    )
+    ``scan_views_no_value``, ``register_value``, ``scan_cache``. (``runmap.redact_text`` keeps its own position-exact views and takes only
+    ``without_spacing_marks`` from ``textnorm``, which is not a view builder.) The one exemption is ``BUILDER_EXEMPTIONS``: the row must be
+    used (no stale row) and names nothing more than the file calls."""
+    calls = _textnorm_builder_calls()
+    outside = [(f, n) for f, n in calls if n not in BUILDER_EXEMPTIONS.get(f, ())]
+    assert outside == [], f"a module builds its own views: {outside}"
+    for file, names in BUILDER_EXEMPTIONS.items():
+        assert {n for f, n in calls if f == file} == names, (file, "the exemption row is stale")
     seen = set()
     for path in sorted(SRC.rglob("*.py")):
         if path.name == "textnorm.py":
