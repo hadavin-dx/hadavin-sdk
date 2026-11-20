@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:05:52Z
+UPDATED_UTC: 2026-11-20T08:09:13Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 11
-CAPACITY: load 8.0 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 11, heavy agents 0
-DISK: / 59G free, 15% used; git worktrees 11; 121M	/tmp/claude-0;476M	/root/.cache/uv;
+AGENTS_RUNNING: 10
+CAPACITY: load 9.8 of 4 cores, mem 2/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 11; 134M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:02:47+00:00
+PUSHED_UTC: 2026-11-20T08:05:52+00:00
 
-(13:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:39 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -95,7 +95,7 @@ PUSHED_UTC: 2026-11-20T08:02:47+00:00
 | (new) g8 | drafter | claude-opus-5-5 | ticket G8 glued-rest gap (IPv4, phone, IBAN, UUID, host) | 08:00 | 08:35 | 1 | running | 1 | 0 | backlog 10: glued-rest ticket |
 | (new) drift | auditor | claude-sonnet-5-5 | drift report G1-G3 and G7 documents against code at HEAD | 08:00 | 08:30 | 1 | running | 1 | 0 | EGM drift report per item |
 | (new) g4v3 | drafter | claude-opus-5-5 | ticket G4 v3 taking plan review round 2 | 08:03 | 08:35 | 1 | running | 3 | 0 | EGM draft step; then plan review round 3 |
-| (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 2 | running | 4 | 0 | final review of the wording |
+| (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 9 Major (SEC-wording-review-4.md) |
 | (new) secS4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: style | 08:06 | 08:16 | 2 | running | 4 | 0 | final review of the wording |
 
 ## SHELLS AND PROCESSES
