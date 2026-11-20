@@ -145,20 +145,20 @@
   {
    "item": "E2-SOCKET",
    "what": "real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2)",
-   "state": "RUNNING",
-   "percent": 50,
-   "evidence file": "raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet)",
+   "state": "DONE (ESCALATIONS E2 closed by a fix)",
+   "percent": 100,
+   "evidence file": "raw/E2-wsgiref-before.log, raw/E2-wsgiref-after.log, raw/E2-tests.log, raw/E2-mutants.log",
    "tries": 1,
-   "reason": "lead decision: in scope, do it without asking"
+   "reason": "the standard server DID leak before the fix: HTML bodies on 400 and 414, the request line echoed, a 500 with text, tracebacks with the client address on stderr, a Server header with the Python version; new src/hadavin_sdk/triggers/server.py (125 lines) makes all refusals empty and quiet. NOT checked: a slow-drip client, refusals with a large unread body, the too-many-headers case"
   },
   {
    "item": "R12-worker",
    "what": "lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14",
-   "state": "RUNNING",
-   "percent": 50,
-   "evidence file": "raw/E2-tests.log (not yet)",
+   "state": "DONE (its own tests pass; kill and database tests by another agent still running)",
+   "percent": 100,
+   "evidence file": "raw/E2-tests.log, raw/E2-triggers-all.log",
    "tries": 1,
-   "reason": "ORDER 012; same agent as E2-SOCKET because one agent owns worker.py"
+   "reason": "back-off wait (10 store reads per refused request, test asserts 5 to 12), a waiting request takes a freed slot (fix of the flaky batch failure), SIGTERM drain tested on worker.serve with a child process (main itself cannot start until core-b's config exists), minors 3, 7, 14 done; minor 8 done for foreign errors only, see LEAD ACTIONS"
   },
   {
    "item": "R12-endpoint",
@@ -351,12 +351,12 @@
    "model": "fable",
    "what exactly it is doing": "writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run",
    "started UTC": "05:41",
-   "expected end": "about 25 min after start",
-   "percent": 40,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers)"
+   "reason": "finished, 162k tokens"
   },
   {
    "model": "fable",
@@ -454,7 +454,7 @@
    "run number": "6 to 9 (builder, after the change)",
    "passed / failed / errors": "32 / 0 / 0 each time",
    "first failing line": "none",
-   "state": "done",
+   "state": "superseded by the run below",
    "reason": "one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run"
   },
   {
@@ -528,6 +528,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "UNVERIFIED by me until the final run of my files"
+  },
+  {
+   "suite or file": "tests/triggers (all files, -n 3)",
+   "branch and SHA": "working tree",
+   "run number": "1 after the lead-review fixes (builder)",
+   "passed / failed / errors": "385 / 0 / 0, 68 skipped",
+   "first failing line": "none (the first run on the new code had 3 failures from an over-strict helper in the builder's own new test, fixed: try 1 of 3)",
+   "state": "done",
+   "reason": "68 skips are database cases without the variable; UNVERIFIED by me until my final run"
   }
  ],
  "restarts": [],
@@ -541,10 +550,10 @@
   },
   {
    "item": "T5 pool-full test",
-   "tries": "failed 1 of 2 runs",
+   "tries": "failed 1 of 3 runs so far",
    "review rounds": 0,
-   "last error": "assert 503 in (200, 202)",
-   "reason it keeps failing": "race between the run's final state and the slot release; code change in work (waiting requests take a freed slot)"
+   "last error": "assert 503 in (200, 202) (batch run)",
+   "reason it keeps failing": "fixed in code (waiting request takes a freed slot); passed in the 2 runs since; not proven gone until the lead's batch"
   }
  ],
  "lost": [],
@@ -555,7 +564,8 @@
   "ORDERS 007, 010 and 011 are not in my ORDERS.md: tell me if they were meant for me",
   "'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)",
   "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once",
-  "Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400"
+  "Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400",
+  "Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict"
  ],
- "failed": "2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work"
+ "failed": "whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since"
 }

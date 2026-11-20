@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:49:16Z
+UPDATED_UTC: 2026-11-20T05:50:05Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 6
-PERCENT: 79
-AGENTS_RUNNING: 4
-CAPACITY: load 0.29 of 4 cores (1-minute average), mem 0.7/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_OPEN: 4
+PERCENT: 84
+AGENTS_RUNNING: 3
+CAPACITY: load 0.13 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 347M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
-FAILED: 2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work
+FAILED: whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block
-PUSHED_UTC: 2026-11-20T05:49:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:49:18Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -35,8 +35,8 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes |
 | BATCH | ONE batch test run when E and D are both coded | DONE with 2 failures (1 INHERITED-from-handover, 1 NEW flaky in my T5 test, fix in work) | 90 | raw/BATCH-full-suite.log, raw/BATCH-rerun-own-files.log, raw/BATCH-lint.log, raw/BATCH-bandit.log | 1 | whole suite once: 2 failed, 10723 passed, 527 skipped in 99 s (no database variable, so database tests skipped; python 3.13 only). PostgreSQL 16 run of my own files still to do after the worker change |
 | MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | DONE on the code of 05:45Z; MUST be re-run on the final code | 80 | tests/endpoint_mutants.py (284 lines), raw/endpoint-mutants-run.log | 1 | 17 of 17 good in 7 groups; 6 mutants have a weak expect text (bare asserts); one worker test is deselected in mutant runs because the runner uses --noconftest; dropping the NUL guard SURVIVES (the field patterns already refuse NUL), left out and said so in the script |
-| E2-SOCKET | real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2) | RUNNING | 50 | raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet) | 1 | lead decision: in scope, do it without asking |
-| R12-worker | lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14 | RUNNING | 50 | raw/E2-tests.log (not yet) | 1 | ORDER 012; same agent as E2-SOCKET because one agent owns worker.py |
+| E2-SOCKET | real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2) | DONE (ESCALATIONS E2 closed by a fix) | 100 | raw/E2-wsgiref-before.log, raw/E2-wsgiref-after.log, raw/E2-tests.log, raw/E2-mutants.log | 1 | the standard server DID leak before the fix: HTML bodies on 400 and 414, the request line echoed, a 500 with text, tracebacks with the client address on stderr, a Server header with the Python version; new src/hadavin_sdk/triggers/server.py (125 lines) makes all refusals empty and quiet. NOT checked: a slow-drip client, refusals with a large unread body, the too-many-headers case |
+| R12-worker | lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14 | DONE (its own tests pass; kill and database tests by another agent still running) | 100 | raw/E2-tests.log, raw/E2-triggers-all.log | 1 | back-off wait (10 store reads per refused request, test asserts 5 to 12), a waiting request takes a freed slot (fix of the flaky batch failure), SIGTERM drain tested on worker.serve with a child process (main itself cannot start until core-b's config exists), minors 3, 7, 14 done; minor 8 done for foreign errors only, see LEAD ACTIONS |
 | R12-endpoint | lead review fixes in endpoint.py: minors 1, 5, parse edges | DONE (its own tests pass; final batch re-run still open) | 100 | raw/D-endpoint-tests-2.log, raw/D-endpoint-mutants.log | 1 | minors 1 and 5 applied, 409 line left to the worker only; 265 tests pass, 2 skipped; 2 new hand mutants caught. NOT applied: minor 6 (literals stay until core-b's defaults exist), minor 12 (a NUL byte inside the document is still accepted and not checked downstream). Stated side effect: a request up to 300.999 s old by a real clock is accepted |
 | R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | RUNNING | 5 | tests/triggers/test_n8n_template.py (not yet) | 1 | ORDER 012; still NOT run in n8n |
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | RUNNING | 5 | raw/D-tests-pg16.log with test ids (not yet) | 1 | ORDER 012: required before done |
@@ -56,7 +56,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | egm-codebase | reviewer | fable | egm:egm-codebase-details checks ticket D claims against the code | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 200k tokens: 1 Blocker, 7 Major, 10 Nit |
 | ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | ended | 100 | done | 1 of 1 (resolve step) | 0 | finished, 218k tokens |
 | mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | ended | 100 | done | n/a | 0 | finished, 175k tokens |
-| e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run | 05:41 | about 25 min after start | 40 | running | n/a | 0 | ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers) |
+| e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run | 05:41 | ended | 100 | done | n/a | 0 | finished, 162k tokens |
 | r12-endpoint | builder | fable | endpoint.py minors of the lead review plus boundary and parse-edge tests | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished |
 | r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | about 20 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 |
 | r12-tests | evidence runner and test writer | fable | writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop) | 05:46 | about 35 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 Major 4 |
@@ -74,7 +74,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | 6 guard files (mutation_runner, lockin_guard, no_hardcoded_values, k5_producers, repo_rules, stage_names) | working tree | 1 (builder E) | 292 / 0 / 0 | none | done | new crash.py must not break repo rules |
 | tests/triggers/test_endpoint.py | working tree | 1 (builder) | 190 / 0 / 0, 2 skipped | none | done | UNVERIFIED by me: I have not re-run it; the batch run will |
 | 5 guard files for endpoint.py | working tree | 1 (builder) | 233 / 0 / 0 | none | done | same |
-| tests/triggers/test_worker.py | working tree | 6 to 9 (builder, after the change) | 32 / 0 / 0 each time | none | done | one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run |
+| tests/triggers/test_worker.py | working tree | 6 to 9 (builder, after the change) | 32 / 0 / 0 each time | none | superseded by the run below | one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run |
 | tests/triggers/test_t5_cases.py (skeleton, another agent's file) | working tree | 1 (worker builder, not ordered) | 65 / 0 / 0, 66 skipped | none | interim | skeleton writer still running; 66 skips must be explained before this counts |
 | ruff check + ruff format --check (src tests demos tools) | a748ab3 + working tree | 1 | clean, 331 files | none | done | batch part 1 |
 | bandit -ll (triggers package, crash.py) | same | 1 | no finding, exit 0 | none | done | batch part 1 |
@@ -83,6 +83,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | my 4 test files + 3 repo rule files (re-run to name the failures) | working tree | 1 | 431 / 1 / 0, 70 skipped | test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md) | done | the T5 failure did not repeat: flaky |
 | tests/endpoint_mutants.py (mutation runner, 17 mutants) | working tree at 05:45Z | 1 (plus 1 re-run by the same agent after worker edits) | 17 of 17 good; problems: [] | none | done, re-run pending | worker.py and endpoint.py are still being changed for ORDER 012; a mutant whose old text no longer matches would show as a problem |
 | tests/triggers/test_endpoint.py (after lead review fixes) | working tree | 2 (builder) | 265 / 0 / 0, 2 skipped | none | done | UNVERIFIED by me until the final run of my files |
+| tests/triggers (all files, -n 3) | working tree | 1 after the lead-review fixes (builder) | 385 / 0 / 0, 68 skipped | none (the first run on the new code had 3 failures from an over-strict helper in the builder's own new test, fixed: try 1 of 3) | done | 68 skips are database cases without the variable; UNVERIFIED by me until my final run |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -93,7 +94,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | item | tries | review rounds | last error | reason it keeps failing |
 |---|---|---|---|---|
 | E test file with PostgreSQL | 2 | 0 | connection refused (server not started) | it does not: try 1 failed on my own start script permission, try 2 passed 73 of 73 |
-| T5 pool-full test | failed 1 of 2 runs | 0 | assert 503 in (200, 202) | race between the run's final state and the slot release; code change in work (waiting requests take a freed slot) |
+| T5 pool-full test | failed 1 of 3 runs so far | 0 | assert 503 in (200, 202) (batch run) | fixed in code (waiting request takes a freed slot); passed in the 2 runs since; not proven gone until the lead's batch |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
@@ -108,3 +109,4 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 - 'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)
 - Your message 05:44Z (no repeated test loops): applied, the agent was told to run once
 - Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400
+- Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict
