@@ -1,31 +1,31 @@
-UPDATED_UTC: 2026-11-20T06:05:39Z
+UPDATED_UTC: 2026-11-20T06:10:24Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 18
 ITEMS_OPEN: 8
-PERCENT: 73
+PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 7.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
+CAPACITY: load 6.4 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 4; 58M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: combined tree: 1 known red test (producers registry, SPINE patch). G2: 2 inherited tests (fix running)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T06:04:25+00:00
+PUSHED_UTC: 2026-11-20T06:05:40+00:00
 
-(11:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ad708163 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:25 | 5 | running | n/a | 0 | lead GO BUILD G7 |
-| aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 5 | running | 1 of 3 (lead review) | 0 | ORDER 011 |
+| ad708163 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:25 | 60 | running | n/a | 0 | G7: redact.py change and new test file committed as work in progress (23b64db); verification and caller trace still running |
+| aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 70 | running | 1 of 3 (lead review) | 0 | ORDER 011 fixes, seen in the files: enforce rework present; settle rule with the refused_before_response predicate present; clear() removed from redact_text; gate_mutants.py being extended; also switching to core-b ii_meter.py. NOT yet verified by its final test run |
 | a7728368 | builder | fable | ORDER 010: changes the one test clause to the stricter has_mixed_script rule, pins it, writes the Unicode 15.1.0 requirement into README/CHANGELOG/ticket G; main checkout, other files than the gate agent | 05:56 | 06:10 | 100 | done | n/a | 0 | finished: ORDER 010 applied (commit 9cb56b5). textnorm batch 939 passed, 0 failed; 2 mutants for the rule run and killed. Unicode: the shipped tables cannot remove the interpreter dependency (normalize, category, name still come from unicodedata). Not run: real Python 3.12, 238 of 240 mutants |
-| aa070de5 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 2 | running | n/a | 0 | the fold is in, so G3 can start; HEAVY at the end (tests) |
-| aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:15 | 70 | running | n/a | 0 | P1d-a picked clean onto main, path tests added (27 pass), pushed as wip/cloud-core-c/g2-p1d-a. 2 tests FAIL, both inherited from the input head itself (it ran the head to prove it). Now on fix try 1 of 2 for both; mutant script blocked by the red baseline |
+| aa070de5 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 80 | running | n/a | 0 | 6 port commits exist (textnorm names, fold scan, tests, re-pin, action counter, fold5 adaptation). Pushed to wip/cloud-core-c/g3-p2d-port as work in progress. NOT verified yet |
+| aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:15 | 90 | running | n/a | 0 | fix try 1: two fix commits exist (73d624c gate/redact fix; 22d2e0d channel.py fix, SPINE-owned file, separate). Pushed to wip/cloud-core-c/g2-p1d-a. Waiting for its test batch and mutant run: NOT verified yet |
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 06:05 | 100 | done | n/a | 0 | finished: G0 + gate wrapper committed (c035b85, 45156c1). 140 tests pass, 2 strict xfail (E3), mutants 12 of 12, ruff and bandit clean. tests/test_k5_producers.py red as expected (SPINE patch). Confirmed by run: one redact pass leaves a bank account readable |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 100 | done | n/a | 0 | finished: fold built, 5 commits, pushed as wip/cloud-core-c/g1-fold. 1 test FAILS (two heads give has_mixed_script opposite rules, E4). Batch: 1 failed, 8616 passed, 17 skipped. Not run: Python 3.12, mutant runner, bandit, full suite |
@@ -75,12 +75,12 @@ PUSHED_UTC: 2026-11-20T06:04:25+00:00
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | DONE | 100 | evidence/F-G0-1.md | 1 | committed and pushed as "code G: G0" and "code F:"; as-built differences listed at the end of ticket F |
 | BUILD G1 fold | DONE | 100 | evidence/G1-fold.md | 1 | fold on cloud/core-c, ORDER 010 clause changed and pinned, textnorm batch green (939 passed). Not run: Python 3.12, full mutant list, full suite |
-| BUILD G2 P1d-a | RUNNING | 70 | evidence/G2-p1d-a.md | 1 | built and pushed on wip/cloud-core-c/g2-p1d-a; 2 inherited failing property tests (a host keeps a linkable last dot; a glued e-mail leaves residue on the first pass) are being fixed, cap 2 more tries |
-| BUILD G3 P2d-1 port | RUNNING | 2 | evidence/G3-p2d-port.md | 1 | one builder in a worktree on top of the fold; port decisions from the review are in its brief |
+| BUILD G2 P1d-a | RUNNING (fix try 1) | 90 | evidence/G2-p1d-a.md | 1 | P1d-a DECISION: option (a) of ORDER 009, fix with regression tests; two fix commits on wip/cloud-core-c/g2-p1d-a, verification running; NOT on cloud/core-c until green; if not green after try 2, left out (option b) |
+| BUILD G3 P2d-1 port | RUNNING | 80 | evidence/G3-p2d-port.md | 1 | 6 commits on wip/cloud-core-c/g3-p2d-port; verification running |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT gate fixes | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | both edit guard/runmap.py in the main checkout; starts when the ORDER 011 fix agent ends |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
-| Gate: lead code review round 1 fixes (ORDER 011) | RUNNING | 5 | evidence/F-G0-1.md | 1 | review round 1 of at most 3 |
-| BUILD G7 context patterns after the sweep (E3) | RUNNING | 5 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | one builder in the main checkout, file guard/redact.py |
+| Gate: lead code review round 1 fixes (ORDER 011) | RUNNING | 70 | evidence/F-G0-1.md | 1 | B1 enforce rework: DONE (commit 45156c1, mutants 12 of 12 then). Settle rule (ORDER 011): coded, not verified. Map clear() fix: coded (redact_text has no clear() now), thread test not verified. gate_mutants.py: exists, being extended. Switch to ii_meter.py: in progress |
+| BUILD G7 context patterns after the sweep (E3) | RUNNING | 60 | evidence/G7-1.md, tickets/G7-context-after-sweep.md | 1 | coded, work-in-progress commit 23b64db; not verified |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -100,4 +100,4 @@ PUSHED_UTC: 2026-11-20T06:04:25+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-ORDER 011 and 012 read; fixes and G7 running. Work-in-progress gate fixes committed and pushed. Open for the lead: ticket F AS BUILT (enforce= keyword), requests/1-producers.patch, G4 3 decisions, G6 text rev 2. E1 cron denied. 5 agents run.
+New for the lead: SECURITY-WORDING-draft.md (stated limits of the gate and the redactor, the Python 3.13 requirement). Open: ticket F AS BUILT (enforce= keyword), requests/1-producers.patch and requests/2-refused-before-response.md for SPINE, G4 3 decisions, G6 text rev 2. E1 cron denied: when my turn ends I only wake on an agent report or a message, so boards stop in between.
