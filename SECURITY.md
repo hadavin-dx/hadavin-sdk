@@ -29,8 +29,10 @@ reset login can clear a stop by hand with no audit row. (3) The reset login cann
 old flag ON, which is also a stop (the safe direction). (4) A reset clears the stops visible to its clear statement:
 a stop committed after that statement began stays ON, and one committed between the audit row and that statement is
 cleared; the command reads the state back and exits 2 while it is still ON. (5) `migrate` refuses, when it applies
-grants, any other role that could clear a stop; a plain `migrate` that names no role applies and checks no grants and
-leaves old ones in place, so name all roles in ONE command.
+grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
+in a role that holds one (or in the reset role); a plain `migrate` that names no role applies and checks no grants and
+leaves old ones in place, so name all roles in ONE command. Not checked: a role whose only path is membership in the
+owner role, in a superuser or in a PostgreSQL predefined role such as `pg_write_all_data`.
 
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT
