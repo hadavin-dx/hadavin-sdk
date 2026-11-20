@@ -1,6 +1,6 @@
 """Makes ``tests/gate_mutants.py`` (not a pytest file) part of the batch (review-code-F-gate-3 m-6, ORDER 020).
 
-Always: a cheap check (the list imports, every search text is in its file exactly once, the count is >= 66, every mutant names its
+Always: a cheap check (the list imports, every search text is in its file exactly once, the count is >= MIN_MUTANTS (the real count), every mutant names its
 killer and an `expect` fragment). The full mutant run is slow: it is behind HADAVIN_RUN_MUTANTS=1 (the repo has no marker for slow
 evidence tests: CI deselects only `live` and `perf`; the mutants of the stages run in their own CI step).
 """
@@ -17,7 +17,7 @@ import pytest
 from tests import gate_mutants
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MIN_MUTANTS = 66
+MIN_MUTANTS = 105
 
 
 def test_the_gate_mutant_list_imports_and_is_not_shrunk():

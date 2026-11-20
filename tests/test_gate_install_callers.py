@@ -14,10 +14,13 @@ from __future__ import annotations
 
 import ast
 import pathlib
+from types import SimpleNamespace
 
 import pytest
 
 import hadavin_sdk
+from hadavin_sdk.guard import judge
+from hadavin_sdk.guard.model_gate import BoundGate
 from hadavin_sdk.guard.producers import MODEL_CALLERS
 
 SRC = pathlib.Path(hadavin_sdk.__file__).resolve().parent
@@ -44,6 +47,20 @@ BYPASS = {
 }
 # NO_MAP may be named only here (the eval and replay command lines have no run and no map), besides its definition in the gate module.
 NO_MAP_ALLOWED = {"evals.py", "k1b/replay.py"}
+
+# Where the judge (`injection_check(detector, ...)`, which reaches `JudgeDetector.llm.chat`) is called from, module -> why it
+# matters for the install (code review round 3, M3/M4). The `Detector` protocol has no map argument, so a judge built
+# once with ONE bound llm (guard/judge.py `make(settings, deps)` takes `deps.llm`) serves the run loop, the shadow card,
+# the approval summary and the k1b loop alike: core-b must bind it with the RUN's map per call or give the protocol one.
+# A NEW call site must be added here (the test below scans for it).
+JUDGE_SITES = {
+    "runtime/agent_loop.py": "`_screen` (document and tool output) and `_shadow` (cards.render_shadow): charged by the loop",
+    "approvals/cards.py": "render_shadow: `injection_check(detector, diagnosis, 'shadow_card')`",
+    "approvals/requests.py": "summary(): `injection_check(detector, inputs, 'approval_summary')`, also reached from Requests.create",
+    "k1b/loop.py": "run_case: `injection_check(detector, shown, 'k1b-tool-result')` on the replay command line",
+    "guard/judge.py": "`qualify` runs the judge over a golden set (evals.py builds it with the plain llm)",
+    "guard/injection.py": "the definition of `injection_check` (it calls `detector.check`)",
+}
 
 # The bare word is built from parts so the repository rule about stage names does not read this file as a stage.
 STAGE_WORD = "sta" + "ge"
@@ -232,6 +249,34 @@ def test_install_no_map_is_used_by_both_command_lines():
         )
 
 
+def _refuses_by_tier(tree: ast.AST) -> bool:
+    """True when the module has an `if` whose test COMPARES something with a tier word (`pilot`, `prod`) or names
+    `PILOT`/`PROD` or the tier list, and whose body raises. A mere mention of the word (a docstring, a constant) is not a
+    refusal (code review round 3, M4: the old check passed on a mention)."""
+    words = {"pilot", "prod"}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        in_test = {
+            n.value for n in ast.walk(node.test) if isinstance(n, ast.Constant) and n.value in words
+        }
+        names = {n.id for n in ast.walk(node.test) if isinstance(n, ast.Name)} | {
+            n.attr for n in ast.walk(node.test) if isinstance(n, ast.Attribute)
+        }
+        compares = any(isinstance(n, ast.Compare) for n in ast.walk(node.test))
+        raises = any(isinstance(n, ast.Raise) for b in node.body for n in ast.walk(b))
+        if raises and compares and (in_test or {"PILOT", "PROD", STAGE_WORD.upper() + "S"} & names):
+            return True
+    return False
+
+
+def test_the_tier_refusal_check_does_not_pass_on_a_mere_mention():
+    assert not _refuses_by_tier(ast.parse('"""pilot and prod"""\nTIERS = ("pilot", "prod")\n'))
+    assert not _refuses_by_tier(ast.parse('if x:\n    raise ValueError("pilot")\n'))
+    assert _refuses_by_tier(ast.parse('if tier in ("pilot", "prod") and enforce:\n    raise X\n'))
+    assert _refuses_by_tier(ast.parse("if env == PROD:\n    raise X\n"))
+
+
 @_xfail
 def test_install_the_module_that_builds_the_gate_refuses_a_non_default_enforce_or_worst_case_in_pilot_and_prod():
     trees = _trees()
@@ -239,17 +284,85 @@ def test_install_the_module_that_builds_the_gate_refuses_a_non_default_enforce_o
     assert builders, "no module under src builds a ModelGate"
     for rel in builders:
         t = trees[rel]
-        stage_words = {
-            n.value
-            for n in ast.walk(t)
-            if isinstance(n, ast.Constant)
-            and isinstance(n.value, str)
-            and n.value in {"pilot", "prod"}
-        }
-        names = {n.id for n in ast.walk(t) if isinstance(n, ast.Name)} | {
-            n.attr for n in ast.walk(t) if isinstance(n, ast.Attribute)
-        }
-        assert stage_words or {"PILOT", "PROD", "STAGES"} & names, (
-            f"{rel} builds the gate but never looks at the stage"
+        assert _refuses_by_tier(t), (
+            f"{rel} builds the gate but never refuses by tier (a mention is not enough)"
         )
         assert not _bad_gate_arguments(t), f"{rel}: {_bad_gate_arguments(t)}"
+
+
+# ---- the judge call sites (code review round 3, M3/M4): the table must be complete; holds today ----
+
+
+def test_the_judge_call_sites_in_src_are_all_in_the_table():
+    found = {
+        rel
+        for rel, tree in _trees().items()
+        if any(_name(c) == "injection_check" for c in _calls(tree))
+    }
+    found.add("guard/injection.py")  # defines injection_check, calls detector.check
+    assert found <= set(JUDGE_SITES), (
+        f"a call site of the judge that the install table does not know: {sorted(found - set(JUDGE_SITES))}"
+    )
+    assert all(why.strip() for why in JUDGE_SITES.values())
+
+
+# ---- behavioural install tests: strict xfails until core-b installs the gate ----
+
+
+def _gate_rows(events):
+    gate_decisions = {
+        "map_enforced",
+        "map_enforced_empty",
+        "enforce_custom",
+        "map_failed",
+        "no_map",
+    }
+    return [
+        e
+        for e in events
+        if e.domain == "llm" and e.operation == "chat" and e.decision in gate_decisions
+    ]
+
+
+@_xfail
+def test_install_behavioural_every_chat_call_of_a_run_has_a_gate_audit_row(tmp_path):
+    """A recording client behind the REAL Runtime (wired as `app.build` wires it): every `chat` the client receives
+    must have exactly one gate row (domain llm, operation chat, a gate `decision`) in the audit chain. Catches a
+    bypassed or unbound site, a deleted catch of GateRefused, a missing `principal=`; the AST test above cannot.
+    Today the loop calls the client directly: no gate row exists."""
+    from tests.fixtures import k5_tools
+    from tests.k5_support import ScriptLLM, build_runtime, handle, k5_cfg
+
+    k5_tools.RESULTS["app"] = "mail ops@example.com from 10.0.0.7"
+    try:
+        llm = ScriptLLM([{"tool": "app"}, {"noaction": True}])
+        rt, _ = build_runtime(k5_cfg(tmp_path), llm)
+        run = handle(rt, b"user jo.bloggs@example.test reports errors")
+        rows = _gate_rows(rt.audit.events(run.run_id))
+    finally:
+        k5_tools.RESULTS.clear()
+    assert llm.sent, "the model was never called"
+    assert len(rows) == len(llm.sent), (
+        f"{len(llm.sent)} chat calls reached the client, {len(rows)} carry a gate audit row"
+    )
+    assert all(r.principal == run.principal_id for r in rows), (
+        "a gate row without the run's principal"
+    )
+
+
+@_xfail
+def test_install_behavioural_the_judge_is_built_on_a_bound_gate():
+    """`judge.make(settings, deps)` is what `app.build` calls (through `backends.table`) with the plain llm. The judge it
+    returns must hold a `BoundGate` (and the install must pass the RUN's map: the `Detector` protocol has no map
+    argument, so core-b either binds per call or extends the protocol)."""
+
+    class Recording:
+        def chat(self, messages, **kwargs):
+            raise AssertionError("not called")
+
+    detector = judge.make(
+        SimpleNamespace(route="main", threshold=0.5), SimpleNamespace(llm=Recording())
+    )
+    assert isinstance(detector.llm, BoundGate), (
+        "the judge holds the plain client: its text is not enforced"
+    )
