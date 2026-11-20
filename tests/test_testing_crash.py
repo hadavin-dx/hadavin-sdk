@@ -807,8 +807,8 @@ def test_f2_many_threads_released_together_give_exactly_one_crash_each_time():
 
 
 def test_f9_a_flag_that_is_refused_twice_is_deleted_at_the_third_try(tmp_path, monkeypatch):
-    """G2: the delete is tried again (Windows can refuse while a reader holds the file); no error
-    when a retry works."""
+    """G2: the delete is tried again (Windows can refuse while a reader holds the file); no "could not be
+    deleted" error when a retry works."""
     flag, real, calls = tmp_path / "flag", Path.unlink, []
 
     def flaky(self, *args, **kwargs):
@@ -817,7 +817,10 @@ def test_f9_a_flag_that_is_refused_twice_is_deleted_at_the_third_try(tmp_path, m
             raise PermissionError("held open")
         real(self, *args, **kwargs)
 
-    with CrashPoints(mode="exit", flag_path=flag) as cp:
+    with (
+        pytest.raises(RuntimeError, match="never fired"),  # armed and left: this error, not "stuck"
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
         cp.arm(POINT)
         monkeypatch.setattr(Path, "unlink", flaky)
     monkeypatch.undo()
