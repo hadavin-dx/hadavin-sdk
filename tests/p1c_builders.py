@@ -3,8 +3,9 @@
 tests/test_redact_idempotent_property.py builds its `p1c-gap1`, `p1c-gap2` and `p1c-gap3` inputs (16 + 44 + 43) from them. The property
 test no longer loads an evidence file: a pruned handover folder cannot take the whole collection down. The bodies are copied
 unchanged, with the same module-level `RNG`; `reseed()` puts it where the probe's own seed puts it, so the rows are the same on
-every run. tests/test_p1c_builders_parity.py checks them against the probe file when that file exists. Every credential is made
-up from parts (the documented AWS example id is the only literal of its kind).
+every run. They were checked ONCE against the probe file (G7 fix round 5: gap1 8 rows, gap2 44, gap3 43, all equal, from the same seed, run
+by a throwaway check whose output is in handover/core-c/evidence/G7-1.md) and that check was then deleted: no test reads the probe or any
+other handover file. Every credential is made up from parts (the documented AWS example id is the only literal of its kind).
 """
 
 from __future__ import annotations
@@ -214,8 +215,13 @@ def gap3_cases() -> list[tuple[str, str, str]]:
     c16 = luhn_number(16, "4")
     c15 = luhn_number(15, "37")
     c13 = luhn_number(13, "4")
-    g = lambda s, sep: sep.join(s[i : i + 4] for i in range(0, len(s), 4))
-    d = lambda k: rand(1, "123456789") + rand(k - 1, string.digits)
+
+    def g(s: str, sep: str) -> str:
+        return sep.join(s[i : i + 4] for i in range(0, len(s), 4))
+
+    def d(k: int) -> str:
+        return rand(1, "123456789") + rand(k - 1, string.digits)
+
     n6, n7, n9, n10, n11, n12, n14 = d(6), d(7), d(9), d(10), d(11), d(12), d(14)
     area, line = "415", "555" + "01" + rand(2, string.digits)
     ssn = (

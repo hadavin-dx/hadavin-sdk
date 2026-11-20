@@ -15,7 +15,8 @@ A placeholder written by the sweep can change what a pattern reads (a bank code 
 beside a known secret is long enough). So after the first sweep the table runs again over the strings the first pass or sweep
 changed, and every later round runs over the strings the previous round changed (by the table or by the sweep), until a round
 changes no text: a fixed point with a hard cap (`_SETTLE_ROUNDS`, 4 rounds). A call that is still changing in the last round
-is refused (RedactionError("NotSettled")), never returned half masked (G7, ORDER 020 MJ-B and fix round 3; see `settle`).
+(or whose last round flipped `bank_near`, a bank word found only in a folded view, which puts every string back to be read once more)
+is refused (RedactionError("NotSettled")), never returned half masked (G7, ORDER 020 MJ-B and fix rounds 3 and 5; see `settle`).
 
 ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
 the control; HIGHENTROPY is their backstop. There is NO second, independent pattern pass on what leaves: the outbound
@@ -875,11 +876,14 @@ _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # `tools.error_reason`'s length cut (`<SECRET_1`, `<SECRET_`, `<SEC`). The whole value must match: any other
 # character, a mixed form, an unknown kind or a glued secret is masked whole, as before G7.
 # STATED LIMIT (fail open, by design; named by the drift report): a SECRET value made ONLY of such tokens is left unmasked and
-# gets no map entry, whoever wrote it. `password=‹EMAIL_1› host` (the value is the one token; `host` is outside it),
-# `password=<EMAIL_1> <IPV4_1>` and token runs separated by a space, a tab, `;` or `,`, and a cut-off opening
-# (`password=<SEC`, `password=<SECRET_`, `password=<EMAIL_1> <SEC`) all stand as typed: a real credential spelled exactly like the
-# redactor's own tokens (or like the cut-off start of one) is not masked, as one spelled `<nil>` is not. That is the price of
-# keeping a tool's error text (redacted twice) from making a junk map entry for every escaped token.
+# gets no map entry, whoever wrote it. Two rules do it, and the tests (tests/test_redact_context_after_sweep.py) split the shapes by which:
+# the older rule (a value that is nothing but genuine placeholders, `_decide`, before this one) covers `password=<EMAIL_1> <IPV4_1>`,
+# the tab, `;` and `,` runs and `password=<EMAIL_1> <SEC` (5 shapes); THIS pattern is needed for the three that hold something it alone
+# accepts: an ESCAPED look-alike (`password=‹EMAIL_1› host`: the value is the one escaped token, `host` is outside it) and a value that is
+# only a cut-off opening (`password=<SEC`, `password=<SECRET_`).
+# All stand as typed: a real credential spelled exactly like the redactor's own tokens (or like the cut-off start of one) is not masked,
+# as one spelled `<nil>` is not. That is the price of keeping a tool's error text (redacted twice) from making a junk map entry for every
+# escaped token.
 _KIND = "|".join(sorted(_LABELS, key=len, reverse=True))
 _OPENINGS = "|".join(
     sorted({lab[:n] for lab in _LABELS for n in range(1, len(lab) + 1)}, key=len, reverse=True)
@@ -1127,13 +1131,15 @@ class _Redactor:
         self.bank_near = False  # redact_many: a bank word in some string of the batch
         # A secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it): swept as a literal
         # before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail.
-        # Indexed by the FIRST placeholder token the written form holds -> {offset of that token in the form -> a character trie of
-        # the forms}; a terminal node (key "") holds (placeholder, full value). Sweeping looks the tokens of the text up: the cost is
-        # tokens x offsets under that token x walk depth, bounded per token by `defaults.SPELLED_MAX_OFFSETS` and `SPELLED_MAX_FORMS`
-        # (a registration past either is refused, InputTooLarge), never entries x text. A rolled-back registration deletes its form
-        # (`_unspell`); an entry whose placeholder no longer maps to its full value is still ignored when read (a safety net).
-        self._spelled: dict[str, dict[int, dict[str, Any]]] = {}
-        self._spelled_forms: dict[str, int] = {}  # forms registered under each first token (capped)
+        # Indexed by the FIRST placeholder token the written form holds -> a character trie of what stands BEFORE that token in the
+        # form (its prefix, stored REVERSED, so the scan reads the text backwards from the token); a node holding key "" carries the
+        # forward trie of what stands AFTER the token (the suffix); a terminal of that one (key "") holds (placeholder, full value).
+        # The scan of a token of the text therefore costs the length of the prefix that really matches the text before it, plus the suffix
+        # walks of the prefixes that matched: it does NOT depend on how many forms or distinct prefix lengths are registered (a log of
+        # cookie headers with a different run of cookies before the same token is one path, not one walk per prefix length). The total
+        # work of a scan is counted and bounded (`defaults.SPELLED_MAX_WORK`) and the deadline is read in it. A rolled-back registration
+        # deletes its form (`_unspell`); an entry whose placeholder no longer maps to its full value is still ignored when read (a safety net).
+        self._spelled: dict[str, dict[str, Any]] = {}
         self._spelled_at: dict[
             str, str
         ] = {}  # placeholder -> the written form registered for it (to delete it on a rollback)
@@ -1172,9 +1178,14 @@ class _Redactor:
         Acceptance rule, exactly: the call is settled when some round r with 1 <= r <= `_SETTLE_ROUNDS` (4) changes no
         text. So a chain whose last change is made in round 3 is accepted (round 4 confirms); a chain that still changes a
         text in round 4 is refused (`RedactionError("NotSettled")`, nothing is shown), because no round has read that
-        text since. The cap is a fail-closed margin over the measured depth (tests/test_redact_settle_loop.py), not a
+        text since (or a flip no round has read since). The cap is a fail-closed margin over the measured depth (tests/test_redact_settle_loop.py), not a
         derived bound. A text that needs no more passes pays nothing extra: the confirming round runs over the strings
         the previous round changed, and a clean text, or one whose second pass finds nothing, ends in round 1.
+
+        A `bank_near` flip (a bank word found in a folded view while a round read a string) puts EVERY string back in `todo`: the strings
+        that no round changed were read without that context. So a round after a flip runs over every string, and a flip in the LAST round
+        leaves `todo` full: the call is refused as NotSettled even when no text changed (no round has read the strings since the flip). The
+        flip happens at most once per call (the flag only goes False -> True).
 
         Time: the call's deadline (CPU clock of the creating thread) is checked before every round and inside every sweep and
         `_build` of the round; `redact` and `redact_many` pass the same deadline into the FIRST sweep (InputTooLarge, never a skipped
@@ -1183,7 +1194,9 @@ class _Redactor:
         finder pass of a sweep that was running. The bound the tests enforce (tests/test_redact_settle_loop.py T4) is the budget plus
         twice the measured unit (one pass and one sweep of the biggest text) plus 0.5 s: looser than that claim, and it is what is
         checked. A machine slow enough that pass 1 alone exceeds the budget refuses the text (InputTooLarge) at the first check
-        after it, fail closed; defaults.py has the figures."""
+        after it, fail closed; defaults.py has the figures. `redact_text` is a SERIES of such calls (the text, then its views) against one
+        absolute deadline: its worst case is the budget + one pass + one sweep + 0.5 s per view, on the CPU clock of the thread only (a thread
+        that waits for the GIL or a lock does not advance it): a wall-clock guard at the call is the caller's (core-b)."""
         cur = list(swept)
         todo = {
             i for i, (o, t) in enumerate(zip(originals, cur, strict=True)) if t != strip_ansi(o)
@@ -1653,8 +1666,6 @@ class _Redactor:
 
     def _place(self, label: str, full: str, original: str) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it."""
-        if label in SECRET_KINDS and original != full and len(full) >= 4:
-            self._spell_cap_check(original)  # refuses before anything is registered
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
@@ -1674,32 +1685,17 @@ class _Redactor:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         return placeholder
 
-    def _spell_cap_check(self, original: str) -> None:
-        """Refuse (`InputTooLarge`) a written form that would pass `defaults.SPELLED_MAX_OFFSETS` or `defaults.SPELLED_MAX_FORMS`
-        registered under its first placeholder token: the scan walks every offset of the token of the text, so these two numbers
-        bound its work per token. Called BEFORE the entry is made, so a refusal leaves nothing half registered."""
-        first = _PLACEHOLDER.search(original)
-        if first is None:
-            return
-        by_offset = self._spelled.get(first.group(1), {})
-        if (first.start() not in by_offset and len(by_offset) >= defaults.SPELLED_MAX_OFFSETS) or (
-            self._spelled_forms.get(first.group(1), 0) >= defaults.SPELLED_MAX_FORMS
-        ):
-            from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
-
-            raise InputTooLarge("SpelledFormsTooMany")
-
     def _spell(self, original: str, placeholder: str, full: str) -> None:
         """Register the written form `original` (it holds at least one placeholder token, since it differs from `full`)."""
         first = _PLACEHOLDER.search(original)
         if first is None:
             return
-        token = first.group(1)
-        node = self._spelled.setdefault(token, {}).setdefault(first.start(), {})
-        for ch in original:
+        node = self._spelled.setdefault(first.group(1), {})
+        for ch in reversed(original[: first.start()]):  # the prefix, read backwards from the token
             node = node.setdefault(ch, {})
-        if "" not in node:
-            self._spelled_forms[token] = self._spelled_forms.get(token, 0) + 1
+        node = node.setdefault("", {})  # the forward trie of what follows the token
+        for ch in original[first.end() :]:
+            node = node.setdefault(ch, {})
         node[""] = (placeholder, full)
         self._spelled_at[placeholder] = original
 
@@ -1709,87 +1705,154 @@ class _Redactor:
         first = _PLACEHOLDER.search(original) if original is not None else None
         if original is None or first is None:
             return
-        token, offset = first.group(1), first.start()
-        by_offset = self._spelled.get(token, {})
-        root = by_offset.get(offset)
+        token = first.group(1)
+        prefix, suffix = original[: first.start()][::-1], original[first.end() :]
+        root = self._spelled.get(token)
         if root is None:
             return
-        path = [root]
-        for ch in original:
-            nxt = path[-1].get(ch)
+        back = [root]
+        for ch in prefix:
+            nxt = back[-1].get(ch)
             if nxt is None:
                 return
-            path.append(nxt)
-        term = path[-1].get("")
+            back.append(nxt)
+        fwd_root = back[-1].get("")
+        if fwd_root is None:
+            return
+        ahead = [fwd_root]
+        for ch in suffix:
+            nxt = ahead[-1].get(ch)
+            if nxt is None:
+                return
+            ahead.append(nxt)
+        term = ahead[-1].get("")
         if term is None or term[0] != placeholder:
             return  # the form there is another entry's: leave it
-        del path[-1][""]
-        self._spelled_forms[token] -= 1
-        for depth in range(len(original), 0, -1):  # prune the nodes that hold nothing now
-            if path[depth]:
+        del ahead[-1][""]
+        for depth in range(len(suffix), 0, -1):  # prune the forward nodes that hold nothing now
+            if ahead[depth]:
                 break
-            del path[depth - 1][original[depth - 1]]
+            del ahead[depth - 1][suffix[depth - 1]]
+        if not fwd_root:
+            del back[-1][""]
+        for depth in range(len(prefix), 0, -1):  # and the backward ones
+            if back[depth]:
+                break
+            del back[depth - 1][prefix[depth - 1]]
         if not root:
-            del by_offset[offset]
-        if not by_offset:
             del self._spelled[token]
-        if not self._spelled_forms.get(token):
-            self._spelled_forms.pop(token, None)
 
     def _spelled_sweep(self, out: str, deadline: float | None) -> str:
         """Replace the written forms of compound secrets (`<SECRET_1>xy`) by their placeholder.
 
-        THE RULE, exactly: every form that matches in full somewhere in `out` is a candidate (start, end); at one start the
-        longest form is the candidate. The candidates are taken leftmost first, and a candidate that begins before the end of
-        one already taken is skipped (non-overlapping, the earliest start wins, at one start the longest wins). The cost is
-        the placeholder tokens of the text, times the offsets registered under a token (at most `defaults.SPELLED_MAX_OFFSETS`),
-        times the walk of a character trie (at most the length of the form): it does NOT depend on the number of forms
-        registered under OTHER tokens, and the forms under one token are capped by `defaults.SPELLED_MAX_FORMS`. The deadline
-        (when given) is checked every `_SPELL_CHECK_EVERY` units of work, a token with no form and a step of a walk each
-        counting one, so a text of tokens with no forms is checked too."""
+        THE RULE: every form that matches in full somewhere in `out` is a candidate (start, end); at one start the longest form is the
+        candidate. The candidates are taken leftmost first. A candidate that begins inside one already taken and ends inside it as well is
+        covered, and nothing is done. One that begins inside and ENDS BEYOND it (an overlap: `xyz<SECRET_1>` and `<SECRET_1>ab` over
+        `xyz<SECRET_1>ab`) fails closed: the span of the whole run of overlapping candidates is registered, on the spot, as an entry of its
+        own (a compound value `xyz` + V + `ab`, `_place_union`) and replaced by that placeholder, so no part of it stays readable.
+        What is NOT covered: an overlap that is only complete in a LATER round, when the first form was already swept and replaced by its
+        placeholder before the second form was registered (the text is then `xyz<BEARER_1>` and the second form `xyz<SECRET_1>` no longer
+        matches it): the part of the later form that the earlier placeholder swallowed (its prefix or tail, `xyz`) stays readable. Stated limit,
+        pinned in tests/test_redact_settle_loop.py.
+
+        Cost: a token of the text walks its prefix trie backwards (as far as the text matches a registered prefix) and, at each matched
+        prefix, the suffix trie forwards. Every step counts one unit of work. The scan REFUSES (`InputTooLarge("SpelledWorkTooMuch")`) a
+        text that needs more than `defaults.SPELLED_MAX_WORK` units, and reads the deadline (when given) every `_SPELL_CHECK_EVERY`
+        units, a token with no form counting one, so a text of tokens with no forms is checked too. The limit is read at the same points
+        as the deadline, so it can be passed by up to `_SPELL_CHECK_EVERY` units."""
         if not self._spelled:
             return out
         found: list[tuple[int, int, str]] = []
-        work = _SPELL_CHECK_EVERY  # the first token is checked
+        limit = defaults.SPELLED_MAX_WORK
+        work = _SPELL_CHECK_EVERY  # the first token is checked ...
+        done = -_SPELL_CHECK_EVERY  # ... and that first reading is not work done
+        n = len(out)
         for m in _PLACEHOLDER.finditer(out):
             work += 1
-            if deadline is not None and work >= _SPELL_CHECK_EVERY:
+            if work >= _SPELL_CHECK_EVERY:
+                done += work
                 work = 0
-                self._over_budget(deadline)
-            by_offset = self._spelled.get(m.group(1))
-            if by_offset is None:
+                if done > limit:
+                    self._work_refused()
+                if deadline is not None:
+                    self._over_budget(deadline)
+            node = self._spelled.get(m.group(1))
+            if node is None:
                 continue
-            for offset, root in by_offset.items():
-                start = m.start() - offset
-                if start < 0:
-                    continue
-                node, best, i = root, None, start
-                while True:
-                    work += 1
-                    if deadline is not None and work >= _SPELL_CHECK_EVERY:
-                        work = 0
+            at, after, back = m.start(), m.end(), 0
+            while True:
+                ahead = node.get("")
+                if (
+                    ahead is not None
+                ):  # a prefix of `back` characters is matched: walk what follows the token
+                    cur, best, i = ahead, None, after
+                    while True:
+                        work += 1
+                        if work >= _SPELL_CHECK_EVERY:
+                            done += work
+                            work = 0
+                            if done > limit:
+                                self._work_refused()
+                            if deadline is not None:
+                                self._over_budget(deadline)
+                        term = cur.get("")
+                        if term is not None and self.mapping.get(term[0]) == term[1]:
+                            best = (i, term[0])
+                        if i >= n or (cur := cur.get(out[i])) is None:
+                            break
+                        i += 1
+                    if best is not None:
+                        found.append((at - back, best[0], best[1]))
+                k = at - back - 1
+                if k < 0:
+                    break
+                work += 1
+                if work >= _SPELL_CHECK_EVERY:
+                    done += work
+                    work = 0
+                    if done > limit:
+                        self._work_refused()
+                    if deadline is not None:
                         self._over_budget(deadline)
-                    term = node.get("")
-                    if term is not None and self.mapping.get(term[0]) == term[1]:
-                        best = (i, term[0])
-                    if i >= len(out) or (node := node.get(out[i])) is None:
-                        break
-                    i += 1
-                if best is not None:
-                    found.append((start, best[0], best[1]))
+                if (node := node.get(out[k])) is None:
+                    break
+                back += 1
         if not found:
             return out
         found.sort(key=lambda c: (c[0], -c[1]))
+        spans: list[list] = []  # [start, end, placeholder, overlapped]
+        for start, end, placeholder in found:
+            if spans and start < spans[-1][1]:
+                if (
+                    end > spans[-1][1]
+                ):  # begins inside the span and ends beyond it: the run is one span
+                    spans[-1][1], spans[-1][3] = end, True
+                continue
+            spans.append([start, end, placeholder, False])
         pieces: list[str] = []
         last = 0
-        for start, end, placeholder in found:
-            if start < last:
-                continue
+        for start, end, placeholder, overlapped in spans:
+            if overlapped:
+                placeholder = self._place_union(out[start:end], placeholder)
             pieces += (out[last:start], placeholder)
             last = end
             self.actions += 1
         pieces.append(out[last:])
         return "".join(pieces)
+
+    @staticmethod
+    def _work_refused() -> None:
+        from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+        raise InputTooLarge("SpelledWorkTooMuch")
+
+    def _place_union(self, union: str, first: str) -> str:
+        """The placeholder of an overlap of written forms: `union` is the text of the whole run (`xyz<SECRET_1>ab`), registered as a compound
+        value of its own (its restored text is the value, its kind the kind of the first form's) unless that value has a placeholder already."""
+        full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), union)
+        if full in self.reverse:
+            return self.reverse[full]
+        return self._place(_kind(first), full, union)
 
     def _build(self) -> None:
         # the deadline of the sweep that triggered the build (`sweep` sets it), else the call's own, as before
@@ -1889,13 +1952,15 @@ class _Redactor:
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
+        free = 0  # free (non-empty) segments seen: the first is checked, then every 32nd, however many segments the text has
         for i in range(0, len(parts), 2):
             segment = parts[i]
             if not segment:
                 continue
+            free += 1
             if (
-                deadline is not None and i % 64 == 0 and (self._finders or self._slow)
-            ):  # every 32nd free segment (a text of 100,000 placeholders has 100,000); with no value to look for there is no work to bound
+                deadline is not None and (free - 1) % 32 == 0 and (self._finders or self._slow)
+            ):  # a text of 100,000 placeholders has 100,000 segments; with no value to look for there is no work to bound
                 self._over_budget(deadline)
             present = {w for w in self._slow if w in segment}
             for finder, prefixes in self._finders:
@@ -2132,13 +2197,23 @@ def redact_many(
     ones (second review, 2026-09-30); the first pass now only finds, the sweep masks, then `_Redactor.settle` runs the
     table again over the strings the sweep changed, to a fixed point with a hard cap (RedactionError past it; see `settle`).
     `near`: texts not redacted here whose bank words still count as bank context (a discussion's evidence).
-    `_deadline`: as for `redact` (CPU clock; InputTooLarge past it)."""
+    `_deadline`: as for `redact` (CPU clock; InputTooLarge past it). A `bank_near` flip during the first reading (a bank word found only
+    in a folded view of string n) re-reads strings 0..n only, each after a deadline check; the strings after n were read with the flag set."""
     r = _Redactor(mapping, None, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     near_before = r.bank_near
-    found = [r.find(item) for item in items]
-    if r.bank_near != near_before:
-        # `_fold_scan` found a bank word only in a FOLDED view while the strings were read: the strings read before that
-        # were read without the batch's bank context. Read them all again (the placeholders the first reading made are reused).
-        found = [r.find(item) for item in items]
+    found: list[str] = []
+    flipped_at: int | None = None
+    for n, item in enumerate(items):
+        found.append(r.find(item))
+        if flipped_at is None and r.bank_near != near_before:
+            flipped_at = n
+    if flipped_at is not None:
+        # `_fold_scan` found a bank word only in a FOLDED view while string `flipped_at` was read: that one and the strings read before it
+        # were read without the batch's bank context. Read THOSE again (the placeholders the first reading made are reused); the strings
+        # after it were read with the flag set. The deadline is read before every one of the reads (`find` itself is not interrupted), so
+        # the flip costs at most one more string pass past the budget, not a second pass over every string.
+        for n in range(flipped_at + 1):
+            r._check_deadline()
+            found[n] = r.find(items[n])
     return r.settle(items, [r.sweep(text, r._deadline) for text in found]), r.mapping

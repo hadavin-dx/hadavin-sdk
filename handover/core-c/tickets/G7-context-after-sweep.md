@@ -1,10 +1,39 @@
 # G7: the table again after the sweep, to a capped fixed point (ORDERS 012 and 013, escalations E3 and E5)
 
 Status: BUILT as ordered in ORDER 013 (one extra pass); FIX ROUND 2 (ORDER 020 MJ-B) replaced it by a capped fixed-point loop; FIX ROUND 3 (G7 result
-review 2, fresh reviewers, 2026-11-20) made it a real fixed point; FIX ROUND 4 (G7 result review 3) bounded the spelled-form scan, fixed its overlap rule and
+review 2, fresh reviewers, 2026-11-20) made it a real fixed point; FIX ROUND 5 (G7 result review 4: caps replaced by a counted work limit, overlaps registered whole, the time statement restated; see ROUND 5 changes) came after FIX ROUND 4 (G7 result review 3) bounded the spelled-form scan, fixed its overlap rule and
 the rollback ghost, made the first sweep carry the deadline, and made the time claims, the numbers and the docs say what the tests enforce. READ "Design as
 built, ROUND 3" and then "ROUND 4 changes" FIRST. Every section marked ROUND 1 or ROUND 2 below is the record of an earlier design and is not the code.
 Evidence: evidence/G7-1.md (parts in order of work; "G7 fix round 4" is the last and holds the raw tail of a real run). Reviews: tickets/G7-result-review-2.md, -3.md.
+
+## ROUND 5 changes (G7 result review 4; supersede the ROUND 4 items on caps, overlap and the time statement)
+- Caps gone (design M1). The per-token caps on offsets (32) and forms (256) refused honest logs (a Cookie header preceded by other cookies of another length on every line;
+  `password=<UUID_1>.<sig_n>` on 300 lines): reproduced, both raised `InputTooLarge("SpelledFormsTooMany")` before the change. The registry is now, per first token, a REVERSED
+  prefix trie (what stood before the token) whose nodes hold the forward suffix trie (what stood after it): the cost of a token is the prefix that really matches plus the
+  suffix walks of the prefixes that matched, independent of how many forms or prefix lengths are registered. The work of a scan (every step and every token = 1 unit) is counted and
+  refused past `defaults.SPELLED_MAX_WORK` (4,000,000; `InputTooLarge("SpelledWorkTooMuch")`), read with the deadline every 1,024 units. The figure comes from measurement (evidence G7-1.md):
+  corpora of 1,835 inputs: at most 1 offset and 1 form per first token; 2,000 generated compositions: 1 offset, 6 forms; honest worst built 243,000 units (16x headroom); hostile 5e6 units refused in 0.4 s.
+  "0 to 2 in practice" in defaults.py was wrong for cookie lines and is gone.
+- Overlap (design M2). A candidate that begins inside one already taken and ends beyond it fails closed: the whole run of overlapping candidates is registered on the spot as one compound
+  entry (`xyz` + V + `ab`, `_place_union`, kind of the first form, same entry if the value is known) and replaced by its placeholder, so no part of it stays readable. "THE RULE, exactly" is no longer
+  claimed as a safety property. WHAT REMAINS (stated in `_spelled_sweep`, pinned by test): an overlap complete only in a LATER round, when the first form was already swept to its
+  placeholder before the second form was registered (`xyz<BEARER_1>`): the part of the later form that the earlier placeholder swallowed (its literal prefix or tail, `xyz`) stays readable.
+  Same class, reached without spelled forms: a compound value inside another plain value (`xyz`+V next to V+tail registered as plain values) is cut by the longest-first sweep and leaves `xyz`
+  (round 3 "compound inside a compound" limit, unchanged). Escalated: handover/core-c/ESCALATIONS.md.
+- Time (design M3). `redact_many` re-reads only strings 0..n after a `bank_near` flip at string n, each after a deadline check. The restated worst case: for one `redact`/`redact_many` call
+  budget + the pass in progress + one sweep; for `redact_text` (a series of calls over the views against one absolute deadline) budget + one pass + one sweep + 0.5 s per view. `redact_text` has only the
+  CPU clock of the thread; a wall-clock guard at the call is core-b's job (listed below). Settle and module docstrings mention the flip (a flip in the last round is NotSettled: no round read the strings since).
+  The segment check is the first free segment, then every 32nd (was `i % 64 == 0`, which read no clock for a text that starts with a placeholder); pinned by a stepping clock.
+- Tests: codebase M1 (T4 at the real budget is "refused or redacted, within budget + 2 units + 0.5"; a `scaled` budget of 1.5 x the measured run must redact; the 0.5 s case kept), M2 (`def`, not lambda),
+  M3 (the at-cap scan is a ratio to the same sweep without forms, measured 1.1x), nits N1 to N7, N9 (see evidence G7-1.md, "G7 fix round 5": fail-before runs, mutants, raw tails).
+  N2: the one-off parity check of the moved builders was run (rows equal) and the parity test deleted. Design nit 4 (forged tokens consuming a cap) is moot: no cap by count. Design nit 6 (an honest 5-pass composition) SKIPPED: none found (the reference loop needs 5 passes on 5 of 2,000 compositions, but the settle loop converges in at most 3 rounds on all of them).
+
+## For core-b (round 5; not done here, other lanes)
+- Wall-clock guard at the callers of `redact_text`/`redact_untrusted` (tool-result path, document path): `redact_text` has only the CPU clock; a thread that waits on the GIL, a lock or I/O does not advance it.
+- `agent_loop.py` 416-420: the label `document_too_large` is used for any `InputTooLarge`, which is now also `SpelledWorkTooMuch` and a deadline refusal; give each its own label or a neutral one.
+- `evals.py` 64-70: "inputs are limited to N characters" is said for `NotSettled`, `SpelledWorkTooMuch` and a deadline refusal too; say what was refused.
+- `k1b/replay.py` 158: any `RedactionError` from `redact_bundle` reaches the BaseException handler at 273, so ONE hostile case file aborts the whole replay (true for `InputTooLarge` already); catch it per case.
+- Check (nit 5 of design review): no caller passes `_sweep_copies=False` except the tests (grep found only redact.py and tests/test_redact_context_after_sweep.py).
 
 ## ROUND 4 changes (supersede the same items of "Design as built, ROUND 3" below)
 - Deadline (was item 7): `redact()` and `redact_many()` pass the call's deadline into the FIRST sweep too; `settle` checks it before every round and passes it
