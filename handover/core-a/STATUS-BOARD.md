@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:09:54Z
+UPDATED_UTC: 2026-11-20T06:10:12Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WAITING-LEAD
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 26
 ITEMS_OPEN: 2
 PERCENT: 96
 AGENTS_RUNNING: 0
-CAPACITY: load 0.18 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.13 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.5G 60G 14%; 352M /home/user/hadavin-sdk; 69M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: ORDER 013 is done; open: item 3 (switch worker names) waits for core-b's answer to request 001; waiting for the next order
-PUSHED_UTC: 2026-11-20T06:09:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:09:56Z (the push before this board)
 NOTE: 0 agents run: nothing in the queue is READY (O13-3 waits for core-b); PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) plus scratch copies of core-b's and core-c's trees under the session scratch folder (the safety check refuses folder deletes)
 
 ## QUEUE ITEMS
