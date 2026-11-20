@@ -16,7 +16,9 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
    Running it later without `--reset-role` therefore refuses the reset role itself. Roles of other schemas or
    applications on the same server are not looked at. See "Limits" for who is not checked.
 3. Store the reset login's connection string as a secret on the operator's machine only. Put the NAME of that secret
-   in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process.
+   in `backends.store.reset_credential_ref`. Do not give this secret to the runtime process: the secrets policy
+   (IAM or the store's access rules) of the runtime's identity must NOT list the reset secret, because nothing in the
+   code can stop a secrets provider from handing it over.
 
 ## Stop
 `hadavin-sdk limits stop --by <who>` adds one stop. It works even when the audit log is down (the audit row is written afterwards).
@@ -98,6 +100,8 @@ runtime and not the reset login):
    intent id first (a lost commit reply is also reported this way) before recording anything by hand.
    The release secret name may not be read by the runtime: a tool,
    source, executor or restored-hash secret that folds to the same name stops the start.
+   Likewise the secrets policy of the runtime's identity must NOT list the release secret (the start check only
+   sees names the runtime config reads; the policy is what keeps the secret out of reach).
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
 
