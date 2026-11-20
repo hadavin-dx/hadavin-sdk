@@ -1,0 +1,22 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /home/user/hadavin-sdk
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 32 items
+
+tests/triggers/test_t5_postgres.py::test_a1_new_signed_request_gives_one_row_with_the_expected_fields ERROR [  3%]
+tests/triggers/test_t5_postgres.py::test_a2_repeat_gives_the_same_run_and_no_model_call ERROR [  6%]
+tests/triggers/test_t5_postgres.py::test_a3_same_key_with_another_document_is_409_and_the_row_stays ERROR [  9%]
+tests/triggers/test_t5_postgres.py::test_a4_two_senders_with_one_key_give_two_rows ERROR [ 12%]
+tests/triggers/test_t5_postgres.py::test_a5_fifty_parallel_requests_with_one_key_give_one_row ERROR [ 15%]
+tests/triggers/test_t5_postgres.py::test_a6_document_over_the_document_cap_is_accepted_and_ends_with_a_person ERROR [ 18%]
+tests/triggers/test_t5_postgres.py::test_a6_body_over_the_body_cap_is_413_and_writes_nothing ERROR [ 21%]
+tests/triggers/test_t5_postgres.py::test_b1_kill_before_the_row_gives_no_ack_and_the_retry_is_accepted ERROR [ 25%]
+tests/triggers/test_t5_postgres.py::test_b2_kill_after_the_row_then_tick_ends_with_a_person ERROR [ 28%]
+tests/triggers/test_t5_postgres.py::test_b3_kill_inside_handle_after_working_then_tick_ends_with_a_person ERROR [ 31%]
+tests/triggers/test_t5_postgres.py::test_b4_no_answer_is_sent_before_the_row_was_read ERROR [ 34%]
+tests/triggers/test_t5_postgres.py::test_c1_two_processes_and_one_request_give_one_row ERROR [ 37%]
+tests/triggers/test_t5_postgres.py::test_c2_two_processes_and_two_documents_give_one_run_and_one_409 ERROR [ 40%]
+tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block 
