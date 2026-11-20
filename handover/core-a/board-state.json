@@ -759,19 +759,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 13:46: share work, one agent per item"
-  },
-  {
-   "id": "rev-grants",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review that the 17 re-pointed grant tests were not weakened and the 3 new pins bite",
-   "started UTC": "13:57",
-   "expected end": "12 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1144,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:10 grant tests reviewed fresh: NO Blocker/Major; nothing weakened; one nit (a relaxed exact call-list equality in the limits-reset test) restored and pushed (wip/core-a-for-grant-tests). NOTE: the SECURITY DEFINER / PUBLIC-EXECUTE pins need a PG DSN (skip without one: no proof on a box without Postgres); trigger functions (EXCLUDED_FUNCTIONS) and definer search_path are not pinned in that file. Running: c-e19 only.",
   "14:06 MAJOR (money, core-b, found while reviewing d-fix22): with max_running one source = core-b default 4, NOTHING in the run loop calls limits.reserve (agent_loop.py:371/531 only charge AFTER the model call; grep finds no .reserve( caller): up to 4 parallel runs of one agent can each pass the budget check before any is booked. The worker's check_spend is silent because the method exists. The old worker default 1 hid this. Options in handover/core-a/requests/to-core-b.md: wire reserve/settle into the loop, or ship default 1 until it is wired, or make check_spend test the loop. Until then operators should set triggers.max_running: 1. d-fix22 itself reviewed: no Blocker. Running: c-e19, rev-grants.",
   "14:02 grant tests: wip/core-a-for-grant-tests pushed (file tests/test_grants_negative_roles.py = core-c's file re-pointed, deliverable is the file; core-c copies it after rebasing on core-b): 17 failed -> 88 passed with PG 16 (raw/grant-tests-before.log, -after.log); 48 passed + 40 skipped without a DSN; 17 not 8 because core-b added 0008-0011 since the trial. Fresh review rev-grants checks nothing was weakened. Running: c-e19, rev-dfix22, rev-grants.",
   "13:59 d-fix22 built on cloud/core-a: worker has NO max_running of its own (reads config.triggers.max_running; ConfigError if missing); worker default was 1, core-b's is 4: with 4 the worker's check_spend warning/refusal path now applies at the default: rev-dfix22 checks exactly what happens; running: c-e19, grant-tests, rev-dfix22.",
@@ -3582,6 +3570,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "d-fix22 review: no Blocker in the change; all 27 mentions accounted for, anchors intact, AST test bites; MAJOR for core-b: with default 4 nobody calls limits.reserve in the loop (only charge after the call): parallel runs can overspend; old default 1 hid it"
+  },
+  {
+   "id": "rev-grants",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review that the 17 re-pointed grant tests were not weakened and the 3 new pins bite",
+   "started UTC": "13:57",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "grant tests review: NO Blocker/Major; nothing weakened (money tables now exact-set empty for every role, release/reset cells exact), every allow-list entry maps to a migrate.py line, reset order is a real requirement (limits.py:262-283), case10 exclusion justified (UNRELEASED_MIGRATIONS); nit 1 (relaxed calls equality) FIXED; PG-only proof for SECURITY DEFINER/PUBLIC EXECUTE pins"
   }
  ]
 }

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:52:09Z
+UPDATED_UTC: 2026-11-20T13:52:39Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 2
-CAPACITY: load 3.20 of 4 cores (1-minute average), mem 1.3/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 13G 57G 19%; 630M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
+AGENTS_RUNNING: 1
+CAPACITY: load 2.49 of 4 cores (1-minute average), mem 1.2/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 13G 57G 18%; 630M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:51:35Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:52:13Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,20 +107,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | c-e19 | builder in /home/user/wt/c-e19 (wip/core-a-for-c-e19) | sonnet | core-c item 2: runmap _canonical_view U+0338 spoof test + docstring (+fix or strict xfail) + mutant | 13:49 | 20 min | 5 | running | - | 0 | lead 13:46: share work, one agent per item |
-| rev-grants | fresh independent reviewer (codebase-details), read-only | sonnet | review that the 17 re-pointed grant tests were not weakened and the 3 new pins bite | 13:57 | 12 min | 5 | running | 1 | 0 | fresh review of each diff |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27461s ago | running | matched by name in ps |
-| 22507 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 22508 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 te | core-a session or its agent | 27s ago | running | matched by name in ps |
-| 22512 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 27s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27491s ago | running | matched by name in ps |
+| 22507 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 58s ago | running | matched by name in ps |
+| 22508 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 te | core-a session or its agent | 58s ago | running | matched by name in ps |
+| 22512 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 58s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -182,6 +181,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 14:10 grant tests reviewed fresh: NO Blocker/Major; nothing weakened; one nit (a relaxed exact call-list equality in the limits-reset test) restored and pushed (wip/core-a-for-grant-tests). NOTE: the SECURITY DEFINER / PUBLIC-EXECUTE pins need a PG DSN (skip without one: no proof on a box without Postgres); trigger functions (EXCLUDED_FUNCTIONS) and definer search_path are not pinned in that file. Running: c-e19 only.
 - 14:06 MAJOR (money, core-b, found while reviewing d-fix22): with max_running one source = core-b default 4, NOTHING in the run loop calls limits.reserve (agent_loop.py:371/531 only charge AFTER the model call; grep finds no .reserve( caller): up to 4 parallel runs of one agent can each pass the budget check before any is booked. The worker's check_spend is silent because the method exists. The old worker default 1 hid this. Options in handover/core-a/requests/to-core-b.md: wire reserve/settle into the loop, or ship default 1 until it is wired, or make check_spend test the loop. Until then operators should set triggers.max_running: 1. d-fix22 itself reviewed: no Blocker. Running: c-e19, rev-grants.
 - 14:02 grant tests: wip/core-a-for-grant-tests pushed (file tests/test_grants_negative_roles.py = core-c's file re-pointed, deliverable is the file; core-c copies it after rebasing on core-b): 17 failed -> 88 passed with PG 16 (raw/grant-tests-before.log, -after.log); 48 passed + 40 skipped without a DSN; 17 not 8 because core-b added 0008-0011 since the trial. Fresh review rev-grants checks nothing was weakened. Running: c-e19, rev-dfix22, rev-grants.
 - 13:59 d-fix22 built on cloud/core-a: worker has NO max_running of its own (reads config.triggers.max_running; ConfigError if missing); worker default was 1, core-b's is 4: with 4 the worker's check_spend warning/refusal path now applies at the default: rev-dfix22 checks exactly what happens; running: c-e19, grant-tests, rev-dfix22.
