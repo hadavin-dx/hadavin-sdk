@@ -199,7 +199,7 @@ def test_every_answer_is_one_write(name):
 def test_the_one_write_holds_status_line_headers_and_the_whole_body(name):
     """A kill between writes is impossible when the first and only write is the complete answer."""
     _app, _data, status, body = _cases()[name]
-    raw, writes = _exchange(name)
+    _raw, writes = _exchange(name)
     first = writes[0]
     _head, sep, tail = first.partition(b"\r\n\r\n")
     assert sep and first.startswith(b"HTTP/1.")
@@ -213,7 +213,7 @@ def test_the_one_write_holds_status_line_headers_and_the_whole_body(name):
 @pytest.mark.parametrize("name", NAMES)
 def test_the_bytes_on_the_wire_are_those_of_the_stdlib_writes(name):
     """Byte for byte what the four-write server sent (taken before the change; Date replaced)."""
-    raw, writes = _exchange(name)
+    raw, _writes = _exchange(name)
     assert _normal(raw) == GOLDEN[name]
 
 
@@ -273,10 +273,16 @@ def test_d_fix16_send_error_writes_one_answer_whatever_the_request_version():
     from hadavin_sdk.triggers.server import QuietRequestHandler
 
     for version in ("HTTP/0.9", "", "HTTP/1.1", "HTTP/2.0"):
-        for code, line in ((400, b"400 Bad Request"), (414, b"414 URI Too Long"), (505, b"400 Bad Request")):
+        for code, line in (
+            (400, b"400 Bad Request"),
+            (414, b"414 URI Too Long"),
+            (505, b"400 Bad Request"),
+        ):
             writes: list[bytes] = []
             h = QuietRequestHandler.__new__(QuietRequestHandler)
             h.request_version = version
             h.wfile = SimpleNamespace(write=writes.append)  # type: ignore[assignment]
             h.send_error(code, "echo of the request", "explain")
-            assert writes == [b"HTTP/1.0 " + line + b"\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"]
+            assert writes == [
+                b"HTTP/1.0 " + line + b"\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            ]
