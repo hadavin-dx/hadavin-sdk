@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:29:07Z
+UPDATED_UTC: 2026-11-20T15:29:54Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.07 of 4 cores (1-minute average), mem 1.1/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 3
+CAPACITY: load 0.14 of 4 cores (1-minute average), mem 1.1/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 643M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:29:01Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:29:12Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| rev-c-G13c-G12c | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G13c (net lookups) + G12c (core rules): are my G13b/G12b Majors fixed (window overlap leak, quadratic _touching_piece, guillemet core drop, U+226E) | 15:30 | 15 min | 5 | running | 1 | 0 | new landed code that answers my findings |
+| rev-c-G4c | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G4c start look-behind + 4 gate mutant fixes (G13d, G13e, E19g, E19i): STOP-guard input closed? | 15:30 | 15 min | 5 | running | 1 | 0 | new landed code that answers my findings |
+| rev-b-B2 | fresh independent reviewer (codebase-details), read-only | sonnet | core-b F-install B2: live path reserves before / settles after the model call (my 'nothing calls reserve' finding), mutants, ungated sites | 15:30 | 15 min | 5 | running | 1 | 0 | new landed code that answers my findings |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 33279s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 33279s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 33279s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 33279s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 33279s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 33279s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 33326s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 33326s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 33326s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 33326s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 33326s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 33326s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +180,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:31 AGENTS 3: found NEW code that answers my findings (heads moved: core-c 107717a7e, core-b 763d71c42): core-c G13c (net lookups: head test before slice) and G12c (core rules) = answers to my G13b/G12b Majors; core-c G4c (start look-behind) + four gate mutant fixes; core-b F-install B2 (live path reserves BEFORE and settles AFTER the model call) = answer to my 'nothing calls limits.reserve' Major. One fresh reviewer each (rev-c-G13c-G12c, rev-c-G4c, rev-b-B2). The wip/lead-b-* heads are unchanged.
 - 15:29 SINCE 15:19 (AGENTS 0): 15:19-15:21 rev-lead-tswm-2 reviewed wip/lead-b-ts-watermark de8967aba (reviews/rev-lead-tswm-2.md: no Blocker/Major, 5 nits). YOUR 15:27 LIST IS ALL DONE; I am not re-running identical work on unchanged heads: wip/lead-b-migrate = 0891d81bd (reviewed twice: reviews/rev-lead-migrate.md and rev-lead-migrate-2.md; waiting for your fix round 1: give me the new head and I review it at once); wip/lead-b-ts-watermark = de8967aba (reviewed twice: rev-lead-tswm.md, rev-lead-tswm-2.md); wip/core-a-merge-c: nothing to merge (all 4 g2/g3 commits SUPERSEDED: handover/core-c/requests/from-core-a-merge.md); CRASH-MATRIX part 2 DONE (CRASH-MATRIX.md 'Part 2', 171 points PG16 + memory); E-door-1 README DONE, reviewed, fixed. I start an agent the minute a head moves or an order names work.
 - 15:25 YOUR wip/lead-b-ts-watermark de8967aba (fix rounds 2-4) reviewed fresh (reviews/rev-lead-tswm-2.md): NO Blocker, NO Major provable. VALIDATE now runs inside the migrate transaction: a crash rolls back 0009 AND the validate (no forever-NOT-VALID window); a planted row only warns; 0009 is still NOT released (manifest 0001-0007, UNRELEASED 0008-0011); no semantic conflict with the core-b merge; exit 75 (EX_TEMPFAIL) is real and tested with stubs. Nits for your round: (1) tests/test_migrations_0009_0010_round2.py:195 `'VALIDATE CONSTRAINT' in 0009.sql` passes only because of the comment at 0009.sql:23 and :201 pins a runbook string: text-matching vacuity, replace with behaviour tests; (2) NO test runs the documented chain leftovers -> DROP -> --accept-changed-draft -> migrate succeeds; and accepting the checksum does not verify the old draft has the constraints/index; (3) the in-migrate settle has NO lock_timeout/statement_timeout (only the standalone command has 5 s/60 s) and ADD CONSTRAINT/CREATE INDEX hold ACCESS EXCLUSIVE until the whole migrate transaction commits: the runbook's 'short lock' is true only on small tables; (4) handover/core-b/MIGRATIONS.md:16 stale; (5) test_a_migrate_that_never_warns_is_killed loosened to BaseException. No agents running.
 - 15:19 WHAT THE MAIN THREAD DID / WHY 0 AGENTS: the main thread only reads agent reports, writes reports and pushes the board; agents run the work. Between 15:05 and 15:17 there were 0 agents because every item on your lists was finished (not skipped): ts-watermark review (reviews/rev-lead-tswm.md), migrate review + targeted deploy-order/merge/keyword review (rev-lead-migrate.md, rev-lead-migrate-2.md), merge-c (all 4 commits superseded: nothing to merge), CRASH-MATRIX part 2 (done, 171 points), E-door-1 README (done and reviewed). NEW from your 15:17 note: wip/lead-b-ts-watermark moved to de8967aba (fix round 2: 0009 without a DO block, migrate validates; runbook; core-b merge): rev-lead-tswm-2 started on that delta (643-line diff). wip/lead-b-migrate is still 0891d81bd = the head I already reviewed twice; I will re-review when your fix round 1 is pushed (tell me the head). AGENTS 1.
