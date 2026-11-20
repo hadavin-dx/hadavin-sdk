@@ -1501,9 +1501,10 @@ One plain `threading.Lock` covers the cap check and the write. Constructor gains
 466	            self._kill = ks.model_copy(deep=True)
 ```
 
-Note a memory/Postgres difference read from the code: memory `_close` treats `settled` and `released` as closed and
-lets an `expired` row through (:352); memory checks the kill switch BEFORE the replay lookup (:293 then :302), the same
-order as Postgres (:665 then :675).
+Same rules as Postgres, read from the code: memory `_close` treats `settled` and `released` as closed and lets an
+`expired` row through (:352), like the Postgres claim on `status IN ('open', 'expired')`; memory checks the kill switch
+BEFORE the replay lookup (:293 then :302), the same order as Postgres (:665 then :675). Memory keeps no month
+counter: the month total is summed from the day entries (`_month_total`, :251-261).
 
 ## 3.6 Other source changes on P4d-a2
 
@@ -2755,7 +2756,7 @@ Test files:
 - `tests/meter_mutants.py`, `tests/postgres_mutants.py`, `tests/meter_memory_killers.py`: mutant lists for
   `tools/mutation_runner.py` (not read beyond the docstring: UNVERIFIED).
 - `tests/pg_dsn.py` + `tests/test_pg_dsn_guard.py` (4): one rule, fail in CI and skip on a laptop when the DSN is missing.
-- Changed: `tests/contracts/kinds/store_postgres.py` (+8 -... : uses `need_dsn_or_skip`), `tests/demo_askdata/conftest.py`.
+- Changed: `tests/contracts/kinds/store_postgres.py` and `tests/demo_askdata/conftest.py` (both now call `need_dsn_or_skip`).
 
 ---------------------------------------------------------------------------------------------------------------
 
