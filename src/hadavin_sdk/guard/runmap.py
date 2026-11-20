@@ -17,7 +17,7 @@ import html
 import re
 import time
 import unicodedata
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 from urllib.parse import unquote
 
@@ -483,6 +483,52 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
+    out, current = _scan(text, mapping, neutralise, getattr(mapping, "redact_cache", None))
+    mapping.clear()
+    mapping.update(current)
+    return out
+
+
+def is_masked(text: str, mapping: Mapping[str, str]) -> bool:
+    """True when redacting `text` with `mapping` would mask nothing more. Never writes `mapping`.
+    (`Mapping` is `collections.abc.Mapping`: a plain dict, a RunMap or a read-only view all fit.)
+
+    It runs the same scan as `redact_text` (same views, caps and time budget) on a COPY of the map and
+    throws the result away. The text counts as masked only when both hold: the copy did not change (no new
+    value was found), and the result holds exactly the placeholders the input held, each as many times.
+    Both parts are needed for the first pass and for the views alike: a new secret grows the map; a second
+    copy of a known value only adds a placeholder. A count alone is not enough: a placeholder followed by
+    more readable text (`password=<UUID_1>.rest`) can be a value the map already holds whole, so one
+    placeholder is swapped for another, and two placeholders can merge into one, with the map unchanged
+    and the count the same or lower. The texts themselves are never compared: cleaning and NFKC change a
+    text without masking anything.
+
+    The redactor works on a private shallow copy of the run's cache (`mapping.redact_cache`), so the built
+    patterns are reused and the caller's cache is never written. A placeholder that is not in the map is
+    left alone, here as in `redact_text`, so it does not make a text unmasked.
+
+    Returns a bool only: no masked text, no found value and no kind leaves this function. Raises
+    InputTooLarge / TooDeep / RedactionError exactly as `redact_text` does: the caller treats any raise as
+    NOT masked."""
+    _within_cap(text)
+    before = dict(mapping)
+    # The redactor only assigns the cache's two keys and never changes what they hold in place (redact.py
+    # `_Redactor._build` builds new objects first), so a shallow copy is private.
+    cache = dict(getattr(mapping, "redact_cache", None) or {})
+    out, current = _scan(text, dict(before), None, cache)
+    held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(_clean(text)))
+    held_after = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(out))
+    return current == before and held_after == held_before
+
+
+def _scan(
+    text: str,
+    mapping: dict[str, str],
+    neutralise: Callable[[str], str] | None,
+    cache: dict[str, Any] | None,
+) -> tuple[str, dict[str, str]]:
+    """The work of `redact_text` without its write: (redacted text, the map as it would be afterwards).
+    `mapping` is only read. Callers check the input cap first (`_within_cap`)."""
     started = time.monotonic()
     try:
         text = fits_after_nfkc(_clean(text))
@@ -490,7 +536,6 @@ def redact_text(
             text = fits_after_nfkc(neutralise(text))
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
-        cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)
         out, current = result.text, result.mapping
         if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
@@ -521,9 +566,7 @@ def redact_text(
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
-    mapping.clear()
-    mapping.update(current)
-    return out
+    return out, current
 
 
 SAFE_HEAD_NOTE = "(details withheld)"
