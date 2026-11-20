@@ -46,11 +46,38 @@ What changed from v2, in one list (each with its finding):
   passed, 12 deselected, 20 xfailed`; appendix D and E apply with `patch -p1` (offsets 6 and 3, no fuzz); then the G8 file
   `396 passed, 12 deselected, 20 xfailed`, the g3 port, property, enforce_map and model-gate files `2213 passed`, and the mutants
   `30 of 30 good`. The tables are unchanged on it.
+- CHANGED in v4 (G8-review-3-codebase N3): HEAD when v4 was written: 99787d5b3 (adds G7 fix round 7, bff88a7a1, to 93c0d08ee).
+  Measured by the v4 drafter on `git archive 99787d5b3` copies in its own scratch folder (`base4`; `v3h` = base4 + appendix D of
+  v3; `v4` = v3h + the v4 changes of section 4.1, then `ruff format`): step 0 (`python -m tests.g8_cases`, v3's appendix A)
+  `0 differ`; appendix D of v3 applies with `patch -p1`, no fuzz (redact.py hunks 7-8 offset 31, hunks 9-10 offset 42); appendix
+  E with offset 3 (g3 port hunk); a scratch row check (not pytest: `check.py`, every probe, must-keep, full-stop and at-rest row
+  through `redact`, `redact_many`, `redact_text`, a second `redact_text` and `redact_untrusted`) gives v3's `after` column on
+  `v3h` with 0 differences. So G7 round 7 changes nothing G8 measures. Cite table, the same names at the three commits (by name
+  first; a line is a hint):
+
+  | name | a5247ac4a | 93c0d08ee | 99787d5b3 |
+  |---|---|---|---|
+  | IBAN / UUID / EC2 / pod / dotted IPV4 / CREDITCARD entries | 266-274 / 275-280 / 375 / 376 / 377 / 471 | same | same |
+  | PHONE comment block / main PHONE tuple | 472-490 / 491-498 | same | same |
+  | `_Redactor.sweep` def / its comment / the `_replace_standalone` call | 1982 / 1983-1987 / 2041 | 1988 / 1989-1993 / 2047 | 2013 / 2014-2018 / 2072 |
+  | `_ALNUM` / `_replace_standalone` def | 2225 / 2228 | 2231 / 2234 | 2267 / 2270 |
+  | runmap.py: `_alias_keys` import / `enforce_map` docstring sentences / `_sweep_held` call | 31 / 699, 718 / 849 | same | same |
+  | model_gate.py guarantee bullet (text / its `E::` pin line) | 12-13 / 14 | same | same |
+  | tests/test_redact_idempotent_property.py `raw_copies` oracle line / docstring (b) | 141 / 5-7 | same | same |
+  | tests/test_redact_g3_port.py re-pointed lines | 56-59 | 59-62 | 59-62 |
+  | tests/test_runmap_enforce_map.py pinning test | 263-275 | same | same |
+  | tests/warden_port/test_redaction.py UUID-sweep tests (N5) | 243-251, 375-379 | same | same |
+
+  model_gate.py: the bullet G8 edits is lines 12-14 (two text lines and the `E::` pin line); v3's "12-13" named the text lines
+  only (N3); appendix D's hunk is unchanged.
 - Python: measured on 3.13 only (the repository's `.venv`; pyproject `>=3.12`). The nested look-behind
   `(?<!(?<![A-Za-z])[vV])` is fixed width; on 3.12 by reading only.
-- Dependencies named (section 8.1): G4 v5 (being drafted; G4-P1c-redactor-gaps-v5.md is at this base still a copy of v4, blob
-  a029802bd1f3, so v4 is what was measured); G9 (the spelled sweep to a fixed point, draft v1, edits `_Redactor.sweep`'s loop);
-  G10 (textfold deadline, draft; no G8 line).
+- Dependencies named (section 8.1): CHANGED in v4 (M3): G4 v5 (G4-P1c-redactor-gaps-v5.md, blob c96f9c01de99 at 99787d5b3) is
+  NOT a copy of v4 as v3 said: it has its own section 0.3 "Order with G8", decision L23 and other new content (for example L21);
+  its HOSTNAME regex lines (5.2, 5.3) are the same text as v4's, so v4's measurement stands; the differences that touch G8 are
+  reconciled in 8.1. G4 v6 is being drafted (untracked draft read at 10:26Z). G9 (the spelled sweep to a fixed point, v1 and a v2
+  draft; edits `_Redactor.sweep`'s loop and adds a read-back that copies the sweep's rule: 8.1, M4); G10 (textfold deadline,
+  draft; no G8 line).
 
 ## 1. Goal
 A value of kind IPV4, PHONE, IBAN, UUID or CREDITCARD glued straight to a letter or `_` (and for IPV4 / UUID / PHONE in the

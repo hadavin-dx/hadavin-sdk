@@ -681,8 +681,47 @@ that fit the box at low load". It does not choose D1-D10; the defaults below are
 - The false-hit rates are an UPPER BOUND on ordinary Latin text with random values; real protected values, other registers and Arabic/Devanagari
   text are not measured.
 
-## 12. Measured by the drafter
-<PENDING>
+## 12. Measured by the drafter (on the prototype `g10v3/proto`; CPU seconds of the measuring thread, `time.thread_time()`; one process; load 3 to 6.7 from other agents during the runs, so seconds are noisy upward)
+### 12.1 Reading sequences (`scripts/seq.py`, stepping clock)
+T and V of D-3: 19 readings, `POINTS_T`; T2: 18, `POINTS_T2` (the 18th in `_holds_with_one_insertion`); `scan_views_no_value(T)`: 16;
+`("a summary", "Mary")`: 15; `("passంword", "password")` (a spacing mark: two marks variants, 2 x 3 converge passes): 20. For every k in
+1..18, `deadline=k + 0.5` raised at reading k + 1 (18 of 18).
+### 12.2 The longest stretch between two readings, and a sweep of expiry offsets (`scripts/overrun.py`)
+Method: the clock of textnorm (and injection) replaced by a recorder that returns the real `time.thread_time()` and keeps it; the call runs with a
+far deadline; the stretches are the differences between consecutive readings, with the entry and the return as the two ends. The weight memo is
+cleared first (a text seen for the first time: the worst case). The sweep: deadline = start + offset for 12 offsets evenly over the whole call
+(memo cleared each time); overrun = the CPU time at the raise minus the deadline.
+| call (236,879 distinct non-ASCII letters, the longest prefix the weight cap takes) | readings | call | longest stretch (where) | sweep: overrun per offset, worst |
+|---|---|---|---|---|
+| `scan_holds`, value `Zqxvbn` | 56 | 5.99 s | 0.599 s (P1 -> P2: the weight) | 0.015 to 0.209 s, worst 0.209 |
+| `scan_holds`, value `密码测试` | 58 | 6.12 s | 0.514 s (P1 -> P2) | 0.019 to 0.094 s |
+| `scan_views_no_value` | 55 | 6.23 s | 0.630 s (P1 -> P2) | 0.002 to 0.109 s (the last offset, 5.75 s, finished before its deadline was read again) |
+The weight is the one stretch above about 0.2 s; it is computed once per text (memoised per SHA-256, at most 32 texts), so a second call on the
+same text has the next longest stretch (a converge pass or a prefix pass, 0.1 to 0.2 s).
+The value work (P2 -> P2b, `scan_holds(text="x", value=...)`): value of 236,879 distinct letters 7.187 s of a 7.92 s call (15 readings);
+262,144 ASCII letters 0.583 s.
+### 12.3 The injection read of 2,000,000 characters (D4; `scripts/overrun.py`, `scripts/inj2.py`, `scripts/injsweep.py`)
+Texts built with a seeded generator (20261120): ASCII sentences; 1 percent non-ASCII; every other character a distinct non-ASCII letter (from
+U+0081 on, the distinct text cycled); words of the corpus class "Hindi and Thai marks" (the Devanagari words सुमन, समन, हंस, हस, दीपक, दिपक, मोहन,
+महन, दुःख, दुख; spacing marks Mc 9.1 % of the characters when alone) and of the class "tag characters" (the six `a` strings; tag characters 32 %
+when alone), each also mixed with English words.
+| text | spacing marks / tags | no budget | verdict | readings | longest stretch (where) |
+|---|---|---|---|---|---|
+| ASCII sentences | 0 | 4.45 s | not flagged | 2,001 | 0.043 s (last reading -> return) |
+| 1 percent non-ASCII | 0 | 9.72 s | not flagged | — | — |
+| every other character a distinct non-ASCII letter | 0 | 16.01 s | not flagged | 2,210 | 0.094 s (tail) |
+| Devanagari words only | Mc 9.1 % | 0.53 s | flagged `guard_unavailable` by `_start_of_next` (no a-z letters before the first boundary: the known L45/K52 behaviour, not the deadline) | — | — |
+| Devanagari 70 % of the words, English 30 % | Mc 5.6 % | 15.80 s | not flagged | 2,626 | 0.132 s (tail) |
+| Devanagari 50 %, English 50 % | Mc 3.7 % | 15.29 s | not flagged | 2,626 | 0.117 s (tail) |
+| tag words only | tags 32 % | (not timed: same boundary rule) | — | — | — |
+| tag words 30 %, English 70 % | tags 16.4 % | 6.52 s | not flagged | 2,641 | 0.078 s (tail) |
+| tag words 10 %, English 90 % | tags 5.8 % | 8.30 s | not flagged | 8,021 | 0.075 s (tail) |
+The raw squash of `_score` over 2,000,000 characters alone: 0.097 s. Sweep on the distinct-letter text (6 offsets, 2.2 to 13.2 s): overruns
+0.001 to 0.017 s. Reading: the injection read is cut finely (one piece per fold call); its longest stretch is the tail after the last reading.
+D4 from these: the slowest text measured is 16.0 s at load about 5; 30.0 gives about 1.9x. v2's 15.6 s (same construction, load 3) agrees.
+### 12.4 Equality and overhead
+D-1 (188 corpus string rows x 3 ways, and the views) green on the prototype. Overhead: v2's measurement (one reading 0.28 to 0.31 us; ratio of
+bests 0.999 and 0.994 on 262,144 ASCII characters) is reused, not re-run for v3.
 
 ## 13. NOT verified
 - The perf rows (`-m perf`: tests/test_textnorm_round2.py ceiling rows with the budget patched, tests/test_textnorm_perf.py): not run.
