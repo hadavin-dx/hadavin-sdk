@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:40:46Z
+UPDATED_UTC: 2026-11-20T09:44:20Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,23 +6,22 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 9
-CAPACITY: load 4.2 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 9, heavy agents 0
+AGENTS_RUNNING: 8
+CAPACITY: load 3.2 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
 DISK: / 58G free, 17% used; git worktrees 18; 1.2G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only (7). G7 round 6 landed 9d8bc580a; fresh result reviews of round 6 and merged-tree batch 5 start now. ORDER 023: E9(1)(3) done, E9(2) building, E10 ticket G9 drafting then plan review round 1, E11 ticket G10 + split running, E12 Q9 builder, Q16 done.
-PUSHED_UTC: 2026-11-20T09:40:40+00:00
+PUSHED_UTC: 2026-11-20T09:43:59+00:00
 
-(15:10 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:14 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | ab19d791 | builder | claude-sonnet-5-5 | Q9 mutants and tests (30 code points; 3 wrong-reason + 4 surviving textnorm mutants; stale N15; both mutant lists on HEAD) | RESTARTED 09:36Z on /tmp/core-c-q9 | 09:36 | 10:10 | 30 | running | 1 | 1 | container restart 09:35Z |
-| a04e121e | builder | claude-sonnet-5-5 | E9(2) _OWN_OUTPUT restricted to SECRET tokens (test + 3 mutants) | RESTARTED on /tmp/core-c-own | 09:36 | 10:00 | 40 | running | 1 | 1 | container restart 09:35Z |
 | adfc4857 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point (E10) | plan review round 1 next (max 3) | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a759f3ff | drafter | claude-opus-5-5 | ticket G10: text-fold deadline + published false-hit rates (E11) | plan review round 1 next | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |

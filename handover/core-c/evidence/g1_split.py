@@ -3,6 +3,7 @@ No protected value is in any corpus text (the values are drawn at random; a hit 
 which the generators below avoid by construction only statistically: names are synthetic/hand-listed; a value that equals a whole word
 of the chunk is NOT filtered, it would be a true hit; this is reported as 'whole-word' count in the examples when it happens)."""
 import ast, glob, os, random, sys, sysconfig, time, unicodedata, collections, json
+if os.environ.get('HADAVIN_SRC'): sys.path.insert(0, os.environ['HADAVIN_SRC'])  # -I ignores PYTHONPATH: the export's src is put first here
 from hadavin_sdk.guard import textnorm
 from hadavin_sdk import defaults
 print("module:", textnorm.__file__, "python:", sys.version.split()[0], "unidata:", unicodedata.unidata_version)
