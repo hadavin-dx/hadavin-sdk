@@ -29,3 +29,19 @@ Reviewers (fresh, not the author, model sonnet on the call; transcripts show cla
 Counts: PROPOSE FIX: the Blocker and all Majors (some with ESCALATE for the verification), 7 Nits; DECLINE 1; CONTEST 0; ESCALATE 1 (needs a real n8n: ESCALATIONS E6).
 ## What happens next
 A sonnet BUILDER (not the author, not a reviewer) edits n8n/*.json, n8n/README-trigger.md and tests/triggers/test_n8n_template.py; a separate evidence runner records; round 2 by fresh reviewers (not these two). Audience decision for the README: the set-up steps are for the Hadavin OPERATOR together with the client's automation builder (state it at the top).
+
+## Round 2 (builder, core-a)
+
+| # | Finding | Done |
+|---|---|---|
+| 1 | Header Auth import recipe, credential id location | README: recipe added, marked UNVERIFIED (field names `name`/`value` in no evidence file) |
+| 2 | How a person finds the stored run | No lookup command exists in cli.py; README and the Stop messages say "ask the Hadavin operator with the run id"; key text = `key` field of "Hash business id" in the failed execution (the Stop message holds only the run id) |
+| 3 | Notify note began SEEN | Now starts UNVERIFIED; test ERROR set pins "Notify placeholder" |
+| 4 | Non-existent README passage | Sentence deleted |
+| 5 | 26 of 27 wording | Fixed |
+| 6 | Build request / Stamp time notes | Start UNVERIFIED (input path); both added to OPEN_NODES |
+| 7 | "below" -> "above" | Done |
+| 8 | `{{ $json.message }}` in step 5 | Done |
+| 9 | Words used here | tenant, agent, principal, ack_wait_s, max_running, max_steps, registry added |
+| 10 | Wait advice conflict | Now "keep 60 s; do not restart n8n while events are in flight" |
+| 11 | Test docstring | Added 520-524 and state check |

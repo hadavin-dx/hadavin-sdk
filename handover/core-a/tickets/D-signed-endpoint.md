@@ -123,7 +123,7 @@ Created by DOOR, all on disk:
 Modify: nothing by DOOR. REQUESTS TO core-b (full text: requests/001-config-triggers.md, DRAFT 3):
 - R1 `S/config.py`: `TriggerSender`, `TriggerSettings`, `Config.triggers` (section 7b). R1b `S/defaults.py`: the default numbers.
 - R1c `S/app.py:158-169` and `S/backends/platform_secrets.py:36-51`: trigger secret names checked at start, kept apart from the other name groups.
-- R1d `S/app.py:46-60`: new App field `trigger_resolve`, a reader limited to the trigger secret names.
+- R1d `S/app.py:46-60`: new App field, a reader limited to the trigger secret names. Asked for as `trigger_resolve`; core-b built it as `trigger_secret` (core-b head f390b7d6e, TRIAL-INTEGRATION.md) and the worker reads `trigger_secret` (`secret_reader`, worker.py:373-380). CHANGED after code review 1.
 - R2 `S/registry.py:226 and 339`: load-time check of a sender's agent and principal. R3 README, SECURITY, CHANGELOG wording. R4 `.github/workflows/ci.yml`: no change (line 181 runs bandit on `src demos tools`). R5 `pyproject.toml`: no change (bandit is pinned in the `scan` group, line 54; the worker starts with `python -m hadavin_sdk.triggers.worker`).
 CODE TO CHANGE (files that disagree with this ticket today):
 - CODE TO CHANGE: `n8n/README-trigger.md` (line 65 when this was written) says the body limit defaults to 262144 bytes; the default is 2 x that, 524288 (section 7b). Not re-checked after code review 1: the n8n files are another agent's.
@@ -136,56 +136,58 @@ Follow-up, not in this PR: the default numbers are literals in endpoint.py:41-43
 1. Endpoint: built. Tests: EP. Blocked by nothing.
 2. Runner: built. Tests: WK:142-508 and T5 on the memory store. T5 on PostgreSQL needs the DSN (lead).
 3. `make_app` and `main` with the real config: the code is built and reads the config by attribute name only (worker.py:295-300, 426-456, 543-563). On THIS tree `Config.triggers` and `App.trigger_secret` do not exist, so `main` always exits 2 here ("triggers block not configured", WK:542); the start of `main` as a real child process runs only on a scratch tree that combines core-b's config with ours: `tests/triggers/test_t5_main_start.py` (skipped here when `hadavin_sdk.config.TriggerSettings` is missing), record `raw/main-start-on-combined-tree.log` (73 tests there). "REQUEST 001 first" applies to this phase only; phases 1 and 2 use the stand-ins inside the test files. Which settings exist in core-b's code today is stated in section 7b.
-4. PostgreSQL and crash cases: K1 is built on memory (WK:484). K2, K3, C4 and every PostgreSQL run: NOT BUILT HERE, lead's laptop.
+4. PostgreSQL and crash cases: K1 is built on memory (WK:489). K2, K3, C4 and every PostgreSQL run: NOT BUILT HERE, lead's laptop.
 5. n8n files: outlines exist; check F1 TO WRITE; a real n8n is ESCALATIONS E4.
 
 ## 7. SIGNATURES, WIRE FORMAT, STATUS CODES (as built)
 A "Protocol" below is a Python typing Protocol: a list of attribute names an object must have; nothing needs to inherit from it.
 `triggers/endpoint.py`
 ```
-PREFIX = "X-Hadavin"; PATH = "/v1/trigger"; METHOD = "POST"                       # endpoint.py:28-32
-KEY_RE = re.compile(r"[A-Za-z0-9._:-]{1,128}")                                    # 33
-ID_RE = re.compile(r"[a-z0-9-]{1,40}")           # 34, tenant and sender ids; both rules are used with fullmatch only (105, 136, 219, 224)
-MIN_SECRET_CHARS = 32; MAX_SENDERS = 8           # 36-37; characters, not bytes; literals here until core-b's defaults exist
-class BadRequest(ValueError)                     # 58; its message never quotes the body
-class SenderSettings(Protocol):  id, agent_id, principal_id                       # 62-68
-class TriggerSettings(Protocol): tenant, senders, max_body_bytes                  # 71-79
+PREFIX = "X-Hadavin"; PATH = "/v1/trigger"; METHOD = "POST"                       # endpoint.py:33-37
+KEY_RE = re.compile(r"[A-Za-z0-9._:-]{1,128}")                                    # 38
+ID_RE = re.compile(r"[a-z0-9-]{1,40}")           # 39, tenant and sender ids; both rules are used with fullmatch only (118, 149, 259, 268)
+MIN_SECRET_CHARS = 32; MAX_SENDERS = 8           # 41-42; characters, not bytes; literals here until core-b's defaults exist
+class BadRequest(ValueError)                     # 71; its message never quotes the body
+class SenderSettings(Protocol):  id, agent_id, principal_id                       # 75-81
+class TriggerSettings(Protocol): tenant, senders, max_body_bytes                  # 84-92
 @dataclass(frozen=True)
-class Accepted: sender, agent_id, principal_id, run_id, trigger_ref: str; document: bytes   # 82-91
-Start = Callable[[Accepted], tuple[int, dict[str, str] | None]]                   # 94
-def derive_run_id(tenant: str, sender: str, key: str) -> str                      # 97; ValueError on a bad charset
-def trigger_ref(sender: str, key: str, document: bytes) -> str                    # 111
-def parse_body(body: bytes) -> tuple[str, bytes]                                  # 123; (key, document); raises BadRequest
-def verify_any(headers, body: bytes, now_ts: float, secrets: Mapping[str, tuple[str, ...]]) -> str | None   # 144; tries all
-def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None                 # 168; ValueError names the sender, never a value
-def make_wsgi(settings: TriggerSettings, secrets, start: Start, clock=time.time)  # 209; ValueError on a bad setup
+class Accepted: sender, agent_id, principal_id, run_id, trigger_ref: str; document: bytes   # 95-104
+Start = Callable[[Accepted], tuple[int, dict[str, str] | None]]                   # 107
+def derive_run_id(tenant: str, sender: str, key: str) -> str                      # 110; ValueError on a bad charset
+def trigger_ref(sender: str, key: str, document: bytes) -> str                    # 124
+def parse_body(body: bytes) -> tuple[str, bytes]                                  # 136; (key, document); raises BadRequest
+def verify_any(headers, body: bytes, now_ts: float, secrets: Mapping[str, tuple[str, ...]]) -> str | None   # 157; tries all
+def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None                 # 185; ValueError names the sender, never a value
+def make_wsgi(settings: TriggerSettings, secrets, start: Start, clock=time.time)  # 249; ValueError on a bad setup
 ```
-- `secrets` is keyed by sender id. `make_wsgi` refuses to build unless its keys equal the configured sender ids (226-228) and then runs `check_secrets` (229).
-- Headers: a WSGI server hands request headers over as `environ` keys. The two that are read are `HTTP_X_HADAVIN_REQUEST_TIMESTAMP` and `HTTP_X_HADAVIN_SIGNATURE` (231-232, 251-255); no other header is read.
-- `parse_body` (123-141): the body must be UTF-8 and one JSON object with exactly `key` and `document`, both strings. BadRequest for: not UTF-8, not JSON, nesting too deep (the RecursionError is caught), an oversize number (129-130); a member written twice (116-120); a key that does not fullmatch KEY_RE (136); a document that cannot be written as UTF-8, that is a lone surrogate given as a JSON escape (138-141). Expected from the code, test TO WRITE: `NaN` as a value fails the string check (134-135), and a leading byte-order mark (three bytes some editors put at the start of a file) is refused by the JSON parser.
-- Check order in `decide` (234-279): other path 404; other method 405, with the header `Allow: POST` (294-295); Content-Length missing, not ASCII digits or zero 400 (202-206, 240-242); over the cap 413, body not read (243-244); a read that raises or returns fewer bytes 400 (245-250; in-process only, the real-socket case is ESCALATIONS E2); signature 401 (256-258); body shape 400 (259-262); then `start`. A `start` that raises or returns a status outside the table gives 503 (272-278); any other error inside gives 503, never a traceback page (281-286). Only 200 and 202 carry a body, holding only `run_id` and `state` (53, 288-290).
+- `secrets` is keyed by sender id. `make_wsgi` first checks the tenant (259-260), the body cap (261-264, at most `MAX_BODY_BYTES_LIMIT` = 8 x the document cap) and the sender ids (265-269), refuses to build unless its keys equal the configured sender ids (270-272) and then runs `check_secrets` (273).
+- Headers: a WSGI server hands request headers over as `environ` keys. The two that are read are `HTTP_X_HADAVIN_REQUEST_TIMESTAMP` and `HTTP_X_HADAVIN_SIGNATURE` (275-276, 295-299); no other header is read.
+- `parse_body` (136-154): the body must be UTF-8 and one JSON object with exactly `key` and `document`, both strings. BadRequest for: not UTF-8, not JSON, nesting too deep (the RecursionError is caught), an oversize number (142-143); a member written twice (`_no_duplicates`, 129-133); a key that does not fullmatch KEY_RE (149-150); a document that cannot be written as UTF-8, that is a lone surrogate given as a JSON escape (151-154). Expected from the code, test TO WRITE: `NaN` as a value fails the string check (147-148), and a leading byte-order mark (three bytes some editors put at the start of a file) is refused by the JSON parser.
+- Check order in `decide` (278-323): other path 404 (280-281); other method 405 (282-283), with the header `Allow: POST` (338-339); Content-Length missing, not ASCII digits or zero 400 (284-286; `_content_length`, 242-246); over the cap 413, body not read (287-288); a read that raises or returns fewer bytes 400 (289-294; in-process, the real-socket case is ESCALATIONS E2 and is now covered by `test_t5_wsgiref.py`); signature 401 (300-302); body shape 400 (303-306); then `start`. A `start` that raises or returns a status outside the table gives 503 (316-322); any other error inside gives 503, never a traceback page (`app`, 326-330). Only 200 and 202 carry a body, holding only `run_id` and `state` (65, 332-334).
 `triggers/worker.py`
 ```
-class Runner:                                                                     # worker.py:73
-    def __init__(self, runtime, store, max_running=1, ack_wait_s=5.0, *, poll_s=0.05)   # 76-84; ValueError unless all are above zero
-    def start(self, req: Accepted) -> tuple[int, dict[str, str]]                  # 113; never raises for a store or loop failure
-    def close(self, wait_s=30.0) -> None                                          # 101; a `with` block calls it (95-99)
-def trigger_settings(config) -> settings                                          # 194; ConfigError when config.triggers is None
-def sender_list(settings) -> list[tuple[str, sender]]                             # 202
-def check_senders(senders, agents, principals) -> None                            # 212; ConfigError
-def read_secrets(senders, resolve) -> dict[str, tuple[str, ...]]                  # 233; ConfigError names the sender only
-def check_bind(host: str, allow_non_loopback: bool) -> None                       # 253; ConfigError
-def make_app(app, *, clock=time.time) -> tuple[wsgi, Runner]                      # 268; the caller closes the Runner
-def make_server(host, port, wsgi, socket_timeout_s) -> WSGIServer                 # 312; bound, not yet serving
-def main(argv=None) -> int                                                        # 354; options --config-dir, --host, --port (357-359)
+class Runner:                                                                     # worker.py:125
+    def __init__(self, runtime, store, max_running=1, ack_wait_s=5.0, *, poll_s=0.05, max_waiting=128)   # 128-159; ValueError unless max_running is a whole number and all are above zero; ack_wait_s at most 30 and not NaN (0 < ack_wait_s <= 30, DC1-7)
+    def start(self, req: Accepted) -> tuple[int, dict[str, str]]                  # 189; never raises for a store or loop failure
+    def close(self, wait_s=30.0) -> None                                          # 167; a `with` block calls it (161-165)
+def trigger_settings(config) -> settings                                          # 295; ConfigError when config.triggers is None
+def sender_list(settings) -> list[tuple[str, sender]]                             # 303
+def check_senders(senders, agents, principals) -> None                            # 313; ConfigError
+def read_secrets(senders, resolve) -> dict[str, tuple[str, ...]]                  # 334; ConfigError names the sender only
+def check_bind(host: str, allow_non_loopback: bool) -> None                       # 354; ConfigError
+def secret_reader(app) -> Callable[[str], str]                                    # 373; App.trigger_secret or ConfigError
+def make_app(app, *, clock=time.time) -> tuple[wsgi, Runner]                      # 426; the caller closes the Runner
+def make_server(host, port, wsgi, socket_timeout_s) -> WSGIServer                 # 459; bound, not yet serving, the port exclusive
+def serve(server, runner) -> int                                                  # 507; SIGTERM, and SIGBREAK where it exists
+def main(argv=None) -> int                                                        # 566; options --config-dir, --host, --port (568-571)
 ```
 There is no `crash` parameter anywhere and no crash point inside our code (section 9).
-`Runner.start` (113-137). Every answer is decided from the stored row by `_answer` (182-191): a row whose agent, principal and `trigger_ref` equal the request's gives 202 while its state is RECEIVED or WORKING (65) and 200 in any other state; a differing row gives 409.
-1. Read the row. "No row" is the exception `NotFound` from `store.get_run`, caught in `_row` (139-143), not a None from the store. A row: answer from it.
-2. No row: a closed Runner answers 503 at once (119-121, 147-149). Otherwise try to take a slot without waiting and hand `runtime.handle(agent_id, principal_id, document, trigger_kind="event", trigger_ref=..., run_id=...)` to the pool (150-153, 170-177).
-3. Then wait for the row, slot or no slot. When no slot is free, poll the stored run row every `poll_s` until `ack_wait_s`: a matching row gives 202 or 200 by state, a differing row gives 409, no row gives 503 (122-133). With a slot the same poll runs, and it also ends in 503 as soon as the loop has ended without a row (126, 131-132). An in-process table of runs in flight is only a fast path and correctness never depends on it; as built no such table decides an answer (`_jobs` serves `close` only, worker.py:92).
-4. Any exception inside `start` gives 503. "Store unreachable" is what `is_connectivity_error` says (S/store/protocol.py:29-38); anything else is logged as "store error" (134-137).
-Pool and close: a `ThreadPoolExecutor` of `max_running` threads and a semaphore of the same size (89-90). A slot is given back only in the done callback, when the loop has ended (162-166). `close` marks the Runner closed, drops work that has not begun and waits up to `wait_s` (101-111); after it a new key gets 503 and a stored row is still answered. Open risk, stated: a loop still running after `wait_s` is not cut off, and its pool thread is not a daemon thread, so the process stays alive until that loop ends (105-106). Connection threads are daemon threads (301-304).
+`Runner.start` (189-198, `_decide` 200-232). Every answer is decided from the stored row by `_answer` (282-292): a row whose agent, principal and `trigger_ref` equal the request's gives 202 while its state is RECEIVED or WORKING (`IN_PROGRESS`, 99) and 200 in any other state; a differing row gives 409 (the 409 log line is worker.py:289). `start` first takes a place among the at most `max_waiting` requests inside it; with none free the answer is 503 at once and the store is not asked (192-194).
+1. Read the row. "No row" is the exception `NotFound` from `store.get_run`, caught in `_row` (234-238), not a None from the store. A row: answer from it.
+2. No row: a closed Runner answers 503 at once (`_decide` 205-207, `_submit` 243-244). Otherwise try to take a slot without waiting and hand `runtime.handle(agent_id, principal_id, document, trigger_kind="event", trigger_ref=..., run_id=...)` to the pool (`_submit`, 240-255; the call itself `_run`, 268-279).
+3. Then wait for the row, slot or no slot. When no slot is free, look at the stored run row, with a pause that starts at `poll_s` and doubles up to one second (about ten reads in five seconds), until `ack_wait_s`: a matching row gives 202 or 200 by state, a differing row gives 409, no row gives 503 (208-225); at each look a waiting request also takes a slot if one is free (223-224), and one that finds the Runner closed gives 503 (221-222). With a slot the same wait runs with the pause at `poll_s`, and it also ends in 503 as soon as the loop has ended without a row (213, 218). An in-process table of runs in flight is only a fast path and correctness never depends on it; as built no such table decides an answer (`_jobs` serves `close` only, worker.py:158).
+4. Any exception inside `start` gives 503 (226-232). "Store unreachable" is what `is_connectivity_error` says (S/store/protocol.py:29-38) and a store error in general is `is_store_error` (worker.py:118-122): both are logged as WARNING (229). Any other exception is a bug, not the store: it is logged as an ERROR "internal error" with the class name (231).
+Pool and close: a `ThreadPoolExecutor` of `max_running` threads and a semaphore of the same size (155-156). A slot is given back only in the done callback, when the loop has ended (`_ended`, 257-266). `close` marks the Runner closed, drops work that has not begun and waits up to `wait_s` (167-187); after it a new key gets 503 with no ERROR line and the pool is never asked (WK:1199, `test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is_never_asked`) and a stored row is still answered. Open risk, stated: a loop still running after `wait_s` is not cut off, and its pool thread is not a daemon thread, so the process stays alive until that loop ends (the close text, 167-176). Connection threads are daemon threads (server.py:182).
 `make_app` (426-456), in this order: `trigger_settings`; `secret_reader` (`App.trigger_secret` must exist); `check_senders` against `app.runtime.agents` and `app.registry.principals`; `read_secrets` (one WARNING per sender that lists more than one name, 340-344); the four settings `max_running`, `ack_wait_s`, `poll_s`, `max_waiting` read with `_setting` (one WARNING naming the ones whose field is missing, see 7b); `check_secrets`; `Runner`; `check_durable` and `check_spend` (one WARNING each, never a refusal); `make_wsgi`. A ValueError of the endpoint or Runner checks is turned into ConfigError (a `max_running` that is not a whole number too, DC1-7).
 `main` (566-595, `_prepare` 543-563): load the config, read host, port and the switch (`_setting`, one WARNING names the ones whose field is missing) and run `check_bind` before anything is built (553), build the App with every qualified agent (`_qualified_agents`, 473-484, a copy of the loop at S/cli.py:289-298: ESCALATIONS E3), `make_app`, `check_tick` (557), then serve with the quiet server classes of `server.py` (stdlib `wsgiref` plus `socketserver.ThreadingMixIn`; `QuietServer`, server.py:175-205), a per-connection socket timeout of `ack_wait_s` + 10 s (`SOCKET_SLACK_S`, worker.py:93; 559-560) and the stdlib request-line log switched off (server.py:91-92). `serve` (507-540) stops on SIGTERM or Ctrl-C and, where the platform has it, on SIGBREAK (Windows: Ctrl-C and Ctrl-Break only); it does not wait for request threads that are in flight (daemon threads) and a second SIGTERM while `close` waits does nothing (the docstring says so, DC1-8). Exit codes (`EXIT_*`, 102; 576-595): 0 clean stop; 4 `StoreUnavailable` (caught first, because it is a subclass of ConfigError, protocol.py:41) or any other connectivity error; 2 ConfigError; 3 anything else. The tick answers 2 for "anything else" (cli.py:306-308); the worker answers 3.
 NOT built, waiting for the lead (ESCALATIONS E1): an audit event on a signed 409; an exit after repeated store errors.
@@ -204,7 +206,7 @@ Status codes (one rule for 202 and 200: 202 while the stored state is RECEIVED o
 | Content-Length over `max_body_bytes` | 413, body not read | empty | no |
 | other method on the path | 405, header `Allow: POST` | empty | no |
 | other path | 404 | empty | no |
-| no row within `ack_wait_s` (also: no slot was free), store error, Runner closed | 503 | empty | no (or unknown: the retry finds it) |
+| no row within `ack_wait_s` (also: no slot was free), store error, Runner closed, or `max_waiting` requests already inside `start` (answered at once, store not asked) | 503 | empty | no (or unknown: the retry finds it) |
 Notes: a document over `evidence.max_document_bytes` is NOT refused by the door; `handle` creates the run and ends it NEEDS_PERSON `document_too_large` (agent_loop.py:399-401), so a settled repeat answers 200 with that state. Kill switch on: state STOPPED (agent_loop.py:250-253). A sender's agent cannot lose its qualification after start (checked at start only, `check_senders`, worker.py:313-331).
 
 ### 7b. REQUEST 001 to core-b: config triggers (full text and reasons: requests/001-config-triggers.md, DRAFT 3)
@@ -251,49 +253,49 @@ Small helpers that stay inside the test files (no package under src): signing (E
 Fixtures: agent `test-agent`, principal `svc:test-agent` (WK:35, T5:50), a recorded or scripted model double, no network. T5 runs each store case on the memory store and, when `HADAVIN_TEST_PG_DSN` is set, on real PostgreSQL (T5:206-207); here it was memory only. "Re-signed" = the sender made a new timestamp and signature.
 | Case | What it shows | Where |
 |---|---|---|
-| N1 | signed fresh request: 202 or 200, one row, one "received" event, run_id as derived | T5:239, WK:140 |
-| N2 | re-signed retry, same key and document: same run, 200 once settled, no extra model call | T5:351, WK:160 |
+| N1 | signed fresh request: 202 or 200, one row, one "received" event, run_id as derived | T5:239, WK:145 |
+| N2 | re-signed retry, same key and document: same run, 200 once settled, no extra model call | T5:351, WK:165 |
 | N3 | byte-identical replay inside 300 s: same as N2 | T5:486 |
-| N4 | two secrets for one sender, old then new: same run_id | EP:384, T5:445 |
-| N5 | two senders, same key text: two run_ids, each with its own agent and principal | EP:403 |
-| N6 | kill switch on: first answer 202 or 200, settled repeat 200 with state STOPPED, no model call | T5:624 |
-| E1 | timestamp exactly 300 s off accepted, 301 refused with 401 before any store read | EP:521, T5:320 |
-| E2 | timestamp of 13 digits, empty, signed, spaced, non-ASCII digits: 401 | EP:559, T5:343 |
-| E3 | key of 1 and of 128 characters accepted; 0 or 129: 400 | EP:257, EP:251 |
-| E4 | body exactly at the cap accepted; one byte more 413 and the body is never read | EP:434, EP:596, T5:418 |
-| E5 | empty document: parses (EP:210); a run is created | run level TO WRITE |
+| N4 | two secrets for one sender, old then new: same run_id | EP:578, T5:445 |
+| N5 | two senders, same key text: two run_ids, each with its own agent and principal | EP:597 |
+| N6 | kill switch on: first answer 202 or 200, settled repeat 200 with state STOPPED, no model call | T5:611 |
+| E1 | timestamp exactly 300 s off accepted, 301 refused with 401 before any store read | EP:743, T5:320 |
+| E2 | timestamp of 13 digits, empty, signed, spaced, non-ASCII digits: 401 | EP:794, T5:343 |
+| E3 | key of 1 and of 128 characters accepted; 0 or 129: 400 | EP:271, EP:265 |
+| E4 | body exactly at the cap accepted; one byte more 413 and the body is never read | EP:628, EP:831, T5:418 |
+| E5 | empty document: parses (EP:213); a run is created | run level TO WRITE |
 | E6 | document over `evidence.max_document_bytes` inside the body cap: settled repeat 200, NEEDS_PERSON `document_too_large` | TO WRITE |
-| E7 | old secret removed: a request signed with it gets 401 | EP:395, T5:456 |
-| E8 | GET 405 with `Allow: POST`; other path 404; both before any signature work | EP:643, EP:656, T5:546, T5:556 |
-| E9 | Content-Length larger than the bytes sent: 400 in-process (EP:617, EP:632, T5:430); on a real socket, what wsgiref answers at the timeout | real socket TO WRITE (ESCALATIONS E2) |
-| E10 | Content-Length missing, `abc`, `-1`, `0`: 400, body never read | EP:608, T5:430 |
+| E7 | old secret removed: a request signed with it gets 401 | EP:589, T5:456 |
+| E8 | GET 405 with `Allow: POST`; other path 404; both before any signature work | EP:878, EP:891, T5:546, T5:556 |
+| E9 | Content-Length larger than the bytes sent: 400 in-process (EP:852, EP:867, T5:430); on a real socket, what wsgiref answers at the timeout | real socket: `test_t5_wsgiref.py` (fewer bytes then half-close and then stall; ESCALATIONS E2 stays open for the lead's reading) |
+| E10 | Content-Length missing, `abc`, `-1`, `0`: 400, body never read | EP:843, T5:430 |
 | E11 | a document under the document cap whose escaped JSON form is over the body cap: 413 (section 7b) | TO WRITE |
-| H1 | bad signature (12 forms): 401, empty body, `parse_body` never called | EP:511, T5:306 |
-| H2 | an extra `X-Hadavin-Sender` header is ignored | EP:415 |
-| H3 | same key, different document: 409, row unchanged, no model call | T5:368, WK:172 |
-| H4 | signed but malformed (25 forms: not JSON, array, missing or extra field, wrong type, bad key, key ending in a line break, invalid UTF-8, lone surrogate, a member twice, depth 10,000, huge number, trailing data, very long key): 400 | EP:252, EP:569, EP:578, T5:402; `NaN` and byte-order mark TO WRITE |
-| H5 | malformed and unsigned: 401, not 400 | EP:586, T5:411 |
-| H6 | key with `/`, `#` or NUL: 400; bad tenant or sender id: ValueError | EP:252, EP:194 |
-| H7 | replay after 300 s with the original signature: 401 | EP:533, T5:501 |
-| H8 | start-up refusals through the pure functions: shared, short, empty or missing secret, 9 senders (EP:331, EP:341, T5:473, WK:573); agent not qualified, principal missing or not a service (WK:565); host not loopback (WK:587); no `triggers` block or unreadable config: `main` exits 2 (WK:537, WK:543) | `main` exits 2 for each refusal with a real config: TO WRITE, blocked (phase 3) |
-| H9 | no body text, key, signature, timestamp or secret in any log record | EP:748, WK:425 |
+| H1 | bad signature (12 forms): 401, empty body, `parse_body` never called | EP:733, T5:306 |
+| H2 | an extra `X-Hadavin-Sender` header is ignored | EP:609 |
+| H3 | same key, different document: 409, row unchanged, no model call | T5:368, WK:177 |
+| H4 | signed but malformed (25 forms: not JSON, array, missing or extra field, wrong type, bad key, key ending in a line break, invalid UTF-8, lone surrogate, a member twice, depth 10,000, huge number, trailing data, very long key): 400 | EP:266, EP:804, EP:813, T5:402; `NaN` and byte-order mark TO WRITE |
+| H5 | malformed and unsigned: 401, not 400 | EP:821, T5:411 |
+| H6 | key with `/`, `#` or NUL: 400; bad tenant or sender id: ValueError | EP:266, EP:197 |
+| H7 | replay after 300 s with the original signature: 401 | EP:768, T5:501 |
+| H8 | start-up refusals through the pure functions: shared, short, empty or missing secret, 9 senders (EP:407, EP:530, T5:473, WK:578); agent not qualified, principal missing or not a service (WK:570); host not loopback (WK:592); no `triggers` block or unreadable config: `main` exits 2 (WK:542, WK:548) | `main` exits 2 for each refusal with a real config: TO WRITE, blocked (phase 3) |
+| H9 | no body text, key, signature, timestamp or secret in any log record | EP:983, WK:430 |
 | H10 | every refusal: empty body, Content-Length 0, no Content-Type (helper EP:131); no header that names the refusal reason | exact header-set assertion TO WRITE |
-| C1 | 50 parallel requests, one key, `max_running` 1 and 4: one row, all 2xx, one model call | WK:190 (1 and 4), WK:203 (1), T5:516 (4) |
-| C2 | 20 keys at once, `max_running` 4, model held: 4 acked, 16 get 503 after `ack_wait_s`, 4 rows, 4 model calls. Spend totals are not asserted (step F) | WK:272 |
-| C3 | one key, two documents in parallel, `max_running` 1 and 4: one 2xx and one 409, never 503 | WK:215 |
-| C4 | two worker PROCESSES on one database, one key: one row. Stand-in here: two Runners on one store, ours without a free slot (WK:233) | NOT BUILT HERE |
-| C5 | slot full: another key gets 503 only after `ack_wait_s`; a repeat of the running key is still acked; a later retry is acked | WK:303, T5:565 |
-| K1 | crash at `store.create_run:after`, then tick step `stuck` (`steps=[s for s in tick.STEPS if s.name == "stuck"]`, a list of TickStep objects, WK:499): NEEDS_PERSON `interrupted`; repeat 200, no model call | WK:484 (memory); T5:606 is a skipped stub (CODE TO CHANGE); PostgreSQL NOT BUILT HERE |
+| C1 | 50 parallel requests, one key, `max_running` 1 and 4: one row, all 2xx, one model call | WK:195 (1 and 4), WK:208 (1), T5:516 (4) |
+| C2 | 20 keys at once, `max_running` 4, model held: 4 acked, 16 get 503 after `ack_wait_s`, 4 rows, 4 model calls. Spend totals are not asserted (step F) | WK:277 |
+| C3 | one key, two documents in parallel, `max_running` 1 and 4: one 2xx and one 409, never 503 | WK:220 |
+| C4 | two worker PROCESSES on one database, one key: one row. Stand-in here: two Runners on one store, ours without a free slot (WK:238) | NOT BUILT HERE |
+| C5 | slot full: another key gets 503 only after `ack_wait_s`; a repeat of the running key is still acked; a later retry is acked | WK:308, T5:565 |
+| K1 | crash at `store.create_run:after`, then tick step `stuck` (`steps=[s for s in tick.STEPS if s.name == "stuck"]`, a list of TickStep objects, WK:504): NEEDS_PERSON `interrupted`; repeat 200, no model call | WK:489 (memory); the skipped stub in T5 is gone, see the comment at T5:606-608 and `test_t5_postgres.py`; PostgreSQL NOT BUILT HERE |
 | K2 | child process killed at `store.create_run:after`, at `store.get_run:after`, at `store.touch:before`; restart; repeat: stored state, one row; after the tick NEEDS_PERSON | TO WRITE, NOT BUILT HERE |
 | K3 | child killed at `store.create_run:before`: no answer was sent; after restart the same request gives 2xx, one row | TO WRITE, NOT BUILT HERE |
-| K4 | store down, or failing while waiting: 503, nothing starts | WK:331, WK:343, T5:593 |
-| K5 | `handle` raises before the row: 503, slot freed (WK:362); no row in time: 503 (WK:385); `StaleState` with a matching row is an ack, with a differing row 409 (WK:405); raise after the row: acked, class name logged (WK:425) | built |
-| K6 | `close`: a running loop ends, new keys 503 at once, a stored row still answered (WK:443); closed Runner takes no work (WK:464) | built |
-| S1 | one real loopback socket: signed request acked, repeat 200 | WK:603 |
+| K4 | store down, or failing while waiting: 503, nothing starts | WK:336, WK:348, T5:593 |
+| K5 | `handle` raises before the row: 503, slot freed (WK:367); no row in time: 503 (WK:390); `StaleState` with a matching row is an ack, with a differing row 409 (WK:410); raise after the row: acked, class name logged (WK:430) | built |
+| K6 | `close`: a running loop ends, new keys 503 at once, a stored row still answered (WK:448); closed Runner takes no work (WK:469) | built |
+| S1 | one real loopback socket: signed request acked, repeat 200 | WK:607 |
 | P1 | `derive_run_id` has the run-id shape for seeded triples; any change of tenant, sender or key changes it | EP:142, EP:150, EP:160 |
-| P2 | any single-byte change of a valid request: 401 | EP:723 |
-| P3 | random bodies, signed or not: never 5xx, start only on the exact shape | EP:679, EP:702 |
-| P4 | `parse_body` round-trips valid keys and Unicode documents | EP:210 |
+| P2 | any single-byte change of a valid request: 401 | EP:958 |
+| P3 | random bodies, signed or not: never 5xx, start only on the exact shape | EP:914, EP:937 |
+| P4 | `parse_body` round-trips valid keys and Unicode documents | EP:213 |
 | F1 | n8n files: both parse as JSON, no secret-shaped literal, error workflow starts with an Error Trigger | TO WRITE (`test_n8n_files.py`) |
 Also TO WRITE: `read_secrets` asks the resolver only for the listed names (invariant 14); the start log line about the tick (invariant 12, blocked, phase 3).
 NUL in the document (ORDER 013, review minor 12), today, pinned by `tests/triggers/test_t5_nul_document.py` (29 tests; memory and PostgreSQL 16): the endpoint accepts it and hashes the raw bytes into `trigger_ref` and the audit `inputs_hash`; the redactor removes every NUL before the model and before the stored map (`guard/runmap.py` `_clean`), so the run ends as it would without the NUL, no document text reaches a PostgreSQL column and no INSERT fails; safe, no finding. U+0001 and U+001F are not removed and reach the model unchanged.
@@ -301,37 +303,37 @@ Mutants (each must be killed by an assertion, judged with S/testing/mutation.py)
 | Mutant | Killed by |
 |---|---|
 | skip the timestamp window | H7, E1 |
-| stop trying secrets after the first match | EP:293 (call list), N4 |
-| drop the payload hash from `trigger_ref` | H3, EP:199 |
-| answer 2xx before the row is read | WK:140, WK:385 |
-| drop tenant, sender or key from the derivation | P1, N5, EP:423 |
+| stop trying secrets after the first match | EP:313 (call list), N4 |
+| drop the payload hash from `trigger_ref` | H3, EP:202 |
+| answer 2xx before the row is read | WK:145, WK:390 |
+| drop tenant, sender or key from the derivation | P1, N5, EP:617 |
 | parse the body before verifying | H1 (spy), H5 |
-| decide 409 from the exception type instead of the row | C3, WK:405 |
+| decide 409 from the exception type instead of the row | C3, WK:410 |
 | remove the 32-character or the distinct-value start check | H8 |
 | read the body before the size check | E4 |
-| answer 503 at once when no slot is free | WK:203, WK:233 |
+| answer 503 at once when no slot is free | WK:208, WK:238 |
 FAIL-BEFORE: the behaviour-level fail-before is H3 with the hash mutant (today's `handle` returns the old run for a different document, agent_loop.py:369-370). Not testable here, UNVERIFIED until run against a real n8n: every item of the "verify on a real n8n" list in section 13.
 Evidence commands: `uv run --all-extras --group test pytest tests/triggers -q` (session, memory); the lead runs the same with `HADAVIN_TEST_PG_DSN` set; `uv run --all-extras --group test ruff check src/hadavin_sdk/triggers tests/triggers`; `uv run --group scan bandit -ll -r src/hadavin_sdk/triggers`. Raw output to `handover/core-a/raw/D-evidence-<n>.log`.
 
 ### 10b. INVARIANT-TO-TEST TABLE (section 5)
 | Invariant | Test | State |
 |---|---|---|
-| 1 check order | EP:511, EP:586, EP:596, EP:643, EP:656 | built |
-| 2 signature, every secret tried, no early stop | EP:272, EP:293 (spy on the verify call list), EP:307, EP:331 | built |
-| 3 300 s window before any store call | EP:521, EP:533, T5:320 | built |
-| 4 run id rule | EP:142, EP:150, EP:160, EP:423 | built |
-| 5 `trigger_ref` | EP:199, T5:239 | built |
-| 6 one row, one loop per key | WK:190, WK:215, T5:516; several processes: C4 | built; C4 NOT BUILT HERE |
-| 7 answer from the row | WK:140, WK:172, WK:405 | built |
-| 8 identity from config, start checks | EP:363, EP:415, WK:565 | built |
+| 1 check order | EP:733, EP:821, EP:831, EP:878, EP:891 | built |
+| 2 signature, every secret tried, no early stop | EP:292, EP:313 (spy on the verify call list), EP:327, EP:407 | built |
+| 3 300 s window before any store call | EP:743, EP:768, T5:320 | built |
+| 4 run id rule | EP:142, EP:150, EP:160, EP:617 | built |
+| 5 `trigger_ref` | EP:202, T5:239 | built |
+| 6 one row, one loop per key | WK:195, WK:220, T5:516; several processes: C4 | built; C4 NOT BUILT HERE |
+| 7 answer from the row | WK:145, WK:177, WK:410 | built |
+| 8 identity from config, start checks | EP:557, EP:609, WK:570 | built |
 | 9 run rows are not deleted | none | a statement about the code base (row 13), not testable |
-| 10 answer body and logs | EP:447, EP:131, EP:748, WK:425 | built; exact header set TO WRITE |
-| 11 503 without ack | EP:472, WK:303, WK:331, WK:343, WK:385, WK:464 | built |
-| 12 the tick must run | log line worker.py:376-379 | the need is not testable; log line test TO WRITE (phase 3) |
-| 13 loop error on a pool thread | WK:362, WK:425 | built |
-| 14 secrets read once, by listed name | WK:573 (failure names no secret) | "asks only for listed names" TO WRITE; the limit inside the resolver is core-b's test |
-| 15 loopback unless switched | WK:587 | built |
-| 16 `max_running` default 1 | WK:471 (Runner default) | the config default is core-b's test (R1) |
+| 10 answer body and logs | EP:641, EP:131, EP:983, WK:430 | built; exact header set TO WRITE |
+| 11 503 without ack | EP:694, WK:308, WK:336, WK:348, WK:390, WK:469 | built |
+| 12 the tick must run | `check_tick` worker.py:487-504 and the start line worker.py:591-594 | the need is not testable; the tick check has its own test in WK (`test_start_warns_once_when_no_recent_stuck_tick_is_recorded`); the log line itself runs in `test_t5_main_start.py` on a combined tree |
+| 13 loop error on a pool thread | WK:367, WK:430 | built |
+| 14 secrets read once, by listed name | WK:578 (failure names no secret) | "asks only for listed names" TO WRITE; the limit inside the resolver is core-b's test |
+| 15 loopback unless switched | WK:592 | built |
+| 16 `max_running` default 1 | WK:476 (Runner default) | the config default is core-b's test (R1) |
 
 ## 11. SECURITY AND LEAST PRIVILEGE
 Identities and secrets
@@ -339,14 +341,14 @@ Identities and secrets
 |---|---|---|---|---|
 | Sender secret(s), one or two per sender | the client's n8n and our secrets backend (named lookup, never in config, code or tests) | n/a | n/a | proves the sender; gives no database or model right; at least 32 characters; distinct per sender and per deployment |
 | Worker process = the existing RUNTIME database role | worker | as the runtime role today (S/store/migrate.py:46-68) | same; on `runs`: SELECT, INSERT, UPDATE; no DELETE anywhere except the audit outbox | NO new role, no new grant, no purge DSN use. The worker holds model and channel credentials because it runs `handle`; that is the cost of one process (section 12) |
-| `App.trigger_resolve` | worker only | the sender secret names, nothing else | nothing | bound reader (R1d); the endpoint module gets values as a plain mapping and never a provider |
+| `App.trigger_secret` (asked for as `trigger_resolve`) | worker only | the sender secret names, nothing else | nothing | bound reader (R1d); the endpoint module gets values as a plain mapping and never a provider |
 | n8n side | the client's n8n | its own trigger data | one HTTP POST to the door | the secret is the one deliberate exception to "secrets stay out of n8n" (atlas line 104); it must be named as such in n8n/README-trigger.md and stored as an n8n credential where the edition allows it (UNVERIFIED) |
 The agent (model) never sees a sender secret; the door has no executor or approver credential.
 Two-secret rotation: (1) store the new value under a new secret name; (2) list both names for the sender, restart the worker (secrets are read once at start); (3) switch n8n to the new value; (4) remove the old name, restart. During 2 to 3 both values verify (N4); after 4 the old one is refused (E7). A config with two names for longer than a swap is allowed but the worker logs a warning at every start.
 Logged and not logged: section 5 invariant 10 (status and sender id only). Refused requests write NO audit row (an unsigned caller must not be able to grow the audit chain); a signed 409 writes none either until the lead decides ESCALATIONS E1.
 What the signature does not cover: method, path, tenant. One path only, so the first two do not matter; two deployments must never share a secret (README sentence), or a request for one verifies at the other for 300 s.
 Abuse bounds: body cap before reading; at most 16 HMACs per request (8 senders x 2); per-connection socket timeout; bounded running loops; no rate limit (out, the client's proxy).
-Negative tests: H1, H2, H5, H7, H8, H9, E7, and the import rule (EP:776): the only module of our package that `triggers/endpoint.py` imports directly is `approvals.hmac_v0`. Limit: the test reads direct imports only; what `hmac_v0` imports in turn is not checked.
+Negative tests: H1, H2, H5, H7, H8, H9, E7, and the import rule (EP:1060): the only module of our package that `triggers/endpoint.py` imports directly is `approvals.hmac_v0`. Limit: the test reads direct imports only; what `hmac_v0` imports in turn is not checked.
 
 ### 11b. Is `Runtime.handle` safe to call from several threads at once?
 Found, with lines:
@@ -377,12 +379,12 @@ Verify on a real n8n before any client text (all UNVERIFIED): the raw body is se
 Acceptance checks that CAN run here (one test, TO WRITE, section 10 case F1): both JSON files parse; no secret-shaped literal is in them; the error workflow's first node is an Error Trigger. Everything else about the two files waits for a real n8n (ESCALATIONS E4).
 
 ## 14. OPEN QUESTIONS, UNVERIFIED, NOT READ
-Open for the lead, in ESCALATIONS.md: E1 (an audit event on a signed 409; exit 4 after repeated store errors: both NOT built, recommended "not in this step"), E2 (wsgiref on a real socket timeout, NOT RUN), E3 (the copied qualification loop), E4 (n8n files stay outlines without a real n8n). Decided in the text after review: a sender left with two secret names gets a warning at every start, not a refusal (worker.py:240-243). Still open from the first draft, with the recommended answer:
+Open for the lead, in ESCALATIONS.md: E1 (an audit event on a signed 409; exit 4 after repeated store errors: both NOT built, recommended "not in this step"), E2 (wsgiref on a real socket timeout, NOT RUN), E3 (the copied qualification loop), E4 (n8n files stay outlines without a real n8n). Decided in the text after review: a sender left with two secret names gets a warning at every start, not a refusal (`read_secrets`, worker.py:340-344). Still open from the first draft, with the recommended answer:
 1. `max_running` default 1 until step F? Checked: limits.py:17-30, agent_loop.py:485. Recommended: yes, 1 now, 4 after F with C2 green on PostgreSQL.
 2. Which server hosts the callable in pilot and prod? Checked: pyproject.toml:14-19 has no server. Recommended: the stdlib threaded server on loopback behind the client's TLS proxy for the pilot, `make_app` for a client-chosen server; no new dependency this round.
 3. May the key be the raw business id? Checked: migrate.py:47 (the portal can read `trigger_ref`). Recommended: no; the template sends its SHA-256 hex.
 4. Should the stuck-run move also tell a person (card)? Checked: tick.py:129-143 writes state and audit only. Recommended: out of this ticket; a finding for core-b.
-5. Is `X-Hadavin` acceptable as the fixed header prefix literal (endpoint.py:28)? Recommended: yes (DECIDED wire); it is a protocol name, not a host or secret.
+5. Is `X-Hadavin` acceptable as the fixed header prefix literal (endpoint.py:33)? Recommended: yes (DECIDED wire); it is a protocol name, not a host or secret.
 UNVERIFIED: every n8n item of section 13; Python documentation wording on `wsgiref` production use; `uv_build` sdist contents; real model client and channel thread safety; the three tree-walking guard tests of section 6 (to run in the batch); pydantic behaviour for the proposed field bounds (core-b's tests pin it); README, SECURITY, CHANGELOG current wording; every test of section 10 (none was run in the rewrite).
 NOT READ: branches core/ak-g2-a and core/T1-T2-tests; PR heads; `inputs/old-plan-v4-1.md`, `old-plan-v4-3.md`, the plan reviews, `inventory-*.md`; atlas-n8n.md beyond lines 7, 23, 36-40, 47-48, 54, 66, 80, 100, 104, 109, 155; S/llm/* bodies except fake.py:15-60; S/actions/secrets_cache.py; S/tools.py except 1015-1045; S/store/postgres.py:300-440; S/runtime/tick.py:150-248 and 266-334; S/guard/*; S/approvals/cards.py; README.md, SECURITY.md, CHANGELOG.md; the test bodies of EP, WK and T5 beyond the lines cited.
 Done = every "built" row of table 10b passes; every TO WRITE test is written and passes; the NOT BUILT HERE cases pass on the lead's laptop with PostgreSQL; every mutant is killed; ruff, bandit and the guard tests are green. Rollback: tag `pre-D`; the change is new files plus core-b's additive config, so removal is a file delete and a config field with default None.
@@ -404,7 +406,7 @@ Done = every "built" row of table 10b passes; every TO WRITE test is written and
 - IR-M11: ESCALATED (E4); acceptance checks that run here added as case F1.
 - IR-M12: invariant-to-test table added (10b); missing tests marked TO WRITE.
 - IR-M13: agent and principal of the fixtures named; C4 marked NOT BUILT HERE.
-- CB-M1: K1 passes TickStep objects taken from `tick.STEPS`, as WK:499 does.
+- CB-M1: K1 passes TickStep objects taken from `tick.STEPS`, as WK:504 does.
 - CB-M5: `config_hash` sentence replaced (row 21, section 4 finding 3, 7b), registry.py:132-173.
 - CB-M6: body cap stated as no guarantee, with what the default covers (7b); edge case E11 TO WRITE; core-b told in request 001 draft 3.
 - CB-M7: "as of main 51c9fc4fb, before this step's files" added to the five claims.
