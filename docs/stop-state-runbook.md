@@ -283,7 +283,7 @@ directly with no audit line (the same is true of `release-expired`). Keep the re
 
 ## After the upgrade to 0009: the stop-year constraints
 0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` (a `ts` between 2000-01-01 and 2100-01-01)
-NOT VALID and never validates them itself (a conditional validation needs a DO block, which the repo's statement lexer
+NOT VALID and never runs `ALTER TABLE ... VALIDATE CONSTRAINT` itself (a conditional validation needs a DO block, which the repo's statement lexer
 refuses). Right after the files, every `migrate` run validates each constraint whose table holds no row outside the
 range, silently. A clean database therefore ends validated. A database that already holds a planted `ts` (the stop
 tables are append-only, such a row cannot be deleted below a superuser) still upgrades, keeps that constraint NOT
