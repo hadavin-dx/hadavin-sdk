@@ -187,6 +187,18 @@ def _main(argv: list[str] | None = None) -> int:
         help="below PostgreSQL 16: a CREATEROLE role you vouch for (it cannot grant the reset role to itself); "
         "repeat for several; named in the output and logged; never excuses a grant on the stop tables",
     )
+    mig.add_argument(
+        "--accept-changed-draft",
+        action="append",
+        default=[],
+        help="an UNRELEASED migration (0008-0011) whose file changed but whose database already matches it: record "
+        "the file's checksum; repeat for several",
+    )
+    mig.add_argument(
+        "--reset-draft",
+        help="an UNRELEASED migration: delete its ledger row and every later one, then apply again (drop what the "
+        "draft made first); refused for a released migration",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -228,6 +240,8 @@ def _main(argv: list[str] | None = None) -> int:
             args.release_role,
             args.no_roles,
             tuple(args.accept_admin_role),
+            tuple(args.accept_changed_draft),
+            args.reset_draft,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -483,6 +497,8 @@ def _migrate(
     release_role: str | None = None,
     no_roles: bool = False,
     accepted_admin_roles: tuple[str, ...] = (),
+    accept_changed_draft: tuple[str, ...] = (),
+    reset_draft: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -517,6 +533,8 @@ def _migrate(
             release_role=release_role,
             no_roles=no_roles,
             accepted_admin_roles=accepted_admin_roles,
+            accept_changed_draft=accept_changed_draft,
+            reset_draft=reset_draft,
             iam_auth=store.iam_auth,
             region=store.region,
             sslmode=store.sslmode,
