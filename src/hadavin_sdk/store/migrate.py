@@ -52,6 +52,8 @@ GRANTS: dict[str, Grant] = {
     "approval_requests": Grant("table", _RW, portal=True),
     "approval_decisions": Grant("table", _APPEND, portal=True),
     "dead_letters": Grant("table", _APPEND),
+    # Spend reservations (0007): the runtime books and closes them; only the purge role deletes closed rows.
+    "spend_reservations": Grant("table", _RW, purge="DELETE", purge_cols=("status", "closed_at")),
     "spend": Grant("table", _RW),
     "spend_month": Grant("table", _RW),
     # Stop state (0006): the runtime may add a stop and read; it holds no right that turns the switch off. Only

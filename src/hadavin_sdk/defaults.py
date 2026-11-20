@@ -144,3 +144,8 @@ TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
 TRIGGER_MAX_RUNNING_CEILING = 64
 TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503
 TRIGGER_ACK_WAIT_S_CEILING = 30.0
+
+# --- spend reservations (limits.py, the `expire_reservations` tick step) -------------------------------------------------
+# Seconds after which an open spend reservation is marked expired (its worst case stays booked). The tick step uses
+# the larger of this and the stuck-run age, so a reservation never expires while its run could still be working.
+RESERVATION_EXPIRE_S = 3600

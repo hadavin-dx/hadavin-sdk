@@ -455,14 +455,16 @@ def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
         monkeypatch.context() as m
     ):  # the release before step B: five files and no stop rows in the map
         m.setattr(migrate_mod, "_migration_files", lambda: files[:5])
-        for name in [k for k in GRANTS if k.startswith("kill_switch_")]:
+        for name in [
+            k for k in GRANTS if k.startswith("kill_switch_") or k == "spend_reservations"
+        ]:
             m.delitem(GRANTS, name)
         assert migrate(old)[-1].startswith("0005_")
     with psycopg.connect(old, autocommit=True) as db:
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
         db.execute('UPDATE kill_switch SET "on" = TRUE, "by" = \'user:before\'')
     roles = {"runtime_role": w.runtime, "reset_role": w.reset, "purge_role": w.purge}
-    assert migrate(old, **roles) == ["0006_stop_state"]
+    assert migrate(old, **roles) == ["0006_stop_state", "0007_spend_reservations"]
     rt = w.store(w.runtime, old)
     ks = rt.get_kill_switch()
     assert (ks.on, ks.by) == (True, "user:before")

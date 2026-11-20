@@ -57,7 +57,7 @@ def pg_schema(migrated=True, runtime=False):
 
 
 class _SplitStore:
-    """The runtime role for everything, the purge role for the two purges: as `app.build` wires them
+    """The runtime role for everything, the purge role for the three purges: as `app.build` wires them
     (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own rights."""
 
     def __init__(self, main, purge):
@@ -71,6 +71,9 @@ class _SplitStore:
 
     def purge_redaction_maps(self, *a, **k):
         return self._purge.purge_redaction_maps(*a, **k)
+
+    def purge_spend_reservations(self, *a, **k):
+        return self._purge.purge_spend_reservations(*a, **k)
 
 
 @kind("store", "postgres")

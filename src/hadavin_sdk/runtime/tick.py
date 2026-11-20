@@ -2,7 +2,7 @@
 
 Contract (design v5 kernel, section 4):
 * ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
-  reprobe_sources, audit_drain. Later PRs only **append** a ``TickStep``.
+  reprobe_sources, audit_drain, expire_reservations. Later PRs only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -20,12 +20,14 @@ Concurrent ticks are safe: every state change is a compare-and-set, and a loser 
 from __future__ import annotations
 
 import logging
+import math
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
@@ -200,6 +202,10 @@ def purge_evidence(ctx: TickContext) -> None:
     calls = store.purge_tool_calls(
         ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
     )
+    # closed spend reservations share the tool-call ceiling; before the hook, so a raising hook cannot skip it
+    reservations = store.purge_spend_reservations(
+        ctx.now - timedelta(days=keep.held_tool_calls_max_days)
+    )
     hook = app.runtime.hooks.hold_run_ids
     try:
         held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
@@ -215,7 +221,13 @@ def purge_evidence(ctx: TickContext) -> None:
     maps += store.purge_redaction_maps(
         ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
     )
-    _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
+    _LOG.info(
+        "purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d spend_reservations=%d",
+        calls,
+        maps,
+        len(held),
+        reservations,
+    )
 
 
 def reprobe_sources(ctx: TickContext) -> None:
@@ -248,6 +260,22 @@ def audit_drain(ctx: TickContext) -> None:
         _LOG.info("audit_drain drained=%s", fn())
 
 
+def reservation_expire_s(app: App) -> int:
+    """The age at which an open spend reservation expires: `defaults.RESERVATION_EXPIRE_S`, or the longest
+    stuck-run age of any agent when that is larger, so no reservation expires while its run could still work."""
+    longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)
+    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))
+
+
+def expire_reservations(ctx: TickContext) -> None:
+    """Mark spend reservations nobody settled (a crash, a timeout) as expired. The counters do not move: the
+    worst case stays booked."""
+    age = reservation_expire_s(ctx.app)
+    expired = ctx.app.store.expire_spend_reservations(age)
+    if expired:
+        _LOG.warning("expire_reservations expired=%d older_than_s=%d", expired, age)
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -272,6 +300,7 @@ STEPS: list[TickStep] = [
         interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
     ),
     TickStep("audit_drain", 0, audit_drain),
+    TickStep("expire_reservations", 0, expire_reservations),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

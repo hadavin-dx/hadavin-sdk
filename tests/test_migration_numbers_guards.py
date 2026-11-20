@@ -360,7 +360,7 @@ def _sha(path: Path) -> str:
 def test_the_real_folder_matches_the_released_manifest(mn):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert mn.released_problems(mn.MIGRATIONS, manifest) == []
-    assert len(manifest) == 6
+    assert len(manifest) == 7
 
 
 def test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number(mn, tmp_path):

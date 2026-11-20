@@ -269,6 +269,8 @@ def _folder(tmp_path, names):
             if n[:4] <= "0004"
             else "0006_stop_state.sql"
             if n == "0007_stop_state.sql"
+            else "0007_spend_reservations.sql"
+            if n == "0008_spend_reservations.sql"
             else "0005_evidence.sql"
         )
         body = "-- empty" if n == "0005_reservations.sql" else real.read_text(encoding="utf-8")
@@ -277,7 +279,13 @@ def _folder(tmp_path, names):
 
 
 _REAL = sorted(p.name for p in mig.MIGRATIONS.glob("*.sql"))
-RENAMED = [*_REAL[:4], "0005_reservations.sql", "0006_evidence.sql", "0007_stop_state.sql"]
+RENAMED = [
+    *_REAL[:4],
+    "0005_reservations.sql",
+    "0006_evidence.sql",
+    "0007_stop_state.sql",
+    "0008_spend_reservations.sql",  # today's 0007_spend_reservations: the grant map names its table
+]
 
 
 def test_the_renamed_tree_is_a_valid_ledger_and_two_files_with_one_number_are_not(tmp_path):

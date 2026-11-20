@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import threading
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from hadavin_sdk.models import (
@@ -18,11 +18,12 @@ from hadavin_sdk.models import (
     Plan,
     Run,
     RunState,
+    SpendReservation,
     TickState,
     ToolCallRecord,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState, check_spend_amount
 
 
 class MemoryStore:
@@ -40,6 +41,7 @@ class MemoryStore:
         self._ticks: dict[str, TickState] = {}
         self._tool_calls: dict[str, ToolCallRecord] = {}
         self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
+        self._reservations: dict[str, SpendReservation] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -279,4 +281,97 @@ class MemoryStore:
                     gone.append(k)
             for k in gone:
                 del self._maps[k]
+            return len(gone)
+
+    # --- spend reservations: the same rules as the Postgres store, under the one lock (one process only) ------
+
+    def _month_total(self, agent_id: str, day: date) -> Decimal:
+        return sum(
+            (
+                v
+                for (a, d), v in self._spend.items()
+                if a == agent_id and (d.year, d.month) == (day.year, day.month)
+            ),
+            Decimal(0),
+        )
+
+    def reserve_spend(
+        self,
+        reservation_id: str,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        *,
+        day_cap: Decimal,
+        month_cap: Decimal,
+        run_id: str | None = None,
+    ) -> None:
+        check_spend_amount(usd)
+        with self._lock:
+            if reservation_id in self._reservations:
+                raise StaleState(f"spend reservation exists: {reservation_id}")
+            booked = self._spend.get((agent_id, day), Decimal(0))
+            if not (booked < day_cap and booked + usd <= day_cap):
+                raise SpendCapExceeded("day")
+            month = self._month_total(agent_id, day)
+            if not (month < month_cap and month + usd <= month_cap):
+                raise SpendCapExceeded("month")
+            self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
+            self._reservations[reservation_id] = SpendReservation(
+                reservation_id=reservation_id,
+                agent_id=agent_id,
+                day=day,
+                run_id=run_id,
+                reserved_usd=usd,
+                created_at=now(),
+            )
+
+    def settle_spend(
+        self, reservation_id: str, actual_usd: Decimal
+    ) -> tuple[SpendReservation, bool]:
+        check_spend_amount(actual_usd)
+        with self._lock:
+            row = self._reservations.get(reservation_id)
+            if row is None:
+                raise NotFound(reservation_id)
+            if row.status == "settled":
+                return row, False
+            # settled_usd is what stays booked: after expiry the booked amount never goes down
+            booked = max(actual_usd, row.reserved_usd) if row.status == "expired" else actual_usd
+            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            run = self._runs.get(row.run_id) if row.run_id is not None else None
+            if run is not None:  # a missing run row moves only the counters
+                self._runs[run.run_id] = run.model_copy(
+                    update={"cost_usd": run.cost_usd + actual_usd}
+                )
+            row = row.model_copy(
+                update={"status": "settled", "settled_usd": booked, "closed_at": now()}
+            )
+            self._reservations[reservation_id] = row
+            return row, True
+
+    def expire_spend_reservations(self, older_than_s: int) -> int:
+        with self._lock:
+            at = now()
+            cutoff = at - timedelta(seconds=older_than_s)
+            old = [
+                r
+                for r in self._reservations.values()
+                if r.status == "open" and r.created_at <= cutoff
+            ]
+            for r in old:  # a status change only: the counters keep the worst case
+                self._reservations[r.reservation_id] = r.model_copy(
+                    update={"status": "expired", "settled_usd": r.reserved_usd, "closed_at": at}
+                )
+            return len(old)
+
+    def purge_spend_reservations(self, before: datetime) -> int:
+        with self._lock:
+            gone = [
+                k
+                for k, r in self._reservations.items()
+                if r.status != "open" and r.closed_at is not None and r.closed_at < before
+            ]
+            for k in gone:
+                del self._reservations[k]
             return len(gone)

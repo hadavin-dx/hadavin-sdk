@@ -9,7 +9,7 @@ import hashlib
 import json
 import re
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any, ClassVar, Literal
@@ -317,3 +317,19 @@ class RunResult(Shape):
     external_ref: str | None = None
     error_code: str | None = None
     retryable: bool = False
+
+
+class SpendReservation(BaseModel):
+    """One row of `spend_reservations` (migration 0007): money set aside for one model call. Not a `Shape`: the
+    table has no schema_version column."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    reservation_id: str
+    agent_id: str
+    day: date  # the UTC date at reserve time; settle and expire act on this day and its month
+    run_id: str | None = None
+    reserved_usd: Decimal
+    settled_usd: Decimal | None = None
+    status: Literal["open", "settled", "expired"] = "open"
+    created_at: datetime
+    closed_at: datetime | None = None

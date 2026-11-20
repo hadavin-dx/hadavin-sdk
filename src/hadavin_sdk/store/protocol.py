@@ -17,6 +17,7 @@ from hadavin_sdk.models import (
     Plan,
     Run,
     RunState,
+    SpendReservation,
     TickState,
     ToolCallRecord,
 )
@@ -44,6 +45,39 @@ class StoreUnavailable(ConfigError):
 
 class NotFound(KeyError):
     pass
+
+
+class SpendCapExceeded(RuntimeError):
+    """A reserve would pass a cap; nothing was booked. `which` is "day" or "month" (the day is checked first)."""
+
+    def __init__(self, which: str) -> None:
+        super().__init__(f"{which} cap reached")
+        self.which = which
+
+
+MAX_SPEND_USD = (
+    10**9
+)  # exclusive upper bound of one amount; the same bound as the table CHECK of 0007
+MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
+MAX_SPEND_EXPONENT = (
+    9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
+)
+
+
+def check_spend_amount(usd: object) -> Decimal:
+    """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+    bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+    ValueError and nothing is booked."""
+    if (
+        type(usd) is not Decimal
+        or not usd.is_finite()
+        or not 0 <= usd < MAX_SPEND_USD
+        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+    ):
+        raise ValueError(
+            "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+        )
+    return usd
 
 
 class Store(Protocol):
@@ -154,12 +188,50 @@ class Store(Protocol):
         because restoring its inputs needs it (NEEDS_PERSON cannot move, so its map ages normally); the 400-day ceiling passes `keep_open=False`. Returns the count."""
         ...
 
+    # --- spend reservations (0007): book the worst case before a model call, the real cost after it ---------------
+    def reserve_spend(
+        self,
+        reservation_id: str,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        *,
+        day_cap: Decimal,
+        month_cap: Decimal,
+        run_id: str | None = None,
+    ) -> None:
+        """Book `usd` on the day and the month counter, or book nothing. A counter that is already at its cap,
+        or that would pass it, refuses: SpendCapExceeded (`which` "day" or "month", the day is checked first).
+        StaleState when the id exists; ValueError for an amount that is not a finite Decimal in [0, 10**9)."""
+        ...
+
+    def settle_spend(
+        self, reservation_id: str, actual_usd: Decimal
+    ) -> tuple[SpendReservation, bool]:
+        """The stored row and `applied` (true only for the call that changed it). The first call closes an open
+        or an expired row: the counters of the row's own day and month move by actual minus reserved (after
+        expiry only upward), `settled_usd` becomes what stays booked (the actual amount; for a row that was
+        expired the larger of actual and reserved) and the real actual amount is added to the run's cost when
+        the row has a run that exists.
+        A later call changes nothing. NotFound for an unknown id; ValueError for a bad amount."""
+        ...
+
+    def expire_spend_reservations(self, older_than_s: int) -> int:
+        """Open rows older than `older_than_s` seconds become expired; the counters do not move, so the worst
+        case stays booked. Returns the count."""
+        ...
+
+    def purge_spend_reservations(self, before: datetime) -> int:
+        """Delete closed rows (settled or expired) closed before `before`; never an open row. Returns the count."""
+        ...
+
 
 def missing_methods(store: object) -> list[str]:
     """The methods of `Store` that `store` does not have. A custom store written for an earlier version lacks the
     evidence methods (`add_tool_call`, `list_tool_calls`, `purge_tool_calls`, `put_redaction_map`,
-    `get_redaction_map`, `purge_redaction_maps`); the app refuses it at start with these names rather than failing
-    on the first tool call."""
+    `get_redaction_map`, `purge_redaction_maps`) or the spend reservation methods (`reserve_spend`, `settle_spend`,
+    `expire_spend_reservations`, `purge_spend_reservations`); the app refuses it at start with these names rather
+    than failing on the first tool call or model call."""
     return sorted(
         n
         for n, v in vars(Store).items()

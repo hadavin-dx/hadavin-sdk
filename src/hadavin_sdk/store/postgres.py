@@ -39,11 +39,18 @@ from hadavin_sdk.models import (
     Plan,
     Run,
     RunState,
+    SpendReservation,
     TickState,
     ToolCallRecord,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
+from hadavin_sdk.store.protocol import (
+    NotFound,
+    SpendCapExceeded,
+    StaleState,
+    StoreUnavailable,
+    check_spend_amount,
+)
 
 _LOG = logging.getLogger("hadavin_sdk.store")
 
@@ -146,6 +153,9 @@ def connect(
     conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
     # Plan hashes include created_at: datetimes must come back in UTC whatever the server's TimeZone is.
     conn.execute("SET TIME ZONE 'UTC'")
+    # Every writer relies on READ COMMITTED (a conditional UPDATE re-checks its WHERE after a row-lock wait); a
+    # server or role default of REPEATABLE READ would turn that wait into an error, so the session pins it.
+    conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")
     return conn
 
 
@@ -583,4 +593,129 @@ class PostgresStore:
                 "COALESCE((SELECT r.updated_at FROM runs r WHERE r.run_id = m.run_id), "
                 "m.updated_at) < %s",
                 (sorted(keep_run_ids), before),
+            ).rowcount
+
+    # --- spend reservations (0007) --------------------------------------------------------------------------
+    # The cap check and the booking are one conditional UPDATE per counter, in the transaction that adds the
+    # reservation row. The UPDATE relies on READ COMMITTED (its re-check after a row-lock wait), which
+    # `connect()` sets for the whole session.
+
+    def reserve_spend(
+        self,
+        reservation_id: str,
+        agent_id: str,
+        day: date,
+        usd: Decimal,
+        *,
+        day_cap: Decimal,
+        month_cap: Decimal,
+        run_id: str | None = None,
+    ) -> None:
+        check_spend_amount(usd)
+        month = day.replace(day=1)
+        try:
+            with self._lock, self._db.transaction():
+                self._exec(
+                    "INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (reservation_id, agent_id, day, run_id, usd),
+                )
+                self._exec(
+                    "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING",
+                    (agent_id, day),
+                )
+                # strictly day before month (the order of add_spend): seed and book the day, then the month;
+                # zero rows = refused, everything rolls back
+                booked = self._exec(
+                    "UPDATE spend SET usd = usd + %(amt)s WHERE agent_id = %(agent)s AND day = %(day)s "
+                    "AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd",
+                    {"amt": usd, "agent": agent_id, "day": day, "cap": day_cap},
+                ).fetchone()
+                if booked is None:
+                    raise SpendCapExceeded("day")
+                self._exec(
+                    "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, 0) "
+                    "ON CONFLICT DO NOTHING",
+                    (agent_id, month),
+                )
+                booked = self._exec(
+                    "UPDATE spend_month SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
+                    "AND month = %(month)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd",
+                    {"amt": usd, "agent": agent_id, "month": month, "cap": month_cap},
+                ).fetchone()
+                if booked is None:
+                    raise SpendCapExceeded("month")
+        except psycopg.errors.UniqueViolation:
+            raise StaleState(f"spend reservation exists: {reservation_id}") from None
+
+    # One statement: the inner SELECT locks the row and reads its status BEFORE the change (after a row-lock
+    # wait it reads the committed status, so a concurrent expire or settle cannot be misread). settled_usd is
+    # what stays booked on the counters: the actual amount, or for a row that was expired the larger of the
+    # actual and the reserved amount (after expiry the booking never goes down).
+    _CLAIM = (
+        "WITH old AS (SELECT status FROM spend_reservations WHERE reservation_id = %(id)s "
+        "AND status IN ('open', 'expired') FOR UPDATE) "
+        "UPDATE spend_reservations r SET status = 'settled', settled_usd = CASE WHEN old.status = 'expired' "
+        "THEN GREATEST(%(a)s::numeric, r.reserved_usd) ELSE %(a)s::numeric END, "
+        "closed_at = clock_timestamp() FROM old WHERE r.reservation_id = %(id)s "
+        "RETURNING r.*, old.status AS was"
+    )
+
+    def settle_spend(
+        self, reservation_id: str, actual_usd: Decimal
+    ) -> tuple[SpendReservation, bool]:
+        check_spend_amount(actual_usd)
+        with self._lock, self._db.transaction():
+            # The claim comes first. A second caller waits on the row lock, finds the row settled, claims
+            # nothing and gets the stored row back unchanged.
+            row = self._exec(self._CLAIM, {"id": reservation_id, "a": actual_usd}).fetchone()
+            if row is None:
+                row = self._exec(
+                    "SELECT * FROM spend_reservations WHERE reservation_id = %s", (reservation_id,)
+                ).fetchone()
+                if row is None:
+                    raise NotFound(reservation_id)
+                return SpendReservation.model_validate(row), False
+            was = row.pop("was")
+            # what the counters must move by: the booked amount changes from reserved to settled_usd
+            delta = row["settled_usd"] - row["reserved_usd"]
+            if (
+                was == "open" or delta
+            ):  # a row that was expired and does not rise leaves the counters alone
+                # the row's own day and its month, never today's; day first, then month
+                for query, key in (
+                    (
+                        "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
+                        row["day"],
+                    ),
+                    (
+                        "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
+                        row["day"].replace(day=1),
+                    ),
+                ):
+                    if self._exec(query, (delta, row["agent_id"], key)).rowcount == 0:
+                        raise RuntimeError("spend counter row missing")  # rolls the claim back
+            if row["run_id"] is not None:  # the real actual amount; a missing run row is ignored
+                self._exec(
+                    "UPDATE runs SET cost_usd = cost_usd + %s WHERE run_id = %s",
+                    (actual_usd, row["run_id"]),
+                )
+        return SpendReservation.model_validate(row), True
+
+    def expire_spend_reservations(self, older_than_s: int) -> int:
+        """The age is measured on the database clock; the counters do not move."""
+        with self._lock:
+            return self._exec(
+                "UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, "
+                "closed_at = clock_timestamp() WHERE status = 'open' "
+                "AND created_at <= clock_timestamp() - make_interval(secs => %s::double precision)",
+                (older_than_s,),
+            ).rowcount
+
+    def purge_spend_reservations(self, before: datetime) -> int:
+        """Closed rows only (run by the purge role, which reads `status` and `closed_at` and nothing else)."""
+        with self._lock:
+            return self._exec(
+                "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %s",
+                (before,),
             ).rowcount

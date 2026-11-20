@@ -28,6 +28,42 @@
     model call is made.
   - **New audit operation** `limits.reset_failed` (result `on`): a reset the database refused.
   - **Stated limits** are in `SECURITY.md` (Stop). Steps: `docs/stop-state-runbook.md`.
+- **Breaking: the worst-case cost of a model call can be booked before the call (migration `0007_spend_reservations.sql`).**
+  - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
+    case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
+    and refuses at the cap (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
+    `limits_unavailable`, `bad_amount`). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
+    real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
+    reservation nobody settled (a crash, a timeout) is marked expired by the new tick step `expire_reservations` after
+    3600 seconds (`defaults.RESERVATION_EXPIRE_S`), or after the stuck-run age when that is longer; it stays booked at
+    the worst case. Closed reservations are deleted by the `purge_evidence` tick step after
+    `retention.held_tool_calls_max_days` (400). The model call sites start to use `reserve` and `settle` in a later
+    change; `Limits.charge` and `Limits.blocked` are unchanged in code.
+  - **Upgrade steps, in this order.** (1) Run `hadavin-sdk migrate` with the same role options as before
+    (`--runtime-role R --portal-role P --purge-role U --reset-role X`): it creates the table and grants the runtime
+    login SELECT, INSERT and UPDATE on it, and the purge login DELETE plus SELECT on `status` and `closed_at` only.
+    (2) Then deploy the code. Code first makes the `expire_reservations` tick step fail (the tick exits 1), and once
+    the model calls use `reserve` every call is refused as `limits_unavailable`. (3) A custom store must add four
+    methods (`reserve_spend`, `settle_spend`, `expire_spend_reservations`, `purge_spend_reservations`); without them
+    the app refuses to start and names them (`ConfigError`).
+  - **Rollback.** Revert only the Python code. Keep the file `0007_spend_reservations.sql`, its grant row and its
+    manifest entry: `migrate` refuses a database whose ledger names a migration that has no file. The table is then
+    unused.
+  - **Behaviour changes.** (a) A call whose worst case does not fit under the day or month cap is refused even when
+    some budget is left (before, one call could pass the cap). (b) The day and month totals now include the amounts
+    held for calls that are still running and for expired reservations, so a run can end with `daily_budget` or
+    `monthly_budget` while another call's hold is open. (c) The same totals feed the two other readers of
+    `Limits.blocked`: the action authorizer (it denies with `limits.*`) and the check just before an approved action
+    runs can now refuse because another call's hold is open or expired. (d) A real cost above the reserved amount is
+    booked in full with no cap check, and one audit outcome is written (domain `limits`, operation `overshoot`,
+    result `booked`); every later reserve on that day or month is refused until the counter is below the cap.
+  - **Stated limits.** A call that takes longer than the expiry age is charged its worst case or more (after expiry
+    a settle can raise the booked amount, never lower it). A reservation that is never settled is in the day and
+    month totals but not in the run's cost. The overshoot audit row is written after the settle commits: a crash in
+    between loses that audit row (the reservation row still shows `settled_usd` above `reserved_usd`). An amount
+    with more than 12 decimal places is refused (`ValueError`; from `Limits.reserve`, `bad_amount`). The runtime login can still UPDATE its own counters: reservations protect
+    against races and crashes, not against a hostile runtime login. The memory store guarantees nothing across
+    processes.
 - **Breaking: model prices are checked when the config loads, and pilot and prod need the date the prices were read.**
   - A route price that is negative (also `-0`), not a finite number, above 1000000 US dollars per million tokens, or
     written with more than 6 decimal places is refused, in every stage. The error names the route and the field, never

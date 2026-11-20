@@ -97,8 +97,11 @@ def app(live_cfg_dir, fake_system):
 
 
 def test_n1_audit_drain_is_the_last_tick_step():
-    assert tick.STEPS[-1].name == STEP and tick.STEPS[-1].every_s == 0
-    assert [s.name for s in tick.STEPS].count(STEP) == 1
+    names = [s.name for s in tick.STEPS]
+    assert next(s for s in tick.STEPS if s.name == STEP).every_s == 0
+    assert names.count(STEP) == 1
+    # audit_drain comes before expire_reservations, which is the last step
+    assert names[-2:] == [STEP, "expire_reservations"]
 
 
 def test_n2_one_tick_writes_a_parked_outcome_to_the_chain(app, monkeypatch, caplog):
@@ -142,7 +145,7 @@ def test_e1_an_audit_without_reconcile_is_a_step_that_passes(app):
             return None
 
     app.audit = NoReconcile()
-    assert run_tick(app, steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, steps=[next(s for s in tick.STEPS if s.name == STEP)]) == 0
     assert app.store.get_tick_state(STEP).last_error is None
 
 
@@ -241,10 +244,12 @@ def test_an_outbox_row_that_cannot_be_written_yet_is_kept(app, monkeypatch):
     _park(log, event)
     with monkeypatch.context() as mp:
         mp.setattr(log, "_append", _boom)
-        assert run_tick(app, steps=[tick.STEPS[-1]]) == 0  # nothing drained is not a failure
+        assert (
+            run_tick(app, steps=[next(s for s in tick.STEPS if s.name == STEP)]) == 0
+        )  # nothing drained is not a failure
         assert [r[0] for r in _outbox(log)] == [event.event_id]
     assert log.events() == []
-    assert run_tick(app, steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, steps=[next(s for s in tick.STEPS if s.name == STEP)]) == 0
     assert _ids(log) == [event.event_id] and _outbox(log) == []
 
 
@@ -275,7 +280,7 @@ def test_an_outbox_that_cannot_be_reached_is_a_quiet_return(app, monkeypatch):
     with monkeypatch.context() as mp:
         mp.setattr(app.audit._db, "run", _boom)
         assert app.audit.reconcile() == 0
-        assert run_tick(app, steps=[tick.STEPS[-1]]) == 0
+        assert run_tick(app, steps=[next(s for s in tick.STEPS if s.name == STEP)]) == 0
     assert app.store.get_tick_state(STEP).last_error is None
     assert [r[0] for r in _outbox(app.audit)] == [event.event_id]  # still there for the next tick
 
@@ -570,7 +575,7 @@ def test_cross_process_an_event_parked_only_in_memory_dies_with_its_process(pg):
 def test_tick_logs_the_drain_count_on_the_tick_logger(app, caplog):
     _park(app.audit, _event())
     with caplog.at_level(logging.INFO, logger="hadavin_sdk.tick"):
-        assert run_tick(app, steps=[tick.STEPS[-1]]) == 0
+        assert run_tick(app, steps=[next(s for s in tick.STEPS if s.name == STEP)]) == 0
     lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.tick"]
     assert lines[0] == "audit_drain drained=1" and len(lines) == 2  # then the summary line
 
