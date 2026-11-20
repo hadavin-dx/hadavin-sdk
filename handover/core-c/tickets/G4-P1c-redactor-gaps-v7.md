@@ -614,6 +614,16 @@ Only SECRET kinds hold (L12). Effect: the 80 HIGHENTROPY rows of 1b, the 3 `data
 blocks are not decoded. 1c rows 2, 3, 6, 7, 10 and 11 become one ENCODED. A blob that is a `_PIECE` of a SECRET value pass 1 found
 (split at `.`, `:`, `=`, `;` and the like) is held too, because pass 1 registers that piece as a secret (MEASURED: `password=<SB>.tail`).
 
+CHANGED in v7 (review round 6 design N2, CONTESTED in part). The reviewer asks to apply the substring rule (a line that is a
+substring of a JWT or PRIVKEY original) to blocks only. Not taken: units are found on the INPUT T (2.5 step 3), where a JWT is
+written whole, and its three `.`-separated segments are single-line RUN units; with the rule limited to blocks, the JWT's own
+payload segment would be decoded in place, and a payload holding an e-mail or a secret would cut the JWT into an ENCODED piece
+(MUST_KEEP_B64 rows 06 and 07 and the probe's JWT rows would change: the reason the held rule exists, round 1 g4c-B2). What the
+reviewer found stays as a stated limit, L-B7: a COPY of one segment of a JWT (or one line of a PEM block) written elsewhere, apart
+from its token, is held and not decoded, so a value only inside that copy is not found. Pre-existing (the base decodes nothing);
+pinned by the strict xfail `test_limit_jwt_segment_copy` (10.3), BY READING: the builder runs its recipe in Phase 3 before marking
+it; when it does not fail, the builder records the output and makes it a plain assert of the measured string instead.
+
 ### 3.4 The decoded view and the hit rule (`_b64_hits`), numbered (CHANGED in v5: the decoded view is always neutralised with `neutralise_untrusted`)
 1. For each unit, in order: `budget.clock()`.
 2. `len(u.joined) > defaults.B64_MAX_UNIT_CHARS`: no decode; `budget.take(0)`; a hit unread.

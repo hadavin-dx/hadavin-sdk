@@ -126,7 +126,8 @@ promised "IPV4 glued to a letter, a digit or `_`": v3 closes the dashed forms gl
 before `ip-` / `ec2-` and a digit before the pod-DNS address (L10).
 
 ## 2. Problem (what the probe shows on a5247ac4a)
-Not a fixed-point problem: a second `redact()` on the output masks nothing more in any of the 86 rows. It is a boundary problem
+Not a fixed-point problem: a second `redact()` on the output masks nothing more in any of the 86 rows (CHANGED in v4: 88 rows,
+the second-call check of 9.1). It is a boundary problem
 in six pattern entries and one sweep rule:
 - `IPV4` dotted (redact.py:377), EC2 dashed (375) and pod DNS (376) start and end with `\b`: a letter or `_` on either side
   refuses the match (`host_ip-192-0-2-10`, `my_ec2-...`, `pod_192-0-2-10.ns.pod` are not masked).
@@ -857,7 +858,7 @@ who edits. G4 v5's own rules are adopted where they are G4's to make (its regex,
 | order | G8 first, `G4C_MERGED = False`; fallback G4 first (0.3, L23) | the same (L-D7) | agreed, no edit |
 | the property-test oracle line | "about line 121" (0.3) | 141 | 141 at a5247ac4a and at 99787d5b3 (MEASURED: `grep -n _replace_standalone tests/test_redact_idempotent_property.py`); the G4 v6 drafter writes 141, by name `raw_copies` |
 | PHONE entry numbers | "G8 entries 5-7" (section 6) | mixed (5 and 6 for the `+` entry) | 6 (`+`-led, before the main tuple), 7 (contiguous beside `_`), 8 (phone word); the main tuple has no number (N2, section 4.1). G4 v6 writes "G8 entries 6-8" |
-| G8 mutants in G4's runs | not listed: step 2 runs only the two G8 test files (0.3) | G4-2: `python tests/g8_mutants.py` in G4's phase 5 | kept: G4 phase 5 runs `python tests/g8_mutants.py`, expected `32 of 32 good` (CHANGED in v4: two mutants added, 8.2); G4 v6 adds the command to its Phase 5 list (its header names "30 of 30", which is v3's count) |
+| G8 mutants in G4's runs | not listed: step 2 runs only the two G8 test files (0.3) | G4-2: `python tests/g8_mutants.py` in G4's phase 5 | kept: G4 phase 5 runs `python tests/g8_mutants.py`, expected `34 of 34 good` (CHANGED in v4: four mutants added, appendix C); G4 v6 adds the command to its Phase 5 list (its header names "30 of 30", which is v3's count) |
 | a red `after_g4c` cell in the G4c commit | the G4 builder writes the measured output into the cell, records old and new in evidence/G4-1.md and reports; a LEAK in the new output is a STOP (0.3 step 2) | "a red host row is a finding to report, not an edit of the column" | G4 v5's rule is adopted (the regex is G4's; the cell is data G8 measured with an older G4 text). G8 v4 section 4.5 says the same |
 | a changed must-keep row under G4a (K60, K66) | intended and the cell updated when the new output masks a base64 blob that decodes to text holding a secret; otherwise STOP (0.3) | "a changed row is a finding, reported, not edited away" | G4 v5's rule is adopted; G8 v4 section 4.5 says the same |
 | docstring placement | G8's paragraph after the "What this is not" paragraph; G4's bare-number paragraph and base64 sentence after G8's, before the closing `"""` (0.3, section 6) | G8's paragraph after the "(A re-scan inside redact() ...)" sentence | the same place: that sentence is the last line of the "What this is not" paragraph (redact.py 21-25 at 99787d5b3, read). Wording to use in both: "after the 'What this is not' paragraph (it ends with the '(A re-scan inside redact() ...)' sentence)" |
@@ -871,7 +872,7 @@ G4-3 and G4-4):
   (they would otherwise XPASS under strict xfail and go red) and switches rows 60-62 and 66 to the `after_g4c` column (section
   4.5, measured with G4 v4's regex).
 - G4-2. G4's phase 4 step 1 run list gets `tests/test_redact_glued_rest.py`, and its phase 5 the mutant run `python
-  tests/g8_mutants.py` (expected: 32 of 32 good; CHANGED in v4, was 30). Expected red: none. A red `after_g4c` host cell: G4 v5's
+  tests/g8_mutants.py` (expected: 34 of 34 good; CHANGED in v4, was 30). Expected red: none. A red `after_g4c` host cell: G4 v5's
   rule (the table above: write the measured output, record, report; a leak is a STOP). Any other red row is a finding, reported.
 - G4-3. Rebase of tests/test_redact_idempotent_property.py: owned by whoever lands second; the two edits do not overlap (G8: the
   `raw_copies` oracle line 141; G4: the `p1c-b64` group, `EXPECTED_INPUTS`, `P1C_B64`). The redact.py module docstring: G8 adds
