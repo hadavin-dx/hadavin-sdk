@@ -1,0 +1,8 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec-g7b
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 162 items / 159 deselected / 3 selected
+
+tests/test_redact_idempotence_property.py::test_I4_bank_fuzz_the_redactor_never_gives_up_at_the_round_bound 
