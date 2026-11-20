@@ -125,37 +125,53 @@ def test_m6_send_error_is_exactly_one_write():
     assert len(writes) == 1, writes
 
 
-def _handler(version, headers):
+class _NotAMessage:
+    """Passes `_bad_headers` as an empty block would, but is not an `email.message.Message`."""
+
+    def __iter__(self):
+        return iter(())
+
+    def __contains__(self, name):
+        return False
+
+    def get_all(self, name, default=None):
+        return default
+
+
+def _handler(monkeypatch, version, headers):
+    class Reached(AssertionError):
+        pass
+
+    def application_handler(*args, **kwargs):
+        raise Reached("the application was reached")
+
+    monkeypatch.setattr(server, "QuietWSGIHandler", application_handler)
     h = QuietRequestHandler.__new__(QuietRequestHandler)
     h.rfile = SimpleNamespace(
         readline=lambda n=-1: b"GET /x HTTP/1.1\r\n",
         count_head=lambda n: None,
         stop_count=lambda: None,
     )
-    h.parse_request = lambda: (
-        setattr(h, "request_version", version)
-        or setattr(  # type: ignore[method-assign]
-            h, "headers", headers
-        )
-        or True
-    )
+
+    def parse():
+        h.request_version, h.headers = version, headers
+        return True
+
+    h.parse_request = parse  # type: ignore[method-assign]
     sent: list[bytes] = []
     h.wfile = SimpleNamespace(write=sent.append)  # type: ignore[assignment]
-
-    def get_app():
-        raise AssertionError("the application was reached")
-
-    h.server = SimpleNamespace(get_app=get_app)  # type: ignore[assignment]
+    h.get_environ = dict  # type: ignore[method-assign]
+    h.server = SimpleNamespace(get_app=lambda: None)  # type: ignore[assignment]
     return h, sent
 
 
-def test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer():
-    h, sent = _handler("HTTP/0.9", Message())
+def test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer(monkeypatch):
+    h, sent = _handler(monkeypatch, "HTTP/0.9", Message())
     h._serve()
     assert sent == []
 
 
-def test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer():
-    h, sent = _handler("HTTP/1.1", object())
+def test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer(monkeypatch):
+    h, sent = _handler(monkeypatch, "HTTP/1.1", _NotAMessage())
     h._serve()
     assert sent == []
