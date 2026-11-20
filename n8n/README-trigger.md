@@ -34,6 +34,8 @@ NOT run by anybody (each is also in the list at the end):
 - The two "Answer caller" nodes and the webhook response mode they need (added after the run).
 - A manual retry of a failed execution from the n8n editor.
 - The real loop values: 30 rounds with 60 second waits.
+- The state check after a 202 or 200 answer (added after the run): the seven nodes from "Run still going?" on, the
+  second way into the wait node, and the real Hadavin states in an answer (the stub's state was a made-up word).
 - The real Hadavin endpoint (a stub answered).
 - One webhook call that starts two executions.
 - n8n Cloud and queue mode.
@@ -54,7 +56,9 @@ stopped moving. The "sender" is the n8n side: one sender has one id and one secr
   request key and a document, signs it with a shared secret, and sends it to Hadavin. Hadavin starts at most one run
   per key and answers with a run id and a state. When Hadavin does not acknowledge the request (an answer 502, 503
   or 504, or no answer at all), the workflow waits, signs the same body again with a new timestamp, and sends
-  again, for a fixed number of rounds.
+  again, for a fixed number of rounds. When Hadavin does acknowledge it (202 or 200), the workflow is NOT finished:
+  it asks again, with the same key, until the answer shows how the run ended, and it fails (so that a person is
+  told) when the run ended badly or never ends (see "A 202 is not the end").
 - `hadavin-trigger-error.json` (error workflow): when the main workflow fails, n8n starts this one, but only if it
   is published. It builds a short message (workflow name, execution link, last node, error text) for a chat or
   e-mail node that you add.
@@ -80,14 +84,16 @@ Every step is required.
    delete the two "Answer caller" nodes and connect the guard's second output straight to "Stop: id or text
    missing"); put your own fields for the business id and the document in THREE nodes: "Id and text present?",
    "Hash business id" and "Build request"; in "Send to Hadavin" replace `https://example.invalid/v1/trigger` with
-   the real address.
-9. Set the two loop numbers for this client: the wait in "Wait before next round" and the number of rounds in "Busy
-   and rounds left?" (see "One run at a time" below).
+   the real address. Connect your own follow-up steps, if any, after "Done: finished or waits for approval" and
+   nowhere else: the first output of "Send to Hadavin" must lead to "Run still going?" and to nothing else.
+9. Set the three loop numbers for this client: the wait in "Wait before next round", the number of rounds in "Busy
+   and rounds left?" (see "One run at a time" below), and the number of checks in "Checks left?" together with the
+   text of "Stop: still running" (see "A 202 is not the end").
 10. Publish the main workflow, send one made-up event, and check that Hadavin answered and that a failed
     execution reaches your chat or e-mail node.
 
-Do not change the `typeVersion` of the Set nodes ("Build request", "Stamp time", "Next round", and "Build message"
-in the error workflow). It is 3.4. With typeVersion 3, n8n 2.47.7 ignored the fields these nodes are meant to build
+Do not change the `typeVersion` of the Set nodes ("Build request", "Stamp time", "Next round", "Next check", and
+"Build message" in the error workflow). It is 3.4. With typeVersion 3, n8n 2.47.7 ignored the fields these nodes are meant to build
 and reported no error: the request went out with the caller's own data, no timestamp header and a useless
 signature, and n8n marked the execution as a success.
 
@@ -124,7 +130,9 @@ need (`responseNode`):
   execution fails as before.
 - "Answer caller: taken", beside the first node of the sending chain: answers the caller with 202 and an empty
   body. This 202 means only that n8n took the event and will try to send it. It does NOT mean that Hadavin
-  accepted it; a later refusal reaches a person through the error workflow, not the caller.
+  accepted it; a later refusal reaches a person through the error workflow, not the caller. In plain words: the
+  caller's 202 means "taken by the workflow", not "done". The caller never learns from this answer how the run
+  ended. A run that ends badly, or never ends, reaches a person through the error workflow only.
 
 This branch was NOT run in n8n. UNVERIFIED: both nodes (type name, version and parameter names were written from
 memory of the n8n documentation), the response mode value, that the stop node still runs after the answer node, and
@@ -211,7 +219,7 @@ refused (409).
 
 | Answer | What it means | What the template does |
 |---|---|---|
-| 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | Goes on to "Check state (optional)". No retry. |
+| 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | NOT the end. Goes on to the state check "Run still going?": while the run is going, the workflow waits and asks again with the same key; then it ends as a success or fails, by the state (see "A 202 is not the end"). |
 | 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing or wrong. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
 | 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | STOP: no retry, straight to the error workflow. Check the secret and both clocks. |
 | 409 | The key was already used with a different document. Empty body. | STOP: no retry, straight to the error workflow. A person must look. |
@@ -260,7 +268,123 @@ The answer holds only `run_id` and `state`. A 200 can carry any of these states:
   STOPPED.
 
 To learn how a run went, send the same request again later (same key, same document, new signature) and read the
-state. The answer never holds a reason and never holds the result of the run.
+state. The answer never holds a reason and never holds the result of the run. The main workflow does exactly this
+by itself; the next section says how.
+
+## A 202 is not the end
+
+The state check is a REQUIRED part of the main workflow, not an extra. It starts at the node "Run still going?",
+which is the only node after the first output of "Send to Hadavin". Do not take it out and do not connect anything
+else to that output.
+
+### Why: an acknowledged request whose work was never done
+
+A design review of the worker found this sequence. The worker's code cannot close it alone, so the template must.
+
+1. A request for a key arrives. The worker stores the run (one row, state RECEIVED). Then the worker process dies,
+   before it has sent its answer. The sender has no acknowledgement.
+2. The sender tries again, as it should. The stored run is still there, in state RECEIVED, so the new worker
+   answers 202. But no work is going on anywhere: the document lived only in the memory of the process that died,
+   and a stored run is never started a second time.
+3. A workflow that takes a 202 as the end now finishes as a success. Nothing tries again after a 2xx.
+4. Later Hadavin's clean-up job (the tick) finds the run that never moved and sets it to NEEDS_PERSON with the
+   reason "interrupted". It changes the stored state and writes an audit record. It sends NO message to a person.
+
+The result without the state check: the client's automation shows a success, the work was never done, and nobody
+is told. The same end is reached after an acknowledged request when the worker is killed during a restart, because
+the process supervisor waited a shorter time than the run needed.
+
+### What the workflow does after a 202 or 200
+
+- "Run still going?" reads the `state` of the answer. If the run is still going, "Checks left?" looks at the
+  count, "Next check" takes the SAME body again (same key, same document) and adds one to the count, "Wait before
+  next round" waits, and then "Stamp time" and "Sign" make a new timestamp and a new signature and the request is
+  sent again. For Hadavin, the same signed request with the same key IS the question "what is the state of this
+  run?". There is no other address for it. It never starts a second run.
+- When the answer shows a state in which the run has ended, or in which it waits for an approval, "Run ended
+  well?" decides: a success ends at "Done: finished or waits for approval"; everything else fails the execution at
+  "Stop: run did not end well", with a message that names the state and the run id. The answer holds no reason,
+  so the message cannot name one: NEEDS_PERSON after a crash ("interrupted") looks the same from here as
+  NEEDS_PERSON for any other reason. A person reads the reason in Hadavin's stored run.
+- When the checks are used up and the run still shows as going, the execution fails at "Stop: still running"
+  ("still shown as running after 45 checks, about 45 minutes").
+- A check that is answered 502, 503 or 504, or not answered, goes the busy way like any other send (wait, sign
+  again, send again). The busy rounds are counted over the whole execution: 30 in all, not 30 for each check.
+- Every failure starts the error workflow, which tells a person. The workflow fails closed: a state it does not
+  know, or an answer without a state, is treated as "did not end well".
+
+### The states
+
+Every state Hadavin has (`RunState` in `src/hadavin_sdk/models.py`), and what the template does with it. A test
+compares this table and the workflow's expressions with the code, so a renamed or new state fails the test.
+
+| State | What it means in plain words | What the template does |
+|---|---|---|
+| RECEIVED | The run is stored; the work has not begun. | STILL GOING: waits and asks again. |
+| WORKING | The agent is reading and thinking. | STILL GOING: waits and asks again. |
+| PLAN_READY | The agent has a plan; the rules are being applied to it. A short step. | STILL GOING: waits and asks again. |
+| EXECUTING | The planned action is being carried out. | STILL GOING: waits and asks again. |
+| VERIFYING | The action was carried out; its result is being checked. | STILL GOING: waits and asks again. |
+| NO_ACTION | The run finished and nothing had to be done (or it only posted a proposal). | SUCCESS: the workflow ends. |
+| SUCCEEDED | The action was carried out and the check passed. | SUCCESS: the workflow ends. |
+| WAITING_FOR_APPROVAL | The plan waits for a person to approve it. Hadavin has asked the approvers itself. | SUCCESS: the workflow ends. What happens after the approval is not watched (see the limits). |
+| NEEDS_PERSON | The run stopped and waits for a person. A run cut off by a crash or a forced kill ends here ("interrupted"). | ERROR: fails, the error workflow tells a person. |
+| DENIED | A rule refused the plan. Nothing was carried out. | ERROR: fails, the error workflow tells a person. |
+| REJECTED | A person said no to the plan. Nothing was carried out. | ERROR: fails, the error workflow tells a person. |
+| EXPIRED | Nobody answered the approval in time. Nothing was carried out. | ERROR: fails, the error workflow tells a person. |
+| ROLLED_BACK | The action was carried out, the check failed, and the action was undone. | ERROR: fails, the error workflow tells a person. |
+| STOPPED | The stop switch ended the run. | ERROR: fails, the error workflow tells a person. |
+
+There is no state named FAILED in the code: a run that fails ends in one of the six ERROR states above.
+
+Why five states count as "still going" although Hadavin answers 202 only for the first two: PLAN_READY, EXECUTING
+and VERIFYING are answered 200, but the run is still on its way in them, and a run that dies in one of them is
+ended by the tick in the same way (as NEEDS_PERSON). The five are exactly the states the tick's stuck step looks
+at. If the workflow took them as an end, the gap described above would stay open for a crash in those states.
+
+### The numbers
+
+- The stuck limit: how long a run may stay quiet before the tick ends it. The code computes it for each agent
+  (`stuck_after_s` in `src/hadavin_sdk/runtime/tick.py`): the agent's `max_steps` times `call_timeout_s` times
+  `max_attempts`, plus 60 seconds. `max_steps` is set for each agent and has no default. The other two are
+  settings of the model connection with the defaults 60 seconds and 3.
+- The tick gap: nothing in the worker starts the tick; the operator's scheduler runs it every 30 to 60 seconds.
+  The code takes 60 seconds as the longest gap (`TICK_SLACK_S` in the same file).
+- Example, an agent with `max_steps` 12 on the defaults: 12 x 60 x 3 + 60 = 2220 seconds (37 minutes); with one
+  tick gap, 2280 seconds (38 minutes).
+- The template's placeholders: a wait of 60 seconds ("Wait before next round") and 45 checks ("Checks left?"),
+  2700 seconds (45 minutes). That is longer than the 2280 seconds of the example.
+- The rule for each client: checks times wait must be LONGER than that client's stuck limit plus one tick gap.
+  With the 60 second wait and the default model settings: `max_steps` 6 needs more than 20 checks, `max_steps` 12
+  more than 38, `max_steps` 20 more than 62. When you change the number in "Checks left?", change the text of
+  "Stop: still running" too. Keep the wait at or under 60 seconds until a longer wait has been run in n8n.
+- With too few checks nothing is lost: the workflow then fails at "Stop: still running" for a run that is merely
+  slow, and a person gets a notice that was not needed. It never ends as a success for a run that is not done.
+
+### Three limits
+
+1. Until the tick has run, a dead run looks alive. A run whose process died keeps the state RECEIVED or WORKING
+   (or PLAN_READY, EXECUTING, VERIFYING) until the tick ends it, and the answer cannot tell a dead run from a live
+   one. So the check can take up to the stuck limit plus one tick gap to notice (38 minutes in the example), and
+   the stuck limit counts from the run's last sign of life, not from the first 202. If the tick does not run at
+   all, the run stays "going" forever; the workflow then fails at "Stop: still running" when its checks are used
+   up, so a person is still told.
+2. The worker itself tells no person about an interrupted run. The tick changes the stored state and writes an
+   audit record, nothing more. This template's error workflow is the only notice today. It works only if the error
+   workflow is published and its "Notify placeholder" was replaced (set-up steps 4 and 5), and only for events
+   that came through this template.
+3. The rule for restarts: set the process supervisor's stop grace period longer than the longest run. A run that
+   is cut by a forced kill ends as "interrupted", and its key is never run again: a NEW key is needed to redo the
+   work (see "When a run shows NEEDS_PERSON after a restart or a crash").
+
+Also know: the workflow stops watching at WAITING_FOR_APPROVAL. If the plan is later rejected, expires, or fails
+when it is carried out, this execution has already ended as a success; those ends are told to people by Hadavin's
+own approval messages, not by this template. And an event that is sent again with the key of a run that ended
+badly fails again, every time: that is meant, the key is used up.
+
+UNVERIFIED: all of this section's n8n side. The state check was added after the lead's run and nobody has run it
+in any n8n. Seen in the run: the IF node, the Set node, the Wait node and the Stop and Error node as types, a
+connection back to "Stamp time" running as a loop, and an answer 202 whose item held `run_id` and `state`.
 
 ## One run at a time: what the sender must do when it is not acknowledged
 
@@ -339,7 +463,9 @@ What the client sees and does:
 - Who is told: as far as the code read for this file shows, the tick changes the stored state and writes an audit
   record; it does not post a chat card at that moment. (A run that ends in NEEDS_PERSON by itself, without a
   crash, does post a card for people when a chat channel is set up.) So do not count on a card for an interrupted
-  run: watch for NEEDS_PERSON from the n8n side with "Check state (optional)", or look at the stored runs.
+  run: the main workflow's state check is what tells a person (it fails at "Stop: run did not end well" and the
+  error workflow runs; see "A 202 is not the end"). For events that did not come through this template, look at
+  the stored runs.
 
 ## Size limits
 
@@ -399,8 +525,9 @@ These are known limits of this version. They are written down so that nobody ass
     with a person. On the stop signal (SIGTERM) the worker closes its port, starts no new run, and lets the run
     that is going reach its end; it does not cut a run, not even in the middle of a model call. If the supervisor
     kills the process before that (Docker, for example, waits 10 seconds unless told otherwise), the run is cut
-    off: the tick later sets it to NEEDS_PERSON with the reason "interrupted", and its key is used up (see "When a
-    run shows NEEDS_PERSON after a restart or a crash"). As the code reads, a second stop signal does nothing
+    off: the tick later sets it to NEEDS_PERSON with the reason "interrupted", and its key is used up: the key is
+    never run again, and a NEW key is needed to redo the work (see "When a run shows NEEDS_PERSON after a restart
+    or a crash"). As the code reads, a second stop signal does nothing
     while the worker waits for its runs (up to 30 seconds) and kills the process after that. Not tested: a request
     that waits for a free slot when the signal comes, a request that arrives between the signal and the closing of
     the port, and a second signal.
@@ -408,6 +535,11 @@ These are known limits of this version. They are written down so that nobody ass
     that has just arrived tries for the free slot at once; one that is already waiting looks only about once a
     second. With a steady flow of events an early event can lose every round and end in the error workflow while
     later ones run. No request is ever acknowledged without a stored run. This setup is for a low event rate.
+13. A dead run looks alive until the tick has run. The answer cannot tell a run whose process died from one that
+    is working: both show RECEIVED or WORKING. The main workflow's state check therefore needs up to the stuck
+    limit plus one tick gap to notice (see "A 202 is not the end" for the numbers).
+14. The worker tells no person about an interrupted run. The tick sets the state and writes an audit record; no
+    chat card, no mail. The error workflow of this template is the only notice today.
 
 ## VERIFY ON A REAL n8n BEFORE ANY CLIENT USE
 
@@ -442,3 +574,12 @@ Nobody has run any of these. The record of what WAS run is `handover/core-a/inpu
     out of n8n".
 18. NOT VERIFIED: an answer 502 or 504 goes the busy way (the run had only 503), and a restart of the real worker
     under load: events sent during the drain are taken by the new worker and none reaches the error workflow.
+19. NOT VERIFIED: the state check after a 202 or 200: the workflow asks again with a new signature while the state
+    is one of the five "still going" states, ends as a success on NO_ACTION, SUCCEEDED and WAITING_FOR_APPROVAL,
+    fails with the state in the message on the six other states and on an answer without a state, and fails at
+    "Stop: still running" after the set number of checks. Also: the count of checks survives a busy round, the
+    wait node works when entered from "Next check", and the Stop and Error node takes an expression as its
+    message.
+20. NOT VERIFIED: the gap itself, against a real worker and a real tick: kill the worker right after it stored a
+    run, send again, and see the execution fail with NEEDS_PERSON within the stuck limit plus one tick gap, and
+    the error workflow tell a person.

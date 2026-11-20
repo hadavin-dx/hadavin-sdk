@@ -8,7 +8,9 @@ secret verified; agent and principal come from configuration, never from the req
 ``start`` decides the answer; this module does not import the runtime, the store or the app.
 
 Every refusal has an empty body. Log lines hold the status and, once verified, the sender id; never
-the body, the key, a header value or a secret. A 409 is logged by the caller's ``start``, which adds
+the body, the key, a header value or a secret. A request that was not verified is logged at DEBUG
+(anyone who reaches the port decides how many there are), a verified one at INFO. A 409 is logged by
+the caller's ``start``, which adds
 the run id; this module writes no second line for it.
 """
 
@@ -19,11 +21,13 @@ import json
 import logging
 import re
 import time
+import unicodedata
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Final, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
+from hadavin_sdk.defaults import MAX_DOCUMENT_BYTES
 
 # ---- wire constants (one place) ----
 PREFIX: Final = "X-Hadavin"  # header prefix handed to hmac_v0
@@ -40,6 +44,9 @@ MAX_SECRETS_PER_SENDER: Final = 2  # the old and the new one while a secret is b
 # Not seen in an editor and not cut by strip(): byte-order mark, zero-width space, non-joiner, joiner,
 # word joiner. A secret file saved with one of them would never verify.
 UNSEEN_CHARS: Final = "\ufeff\u200b\u200c\u200d\u2060"
+# The most ``max_body_bytes`` may be, whatever settings object the caller hands in: a body is JSON text
+# around one document, and escaping can make it several times the document's size.
+MAX_BODY_BYTES_LIMIT: Final = 8 * MAX_DOCUMENT_BYTES
 MAX_LENGTH_DIGITS: Final = 12  # a longer Content-Length is over any cap; also keeps int() cheap
 BODY_FIELDS: Final = frozenset({"key", "document"})
 ANSWER_FIELDS: Final = ("run_id", "state")
@@ -204,6 +211,8 @@ def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None:
                     f"trigger sender {sender!r}: a secret with a byte-order mark or a zero-width"
                     " character"
                 )
+            if any(unicodedata.category(char) == "Cc" for char in value):
+                raise ValueError(f"trigger sender {sender!r}: a secret with a control character")
             if values.count(value) > 1:
                 raise ValueError(f"trigger sender {sender!r}: the same secret twice")
             other = owner.setdefault(value, sender)
@@ -244,6 +253,10 @@ def make_wsgi(
         raise ValueError(f"triggers.tenant does not match {ID_RE.pattern}")
     if isinstance(max_body, bool) or not isinstance(max_body, int) or max_body <= 0:
         raise ValueError("triggers.max_body_bytes must be a positive integer")
+    if max_body > MAX_BODY_BYTES_LIMIT:
+        raise ValueError(f"triggers.max_body_bytes is over {MAX_BODY_BYTES_LIMIT}")
+    if len(senders) > MAX_SENDERS:
+        raise ValueError(f"more than {MAX_SENDERS} trigger senders")
     for sender in senders:
         if not isinstance(sender, str) or ID_RE.fullmatch(sender) is None:
             raise ValueError(f"trigger sender id {sender!r} does not match {ID_RE.pattern}")
@@ -318,7 +331,8 @@ def make_wsgi(
         if status == 405:
             response_headers.append(("Allow", METHOD))
         if status != 409:  # ``start`` wrote the 409 line, with the run id: one line per request
-            _LOG.info("trigger status=%d sender=%s", status, sender or "-")
+            level = logging.INFO if sender else logging.DEBUG  # DEBUG: refused before it verified
+            _LOG.log(level, "trigger status=%d sender=%s", status, sender or "-")
         start_response(STATUS_TEXT[status], response_headers)
         return [out]
 

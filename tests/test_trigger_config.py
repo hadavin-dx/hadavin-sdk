@@ -346,7 +346,9 @@ def test_hostile_secret_name_as_second_of_two_refused(cfg_dir):
     assert "triggers.senders.s1.secret_names" in text
 
 
-@pytest.mark.parametrize("name", ["k", "K" * 128, "Key_one.v2:eu/primary-1"], ids=["one", "128", "all"])
+@pytest.mark.parametrize(
+    "name", ["k", "K" * 128, "Key_one.v2:eu/primary-1"], ids=["one", "128", "all"]
+)
 def test_secret_name_characters_allowed_as_built(cfg_dir, name):
     """Case: the secret names the character rule lets through as built: one character, 128 characters, and one
     name with every allowed kind of character (letters of both cases, digits, underscore, dot, colon, slash,
@@ -489,10 +491,10 @@ def test_not_a_number_is_not_a_number(cfg_dir, field, value):
     assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: value}))
 
 
-@pytest.mark.parametrize("value", [4.0, 1.0, 1e0], ids=repr)
+@pytest.mark.parametrize("value", [4.0, 1.0, 64.0], ids=repr)
 @pytest.mark.parametrize("field", ["max_running", "max_body_bytes"])
 def test_float_for_a_whole_number_refused(cfg_dir, field, value):
-    """Case: a float with no fraction (4.0, 1.0) where a whole number is expected (max_running, max_body_bytes).
+    """Case: a float with no fraction (4.0, 1.0, 64.0) where a whole number is expected (max_running, max_body_bytes).
     Refused, the field named: a float is not silently cut to a whole number."""
     assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: value}))
 
@@ -725,7 +727,7 @@ def test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name(cfg_dir):
     assert "triggers.senders.s1.secret_names" in str(info.value)
     assert PASTED not in str(info.value)
     printed = "".join(traceback.format_exception(info.value))
-    assert PASTED not in printed.replace("_sender(PASTED)", "")
+    assert PASTED not in printed
     assert info.value.__cause__ is None
 
 
@@ -954,7 +956,7 @@ def test_trigger_secret_is_called_with_one_name_and_reads_the_provider_each_time
 def test_trigger_secret_is_a_plain_function_that_does_not_hand_out_the_provider(cfg_dir):
     """Case (new: `App.trigger_secret`): what the object is. A plain function: not the provider, not a method bound
     to the provider (no `__self__`), not a partial (no `func`, `args`, `keywords`), with no public attribute at
-    all and no `get`. So nothing reachable by a normal attribute leads from the reader to the whole provider."""
+    all and no `get`. So no normal attribute of the reader gives the whole provider."""
     app, provider, _ = _app_with_other_secrets(cfg_dir)
     read = app.trigger_secret
     assert read is not provider

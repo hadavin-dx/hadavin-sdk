@@ -10,6 +10,18 @@ point is disarmed (or its flag file deleted) before the crash, and if that fails
 
 Flag file: one line of text, `<point>` or `<point>#<nth>`. A missing, unreadable or malformed file
 means "not armed".
+
+What a test must know, or the helper misleads it:
+
+- Exit code 137 is also what a real forced kill shows (128 + 9). A test of mode "exit" asserts the
+  marker line on the child's stdout AND the exit code; the code alone proves nothing. If the marker
+  cannot be written (a closed stdout), the process still exits with the code, with no marker.
+- A flag file left on disk kills the next child that uses the same path. Arm inside a `with` block
+  (it deletes a flag that never fired), or delete the flag in a `finally`.
+- Mode "raise" behind the real trigger server does not simulate a crash: the server's own error
+  handling catches what the application raises and answers 503. Use mode "exit" in a child there.
+- The gate is an environment variable that a child process inherits from pytest; a child started
+  with another environment cannot build a `CrashPoints`.
 """
 
 from __future__ import annotations
@@ -139,8 +151,10 @@ class CrashPoints:
             self._fired.append(point)
             if self._mode == "raise":
                 raise SimulatedCrash(point)
-            print(CRASH_MARKER, flush=True)
-            os._exit(CRASH_EXIT_CODE)
+            try:
+                print(CRASH_MARKER, flush=True)
+            finally:  # a closed stdout must not turn the crash into an ordinary exception
+                os._exit(CRASH_EXIT_CODE)
 
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         """A stand-in for `target` whose listed methods pass `<name>.<method>:before` and `:after`.

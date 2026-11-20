@@ -10,6 +10,15 @@ Answers written here, before the endpoint is reached: 400 for a request line or 
 not HTTP, and for a client that sends nothing more until the socket timeout; 414 for a request line
 over the stdlib cap; 431 for too many or too long headers; 503 when the application raised. A client
 that is gone gets nothing; its connection is closed.
+
+Also refused here with 400, before the body is read: an HTTP version of 2.0 or higher (the stdlib
+parser says 505; no refusal made here is a 5xx); a header whose name holds an underscore (the
+application sees `X_Name` and `X-Name` as one name, and a proxy in front may not, so a caller could
+pass a header the proxy never checked); more than one Content-Length header, equal or not; any
+Transfer-Encoding header. A request line with no version (the old `GET /path` form) gets no answer:
+the connection is closed. The application sees only what the request and the server set: no variable
+of the process environment can stand in for a header that was not sent. These refusals are logged at
+DEBUG: their number is chosen by whoever can reach the port.
 """
 
 from __future__ import annotations
@@ -17,6 +26,7 @@ from __future__ import annotations
 import logging
 import socketserver
 import sys
+from email.message import Message
 from typing import Any, ClassVar, Final
 from wsgiref.simple_server import ServerHandler, WSGIRequestHandler, WSGIServer
 
@@ -25,6 +35,7 @@ from hadavin_sdk.triggers.endpoint import STATUS_TEXT
 MAX_REQUEST_LINE: Final[int] = 65536  # the cap the stdlib handler uses
 STALLED_STATUS: Final[int] = 400  # the client sent nothing more until the socket timeout
 LONG_LINE_STATUS: Final[int] = 414
+SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
 
@@ -49,6 +60,7 @@ class QuietWSGIHandler(ServerHandler):
     error_status = STATUS_TEXT[503]
     error_headers: ClassVar[list[tuple[str, str]]] = [("Content-Length", "0")]
     error_body = b""
+    os_environ: ClassVar[dict[str, str]] = {}  # the stdlib default is a copy of the process environment
 
     def log_exception(self, exc_info: Any) -> None:
         kind = exc_info[0] if exc_info else None
@@ -64,6 +76,7 @@ class QuietRequestHandler(WSGIRequestHandler):
 
     server_version = "trigger"  # the stdlib default names its own and the Python version
     sys_version = ""
+    _answer_begun = False  # True once a refusal's status line was handed to the socket
 
     def log_message(self, format: str, *args: Any) -> None:
         """Nothing: the arguments hold the request line, which is text chosen by the caller."""
@@ -73,7 +86,10 @@ class QuietRequestHandler(WSGIRequestHandler):
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
         """Status line and an empty body. `message` and `explain` can repeat the request and are dropped."""
-        _LOG.info("trigger status=%d sender=- (refused before the endpoint)", code)
+        if code >= SERVER_ERROR:  # the stdlib parser answers 505 for HTTP/2.0 and up: a caller's mistake
+            code = STALLED_STATUS
+        self._answer_begun = True
+        _LOG.debug("trigger status=%d sender=- (refused before the endpoint)", code)
         self.send_response_only(code)
         self.send_header("Content-Length", "0")
         self.send_header("Connection", "close")
@@ -106,20 +122,38 @@ class QuietRequestHandler(WSGIRequestHandler):
             return
         if not parsed:  # it has answered through send_error, or the client sent nothing
             return
+        if not isinstance(self.headers, Message):  # a request line with no version has no header block
+            _LOG.debug("trigger server: request line without an HTTP version, closed with no answer")
+            return
+        if self._bad_headers():
+            self.send_error(STALLED_STATUS)
+            return
         handler = QuietWSGIHandler(
             self.rfile, self.wfile, self.get_stderr(), self.get_environ(), multithread=True
         )
         handler.request_handler = self  # type: ignore[attr-defined]  # as the stdlib does, for close()
         handler.run(self.server.get_app())  # type: ignore[attr-defined]
 
+    def _bad_headers(self) -> bool:
+        """True for header names and framing headers that are refused before the body is read."""
+        if any("_" in name for name in self.headers.keys()):
+            return True
+        if len(self.headers.get_all("Content-Length", [])) > 1:
+            return True
+        return "Transfer-Encoding" in self.headers
+
     def _refuse_stalled(self) -> None:
-        """The socket timed out while the request line or the headers were read: nothing was answered yet."""
+        """The socket timed out while the request line or the headers were read. If an answer was begun
+        (the timeout came while a refusal was written), nothing more is written: only the close is left."""
+        if self._answer_begun:
+            _LOG.debug("trigger server: timeout while an answer was written, closed")
+            return
         if not hasattr(self, "request_version"):
             self.request_version = ""
         try:
             self.send_error(STALLED_STATUS)
         except OSError as exc:  # not writable any more: just close
-            _LOG.info("trigger server: stalled client gone: %s", type(exc).__name__)
+            _LOG.debug("trigger server: stalled client gone: %s", type(exc).__name__)
 
 
 class QuietServer(socketserver.ThreadingMixIn, WSGIServer):

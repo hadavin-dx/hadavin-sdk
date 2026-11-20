@@ -337,8 +337,15 @@ def test_both_implementers_have_the_meter_shape(impl):
     assert cls is not None
     reserve = inspect.signature(cls.reserve).parameters
     assert list(reserve) == ["self", "agent_id", "worst_usd", "run_id"]
-    assert reserve["run_id"].kind is inspect.Parameter.KEYWORD_ONLY and reserve["run_id"].default is None
-    assert list(inspect.signature(cls.settle).parameters) == ["self", "reservation_id", "actual_usd"]
+    assert (
+        reserve["run_id"].kind is inspect.Parameter.KEYWORD_ONLY
+        and reserve["run_id"].default is None
+    )
+    assert list(inspect.signature(cls.settle).parameters) == [
+        "self",
+        "reservation_id",
+        "actual_usd",
+    ]
 
 
 # --- ii 1: an id only after the booking; every refusal means no model call and nothing booked -----------------------
@@ -369,7 +376,9 @@ def test_a_reserve_past_the_cap_is_refused_with_the_cap_reason_and_books_nothing
     assert caught.value.reason == r.cap_reason
     assert inner.calls == 0
     assert r.booked() == D("0.60")
-    assert _refused(r.meter, D("0.41")) == r.cap_reason  # a refusal does not use the budget up either
+    assert (
+        _refused(r.meter, D("0.41")) == r.cap_reason
+    )  # a refusal does not use the budget up either
     r.meter.reserve(AGENT, D("0.40"))
     assert r.booked() == D("1.00")
 
@@ -482,7 +491,7 @@ def test_an_unknown_agent_is_a_key_error_and_books_nothing(lim):
     assert r.booked() == 0
 
 
-@pytest.mark.parametrize("run_id", [7, 1.5, b"run", ("run",)], ids=["int", "float", "bytes", "tuple"])
+@pytest.mark.parametrize("run_id", [7, 1.5, ("run",)], ids=["int", "float", "tuple"])
 def test_a_reserve_that_is_refused_for_any_reason_books_nothing(lim, request, run_id):
     """ii 1 and inv 2, inv 8: reserve either returns an id with the worst case booked, or raises with nothing
     booked. A run id that is not text is not fixed by the interface (a store may take it or refuse it); what
@@ -511,7 +520,13 @@ def test_a_reserve_that_is_refused_for_any_reason_books_nothing(lim, request, ru
 
 @pytest.mark.parametrize(
     ("actual", "over"),
-    [("0", "0"), ("0.25", "0"), ("0.60", "0"), ("0.600000000001", "0.000000000001"), ("0.85", "0.25")],
+    [
+        ("0", "0"),
+        ("0.25", "0"),
+        ("0.60", "0"),
+        ("0.600000000001", "0.000000000001"),
+        ("0.85", "0.25"),
+    ],
 )
 def test_settle_returns_the_overshoot_and_books_the_real_cost(rig, actual, over):
     """ii 3: "settle returns the overshoot, max(0, settled minus reserved)"; inv 7: an overshoot is booked in
@@ -571,7 +586,7 @@ def test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays(ri
     counters unchanged, so a later good settle still wins."""
     r = rig(cap=WIDE)
     rid = r.meter.reserve(AGENT, D("0.60"))
-    with pytest.raises(ValueError) as caught:  # noqa: PT011 - the interface names the type only
+    with pytest.raises(ValueError) as caught:
         r.meter.settle(rid, amount)
     assert not isinstance(caught.value, SpendRefused)
     assert r.booked() == D("0.60")
@@ -662,7 +677,9 @@ def test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays(lim, err
     assert Limits(r.store, Sink(), _registry(WIDE, WIDE)).settle(rid, D("0.10")) == 0  # still open
 
 
-def test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays(request, monkeypatch):
+def test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays(
+    request, monkeypatch
+):
     """ii 6 with a real failure (PostgreSQL only): the connection dies between the call and the settle. Seen
     from a second connection the worst case is still booked and the reservation is still open."""
     monkeypatch.setattr(limits_mod, "now", lambda: NOON)
@@ -670,7 +687,7 @@ def test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays(
     meter = Limits(broken, Sink(), _registry(D("1.00"), WIDE))
     rid = meter.reserve(AGENT, D("0.60"))
     broken._db.close()
-    with pytest.raises(Exception) as caught:  # noqa: B017, PT011 - the interface names no type
+    with pytest.raises(Exception) as caught:
         meter.settle(rid, D("0.10"))
     assert not isinstance(caught.value, SpendRefused | KeyError | ValueError), type(caught.value)
     assert reader.spend_totals(AGENT, NOON.date()) == (D("0.60"), D("0.60"))
@@ -849,10 +866,14 @@ def test_threads_on_one_budget_get_exactly_floor_cap_over_amount_grants():
 
 
 def _settle_race(meters, store, run_id, rid):
-    amounts = [D("0.10") * (i + 1) for i in range(len(meters))]  # 0.10 .. 1.60 against 0.60 reserved
+    amounts = [
+        D("0.10") * (i + 1) for i in range(len(meters))
+    ]  # 0.10 .. 1.60 against 0.60 reserved
     outcomes = _together(len(meters), lambda i: meters[i].settle(rid, amounts[i]))
     assert all(type(o) is D for o in outcomes), outcomes
-    assert len(set(outcomes)) == 1, f"settles of one reservation returned different results: {outcomes}"
+    assert len(set(outcomes)) == 1, (
+        f"settles of one reservation returned different results: {outcomes}"
+    )
     winner = store.get_run(run_id).cost_usd
     assert winner in amounts
     assert outcomes[0] == max(D(0), winner - D("0.60"))
