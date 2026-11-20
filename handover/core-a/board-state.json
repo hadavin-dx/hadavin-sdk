@@ -761,19 +761,6 @@
    "reason": "lead 16:38"
   },
   {
-   "id": "rev-c-G12d",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c G12d 1c56de238 (label-shaped/look-alike-bracket values keep their core, budget rule): are my G12b/G9b Majors fixed?",
-   "started UTC": "17:05",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead GO 16:51 + heads moved"
-  },
-  {
    "id": "A4-B8-text",
    "role": "builder (docs)",
    "model": "sonnet",
@@ -4286,6 +4273,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "lead ts-watermark round 3: NO Blocker/Major provable; earlier nits 2,5 closed, 3,6 mostly; 1,4 open; 5 new nits (no lock_timeout on 0009 file loop, 75 too broad, unqualified names); reviews/rev-lead-tswm-3.md"
+  },
+  {
+   "id": "rev-c-G12d",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G12d 1c56de238 (label-shaped/look-alike-bracket values keep their core, budget rule): are my G12b/G9b Majors fixed?",
+   "started UTC": "17:05",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c G12d: no Blocker; Major: <HUNTER2 all-caps after < leaks (regression of G12c), \u2039SECRET_1\u203ahunter22 leak pinned, _outside_lookalikes super-linear (unrun); c1 fixed, c2 not; reviews/rev-c-G12d.md"
   }
  ]
 }
