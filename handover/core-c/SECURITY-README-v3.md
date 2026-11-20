@@ -120,7 +120,7 @@ Stopped work and set-up:
 
 Shown by tests (each in core-c's or core-b's tests, on the code alone):
 21. In the gate's tests, known values are replaced before a call, in message text and documents only. Not when a tool states "no map"; only the test and replay command lines may.
-22. In the gate's tests, a model call needs a reservation, and a refused reservation means no call. This does not cover a call already in flight, the test and replay command lines, or the guardrail call.
+22. In the gate's tests, a model call needs a reservation, and a refused reservation means no call. The stop switch works through that refusal. This does not cover a call already in flight, the test and replay command lines, or the guardrail call.
 23. In two test runs on database version 16, 50 simultaneous requests against a cap of 3.00 reserved 3.00 and refused 47. Booked money can still pass the cap (line 18 and part 2.2).
 24. In the gate's tests, its code holds no message or error text, and no audit row in those tests held a secret.
 
@@ -571,7 +571,7 @@ State items (not gaps):
 
 By evidence level: UNVERIFIED as the only basis: 13 (K12, K13, K18, K23, K26, K29, K32, K42, K50, K51, K55, K59, K60). An UNVERIFIED part beside a test: 3 (K20 example, K21 connectors, K45 other places). NOT RUN: 7 (K10, K11, K15, K16, K25, K62, K63). K14 is TESTED for the old rule and NOT RUN for the new one.
 
-Changes from v2 (62 gaps): K63 added. K10, K11, K15, K16 OPEN to FIXED ON BRANCH. K47, K61 FIXED ON BRANCH to FIXED. K14 now "lead or core-b" group as before; K63 joins it.
+Changes from v2 (62 gaps): K63 added. K10, K11, K15, K16 OPEN to FIXED ON BRANCH. K47, K61 FIXED ON BRANCH to FIXED. K63 joins the "lead or core-b" group. Evidence column new in v3.
 
 Gaps named in part 1 (13 of 63): K34 (line 9), K37 and K36 (10, 11), K8 (12), K42 (13), K19 (14), K23 (15), K21 (16), K25 (17), K20 (18), K14 (19), K63 (20), K59 (line 2, "approval-message id fields"). Order rule: secrets reaching the AI service first, then money, then stopped work; within a group, wider exposure first.
 
