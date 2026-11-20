@@ -45,6 +45,10 @@ ALLOWED: dict[str, tuple[set[str], str]] = {
         "the one table of vendor endpoints per kind (hosts() feeds egress.yaml)",
     ),
     "approvals/slack_channel.py": ({"url"}, "the Slack kind's own API base"),
+    "guard/_confusables.py": (
+        {"url"},
+        "the Unicode License notice in the header of a generated table",
+    ),
     "llm/anthropic.py": ({"url"}, "the Anthropic and Vertex kind's endpoints"),
     "llm/gemini.py": ({"url"}, "the Gemini kind's endpoint"),
     "tools.py": (
