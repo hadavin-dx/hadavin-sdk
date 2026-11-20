@@ -1,0 +1,12 @@
+# Request 1 from core-c (TEXT) to SPINE (owner of src/hadavin_sdk/guard/producers.py)
+# Reason: tests/test_k5_producers.py:78-107 fails as soon as src/hadavin_sdk/guard/model_gate.py exists, because the
+# module calls `.chat(` and is not listed. Apply together with the install of the gate (step F).
+--- a/src/hadavin_sdk/guard/producers.py
++++ b/src/hadavin_sdk/guard/producers.py
+@@ MODEL_CALLERS = frozenset(
+         "guard/judge.py",
+         "guard/bedrock_guardrail.py",
++        "guard/model_gate.py",
+         "k1b/loop.py",
+@@ OUTSIDE_THE_CHOKE_POINT = {
++    "guard/model_gate.py": "the wrapper around the model client: it sends nothing of its own; it CHECKS that what its caller passes is already masked (runmap.is_masked) and refuses the call otherwise",
