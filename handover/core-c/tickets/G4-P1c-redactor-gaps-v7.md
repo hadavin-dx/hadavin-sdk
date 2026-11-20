@@ -748,6 +748,13 @@ such pieces).
      glued to a letter pass although the same value is a secret kind below it.") gains the sentence "Since G4 the redactor's own
      sweep keeps the secret kind's rule (the `_build` tie-break)." Both edits in Phase 2. The fifth map of TB-2.8 pins it.
    - No mutant pins either line (snippet script: no `old` text of the five mutant files holds them).
+   - CHANGED in v7 (review round 6 readiness N4): a third stale text. The comment under `if _rules_conflict(known):` in `snapshot`
+     (runmap.py 907-909) reads "One original under two placeholders (E5): the redactor keeps the FIRST placeholder's rule, so the
+     stronger rule (every copy, a secret kind) goes first. Built fresh: the run's cache holds the map's own order." In Phase 2 it
+     becomes: "One original under two placeholders (E5). Since G4 the redactor itself keeps the secret kind's rule for that
+     original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the others, which
+     decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the run's cache holds the map's own
+     order." (Comment only; R8's `old`, `        if _rules_conflict(known):\n`, is the line above it and is not touched.)
    - MEASURED: `redact("pre"+X+"post and "+X+" alone", mapping=...)` with `X = "QUJD"+"REVG"+"R0hJ"`: at the base with
      `{"<TENANT_1>": X, "<SECRET_1>": X}`: `preQUJDREVGR0hJpost and <TENANT_1> alone`; on the prototype with
      `{"<TENANT_1>": X, "<ENCODED_1>": X}`: `pre<ENCODED_1>post and <ENCODED_1> alone` (TB-2.7).
