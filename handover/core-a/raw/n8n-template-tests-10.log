@@ -1,47 +1,7 @@
 warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
-............................................F........................... [ 79%]
+........................................................................ [ 79%]
 .............F.....                                                      [100%]
 =================================== FAILURES ===================================
-_ test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example _
-
-    def test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example():
-        raw = _readme()
-        readme = " ".join(raw.split())
-        head = readme.partition("## What was run and what was not")[0]
-        assert "TOGETHER WITH the client's automation builder" in head
-        glossary = head.partition("## Words used here")[2].partition("## Before you start")[0]
-        for word in ("Hadavin:", "run:", "key:", "sender:", "state:", "NEEDS_PERSON:", "tick:"):
-            assert f"- {word}" in glossary, word
-        operator = head.partition("## Before you start: what you need from the Hadavin operator")[2]
-        for phrase in (
-            "reverse proxy that ends TLS",
-            "at least 32 random characters, no space or line break at the start or end",
-            "secrets.token_urlsafe",
-            "the request carries no sender id",
-            "is NOT in the configuration code",
-        ):
-            assert phrase.lower() in operator.lower(), phrase
-        curl = raw.partition("## What the caller sends to the webhook")[2].partition("## The key rule")[
-            0
-        ]
-        assert "curl -i -X POST" in curl and '"record_id"' in curl and '"text"' in curl
-        assert "HTTP 202 with an empty body" in " ".join(curl.split())
-        steps = readme.partition("## Set-up")[2].partition("## The webhook address")[0]
-        for phrase in (
-            "TEST sender or a test agent",
-            "starts a REAL run",
-            "EMPTY text",
-            "tolerate running TWICE for one key",
-            "does NOT mean that the action happened",
-            "n8n list:workflow",
-            "n8n publish:workflow",
-            "(UNVERIFIED)",
-        ):
-            assert phrase in steps, phrase
->       assert 'write its id and name into the node "Sign"' in steps and "shows the credential" in steps
-E       assert ('write its id and name into the node "Sign"' in " These steps are for the Hadavin operator together with the client's automation builder. Every step is required. 1. G...t with the caller's own data, no timestamp header and a useless signature, and n8n marked the execution as a success. ")
-
-tests/triggers/test_n8n_template.py:816: AssertionError
 _ test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap _
 
     def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap():
@@ -88,11 +48,31 @@ _ test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_t
         assert span > limit
         minutes = span // 60
         message = nodes[c.too_long]["parameters"]["errorMessage"]
->       assert f"still shown as running after {checks} checks, about {minutes} minutes" in message
-E       AssertionError: assert 'still shown as running after 45 checks, about 52 minutes' in 'Hadavin trigger: the run was still shown as running after 45 checks, about 52 to 53 minutes. Either it runs very long... (no lookup tool exists yet in this tree). Do not send the event with a new key before the state of this run is known.'
+        assert f"still shown as running after {checks} checks, about {minutes} minutes" in message
+        assert "=" not in message[:2]  # a fixed text
+        readme = " ".join(_readme().split())
+        part = readme.partition("### The numbers")[2].partition("### Three limits")[0]
+        assert part, "the numbers part is gone"
+        for phrase in (
+            "`stuck_after_s` in `src/hadavin_sdk/runtime/tick.py`",
+            "`max_steps` times `call_timeout_s` times `max_attempts`, plus 60 seconds",
+            f"the defaults {llm.call_timeout_s:g} seconds and {llm.max_attempts}",
+            f"{tick.TICK_SLACK_S} seconds as the longest gap (`TICK_SLACK_S`",
+            (
+                f"`max_steps` {EXAMPLE_STEPS} on the defaults: {EXAMPLE_STEPS} x {llm.call_timeout_s:g} x "
+                f"{llm.max_attempts} + 60 = {stuck:g} seconds"
+            ),
+            f"{limit:g} seconds",
+            f"a wait of {wait['amount']} seconds",
+            f"{checks} checks",
+            f"{span} seconds ({minutes} minutes)",
+            "checks times wait must be LONGER than that client's stuck limit plus one tick gap",
+        ):
+>           assert phrase in part, phrase
+E           AssertionError: 3150 seconds (52 minutes)
+E           assert '3150 seconds (52 minutes)' in ' - The stuck limit: how long a run may stay quiet before the tick ends it. The code computes it for each agent (`stuc...ively, or in one network namespace). Whether a given Docker setup can then reach it is UNVERIFIED; nobody has run it. '
 
-tests/triggers/test_n8n_template.py:1692: AssertionError
+tests/triggers/test_n8n_template.py:1713: AssertionError
 =========================== short test summary info ============================
-FAILED tests/triggers/test_n8n_template.py::test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example
 FAILED tests/triggers/test_n8n_template.py::test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap
-2 failed, 89 passed in 0.62s
+1 failed, 90 passed in 0.54s

@@ -80,3 +80,4 @@ ok  KILLED       G20g poll_s has no upper bound  [test_n15_runner_bounds_are_ref
 ok  KILLED       G20h max_waiting of zero is accepted  [test_n15_runner_bounds_are_refused[kw4-max_waiting]]
 ok  KILLED       G20i max_waiting may be a bool  [test_n15_runner_bounds_are_refused[kw5-max_waiting]]
 ok  CRASH        G20j make_app lets a bound of the Runner through as a ValueError  [test_n15_make_app_turns_a_bound_into_a_config_error]
+ok  KILLED       G21a the cap on connection threads is removed (a connection over the cap is not closed)  [test_connections_above_the_cap_are_closed_at_once_unread_and_the_cap_f]
