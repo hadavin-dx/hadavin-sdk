@@ -255,7 +255,7 @@ class QuietRequestHandler(WSGIRequestHandler):
             self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message)
         ):  # a request line with no version has no header block (3.12 reads one anyway: also closed here, with no answer once the request is complete; a stalled or over-limit request after `GET /path` still gets 400 through `_refuse_stalled` / 431->400 on 3.12, and on 3.13 the connection is closed silently)
             _LOG.debug(
-                "trigger server: request line without an HTTP version, closed once the request is complete"
+                "trigger server: request line without an HTTP version, closed with no answer"
             )
             return
         if self._bad_headers():
