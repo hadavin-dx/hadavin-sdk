@@ -289,7 +289,7 @@ def test_definite_settle_refusal_books_the_run_cost_directly(world):
 
 def test_ambiguous_settle_failure_does_not_double_count_the_run_cost(world):
     llm = StubLLM(cost="0.20")
-    rt, spy = world(llm)
+    rt, _spy = world(llm)
     real = rt.limits.settle_for
 
     def commit_then_lose_the_reply(agent_id, rid, usd):
