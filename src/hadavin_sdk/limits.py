@@ -10,7 +10,13 @@ from typing import Protocol
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.models import AuditEvent, KillSwitch, new_id, now
 from hadavin_sdk.registry import Registry
-from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, Store, check_spend_amount
+from hadavin_sdk.store.protocol import (
+    NotFound,
+    SpendCapExceeded,
+    Store,
+    check_spend_amount,
+    check_spend_cap,
+)
 
 _LOG = logging.getLogger("hadavin_sdk.limits")
 
@@ -33,8 +39,11 @@ class Meter(Protocol):
         """Book the worst case, then return the reservation id. Any exception: no model call."""
         ...
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
-        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins."""
+    def settle(
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+    ) -> Decimal:
+        """Replace the worst case with the real cost; returns the overshoot (0 when none). First call wins.
+        With `agent_id`, a reservation of another agent is NotFound."""
         ...
 
 
@@ -46,7 +55,9 @@ class Budget:
     every call that is open or was abandoned. Not the registry's `Budget` (an agent's budget numbers)."""
 
     def __init__(self, limit: Decimal) -> None:
-        self.limit = limit
+        self.limit = check_spend_cap(
+            limit
+        )  # a NaN, a float or a negative cap is a ValueError here, not later
         self._lock = threading.Lock()
         # reservation id -> [reserved, booked now, state, overshoot, run_id]; state: open | forfeited | settled
         self._rows: dict[str, list] = {}
@@ -66,7 +77,7 @@ class Budget:
 
     def charge(self, usd: Decimal) -> None:
         with self._lock:
-            self._rows[new_id("res")] = [usd, usd, "settled", Decimal(0), None]
+            self._rows[new_id("res")] = [usd, usd, "settled", Decimal(0), None, None]
 
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str:
         """Book the worst case of one model call and return the reservation id. SpendRefused("bad_amount") for an
@@ -78,20 +89,26 @@ class Budget:
         except ValueError:
             raise SpendRefused("bad_amount") from None
         with self._lock:
-            if run_id in self._closed or self._spent() + worst_usd > self.limit:
+            # the same rule as the store: a counter AT the cap refuses even a zero amount (usd < cap)
+            spent = self._spent()
+            if run_id in self._closed or not (
+                spent < self.limit and spent + worst_usd <= self.limit
+            ):
                 raise SpendRefused("usd_cap")
             rid = new_id("res")
-            self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id]
+            self._rows[rid] = [worst_usd, worst_usd, "open", Decimal(0), run_id, agent_id]
             return rid
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+    def settle(
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+    ) -> Decimal:
         """Replace the worst case with the real cost (it may be above it; settle never refuses) and return the
-        overshoot. NotFound for an unknown id, ValueError for a bad amount. A repeat returns the first result
+        overshoot. NotFound for an unknown id (or, with `agent_id`, another agent's), ValueError for a bad amount. A repeat returns the first result
         and changes nothing. After `forfeit` the late settle of that call can only RAISE what is booked."""
         check_spend_amount(actual_usd)
         with self._lock:
             row = self._rows.get(reservation_id)
-            if row is None:
+            if row is None or (agent_id is not None and len(row) > 5 and row[5] != agent_id):
                 raise NotFound(reservation_id)
             reserved, booked, state = row[0], row[1], row[2]
             if state != "settled":
@@ -168,11 +185,14 @@ class Limits:
             _LOG.warning("reserve refused: limits_unavailable error_kind=%s", type(exc).__name__)
             raise SpendRefused("limits_unavailable") from None
 
-    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+    def settle(
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+    ) -> Decimal:
         """Replace the worst case with the real cost and return the overshoot (0 when none), always from the
-        stored row: a repeated call returns the first result. NotFound for an unknown id, ValueError for a bad
+        stored row: a repeated call returns the first result. With `agent_id`, another agent's reservation is
+        NotFound. NotFound for an unknown id, ValueError for a bad
         amount. An overshoot is booked in full and audited once; the audit never makes this raise."""
-        row, applied = self.store.settle_spend(reservation_id, actual_usd)
+        row, applied = self.store.settle_spend(reservation_id, actual_usd, agent_id=agent_id)
         over = max(Decimal(0), (row.settled_usd or Decimal(0)) - row.reserved_usd)
         if applied and over > 0:
             try:

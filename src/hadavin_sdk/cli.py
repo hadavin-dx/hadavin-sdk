@@ -6,11 +6,17 @@
                                                          reset logs in as the reset role (the secret named by
                                                          backends.store.reset_credential_ref); pilot and prod
                                                          without it: exit 2
+  hadavin-sdk [--config DIR] release-expired AGENT --day YYYY-MM-DD --by WHO
+                                                         lower the EXPIRED spend holds of one agent and day (audited
+                                                         first); logs in as the release role (the secret named by
+                                                         backends.store.release_credential_ref); exit 0 done, 2
+                                                         refused or rights missing, 3 audit unavailable, 4 store down
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint, evidence purge, source re-probe,
                                                          audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
+                                                         [--release-role Y]
                                                          apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
@@ -35,6 +41,7 @@ import logging
 import os
 import sys
 import traceback
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -54,6 +61,13 @@ from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
 def _num(x: float | None, places: int = 2) -> str:
     return "-" if x is None else f"{x:.{places}f}"
+
+
+def _day(text: str) -> date:
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"not a date YYYY-MM-DD: {text!r}") from None
 
 
 def _positive(text: str) -> int:
@@ -99,12 +113,22 @@ def _main(argv: list[str] | None = None) -> int:
     lim = sub.add_parser("limits", help="kill switch")
     lim.add_argument("action", choices=["stop", "reset"])
     lim.add_argument("--by", required=True)
+    rel = sub.add_parser(
+        "release-expired", help="lower the expired spend holds of one agent and day (release role)"
+    )
+    rel.add_argument("agent")
+    rel.add_argument("--day", required=True, type=_day, help="the booking day, YYYY-MM-DD")
+    rel.add_argument("--by", required=True)
     sub.add_parser("tick", help="one pass of the housekeeping steps (run every 30-60 s)")
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
         "--purge-role",
         help="grant this database role the evidence purge (DELETE on tool_calls and redaction_maps) and nothing else",
+    )
+    mig.add_argument(
+        "--release-role",
+        help="grant this database role the release of expired spend holds (one function and the audit append) and nothing else",
     )
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
@@ -145,7 +169,16 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role, args.reset_role)
+        return _migrate(
+            cfg,
+            args.runtime_role,
+            args.portal_role,
+            args.purge_role,
+            args.reset_role,
+            args.release_role,
+        )
+    if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
+        return release_expired_cmd(cfg, args.agent, args.day, args.by)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -356,6 +389,7 @@ def _migrate(
     portal_role: str | None = None,
     purge_role: str | None = None,
     reset_role: str | None = None,
+    release_role: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -378,6 +412,7 @@ def _migrate(
         portal_role=portal_role,
         purge_role=purge_role,
         reset_role=reset_role,
+        release_role=release_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,
@@ -436,6 +471,81 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
         file=sys.stderr,
     )
     return 2
+
+
+def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
+    """`release-expired`: lower the EXPIRED spend holds of one agent and one day, logged in as the release role.
+    Its own function and its own exit codes; it shares nothing with `kill_switch`. Refusals come before any
+    connection. Exit 0 done (also 0 rows), 2 refused (config, or the login lacks the right), 3 the audit store is
+    unavailable (nothing changed), 4 the store is unreachable (nothing changed)."""
+    b = cfg.backends
+    if b.store.kind != "postgres":
+        print(
+            "refused: release-expired needs the postgres store (the memory store lives in one process)",
+            file=sys.stderr,
+        )
+        return 2
+    ref = getattr(b.store, "release_credential_ref", None)
+    if not ref:
+        print(
+            "refused: release-expired needs the release role's login. Create the release role, run "
+            "hadavin-sdk migrate --release-role <role>, then set backends.store.release_credential_ref to the "
+            "name of the secret that holds its DSN. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    others = {
+        getattr(b.store, "dsn_secret_name", None),
+        getattr(b.store, "reset_credential_ref", None),
+        getattr(b.store, "purge_dsn_secret_name", None),
+    } - {None}
+    if ref in others:
+        print(
+            "refused: backends.store.release_credential_ref names the same secret as the runtime, reset or purge "
+            "login. Point it at the secret that holds the release role's own DSN. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        secrets = make("secrets", b.secrets)
+        as_release = b.store.model_copy(
+            update={"dsn_secret_name": ref, "purge_dsn_secret_name": None}
+        )
+        platform_secrets.check(secrets, [as_release, b.audit], set())
+        store = make("store", as_release, secrets)
+        audit = make("audit", b.audit, secrets, store=store, signer=None, anchor=None)
+    except StoreUnavailable:
+        print("release NOT run: the store is unreachable. Nothing was changed.", file=sys.stderr)
+        return 4
+    release = getattr(store, "release_expired_spend", None)
+    if release is None:
+        print("refused: this store cannot release holds", file=sys.stderr)
+        return 2
+    try:
+        done = release(agent, day, by, audit)
+    except AuditUnavailable:
+        print(
+            "refused: the audit store is unavailable, so the release cannot be recorded. Nothing was changed.",
+            file=sys.stderr,
+        )
+        return 3
+    except Exception as exc:  # noqa: BLE001 - the class name only
+        if is_connectivity_error(exc):
+            print(
+                "release NOT run: the store is unreachable. Nothing was changed.", file=sys.stderr
+            )
+            return 4
+        print(
+            f"release failed ({type(exc).__name__}); nothing was changed. Is this the release role's login "
+            "(hadavin-sdk migrate --release-role)?",
+            file=sys.stderr,
+        )
+        return 2
+    print(
+        f"released {done.reservations} expired hold(s) of {done.agent_id} on {done.day}: {done.released_usd} USD "
+        f"(day counter now {done.day_usd}, month counter now {done.month_usd}) (by {by})"
+    )
+    return 0
 
 
 def kill_switch(limits: Limits, action: str, by: str) -> int:

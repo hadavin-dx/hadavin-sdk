@@ -347,13 +347,15 @@ class MemoryStore:
             self._reservations[reservation_id] = row
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
+        if agent_id is not None:
+            check_store_id(agent_id, "agent_id")
         with self._lock:
             row = self._reservations.get(reservation_id)
-            if row is None:
+            if row is None or (agent_id is not None and row.agent_id != agent_id):
                 raise NotFound(reservation_id)
             if row.status == "settled":
                 return row, False

@@ -34,6 +34,7 @@ from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
+    AuditEvent,
     DeadLetter,
     GateDecision,
     KillSwitch,
@@ -48,6 +49,7 @@ from hadavin_sdk.models import (
 from hadavin_sdk.store.protocol import (
     NotFound,
     SpendCapExceeded,
+    SpendRelease,
     StaleState,
     StoreUnavailable,
     check_expiry_age,
@@ -673,7 +675,7 @@ class PostgresStore:
     # actual and the reserved amount (after expiry the booking never goes down).
     _CLAIM = (
         "WITH old AS (SELECT status FROM spend_reservations WHERE reservation_id = %(id)s "
-        "AND status IN ('open', 'expired') FOR UPDATE) "
+        "AND (%(agent)s::text IS NULL OR agent_id = %(agent)s) AND status IN ('open', 'expired') FOR UPDATE) "
         "UPDATE spend_reservations r SET status = 'settled', settled_usd = CASE WHEN old.status = 'expired' "
         "THEN GREATEST(%(a)s::numeric, r.reserved_usd) ELSE %(a)s::numeric END, "
         "closed_at = clock_timestamp() FROM old WHERE r.reservation_id = %(id)s "
@@ -681,20 +683,24 @@ class PostgresStore:
     )
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
+        if agent_id is not None:
+            check_store_id(agent_id, "agent_id")
         with self._lock, self._db.transaction():
             # The claim comes first. A second caller waits on the row lock, finds the row settled, claims
             # nothing and gets the stored row back unchanged.
-            row = self._exec(self._CLAIM, {"id": reservation_id, "a": actual_usd}).fetchone()
+            row = self._exec(
+                self._CLAIM, {"id": reservation_id, "a": actual_usd, "agent": agent_id}
+            ).fetchone()
             if row is None:
                 row = self._exec(
                     "SELECT * FROM spend_reservations WHERE reservation_id = %s", (reservation_id,)
                 ).fetchone()
-                if row is None:
-                    raise NotFound(reservation_id)
+                if row is None or (agent_id is not None and row["agent_id"] != agent_id):
+                    raise NotFound(reservation_id)  # also another agent's id: nothing is revealed
                 return SpendReservation.model_validate(row), False
             was = row.pop("was")
             # what the counters must move by: the booked amount changes from reserved to settled_usd
@@ -741,3 +747,61 @@ class PostgresStore:
                 "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %s",
                 (before,),
             ).rowcount
+
+    def release_expired_spend(
+        self, agent_id: str, day: date, actor: str, audit: Any
+    ) -> SpendRelease:
+        """Release the EXPIRED holds of one agent and one day (migration 0008). Order: the audit intent row is
+        written first (if that fails, nothing changed and the error is raised); then ONE transaction lowers the
+        expired rows to settled at 0 and moves the day and the month counter by the same sum, never below zero;
+        then the outcome row (its failure is logged, never raised: the release is committed). Live (open) holds,
+        settled rows and other days are not touched. Runs only under the release login: any other login gets
+        InsufficientPrivilege and a `release_failed` outcome. `audit` is the chain audit of the same login."""
+        check_store_id(agent_id, "agent_id")
+        check_store_id(actor, "actor")
+        check_spend_day(day)
+        ref = f"{agent_id}:{day.isoformat()}"
+        audit.write_intent(_release_event(actor, ref, "intent"))
+        try:
+            with self._lock, self._db.transaction():
+                row = self._exec(
+                    "SELECT * FROM hadavin_release_expired_spend(%s, %s)", (agent_id, day)
+                ).fetchone()
+        except Exception as exc:
+            _write_outcome(audit, _release_event(actor, ref, "release_failed", type(exc).__name__))
+            raise
+        done = SpendRelease(
+            agent_id=agent_id,
+            day=day,
+            reservations=int(row["reservations"]),
+            released_usd=row["released_usd"],
+            day_usd=row["day_usd"],
+            month_usd=row["month_usd"],
+        )
+        _write_outcome(
+            audit,
+            _release_event(
+                actor, ref, f"released rows={done.reservations} usd={done.released_usd}"
+            ),
+        )
+        return done
+
+
+def _release_event(actor: str, ref: str, result: str, error: str | None = None) -> AuditEvent:
+    return AuditEvent(
+        run_id="-",
+        domain="limits",
+        operation="release_expired",
+        principal=actor,
+        source="cli",
+        object_ref=ref,
+        result=result,
+        error_code=error,
+    )
+
+
+def _write_outcome(audit: Any, event: AuditEvent) -> None:
+    try:
+        audit.write_outcome(event)
+    except Exception as exc:  # noqa: BLE001 - the release is already committed (or already failed)
+        _LOG.warning("release outcome not audited error_kind=%s", type(exc).__name__)
