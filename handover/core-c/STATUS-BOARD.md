@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:24:17Z
+UPDATED_UTC: 2026-11-20T08:26:14Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 8.6 of 4 cores, mem 2/15 GB, disk 59G free, 16% used, light agents 7, heavy agents 0
-DISK: / 59G free, 16% used; git worktrees 13; 179M	/tmp/claude-0;476M	/root/.cache/uv;
+AGENTS_RUNNING: 8
+CAPACITY: load 9.3 of 4 cores, mem 2/15 GB, disk 59G free, 16% used, light agents 8, heavy agents 0
+DISK: / 59G free, 16% used; git worktrees 13; 188M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:24:14+00:00
+PUSHED_UTC: 2026-11-20T08:26:07+00:00
 
-(13:54 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -94,7 +94,7 @@ PUSHED_UTC: 2026-11-20T08:24:14+00:00
 | (new) p1dr2 | builder | claude-sonnet-5-5 | P1d-a review items M6 (independent link oracle) and N1 | 08:00 | 08:40 | 100 | done | 1 | 0 | finished: M6 FIXED (independent link oracle, real leak [evil.com] found and fixed), N1 FIXED; cherry-picked as a2dea63; builder batch 1772 passed, 4 skipped, 4 xfailed; pushed wip/cloud-core-c/p1d-r2 |
 | (new) g8 | drafter | claude-opus-5-5 | ticket G8 glued-rest gap (IPv4, phone, IBAN, UUID, host) | 08:00 | 08:35 | 1 | running | 1 | 0 | backlog 10: glued-rest ticket |
 | (new) drift | auditor | claude-sonnet-5-5 | drift report G1-G3 and G7 documents against code at HEAD | 08:00 | 08:30 | 100 | done | 1 | 0 | finished: DRIFT-G1-G2-G3.md (70 verified, 31 differ, 13 cannot check); top drift: docstrings promise a G5 re-run that does not exist (E8) |
-| (new) g4v3 | drafter | claude-opus-5-5 | ticket G4 v3 taking plan review round 2 | 08:03 | 08:35 | 1 | running | 3 | 0 | EGM draft step; then plan review round 3 |
+| (new) g4v3 | drafter | claude-opus-5-5 | ticket G4 v3 taking plan review round 2 | 08:03 | 08:35 | 100 | done | 3 | 0 | finished: G4-P1c-redactor-gaps-v3.md (899 lines), committed aef96b6; measured on HEAD: 19 host rows close (not 21), fail-before 76, 77 must-keep rows, 1,977 property inputs |
 | (new) secC4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: comprehension | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 9 Major (SEC-wording-review-4.md) |
 | (new) secS4 | reviewer | claude-sonnet-5-5 | wording v4 final review round 4: style | 08:06 | 08:16 | 100 | done | 4 | 0 | reported: wording v4 NOT READY, 0 Blocker, 12 Major, nits |
 | (new) sec5 | drafter | claude-opus-5-5 | wording v5 rewrite taking review round 4 (comprehension + style) | 08:12 | 08:40 | 100 | done | 5 | 0 | finished: SECURITY-README-v5.md (69 gaps, owner summary 28), check script passes; written before gate r4 and G7 r3 were merged, so the round 3/4 fix rows say NOT RUN: refresh once G7 r4 and P1d r3 land, then final review round 5 |
@@ -104,6 +104,8 @@ PUSHED_UTC: 2026-11-20T08:24:14+00:00
 | (new) g7C3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-codebase-details) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: 1 Blocker (doc claim, stale at HEAD), 5 Major, nits (G7-result-review-3.md) |
 | (new) p1dr3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix: oracle boundaries, four exclusions, linkifier dependency | 08:22 | 08:50 | 1 | running | 3 | 0 | from G2-result-review-2.md |
 | (new) g7fix4 | builder | claude-sonnet-5-5 | G7 fix round 4 (bounded spelled scan, overlap rule, deadline tests, builders moved, bank_near, docstrings E9) | 08:25 | 08:55 | 1 | running | 4 | 0 | from G7-result-review-3.md |
+| (new) g4R3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: implementation readiness | 08:27 | 08:42 | 2 | running | 3 | 0 | build P1c only after a clean plan review |
+| (new) g4C3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: codebase details (current tree with gate r4 and G7 r3) | 08:27 | 08:42 | 2 | running | 3 | 0 | same |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
