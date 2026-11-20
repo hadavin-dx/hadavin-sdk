@@ -130,3 +130,34 @@ def test_spend_and_reservation_statements_never_touch_a_same_named_table_elsewhe
         assert after_temp == before_temp
     finally:
         cleanup()
+
+
+def test_the_money_function_calls_name_their_schema_so_a_temporary_function_never_answers(w):
+    """Step 3: reserve, settle, expire, purge and add_spend are calls of `<schema>.hadavin_*`. A function of the same
+    name and argument types in `pg_temp`, searched FIRST when the session says so, must never be called: each decoy
+    raises, and the real functions must do the work."""
+    rt = w.store(w.runtime)
+    pu = w.store(w.purge)
+    decoys = {
+        "hadavin_reserve_spend": "(p_id text, p_agent text, p_day date, p_usd numeric, p_day_cap numeric, "
+        "p_month_cap numeric, p_run_id text) RETURNS void",
+        "hadavin_settle_spend": "(p_id text, p_actual numeric, p_agent text) RETURNS SETOF record",
+        "hadavin_expire_spend_reservations": "(p_age_s integer) RETURNS bigint",
+        "hadavin_purge_spend_reservations": "(p_before timestamptz) RETURNS bigint",
+        "hadavin_add_spend": "(p_agent text, p_day date, p_usd numeric) RETURNS record",
+    }
+    for db in (rt._db, pu._db):
+        for name, signature in decoys.items():
+            db.execute(
+                f"CREATE FUNCTION pg_temp.{name}{signature} LANGUAGE plpgsql AS "
+                "$$ BEGIN RAISE EXCEPTION 'decoy was called'; END $$"
+            )
+        db.execute(sql.SQL("SET search_path = pg_temp, {}").format(sql.Identifier(w.schema)))
+    rid = new_id("res")
+    rt.reserve_spend(rid, AGENT, DAY, D("2.00"), day_cap=D("100"), month_cap=D("100"))
+    row, applied = rt.settle_spend(rid, D("1.50"))
+    assert applied and row.settled_usd == D("1.50")
+    assert rt.add_spend(AGENT, DAY, D("1.00")) == (D("2.50"), D("2.50"))
+    rt.reserve_spend(new_id("res"), AGENT, DAY, D("1.00"), day_cap=D("100"), month_cap=D("100"))
+    assert rt.expire_spend_reservations(0) == 1
+    assert pu.purge_spend_reservations(datetime(2999, 1, 1, tzinfo=UTC)) == 1

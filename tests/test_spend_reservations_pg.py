@@ -232,18 +232,25 @@ def _break(monkeypatch, store, text):
     monkeypatch.setattr(store, "_exec", faulty)
 
 
+def _fail_inside_function(w, table):
+    """A fault INSIDE the definer function (the runtime has no right on the table any more, so a revoke proves
+    nothing): the owner puts a CHECK that no row can pass on the counter table, so the function's own INSERT or
+    UPDATE of it raises while an earlier step of the same call has already run."""
+    w.do(f"ALTER TABLE {table} ADD CONSTRAINT never CHECK (false) NOT VALID")
+
+
 @pg
-@pytest.mark.parametrize("fault", ["raised", "revoked"])
+@pytest.mark.parametrize("fault", ["raised", "constraint"])
 def test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing(w, monkeypatch, fault):
     rt = w.store(w.runtime)
     kept = _reserve(rt, "0.50")
     with monkeypatch.context() as m:
         if fault == "raised":
-            _break(m, rt, '."spend_month" SET')
+            _break(m, rt, "hadavin_reserve_spend")  # the call itself fails
             failure = RuntimeError
         else:
-            w.grant("REVOKE UPDATE ON spend_month FROM {}", w.runtime)
-            failure = DENIED
+            _fail_inside_function(w, "spend_month")  # the function fails after it booked the day
+            failure = errors.CheckViolation
         with pytest.raises(failure):
             _reserve(rt, "1.25")
         assert _table(w) == {kept: ("open", D("0.50"), None)}  # no row
@@ -258,27 +265,33 @@ def test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing(w, monkeypatc
 
 
 @pg
-def test_c3_a_fault_at_the_day_update_in_reserve_leaves_no_row(w, monkeypatch):
+@pytest.mark.parametrize("fault", ["raised", "constraint"])
+def test_c3_a_fault_at_the_day_update_in_reserve_leaves_no_row(w, monkeypatch, fault):
     rt = w.store(w.runtime)
-    _break(monkeypatch, rt, '."spend" SET')
-    with pytest.raises(RuntimeError, match="injected fault"):
+    if fault == "raised":
+        _break(monkeypatch, rt, "hadavin_reserve_spend")
+        failure = RuntimeError
+    else:
+        _fail_inside_function(w, "spend")  # after the reservation row was inserted
+        failure = errors.CheckViolation
+    with pytest.raises(failure):
         _reserve(rt, "1.25")
     assert _table(w) == {} and _counters(w) == (None, None)
 
 
 @pg
-@pytest.mark.parametrize("fault", ["raised", "revoked", "counter_row_deleted"])
+@pytest.mark.parametrize("fault", ["raised", "constraint", "counter_row_deleted"])
 def test_c4_a_fault_at_the_month_update_in_settle_changes_nothing(w, monkeypatch, fault):
     rt = w.store(w.runtime)
     run_id = _new_run(rt)
     rid = _reserve(rt, "1.00", run_id=run_id)
     with monkeypatch.context() as m:
         if fault == "raised":
-            _break(m, rt, '."spend_month" SET')
+            _break(m, rt, "hadavin_settle_spend")
             failure, message = RuntimeError, "injected fault"
-        elif fault == "revoked":
-            w.grant("REVOKE UPDATE ON spend_month FROM {}", w.runtime)
-            failure, message = DENIED, "spend_month"
+        elif fault == "constraint":
+            _fail_inside_function(w, "spend_month")
+            failure, message = errors.CheckViolation, "never"
         else:
             w.do("DELETE FROM spend_month")
             failure, message = RuntimeError, "spend counter row missing"
@@ -875,11 +888,17 @@ def test_the_step_runs_as_the_runtime_login_and_expires_only_old_rows(w):
 
 
 @pg
-def test_the_step_fails_and_the_next_step_runs_when_the_runtime_login_lost_its_update_right(w):
+def test_the_step_fails_and_the_next_step_runs_when_the_runtime_login_lost_its_execute_right_on_expire(
+    w,
+):
     rt = w.store(w.runtime)
     rid = _reserve(rt, "1.00")
     _age(w, rid, defaults.RESERVATION_EXPIRE_S + 5)
-    w.grant("REVOKE UPDATE ON spend_reservations FROM {}", w.runtime)
+    w.grant(  # the expire is a definer function now: the right that matters is EXECUTE on it
+        "REVOKE EXECUTE ON FUNCTION {}.hadavin_expire_spend_reservations(integer) FROM {}",
+        w.schema,
+        w.runtime,
+    )
     ran = []
     steps = [tick.STEPS[-1], TickStep("after", 0, lambda ctx: ran.append("after"))]
     assert run_tick(_app(rt), now=now(), steps=steps) == 1
