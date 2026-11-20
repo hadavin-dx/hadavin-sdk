@@ -139,7 +139,7 @@ def _gated(meter, inner, worst, run_id=None):
     rid = meter.reserve(AGENT, worst, run_id=run_id)
     reply = inner.chat()
     try:
-        over = meter.settle(rid, reply.cost_usd)
+        over = meter.settle(rid, reply.cost_usd, agent_id=AGENT)
     except Exception as exc:  # noqa: BLE001 - ii 6: return the reply anyway
         over = exc
     return rid, reply, over
@@ -328,7 +328,7 @@ def _together(count, work):
 )
 def test_both_implementers_have_the_meter_shape(impl):
     """README section 2 "Two implementers, one shape"; ticket F-install line 8: reserve(agent_id, worst_usd, *,
-    run_id=None) -> str and settle(reservation_id, actual_usd) -> Decimal."""
+    run_id=None) -> str and settle(reservation_id, actual_usd, *, agent_id) -> Decimal."""
     cls = Limits if impl == "limits" else BUDGET
     assert cls is not None
     reserve = inspect.signature(cls.reserve).parameters
@@ -341,6 +341,7 @@ def test_both_implementers_have_the_meter_shape(impl):
         "self",
         "reservation_id",
         "actual_usd",
+        "agent_id",
     ]
 
 
@@ -521,7 +522,7 @@ def test_settle_returns_the_overshoot_and_books_the_real_cost(rig, actual, over)
     full with no cap check (the cap here is exactly the reserved amount)."""
     r = rig(cap=D("0.60"))
     rid = r.meter.reserve(AGENT, D("0.60"))
-    result = r.meter.settle(rid, D(actual))
+    result = r.meter.settle(rid, D(actual), agent_id=AGENT)
     assert type(result) is D and result == D(over)
     assert r.booked() == D(actual)
 
@@ -535,9 +536,9 @@ def test_settle_twice_the_first_call_wins(rig, first, second, over):
     nothing"; inv 3."""
     r = rig(cap=WIDE)
     rid = r.meter.reserve(AGENT, D("0.60"))
-    assert r.meter.settle(rid, D(first)) == D(over)
+    assert r.meter.settle(rid, D(first), agent_id=AGENT) == D(over)
     for amount in (second, first, second):
-        assert r.meter.settle(rid, D(amount)) == D(over)
+        assert r.meter.settle(rid, D(amount), agent_id=AGENT) == D(over)
         assert r.booked() == D(first)
 
 
@@ -547,7 +548,7 @@ def test_settle_with_zero_frees_the_whole_reservation(rig):
     r = rig(cap=D("1.00"))
     rid = r.meter.reserve(AGENT, D("1.00"))
     assert _refused(r.meter, SMALLEST) == r.cap_reason
-    assert r.meter.settle(rid, D(0)) == 0
+    assert r.meter.settle(rid, D(0), agent_id=AGENT) == 0
     assert r.booked() == 0
     r.meter.reserve(AGENT, D("1.00"))
     assert r.booked() == D("1.00")
@@ -562,10 +563,12 @@ def test_settle_with_an_unknown_id_is_not_found_from_both_meters(rig):
     rid = r.meter.reserve(AGENT, D("0.60"))
     for unknown in ("res-" + uuid.uuid4().hex, rid + "x"):
         with pytest.raises(NotFound) as caught:
-            r.meter.settle(unknown, D("0.10"))
+            r.meter.settle(unknown, D("0.10"), agent_id=AGENT)
         assert isinstance(caught.value, KeyError)
     assert r.booked() == D("0.60")
-    assert r.meter.settle(rid, D("0.10")) == 0  # the known one is untouched and still open
+    assert (
+        r.meter.settle(rid, D("0.10"), agent_id=AGENT) == 0
+    )  # the known one is untouched and still open
 
 
 def test_settle_with_an_empty_id_is_refused_and_books_nothing(rig):
@@ -576,9 +579,9 @@ def test_settle_with_an_empty_id_is_refused_and_books_nothing(rig):
     r = rig(cap=WIDE)
     rid = r.meter.reserve(AGENT, D("0.60"))
     with pytest.raises((NotFound, ValueError)):
-        r.meter.settle("", D("0.10"))
+        r.meter.settle("", D("0.10"), agent_id=AGENT)
     assert r.booked() == D("0.60")
-    assert r.meter.settle(rid, D("0.10")) == 0
+    assert r.meter.settle(rid, D("0.10"), agent_id=AGENT) == 0
 
 
 @pytest.mark.parametrize("amount", HOSTILE)
@@ -588,10 +591,10 @@ def test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays(ri
     r = rig(cap=WIDE)
     rid = r.meter.reserve(AGENT, D("0.60"))
     with pytest.raises(ValueError) as caught:
-        r.meter.settle(rid, amount)
+        r.meter.settle(rid, amount, agent_id=AGENT)
     assert not isinstance(caught.value, SpendRefused)
     assert r.booked() == D("0.60")
-    assert r.meter.settle(rid, D("0.25")) == 0
+    assert r.meter.settle(rid, D("0.25"), agent_id=AGENT) == 0
     assert r.booked() == D("0.25")
 
 
@@ -625,9 +628,11 @@ def test_a_settle_after_the_sweep_can_only_raise_the_booked_amount(rig, actual, 
     run_id = r.run()
     rid = r.meter.reserve(AGENT, D("0.60"), run_id=run_id)
     r.sweep(run_id)
-    assert r.meter.settle(rid, D(actual)) == D(over)
+    assert r.meter.settle(rid, D(actual), agent_id=AGENT) == D(over)
     assert r.booked() == D(booked)
-    assert r.meter.settle(rid, D("0.99")) == D(over)  # and that settle was the first: it wins
+    assert r.meter.settle(rid, D("0.99"), agent_id=AGENT) == D(
+        over
+    )  # and that settle was the first: it wins
     assert r.booked() == D(booked)
     if r.is_limits:
         assert r.run_cost(run_id) == D(actual)
@@ -647,14 +652,14 @@ def test_the_tick_step_expires_by_age_and_leaves_the_counters_alone(lim, monkeyp
     assert "expire_reservations" in [step.name for step in tick.STEPS]
     fresh = r.meter.reserve(AGENT, D("0.60"))
     tick.expire_reservations(ctx)
-    assert r.meter.settle(fresh, D("0.10")) == 0
+    assert r.meter.settle(fresh, D("0.10"), agent_id=AGENT) == 0
     assert r.booked() == D("0.10")
     old = r.meter.reserve(AGENT, D("0.60"))
     time.sleep(0.05)
     monkeypatch.setattr(defaults, "RESERVATION_EXPIRE_S", 0)
     tick.expire_reservations(ctx)
     assert r.booked() == D("0.70")
-    assert r.meter.settle(old, D("0.10")) == 0
+    assert r.meter.settle(old, D("0.10"), agent_id=AGENT) == 0
     assert r.booked() == D("0.70")  # 0.10 settled plus the 0.60 that expired: never lower
 
 
@@ -675,7 +680,9 @@ def test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays(lim, err
     assert r.booked() == D("0.60")
     calls = r.seen_by_meter.calls
     assert calls.count("reserve_spend") == 1 and calls.count("settle_spend") == 1
-    assert Limits(r.store, Sink(), _registry(WIDE, WIDE)).settle(rid, D("0.10")) == 0  # still open
+    assert (
+        Limits(r.store, Sink(), _registry(WIDE, WIDE)).settle(rid, D("0.10"), agent_id=AGENT) == 0
+    )  # still open
 
 
 def test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays(
@@ -689,10 +696,10 @@ def test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays(
     rid = meter.reserve(AGENT, D("0.60"))
     broken._db.close()
     with pytest.raises(Exception) as caught:
-        meter.settle(rid, D("0.10"))
+        meter.settle(rid, D("0.10"), agent_id=AGENT)
     assert not isinstance(caught.value, SpendRefused | KeyError | ValueError), type(caught.value)
     assert reader.spend_totals(AGENT, NOON.date()) == (D("0.60"), D("0.60"))
-    assert Limits(reader, Sink(), _registry(WIDE, WIDE)).settle(rid, D("0.10")) == 0
+    assert Limits(reader, Sink(), _registry(WIDE, WIDE)).settle(rid, D("0.10"), agent_id=AGENT) == 0
     assert reader.spend_totals(AGENT, NOON.date()) == (D("0.10"), D("0.10"))
 
 
@@ -708,13 +715,13 @@ def test_the_settled_cost_is_added_to_the_run_exactly_once(lim):
     second = r.meter.reserve(AGENT, D("0.60"), run_id=run_id)
     loose = r.meter.reserve(AGENT, D("0.60"))  # no run: only the counters move
     assert r.run_cost(run_id) == 0
-    r.meter.settle(first, D("0.25"))
+    r.meter.settle(first, D("0.25"), agent_id=AGENT)
     assert r.run_cost(run_id) == D("0.25")
-    r.meter.settle(first, D("0.50"))
-    r.meter.settle(first, D("0.25"))
+    r.meter.settle(first, D("0.50"), agent_id=AGENT)
+    r.meter.settle(first, D("0.25"), agent_id=AGENT)
     assert r.run_cost(run_id) == D("0.25")
-    assert r.meter.settle(second, D("0.85")) == D("0.25")
-    r.meter.settle(loose, D("0.40"))
+    assert r.meter.settle(second, D("0.85"), agent_id=AGENT) == D("0.25")
+    r.meter.settle(loose, D("0.40"), agent_id=AGENT)
     assert r.run_cost(run_id) == D("1.10")
     assert r.run_cost(other) == 0
     assert r.booked() == D("1.50")
@@ -741,7 +748,7 @@ def test_twelve_decimal_places_are_booked_unrounded(rig):
     assert r.booked() == SMALLEST
     r.meter.reserve(AGENT, D("1.00") - SMALLEST)
     assert r.booked() == D("1.00")
-    assert r.meter.settle(rid, SMALLEST * 3) == SMALLEST * 2
+    assert r.meter.settle(rid, SMALLEST * 3, agent_id=AGENT) == SMALLEST * 2
     assert r.booked() == D("1.00") + SMALLEST * 2
 
 
@@ -798,7 +805,7 @@ def test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that
     assert (after.month, after.day) == (2, 1)
     assert (r.booked(), r.month()) == (0, 0)  # the first of February starts empty
     held = r.meter.reserve(AGENT, D("0.70"))
-    assert r.meter.settle(rid, D("0.25")) == 0
+    assert r.meter.settle(rid, D("0.25"), agent_id=AGENT) == 0
     assert (r.booked(late), r.month(late)) == (D("0.25"), D("0.25"))
     assert (r.booked(after), r.month(after)) == (D("0.70"), D("0.70"))
     assert r.run_cost(run_id) == D("0.25")
@@ -806,7 +813,7 @@ def test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that
     assert _refused(r.meter, D("0.76")) == "daily_budget"
     r.meter.reserve(AGENT, D("0.75"))
     r.clock[0] = after
-    assert r.meter.settle(held, D("0.90")) == D("0.20")
+    assert r.meter.settle(held, D("0.90"), agent_id=AGENT) == D("0.20")
     assert (r.booked(after), r.month(after)) == (D("0.90"), D("0.90"))
 
 
@@ -870,7 +877,7 @@ def _settle_race(meters, store, run_id, rid):
     amounts = [
         D("0.10") * (i + 1) for i in range(len(meters))
     ]  # 0.10 .. 1.60 against 0.60 reserved
-    outcomes = _together(len(meters), lambda i: meters[i].settle(rid, amounts[i]))
+    outcomes = _together(len(meters), lambda i: meters[i].settle(rid, amounts[i], agent_id=AGENT))
     assert all(type(o) is D for o in outcomes), outcomes
     assert len(set(outcomes)) == 1, (
         f"settles of one reservation returned different results: {outcomes}"
@@ -927,7 +934,7 @@ def test_the_budget_does_not_read_the_stop_state():
     meter = BUDGET(D("1.00"))
     assert not any(hasattr(meter, name) for name in ("store", "get_kill_switch", "registry"))
     rid = meter.reserve(AGENT, D("0.60"))
-    assert isinstance(rid, str) and meter.settle(rid, D("0.25")) == 0
+    assert isinstance(rid, str) and meter.settle(rid, D("0.25"), agent_id=AGENT) == 0
 
 
 # --- one table of scenarios, the same for every implementer -----------------------------------------------------------
@@ -1017,7 +1024,7 @@ def _play(r, steps):
                 ids[key] = r.meter.reserve(AGENT, amount, run_id=run_id)
                 outcome = ID if isinstance(ids[key], str) and ids[key] else repr(ids[key])
             elif what == "settle":
-                outcome = r.meter.settle(ids.get(key, "res-" + key), amount)
+                outcome = r.meter.settle(ids.get(key, "res-" + key), amount, agent_id=AGENT)
             else:
                 r.sweep(run_id)
         except SpendRefused as exc:
