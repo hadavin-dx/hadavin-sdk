@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Twenty-nine groups, one per guarantee:
+first failing line that holds `expect`. Thirty-one groups, one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -40,6 +40,8 @@ first failing line that holds `expect`. Twenty-nine groups, one per guarantee:
     G27 `_content_length`: ASCII digits only
     G28 `check_bind`: only the value True is the switch for a non-loopback host
     G29 `check_senders`: agent not qualified, principal unknown, principal not of kind service
+    G30 the size cap is on the raw body bytes (the guard itself; not a cap on the decoded document), G31 an empty document
+        is a document (`parse_body` does not refuse it)
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
@@ -114,6 +116,7 @@ TW = "tests/triggers/test_worker.py"
 TC = "tests/test_testing_crash.py"
 TS = "tests/triggers/test_t5_wsgiref.py"
 TP = "tests/triggers/test_t5_process.py"
+TT = "tests/triggers/test_t5_cases.py"
 ENDPOINT = "src/hadavin_sdk/triggers/endpoint.py"
 WORKER = "src/hadavin_sdk/triggers/worker.py"
 CRASH = "src/hadavin_sdk/testing/crash.py"
@@ -154,6 +157,29 @@ READ_THEN_CAP = (
     "        except Exception:  # noqa: BLE001 - a broken or timed-out connection is the sender's fault\n"
     "            return 400, None, None\n"
 )
+CAP_GUARD = (
+    "        if length > max_body:\n            return 413, None, None  # the body is not read\n"
+)
+READ_AND_PARSE = (
+    "        try:\n"
+    '            body = environ["wsgi.input"].read(length)\n'
+    "        except Exception:  # noqa: BLE001 - a broken or timed-out connection is the sender's fault\n"
+    "            return 400, None, None\n"
+    "        if not isinstance(body, bytes) or len(body) != length:\n"
+    "            return 400, None, None\n"
+    "        ts, sig = environ.get(ts_env), environ.get(sig_env)\n"
+    "        headers = {\n"
+    '            TIMESTAMP_HEADER: ts if isinstance(ts, str) else "",\n'
+    '            SIGNATURE_HEADER: sig if isinstance(sig, str) else "",\n'
+    "        }\n"
+    "        sender = verify_any(headers, body, clock(), secrets)\n"
+    "        if sender is None:\n"
+    "            return 401, None, None\n"
+    "        try:\n"
+    "            key, document = parse_body(body)\n"
+    "        except BadRequest:\n"
+    "            return 400, sender, None\n"
+)
 EXCEPT_STORE = (
     "        except Exception as exc:  # noqa: BLE001 - no ack in every case, the sender retries\n"
 )
@@ -176,7 +202,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW]
+TESTS = [TE, TC, TS, TP, TW, TT]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1023,6 +1049,35 @@ M = [
         TE,
         "test_t5_7b_content_length_missing_or_not_digits_or_zero_is_400[]",
         "assert 503 == 400",
+    ),
+    # --- G30 the cap is on the raw bytes; G31 the empty document
+    mutant(
+        "G30a the size cap guard is deleted (no 413 for an escaped body over the cap)",
+        ENDPOINT,
+        CAP_GUARD,
+        "",
+        TE,
+        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[nul]",
+        "assert 202 == 413",
+    ),
+    mutant(
+        "G30b the cap is on the decoded document length after parse_body, not on the raw bytes",
+        ENDPOINT,
+        CAP_GUARD + READ_AND_PARSE,
+        READ_AND_PARSE
+        + "        if len(document) > max_body:\n            return 413, sender, None\n",
+        TT,
+        "test_e11_escaped_body_over_the_cap_is_413_though_the_document_is_under_it",
+        "assert False",
+    ),
+    mutant(
+        "G31 parse_body refuses an empty document",
+        ENDPOINT,
+        '    try:\n        return key, document.encode("utf-8")\n',
+        '    if not document:\n        raise BadRequest("empty document")\n    try:\n        return key, document.encode("utf-8")\n',
+        TT,
+        "test_e5_empty_document_creates_one_run_and_logs_no_document",
+        "assert 400 in (200, 202)",
     ),
     # --- G28 the bind switch
     mutant(
