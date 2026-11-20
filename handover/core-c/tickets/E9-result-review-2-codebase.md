@@ -1,0 +1,8 @@
+# E9 result review round 2 (codebase details, fresh, sonnet) — 2026-11-20 ~10:55Z
+Read only. No leak, no vacuous mutant killer (E9-1/2/3 killers read, each old string occurs once, redact.py 889/891). Findings and fixes (commit "code G: E9 result review round 2 fixes"):
+- "Blocker" 1: approvals/gate.py named models.ModelProse and discuss.Answer (do not exist) -> FIXED (now approvals/channel.clean).
+- "Blocker" 2: gate.py said text is "masked once ... before it reaches this module"; channel.clean runs the cleaning inside redact_text, on each decoded view, and masks again on re-reads -> FIXED.
+- Major 3: test_redact_own_output_hardening.py module docstring stale (any real label) -> FIXED. Major 4: E9-own-output.md "contiguous block at the end" false (E9 block 212-228, Q9 follow) -> FIXED.
+- Nit 5: redact.py comment 875-876 internally inconsistent about genuine placeholders -> FIXED (older rule named). Nit 6: separator tests (hardening.py:83,:117-120, context_after_sweep.py:488-491,:494) trivially true because the key=value class stops at \s ; , — real coverage is own_output.py:207-210,:213-218: NOT CHANGED (kept; stated). Nit 7: is_masked in redact_corpus_support.py:2, test_runmap_map_write.py:3,138, DECISIONS.md:28 are historical notes. Nit 8: EXPECTED_COUNT 94 in test_redact_mutants_meta.py not independently counted by reviewer (builder's run: 94 of 94 good).
+Not read: rest of redact.py, ~50 ticket files, SECURITY-README-v5 K43 (still to update), ESCALATIONS.md:78 stale mention of test_runmap_is_masked.py.
+Design review round 2 N1, N2, N4 also fixed in the same commit (N4: test_e9_a_junk_entry_in_the_run_map_keeps_later_genuine_placeholders_and_sweeps_a_stray_copy). Batch: 96 passed, 1 skipped, 5 xfailed on the touched files (MEASURED).

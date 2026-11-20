@@ -1,0 +1,5 @@
+hostile 500 prefix lengths, 129540 chars: with forms 0.2819 s, without 0.2557 s, ratio 1.1
+honest 300 prefix lengths 0.0074 s vs 1 prefix length 0.0066 s, ratio 1.13; probe chars 57749
+5000 forms: with 0.0323 s, without 0.0239 s, ratio 1.35
+deep hostile at the real limit: InputTooLarge SpelledWorkTooMuch 0.392 s
+deep hostile limit raised: 0.758 s; probe 129870 chars, forms registered 300

@@ -10,6 +10,9 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 
 from __future__ import annotations
 
+import base64
+import binascii
+import bisect
 import collections
 import functools
 import hashlib
@@ -18,18 +21,30 @@ import re
 import time
 import unicodedata
 from collections.abc import Callable, Mapping
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, NamedTuple
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import (
+    _EVERY_COPY,
+    _PLACEHOLDER,
     ARN_TAIL,
     PATTERNS,
     SECRET_KINDS,
+    RedactionResult,
+    _alias_keys,
+    _joins,
+    _plain,
     _Redactor,
+    _replace_standalone,
+    _sweep,
     kind_of,
+    place_encoded,
     redact,
+    strip_ansi,
 )
+from hadavin_sdk.guard.textnorm import without_spacing_marks
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -113,7 +128,14 @@ def nfkc(text: str) -> str:
     the redactor's cap is refused first (InputTooLarge, a RedactionError), as redact_text does for its own views."""
     if text.isascii():  # NFKC leaves ASCII alone, and ASCII has no invisible format characters
         return text
-    return canonical(fits_after_nfkc(text))
+    # the WHOLE text is composed (a base letter joins its combining mark, Hangul jamo join), then the invisible characters go:
+    # main's `canonical`. `canonical` itself is per character now (index fidelity for replacement) and composes nothing,
+    # which is wrong for decoding: a secret stored precomposed and shown decomposed must be found
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFKC", fits_after_nfkc(text))
+        if unicodedata.category(c) != "Cf"
+    )
 
 
 _HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2}))")
@@ -295,9 +317,15 @@ def canonical(text: str) -> str:
 _ASCII_OR_ONE = re.compile(r"[\x00-\x7f]+|[^\x00-\x7f]")  # a run of ASCII, or one other character
 
 
-def _canonical_view(text: str) -> tuple[str, list[int]]:
-    """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
-    character, the index of the original character it came from."""
+_INVISIBLE = frozenset({"Cf"})
+# G13 (E19 N3): what the result-marker search also drops. `canonical` composes nothing, so a combining mark after `<` (U+0338)
+# stays between the two `<` of a marker look-alike and `_MARKER` did not match it.
+_INVISIBLE_OR_MARK = frozenset({"Cf", "Mn", "Me"})
+
+
+def _canonical_view(text: str, drop: frozenset[str] = _INVISIBLE) -> tuple[str, list[int]]:
+    """The canonical form of `text` (NFKC, characters of a category in `drop` removed: by default the invisible format
+    characters) and, for each canonical character, the index of the original character it came from."""
     chars: list[str] = []
     index: list[int] = []
     for run in _ASCII_OR_ONE.finditer(text):
@@ -307,14 +335,17 @@ def _canonical_view(text: str) -> tuple[str, list[int]]:
             index.extend(range(run.start(), run.end()))
             continue
         for d in unicodedata.normalize("NFKC", piece):
-            if unicodedata.category(d) != "Cf":
+            if unicodedata.category(d) not in drop:
                 chars.append(d)
                 index.append(run.start())
     return "".join(chars), index
 
 
 def replace_canonical(
-    text: str, pattern: re.Pattern[str], repl: Callable[[re.Match[str]], str]
+    text: str,
+    pattern: re.Pattern[str],
+    repl: Callable[[re.Match[str]], str],
+    drop: frozenset[str] = _INVISIBLE,
 ) -> str:
     """Find `pattern` in the canonical view of `text` and replace only the matched stretches IN THE ORIGINAL.
     The model keeps seeing the text as it was written (accents, CJK, emoji, joiners untouched); only a stretch
@@ -322,7 +353,7 @@ def replace_canonical(
     is its own canonical form."""
     if text.isascii():
         return pattern.sub(repl, text)
-    canon, index = _canonical_view(text)
+    canon, index = _canonical_view(text, drop)
     out: list[str] = []
     last = 0
     for m in pattern.finditer(canon):
@@ -340,8 +371,10 @@ def replace_canonical(
 def escape_placeholders(text: str) -> str:
     """Untrusted text may contain a literal `<IPV4_2>` in any case (`<ipv4_2>`, `<Ipv4_2>`). Left as typed it
     would look like the placeholder the redactor later issues to a different value, and restore or the grounding
-    check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. Call it on
-    `canonical(text)`, so Unicode look-alikes are already ASCII."""
+    check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. It is found in the canonical
+    view (NFKC one character at a time, invisible format characters removed), so a COMPATIBILITY spelling (full-width
+    `\uff1c\uff29\uff30\uff36\uff14\uff3f\uff12\uff1e`, a zero-width space inside) is caught; a confusable from another script that NFKC keeps (Cyrillic `\u0410` for
+    `A`, UTS #39 look-alikes) is not folded and is not escaped (G13, E19 N2)."""
     return replace_canonical(text, _LOOKALIKE, lambda m: f"\u2039{m.group(1)}_{m.group(2)}\u203a")
 
 
@@ -351,8 +384,9 @@ _MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
 def escape_markers(text: str) -> str:
     """Neutralise anything shaped like our result markers, in any case and spacing, including full-width and
     zero-width spellings (found in the canonical form, rewritten in the original; the rest of the text is left
-    as it was written)."""
-    return replace_canonical(text, _MARKER, lambda m: "[[")
+    as it was written). Combining marks are dropped for this search too (G13, E19 N3): `<<` + U+0338 + `TOOL RESULT` is a
+    marker look-alike."""
+    return replace_canonical(text, _MARKER, lambda m: "[[", _INVISIBLE_OR_MARK)
 
 
 def neutralise_untrusted(text: str) -> str:
@@ -430,7 +464,8 @@ def composed(text: str) -> str:
 
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC one character at a time, invisible characters removed), the same
-    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks).
+    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks),
+    then the canonical and the composed view of the text without its spacing marks, modifier letters and modifier symbols.
     Only forms that differ from `text` are returned; a text with no combining sequence has the same composed and canonical view,
     so it costs nothing."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
@@ -440,6 +475,11 @@ def _views(text: str) -> list[str]:
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
     undone = fits_after_nfkc(undo(text))
+    # and the text without its spacing marks, modifier letters and modifier symbols (textnorm, "MARKS AND SCANS": NFKC reads a modifier
+    # letter as a letter and keeps a spacing vowel sign, so "AKIA" + U+093E + "IOSFODNN7EXAMPLE" is not the key in `canonical` alone), in
+    # the canonical view and in its composed twin (they differ when the text holds a letter and a combining accent, also when the
+    # removed mark stood between the two: `canonical` composes nothing)
+    unmarked = without_spacing_marks(text)
     for view in (
         canonical(text),
         canonical(unescaped),
@@ -447,6 +487,8 @@ def _views(text: str) -> list[str]:
         composed(text),
         composed(unescaped),
         composed(undone),
+        canonical(unmarked),
+        composed(unmarked),
     ):
         view = _clean(view)
         if view != text and view not in out:
@@ -463,15 +505,22 @@ _ENCODED_MARKS = ("%", chr(92), "&")
 MAX_DECODED_MASKS = 256
 
 
-def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
+def _decoded_masks(
+    current: dict[str, str], text: str, deadline: float | None = None
+) -> list[tuple[str, str]]:
     """(placeholder, decoded original) for the values pass one masked WHOLE whose decoded spelling would stop a value
     pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
     use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
-    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call.
+    `deadline` (a `time.thread_time()` value, shared with stage 1 and every view) is checked once per stored original, before
+    any skip; a spent deadline raises `InputTooLarge`.
+    """
     out = []
     for ph, original in current.items():
+        if deadline is not None and time.thread_time() > deadline:
+            raise InputTooLarge("InputTooLarge")  # one check per stored original, before any skip
         if original.startswith("\0seed") or not (
             any(c in original for c in _ENCODED_MARKS) or not original.isascii()
         ):
@@ -501,13 +550,407 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
     return view
 
 
-def _cache_of(mapping: Mapping[str, str]) -> dict[str, Any] | None:
-    """The run's built patterns (`RunMap.redact_cache`), or None. A mapping whose attribute access raises is
-    a RedactionError like any other failure of the redactor (it names the error's type, never a text)."""
+@dataclass
+class _ScanBudget:
+    """The base64 step's budget for ONE redact_text call; the text, every view and every depth share it."""
+
+    started: float  # redact_text's `started`; the deadline is started + defaults.REDACT_BUDGET_S
+    units: int = (
+        0  # units decoded or masked unread so far (decodable, not held), all views and depths
+    )
+    decoded_chars: int = 0  # characters of decoded text read so far (len of each _b64_text result)
+    part_chars: int = 0  # decoded characters of the lines and trimmed joins of blocks tried alone (a count of their own)
+
+    def clock(self) -> None:
+        """ONE time.thread_time() read; past the deadline: InputTooLarge."""
+        if time.thread_time() - self.started > defaults.REDACT_BUDGET_S:
+            raise InputTooLarge("InputTooLarge")
+
+    def take(self, chars: int, part: bool = False) -> None:
+        if part:
+            self.part_chars += chars
+            if self.part_chars > defaults.B64_MAX_DECODED_CHARS:
+                raise InputTooLarge("InputTooLarge")
+            return
+        self.units += 1
+        self.decoded_chars += chars
+        if (
+            self.units > defaults.B64_MAX_UNITS
+            or self.decoded_chars > defaults.B64_MAX_DECODED_CHARS
+        ):
+            raise InputTooLarge("InputTooLarge")
+
+
+class _B64Unit(NamedTuple):
+    start: int  # offset in the ANSI-stripped text (3.1 point 5)
+    end: int
+    written: str  # the unit as written, line breaks included: the ENCODED original
+    joined: str  # its lines, stripped, joined with nothing between: what _b64_text decodes
+    lines: tuple[str, ...]  # its lines as written (stripped), for the held rule
+    parts: tuple[
+        _B64Unit, ...
+    ] = ()  # a block's lines of at least B64_MIN_CHARS characters, each a one-line unit; () for a run
+    trims: tuple[
+        _B64Unit, ...
+    ] = ()  # a block of 3 or more lines: its lines without the last, and without the first (2 or more lines)
+
+
+_B64_LINE = re.compile(r"[A-Za-z0-9+/_\-]+={0,2}")  # one line of a block, matched whole (fullmatch)
+_B64_RUN = re.compile(
+    rf"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+/_\-]{{{defaults.B64_MIN_CHARS},}}={{0,2}}(?![A-Za-z0-9+/_\-=])"
+)
+# Blanked before runs are found (3.1 point 2): a placeholder of ours, or a marker shape. STATED LIMIT (L-B6, design result review 1 N6): the
+# `[A-Z][A-Z0-9_]*` branch blanks ANY all-uppercase-and-digit text in angle brackets, so a blob whose base64 characters are all
+# uppercase letters, digits and `_`, written between `<` and `>` (or `‹` and `›`), is never a run: an author who controls the payload
+# bytes can pick a payload that encodes so. No input a real secret would produce has that shape (pinned by TB-3.3b).
+_B64_TOKEN_SKIP = re.compile(r"[<‹](?:[A-Za-z][A-Za-z0-9]*_\d+|[A-Z][A-Z0-9_]*)[>›]")
+_B64_SEP = "\n\n;\n\n"  # between decoded texts: survives `neutralise_untrusted`, holds no run character, no `\`, `%` or `&`
+
+
+def _b64_lines(search: str) -> list[tuple[int, int]]:
+    """(start, end) of each line's content: split on `\\n`, one trailing `\\r` and spaces or tabs at both ends dropped."""
+    spans: list[tuple[int, int]] = []
+    pos = 0
+    for line in search.split("\n"):
+        s, e = pos, pos + len(line)
+        pos = e + 1
+        if e > s and search[e - 1] == "\r":
+            e -= 1
+        while s < e and search[s] in " \t":
+            s += 1
+        while e > s and search[e - 1] in " \t":
+            e -= 1
+        spans.append((s, e))
+    return spans
+
+
+def _b64_units(text: str) -> tuple[str, list[_B64Unit]]:
+    """(the ANSI-stripped text, its base64 units in order); (text, []) when the text holds no run. A unit is a wrapped block
+    (two or more lines of one length) or a run that does not start inside a block. Placeholders and markers are never runs."""
+    stripped = strip_ansi(text)
+    search = stripped
+    if "<" in search or "‹" in search:
+        search = _B64_TOKEN_SKIP.sub(lambda m: " " * len(m.group()), search)
+    if not _B64_RUN.search(search):
+        return stripped, []
+    spans = _b64_lines(search)
+    blocks: list[_B64Unit] = []
+    i = 0
+    while i < len(spans):
+        first_start, first_end = spans[i]
+        width = first_end - first_start
+        line = search[first_start:first_end]
+        if width < defaults.B64_WRAP_MIN_CHARS or "=" in line or not _B64_LINE.fullmatch(line):
+            i += 1
+            continue
+        taken = [i]
+        for j in range(i + 1, len(spans)):
+            s, e = spans[j]
+            line = search[s:e]
+            if not line or len(line) > width or not _B64_LINE.fullmatch(line):
+                break
+            taken.append(j)
+            if len(line) < width or "=" in line:
+                break  # a shorter or padded line is the last
+        if len(taken) >= 2:
+            start, end = spans[taken[0]][0], spans[taken[-1]][1]
+            lines = tuple(search[s:e] for s, e in (spans[k] for k in taken))
+            parts = tuple(
+                _B64Unit(s, e, search[s:e], search[s:e], (search[s:e],))
+                for s, e in (spans[k] for k in taken)
+                if len(search[s:e].rstrip("=")) >= defaults.B64_MIN_CHARS
+            )
+            trims: list[_B64Unit] = []
+            if len(taken) >= 3:  # the blob without a closing word, and without an odd first line
+                for ks in (taken[:-1], taken[1:]):
+                    ts, te = spans[ks[0]][0], spans[ks[-1]][1]
+                    tl = tuple(search[s:e] for s, e in (spans[k] for k in ks))
+                    trims.append(_B64Unit(ts, te, stripped[ts:te], "".join(tl), tl))
+            blocks.append(
+                _B64Unit(
+                    start, end, stripped[start:end], "".join(lines), lines, parts, tuple(trims)
+                )
+            )
+            i = taken[-1] + 1
+        else:
+            i += 1
+    starts = [b.start for b in blocks]
+    units = list(blocks)
+    for m in _B64_RUN.finditer(search):
+        k = bisect.bisect_right(starts, m.start()) - 1
+        if k < 0 or m.start() >= blocks[k].end:  # a run inside a block is not a unit
+            units.append(_B64Unit(m.start(), m.end(), m.group(), m.group(), (m.group(),)))
+    units.sort(key=lambda u: u.start)
+    return stripped, units
+
+
+def _b64_held(unit: _B64Unit, secret: frozenset[str], wholes: str) -> bool:
+    """A unit pass one already masked: its text (padding ignored) is the original of a secret placeholder, or every line is one or a
+    piece of a JWT or key original (`wholes`: those originals joined by NUL, built once per `_pass_one`)."""
+    if unit.written.rstrip("=") in secret:
+        return True
+    return all(line.rstrip("=") in secret or line in wholes for line in unit.lines)
+
+
+def _printable_text(s: str | None) -> str | None:
+    """`s` when at least `defaults.B64_PRINTABLE_SHARE` of its characters are printable (tab, line feed and carriage return count),
+    else None. STATED LIMIT (L-B8, design result review 1 M2): a decoded text with 10 % or more non-printable characters is never
+    scanned, and `str.isprintable()` is False for NBSP and U+3000 as well as for control characters. A blob padded on purpose with
+    such characters, or a binary container (protobuf, msgpack) that holds an ASCII credential among its non-text bytes, is not a
+    unit hit and stays readable beside pass one's misses. No fallback is built (a lead decision; an ASCII-strings extraction of at
+    least 8 characters changed 0 of the 142 probe rows and 0 of the 1,978 property inputs, measured: G4-build-notes.md). Pinned by
+    `test_limit_padded_blob` (strict xfail)."""
+    if (
+        s is not None
+        and s
+        and sum(c.isprintable() or c in "\t\n\r" for c in s)
+        >= defaults.B64_PRINTABLE_SHARE * len(s)
+    ):
+        return s
+    return None
+
+
+def _decoded(raw: bytes, codec: str) -> str | None:
     try:
-        return getattr(mapping, "redact_cache", None)
-    except Exception as exc:  # noqa: BLE001 - fail closed
-        raise RedactionError(type(exc).__name__) from None
+        return raw.decode(codec)
+    except UnicodeDecodeError:
+        return None
+
+
+def _b64_text(joined: str) -> str | None:
+    """The text a base64 run (standard or URL-safe alphabet, padded or not) decodes to, or None when it is not text."""
+    body = joined.rstrip("=")
+    std = "+" in body or "/" in body
+    url = "-" in body or "_" in body
+    if std and url:
+        return None
+    if url:
+        body = body.replace("-", "+").replace("_", "/")
+    if len(body) % 4 == 1:
+        return None
+    try:
+        raw = base64.b64decode(body + "=" * (-len(body) % 4), validate=True)
+    except (binascii.Error, ValueError):
+        return None
+    if raw[:2] == b"\xff\xfe":
+        return _printable_text(_decoded(raw[2:], "utf-16-le"))
+    if raw[:2] == b"\xfe\xff":
+        return _printable_text(_decoded(raw[2:], "utf-16-be"))
+    if raw[:3] == b"\xef\xbb\xbf":
+        return _printable_text(_decoded(raw[3:], "utf-8"))
+    text = _printable_text(_decoded(raw, "utf-8"))
+    if text is not None:
+        return text
+    if len(raw) % 2 == 0 and len(raw) >= 4:
+        odd, even = raw[1::2], raw[0::2]
+        if odd.count(0) >= defaults.B64_UTF16_ZERO_SHARE * len(odd):
+            return _printable_text(_decoded(raw, "utf-16-le"))
+        if even.count(0) >= defaults.B64_UTF16_ZERO_SHARE * len(even):
+            return _printable_text(_decoded(raw, "utf-16-be"))
+    return None
+
+
+def _b64_hits(
+    units: list[_B64Unit],
+    known: dict[str, str],
+    budget: _ScanBudget,
+    depth: int,
+    part: bool = False,
+) -> tuple[list[bool], list[tuple[str, str]]]:
+    """For each unit, whether it is a HIT (its decoded text held a value the scan masks, or it was masked unread because it was too
+    long or too deep), and the KEPT entries: (kind, original) pairs of the decoded view's new values of kinds that are never stored
+    (kept as pairs, not as placeholders: two scans number their entries from the same start). `part=True` is the call for the lines
+    and trimmed joins of blocks: nothing counts against `B64_MAX_UNITS` and the decoded characters go to `budget.part_chars`."""
+    hits = [False] * len(units)
+    pieces: list[str] = []
+    idx: list[int] = []
+    for k, u in enumerate(units):
+        budget.clock()
+        if len(u.joined) > defaults.B64_MAX_UNIT_CHARS:
+            budget.take(0, part)
+            hits[k] = True
+            continue
+        d = _b64_text(u.joined)
+        if d is None:
+            continue
+        if depth >= defaults.B64_MAX_DEPTH:
+            budget.take(0, part)
+            hits[k] = True
+            continue
+        budget.take(len(d), part)
+        piece = _clean(d)
+        if _B64_SEP in piece:  # a decoded text cannot fake the boundaries
+            hits[k] = True
+            continue
+        pieces.append(piece)
+        idx.append(k)
+
+    def all_hit() -> tuple[list[bool], list[tuple[str, str]]]:
+        for k in idx:
+            hits[k] = True
+        return hits, []
+
+    if not pieces:
+        return hits, []
+    joined = _B64_SEP.join(pieces)
+    if _expanded_len(joined) > defaults.MAX_REDACT_CHARS:
+        return all_hit()
+    seen = fits_after_nfkc(neutralise_untrusted(fits_after_nfkc(_clean(joined)))).split(_B64_SEP)
+    if len(seen) != len(pieces):
+        return all_hit()
+    try:
+        out, scanned_map = _scan(joined, dict(known), None, neutralise_untrusted, budget, depth + 1)
+    except TooDeep:
+        return all_hit()
+    after = out.split(_B64_SEP)
+    if len(after) != len(pieces):
+        return all_hit()
+    for i, a, s in zip(idx, after, seen, strict=False):
+        hits[i] = _held(a) > _held(s)
+    kept = [
+        (kind_of(k), v)
+        for k, v in scanned_map.items()
+        if k not in known and kind_of(k) not in STORED_KINDS and kind_of(k) != "ENCODED"
+    ]
+    return hits, kept
+
+
+def _b64_place(stripped: str, units: list[_B64Unit], placeholders: dict[str, str]) -> str:
+    """`stripped` with each chosen unit (sorted, not overlapping) replaced by the placeholder of its `written`."""
+    out: list[str] = []
+    pos = 0
+    for u in units:
+        out.append(stripped[pos : u.start])
+        out.append(placeholders[u.written])
+        pos = u.end
+    out.append(stripped[pos:])
+    return "".join(out)
+
+
+_ONLY_PLACEHOLDERS = re.compile(r"(?:<ENCODED_[1-9][0-9]{0,5}>)+")
+
+
+def _only_encoded(t2: str, base: dict[str, str]) -> bool:
+    """True when `t2` is nothing but `<ENCODED_n>` placeholders and no stored original (ASCII, so with no folded spelling) occurs
+    inside it: a second `redact` over such a text reads nothing and writes nothing.
+
+    A performance win for all-ASCII maps only (E22): the shortcut is OFF whenever any stored value is non-ASCII (its folded spelling
+    is not known here, so `redact` runs) or occurs in `t2`. Pinned by TB-3.44 and TB-3.45 and three mutants."""
+    if not _ONLY_PLACEHOLDERS.fullmatch(t2):
+        return False
+    return all(v.isascii() and v not in t2 for v in base.values())
+
+
+def _pass_one(
+    text: str, mapping: dict[str, str], cache, budget: _ScanBudget, depth: int
+) -> RedactionResult:
+    """Pass one (`redact`, with G7's settle) and, when a base64 run that pass one did not hold decodes to text in which the scan
+    masks something, a second `redact` over the text with each such run replaced whole by one `<ENCODED_n>`."""
+    started = budget.started
+    first = redact(
+        text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+    )
+    stripped, units = _b64_units(text)
+    if not units:
+        return first
+    secret = frozenset(
+        v.rstrip("=") for k, v in first.mapping.items() if kind_of(k) in SECRET_KINDS
+    )
+    wholes = "\x00".join(v for k, v in first.mapping.items() if kind_of(k) in ("JWT", "PRIVKEY"))
+    units = [u for u in units if not _b64_held(u, secret, wholes)]
+    distinct = list({u.written: u for u in units}.values())
+    if not distinct:
+        return first
+    hits, kept = _b64_hits(distinct, first.mapping, budget, depth)
+    hit_of = {u.written: hit for u, hit in zip(distinct, hits, strict=True)}
+    fallback: dict[str, _B64Unit] = {}
+    for unit in distinct:
+        if (unit.parts or unit.trims) and not hit_of[unit.written]:
+            for p in (*unit.trims, *unit.parts):
+                if p.written not in hit_of and not _b64_held(p, secret, wholes):
+                    fallback.setdefault(p.written, p)
+    if fallback:
+        part_hits, part_kept = _b64_hits(
+            list(fallback.values()), first.mapping, budget, depth, part=True
+        )
+        hit_of.update(zip(fallback, part_hits, strict=True))
+        have = {v for _, v in kept}
+        for kind, original in part_kept:
+            if original not in have:
+                kept.append((kind, original))
+                have.add(original)
+    if not any(hit_of.values()):
+        return first
+    base = dict(mapping)
+    counters = _Redactor(dict(base)).counters
+    for kind, original in kept:
+        counters[kind] += 1
+        base[f"<{kind}_{counters[kind]}>"] = original
+    chosen: list[_B64Unit] = []
+    for unit in units:
+        if hit_of[unit.written]:
+            chosen.append(unit)
+        elif unit.parts or unit.trims:
+            trim = next((t for t in unit.trims if hit_of.get(t.written)), None)
+            if trim is not None:
+                chosen.append(trim)
+            chosen.extend(
+                p
+                for p in unit.parts
+                if hit_of.get(p.written)
+                and (trim is None or p.end <= trim.start or p.start >= trim.end)
+            )
+    chosen.sort(key=lambda u: u.start)
+    runs = list(dict.fromkeys(u.written for u in chosen))
+    placeholders = dict(zip(runs, place_encoded(base, runs), strict=True))
+    t2 = _b64_place(stripped, chosen, placeholders)
+    if _only_encoded(t2, base):
+        # E22: the whole text is one run (or runs) now held as `<ENCODED_n>`: `redact` would rebuild its finder around the run's
+        # original (the full length of the text) to read back 11 characters, and returns them as they are
+        return RedactionResult(text=t2, mapping=base, actions=0)
+    return redact(t2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)
+
+
+def _scan(
+    text: str,
+    mapping: dict[str, str],
+    cache,
+    neutralise: Callable[[str], str] | None,
+    budget: _ScanBudget,
+    depth: int,
+) -> tuple[str, dict[str, str]]:
+    """The whole of `redact_text` but the cap, the exception wrapper and the map write: the text and its views, each through
+    `_pass_one`. Returns the output and the new map; never writes `mapping`."""
+    started = budget.started
+    text = fits_after_nfkc(_clean(text))
+    if neutralise is not None:
+        text = fits_after_nfkc(neutralise(text))
+    scan = not text.isascii() or any(c in text for c in "\\%&")
+    views = _views(text) if scan else []  # _views refuses a view that would pass the cap
+    result = _pass_one(text, mapping, cache, budget, depth)
+    out, current = result.text, result.mapping
+    if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
+        raise InputTooLarge("InputTooLarge")
+    pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
+    if (
+        neutralise is not None
+    ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
+        pairs += [
+            (ph, n) for ph, d in pairs if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
+        ]
+    for view in views:
+        if (
+            time.thread_time() - started > defaults.REDACT_BUDGET_S
+        ):  # a hostile text: fail closed, nothing shown
+            raise InputTooLarge("InputTooLarge")
+        if neutralise is not None:
+            view = fits_after_nfkc(neutralise(view))
+        view = _keep_earlier_masks(view, pairs)
+        again = _pass_one(view, current, cache, budget, depth)
+        # a new value, or a known one only the view spells in a way pass one could not read
+        if again.mapping != current or _held(again.text) > _held(out):
+            out, current = again.text, again.mapping
+    return _clean(out), current
 
 
 def redact_text(
@@ -523,6 +966,17 @@ def redact_text(
     neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
     surrogates last, so it always encodes.
 
+    Base64 step (G4): every run of the base64 alphabet that pass one did not mask as a secret and that decodes to text is decoded;
+    the decoded texts are scanned as ONE text by this same procedure (escaped with `neutralise_untrusted` whatever the caller's hook
+    is, then views, decoded masks and nested base64 to `defaults.B64_MAX_DEPTH`), and a run whose decoded text held anything that
+    scan masks is replaced whole by one `<ENCODED_n>` before pass one runs again. ENCODED is a secret kind, never stored or restored.
+    A wrapped block (lines of one length) is decoded joined; when the join holds nothing, its lines are decoded one by one, and those
+    lines are not counted as units (their decoded characters have a count of their own under the same limit); a block of 3 or more lines
+    is also tried with its first or its last line left out (`unit.trims`, a trimmed join), counted the same way in `part_chars`. At most
+    `defaults.B64_MAX_UNITS` units and `defaults.B64_MAX_DECODED_CHARS` decoded characters per call, the deadline read before
+    each unit; past either, `InputTooLarge`; the decoded texts are scanned joined by a line holding `;`, and a decoded value of a kind
+    that is never stored stays in the run's map (its plain copies are masked).
+
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
     `InputTooLarge` (a RedactionError) is raised and nothing is redacted. NFKC expands some characters (U+FDFA
@@ -532,159 +986,607 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    out, current = _scan(text, mapping, neutralise, _cache_of(mapping))
+    started = time.thread_time()
+    try:
+        cache = getattr(mapping, "redact_cache", None)
+        budget = _ScanBudget(started)
+        out, current = _scan(text, mapping, cache, neutralise, budget, 0)
+    except (InputTooLarge, TooDeep, RedactionError):
+        raise  # as raised: the text of `NotSettled` (the settle loop's cap) is kept for the caller's log
+    except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
+        raise RedactionError(type(exc).__name__) from None
     # No `clear()` first: another thread (the model gate holds this map by reference) must never read it
     # empty. `current` is always the old map plus new entries: the redactor copies the map, only ever adds
     # to its copy, and numbers a new placeholder above every number already held (`redact._Redactor`).
+    # STATED LIMIT (lead review round 2, m-new-7; older than this change): two threads that write ONE map at
+    # the same time each number from their own copy, so two different values can get the same placeholder
+    # and the later `update` wins. One run's map has one writer at a time today.
     mapping.update(current)
     return out
 
 
-def is_masked(
-    text: str, mapping: Mapping[str, str], neutralise: Callable[[str], str] | None = None
-) -> bool:
-    """True when redacting `text` with `mapping` would mask nothing more. Never writes `mapping`.
-    (`Mapping` is `collections.abc.Mapping`: a plain dict, a RunMap or a read-only view all fit.)
-
-    It runs the same scan as `redact_text` (same views, caps and time budget) on a COPY of the map and
-    throws the result away. The text counts as masked only when both hold: the copy did not change (no new
-    value was found), and the result holds exactly the placeholders the input held, each as many times.
-    Both parts are needed for the first pass and for the views alike: a new secret grows the map; a second
-    copy of a known value only adds a placeholder. A count alone is not enough: a placeholder followed by
-    more readable text (`password=<UUID_1>.rest`) can be a value the map already holds whole, so one
-    placeholder is swapped for another, and two placeholders can merge into one, with the map unchanged
-    and the count the same or lower. The texts themselves are never compared: cleaning and NFKC change a
-    text without masking anything.
-
-    The redactor works on a private shallow copy of the run's cache (`mapping.redact_cache`), so the built
-    patterns are reused and the caller's cache is never written. A placeholder that is not in the map is
-    left alone, here as in `redact_text`, so it does not make a text unmasked.
-
-    `neutralise` has the meaning it has in `redact_text`: pass the hook the text was redacted with
-    (`neutralise_untrusted` for the output of `redact_untrusted`). Without it an ESCAPED placeholder
-    look-alike in untrusted text (`&lt;ID_5&gt;`, `%3CID_5%3E`) reads as not masked, because its decoded
-    view holds a placeholder the text did not. With it the placeholders are counted after the hook, as
-    `redact_text` would see them.
-
-    Returns a bool only: no masked text, no found value and no kind leaves this function. Raises
-    InputTooLarge / TooDeep / RedactionError exactly as `redact_text` does: the caller treats any raise as
-    NOT masked."""
-    _within_cap(text)
-    before = dict(mapping)
-    # The redactor only assigns the cache's two keys and never changes what they hold in place (redact.py
-    # `_Redactor._build` builds new objects first), so a shallow copy is private.
-    cache = dict(_cache_of(mapping) or {})
-    out, current = _scan(text, dict(before), neutralise, cache)
-    seen = _clean(text) if neutralise is None else _clean(neutralise(_clean(text)))
-    held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(seen))
-    held_after = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(out))
-    return current == before and held_after == held_before
+# The most sweeps one `enforce_map` call makes over a text. A text with nothing to replace takes one, an
+# ordinary text with replacements two (the second finds nothing). Small and constant: past it the call fails.
+ENFORCE_MAX_SWEEPS = 4
+# The enforce step's own size cap (design review E1). The redaction cap (`defaults.MAX_REDACT_CHARS`) is a cap on
+# text still to be redacted. What the gate holds has already been through a producer, and masking GROWS a text:
+# a value of 3 characters becomes a placeholder of up to `<KIND_NNNNN>`. A document just under the redaction cap
+# made of short values is longer than the cap once masked and was refused on every call. The factor is safe because
+# one sweep cannot grow a text by more than `max placeholder length / 3` (a value under 3 characters is never
+# replaced); `test_e1_the_growth_factor_covers_the_longest_placeholder` derives that bound from the redactor's own
+# labels. WHAT IS BOUNDED (review rounds 2 and 3, dz2-M3, design M2): each input text stays under ENFORCE_MAX_CHARS and
+# each sweep's output under ENFORCE_MAX_OUT_CHARS (checked after the sweep that made it); one `EnforceBudget` (one per
+# `snapshot`, so one per chat call of the gate) bounds the characters of ALL texts of the call, the steps (one per text
+# and one per held-back value that really occurs in a text: NOT one per value per sweep, so a long honest history is
+# not refused for the size of the map) and the time. The time is a CPU deadline (`time.thread_time()`, the clock of
+# `redact.py`) that is passed INTO the redactor's `sweep` (checked before each segment and each value replaced) and
+# its build, and a wall-clock deadline checked between values: one `sweep` over a large text with many known values
+# stops at the deadline (InputTooLarge), it is no longer unbounded.
+ENFORCE_GROWTH_FACTOR = 8
+ENFORCE_MAX_CHARS = ENFORCE_GROWTH_FACTOR * defaults.MAX_REDACT_CHARS
+ENFORCE_MAX_OUT_CHARS = ENFORCE_GROWTH_FACTOR * ENFORCE_MAX_CHARS
+ENFORCE_MAX_TOTAL_CHARS = (
+    4 * ENFORCE_MAX_CHARS
+)  # all texts of one chat call together (input; plus growth)
+# Held-back values (a known value that is a piece of a placeholder or an edge value) one snapshot accepts. The
+# old cap of 256 refused EVERY later call of a run that a hostile document had planted 257 values in (the map only
+# grows). The work per held-back value is one substring test per text and round, and one sweep only where it occurs, so
+# the cap is set by memory and the deadline, not by one call's step count. Past it the call is refused with
+# `InputTooLarge` (gate code `mask_budget_exceeded`); the producer side should stop registering (core-b, request 3).
+ENFORCE_MAX_HELD = 4096
+# entries of the map one snapshot accepts (K): 20,480; past it, InputTooLarge
+ENFORCE_MAX_ENTRIES = 5 * ENFORCE_MAX_HELD
+# 32,768: one per text, one per held-back value that occurs in a text (per round)
+ENFORCE_MAX_STEPS = 8 * ENFORCE_MAX_HELD
+# Above defaults.MAX_MAP_ENTRIES on purpose: the run cap is checked after a producer call; these bound the call before it.
 
 
-# Any substring of a placeholder token (`<KIND_12>`) is made of these characters only: the cheap first test.
-_TOKEN_PART = re.compile(r"<?[A-Z0-9]*_?[0-9]*>?")
+class EnforceBudget:
+    """One deadline, one character budget and one step budget for every `enforce_map` call that shares a snapshot
+    (the gate takes one snapshot per chat call). Raises `InputTooLarge` when one runs out. Not shared between
+    threads. `cpu_deadline` is a `time.thread_time()` value (the redactor's clock): `enforce_map` passes it into
+    `_Redactor.sweep`."""
+
+    __slots__ = ("chars", "cpu_deadline", "deadline", "steps")
+
+    def __init__(self) -> None:
+        self.deadline = time.monotonic() + defaults.REDACT_BUDGET_S
+        self.cpu_deadline = time.thread_time() + defaults.REDACT_BUDGET_S
+        self.chars, self.steps = ENFORCE_MAX_TOTAL_CHARS, ENFORCE_MAX_STEPS
+
+    def check(self) -> None:
+        if time.monotonic() > self.deadline or time.thread_time() > self.cpu_deadline:
+            raise InputTooLarge("InputTooLarge")
+
+    def spend_chars(self, n: int) -> None:
+        self.chars -= n
+        if self.chars < 0:
+            raise InputTooLarge("InputTooLarge")
+
+    def step(self) -> None:
+        self.steps -= 1
+        if self.steps < 0:
+            raise InputTooLarge("InputTooLarge")
+        if self.steps % 16 == 0:
+            self.check()
+
+
+_NOT_RAW = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
+# A known value that begins with the tail of a placeholder (`>abc`, `ECRET_1>abc`) or ends with the head of one
+# (`xyz<`, `xyz<SEC`) can be matched ACROSS the edge of a placeholder the same sweep has just written, and would
+# damage it (`<SECRET_1<SECRET_2>`). Such a value is held back like a piece of a placeholder (design review E2).
+# Review round 2 (dz2-M2) claimed that `S3cr3t>abcdef` (two secret kinds `S3cr3t` and `>abcdef`) leaks the tail:
+# NOT REPRODUCED (the placeholder `<SECRET_1>` and the raw `>` that follows it are two characters; the held-back
+# sweep then finds `>abcdef`); a swept-first order was tried and rejected: it lets a shorter edge value cut a longer
+# secret (`pass>` and `>abc` in `pass>abc` left `pass` raw). `tests/test_model_gate.py::test_r2_m2_*` pin the case.
+_EDGE_HEAD = re.compile(r"[A-Z0-9_]*>")
+_EDGE_TAIL = re.compile(r"<[A-Z0-9_]*\Z")
+
+
+def _is_edge_value(original: str) -> bool:
+    return _EDGE_HEAD.match(original) is not None or _EDGE_TAIL.search(original) is not None
 
 
 def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
     """`text` with every raw copy of a value the map already holds replaced by that value's EXISTING
     placeholder. No pattern is run: nothing new is found, no entry is added, no placeholder is invented,
     and `mapping` (a `collections.abc.Mapping`, placeholder -> original) and its `redact_cache` are never
-    written. Doing it twice changes nothing more, and a text that holds no raw copy comes back equal.
+    written. A text that holds no raw copy comes back equal. IDEMPOTENT: the text returned is one the
+    sweep leaves unchanged, so `enforce_map(enforce_map(x, m), m) == enforce_map(x, m)`.
 
     The replace is the redactor's own final sweep (`guard/redact.py` `_Redactor.sweep`), so the rules are
     the ones every producer's output already follows: longest originals first (a value that contains
     another is replaced whole); nothing is replaced inside a placeholder already in the text. Which copies
     (`redact._sweep`): a value of a secret kind of 4 characters or more, every copy; any other value, only
-    where no ASCII letter or digit touches it.
+    where no ASCII letter or digit touches it (a PHONE value: where no digit does; `redact._joins`, ticket G8).
 
-    One thing is added to the sweep. Inside one stretch of text the sweep replaces value after value and
-    does not look again at the placeholders it has just written, so a shorter known value that is itself a
-    piece of a placeholder of this map (`SECRET`, `UUID_1`) would be replaced INSIDE a placeholder written
-    a moment before (`<<SECRET_1>_2>`). Such values are therefore held back and swept afterwards, one at a
-    time, longest first: each of those sweeps starts by setting every placeholder in the text aside.
+    Stated (G9b N1): the gate's form of an overlap (`redact._Redactor._masked`) is one placeholder per free stretch of a run and the run's
+    own tokens, so a free character of a run that the covering occurrences do not name can be dropped from the masked form; the text
+    shown never holds it readable.
+
+    Two things are added to the sweep.
+    1. Held-back values. Inside one stretch of text the sweep replaces value after value and does not look
+       again at the placeholders it has just written, so a shorter known value that is itself a piece of a
+       placeholder of this map (`SECRET`, `UUID_1`) would be replaced INSIDE a placeholder written a moment
+       before (`<<SECRET_1>_2>`). Every value that the sweep can replace at all and that is a piece of one
+       of the map's placeholders is therefore held back and swept
+       afterwards, one at a time, longest first: each of those sweeps starts by setting every placeholder
+       in the text aside. A value the sweep never replaces (see the limits) is not held back.
+    2. Repeat until nothing changes (lead review round 2, MJ2). One sweep is not a fixed point: an
+       identifier glued to a shorter secret (`abc123xyz9Zq9x`) is skipped because a letter touches it, the
+       secret is then replaced, and the identifier stands alone and raw (`abc123xyz9<SECRET_1>`). So the
+       sweep runs again while the text changes, at most `ENFORCE_MAX_SWEEPS` times; a text that is still
+       changing then is REFUSED (RedactionError: fail closed, the gate makes no call), never sent half done.
 
     Limits, on purpose (each pinned by a test in tests/test_runmap_enforce_map.py):
     - NOT replaced at all: a value under 3 characters; and, unless it is a secret kind of 4 characters or
       more, a value that is all digits and under 6 characters or a common word (`redact._COMMON`).
-    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit touches it.
-    - Only the spelling held in the map is replaced. A copy hidden by full-width letters, a zero-width
+    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit (for a PHONE value: a
+      digit) touches it and
+      keeps touching it after every other replacement.
+    - Only the spelling held in the map is replaced (for a value that is not ASCII, also its folded NFKC spellings,
+      which the redactor sweeps with it: each is its own held-back item when it is a piece of a placeholder). A copy hidden by full-width letters, a zero-width
       space or an escape is NOT found here: finding those is the pattern redactor's work (`redact_text`),
-      and returning a decoded view from here could turn a look-alike into a real placeholder.
+      and returning a decoded view from here could turn a look-alike into a real placeholder. The text is
+      not cleaned either: a copy split by NUL characters (a UTF-16 document read as UTF-8 has one after
+      every character) is not found. The gate's net reads those forms of a SECRET value (`held_in_views`, G13).
+    - A value that itself holds a placeholder-shaped token (`ab<X_1>cd`) is never replaced: the sweep
+      sets every token aside first, so the value never lies in one stretch of text.
+    - A known value written inside angle brackets so that it reads as a token (the value `ABC_1` written
+      as `<ABC_1>`) is taken for a placeholder and left.
     - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in
-      `abcdef`): the longer one (the earlier in the map when equal) is replaced and the rest of the other
-      stays (`<A_1>ef`); when neither is a secret kind, neither is replaced there.
+      `abcdef`): since G9 the sweep reads the text back with the map's placeholders put back and replaces the
+      readable rest by the EXISTING placeholder of a value that covers it, a secret's where one does, else the
+      identifier's (`<SECRET_1><SECRET_2>`); the map is not written. A held-back value is not in this sweep's
+      map: its rest stays here. The net (`held_value_left`) checks values of SECRET kinds only: the rest of a held-back
+      secret refuses the call, the rest of a held-back identifier passes the net silently (a stated limit).
+      Where one value is held under both an identifier and a secret kind, since G4 the secret's placeholder is the one used.
+    - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
+      on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
+      text it is not replaced (the `>` belongs to that placeholder) and its tail stays readable (4 or more characters
+      of a SECRET value there: the net refuses the call, `_touching_piece`, G13).
+    - A map key that is not a genuine placeholder (`<host_1>`: lower case) is not set aside by any sweep,
+      so a known value that is a piece of it (`host`) is replaced inside it, held back or not: a damaged
+      placeholder, no raw value. The redactor only writes genuine keys.
+    - A chain of glued identifiers that needs more than `ENFORCE_MAX_SWEEPS` sweeps is refused, not sent.
 
-    Same input cap as `redact_text` (`InputTooLarge`); any other failure (a map that is not text to text)
-    is a RedactionError that names the error's type and never the text."""
-    _within_cap(text)
+    Bounds: the input cap of `redact_text` and the time budget `defaults.REDACT_BUDGET_S`, but one budget for ALL
+    texts that share a snapshot (`EnforceBudget`: time, characters, steps; see ENFORCE_MAX_CHARS for what is and is
+    not bounded; one regex scan of one stretch of text inside the redactor cannot be interrupted). Past any of them, `InputTooLarge`. Any other failure (a map that is not text to
+    text) is a RedactionError that names the error's type and never the text."""
     try:
-        known = dict(mapping)
-        tokens = "\n".join(known)
-        late = {
-            ph: original
-            for ph, original in known.items()
-            if _TOKEN_PART.fullmatch(original) and original in tokens
-        }
-        if not late:
-            # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
-            cache = dict(getattr(mapping, "redact_cache", None) or {})
-            return _Redactor(known, cache).sweep(text)
-        first = {ph: original for ph, original in known.items() if ph not in late}
-        out = _Redactor(first, None).sweep(text)
-        for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1])):
-            if original in out:
-                out = _Redactor({ph: original}, None).sweep(out)
-        return out
+        if len(text) > ENFORCE_MAX_CHARS:
+            raise InputTooLarge("InputTooLarge")
+        snap = snapshot(mapping)
+        budget = snap.budget
+        budget.spend_chars(len(text))
+        budget.step()  # one step per text
+        first, held_back = snap.sweeps
+        deadline = budget.cpu_deadline
+        out = text
+        for _ in range(ENFORCE_MAX_SWEEPS):
+            before = out
+            out = first.sweep(out, deadline)
+            for n, (spelling, placeholder, rule) in enumerate(held_back):
+                if not n % 64:
+                    budget.check()  # the substring tests below cost one pass over the text each
+                if spelling in out:
+                    budget.step()  # only a value that really occurs costs a step
+                    out = _sweep_held(out, spelling, placeholder, rule, deadline)
+            if len(out) > ENFORCE_MAX_OUT_CHARS:
+                raise InputTooLarge("InputTooLarge")
+            budget.check()  # a hostile text or map: fail closed
+            if out == before:
+                budget.spend_chars(max(0, len(out) - len(text)))
+                return out
+    except RedactionError:
+        raise
     except Exception as exc:  # noqa: BLE001 - whatever the sweep raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
+    raise RedactionError("NotSettled")  # still changing after the last sweep: nothing is sent
 
 
-def _scan(
-    text: str,
-    mapping: dict[str, str],
-    neutralise: Callable[[str], str] | None,
-    cache: dict[str, Any] | None,
-) -> tuple[str, dict[str, str]]:
-    """The work of `redact_text` without its write: (redacted text, the map as it would be afterwards).
-    `mapping` is only read. Callers check the input cap first (`_within_cap`)."""
-    started = time.monotonic()
-    try:
-        text = fits_after_nfkc(_clean(text))
-        if neutralise is not None:
-            text = fits_after_nfkc(neutralise(text))
-        scan = not text.isascii() or any(c in text for c in "\\%&")
-        views = _views(text) if scan else []  # _views refuses a view that would pass the cap
-        result = redact(text, mapping=mapping, _cache=cache)
-        out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+class MapSnapshot(dict):
+    """ONE copy of a run's map, taken at one moment, with the sweeps `enforce_map` needs built from it once.
+    `enforce_map(text, a_snapshot)` reuses them, so a caller with many texts (the model gate: every message
+    and document of one call) copies the map once and builds its patterns at most once, and every text of
+    that call is enforced against the same entries. Private to its maker: not shared between threads, and
+    not kept after the call (a value the run learns later is in the next snapshot)."""
+
+    sweeps: tuple[Any, list[tuple[str, str, Any]]]  # the main sweep, the held-back spellings
+    budget: EnforceBudget
+    secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
+    checker: Any  # a redactor over exactly those secret values, for `held_value_left`
+    # `_piece_index` of the secret values (G13)
+    pieces: Any  # `PieceIndex`
+
+
+def _rules_conflict(known: Mapping[str, str]) -> bool:
+    """True when one original is held under two placeholders whose sweep rules differ (a secret kind and an
+    identifier kind). Plain duplicates with one rule are not a conflict."""
+    rules: dict[str, set[Any]] = {}
+    for ph, original in known.items():
+        rule = _sweep(ph, original)
+        if rule is not None:
+            rules.setdefault(original, set()).add(rule)
+    return any(len(found) > 1 for found in rules.values())
+
+
+def _late_values(known: Mapping[str, str]) -> dict[str, str]:
+    """The entries to hold back: the sweep can replace the value (or one of its ALIAS spellings: a non-ASCII value
+    is swept in its folded spellings too, `redact._alias_keys`) and it is a piece of one of the map's keys or an
+    edge value (`_is_edge_value`). A value is a piece of a key only if all its characters occur in the keys, so
+    most values are dismissed by one set test and only the rest are looked up in the joined keys; a value is
+    looked up once however many placeholders hold it (design M2: the old test was one pass over all keys per
+    value)."""
+    tokens = "\n".join(known)
+    alphabet = set(tokens)
+    seen: dict[str, bool] = {}
+
+    def held(spelling: str) -> bool:
+        found = seen.get(spelling)
+        if found is None:
+            found = _is_edge_value(spelling) or (
+                len(spelling) <= len(tokens)
+                and alphabet.issuperset(spelling)
+                and spelling in tokens
+            )
+            seen[spelling] = found
+        return found
+
+    late: dict[str, str] = {}
+    for ph, original in known.items():
+        if _sweep(ph, original) is None:
+            continue
+        spellings = (original,) if _plain(original) else (original, *_alias_keys(original))
+        if any(held(spelling) for spelling in spellings if spelling):
+            late[ph] = original
+    return late
+
+
+def _sweep_held(text: str, spelling: str, placeholder: str, rule: Any, deadline: float) -> str:
+    """The redactor's final sweep for ONE spelling of one held-back value: every placeholder-shaped token is set
+    aside, then the free stretches are replaced by the spelling's rule (`redact._sweep`). Not a `_Redactor`: a
+    redactor built for a non-ASCII value would sweep that value's folded spellings too, in the same pass, and cut
+    the placeholder it had just written (`<<TENANT_1>_1>`: code review round 3, M2). Each spelling is its own
+    held-back item, longest first."""
+    parts = _PLACEHOLDER.split(text)
+    for i in range(0, len(parts), 2):
+        if not i % 512 and time.thread_time() > deadline:
             raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text) if views else []
-        if (
-            neutralise is not None
-        ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
-            pairs += [
-                (ph, n)
-                for ph, d in pairs
-                if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
-            ]
-        for view in views:
-            if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
-            ):  # a hostile text: fail closed, nothing shown
-                raise InputTooLarge("InputTooLarge")
-            if neutralise is not None:
-                view = fits_after_nfkc(neutralise(view))
-            view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
-            # a new value, or a known one only the view spells in a way pass one could not read
-            if again.mapping != current or _held(again.text) > _held(out):
-                out, current = again.text, again.mapping
-        out = _clean(out)
-    except (InputTooLarge, TooDeep):
+        segment = parts[i]
+        if spelling in segment:
+            if rule is _EVERY_COPY:
+                parts[i] = segment.replace(spelling, placeholder)
+            else:
+                parts[i] = _replace_standalone(segment, spelling, placeholder, _joins(placeholder))
+    return "".join(parts)
+
+
+def _built(
+    entries: dict[str, str], holder: dict[str, Any] | None, slot: str, deadline: float
+) -> Any:
+    """A `_Redactor` over `entries`, its patterns BUILT now (inside the budget), reusing the state `holder[slot]`
+    holds when it was built for the same entries and storing the new state there as ONE assignment (a pair), so a
+    thread that shares the holder never reads half of an update. `holder` is the bound gate's own: the run's
+    `redact_cache` is never written."""
+    scratch: dict[str, Any] = {}
+    pair = holder.get(slot) if holder is not None else None
+    if pair is not None and pair[0] == entries:
+        scratch = {"map": pair[0], "state": pair[1]}
+    redactor = _Redactor(entries, scratch, deadline)
+    redactor.sweep("", deadline)  # builds the patterns now, under the deadline
+    if holder is not None and "map" in scratch and "state" in scratch:
+        holder[slot] = (scratch["map"], scratch["state"])
+    return redactor
+
+
+def _held_items(late: Mapping[str, str], stored: set[str]) -> list[tuple[str, str, Any]]:
+    """(spelling, placeholder, rule) for every spelling of every held-back value, longest first: the value itself and,
+    for a non-ASCII value, the folded spellings the redactor would sweep with it (`redact._alias_keys`; one that is
+    itself a stored value is that value's own item)."""
+    items: dict[str, tuple[str, str, Any]] = {}
+    for ph, original in late.items():
+        spellings = (original,) if _plain(original) else (original, *_alias_keys(original))
+        for spelling in spellings:
+            rule = _sweep(ph, spelling)
+            if spelling and rule is not None and (spelling == original or spelling not in stored):
+                items.setdefault(spelling, (spelling, ph, rule))
+    return sorted(items.values(), key=lambda item: -len(item[0]))
+
+
+def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) -> MapSnapshot:
+    """A `MapSnapshot` of `mapping` (itself when it already is one). `dict(mapping)` on a RunMap or a plain
+    dict is one atomic copy, so a writer in another thread is seen whole or not at all. Never writes
+    `mapping` or its `redact_cache`. Any failure (a map that is not text to text, a cache attribute that
+    raises) is a RedactionError that names the error's type. Bounded: more than `ENFORCE_MAX_ENTRIES` entries or
+    `ENFORCE_MAX_HELD` held-back values is `InputTooLarge`; the build runs under the budget's deadline.
+
+    `cache`: a dict the CALLER owns (the bound gate keeps one per run) in which the built patterns of the held-back
+    case are kept between calls. The run's own `redact_cache` cannot serve there: it is valid for the whole map, and
+    a map with one held-back value is swept in two parts."""
+    if isinstance(mapping, MapSnapshot):
+        return mapping
+    try:
+        known = MapSnapshot(mapping)
+        if len(known) > ENFORCE_MAX_ENTRIES:
+            raise InputTooLarge("InputTooLarge")
+        known.budget = budget = EnforceBudget()
+        deadline = budget.cpu_deadline
+        late = _late_values(known)
+        if len(late) > ENFORCE_MAX_HELD:
+            raise InputTooLarge("InputTooLarge")
+        if _rules_conflict(known):
+            # One original under two placeholders (E5). Since G4 the redactor itself keeps the secret kind's rule for that
+            # original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the
+            # others, which decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the
+            # run's cache holds the map's own order.
+            ordered = dict(sorted(known.items(), key=lambda kv: _sweep(*kv) is not _EVERY_COPY))
+            first = _built(
+                {ph: o for ph, o in ordered.items() if ph not in late}, cache, "first", deadline
+            )
+        elif late:
+            first = _built(
+                {ph: o for ph, o in known.items() if ph not in late}, cache, "first", deadline
+            )
+        else:
+            # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
+            first = _Redactor(known, dict(getattr(mapping, "redact_cache", None) or {}), deadline)
+            first.sweep("", deadline)
+        held_back = _held_items(late, set(known.values()))
+        known.sweeps = (first, held_back)
+        secrets = {ph: o for ph, o in known.items() if _sweep(ph, o) is _EVERY_COPY}
+        known.secret_values = frozenset(secrets.values())
+        known.checker = _built(secrets, cache, "check", deadline) if secrets else None
+        known.pieces = _piece_index(known.secret_values)
+    except RedactionError:
         raise
-    except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
+    except Exception as exc:  # noqa: BLE001 - fail closed
         raise RedactionError(type(exc).__name__) from None
-    return out, current
+    return known
+
+
+# G13 (E19 M1): the shortest piece of a secret value that the net reads as a leak where it touches a placeholder.
+NET_MIN_PIECE = 4
+# G13b (design M-1): a piece that is only the public start of a value (its URL scheme `https://`, `postgres://`, or an
+# auth word `Bearer `) or only separator characters is no leak: `https://<HOSTNAME_1>/health` is ordinary text beside a
+# WEBHOOK value that starts `https://hooks...`. A piece that goes one character past that start (the scheme plus one letter) still is.
+_LEAD = re.compile(
+    r"(?:[A-Za-z][A-Za-z0-9+.\-]{0,14}://"
+    r"|(?i:Bearer|Basic|Token|Digest|OAuth|ApiKey|Negotiate|NTLM|AWS4-HMAC-SHA256|Bot|Key)[ \t]+)"
+)
+_SEPARATORS = " \t\r\n/\\:;,.?&=#@!-_+*~|<>()[]{}'\"%"
+_LOOKUP_COST = 64  # characters one piece lookup charges to the call budget (a compare stops at the first difference)
+_KEY_HITS_MAX = 4096  # G13c: the most head hits the net reads around one key (both sides); past it InputTooLarge
+PieceIndex = tuple[
+    list[str],
+    dict[int, list[str]],
+    list[str],
+    list[str],
+    list[str],
+    frozenset[str],
+    frozenset[str],
+    int,
+]
+
+
+def _piece_index(values: frozenset[str]) -> PieceIndex:
+    """G13: the secret values longer than `NET_MIN_PIECE` that have no public start, sorted; those that have one (G13b:
+    `_LEAD`; only starts of `NET_MIN_PIECE` or more matter), sorted, by the length of that start; the reversals of all of
+    them, sorted; G13c: the values made only of separator characters (a piece of those is read even where it is only
+    separators), forward and reversed, sorted, which are not in the lists before; the first and the last
+    `NET_MIN_PIECE` characters of each; the longest length of any value (kept here so a chunk does not scan the
+    values). `_touching_piece` looks a piece up by bisection."""
+    fwd = [v for v in values if len(v) > NET_MIN_PIECE]
+    plain: list[str] = []
+    leaded: dict[int, list[str]] = {}
+    seps: list[str] = []
+    for v in fwd:
+        lead = _LEAD.match(v)
+        if not v.strip(_SEPARATORS):
+            seps.append(v)
+        elif lead and lead.end() >= NET_MIN_PIECE:
+            leaded.setdefault(lead.end(), []).append(v)
+        else:
+            plain.append(v)
+    plain.sort()
+    for group in leaded.values():
+        group.sort()
+    seps.sort()
+    rev = sorted(v[::-1] for v in fwd if v.strip(_SEPARATORS))
+    seps_rev = sorted(v[::-1] for v in seps)
+    heads = frozenset(v[:NET_MIN_PIECE] for v in fwd)
+    tails = frozenset(v[-NET_MIN_PIECE:] for v in fwd)
+    return plain, leaded, rev, seps, seps_rev, heads, tails, max(map(len, values), default=0)
+
+
+def _digest(piece: str) -> bytes:
+    """G13c: a 16-byte digest of a long piece (what `_touching_piece` remembers instead of the piece)."""
+    return hashlib.blake2b(piece.encode("utf-8", "surrogatepass"), digest_size=16).digest()
+
+
+def _starts_one(ordered: list[str], piece: str) -> bool:
+    """True when some string of the sorted list `ordered` starts with `piece` (a string equal to it counts)."""
+    i = bisect.bisect_left(ordered, piece)
+    return i < len(ordered) and ordered[i].startswith(piece)
+
+
+def _touching_piece(text: str, snap: MapSnapshot) -> bool:
+    """(E:: = tests/test_runmap_enforce_map.py.) G13 (E19 M1): True when a KEY of the map has, right before it, a piece of `NET_MIN_PIECE` or more characters
+    that is the START of a secret value (shorter than or equal to the value), or right after it a piece that is the
+    END of one: `hunter2-<SECRET_2>`, `<SECRET_1>-ZZZZ`. Such a piece is what is left when two known values overlap and
+    one was masked across the other, whatever the placeholder holds. Not a piece (G13b, design M-1): characters that
+    are only separators, and the public start of a value (`https://`, `Bearer `; `_LEAD`) taken alone: ordinary text
+    beside a placeholder (`https://<HOSTNAME_1>/health`) is not refused because a webhook value starts the same way;
+    a scheme plus one more character is a piece. G13c (m2): the separator rule exempts a piece only because of the
+    value it is a piece OF: a piece that starts (ends) a value made ONLY of separators (`!!!!!!!!`, `....----`) is a
+    piece however short, and a piece of separators that starts a value with other characters (`-----BEGIN`) is not. G13c (m1): the public auth words of `_LEAD` are read in any letter case
+    (`bearer `, `BEARER `) and are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`,
+    `AWS4-HMAC-SHA256`, `Bot`, `Key`; any other word before a secret (a custom scheme) is not exempt (letter case
+    matters only for these words: the VALUE itself is compared as written, so a piece of a value in another letter case
+    is not read; E::test_g13c_5). Stated limit (G13d, pinned: E::test_g13d_1): a secret made ONLY of separator
+    characters (whitespace, `********`) makes any run of 4 or more of them before or after a key a piece, so indentation
+    or `****<HOST_1>` is refused for the run; whether a producer can register such a value, and the minimum run length
+    for those values, are open (handover ESCALATIONS E24). Stated limit:
+    a secret whose own first characters are ordinary words (`the quick brown fox`) refuses text that starts the same way
+    beside a key (`the <HOST_1>`; the net cannot tell a copy of those words from a leak), and that refusal stays for
+    the run (the message stays in the history); it is the same `held_value_left` code as a leak (pinned: E::test_g13c_6, E::test_g13c_6b). Only
+    the text between the key and the next (or previous) key is read, at most the longest value's length minus one.
+    Cost (G13c): a position is tested by its first (left) or last (right) `NET_MIN_PIECE` characters (a slice of
+    that size) BEFORE the piece is cut, so a gap with no head hit copies nothing and a hit copies one piece (the
+    earlier code cut a piece of up to the longest value's length at every position: quadratic in the gap, unbudgeted).
+    A piece is looked up only where those characters are those of a value; a piece already looked up in this text is
+    not looked up, nor charged, again; `seen` keeps the piece itself when it is at most `_LOOKUP_COST` characters and
+    else a 16-byte digest, so its memory does not grow with the length of the pieces (it held every piece whole: about
+    370 MB at a 16,000-character value on a hostile gap); each lookup spends at most `_LOOKUP_COST` characters of the
+    call's budget (`InputTooLarge` past it) and the deadline is read every 256 hits (E::test_g13c_9). G13d (review 1 M1): the
+    charge is made at EVERY head hit, before the `seen` test: `1 + len(piece) // _LOOKUP_COST` characters (the work a
+    repeated hit still does is the cut and the digest, O(piece)), so an identical gap repeated before many keys is
+    budgeted (E::test_g13c_7, E::test_g13c_8) while a short repeated head costs one character a hit (E::test_g13b_4:
+    378,000 repeats stay under 1M); the lookup itself (`min(len, _LOOKUP_COST)`) is charged once per distinct piece. Memory: E::test_g13c_2, E::test_g13c_10. At most `_KEY_HITS_MAX` head hits
+    are read around one key (both sides together, repeated pieces included): past it `InputTooLarge`, which the
+    gate reports as `mask_budget_exceeded` (fail closed: a hostile run of one head repeated, one hit a character,
+    would otherwise cost the whole call's budget; the 1,978-input property corpus never gets near it; E::test_g13c_3).
+    The cap also trips on honest text: a PEM head (`-----BEGIN ...`) beside a long run of dashes or equals signs (a gap
+    over 4,096 characters of one repeated head) is refused as `mask_budget_exceeded` (E::test_g13c_3)."""
+    plain, leaded, rev, seps, seps_rev, heads, tails, longest = snap.pieces
+    if not heads:
+        return False
+    budget, k = snap.budget, NET_MIN_PIECE
+    tokens = [m.span() for m in _PLACEHOLDER.finditer(text) if m.group() in snap]
+    seen: set[tuple[bool, str | bytes]] = (
+        set()
+    )  # the pieces looked up in this text that were not a leak
+    hits = 0
+    for n, (start, end) in enumerate(tokens):
+        if not n % 256:
+            budget.check()
+        before = tokens[n - 1][1] if n else 0
+        after = tokens[n + 1][0] if n + 1 < len(tokens) else len(text)
+        left = text[max(before, start - longest + 1) : start]
+        key_hits = 0
+        for i in range(len(left) - k, -1, -1):  # the piece left[i:] ends at the key
+            if left[i : i + k] not in heads:
+                continue
+            key_hits += 1
+            if key_hits > _KEY_HITS_MAX:
+                raise InputTooLarge("InputTooLarge")
+            hits += 1
+            if not hits % 256:
+                budget.check()
+            piece = left[i:]
+            budget.spend_chars(1 + len(piece) // _LOOKUP_COST)  # every hit
+            mark = (True, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
+            if mark in seen:
+                continue
+            seen.add(mark)
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if (
+                _starts_one(plain, piece)
+                or any(
+                    len(piece) > lead and _starts_one(group, piece)
+                    for lead, group in leaded.items()
+                )
+                if piece.strip(_SEPARATORS)
+                else _starts_one(seps, piece)
+            ):
+                return True
+        right = text[end : min(after, end + longest - 1)]
+        for j in range(k, len(right) + 1):  # the piece right[:j] starts at the key
+            if right[j - k : j] not in tails:
+                continue
+            key_hits += 1
+            if key_hits > _KEY_HITS_MAX:
+                raise InputTooLarge("InputTooLarge")
+            hits += 1
+            if not hits % 256:
+                budget.check()
+            piece = right[:j]
+            budget.spend_chars(1 + len(piece) // _LOOKUP_COST)  # every hit
+            mark = (False, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
+            if mark in seen:
+                continue
+            seen.add(mark)
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if _starts_one(rev if piece.strip(_SEPARATORS) else seps_rev, piece[::-1]):
+                return True
+    return False
+
+
+def held_in_views(text: str, snap: MapSnapshot) -> bool:
+    """G13 (E19 M2): the net over the forms of `text` a reader (or the model) may decode: the text without NUL and lone
+    surrogates (a UTF-16 document read as UTF-8) and, when it holds a non-ASCII character or `\\`, `%` or `&`, every
+    `_views` form of that. True when `held_value_left` finds a secret value in any of them (that is the sweep over
+    the form AND the piece rule `_touching_piece`, so a piece beside a key in a decoded form refuses too). Each
+    view's characters are spent from the call's budget, and the deadline is read before each window's views are
+    built; a text whose views would pass `defaults.MAX_REDACT_CHARS` is read in overlapping windows (`_windows`).
+    `_views` can raise `InputTooLarge` or `TooDeep`: the caller refuses the call. Stated limits: a copy spelled in
+    several stacked layers (`%26%23...`, up to `SCRUB_MAX_LAYERS` = 8 undone; each layer can multiply the spelling by up
+    to 10) across a window edge of a text over `VIEW_WINDOW` characters is missed when the spelling is longer than the
+    overlap (`WINDOW_OVERLAP_MAX`); the producers read the same layers whole, so this matters only where a producer was
+    bypassed. Not pinned: the stacked-layer limit."""
+    if not snap.secret_values:
+        return False
+    cleaned = _clean(text)
+    if cleaned != text:
+        snap.budget.spend_chars(len(cleaned))
+        snap.budget.check()
+        if held_value_left(cleaned, snap):
+            return True
+    if cleaned.isascii() and not any(c in cleaned for c in "\\%&"):
+        return False
+    for window in _windows(cleaned, snap.pieces[-1]):
+        snap.budget.check()
+        for view in _views(window):
+            snap.budget.spend_chars(len(view))
+            snap.budget.check()
+            if held_value_left(view, snap):
+                return True
+    return False
+
+
+# G13: a text longer than this is read by `held_in_views` in windows of this size (`_views` refuses a form past
+# `defaults.MAX_REDACT_CHARS`, and NFKC can triple a text; the gate holds texts up to 8 times that cap).
+VIEW_WINDOW = defaults.MAX_REDACT_CHARS // 4
+# G13b (design M-2): the most two windows overlap. A value of up to (WINDOW_OVERLAP_MAX - 16) / 10 = 1,636 characters
+# keeps the full overlap of ten characters a character; a longer one (a PEM key, a planted blob up to 65,536
+# characters) is read with this overlap: its spelling of up to this many characters is found across a window edge
+# (an NFKC or percent form is 1 to 3 characters a character, so values up to about 5,000 in a form of 3), and the
+# raw copy is found by `held_value_left` on the whole text, which has no windows.
+WINDOW_OVERLAP_MAX = VIEW_WINDOW // 4
+
+
+def _windows(text: str, longest: int) -> list[str]:
+    """`text` whole when it fits one window, else windows of `VIEW_WINDOW` characters that overlap by ten times the
+    longest secret value plus 16 (an escaped spelling is at most ten characters a character: `&#1114111;`), at most
+    `WINDOW_OVERLAP_MAX` (G13b: a long value no longer refuses every long text; its limit is in `held_in_views`)."""
+    if len(text) <= VIEW_WINDOW:
+        return [text]
+    overlap = min(10 * longest + 16, WINDOW_OVERLAP_MAX)
+    step = VIEW_WINDOW - overlap
+    return [text[i : i + VIEW_WINDOW] for i in range(0, len(text) - overlap, step)]
+
+
+def held_value_left(text: str, snap: MapSnapshot) -> bool:
+    """Safety net for the gate (dz2-M2, design M3): True when a value of a SECRET kind (4 or more characters: the
+    ones swept in every copy) still occurs raw in `text`. A placeholder-shaped token hides a value only if it is an
+    exact KEY of the map; any other `<NAME_1>` (a forged `<AKIAEXAMPLE123_1>`) is opened up first, because the
+    sweep itself sets every placeholder-shaped token aside. One pass of the same finder the sweep uses, under the
+    call's deadline. Never returns or logs the value. A value that spans two chunks the gate enforced one by one
+    (a fixed framing word between) is not seen here: a stated limit of the gate. Since G9 the checker's sweep reads
+    the text back: a secret value spelled across a placeholder is found; that sweep can raise `InputTooLarge` (its
+    work count, the deadline, `SpelledNotSettled`), which `_chunk` does not catch: `_enforced` reports it as
+    `mask_budget_exceeded`. Since G13 the piece rule runs too (`_touching_piece`: a piece of a secret value beside a
+    key of the map, `hunter2-<HOST_1>`; G13b: not a bare URL scheme or separators). `held_in_views` calls this on each
+    decoded form of a text."""
+    if not snap.secret_values:
+        return False
+    opened = _NOT_RAW.sub(
+        lambda m: m.group() if m.group() in snap else m.group().replace("<", "<\0"), text
+    )
+    if snap.checker.sweep(opened, snap.budget.cpu_deadline) != opened:
+        return True
+    return _touching_piece(text, snap)  # G13 (E19 M1)
 
 
 SAFE_HEAD_NOTE = "(details withheld)"

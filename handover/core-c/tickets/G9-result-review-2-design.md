@@ -1,0 +1,8 @@
+# G9 result review, round 2 (fresh, design, read-only, nothing run)
+Verdict: 0 Blocker, 3 Major, 5 Nit. No new way found for a secret to stay readable in a returned output.
+Major
+- M1 `_overlaps` (redact.py ~2233-2249) collects every occurrence before charging (`_spend` after the list exists); no deadline read inside the finditer loop. A nested-chain text (200 secrets a x4..203, ~230k chars of `<SECRET_203>x...`) can build ~4e8 tuples: hang/OOM before SpelledWorkTooMuch. Fix: charge as you go or dedupe by (at, word); add a test.
+- M2 `_place_union` returns an existing `reverse[full]` placeholder whatever its kind, so a SECRET union can become a restorable kind (TENANT_1 = ab-cd-ef known, SECRET_1 = cd-ef learned, `ab-<SECRET_1>` -> `<TENANT_1>`). Kind rule (`kind = SECRET if secret`) pinned by nothing (MIX N5 not done). Fix: keep the secret token or add a SECRET entry.
+- M3 Unit weights undercount time 10-40x vs the calibration (2.3-4.6 us/unit measured vs 0.09-0.21); state whether E17 10 s is CPU or wall. A 4,000-char periodic secret `ab`*2000 with text `S+"a"+S` costs ~11.9M units and is refused (SpelledWorkTooMuch) on a ~12k document. Fails closed, loses a legitimate document. Recalibrate or add a per-edge comparison cap; state the limit with numbers.
+Nit: N1 `_masked` can drop a free character (state in enforce_map docstring); N2 SpelledNotSettled raised even when pass 4 closed the last run; N3 defaults.py:149-150 cap-order comment incomplete (FinderMemoryTooMuch 786,432 comes before MAX_MAP_CHARS); N4 mutant G9-6 does not exist (numbering); N5 G9-25..30 look sound.
+Not read: redact()/redact_many(), `_fold_scan`, runmap G13 net, model_gate, G9-1..24 killers.

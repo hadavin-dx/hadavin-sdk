@@ -9,7 +9,14 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-240 mutants (the list of P1b, 216, the 10 of P1a fix8 and the 14 of the two P1b fix rounds, 9 of round 1 and 5 of round 2), in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+268 mutants, in the order of the list. The total is the sum of the groups, which ``tests/test_textnorm_meta.py`` (test a) checks by slice:
+77 + 26 + 14 + 5 + 31 + 10 + 77 + 28 = 268. In that order: 77 of the text fold and P1a fix4 (28 re-pointed mutants of the earlier text-fold list, the
+killers moved with their tests, + 12 of the first package + 9 of fold2 + 3 of fold3 (U+0345) + 16 of fold4 + 9 of fix4 = 77; the first fold4 mutant is the
+fold2 mutant "no case fold before the marks are dropped", restored), 26 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped
+views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 31 of fix7
+(the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens), 10 of fix8, 77 of the P1b
+fix batch (30 of the first batch + 33 of order 137 + 9 of round 1 + 5 of round 2 = 77) and 28 of G10, M3 and the tidy (16 of G10, the deadline of the
+fold, + 7 of M3, its wall clock, + 5 of the tidy, the huge budget and the boundaries of the wall factor, last: 16 + 7 + 5 = 28). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -33,19 +40,22 @@ SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
 SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 FB = "tests/test_textnorm_fixbatch.py"  # the killers of the fix batch: the composed view, the Mc and Sk keys, the minimums, the cache, the choke point, the insertion match
 O = "tests/test_textnorm_order137.py"  # the killers of order 137: the strict scan_views, the registration check, the cache scope, the cap, the Japanese minimum, the Russian word
+Q9 = "tests/test_textnorm_q9.py"  # the killers of round 2 of the Q9 list: the composed view after an unescape or an undo, the padded overlap, the halving point (look-alike phrases)
+DL = "tests/test_textnorm_deadline.py"  # the killers of G10: the deadline of the fold scan and of the injection read
 R2 = "tests/test_textnorm_round2.py"  # the killers of the round 2 fix: the padded boundary, the settings check, the composed-form equivalence
 RO = "tests/test_textnorm_round1.py"  # the killers of the round 1 fix batch: the composed evidence view, the strict register, the chunked tripwire, the cache lock
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, SC, SB, FB, O, RO, R2, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, FB, O, RO, R2, Q9, DL, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 RM, INJ = S + "runmap.py", S + "injection.py"
 DEF = "src/hadavin_sdk/defaults.py"
 
 
-def mutant(name, file, old, new, killer, expect, *, test_file=T, **kw):
-    """One mutant: ``killer`` (a test of ``test_file``) must fail first, with a line that holds ``expect``."""
-    pin = test_file.removesuffix(".py") + "::" + killer
+def mutant(name, file, old, new, killer, expect, *, test_file=T, param="", **kw):
+    """One mutant: ``killer`` (a test of ``test_file``) must fail first, with a line that holds ``expect``. ``param`` (``[300]``) is the id suffix of
+    the parameter of a parametrized killer that must be the failing one."""
+    pin = test_file.removesuffix(".py") + "::" + killer + param
     return Mutant(
         name, file, old, new, expect, test_file=test_file, only_test=killer, pinned=pin, **kw
     )
@@ -324,7 +334,7 @@ M = [
         "    return _views(\n        raw, casefold=casefold, collapse_ws=collapse_ws, marks_dropped=True, scripts=scripts\n    )\n", "    return (_fold(raw, casefold=casefold, collapse_ws=collapse_ws),)\n",
         GREEKLOOK, "has no view that reads admin"),
     mutant("scan: squeeze_views gives one view", TN,
-        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):", "    for view in (_fold(raw, casefold=True),):",
+        "    for view in _views(\n        raw, casefold=True, collapse_ws=False, marks_dropped=True, deadline=deadline\n    ):", "    for view in (_fold(raw, casefold=True),):",
         GREEKLOOK, "squeeze_views has no view that reads ADMIN"),
     mutant("tag: a reading of identity_keys has no tag", TN,
         "    return tuple(\n        tag + view\n        for view in _views(raw, casefold=True, collapse_ws=True, marks_dropped=marks_dropped)\n    )\n",
@@ -446,8 +456,8 @@ M = [
         "collapse_ws=collapse_ws, marks_dropped=False, scripts=scripts\n    )",
         NOASCII, "the scan misses the value with the mark inserted"),
     mutant("marks: squeeze_views has no marks-dropped views", TN,
-        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):",
-        "    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=False):",
+        "    for view in _views(\n        raw, casefold=True, collapse_ws=False, marks_dropped=True, deadline=deadline\n    ):",
+        "    for view in _views(\n        raw, casefold=True, collapse_ws=False, marks_dropped=False, deadline=deadline\n    ):",
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: a spacing combining mark (Mc) is not dropped", TN,
         '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Lm", "Sk"}\n)  # kept by',
@@ -456,7 +466,7 @@ M = [
         '    {"Mc", "Lm", "Sk"}\n)  # kept by', '    {"Mc", "Sk"}\n)  # kept by',
         MCSQUEEZE, "misses a secret hidden with U+"),
     mutant("marks: a view is repeated", TN,
-        "        scripts=scripts,\n    ):\n        if view not in out:\n            out.append(view)", "        scripts=scripts,\n    ):\n        out.append(view)",
+        "        scripts=scripts,\n        deadline=deadline,\n    ):\n        if view not in out:\n            out.append(view)", "        scripts=scripts,\n        deadline=deadline,\n    ):\n        out.append(view)",
         SIXVIEWS, "repeated or there are more than the limit"),
     mutant("names: the negative circled and squared letters are not read", GEN,
         '        (r"(?:CROSSED )?NEGATIVE (?:CIRCLED|SQUARED) LATIN CAPITAL LETTER ([A-Z])", "upper"),\n', "",
@@ -611,7 +621,7 @@ M = [
     mutant("mixed: a mark of the word's own script flags", TN,
         '    return any(group != "LATIN" and group not in own for group in map(_script_of, marks))\n',
         '    return any(group != "LATIN" for group in map(_script_of, marks))\n',
-        MIXED2, "is flagged"),
+        MIXED2, "own script group flags"),
     mutant("mixed: a spacing mark splits the word", TN,
         '        if ch.isalnum() or ch == "_" or unicodedata.category(ch) == "Mc":\n',
         '        if ch.isalnum() or ch == "_":\n', MIXED2, "is not flagged"),
@@ -630,7 +640,7 @@ M = [
         DOCS, "says NFKC again"),
     mutant("runmap: the composed view is not listed", RM,
         "        composed(text),\n        composed(unescaped),\n        composed(undone),\n", "",
-        "test_redact_text_masks_a_decomposed_copy_of_a_known_name", "a decomposed copy of a known name is not masked", test_file=FB),
+        "test_q9_a_decomposed_name_behind_a_json_escape_is_masked_by_the_composed_view_of_the_unescaped_text", "COMPOSED-VIEW-", test_file=Q9, param="[entity]"),
     mutant("runmap: the composed view keeps the invisible characters", RM,
         '    kept = "".join(c for c in text if unicodedata.category(c) != "Cf")\n', "    kept = text\n",
         "test_redact_text_masks_a_decomposed_secret_after_an_invisible_character", "keeps the letter and its accent apart", test_file=FB),
@@ -672,7 +682,7 @@ M = [
         "_all_views(raw, _value_scripts(value)) if view)\n", "_all_views(raw, frozenset()) if view)\n",
         "test_a_caller_that_names_only_the_value_cannot_miss_an_inserted_foreign_letter", "gives no script view for the value", test_file=FB),
     mutant("injection: the call names no value", INJ,
-        "textnorm.scan_views_no_value(text)", "textnorm.scan_views(text)",
+        "textnorm.scan_views_no_value(text, budget_s=_left(deadline))", "textnorm.scan_views(text, budget_s=_left(deadline))",
         "test_no_caller_in_the_package_omits_the_value_or_the_scripts", "names no value", test_file=FB),
     mutant("minimum: the floor is one", TN,
         "    out = tuple(_whole_number(name, floor) for name in _MINIMUM_NAMES)", "    out = tuple(_whole_number(name, 1) for name in _MINIMUM_NAMES)",
@@ -684,7 +694,7 @@ M = [
         "    if type(value) is not int or value < floor:\n", "    if not isinstance(value, int) or value < floor:\n",
         "test_the_number_of_passes_must_be_a_plain_int_of_at_least_one", "is accepted", test_file=FB),
     mutant("insertion: the match is never made", TN,
-        "    return any(\n        _holds_with_one_insertion(view, needle) for view in script_views for needle in inserts\n    )\n", "    return False\n",
+        "    for view in script_views:\n        _tick(deadline)\n        if any(_holds_with_one_insertion(view, needle, deadline) for needle in inserts):\n            return True\n    return False\n", "    return False\n",
         "test_one_inserted_letter_of_the_same_script_is_found_at_every_inner_position", "is not found", test_file=FB),
     mutant("insertion: the first half is not searched", TN,
         "    start = view.find(first)\n", "    start = -1\n",
@@ -766,7 +776,7 @@ M = [
         "    level = logging.INFO if coverage == _FUZZY and not narrowed else logging.WARNING\n", "    level = logging.INFO\n",
         "test_registration_is_logged_with_the_coverage_and_never_the_value", "instead of INFO then WARNING", test_file=O),
     mutant("injection: a module builds its own views", INJ,
-        "            yield text, textnorm.scan_views_no_value(text)\n", "            yield text, textnorm.scan_keyset(text)\n",
+        "            yield text, textnorm.scan_views_no_value(text, budget_s=_left(deadline))\n", "            yield text, textnorm.scan_keyset(text)\n",
         "test_no_module_outside_textnorm_builds_its_own_views", "a module builds its own views", test_file=O),
     mutant("cache: the views are kept outside a scope", TN,
         "\"hadavin_textnorm_scan_cache\", default=None", "\"hadavin_textnorm_scan_cache\", default=_CacheScope()",
@@ -845,14 +855,14 @@ M = [
         "(narrowed or (coverage == _EXACT_ONLY and script_needles and not has_squeeze))", "(narrowed or coverage == _EXACT_ONLY)",
         "test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default", "ordinary secrets were refused", test_file=RO),
     mutant("injection: the pieces do not overlap", INJ,
-        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= 1:\n",
-        "test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found", "boundary", test_file=RO),
+        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters, deadline):\n", "        if back >= 1:\n",
+        "test_q9_a_padded_window_before_a_boundary_moves_the_start_of_the_next_piece_back", "OVERLAP-PADDED", test_file=Q9),
     mutant("injection: a text over the size rule is flagged whole again", INJ,
         "        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n", "        raise textnorm.TextTooLong(\"over\")\n        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n",
         "test_m4_a_clean_text_over_the_size_rule_is_not_flagged", "OVERCAP-CLEAN", test_file=RO),
     mutant("injection: the new piece ignores the letters it holds", INJ,
-        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= low:\n",
-        "test_a_phrase_padded_across_a_piece_boundary_is_found_whatever_the_padding", "HOSTILE-PAD", test_file=R2),
+        "        if back >= low and _holds(text[end - back : end], need_kept, need_letters, deadline):\n", "        if back >= low:\n",
+        "test_q9_a_look_alike_phrase_padded_across_a_piece_boundary_is_found_only_by_the_moved_back_start", "HOSTILE-LOOKALIKE-PAD", test_file=Q9, param="[300]"),
     mutant("injection: a boundary with too few letters passes", INJ,
         "    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary", "    return end - low\n    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary",
         "test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed", "HOSTILE-LONG-PAD", test_file=R2),
@@ -860,11 +870,123 @@ M = [
         "        _check_geometry()\n", "        pass\n",
         "test_the_settings_of_the_chunked_read_are_checked", "GEOMETRY-UNCHECKED", test_file=R2),
     mutant("injection: the second half of a halved piece starts at the halfway point", INJ,
-        "            yield from RegexDetector._fit(piece[second:])\n", "            yield from RegexDetector._fit(piece[cut:])\n",
-        "test_a_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found", "HOSTILE-HALVING", test_file=R2),
+        "            yield from RegexDetector._fit(piece[second:], deadline)\n", "            yield from RegexDetector._fit(piece[cut:], deadline)\n",
+        "test_q9_a_look_alike_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found_by_value", "HOSTILE-HALVING-VALUE", test_file=Q9),
     mutant("tables: the lazy tables are never kept", TN,
         "                _LAZY_TABLES = tables\n", "                pass\n",
         "test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names", "the lazy tables are never kept", test_file=RO),
+    mutant("deadline: the clock is never read", TN,
+        "    if deadline is not None and (\n        time.thread_time() >= deadline[0] or time.monotonic() >= deadline[1]\n    ):\n",
+        "    if False:\n",
+        "test_a_spent_budget_raises_and_never_answers", "DEADLINE-SPENT", test_file=DL),
+    mutant("deadline: a spent deadline answers no hit", TN,
+        "    _checked(text, value)\n    _tick(deadline)\n",
+        "    _checked(text, value)\n    if deadline is not None and time.thread_time() >= deadline[0]:\n        return False\n",
+        "test_a_spent_budget_raises_and_never_answers", "DEADLINE-NOT-FALSE", test_file=DL),
+    mutant("deadline: the error is a TextTooLong", TN,
+        "class DeadlinePassed(TextnormError):",
+        "class DeadlinePassed(TextTooLong):",
+        "test_the_error_is_not_a_size_refusal_and_ends_the_chunked_read_at_once", "DEADLINE-NOT-SIZE", test_file=DL),
+    mutant("deadline: a bad budget is no budget", TN,
+        "    if type(budget_s) not in (int, float):\n        raise NotText(\"budget_s must be a finite number of CPU seconds or None\")\n    try:\n        finite = math.isfinite(budget_s)\n    except OverflowError:  # an int too large for a float (10**400) is not a finite budget either\n        finite = False\n    if not finite:\n        raise NotText(\"budget_s must be a finite number of CPU seconds or None\")\n",
+        "    pass\n",
+        "test_a_bad_budget_is_refused_before_any_reading", "DEADLINE-TYPE", test_file=DL),
+    mutant("deadline: the views of the text are built without the deadline", TN,
+        "    bundle = _text_bundle(text, deadline)\n",
+        "    bundle = _text_bundle(text)\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: the injection views are built without the deadline", TN,
+        "    bundle = _text_bundle(raw, deadline)\n",
+        "    bundle = _text_bundle(raw)\n",
+        "test_every_reading_point_of_the_injection_views_is_pinned", "NO-VALUE-POINTS", test_file=DL),
+    mutant("deadline: the scan keys get no deadline", TN,
+        "        tuple(sorted(_scan_keys(raw, deadline))),\n",
+        "        tuple(sorted(_scan_keys(raw))),\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: no reading before a prefix pass", TN,
+        "        _tick(deadline)\n        nfkd = unicodedata.normalize(\"NFKD\", text)\n",
+        "        nfkd = unicodedata.normalize(\"NFKD\", text)\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: no reading between the passes of a scan key", TN,
+        "        _tick(deadline)\n        out = step(text)\n",
+        "        out = step(text)\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: no reading after the needles of the value", TN,
+        "    needles = _needles_or_refuse(value, scripts)\n    _tick(deadline)\n",
+        "    needles = _needles_or_refuse(value, scripts)\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: no reading in the insertion loop", TN,
+        "        hits += 1\n        if not hits % 4096:\n            _tick(deadline)\n        stop = start + h\n",
+        "        stop = start + h\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("injection: the detector passes no deadline", INJ,
+        "        score = self._score(text, _deadline())\n",
+        "        score = self._score(text)\n",
+        "test_the_injection_check_flags_a_run_past_its_budget", "DEADLINE-INJECTION", test_file=DL),
+    mutant("injection: the budget setting is not checked", INJ,
+        "    if type(budget) not in (int, float) or not 0 < budget < float(\"inf\"):\n",
+        "    if False:\n",
+        "test_the_injection_budget_setting_is_checked", "BUDGET-UNCHECKED", test_file=DL),
+    mutant("deadline: the budget is taken as a deadline", TN,
+        "    return time.thread_time() + budget_s, time.monotonic() + factor * budget_s\n",
+        "    return budget_s, budget_s\n",
+        "test_the_budget_is_counted_on_the_thread_that_runs_the_scan", "DEADLINE-THREAD", test_file=DL),
+    mutant("injection: the deadline is passed as the budget", INJ,
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
+        "    return deadline\n",
+        "test_the_injection_check_flags_a_run_past_its_budget", "DEADLINE-INJECTION", test_file=DL),
+    mutant("deadline: no reading in the second loop of the insertion match", TN,
+        "        hits += 1\n        if not hits % 4096:\n            _tick(deadline)\n        lo = max(start - h - 1, 0)\n",
+        "        hits += 1\n        lo = max(start - h - 1, 0)\n",
+        "test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses", "DEADLINE-POINTS", test_file=DL),
+    mutant("deadline: the wall clock is never read", TN,
+        "        time.thread_time() >= deadline[0] or time.monotonic() >= deadline[1]\n",
+        "        time.thread_time() >= deadline[0]\n",
+        "test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget", "WALL-DEADLINE", test_file=DL),
+    mutant("deadline: the wall allowance is the CPU budget", TN,
+        "    return time.thread_time() + budget_s, time.monotonic() + factor * budget_s\n",
+        "    return time.thread_time() + budget_s, time.monotonic() + budget_s\n",
+        "test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget", "WALL-DEADLINE", test_file=DL),
+    mutant("deadline: the wall factor is not checked", TN,
+        "    if type(factor) not in (int, float) or not 1 <= factor < math.inf:\n",
+        "    if False:\n",
+        "test_the_wall_factor_setting_is_checked", "WALL-FACTOR-UNCHECKED", test_file=DL),
+    mutant("deadline: the wall clock is read without a budget", TN,
+        "    if budget_s is None:\n        return None\n",
+        "    if budget_s is None:\n        time.monotonic()\n        return None\n",
+        "test_the_wall_clock_is_not_read_without_a_budget", "WALL-NONE", test_file=DL),
+    mutant("injection: the wall factor is not checked", INJ,
+        "    if type(factor) not in (int, float) or not 1 <= factor < float(\"inf\"):\n",
+        "    if False:\n",
+        "test_the_wall_factor_setting_is_checked", "WALL-FACTOR-UNCHECKED", test_file=DL),
+    mutant("injection: the wall deadline is not set", INJ,
+        "    return time.thread_time() + budget, time.monotonic() + factor * budget\n",
+        "    return time.thread_time() + budget, float(\"inf\")\n",
+        "test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold", "WALL-INJECTION", test_file=DL),
+    mutant("injection: the seconds left ignore the wall clock", INJ,
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
+        "    return deadline[0] - time.thread_time()\n",
+        "test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold", "WALL-INJECTION", test_file=DL),
+    mutant("deadline: a huge int budget raises OverflowError", TN,
+        "    try:\n        finite = math.isfinite(budget_s)\n    except OverflowError:  # an int too large for a float (10**400) is not a finite budget either\n        finite = False\n",
+        "    finite = math.isfinite(budget_s)\n",
+        "test_a_bad_budget_is_refused_before_any_reading", "DEADLINE-TYPE", test_file=DL),
+    mutant("deadline: a wall factor of exactly 1 is refused", TN,
+        "or not 1 <= factor < math.inf:",
+        "or not 1 < factor < math.inf:",
+        "test_a_wall_factor_of_exactly_one_is_accepted", "WALL-FACTOR-ONE", test_file=DL),
+    mutant("injection: a wall factor of exactly 1 is refused", INJ,
+        "or not 1 <= factor < float(\"inf\"):",
+        "or not 1 < factor < float(\"inf\"):",
+        "test_a_wall_factor_of_exactly_one_is_accepted", "WALL-FACTOR-ONE", test_file=DL),
+    mutant("injection: the wall seconds left are not divided by the factor", INJ,
+        "        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
+        "        (deadline[1] - time.monotonic()),\n    )\n",
+        "test_the_seconds_left_are_the_smaller_of_the_cpu_left_and_the_wall_left_over_the_factor", "LEFT-RULE", test_file=DL),
+    mutant("injection: the seconds left are the larger of the two", INJ,
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1]",
+        "    return max(\n        deadline[0] - time.thread_time(),\n        (deadline[1]",
+        "test_the_seconds_left_are_the_smaller_of_the_cpu_left_and_the_wall_left_over_the_factor", "LEFT-RULE", test_file=DL),
 ]  # fmt: skip
 
 

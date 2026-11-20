@@ -7,10 +7,11 @@ The second pass must escape the first pass's placeholders (`<SECRET_1>` of the t
 that escaped token for a new secret: the run map gained `<SECRET_n>` = `‹SECRET_1›`, a junk entry of a secret kind
 whose "value" was swept from every later text.
 
-The rule now (`redact._mask`): a value that is nothing but escaped look-alikes (`‹KIND_n›`, exactly what
+The rule now (`redact._decide`; E9(2): SECRET tokens only, any other kind is masked): a value that is nothing but escaped look-alikes (`‹SECRET_n›`, exactly what
 `runmap.escape_placeholders` writes) and genuine placeholders, with nothing besides but spaces, `;` and `,`, is left
 alone, as a value of genuine placeholders alone already was. A value that holds a look-alike AND anything a secret
-can be made of is masked whole, as before. Nothing is added to a map for an escaped token, so it restores to nothing.
+can be made of is masked whole, as before. Nothing is added to a map for an escaped SECRET token, so it restores to
+nothing; an escaped token of another kind (`‹SECRET_1›<UUID_3>`, `‹EMAIL_1›`) is masked and makes one junk entry.
 
 Every value here is made up and built from parts.
 """
@@ -64,8 +65,8 @@ def test_the_error_path_output_reads_as_masked_with_the_hook_it_was_redacted_wit
     rmap = _run_map_after_a_document()
     exc = ValueError(f"login failed password={PW} host {IP}")
     out = tools.prepare_output(tools.ERROR_PREFIX + tools.error_reason(exc), rmap, 4096)
-    assert runmap.is_masked(out, rmap, runmap.neutralise_untrusted) is True
-    assert runmap.redact_untrusted(out, rmap) == out
+    held = dict(rmap)
+    assert runmap.redact_untrusted(out, rmap) == out and dict(rmap) == held
 
 
 def test_a_tool_that_echoes_a_secret_placeholder_from_its_arguments():
@@ -180,18 +181,63 @@ def test_only_the_exact_escaped_shape_is_left_alone():
         assert result.mapping == {"<SECRET_1>": value}
 
 
-def test_lookalikes_and_genuine_placeholders_together_are_left_alone():
-    text = f"password={ESC_SECRET}<UUID_3>{ESC_IP}"
+def test_secret_lookalikes_and_genuine_placeholders_together_are_left_alone():
+    """E9(2): a run of escaped `‹SECRET_n›` and genuine SECRET placeholders is left alone, as before."""
+    text = f"password={ESC_SECRET}<SECRET_3>{ESC_SECRET}"
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
 
 
-def test_lookalikes_separated_by_spaces_semicolons_or_commas_are_left_alone():
-    text = f"Cookie: {ESC_SECRET}; {ESC_IP}, {ESC_SECRET}"
+def test_a_genuine_placeholder_of_another_kind_beside_a_lookalike_is_masked_whole():
+    """E9(2), changed shape (before: `password=‹SECRET_1›<UUID_3>‹SECRET_1›` was left unmasked as one own-output run; now masked whole): the
+    older placeholders-only rule does not cover it (an escaped token is not a placeholder) and `<UUID_3>` is not a SECRET token."""
+    value = f"{ESC_SECRET}<UUID_3>{ESC_SECRET}"
+    result = R.redact(f"password={value}")
+    assert result.text == "password=<SECRET_1>" and result.mapping == {"<SECRET_1>": value}
+
+
+def test_a_lookalike_of_another_kind_in_a_secret_value_is_masked_whole():
+    """E9(2), changed shape (before: left unmasked, a stated limit; now: masked): `password=‹SECRET_1›<UUID_3>‹IPV4_1›` held an escaped
+    token of a kind that is not SECRET, so it is a real value spelled like a token and is masked whole."""
+    value = f"{ESC_SECRET}<UUID_3>{ESC_IP}"
+    result = R.redact(f"password={value}")
+    assert result.text == "password=<SECRET_1>"
+    assert result.mapping == {"<SECRET_1>": value}
+
+
+def test_secret_lookalikes_separated_by_spaces_semicolons_or_commas_are_left_alone():
+    text = f"Cookie: {ESC_SECRET}; {L}SECRET_2{G}, {ESC_SECRET}"
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
+
+
+def test_a_cookie_run_with_a_lookalike_of_another_kind_is_masked_whole():
+    """E9(2), changed shape (before: left unmasked; now: masked): the escaped `‹IPV4_1›` in a SECRET run is not exempt."""
+    value = f"{ESC_SECRET}; {ESC_IP}, {ESC_SECRET}"
+    result = R.redact(f"Cookie: {value}")
+    assert result.text == "Cookie: <SECRET_1>"
+    assert result.mapping == {"<SECRET_1>": value}
 
 
 def test_a_value_of_genuine_placeholders_alone_is_left_alone_as_before():
     result = R.redact("password=<SECRET_4>")
     assert result.text == "password=<SECRET_4>" and result.mapping == {}
+
+
+def test_e9_redact_untrusted_twice_with_an_address_value_makes_one_junk_entry():
+    """Pins an ACCEPTED trade-off (option (a)); the lead's option (b) would exempt the escaped token of another kind.
+
+    A key followed by an address: the first pass writes `password=<EMAIL_1>` (EMAIL runs before the SECRET key=value pattern),
+    the second pass escapes it to `‹EMAIL_1›`, a SECRET value that is masked: one entry `<SECRET_1>` = `‹EMAIL_1›`.
+    """
+    first_map: dict[str, str] = {}
+    once = runmap.redact_untrusted("login failed password=a@b.co host", first_map)
+    assert once == "login failed password=<EMAIL_1> host"
+    assert first_map == {"<EMAIL_1>": "a@b.co"}
+    rmap = runmap.RunMap()
+    twice = runmap.redact_untrusted(once, rmap)
+    assert twice == "login failed password=<SECRET_1> host"
+    assert dict(rmap) == {"<SECRET_1>": f"{L}EMAIL_1{G}"}
+    held = dict(rmap)
+    third = runmap.redact_untrusted(twice, rmap)
+    assert third == f"login failed password={ESC_SECRET} host" and dict(rmap) == held

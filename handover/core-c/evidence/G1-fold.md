@@ -241,3 +241,36 @@ pinned '' ('\u0903', '') 'alice'
 stub 15.0.0 key_tag='\ue000alg=fold5|ud=15.0.0\ue000' identity_keys(U+0903)=(tag+'\u0903', tag) identity_keys(U+200B)=(tag,) identity_key('Alice')=tag+'alice'
 key_tag() in identity_keys(U+0903): True; in identity_keys(U+200B): True; could_be_same_person(U+0903, U+200B): True; could_be_same_person(U+0903, 'a'): False
 ```
+
+## G1 fix round 1 (review findings B1, B2, M6, M8)
+
+**B1 (undo no longer composed).** Cause: `nfkc` (run by `undo` in every round) called the per-character `canonical`. Reproduced with
+new `tests/test_undo_composes.py` BEFORE the fix: 9 failed, 1 passed, e.g. `assert 'Müller' == 'M\xfcller'` (`undo` of the NFD name),
+the same for Vietnamese stacked marks, Hangul jamo and `cafe + U+0301`; `tools.prepare_output` did not scrub a handed-out secret shown
+NFD or as Hangul jamo; `_strip_fragment` kept a decomposed front. Fix (runmap.py `nfkc` only): NFKC of the whole text, then Cf dropped
+(exactly main's `canonical`; not `composed`, which drops Cf first and differs, review M7). `canonical`, `_canonical_view`,
+`replace_canonical` unchanged. `_views` keeps its six views (the `view not in out` check removes duplicates; `undone` is now composed, so the
+`composed(undone)` view equals it and is dropped). After: 10 passed.
+
+**B2 (chunk boundary).** Cause: `_holds` counted a-z letters of the FOLD views only; the raw squash in `_score` keeps ASCII a-z. Test text:
+filler of ASCII words, `ignore`, N look-alike letters (full-width a, Cyrillic a; N = 1030, 1100, 2000) ending on the first chunk boundary
+(32,768), `previousinstructions`, filler up to 263,144 characters. BEFORE the fix `tests/test_injection_chunk_boundary.py`: 6 failed (every
+padding x N), first line `AssertionError: the phrase behind padding was not found` (verdict not flagged, score 0.0). Fix, first try (raw window must hold the letters in `_holds`) was REVERTED: it made
+`tests/test_textnorm_round2.py::test_the_clean_text_costs_no_false_flag_in_prose_logs_and_a_foreign_script` fail (`CLEAN-CORPUS: russian prose was flagged (guard_unavailable)`):
+Russian prose over the cap has no ASCII letters and would have started failing closed. Final fix (injection.py `_score`): after the pieces are read
+without raising (a boundary that cannot be proven still fails closed there first, so the `guard_unavailable` reasons of existing tests are unchanged),
+the raw ASCII squash of the WHOLE text is searched for the squashed phrases, as the old whole-text read did; `_holds` is unchanged. After: 8 passed.
+
+**M6 measured (behaviour unchanged).** `injection_check(RegexDetector(0.5), text, "t")` on a 300,000-character Chinese text
+(no Latin letters) and on a Japanese one: flagged, `reason_code=guard_unavailable` (`TextTooLong: the 8192 characters before a piece boundary ...
+hold too few letters`); the same before my fix (`_holds` counts only a-z). Russian prose over the cap still passes (look-alike letters count). A mixed
+text with ` a b ` every 17 characters passes. So a large Han or kana text over the cap fails closed; not changed.
+
+**M8.** app.py `build`: `textnorm.require_pinned_unidata()` moved to right after the test-doubles check, before `load_registry` and
+`make("secrets", ...)`. `tests/test_app_unicode_check_order.py` (stub `unidata_version`, `make` recording): BEFORE the move
+`AssertionError: a backend was built before the Unicode check`; after: passed.
+
+**Commands (final).** `ruff check src tests`: clean; ruff format on my files: clean; pytest (the VERIFY list, -n 2, not perf): `7707 passed in 311s`
+(one run before the B2 correction had 1 failed, the round2 Russian-prose test above); perf-marked textnorm/injection/undo tests serially: `19 passed`;
+bandit on guard `-ll`: no findings. Files: runmap.py `nfkc`, injection.py `_score`, app.py (the check moved), tests/test_undo_composes.py,
+tests/test_injection_chunk_boundary.py, tests/test_app_unicode_check_order.py.

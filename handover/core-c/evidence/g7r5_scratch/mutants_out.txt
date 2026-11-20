@@ -1,0 +1,29 @@
+## mutant: N3a settle: the round deadline check removed
+FAILED tests/test_redact_settle_loop.py::test_settle_refuses_before_a_round_when_the_deadline_is_spent_and_never_calls_find
+1 failed in 0.23s
+
+## mutant: N3b sweep: the segment check removed
+        no check to run: a deadline of 1.5 (reading 1 is the build check, passed) trips at reading 2, the segment check, and without that
+FAILED tests/test_redact_settle_loop.py::test_the_deadline_trips_at_the_segment_check_of_a_segment_with_no_known_value
+FAILED tests/test_redact_settle_loop.py::test_the_segment_check_reads_the_clock_at_the_first_free_segment_then_every_32nd
+FAILED tests/test_redact_settle_loop.py::test_a_text_that_starts_with_a_placeholder_trips_the_segment_check
+3 failed in 0.16s
+
+## mutant: N3c sweep: the old cadence `i % 64 == 0` (an empty first segment skipped before it)
+FAILED tests/test_redact_settle_loop.py::test_the_segment_check_reads_the_clock_at_the_first_free_segment_then_every_32nd
+FAILED tests/test_redact_settle_loop.py::test_a_text_that_starts_with_a_placeholder_trips_the_segment_check
+2 failed in 0.12s
+
+## mutant: N4 scan: `work` counts only the tokens that have a form
+FAILED tests/test_redact_settle_loop.py::test_the_token_check_cadence_counts_tokens_with_no_form_too
+1 failed, 1 passed in 0.10s
+
+## mutant: M3 redact_many: re-read every string on a flip, unchecked (round 4 behaviour)
+FAILED tests/test_redact_settle_loop.py::test_redact_many_checks_the_deadline_between_the_two_reads_when_bank_near_flips
+FAILED tests/test_redact_settle_loop.py::test_redact_many_re_reads_only_the_strings_read_before_the_flip
+2 failed in 0.24s
+
+## mutant: N9 scan: quadratic (every token compares every registered form)
+FAILED tests/test_redact_settle_loop.py::test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses
+1 failed, 2 passed in 51.23s
+

@@ -49,7 +49,8 @@ gcp = [
 hadavin-sdk = "hadavin_sdk.cli:main"
 
 [dependency-groups]
-dev = ["pytest==9.2.0", "ruff==0.17.1"]
+# linkify-it-py (MIT, with its dependency uc-micro-py, MIT): tests/test_p1d_link_oracle.py checks its link oracle against it.
+dev = ["pytest==9.2.0", "ruff==0.17.1", "linkify-it-py==2.0.3"]
 # Contract-suite stand-ins for cloud services (CI installs it with every extra).
 test = ["moto[s3,kms,secretsmanager]==5.2.5", "pglast==8.7", "pytest-xdist==3.8.0"]
 # Free scanners that keep working when the repository turns private.
@@ -82,11 +83,15 @@ ban-relative-imports = "all"
 # exemption: a per-file-ignores entry below with its reason, a row in the exemption list of tests/test_textnorm_meta.py, and a lead order.
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "hadavin_sdk.guard.textnorm.fold".msg = "a match or scan reads every view: use fold_views + squeeze_views (scan_needles) or identity_keys"
+"hadavin_sdk.guard.textnorm.fold_view".msg = "fold_view is ONE view, for a caller that cuts the original text at a match (the redactor, through an exemption row): a match or scan reads every view, use fold_views + squeeze_views (scan_needles) or identity_keys"
 "hadavin_sdk.guard.textnorm.squeeze".msg = "a match or scan reads every view: use fold_views + squeeze_views (scan_needles) or identity_keys"
 "hadavin_sdk.guard.textnorm.identity_key".msg = "identity_key is ONE reading: only for a unique index or dedupe, through an exemption row; a match uses identity_keys or could_be_same_person"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "TID251"]
+# the redactor cuts the ORIGINAL text at the place ONE view found a value, so it asks textnorm for the views one by one (fold, fold_view);
+# the row and its reason are pinned in tests/test_textnorm_meta.py (EXEMPTIONS)
+"src/hadavin_sdk/guard/redact.py" = ["TID251"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -224,6 +224,7 @@ def test_refusal_handlers_has_five_entries_and_the_banned_names_follow_textnorm(
         "EmptyView",
         "ViewTooShort",
         "CoverageRefused",
+        "DeadlinePassed",
     }, "a new TextnormError subclass: it is banned automatically; update this list on purpose"
 
 

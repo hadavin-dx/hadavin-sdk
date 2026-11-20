@@ -1,0 +1,5 @@
+# Merged-tree batch 2 (core-c, 08:4xZ): gate round 4 + G7 rounds 3 and 4 + P1d-a round 2 + docstring fixes together
+
+Tree: cloud/core-c at 6783535 (G7 round 4 cherry-picked) plus notes commits. Command (raw): `uv run --all-extras --group test pytest -q -n 4 --no-header -p no:cacheprovider tests/test_model_gate.py tests/test_runmap_enforce_map.py tests/test_runmap_map_write.py tests/test_gate_install_callers.py tests/test_gate_mutants_picked_up.py tests/test_redact_settle_loop.py tests/test_redact_context_after_sweep.py tests/test_redact_idempotent_property.py tests/test_redact_fold_budget.py tests/test_k5_producers.py tests/test_stage_names.py tests/test_no_hardcoded_values.py tests/test_p1d_a_paths.py tests/test_p1d_link_oracle.py tests/test_undo_composes.py`
+Result (raw last line): `2601 passed, 2 skipped, 5 xfailed in 170.97s (0:02:50)`; no failure or error line in the output.
+NOT RUN here: the whole suite, perf tests, mutant runs, Python 3.12, PostgreSQL 17. The 5 xfails are the gate's strict install xfails (core-b installs).

@@ -1,0 +1,4 @@
+corpora (1835 inputs): tokens with forms, max offsets, max forms, hist offsets, hist forms: (3, 1, 1, {1: 3}, {1: 3})
+2000 generated compositions: (1564, 1, 6, {1: 1564}, {1: 704, 2: 549, 3: 226, 4: 64, 5: 18, 6: 3})
+honest A(300) cookie log: (1, 300, 300, {300: 1}, {300: 1})
+honest B(300) signed log: (1, 1, 300, {1: 1}, {300: 1})

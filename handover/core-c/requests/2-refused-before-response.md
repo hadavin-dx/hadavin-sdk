@@ -35,3 +35,10 @@ UNTIL THE MARK EXISTS the gate treats NO error as refused-before-response: every
 ## Tests on core-c's side (already there, with a fake exception carrying the flag)
 tests/test_model_gate.py: `test_t13_rule_b_an_error_marked_refused_before_response_is_settled_at_zero`, `test_t13_rule_c_a_failed_call_is_not_settled_and_the_same_error_comes_out`, `test_no_error_the_adapters_raise_today_carries_the_mark` (this last one pins TODAY's state of `with_retry` and `ProviderError`: it will fail when you add the mark, on purpose: tell core-c, the test is then turned into "a 401 is marked, a parse failure is not").
 Nothing to change in the gate when the mark lands.
+
+## Update 13:2xZ (contract change for ProviderExhausted)
+The gate now honours the mark ALSO on `ProviderExhausted`. A `ProviderExhausted` carrying the exact mark `refused_before_response is True` means EVERY attempt the retry layer made was refused before any response (nothing billed): the gate settles at 0, audit `failed` / `provider_refused`, exactly as for a marked `ProviderError`. This unblocks the no-overspend guarantee in core-b's F-install.
+- An UNMARKED `ProviderExhausted` keeps rule (c): worst case stays booked, code `provider_exhausted`.
+- Not honoured (pinned): a non-`ProviderError` with the mark, a truthy non-`True` mark (1, "True"), a mark that raises on read.
+- The gate cannot verify the mark. The adapter/retry layer must set it on an exhausted error ONLY when no attempt produced a response or may have been billed. A timeout after the request was sent is NOT a refusal; one such attempt among the refused ones means the exhausted error stays unmarked (unknown attempt cost: do not settle, ORDER 017 item 4).
+- This supersedes the line above "`ProviderExhausted` ... the gate ignores the mark on it anyway".

@@ -110,7 +110,9 @@ def test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed():
     assert verdict.flagged is True, (
         "HOSTILE-LONG-PAD: a phrase padded with 15000 invisible characters passed"
     )
-    assert verdict.reason_code == "guard_unavailable", verdict.reason_code
+    assert verdict.reason_code == "guard_unavailable", (
+        f"HOSTILE-LONG-PAD: the text was read to the end ({verdict.reason_code}), not refused as guard_unavailable"
+    )
 
 
 def test_the_clean_text_costs_no_false_flag_in_prose_logs_and_a_foreign_script():
@@ -213,10 +215,18 @@ def test_the_settings_of_the_chunked_read_are_checked(monkeypatch):
     for name, value in bad:
         with monkeypatch.context() as m:
             m.setattr(defaults, name, value)
-            with pytest.raises(ValueError) as caught:
+            try:
                 list(injection.RegexDetector._read(over))
-            assert "must be" in str(caught.value) or "injection overlap" in str(caught.value), (
-                f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({caught.value})"
+            except ValueError as caught:
+                message = str(caught)
+            except Exception as caught:  # noqa: BLE001 - the read ran on a bad setting and failed somewhere else
+                raise AssertionError(
+                    f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({type(caught).__name__}: {caught})"
+                ) from None
+            else:
+                raise AssertionError(f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused")
+            assert "must be" in message or "injection overlap" in message, (
+                f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({message})"
             )
             assert _check(over).reason_code == "guard_unavailable"
 
@@ -331,7 +341,9 @@ def test_canonically_equivalent_spellings_have_one_grounding_key_and_different_l
 # ---- the time of the chunked read at its ceiling (run ALONE: ``pytest -m perf tests/test_textnorm_round2.py -s``) ---------------------------------------------------
 @pytest.mark.perf
 @pytest.mark.parametrize("name", ["ascii", "cyrillic"])
-def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_the_bound(name):
+def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_the_bound(
+    name, monkeypatch
+):
     """Perf row (printed with -s): a clean text of exactly ``TEXTNORM_INJECTION_MAX_CHARS`` (the longest text the chunked read takes) is read, not
     flagged. The bound (120 s) is generous because the evidence run of round 1 measured 3.6 s (ASCII) and 11.1 s (Cyrillic) under a load of 3.5; the real
     numbers of the final run are in the report. FAILS before by behaviour (every over-cap text was flagged)."""
@@ -342,6 +354,9 @@ def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_th
     )
     n = defaults.TEXTNORM_INJECTION_MAX_CHARS
     text = (unit * (n // len(unit) + 2))[:n]
+    monkeypatch.setattr(
+        defaults, "INJECTION_BUDGET_S", None
+    )  # the row times the read; the budget has its own tests (G10)
     start = time.perf_counter()
     verdict = _check(text)
     took = time.perf_counter() - start

@@ -988,12 +988,16 @@ def error_reason(
     exc: BaseException, secrets: list[str] | None = None, scrub: ScrubSettings = _DEFAULT_SCRUB
 ) -> str:
     """A short reason for the model. Network and driver errors carry hosts and users: their type says enough. The
-    message of any other exception is scrubbed of the handed-out secrets BEFORE it is cut to its length: a cut first
-    splits a secret and leaves its front (`prepare_output` later sees no whole spelling)."""
+    message of any other exception is made encodable (`_sanitise`: a lone surrogate cannot be encoded), then bounded to
+    MAX_REDACT_CHARS (so the scrub's work is bounded), scrubbed of the handed-out secrets, pattern-redacted, and only
+    then cut to 160/200 characters. The first bound can split a secret that straddles it, leaving its front just before
+    the TRUNCATED note; that front lies hundreds of KB beyond the final 160/200-character cut, so it reaches the model
+    only if redaction shrinks the text by that much first. That bound (`_cut`) applies only when handed-out secrets are
+    present; without secrets the bound happens inside `redact_bounded`."""
     if isinstance(exc, OSError | urllib.error.URLError) and not isinstance(exc, ToolRefused):
         return f"{type(exc).__name__} (network error)"
     refused = isinstance(exc, ToolRefused)
-    message = str(exc)
+    message = _sanitise(str(exc))
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
     if long_enough:
         message = _cut(
