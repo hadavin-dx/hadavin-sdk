@@ -9,18 +9,14 @@
 -- THE PROMISE (from step 4 on): a runtime login cannot lower a booked amount, except by settling an open hold it can
 -- name, once, by at most that hold's reserved amount. It cannot lower a plain charge, a settled or expired amount, forge
 -- a settled row, edit usd, or touch a row by SQL (it has no right on the tables).
--- HONEST RESIDUAL (do not over-claim): the runtime still chooses the arguments. (1) The caps are arguments of
--- hadavin_reserve_spend, so the runtime CAN DISABLE CAP ENFORCEMENT (an overshoot of the budget); it cannot lower a
--- booked amount. "The budget is enforced" is NOT promised here (a caps table the runtime cannot write is the named
--- follow-up, step 6). (2) It can settle any open hold whose id it knows to 0: the counter falls by at most that hold's
--- reserved amount, once. (3) It can expire every open hold at any age (hadavin_expire_spend_reservations has no lower
--- bound on the age, because the contract suite and the memory store accept 0). Expiring alone is an outage, not a loss
--- (holds stay booked at the reserved amount). BUT an operator who then runs release-expired (0008, no age check) for that
--- agent and day lowers the counters by every hold the runtime expired, marks them settled at 0, and the real late settle
--- then returns claimed = false: the booking is LOST (repro: reserve 10, expire at age 0, release, late settle: counter
--- 0). So "expire at any age is safe" is false when an operator releases afterwards; the operator must not release a day
--- whose holds may have been expired on purpose. (4) It can raise any counter by add_spend. (5) settle with a NULL agent
--- returns the stored row of any agent whose hold id it knows (the Limits layer passes no agent when it has none).
+-- HONEST RESIDUAL (do not over-claim): the runtime still chooses the other arguments. (1) The caps are NOT arguments:
+-- hadavin_reserve_spend takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads day_cap and month_cap from the
+-- table hadavin_caps, which the runtime login cannot write (HD005 when the agent has no row). So the runtime can neither
+-- lower a booked amount nor choose or raise a cap. (2) It can settle any open hold whose id it knows to 0: the counter
+-- falls by at most that hold's reserved amount, once. (3) It can expire every open hold at any age
+-- (hadavin_expire_spend_reservations has no lower bound on the age, because the contract suite and the memory store
+-- accept 0): a self-inflicted outage, safe (holds stay booked at the reserved amount). (4) It can raise any counter by
+-- add_spend.
 --
 -- Rules every function body follows:
 --   * SECURITY DEFINER, VOLATILE (stated), NOT STRICT (a STRICT function returns NULL silently for a NULL argument, which

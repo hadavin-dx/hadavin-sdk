@@ -13,9 +13,7 @@
     Migrate creates the caps table empty and never seeds it, so until `sync-caps` completes every agent is refused
     (`limits_unavailable`). There is no rolling upgrade. See "Caps live in a table the runtime cannot write" in
     `docs/stop-state-runbook.md`.
-  - TODO-E2: the sentence "the runtime login can neither lower a booked amount nor choose or raise a cap" becomes true
-    when the reserve function reads the table; until then "a compromised runtime login can bypass the cap but cannot
-    lower a booked amount" stands.
+  - The runtime login can neither lower a booked amount nor choose or raise a cap.
 - **`migrate` now refuses a database whose `hadavin_*` functions or money tables have more than one owner (F-money-definer, migration 0011).**
   - **What changed.** Every `hadavin_*` function must have the same owner, that owner must not be a named role (or
     a role a named role is a member of), and `spend`, `spend_month`, `spend_reservations`, `runs` and the new

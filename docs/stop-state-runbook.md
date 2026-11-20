@@ -239,9 +239,7 @@ The runtime login has no right on that table and cannot run `hadavin_set_cap`; o
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
-- TODO-E2 (flip when the reserve function reads the table and the 7-argument form is gone): replace the next line with
-  "the runtime login can neither lower a booked amount nor choose or raise a cap".
-- UNTIL THEN, verbatim: "a compromised runtime login can bypass the cap but cannot lower a booked amount".
+The runtime login can neither lower a booked amount nor choose or raise a cap.
 
 Deploy, in this order (there is no rolling upgrade):
 1. Stop the tick scheduler and every runtime-side process.
@@ -251,8 +249,10 @@ Deploy, in this order (there is no rolling upgrade):
    purge or release secret; not the same login under another name).
 4. `hadavin-sdk limits sync-caps --by WHO --yes`.
 5. Start, then run one smoke `tick`.
-EVERY RUN IS REFUSED (`limits_unavailable`, for every agent) UNTIL `sync-caps` HAS COMPLETED: an agent with no row is
-refused, fail closed. A new agent is refused the same way until its caps are synced.
+EVERY RUN IS REFUSED (`limits_unavailable`, for every agent) UNTIL `sync-caps` HAS COMPLETED: every agent needs a cap
+row, or `hadavin_reserve_spend` (5 arguments: p_id, p_agent, p_day, p_usd, p_run_id) raises HD005 ("run limits
+sync-caps"), fail closed. Afterwards `limits check-caps` (exit 1 on drift or a missing row) and the tick step
+`check_caps` report any difference between registry and table. A new agent is refused the same way until its caps are synced.
 
 Commands (all under the reset login; they refuse BEFORE any connection when `reset_credential_ref` is missing or
 collides with a runtime secret, in every environment; the memory store is refused: "this store has no cap table"):
