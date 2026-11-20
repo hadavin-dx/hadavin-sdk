@@ -789,19 +789,6 @@
    "reason": "EGM"
   },
   {
-   "id": "rev-grantfix2-r5",
-   "role": "reviewer",
-   "model": "sonnet",
-   "what exactly it is doing": "round 5 (cap) fresh review of grant-test fix bdf8a9f8d",
-   "started UTC": "17:39",
-   "expected end": "10 min",
-   "percent": 10,
-   "state": "running",
-   "review round n of cap": "5 of 5",
-   "retries so far": 0,
-   "reason": "EGM"
-  },
-  {
    "id": "d-fix27",
    "role": "builder",
    "model": "sonnet",
@@ -813,6 +800,19 @@
    "review round n of cap": "fix of round 3",
    "retries so far": 0,
    "reason": "EGM"
+  },
+  {
+   "id": "grantfix4",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "make the grant tests date/clock independent (round 5 Majors + MAINTAIN/COLUMNS nits)",
+   "started UTC": "17:50",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "after cap",
+   "retries so far": 0,
+   "reason": "EGM cap"
   }
  ],
  "tests": [
@@ -1649,6 +1649,19 @@
    "review round n of cap": "3 of 5",
    "retries so far": 0,
    "reason": "round 3: round-2 Major closed; 1 new Major (OSError on config/registry files treated as store down, retried forever); 4 nits; reviews/rev-dfix26-r3.md; d-fix27 started"
+  },
+  {
+   "id": "rev-grantfix2-r5",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "round 5 (cap) fresh review of grant-test fix bdf8a9f8d",
+   "started UTC": "17:39",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "5 of 5",
+   "retries so far": 0,
+   "reason": "round 5 (cap): 2 Major (dated constant DAY 2026-03-10; clock-dependent release/purge tests), unconfirmed, tests pass 45/45 today; fix pass started; goes to ESCALATIONS"
   }
  ]
 }
