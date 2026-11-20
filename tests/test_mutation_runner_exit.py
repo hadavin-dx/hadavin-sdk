@@ -91,3 +91,50 @@ def test_a_value_error_of_the_validation_is_a_nonzero_exit():
 def test_a_normal_end_and_an_explicit_exit_keep_their_codes():
     assert drive("sys.exit(exit_guard(lambda: None))").returncode == 0
     assert drive("sys.exit(exit_guard(lambda: sys.exit(3)))").returncode == 3
+
+
+def test_a_stale_anchor_exits_2_and_names_the_mutant():
+    done = drive(
+        """
+        from types import SimpleNamespace
+        from tests import endpoint_mutants as em
+        def main():
+            fake = SimpleNamespace(name="GZ gone", file="src/hadavin_sdk/triggers/server.py", old="no such text \\x00")
+            problems = em.check_anchors([fake])
+            if problems:
+                print("\\n".join(problems), file=sys.stderr)
+                sys.exit(2)
+        sys.exit(exit_guard(main))
+        """
+    )
+    assert done.returncode == 2, (done.returncode, done.stderr[-300:])
+    assert "GZ gone" in done.stderr and "occurs 0 times" in done.stderr
+    assert "Traceback" not in done.stderr
+
+
+def test_a_failing_unmutated_baseline_exits_1_naming_the_cause():
+    done = drive(
+        """
+        def baseline():
+            raise RuntimeError("the unmutated copy does not pass its tests")
+        def main():
+            baseline()
+            print("mutants ran")
+        sys.exit(exit_guard(main))
+        """
+    )
+    assert done.returncode == 1, (done.returncode, done.stderr[-300:])
+    assert "does not pass its tests" in done.stderr and "mutants ran" not in done.stdout
+
+
+def test_a_runner_exception_in_a_later_step_is_exit_1_after_earlier_output():
+    done = drive(
+        """
+        def main():
+            print("first mutant done", flush=True)
+            {}["missing"]
+        sys.exit(exit_guard(main))
+        """
+    )
+    assert done.returncode == 1 and "first mutant done" in done.stdout
+    assert "KeyError" in done.stderr

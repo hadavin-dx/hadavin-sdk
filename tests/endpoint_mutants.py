@@ -691,8 +691,8 @@ M = [
     mutant(
         "G16b a request line with no version is not closed quietly",
         SERVER,
-        'self.request_version == "HTTP/0.9" or ',
-        "",
+        'self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message)',
+        "False",
         TS,
         "test_f2_a_request_line_without_a_version_is_closed_on_purpose",
         "assert [('WARNING', ...ributeError')] == [('DEBUG', 't...h no answer')]",
