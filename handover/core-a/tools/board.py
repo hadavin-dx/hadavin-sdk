@@ -203,7 +203,7 @@ def main() -> int:
     if sh(["git", "diff", "--cached", "--quiet"])[0] != 0:
         msg = (
             f"code D+E: WIP snapshot {now} (builders running, not the tested state)\n\n"
-            "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n"
+            "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n"
             "Claude-Session: https://claude.ai/code/session_014pRo39MRxnYCnugNxyoaw6"
         )
         sh(["git", "commit", "-q", "-m", msg])
