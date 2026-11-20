@@ -1277,7 +1277,7 @@ def test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker():
     ):
         if hasattr(defaults, theirs):  # only on a tree that has core-b's defaults
             assert ours == getattr(defaults, theirs), theirs
-        elif os.environ.get("HADAVIN_REQUIRE_PG") == "1":
+        elif strict():
             pytest.fail(f"HADAVIN_REQUIRE_PG=1: defaults.{theirs} is not on this tree")
 
 

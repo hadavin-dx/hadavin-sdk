@@ -589,6 +589,9 @@ def settle(ctx: Ctx, timeout_s: float = 30.0) -> None:
     assert taken == ctx.max_running, f"[{ctx.name} seed={ctx.seed}] I7 only {taken} slot(s) free"
 
 
+RETRY_503_TRIES = 4
+
+
 def retry_503(ctx: Ctx, run_one) -> int:
     """I8: every 503 of a request that reached start, sent again once the pool is free."""
     seen, again = set(), 0
@@ -596,10 +599,22 @@ def retry_503(ctx: Ctx, run_one) -> int:
         if rec.status != 503 or not rec.reached or rec.case.index in seen:
             continue
         seen.add(rec.case.index)
-        got = run_one(rec.case)
-        again += 1
+        # A 503 is also the answer when the pool is free but the loop did not write its row within ack_wait_s
+        # (0.3 s for max_running=1): on a loaded machine (pytest-xdist, 3 workers) that happens, and the contract
+        # of the endpoint says "send again with the same key". One 503 on a retry is so not a bug. What can only
+        # be a bug: still 503 after RETRY_503_TRIES sends with a quiet model and a free pool (a stuck loop, a
+        # lost slot, a row that is never written), or any status that is neither 2xx nor 409.
+        for attempt in range(RETRY_503_TRIES):
+            got = run_one(rec.case)
+            again += 1
+            if got.status != 503:
+                break
+            settle(ctx)  # the loop of the 503 may still be writing its row: let it end, then send again
         if got.status not in OK | {409}:
-            ctx.problem(rec.case, f"I8 the retry of a 503 got {got.status}")
+            ctx.problem(
+                rec.case,
+                f"I8 the retry of a 503 got {got.status} after {attempt + 1} sends on a free pool",
+            )
     return again
 
 

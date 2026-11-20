@@ -22,8 +22,31 @@ DSN_VARIABLE = "HADAVIN_TEST_PG_DSN"
 MISSING_DATABASE_WORDS = (DSN_VARIABLE, "psycopg")
 
 
+STRICT_WORDS = frozenset({"1", "true", "yes"})
+NOT_STRICT_WORDS = frozenset({"", "0", "false", "no"})
+
+
 def strict() -> bool:
-    return os.environ.get(STRICT_VARIABLE) == "1"
+    """The one place that reads HADAVIN_REQUIRE_PG (conftest.py and test_worker.py both call it). 1, true and yes
+    (any case, spaces around ignored) are strict; unset, empty, 0, false and no are not. Any other value is
+    an error: a typo must not turn the switch off without a word."""
+    raw = os.environ.get(STRICT_VARIABLE)
+    if raw is None:
+        return False
+    word = raw.strip().lower()
+    if word in STRICT_WORDS:
+        return True
+    if word in NOT_STRICT_WORDS:
+        return False
+    raise pytest.UsageError(
+        f"{STRICT_VARIABLE}={raw!r} is not understood: use 1, true or yes to make a skipped PostgreSQL "
+        "test a failure, or 0, false, no or nothing to let it skip"
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """At session start: a value of the switch that is not understood stops the run here, not at the first skip."""
+    strict()
 
 
 def skip_reason(report: pytest.TestReport) -> str:
