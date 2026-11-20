@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:35:26Z
+UPDATED_UTC: 2026-11-20T08:35:58Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 0.73 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, agents light 4 heavy 2
+CAPACITY: load 0.71 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, agents light 4 heavy 2
 DISK: / 54G free, 23% used; worktrees /tmp/core-b-wt 2.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T08:35:23Z (previous push; this board is pushed right after writing)
+PUSHED_UTC: 2026-11-20T08:35:55Z (previous push; this board is pushed right after writing)
 IST: 14:05 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
@@ -173,3 +173,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 08:18Z: pulled; no new order after 021; lead's step B round 2 range not on origin yet (wip/lead-fix-B-who-else still at c0d8f5ec8). A9 builder (audit_* qualification + write-path drain tests) running; evidence batch 6 follows its merge. F-install blockers unchanged (core-c).
 
 08:36Z AGENTS: none running right now (all landed). WAITING-FOR-LEAD: (1) migration number 0008 confirmation (QUESTIONS.md), (2) ruling on the three ticket drafts' open questions (P4b2: is the named class worth it; P4c: reopen ii-meter for a 7th reason run_cap; Q17: build now or ledger row), (3) the dblink demo test and BRIEF-PREAMBLE vendor string (the two remaining failures of batch 6). WAITING-FOR-CORE-C: request 3 (NO_MAP), usd_cap in SPEND_REASONS, gate honouring the mark, K5 chain; then F-install merges. Next from me: EGM plan review of the 3 drafts (sequence: reviewers one round, sonnet).
+
+08:35Z ORDER 022 AGENTS (6, all sonnet, since ~08:35Z, disjoint files): B5a step B search_path/PG17 lock/role-less migrate (migrate.py, postgres.py; fail-first tests) | B5b step B reset ref overlap + reset wording (cli.py, app.py) | plan review of the 3 ticket drafts (read-only) | hostile re-read of step C (read-only) | hostile re-read of D-config (read-only) | mutation check of step A audit chain (tests only). Blocked by: none. Waiting for lead: round 3 of who_else (cherry-pick when announced), ORDER 022 text in ORDERS.md.
