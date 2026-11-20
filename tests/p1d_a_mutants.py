@@ -65,16 +65,16 @@ M = [
     ),
     m(
         "A3",
-        SL,
-        "shown = defang_text(runmap.redact_text(withheld, seeded, neutralise=_neutralise))",
-        "shown = runmap.redact_text(withheld, seeded, neutralise=_neutralise)",
+        CH,
+        "return defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))",
+        "return runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise)",
         "test_row_L5_slack",
     ),
     m(
         "A3b",
-        SL,
-        "withhold_commands(undefang_text(req.summary))",
-        "withhold_commands(req.summary)",
+        CH,
+        "withhold_commands(undefang_text(shown))",
+        "withhold_commands(shown)",
         "test_row_L7_slack",
     ),
     m(

@@ -149,11 +149,11 @@ def test_card_masks_what_model_masks():
 
 
 def test_row_TS1_card():
-    """N3: the secret is found ONLY by the tag-stripped view (`password%<i></i>3Dx` reads as `password=x` once the tags are
-    deleted). The card must take that view's result, defanged and settled like any other (kills mutant A11)."""
-    x = "see docs" + ".example" + ".com and password%<i></i>3Dhunter" + "2xyz now"
+    """N3: the secret is found ONLY by the tag-stripped view (`password%<i> </i>3Dx` reads as `password=x` only once the tags are
+    deleted, the text pass reads a space there). The card must take that view's result, defanged and settled like any other (kills mutant A11)."""
+    x = "see docs" + ".example" + ".com and password%<i> </i>3Dhunter" + "2 end"
     shown = channel.clean(x)
-    assert shown == "see docs[.]example[.]com and password=<SECRET_1> now", (
+    assert shown == "see docs[.]example[.]com and password=<SECRET_1> end", (
         f"ROW TS1 card: {shown!r}"
     )
 
