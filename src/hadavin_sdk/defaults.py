@@ -248,10 +248,19 @@ TEXTNORM_MIN_DIGIT_CHARS = 6
 # scripts inserted anywhere inside it, so "密码测试" is found in "密的码测试". INSERTION_MIN: the fewest characters such a needle may have, per script group (the first
 # word of the Unicode name, Han and kana grouped; see guard.textnorm); a shorter needle is matched exactly only, because "a?b" matches too many ordinary words.
 # The numbers come from a measurement on running text (CHANGELOG, "ONE INSERTED LETTER"): for each script, the shortest needle for which the
-# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text; a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
+# extra matches the insertion adds stay near 1% or lower per 10,000 characters of text (that figure is only what the one-inserted-letter match ADDS,
+# per script, on Bible text; it is NOT the false-hit rate of the whole scan, see FALSE HITS below); a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
 # minimum (measured on its own, CHANGELOG order 137 D3). A
 # script not in the table (Armenian, Georgian, ... : not measured) takes the default, 12: the LARGEST minimum measured for any script (Greek, 12; Cyrillic 10), the safe side for a script nobody measured. INSERTION_MAX: the longest needle
 # the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
+# FALSE HITS of the whole scan_holds (measured 2026-11-20, Python 3.13.18, Unicode 15.1.0; handover/core-c/evidence/G1-false-hits-and-cost.md,
+# "Round 2"): the share of 10,000-character chunks of ordinary Latin text (repository prose and code, standard-library docstrings, generated
+# text) in which scan_holds reports a value drawn at random (random pronounceable strings and a 70-name hand list, not real protected values):
+# 4 letters 5.3%, 5 letters 1.0%, 6 letters 0.4%, 8 or more 0; a common word of 5-10 letters 3.9-4.5% (its draw is hash-seeded: two runs);
+# ASCII ids of 4-5 characters 0.22%; 6 digits 0.007%. An upper bound in ONE sense only: a value that is a whole word of the text counts as a
+# hit. It is NOT a bound for other registers (tickets, email, chat) or for real protected values. Share of the hits that cut a word: 4 letters
+# 94%, 5 letters 63%, ids of 4-5 characters 99%, 6-letter names 9% (91% are the whole name). Non-Latin: one program's real interface text
+# (Russian 4-8 letters 7.6%; Chinese of 2 characters drawn by frequency 5.2%, of 3-4 characters 0); Arabic and Devanagari synthetic only, unknown.
 TEXTNORM_INSERTION_MIN_CHARS = 12
 TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
     ("HAN", 4),
@@ -283,3 +292,10 @@ TEXTNORM_INJECTION_OVERLAP_CHARS = 1_024
 TEXTNORM_INJECTION_OVERLAP_MAX_CHARS = 8_192
 TEXTNORM_INJECTION_PHRASE_CHARS = 120
 TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
+# INJECTION_BUDGET_S (guard.injection, G10): the CPU seconds (time.thread_time() of the thread that runs the check) that ONE RegexDetector check,
+# one detector call on one text, may spend in the text fold; past them textnorm raises DeadlinePassed and the run is flagged guard_unavailable
+# (fail closed). Per check, not per run: a run that checks many texts (k1b: one check per tool result) may spend it once per check. None: no
+# deadline. A positive finite number; anything else flags every run. 30.0: about 1.9x the slowest text of 2,000,000 characters measured on the
+# build box (16.0 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. CPU only: waiting for the GIL,
+# a lock or I/O does not count, and no call site of the injection check has a wall-clock limit.
+INJECTION_BUDGET_S = 30.0

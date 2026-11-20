@@ -491,7 +491,7 @@ def _stub_keys(monkeypatch, counts, drop_last=False):
         n = counts[0] if variant == text else counts[1]
         return [f"{'A' if variant == text else 'B'}{i}" for i in range(n)]
 
-    def key(tag_text, step):
+    def key(tag_text, step, deadline=None):
         if drop_last and tag_text == f"A{counts[0] - 1}" and step is textnorm._pass_b:
             return ""
         return f"k{tag_text}{step.__name__}"

@@ -123,8 +123,8 @@ x the tag texts T0 to T3, x2 marks variants (the text as it is, the text without
 has the keys of the text as it is AND of the text without them (a few of them are look-alike letters: U+0C02 reads ``o``). ``could_be_same_person``
 is NOT widened by the scan keys (the spelling variants of P1a are the whole name test; the ticket's erratum BN-20 says "not widened in P1b").
 
-THE PUBLIC NAMES (36, pinned by ``tests/test_textnorm.py``; ``__all__`` is sorted). Errors: ``TextnormError`` (base, not a ``ValueError``),
-``TextTooLong``, ``NotText``, ``UnidataMismatch``, ``FoldNotConverged``, ``EmptyView``, ``ViewTooShort``, ``CoverageRefused``. Check names (DENY and ALLOW):
+THE PUBLIC NAMES (37, pinned by ``tests/test_textnorm.py``; ``__all__`` is sorted). Errors: ``TextnormError`` (base, not a ``ValueError``),
+``TextTooLong``, ``NotText``, ``UnidataMismatch``, ``FoldNotConverged``, ``EmptyView``, ``ViewTooShort``, ``CoverageRefused``, ``DeadlinePassed``. Check names (DENY and ALLOW):
 ``identity_key`` (one spelling variant), ``identity_keys`` (all), ``could_be_same_person``, ``allow_equal`` and ``AllowVerdict``, ``names_equal``
 (prose only), ``fold`` (one spelling variant), ``squeeze`` (letters and digits only), ``key_tag`` and ``FOLD_VERSION`` (which fold made a check
 name), ``FILLERS`` (the invisible filler characters). Views and scans: ``fold_views``, ``squeeze_views``, ``scan_keyset``, ``value_scripts``,
@@ -247,6 +247,18 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   needle length); two inserted letters, a deleted letter and a changed letter are not matched; an insertion before the first or after the last
   character is not an insertion (the exact match holds it). A Latin value is not covered: its squeeze view is ASCII only, and a letter inserted
   into ASCII text is a different word to the squeeze view ("pasxsword"); that stays a limit.
+  DEADLINE (G10, ORDER 023): ``scan_holds`` and ``scan_views_no_value`` take a keyword ``budget_s``: None (the default: no clock is read and
+  every result is what it was before) or a finite ``int`` or ``float`` of CPU seconds. The call itself reads ``time.thread_time()`` once at its
+  start and counts the budget from there, on the clock of the thread that runs it (a call made in a worker thread is timed on that thread).
+  Anything else (a ``bool``, a string, NaN, an infinity) raises ``NotText`` before any reading and any work; zero or less is a budget already
+  spent. The clock is read at fixed points BETWEEN whole passes, never inside one (NFKD and NFKC are single calls over the whole text, so a pass
+  is never cut): after the size rule, after the value's needles, before each of the two prefix passes of each text of ``_readings``, per
+  squeeze view, before each pass of each scan key, after the views of the text, before the insertion match and per script view of it, and
+  every 4,096 hits of the insertion match. A reading at or past the deadline raises ``DeadlinePassed`` (fail closed: never a False, never a
+  part of the views); a bundle is stored in ``scan_cache()`` only after a whole build, and a call that finds it cached still reads the clock.
+  With a budget a call returns exactly what it returns without one, or raises; which of the two depends on the speed of the machine. The
+  overrun is the longest stretch between two readings (the size rule of a long text of distinct letters is the longest one); the work on the
+  VALUE (its needles and scan keys) has no reading inside it, only before and after. No other function takes a budget.
 
 WHERE ``could_be_same_person`` IS USED. It is a library primitive for the deny and check-name path only. It is wired into NO approval check, and no
 approval compares people's names (``approvals/requests.py`` compares ids exactly). A use in an approval later is a new ticket with its own plan review
@@ -292,9 +304,11 @@ import contextvars
 import functools
 import hashlib
 import logging
+import math
 import re
 import sys
 import threading
+import time
 import types
 import unicodedata
 from collections import Counter
@@ -313,6 +327,7 @@ __all__ = [
     "AllowVerdict",
     "Coverage",
     "CoverageRefused",
+    "DeadlinePassed",
     "EmptyView",
     "FoldNotConverged",
     "NotText",
@@ -376,6 +391,13 @@ class FoldNotConverged(TextnormError):
     """A DENY spelling variant of ``scan_keyset`` was still changing after ``defaults.TEXTNORM_MAX_PASSES`` passes (the last one is the
     confirming pass). Fail closed: any ``TextnormError`` on a DENY path means REFUSE. Not seen on any code point or in the fuzz tests; it
     is the bound, not an expected answer."""
+
+
+class DeadlinePassed(TextnormError):
+    """The scan used up the caller's CPU budget (``budget_s`` seconds of ``time.thread_time()`` of the thread that runs the call, counted from
+    the call's start); nothing was decided. A DENY caller REFUSES, as for any ``TextnormError``; the injection check flags the run. It is not a
+    ``TextTooLong``: a reader that halves a text that is too long must not start more work after the deadline. The message holds no text, no
+    value and no length."""
 
 
 class EmptyView(TextnormError):
@@ -575,6 +597,23 @@ def _checked(*texts: str) -> None:
             )
 
 
+def _deadline_of(budget_s: float | None) -> float | None:
+    """The ``budget_s`` rule of ``scan_holds`` and ``scan_views_no_value``: None (no deadline, no reading), or a finite ``int`` or ``float``
+    that is not a ``bool``. The deadline is the CPU clock of the thread that runs the call, read here once, plus the budget (zero or less: spent)."""
+    if budget_s is None:
+        return None
+    if type(budget_s) not in (int, float) or not math.isfinite(budget_s):
+        raise NotText("budget_s must be a finite number of CPU seconds or None")
+    return time.thread_time() + budget_s
+
+
+def _tick(deadline: float | None) -> None:
+    """One reading of the calling thread's CPU clock (``time.thread_time()``, through the module attribute so a test can replace it):
+    ``DeadlinePassed`` once the clock has reached the deadline (fail closed); nothing at all without a deadline."""
+    if deadline is not None and time.thread_time() >= deadline:
+        raise DeadlinePassed("the scan passed its deadline")
+
+
 # COMBINING GREEK YPOGEGRAMMENI: the only mark whose case fold is a letter (iota); see "U+0345" in the module docstring
 _YPOGEGRAMMENI = "\u0345"
 _IOTA = "\u03b9"
@@ -728,6 +767,7 @@ def _readings(
     collapse_ws: bool,
     marks_dropped: bool = False,
     marks_only: bool = False,
+    deadline: float | None = None,
 ) -> list[tuple[bool, str]]:
     """Every spelling reading of ``raw`` as ``(marks, view)`` in the order of ``_READINGS``, WITH repeats: ``marks`` is False for the readings of
     the text itself and True for those of the text without its Mc, Lm and Sk characters (``marks_dropped``; with ``marks_only`` only those are
@@ -739,8 +779,10 @@ def _readings(
     for marks, text in enumerate(texts):
         if marks_only and not marks:
             continue
+        _tick(deadline)
         nfkd = unicodedata.normalize("NFKD", text)
         with_iota = _prefix(nfkd, iota=True, marks=bool(marks))
+        _tick(deadline)
         prefixes = {
             True: with_iota,
             False: _prefix(nfkd, iota=False, marks=bool(marks))
@@ -781,6 +823,7 @@ def _view_pairs(
     marks_dropped: bool = False,
     marks_only: bool = False,
     scripts: frozenset[str] = frozenset(),
+    deadline: float | None = None,
 ) -> list[tuple[str, str]]:
     """Every view of ``raw`` as ``(kind, view)``, kind ``"spelling"`` or ``"script"``, in the order of ``_READINGS``; a pair is not repeated (the
     same text may be both kinds). With ``marks_dropped`` the same spelling variants of the text WITHOUT its Mc, Lm and Sk characters follow (a
@@ -793,6 +836,7 @@ def _view_pairs(
             collapse_ws=collapse_ws,
             marks_dropped=marks_dropped,
             marks_only=marks_only,
+            deadline=deadline,
         ),
         scripts,
     )
@@ -805,6 +849,7 @@ def _views(
     collapse_ws: bool,
     marks_dropped: bool = False,
     scripts: frozenset[str] = frozenset(),
+    deadline: float | None = None,
 ) -> tuple[str, ...]:
     """Every view of ``raw`` as a string, without repeats (``_view_pairs`` without the kinds): at most three spelling variants, twice as many with
     ``marks_dropped`` (the check names of ``identity_keys`` are these, at most six), three times as many with ``scripts``."""
@@ -815,6 +860,7 @@ def _views(
         collapse_ws=collapse_ws,
         marks_dropped=marks_dropped,
         scripts=scripts,
+        deadline=deadline,
     ):
         if view not in out:
             out.append(view)
@@ -1051,10 +1097,13 @@ def squeeze_views(raw: str, *, loose: bool = False) -> tuple[str, ...]:
     return _squeezed(raw, loose=loose)
 
 
-def _squeezed(raw: str, *, loose: bool = False) -> tuple[str, ...]:
+def _squeezed(raw: str, *, loose: bool = False, deadline: float | None = None) -> tuple[str, ...]:
     """``squeeze_views`` on a text that was already checked."""
     out: list[str] = []
-    for view in _views(raw, casefold=True, collapse_ws=False, marks_dropped=True):
+    for view in _views(
+        raw, casefold=True, collapse_ws=False, marks_dropped=True, deadline=deadline
+    ):
+        _tick(deadline)
         s = view.upper()
         if loose:
             s = s.translate(_LOOSE)
@@ -1222,11 +1271,12 @@ def _tag_texts(raw: str) -> list[str]:
     return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]
 
 
-def _converge(text: str, step) -> str:
+def _converge(text: str, step, deadline: float | None = None) -> str:
     """Repeat ``step`` until its output equals its input, for at most ``defaults.TEXTNORM_MAX_PASSES`` passes (the confirming pass
     included); a text still changing after that raises ``FoldNotConverged``."""
     passes = _validated_max_passes()
     for _ in range(passes):
+        _tick(deadline)
         out = step(text)
         if out == text:
             return out
@@ -1255,11 +1305,11 @@ def _pass_b(text: str) -> str:
 _CLASS_MAP = str.maketrans("zl", "3i")
 
 
-def _scan_key(text: str, step) -> str:
+def _scan_key(text: str, step, deadline: float | None = None) -> str:
     """One scan key of one marks variant of one tag text, read by one spelling variant (A or B): the text to its fixed point, the class maps ``z`` to ``3`` and ``l``
     to ``i``, then only letters and digits (every character for which ``str.isalnum()`` is False, and every modifier letter (category
     Lm), is removed)."""
-    s = _converge(text, step).translate(_CLASS_MAP)
+    s = _converge(text, step, deadline).translate(_CLASS_MAP)
     return "".join(ch for ch in s if ch.isalnum() and unicodedata.category(ch) != "Lm")
 
 
@@ -1269,7 +1319,8 @@ def scan_keyset(raw: str) -> frozenset[str]:
     ``raw``; at most 2 spelling variants (A and B) x 4 tag texts = 8 keys for a text with no spacing mark (Mc) and no modifier symbol (Sk), 16 for a text
     with one (the keys of the text as it is and of the text without them), by construction (13 is the most a text can reach, because the
     decoded tags alone are ASCII; a guard raises ``TextTooLong`` above 16, which cannot happen), each at most as long as the weight of ``raw``; a text
-    over the size rule raises ``TextTooLong``, a non-``str`` ``NotText``; over-matching is the safe side; there is no clock or deadline;
+    over the size rule raises ``TextTooLong``, a non-``str`` ``NotText``; over-matching is the safe side; it reads no clock (the budget is
+    ``scan_holds``'s and ``scan_views_no_value``'s);
     the keys hold letters and digits only (spaces, punctuation, ``#``, ``~``, ``@``, ``|`` and U+FFFD are dropped). Invisible-only text
     gives ``frozenset()``, and no key is ever ``""``.
 
@@ -1284,7 +1335,7 @@ def scan_keyset(raw: str) -> frozenset[str]:
     return _scan_keys(raw)
 
 
-def _scan_keys(raw: str) -> frozenset[str]:
+def _scan_keys(raw: str, deadline: float | None = None) -> frozenset[str]:
     """``scan_keyset`` on a text that was already checked."""
     no_lm = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")
     # A spacing mark (Mc) or a modifier symbol (Sk) is a table source in a few cases (U+0C02, U+0C82, U+0D02, U+0D82 read as ``o``, U+0B03 as
@@ -1292,7 +1343,7 @@ def _scan_keys(raw: str) -> frozenset[str]:
     # text without them). So a text that holds one has the keys of BOTH, and a text that holds none has the keys it always had.
     no_marks = "".join(ch for ch in no_lm if unicodedata.category(ch) not in ("Mc", "Sk"))
     keys = {
-        _scan_key(text, step)
+        _scan_key(text, step, deadline)
         for variant in dict.fromkeys((no_lm, no_marks))
         for text in dict.fromkeys(_tag_texts(variant))
         for step in (_pass_a, _pass_b)
@@ -1350,7 +1401,7 @@ def scan_cache() -> Iterator[None]:
         _SCAN_CACHE.reset(token)
 
 
-def _text_bundle(raw: str) -> _Bundle:
+def _text_bundle(raw: str, deadline: float | None = None) -> _Bundle:
     """What every scan of one TEXT shares, whatever the protected value: the spelling readings (``_readings``, case folded, whitespace collapsed,
     with the marks-dropped ones), the squeeze views and the sorted scan keys. Built once per ``scan_cache`` scope (see there) and again for every
     call outside one; only the script views depend on the value, and they are cut from the marks-dropped readings in a pass over each. All
@@ -1364,9 +1415,11 @@ def _text_bundle(raw: str) -> _Bundle:
         if hit is not None:
             return hit
     bundle: _Bundle = (
-        tuple(_readings(raw, casefold=True, collapse_ws=True, marks_dropped=True)),
-        _squeezed(raw),
-        tuple(sorted(_scan_keys(raw))),
+        tuple(
+            _readings(raw, casefold=True, collapse_ws=True, marks_dropped=True, deadline=deadline)
+        ),
+        _squeezed(raw, deadline=deadline),
+        tuple(sorted(_scan_keys(raw, deadline))),
     )
     if scope is not None:
         with scope.lock:
@@ -1407,12 +1460,16 @@ def scan_views(raw: str, value: str) -> tuple[str, ...]:
     return tuple(view for view in _all_views(raw, _value_scripts(value)) if view)
 
 
-def scan_views_no_value(raw: str) -> tuple[str, ...]:
+def scan_views_no_value(raw: str, *, budget_s: float | None = None) -> tuple[str, ...]:
     """The views of a TEXT for a check that has NO protected value (the injection check): the same views as ``scan_views`` without a script view,
     so at most 6 + 6 + 16 = 28. It is a separate function on purpose: ``scan_views`` refuses ``None``, so a missing value can never turn into a
-    scan that reads no script."""
+    scan that reads no script. ``budget_s``: see "DEADLINE" in the module docstring (None: no clock is read)."""
+    deadline = _deadline_of(budget_s)
     _checked(raw)
-    return tuple(view for view in _all_views(raw, frozenset()) if view)
+    _tick(deadline)
+    bundle = _text_bundle(raw, deadline)
+    _tick(deadline)
+    return tuple(view for view in _all_views(raw, frozenset(), bundle) if view)
 
 
 _JAPANESE_GROUPS = frozenset({"HAN", "KANA"})
@@ -1441,7 +1498,7 @@ def _one_off(window: str, target: str) -> bool:
     return window[i + 1 :] == target[i:] if i < n else True
 
 
-def _holds_with_one_insertion(view: str, needle: str) -> bool:
+def _holds_with_one_insertion(view: str, needle: str, deadline: float | None = None) -> bool:
     """True when ``view`` holds ``needle`` with at most ONE extra character inserted between two of its characters. Bounded and linear in the text
     for a text that is not built to defeat it: whatever the insertion is, one half of the needle is intact, so the text is searched for each half
     exactly (``str.find``) and each hit is checked against the other half by ``_one_off``. Needles of 2 characters or fewer, and the callers'
@@ -1450,14 +1507,21 @@ def _holds_with_one_insertion(view: str, needle: str) -> bool:
     m = len(needle)
     h = m // 2
     first, second = needle[:h], needle[h:]
+    hits = 0  # both halves count; the clock is read every 4,096 hits
     start = view.find(first)
     while start != -1:  # the first half is intact: the insertion is in or before the second half
+        hits += 1
+        if not hits % 4096:
+            _tick(deadline)
         stop = start + h
         if _one_off(view[stop : stop + (m - h) + 1], second):
             return True
         start = view.find(first, start + 1)
     start = view.find(second)
     while start != -1:  # the second half is intact: the insertion is in or after the first half
+        hits += 1
+        if not hits % 4096:
+            _tick(deadline)
         lo = max(start - h - 1, 0)
         if _one_off(view[lo:start][::-1], first[::-1]):
             return True
@@ -1503,7 +1567,7 @@ def _needles_or_refuse(value: str, scripts: frozenset[str]) -> list[tuple[str, s
         raise
 
 
-def scan_holds(*, text: str, value: str) -> bool:
+def scan_holds(*, text: str, value: str, budget_s: float | None = None) -> bool:
     """THE DENY SCAN (redaction, blocklist, has-secret): True when ANY view of ``text`` (``scan_views(text, value)``) holds ANY needle of the
     protected ``value`` (``scan_needles`` and the scan keys of the value that reach their minimum), or holds a script needle of the value with
     one extra letter of the value's own scripts inserted (see "ONE INSERTED LETTER"). Over-matching is the safe side. REFUSES, and never answers
@@ -1514,11 +1578,19 @@ def scan_holds(*, text: str, value: str) -> bool:
     caller treats every ``TextnormError`` like any other on a DENY path: REFUSE, and looks for such a value with its own exact search. Both
     arguments are checked (type, then size) before any work. Both are KEYWORD-ONLY (``scan_holds(text=..., value=...)``): two plain strings in a
     row are easy to swap, and a swap would scan the value for the text. Nothing of the text is kept after the call; to scan ONE text for
-    hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``."""
+    hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``. ``budget_s``: None (no clock is read) or the
+    CPU seconds this call may spend, counted from its start on the thread that runs it; past them the scan raises ``DeadlinePassed`` (see
+    "DEADLINE" in the module docstring). A consumer passes its own budget (the redactor: the seconds left before its deadline) and converts at
+    the call, ``except textnorm.DeadlinePassed: raise InputTooLarge("InputTooLarge") from None``, with that function listed in the refusal
+    handlers of ``tests/test_textnorm_callers.py``."""
+    deadline = _deadline_of(budget_s)
     _checked(text, value)
+    _tick(deadline)
     scripts = _value_scripts(value)
     needles = _needles_or_refuse(value, scripts)
-    bundle = _text_bundle(text)
+    _tick(deadline)
+    bundle = _text_bundle(text, deadline)
+    _tick(deadline)
     views = [view for view in _all_views(text, scripts, bundle) if view]
     if any(needle in view for view in views for _kind, needle in needles):
         return True
@@ -1530,10 +1602,13 @@ def scan_holds(*, text: str, value: str) -> bool:
     ]
     if not inserts:
         return False
+    _tick(deadline)
     script_views = {_script_view(view, scripts) for marks, view in bundle[0] if marks} - {""}
-    return any(
-        _holds_with_one_insertion(view, needle) for view in script_views for needle in inserts
-    )
+    for view in script_views:
+        _tick(deadline)
+        if any(_holds_with_one_insertion(view, needle, deadline) for needle in inserts):
+            return True
+    return False
 
 
 _LOG = logging.getLogger("hadavin_sdk.guard")
