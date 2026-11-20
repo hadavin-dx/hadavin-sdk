@@ -347,14 +347,26 @@ def test_hostile_secret_name_as_second_of_two_refused(cfg_dir):
 
 
 @pytest.mark.parametrize(
-    "name", ["k", "K" * 128, "Key_one.v2:eu/primary-1"], ids=["one", "128", "all"]
+    "name", ["k", "K" * 128, "Key_one.v2:eu.primary-1"], ids=["one", "128", "all"]
 )
 def test_secret_name_characters_allowed_as_built(cfg_dir, name):
     """Case: the secret names the character rule lets through as built: one character, 128 characters, and one
-    name with every allowed kind of character (letters of both cases, digits, underscore, dot, colon, slash,
-    hyphen). Loads unchanged."""
+    name with every allowed kind of character (letters of both cases, digits, underscore, dot, colon,
+    hyphen). Loads unchanged. (A slash left the charset in core-b's D-config fix round 2, DRAFT 3 of
+    handover/core-b/requests/001.answer.md; see the next test.)"""
     sender = _load(cfg_dir, _block({"s1": _sender(name)})).triggers.senders["s1"]
     assert sender.secret_names == (name,)
+
+
+@pytest.mark.parametrize("name", ["Key_one.v2:eu/primary-1", "a/b", "/", ".", "..", "a..b", "-", "_.:"])
+def test_secret_name_with_a_slash_or_a_path_trick_or_no_letter_refused(cfg_dir, name):
+    """Case: interface change (core-b DRAFT 3, requests/001.answer.md): "/" is no longer a secret-name character,
+    and "." / ".." / a name holding ".." / a name with no letter or digit are refused (a file-backed provider
+    would read a path). Refused at load, naming the field and not showing the name."""
+    text = _refused(cfg_dir, _block({"s1": _sender(name)}))
+    assert "triggers.senders.s1.secret_names" in text
+    if len(name) > 6:  # a short name such as "-" is part of any text
+        assert name not in text
 
 
 HOSTILE_REF_IDS = [" ", "\t", "a b", "a\n", "a\u00a0b", "a\u200bb", "a\x00b", "a/b", "a" * 129, ""]
@@ -818,14 +830,6 @@ def test_env_kind_with_distinct_sender_secrets_starts(cfg_dir):
     assert app.trigger_secret("key-two") == VALUE_TWO
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets "
-    "kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: "
-    "a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one "
-    "variable for two senders or for both names of one sender. The start is not refused (config.py "
-    "_trigger_refusals, platform_secrets.check_senders)",
-)
 @pytest.mark.parametrize(
     "senders",
     [

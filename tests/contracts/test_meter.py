@@ -488,18 +488,10 @@ def test_an_unknown_agent_is_a_key_error_and_books_nothing(lim):
 
 
 @pytest.mark.parametrize("run_id", [7, 1.5, ("run",)], ids=["int", "float", "tuple"])
-def test_a_reserve_that_is_refused_for_any_reason_books_nothing(lim, request, run_id):
+def test_a_reserve_that_is_refused_for_any_reason_books_nothing(lim, run_id):
     """ii 1 and inv 2, inv 8: reserve either returns an id with the worst case booked, or raises with nothing
     booked. A run id that is not text is not fixed by the interface (a store may take it or refuse it); what
     is fixed is that a refusal leaves no booking behind."""
-    _finding(
-        request,
-        "limits-memory",
-        "FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with "
-        "limits_unavailable, but the worst case stays on the day and month counters with no reservation "
-        "to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the "
-        "store run, still there at 7f8481795, now reachable through the meter)",
-    )
     r = lim(cap=D("1.00"))
     try:
         rid = r.meter.reserve(AGENT, D("0.60"), run_id=run_id)
@@ -568,12 +560,25 @@ def test_settle_with_an_unknown_id_is_not_found_from_both_meters(rig):
     """ii 4: "settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters"."""
     r = rig(cap=WIDE)
     rid = r.meter.reserve(AGENT, D("0.60"))
-    for unknown in ("res-" + uuid.uuid4().hex, rid + "x", ""):
+    for unknown in ("res-" + uuid.uuid4().hex, rid + "x"):
         with pytest.raises(NotFound) as caught:
             r.meter.settle(unknown, D("0.10"))
         assert isinstance(caught.value, KeyError)
     assert r.booked() == D("0.60")
     assert r.meter.settle(rid, D("0.10")) == 0  # the known one is untouched and still open
+
+
+def test_settle_with_an_empty_id_is_refused_and_books_nothing(rig):
+    """ii 4 as changed by core-b's F-store fix round 2 (3c033b209, handover/core-b/interfaces/README.md): the
+    reservation id is checked by the store before the lookup, so an EMPTY id is a ValueError from the store-backed
+    meter (it used to be NotFound). Kept meaning: an id that names no reservation is refused (NotFound or
+    ValueError, from either meter), nothing moves and the open reservation still settles."""
+    r = rig(cap=WIDE)
+    rid = r.meter.reserve(AGENT, D("0.60"))
+    with pytest.raises((NotFound, ValueError)):
+        r.meter.settle("", D("0.10"))
+    assert r.booked() == D("0.60")
+    assert r.meter.settle(rid, D("0.10")) == 0
 
 
 @pytest.mark.parametrize("amount", HOSTILE)

@@ -549,17 +549,10 @@ def test_reserve_refuses_a_bad_cap_and_books_nothing(store, bad, which):
         store.settle_spend(refused, Decimal(0))
 
 
-def test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error(store, request):
+def test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error(store):
     """S1.reserve: the errors of reserve_spend are SpendCapExceeded, StaleState and ValueError, and inv 9 says caps
     are validated like amounts. A very large finite cap must therefore be granted (it is above the counter) or be
     a ValueError; no third outcome, and the same on both kinds."""
-    _finding(
-        request,
-        "postgres",
-        "FINDING F2: a finite cap too large for NUMERIC (1E+200000) is not refused by check_spend_cap (no upper "
-        "bound) and PostgreSQL raises psycopg NumericValueOutOfRange, an error the interface does not list; the "
-        "memory store grants the same call",
-    )
     huge = Decimal("1E+200000")
     for which in ("day_cap", "month_cap"):
         try:
@@ -578,18 +571,11 @@ def test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error(store
         pytest.param({"agent": None}, id="agent-none"),
     ],
 )
-def test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change(store, request, bad):
+def test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change(store, bad):
     """Inv 2 "all or nothing: a refused or FAILED reserve leaves no reservation row and no counter change". A
     wrongly typed argument passes the amount and cap checks. Each store may then either take the call whole (the
     postgres kind stores the int 7 as the text "7": booked, with a row) or fail it whole; when it fails, nothing
     may be booked and the whole cap must still be free for the same agent and day."""
-    _finding(
-        request,
-        "memory",
-        "FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the "
-        "SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) "
-        "the exception leaves the amount booked with no row, so nothing can ever settle or expire it",
-    )
     cap = _usd("1.00")
     agent = bad.get("agent", "a")
     failed = None

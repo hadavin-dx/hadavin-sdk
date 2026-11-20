@@ -29,7 +29,7 @@ code and account x 8 separators between the two lines x 4 layouts), and over fix
 shared ground is the ticket's own example, which is one point of that grid.
 
 Marks. A property that fails on a redactor WITHOUT G7 and passes with it carries `needs_g7` (strict xfail when the
-fix is absent, detected by `_Redactor.settle` / `_ESCAPED_LOOKALIKE`). A property that fails
+fix is absent, detected by `_Redactor.settle` / `_OWN_OUTPUT`). A property that fails
 WITH the fix is a finding: strict xfail with the reason `FINDING G7-Fn`, smallest example in
 handover/core-a/FINDINGS-core-c-G7-redaction.md. No property was weakened to pass.
 
@@ -59,7 +59,9 @@ R = importlib.import_module(
 HAS_G7 = hasattr(
     R._Redactor, "settle"
 )  # core-c rewrote G7 once: `_CONTEXT_PATTERNS` is gone, `settle` stayed
-HAS_OWN_OUTPUT_RULE = hasattr(R, "_ESCAPED_LOOKALIKE")
+# The own-output rule (a secret value that is only this redactor's own escaped output makes no map entry) is named
+# `_ESCAPED_LOOKALIKE` in core-c's first G7 build and `_OWN_OUTPUT` since fix round 1 (ab6ff2f61). Either name counts.
+HAS_OWN_OUTPUT_RULE = hasattr(R, "_OWN_OUTPUT") or hasattr(R, "_ESCAPED_LOOKALIKE")
 _NEEDS = "needs core-c G7 fix (not on this branch yet)"
 needs_g7 = pytest.mark.xfail(not HAS_G7, strict=True, reason=_NEEDS)
 needs_own_output_rule = pytest.mark.xfail(not HAS_OWN_OUTPUT_RULE, strict=True, reason=_NEEDS)

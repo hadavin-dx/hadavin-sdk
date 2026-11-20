@@ -836,8 +836,7 @@ def test_a_port_in_use_is_a_listen_error_exit_2_not_store_unreachable(monkeypatc
     (exit 4). The port is taken first by a listening socket of this test."""
     taken = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):  # Windows: else a second bind of the port passes
-            taken.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        # A plain occupier, no exclusive flag: the server itself must refuse a second bind (code review 1, DC1-1).
         taken.bind((worker.LOOPBACK, 0))
         taken.listen(1)
         port = taken.getsockname()[1]
@@ -1125,3 +1124,93 @@ def test_make_app_reads_secrets_only_through_the_named_reader_and_refuses_other_
     _wsgi, runner = worker.make_app(app)
     runner.close(0)
     assert asked == ["door-a"]
+
+
+# --- code review 1 (DC1-3, DC1-4, DC1-7 and the mutant gap in Runner.close) ----------------------------------
+
+
+def test_ack_wait_nan_is_refused_and_a_non_int_max_running_is_a_config_error_in_make_app(rt):
+    """DC1-7. NaN passed both comparisons of the old bound; a string or a float as max_running was a TypeError
+    (or a float limit) and not a config error."""
+    with pytest.raises(ValueError, match="at most 30"):
+        Runner(rt, rt.store, ack_wait_s=float("nan"))
+    for bad in ("2", 2.0, True, None):
+        with pytest.raises(ValueError, match="whole number"):
+            Runner(rt, rt.store, max_running=bad)
+        with pytest.raises(ConfigError, match="whole number") as refused:
+            worker.make_app(_app(rt, _settings(max_running=bad)))
+        assert "Traceback" not in str(refused.value)
+    with pytest.raises(ConfigError, match="at most 30"):
+        worker.make_app(_app(rt, _settings(ack_wait_s=float("nan"))))
+
+
+def test_start_warns_once_with_the_names_of_settings_that_have_no_field(rt, caplog):
+    """DC1-3: names only, once, and none when every field exists."""
+    settings = _settings()
+    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
+        _wsgi, runner = worker.make_app(_app(rt, settings))
+        runner.close(0)
+        mine = [m for m in _log_lines(caplog, "WARNING") if "no field" in m]
+        assert len(mine) == 1 and mine[0].endswith(": max_waiting"), mine
+        caplog.clear()
+        full = _settings(max_waiting=5)
+        _wsgi, runner = worker.make_app(_app(rt, full))
+        runner.close(0)
+        assert [m for m in _log_lines(caplog, "WARNING") if "no field" in m] == []
+        caplog.clear()
+        bare = SimpleNamespace(**{k: v for k, v in vars(settings).items() if k != "poll_s"})
+        _wsgi, runner = worker.make_app(_app(rt, bare))
+        runner.close(0)
+        mine = [m for m in _log_lines(caplog, "WARNING") if "no field" in m]
+        assert len(mine) == 1 and mine[0].endswith(": poll_s, max_waiting"), mine
+        assert "door-a" not in mine[0] and SECRET not in mine[0]
+
+
+def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handlers_back(monkeypatch):
+    """DC1-4. SIGBREAK is Windows only; a stand-in number is used here."""
+    monkeypatch.setattr(signal, "SIGBREAK", signal.SIGUSR1, raising=False)
+    before = {n: signal.getsignal(n) for n in (signal.SIGTERM, signal.SIGUSR1)}
+    seen: dict[int, object] = {}
+
+    class Server:
+        server_port = 0
+
+        def serve_forever(self):
+            seen.update({n: signal.getsignal(n) for n in before})
+
+        def server_close(self):
+            pass
+
+        def shutdown(self):
+            pass
+
+    closed = []
+    runner = SimpleNamespace(close=lambda: closed.append(True))
+    assert worker.serve(Server(), runner) == worker.EXIT_OK  # type: ignore[arg-type]
+    assert seen[signal.SIGTERM] is seen[signal.SIGUSR1] and seen[signal.SIGTERM] != before[signal.SIGTERM]
+    assert {n: signal.getsignal(n) for n in before} == before and closed == [True]
+
+
+def test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is_never_asked(
+    rt, caplog
+):
+    """Mutant gap: with `self._closed = True` removed in `close`, `start` hands the work to a pool that has
+    been shut down; the pool raises, the answer is still 503, but an ERROR line is logged. The spy on the
+    pool's `submit` and the ERROR check kill that mutant."""
+    submitted: list[object] = []
+    runner = Runner(rt, rt.store)
+    real = runner._pool.submit
+
+    def spy(*args, **kwargs):
+        submitted.append(args)
+        return real(*args, **kwargs)
+
+    runner._pool.submit = spy  # type: ignore[method-assign]
+    runner.close()
+    with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
+        began = time.monotonic()
+        assert runner.start(_req()) == (503, {})
+        assert time.monotonic() - began < 2.0
+    assert submitted == []
+    assert [r for r in caplog.records if r.levelno >= 40] == []
+    assert rt.store._runs == {} and rt.llm.calls == 0
