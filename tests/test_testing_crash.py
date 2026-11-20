@@ -587,106 +587,71 @@ def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, 
     flag.unlink()
 
 
-def _arm_bad(point=POINT, nth=1):
-    return lambda cp, flag: cp.arm(point, nth=nth)
-
-
-def _wrap_bad(target, name="thing", methods=("step",)):
-    return lambda cp, flag: cp.wrap(target, name, list(methods) if methods != "step" else methods)
-
-
-BAD_POINTS = [
-    ("empty", ""),
-    ("upper-name", "Thing.step:before"),
-    ("upper-method", "thing.Step:before"),
-    ("upper-edge", "thing.step:BEFORE"),
-    ("no-edge", "thing.step"),
-    ("unknown-edge", "thing.step:during"),
-    ("no-method", "thing:before"),
-    ("path", "a/b.step:before"),
-    ("dots", "...:before"),
-    ("newline-after", "thing.step:before\n"),
-    ("newline-before", "\nthing.step:before"),
-    ("hash-in-point", "thing.step:before#2"),
-    ("hash-in-name", "thing#2.step:before"),
-    ("too-many-parts", "thing.step.more:before"),
-    ("digit-first", "1thing.step:before"),
-    ("space", "thing.st ep:before"),
-    ("300-chars-name", "t" * 300 + ".step:before"),
-    ("300-chars-method", "thing." + "s" * 300 + ":before"),
-    ("none", None),
-    ("bytes", b"thing.step:before"),
-]
-BAD_NTH = [("zero", 0), ("negative", -1), ("huge", 10**9), ("float", 1.0), ("string", "2")]
-BAD_NTH += [("none", None), ("true", True), ("false", False)]
-BAD_NAMES = ["", "Thing", "a.b", "a:b", "a#b", "a\n", "t" * 300]
-BAD_METHODS = ["", "Step", "__init__\n", "st.ep", "step#1"]
-
-REFUSED = (
-    [
-        pytest.param(_arm_bad(point), ValueError, "point", id=f"point-{key}")
-        for key, point in BAD_POINTS
-    ]
-    + [
-        pytest.param(_arm_bad(nth=nth), (TypeError, ValueError), "nth", id=f"nth-{key}")
-        for key, nth in BAD_NTH
-    ]
-    + [
-        pytest.param(_wrap_bad(Thing(), name), ValueError, "bad name", id=f"wrap-name-{i}")
-        for i, name in enumerate(BAD_NAMES)
-    ]
-    + [
+BAD_POINTS = {
+    "empty": "",
+    "upper-name": "Thing.step:before",
+    "upper-method": "thing.Step:before",
+    "upper-edge": "thing.step:BEFORE",
+    "no-edge": "thing.step",
+    "unknown-edge": "thing.step:during",
+    "no-method": "thing:before",
+    "path": "a/b.step:before",
+    "dots": "...:before",
+    "newline-after": "thing.step:before\n",
+    "newline-before": "\nthing.step:before",
+    "hash-in-point": "thing.step:before#2",
+    "hash-in-name": "thing#2.step:before",
+    "too-many-parts": "thing.step.more:before",
+    "digit-first": "1thing.step:before",
+    "space": "thing.st ep:before",
+    "300-chars-name": "t" * 300 + ".step:before",
+    "300-chars-method": "thing." + "s" * 300 + ":before",
+    "none": None,
+    "bytes": b"thing.step:before",
+}
+BAD_NTH = {"zero": 0, "negative": -1, "huge": 10**9, "float": 1.0, "string": "2", "none": None}
+BAD_NTH |= {"true": True, "false": False}
+# (id, error, text the message has, what to do with the CrashPoints `cp` and the flag path `flag`)
+WRAP = lambda target, name, methods: lambda cp, flag: cp.wrap(target, name, methods)
+REFUSED = [
+    *(
+        pytest.param(ValueError, "point", lambda cp, f, v=v: cp.arm(v), id=f"point-{k}")
+        for k, v in BAD_POINTS.items()
+    ),
+    *(
         pytest.param(
-            _wrap_bad(Thing(), "thing", [m]), ValueError, "bad method", id=f"wrap-method-{i}"
+            (TypeError, ValueError), "nth", lambda cp, f, v=v: cp.arm(POINT, nth=v), id=f"nth-{k}"
         )
-        for i, m in enumerate(BAD_METHODS)
-    ]
-    + [
-        pytest.param(
-            _wrap_bad(Thing(), "thing", ["step", "nope"]), AttributeError, "nope", id="wrap-missing"
-        ),
-        pytest.param(
-            _wrap_bad(Thing(), "thing", ["label"]), TypeError, "not a method", id="wrap-attribute"
-        ),
-        pytest.param(
-            lambda cp, flag: cp.wrap(Thing(), "thing", "step"),
-            TypeError,
-            "collection",
-            id="wrap-string-as-methods",
-        ),
-        pytest.param(_wrap_bad(Gen(), "gen", ["count"]), TypeError, "count", id="wrap-generator"),
-        pytest.param(_wrap_bad(Gen(), "gen", ["fetch"]), TypeError, "fetch", id="wrap-coroutine"),
-        pytest.param(
-            _wrap_bad(Gen(), "gen", ["stream"]), TypeError, "stream", id="wrap-async-generator"
-        ),
-        pytest.param(_wrap_bad([1], "box", ["__len__"]), TypeError, "__len__", id="wrap-dunder"),
-        pytest.param(
-            _wrap_bad(print, "fn", ["__call__"]), TypeError, "__call__", id="wrap-dunder-call"
-        ),
-        pytest.param(
-            lambda cp, flag: CrashPoints(mode="exit"),
-            ValueError,
-            "flag_path",
-            id="mode-exit-without-flag",
-        ),
-        pytest.param(
-            lambda cp, flag: CrashPoints(flag_path=flag),
-            ValueError,
-            "flag_path",
-            id="mode-raise-with-flag",
-        ),
-        pytest.param(
-            lambda cp, flag: CrashPoints(mode="kill", flag_path=flag),
-            ValueError,
-            "mode",
-            id="bad-mode",
-        ),
-    ]
-)
+        for k, v in BAD_NTH.items()
+    ),
+    *(
+        pytest.param(ValueError, "bad name", WRAP(Thing(), n, ["step"]), id=f"wrap-name-{i}")
+        for i, n in enumerate(["", "Thing", "a.b", "a:b", "a#b", "a\n", "t" * 300])
+    ),
+    *(
+        pytest.param(ValueError, "bad method", WRAP(Thing(), "t", [m]), id=f"wrap-method-{i}")
+        for i, m in enumerate(["", "Step", "__init__\n", "st.ep", "step#1"])
+    ),
+    pytest.param(AttributeError, "nope", WRAP(Thing(), "t", ["step", "nope"]), id="wrap-missing"),
+    pytest.param(TypeError, "not a method", WRAP(Thing(), "t", ["label"]), id="wrap-attribute"),
+    pytest.param(TypeError, "collection", WRAP(Thing(), "t", "step"), id="wrap-string-as-methods"),
+    pytest.param(TypeError, "count", WRAP(Gen(), "g", ["count"]), id="wrap-generator"),
+    pytest.param(TypeError, "fetch", WRAP(Gen(), "g", ["fetch"]), id="wrap-coroutine"),
+    pytest.param(TypeError, "stream", WRAP(Gen(), "g", ["stream"]), id="wrap-async-generator"),
+    pytest.param(TypeError, "__len__", WRAP([1], "box", ["__len__"]), id="wrap-dunder"),
+    pytest.param(TypeError, "__call__", WRAP(print, "fn", ["__call__"]), id="wrap-dunder-call"),
+    pytest.param(
+        ValueError, "flag_path", lambda cp, f: CrashPoints(mode="exit"), id="exit-no-flag"
+    ),
+    pytest.param(ValueError, "flag_path", lambda cp, f: CrashPoints(flag_path=f), id="raise-flag"),
+    pytest.param(
+        ValueError, "mode", lambda cp, f: CrashPoints(mode="kill", flag_path=f), id="mode"
+    ),
+]
 
 
-@pytest.mark.parametrize(("act", "exc", "match"), REFUSED)
-def test_h3_bad_input_is_refused_and_nothing_is_armed_or_written(tmp_path, act, exc, match):
+@pytest.mark.parametrize(("exc", "match", "act"), REFUSED)
+def test_h3_bad_input_is_refused_and_nothing_is_armed_or_written(tmp_path, exc, match, act):
     """H3, E5, E6, F6, F9: bad point or name, nth below 1 or not a whole number (a bool too), a
     dunder, async or generator method, one string as the methods, a wrong mode and flag pairing."""
     flag = tmp_path / "flag"
