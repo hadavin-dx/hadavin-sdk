@@ -806,11 +806,11 @@
    "what exactly it is doing": "fresh review of core-c G9c and G12d follow-up diffs as they land -> xr-from-core-a-4.md",
    "started UTC": "17:08",
    "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 10,
+   "state": "waiting",
    "review round n of cap": "-",
    "retries so far": 0,
-   "reason": "lead 17:02 order A7-A10"
+   "reason": "no G9c commit on cloud/core-c yet (a4c99a006 has only a one-line G4d fix e82c42b63); findings 1-4 unaddressed; re-run on the next core-c push that touches redact.py"
   },
   {
    "id": "A10-fuzz-pg",
