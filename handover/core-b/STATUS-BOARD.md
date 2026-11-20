@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:55:21Z
+UPDATED_UTC: 2026-11-20T12:57:59Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.05 of 4 cores, mem 1/15 GB, disk 46G free, 35% used, agents light 4 heavy 2
+CAPACITY: load 1.94 of 4 cores, mem 1/15 GB, disk 46G free, 35% used, agents light 4 heavy 2
 DISK: / 46G free, 35% used; worktrees /tmp/core-b-wt 3.9G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:54:03Z (previous push; this board is pushed right after writing)
-IST: 18:25 IST
+PUSHED_UTC: 2026-11-20T12:56:57Z (previous push; this board is pushed right after writing)
+IST: 18:27 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -266,3 +266,5 @@ Also running: F6 (step 6 review fixes, since 12:41Z, worktree MF6). After all la
 12:48Z LOAD 1.6 of 4 cores. AGENTS (5 live + 2 started now): G step 4 (sonnet, MG) | H1 0011 findings (sonnet, MH1) | H2 ABC findings (sonnet, MH2) | R7 fresh review of F6 diff, read-only (sonnet, since 12:47Z) | E10 non-PG mutant batteries + unit tests (haiku, since 12:47Z, evidence/batch-10-nonpg.md). PG evidence waits for the laptop (evidence-bpg, PG 15 and 17). Reviews of H1/H2/G diffs start the moment each reports.
 
 12:58Z DONE since 12:48Z: F6 merged; R7 fresh review of F6 found a Blocker (Limits log carried the store message: breaks the pinned "class not message" test) + 2 Majors (unbounded ids in logs): FIXED by me (log names class only plus one fixed sync-caps hint; ids cut to 64), 79 tests green, pushed. E10 non-PG evidence (evidence/batch-10-nonpg.md): mutant baselines of reserve_mutants/audit_drain_mutants broken since the check_caps step was added (steps picked by position) + price M6b/stage M4d harness misses + tests/test_money_definer_pg.py stale unpack (7 MONEY_FUNCTIONS) -> agents below. AGENTS (sonnet, load target 3.5): G step 4 (MG, running) | H1 resumed: B3 -> M1 -> N1 -> M5 in MH1, one pytest at a time (M2 deferred to a separate agent after H1, 124 call sites) | H2 ABC findings (MH2) | T1 tick-step-by-name + mutant baselines (MT1, since 12:58Z, tests only).
+
+13:08Z H2 MERGED (714bd9f7f, pushed): ABC M1 isolation pin (+PG test), M2 mark tests deleted, M3 Anthropic mark narrowed unless direct_api, nit 2 AuditEvent limits (128 + charset, audit_ref hashing), nit 3 outbox order, nit 1/6 docs. Left in DECISIONS: isolation in check_role_settings/verify (migrate.py: after G), N4/5/7/8. AGENTS (sonnet): G step 4 (MG, running since 11:49Z, long overdue: will ask for its state next) | H1 B3 -> M1 -> N1 -> M5 (MH1) | T1 tick-by-name + mutant baselines (MT1) | R8 fresh review of H2 diff (since 13:07Z, writes tickets/ABC-H2-review-1.md). Queued: M2, M4, M6, isolation check_role_settings (all after G/H1 because of migrate.py/tests overlap).
