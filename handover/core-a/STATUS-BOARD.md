@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:04:16Z
+UPDATED_UTC: 2026-11-20T06:05:35Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 25
-ITEMS_OPEN: 4
-PERCENT: 89
-AGENTS_RUNNING: 2
-CAPACITY: load 0.64 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.4G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
+ITEMS_TOTAL: 26
+ITEMS_OPEN: 3
+PERCENT: 93
+AGENTS_RUNNING: 1
+CAPACITY: load 1.02 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.5G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:03:47Z (the push before this board)
+NEXT: gate contract test for core-c lands: record findings; then report block; then waiting for the lead or core-b
+PUSHED_UTC: 2026-11-20T06:04:18Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -42,9 +42,10 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | DONE | 100 | raw/D-tests-pg16.log (13 database and kill tests with test ids), raw/D-E-all-tests-pg16.log (all my files: 578 passed, 4 skipped at that time) | 1 | 13 of 13 on PostgreSQL 16.15 at the first real run: one row per key, 409 on another document, 50 parallel, oversize, 4 child-process kill cases, 2 two-process cases; plus 19 no-database cases (start refusal through main, start checks, SIGTERM drain). The agent could not start the database (folder permission), I started it from /var/lib/postgresql/core-a-test and ran the file myself. NOT run: PostgreSQL 17 |
 | MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | DONE | 100 | tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log | 1 | 30 of 30 good; problems: [] (13 new mutants in groups G8 to G12: quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM). Weak points: G11a and G12c rest on the pinned test more than on the message text; run by the agent, not re-run by me |
 | O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | DONE | 100 | tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md | 1 | on core-b's code (commit 2b086c2): 93 passed, 16 strict expected-failures = 7 findings, 20 skipped (fields core-b has not built). On my branch the file skips. NOT checked: pilot and prod configs, the database |
-| O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | RUNNING | 5 | raw/D-nul-document-pg16.log (not yet) | 1 | ORDER 013 verdict on review minor 12 |
+| O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | DONE | 100 | tests/triggers/test_t5_nul_document.py (29 tests), raw/D-nul-document-pg16.log, ticket D lines 241 and 293 | 1 | today: a NUL character inside a document is ACCEPTED and is safe at all three levels: the redactor removes it before the model sees the text, no document text reaches a database column, the run ends normally. Pinned, not changed. Also pinned: the control characters U+0001 and U+001F are NOT removed and reach the model unchanged. The agent repeated its file 5 times against the no-loop rule: said here, no harm. NOT checked: real model clients, the database audit sink, a real card channel |
 | O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001 |
 | O13-gate | contract test file for core-c's gate module (non-builder) | RUNNING | 5 | raw/gate-contract-tests-on-core-c.log (not yet) | 1 | started early, see DECISIONS: it is a new file that depends on nothing of mine |
+| BATCH-3 | ONE batch of my own files after ORDER 013 items 1 and 2 (lint, all my test files and the rule files on PostgreSQL 16) | DONE | 100 | raw/BATCH3-own-files-pg16.log (test ids) | 1 | lint and format clean (342 files); 899 passed, 105 skipped, 0 failed in 43 s. Skips: 102 contract tests waiting for core-b's step F, the trigger config file (config not on my branch), 2 empty-body rows. The whole suite was NOT run again (owner rule); last whole-suite run is batch 2 |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -68,7 +69,7 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | t4-contract | builder (tests) | fable | contract tests for core-b's spend reservation store methods and the 50-connection cap test file | 05:46 | ended | 100 | done | n/a | 0 | finished, 155k tokens |
 | mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | ended | 100 | done | n/a | 0 | finished |
 | o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | ended | 100 | done | n/a | 0 | finished |
-| o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013; 3 agents run |
+| o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | ended | 100 | done | n/a | 0 | finished; ran its own file 6 times in total although told once |
 | o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | about 30 min after start | 5 | running | n/a | 0 | ORDER 013 last paragraph; 4 agents run |
 
 ## SHELLS AND PROCESSES
@@ -100,6 +101,8 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | BATCH 2 whole suite: pytest -n 3 -m 'not live and not perf' | working tree after ORDER 012 fixes | 1 of 1 for this round | 10865 / 1 / 0, 640 skipped (100 s) | tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md) | done | INHERITED from the handover folder, not from code; no NEW failure |
 | tests/endpoint_mutants.py (30 mutants) | working tree | 4 (agent, after the extension) | 30 of 30 good; problems: [] | none | done | covers the lead-review code now; database tests are skipped inside mutant runs |
 | tests/test_trigger_config.py on core-b's tree (scratch copy) | origin/cloud/core-b 2b086c2 | 1 (agent) | 93 passed, 16 xfailed (strict), 20 skipped | none unexpected; the 16 are findings F2, F3, F4a, F4b, F5, F7, F8 | done | non-builder test of core-b's config |
+| tests/triggers/test_t5_nul_document.py | working tree | 1 logged (agent), plus 5 repeats it should not have made | 29 / 0 / 0 | none | done | PostgreSQL 16.15; a control test shows the database does refuse a NUL in text, so 'nothing failed' is a real result |
+| BATCH 3: my own files + rule files, PostgreSQL 16, -n 3 | working tree | 1 of 1 | 899 / 0 / 0, 105 skipped (43 s) | none | done | ORDER 013: one batch when items 1 and 2 are pushed |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -124,3 +127,4 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 - requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)
 - Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here
 - I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer
+- NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model

@@ -2,7 +2,7 @@
  "order": "013 (002 to 012 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module",
+ "next": "gate contract test for core-c lands: record findings; then report block; then waiting for the lead or core-b",
  "note": "the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -208,11 +208,11 @@
   {
    "item": "O13-NUL",
    "what": "test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-nul-document-pg16.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_nul_document.py (29 tests), raw/D-nul-document-pg16.log, ticket D lines 241 and 293",
    "tries": 1,
-   "reason": "ORDER 013 verdict on review minor 12"
+   "reason": "today: a NUL character inside a document is ACCEPTED and is safe at all three levels: the redactor removes it before the model sees the text, no document text reaches a database column, the run ends normally. Pinned, not changed. Also pinned: the control characters U+0001 and U+001F are NOT removed and reach the model unchanged. The agent repeated its file 5 times against the no-loop rule: said here, no harm. NOT checked: real model clients, the database audit sink, a real card channel"
   },
   {
    "item": "O13-3",
@@ -231,6 +231,15 @@
    "evidence file": "raw/gate-contract-tests-on-core-c.log (not yet)",
    "tries": 1,
    "reason": "started early, see DECISIONS: it is a new file that depends on nothing of mine"
+  },
+  {
+   "item": "BATCH-3",
+   "what": "ONE batch of my own files after ORDER 013 items 1 and 2 (lint, all my test files and the rule files on PostgreSQL 16)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/BATCH3-own-files-pg16.log (test ids)",
+   "tries": 1,
+   "reason": "lint and format clean (342 files); 899 passed, 105 skipped, 0 failed in 43 s. Skips: 102 contract tests waiting for core-b's step F, the trigger config file (config not on my branch), 2 empty-body rows. The whole suite was NOT run again (owner rule); last whole-suite run is batch 2"
   }
  ],
  "agents": [
@@ -484,15 +493,15 @@
   {
    "model": "fable",
    "started UTC": "05:59",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "o13-nul",
    "role": "builder (tests) and evidence runner",
    "what exactly it is doing": "follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop",
-   "expected end": "about 20 min after start",
-   "reason": "ORDER 013; 3 agents run"
+   "expected end": "ended",
+   "reason": "finished; ran its own file 6 times in total although told once"
   },
   {
    "id": "o13-gate",
@@ -697,6 +706,24 @@
    "first failing line": "none unexpected; the 16 are findings F2, F3, F4a, F4b, F5, F7, F8",
    "state": "done",
    "reason": "non-builder test of core-b's config"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_nul_document.py",
+   "branch and SHA": "working tree",
+   "run number": "1 logged (agent), plus 5 repeats it should not have made",
+   "passed / failed / errors": "29 / 0 / 0",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "PostgreSQL 16.15; a control test shows the database does refuse a NUL in text, so 'nothing failed' is a real result"
+  },
+  {
+   "suite or file": "BATCH 3: my own files + rule files, PostgreSQL 16, -n 3",
+   "branch and SHA": "working tree",
+   "run number": "1 of 1",
+   "passed / failed / errors": "899 / 0 / 0, 105 skipped (43 s)",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "ORDER 013: one batch when items 1 and 2 are pushed"
   }
  ],
  "restarts": [],
@@ -729,7 +756,8 @@
   "ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started",
   "requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
-  "I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer"
+  "I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer",
+  "NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
 }
