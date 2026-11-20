@@ -1,9 +1,9 @@
 {
- "order": "013 (002 to 012 standing)",
- "state": "WAITING-LEAD",
+ "order": "014 (002 to 013 standing)",
+ "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "ORDER 013 is done; open: item 3 (switch worker names) waits for core-b's answer to request 001; waiting for the next order",
- "note": "0 agents run: nothing in the queue is READY (O13-3 waits for core-b); PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) plus scratch copies of core-b's and core-c's trees under the session scratch folder (the safety check refuses folder deletes)",
+ "next": "trial lands: record findings; at every board: look for core-b's requests/001.answer.md",
+ "note": "PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -217,8 +217,8 @@
   {
    "item": "O13-3",
    "what": "switch the worker to core-b's final names",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "MOVED to O14-3",
+   "percent": 100,
    "evidence file": "",
    "tries": 1,
    "reason": "WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001"
@@ -240,6 +240,33 @@
    "evidence file": "raw/BATCH3-own-files-pg16.log (test ids)",
    "tries": 1,
    "reason": "lint and format clean (342 files); 899 passed, 105 skipped, 0 failed in 43 s. Skips: 102 contract tests waiting for core-b's step F, the trigger config file (config not on my branch), 2 empty-body rows. The whole suite was NOT run again (owner rule); last whole-suite run is batch 2"
+  },
+  {
+   "item": "O14-1",
+   "what": "TRIAL INTEGRATION: combined tree of core-b, core-c and core-a code paths in a scratch worktree from main; conflicts, name mismatches, ONE whole-suite run on PostgreSQL 16; findings only, nothing pushed",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "TRIAL-INTEGRATION.md, raw/TRIAL-*.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 014 item 1 (most valuable)"
+  },
+  {
+   "item": "O14-2",
+   "what": "missing mutant scripts for core-b's steps (audit drain, price)",
+   "state": "SKIPPED (they exist)",
+   "percent": 100,
+   "evidence file": "git ls-tree origin/cloud/core-b: tests/audit_drain_mutants.py and tests/price_mutants.py are there (also stop_state_mutants.py)",
+   "tries": 0,
+   "reason": "ORDER 014 item 2 says: check first, skip any that exist. Both exist on core-b's branch at 06:12Z, so nothing to write. NOT done: I did not run or review core-b's scripts"
+  },
+  {
+   "item": "O14-3",
+   "what": "switch the worker to core-b's bound reader and run the worker start test for real",
+   "state": "WAIT core-b",
+   "percent": 0,
+   "evidence file": "",
+   "tries": 0,
+   "reason": "no requests/001.answer.md on core-b's branch yet (checked 06:12Z); I check at every board"
   }
  ],
  "agents": [
@@ -515,6 +542,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "finished"
+  },
+  {
+   "id": "o14-trial",
+   "role": "evidence runner (integration trial, fixes nothing)",
+   "model": "fable",
+   "what exactly it is doing": "builds the combined tree in a scratch worktree, lists conflicts and mismatches, runs the whole suite once on PostgreSQL 16, classifies failures; owns the local PostgreSQL start and stop",
+   "started UTC": "06:12",
+   "expected end": "about 60 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ORDER 014 item 1; only 1 agent runs: item 2 needs no work (scripts exist), item 3 waits for core-b, and the trial is one indivisible job on one database and one worktree"
   }
  ],
  "tests": [
@@ -761,13 +801,10 @@
  ],
  "lost": [],
  "lead_actions": [
-  "FINDINGS-core-b-trigger-config.md: 7 findings on core-b's trigger config (whole secret store handed to the worker; a secret value typed as a name is echoed; booleans load as numbers; blank names load; body cap equals the document cap; shared platform secret name not refused) and 6 differences from request 001 DRAFT 3: please pass to core-b",
-  "ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started",
-  "requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)",
+  "ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so",
+  "Item 3 waits for core-b's requests/001.answer.md",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
-  "I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer",
-  "NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model",
-  "Gate contract test: no finding against core-c's gate. For the plan: no shipped worst-case cost formula covers tool schemas, documents and retries yet (interface point 10); core-c's ticket text on settle after an error is stale"
+  "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
 }

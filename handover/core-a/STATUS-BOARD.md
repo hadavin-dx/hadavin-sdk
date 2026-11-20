@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-20T06:11:10Z
+UPDATED_UTC: 2026-11-20T06:12:38Z
 SESSION: core-a
-ORDER: 013 (002 to 012 standing)
-STATE: WAITING-LEAD
+ORDER: 014 (002 to 013 standing)
+STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 26
-ITEMS_OPEN: 2
-PERCENT: 96
-AGENTS_RUNNING: 0
-CAPACITY: load 0.09 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.5G 60G 14%; 352M /home/user/hadavin-sdk; 69M /tmp/claude-0; 131M /root/.cache
+ITEMS_TOTAL: 29
+ITEMS_OPEN: 4
+PERCENT: 93
+AGENTS_RUNNING: 1
+CAPACITY: load 0.16 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.7G 60G 14%; 522M /home/user/hadavin-sdk; 69M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: ORDER 013 is done; open: item 3 (switch worker names) waits for core-b's answer to request 001; waiting for the next order
-PUSHED_UTC: 2026-11-20T06:10:15Z (the push before this board)
-NOTE: 0 agents run: nothing in the queue is READY (O13-3 waits for core-b); PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) plus scratch copies of core-b's and core-c's trees under the session scratch folder (the safety check refuses folder deletes)
+NEXT: trial lands: record findings; at every board: look for core-b's requests/001.answer.md
+PUSHED_UTC: 2026-11-20T06:11:13Z (the push before this board)
+NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before
 
 ## QUEUE ITEMS
 | item | what | state | percent | evidence file | tries | reason |
@@ -43,9 +43,12 @@ NOTE: 0 agents run: nothing in the queue is READY (O13-3 waits for core-b); Post
 | MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | DONE | 100 | tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log | 1 | 30 of 30 good; problems: [] (13 new mutants in groups G8 to G12: quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM). Weak points: G11a and G12c rest on the pinned test more than on the message text; run by the agent, not re-run by me |
 | O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | DONE | 100 | tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md | 1 | on core-b's code (commit 2b086c2): 93 passed, 16 strict expected-failures = 7 findings, 20 skipped (fields core-b has not built). On my branch the file skips. NOT checked: pilot and prod configs, the database |
 | O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | DONE | 100 | tests/triggers/test_t5_nul_document.py (29 tests), raw/D-nul-document-pg16.log, ticket D lines 241 and 293 | 1 | today: a NUL character inside a document is ACCEPTED and is safe at all three levels: the redactor removes it before the model sees the text, no document text reaches a database column, the run ends normally. Pinned, not changed. Also pinned: the control characters U+0001 and U+001F are NOT removed and reach the model unchanged. The agent repeated its file 5 times against the no-loop rule: said here, no harm. NOT checked: real model clients, the database audit sink, a real card channel |
-| O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001 |
+| O13-3 | switch the worker to core-b's final names | MOVED to O14-3 | 100 |  | 1 | WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001 |
 | O13-gate | contract test file for core-c's gate module (non-builder) | DONE | 100 | tests/contracts/test_model_gate_contract.py, raw/gate-contract-tests-on-core-c.log | 1 | on core-c's code (commit 619a3e5): 201 passed, 0 expected-failures, 1 skipped; 7 planted mutants in a scratch copy all caught. No finding against the gate. Two notes for the lead: no shipped worst-case formula covers tools, documents and retries yet (interface point 10 is tested only with a formula written in the test); core-c's ticket text on when to settle is stale, the code follows the interface. On my branch the file skips (module not here) |
 | BATCH-3 | ONE batch of my own files after ORDER 013 items 1 and 2 (lint, all my test files and the rule files on PostgreSQL 16) | DONE | 100 | raw/BATCH3-own-files-pg16.log (test ids) | 1 | lint and format clean (342 files); 899 passed, 105 skipped, 0 failed in 43 s. Skips: 102 contract tests waiting for core-b's step F, the trigger config file (config not on my branch), 2 empty-body rows. The whole suite was NOT run again (owner rule); last whole-suite run is batch 2 |
+| O14-1 | TRIAL INTEGRATION: combined tree of core-b, core-c and core-a code paths in a scratch worktree from main; conflicts, name mismatches, ONE whole-suite run on PostgreSQL 16; findings only, nothing pushed | RUNNING | 5 | TRIAL-INTEGRATION.md, raw/TRIAL-*.log (not yet) | 1 | ORDER 014 item 1 (most valuable) |
+| O14-2 | missing mutant scripts for core-b's steps (audit drain, price) | SKIPPED (they exist) | 100 | git ls-tree origin/cloud/core-b: tests/audit_drain_mutants.py and tests/price_mutants.py are there (also stop_state_mutants.py) | 0 | ORDER 014 item 2 says: check first, skip any that exist. Both exist on core-b's branch at 06:12Z, so nothing to write. NOT done: I did not run or review core-b's scripts |
+| O14-3 | switch the worker to core-b's bound reader and run the worker start test for real | WAIT core-b | 0 |  | 0 | no requests/001.answer.md on core-b's branch yet (checked 06:12Z); I check at every board |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -71,6 +74,7 @@ NOTE: 0 agents run: nothing in the queue is READY (O13-3 waits for core-b); Post
 | o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | ended | 100 | done | n/a | 0 | finished |
 | o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | ended | 100 | done | n/a | 0 | finished; ran its own file 6 times in total although told once |
 | o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | ended | 100 | done | n/a | 0 | finished |
+| o14-trial | evidence runner (integration trial, fixes nothing) | fable | builds the combined tree in a scratch worktree, lists conflicts and mismatches, runs the whole suite once on PostgreSQL 16, classifies failures; owns the local PostgreSQL start and stop | 06:12 | about 60 min after start | 5 | running | n/a | 0 | ORDER 014 item 1; only 1 agent runs: item 2 needs no work (scripts exist), item 3 waits for core-b, and the trial is one indivisible job on one database and one worktree |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
@@ -123,10 +127,7 @@ NOTE: 0 agents run: nothing in the queue is READY (O13-3 waits for core-b); Post
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-- FINDINGS-core-b-trigger-config.md: 7 findings on core-b's trigger config (whole secret store handed to the worker; a secret value typed as a name is echoed; booleans load as numbers; blank names load; body cap equals the document cap; shared platform secret name not refused) and 6 differences from request 001 DRAFT 3: please pass to core-b
-- ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started
-- requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)
+- ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so
+- Item 3 waits for core-b's requests/001.answer.md
 - Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here
-- I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer
-- NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model
-- Gate contract test: no finding against core-c's gate. For the plan: no shipped worst-case cost formula covers tool schemas, documents and retries yet (interface point 10); core-c's ticket text on settle after an error is stale
+- I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer
