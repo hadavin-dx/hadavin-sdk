@@ -1930,8 +1930,15 @@ def test_s2_members_of_the_reset_role_are_listed_even_when_it_holds_no_right_yet
 
 
 def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
+    for role in (
+        w.reset,
+        w.portal,
+        w.purge,
+    ):  # else the money check (an unnamed executor) refuses first
+        w.grant("REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA {} FROM {}", w.schema, role)
     names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))
-    assert w.runtime not in (names or "")
+    assert names is not None, "the stop check itself must be the refusal"
+    assert w.runtime not in names
     assert w.rights(w.reset)["kill_switch_clears"] == {"SELECT", "INSERT"}
 
 
