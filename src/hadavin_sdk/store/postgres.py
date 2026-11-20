@@ -687,7 +687,6 @@ class PostgresStore:
             "stops": sql.SQL("{}.kill_switch_stops").format(s),
             "clears": sql.SQL("{}.kill_switch_clears").format(s),
             "resets": sql.SQL("{}.kill_switch_resets").format(s),
-            "mark": sql.SQL("{}.kill_switch_watermark").format(s),
         }
 
     def get_kill_switch(self) -> KillSwitch:
@@ -710,8 +709,8 @@ class PostgresStore:
         ):  # the flag is off: any stop with no clear still means ON (the oldest one is reported)
             # Every clear names one distinct stop (primary key plus foreign key), so "some stop has no clear" is
             # exactly count(stops) > count(clears): two index-only counts, however many cleared stops there are.
-            # A time watermark cannot make this cheaper without risk: a stop hidden because its ts is at or below
-            # the watermark (a planted old ts, a hand-inserted stop after a reset) must still count as open. The
+            # No time watermark: a stop hidden because its ts is at or below it (a planted old ts, a hand-inserted
+            # stop after a reset) must still count as open, so there is no such table (0009, review N3). The
             # slow oldest-first anti-join runs only when a stop really is open (the switch is ON anyway).
             row = self._exec(
                 sql.SQL(
@@ -776,8 +775,8 @@ class PostgresStore:
 
     def clear_stops(self, by: str, stop_ids: Sequence[str], audit_seq: int | None = None) -> None:
         """Compare-and-clear (the reset role only): the old flag off and one clear row for each of exactly these
-        stop ids, one `kill_switch_resets` row (who, the ids it really cleared, the audit chain seq when the caller
-        knows it) and the watermark moved to the newest cleared stop time, all in one transaction. A stop that is not in `stop_ids` (set after the caller read the open stops)
+        stop ids and one `kill_switch_resets` row (who, the ids it really cleared, the audit chain seq when the caller
+        knows it), all in one transaction. A stop that is not in `stop_ids` (set after the caller read the open stops)
         gets no clear and keeps the switch ON."""
         t = self._stop_tables()
         ids = [
@@ -799,7 +798,6 @@ class PostgresStore:
                     "run hadavin-sdk migrate"
                 )
             cleared: list[str] = []
-            newest = None
             if ids:
                 done = self._exec(
                     sql.SQL(
@@ -807,29 +805,18 @@ class PostgresStore:
                         "FROM {stops} s WHERE s.id = ANY(%s::uuid[]) AND NOT EXISTS "
                         "(SELECT 1 FROM {clears} x WHERE x.stop_id = s.id) "
                         "ON CONFLICT (stop_id) DO NOTHING RETURNING stop_id) "
-                        "SELECT array_agg(c.stop_id::text) AS ids, max(s.ts) AS newest "
-                        "FROM c JOIN {stops} s ON s.id = c.stop_id"
+                        "SELECT array_agg(c.stop_id::text) AS ids FROM c"
                     ).format(**t),
                     (by, stamp, ids),
                 ).fetchone()
                 cleared = list(done["ids"] or [])
-                newest = done["newest"]
-            # The reset's own record (the reset role holds INSERT only, so no RETURNING) and the watermark.
+            # The reset's own record (the reset role holds INSERT only, so no RETURNING).
             self._exec(
                 sql.SQL(
                     'INSERT INTO {resets} ("by", at, cleared_ids, audit_seq) VALUES (%s, %s, %s::uuid[], %s)'
                 ).format(**t),
                 (by, stamp, cleared, audit_seq),
             )
-            if newest is not None:  # never lowers: the trigger refuses it, GREATEST keeps it quiet
-                self._exec(
-                    sql.SQL(
-                        "INSERT INTO {mark} AS w (id, through, at) VALUES (TRUE, %s, %s) "
-                        "ON CONFLICT (id) DO UPDATE SET through = GREATEST(w.through, EXCLUDED.through), "
-                        "at = EXCLUDED.at"
-                    ).format(**t),
-                    (newest, stamp),
-                )
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))

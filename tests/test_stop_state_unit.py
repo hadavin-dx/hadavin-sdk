@@ -123,7 +123,6 @@ RESET_ROWS = {
     "audit_entries": "SELECT, INSERT",
     "audit_checkpoints": "SELECT",
     "kill_switch_resets": "SELECT, INSERT",  # 0009: the reset's own append-only record
-    "kill_switch_watermark": "SELECT, INSERT, UPDATE",  # 0009: written by the reset only
 }
 
 
@@ -326,3 +325,24 @@ def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_exits_2_and_builds_noth
         "backends.store.dsn_secret_name"
     )
     assert "The kill switch was not changed." in err
+
+
+def test_cli_validate_constraints_runs_only_the_validate_step(cfg_dir, monkeypatch):
+    """`migrate --validate-constraints` needs no role, calls the validate step and never `migrate`."""
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+    seen = []
+
+    def no_migrate(*a, **k):
+        raise AssertionError("migrate ran")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", no_migrate)
+    monkeypatch.setattr(
+        "hadavin_sdk.store.migrate.validate_stop_constraints",
+        lambda dsn, **kw: seen.append(dsn) or ["kill_switch_stops_ts_range"],
+    )
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--validate-constraints"]) == 0
+    assert seen == ["postgresql://unused"]

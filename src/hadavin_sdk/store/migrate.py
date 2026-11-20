@@ -83,10 +83,8 @@ GRANTS: dict[str, Grant] = {
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
     "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
     "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
-    # Stop state hardening (0009): the reset's own record (the runtime role holds nothing on it) and the watermark
-    # of cleared stops (the runtime role reads it; only the reset role writes it).
+    # Stop state hardening (0009): the reset's own record (the runtime role holds nothing on it).
     "kill_switch_resets": Grant("table", "", reset=_APPEND),
-    "kill_switch_watermark": Grant("table", "SELECT", reset="SELECT, INSERT, UPDATE"),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND, release=_APPEND),
     "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT", release="SELECT"),
@@ -145,7 +143,6 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
 EXCLUDED_FUNCTIONS = (
     *TRIPWIRE_FUNCTIONS,
     "hadavin_audit_append_only()",
-    "hadavin_watermark_guard()",
 )
 # The relations the owner check compares with the function owner: a definer function that cannot write one of
 # them fails every call with insufficient_privilege.
@@ -603,6 +600,50 @@ def _check_stop_relations(db) -> None:
             f"{missing or 'none'}, names that resolve to another relation {shadowed or 'none'}). Run migrate "
             "with a search_path whose first existing schema holds the stop tables"
         )
+
+
+# The constraints 0009 adds NOT VALID (so an upgrade never fails on a planted row): (table, constraint).
+NOT_VALID_BY_DESIGN = (
+    ("kill_switch_stops", "kill_switch_stops_ts_range"),
+    ("kill_switch_clears", "kill_switch_clears_ts_range"),
+)
+
+
+def not_valid_constraints(db) -> list[tuple[str, str]]:
+    """The `NOT_VALID_BY_DESIGN` constraints of `current_schema()` that are still NOT VALID (review N2)."""
+    rows = db.execute(
+        "SELECT c.relname, k.conname FROM pg_catalog.pg_constraint k "
+        "JOIN pg_catalog.pg_class c ON c.oid = k.conrelid "
+        "WHERE c.relnamespace = pg_catalog.to_regnamespace(pg_catalog.current_schema()) AND NOT k.convalidated"
+    ).fetchall()
+    return [pair for pair in NOT_VALID_BY_DESIGN if tuple(pair) in {tuple(r) for r in rows}]
+
+
+def validate_constraints(db) -> list[str]:
+    """VALIDATE every constraint `not_valid_constraints` lists; return their names. Run as the table owner, as a
+    step of its own (`hadavin-sdk migrate --validate-constraints`), never inside a migration file: a planted row
+    makes it fail, naming the constraint, and the operator must deal with that row first."""
+    done = []
+    for table, name in not_valid_constraints(db):
+        try:
+            db.execute(
+                sql.SQL("ALTER TABLE {} VALIDATE CONSTRAINT {}").format(
+                    sql.Identifier(table), sql.Identifier(name)
+                )
+            )
+        except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
+            raise ConfigError(
+                f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
+                "2100-01-01, or this login is not the table owner); deal with the row first"
+            ) from None
+        done.append(name)
+    return done
+
+
+def validate_stop_constraints(dsn: str, **connect_args) -> list[str]:
+    """Open the owner's connection and `validate_constraints` in one transaction (the CLI's `--validate-constraints`)."""
+    with connect(dsn, **connect_args) as db, db.transaction():
+        return validate_constraints(db)
 
 
 def who_else_can_clear(
@@ -1151,6 +1192,14 @@ def migrate(
             if notes is not None:
                 notes.append(owner_note)
         _seed_limits(db)
+        if left := not_valid_constraints(db):
+            warn = (
+                f"constraints still NOT VALID: {', '.join(n for _, n in left)}; once no row is outside the "
+                "year range, run hadavin-sdk migrate --validate-constraints"
+            )
+            _LOG.warning("migrate: %s", warn)
+            if notes is not None:
+                notes.append(warn)
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
             if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):

@@ -16,6 +16,7 @@ import psycopg
 from psycopg import errors, sql
 from psycopg.conninfo import make_conninfo
 
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as migrate_mod
 from hadavin_sdk.store.migrate import GRANTS, migrate
 
@@ -28,7 +29,6 @@ DENIED = errors.InsufficientPrivilege
 FILE_0009 = migrate_mod.MIGRATIONS / "0009_stop_state_hardening.sql"
 NEW_TABLES = (
     "kill_switch_resets",
-    "kill_switch_watermark",
     "hadavin_limits",
     "hadavin_caps",
 )  # 0009 and 0011
@@ -126,26 +126,65 @@ def test_runtime_cannot_insert_into_the_reset_record_but_the_reset_role_can(w):
 def test_grant_rows_say_the_same(w):
     assert GRANTS["kill_switch_resets"].runtime == ""
     assert GRANTS["kill_switch_resets"].reset == "SELECT, INSERT"
-    assert GRANTS["kill_switch_watermark"].runtime == "SELECT"
+    assert "kill_switch_watermark" not in GRANTS
 
 
-def test_watermark_is_written_by_the_reset_role_only_and_never_goes_back(w):
-    ins = "INSERT INTO kill_switch_watermark (through) VALUES ('2026-01-02')"
-    with w.as_(w.runtime) as db:
-        with pytest.raises(DENIED):
-            db.execute(ins)
-        assert db.execute("SELECT count(*) FROM kill_switch_watermark").fetchone()[0] == 0
-    with w.as_(w.reset) as db:
-        db.execute(ins)
-        db.execute("UPDATE kill_switch_watermark SET through = '2026-02-01'")
-        with pytest.raises(psycopg.errors.RaiseException):
-            db.execute("UPDATE kill_switch_watermark SET through = '2026-01-01'")
-        with pytest.raises(psycopg.errors.CheckViolation):
-            db.execute("UPDATE kill_switch_watermark SET through = '20000-01-01'")
-        with pytest.raises(psycopg.errors.CheckViolation):
-            db.execute(
-                "INSERT INTO kill_switch_watermark (id, through) VALUES (false, '2026-01-01')"
-            )
+def test_there_is_no_watermark_table_and_no_guard_function(w):
+    """Review N3: nothing read the watermark, so it is gone (and its trigger function with it)."""
+    rel = w.run("SELECT to_regclass(%s)::text", (f"{w.schema}.kill_switch_watermark",))[0][0]
+    fn = w.run(
+        "SELECT count(*) FROM pg_proc WHERE proname = 'hadavin_watermark_guard' AND pronamespace = %s::regnamespace",
+        (w.schema,),
+    )[0][0]
+    assert (rel, fn) == (None, 0)
+
+
+STOP_YEAR_CONSTRAINTS = ["kill_switch_clears_ts_range", "kill_switch_stops_ts_range"]
+
+
+def _validated(w):
+    """The names of the stop-year constraints PostgreSQL itself calls validated (not our own helper)."""
+    return sorted(
+        r[0]
+        for r in w.run(
+            "SELECT k.conname FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace "
+            "WHERE k.conname = ANY(%s) AND k.convalidated AND n.nspname = %s",
+            (STOP_YEAR_CONSTRAINTS, w.schema),
+        )
+    )
+
+
+def test_migrate_warns_while_a_constraint_is_not_valid_and_the_validate_step_clears_it(w):
+    notes: list[str] = []
+    w.migrate(
+        notes=notes
+    )  # a second run on the migrated schema: nothing new, the warning is still there
+    assert any(
+        "NOT VALID" in n and "kill_switch_stops_ts_range" in n and "--validate-constraints" in n
+        for n in notes
+    ), notes
+    assert _validated(w) == []
+    done = migrate_mod.validate_stop_constraints(w.scoped)
+    assert sorted(done) == STOP_YEAR_CONSTRAINTS
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS  # both really validated, read from pg_constraint
+    again: list[str] = []
+    w.migrate(notes=again)
+    assert not any("NOT VALID" in n for n in again), again  # no warning once validated
+    assert migrate_mod.validate_stop_constraints(w.scoped) == []  # idempotent
+
+
+def test_the_validate_step_refuses_naming_the_constraint_while_a_planted_row_exists(w):
+    # plant what an upgrade from before 0009 can hold: drop the check, add the row, put the check back NOT VALID
+    with w.admin() as db:
+        db.execute("ALTER TABLE kill_switch_stops DROP CONSTRAINT kill_switch_stops_ts_range")
+        db.execute("INSERT INTO kill_switch_stops (ts) VALUES ('0100-01-01 BC')")
+        db.execute(
+            "ALTER TABLE kill_switch_stops ADD CONSTRAINT kill_switch_stops_ts_range "
+            "CHECK (ts BETWEEN '2000-01-01' AND '2100-01-01') NOT VALID"
+        )
+    with pytest.raises(ConfigError, match="kill_switch_stops_ts_range"):
+        migrate_mod.validate_stop_constraints(w.scoped)
+    assert "kill_switch_stops_ts_range" not in _validated(w)
 
 
 def test_the_open_stops_index_exists(w):

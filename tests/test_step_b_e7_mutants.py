@@ -135,3 +135,31 @@ def test_granting_insert_to_runtime_is_killed(mw, tmp_path, monkeypatch):
         ],
         grants=g,
     )
+
+
+# --- the validate step (review N2): a validate that leaves a constraint NOT VALID must be killed ------------------
+
+
+def _validate_nothing(db):
+    return [n for _, n in migrate_mod.not_valid_constraints(db)]  # claims the names, validates none
+
+
+def _validate_first_only(db):
+    table, name = migrate_mod.not_valid_constraints(db)[0]
+    db.execute(f"ALTER TABLE {table} VALIDATE CONSTRAINT {name}")
+    return [name]
+
+
+@pytest.mark.parametrize("mutant", [_validate_nothing, _validate_first_only])
+def test_a_validate_step_that_leaves_a_constraint_not_valid_is_killed(mw, monkeypatch, mutant):
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "validate_constraints", mutant)
+    with pytest.raises(AssertionError):
+        real.test_migrate_warns_while_a_constraint_is_not_valid_and_the_validate_step_clears_it(mw)
+
+
+def test_a_migrate_that_never_warns_is_killed(mw, monkeypatch):
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "not_valid_constraints", lambda db: [])
+    with pytest.raises(AssertionError):
+        real.test_migrate_warns_while_a_constraint_is_not_valid_and_the_validate_step_clears_it(mw)
