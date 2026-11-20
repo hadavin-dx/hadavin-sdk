@@ -36,7 +36,7 @@ def _fail(msg):
 
 
 def v(c: str, n: int) -> str:
-    rng = random.Random(f"{c}{n}")
+    rng = random.Random(f"{c}{n}")  # noqa: S311 - a fixed-seed test value
     return c + "".join(rng.choices(_ALPHA, k=n - 1))
 
 
