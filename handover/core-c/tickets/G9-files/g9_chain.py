@@ -1,5 +1,4 @@
-"""G9 v3 evidence: the design critic's chain (round 1 M2) on tree argv[1]; argv[2] == "pieces": G9 unions register pieces and the written
-form (v1's design, `_place_union(..., derived=True)` forced) for the comparison of 9.3. Passes per sweep from g9_probe."""
+"""G9 v3 evidence: the design critic's chain (round 1 M2) on tree argv[1]. Passes per sweep from g9_probe (9.3)."""
 import importlib, sys, time
 sys.path.insert(0, sys.argv[1] + "/src")
 R = importlib.import_module("hadavin_sdk.guard.redact")
@@ -7,9 +6,6 @@ sys.path.insert(0, sys.argv[0].rsplit("/", 1)[0])
 import g9_probe  # noqa: E402
 
 g9_probe.install(R)
-if sys.argv[2:] == ["pieces"]:
-    _real = R._Redactor._place_union
-    R._Redactor._place_union = lambda self, union, kind, derived=True: _real(self, union, kind, True)
 from hadavin_sdk.guard import runmap
 A = "xY7wV6uT5s" + "R4aB3dE5fG9"      # S1, ends with G9 (21)
 S2 = "G9" + "hIjK1mNoPq2R"            # S2 starts with G9 (14); tail hIjK1mNoPq2R (12)
