@@ -1,0 +1,2 @@
+# Mutant run 20 (full tests/endpoint_mutants.py on cloud/core-a head 05d727afb, PG16 not required)
+Result: "120 of 120 run are as expected; problems: []", EXIT 0 (raw/mutants-run20.log). KNOWN SURVIVORS: none. Crash-accepted: G20j, G31, G32e as before. Run 19 (5a8c83fd3) gave the same result; run 20 covers the d-fix22/d-fix24 worker changes. Note: tests/triggers/crash_launcher.py was de-duplicated (18 lines, no behaviour change) during the run.
