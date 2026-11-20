@@ -893,6 +893,29 @@ def test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads():
     plain = _best_cpu(lambda: r.sweep(raw))
     assert plain > 0.015, plain
     assert read_back < 4 * plain + 0.01, (read_back, plain)
+
+
+def test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep():
+    """Found by the whole suite on the prototype (tests/test_k5_fixes4.py, 1.2 s -> 40 s): `x` x 262,143 + ` ` is one HIGHENTROPY token and a
+    space; read back whole, the finder tried the 262,143-character value at every position of a periodic E (quadratic). A run is read back
+    at most `defaults.SPELLED_READBACK_REACH` (1,024) characters deep on each side that touches readable text."""
+    r = R._Redactor({"<HIGHENTROPY_1>": "x" * 200_000})
+    r.sweep("")
+    work = [0]
+    assert r._overlaps("<HIGHENTROPY_1> ", None, work) == []
+    reach = defaults.SPELLED_READBACK_REACH
+    assert work == [2 * (1 + reach + 1)], work  # E = a separator, the last 1,024 `x`, the space: built, then one finder pass
+
+
+def test_g9_an_overlap_deeper_than_the_reach_is_not_looked_for_a_stated_limit():
+    """STATED LIMIT (section 11): a value that overlaps a token by more than `SPELLED_READBACK_REACH` characters is not looked for: its
+    readable tail stays. Pinned so that a change of the reach is looked at."""
+    base = "".join(f"{n:04x}Qz" for n in range(200))  # 1,200 characters, not periodic
+    tail = "TAIL" + "1234"
+    r = _registering({"<SECRET_1>": base, "<SECRET_2>": base[100:] + tail})
+    assert r.sweep(base + tail) == "<SECRET_1>" + tail  # the overlap is 1,100 characters deep in <SECRET_1>
+    near = _registering({"<SECRET_1>": base, "<SECRET_2>": base[200:] + tail})
+    assert near.sweep(base + tail) == "<SECRET_3>"  # 1,000 deep: found
 ```
 ### 7.5 Fail-before (measured: the edits of 7.1-7.4 applied to the `head` archive, tests only)
 `uv run --all-extras --group test pytest -q -n 3 -m "not perf" tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py
@@ -996,6 +1019,8 @@ S1 = `xY7wV6uT5sR4aB3dE5fG9` (ends with `G9`), S2 = `G9hIjK1mNoPq2R`; line `see 
 Same through `redact` and `redact_text`; under 3 ms each. So the refusal path IS reachable by a real input when unions register pieces
 (v1's design), and is not reached by any input built or searched under v2.
 ### 9.4 Cost (`cost2.py`, `bound.py`; redact_text with a fresh RunMap at the cap; units = the shared count of one sweep call)
+Measured before the reach (4.3) was added; no honest shape below has a value of 1,024 characters or more beside readable text, so the
+reach does not change them (it changes H1: E per forged copy 2 x 1,024 + 2 characters instead of 2,002; still refused).
 | shape | head s | v2 s | v2 passes | v2 max units per sweep (of 4,000,000) |
 |---|---|---|---|---|
 | curl -u at cap | 2.16-2.28 | 2.24-2.27 | 1 | 1 |
