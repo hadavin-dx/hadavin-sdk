@@ -1,0 +1,49 @@
+"""Probe (trial integrator): core-c's ModelGate around core-b's real Limits (reserve/settle on the memory store)."""
+import sys, tempfile
+from decimal import Decimal
+from pathlib import Path
+sys.path.insert(0, ".")
+import tests.test_trigger_config as t
+from hadavin_sdk.guard import model_gate
+from hadavin_sdk.limits import Limits, SpendRefused, Meter as LimitsMeter
+from hadavin_sdk.models import Reply
+import inspect
+from datetime import date
+from hadavin_sdk.models import now
+
+d = t.make_cfg(Path(tempfile.mkdtemp()))
+app, _ = t._build(d, None, {})
+limits = Limits(app.store, app.audit, app.registry)
+print("store:", type(app.store).__name__, "| audit:", type(app.audit).__name__)
+print("gate Meter.reserve:", inspect.signature(model_gate.Meter.reserve), "| limits:", inspect.signature(Limits.reserve))
+print("gate Meter.settle :", inspect.signature(model_gate.Meter.settle), "| limits:", inspect.signature(Limits.settle))
+print("two Meter protocols:", model_gate.Meter is LimitsMeter)
+print("Reply fields:", sorted(Reply.model_fields))
+class Fake:
+    def __init__(self): self.calls = 0
+    def chat(self, messages, **kw):
+        self.calls += 1
+        return self.reply
+fake = Fake()
+route = next(iter(app.config.routes))
+fake.reply = Reply(text="ok", model_id="m", input_tokens=1, output_tokens=1, cost_usd=Decimal("0.002"), latency_ms=1, stop_reason="end_turn")
+gate = model_gate.ModelGate(fake, meter=limits, audit=app.audit, worst_case=lambda *a: Decimal("0.01"))
+bound = gate.bind(t.AGENT, "run-" + "0" * 32, mapping={})
+before = app.store.spend_totals(t.AGENT, now().date())
+try:
+    r = bound.chat([{"role": "user", "content": "hello"}], system="s", route=route)
+    print("1 gate call with real Limits: ok; calls to client:", fake.calls)
+except Exception as e:
+    print("1 gate call ->", type(e).__name__, ":", e, "| client calls:", fake.calls)
+try: print("spend totals before/after:", before, app.store.spend_totals(t.AGENT, now().date()))
+except Exception as e: print("spend_totals ->", type(e).__name__, e)
+# refusal: a worst case above any cap
+gate2 = model_gate.ModelGate(fake, meter=limits, audit=app.audit, worst_case=lambda *a: Decimal("1000000"))
+n = fake.calls
+try:
+    gate2.bind(t.AGENT, "run-" + "1" * 32, mapping={}).chat([{"role": "user", "content": "hello"}], system="s", route=route)
+    print("2 over-cap call: NOT refused")
+except SpendRefused as e:
+    print("2 over-cap call: SpendRefused reason =", e.reason, "| in gate SPEND_REASONS:", e.reason in model_gate.SPEND_REASONS, "| client called:", fake.calls != n)
+except Exception as e:
+    print("2 over-cap call ->", type(e).__name__, e)

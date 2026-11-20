@@ -1,0 +1,6 @@
+.T1 day cap: granted=3 refused=47 other=0 distinct_backend_pids=50
+.T1 month cap: granted=3 refused=47 other=0 distinct_backend_pids=50
+.T1 control: admitted=50 of 50 distinct_backend_pids=50 day_total=50.00 cap=3.00
+...T1 settle/expire race: rows=40 expired_first=40 expired_by_sweeps=40
+.....
+11 passed in 4.52s

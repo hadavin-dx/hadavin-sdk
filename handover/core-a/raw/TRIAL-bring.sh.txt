@@ -1,0 +1,23 @@
+#!/bin/bash
+# usage: bring.sh <branch-ref> <base-ref> <label> <paths...>   (run inside the trial worktree)
+# For every file <branch> changed against <base> in <paths>:
+#   - if the trial tree still has the base version (or lacks it as base does): take the branch's file whole (git checkout <branch> -- file)
+#   - else: three-way merge with git merge-file (ours = trial tree, base = <base>, theirs = <branch>)
+br=$1; base=$2; label=$3; shift 3
+tmp=$(mktemp -d)
+git diff --name-status --no-renames $base $br -- "$@" | while read st f; do
+  cur=$(git rev-parse -q --verify HEAD:"$f" 2>/dev/null || echo none)
+  b=$(git rev-parse -q --verify $base:"$f" 2>/dev/null || echo none)
+  t=$(git rev-parse -q --verify $br:"$f" 2>/dev/null || echo none)
+  if [ "$cur" = "$t" ]; then echo "SAME     $label $f"; continue; fi
+  if [ "$cur" = "$b" ]; then
+    if [ "$t" = none ]; then git rm -q "$f"; echo "DELETE   $label $f"; else git checkout -q $br -- "$f"; echo "CHECKOUT $label $f"; fi
+    continue
+  fi
+  if [ "$t" = none ] || [ "$cur" = none ]; then echo "DELMOD-CONFLICT $label $f (left as is)"; continue; fi
+  if [ "$b" = none ]; then : > $tmp/base; else git show $base:"$f" > $tmp/base; fi
+  git show $br:"$f" > $tmp/theirs
+  if git merge-file -L trial -L base -L "$label" "$f" $tmp/base $tmp/theirs; then echo "MERGED-CLEAN $label $f"; else echo "MERGED-CONFLICT($(grep -c '^<<<<<<< ' "$f") hunks) $label $f"; fi
+  git add "$f"
+done
+rm -rf $tmp

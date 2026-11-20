@@ -1,0 +1,28 @@
+"""Probe (trial integrator): does core-a's worker start against core-b's Config.triggers and App? Run from the combined tree root."""
+import dataclasses, sys, tempfile, json
+from pathlib import Path
+sys.path.insert(0, ".")
+import tests.test_trigger_config as t
+from hadavin_sdk.triggers import worker, endpoint
+from hadavin_sdk import defaults
+
+d = t.make_cfg(Path(tempfile.mkdtemp()))
+app, provider = t._build(d, t._block(t.TWO_SENDERS), t.TWO_SENDER_VALUES)
+s = app.config.triggers
+print("settings type:", type(s).__name__, "fields:", sorted(type(s).model_fields))
+print("senders type:", type(s.senders).__name__, "sender fields:", sorted(type(next(iter(s.senders.values()))).model_fields))
+print("App has trigger_resolve:", hasattr(app, "trigger_resolve"), "| App.secrets:", type(app.secrets).__name__)
+print("worker fallbacks used (field missing on core-b):", {k: getattr(s, k, "<MISSING>") for k in ("host","port","allow_non_loopback","poll_s","max_running","ack_wait_s","max_body_bytes")})
+print("literals: worker.MAX_RUNNING", worker.MAX_RUNNING, "vs defaults.TRIGGER_MAX_RUNNING", defaults.TRIGGER_MAX_RUNNING, "| worker.ACK_WAIT_S", worker.ACK_WAIT_S, "vs", defaults.TRIGGER_ACK_WAIT_S)
+try:
+    worker.make_app(app); print("1 AS IS: worker.make_app started")
+except Exception as e:
+    print("1 AS IS: worker.make_app ->", type(e).__name__, ":", e)
+# 2: with the one missing name supplied from core-b's built way (app.secrets.get), nothing else changed
+class Shim:
+    def __init__(self, app): self._a = app; self.trigger_resolve = app.secrets.get
+    def __getattr__(self, n): return getattr(self._a, n)
+try:
+    wsgi, runner = worker.make_app(Shim(app)); print("2 WITH trigger_resolve = app.secrets.get: started, wsgi", type(wsgi).__name__); runner.close(0)
+except Exception as e:
+    print("2 WITH shim ->", type(e).__name__, ":", e)

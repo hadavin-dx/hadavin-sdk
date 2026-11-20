@@ -1,0 +1,15 @@
+import re,sys
+# usage: resolve.py file choice1 choice2 ...  ; choice = ours|theirs|both|@literal-file
+f=sys.argv[1]; ch=sys.argv[2:]
+s=open(f).read()
+pat=re.compile(r'^<<<<<<< [^\n]*\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]*\n', re.S|re.M)
+i=[0]
+def rep(m):
+    c=ch[i[0]]; i[0]+=1
+    if c=='ours': return m.group(1)
+    if c=='theirs': return m.group(2)
+    if c=='both': return m.group(1)+m.group(2)
+    return open(c[1:]).read()
+s2=pat.sub(rep,s)
+assert i[0]==len(ch),(i[0],len(ch))
+open(f,'w').write(s2)

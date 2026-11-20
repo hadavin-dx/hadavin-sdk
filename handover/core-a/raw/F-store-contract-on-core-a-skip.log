@@ -1,0 +1,50 @@
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 38%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 77%]
+sssssssssssssssssssssssssssssssssssssssssss                              [100%]
+=========================== short test summary info ============================
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:115: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:127: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:145: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:163: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:172: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:182: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:196: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:209: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:222: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:243: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:259: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:271: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:283: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:300: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:315: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:323: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:358: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:389: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:406: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:420: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:440: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:456: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:470: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:492: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:510: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [36] tests/contracts/test_store_spend_reservations.py:539: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:552: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:573: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:613: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:629: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:646: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [12] tests/contracts/test_store_spend_reservations.py:653: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [4] tests/contracts/test_store_spend_reservations.py:679: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:721: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:99: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_t1_reserve_cap.py:107: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:153: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:188: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:227: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:258: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:316: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:369: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:405: core-b step F not landed: Store.reserve_spend missing
+187 skipped in 0.36s

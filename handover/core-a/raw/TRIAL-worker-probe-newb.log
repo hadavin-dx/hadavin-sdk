@@ -1,7 +1,8 @@
 settings type: TriggerSettings fields: ['ack_wait_s', 'max_body_bytes', 'max_running', 'senders', 'tenant']
 senders type: dict sender fields: ['agent_id', 'principal_id', 'secret_names']
-Traceback (most recent call last):
-  File "/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/tl/worker_probe.py", line 14, in <module>
-    print("App has trigger_resolve:", hasattr(app, "trigger_resolve"), "| App.secrets:", type(app.secrets).__name__)
-                                                                                              ^^^^^^^^^^^
-AttributeError: 'App' object has no attribute 'secrets'
+App has trigger_resolve: False | App.secrets: False | App.trigger_secret: True
+worker fallbacks used (field missing on core-b): {'host': '<MISSING>', 'port': '<MISSING>', 'allow_non_loopback': '<MISSING>', 'poll_s': '<MISSING>', 'max_running': 4, 'ack_wait_s': 5.0, 'max_body_bytes': 524288}
+literals: worker.MAX_RUNNING 1 vs defaults.TRIGGER_MAX_RUNNING 4 | worker.ACK_WAIT_S 5.0 vs 5.0
+1 AS IS: worker.make_app -> ConfigError : App.trigger_resolve is not available: the trigger secrets cannot be read
+trigger sender s1 accepts 2 secrets: finish the swap
+2 WITH trigger_resolve = the reader core-b built (trigger_secret, else secrets.get): started, wsgi function
