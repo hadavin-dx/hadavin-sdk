@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:29:18Z
+UPDATED_UTC: 2026-11-20T06:33:25Z
 SESSION: core-b
 ORDER: 016
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 5
-CAPACITY: load 2.30 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 877M
+CAPACITY: load 1.89 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 931M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: land F-store tests and the provider-mark tests; F-install build and its tests; resolve the hostile re-read; batch run 3 on a merged tree when F-install is coded
-PUSHED_UTC: 2026-11-20T06:28:44Z (previous push; this board is pushed right after writing)
-IST: 11:59 IST
+PUSHED_UTC: 2026-11-20T06:29:19Z (previous push; this board is pushed right after writing)
+IST: 12:03 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
