@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:42:07Z
+UPDATED_UTC: 2026-11-20T13:43:09Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 1
-CAPACITY: load 1.22 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.58 of 4 cores (1-minute average), mem 1.0/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 626M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:41:15Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:42:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,21 +106,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| wipci-fix | builder in /home/user/wt/for-ci | sonnet | CI agreement test: planted tests for every assertion, wider parser (env, uv --python, python-version-file, include, container, .python-version), float-3.10 trap, upper bound | 13:36 | 15 min | 5 | running | - | 0 | rev-wipci findings |
+| rev-wipci2 | fresh independent reviewer (codebase-details), read-only | sonnet | review round 2 of tests/test_ci_python_matrix.py (false positives on the real repo, silent false negatives, proportion) | 13:44 | 10 min | 5 | running | 2 | 0 | after wipci-fix |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 26859s ago | running | matched by name in ps |
-| 22252 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 22255 | timeout 100 /home/user/hadavin-sdk/.venv/bin/python -m pytest tests/te | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 22257 | /home/user/hadavin-sdk/.venv/bin/python -m pytest tests/test_ci_python | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 23473 | /bin/bash -e /tmp/pytest-of-root/pytest-1173/test_a_head_tree_with_a_h | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 26921s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 26921s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 26921s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 26921s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 26921s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 26921s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -182,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 13:44 wip/core-a-for-ci UPDATED and pushed: the agreement test now has a planted-mismatch test for every assertion (20 assertions, each red when deleted: shown in a scratch copy) and its parser sees env/UV_PYTHON, uv run/uvx --python, python-version-file, matrix include, container/service images, .python-version, composite actions and all workflow files; 212 passed with the two existing CI guards; review round 2 started (rev-wipci2).
 - 13:41 c-run-2 (perf) DONE at core-c 9072e701f (evidence/c-run-2.md, raw/c-run-2.log): 39 passed, 0 failed, 462 deselected, 209 s wall, load 0.60 start / 1.80 end / 1.95 max (quiet box). test_redact_fold_budget.py::test_hostile_1 PASSED but the whole test took 40.13 s (the top duration); core-c expected 'zwsp shape ~3 s' (a per-shape time I did not record: ask if you want it); T10 and T11 passed, both under 4.49 s (not in the top 15, exact figures unknown). Next slowest: test_k5_perf no_redaction_pattern_is_super_linear 28.8 s, settle_loop T4 13.6 s. All lead-build-3 runs 1-4 are now delivered (c-run-1..4).
 - 13:38 c-run-3 DONE (evidence/c-run-3.md, raw/c-run-3-*.log) at core-c 9072e701f. MATCH: redact_mutants '117 of 117 good; problems: []' (408 s), stage 37/37, textnorm 256/256 (592 s), g8 35/35, e14 8/8. DIFFER: (a) gate_mutants.py and b64_mutants.py ran NO mutant: RuntimeError 'the unmutated copy does not pass its tests' (mutation_runner.py:527): the unmutated tree fails its own mutant-test set: these two sets include the tests of the 3 known failures TB-2.8/TB-2.11/TB-3.4 (E20, c-run-1) but I have not verified that is the cause; so R15/R8 and the b64 count are NOT observed; (b) p1d_a_mutants.py: 51 mutants: 48 KILLED, 2 SURVIVED (A43, A15), 1 ERROR (A3d 'SNIPPET NOT FOUND'), no summary line (the brief said 'identical to base'). Run 2 (perf) started on the quiet box.
 - 13:38 rev-wipb DONE: wip/core-a-for-b (leap-day fix) reviewed fresh: NO Blocker/Major; regex correct for all years, no ReDoS; the reviewer's +15:xx stall worry I CHECKED on the real PG 16 here: +15:59 and +15:00 are accepted by the cast, +16:00 rejected by both cast and regex: no stall. Branch is ready for core-b to cherry-pick (4f33f1c0e on b637d1289). Remaining nit: SQLite julianday is lenient (2023-02-29 gets a value, PG gives NULL): ordering divergence only.

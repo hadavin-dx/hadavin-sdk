@@ -748,17 +748,17 @@
  ],
  "agents": [
   {
-   "id": "wipci-fix",
-   "role": "builder in /home/user/wt/for-ci",
+   "id": "rev-wipci2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "CI agreement test: planted tests for every assertion, wider parser (env, uv --python, python-version-file, include, container, .python-version), float-3.10 trap, upper bound",
-   "started UTC": "13:36",
-   "expected end": "15 min",
+   "what exactly it is doing": "review round 2 of tests/test_ci_python_matrix.py (false positives on the real repo, silent false negatives, proportion)",
+   "started UTC": "13:44",
+   "expected end": "10 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "2",
    "retries so far": 0,
-   "reason": "rev-wipci findings"
+   "reason": "after wipci-fix"
   }
  ],
  "tests": [
@@ -1131,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:44 wip/core-a-for-ci UPDATED and pushed: the agreement test now has a planted-mismatch test for every assertion (20 assertions, each red when deleted: shown in a scratch copy) and its parser sees env/UV_PYTHON, uv run/uvx --python, python-version-file, matrix include, container/service images, .python-version, composite actions and all workflow files; 212 passed with the two existing CI guards; review round 2 started (rev-wipci2).",
   "13:41 c-run-2 (perf) DONE at core-c 9072e701f (evidence/c-run-2.md, raw/c-run-2.log): 39 passed, 0 failed, 462 deselected, 209 s wall, load 0.60 start / 1.80 end / 1.95 max (quiet box). test_redact_fold_budget.py::test_hostile_1 PASSED but the whole test took 40.13 s (the top duration); core-c expected 'zwsp shape ~3 s' (a per-shape time I did not record: ask if you want it); T10 and T11 passed, both under 4.49 s (not in the top 15, exact figures unknown). Next slowest: test_k5_perf no_redaction_pattern_is_super_linear 28.8 s, settle_loop T4 13.6 s. All lead-build-3 runs 1-4 are now delivered (c-run-1..4).",
   "13:38 c-run-3 DONE (evidence/c-run-3.md, raw/c-run-3-*.log) at core-c 9072e701f. MATCH: redact_mutants '117 of 117 good; problems: []' (408 s), stage 37/37, textnorm 256/256 (592 s), g8 35/35, e14 8/8. DIFFER: (a) gate_mutants.py and b64_mutants.py ran NO mutant: RuntimeError 'the unmutated copy does not pass its tests' (mutation_runner.py:527): the unmutated tree fails its own mutant-test set: these two sets include the tests of the 3 known failures TB-2.8/TB-2.11/TB-3.4 (E20, c-run-1) but I have not verified that is the cause; so R15/R8 and the b64 count are NOT observed; (b) p1d_a_mutants.py: 51 mutants: 48 KILLED, 2 SURVIVED (A43, A15), 1 ERROR (A3d 'SNIPPET NOT FOUND'), no summary line (the brief said 'identical to base'). Run 2 (perf) started on the quiet box.",
   "13:38 rev-wipb DONE: wip/core-a-for-b (leap-day fix) reviewed fresh: NO Blocker/Major; regex correct for all years, no ReDoS; the reviewer's +15:xx stall worry I CHECKED on the real PG 16 here: +15:59 and +15:00 are accepted by the cast, +16:00 rejected by both cast and regex: no stall. Branch is ready for core-b to cherry-pick (4f33f1c0e on b637d1289). Remaining nit: SQLite julianday is lenient (2023-02-29 gets a value, PG gives NULL): ordering divergence only.",
@@ -3442,6 +3443,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "c-run-2 perf at core-c 9072e701f: 39 passed, 0 failed, 462 deselected in 209 s; load 0.6 to 1.8 (max 1.95); hostile_1 PASSED but took 40.1 s for the whole test (core-c expected ~3 s for the zwsp shape; per-shape time not recorded); T10/T11 passed, each under 4.49 s; evidence/c-run-2.md"
+  },
+  {
+   "id": "wipci-fix",
+   "role": "builder in /home/user/wt/for-ci",
+   "model": "sonnet",
+   "what exactly it is doing": "CI agreement test: planted tests for every assertion, wider parser (env, uv --python, python-version-file, include, container, .python-version), float-3.10 trap, upper bound",
+   "started UTC": "13:36",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "CI agreement test: 20 assertions each with a planted test (red when deleted), parser sees env/uv --python/python-version-file/include/images/.python-version/composite actions/all workflows, float 3.10 trap, upper bound; 212 passed with the 2 CI guards; pushed to wip/core-a-for-ci"
   }
  ]
 }
