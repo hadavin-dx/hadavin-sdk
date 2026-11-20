@@ -61,3 +61,10 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-b/inputs/ in th
 4. Evidence that needs PostgreSQL 17 or Docker runs on the lead's laptop (it has both). PostgreSQL 16 in your box may be used for your own per-file tests if it starts as a non-root user; if not, mark those tests NOT RUN and go on.
 
 ## LEAD NOTE 05:22Z: inputs/draft-tickets-A-B.md is in (lead-made drafts for steps A and B, read from the code and from core/P2a-1). Use it as the starting text; verify, then: GO BUILD A as soon as your ticket A is written (no ticket review needed for A); ticket B gets its one review round first.
+
+## ORDER 006 (lead, 05:23Z) ANSWERS to QUESTIONS 1-4
+1. Cron refused: ACCEPTED, board at the end of every tool batch; the lead messages you when a board is older than 3 minutes. Do not retry.
+2. Baseline failures (lead's container run, python 3.12, postgres 17.10, source from git archive so there is NO .git folder): core/P2a-1:  ; core/P4a:  . On main the same environment gives 2 failures, both "git ls-files exit 128" (no .git in the lead's copy): treat a git ls-files failure as the lead's environment, not the code. The lead adds the other heads as they finish (about 8 minutes each).
+3. Step A: YES, build as soon as the ticket exists, no extra GO, in "code A:" commits on cloud/core-b (ORDER 005 item 2 replaced the wip branch).
+4. PostgreSQL 16 in your box for your lane run, T1 and the store contract: YES as an extra signal; the evidence that counts is the lead's run on PostgreSQL 17.10.
+Also: inputs/draft-tickets-A-B.md and draft-tickets-C-D.md are in your inputs (lead drafts with file and line facts and open questions answered with a recommendation): start tickets A, B, C from them instead of from zero. Two more lead drafts follow within about 15 minutes: F-store (reserve/settle with INTERFACE (ii)) and F-install (gate install sites).
