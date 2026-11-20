@@ -1,26 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:46:08Z
+UPDATED_UTC: 2026-11-20T05:46:45Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
-ITEMS_TOTAL: 15
-ITEMS_OPEN: 7
-PERCENT: 78
-AGENTS_RUNNING: 2
-CAPACITY: load 1.3 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 2, heavy agents 0
+ITEMS_TOTAL: 16
+ITEMS_OPEN: 8
+PERCENT: 73
+AGENTS_RUNNING: 3
+CAPACITY: load 1.7 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 3; 2.4M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: G1 fold: 1 test fails (E4, lead decision)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:42:48+00:00
+PUSHED_UTC: 2026-11-20T05:46:09+00:00
 
 (11:16 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) G3 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 2 | running | n/a | 0 | the fold is in, so G3 can start; HEAVY at the end (tests) |
 | aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:10 | 5 | running | n/a | 0 | G2 does not touch guard/runmap.py and the fold does not touch guard/redact.py, so it can run beside the two other builders |
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 06:05 | 50 | running | n/a | 0 | 3 correction messages so far; ORDER 007 changes the mask step from a refusing check to map enforcement by replacement, so the gate part is being reworked; adds tests/gate_mutants.py (ORDER 008) |
@@ -67,8 +68,9 @@ PUSHED_UTC: 2026-11-20T05:42:48+00:00
 | BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 50 | evidence/F-G0-1.md | 1 | work-in-progress snapshots committed and pushed (code G: G0, code F:); rework to ORDER 007 under way; not verified yet |
 | BUILD G1 fold | BLOCKED-LEAD (1 test) + WAIT pick | 85 | evidence/G1-fold.md | 1 | built and pushed on wip/cloud-core-c/g1-fold; 1 failing test needs the lead (E4); pick onto cloud/core-c waits for the gate builder to leave guard/runmap.py |
 | BUILD G2 P1d-a | RUNNING | 5 | evidence/G2-p1d-a.md | 1 | one builder in a worktree |
-| BUILD G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | G3 is held until G1 is in and its port table is written (review Blocker); G6 text revision 2 waits for the lead OK |
+| BUILD G3 P2d-1 port | RUNNING | 2 | evidence/G3-p2d-port.md | 1 | one builder in a worktree on top of the fold; port decisions from the review are in its brief |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT G0 commit | 30 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | probe done, ticket written by the session; build starts when the G0 builder leaves guard/runmap.py (same file); corpus test cut (corpus not in the repository) |
+| BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -87,4 +89,4 @@ PUSHED_UTC: 2026-11-20T05:42:48+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-E4 (new): choose the has_mixed_script rule for the fold. MEASURED: Python 3.12.3 has Unicode 15.0.0, so the fold start-up check refuses pilot/prod on 3.12 (decision). Grounding finds more than main in one invisible-character case (decision). tickets/G-review-1.md open points; ticket G4 3 decisions; worktree_case= vs routes=; E1 cron denied.
+E4 (new): choose the has_mixed_script rule for the fold. MEASURED: Python 3.12.3 has Unicode 15.0.0, so the fold start-up check refuses pilot/prod on 3.12 (decision). Grounding finds more than main in one invisible-character case (decision). tickets/G-review-1.md open points; ticket G4 3 decisions; worst_case= vs routes=; E1 cron denied.
