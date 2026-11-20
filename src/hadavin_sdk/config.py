@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime
-from decimal import Context, Decimal, localcontext
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
@@ -100,9 +100,7 @@ class Route(_Strict):
         if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
             raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
         try:
-            with localcontext(
-                Context(prec=defaults.MONEY_DECIMAL_PRECISION)
-            ):  # not the caller's precision
+            with localcontext(defaults.money_context()):  # not the caller's precision
                 fine = v == v.quantize(Decimal("1E-6"))
         except ArithmeticError as exc:
             raise ValueError("a price could not be checked for decimal places") from exc

@@ -6,7 +6,7 @@ import hashlib
 import json
 import threading
 from collections import Counter
-from decimal import Context, Decimal, localcontext
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
@@ -48,9 +48,7 @@ class FakeLLM:
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
-        with localcontext(
-            Context(prec=defaults.MONEY_DECIMAL_PRECISION)
-        ):  # not the caller's precision
+        with localcontext(defaults.money_context()):  # not the caller's precision
             cost = (
                 Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
                 + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
