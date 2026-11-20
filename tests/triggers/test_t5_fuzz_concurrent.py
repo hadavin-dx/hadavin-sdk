@@ -156,13 +156,14 @@ class RecLLM(CountingLLM):
         super().__init__(None, 0.0)
         self.counts: Counter[str] = Counter()
         self._rl, self._delay, self.gate = threading.Lock(), delay, gate
+        self.quiet = False  # True: no delay any more (the retries of I8 must not race a slow model)
         self._rng = random.Random(seed)  # noqa: S311
 
     def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
         digest = revision_of(documents[0]) if documents else "none"
         with self._rl:
             self.counts[digest] += 1
-            pause = self._delay(self._rng)
+            pause = 0.0 if self.quiet else self._delay(self._rng)
         if self.gate is not None:
             self.gate.wait(30)
         if pause:
@@ -290,7 +291,6 @@ def make_stack2(
         runtime=runtime,
         store=runner_store,
         trigger_secret=names.__getitem__,
-        trigger_resolve=names.__getitem__,
     )
     return worker.make_app(app, clock=clock)
 
@@ -685,6 +685,8 @@ def analyse(ctx: Ctx, recs: list[Rec], extra_ok: dict[str, tuple[str, str]] | No
 def finish(ctx: Ctx, baseline: set, run_one, lines: list[str], signatures: set[str]) -> dict:
     """After the clients: settle, I8 retries, a fresh request per slot, close, no thread left."""
     settle(ctx)
+    if ctx.llm is not None:
+        ctx.llm.quiet = True
     if ctx.fault is not None:
         ctx.fault.healed = True
     if ctx.clock is not None:
