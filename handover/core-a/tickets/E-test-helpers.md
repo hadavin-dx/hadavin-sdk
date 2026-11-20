@@ -101,7 +101,7 @@ class CrashPoints:
     def armed(self) -> str | None: ...  # "store.create_run:after" or None
     def hit(
         self, point: str
-    ) -> None: ...  # one-shot: raise SimulatedCrash, or print marker and os._exit
+    ) -> None: ...  # one-shot: raise SimulatedCrash, or write the marker with os.write(1, ...) and os._exit
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         ...
         # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m;
@@ -179,7 +179,7 @@ FAIL-BEFORE: N6 is the behaviour no existing test can show. Mutants (hand list, 
 - Branch: `cloud/core-a`, in separate commits that touch only src/ and tests/, message starting `code E:` (ORDERS.md:59, ORDER 005 item 2, confirmed by ORDER 006). This replaces the "wip/cloud-core-a/E cut from origin/main" of the brief and of ORDERS.md:51. Base: src/ and tests/ of the branch equal origin/main 51c9fc4fb.
 - While building run only: `uv run --all-extras --group test python -m compileall -q src/hadavin_sdk/testing/crash.py tests/test_testing_crash.py`; `uv run --all-extras --group test ruff check src tests`; `uv run --all-extras --group test ruff format --check src tests`; `uv run --all-extras --group test pytest -q tests/test_testing_crash.py`; then the six guard files of section 4 once. No full pytest (ORDERS.md:52).
 - ruff rule S is on for src with only S101 lifted for tests (pyproject.toml:72, 78-79): no `assert` in crash.py; line length 100 (pyproject.toml:68).
-- `print` is used once on purpose (the marker); `os._exit` once. Bandit runs at `-ll` on src (ci.yml:181); a finding there is reported, never suppressed (UNVERIFIED that none appears: not run).
+- The marker is written with `os.write(1, ...)` (no `print`) and `os._exit` is called once. Bandit runs at `-ll` on src (ci.yml:181); a finding there is reported, never suppressed (UNVERIFIED that none appears: not run).
 - Python 3.12 and 3.13 (ci.yml:74, 142): `def wrap[T]` is 3.12 syntax, allowed by requires-python (pyproject.toml:6).
 - Size estimate (first plan): crash.py about 110 lines, test file about 190 lines, 2 files, 0 existing files touched. As built (wc -l 2026-11-20): crash.py 295 lines, test file 1030 lines, still 2 files. Three-try cap applies (ORDERS.md:40).
 - Evidence: the pytest output of the one test file, saved to handover/core-a/raw/E-tests.log; P1 is NOT RUN here unless PostgreSQL starts as a non-root user (ORDERS.md:61).
@@ -206,6 +206,6 @@ Open questions for the lead (none blocks the build):
 5. Optional CHANGELOG line R1: wanted at landing or not? Recommended: yes, one line by core-b in the D+E PR.
 6. `trace.CrashWindows` of the demo (inventory-promote.md:11) is not in the inputs. Recommended: not taken; no named test needs it.
 
-UNVERIFIED: that uv_build puts the new file into the wheel (no build run); that pytest sets `PYTEST_CURRENT_TEST` in `os.environ` during fixtures and tests and that children inherit it (test H1 and N7 pin it); that `ThreadPoolExecutor` stores a `BaseException` in the future (E4 pins it); that bandit and ruff raise nothing on `os._exit` and `print`; the Windows exit code; any fault-injection library on rung 4; pytest-socket version and licence; the method names of core-b's reserve and settle interface; the final signatures of step D (taken from the draft, not from a reviewed ticket).
+UNVERIFIED: that uv_build puts the new file into the wheel (no build run); that pytest sets `PYTEST_CURRENT_TEST` in `os.environ` during fixtures and tests and that children inherit it (test H1 and N7 pin it); that `ThreadPoolExecutor` stores a `BaseException` in the future (E4 pins it); that bandit and ruff raise nothing on `os._exit` and `os.write`; the Windows exit code; any fault-injection library on rung 4; pytest-socket version and licence; the method names of core-b's reserve and settle interface; the final signatures of step D (taken from the draft, not from a reviewed ticket).
 
 NOT READ: S/store/postgres.py outside lines 125-146, 192-270 and its method list; S/runtime/agent_loop.py outside 172-232, 352-412, 462-492 and its `except` list; S/runtime/tick.py outside 100-183 and 335-369; S/store/memory.py after line 104; tests/k1b_support.py, tests/tls_support.py, tests/fixtures/*, tests/contracts/*, tests/demo_askdata/*, tests/warden_port/fakes.py beyond their function lists; tests/contracts/kinds/store_postgres.py beyond lines 1-25 and its grep hits; the bodies of the guard tests beyond the cited lines; tools/mutation_runner.py beyond lines 10 and 69; uv.lock (one grep); README, SECURITY, docs; old-plan-v4-1.md, old-plan-v4-3.md, atlas-n8n.md, review-plan-1 and -2 files, resolve-plan-1.md; ticket C of the draft beyond a skim; any PR or branch; the demo's `trace.py` and tests.
