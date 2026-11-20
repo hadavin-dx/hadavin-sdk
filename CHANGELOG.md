@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- `limits set-cap AGENT --day --month --by`, `limits sync-caps --by` and `limits check-caps` (F-money-definer step 6): the spend caps live in the table `hadavin_caps`, written only under the reset login (intent audited first, one intent and one outcome per agent, stop at the first failure, idempotent re-run). `check-caps` exits 1 on any difference or missing row. New tick step `check_caps` (runtime login, read-only) fails the tick while a live or draft agent's registry caps differ from the table. `limits stop` and `limits reset` are unchanged.
+- `limits set-cap AGENT --day --month --by`, `limits sync-caps --by` and `limits check-caps` (F-money-definer step 6): the spend caps live in the table `hadavin_caps`, written only under the caps login (`migrate --caps-role`, `backends.store.caps_credential_ref`; intent audited first, one intent and one outcome per agent, stop at the first failure, idempotent re-run). `check-caps` exits 1 on any difference or missing row. New tick step `check_caps` (runtime login, read-only) fails the tick while a live or draft agent's registry caps differ from the table. `limits stop` and `limits reset` are unchanged.
 - `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
 
 ### Upgrade steps
@@ -17,9 +17,11 @@
     these tables directly and would be refused); run `migrate` naming ALL roles; start; run one smoke `tick`. Anything
     of yours that read `spend_reservations` or wrote a money table as the runtime login must use the store methods or
     an admin login.
-- **Every Postgres deployment now needs a reset login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
-  - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`;
-    set `backends.store.reset_credential_ref`; `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke tick.
+- **Every Postgres deployment now needs a reset login and a caps login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
+  - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`
+    AND `--caps-role` (a reset role without a caps role is refused); set `backends.store.caps_credential_ref` (NOT
+    `reset_credential_ref`: the reset login runs no money function); `hadavin-sdk limits sync-caps --by WHO --yes`;
+    start; one smoke tick.
     Migrate creates the caps table empty and never seeds it, so until `sync-caps` completes every agent is refused
     (`limits_unavailable`). There is no rolling upgrade. See "Caps live in a table the runtime cannot write" in
     `docs/stop-state-runbook.md`.
@@ -44,7 +46,7 @@
     row is missing, or its flag is on, or any stop has no clear.
   - **Upgrade steps, in this order.** (0) Stop every runtime process first: old and new code must never share one
     database. (1) Create a LOGIN role for resets (migrate never creates roles). (2) In ONE command run
-    `hadavin-sdk migrate --runtime-role R --portal-role P --purge-role U --reset-role X`; without `--reset-role` migrate
+    `hadavin-sdk migrate --runtime-role R --portal-role P --purge-role U --reset-role X --caps-role C` (a reset role without a caps role is refused); without `--reset-role` migrate
     warns that nobody but the owner can reset. (3) Store the reset login's connection string as a secret on the
     operator's machine only, and name it in `backends.store.reset_credential_ref`. The runtime process never reads it.
     (4) Deploy the new code. Old code must not run against the migrated database: it does not see the new stops, and

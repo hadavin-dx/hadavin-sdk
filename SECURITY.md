@@ -20,9 +20,10 @@ write to the chain.
 Tamper evidence of past rows is conditional. It holds only when the runtime login (1) does not own the audit tables
 and (2) has no UPDATE, DELETE or TRUNCATE on `audit_entries`. `migrate --runtime-role` enforces (2): it grants the
 runtime login SELECT and INSERT on `audit_entries` and `audit_checkpoints`, and the append-only triggers also refuse
-UPDATE, DELETE and TRUNCATE (a test proves the real attempts fail). It does not enforce (1): it does not refuse a
-runtime role that owns the audit tables (an owner can disable the triggers), so the operator must not make the runtime
-login the owner. Two runtime rights are wider than they need to be today: DELETE on `audit_outbox` (events parked
+UPDATE, DELETE and TRUNCATE (a test proves the real attempts fail). It also enforces (1) for the runtime and the
+caps login: `migrate` refuses a named role that owns an audit table (an owner can disable the triggers) or is a member of the
+owner role (tests prove each case). Two runtime rights are STILL wider than they need to be today, and this stays open until
+the ticket is built (the two xfail pins in `tests/test_audit_runtime_rights_pg.py` mark it): DELETE on `audit_outbox` (events parked
 there and not yet written can vanish; they are not yet in the chain, so nothing in the chain shows it) and INSERT on
 `audit_checkpoints` (a planted row at the head's seq makes verification raise a false alarm). Both are tracked in
 handover/core-b/tickets/A-audit-rights.md. Even then this is tamper evidence of past rows, not authenticity: a
@@ -32,7 +33,7 @@ true ones. A signer and an anchor (checkpoints held outside the database) narrow
 **Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
 runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to
-the audit log first. The reset login can append audit rows (as the runtime login already can). The database owner and
+the audit log first. The reset login can append audit rows (as the runtime login already can). The reset login runs no money function. The database owner and
 a superuser are outside this guarantee. The memory store guarantees nothing. Stated limits: (1) the guarantee is about
 the state stored in the database, and the store names its schema in every stop-state statement so a temporary table
 cannot hide a stop; a runtime process that is itself taken over can ignore any switch, so stop the process as well.
@@ -71,4 +72,4 @@ Redaction is pattern based and treats the end of a value the way the redactor's 
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
 
-On PostgreSQL after migration 0011, the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
+On PostgreSQL after migration 0011, the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). Only the caps login (`migrate --caps-role`, `backends.store.caps_credential_ref`) can set a cap (`limits set-cap`, `sync-caps`, `check-caps`); the reset login runs no money function, and `migrate` refuses a command that names a reset role and no caps role.

@@ -167,12 +167,31 @@ def test_migrate_refuses_a_login_that_owns_an_audit_table(w, who, table):
 @pytest.mark.parametrize("who", ["runtime", "caps"])
 def test_migrate_refuses_a_login_that_is_a_member_of_the_owner_role(w, who):
     role, owner = getattr(w, who), _owner_of(w, "audit_entries")
-    w.grant("GRANT {} TO {}", owner, role)
+    with w.hazard():  # a login that inherits the owner is visible to every other worker's migrate
+        w.grant("GRANT {} TO {}", owner, role)
+        try:
+            with pytest.raises(ConfigError, match=rf"{role} is a member of {owner}"):
+                w.migrate()
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, role)
+    assert w.migrate() == []
+
+
+@pytest.mark.parametrize("who", ["runtime", "caps"])
+def test_migrate_refuses_a_login_that_is_a_member_of_the_role_that_owns_an_audit_table(w, who):
+    """Not the function owner: only the relation check of `effective_problems` can catch this one."""
+    role, owner = getattr(w, who), _owner_of(w, "audit_entries")
+    helper = w.new_role(f"ao_{who}", "NOLOGIN")
+    w.grant("ALTER TABLE audit_entries OWNER TO {}", helper)
+    w.grant("GRANT {} TO {}", helper, role)
     try:
-        with pytest.raises(ConfigError, match=rf"{role} is a member of {owner}"):
+        with pytest.raises(
+            ConfigError, match=rf"{role}: is a member of {helper}, the owner of relations"
+        ):
             w.migrate()
     finally:
-        w.grant("REVOKE {} FROM {}", owner, role)
+        w.grant("REVOKE {} FROM {}", helper, role)
+        w.grant("ALTER TABLE audit_entries OWNER TO {}", owner)
     assert w.migrate() == []
 
 

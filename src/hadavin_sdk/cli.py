@@ -223,16 +223,16 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(
+        return _migrate(  # keywords only: a merge with another edit of this signature cannot shift a role
             cfg,
-            args.runtime_role,
-            args.portal_role,
-            args.purge_role,
-            args.reset_role,
-            args.release_role,
-            args.no_roles,
-            tuple(args.accept_admin_role),
-            args.caps_role,
+            runtime_role=args.runtime_role,
+            portal_role=args.portal_role,
+            purge_role=args.purge_role,
+            reset_role=args.reset_role,
+            release_role=args.release_role,
+            caps_role=args.caps_role,
+            no_roles=args.no_roles,
+            accepted_admin_roles=tuple(args.accept_admin_role),
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -481,7 +481,8 @@ def _say(text: str) -> None:
 
 def _migrate(
     cfg,
-    runtime_role: str | None,
+    *,
+    runtime_role: str | None = None,
     portal_role: str | None = None,
     purge_role: str | None = None,
     reset_role: str | None = None,
@@ -507,6 +508,16 @@ def _migrate(
         print(
             "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
             "roles (--runtime-role ... --reset-role) in ONE command, or pass --no-roles to apply the schema only",
+            file=sys.stderr,
+        )
+        return 2
+    if reset_role and not caps_role:
+        # Only the caps role runs hadavin_set_cap (the reset role runs none), so this command would take the right
+        # from the reset login and give it to nobody: nobody but the owner could set a spend cap.
+        print(
+            "refused: a reset role is named but no caps role: the reset role runs no money function, so nobody but "
+            "the owner could set a spend cap. Name the caps role in the same command (--caps-role <role>). "
+            "Nothing was changed.",
             file=sys.stderr,
         )
         return 2
@@ -548,7 +559,7 @@ def _migrate(
             "with --reset-role <role>",
             file=sys.stderr,
         )
-    if runtime_role and not caps_role:
+    if any((runtime_role, portal_role, purge_role, reset_role, release_role)) and not caps_role:
         print(
             "warning: no caps role was named, so nobody but the owner can set a spend cap; run again with "
             "--caps-role <role>",
@@ -806,7 +817,9 @@ def _caps_login(cfg, what: str):
             return 2
         as_caps = b.store.model_copy(update={"dsn_secret_name": ref, "purge_dsn_secret_name": None})
         platform_secrets.check(secrets, [as_caps, b.audit], set())
-        as_caps._login_role = "reset"  # the caps login, like the reset login, is not held to the runtime's rights at start
+        # No `_login_role` marker: the caps login holds nothing on the stop tables, so the store start runs the same
+        # own-rights check as for the runtime login (postgres.py `own_stop_rights_problems`) and refuses a caps login
+        # that can clear a stop.
         store = make("store", as_caps, secrets)
         audit = (
             None

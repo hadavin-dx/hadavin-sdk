@@ -191,7 +191,6 @@ def build(
             # The reset login is never read by this process; a sender must not carry its name all the same.
             {getattr(b.store, "reset_credential_ref", None)} - {None},
             {getattr(b.store, "release_credential_ref", None)} - {None},
-            {getattr(b.store, "caps_credential_ref", None)} - {None},
         ),
         file_backed=file_backed,
     )

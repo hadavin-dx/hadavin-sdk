@@ -184,8 +184,8 @@ WARNING = "warning: no reset role was named, so nobody but the owner can reset t
     [
         (["--runtime-role", "rt"], True),
         (["--runtime-role", "rt", "--purge-role", "pu", "--portal-role", "po"], True),
-        (["--runtime-role", "rt", "--reset-role", "rs"], False),
-        (["--reset-role", "rs"], False),
+        (["--runtime-role", "rt", "--reset-role", "rs", "--caps-role", "cp"], False),
+        (["--reset-role", "rs", "--caps-role", "cp"], False),
         (
             ["--no-roles"],
             False,
@@ -326,3 +326,96 @@ def test_b4_a_reset_ref_equal_to_the_runtime_secret_name_exits_2_and_builds_noth
         "backends.store.dsn_secret_name"
     )
     assert "The kill switch was not changed." in err
+
+
+CAPS_WARNING = "warning: no caps role was named, so nobody but the owner can set a spend cap"
+
+
+def _fake_migrate(monkeypatch):
+    calls = []
+
+    def fake_migrate(dsn, **kw):
+        calls.append(kw)
+        return []
+
+    monkeypatch.setattr(migrate_mod, "migrate", fake_migrate)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "dbname=never_opened")
+    return calls
+
+
+@pytest.mark.parametrize(
+    "flags,warned",
+    [
+        (["--runtime-role", "rt"], True),
+        (["--portal-role", "po"], True),
+        (["--purge-role", "pu"], True),
+        (["--release-role", "rl"], True),
+        (["--runtime-role", "rt", "--caps-role", "cp"], False),
+        (["--caps-role", "cp"], False),
+        (["--no-roles"], False),
+    ],
+)
+def test_migrate_warns_when_any_role_is_named_without_a_caps_role(
+    cfg_dir, monkeypatch, capsys, flags, warned
+):
+    _fake_migrate(monkeypatch)
+    assert cli.main(["--config", str(_postgres(cfg_dir)), "migrate", *flags]) == 0
+    out, err = capsys.readouterr()
+    assert (CAPS_WARNING in err) is warned
+    assert "--caps-role <role>" not in out
+
+
+@pytest.mark.parametrize(
+    "flags",
+    [
+        ["--reset-role", "rs"],
+        ["--runtime-role", "rt", "--reset-role", "rs", "--release-role", "rl"],
+    ],
+)
+def test_migrate_refuses_a_reset_role_without_a_caps_role_before_any_connection(
+    cfg_dir, monkeypatch, capsys, flags
+):
+    """Only the caps role runs hadavin_set_cap: naming the reset role alone would leave it to nobody."""
+    calls = _fake_migrate(monkeypatch)
+    assert cli.main(["--config", str(_postgres(cfg_dir)), "migrate", *flags]) == 2
+    _out, err = capsys.readouterr()
+    assert "a reset role is named but no caps role" in err and "--caps-role" in err
+    assert "Nothing was changed" in err
+    assert calls == []  # refused before the library was reached
+
+
+def test_migrate_hands_every_role_to_the_library_under_its_own_name(cfg_dir, monkeypatch):
+    """A merge with another edit of the `_migrate` signature cannot put a role into the wrong slot: every role
+    reaches the library by keyword, each with its own flag's value."""
+    calls = _fake_migrate(monkeypatch)
+    flags = {
+        "--runtime-role": "rt",
+        "--portal-role": "po",
+        "--purge-role": "pu",
+        "--reset-role": "rs",
+        "--release-role": "rl",
+        "--caps-role": "cp",
+    }
+    argv = [x for pair in flags.items() for x in pair]
+    assert cli.main(["--config", str(_postgres(cfg_dir)), "migrate", *argv]) == 0
+    (kw,) = calls
+    assert {k.removeprefix("--").replace("-", "_"): v for k, v in flags.items()} == {
+        k: kw[k]
+        for k in (
+            "runtime_role",
+            "portal_role",
+            "purge_role",
+            "reset_role",
+            "release_role",
+            "caps_role",
+        )
+    }
+
+
+def test_the_migrate_command_function_takes_keywords_only():
+    import inspect
+
+    params = list(inspect.signature(cli._migrate).parameters.values())
+    assert params[0].name == "cfg"
+    assert all(p.kind is inspect.Parameter.KEYWORD_ONLY for p in params[1:])
+    assert "caps_role" in {p.name for p in params}

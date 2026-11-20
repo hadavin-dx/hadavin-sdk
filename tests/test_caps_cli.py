@@ -373,6 +373,19 @@ def test_a_login_without_the_right_is_exit_2_nothing_changed(w, tmp_path, spy, c
     assert _table(w) == {}
 
 
+def test_a_caps_login_that_can_clear_a_stop_is_refused_at_start_and_nothing_changes(
+    w, tmp_path, spy, capsys
+):
+    """The caps login is held to the same own-rights check as the runtime login (it holds nothing on the stop
+    tables): a hand grant of UPDATE on the kill switch refuses the command before any cap is written."""
+    cfg = _config(tmp_path)
+    w.grant("GRANT UPDATE ON kill_switch TO {}", w.caps)
+    assert _sync(cfg, "--yes") == 2
+    err = capsys.readouterr().err
+    assert "rights on the stop tables" in err and "UPDATE on kill_switch" in err
+    assert _table(w) == {}
+
+
 # ---- set-cap ---------------------------------------------------------------------------------------------------------------
 
 

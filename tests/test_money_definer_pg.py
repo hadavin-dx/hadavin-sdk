@@ -985,10 +985,13 @@ def test_L2_a_runtime_login_that_is_the_owner_a_member_of_it_or_a_superuser_is_r
     with pytest.raises(ConfigError):
         w.migrate(release_role=w.release, runtime_role=owner)
     member = w.new_role("member")
-    w.grant("GRANT {} TO {}", owner, member)
-    with pytest.raises(ConfigError):
-        w.migrate(release_role=w.release, runtime_role=member)
-    w.grant("REVOKE {} FROM {}", owner, member)
+    with w.hazard():  # a login that inherits the owner is visible to every other worker's migrate
+        w.grant("GRANT {} TO {}", owner, member)
+        try:
+            with pytest.raises(ConfigError):
+                w.migrate(release_role=w.release, runtime_role=member)
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, member)
     w.do(f"ALTER ROLE {member} SUPERUSER")
     try:
         with pytest.raises(ConfigError):

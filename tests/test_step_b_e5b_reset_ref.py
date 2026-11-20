@@ -135,7 +135,8 @@ def test_a_secret_the_runtime_reads_that_folds_to_the_caps_ref_stops_the_start(
     _with_ref(monkeypatch, cfg, field="caps_credential_ref")
     with pytest.raises(ConfigError) as caught:
         _build(cfg)
-    assert "caps_credential_ref" in str(caught.value) or "senders" in str(caught.value)
+    # the one loop of app.build names the field, senders included
+    assert "caps_credential_ref" in str(caught.value)
     assert REF not in str(caught.value) and ALIAS not in str(caught.value)
 
 

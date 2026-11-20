@@ -97,16 +97,24 @@ class World:
     def store(self, role, scoped=None):
         """A store whose one connection is logged in as `role` (proven, not assumed)."""
         settings = PostgresSettings(**SETTINGS)
-        if role in (
-            self.reset,
-            self.caps,
-        ):  # the CLI marks the reset and caps logins (E6): not held to the runtime's rights
+        # the CLI marks the reset login (E6): not held to the runtime's rights; the caps login is held to them
+        if role == self.reset:
             settings._login_role = "reset"
         s = make("store", settings, FakeSecretProvider({"pg-dsn": self.dsn_of(role, scoped)}))
         self.stores.append(s)
         assert s._db.execute("SELECT current_user").fetchone()[0] == role
         s._db.execute("SET statement_timeout = '30s'")  # a blocked statement fails, never hangs
         return s
+
+    @contextlib.contextmanager
+    def hazard(self):
+        """A role that inherits the owner's or a predefined role's rights (a member of the owner, of
+        pg_write_all_data) is visible to EVERY other test's `migrate` on the server, whatever its schema or worker
+        (rights of a superuser member reach every table). Hold the EXCLUSIVE server gate (tests/pg_gate.py) for as
+        long as such a grant exists; the caller revokes before the block ends. Without it, a parallel worker's migrate
+        refuses with "a role other than the owner can write a money table"."""
+        with pg_gate.exclusive():
+            yield
 
     def new_role(self, part, options="LOGIN"):
         name = f"sb_{part}_{self.sfx}"
@@ -707,7 +715,16 @@ def test_migrate_with_a_reset_role_that_does_not_exist_applies_nothing(
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
     _demo(cfg_dir)
     monkeypatch.setenv("HADAVIN_MIGRATE_DSN", fresh)
-    assert cli.main(["--config", str(cfg_dir), "migrate", "--reset-role", ghost]) == 3
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--reset-role",
+        ghost,
+        "--caps-role",
+        f"sb_gc_{w.sfx}",
+    ]
+    assert cli.main(argv) == 3
     assert "Traceback" not in capsys.readouterr().err
     with psycopg.connect(fresh, autocommit=True) as db:
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
@@ -738,6 +755,8 @@ def test_cli_migrate_passes_the_reset_role_and_the_reset_login_can_then_reset(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main(argv) == 0
     rt = w.store(w.runtime, fresh)
@@ -1255,13 +1274,15 @@ def test_s2_roles_of_the_server_with_no_grant_on_these_relations_are_not_listed(
     owner = w.run("SELECT current_user")[0][0]
     w.new_role("st")
     of_owner, writer = w.new_role("mw", "LOGIN NOINHERIT"), w.new_role("wa")
-    w.grant("GRANT {} TO {}", owner, of_owner)
-    w.grant("GRANT pg_write_all_data TO {}", writer)
-    try:
-        assert _who(w.scoped, w.reset) == []
-        assert w.migrate() == []
-    finally:
-        w.grant("REVOKE {} FROM {}", owner, of_owner)
+    with w.hazard():
+        w.grant("GRANT {} TO {}", owner, of_owner)
+        w.grant("GRANT pg_write_all_data TO {}", writer)
+        try:
+            assert _who(w.scoped, w.reset) == []
+            assert w.migrate() == []
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, of_owner)
+            w.grant("REVOKE pg_write_all_data FROM {}", writer)
 
 
 def _second_schema(w):
@@ -1635,6 +1656,8 @@ def test_cli_migrate_prints_and_logs_every_accepted_admin_role(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main(base) == 0
     assert "accepted" not in capsys.readouterr().out
@@ -1666,6 +1689,8 @@ def test_cli_migrate_notes_never_fail_on_a_stdout_that_cannot_encode_the_name(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main([*argv, "--accept-admin-role", cjk]) == 0
     assert chr(92) + "u4e2d" in raw.getvalue().decode("cp1252")
@@ -1684,6 +1709,8 @@ def test_cli_migrate_refuses_a_lone_surrogate_in_an_accepted_role_with_exit_2(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main([*argv, "--accept-admin-role", chr(0xD800)]) == 2
 
@@ -1720,6 +1747,8 @@ def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
         "--accept-admin-role",
         vouched,
     ]
@@ -1749,6 +1778,8 @@ def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
         w.runtime,
         "--reset-role",
         w.reset,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
     captured = capsys.readouterr()
@@ -2247,5 +2278,5 @@ def test_cli_migrate_warns_on_stderr_when_a_runtime_role_is_named_without_a_rese
     out, err = capsys.readouterr()
     assert "warning: no reset role was named" in err and "--reset-role" in err
     assert "no reset role" not in out
-    assert cli.main([*base, "--reset-role", w.reset]) == 0
+    assert cli.main([*base, "--reset-role", w.reset, "--caps-role", w.caps]) == 0
     assert "no reset role" not in capsys.readouterr().err

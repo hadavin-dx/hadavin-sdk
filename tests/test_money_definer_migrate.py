@@ -317,7 +317,7 @@ def test_migrate_refuses_when_a_role_reaches_execute_through_a_membership(w):
 
 @NEEDS_PG
 def test_the_reset_role_slot_gives_execute_to_exactly_the_mapped_function(w, monkeypatch):
-    """The reset slot works for a mapped function (add_spend stands in beside the two cap functions)."""
+    """The reset slot works for a mapped function (add_spend stands in: the real map gives the reset role none)."""
     monkeypatch.setitem(mig.FUNCTION_GRANTS, ADD, mig.FunctionGrant(runtime=True, reset=True))
     w.migrate(release_role=w.release)
     assert _can_exec(w, w.reset, ADD) is True
@@ -365,12 +365,57 @@ def test_migrate_takes_the_cap_functions_back_from_the_reset_role(w, sig_name):
 
 
 @NEEDS_PG
-def test_the_caps_role_may_not_be_the_reset_role_or_a_member_of_one(w):
+def test_the_caps_role_may_not_be_the_reset_role(w):
     with pytest.raises(ConfigError, match="must be different roles"):
         w.migrate(release_role=w.release, caps_role=w.reset)
-    w.grant("GRANT {} TO {}", w.reset, w.caps)
+
+
+@NEEDS_PG
+@pytest.mark.parametrize("order", ["caps_in_reset", "reset_in_caps"])
+def test_the_caps_role_and_the_reset_role_may_not_be_members_of_each_other(w, order):
+    group, member = (w.reset, w.caps) if order == "caps_in_reset" else (w.caps, w.reset)
+    w.grant("GRANT {} TO {}", group, member)
     with pytest.raises(ConfigError, match="must not be members of each other"):
         w.migrate(release_role=w.release)
+    w.grant("REVOKE {} FROM {}", group, member)
+    assert w.migrate(release_role=w.release) == []
+
+
+@pytest.fixture(name="bare")
+def bare_world():
+    """A world whose schema and logins exist but are NOT migrated: the test itself calls migrate, so a failure of
+    migrate is a failure of the test (not a fixture error)."""
+    world = World()
+    with psycopg.connect(world.dsn, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(world.schema)))
+        for r in world.roles:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+    world.release = world.new_role("rl")
+    try:
+        yield world
+    finally:
+        with psycopg.connect(world.dsn, autocommit=True) as db:
+            for schema in world.schemas:
+                db.execute(
+                    sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(schema))
+                )
+            for r in world.roles:
+                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
+
+
+@NEEDS_PG
+def test_naming_the_caps_role_gives_it_exactly_its_rights(bare):
+    """Asserted here, after the test's own migrate call: a migrate that ignores the caps role fails THIS test."""
+    assert bare.migrate(release_role=bare.release) != []
+    assert {sig for sig in mig.FUNCTION_GRANTS if _can_exec(bare, bare.caps, sig)} == {
+        SET_CAP,
+        CAP_MATCHES,
+    }
+    assert bare.rights(bare.caps) == {
+        "audit_entries": {"SELECT", "INSERT"},
+        "audit_checkpoints": {"SELECT"},
+    }
 
 
 @NEEDS_PG

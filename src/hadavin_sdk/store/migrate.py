@@ -762,7 +762,8 @@ def check_isolation_settings(db, named: list[str]) -> list[str]:
     notes = []
     for role, setrole, dbname, config in rows:
         value = config.split("=", 1)[1].strip().strip("'\"").lower()
-        if value == "read committed":
+        # PostgreSQL runs `read uncommitted` as `read committed`: the same level, nothing to report
+        if value in ("read committed", "read uncommitted"):
             continue
         who = f"role {role}" if setrole else "every role"
         where = f"in database {dbname}" if dbname else "in every database"

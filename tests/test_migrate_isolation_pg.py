@@ -22,8 +22,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture(name="w")
-def world():
+def _made_world():
     w = World()
     with psycopg.connect(w.dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(w.schema)))
@@ -41,6 +40,17 @@ def world():
             for r in w.roles:
                 db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
                 db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
+
+
+@pytest.fixture(name="w")
+def world():
+    yield from _made_world()
+
+
+@pytest.fixture(name="w2")
+def second_world():
+    """Another test's world on the same server (a parallel worker's, in a real run)."""
+    yield from _made_world()
 
 
 def _database(w) -> str:
@@ -76,8 +86,10 @@ def test_a_weaker_default_of_a_named_login_is_reported_not_changed(w, level, sco
     assert _setting(w, w.runtime) == [f"default_transaction_isolation={level}"]  # never erased
 
 
-def test_read_committed_is_not_reported(w):
-    w.do(f"ALTER ROLE {w.portal} SET default_transaction_isolation = 'read committed'")
+@pytest.mark.parametrize("level", ["read committed", "read uncommitted"])
+def test_read_committed_and_its_alias_are_not_reported(w, level):
+    """PostgreSQL runs `read uncommitted` as `read committed`: no note for either."""
+    w.do(f"ALTER ROLE {w.portal} SET default_transaction_isolation = '{level}'")
     assert _notes(w) == []
 
 
@@ -113,3 +125,44 @@ def test_the_notes_are_logged_at_warning_level(w, caplog):
     assert any(
         w.purge in r.getMessage() and "repeatable read" in r.getMessage() for r in caplog.records
     )
+
+
+# --- parallel workers share one cluster: a role that inherits the owner is visible to every migrate -----------------------
+
+
+def test_a_role_that_inherits_the_owner_is_seen_by_another_worlds_migrate(w, w2):
+    """Why `World.hazard()` exists: roles are server-wide, and a login that inherits the (superuser) owner can write
+    every money table of every schema, so ANOTHER world's migrate refuses while the grant exists."""
+    from hadavin_sdk.errors import ConfigError
+
+    owner = w.run("SELECT current_user")[0][0]
+    with w.hazard():
+        w.grant("GRANT {} TO {}", owner, w.runtime)
+        try:
+            with pytest.raises(ConfigError, match="can write a money table"):
+                w2.migrate()
+        finally:
+            w.grant("REVOKE {} FROM {}", owner, w.runtime)
+    assert w2.migrate() == []
+
+
+def _gate_free_for_shared() -> bool:
+    """True when a second connection can take the shared gate (what every other worker's migrate needs)."""
+    from tests import pg_gate
+
+    with psycopg.connect(w_dsn(), autocommit=True) as db:
+        got = db.execute("SELECT pg_try_advisory_lock_shared(%s)", (pg_gate.GATE,)).fetchone()[0]
+        if got:
+            db.execute("SELECT pg_advisory_unlock_shared(%s)", (pg_gate.GATE,))
+        return got
+
+
+def w_dsn() -> str:
+    return os.environ["HADAVIN_TEST_PG_DSN"]
+
+
+def test_hazard_holds_the_exclusive_server_gate(w):
+    """Another worker's migrate takes the gate SHARED; while a hazard role may exist it must be unable to. (Not
+    asserted outside the block: another worker may hold either lock at that moment.)"""
+    with w.hazard():
+        assert _gate_free_for_shared() is False
