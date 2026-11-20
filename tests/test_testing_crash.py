@@ -611,7 +611,8 @@ def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, 
 
 def stub_unlink(monkeypatch, refusals):
     """Path.unlink refuses `refusals` times (None: always) with PermissionError, then works.
-    The pause is set to 0 and the helper's sleeps are recorded. Returns the call counter and the pauses."""
+    The pause is set to 0 and the helper's sleeps are recorded.
+    Returns the call counter, the pauses and the function that restores Path.unlink."""
     real, calls, pauses = Path.unlink, [], []
     monkeypatch.setattr(crash_mod, "_UNLINK_PAUSE_S", 0)  # no real waiting
     # the helper module's own `time` name only: the global time.sleep stays real

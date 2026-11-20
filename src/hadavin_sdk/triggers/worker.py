@@ -129,6 +129,13 @@ PING_RUN_ID: Final[str] = (
     "run-" + "0" * 32
 )  # a run id that is never stored: the cheapest store call is get_run
 
+HEALTH_RECHECK_S: Final[float] = (
+    5.0  # a worker that started with the store down asks the store this often
+)
+HEALTH_PING_TIMEOUT_S: Final[float] = (
+    2.0  # the /health store ping is given this long, then it is "down"
+)
+
 _LOG = logging.getLogger("hadavin_sdk.triggers")
 
 
@@ -204,6 +211,8 @@ class Runner:
         self._lock = threading.Lock()  # guards _jobs and _closed
         self._jobs: set[Future[None]] = set()  # handle calls not yet ended, for `close` only
         self._closed = False
+        self._ping_lock = threading.Lock()  # guards _ping
+        self._ping: _Ping | None = None  # the one ping thread that may be pending
 
     @property
     def ack_wait_s(self) -> float:
@@ -224,16 +233,21 @@ class Runner:
 
     def health(self) -> tuple[bool, int]:
         """(store is up, store failures since start) for ``GET /health``. The ping is `get_run` of an id that is
-        never stored: NotFound is the store answering; any other error is a failure and is counted."""
-        try:
-            self._store.get_run(PING_RUN_ID)
-        except NotFound:
-            pass
-        except Exception as exc:  # noqa: BLE001 - down in every case; the class name only
+        never stored: NotFound is the store answering; any other error is a failure and is counted.
+
+        The ping runs in its own thread and is given `HEALTH_PING_TIMEOUT_S`; one that does not return in time is
+        "down" and is counted. At most one ping thread is pending: while it is, a new call waits for that same
+        ping (it starts no second one), so a hung store costs one thread, not one per call."""
+        with self._ping_lock:
+            ping = self._ping
+            if ping is None or ping.done.is_set():
+                ping = self._ping = _Ping(self._store, self._count_store_failure)
+                ping.thread.start()
+        if not ping.done.wait(HEALTH_PING_TIMEOUT_S):
             self._count_store_failure()
-            _LOG.debug("trigger health: store ping failed (%s)", type(exc).__name__)
+            _LOG.debug("trigger health: store ping did not return in time")
             return False, self.store_failures
-        return True, self.store_failures
+        return ping.up, self.store_failures
 
     def _count_store_failure(self) -> None:
         with self._stats_lock:
@@ -405,6 +419,29 @@ class Runner:
             )
         except Exception as exc:  # noqa: BLE001 - never takes the process down; the tick ends a cut-off run
             _LOG.warning("trigger run %s: loop raised %s", req.run_id, type(exc).__name__)
+
+
+class _Ping:
+    """One store ping on its own daemon thread; `done` is set when it has returned, `up` is the answer."""
+
+    def __init__(self, store: Any, on_failure: Callable[[], None]) -> None:
+        self.done = threading.Event()
+        self.up = False
+        self._store, self._on_failure = store, on_failure
+        self.thread = threading.Thread(target=self._run, name="trigger-ping", daemon=True)
+
+    def _run(self) -> None:
+        try:
+            try:
+                self._store.get_run(PING_RUN_ID)
+            except NotFound:
+                pass
+            self.up = True
+        except Exception as exc:  # noqa: BLE001 - down in every case; the class name only
+            self._on_failure()
+            _LOG.debug("trigger health: store ping failed (%s)", type(exc).__name__)
+        finally:
+            self.done.set()
 
 
 def _hash_of(ref: object) -> str:
@@ -742,7 +779,8 @@ def serve(server: WSGIServer, runner: Any) -> int:
     return EXIT_OK
 
 
-def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
+def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
+    """Load the config, build the App and the Runner: (wsgi, runner, app). The caller closes the Runner."""
     from hadavin_sdk.app import build
     from hadavin_sdk.config import load_config
     from hadavin_sdk.registry import load_registry
@@ -755,46 +793,134 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
     check_bind(host, args.allow_non_loopback)
     app = build(args.config_dir, qualified_agents(load_registry(config)))
     wsgi, runner = make_app(app)
-    check_tick(app.store)
+    try:
+        check_tick(app.store)
+    except BaseException:
+        runner.close(0)
+        raise
+    return wsgi, runner, app
+
+
+def _warn_no_audit(app: Any) -> None:
+    """One WARNING when the App has no `audit`: the 409 conflict events then cannot be written. Only `main`
+    calls this (never `make_app`, which tests feed with stand-ins)."""
+    if not hasattr(app, "audit"):
+        _LOG.warning(
+            "trigger worker: the App (%s) has no 'audit' attribute: 409 conflict events are counted but not"
+            " written to the audit",
+            type(app).__name__,
+        )
+
+
+def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
+    wsgi, runner, app = _build_app(args)
+    _warn_no_audit(app)
+    port = args.port if args.port is not None else PORT
     try:
         timeout = runner.ack_wait_s + SOCKET_SLACK_S  # the value `make_app` read, default or not
-        return make_server(host, port, wsgi, timeout), runner
+        return make_server(args.host, port, wsgi, timeout), runner
     except BaseException:
         runner.close(0)
         raise
 
 
-class _StoreDown:
-    """What the degraded worker serves in place of a Runner: `/health` says store_down; `serve` closes it."""
+def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
+    """One try of a degraded worker to get the real app: build it and ping the store with `Runner.health`.
+    Raises while the store is down (any error: the caller tries again later); on success (wsgi, runner)."""
+    wsgi, runner, app = _build_app(args)
+    up, _failures = runner.health()
+    if not up:
+        runner.close(0)
+        raise StoreUnavailable("store ping failed")
+    _warn_no_audit(app)
+    return wsgi, runner
 
-    running = 0
 
-    def __init__(self) -> None:
+class _Degraded:
+    """What a worker that started with the store down serves, and the switch to the real app.
+
+    As the WSGI callable it hands every request to the app held in `_app`, read per request: first
+    `health_only_app` (``/health`` 503, an empty 503 elsewhere), and, once the store has answered a re-check,
+    the real wsgi app. The Runner exists only inside `_recover`; the real app is put in place only after it is
+    built, so no request is answered 2xx before that. `serve` uses it as its runner: `running` and `close`."""
+
+    def __init__(self, args: argparse.Namespace) -> None:
+        self._args = args
         self.failures = 1  # the failed start-up
+        self._lock = threading.Lock()  # guards _app, _runner, _stopped and failures
+        self._app: Callable[..., Any] = health_only_app(self.health)
+        self._runner: Runner | None = None
+        self._stopped = threading.Event()
+        self._thread = threading.Thread(target=self._watch, name="trigger-recover", daemon=True)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def __call__(self, environ: Any, start_response: Any) -> Any:
+        with self._lock:
+            app = self._app
+        return app(environ, start_response)
 
     def health(self) -> tuple[bool, int]:
-        return False, self.failures
+        with self._lock:
+            return False, self.failures
+
+    @property
+    def running(self) -> int:
+        with self._lock:
+            runner = self._runner
+        return runner.running if runner is not None else 0
+
+    def _watch(self) -> None:
+        last = ""
+        while not self._stopped.wait(HEALTH_RECHECK_S):
+            try:
+                wsgi, runner = _recover(self._args)
+            except Exception as exc:  # noqa: BLE001 - the class name only: the text could hold a value
+                with self._lock:
+                    self.failures += 1
+                name = type(exc).__name__
+                if (
+                    not (isinstance(exc, StoreUnavailable) or is_connectivity_error(exc))
+                    and name != last
+                ):
+                    _LOG.warning("trigger worker: store re-check failed (%s): still degraded", name)
+                last = name
+                continue
+            with self._lock:
+                if not self._stopped.is_set():
+                    self._runner, self._app = runner, wsgi
+                    runner = None
+            if runner is not None:  # stopped while building: nobody will serve with it
+                runner.close(0)
+                return
+            _LOG.info("trigger worker: store is back, serving triggers")
+            return
 
     def close(self) -> None:
-        return None
+        with self._lock:
+            self._stopped.set()
+            runner = self._runner
+        if runner is not None:
+            runner.close()
 
 
 def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
     """The store was not reachable at start: log one WARNING (class name only) and serve `/health` 503 and
-    an empty 503 for every other path, until stopped. A supervisor sees the 503 and restarts the worker."""
+    an empty 503 for every other path. Every `HEALTH_RECHECK_S` the store is tried again; when it answers, the
+    real app replaces the degraded one in the same process (`_Degraded`). Stops on Ctrl-C or SIGTERM."""
     _LOG.warning(
         "trigger worker: store unreachable at start (%s): starting anyway; GET /health answers 503 until the"
-        " store is back and the worker is restarted",
+        " store answers, re-checked every %g s",
         type(exc).__name__,
+        HEALTH_RECHECK_S,
     )
-    down = _StoreDown()
+    degraded = _Degraded(args)
     try:
         port = args.port if args.port is not None else PORT
         check_port(port)
         check_bind(args.host, args.allow_non_loopback)
-        server = make_server(
-            args.host, port, health_only_app(down.health), ACK_WAIT_S + SOCKET_SLACK_S
-        )
+        server = make_server(args.host, port, degraded, ACK_WAIT_S + SOCKET_SLACK_S)
     except ConfigError as err:
         print(f"trigger worker: config error: {err}", file=sys.stderr)
         return EXIT_CONFIG
@@ -803,7 +929,8 @@ def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
         server.server_address[0],
         server.server_port,
     )
-    return serve(server, down)
+    degraded.start()
+    return serve(server, degraded)
 
 
 def _log_to_stderr() -> logging.Handler:
@@ -870,7 +997,8 @@ def _fields(exc: BaseException, limit: int = 10) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 3 anything else. A store that is not
-    reachable at start is no exit: one WARNING, then the worker serves ``/health`` 503 only (`_serve_degraded`)."""
+    reachable at start is no exit: one WARNING, then the worker serves ``/health`` 503 only and re-checks the
+    store every `HEALTH_RECHECK_S`, switching to normal serving when it answers (`_serve_degraded`)."""
     parser = argparse.ArgumentParser(prog="python -m hadavin_sdk.triggers.worker")
     parser.add_argument("--config-dir", type=Path, default=None)
     parser.add_argument("--host", default=LOOPBACK, help=f"default: {LOOPBACK}")

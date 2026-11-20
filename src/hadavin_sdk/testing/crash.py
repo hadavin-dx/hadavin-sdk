@@ -160,9 +160,8 @@ class CrashPoints:
             else:
                 took = left is not None and self._disarm()
                 stuck = left is not None and self._flag is not None and _still_there(self._flag)
-                if (
-                    not took
-                ):  # nothing of ours was taken (a child fired it first): not "never fired"
+                # nothing of ours was taken (a child fired it first): not "never fired"
+                if not took:
                     left = None
         if exc_type is not None:
             return
@@ -283,7 +282,7 @@ class CrashPoints:
         except FileNotFoundError:
             text = ""
         except PermissionError:  # a sharing violation on Windows, or a directory read there
-            text, unreadable = "", not self._flag.is_dir()
+            text, unreadable = "", not os.path.isdir(self._flag)  # isdir never raises
         except (OSError, ValueError):  # a directory, undecodable bytes: not armed, no read error
             text = ""
         point, sep, count = text.removesuffix("\n").partition("#")
