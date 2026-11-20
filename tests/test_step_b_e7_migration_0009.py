@@ -26,7 +26,12 @@ pytestmark = pytest.mark.skipif(
 
 DENIED = errors.InsufficientPrivilege
 FILE_0009 = migrate_mod.MIGRATIONS / "0009_stop_state_hardening.sql"
-NEW_TABLES = ("kill_switch_resets", "kill_switch_watermark", "hadavin_limits")  # 0009 and 0011
+NEW_TABLES = (
+    "kill_switch_resets",
+    "kill_switch_watermark",
+    "hadavin_limits",
+    "hadavin_caps",
+)  # 0009 and 0011
 ROW = "(seq, at, run_id, kind, body, prev, hash, event_id) VALUES (%s, 'a', 'r', 'k', 'b', 'p', 'h', %s)"
 
 

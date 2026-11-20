@@ -308,3 +308,104 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
+
+-- Step 6 (caps out of the runtime's hands), ADDITIONS ONLY: the table of caps and the two functions around it. The
+-- reserve function above still takes its caps as arguments in this step; a later step makes it read this table.
+-- hadavin_caps: one row per agent. Owner only: no role holds any right on it (`migrate` GRANTS row is all ""); the
+-- definer functions below touch it as owner. The CHECKs are the part of the cap rule that is a property of the value
+-- (>= 0 and finite; NaN sorts above every number, so it fails the second test); the scale limit comes from
+-- hadavin_limits and is enforced inside hadavin_set_cap. NOT the amount window: a cap of 10 to the 30th is valid.
+CREATE TABLE hadavin_caps (
+    agent_id TEXT PRIMARY KEY,
+    day_cap NUMERIC NOT NULL CHECK (day_cap >= 0 AND day_cap < 'Infinity'::numeric),
+    month_cap NUMERIC NOT NULL CHECK (month_cap >= 0 AND month_cap < 'Infinity'::numeric),
+    set_by TEXT NOT NULL,
+    set_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+REVOKE ALL ON hadavin_caps FROM PUBLIC;
+
+-- hadavin_set_cap: upsert the caps of one agent (the reset login runs it; the runtime cannot). Arguments are validated
+-- inside: the agent id as in the other functions, both caps by the cap rule, p_by non-empty without control characters.
+CREATE OR REPLACE FUNCTION hadavin_set_cap(p_agent TEXT, p_day_cap NUMERIC, p_month_cap NUMERIC, p_by TEXT)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_decimals NUMERIC;
+    v_max_id NUMERIC;
+BEGIN
+    SELECT l.value INTO v_max_decimals FROM hadavin_limits l WHERE l.name = 'max_decimals';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ '[\x01-\x1f\x7f-\x9f]' THEN
+        RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
+    END IF;
+    IF p_by IS NULL OR pg_catalog.char_length(p_by) NOT BETWEEN 1 AND v_max_id
+       OR p_by ~ '[\x01-\x1f\x7f-\x9f]' THEN
+        RAISE EXCEPTION 'invalid argument: p_by' USING ERRCODE = '22023';
+    END IF;
+    IF p_day_cap IS NULL OR NOT (p_day_cap >= 0 AND p_day_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_day_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_day_cap' USING ERRCODE = '22023';
+    END IF;
+    IF p_month_cap IS NULL OR NOT (p_month_cap >= 0 AND p_month_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_month_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_month_cap' USING ERRCODE = '22023';
+    END IF;
+
+    INSERT INTO hadavin_caps AS c (agent_id, day_cap, month_cap, set_by, set_at)
+    VALUES (p_agent, p_day_cap, p_month_cap, p_by, pg_catalog.clock_timestamp())
+    ON CONFLICT (agent_id) DO UPDATE
+       SET day_cap = EXCLUDED.day_cap, month_cap = EXCLUDED.month_cap, set_by = EXCLUDED.set_by,
+           set_at = EXCLUDED.set_at;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_set_cap(TEXT, NUMERIC, NUMERIC, TEXT) FROM PUBLIC;
+
+-- hadavin_cap_matches: read-only comparison. Says whether the supplied pair equals the stored one: 'same', 'differs',
+-- or 'missing' (no row). It reveals nothing but that, gives no table right and changes nothing. VOLATILE like the others.
+CREATE OR REPLACE FUNCTION hadavin_cap_matches(p_agent TEXT, p_day_cap NUMERIC, p_month_cap NUMERIC)
+RETURNS TEXT
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_decimals NUMERIC;
+    v_max_id NUMERIC;
+    rec RECORD;
+BEGIN
+    SELECT l.value INTO v_max_decimals FROM hadavin_limits l WHERE l.name = 'max_decimals';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ '[\x01-\x1f\x7f-\x9f]' THEN
+        RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
+    END IF;
+    IF p_day_cap IS NULL OR NOT (p_day_cap >= 0 AND p_day_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_day_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_day_cap' USING ERRCODE = '22023';
+    END IF;
+    IF p_month_cap IS NULL OR NOT (p_month_cap >= 0 AND p_month_cap < 'Infinity'::numeric)
+       OR pg_catalog.scale(p_month_cap) > v_max_decimals THEN
+        RAISE EXCEPTION 'invalid argument: p_month_cap' USING ERRCODE = '22023';
+    END IF;
+
+    SELECT c.day_cap, c.month_cap INTO rec FROM hadavin_caps c WHERE c.agent_id = p_agent;
+    IF NOT FOUND THEN RETURN 'missing'; END IF;
+    IF rec.day_cap = p_day_cap AND rec.month_cap = p_month_cap THEN RETURN 'same'; END IF;
+    RETURN 'differs';
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;

@@ -100,6 +100,8 @@ GRANTS: dict[str, Grant] = {
     # 0011: the limits the money functions read (written by `migrate` from the Python constants on every run). Only
     # the owner touches it: the definer functions read it as owner.
     "hadavin_limits": Grant("table", ""),
+    # 0011 step 6: the caps. Owner only; `hadavin_set_cap` and `hadavin_cap_matches` touch it as owner.
+    "hadavin_caps": Grant("table", ""),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
@@ -115,16 +117,18 @@ TRIPWIRE_FUNCTIONS = (
     "hadavin_audit_checkpoint_guard()",
     MONEY_GUARD_FUNCTION,
 )
-# 0011: the five SECURITY DEFINER money functions. Each is re-pinned on every migrate run (`_pin_money_functions`).
+# 0011: the SECURITY DEFINER money functions (five bookings, set_cap, cap_matches). Each is re-pinned on every migrate run (`_pin_money_functions`).
 MONEY_FUNCTIONS = (
     "hadavin_reserve_spend(text, text, date, numeric, numeric, numeric, text)",
     "hadavin_settle_spend(text, numeric, text)",
     "hadavin_expire_spend_reservations(integer)",
     "hadavin_purge_spend_reservations(timestamptz)",
     "hadavin_add_spend(text, date, numeric)",
+    "hadavin_set_cap(text, numeric, numeric, text)",
+    "hadavin_cap_matches(text, numeric, numeric)",
 )
 # Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
-# purges; the release role (0008) releases. The reset and portal roles run none. Every other role, PUBLIC included,
+# purges; the release role (0008) releases; the reset role sets caps and compares them (step 6). The portal role runs none. Every other role, PUBLIC included,
 # is refused.
 FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     MONEY_FUNCTIONS[0]: FunctionGrant(runtime=True),
@@ -132,6 +136,9 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     MONEY_FUNCTIONS[2]: FunctionGrant(runtime=True),
     MONEY_FUNCTIONS[3]: FunctionGrant(purge=True),
     MONEY_FUNCTIONS[4]: FunctionGrant(runtime=True),
+    # Step 6: only the reset role sets a cap; the runtime (tick check) and the reset role compare one.
+    MONEY_FUNCTIONS[5]: FunctionGrant(reset=True),
+    MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, reset=True),
     RELEASE_FUNCTION: FunctionGrant(release=True),
 }
 # Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.
@@ -142,7 +149,14 @@ EXCLUDED_FUNCTIONS = (
 )
 # The relations the owner check compares with the function owner: a definer function that cannot write one of
 # them fails every call with insufficient_privilege.
-_OWNED_RELATIONS = ("spend", "spend_month", "spend_reservations", "runs", "hadavin_limits")
+_OWNED_RELATIONS = (
+    "spend",
+    "spend_month",
+    "spend_reservations",
+    "runs",
+    "hadavin_limits",
+    "hadavin_caps",
+)
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
