@@ -97,10 +97,14 @@ Start = Callable[[Accepted], tuple[int, "dict[str, str] | None"]]
 def derive_run_id(tenant: str, sender: str, key: str) -> str:
     """The one run id of (tenant, sender, key). The three charsets exclude NUL, the separator, so
     two different triples never give the same hash input."""
-    for name, value, rx in (("tenant", tenant, ID_RE), ("sender", sender, ID_RE), ("key", key, KEY_RE)):
+    for name, value, rx in (
+        ("tenant", tenant, ID_RE),
+        ("sender", sender, ID_RE),
+        ("key", key, KEY_RE),
+    ):
         if not isinstance(value, str) or "\0" in value or rx.fullmatch(value) is None:
             raise ValueError(f"{name} does not match {rx.pattern}")
-    joined = "\0".join((tenant, sender, key)).encode("utf-8")
+    joined = f"{tenant}\0{sender}\0{key}".encode()
     return "run-" + hashlib.sha256(joined).hexdigest()[:RUN_ID_HEX]
 
 

@@ -133,9 +133,8 @@ class CrashPoints:
             self._seen[point] = self._seen.get(point, 0) + 1
             if self._seen[point] < current[1]:
                 return
-            if (
-                not self._take()
-            ):  # disarm BEFORE the crash; if another process took the flag, no crash
+            # Disarm BEFORE the crash. If the flag could not be deleted, another process took it.
+            if not self._take():
                 return
             self._fired.append(point)
             if self._mode == "raise":
