@@ -1,18 +1,19 @@
-"""G7 (ORDERS 012 and 013, escalations E3 and E5): ONE more pattern pass after the sweep.
+"""G7 (ORDERS 012 and 013, escalations E3 and E5; rebuilt as a capped fixed-point loop in fix rounds 2 and 3): the table runs again
+after the sweep.
 
-A pattern's result can change once placeholders stand in the text, and the sweep writes placeholders after every
-pattern ran. Two shapes found by runs on main, both masked only by a SECOND pass before G7:
+A pattern's result can change once placeholders stand in the text, and the sweep writes placeholders after every pattern ran.
+Two shapes found by runs on main, both masked only by a LATER pattern pass before G7:
 - E3: line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account>`. The account pattern needs the code's
   placeholder before the digits; on line 2 only the sweep writes it. The account stayed readable.
 - E5: line 1 `password=V`, line 2 `Bearer V+xy` with the token under BEARER's 12 characters. Swept to
-  `Bearer <SECRET_1>xy`, which is 12 characters or more: only a second pass masked the tail. The same for BASIC
+  `Bearer <SECRET_1>xy`, which is 12 characters or more: only a later pass masked the tail. The same for BASIC
   (8 characters) and `authorization:` (8 characters).
-The fix is for the class: `redact()` and `redact_many()` run the whole pattern table once more over the swept text
-and sweep again what that finds (`_Redactor.settle`). Round 1 of ORDER 013 was ONE extra pass; ORDER 020 MJ-B replaced it
-with a loop to a fixed point over only the strings the last sweep changed, capped at `_SETTLE_ROUNDS` (4) rounds, a
-RedactionError past the cap (tests/test_redact_settle_loop.py). The tests here are the one- and two-pass shapes.
-A text the first pass and its sweep left unchanged is not scanned again.
-The property over the repo's corpora is in tests/test_redact_idempotent_property.py.
+The fix is for the class: `redact()` and `redact_many()` run `_Redactor.settle`, which runs the whole table again over the strings that
+changed, round after round, until a round changes no text, at most `_SETTLE_ROUNDS` (4) rounds, a RedactionError past the cap (the cap and
+the loop are in tests/test_redact_settle_loop.py). The tests here are the one- and two-round shapes, the unchanged-result checks and
+the guards on what the design relies on (the list of patterns that read a placeholder, the purity of the pattern decision, the placeholder
+shape). A text the first pass and its sweep left unchanged is not scanned again. The property over the repo's corpora is in
+tests/test_redact_idempotent_property.py.
 
 Every digit string and credential here is made up and built from parts.
 """
@@ -46,17 +47,17 @@ def _old_one_pass(text: str) -> str:
     return r.sweep(r.find(text))
 
 
-# --- the gap, masked in ONE pass ---------------------------------------------------------------------------------
+# --- the gap, masked in ONE call ---------------------------------------------------------------------------------
 
 
-def test_the_account_straight_after_a_swept_bank_code_is_masked_in_one_pass():
+def test_the_account_straight_after_a_swept_bank_code_is_masked_in_one_call():
     result = R.redact(DIRECT)
     assert result.text == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
     assert result.mapping == {"<BANKCODE_1>": BSB, "<BANKACCT_1>": ACCOUNT}
     assert ACCOUNT not in result.text
 
 
-def test_the_same_shape_through_runmap_redact_text_is_masked_in_one_pass():
+def test_the_same_shape_through_runmap_redact_text_is_masked_in_one_call():
     mapping = runmap.RunMap()
     out = runmap.redact_text(DIRECT, mapping)
     assert out == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
@@ -79,7 +80,7 @@ def test_the_old_path_left_both_shapes_readable():
 
 
 def test_a_newly_found_account_is_swept_from_the_rest_of_the_text():
-    """The account found by the second look is a value like any other: its other standalone copies are masked."""
+    """The account found in round 1 is a value like any other: its other standalone copies are masked."""
     text = f"refund {ACCOUNT} failed\nBSB: {BSB}\npaid {BSB}/{ACCOUNT}"
     result = R.redact(text)
     assert result.text == (
@@ -100,7 +101,7 @@ def test_two_codes_and_two_accounts():
 
 
 def test_redact_many_masks_the_account_when_the_code_is_in_another_string():
-    """`redact_many` sweeps each string after finding in all of them: the same gap, the same second look. The
+    """`redact_many` sweeps each string after finding in all of them: the same gap, the same settle rounds. The
     account found in one string is swept from the others too."""
     outs, mapping = R.redact_many([f"BSB: {BSB}", f"paid {BSB}/{ACCOUNT}", f"refund {ACCOUNT}"])
     assert outs == ["BSB: <BANKCODE_1>", "paid <BANKCODE_1>/<BANKACCT_1>", "refund <BANKACCT_1>"]
@@ -116,7 +117,7 @@ def test_a_run_map_that_already_holds_the_code_gives_the_same_result():
     assert dict(mapping) == {"<BANKCODE_1>": BSB, "<BANKACCT_1>": ACCOUNT}
 
 
-def test_redact_untrusted_masks_the_shape_in_one_pass():
+def test_redact_untrusted_masks_the_shape_in_one_call():
     mapping = runmap.RunMap()
     out = runmap.redact_untrusted(DIRECT, mapping)
     assert out == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
@@ -152,9 +153,8 @@ def test_a_second_redact_text_pass_changes_nothing(name):
 
 
 @pytest.mark.parametrize("name", sorted(SHAPES))
-def test_one_pass_now_equals_two_passes_of_the_old_path(name):
-    """Nothing more is masked than two passes masked before: the second look does the second pass's work only
-    for the context patterns."""
+def test_one_call_now_equals_two_calls_of_the_old_path(name):
+    """Nothing more is masked than two calls of the old path masked (find and sweep, then find and sweep over the result)."""
     r = R._Redactor(None)
     once = r.sweep(r.find(SHAPES[name]))
     r2 = R._Redactor(r.mapping)
@@ -208,7 +208,7 @@ E5 = {
 
 
 @pytest.mark.parametrize("name", sorted(E5))
-def test_e5_a_token_tail_beside_a_swept_secret_is_masked_in_one_pass(name):
+def test_e5_a_token_tail_beside_a_swept_secret_is_masked_in_one_call(name):
     text, expected, kind = E5[name]
     result = R.redact(text)
     assert result.text == expected
@@ -222,7 +222,7 @@ def test_e5_a_token_tail_beside_a_swept_secret_is_masked_in_one_pass(name):
 
 
 @pytest.mark.parametrize("name", sorted(E5))
-def test_e5_through_redact_text_one_pass_is_a_fixed_point(name):
+def test_e5_through_redact_text_one_call_is_a_fixed_point(name):
     text, expected, _ = E5[name]
     mapping = runmap.RunMap()
     once = runmap.redact_text(text, mapping)
@@ -254,9 +254,9 @@ def _counted(monkeypatch):
         calls["find"] += 1
         return find(self, text)
 
-    def counted_sweep(self, out):
+    def counted_sweep(self, out, deadline=None):
         calls["sweep"] += 1
-        return sweep(self, out)
+        return sweep(self, out, deadline)
 
     monkeypatch.setattr(R._Redactor, "find", counted_find)
     monkeypatch.setattr(R._Redactor, "sweep", counted_sweep)
@@ -269,29 +269,30 @@ def test_a_text_with_nothing_to_mask_is_scanned_once(monkeypatch):
     assert calls == {"find": 1, "sweep": 1}
 
 
-def test_a_text_with_a_value_gets_exactly_one_more_pattern_pass_and_no_second_sweep(monkeypatch):
+def test_a_text_with_a_value_gets_one_confirming_pattern_pass_and_no_second_sweep(monkeypatch):
     calls = _counted(monkeypatch)
     R.redact(f"password={V} then nothing")
-    assert calls == {"find": 2, "sweep": 1}  # the second pass found nothing new: no second sweep
+    assert calls == {
+        "find": 2,
+        "sweep": 1,
+    }  # round 1 found nothing and changed nothing: it ends the loop, no second sweep
 
 
-def test_the_shapes_stay_within_the_cap_and_the_plain_one_is_two_passes_and_two_sweeps(monkeypatch):
+def test_the_direct_shape_is_three_pattern_passes_and_two_sweeps(monkeypatch):
+    """Pass 1 and its sweep; round 1 finds the account (the map grew: sweep); round 2 confirms (nothing changed: no sweep).
+    The shapes of this file need at most `1 + rounds` passes, `rounds` well under the cap."""
     calls = _counted(monkeypatch)
     for text in [*SHAPES.values(), *(e[0] for e in E5.values())]:
         calls["find"] = calls["sweep"] = 0
         R.redact(text)
-        assert calls["find"] <= 1 + R._SETTLE_ROUNDS and calls["sweep"] <= 1 + R._SETTLE_ROUNDS, (
-            text
-        )
+        assert 1 <= calls["find"] <= 1 + (R._SETTLE_ROUNDS - 1), text
+        assert 1 <= calls["sweep"] <= 1 + (R._SETTLE_ROUNDS - 1), text
     calls["find"] = calls["sweep"] = 0
     R.redact(DIRECT)
-    assert calls == {
-        "find": 2,
-        "sweep": 2,
-    }  # the second pass found the account; its sweep changed nothing: done
+    assert calls == {"find": 3, "sweep": 2}
 
 
-def test_redact_many_scans_again_only_the_strings_that_changed(monkeypatch):
+def test_redact_many_scans_again_only_the_strings_the_first_pass_or_sweep_changed(monkeypatch):
     calls = _counted(monkeypatch)
     R.redact_many(["nothing here", f"password={V}", "nor here"])
     assert calls == {"find": 4, "sweep": 3}
@@ -312,7 +313,7 @@ def test_public_signatures_are_unchanged():
 
 
 def test_find_only_mode_is_left_alone():
-    """`_sweep_copies=False` only finds: no sweep, so no second look either."""
+    """`_sweep_copies=False` only finds: no sweep, so no settle loop either."""
     result = R.redact(DIRECT, _sweep_copies=False)
     assert result.text == f"BSB: <BANKCODE_1>\npaid {BSB}/{ACCOUNT}"
 
@@ -322,7 +323,7 @@ def test_find_only_mode_is_left_alone():
 
 def _bank_text(size: int) -> str:
     """About `size` characters: 40 distinct bank codes named once each, then lines that pay a code and an account
-    (every line a different account), so the sweep writes a code placeholder on every line and the second look
+    (every line a different account), so the sweep writes a code placeholder on every line and round 1
     has an account to find on every line."""
     codes = [f"{100 + i:03d}-{200 + i:03d}" for i in range(40)]
     head = "".join(f"BSB: {code}\n" for code in codes)
@@ -346,7 +347,7 @@ def _seconds(fn, text: str) -> float:
 
 
 @pytest.mark.perf  # a CPU-time bound: it runs in the perf step, not the default suite
-def test_T1_the_second_look_stays_within_a_fixed_ceiling_on_100000_characters_of_bank_lines():
+def test_T1_the_settle_rounds_stay_within_a_fixed_ceiling_on_100000_characters_of_bank_lines():
     text = _bank_text(100_000)
     assert len(text) == 100_000
     out = R.redact(text)
@@ -354,16 +355,18 @@ def test_T1_the_second_look_stays_within_a_fixed_ceiling_on_100000_characters_of
     old = _seconds(_old_one_pass, text)
     new = _seconds(R.redact, text)
     print(f"\nG7 timing 100,000 chars: old one pass {old:.3f} s, redact() now {new:.3f} s")
-    assert new < 20.0  # the fixed ceiling, generous: measured 0.48 s (old one pass 0.21 s)
-    # two old passes are the work this replaces; the second look must not cost more than a few of them
-    assert new < 6 * max(old, 0.05)
+    assert (
+        new < 20.0
+    )  # the fixed ceiling, generous (measured: ticket and evidence G7-1.md, round 3)
+    # a round is a pass and a sweep of what changed: the rounds must not cost more than a few old passes
+    assert new < 8 * max(old, 0.05)
 
 
 @pytest.mark.perf
-def test_T2_the_second_look_is_linear_in_the_text_size():
+def test_T2_the_settle_rounds_are_linear_in_the_text_size():
     """4x the text, at most 12x the time (the repo's rule for a linear pass: 3x per size ratio); the big text is
     under the redaction cap. Every line carries a NEW account, so the map grows with the text: the worst case
-    for the second sweep."""
+    for the sweep of round 1."""
     small, big = _bank_text(60_000), _bank_text(240_000)
     t_small = _seconds(R.redact, small)
     t_big = _seconds(R.redact, big)
@@ -372,12 +375,98 @@ def test_T2_the_second_look_is_linear_in_the_text_size():
 
 
 @pytest.mark.perf
-def test_T3_a_text_of_bank_code_placeholders_and_no_account_costs_one_cheap_look():
+def test_T3_a_text_of_bank_code_placeholders_and_no_account_costs_one_cheap_round():
     """A planted text: a code placeholder written 20,000 times with nothing after it. Nothing changes, so the
-    second look is two pattern passes and no sweep."""
+    rounds are one confirming pattern pass and no second sweep."""
     text = f"BSB: {BSB}\n" + f"paid {BSB} ok\n" * 20_000
     old = _seconds(_old_one_pass, text)
     new = _seconds(R.redact, text)
     print(f"\nG7 timing {len(text):,} chars, no account: old {old:.3f} s, now {new:.3f} s")
     assert new < 20.0
     assert new < 3 * max(old, 0.05)
+
+
+# --- what the design relies on (round 3 N2, M7: replaces the test that pinned the list of two patterns) --------------------------------
+
+# Patterns whose regex SOURCE reads a placeholder shape. BANKACCT: `<BANKCODE_n>` straight before the account (the keyword form reads
+# it through `_bank_context`). SECRET: the cookie form's negative guard (`Cookie: <SECRET_1>` stays as it is).
+_READERS = {"BANKACCT", "SECRET"}
+_GUARD_ONLY = {
+    "SECRET"
+}  # reads a placeholder only to LEAVE one alone: a fold-only hit never depends on it
+
+
+def test_every_pattern_that_reads_a_placeholder_shape_is_a_context_label():
+    """`_CONTEXT_LABELS` takes a full round in the fold scan whatever the scan found. A pattern whose result depends on a placeholder
+    must be listed; a new one that is not fails here. The loop of `settle` does not rely on this list (it runs the whole table),
+    the fold scan does."""
+    import re
+
+    readers = {label for label, p in R.PATTERNS if re.search(r"_\\d\+>|<\[A-Z", p.pattern)}
+    assert readers == _READERS, (
+        "a pattern reads a placeholder shape this list does not know: decide, then list it"
+    )
+    assert readers - _GUARD_ONLY <= R._CONTEXT_LABELS
+    assert {
+        "BANKACCT",
+        "BANKCODE",
+    } == R._CONTEXT_LABELS  # the producer of the context is listed too
+    # BANKACCT's keyword form reads the context through the function, not through its regex source
+    assert R._BANK_CONTEXT.search("<BANKCODE_12>") is not None
+
+
+def test_the_pattern_decision_does_not_read_the_map():
+    """`settle` relies on the pattern PASS being a function of the text and the batch flag, not of the map: `_decide` (the choice of
+    what is a value) ignores `mapping`, `reverse`, `counters`, `alias` and the spelled forms. Only `_mask_ex` reads the map, to choose the
+    placeholder. A source check and a behavioural one: the same decisions with an empty and with a full map."""
+    import inspect
+
+    src = inspect.getsource(R._Redactor._decide)
+    for name in ("self.mapping", "self.reverse", "self.counters", "self.alias", "self._spelled"):
+        assert name not in src, (
+            f"_decide reads {name}: the settle loop assumes a pass is a function of the text"
+        )
+    texts = [
+        DIRECT,
+        KEYWORD,
+        *SHAPES.values(),
+        *(e[0] for e in E5.values()),
+        f"Bearer {V}xy",
+        f"password={V}",
+    ]
+    texts += [
+        "Bearer <SECRET_1>xy and Basic <SECRET_2>ab",
+        "password=<SECRET_1>xy; Cookie: <SECRET_3>; sid=abcdef123456",
+        "Cookie: a=<SECRET_1>; sid=abcdef123456",
+        "mail bob@example.com from 10.1.2.3 at 123-45-6789",
+        f"paid <BANKCODE_1>/{ACCOUNT} and <BANKCODE_1> {ACCOUNT_2}",
+    ]
+    full = {f"<SECRET_{n}>": f"k{n:04d}abc" for n in range(1, 40)} | {"<BANKCODE_1>": BSB}
+    decided = 0
+    for text in texts:
+        for label, pattern in R.PATTERNS:
+            for m in pattern.finditer(text):
+                empty, loaded = R._Redactor(None), R._Redactor(dict(full))
+                empty.bank_near = loaded.bank_near = True
+                assert empty._decide(m, label) == loaded._decide(m, label), (label, text[:40])
+                decided += 1
+    assert decided >= 25  # the loop looked at real matches
+
+
+def test_the_placeholder_shape_is_what_the_redactor_issues_and_what_the_patterns_read():
+    """`_PLACEHOLDER` (the split of the sweep and the strip of `_mask_ex`), `<BANKCODE_n>` in the patterns and `kind_of` agree with what
+    `_place` writes, for every label and a 5-digit number."""
+    for label in R._LABELS:
+        r = R._Redactor(None)
+        r.counters[label] = 12344
+        placeholder = r._place(label, "v" * 8, "v" * 8)
+        assert placeholder == f"<{label}_12345>"
+        assert R._PLACEHOLDER.fullmatch(placeholder), placeholder
+        assert R.kind_of(placeholder) == label
+    assert R._PLACEHOLDER.fullmatch("<BANKCODE_1>") and R._PLACEHOLDER.fullmatch("<BANKCODE_99999>")
+    assert not R._PLACEHOLDER.fullmatch("<bankcode_1>") and not R._PLACEHOLDER.fullmatch(
+        "<BANKCODE_>"
+    )
+    assert R._BANK_CONTEXT.search("x <BANKCODE_1> y") and R._BANK_CONTEXT.search(
+        "x <BANKCODE_99999> y"
+    )

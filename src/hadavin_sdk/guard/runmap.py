@@ -586,8 +586,8 @@ def redact_text(
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping
         out = _clean(out)
-    except (InputTooLarge, TooDeep):
-        raise
+    except (InputTooLarge, TooDeep, RedactionError):
+        raise  # as raised: the text of `NotSettled` (the settle loop's cap) is kept for the caller's log
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
     # No `clear()` first: another thread (the model gate holds this map by reference) must never read it

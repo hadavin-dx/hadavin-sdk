@@ -21,11 +21,11 @@ The corpora (nothing is dropped from any of them; `test_the_corpus_is_what_this_
   p1c            handover/core-c/evidence/p1c_probe.py            gap1_values (short and long), gap2_cases, gap3_cases
   g7             tests/test_redact_context_after_sweep.py         SHAPES, MUST_KEEP, E5 (the shapes G7 was built on)
   constructed    this file                                        CONSTRUCTED: built to find what one extra pass misses
-Measured 2026-11-20 (fix round 2, with the capped fixed-point loop): 1,835 inputs, 0 refused (asserted), 0 fail. With the
-second pass switched off, 8 fail (5 g7 shapes, 3 g7 E5); with ONE extra pass (the round 1 design) `constructed:0` failed
-too; no input of the older corpora fails with or without it. The generated compositions aimed at the class (2 to 4 lines
-of key=V, glued bank code, short Bearer/Basic/authorization/sig/auth with V glued, account after code, copies) are in
-tests/test_redact_settle_loop.py, against a reference fixed-point loop.
+Measured 2026-11-20 (fix round 3, settle as a real fixed point): 1,835 inputs, 0 refused (asserted), 0 fail. With settle
+switched off, 9 fail (5 g7 shapes, 3 g7 E5, `constructed:0`); with ONE extra pass (the round 1 design) only `constructed:0` fails;
+no input of the older corpora fails with or without it. The generated compositions aimed at the class (4 to 8 lines of key=V,
+glued bank codes, short Bearer/Basic/authorization/sig/auth with V glued, account after code, copies, half of them from a
+pre-seeded run map) are in tests/test_redact_settle_loop.py, against a reference fixed-point loop.
 Not used, because they are not inputs of the redactor: tests/demo_askdata/fuzzgen.py (SQL for the demo's validator),
 tests/test_peel_run_id.py HOSTILE (run ids), tests/fixtures/textnorm_corpus.json (name pairs for the fold).
 
@@ -75,8 +75,8 @@ def _p1c_module():
 _V = "abcd" + "9x"
 CONSTRUCTED = [
     # 0: a chain of three. Pass 1 finds the password; its sweep frees the bank code from the letters glued to it;
-    # pass 2 finds the code; the second sweep writes the code's placeholder before the account; only a THIRD pattern
-    # pass reads the account (the capped loop runs it on the one text the second sweep changed).
+    # round 1 finds the code; the second sweep writes the code's placeholder before the account; round 2 reads the
+    # account; round 3 changes nothing and ends the loop (a fixed point; see `_Redactor.settle`).
     f"password={_V}\nBSB: {g7.BSB}{_V}\npaid {g7.BSB}/{g7.ACCOUNT}",
 ]
 
@@ -103,9 +103,12 @@ def _build() -> list[tuple[str, str]]:
     rng = random.Random(20261120)  # noqa: S311 - the seed the round-trip corpus was built with
     add("round-trip", [round_trip.random_text(rng) for _ in range(300)])
     add("lookalikes", round_trip.LOOKALIKES)
-    assert _P1C.exists(), (
-        f"the p1c probe file is missing ({_P1C}): the corpus would shrink silently"
-    )
+    if not _P1C.exists():  # a deliberate failure at collection: a silently smaller corpus would make the property weaker
+        raise FileNotFoundError(
+            "tests/test_redact_idempotent_property.py needs the corpus builder "
+            "handover/core-c/evidence/p1c_probe.py (inputs p1c-gap1/2/3, 103 of 1,835) and it is not there "
+            f"({_P1C}): restore it, or change this file's corpus and EXPECTED_INPUTS on purpose"
+        )
     probe = _p1c_module()
     values = probe.gap1_values()
     add("p1c-gap1", [v[k] for v in values for k in ("short", "long")])
@@ -267,7 +270,10 @@ def test_no_input_of_the_corpora_is_refused():
     assert refused == []
 
 
-def test_the_constructed_chain_is_one_call_and_a_chain_past_the_cap_is_a_refusal(monkeypatch):
+def test_the_constructed_chain_is_one_call_and_check_reports_a_refusal_as_refused(monkeypatch):
+    """The chain of three is masked in one call at the real cap. `check` must report a refusal as "refused", not "ok" or "fails":
+    a cap of 1 is patched in here ONLY to drive that path (the cap's real boundary is tested, unpatched, in
+    tests/test_redact_settle_loop.py)."""
     mapping = runmap.RunMap()
     out = runmap.redact_text(CONSTRUCTED[0], mapping)
     assert g7.ACCOUNT not in out
