@@ -153,7 +153,13 @@ N15 = "test_n15_runner_bounds_are_refused"
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
-def mutant(name, src, old, new, test_file, killer, expect, **kw):
+KNOWN_SURVIVORS: set[str] = set()  # names of mutants that have no killer test: see the module text
+
+
+def mutant(name, src, old, new, test_file, killer, expect, known_survivor=False, **kw):
+    if known_survivor:  # no test exists: the whole file runs and the expected verdict is SURVIVED
+        KNOWN_SURVIVORS.add(name)
+        return Mutant(name, src, old, new, expect, test_file=test_file, **kw)
     pin = test_file[:-3] + "::" + killer
     return Mutant(
         name,
@@ -262,7 +268,7 @@ M = [
     ),
     # --- G5 the signature before parsing
     mutant(
-        "G5a the body is parsed before the signature (seen as the status)",
+        "G5a the body is parsed before the signature (ONE mutant with G5b, two killers: the status)",
         ENDPOINT,
         VERIFY,
         PARSE_FIRST + VERIFY,
@@ -271,7 +277,7 @@ M = [
         "400 == 401",
     ),
     mutant(
-        "G5b the body is parsed before the signature (seen by the parse spy)",
+        "G5b the body is parsed before the signature (ONE mutant with G5a, two killers: the parse spy)",
         ENDPOINT,
         VERIFY,
         PARSE_FIRST + VERIFY,
@@ -302,7 +308,7 @@ M = [
     mutant(
         "G7a the point is not disarmed before the crash",
         CRASH,
-        "            if not self._take():\n                return\n",
+        "            if not self._disarm():\n                return\n",
         "",
         TC,
         "test_n2_before_crashes_and_nothing_was_written",
@@ -700,8 +706,8 @@ M = [
     mutant(
         "G18c serve does not close the runner",
         WORKER,
-        "        runner.close()\n        if previous is not None:\n",
-        "        if previous is not None:\n",
+        "        runner.close()\n        for number, handler in previous.items():\n",
+        "        for number, handler in previous.items():\n",
         TW,
         "test_serve_gives_the_previous_sigterm_handler_back",
         "assert (False)",
@@ -782,7 +788,7 @@ M = [
     ),
     # --- G20 the bounds of Runner
     mutant(
-        "G20a max_running below one is not refused by the Runner",
+        "G20a max_running below one is not refused by the Runner (message guard: a later check still refuses, only the text differs)",
         WORKER,
         "max_running < 1 or ",
         "",
@@ -793,14 +799,14 @@ M = [
     mutant(
         "G20b ack_wait_s of zero is accepted",
         WORKER,
-        " or ack_wait_s <= 0",
-        "",
+        "0 < ack_wait_s <= ACK_WAIT_S_CEILING",
+        "ack_wait_s <= ACK_WAIT_S_CEILING",
         TW,
         "test_bad_arguments_are_refused",
         "DID NOT RAISE ValueError",
     ),
     mutant(
-        "G20c poll_s of zero is not refused as such",
+        "G20c poll_s of zero is not refused as such (message guard: the POLL_S_MIN check still refuses, only the text differs)",
         WORKER,
         " or poll_s <= 0:",
         ":",
@@ -820,8 +826,8 @@ M = [
     mutant(
         "G20e ack_wait_s has no ceiling",
         WORKER,
-        "        if ack_wait_s > ACK_WAIT_S_CEILING:\n",
-        "        if False:\n",
+        "0 < ack_wait_s <= ACK_WAIT_S_CEILING",
+        "0 < ack_wait_s",
         TW,
         N15 + "[kw1-at most 30]",
         "DID NOT RAISE ValueError",
@@ -873,36 +879,242 @@ M = [
         allow_crash=True,
         crash_type="ValueError",
     ),
+    # --- G21 the quiet server: the two bounds on a client, and its fault hooks (d-fix2)
+    mutant(
+        "G21a the cap on connection threads is removed (a connection over the cap is not closed)",
+        SERVER,
+        "        if not self._slots.acquire(blocking=False):\n",
+        "        if False:\n",
+        TS,
+        "test_connections_above_the_cap_are_closed_at_once_unread_and_the_cap_frees_again",
+        "XXXX",
+    ),
+    mutant(
+        "G21b the absolute read deadline is replaced by the pause limit of each recv",
+        SERVER,
+        "        left = self._end - time.monotonic()\n",
+        "        left = 10**9\n",
+        TS,
+        "test_a_slow_body_is_cut_at_the_absolute_deadline_not_at_the_pause_limit",
+        "XXXX",
+    ),
+    mutant(
+        "G21c QuietServer.handle_error is deleted (the stdlib prints a traceback)",
+        SERVER,
+        "    def handle_error(self, request: Any, client_address: Any) -> None:\n",
+        "    def _not_handle_error(self, request: Any, client_address: Any) -> None:\n",
+        TS,
+        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line",
+        "XXXX",
+    ),
+    mutant(
+        "G21d QuietServer.process_request_thread is deleted (a BaseException reaches the thread hook)",
+        SERVER,
+        "    def process_request_thread(self, request: Any, client_address: Any) -> None:\n",
+        "    def _not_process_request_thread(self, request: Any, client_address: Any) -> None:\n",
+        TS,
+        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line",
+        "XXXX",
+    ),
+    # --- G22 Runner.close
+    mutant(
+        "G22 Runner.close does not set the closed flag (the shut-down pool refuses the work instead)",
+        WORKER,
+        "            self._closed = True\n",
+        "            pass\n",
+        TW,
+        "test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is_never_asked",
+        "XXXX",
+    ),
+    # --- G23 the 409 rule of _answer: agent and principal, one mutant each
+    mutant(
+        "G23a _answer does not compare the agent of the row (T-1)",
+        WORKER,
+        "        found.agent_id != req.agent_id\n        or found.principal_id",
+        "        found.principal_id",
+        TW,
+        "test_same_key_and_ref_but_another_agent_or_principal_is_409[agent_id]",
+        "XXXX",
+    ),
+    mutant(
+        "G23b _answer does not compare the principal of the row (T-1)",
+        WORKER,
+        "        or found.principal_id != req.principal_id\n",
+        "",
+        TW,
+        "test_same_key_and_ref_but_another_agent_or_principal_is_409[principal_id]",
+        "XXXX",
+    ),
+    # --- G24 the header set of a refusal
+    mutant(
+        "G24 a 401 carries an extra header X-Reason (the refused() header subset)",
+        ENDPOINT,
+        '        if status == 405:\n            response_headers.append(("Allow", METHOD))\n',
+        '        if status == 405:\n            response_headers.append(("Allow", METHOD))\n'
+        '        if status == 401:\n            response_headers.append(("X-Reason", "bad"))\n',
+        TE,
+        "test_t5_8b_removed_old_secret_is_refused",
+        "XXXX",
+    ),
+    # --- G25 sender_map
+    mutant(
+        "G25 sender_map accepts a sender id listed twice",
+        ENDPOINT,
+        "        if sender.id in out:\n",
+        "        if False:\n",
+        TE,
+        "NO_TEST_EXISTS",
+        "no test",
+        known_survivor=True,
+    ),
+    # --- G26 parse_body
+    mutant(
+        "G26a parse_body takes a duplicate member (no _no_duplicates hook)",
+        ENDPOINT,
+        'json.loads(body.decode("utf-8"), object_pairs_hook=_no_duplicates)',
+        'json.loads(body.decode("utf-8"))',
+        TE,
+        "test_parse_body_refuses[duplicate key]",
+        "XXXX",
+    ),
+    mutant(
+        "G26b parse_body does not require exactly key and document",
+        ENDPOINT,
+        " or set(obj) != BODY_FIELDS:",
+        ":",
+        TE,
+        "test_parse_body_refuses[extra NaN]",
+        "XXXX",
+    ),
+    # --- G27 the Content-Length guard
+    mutant(
+        "G27 _content_length takes a signed, spaced or non-ASCII number (digits-only guard removed)",
+        ENDPOINT,
+        "    if not isinstance(raw, str) or not (raw.isascii() and raw.isdigit()):\n",
+        "    if not isinstance(raw, str):\n",
+        TE,
+        "test_t5_7b_content_length_missing_or_not_digits_or_zero_is_400[abc]",
+        "XXXX",
+    ),
+    # --- G28 the bind switch
+    mutant(
+        "G28 check_bind takes any truthy value as the non-loopback switch",
+        WORKER,
+        "    if not loopback and allow_non_loopback is not True:\n",
+        "    if not loopback and not allow_non_loopback:\n",
+        TW,
+        "test_non_loopback_host_needs_the_switch",
+        "XXXX",
+    ),
+    # --- G29 check_senders, the three refusals
+    mutant(
+        "G29a check_senders does not refuse an agent that is not qualified",
+        WORKER,
+        "        if sender.agent_id not in qualified:\n",
+        "        if False:\n",
+        TP,
+        "test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-agent]",
+        "XXXX",
+    ),
+    mutant(
+        "G29b check_senders does not refuse a principal that is unknown",
+        WORKER,
+        "        if principal is None:\n",
+        "        if False:\n",
+        TP,
+        "test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-principal]",
+        "XXXX",
+    ),
+    mutant(
+        "G29c check_senders does not refuse a principal that is not of kind service",
+        WORKER,
+        '        if principal.kind != "service":\n',
+        "        if False:\n",
+        TP,
+        "test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-service]",
+        "XXXX",
+    ),
 ]
+
+POSIX_ONLY = ("G12d", "G18c")  # their killers skip on win32 (SIGTERM is not delivered there)
+
+
+def check_anchors(mutants):
+    """Every `old` text must occur EXACTLY once in its source file: the runner replaces every occurrence and a
+    stale or ambiguous anchor would otherwise give a wrong or no mutant. Returns the list of problems."""
+    bad = []
+    for m in mutants:
+        text = (ROOT / m.file).read_text(encoding="utf-8")
+        n = text.count(m.old)
+        if n != 1:
+            bad.append(f"ERROR anchor of {m.name!r} occurs {n} times in {m.file} (must be 1)")
+    return bad
+
+
+def header():
+    import hashlib
+
+    files = sorted((ROOT / "src/hadavin_sdk/triggers").glob("*.py"))
+    files += [ROOT / CRASH, Path(__file__).resolve()]
+    print(f"# endpoint mutants run, python {sys.version.split()[0]}, platform {sys.platform}")
+    for f in files:
+        print(f"# sha256 {hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(ROOT)}")
+    sys.stdout.flush()
+
 
 if __name__ == "__main__":
     only = sys.argv[1:]
     if only and not any(o in m.name for m in M for o in only):
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
+    header()
+    problems = check_anchors(M)
+    if problems:
+        print("\n".join(problems), file=sys.stderr)
+        sys.exit(2)  # a stale anchor is loud and nothing runs
+    skipped = []
+    todo = M
+    if sys.platform == "win32":
+        skipped = [m.name for m in M if m.name.startswith(POSIX_ONLY)]
+        todo = [m for m in M if m.name not in skipped]
+        for name in skipped:
+            print(f"NOT RUN HERE (win32, POSIX killer) {name}", flush=True)
     first_lines = {}
 
     def show(row):
         name, v, test_id, good = row
-        print(
-            f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:70]}]",
-            flush=True,
-        )
-        if not good:
+        listed = name in KNOWN_SURVIVORS
+        tag = "ok " if good else "BAD"
+        if listed:
+            tag = "SURV(known)" if v == "SURVIVED" else "BAD"
+        print(f"{tag} {v:12} {name}  [{test_id.split('::')[-1][:70]}]", flush=True)
+        if not good and not (listed and v == "SURVIVED"):
             print("      first line:", first_lines.get(name, "")[:200], flush=True)
 
     # set for the pytest child only (the runner's fixed child variables), not in this process's environment
     mutation_runner.CHILD_FIXED_ENV["PYTEST_ADDOPTS"] = f"--deselect {NEEDS_CONFTEST}"
     res = run_mutants(
         ROOT,
-        M,
+        todo,
         [TE, TW, TC, TS, TP],
         extra_dirs=("tests",),
         only=only,
         on_result=show,
         first_lines=first_lines,
         timeout=300,
+        baseline_timeout=900,
     )
-    bad = [n for n, _, _, g in res if not g]
-    print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
-    sys.exit(1 if bad else 0)
+    known = [n for n, v, _, _ in res if n in KNOWN_SURVIVORS and v == "SURVIVED"]
+    bad = [n for n, v, _, g in res if not g and not (n in KNOWN_SURVIVORS and v == "SURVIVED")]
+    killed = sum(1 for n, v, _, g in res if g and v == "KILLED" and n not in KNOWN_SURVIVORS)
+    crash = sum(1 for n, v, _, g in res if g and v == "CRASH")
+    print(f"{killed} killed, {crash} crash-accepted (G20j), {len(known)} known survivors")
+    print(
+        "KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass"
+    )
+    for n in sorted(known):
+        print(f"  - {n}")
+    if skipped:
+        print(f"NOT RUN HERE (win32): {skipped}")
+    print(f"{len(res) - len(bad)} of {len(res)} run are as expected; problems: {bad}")
+    sys.exit(1 if bad else (3 if skipped else 0))
