@@ -31,3 +31,7 @@ No candidate was needed beyond this one (1 try).
 1. `python` on this machine without the venv lacks no module, but `tools/mutation_runner.py` sets `PYTHONNOUSERSITE=1`: the mutant runners must be run with `/home/user/hadavin-sdk/.venv/bin/python` (the first b64 run with the system python failed its unmutated baseline for that reason, not a code reason).
 2. Count pins: b64 mutants 44 -> 58 (13 host + 1 mine); g8 mutants 43 (unchanged); `tests/b64_mutants.py` docstring line about `host` selecting nothing is now stale (left; docs pass).
 3. SECURITY.md and CHANGELOG.md not edited (docs pass).
+
+Correction (G4d, 2026-11-20): the line "`(?![\w-])` after the suffix is unchanged (a name followed by `é` is still a name)" above is wrong for a CJK or other
+non-ASCII glue that no label can absorb: `db01.corp例`, `db01.local例`, `host=db01-7例` and `例host=db01-7` stayed readable at this tag. Fixed in G4d
+(see G4d-build-notes.md). The deviation 2 line "the `tests/b64_mutants.py` docstring ... is now stale (left; docs pass)" is also wrong: the patch had already removed it.
