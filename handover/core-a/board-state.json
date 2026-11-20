@@ -1,8 +1,8 @@
 {
- "order": "012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)",
+ "order": "013 (002 to 012 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "mutant script extension lands: record; then wait for lead verdicts or round 2 review",
+ "next": "the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module",
  "note": "the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -194,7 +194,43 @@
    "percent": 5,
    "evidence file": "raw/endpoint-mutants-run-3.log (not yet)",
    "tries": 1,
-   "reason": "ORDER 008: a guarantee with no mutant script counts as not done; this was my own open point 5 in REPORT.md; no order needed, so I do it while waiting for the lead"
+   "reason": "ORDER 013 item 1 (started 05:58Z before the order arrived, same content)"
+  },
+  {
+   "item": "O13-2",
+   "what": "tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/trigger-config-tests-on-core-b.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 013 item 2; failing tests become strict expected-failures = findings"
+  },
+  {
+   "item": "O13-NUL",
+   "what": "test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-nul-document-pg16.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 013 verdict on review minor 12"
+  },
+  {
+   "item": "O13-3",
+   "what": "switch the worker to core-b's final names",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "",
+   "tries": 1,
+   "reason": "WAIT: only when core-b's answer to requests/001 changes (a reader bound to the sender names is coming); item O13-2 reports the differences"
+  },
+  {
+   "item": "O13-gate",
+   "what": "contract test file for core-c's gate module (non-builder)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "",
+   "tries": 1,
+   "reason": "WAIT: ORDER 013 says after items 1 and 2 are pushed and one batch of my own files"
   }
  ],
  "agents": [
@@ -430,7 +466,33 @@
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "only 1 agent runs: every other open item waits on the lead or on core-b (see LEAD ACTIONS)"
+   "reason": "ORDER 013 item 1"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:59",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "o13-config",
+   "role": "builder (tests, non-builder of the code under test)",
+   "what exactly it is doing": "reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder",
+   "expected end": "about 25 min after start",
+   "reason": "ORDER 013 item 2"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:59",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "o13-nul",
+   "role": "builder (tests) and evidence runner",
+   "what exactly it is doing": "follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop",
+   "expected end": "about 20 min after start",
+   "reason": "ORDER 013; 3 agents run"
   }
  ],
  "tests": [
@@ -632,14 +694,10 @@
  ],
  "lost": [],
  "lead_actions": [
-  "handover/BRIEF-PREAMBLE.md (your file) makes test_no_vendor_brand_string_is_tracked FAIL on this branch: the only failure of the whole suite",
-  "ORDER 012 verdict needed: I did NOT add crash= hook points (kill tests wrap the store, 4 kill cases pass on PostgreSQL 16) and chose a backed-off wait over '503 at once' (10 store reads per refused request). DECISIONS has both rows",
-  "requests/001-config-triggers.md DRAFT 3 (core-b: Config.triggers, App.trigger_resolve, defaults): until it lands the worker cannot start through main",
-  "requests/002-readme-security-text.md: 18 sentences for core-b's README, SECURITY, CHANGELOG",
-  "requests/003-interface-i-questions.md: 3 contradictions and 10 gaps in core-b's interface (i), plus fixtures the contract tests need (purge routing, a reset role, grants entry)",
-  "Findings for the plan: an interrupted run gets no card to a person; a NUL byte inside a document is accepted (review minor 12, not fixed); review minor 8 is strict only for foreign errors; review minor 6 (literal defaults) waits for core-b",
+  "ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started",
+  "requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
-  "ORDERS 007, 010, 011 are not in my file; 'GO BUILD D' is not written in ORDERS.md"
+  "I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
 }

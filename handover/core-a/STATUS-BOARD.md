@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:58:34Z
+UPDATED_UTC: 2026-11-20T05:59:44Z
 SESSION: core-a
-ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
+ORDER: 013 (002 to 012 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 21
-ITEMS_OPEN: 2
-PERCENT: 95
-AGENTS_RUNNING: 1
-CAPACITY: load 0.31 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.8G 60G 15%; 348M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
+ITEMS_TOTAL: 25
+ITEMS_OPEN: 6
+PERCENT: 81
+AGENTS_RUNNING: 3
+CAPACITY: load 0.15 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.8G 60G 15%; 350M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: mutant script extension lands: record; then wait for lead verdicts or round 2 review
-PUSHED_UTC: 2026-11-20T05:58:13Z (the push before this board)
+NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
+PUSHED_UTC: 2026-11-20T05:58:38Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -40,7 +40,11 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | R12-endpoint | lead review fixes in endpoint.py: minors 1, 5, parse edges | DONE (its own tests pass; final batch re-run still open) | 100 | raw/D-endpoint-tests-2.log, raw/D-endpoint-mutants.log | 1 | minors 1 and 5 applied, 409 line left to the worker only; 265 tests pass, 2 skipped; 2 new hand mutants caught. NOT applied: minor 6 (literals stay until core-b's defaults exist), minor 12 (a NUL byte inside the document is still accepted and not checked downstream). Stated side effect: a request up to 300.999 s old by a real clock is accepted |
 | R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | DONE as an OUTLINE (NOT run in n8n; the lead verifies on a real n8n) | 100 | n8n/ (3 files), tests/triggers/test_n8n_template.py, requests/002-readme-security-text.md | 1 | empty-field guard before hashing, outer loop for 503 with re-sign (60 s x 30 rounds as placeholders), README limits; 24 checks pass that need no n8n (re-run by me on the final code); 19 node parameters are guesses marked UNVERIFIED; stated in the README: the answer carries no reason, so a client cannot tell 'interrupted' from other NEEDS_PERSON cases, and the tick posts no card for an interrupted run |
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | DONE | 100 | raw/D-tests-pg16.log (13 database and kill tests with test ids), raw/D-E-all-tests-pg16.log (all my files: 578 passed, 4 skipped at that time) | 1 | 13 of 13 on PostgreSQL 16.15 at the first real run: one row per key, 409 on another document, 50 parallel, oversize, 4 child-process kill cases, 2 two-process cases; plus 19 no-database cases (start refusal through main, start checks, SIGTERM drain). The agent could not start the database (folder permission), I started it from /var/lib/postgresql/core-a-test and ran the file myself. NOT run: PostgreSQL 17 |
-| MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | RUNNING | 5 | raw/endpoint-mutants-run-3.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done; this was my own open point 5 in REPORT.md; no order needed, so I do it while waiting for the lead |
+| MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | RUNNING | 5 | raw/endpoint-mutants-run-3.log (not yet) | 1 | ORDER 013 item 1 (started 05:58Z before the order arrived, same content) |
+| O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | RUNNING | 5 | raw/trigger-config-tests-on-core-b.log (not yet) | 1 | ORDER 013 item 2; failing tests become strict expected-failures = findings |
+| O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | RUNNING | 5 | raw/D-nul-document-pg16.log (not yet) | 1 | ORDER 013 verdict on review minor 12 |
+| O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: only when core-b's answer to requests/001 changes (a reader bound to the sender names is coming); item O13-2 reports the differences |
+| O13-gate | contract test file for core-c's gate module (non-builder) | RUNNING | 5 |  | 1 | WAIT: ORDER 013 says after items 1 and 2 are pushed and one batch of my own files |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -62,7 +66,9 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 182k tokens |
 | r12-tests | evidence runner and test writer | fable | writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop) | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 176k tokens; could not start the database (permission on the scratch folder), did not work around it: correct |
 | t4-contract | builder (tests) | fable | contract tests for core-b's spend reservation store methods and the 50-connection cap test file | 05:46 | ended | 100 | done | n/a | 0 | finished, 155k tokens |
-| mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | about 20 min after start | 5 | running | n/a | 0 | only 1 agent runs: every other open item waits on the lead or on core-b (see LEAD ACTIONS) |
+| mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013 item 1 |
+| o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | about 25 min after start | 5 | running | n/a | 0 | ORDER 013 item 2 |
+| o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013; 3 agents run |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
@@ -110,11 +116,7 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-- handover/BRIEF-PREAMBLE.md (your file) makes test_no_vendor_brand_string_is_tracked FAIL on this branch: the only failure of the whole suite
-- ORDER 012 verdict needed: I did NOT add crash= hook points (kill tests wrap the store, 4 kill cases pass on PostgreSQL 16) and chose a backed-off wait over '503 at once' (10 store reads per refused request). DECISIONS has both rows
-- requests/001-config-triggers.md DRAFT 3 (core-b: Config.triggers, App.trigger_resolve, defaults): until it lands the worker cannot start through main
-- requests/002-readme-security-text.md: 18 sentences for core-b's README, SECURITY, CHANGELOG
-- requests/003-interface-i-questions.md: 3 contradictions and 10 gaps in core-b's interface (i), plus fixtures the contract tests need (purge routing, a reset role, grants entry)
-- Findings for the plan: an interrupted run gets no card to a person; a NUL byte inside a document is accepted (review minor 12, not fixed); review minor 8 is strict only for foreign errors; review minor 6 (literal defaults) waits for core-b
+- ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started
+- requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)
 - Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here
-- ORDERS 007, 010, 011 are not in my file; 'GO BUILD D' is not written in ORDERS.md
+- I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer
