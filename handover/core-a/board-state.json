@@ -433,11 +433,11 @@
   {
    "item": "FU-3",
    "what": "follow-ups: Retry-After 1 on 503, rename trigger_resolve to trigger_secret in 2 test helpers and delete the old-name fallback in worker.py",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/DR3-followups-tests.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/DR3-followups-tests.log, raw/endpoint-mutants-run-9.log",
    "tries": 1,
-   "reason": "from the worker builder's report"
+   "reason": "Retry-After: 1 on every 503 (empty body); old reader keyword removed from worker.py and from the two test helpers; 421 passed, 2 skipped; 30 of 30 mutants. GAPS: the new Retry-After test was not run without the change (it reads a constant that would not exist); NO test pins that the old keyword is refused (to add); the concurrent fuzz file still used the old keyword (told its writer)"
   },
   {
    "item": "E-fix-1",
@@ -1038,15 +1038,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:46",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "sn-fu3",
    "role": "builder",
    "what exactly it is doing": "Retry-After header, reader rename, fallback removal, one test run and one mutant run",
-   "expected end": "about 15 min",
-   "reason": "follow-ups; 6 agents run"
+   "expected end": "ended",
+   "reason": "finished, 81k tokens"
   },
   {
    "model": "sonnet",
@@ -1368,6 +1368,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "skips on my own branch"
+  },
+  {
+   "suite or file": "tests/triggers (endpoint, worker, fuzz, postgres, process, wsgiref) after the follow-ups",
+   "branch and SHA": "working tree",
+   "run number": "1 (sonnet agent)",
+   "passed / failed / errors": "421 / 0 / 0, 2 skipped",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "UNVERIFIED by me until the batch"
   }
  ],
  "restarts": [],
