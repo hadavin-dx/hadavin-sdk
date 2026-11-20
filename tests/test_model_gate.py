@@ -960,6 +960,10 @@ def test_d2_a_zero_worst_case_is_allowed():
     assert meter.reserved["res_1"][1] == Decimal(0) and sink.codes() == [("ok", None)]
 
 
+class _ExhaustedSub(ProviderExhausted):
+    pass
+
+
 class Marked(ProviderError):
     """A ProviderError carrying the mark core-b is asked for (requests/2-refused-before-response.md)."""
 
@@ -978,9 +982,15 @@ UNSETTLED = [
     ),  # unmarked: may be a billed reply that did not parse
     (ProviderExhausted("throttled"), "provider_exhausted"),
     (
-        _flagged(ProviderExhausted("throttled, flagged")),
+        _flagged(
+            ProviderExhausted(
+                "exhausted, truthy",
+            ),
+            1,
+        ),
         "provider_exhausted",
-    ),  # exhausted is never (b)
+    ),
+    (_flagged(ProviderExhausted("exhausted, a str"), "True"), "provider_exhausted"),
     (_flagged(ProviderError("truthy, not True"), 1), "provider_error"),
     (_flagged(ProviderError("a str"), "yes"), "provider_error"),
     (_flagged(ValueError("flag on an error that is not the adapter's")), "call_failed"),
@@ -1315,25 +1325,58 @@ def test_pin_a_gate_is_never_wrapped_twice_in_either_form():
 
 
 def test_pin_the_mark_counts_only_on_a_provider_error_that_is_not_exhausted():
-    """E4: the predicate itself. A flagged non-ProviderError and a flagged ProviderExhausted are NOT refused
-    before response (the second may have had attempts that were answered)."""
+    """E4 (changed by design, 13:2xZ): the predicate itself. A flagged non-ProviderError is NOT refused; a flagged
+    ProviderExhausted IS (every attempt was refused); an unmarked or non-True-marked one is not."""
     refused_before = model_gate.refused_before_response
     assert refused_before(Marked("x")) is True
     assert refused_before(_flagged(ProviderError("x"))) is True
     assert refused_before(_flagged(ValueError("x"))) is False, "a flagged non-ProviderError counted"
     assert refused_before(_flagged(OSError("x"))) is False, "a flagged non-ProviderError counted"
-    assert refused_before(_flagged(ProviderExhausted("x"))) is False, (
-        "a flagged ProviderExhausted counted"
+    # CHANGED BY DESIGN (was: a flagged ProviderExhausted is NOT refused): marked exhausted = every attempt refused
+    assert refused_before(_flagged(ProviderExhausted("x"))) is True, (
+        "a flagged ProviderExhausted not counted"
+    )
+    assert refused_before(_flagged(_ExhaustedSub("x"))) is True, (
+        "a flagged subclass of Exhausted not counted"
+    )
+    assert refused_before(ProviderExhausted("x")) is False, "an unmarked ProviderExhausted counted"
+    assert refused_before(_flagged(ProviderExhausted("x"), "True")) is False, (
+        "the string True counted"
+    )
+    assert refused_before(_flagged(ProviderExhausted("x"), 1)) is False, (
+        "a truthy non-True mark counted"
     )
     assert refused_before(ProviderError("x")) is False
 
 
-def test_pin_a_flagged_exhausted_and_a_flagged_value_error_are_not_settled_through_the_gate():
-    for error in (_flagged(ProviderExhausted("x")), _flagged(ValueError("x"))):
+def test_pin_a_flagged_value_error_and_an_unmarked_exhausted_are_not_settled_through_the_gate():
+    for error in (
+        _flagged(ValueError("x")),
+        ProviderExhausted("x"),
+        _flagged(ProviderExhausted("x"), "True"),
+    ):
         bound, _, meter, _ = build(Client(raises=error))
         with pytest.raises(type(error)):
             bound.chat(CLEAN, system="s", route="main")
-        assert meter.settles == [], "a flagged error that is not a plain ProviderError was settled"
+        assert meter.settles == [], (
+            "an error that is not a marked ProviderError/Exhausted was settled"
+        )
+
+
+@pytest.mark.parametrize(
+    "error",
+    [_flagged(ProviderExhausted("all refused")), _flagged(_ExhaustedSub("sub"))],
+    ids=["exhausted", "subclass"],
+)
+def test_pin_a_marked_exhausted_is_settled_at_zero_with_the_refused_code(error):
+    """NEW (13:2xZ): a ProviderExhausted marked True means every attempt was refused: settle 0, code provider_refused."""
+    bound, _, meter, sink = build(Client(raises=error))
+    with pytest.raises(ProviderExhausted) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    assert caught.value is error
+    assert meter.settles == [("res_1", Decimal(0))], "a marked exhausted error was not settled at 0"
+    assert sink.codes() == [("failed", "provider_refused")]
+    assert sink.rows[0].object_ref == "res_1"
 
 
 # --- audit (T16 to T18) -------------------------------------------------------------------------------------------
