@@ -539,7 +539,9 @@ def test_b1_seed_entries_of_the_map_cause_no_refusal_and_no_change():
 
 
 def test_b1_the_callers_cache_is_not_written_by_a_call_through_the_gate():
-    mapping = runmap.RunMap({"<IPV4_1>": IP, "<SECRET_1>": TOKEN})  # an empty cache: the sweep must build
+    mapping = runmap.RunMap(
+        {"<IPV4_1>": IP, "<SECRET_1>": TOKEN}
+    )  # an empty cache: the sweep must build
     cache = mapping.redact_cache
     bound, client, _, _ = build(mapping=mapping)
     bound.chat([{"role": "user", "content": f"at {IP}"}], system="s", route="main", documents=[TOKEN.encode()])  # fmt: skip
@@ -666,13 +668,24 @@ def test_m4_only_the_published_reasons_become_an_audit_code():
         with pytest.raises(SpendRefused):
             bound.chat(CLEAN, system="s", route="main")
         assert sink.codes() == [("refused", reason)]
-    for reason in ("timed_out", "provider_refused", "ok", "", None, 7, ["daily_budget"], b"daily_budget"):
+    for reason in (
+        "timed_out",
+        "provider_refused",
+        "ok",
+        "",
+        None,
+        7,
+        ["daily_budget"],
+        b"daily_budget",
+    ):
         error = OSError("network")
         error.reason = reason
         bound, client, _, sink = build(meter=Meter(reserve_raises=error))
         with pytest.raises(OSError):
             bound.chat(CLEAN, system="s", route="main")
-        assert sink.codes() == [("refused", "reserve_refused")], "a reason that is not published was copied"
+        assert sink.codes() == [("refused", "reserve_refused")], (
+            "a reason that is not published was copied"
+        )
         assert client.sent == []
 
 
@@ -702,9 +715,15 @@ def _flagged(error: BaseException, value: object = True) -> BaseException:
 
 
 UNSETTLED = [
-    (ProviderError("bad key"), "provider_error"),  # unmarked: may be a billed reply that did not parse
+    (
+        ProviderError("bad key"),
+        "provider_error",
+    ),  # unmarked: may be a billed reply that did not parse
     (ProviderExhausted("throttled"), "provider_exhausted"),
-    (_flagged(ProviderExhausted("throttled, flagged")), "provider_exhausted"),  # exhausted is never (b)
+    (
+        _flagged(ProviderExhausted("throttled, flagged")),
+        "provider_exhausted",
+    ),  # exhausted is never (b)
     (_flagged(ProviderError("truthy, not True"), 1), "provider_error"),
     (_flagged(ProviderError("a str"), "yes"), "provider_error"),
     (_flagged(ValueError("flag on an error that is not the adapter's")), "call_failed"),
@@ -714,7 +733,9 @@ UNSETTLED = [
 ]
 
 
-@pytest.mark.parametrize(("error", "code"), UNSETTLED, ids=[f"{c}-{i}" for i, (_, c) in enumerate(UNSETTLED)])
+@pytest.mark.parametrize(
+    ("error", "code"), UNSETTLED, ids=[f"{c}-{i}" for i, (_, c) in enumerate(UNSETTLED)]
+)
 def test_t13_rule_c_a_failed_call_is_not_settled_and_the_same_error_comes_out(error, code):
     """ORDER 011 rule (c): cost unknown, so the worst case stays booked; the store's sweep closes it."""
     bound, client, meter, sink = build(Client(raises=error))
@@ -733,7 +754,7 @@ def test_t13_rule_c_a_failed_call_is_not_settled_and_the_same_error_comes_out(er
 )
 def test_t13_rule_b_an_error_marked_refused_before_response_is_settled_at_zero(error):
     """ORDER 011 rule (b), with a fake exception carrying the mark: llm/retry.py does not set it yet."""
-    bound, client, meter, sink = build(Client(raises=error))
+    bound, _, meter, sink = build(Client(raises=error))
     with pytest.raises(ProviderError) as caught:
         bound.chat(CLEAN, system="s", route="main")
     assert caught.value is error
@@ -831,7 +852,9 @@ def test_m5_a_reply_object_without_a_cost_attribute_is_returned_and_not_settled(
 
 def test_m5_a_zero_cost_reply_is_settled_at_zero():
     client = Client()
-    client.reply = Reply(model_id="fake-model")  # cost_usd defaults to Decimal(0): a real, known cost
+    client.reply = Reply(
+        model_id="fake-model"
+    )  # cost_usd defaults to Decimal(0): a real, known cost
     bound, _, meter, sink = build(client)
     bound.chat(CLEAN, system="s", route="main")
     assert meter.settles == [("res_1", Decimal(0))] and sink.codes() == [("ok", None)]
@@ -1024,7 +1047,9 @@ def test_the_audit_row_has_the_agreed_fields_and_nothing_else():
         "replay",
         "ok",
     )
-    assert row.object_ref == "res_1"  # minor m3: the reservation id, to match the row to the spend row
+    assert (
+        row.object_ref == "res_1"
+    )  # minor m3: the reservation id, to match the row to the spend row
     assert row.inputs_hash is None and row.decision is None
     assert row.rule_id is None and row.error_code is None
     assert row.output_hash is None and row.restored_hash is None and row.rows is None
@@ -1098,8 +1123,8 @@ GATE_SOURCE = Path(model_gate.__file__)
 # What an exception variable may be handed to, and nothing else: a type test, one attribute read by name, the
 # rule (b) predicate. Never str(), repr(), format, an f-string, `raise ... from`, an audit row or a constructor.
 EXC_MAY_GO_TO = {"isinstance", "getattr", "refused_before_response"}
-BANNED_NAMES = {"logging", "getLogger", "print", "warnings", "traceback", "repr", "format", "vars", "ContextVar"}  # fmt: skip
-BANNED_ATTRS = {"__cause__", "__context__", "__traceback__", "args", "with_traceback", "add_note", "__notes__", "__dict__", "local"}  # fmt: skip
+BANNED_NAMES = {"logging", "getLogger", "print", "warnings", "traceback", "repr", "format", "vars", "ContextVar", "__import__", "exec", "eval"}  # fmt: skip
+BANNED_ATTRS = {"__cause__", "__context__", "__traceback__", "args", "with_traceback", "add_note", "__notes__", "__dict__", "local", "getLogger"}  # fmt: skip
 ROW_VALUES = {
     "run_id": "self._run_id",
     "domain": "AUDIT_DOMAIN",
@@ -1143,7 +1168,9 @@ def gate_source_problems(source: str) -> list[str]:
             if target not in EXC_MAY_GO_TO or node not in call.args:
                 problems.append(f"line {line}: exception text could leave through {node.id}")
         elif isinstance(node, ast.Raise):
-            bare_or_fixed = node.exc is None or (isinstance(node.exc, ast.Name) and node.cause is None)
+            bare_or_fixed = node.exc is None or (
+                isinstance(node.exc, ast.Name) and node.cause is None
+            )
             fixed_type_error = (
                 isinstance(node.exc, ast.Call)
                 and ast.unparse(node.exc.func) == "TypeError"
@@ -1204,7 +1231,7 @@ def test_i9_the_guard_fails_on_each_planted_leak_anywhere_in_the_module(old, new
     if "as err" in new:  # the handler now binds a name: use it in an f-string in its body
         planted = planted.replace(
             "            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n",
-            "            self.seen = f\"{err}\"\n            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n",
+            '            self.seen = f"{err}"\n            self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation)\n',
         )
         assert planted.count("self.seen") == 1
     ast.parse(planted)  # a plant that does not parse proves nothing

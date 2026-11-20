@@ -94,7 +94,9 @@ RESULT_FAILED = "failed"
 CODE_GATE_REFUSED = "gate_refused"
 CODE_MASK_REFUSED = "mask_refused"
 CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
-CODE_PROVIDER_REFUSED = "provider_refused"  # rule (b): marked refused before any response, settled at 0
+CODE_PROVIDER_REFUSED = (
+    "provider_refused"  # rule (b): marked refused before any response, settled at 0
+)
 CODE_PROVIDER_ERROR = "provider_error"  # rule (c): an unmarked ProviderError, NOT settled
 CODE_PROVIDER_EXHAUSTED = "provider_exhausted"  # rule (c): retries used up, NOT settled
 CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the client, NOT settled
@@ -244,7 +246,9 @@ class BoundGate:
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation)
             raise
         cost = usable_cost(reply)
-        if cost is None:  # rule (c): the call is paid and its reply is returned; nothing to settle with
+        if (
+            cost is None
+        ):  # rule (c): the call is paid and its reply is returned; nothing to settle with
             self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation)
         else:  # rule (a)
             self._settle(reservation, cost, RESULT_OK, None)

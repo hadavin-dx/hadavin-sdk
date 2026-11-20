@@ -501,6 +501,15 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
     return view
 
 
+def _cache_of(mapping: Mapping[str, str]) -> dict[str, Any] | None:
+    """The run's built patterns (`RunMap.redact_cache`), or None. A mapping whose attribute access raises is
+    a RedactionError like any other failure of the redactor (it names the error's type, never a text)."""
+    try:
+        return getattr(mapping, "redact_cache", None)
+    except Exception as exc:  # noqa: BLE001 - fail closed
+        raise RedactionError(type(exc).__name__) from None
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
@@ -523,7 +532,7 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    out, current = _scan(text, mapping, neutralise, getattr(mapping, "redact_cache", None))
+    out, current = _scan(text, mapping, neutralise, _cache_of(mapping))
     # No `clear()` first: another thread (the model gate holds this map by reference) must never read it
     # empty. `current` is always the old map plus new entries: the redactor copies the map, only ever adds
     # to its copy, and numbers a new placeholder above every number already held (`redact._Redactor`).
@@ -564,7 +573,7 @@ def is_masked(
     before = dict(mapping)
     # The redactor only assigns the cache's two keys and never changes what they hold in place (redact.py
     # `_Redactor._build` builds new objects first), so a shallow copy is private.
-    cache = dict(getattr(mapping, "redact_cache", None) or {})
+    cache = dict(_cache_of(mapping) or {})
     out, current = _scan(text, dict(before), neutralise, cache)
     seen = _clean(text) if neutralise is None else _clean(neutralise(_clean(text)))
     held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(seen))

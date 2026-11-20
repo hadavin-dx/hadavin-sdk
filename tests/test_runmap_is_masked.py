@@ -412,3 +412,17 @@ def test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account():
     mapping = runmap.RunMap()
     out = runmap.redact_text(BANK_LINES, mapping)
     assert runmap.is_masked(out, mapping) is True
+
+
+def test_m8_a_mapping_whose_cache_attribute_raises_is_a_redaction_error_in_both_functions():
+    """Lead review round 1, minor m8: the cache read is inside the fail-closed part again."""
+
+    class Exotic(dict):
+        @property
+        def redact_cache(self):
+            raise OSError(f"cache backend down {TOKEN}")
+
+    for call in (runmap.redact_text, runmap.is_masked, runmap.enforce_map):
+        with pytest.raises(runmap.RedactionError) as caught:
+            call(f"host {IP}", Exotic({"<IPV4_1>": IP}))
+        assert caught.value.args == ("OSError",) and caught.value.__cause__ is None
