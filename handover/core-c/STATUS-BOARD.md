@@ -1,28 +1,28 @@
-UPDATED_UTC: 2026-11-20T05:39:59Z
+UPDATED_UTC: 2026-11-20T05:40:39Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 7
-PERCENT: 71
+PERCENT: 74
 AGENTS_RUNNING: 3
-CAPACITY: load 3.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
+CAPACITY: load 3.7 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 2; 2.3M	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:39:45+00:00
+PUSHED_UTC: 2026-11-20T05:39:59+00:00
 
-(11:09 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:10 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
-| a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 05:55 | 5 | running | n/a | 0 | lead GO BUILD; received 2 correction messages (INTERFACE (ii) + ORDER 006; is_masked rule changed to a multiset comparison) |
+| a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 06:05 | 50 | running | n/a | 0 | 3 correction messages so far; ORDER 007 changes the mask step from a refusing check to map enforcement by replacement, so the gate part is being reworked; adds tests/gate_mutants.py (ORDER 008) |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 2 | running | n/a | 0 | lead GO BUILD G; separate worktree so two builders never share a checkout; HEAVY (runs tests) |
 | a04f3d03 | reviewer | fable | EGM plan review of tickets/G-text-deltas.md, implementation readiness | 05:32 | 05:40 | 100 | done | 1 of 1 | 0 | finished: ticket G NOT READY: 3 Blockers, 14 Majors, 6 Nits. Blocker 1 is a fail-open in the planned is_masked rule (count of placeholders misses a swap): sent to the builder at once |
 | aceaf250 | reviewer | fable | EGM plan review of ticket G, code facts on main and on the input heads through git objects only | 05:32 | 05:42 | 40 | running | 1 of 1 | 1 | try 1 returned INCOMPLETE: this reviewer type has no shell and could not read git objects (my brief told it to). Retry with the heads exported as plain files. 13 document-only findings so far, e.g. a withheld line may pass is_masked |
@@ -61,7 +61,7 @@ PUSHED_UTC: 2026-11-20T05:39:45+00:00
 | T3 EGM review of ticket G | RUNNING | 60 | tickets/G-review-1.md | 1 | readiness reviewer done (3 Blockers, 14 Majors, 6 Nits); codebase reviewer on its retry |
 | T3 EGM review of ticket F | DONE | 100 | tickets/F-review-1.md | 1 | NOT CLEAN after the one round: 6 Blockers, 9 Majors, 7 Nits merged; resolved or assumed in tickets/F-review-1.md; one escalated (E2) |
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
-| BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 5 | evidence/F-G0-1.md | 1 | one builder; tests/test_k5_producers.py will be red until SPINE applies requests/1-producers.patch |
+| BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 50 | evidence/F-G0-1.md | 1 | work-in-progress snapshots committed and pushed (code G: G0, code F:); rework to ORDER 007 under way; not verified yet |
 | BUILD G1 fold | RUNNING | 2 | evidence/G1-fold.md | 1 | one builder in a worktree |
 | BUILD G2 P1d-a, G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | they stack on the fold; G6 wording waits for the lead's OK of the text |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT G0 commit | 30 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | probe done, ticket written by the session; build starts when the G0 builder leaves guard/runmap.py (same file); corpus test cut (corpus not in the repository) |
@@ -83,4 +83,4 @@ PUSHED_UTC: 2026-11-20T05:39:45+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-E2 in ESCALATIONS.md (the mask check would refuse normal traffic: lead decision needed). DECISIONS 05:33: gate takes worst_case= callable, not routes= (confirm). E1 cron denied. 5 agents run on 4 cores: 1 heavy (fold tests), 4 light.
+ORDER 006-008 read and applied. Ticket G4 (P1c) asks 3 small decisions. DECISIONS 05:33: gate takes worst_case= callable, not routes= (confirm). E1 cron denied. Fewer than 3 builders run because G2, G3 and G4 all edit guard/runmap.py or guard/redact.py, which the gate builder and the fold builder hold.
