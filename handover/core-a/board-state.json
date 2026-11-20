@@ -289,11 +289,11 @@
   {
    "item": "B5-matrix",
    "what": "crash matrix for step D: kill at every store call on the request path, PostgreSQL 16, expected end state per point",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "CRASH-MATRIX.md, raw/D-crash-matrix-pg16.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_crash_matrix.py, CRASH-MATRIX.md, raw/D-crash-matrix-pg16.log",
    "tries": 1,
-   "reason": "backlog 5"
+   "reason": "83 passed in 54 s: 43 kill points on PostgreSQL 16 (child process killed), 39 on memory; NO finding: at most one row per key, at most one model call across kill and retry, nothing left open after the tick. LIMITS: only the path where the model says 'nothing to do'; run 1 had 1 failure from the test itself (it read 'no row' before the dead process's database session had ended), fixed, 2 of 3 tries used. Read from code, NOT asserted: a kill after the final state write leaves a final row without its audit event and card; a kill between the model call and the spend booking leaves one model call uncounted"
   },
   {
    "item": "B6-fstore",
@@ -375,6 +375,15 @@
    "evidence file": "",
    "tries": 0,
    "reason": "WAIT core-b's bound reader"
+  },
+  {
+   "item": "B5b-matrix-paths",
+   "what": "crash matrix part 2: kills on the paths with a read-tool call, a proposal waiting for approval, and (if buildable) execute and verify; retry before and after the tick",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-crash-matrix-paths-pg16.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in"
   }
  ],
  "agents": [
@@ -693,15 +702,15 @@
   {
    "model": "fable",
    "started UTC": "06:16",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "b5-matrix",
    "role": "builder (tests) and evidence runner",
    "what exactly it is doing": "writes tests/triggers/test_t5_crash_matrix.py and CRASH-MATRIX.md, child processes killed on PostgreSQL",
-   "expected end": "about 40 min after start",
-   "reason": "backlog 5"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -767,6 +776,19 @@
    "what exactly it is doing": "server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once",
    "expected end": "about 30 min after start",
    "reason": "ORDER 017; 8 agents run now (trial, fuzz, matrix, F-store, G7, design review, n8n, code minors)"
+  },
+  {
+   "id": "b5b-paths",
+   "role": "builder (tests) and evidence runner",
+   "model": "fable",
+   "what exactly it is doing": "writes tests/triggers/test_t5_crash_matrix_paths.py, kills child processes on PostgreSQL on the tool, proposal and approval paths",
+   "started UTC": "06:25",
+   "expected end": "about 45 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "8 agents run"
   }
  ],
  "tests": [
@@ -985,6 +1007,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "non-builder contract test; not in my batch 3 (it landed after), in the checkout it skips"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_crash_matrix.py",
+   "branch and SHA": "working tree",
+   "run number": "2 (agent; run 1: 82 passed, 1 failed from the test's own timing, fixed)",
+   "passed / failed / errors": "83 / 0 / 0 (54 s)",
+   "first failing line": "run 1: point r4, 'no row' read too early",
+   "state": "done",
+   "reason": "PostgreSQL 16.15 on port 55433"
   }
  ],
  "restarts": [],
@@ -1014,6 +1045,7 @@
  "lost": [],
  "lead_actions": [
   "ORDER 017 read at 06:22Z. Major A = ORDER 015, already in the files since 06:20Z (your review read the older commit); Major B and the minors are in work",
+  "CRASH-MATRIX.md: 43 kill points on PostgreSQL 16, no finding on the 'nothing to do' path. Two facts read from code and NOT yet tested, for the plan: (1) a kill right after the final state write leaves no audit event and no card for that final state, and nothing writes them later; (2) a kill between the model call and the spend booking leaves that call uncounted (step F reservations should close this)",
   "ORDER 015 done in the files. What your evidence file says differently from the order's summary (so you can decide): (a) the Crypto node version 2 with a credential ran only in a small test workflow, never in the full chain; (b) the secret IS in plain text in a decrypted credential export and in the import file; (c) the retry caps rest on one run; (d) import drops the top-level notes key; (e) no observed shape exists for 'answer the caller' (fix 6), mine is unverified; (f) I added a second answer node (202 to the caller when the guard passes) because without it the caller would hang for the whole 503 loop: say CHANGE to remove it. The edited files need a new import on your n8n",
   "STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued",
   "ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them",
