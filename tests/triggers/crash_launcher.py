@@ -21,12 +21,6 @@ matrix does NOT exercise the real day window or the 3600 s expiry floor and prov
 only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
 state of `crash_money.py`).
 
-LIMIT of the seeding: on PostgreSQL the child installs the test-only money wrappers (`install_pg_test_seeding`),
-which write ``hadavin_caps`` and WIDEN ``max_day_skew`` to 100000 days and ``min_expiry_age`` to 0. So the
-matrix does NOT exercise the real day window or the 3600 s expiry floor and proves nothing about either; it
-only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
-state of `crash_money.py`).
-
 Environment: ``TRIGGER_CHILD_SECRETS`` is a JSON object sender id -> fake secret value;
 ``CRASH_CHILD_DSN`` is the PostgreSQL DSN for ``--store postgres``.
 """
