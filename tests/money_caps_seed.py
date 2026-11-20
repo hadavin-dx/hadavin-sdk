@@ -67,3 +67,13 @@ def seeding_reserve(original):
         )
 
     return reserve_spend
+
+
+def seed_registry_caps(dsn_or_conn, schema: str | None, registry) -> None:
+    """Seed the caps of every non-retired agent of `registry` with the registry's own budget, as the owner: the
+    state `limits sync-caps` leaves, so a FULL tick (step `check_caps`) finds no drift."""
+    for agent in registry.agents.values():
+        if agent.status != "retired":
+            seed_caps(
+                dsn_or_conn, schema, agent.id, agent.budget_usd.daily, agent.budget_usd.monthly
+            )
