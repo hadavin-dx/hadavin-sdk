@@ -12,6 +12,7 @@ reason in ``expect``. Not collected by pytest. Run from the repo root:
     uv run --all-extras --group test python tests/redact_mutants.py N8         # only mutants whose name contains the text
 
 Good means KILLED, or CRASH with the declared exception class. Exit 1 if any mutant is not good, 2 if a filter selects none.
+G9 numbering: there is no mutant G9-6 (dropped before the first build; the numbers were not reused, G9 result review 2, N4). G9b adds G9-31 .. G9-37.
 N1 (the early U+2044 return of `_char_class`) and N14 (the slash replace of the alignment) are gone: both covered dead code, which was deleted after the
 exhaustive proof in tests/test_redact_g3_port.py (G1 Q9 review F3). tests/test_redact_mutants_meta.py pins the count and checks every killer.
 R2 ("the check after stage 1 is removed") is killed by BUDGET-1b (the spy counter is 1 instead of 0); it is not declared equivalent.
@@ -311,9 +312,9 @@ M += [
        "kind = _kind(inside[0][1])",
        "test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first",
        "the union of an address and a secret is not a SECRET"),
-    g9("G9-9 a held value registered again", "        if full in self.reverse:\n            return self.reverse[full]\n        if not derived:",
-       "        if not derived:",
-       "test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_whatever_its_kind",
+    g9("G9-9 a held value registered again", "        held = self.reverse.get(full)\n",
+       "        held = None\n",
+       "test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_unless_it_would_downgrade_a_secret",
        "a held value got a second placeholder"),
     g9("G9-10 the union registers pieces and its written form", "self._place_union(out[start:end], kind, derived=False)",
        "self._place_union(out[start:end], kind, derived=True)",
@@ -330,7 +331,7 @@ M += [
     g9("G9-14 the count reads no clock",
        "if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:", "if False:",
        "test_g9_the_count_reads_the_clock_each_time_it_passes_a_multiple_of_1024", "DID NOT RAISE"),
-    g9("G9-15 the occurrences not counted", "self._spend(work, len(occ), deadline)", "self._spend(work, 0, deadline)",
+    g9("G9-15 the occurrences not counted", "self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)", "self._spend(work, 0, deadline)",
        "test_g9_the_read_back_counts_its_pieces_and_its_occurrences", "[16]"),
     g9("G9-16 the finder groups read no clock",
        "# between finder groups: a pass of a finder over E is not counted\n                self._over_budget(deadline)",
@@ -348,7 +349,7 @@ M += [
     g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
        "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
     g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * len(w) + 2, deadline)", "self._spend(work, 0, deadline)",
-       "test_g9_a_long_periodic_value_beside_its_own_period_is_refused_by_the_count", "DID NOT RAISE"),
+       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "265_620"),
     g9("G9-23 the read-back reach removed", "keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)",
        "keep = self._longest - 1",
        "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[40002]"),
@@ -368,6 +369,22 @@ M += [
        "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
     g9("G9-30 the scan of the window not counted", "self._spend(work, hi - lo, deadline)", "self._spend(work, 0, deadline)",
        "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
+    g9("G9-31 a secret union takes the held non-secret placeholder",
+       "        if held is not None and not (kind in SECRET_KINDS and _kind(held) not in SECRET_KINDS):\n            return held\n",
+       "        if held is not None:\n            return held\n",
+       "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "assert out == \"<SECRET_2>\""),
+    g9("G9-32 no rebuild of the rules after a secret union upgrades a held value", "                if keep_rules:\n", "                if current:\n",
+       "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "a standalone copy is still swept"),
+    g9("G9-33 the occurrences not charged as they are found", "                self._spend(work, _OCC_CHARGE_EVERY, deadline)\n", "                pass\n",
+       "test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists", "peak traced"),
+    g9("G9-34 the remainder of the occurrences not charged", "self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans", "assert work == [23]"),
+    g9("G9-35 the text read back again for every place of the anchor", "                    if read is None:\n", "                    if True:\n",
+       "test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_not_refused", "SpelledWorkTooMuch"),
+    g9("G9-36 a further place costs a whole comparison", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 2 * len(w) + 2, deadline)",
+       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "265_620"),
+    g9("G9-37 a further place costs nothing", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9b_the_periodic_limit_is_stated_with_numbers", "DID NOT RAISE"),
 ]  # fmt: skip
 
 

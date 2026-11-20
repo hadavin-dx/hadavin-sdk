@@ -126,6 +126,18 @@ REDACT_BUDGET_S = 6.0
 # `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost (SECURITY wording). G9 (E10): the count is per
 # `_Redactor.sweep` CALL, shared by its passes: the spelled scans, the read-backs (one unit per character put back, one per occurrence),
 # the anchored check of rules longer than the reach, and the value of every union, counted before it is built.
+# G9b (G9 result review 2, M3) STATED LIMIT of the anchored check on a PERIODIC long value. Units are not time: measured on the Linux test machine
+# (thread CPU), `S + "a" + S` with S = `ab` x n costs 0.01 to 0.02 microseconds per unit, so here the count, not the clock, refuses. Units,
+# measured: len(S) 2,000: 0.54 million; 4,000: 1.74 million (8,001 characters of text), 1.94 million (12,002 characters, three copies); 8,000: 4.50
+# million, REFUSED; 16,000: 11.5 million. So a periodic registered secret of up to about 7,000 characters beside its own period is accepted, one of
+# 8,000 or more is refused (`SpelledWorkTooMuch`: fail closed, the document is lost). The read-back at an edge is made once per (edge, rule)
+# (`2 * len(rule) + 2` units); each further place of the anchor costs `len(rule) // 32 + 1` (`_COMPARE_SHARE`). Before G9b every place paid a
+# whole comparison: S of 4,000 characters in 12,000 characters of text needed 11.9 million units and was refused.
+# CPU OR WALL: the clock of every limit here (`REDACT_BUDGET_S`, the deadlines of `_Redactor`) is `time.thread_time()`, CPU time of the thread. The
+# "10 s" of the E17 note ("no refusal (10 s under load)") is a WALL figure of the measuring run on a loaded machine, not a CPU budget and not a
+# limit of this module; the CPU budget is `REDACT_BUDGET_S` (6.0).
+# ORDER OF THE CAPS (G9 result review 2, N3): `FinderMemoryTooMuch` (`MAX_FINDER_CHARS`, 786,432 trie nodes) comes BEFORE `MAX_MAP_CHARS` (524,288),
+# which the run checks; this limit and the union and registry limits below are per call.
 SPELLED_MAX_WORK = 4_000_000
 # MEMORY of the registry (round 7): the tries hold one dict per character of every registered written form that is not already a node (prefix and
 # suffix; about 185 bytes each, measured: 37.2 MB per 200,000 characters, 49 MB per 260,000, tracemalloc, evidence g7r6_units.py `memory()` and

@@ -1910,13 +1910,39 @@ def test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_come
     assert r.sweep("10.100.200.5-Xyz9 y") == "<SECRET_2> y"
 
 
-def test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_whatever_its_kind():
-    """Design M3 (v3): the run's value `abcdefghijkl` is already held, under TENANT. The union is that placeholder, as `_place_union` has
-    always answered a held value: no second placeholder for one value, so `reverse` and runmap's `_rules_conflict` are not disturbed. The
-    value was restorable before G9 already (its standalone copies are swept as TENANT_1); stated in section 11 (mutant G9-9)."""
-    r = _registering({"<TENANT_1>": _A + "ijkl", "<SECRET_1>": _A, "<SECRET_2>": _B})
-    assert r.sweep("z" + _A + "ijkl y") == "z<TENANT_1> y", "a held value got a second placeholder"
+def test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_unless_it_would_downgrade_a_secret():
+    """Design M3 (v3), G9b M2: the run's value `abcdefghijkl` is already held. The union is that placeholder, as `_place_union` has always
+    answered a held value: no second placeholder for one value, so `reverse` and runmap's `_rules_conflict` are not disturbed. Held under a
+    SECRET kind (APIKEY) or an identifier run reusing an identifier: reused (mutant G9-9). A SECRET union whose value is held under a
+    non-secret kind is NOT reused: see the next test (mutant G9-31)."""
+    r = _registering({"<APIKEY_1>": _A + "ijkl", "<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("z" + _A + "ijkl y") == "z<APIKEY_1> y", "a held value got a second placeholder"
     assert len(r.mapping) == 3
+    r = _registering({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    assert r.sweep("acme-prod-01-eu") == "<TENANT_3>"
+    assert r.sweep("acme-prod-01-eu") == "<TENANT_3>" and len(r.mapping) == 3
+    r = _registering(
+        {"<TENANT_1>": "acme-prod-01-eu", "<TENANT_2>": "acme-prod-01", "<TENANT_3>": "prod-01-eu"}
+    )
+    assert r.sweep("acme-prod-01-eu") == "<TENANT_1>", (
+        "an identifier union did not reuse its held value"
+    )
+
+
+def test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value():
+    """G9b M2: TENANT_1 = `ab-cd-ef` (known), SECRET_1 = `cd-ef` (learned); `ab-<SECRET_1>` is a run that holds a secret, so its union is a
+    SECRET. Its value is already held under TENANT_1, which a gate restores: answering that placeholder would turn a secret into a
+    restorable kind. The union is registered as a SECRET entry (the kind rule, mutant G9-31), the rules are rebuilt for it (mutant G9-32) so
+    a standalone copy of the value is swept as that SECRET too, and the TENANT entry stays in the map."""
+    held = "ab-cd-ef"
+    r = _registering({"<TENANT_1>": held, "<SECRET_1>": "cd-ef"})
+    out = r.sweep("ab-<SECRET_1>")
+    assert out == "<SECRET_2>", out
+    assert r.mapping == {"<TENANT_1>": held, "<SECRET_1>": "cd-ef", "<SECRET_2>": held}
+    assert r.reverse[held] == "<SECRET_2>"
+    assert r.sweep("copy " + held + " end") == "copy <SECRET_2> end", (
+        "a standalone copy is still swept as the TENANT"
+    )
 
 
 def test_g9_a_union_of_identifiers_only_is_an_identifier():
@@ -2259,14 +2285,20 @@ def test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check():
     )
 
 
-def test_g9_a_long_periodic_value_beside_its_own_period_is_refused_by_the_count():
+def test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count():
     """The anchored check compares the rule at every place its anchor is found, at every edge; a PERIODIC long value (`x` x 1,100) beside
-    readable text of the same period finds its anchor at 76 places, and each comparison at each of the 30 cut edges is counted
-    (`2 x len(w) + 2` units): about 5 million, refused (`SpelledWorkTooMuch`), not walked (stated in 11; mutant G9-22)."""
+    readable text of the same period finds its anchor at 76 places per edge. Since G9b M3 the first comparison of an edge pays
+    `2 x len(w) + 2` (the read-back, made once per edge and rule) and each further place `len(w) // 32 + 1` = 35: the 30 cut edges
+    of 30 copies cost 265,620 units (exact), and 1,500 copies (about 4 million occurrences' worth of comparisons) are refused
+    (`SpelledWorkTooMuch`), not walked (stated in defaults.py; mutants G9-22, G9-35, G9-36)."""
     r = _registering({"<SECRET_1>": "x" * 1_100})
+    # `<SECRET_9>` is not a key: the run of `<SECRET_1>` touches readable text on its right only, so it is cut at the reach there
+    unit = "<SECRET_9><SECRET_1>" + "x" * 200 + " end\n"
+    work = [0]
+    r._overlaps(unit * 30, None, work)
+    assert work == [265_620], work
     with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
-        # `<SECRET_9>` is not a key: the run of `<SECRET_1>` touches readable text on its right only, so it is cut at the reach there
-        r.sweep(("<SECRET_9><SECRET_1>" + "x" * 200 + " end\n") * 30)
+        r.sweep(unit * 1_500)
 
 
 def test_g9_constants_hold_sane_values():
@@ -2331,3 +2363,82 @@ def test_g9_a_gate_text_that_mentions_a_long_value_many_times_is_masked_not_refu
     text = "".join(f"step {i} see <SECRET_1> now.\n" for i in range(300))
     assert runmap.enforce_map(text, {"<SECRET_1>": value}) == text
     assert runmap.enforce_map(text + value, {"<SECRET_1>": value}) == text + "<SECRET_1>"
+
+
+def _nested_chain(depth: int, copies: int) -> tuple[dict[str, str], str]:
+    """`depth` SECRET values `a` x 4 .. `a` x (depth + 3), each a substring of the next, and `copies` of `<last>x`: read back, every copy is
+    `a` x (depth + 3) + `x`, and every rule occurs at every place of every run (about depth^2 / 2 per copy)."""
+    mapping = {f"<SECRET_{k}>": "a" * (k + 3) for k in range(1, depth + 1)}
+    return mapping, f"<SECRET_{depth}>x" * copies
+
+
+def test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists(monkeypatch):
+    """G9b M1: the occurrences of the rules in the read-back text were all collected before the first was charged, so a nested chain
+    (200 secrets, 17,000 copies, 221,000 characters: about 4e8 occurrences) built a list that never fitted in memory. Charged every
+    `_OCC_CHARGE_EVERY` found, the call is refused after the limit's worth. Small shape (50 values, 2,000 copies: 2.6 million occurrences,
+    about 400 MB when all are collected) with the limit at 200,000 units: refused, peak traced memory under 40 MB (mutant G9-33)."""
+    mapping, text = _nested_chain(50, 2_000)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 200_000)
+    tracemalloc.start()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+            r._overlaps(text, None, [0])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 40_000_000, f"peak traced {peak}"
+
+
+def test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans():
+    """G9b M1: the blocks of `_OCC_CHARGE_EVERY` are charged as found and the REMAINDER after the scans: a text with fewer occurrences than
+    one block is charged all at the end, one unit each, as before (3 values, 2 copies: E is 14 characters, 9 occurrences that count, 23
+    units, measured; mutant G9-34 charges the remainder as 0: 14)."""
+    mapping, text = _nested_chain(3, 2)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    work = [0]
+    r._overlaps(text, None, work)
+    assert work == [23], work
+
+
+@pytest.mark.perf
+def test_g9b_the_nested_chain_of_200_secrets_is_refused_in_bounded_time_and_memory():
+    """G9b M1, the review's shape: 200 nested secrets, 17,000 copies of `<SECRET_200>x` (221,000 characters), the real limit: refused
+    (`SpelledWorkTooMuch`) after about 4 million occurrences (measured 2.8 s CPU and 82 MB peak under tracemalloc; before the fix: not
+    finished in 120 s)."""
+    mapping, text = _nested_chain(200, 17_000)
+    r = R._Redactor(mapping)
+    r.sweep("")
+    tracemalloc.start()
+    started = time.thread_time()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+            r._overlaps(text, None, [0])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert time.thread_time() - started < 30
+    assert peak < 250_000_000, f"peak traced {peak}"
+
+
+def test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_not_refused():
+    """G9b M3 (the review's shape): `S + "a" + S`, S = `ab` x 2,000 (4,000 characters), 12,002 characters in all: the anchored check read the
+    text back for EVERY place of the anchor (2,000 per edge, each `2 x 4,000 + 2` units: 11.9 million, refused). The read-back is made once
+    per (edge, rule) and each further place costs `len(rule) // _COMPARE_SHARE + 1` units: 1.9 million units here (measured), accepted, and
+    the text is masked whole. Mutant G9-35 (a read-back per place: refused)."""
+    s = "ab" * 2_000
+    r = _registering({"<SECRET_1>": s})
+    assert r.sweep(s + "a" + s + "a" + s) == "<SECRET_1>a<SECRET_1>a<SECRET_1>"
+
+
+def test_g9b_the_periodic_limit_is_stated_with_numbers():
+    """G9b M3: STATED LIMIT (defaults.py): `S + "a" + S`, S = `ab` x n, costs (units, measured) 0.54 million at len(S) 2,000, 1.7 million at
+    4,000, 4.5 million at 8,000, 11.5 million at 16,000: a 6,000-character S is accepted, an 8,000-character S is refused (limit 4 million).
+    Mutant G9-37 (the further-place charge dropped: the 8,000 case is accepted)."""
+    ok = "ab" * 3_000
+    assert _registering({"<SECRET_1>": ok}).sweep(ok + "a" + ok) == "<SECRET_1>a<SECRET_1>"
+    big = "ab" * 4_000
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        _registering({"<SECRET_1>": big}).sweep(big + "a" + big)
