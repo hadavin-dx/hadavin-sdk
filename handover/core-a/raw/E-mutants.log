@@ -1,0 +1,26 @@
+=== MUTANT 1: drop the disarm before the crash ===
+71 passed, 2 skipped in 1.23s
+restored: cmp identical
+=== MUTANT 2: derive SimulatedCrash from Exception ===
+36c36
+< class SimulatedCrash(BaseException):
+---
+> class SimulatedCrash(Exception):
+FAILED tests/test_testing_crash.py::test_n6_crash_before_the_model_call_leaves_the_run_working
+1 failed, 70 passed, 2 skipped in 0.68s
+restored: cmp identical
+=== MUTANT 3: drop the pytest gate ===
+68,71d67
+<         if _GATE not in os.environ:
+<             raise RuntimeError(
+<                 "CrashPoints is a test tool: it can only be built inside a pytest run"
+<             )
+FAILED tests/test_testing_crash.py::test_h1_cannot_be_built_outside_a_pytest_run
+FAILED tests/test_testing_crash.py::test_h1_a_child_without_the_pytest_variable_cannot_kill_itself
+2 failed, 69 passed, 2 skipped in 0.77s
+restored: cmp identical
+=== MUTANT 4: swap before and after ===
+164c164
+<         before, after = f"{name}.{method}:before", f"{name}.{method}:after"
+---
+>         after, before = f"{name}.{method}:before", f"{name}.{method}:after"
