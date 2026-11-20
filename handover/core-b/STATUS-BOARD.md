@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:43:03Z
+UPDATED_UTC: 2026-11-20T11:44:09Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.91 of 4 cores, mem 1/15 GB, disk 48G free, 32% used, agents light 4 heavy 2
+CAPACITY: load 2.33 of 4 cores, mem 1/15 GB, disk 48G free, 32% used, agents light 4 heavy 2
 DISK: / 48G free, 32% used; worktrees /tmp/core-b-wt 3.5G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T11:41:45Z (previous push; this board is pushed right after writing)
-IST: 17:13 IST
+PUSHED_UTC: 2026-11-20T11:44:06Z (previous push; this board is pushed right after writing)
+IST: 17:14 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -237,3 +237,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 11:13Z MORE AGENTS STARTED (sonnet): fresh HOSTILE REVIEW of the merged 0011 functions + migrate.py checks (11:14Z; writes tickets/F-money-definer-review-0011.md); E1 = step 6 first half (hadavin_caps, hadavin_set_cap reset-only, hadavin_cap_matches; reserve untouched until D is merged; 11:14Z, due 12:00Z). RUNNING NOW: D (11:04Z), C (11:04Z), 0011 reviewer (11:14Z), E1 (11:14Z).
 
 11:17Z BOARD AUTOMATION: a background loop now runs board.sh every ~75 s (flock-protected) so the last push never passes ~2 min even while I wait on long runs. Same four agents running (D, C, 0011 reviewer, E1).
+
+11:44Z MERGED on cloud/core-b: E1 (step 6 first half: hadavin_caps, hadavin_set_cap reset-only, hadavin_cap_matches + ALL 0011 review fixes M1-M3, m4-m7, m9, m10: unnamed roles' EXECUTE refused, signature-exact maps, E'' regexes, day range 22023, settle counter floor HD003, settle checks runs.agent_id) and D (STEP 3: store/postgres.py calls {schema}.hadavin_* via _money_call, HD/23505/22023 mapped, old grants still in place; reserve_mutants re-aimed at the 0011 SQL). VERIFICATION OF THE MERGED TREE RUNNING (16 test files: step-3 store tests, contract tests, definer/caps tests; started 11:44Z, ~15-25 min on the shared server). Open from E1: m8 (settle with NULL agent returns another agent's row: needs a Limits/contract change: residual 5). RUNNING AGENTS: C (definer test writer, since 11:04Z). NEXT: step-3 fresh review, step 4 (flip the grants; core-a helpers already re-pointed), reserve signature change (step 6 second half), step 5 docs.
