@@ -286,9 +286,11 @@ class QuietRequestHandler(WSGIRequestHandler):
             self.rfile.stop_count()  # type: ignore[attr-defined]
         if not parsed:  # it has answered through send_error, or the client sent nothing
             return
-        if (
-            self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message)
-        ):  # a request line with no version has no header block (3.12 reads one anyway: also closed here, with no answer once the request is complete; a stalled or over-limit request after `GET /path` still gets 400 through `_refuse_stalled` / 431->400 on 3.12, and on 3.13 the connection is closed silently)
+        # A request line with no version (`GET /path`) has no header block, so it is closed with no answer.
+        # CPython 3.12 reads a header block for it anyway: it is closed here too once the request is complete.
+        # A stalled request after `GET /path` is still answered 400 (`_refuse_stalled`), an over-limit one 431
+        # (`send_error` keeps 431); on 3.13 the connection is closed silently.
+        if self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message):
             _LOG.debug(
                 "trigger server: request line without an HTTP version, closed with no answer"
             )

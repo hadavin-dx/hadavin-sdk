@@ -21,8 +21,7 @@ first failing line that holds `expect`. Thirty-six groups (G32 is E1: ten mutant
         up, the upper bound of max_body_bytes, the size cap before the body is read
     G14 the rules for a secret value: no byte-order mark or zero-width character, no control character, no repeated value
     G15 the quiet server: a timeout on the request line or in the headers is a stalled client, 414, and the
-        `_answer_begun` flag (set in send_error, read in `_refuse_stalled`). G15d was deleted (equivalent: the
-        `request_version` default of `_refuse_stalled` it guarded no longer exists, `send_error` never reads it)
+        `_answer_begun` flag (set in send_error, read in `_refuse_stalled`).
     G16 the quiet server: HTTP 2.0 and up is 400, no version is closed quietly, underscore names, two Content-Length,
         Transfer-Encoding, and the process environment kept out of the request (`os_environ = {}`)
     G17 Retry-After on a 503, and DEBUG for a request that did not verify
