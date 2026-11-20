@@ -26,7 +26,7 @@ Rules: items are independent unless marked; start all READY items; mark each row
 ## Added by ORDER 004 (2026-11-20 04:40 UTC): these replace the TICKET DRAFT and CROSS-CHECK rows above
 | # | item | state | evidence file |
 |---|---|---|---|
-| T1 | Read inputs/ (plan-v2, plan-v3, plan-v4-final, the two round-3 reviews) and write handover/core-b/PLAN-READBACK.md: your steps, your files, what you must NOT touch, your open questions | READY | |
+| T1 | Read inputs/ (plan-v2, plan-v3, plan-v4-final, the two round-3 reviews) and write handover/core-b/PLAN-READBACK.md: your steps, your files, what you must NOT touch, your open questions | DONE | PLAN-READBACK.md |
 | T2 | Tickets for your steps (ORDER 004 item 3), in the order given there | WAIT T1 | |
 | T3 | One EGM review round per ticket (not for A and E), resolve, save | WAIT T2 | |
 | T4 | Test files for other sessions' steps while you wait (ORDER 004 item 2) on your own wip branch, new files only | READY after interfaces are published | |
