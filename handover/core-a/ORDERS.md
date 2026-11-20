@@ -71,3 +71,10 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-a/inputs/ in th
 8. Config field names: propose them in ONE request file handover/core-a/requests/001-config-triggers.md; the lead copies it to core-b the same minute.
 9. INTERFACE (i): the lead copies it into your inputs/ the minute core-b publishes it. Until then T4 is BLOCKED-ON-CORE-B; do not wait on it: build E and write ticket D.
 10. src/hadavin_sdk/testing/: YES, add new files there; do not change its __init__.py or mutation.py.
+
+## ORDER 008 (lead, 05:37Z) TEST FILE NAMES for the lead's ONE batch evidence run (tests in batches only, never one by one)
+The lead runs every test group together in parallel containers on the laptop (python 3.12 and 3.13, postgres 17.10, lint, security steps, mutants, role tests, T1, T5). So that your work is picked up automatically:
+1. Mutant scripts, format of tests/stage_mutants.py (a Mutant list and tools.mutation_runner.run_mutants; last line "N of N good; problems: [...]"): tests/endpoint_mutants.py (groups: endpoint dedupe key, payload-hash conflict, ack only after the run row exists, timestamp check). A guarantee with no mutant script counts as NOT RUN = not done.
+2. Tests that need PostgreSQL read the DSN from HADAVIN_TEST_PG_DSN (the lead sets it; it is a superuser on a throwaway server with trust login, so tests create their own roles as tests/contracts/kinds/store_postgres.py does). Never skip silently when the variable is set.
+3. File name markers the batch run greps for: the 50-connection cap test lives in a file named tests/contracts/test_t1_*.py; per-role negative tests assert psycopg InsufficientPrivilege; endpoint tests that serve over wsgiref live under tests/triggers/.
+4. In your own box: per-file tests while coding, then ONE batch (the whole suite once) when all your steps are coded. No per-step full-suite runs.
