@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T05:22:21Z
+UPDATED_UTC: 2026-11-20T05:23:48Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 7
-PERCENT: 35
+PERCENT: 45
 AGENTS_RUNNING: 3
 CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 3, heavy agents 0
-DISK: / 60G free, 13% used; git worktrees 1; 84K	/tmp/claude-0;116M	/root/.cache/uv;
+DISK: / 60G free, 13% used; git worktrees 1; 376K	/tmp/claude-0;116M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: when T1 and the surveys end: write tickets G and F, then one EGM round each
-PUSHED_UTC: 2026-11-20T05:22:01+00:00
+PUSHED_UTC: 2026-11-20T05:22:21+00:00
 
-(10:52 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(10:53 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -47,9 +47,9 @@ PUSHED_UTC: 2026-11-20T05:22:01+00:00
 | T1 plan read-back | RUNNING | 40 | PLAN-READBACK.md | 1 | agent running |
 | T2 prep: survey of input heads for step G | RUNNING | 10 | tickets/G-survey-*.md | 1 | 2 agents; heads fetched read-only as local refs, no checkout |
 | T2 ticket G text deltas | WAIT T1 | 0 | tickets/G-text-deltas.md | 0 | needs the read-back first |
-| T2 ticket F gate wrapper body | WAIT T1 | 0 | tickets/F-gate-wrapper-body.md | 0 | needs the read-back first |
+| T2 ticket F gate wrapper body | DONE (draft) | 100 | tickets/F-gate-wrapper-body.md | 0 | written by the session itself while 3 agents run; 5 open questions inside; EGM round is next |
 | T3 EGM review of ticket G | WAIT T2 | 0 | tickets/G-review-1.md | 0 | one round only |
-| T3 EGM review of ticket F | WAIT T2 | 0 | tickets/F-review-1.md | 0 | one round only |
+| T3 EGM review of ticket F | READY | 0 | tickets/F-review-1.md | 0 | starts when an agent slot frees (EGM stages never overlap with each other) |
 | T4 test files for other steps | WAIT interfaces | 0 | none | 0 | core-b has not published reserve/settle yet; needs GO BUILD or lead word on which files |
 
 ## RESTARTS
