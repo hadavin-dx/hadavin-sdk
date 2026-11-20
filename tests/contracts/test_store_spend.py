@@ -292,7 +292,7 @@ def test_settle_with_an_unknown_id_is_not_found_and_changes_nothing(store):
     with pytest.raises(NotFound):
         store.settle_spend(new_id("res"), D("0.10"))
     with pytest.raises(KeyError):  # NotFound is a KeyError (contract point 4)
-        store.settle_spend("", D("0.10"))
+        store.settle_spend("res-unknown", D("0.10"))
     assert _rows(store) == rows and _totals(store) == (D("1.00"), D("1.00"))
     assert store.settle_spend(rid, D("0.10"))[1] is True  # the store still works
 

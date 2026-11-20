@@ -749,7 +749,9 @@ def _id_outcome(store, rid):
         with pytest.raises(StaleState):
             store.reserve_spend(rid, AGENTS[2], DAY, amount, day_cap=BIG, month_cap=BIG)
         with pytest.raises(NotFound):
-            store.settle_spend(rid + "x", actual)
+            store.settle_spend(
+                rid[:-1] + ("0" if rid[-1] != "0" else "1"), actual
+            )  # same length, unknown
         row, applied = store.settle_spend(rid, actual)
         assert applied is True and row.reservation_id == rid and row.settled_usd == actual
         row, applied = store.settle_spend(rid, amount)
