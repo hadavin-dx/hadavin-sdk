@@ -31,3 +31,5 @@
 | 05:21 / 10:51 | Where temporary worktrees go | (a) /tmp as Q3 says; (b) the session scratch folder under /tmp/claude-0 | CHOSE (b): the session harness allows writes there without prompts; still under /tmp, never in the main checkout | nothing | yes | |
 | 05:21 / 10:51 | Commit trailer | (a) Claude Sonnet 5.5 line of preamble rule 9; (b) Claude Fable 5.2 line the session harness requires | CHOSE (b): Fable did the work and the harness rule is fixed for this session | commits differ from the preamble text | yes, by lead order | |
 |---|---|---|---|---|---|---|
+
+| 09:30Z | lead verdicts on open escalations | see ORDER 023 | CHOSE: best-first, security and money over simplicity | | yes, by lead | |
