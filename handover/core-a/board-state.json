@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "door-docs",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "door review B1(a)/B1(b)/M2/M3/M5/N2-N6 docs, E-door-1 escalation, N4 plan check",
-   "started UTC": "12:29",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead verdicts on review-door-1"
-  },
-  {
    "id": "door-code",
    "role": "builder",
    "model": "sonnet",
@@ -1144,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:38 door-docs done: B1(a) reword, ESCALATIONS E-door-1 (owner decision: store document + notify, default sender polls), n8n README/note M5, N4 ANSWER: hadavin_sdk.testing.crash and mutation.py ARE meant to ship in the wheel (tickets/E-test-helpers.md:40 'ships in the wheel but is dead code at run time', :60); plan-v4-final item E has no packaging statement. door-code (M1/M3/M4/M6/N1) still running.",
   "12:32 nits16 (d-fix17) done: head will be pushed now; G15d gone, G33d xfail unchanged. door-code builder started (M1/M3/M4/M6/N1); then a fresh review of the diff, then your mutant run.",
   "12:36 XREVIEW core-c G1 fold + G2 P1d-a DONE: reviews/xreview-g1g2.md + NEW FILE handover/core-c/requests/xr-g1g2.md (copy into cloud/core-c). No Blocker; 1 Major (error_reason crash on lone surrogate), accepted xfail leaks, test exemption too wide.",
   "12:29 Lead verdicts on review-door-1 received. Docs batch running (door-docs). Code fixes M1 (431 header cap), M3 start check, M4 memory-store refusal, M6 mutants queue behind nits16 (same files server.py/endpoint_mutants.py); then a fresh review of the diff.",
@@ -3060,6 +3048,19 @@
    "review round n of cap": "fix after the d-fix16 review",
    "retries so far": 0,
    "reason": "d-fix17: dead guard + REFUSAL_TEXT 408/417 + G15d removed; S-2/S-3/S-4 done; anchors 195 passed 1 xfailed (G33d); 104 passed on 3.12.3 and 3.13.12; 1431 passed 5 skipped (raw/D-fix17-tests.log)"
+  },
+  {
+   "id": "door-docs",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "door review B1(a)/B1(b)/M2/M3/M5/N2-N6 docs, E-door-1 escalation, N4 plan check",
+   "started UTC": "12:29",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "B1(a) reworded in CRASH-MATRIX/tickets/PLAN-READBACK/worker docstring; E-door-1 in ESCALATIONS.md; n8n README 14a-14d + M5 note; test pins updated (92 n8n tests pass); N4: crash.py and mutation.py are meant to ship in the wheel (E-test-helpers.md:40,60). N5/M2/M3 server.py text handed to door-code"
   }
  ]
 }
