@@ -43,7 +43,7 @@ first failing line that holds `expect`. Thirty-three groups (G32 is E1: ten muta
     G30 the size cap is on the raw body bytes (the guard itself; not a cap on the decoded document), G31 an empty document
         is a document (`parse_body` does not refuse it)
     G32 E1 (d-fix6, d-fix8): the 409 audit event and its cap, /health, the degraded start and its recovery, the no-audit warning
-    G33 E1 fix2 (d-fix9): `_close_app` in `_recover`, the ping set after start, the 2 s audit wait, `DEGRADED_FATAL_AFTER`,
+    G33 E1 fix2 (d-fix9): `_close_app` in `_recover`, the ping set after start, the 2 s audit wait, the 5-minute limit of the re-check WARNING (`DEGRADED_WARN_EVERY_S`),
         the per-sender cap, an unsigned request is never a sender
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
@@ -1246,15 +1246,13 @@ M = [
         "assert 30.0 == 2.0",
     ),
     mutant(
-        "G33d a degraded worker never stops on repeated non-store errors",
+        "G33d a degraded worker logs its re-check failure at every try, not once per 5 minutes",
         WORKER,
-        "                    if other >= DEGRADED_FATAL_AFTER:\n",
-        "                    if False:\n",
+        "                if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:\n",
+        "                if True:\n",
         T9,
-        "test_fix2_five_non_store_failures_in_a_row_stop_the_worker_with_exit_3",
-        "the worker did not stop on its own",  # pytest.fail: the leading class is `Failed`, not an assertion
-        allow_crash=True,
-        crash_type="Failed",
+        "test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class_changes",
+        "assert",
     ),
     mutant(
         "G33e the 409 event cap uses one shared key for all senders",

@@ -986,8 +986,6 @@ class _Degraded:
                         "trigger worker: store re-check failed (%s): still degraded", name
                     )
                     last, last_warned = name, now
-                if self.failures > 6:
-                    return
                 continue
             with self._lock:
                 if not self._stopped.is_set():
