@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T17:32:09Z
+UPDATED_UTC: 2026-11-20T17:32:58Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:45Z REAL RUNNING AGENTS 4: Q2, Q3, P7b builders + Q1 reviewer; heavy: whole-tree redact_mutants in background. Load (/proc/loadavg) 5.01 3.20 2.49. Q1 MERGED (reply masking in the gate + guard/putback.py put_back; strict xfail F2 flipped to a passing test; ReplyMaskFailed on failure, cost still settled; gate tests 399 passed; builder mutants Q1a-i 9/9, gate_mutants whole not yet re-run on merged head: MIN 168). head a8ec2b6d6. 1730Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b), heavy processes 6, load (/proc/loadavg) 3.63 2.59 2.25, head bf0701d67. ANSWERS-1730Z.md. No long command in the turn (mutant run in background). 1726Z R
+STATE: 17:50Z LOAD 4.06 3.23 2.54 (/proc/loadavg; was 4-5). Heavy processes alive: 3 at the last ps (my whole-tree redact_mutants, Q2 gate_mutants subset, Q3 gate_mutants subset). Action: Q2, Q3, P7b builders told to run ONE heavy process at a time and no whole gate_mutants run until `pgrep -f mutants.py` is empty; timings taken above load 4 are INVALID-LOAD; P10 perf only at load under 2. Running agents 4 (Q2, Q3, P7b builders, Q1 reviewer). 17:45Z REAL RUNNING AGENTS 4: Q2, Q3, P7b builders + Q1 reviewer; heavy: whole-tree redact_mutants in background. Load (/proc/loadavg) 5.01 3.20 2.49. Q1 MERGED (reply masking in the gate + guard/putb
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 5.0 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+CAPACITY: load 4.1 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;310M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:31:17+00:00
+PUSHED_UTC: 2026-11-20T17:32:10+00:00
 
 (23:02 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
