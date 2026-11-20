@@ -702,16 +702,16 @@ such pieces).
 ## 4. G4b: the kind ENCODED (guard/redact.py)
 1. `_LABELS = tuple(dict.fromkeys([*(label for label, _ in PATTERNS), "ENCODED"]))` (redact.py 868). ENCODED is NOT in `PATTERNS`.
    - What follows from `_LABELS`: the counters (`_Redactor`, 1112). Since E9 nothing else is built from it: `_KIND` and
-     `_OPENINGS` are gone and `_OWN_OUTPUT` names `SECRET` only (redact.py 883-886). v4's "`_OWN_OUTPUT` follows" is withdrawn.
+     `_OPENINGS` are gone and `_OWN_OUTPUT` names `SECRET` only (CHANGED in v7: `_OWN_TOKEN` / `_OWN_OUTPUT`, redact.py 889-890). v4's "`_OWN_OUTPUT` follows" is withdrawn.
    - Own output after E9 (MEASURED on the prototype at e8ff6de2b): `password=<ENCODED_1>` stays as typed with no entry, by the OLDER
-     rule of `_decide` (a value that is nothing but genuine placeholders, any kind: redact.py 1661-1666). `password=‹ENCODED_1›`
+     rule of `_decide` (a value that is nothing but genuine placeholders, any kind: CHANGED in v7: redact.py 1672-1675). `password=‹ENCODED_1›`
      (escaped look-alike) is masked as `password=<SECRET_1>` with the entry `‹ENCODED_1›`, exactly as `password=‹EMAIL_1›` is; and
      `password=<ENC` (a cut-off opening) is masked as `password=<SECRET_1>`, as `password=<EMA` is. So the v4 nit "`<ENC` is a
      cut-off own opening left unmasked" no longer applies: E9 limits cut-off openings to `<SECRET_`.
    - The growth-factor test (tests/test_runmap_enforce_map.py:470, longest label) still passes: ENCODED is 7 letters, AZURERESOURCE 13.
    - tests/test_redact_context_after_sweep.py:469 calls `_place` for every label of `_LABELS`, ENCODED included: it is run in Phase 2.
-2. `SECRET_KINDS` gains "ENCODED" (redact.py 2143-2159).
-3. Counter restoration needs no new code (redact.py 1110-1125: a kind in `self.counters` is restored from the map's numbers).
+2. `SECRET_KINDS` gains "ENCODED" (CHANGED in v7: redact.py 2182-2198).
+3. Counter restoration needs no new code (CHANGED in v7: redact.py 1112-1121: a kind in `self.counters` is restored from the map's numbers).
 4. `def place_encoded(mapping: dict[str, str], runs: list[str]) -> list[str]` is the only writer of ENCODED.
    - For each run in order, it returns the placeholder the run gets and adds it to `mapping` IN PLACE: exactly one entry per new run.
      No `_PIECE` pieces, no `_spelled`, no journal.
@@ -723,7 +723,8 @@ such pieces).
    - CHANGED in v6 (0.3b): once G9 is merged, a G9 union whose first token is `<ENCODED_n>` is registered by `_place_union` /
      `_place` as an ENCODED entry too; "only writer" means the only writer of an ENCODED entry for a base64 unit.
 5. `_build` tie-break, restricted to the same original.
-   - The sort key (redact.py 1936, `key=lambda kv: -len(kv[1])`) is NOT changed. The rules loop (1941-1944) becomes:
+   - The sort key (CHANGED in v7: redact.py 1964, `key=lambda kv: -len(kv[1])`) is NOT changed. The rules loop (1967-1972; the
+     two lines G4 replaces are 1971-1972) becomes:
      ```python
      rule = _sweep(placeholder, original)
      if rule is not None and (
@@ -733,7 +734,11 @@ such pieces).
          self._rules[original] = (n, placeholder, rule)
      ```
    - For one original held by an identifier and by a secret kind, the secret kind's rule wins (as `runmap._rules_conflict` already
-     does in `snapshot`). Two DIFFERENT originals keep the order the stable sort gives.
+     does in `snapshot`). Two DIFFERENT originals keep the order the stable sort gives. CHANGED in v7 (review round 6 design M2):
+     that is NOT what `snapshot` does: when `_rules_conflict` is true for ANY original, `snapshot` re-sorts EVERY entry with an
+     every-copy rule (`_sweep(*kv) is _EVERY_COPY`: a secret kind of 4 characters or more) before the others, so two different
+     overlapping originals follow the secret one at the gate whenever some other original of the map is held twice. The tie-break
+     does not do that; so gate mutant R8 is NOT equivalent under G4 (9.3, TB-2.11, MEASURED).
    - CHANGED in v6 (review round 5 N1): the winning secret entry keeps ITS OWN index `n` (the line stores `(n, placeholder, rule)`
      of the later entry), so an original that is also held by a later secret entry moves back in the order the sweep applies
      overlapping values in. v5's "the docstring stays true" is withdrawn: `enforce_map`'s docstring clause "(the earlier in the map
@@ -747,7 +752,7 @@ such pieces).
      `{"<TENANT_1>": X, "<SECRET_1>": X}`: `preQUJDREVGR0hJpost and <TENANT_1> alone`; on the prototype with
      `{"<TENANT_1>": X, "<ENCODED_1>": X}`: `pre<ENCODED_1>post and <ENCODED_1> alone` (TB-2.7).
    - MEASURED at the base AND on the prototype, `enforce_map("x ab-cd-ef y", m)` for the four maps (TB-2.8, review round 4 readiness
-     Major 7), identical on both:
+     Major 7), identical on both (CHANGED in v7: the values of a tree WITHOUT G9; with G9 they change, 0.3b table):
      | m (in insertion order) | output |
      |---|---|
      | `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"}` | `x ab-<TENANT_1> y` |
@@ -756,13 +761,14 @@ such pieces).
      | `{"<SECRET_1>": "cd-ef", "<TENANT_1>": "ab-cd"}` | `x ab-<SECRET_1> y` |
      v3's sort key `(-len, kind not in SECRET_KINDS)` would have changed the first to `x <SECRET_1>-ef y` (L16 fallback).
    - CHANGED in v6 (review round 5 N1): a FIFTH map, `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<SECRET_2>": "cd-ef"}`, where
-     the tie-break moves the rule index. Text `x ab-cd-ef y`. BY READING (review round 5's values; not measured by the v6 drafter):
+     the tie-break moves the rule index. Text `x ab-cd-ef y`. CHANGED in v7: MEASURED at 944d143db (`r8.py`: G4's rules loop
+     patched into `_Redactor._build` in-process), equal to review round 5's values read by v6:
      | call | base | after G4 |
      |---|---|---|
      | the redactor's own sweep, `runmap._Redactor(m, None).sweep(t)` (as test_e5's `_one_sweep`) | `x ab-<TENANT_1> y` (cd-ef at index 0, TENANT rule, standalone after `-`) | `x <SECRET_1>-ef y` (cd-ef's rule is SECRET_2's at index 2; ab-cd at index 1 goes first) |
-     | `runmap.enforce_map(t, m)` | `x <SECRET_1>-ef y` (`_rules_conflict` is true, so `snapshot` sorts the secret-kind entries first) | `x <SECRET_1>-ef y` |
-     The builder measures both rows in Phase 2 and pins the measured strings; a difference from this table is recorded in the
-     evidence (not a STOP unless the after column shows a readable `ab-cd` or `cd-ef`).
+     | `runmap.enforce_map(t, m)` | `x <SECRET_1>-ef y` (`_rules_conflict` is true, so `snapshot` sorts the every-copy entries first) | `x <SECRET_1>-ef y` |
+     The builder re-measures both rows in Phase 2 and pins the measured strings; a difference from this table is recorded in the
+     evidence (not a STOP unless the after column shows a readable `ab-cd` or `cd-ef`). With G9 merged: the G9 + G4 column of 0.3b.
 6. `defaults.STORED_KINDS` does NOT change, and `runmap._GRAMMAR` gets no ENCODED entry.
 7. `RedactionResult.actions` does not count ENCODED replacements (it has no reader in src; stated).
 8. approvals/channel.py 98 `_ASSIGNMENT_KINDS` gains "ENCODED" (L10). What it does, MEASURED (TB-3.26, review round 4 codebase B3):
