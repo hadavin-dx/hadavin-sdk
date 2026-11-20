@@ -41,9 +41,11 @@ N8N = Path(__file__).resolve().parents[2] / "n8n"
 MAIN, ERROR, README = "hadavin-trigger.json", "hadavin-trigger-error.json", "README-trigger.md"
 PREFIX = "n8n-nodes-base."
 EVIDENCE = "handover/core-a/inputs/lead-evidence-n8n-1.md"
-SEEN = "SEEN IN n8n 2.47.7:"
+SEEN = "SEEN IN n8n 2.47.7"  # with or without the colon: a note that cites a record writes "(record, once)"
 OPEN = "UNVERIFIED:"
-NOT_REIMPORTED = "this version not re-imported"
+EDITED_SINCE = (
+    "names and notes edited since"  # the workflow names: the nodes are those of the fourth record
+)
 WEBHOOK_ID = (
     "00000000-0000-4000-8000-000000000000"  # the made-up placeholder, replaced per installation
 )
@@ -52,26 +54,19 @@ SET_VERSION = 3.4  # with 3, n8n 2.47.7 ignored "assignments" and reported no er
 SECRET_FIELDS = ("secret", "password", "passphrase", "token", "apikey", "privatekey")
 SECRET_READS = ("$env", "$vars", "$secrets", "createHmac", "require(")
 # The nodes whose note still names something nobody has seen working. Change this list with the notes.
+# After the fourth record (evidence-n8n-4.md, each case once) eight nodes of the main file are SEEN as written.
 OPEN_NODES = {
     MAIN: {
         "Trigger placeholder",
         "Id and text present?",
-        "Stop: id or text missing",
-        "Answer caller: taken",
         "Hash business id",
-        "Build request",
-        "Stamp time",
         "Sign",
         "Send to Hadavin",
         "Busy and rounds left?",
-        "Next round",
         "Wait before next round",
         "Stop: refused or gave up",
-        "Run still going?",
         "Checks left?",
-        "Next check",
         "Run ended well?",
-        "Done: finished or waits for approval",
         "Stop: run did not end well",
         "Stop: still running",
     },
@@ -79,17 +74,18 @@ OPEN_NODES = {
 }
 # What nobody has run, as the README's status part must name it.
 NOT_RUN = (
-    "These two files as they stand now",
-    "INSIDE the full chain",
-    'The "Answer caller: taken" node',
+    "The placeholder values of these two files as they stand now",
     "A manual retry of a failed execution from the n8n editor",
     "45 rounds with 70 second waits",
-    "The state check after a 202 or 200 answer",
-    "The real Hadavin endpoint (a stub answered)",
+    "for every state but NO_ACTION, RECEIVED and WORKING",
+    "The real Hadavin endpoint behind a real reverse proxy",
     "One webhook call that starts two executions",
     "n8n Cloud and queue mode",
     "n8n versions other than 2.47.7",
     "A receiver that answers 520 to 524",
+    "a lone surrogate",
+    "HTTP Request timeout of 45 seconds",
+    "Whether anybody is told when an execution is lost in a restart of n8n",
 )
 # The busy condition, as the node must hold it: where the status is read, the statuses that mean "try again",
 # and the test that counts a missing status (no HTTP answer at all) as "try again" too.
@@ -115,6 +111,8 @@ BUSY_EXPRESSION = (
 )
 EVIDENCE_2 = "handover/core-a/inputs/evidence-n8n-2.md"
 EVIDENCE_3 = "handover/core-a/inputs/evidence-n8n-3.md"
+EVIDENCE_4 = "handover/core-a/inputs/evidence-n8n-4.md"
+SEEN_4 = f"SEEN IN n8n 2.47.7 ({EVIDENCE_4}, once"
 # What n8n 2.47.7 put in the field `error` of the failed item (evidence-n8n-2.md, lines 117 to 208).
 ERROR_ITEMS = {
     "refused connection": {
@@ -181,6 +179,7 @@ VERIFY_ITEMS = (
     "n8n publish:workflow",
     "a refused event",
     "pass the item through",
+    "an execution that is lost in a restart",
 )
 # The state check. How the workflow sorts the state of an answer, taken from the code so that a renamed or a new
 # state fails here: "still going" = the states the tick's stuck step ends when a run stops moving; "success" = the
@@ -414,12 +413,15 @@ def _example_stuck() -> tuple[SimpleNamespace, float]:
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
-def test_file_parses_and_says_this_version_was_not_imported_again(name):
+def test_file_parses_and_says_it_was_run_in_the_fourth_record_with_the_placeholders_replaced(name):
     flow = _load(name)
-    assert "run in n8n 2.47.7" in flow["name"] and NOT_REIMPORTED in flow["name"]
+    assert "run in n8n 2.47.7" in flow["name"] and EDITED_SINCE in flow["name"]
     assert flow["active"] is False
-    assert flow["notes"].startswith(OPEN) and "has not been imported" in flow["notes"]
-    assert EVIDENCE in flow["notes"]
+    # the placeholder values were replaced before the import: they stay open; the file itself was run
+    assert flow["notes"].startswith(OPEN + " the placeholder value")
+    assert "was imported, published and run in the fourth record" in flow["notes"]
+    assert "has not been imported" not in flow["notes"]
+    assert EVIDENCE_4 in flow["notes"] and EVIDENCE in flow["notes"]
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
@@ -437,17 +439,38 @@ def test_every_node_has_a_name_a_type_and_a_note_that_says_what_was_seen(name):
     assert still_open == OPEN_NODES[name], still_open ^ OPEN_NODES[name]
 
 
-def test_a_node_that_was_not_in_the_run_does_not_claim_it_was_seen():
+def test_a_node_claims_only_what_a_record_shows():
     nodes = _nodes(_load(MAIN))
     added = [name for name, node in nodes.items() if node["type"] == PREFIX + "respondToWebhook"]
     assert added == ["Answer caller: taken"]
-    for name in [*added, _sign_node(_load(MAIN)), _load(MAIN)["nodes"][0]["name"]]:
+    # the credential placeholders were replaced before the import of the fourth record: still open
+    for name in [_sign_node(_load(MAIN)), _load(MAIN)["nodes"][0]["name"]]:
         assert nodes[name]["notes"].startswith(OPEN), name
     for name in added:
-        # the node as written was never run; what its Respond node does was seen once, in the third record
+        # the node as written was run once in the fourth record (noData, 202, early answer); the earlier
+        # claim that it was never run is gone; what its Respond node does was seen in the third record too
         note = nodes[name]["notes"]
-        assert "NOT part of any run as written" in note, name
+        assert note.startswith(SEEN_4), name
+        assert "NOT part of any run as written" not in note and OPEN not in note, name
+        assert "lines 47 to 49, 84 to 86" in note and "0.10 to 0.33 s" in note, name
         assert f"SEEN IN n8n 2.47.7 ({EVIDENCE_3}, each case ran once)" in note, name
+    # every node that is not open starts with a SEEN mark, and the ones the fourth record closed name it
+    for name in set(nodes) - OPEN_NODES[MAIN]:
+        assert nodes[name]["notes"].startswith(SEEN), name
+    closed = {
+        "Stop: id or text missing",
+        "Answer caller: taken",
+        "Build request",
+        "Stamp time",
+        "Next round",
+        "Run still going?",
+        "Next check",
+        "Done: finished or waits for approval",
+    }
+    for name in closed:
+        assert nodes[name]["notes"].startswith(SEEN_4), name
+    for name in OPEN_NODES[MAIN]:
+        assert SEEN_4 in nodes[name]["notes"] or name.startswith("Stop:"), name
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
@@ -688,7 +711,7 @@ def test_guard_comes_before_hashing_and_signing():
     assert not {sign, hashing} & _reach(flow, stop)
 
 
-def test_the_caller_is_answered_and_the_readme_says_this_was_not_run():
+def test_the_caller_is_answered_and_the_readme_says_this_was_run_once():
     flow = _load(MAIN)
     nodes, edges = _nodes(flow), _edges(flow)
     webhook = flow["nodes"][0]
@@ -701,12 +724,13 @@ def test_the_caller_is_answered_and_the_readme_says_this_was_not_run():
     for name in answers:
         assert "body" not in json.dumps(nodes[name]["parameters"]).lower()  # an empty answer
     readme = " ".join(_readme().split())
-    assert "This branch was NOT run in n8n as written." in readme
+    assert "This branch WAS run in n8n as written (fourth record" in readme
     assert "the caller got HTTP 200 from n8n although the guard had stopped the event" in readme
     assert "It does NOT mean that Hadavin accepted it" in readme
     assert "IN SERIES on the guard's first output" in readme
     assert "has NO answer node" in readme and "n8n's own error answer" in readme
-    assert "UNVERIFIED: its status and body" in readme
+    assert "UNVERIFIED: its status and body" not in readme
+    assert 'HTTP 500 with the body `{"message":"Error in workflow"}`' in readme
 
 
 def test_the_webhook_has_authentication_and_the_readme_makes_it_a_required_step():
@@ -716,7 +740,10 @@ def test_the_webhook_has_authentication_and_the_readme_makes_it_a_required_step(
     reference = webhook["credentials"]["httpHeaderAuth"]
     assert set(reference) == {"id", "name"} and reference["id"].startswith("REPLACE-")
     assert "AUTHENTICATION IS A REQUIRED SET-UP STEP" in webhook["notes"]
-    assert webhook["notes"].startswith(OPEN)  # the shape was written from memory
+    assert webhook["notes"].startswith(
+        OPEN
+    )  # the placeholder credential id was replaced before the import
+    assert "HTTP 403" in webhook["notes"] and SEEN_4 in webhook["notes"]
     readme = " ".join(_readme().split())
     section = readme.partition("## Webhook authentication")[2].partition(
         "## Where the secret lives"
@@ -726,7 +753,8 @@ def test_the_webhook_has_authentication_and_the_readme_makes_it_a_required_step(
         "REQUIRED set-up step",
         "Header authentication",
         "`httpHeaderAuth`",
-        "UNVERIFIED: that shape",
+        "SEEN IN n8n 2.47.7 (fourth record, once, lines 35, 60 and 75): that shape",
+        "HTTP 403",
         "an unguessable path",
         "at least 32 random characters",
         "never the trigger secret",
@@ -1204,11 +1232,26 @@ def test_readme_status_says_what_was_run_what_was_not_and_lists_every_verify_ite
     # the status stands at the very top: the first paragraph after the title
     status = " ".join(readme.split("\n\n")[1].split())
     assert status.startswith(
-        "**Status: an earlier version of these two files was run in n8n 2.47.7"
+        "**Status: these two files were imported, published and run in n8n 2.47.7 by the lead"
     )
-    assert f"`{EVIDENCE}`" in status
-    assert "have NOT been imported or run in any n8n since" in status
-    assert "Nobody has run this exact version." in status
+    assert f"`{EVIDENCE}`" in status and f"`{EVIDENCE_4}`" in status
+    assert "have NOT been imported or run in any n8n since" not in status
+    assert "Nobody has run this exact version." not in status
+    assert "each case run ONCE" in status and "the placeholders themselves were not run" in status
+    for phrase in (  # the seen things, each with its line, and the open things, in the status
+        "(line 46)",
+        "(lines 47 and 48)",
+        "(line 49)",
+        "(line 51)",
+        "the error workflow does NOT run (line 50)",
+        "(lines 59 and 62 to 64)",
+        "HTTP 403 (line 60)",
+        "(lines 84 to 86)",
+        "survived a restart of n8n (line 66)",
+        "a timeout of 45 seconds, a redirect, 502, 503 or 504 with a body, 520 to 524",
+        "a lone surrogate, null values, an execution lost in a restart",
+    ):
+        assert phrase in status, phrase
     assert "not run in n8n" not in flat.replace("NOT run in n8n", "")  # the old status line is gone
     _head, _, listed = flat.partition("NOT run by anybody")
     listed = listed.partition("## What the two workflows do")[0]
@@ -1218,11 +1261,19 @@ def test_readme_status_says_what_was_run_what_was_not_and_lists_every_verify_ite
     assert re.findall(r"(?<!\d)(\d)\. ", seen)[:8] == [str(i) for i in range(1, 9)]
     _head, _, tail = readme.partition("## VERIFY ON A REAL n8n BEFORE ANY CLIENT USE")
     assert tail, "the verify list is gone"
-    items = re.findall(r"^(\d+)\. NOT VERIFIED", tail, re.MULTILINE)
+    mark = r"(?:NOT VERIFIED|DONE)"
+    items = re.findall(rf"^(\d+)\. {mark}", tail, re.MULTILINE)
     assert items == [str(i) for i in range(1, len(VERIFY_ITEMS) + 1)]
-    entries = re.split(r"^\d+\. NOT VERIFIED", tail, flags=re.MULTILINE)[1:]
+    entries = re.split(rf"^\d+\. {mark}", tail, flags=re.MULTILINE)[1:]
     for phrase, entry in zip(VERIFY_ITEMS, entries, strict=True):
         assert phrase in " ".join(entry.split()), phrase
+    # the items a real run now covers are DONE and cite the evidence lines; every other item stays NOT VERIFIED
+    marks = dict(re.findall(rf"^(\d+)\. ({mark})", tail, re.MULTILINE))
+    done = {1, 2, 4, 9, 21, 22, 24}
+    assert {int(n) for n, m in marks.items() if m == "DONE"} == done, marks
+    for number, entry in enumerate(entries, start=1):
+        if number in done:
+            assert " ".join(entry.split()).startswith("(line"), number
 
 
 def test_readme_lists_the_states_a_200_can_carry_as_the_code_has_them():
@@ -1538,9 +1589,11 @@ def test_the_workflow_sorts_the_states_exactly_as_the_code_names_them():
     )  # unknown state: fails too
     for word in ("$json.body", "$json.ts", "$json.hmac", "document", "$('Build request')"):
         assert word not in message, word
-    for name in (c.check, c.verdict):
-        assert "REQUIRED" in nodes[c.check]["notes"]
-        assert nodes[name]["notes"].startswith(OPEN), name
+    assert "REQUIRED" in nodes[c.check]["notes"]
+    assert nodes[c.check]["notes"].startswith(SEEN_4)  # NO_ACTION, RECEIVED, WORKING were run
+    assert nodes[c.verdict]["notes"].startswith(
+        OPEN
+    )  # SUCCEEDED, WAITING_FOR_APPROVAL, the rest were not
 
 
 def _list_text(states: frozenset[RunState]) -> str:
@@ -1762,7 +1815,8 @@ def test_readme_says_why_a_202_is_not_the_end_and_has_a_row_for_every_state():
     assert "There is no state named FAILED in the code" in flat
     assert "The answer holds no reason" in flat
     assert "fails closed" in flat
-    assert "UNVERIFIED: all of this section's n8n side." in flat
+    assert "UNVERIFIED: all of this section's n8n side for every other state" in flat
+    assert "SEEN IN n8n 2.47.7 (fourth record, once each, lines 47, 58, 112 to 118)" in flat
     # the nodes the section names exist
     names = set(_nodes(_load(MAIN)))
     for name in re.findall(r'"([^"]+)"', flat):
@@ -1842,7 +1896,11 @@ def test_the_wait_is_above_65_seconds_and_every_number_that_follows_from_it_agre
         "each case once",
     ):
         assert phrase in note, phrase
-    assert note.startswith(OPEN) and "was not run" in note  # 70 s itself in a restart: an inference
+    # 70 s in a restart was SEEN once in the fourth record; the notice for a lost execution stays open
+    assert note.startswith(OPEN) and "whether anybody is told when an execution is lost" in note
+    assert f"{SEEN_4}; lines 47, 50, 58, 66, 105 to 107, 109)" in note
+    assert "is now SEEN once" in note and "survived a restart of n8n" in note
+    assert "was not run" not in note
     # 45 rounds and 45 checks of 70 s: 3150 s, 52 minutes, 105 minutes together, and the old numbers are gone
     assert 45 * 70 == 3150 and 3150 // 60 == 52 and 2 * 3150 // 60 == 105
     assert 3150 + 46 * 45 == 5220 and 5220 // 60 == 87  # 45 waits and 46 sends of 45 s at the most
@@ -1901,7 +1959,8 @@ def test_the_restart_fact_is_a_known_fact_in_the_limits_the_checklist_and_the_st
         "an execution in a wait of 60 seconds, restarted at about second 20, was LOST",
         "an execution in a wait of 120 seconds, restarted at about second 30, was saved as waiting, survived",
         "that a wait of exactly 70 seconds is saved like the 120 seconds one",
-        "(an inference from the threshold, not run)",
+        "SEEN IN n8n 2.47.7 (fourth record, once, line 66)",
+        "stayed waiting, resumed and finished with success",
         "whether the error workflow runs for a lost execution",
     ):
         assert phrase in limits, phrase
@@ -1938,13 +1997,15 @@ def test_respond_then_stop_and_error_is_seen_and_the_guard_shape_relies_on_it():
     assert not after & set(answers)  # no second Respond node can run after the first
     ends = [n for n in after if not edges.get(n)]
     assert ends and {nodes[n]["type"] for n in ends} <= {PREFIX + "stopAndError", PREFIX + "noOp"}
-    assert "SEEN" in nodes["Stop: id or text missing"]["notes"].replace("UNVERIFIED", "")
+    stop_note = nodes["Stop: id or text missing"]["notes"]
+    assert stop_note.startswith(SEEN_4) and OPEN not in stop_note
+    assert 'HTTP 500 with the body {"message":"Error in workflow"}' in stop_note
     assert (
         "that is not this case, because here no answer node has run"
         in nodes["Stop: id or text missing"]["notes"]
     )
     readme = " ".join(_readme().split())
-    part = readme.partition("This branch was NOT run in n8n as written.")[2].partition(
+    part = readme.partition("This branch WAS run in n8n as written")[2].partition(
         "## Webhook authentication"
     )[0]
     for phrase in (
@@ -1952,8 +2013,9 @@ def test_respond_then_stop_and_error_is_seen_and_the_guard_shape_relies_on_it():
         "the caller KEPT the Respond answer (HTTP 200 there)",
         "This chain relies on exactly that",
         "never add another answer node to this chain",
-        "UNVERIFIED: this node as written",
-        "that n8n answers the caller before it starts the long sending chain",
+        "(fourth record, once, lines 47 to 49, 59 and 84 to 86)",
+        "n8n answered at once, before the long chain",
+        "is corrected by the fourth record",
     ):
         assert phrase in part, phrase
     # the error workflow's note carries the same fact, and says what is NOT shown
@@ -1965,3 +2027,35 @@ def test_respond_then_stop_and_error_is_seen_and_the_guard_shape_relies_on_it():
     # the top-level note of the main file names the third record, each case once
     top = flow["notes"]
     assert EVIDENCE_3 in top and "each case once" in top
+
+
+# ---- the fourth record: a receiver that is down and then recovers is silent ----
+
+
+def test_the_readme_states_that_a_receiver_that_recovers_is_silent_and_how_long_that_lasts():
+    readme = " ".join(_readme().split())
+    part = readme.partition(
+        "### A receiver that is down and then recovers is silent: success, no error workflow"
+    )[2].partition("### 200 does not mean")[0]
+    assert part, "the section is gone"
+    for phrase in (
+        "This is documented and deliberate: an outage that recovers needs no person.",
+        "the execution ends as a success, and the error workflow is NOT started",
+        "The client's records show such an event as a late success",
+        "(fourth record, once, lines 50 and 124)",
+        "no execution of the error workflow was created",
+        "45 waits of 70 seconds, 3150 seconds, 52 minutes",
+        'An outage that lasts longer ends at "Stop: refused or gave up" and the error workflow tells a person.',
+    ):
+        assert phrase in part, phrase
+    # the bound is the busy rounds of the node: 45 rounds times the wait of 70 s
+    flow = _load(MAIN)
+    wait = _nodes(flow)[_one(flow, "wait")]["parameters"]["amount"]
+    assert 45 * wait == 3150 and 3150 // 60 == 52
+    assert (
+        _busy_parts(BUSY_EXPRESSION)[1] == 45
+    )  # the busy rounds of the "Busy and rounds left?" node
+    # the error workflow's note says the same, and says it was seen
+    notify = _load(ERROR)["nodes"][-1]["notes"]
+    assert "a short outage that recovers is silent here by design" in notify
+    assert "did NOT run when the receiver was down" in notify
