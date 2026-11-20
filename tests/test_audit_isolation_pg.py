@@ -65,7 +65,7 @@ def test_two_writers_under_a_repeatable_read_role_default_leave_one_gapless_chai
                 ]
                 errors: list[BaseException] = []
 
-                def work(log, tag):
+                def work(log, tag, errors=errors):
                     try:
                         for i in range(N):
                             log.write_intent(_event(tag, i))
@@ -73,7 +73,8 @@ def test_two_writers_under_a_repeatable_read_role_default_leave_one_gapless_chai
                         errors.append(exc)
 
                 threads = [
-                    threading.Thread(target=work, args=(log, tag)) for log, tag in zip(logs, "ab")
+                    threading.Thread(target=work, args=(log, tag))
+                    for log, tag in zip(logs, "ab", strict=True)
                 ]
                 for t in threads:
                     t.start()
