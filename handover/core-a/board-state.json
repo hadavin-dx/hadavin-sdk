@@ -190,11 +190,11 @@
   {
    "item": "MUTANTS-2",
    "what": "extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/endpoint-mutants-run-3.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log",
    "tries": 1,
-   "reason": "ORDER 013 item 1 (started 05:58Z before the order arrived, same content)"
+   "reason": "30 of 30 good; problems: [] (13 new mutants in groups G8 to G12: quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM). Weak points: G11a and G12c rest on the pinned test more than on the message text; run by the agent, not re-run by me"
   },
   {
    "item": "O13-2",
@@ -461,12 +461,12 @@
    "model": "fable",
    "what exactly it is doing": "adds mutant groups G8 to G12 to the script and runs it once",
    "started UTC": "05:58",
-   "expected end": "about 20 min after start",
-   "percent": 5,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "ORDER 013 item 1"
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -679,6 +679,15 @@
    "first failing line": "tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md)",
    "state": "done",
    "reason": "INHERITED from the handover folder, not from code; no NEW failure"
+  },
+  {
+   "suite or file": "tests/endpoint_mutants.py (30 mutants)",
+   "branch and SHA": "working tree",
+   "run number": "4 (agent, after the extension)",
+   "passed / failed / errors": "30 of 30 good; problems: []",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "covers the lead-review code now; database tests are skipped inside mutant runs"
   }
  ],
  "restarts": [],

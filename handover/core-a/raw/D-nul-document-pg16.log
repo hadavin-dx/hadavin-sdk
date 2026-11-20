@@ -35,4 +35,4 @@ tests/triggers/test_t5_nul_document.py::test_level3_postgres_no_insert_fails_and
 tests/triggers/test_t5_nul_document.py::test_level3_postgres_same_key_with_and_without_the_nul_is_409 PASSED [ 96%]
 tests/triggers/test_t5_nul_document.py::test_level3_postgres_tooled_run_from_a_nul_document_ends_in_shadow PASSED [100%]
 
-============================== 29 passed in 2.94s ==============================
+============================== 29 passed in 3.81s ==============================

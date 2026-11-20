@@ -1,4 +1,4 @@
-core-b commit: 820c65c (origin/cloud/core-b), tree unpacked with git archive into a scratch folder; run 2026-11-20T06:03:08Z
+core-b commit: 820c65c (origin/cloud/core-b), tree unpacked with git archive into a scratch folder; run 2026-11-20T06:03:30Z
 hadavin_sdk.config from: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/coreb/src/hadavin_sdk/config.py
 ...x...............................................xxxxxxxx.......ss...s [ 55%]
 s...ss...ss...ss....sxxxssssssss............xxx.xs.......                [100%]
@@ -22,5 +22,5 @@ XFAIL tests/test_trigger_config.py::test_reader_refuses_a_name_that_no_sender_li
 SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.poll_s
 SKIPPED [7] tests/test_trigger_config.py:83: field not built on this branch: triggers.port
 SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.allow_non_loopback
-SKIPPED [1] tests/test_trigger_config.py:629: field not built on this branch: App.trigger_resolve
-93 passed, 20 skipped, 16 xfailed in 3.86s
+SKIPPED [1] tests/test_trigger_config.py:626: field not built on this branch: App.trigger_resolve
+93 passed, 20 skipped, 16 xfailed in 4.36s
