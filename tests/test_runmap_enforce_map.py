@@ -1188,3 +1188,82 @@ def test_g13c_6_a_value_that_starts_with_ordinary_words_refuses_text_that_starts
 def test_g13c_6b_desired_ordinary_words_beside_a_key_are_sent():
     snap = _g13c_snap(["the quick brown fox"])
     assert not runmap.held_value_left("the <HOST_1>", snap)
+
+
+def _g13d_spent(text, snap):
+    before = snap.budget.chars
+    assert not runmap._touching_piece(text, snap)
+    return before - snap.budget.chars
+
+
+def test_g13c_7_a_repeated_piece_is_charged_at_every_hit_left():
+    """G13c-7 (review 1, M1): the reviewer's shape: a gap `a`*4090 + `b` repeated before many keys, a 16,000-character value
+    that starts `aaaa`. A piece already looked up is not looked up again, but every hit is CHARGED (1 + length/64, before the
+    `seen` test): the second identical gap costs about 134,000 characters, not 0, so many keys run the call's budget out."""
+    snap = _g13c_snap(["aaaa" + "c" * 16_380])
+    gap = "a" * 4090 + "b<HOST_1>"
+    one = _g13d_spent(gap, snap)
+    assert one >= 4_000 * runmap._LOOKUP_COST * 0.9, f"G13c-7 a lookup was not charged: {one}"
+    two = _g13d_spent(gap * 2, _g13c_snap(["aaaa" + "c" * 16_380]))
+    assert two - one >= 100_000, f"G13c-7 a repeated piece was not charged: {one} then {two}"
+    big = _g13c_snap(["aaaa" + "c" * 65_000])
+    with pytest.raises(runmap.InputTooLarge):
+        runmap._touching_piece(gap * 100, big)  # 410 KB, under ENFORCE_MAX_CHARS
+
+
+def test_g13c_8_a_repeated_piece_is_charged_at_every_hit_right():
+    """G13c-8: the same on the right side (`<HOST_1>` + `b` + `a`*4090 repeated, a value that ENDS `aaaa`); the lookup of a
+    distinct piece is charged too."""
+    values = ["c" * 16_380 + "aaaa"]
+    gap = "<HOST_1>b" + "a" * 4090
+    one = _g13d_spent(gap, _g13c_snap(values))
+    assert one >= 4_000 * runmap._LOOKUP_COST * 0.9, f"G13c-8 the lookup was not charged: {one}"
+    two = _g13d_spent(gap * 2, _g13c_snap(values))
+    assert two - one >= 100_000, f"G13c-8 a repeated piece was not charged: {one} then {two}"
+    with pytest.raises(runmap.InputTooLarge):
+        runmap._touching_piece(gap * 100, _g13c_snap(["c" * 65_000 + "aaaa"]))
+
+
+def test_g13c_9_the_deadline_is_read_every_256_hits_on_both_sides(monkeypatch):
+    """G13c-9 (nit 3): `hits % 256` reads the deadline: 1,000 head hits left of a key read it 1 (the key) + 3 times, and
+    the same on the right (the hit count is shared by both sides: 2,000 hits, 7 reads past the key's one)."""
+    calls = []
+    monkeypatch.setattr(runmap.EnforceBudget, "check", lambda self: calls.append(1))
+    left = _g13c_snap(["aaaa" + "c" * 5_000])
+    assert not runmap._touching_piece("a" * 1_003 + "b<HOST_1>", left)
+    assert len(calls) == 1 + 3, f"G13c-9 the left deadline reads: {len(calls)}"
+    calls.clear()
+    right = _g13c_snap(["c" * 5_000 + "aaaa"])
+    assert not runmap._touching_piece("<HOST_1>b" + "a" * 1_003, right)
+    assert len(calls) == 1 + 3, f"G13c-9 the right deadline reads: {len(calls)}"
+
+
+def test_g13c_10_the_seen_set_does_not_hold_long_pieces_whole_right():
+    """G13c-10 (nit 3): the memory test of G13c-2 on the right side (the pieces after each key)."""
+    import tracemalloc
+
+    snap = _g13c_snap(["c" * 16_380 + "aaaa"])
+    text = "".join(f"<HOST_1>{n:05d}" + "baaaa" * 2_000 for n in range(6))
+    tracemalloc.start()
+    try:
+        assert not runmap._touching_piece(text, snap)
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 40_000_000, f"G13c-10 the pieces looked up were kept whole: peak {peak:,} bytes"
+
+
+def test_g13d_1_values_of_only_separators_refuse_a_run_of_four_beside_a_key_a_stated_limit():
+    """G13d-1 (review 1, M2): STATED LIMIT, current behaviour pinned (an open question for the lead, ESCALATIONS E24): a
+    secret value made only of separators (whitespace, `********`) makes any run of 4 or more of its characters before or
+    after a key a piece: indentation beside a placeholder, `****<HOST_1>`, are refused (`held_value_left`) for the run."""
+    for value, runs in (
+        (" " * 8, ("    <HOST_1>", "<HOST_1>    ", "x       <HOST_1>")),
+        ("*" * 8, ("****<HOST_1>", "<HOST_1>****", "a ****<HOST_1>")),
+        ("\t \t \t \t ", ("\t \t <HOST_1>", "<HOST_1>\t \t ")),
+    ):
+        snap = _g13c_snap([value])
+        for text in runs:
+            assert runmap._touching_piece(text, snap), f"G13d-1 the stated limit changed: {text!r}"
+            assert runmap.held_value_left(text, snap)
+        assert not runmap._touching_piece("   <HOST_1>", snap), "G13d-1 a run of 3 is not a piece"
