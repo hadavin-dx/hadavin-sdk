@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:36:14Z
+UPDATED_UTC: 2026-11-20T07:36:38Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 40
 ITEMS_OPEN: 24
 PERCENT: 73
 AGENTS_RUNNING: 5
-CAPACITY: load 6.0 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
+CAPACITY: load 5.9 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 71M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: tests/test_gate_mutants_picked_up.py fails on purpose (24 mutants out of sync, re-sync by the gate fix agent); producers registry (core-b patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:31:18+00:00
+PUSHED_UTC: 2026-11-20T07:36:14+00:00
 
 (13:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
