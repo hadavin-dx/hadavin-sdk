@@ -92,7 +92,9 @@ class MemoryStore:
             run = self._runs.get(run_id)
             if run is None:
                 raise NotFound(run_id)
-            self._runs[run_id] = run.model_copy(update={"cost_usd": run.cost_usd + usd})
+            with localcontext(defaults.money_context()):
+                cost = run.cost_usd + usd
+            self._runs[run_id] = run.model_copy(update={"cost_usd": cost})
 
     def touch(self, run_id: str) -> None:
         """Heartbeat only: moves `updated_at`, never checks or changes the state (`transition` is the only
@@ -339,7 +341,8 @@ class MemoryStore:
                 reserved_usd=usd,
                 created_at=now(),
             )
-            self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
+            with localcontext(defaults.money_context()):
+                self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
             self._reservations[reservation_id] = row
 
     def settle_spend(

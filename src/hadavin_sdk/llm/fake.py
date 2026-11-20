@@ -12,6 +12,7 @@ from typing import Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
+from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.models import Reply
 
 
@@ -48,9 +49,12 @@ class FakeLLM:
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))
         r = self.routes[route]
-        with localcontext(defaults.money_context()):  # not the caller's precision
-            cost = (
-                Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
-                + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
-            ) / Decimal(1_000_000)
+        try:
+            with localcontext(defaults.money_context()):  # not the caller's precision
+                cost = (
+                    Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok
+                    + Decimal(data.get("output_tokens", 0)) * r.output_usd_per_mtok
+                ) / Decimal(1_000_000)
+        except ArithmeticError as exc:  # same mapping as llm/common.py reply()
+            raise ProviderError("bad_amount: the reply price overflowed") from exc
         return Reply(**data, cost_usd=cost, model_id=r.model_id)
