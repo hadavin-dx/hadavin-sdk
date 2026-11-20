@@ -1,5 +1,5 @@
-"""Mutants of the price constraint (step C): the 20 mutants of the ticket's mutation plan and of the by-hand kill
-table, run by ``tools/mutation_runner.py``.
+"""Mutants of the price constraint (step C): the mutants of the ticket's mutation plan and of the by-hand kill
+table (and two added after review: M12b, M13), run by ``tools/mutation_runner.py``.
 
 Each mutant reverts ONE guard of ``config.py`` in a temp copy of the package; the pinned test of
 ``tests/test_price_constraint.py`` must be the one that fails first, and its first failing line must hold ``expect``.
@@ -22,8 +22,9 @@ killer ends in an exception and not in a failed assertion: they are marked ``all
 the runner reads is pydantic's ``ValidationError: 1 validation error for Config`` (the cause of the ``ConfigError``),
 so for these three the class name and that text are checked, not which refusal it was.
 
-``HOLES`` names a mutant that no test of the file kills; it is printed and not run. M12 in ``M`` is the form of it
-that the tests do kill (the order reversed)."""
+``HOLES`` names the mutants that no test of the file kills; each is printed and not run. It is empty: the plain
+form of M12 (the routes not sorted at all) is M12b in ``M``, killed by a test that hands the helper a Config whose
+routes are in reverse order (a config file written with ``yaml.safe_dump`` always arrives sorted)."""
 
 import os
 import sys
@@ -59,8 +60,10 @@ E5_DATE = "test_e5_date_required_in_pilot_and_prod"
 E6_LOAD = "test_e6_today_and_old_dates_load"
 E6_FUTURE = "test_e6_future_date_refused_in_every_stage"
 E7 = "test_e7_prices_at_the_bounds_load"
+UTC_DAY = "test_today_is_the_utc_date"
 H1 = "test_h1_e7_bad_price_refused_for_fake_in_demo"
 H3 = "test_h3_all_zero_fields_in_one_error_sorted_by_route"
+H3_ORDER = "test_h3_the_refusals_are_sorted_by_route_when_the_routes_are_not"
 H4 = "test_h4_only_a_plain_date_is_read"
 H4_OBJECT = "test_h4_a_datetime_object_is_refused_directly"
 H5 = "test_h5_a_config_changed_by_model_copy_is_still_named_by_the_helper"
@@ -139,13 +142,14 @@ M = [
         E5_ZERO + f"[pilot-{IN}]", NOT_RAISED),
     mutant("M12 the routes are sorted last name first", "sorted(cfg.routes.items())",
         "sorted(cfg.routes.items(), reverse=True)", H3, "routes.alpha"),
+    mutant("M12b the routes are not sorted", "sorted(cfg.routes.items())", "cfg.routes.items()", H3_ORDER,
+        "routes.zeta"),
+    mutant("M13 _today uses the local date", "    return datetime.now(UTC).date()", "    return datetime.now().date()",
+        UTC_DAY, "datetime.date(2026, 11, 20) == datetime.date(2026, 11, 21)"),
 ]  # fmt: skip
 
-# A mutant NO test of tests/test_price_constraint.py kills (the whole file passes with it): (name, old, new, why).
-HOLES = [
-    ("M12 (plain form) the routes are not sorted", "sorted(cfg.routes.items())", "cfg.routes.items()",
-        "the tests write config.yaml with yaml.safe_dump, which sorts the keys, so the routes arrive sorted anyway"),
-]  # fmt: skip
+# Mutants NO test of tests/test_price_constraint.py kills (the whole file passes with them): (name, old, new, why).
+HOLES: list[tuple[str, str, str, str]] = []
 
 
 if __name__ == "__main__":

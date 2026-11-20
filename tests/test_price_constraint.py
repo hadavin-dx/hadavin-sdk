@@ -5,7 +5,7 @@ Written from the ticket's invariants by a different agent than the builder of th
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -235,10 +235,24 @@ def test_e6_the_day_is_read_from_the_clock_at_load(tmp_path, monkeypatch):
 
 
 def test_today_is_the_utc_date(monkeypatch):
-    before = datetime.now(UTC).date()
+    """The clock stands at 23:30 on 2026-11-20 at five hours behind UTC, which is 04:30 on 2026-11-21 in UTC:
+    the local date and the UTC date differ, and `_today` must give the UTC one."""
+    instant = datetime(2026, 11, 20, 23, 30, tzinfo=timezone(timedelta(hours=-5)))
+    assert instant.date() == date(2026, 11, 20) and instant.astimezone(UTC).date() == date(
+        2026, 11, 21
+    )
+
+    class Clock(datetime):
+        @classmethod
+        def now(
+            cls, tz=None
+        ):  # as datetime.now: local wall-clock time without tz, that zone's time with it
+            return instant.replace(tzinfo=None) if tz is None else instant.astimezone(tz)
+
+    monkeypatch.setattr(config_mod, "datetime", Clock)
     got = config_mod._today()
     assert type(got) is date
-    assert before <= got <= datetime.now(UTC).date()
+    assert got == date(2026, 11, 21)
 
 
 H4 = [
@@ -383,13 +397,14 @@ def test_e7_prices_at_the_bounds_load(cfg_dir, value, field):
 
 @pytest.mark.parametrize("zero", ["0E+30", "0E+999999", "0E-999999", "0." + "0" * 9_999])
 def test_hostile_zero_spellings_never_escape_as_another_error(cfg_dir, zero):
-    """A zero with a huge exponent is either loaded as zero (fake in demo) or refused: never a crash, and
-    never loaded for a real kind."""
-    try:
-        assert load_config(set_price(cfg_dir, zero)).routes["default"].input_usd_per_mtok == 0
-    except ConfigError as exc:
-        assert f"routes.default.{IN}" in str(exc)
-    assert f"routes.default.{IN}" in refusal(set_price(real_kind(cfg_dir), zero))
+    """A zero with a huge exponent is a zero: it loads for the fake kind in demo, is refused with the zero-price
+    line for the fake kind in pilot, and is never loaded for a real kind."""
+    assert load_config(set_price(cfg_dir, zero)).routes["default"].input_usd_per_mtok == 0
+    in_pilot = refusal(edit(cfg_dir, lambda d: d.__setitem__("environment", "pilot")))
+    assert "environment pilot: refused:" in in_pilot
+    assert f"routes.default.{IN}: {ZERO_TEXT}" in in_pilot
+    edit(cfg_dir, lambda d: d.__setitem__("environment", "demo"))
+    assert f"routes.default.{IN}: {ZERO_TEXT}" in refusal(real_kind(cfg_dir))
 
 
 def test_i3_both_fields_and_every_route_are_checked_for_sign(cfg_dir):
@@ -454,6 +469,19 @@ def test_h3_all_zero_fields_in_one_error_sorted_by_route(cfg_dir):
     ]
     assert ", ".join(want) in text
     assert text.count(ZERO_TEXT) == 4
+
+
+def test_h3_the_refusals_are_sorted_by_route_when_the_routes_are_not(cfg_dir):
+    """The helper sorts by itself: the routes of this Config are in reverse order (a YAML file written by
+    `yaml.safe_dump` always arrives sorted, so a load cannot show it)."""
+    cfg = load_config(real_kind(cfg_dir))
+    zero = cfg.routes["default"].model_copy(update={IN: 0})
+    names = ["zeta", "default", "alpha"]
+    changed = cfg.model_copy(update={"routes": dict.fromkeys(names, zero)})
+    assert list(changed.routes) == names  # not sorted
+    assert config_mod._price_refusals(changed) == [
+        f"routes.{name}.{IN}: {ZERO_TEXT}" for name in sorted(names)
+    ]
 
 
 def test_i4_zero_and_date_refusals_share_one_error_with_the_environment_refusals(tmp_path, today):

@@ -21,8 +21,14 @@ applies each to THIS working tree, runs the killer in ``tests/test_audit_drain.p
 HADAVIN_TEST_PG_DSN, and puts the file back byte for byte; it refuses to start when a target file has uncommitted
 changes and runs the killer on the clean tree first. Exit 1 if any is not KILLED.
 
-M4 is written as "the drained event is not removed and the flush stops": the plain form (the ``del`` line removed)
-loops forever, which the runner would report as TIMEOUT and not as a kill."""
+M4 is written as "the drained event is not removed and the flush stops": the plain form (the ``pop`` removed)
+loops forever, which the runner would report as TIMEOUT and not as a kill.
+
+M1 ends its killer in an exception, not in a failed assertion (the test looks the step up by name before it
+asserts on the order), so it is marked ``allow_crash`` and the exception class is checked.
+
+F1 to F6 are the mutants of fix round 1 (``_drain`` returns the exception, a refused event or row no longer blocks
+the ones after it, the step fails with the counts); their killers are the f1 to f7 tests."""
 
 import os
 import subprocess
@@ -60,6 +66,12 @@ H1 = "test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them"
 ERROR = "test_an_outbox_that_answers_with_an_error_fails_the_step"
 E7 = "test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step"
 CROSS = "test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another"
+F1 = "test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing"
+F1_TEXT = "test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only"
+F3 = "test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate"
+F5_ASIDE = "test_f5_a_flush_moves_a_refused_event_aside_and_writes_the_ones_after_it"
+F5_OUTAGE = "test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order"
+F6_PG = "test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row"
 
 FLUSH = "            self._flush_pending()\n        return key\n\n    def "
 NO_FLUSH = "            pass\n        return key\n\n    def "
@@ -71,15 +83,22 @@ BAD_ID = "            if event.event_id != event_id:\n                unreadable
 SELECT_GUARD = "            if not is_connectivity_error(exc):\n"
 STEP_ROW = '    TickStep("audit_drain", 0, audit_drain),\n'
 STEP_BODY = '        _LOG.info("audit_drain drained=%s", fn())\n'
+FLUSH_STOP = "                    if failed is not None and is_connectivity_error(failed):\n"
+ROW_FAILED = "            if failed is not None:\n"
+COUNT = "                not_writable += not is_connectivity_error(failed)\n"
+NOT_DELETED = "                not_deleted += 1\n                continue\n"
+RAISE = '            raise RuntimeError("audit outbox: " + ", ".join(problems))\n'
 
 
-def mutant(name, file, old, new, killer, expect, test_file=SELF):
+def mutant(name, file, old, new, killer, expect, test_file=SELF, crash=""):
     return Mutant(
         name,
         file,
         old,
         new,
         expect,
+        allow_crash=bool(crash),
+        crash_type=crash,
         test_file=test_file,
         only_test=killer.split("[")[0],
         pinned=test_file[:-3] + "::" + killer,
@@ -91,16 +110,17 @@ def by_hand(name, file, old, new, killer, expect):
 
 
 M = [
-    mutant("M1 the STEPS row is removed", TICK, STEP_ROW, "", N1, "reprobe_sources"),
+    mutant("M1 the STEPS row is removed", TICK, STEP_ROW, "", N1, "StopIteration", crash="StopIteration"),
     mutant("M2 the audit_drain body is empty", TICK, STEP_BODY, "        pass\n", N2, "assert (0 == 1)"),
     mutant("M3a the flush call is removed from write_intent", CHAIN,
         FLUSH + "write_outcome", NO_FLUSH + "write_outcome", N3 + "[write_intent]", "rows=None)] == []"),
     mutant("M3b the flush call is removed from write_outcome", CHAIN,
         FLUSH + "_flush_pending", NO_FLUSH + "_flush_pending", N3 + "[write_outcome]", "rows=None)] == []"),
-    mutant("M4 the flush does not remove a drained event", CHAIN,
-        "                    del self._pending[0]", "                    break", N3 + "[write_intent]", "rows=None)] == []"),
-    mutant("M5 the outbox row is deleted when _drain returned False", CHAIN,
-        "            if self._drain(event):\n", "            if self._drain(event) or True:\n", KEPT, "assert [] == ['evt-"),
+    mutant("M4 the flush does not remove a drained event", CHAIN, FLUSH_STOP,
+        "                    if failed is None or is_connectivity_error(failed):\n", N3 + "[write_intent]",
+        "rows=None)] == []"),
+    mutant("M5 the outbox row is deleted when its append failed", CHAIN, ROW_FAILED,
+        "            if failed is not None and not is_connectivity_error(failed):\n", KEPT, "assert [] == ['evt-"),
     mutant("M6a an unreadable body raises at once", CHAIN, BAD_BODY, "            except ValueError:\n                raise\n",
         H1, "evt-e"),
     mutant("M6b a body under another row's id raises at once", CHAIN, BAD_ID,
@@ -117,6 +137,18 @@ M = [
         E5 + "[write_outcome]", "assert (['evt-"),
     mutant("M9 a SELECT error that is not an outage is swallowed", CHAIN, SELECT_GUARD, "            if False:\n",
         ERROR, "assert 0 == 1"),
+    mutant("F1 an append failure that is not an outage is treated as an outage", CHAIN, COUNT,
+        "                not_writable += 0\n", F1, "assert 0 == 1"),
+    mutant("F2 a row that is not writable is deleted", CHAIN, COUNT + "                continue\n",
+        COUNT + "                if is_connectivity_error(failed):\n                    continue\n", F1, "assert [] == [('evt-b'"),
+    mutant("F3 a DELETE failure ends the loop", CHAIN, NOT_DELETED, "                not_deleted += 1\n                break\n",
+        F3 + "[refused]", "assert ['evt-a'] == ['evt-a', 'evt-b', 'evt-c']"),
+    mutant("F4 the counts are dropped from the RuntimeError", CHAIN, RAISE,
+        '            raise RuntimeError("audit outbox: rows kept")\n', F1_TEXT, "assert 'audit outbox: rows kept' == "),
+    mutant("F5 the flush stops at a failure that is not an outage", CHAIN, FLUSH_STOP,
+        "                    if failed is not None:\n", F5_ASIDE, "assert 1 == 2"),
+    mutant("F6 the flush moves an outage failure aside", CHAIN, FLUSH_STOP, "                    if False:\n",
+        F5_OUTAGE + "[OSError]", "assert 2 == 1"),
 ]  # fmt: skip
 
 HAND = [
@@ -125,6 +157,8 @@ HAND = [
     by_hand("M2 the audit_drain body is empty (two processes)", TICK, STEP_BODY, "        pass\n",
         CROSS, "audit_drain drained=1"),
     by_hand("M1 the STEPS row is removed (two processes)", TICK, STEP_ROW, "", CROSS, "audit_drain drained=1"),
+    by_hand("F1 an append failure that is not an outage is treated as an outage (a missing INSERT grant)", CHAIN,
+        COUNT, "                not_writable += 0\n", F6_PG, "assert 0 == 1"),
 ]  # fmt: skip
 
 
