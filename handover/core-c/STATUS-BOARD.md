@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T06:42:38Z
+UPDATED_UTC: 2026-11-20T06:43:53Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
-ITEMS_TOTAL: 26
-ITEMS_OPEN: 11
-PERCENT: 76
+ITEMS_TOTAL: 27
+ITEMS_OPEN: 12
+PERCENT: 74
 AGENTS_RUNNING: 4
 CAPACITY: load 3.1 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 5; 66M	/tmp/claude-0;397M	/root/.cache/uv;
+DISK: / 60G free, 14% used; git worktrees 5; 68M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T06:39:26+00:00
+PUSHED_UTC: 2026-11-20T06:42:38+00:00
 
-(12:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:13 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -115,6 +115,7 @@ PUSHED_UTC: 2026-11-20T06:39:26+00:00
 | EGM result review of the gate code (round 1) | DONE | 100 | tickets/F-result-review-1.md | 1 | NOT CLEAN: 1 Blocker, 14 Majors, 14 Nits merged; tickets/F-result-review-1.md; in-file findings with the builder, 6 escalated (E6), per-site install list for core-b written |
 | Rework tests/test_grants_negative_roles.py against core-b's step B grant map | DONE | 100 | evidence/B-grants-rework.md | 1 | committed "code B:"; evidence/B-grants-rework.md; 6 findings about core-b grants in E7 |
 | EGM result review of the G7 redactor change (round 1) | RUNNING (restart) | 5 | tickets/G7-result-review-1.md | 2 | first attempt cut off by the limit; two reviewers on claude-sonnet-5-5 |
+| EGM sequence (owner order 12:15 IST): items built without a review step | RUNNING | 20 | EGM-LEDGER.md | 1 | ledger written; missing steps: result review of the fold (G1) and P1d-a (G2) started now; G7 plan review after its result review; drift reports for everything; result review of the test files (B, T1) |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -146,4 +147,4 @@ PUSHED_UTC: 2026-11-20T06:39:26+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-EGM proof pushed (REPORT.md: 6 opus-5-5, 66 sonnet-5-5, 0 fable). Restart running: gate round 2 + ORDER 017, integration, grants rework, G7 result review (2 reviewers). P1c waits for the integration. E1 cron denied.
+EGM-LEDGER.md (new): brainstorm/draft were not run through the egm skills for any ticket and egm-drift-report has not been run for anything; list of items built without a review step and the missing steps. Running now: result reviews of the fold and of P1d-a.
