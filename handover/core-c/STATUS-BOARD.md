@@ -1,28 +1,33 @@
-UPDATED_UTC: 2026-11-20T07:10:23Z
+UPDATED_UTC: 2026-11-20T07:14:40Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
-ITEMS_TOTAL: 29
-ITEMS_OPEN: 16
-PERCENT: 79
-AGENTS_RUNNING: 4
-CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 5; 69M	/tmp/claude-0;397M	/root/.cache/uv;
+ITEMS_TOTAL: 33
+ITEMS_OPEN: 20
+PERCENT: 70
+AGENTS_RUNNING: 8
+CAPACITY: load 0.4 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 8, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 5; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:08:08+00:00
+PUSHED_UTC: 2026-11-20T07:10:23+00:00
 
-(12:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:44 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) g2D | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate (egm:egm-design): required mapping/NO_MAP, GateRefused, framing rule, enforce caps, settle rule | 07:10 | 07:25 | 2 | running | 2 of 3 (lead rounds separate) | 0 | EGM sequence: fresh reviewers after the fixes |
-| (new) g2C | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate and its tests (egm:egm-codebase-details): stated limits vs the real sweep, call-site handling, tests that cannot fail, mutant plausibility | 07:10 | 07:30 | 2 | running | 2 of 3 | 0 | EGM sequence |
+| (new) g4R | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 (P1c) readiness (egm:egm-implementation-readiness) | 07:20 | 07:35 | 2 | running | 1 of 3 | 0 | EGM sequence: plan review before any build |
+| (new) g4C | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 against the real code (egm:egm-codebase-details) | 07:20 | 07:40 | 2 | running | 1 of 3 | 0 | EGM sequence |
+| (new) gfix2 | builder | claude-sonnet-5-5 | gate fix round for the EGM result review round 2: forged framing token leak (Blocker), edge-value leak, framing DoS, audit marker, interrupts, bounds; reproduce first, mutants | 07:20 | 08:10 | 2 | running | 2 of 3 then lead round 3 | 0 | lane: model_gate.py + enforce functions of runmap.py only |
+| (new) evrun | evidence runner | claude-sonnet-5-5 | measures the fold's false-hit rate on ordinary text and its time cost (review findings M4, M5 of the fold); clean export in /tmp/core-c-ev; writes evidence only | 07:20 | 08:00 | 2 | running | n/a | 0 | lane: evidence file only; 1 CPU-heavy process at a time |
+| (new) wsec | writer | claude-sonnet-5-5 | SECURITY and README wording final draft from all tickets and evidence (backlog item 9) | 07:20 | 07:45 | 2 | running | n/a | 0 | lane: one new handover file |
+| a7518043 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate (egm:egm-design): required mapping/NO_MAP, GateRefused, framing rule, enforce caps, settle rule | 07:10 | 07:25 | 100 | done | 2 of 3 (lead rounds separate) | 0 | finished: gate round 2 design review: 1 Blocker (forged framing token leaves a known secret unreplaced), 6 Majors, 2 Nits; nothing executed |
+| a2032c0c | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate and its tests (egm:egm-codebase-details): stated limits vs the real sweep, call-site handling, tests that cannot fail, mutant plausibility | 07:10 | 07:30 | 2 | running | 2 of 3 | 0 | EGM sequence |
 | a2589393 | builder | claude-sonnet-5-5 | G1 fix round 1: undo composes again (a regression found by review and REPRODUCED: decomposed secrets no longer scrubbed in tool output), injection chunk-boundary bypass, Unicode check order in app.build; failing tests first | 07:01 | 07:30 | 100 | done | 1 of 3 (result review) | 0 | finished: B1 fixed (nfkc = main behaviour; 9 of 10 tests failed before), B2 fixed (6 cases failed before), M8 fixed; non-Latin text over the cap is flagged guard_unavailable (measured: Chinese and Japanese 300,000 characters; already true before). 7707 passed, perf 19 passed. Committed |
 | (new) g7fix | builder | claude-sonnet-5-5 | G7 fix round 1: hardens the own-output rule in guard/redact.py (real label only, ASCII digits, SECRET only, anchored shape, partial placeholder) + tests with fail-before | 06:54 | 07:20 | 2 | running | 1 of 3 (result review) | 0 | reproduced security hole; edits only guard/redact.py and new tests; other agents hold the gate and integration files |
 | a6531435 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the text fold G1 (egm:egm-codebase-details): false negatives in the fold, canonical/composed callers, Python 3.12 vs 3.13, chunked injection read, tests | 06:50 | 07:10 | 100 | done | 1 of 3 | 0 | finished: fold has 2 Blockers (undo no longer composes: REPRODUCED; chunk-boundary bypass of the injection check), 8 Majors, 4 Nits; fixes started |
@@ -125,6 +130,10 @@ PUSHED_UTC: 2026-11-20T07:08:08+00:00
 | EGM sequence (owner order 12:15 IST): items built without a review step | RUNNING | 20 | EGM-LEDGER.md | 1 | ledger written; missing steps: result review of the fold (G1) and P1d-a (G2) started now; G7 plan review after its result review; drift reports for everything; result review of the test files (B, T1) |
 | EGM result reviews of the fold (G1) and P1d-a (G2) | DONE (round 1) | 100 | tickets/G1-result-review-1.md, G2-result-review-1.md | 1 | fold: 2 Blockers, 8 Majors; P1d-a: 7 Majors; records tickets/G1-result-review-1.md, G2-result-review-1.md; fix rounds running |
 | EGM result review round 2 of the gate | RUNNING | 5 | tickets/F-result-review-2.md | 1 | two fresh reviewers |
+| Gate fix round for review round 2 | RUNNING | 2 | evidence/F-G0-1.md | 1 | builder in the main checkout; the code reviewer's findings go to it by message |
+| EGM plan review of ticket G4 (P1c) | RUNNING | 5 | tickets/G4-review-1.md | 1 | two reviewers |
+| Fold false-hit and cost measurement | RUNNING | 2 | evidence/G1-false-hits-and-cost.md | 1 | evidence runner, no code |
+| SECURITY and README wording final | RUNNING | 2 | SECURITY-README-final.md | 1 | writer |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
