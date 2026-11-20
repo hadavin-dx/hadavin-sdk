@@ -3,6 +3,17 @@
 ## Unreleased
 
 ### Upgrade steps
+- **Breaking: model prices are checked when the config loads, and pilot and prod need the date the prices were read.**
+  - A route price that is negative (also `-0`), not a finite number, above 1000000 US dollars per million tokens, or
+    written with more than 6 decimal places is refused, in every stage. The error names the route and the field, never
+    the value.
+  - A price of zero is refused unless the model kind is `fake` and the stage is `demo`. A zero price would make every
+    call cost nothing, so no spend cap could ever stop it.
+  - New top-level setting `prices_as_of` (a date written `YYYY-MM-DD`): required in `pilot` and `prod`, and it must not
+    be in the future (UTC). It is the day you read the prices from the provider's price page. **Upgrade step:** add
+    `prices_as_of: <date>` to every pilot and prod config.
+  - Stated limits: an old date is accepted (a stale price table is not refused yet); a config with both a negative and
+    a zero price reports them in two rounds; the agents' qualification hash does not change.
 - **Breaking: the first stage is now called `demo`; `environment: dev` is refused.** The stages are exactly `demo`, `pilot` and `prod`. A config that says `environment: dev` stops at start with "environment: dev was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)" (shown beside any other problem found in the same file, and also for `Dev`, `DEV` and spellings with spaces, which are refused all the same); any other value (`Demo`, `staging`, `uat`, an empty value) is refused too, and values are never tidied or guessed. To upgrade: (1) change `environment:` in your config to `demo`; (2) if your code imports `backends.table.DEV_ONLY`, import `DEMO_ONLY` instead (same six kind pairs, no old name kept); (3) a project label such as `uat` is not a stage: map it to one stage in your own config. Also: the pilot and prod checks (`deferred.py`, `registry.py`, `app.py`) now ask one function, `hadavin_sdk.stages.is_live(environment)`, which treats anything that is not exactly `demo` as live; the prod-only rules (no local key file, a retention-agreed anchor) ask `hadavin_sdk.stages.is_prod(environment)`, which is true for `prod` and for any value that is not a stage. `STAGES`, `is_live` and `is_prod` live in the new leaf module `hadavin_sdk/stages.py`, not in `config.py`; the list `deferred.LIVE` is removed. The redactor no longer sweeps the words `demo` and `pilot` as a name (it already skipped `prod`), but a secret that reads `demo` is still swept. No stage is stored today; the first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision, and add a test through that real read site.
 - **Client-profile check: two new refusals.**
   - **Test objects are refused in pilot and prod.** A pilot or prod `app.build` call that passes `secrets=`, `channel=`, `detector=`, `llm=` or `clock=` (objects that stand in for a configured part and are meant for tests) now stops with a `ConfigError` before anything is built, unless the caller also passes `allow_test_doubles=True`.
