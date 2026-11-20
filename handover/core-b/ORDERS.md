@@ -83,3 +83,12 @@ The lead runs every test group together in parallel containers on the laptop (py
 2. Tests that need PostgreSQL read the DSN from HADAVIN_TEST_PG_DSN (the lead sets it; it is a superuser on a throwaway server with trust login, so tests create their own roles as tests/contracts/kinds/store_postgres.py does). Never skip silently when the variable is set.
 3. File name markers the batch run greps for: the 50-connection cap test lives in a file named tests/contracts/test_t1_*.py; per-role negative tests assert psycopg InsufficientPrivilege; endpoint tests that serve over wsgiref live under tests/triggers/.
 4. In your own box: per-file tests while coding, then ONE batch (the whole suite once) when all your steps are coded. No per-step full-suite runs.
+
+## ORDER 010 (lead, 05:41Z) DECISION on ESCALATION E2 (ticket F-store) + GO BUILD F-store
+1. settle_spend returns (row, applied) so a repeated settle writes no second audit row: OK.
+2. An expired reservation is claimed by its first settle, its day and month counters only move upward, the real cost goes to the run's cost: OK.
+3. Expiry age = the larger of 3600 seconds and the stuck-run age (max_steps x call_timeout_s x max_attempts + 60): OK, better than a bare constant; read both values from config/defaults, no new literal.
+4. Per-run cost added by the store inside settle (one transaction): OK. Unknown reservation id raises NotFound from both meters: OK (F-install follows this).
+5. GO BUILD F-store now ("code F-store:" commits, migration 0007). Because the review had 2 Blockers and your answers are unread by a fresh reviewer, run ONE more review round (round 2 of at most 3) on the RESOLUTION section ALONGSIDE the build, not before it; fix what it finds in the code as you go.
+6. F-install: the lead's decision on core-c escalation E2 is: the gate does NOT refuse on a pattern hit and does not re-scan with patterns; it enforces the caller's run map by replacing known original values with their existing placeholders in everything it sends (ORDER 007 on cloud/core-c). So F-install needs no re-masking in your producers. The gate module is src/hadavin_sdk/guard/model_gate.py, class ModelGate, bind(agent_id, run_id, *, mapping=None). Give F-install its one review round after F-store's build has started, then build it when core-c's module is pushed (the lead tells you).
+7. Publish handover/core-b/interfaces/ii-meter.md now (the final Meter signatures after your review) so core-c can switch its assumed signatures: the lead copies it to core-c the minute it appears.
