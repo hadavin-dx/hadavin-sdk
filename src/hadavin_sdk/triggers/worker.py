@@ -3,7 +3,8 @@
 `Runner.start` is what the endpoint calls for a verified request. It answers 2xx only after the store has returned
 the run row and that row is for the same agent, principal and `trigger_ref` (same sender, key and document). The
 answer is always decided from the ROW, never from which exception the loop raised. 202 = the run is RECEIVED or
-WORKING, 200 = any later state, 409 = a row exists for the same key but another document (nothing is written),
+WORKING, 200 = any later state, 409 = a row exists for the same key but another document (no run is written;
+one `trigger.conflict` audit event with ids and both payload hashes, at most 10 per sender per minute, see `_conflict`),
 503 = store not reachable, or no row within `ack_wait_s` (not acknowledged; send again with the same key; it
 may already be running). A request that finds no free slot is not refused at once: it waits for the row like any other, because another
 request for the same key may be writing it right now. While it waits it looks for a free slot and for the row
