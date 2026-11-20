@@ -1,5 +1,5 @@
 {
-  "name": "hadavin-trigger-error (outline, not run in n8n)",
+  "name": "hadavin-trigger-error (outline; earlier version run in n8n 2.47.7; this version not re-imported)",
   "active": false,
   "nodes": [
     {
@@ -11,12 +11,12 @@
         0
       ],
       "parameters": {},
-      "notes": "UNVERIFIED: typeVersion. Atlas: an error workflow must start with an Error Trigger, is chosen in the main workflow's Workflow Settings, and one error workflow can serve many workflows; the Error Trigger page says the error workflow must be published and cannot be tested with a manual run (read from the documentation, not seen on a real n8n)."
+      "notes": "SEEN IN n8n 2.47.7: this node as written. This workflow ran once for every failed execution of the main workflow, but ONLY while it was published. Imported and not published, n8n logged that it 'is not active and cannot be executed' and nobody was told. So publishing this workflow is a required set-up step. One error workflow can serve many workflows; it is chosen in the main workflow's Workflow Settings."
     },
     {
       "name": "Build message",
       "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "typeVersion": 3.4,
       "position": [
         220,
         0
@@ -33,7 +33,7 @@
         },
         "includeOtherFields": false
       },
-      "notes": "UNVERIFIED: typeVersion, the 'assignments' shape and the exact field paths. Atlas: the payload holds execution id and url, error message and stack, last node, mode, workflow id and name; execution id and url are missing when the trigger node itself failed; retryOf is present only on retries. Do not add the request body or any header to the message."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the message held the workflow name, the execution link, the last node and the error text. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' and the message was null. The four field paths used here were all in what the Error Trigger delivered. Do not add the request body or any header to the message, and do not pass on the whole error object: its field execution.error.node holds the failing node with all its parameters and notes."
     },
     {
       "name": "Notify placeholder",
@@ -44,7 +44,7 @@
         0
       ],
       "parameters": {},
-      "notes": "UNVERIFIED: the node type name and typeVersion. Replace this node with the client's chat or e-mail node and send {{ $json.message }}. What lands here by design, because a person must look: a missing business id or document text; a 401, 409, 400 or 413 from the trigger endpoint; and a 503 (busy) in every round of the main workflow's wait-and-sign-again loop, which means the event was NOT accepted."
+      "notes": "SEEN IN n8n 2.47.7: this node as written (it does nothing). Replace it with the client's chat or e-mail node and send {{ $json.message }}. What lands here by design, because a person must look: a missing business id or document text; a 401, 409, 400 or 413 from the trigger endpoint; and a 503 (busy) in every round of the main workflow's wait-and-sign-again loop, which means the event was NOT accepted."
     }
   ],
   "connections": {
@@ -74,5 +74,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "notes": "UNVERIFIED: the top-level export shape and the settings keys; the atlas does not document the workflow JSON format. Outline, not run in n8n."
+  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run (only the name and the notes texts; the Set node's typeVersion 3.4 is the one that was run) and has not been imported into any n8n since. SEEN IN n8n 2.47.7: the import by command line accepted the top-level shape and the settings key and dropped this top-level notes key. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
 }
