@@ -239,13 +239,15 @@ class Verification:
 
 
 # A ts is cast to timestamptz only when it is a real calendar value (a shape check alone lets 2026-02-30 through; no `?` here: the placeholder translation would rewrite it and
-# the cast then raises, which would block every batch read). Month-specific day ranges; 29 February is left out
-# (such a row sorts last, it is never an error). Hours 00-23, minutes and seconds 00-59, offset hours 00-15.
+# the cast then raises, which would block every batch read). Month-specific day ranges; 29 February only in a
+# leap year (divisible by 4, a century only when divisible by 400; any other such row sorts last, never an error). Hours 00-23, minutes and seconds 00-59, offset hours 00-15.
+_LEAP2 = "(0[48]|[2468][048]|[13579][26])"
 _TS_SHAPE = (
-    "^(000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-("
+    "^((000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-("
     "(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|"
     "(0[469]|11)-(0[1-9]|[12][0-9]|30)|"
-    "02-(0[1-9]|1[0-9]|2[0-8]))"
+    "02-(0[1-9]|1[0-9]|2[0-8]))|"
+    f"([0-9]{{2}}{_LEAP2}|{_LEAP2}00)-02-29)"
     "[T ]([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
     "(\\.[0-9]{1,9}){0,1}"
     "(Z|[+-](0[0-9]|1[0-5])(:{0,1}[0-5][0-9]){0,1}){0,1}$"

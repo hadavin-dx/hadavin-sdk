@@ -84,3 +84,35 @@ def test_postgres_a_wellformed_but_impossible_ts_sorts_last_and_never_fails_the_
             log = audit.ChainAudit(db)
             page = db.run(log._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", 100, 0))
             assert [r[0] for r in page] == ["a1", "b1", "b2", "b3"]
+
+
+def test_postgres_29_february_only_in_a_leap_year():
+    """A real leap day sorts by its instant; 2027-02-29 and 2100-02-29 do not exist: they sort last, no error."""
+    pytest.importorskip("psycopg")
+    import psycopg
+
+    from tests.contracts.kinds.store_postgres import pg_schema
+
+    rows = [
+        ("c1", '"2100-02-29T00:00:00Z"'),
+        ("c2", '"2027-02-29T00:00:00Z"'),
+        ("a3", '"2028-03-01T00:00:00Z"'),
+        ("a2", '"2028-02-29T10:00:00.123456Z"'),
+        ("a1", '"2028-02-28T23:00:00Z"'),
+        ("a4", '"2000-02-29T00:00:00Z"'),
+    ]
+    for dsn in pg_schema():
+        with psycopg.connect(dsn, autocommit=True) as conn:
+            conn.execute("SET TIME ZONE 'UTC'")
+            db = audit._Db(conn, threading.Lock(), pg=True)
+            for event_id, ts in rows:
+                db.run(
+                    "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", (event_id, _body(ts))
+                )
+            log = audit.ChainAudit(db)
+            page = db.run(log._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", 100, 0))
+            assert [r[0] for r in page] == ["a4", "a1", "a2", "a3", "c1", "c2"]
+
+
+def test_the_ts_shape_has_no_question_mark():
+    assert "?" not in audit._TS_SHAPE
