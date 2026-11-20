@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:12:07Z
+UPDATED_UTC: 2026-11-20T13:12:53Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 1
-CAPACITY: load 2.12 of 4 cores (1-minute average), mem 1.0/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 3
+CAPACITY: load 1.08 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 57G 18%; 620M /home/user/hadavin-sdk; 1.1G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:11:42Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:12:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| wipc-fixes | builder in worktree /home/user/wt/for-c, branch wip/core-a-for-c | sonnet | core-c Majors: tools.py error_reason sanitise (+test+mutant) and test_k5_producers exemption (+test) | 13:09 | 20 min | 5 | running | - | 0 | lead 13:09: build for other lanes on wip/core-a-for-<x> |
+| cc-run1 | evidence runner (never judges) | sonnet | core-c whole suite run 1 at /tmp/ca-c-run (pytest -n 3 not perf not live) -> evidence/c-run-1.md | 13:12 | 25 min | 5 | running | - | 0 | lead orders 13:10 and 13:12 (lead-build-3.md) |
+| cc-run3 | evidence runner (never judges) | sonnet | core-c mutant scripts run 3, one at a time, 1 core -> evidence/c-run-3.md | 13:12 | 30 min | 5 | running | - | 0 | lead orders 13:10 and 13:12 (lead-build-3.md) |
+| rev-wipc | fresh independent reviewer (codebase-details), read-only | sonnet | review of the wip/core-a-for-c diff (tools.py error_reason, k5 exemption, tests, mutant) | 13:12 | 12 min | 5 | running | 1 | 0 | lead orders 13:10 and 13:12 (lead-build-3.md) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 25059s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 25059s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 25059s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 25059s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 25059s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 25059s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 25105s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 25105s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 25105s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 25105s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 25105s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 25105s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +180,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 13:12 wip/core-a-for-c PUSHED (b1f502fe4) with both core-c Majors fixed (tests, mutant ER1, narrowed exemption + planted-slice tests); fresh review rev-wipc running. lead-build-3.md found: base is core-c head 9072e701f (the file named c6a42ce74, branch moved); run 1 (whole suite) and run 3 (8 mutant scripts, sequential) started on /tmp/ca-c-run: 2 heavy slots used (run 1 uses -n 3, so load will be ~4; run 3 waits its turn per file). Run 2 (perf, idle box) and run 4 (g4-p4) follow when run 1 ends.
 - 13:16 (a) handover/core-a/requests/to-core-b.md written: I PROPOSE to build B-1 outbox read range-check, B-2 AuditEvent producer sanitising (agent_loop.py:521/266), B-3 Anthropic allowlist on wip/core-a-for-b from 13:20 unless core-b says no; M1/M2/M4/M5/M6 and the tamper-evidence wording stay core-b's decisions. (b) core-c has NO requests/from-core-c.md on its branch yet and no lead-build-3.md: I watch for wip/cloud-core-c/g4, g9 and lead-build-3.md and will run their heavy batches (max 2 at once) when they appear. (c) wipc-fixes running; wip/core-a-for-ci pushed.
 - 13:16 wipci-matrix DONE, branch wip/core-a-for-ci pushed: I did NOT convert ci.yml to a matrix: it already tests 3.13 (check) and 3.12 (tests-py312) each with PostgreSQL+Vault; a literal matrix renames the required check 'check' and breaks tests/test_ci_gitleaks_scope.py REQUIRED_NAMES and tests/fixtures/ci_security_golden.json. Pushed the agreement test only (tests/test_ci_python_matrix.py: lowest CI python == requires-python floor, highest == check job, none below; fails on 3 planted mismatches; 153 passed with the two existing CI guards). Say 'matrix anyway' and I change ci.yml + both guards.
 - 13:14 list-cfree DONE (list in handover/core-c/requests/from-core-a.md): beyond my two Majors only R4 (error_reason redact once with the run's map; request 4 says core-b owns tools.py, LANE-MAP says core-c: WHO OWNS tools.py?), R5 (slack_channel.py _who raw email/<!channel> principals; core-b's file), C3 (usd_cap sixth reason, collides with G13/G9 in model_gate.py) are buildable; the rest is held or waits on your decisions E16, L-D13, E19 O-1, G6. I start R4/R5 only after your line (ownership + consent). core-c also asks core-a for the 256 KB scan-stall script (not received): send me the request text.

@@ -748,17 +748,43 @@
  ],
  "agents": [
   {
-   "id": "wipc-fixes",
-   "role": "builder in worktree /home/user/wt/for-c, branch wip/core-a-for-c",
+   "id": "cc-run1",
+   "role": "evidence runner (never judges)",
    "model": "sonnet",
-   "what exactly it is doing": "core-c Majors: tools.py error_reason sanitise (+test+mutant) and test_k5_producers exemption (+test)",
-   "started UTC": "13:09",
-   "expected end": "20 min",
+   "what exactly it is doing": "core-c whole suite run 1 at /tmp/ca-c-run (pytest -n 3 not perf not live) -> evidence/c-run-1.md",
+   "started UTC": "13:12",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
    "review round n of cap": "-",
    "retries so far": 0,
-   "reason": "lead 13:09: build for other lanes on wip/core-a-for-<x>"
+   "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
+  },
+  {
+   "id": "cc-run3",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c mutant scripts run 3, one at a time, 1 core -> evidence/c-run-3.md",
+   "started UTC": "13:12",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
+  },
+  {
+   "id": "rev-wipc",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the wip/core-a-for-c diff (tools.py error_reason, k5 exemption, tests, mutant)",
+   "started UTC": "13:12",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
   }
  ],
  "tests": [
@@ -1131,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:12 wip/core-a-for-c PUSHED (b1f502fe4) with both core-c Majors fixed (tests, mutant ER1, narrowed exemption + planted-slice tests); fresh review rev-wipc running. lead-build-3.md found: base is core-c head 9072e701f (the file named c6a42ce74, branch moved); run 1 (whole suite) and run 3 (8 mutant scripts, sequential) started on /tmp/ca-c-run: 2 heavy slots used (run 1 uses -n 3, so load will be ~4; run 3 waits its turn per file). Run 2 (perf, idle box) and run 4 (g4-p4) follow when run 1 ends.",
   "13:16 (a) handover/core-a/requests/to-core-b.md written: I PROPOSE to build B-1 outbox read range-check, B-2 AuditEvent producer sanitising (agent_loop.py:521/266), B-3 Anthropic allowlist on wip/core-a-for-b from 13:20 unless core-b says no; M1/M2/M4/M5/M6 and the tamper-evidence wording stay core-b's decisions. (b) core-c has NO requests/from-core-c.md on its branch yet and no lead-build-3.md: I watch for wip/cloud-core-c/g4, g9 and lead-build-3.md and will run their heavy batches (max 2 at once) when they appear. (c) wipc-fixes running; wip/core-a-for-ci pushed.",
   "13:16 wipci-matrix DONE, branch wip/core-a-for-ci pushed: I did NOT convert ci.yml to a matrix: it already tests 3.13 (check) and 3.12 (tests-py312) each with PostgreSQL+Vault; a literal matrix renames the required check 'check' and breaks tests/test_ci_gitleaks_scope.py REQUIRED_NAMES and tests/fixtures/ci_security_golden.json. Pushed the agreement test only (tests/test_ci_python_matrix.py: lowest CI python == requires-python floor, highest == check job, none below; fails on 3 planted mismatches; 153 passed with the two existing CI guards). Say 'matrix anyway' and I change ci.yml + both guards.",
   "13:14 list-cfree DONE (list in handover/core-c/requests/from-core-a.md): beyond my two Majors only R4 (error_reason redact once with the run's map; request 4 says core-b owns tools.py, LANE-MAP says core-c: WHO OWNS tools.py?), R5 (slack_channel.py _who raw email/<!channel> principals; core-b's file), C3 (usd_cap sixth reason, collides with G13/G9 in model_gate.py) are buildable; the rest is held or waits on your decisions E16, L-D13, E19 O-1, G6. I start R4/R5 only after your line (ownership + consent). core-c also asks core-a for the 256 KB scan-stall script (not received): send me the request text.",
@@ -3302,6 +3329,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "NO matrix: ci.yml already runs 3.13 (check) and 3.12 (tests-py312) with PG+Vault; a matrix would rename the required check 'check' and break test_ci_gitleaks_scope REQUIRED_NAMES + ci_security_golden.json; pushed only tests/test_ci_python_matrix.py (floor==pyproject, top==check, none below; fails on 3 planted mismatches; 153 passed with the 2 existing CI guards)"
+  },
+  {
+   "id": "wipc-fixes",
+   "role": "builder in worktree /home/user/wt/for-c, branch wip/core-a-for-c",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c Majors: tools.py error_reason sanitise (+test+mutant) and test_k5_producers exemption (+test)",
+   "started UTC": "13:09",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "branch wip/core-a-for-c pushed (b1f502fe4): tools.py error_reason _sanitise(str(exc)) + docstring order; 4 surrogate tests (3 red before); mutant ER1 killed (CRASH); test_k5_producers exemption narrowed to error_reason + 4 tests incl. planted slice flagged; 7098 passed 1 skipped on the tools-importing tests"
   }
  ]
 }
