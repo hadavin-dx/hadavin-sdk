@@ -1823,7 +1823,13 @@ class _Redactor:
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
         core = _bare(full) if derived and label in SECRET_KINDS else full
         # `none!`: masked whole, but its core would sweep every `none`; `<EMA`, `‹EMAIL_1›`: the core is a placeholder's own text
-        if core.lower() in _NOT_A_VALUE or _placeholder_like(core):
+        # a value that holds an escaped look-alike (`‹KIND_n›`, E9): no core (it would be a junk entry the E9 pins forbid: `‹SECRET_1›<UUID_3>`)
+        if (
+            core.lower() in _NOT_A_VALUE
+            or _placeholder_like(core)
+            or "\u2039" in full
+            or "\u203a" in full
+        ):
             core = full
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
