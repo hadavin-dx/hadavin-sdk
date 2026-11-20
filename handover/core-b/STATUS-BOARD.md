@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:19:54Z
+UPDATED_UTC: 2026-11-20T15:25:02Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.34 of 4 cores, mem 1/15 GB, disk 40G free, 43% used, agents light 4 heavy 2
+CAPACITY: load 0.95 of 4 cores, mem 1/15 GB, disk 40G free, 43% used, agents light 4 heavy 2
 DISK: / 40G free, 43% used; worktrees /tmp/core-b-wt 4.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T15:17:54Z (previous push; this board is pushed right after writing)
-IST: 20:49 IST
+PUSHED_UTC: 2026-11-20T15:23:58Z (previous push; this board is pushed right after writing)
+IST: 20:55 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
@@ -323,3 +323,8 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 Also live: B2 builder (MB2). Waiting: laptop wip/lead-b-migrate (M4, isolation, audit-rights, column grants). After S1+R1+B2 land: I re-request laptop PG evidence on the final head.
 
 14:25Z LEAD ROUTE (laptop evidence on base 3924f81a0 + wip/lead-b-migrate 0891d81bd: caps role, isolation check, owner-refusal tests; take it after the laptop's review is clean). My routing: stop-state failures (s2_*, e7_a_flag, broken_stdout, accepted_admin_roles, reset_role_member_of_owner, round2, S12/other mutants) -> S1 (MS1); money_definer mutants (f_/i_ patterns), pg, review_fixes, migrate limits test, audit_drain, spend_reservations, contracts caps, reserve/price/stage mutants -> R1 (MR1); parallel-run isolation of the 4 step-4 grant tests -> W1 (MW1, new, own DB); A-audit-rights design -> reviewer AR (writes tickets/A-audit-rights-review-1.md with a builder brief; then a builder); B2 review fixes (settle fallback double count, docs, ungated sites) -> B2 builder (MB2). Docs 'reset login sets caps' (runbook ~252-261, README): fix at the merge of wip/lead-b-migrate. AGENTS LIVE (5, sonnet): S1, R1, W1, AR, B2.
+
+15:24Z STATUS. MODEL: get_session configured_model=claude-sonnet-5-5, session_context.model=claude-sonnet-5-5, external_metadata.model=claude-sonnet-5-5, last_served_model=claude-sonnet-5-5; trailer on this commit: Claude Sonnet 5.5. NOT FABLE-SERVED.
+AGENTS RUNNING: 1 (sonnet): S1 stop-state fixer (MS1: tests/test_stop_state_roles.py 13 failures incl. W1's pg_gate commit 600feeba0, stop_state_mutants S12 survivors + 13 other, round2). Finished since 14:25Z: R1 (merged e337feb6e), B2 + review fixes (merged d070fda3d), W1 (commit 600feeba0 waits to merge via S1), AR design review (decision in DECISIONS.md), I1 + fix (merged a25f6858d), F7 (merged 84fa98213).
+LEAD 15:37 FIX LIST on cloud/core-b head e337feb6e+: (1) money-definer collection unpack: FIXED (pg file F7/H1; mutants file R1 56/56); (2) test_audit_drain 7: FIXED (T1, T2, A3, R1 cross-process PYTHONPATH fix); (3) spend_reservations_pg 6: FIXED (T1, F7, I1; R1 saw 3 role-interference setup errors from concurrent fixers on the shared DB, not code); (4) stop_state_roles 11-13: IN PROGRESS S1 (stale expectations vs 'roles not named ... can run the money functions' text; pg_write_all_data test must expect a refusal; NO migrate check is weakened); (5) caps contracts 3: FIXED (F7); (6) seed137 PG17-only: not reproducible on PG16 here (seed23 sibling fixed by R1 widening_expire); (7) test_limits_reserve log line FIXED; review_fixes m1/m2 etc FIXED (F7); round2 S1; (8) mutant baselines: audit_drain 20/20 (+hand 4/4), reserve 31/31 (+hand 27/27), price 22/22, stage 37/37, money_definer_mutants 56/56 (R1); stop_state_mutants S1.
+25 BASE FAILURES from wip/lead-b-migrate: routed per the 14:25Z lines: stop-state ones -> S1, definer/mutants/parallel ones fixed above; waiting for the laptop review of that branch to be clean, then I merge it and fix docs 'reset login sets caps'. Then A-audit-rights builder (needs lead's yes, DECISIONS.md 14:30Z).
