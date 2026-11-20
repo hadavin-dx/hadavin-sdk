@@ -415,7 +415,10 @@ def test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_sca
 
 def test_ascii_2_a_bank_word_on_a_non_ascii_line_widens_the_masking_on_an_ascii_line():
     _old_tree_guard()
-    far = "x" * 300  # beyond the 100-character window of the ordinary bank context
+    # Beyond the 100-character window of the ordinary bank context. Words, not one run of 300 letters (as on P2d-1):
+    # such a run is masked as one blob (`<HIGHENTROPY_1>`), and since G7 the patterns run once more over the masked
+    # text, where the bank word then stands 17 characters before the account: the ASCII control was masked too.
+    far = "x " * 150
     line = "acct 12345678"
     mixed = redact("bank account list café\n" + far + "\n" + line).text
     assert "12345678" not in mixed
