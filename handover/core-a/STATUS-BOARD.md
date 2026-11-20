@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T11:06:07Z
+UPDATED_UTC: 2026-11-20T11:07:23Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 80
-ITEMS_OPEN: 23
-PERCENT: 81
-AGENTS_RUNNING: 1
-CAPACITY: load 0.05 of 4 cores (1-minute average), mem 1.0/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_TOTAL: 81
+ITEMS_OPEN: 24
+PERCENT: 80
+AGENTS_RUNNING: 3
+CAPACITY: load 0.01 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 17%; 588M /home/user/hadavin-sdk; 912M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
-FAILED: 10:48 UTC, BATCH9 (final tree, whole suite, REQUIRE_PG=1 -n 3): 13 failed: 10 strict-mode by design (pass on the combined tree) + dblink (needs PG default socket) + brand string (the lead's BRIEF-PREAMBLE.md) + ONE NEW: tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]: a 2xx status with an EMPTY body (JSONDecodeError at line ~822), passed in BATCH7/BATCH8 and all builder runs: agent flake2 investigates (hypothesis: worker killed mid-answer = truncated response; NOT assumed, NOT skipped, NOT weakened).
+FAILED: 10:48 UTC, BATCH9 (final tree, whole suite, REQUIRE_PG=1 -n 3): 13 failed: 10 strict-mode by design (pass on the combined tree) + dblink (needs PG default socket) + brand string (the lead's BRIEF-PREAMBLE.md) + ONE NEW: tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]: a 2xx status with an EMPTY body (JSONDecodeError at line ~822), passed in BATCH7/BATCH8 and all builder runs: agent flake2 investigates (hypothesis: worker killed mid-answer = truncated response; NOT assumed, NOT skipped, NOT weakened). || 11:07 LEAD ORDER: the pg-kill failure is treated as a REAL defect until proven otherwise (my 'test race' verdict rests on reading + one isolated client check, not on a reproduction): A-repro (20 runs + 40-run harness), B-read (analysis), then C-single-write (server hardening); D is NOT tagged green until closed.
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T11:05:37Z (the push before this board)
+PUSHED_UTC: 2026-11-20T11:06:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -100,21 +100,24 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | E1-fix4 | delete the fatal-after-5 machinery (churn), WARNING per 5 min with the class name while the store is down, tests and mutant G33d adjusted, ticket | DONE | 100 | reviews/D-code-result-review-5.md round 3 | 1 | batch8 running |
 | FIX-signed_post | crash_launcher.signed_post: incomplete 2xx response = no complete ack (test client); + 3 cosmetic E1 nits | RUNNING in final-fix | 5 | FINDINGS-flake-pg-kill.md | 0 | batch9 mutant run in progress |
 | BLOCKED-mutant-run-19 | complete mutant run 19: needs tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` (G33d anchor) and a re-run of `uv run python tests/endpoint_mutants.py` | BLOCKED: both actions were denied by the permission classifier for the builder; I did not do them by another route; waiting for the user's go-ahead | 90 | raw/endpoint-mutants-run-19.log (aborted: anchor 0 times) | 1 | permission denial, not worked around |
+| C-single-write | server hardening: status line + headers + body in ONE write per answer (so a kill gives nothing or the complete answer), test counting writes + mutant; 20-run count after the fix | QUEUED: starts when A has its baseline and B has the exact place (about 11:20) | 0 | raw/REPRO-pgkill-*.log | 0 | A edits no repo file but runs tests; C edits server.py |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
+| A-repro | reproducer | sonnet | lead order: the pg-kill id 20 runs (pass/fail counts, raw log) + a 40-run harness counting complete 2xx / truncated / no answer with the old client behaviour | 11:07 | 20 min | 5 | running | n/a | 0 | lead 11:07: treat as a real defect until proven otherwise |
+| B-read | read-only analyst (codebase-details) | sonnet | lead order: where can a 2xx leave with no body: bytes the client can see at each moment of the answer, order row-before-answer, smallest server change (one write per answer) | 11:07 | 10 min | 5 | running | n/a | 0 | lead 11:07 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 17498s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 17498s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 17498s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 17498s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 17498s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 17498s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 17574s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 17574s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 17574s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 17574s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 17574s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 17574s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -176,6 +179,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 11:07 ORDER taken: pg-kill empty-body 2xx = REAL defect until proven otherwise. A-repro and B-read started 11:07 (3rd agent, the fix builder C-single-write, starts when A has its baseline: it edits server.py while A runs tests: about 11:20). 'C e1-fix2' of your list is long done (10:03). Report on the board when closed: cause, fix, 20-run count after the fix, mutant. D not tagged green until then.
 - Answer 11:03 (your READY list is stale, all of it is DONE): e1-fix2, e1-fix3, e1-fix4 builders: done 10:03-10:40; mutant run 17/18: 109 of 109 (run 18 10:38); README-trigger.md notes from evidence-n8n-4: done 11:02 (n8n-fix6, 92 tests); fresh E1 review: 4 rounds, round 4 clean (10:42). Running now: n8n-rev6 (fresh read-only review of the n8n pack after your run, since 11:03). Nothing else is READY: the only open item is BLOCKED mutant run 19 (one anchor line + a re-run: denied by the permission classifier for my builder; I wait for the owner). Next: REPORT.md final block and the commit range for D and E (posted on the board in a few minutes).
 - n8n template updated to your evidence-n8n-4 (92 tests pass): 8 notes now 'SEEN IN n8n 2.47.7 (evidence-n8n-4.md, once)', contradictions corrected (noData 202 and the early answer ARE seen; a refused event answers HTTP 500 + {message: Error in workflow}; the 70 s wait survived a restart once), silent recovery documented as deliberate. Checked by script: nodes (minus notes) and connections of both JSON files are identical to head 02226ce04 that you ran; only names and notes changed. Still UNVERIFIED: the 45 s timeout, 3xx, 502/503/504 with body, 520-524, Retry-After, 45 rounds exhausted, states other than NO_ACTION, lone surrogate, null values, an execution lost in a restart, Cloud/queue mode.
 - BLOCKED (exact): mutant run 19 cannot finish: (1) tests/endpoint_mutants.py line 1251 must read `at - last_warned` (my cosmetic rename `now`->`at` in worker._watch moved the G33d anchor); (2) `uv run python tests/endpoint_mutants.py` re-run. A builder's attempt at both was denied by the permission classifier; I do not route around a denial: needs the owner's go-ahead. Evidence on the same code: builder run 18 109 of 109 (before the rename), BATCH9 98 lines all ok (log cut). Everything else of the final-fix is done: truncated-2xx test client fix with 4 unit tests, 3 nits, tests 1399 passed 5 skipped.
