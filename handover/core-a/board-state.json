@@ -420,6 +420,15 @@
    "evidence file": "raw/D-fuzz-concurrent-pg16.log (not yet)",
    "tries": 1,
    "reason": "ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths"
+  },
+  {
+   "item": "EGM-SEQ",
+   "what": "owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "EGM-LEDGER.md",
+   "tries": 1,
+   "reason": "owner order relayed at 06:43Z; step 1 = result review of step E started; the rest waits for the builders to end so the reviewers see the final code"
   }
  ],
  "agents": [
@@ -1299,6 +1308,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "EGM-SEQUENCE: honest ledger in EGM-LEDGER.md: nothing I built has had the full sequence; missing for all code and tests: fresh result review, resolve, repeat, drift report; for ticket E also the plan review; no brainstorm or draft for anything (the lead's draft was the input). Running the result review of step E now, the rest after the three builders end",
   "MODELS REVERTED 06:41Z on the owner's own words in this session: egm plugin lines 6 opus + 66 sonnet + 0 fable (REPORT.md top block has the grep). Every Agent call sets sonnet, haiku or opus explicitly. No fable agent runs",
   "DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop",
   "TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since",

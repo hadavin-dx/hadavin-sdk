@@ -1,0 +1,6 @@
+F4 in : 'password=Zq7pLｘ2xQ9, Zq7pLm2xQ9'
+F4 out: 'password=<SECRET_1> Zq7pLm2xQ9'
+F3 'call +1 415 555 0142.' -> 'call +1 415 555 0142.'
+F3 'call +1 415 555 0142' -> 'call <PHONE_1>'
+F3 'call +1 415 555 0142. Thanks' -> 'call +1 415 555 0142. Thanks'
+F3 'call +1 415 555 0142,' -> 'call <PHONE_1>,'
