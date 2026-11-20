@@ -1,21 +1,23 @@
 -- Money definer functions (ticket F-money-definer, option B of E13). This file adds the SECURITY DEFINER functions below
--- that WILL be the only writers of the three money tables (spend, spend_month, spend_reservations), plus the release
--- function of 0008. THE WALL IS NOT UP BY THIS FILE ALONE: until step 4 (the grants flip in `migrate`) the runtime login
--- still holds write rights on those tables and can lower a booked amount with plain SQL (the H1 bypass of the 0010
--- header). From step 4 on, `migrate` (when roles are named) takes every write right on those tables from the runtime login
--- and grants it EXECUTE on reserve, settle, expire and add_spend; the purge role gets EXECUTE on the purge only. The store
--- (Python) calls these functions by their schema-qualified name; the SQL of the bookings exists in this file only.
+-- that are the only writers of the three money tables (spend, spend_month, spend_reservations), plus the release
+-- function of 0008 (replaced below). THE WALL IS BUILT BY `migrate`, NOT BY THIS FILE ALONE: when roles are named,
+-- `migrate` takes every write right on those tables from the runtime login (it keeps SELECT on spend and spend_month)
+-- and grants it EXECUTE on reserve, settle, expire and add_spend; the purge role gets EXECUTE on the purge only. A
+-- deployment migrated without naming roles has no wall (the stop-state check refuses it). The store (Python) calls
+-- these functions by their schema-qualified name; the SQL of the bookings exists in this file only.
 --
--- THE PROMISE (from step 4 on): a runtime login cannot lower a booked amount, except by settling an open hold it can
+-- THE PROMISE (with the roles named): a runtime login cannot lower a booked amount, except by settling an open hold it can
 -- name, once, by at most that hold's reserved amount. It cannot lower a plain charge, a settled or expired amount, forge
 -- a settled row, edit usd, or touch a row by SQL (it has no right on the tables).
 -- HONEST RESIDUAL (do not over-claim): the runtime still chooses the other arguments. (1) The caps are NOT arguments:
 -- hadavin_reserve_spend takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads day_cap and month_cap from the
 -- table hadavin_caps, which the runtime login cannot write (HD005 when the agent has no row). So the runtime can neither
 -- lower a booked amount nor choose or raise a cap. (2) It can settle any open hold whose id it knows to 0: the counter
--- falls by at most that hold's reserved amount, once. (3) It can expire every open hold at any age
--- (hadavin_expire_spend_reservations has no lower bound on the age, because the contract suite and the memory store
--- accept 0): a self-inflicted outage, safe (holds stay booked at the reserved amount). (4) It can raise any counter by
+-- falls by at most that hold's reserved amount, once. (3) It can expire any open hold older than
+-- the limit min_expiry_age (default 3600 s; a younger age is refused, review M1), and the release function only lowers a
+-- hold that was expired for longer than that: a self-inflicted outage, safe (holds stay booked at the reserved amount,
+-- and a real late settle still finds its hold). (3b) It can name any booking day within max_day_skew days (default 1)
+-- of the database's UTC date, never a far day that would start a fresh counter (review B3). (4) It can raise any counter by
 -- add_spend.
 --
 -- Rules every function body follows:
@@ -36,7 +38,8 @@
 --     closed.
 --   * Error codes: HD001 cap reached (message 'day' or 'month'), HD002 reservation not found (unknown or another
 --     agent's id, the same error for both), HD003 counter row missing (the whole transaction rolls back), HD004 limit row
---     missing, 22023 invalid argument, 23505 duplicate reservation id (native).
+--     missing, HD005 no cap row for the agent (reserve only; fail closed), 22023 invalid argument, 23505 duplicate
+--     reservation id (native).
 --   * Lock order: the reservation row, the day counter, the month counter (the order of 0008 and of the store), so there is
 --     no lock cycle.
 -- Owner: whoever runs `migrate` (one owner for all hadavin_* functions and the money tables, checked by `migrate`). A
@@ -280,9 +283,11 @@ RETURNS TABLE (
     reservations BIGINT, released_usd NUMERIC, day_usd NUMERIC, month_usd NUMERIC, applied_usd NUMERIC
 )
 LANGUAGE plpgsql
+VOLATILE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
 AS $fn$
+#variable_conflict use_column
 DECLARE
     n BIGINT;
     total NUMERIC;
@@ -399,7 +404,7 @@ $fn$;
 REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
 
 -- Step 6 (caps out of the runtime's hands), ADDITIONS ONLY: the table of caps and the two functions around it. The
--- reserve function below takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads its caps from this table.
+-- reserve function above takes 5 arguments (p_id, p_agent, p_day, p_usd, p_run_id) and reads its caps from this table.
 -- hadavin_caps: one row per agent. Owner only: no role holds any right on it (`migrate` GRANTS row is all ""); the
 -- definer functions below touch it as owner. The CHECKs are the part of the cap rule that is a property of the value
 -- (>= 0 and finite; NaN sorts above every number, so it fails the second test); the scale limit comes from
