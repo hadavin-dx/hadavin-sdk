@@ -70,7 +70,9 @@ def test_the_two_unit_symbols_are_exactly_micro_and_ohm():
 def test_a_code_point_newer_than_unicode_15_1_0_counts_as_neutral():
     # docstring: "A code point added to Unicode after the pinned version is not in the data and counts as neutral."
     # U+1C89 CYRILLIC CAPITAL LETTER TJE is new in Unicode 16.0; U+10D40 GARAY DIGIT ZERO is new in 16.0 as well.
-    assert unicodedata.unidata_version >= "15.1.0"
+    # pyproject allows Python 3.12 (Unicode 15.0.0) as well as 3.13 (15.1.0): both predate 16.0, so every code point below is
+    # unassigned (Cn) in either, and the checks hold on both; an interpreter from before 15.0.0 is out of scope.
+    assert unicodedata.unidata_version >= "15.0.0"
     for cp in (0x1C89, 0x1C8A, 0x10D4A):
         ch = chr(cp)
         if unicodedata.unidata_version <= "15.1.0":
