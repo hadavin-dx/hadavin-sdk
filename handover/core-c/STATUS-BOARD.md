@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:56:52Z
+UPDATED_UTC: 2026-11-20T10:01:04Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,33 +6,34 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 4.2 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 7, heavy agents 0
-DISK: / 57G free, 18% used; git worktrees 21; 1.3G	/tmp/claude-0;280M	/root/.cache/uv;
+AGENTS_RUNNING: 8
+CAPACITY: load 3.2 of 4 cores, mem 5/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
+DISK: / 57G free, 18% used; git worktrees 21; 1.4G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. Q9 landed (4fb0b5154, 6e8bb9820): 30 code-point tests + 30 mutants, textnorm 240 of 240 good, redact_mutants 89 of 93 in the builder run, 4 survivors = E13 (look-alike set compare, U+2044, slash replace, DM-1). Whole redact_mutants.py (96 with E9) running on merged HEAD (E12). G10 plan review round 1 running. G9 ticket still drafting.
-PUSHED_UTC: 2026-11-20T09:56:49+00:00
+NEXT: LIVE only. E10 plan review round 1 STARTED 09:59Z (G9 ticket: the lead's loop as stated does not close E10: it must read the text with placeholders put back; design + measurements in the ticket). E12 SUMMARY: redact_mutants.py on merged HEAD 92 of 96 good, 4 survivors (E13) under review. Heavy batches running: 0.
+PUSHED_UTC: 2026-11-20T10:00:33+00:00
 
-(15:26 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:31 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| adfc4857 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point (E10) | plan review round 1 next (max 3) | 09:37 | 10:05 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |
 | ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
 | a83c98d5 | evidence runner | claude-sonnet-5-5 | E11(c) split of Latin false hits (low load only) | 09:37 | 10:00 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a6a89e42 | builder | claude-sonnet-5-5 | G7 fix round 7 (registry memory limit, actions double count, structural growth trigger, counts/figures/scripts) | G7 result review round 6 done (0 Blocker, 1+4 Major) | 09:52 | 10:25 | 1 | running | 7 | 0 | from G7-result-review-6.md; E10 fixed point waits for ticket G9 |
-| a19f95a7 | reviewer | claude-sonnet-5-5 | G10 PLAN review round 1 (codebase): pins, callers, DeadlinePassed vs TextTooLong | 09:55 | 10:10 | 2 | running | 1 | 0 | max 3 rounds, then build |
 | acfcd4eb | reviewer | claude-sonnet-5-5 | Q9 fresh EGM result review (30 code-point tests and mutants; textnorm survivors; E13 survivors) | 09:58 | 10:12 | 2 | running | 1 | 0 | ORDER 022 Q9 condition |
+| a9111b4b | drafter | claude-opus-5-5 | G10 v3 ticket (plan review round 1: 5 Blockers, 3 red tests, overrun bound, D4 measurement) | plan review round 2 next | 09:58 | 10:30 | 1 | running | 3 | 0 | EGM draft step |
+| a252f005 | reviewer | claude-sonnet-5-5 | G9 PLAN review round 1 (readiness): spelled sweep fixed point (E10) | 09:59 | 10:15 | 2 | running | 1 | 0 | max 3 rounds, then build |
+| a6aeb49d | reviewer | claude-sonnet-5-5 | G9 PLAN review round 1 (design critic): completeness of the overlap closure, gate DoS | 09:59 | 10:15 | 2 | running | 1 | 0 | max 3 rounds, then build |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| tests/redact_mutants.py, all 96 mutants on merged HEAD (core-c, worktree /tmp/core-c-mut96) | running | timeout 40 min; writes /tmp/redact-mutants-96.txt | heavy batch 1 of 2 (E12 SUMMARY line) |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
