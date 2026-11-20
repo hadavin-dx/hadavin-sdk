@@ -1610,8 +1610,8 @@ def test_b2_cli_reset_says_still_on_when_a_stop_commits_after_its_clear_statemen
     assert waited, "the reset never waited on the owner's clear: nothing overlapped"
     out, err = capsys.readouterr()
     assert codes == [2], err
-    assert "kill switch still ON (by 'ops:during')" in err
-    assert "Run limits reset again" in err
+    assert "kill switch still ON (set by 'ops:during' at " in err
+    assert "reset again" not in err and "Check the stop reason" in err
     assert "kill switch OFF" not in out + err
     assert w.kinds() == ["limits.reset"]  # written, not failed
     ks = w.read()

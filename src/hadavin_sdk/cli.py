@@ -55,7 +55,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.secret_name import canonical_secret_name
+from hadavin_sdk.secret_name import collides
 from hadavin_sdk.stages import is_live
 from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
@@ -236,11 +236,7 @@ def _main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        if (
-            reset_ref
-            and b.store.dsn_secret_name
-            and canonical_secret_name(reset_ref) == canonical_secret_name(b.store.dsn_secret_name)
-        ):
+        if reset_ref and b.store.dsn_secret_name and collides(reset_ref, [b.store.dsn_secret_name]):
             # Before any connection: the reset must not run on the runtime's own login.
             print(
                 "refused: backends.store.reset_credential_ref names the same secret as "
@@ -251,6 +247,14 @@ def _main(argv: list[str] | None = None) -> int:
             return 2
     try:
         secrets = make("secrets", b.secrets)
+        if reset_ref and _same_login(secrets, reset_ref, [b.store.dsn_secret_name]):
+            print(
+                "refused: backends.store.reset_credential_ref holds the same login as "
+                "backends.store.dsn_secret_name (two names, one DSN), so the reset would run on the runtime "
+                "login. Point it at the secret that holds the reset role's own DSN. The kill switch was not changed.",
+                file=sys.stderr,
+            )
+            return 2
         if reset_ref:
             # The reset role's own login for the store and the audit row. It signs and anchors nothing (it may
             # not write a checkpoint); the tick does that under the runtime login.
@@ -455,11 +459,28 @@ def audit_verify(audit) -> int:
     return 0 if result.ok else 1
 
 
+def _same_login(secrets, ref: str, others) -> bool:
+    """True when the secret ``ref`` holds the same value as one of ``others`` (two names, one login). A name that
+    cannot be read is not the same: the start-up probe reports it with its own message."""
+    try:
+        mine = secrets.get(ref)
+        return any(secrets.get(n) == mine for n in others if n)
+    except Exception:  # noqa: BLE001 - an unreadable secret is reported by platform_secrets.check
+        return False
+
+
 def _kill_switch_store_down(what: str, exc: BaseException) -> int:
     """4 when the store cannot be reached; 2 when it answers but is not ready (missing table or grant)."""
     if is_connectivity_error(exc):
+        # After the intent row was written the connection may drop at any point, so a reset may have landed.
+        certain = (
+            "Nothing was changed."
+            if what != "reset"
+            else "The connection was lost while the reset ran, so it may or may not have been applied: treat "
+            "the kill switch as ON until a read shows OFF."
+        )
         print(
-            f"kill switch NOT {what}: the store is unreachable. Nothing was changed. "
+            f"kill switch NOT {what}: the store is unreachable. {certain} "
             "Fix the store, then run the same command again.",
             file=sys.stderr,
         )
@@ -499,16 +520,16 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
             file=sys.stderr,
         )
         return 2
-    others = {
-        canonical_secret_name(n)
+    others_names = [
+        n
         for n in (
             getattr(b.store, "dsn_secret_name", None),
             getattr(b.store, "reset_credential_ref", None),
             getattr(b.store, "purge_dsn_secret_name", None),
         )
         if n
-    }
-    if canonical_secret_name(ref) in others:
+    ]
+    if collides(ref, others_names):
         print(
             "refused: backends.store.release_credential_ref names the same secret as the runtime, reset or purge "
             "login. Point it at the secret that holds the release role's own DSN. Nothing was changed.",
@@ -517,6 +538,14 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
         return 2
     try:
         secrets = make("secrets", b.secrets)
+        if _same_login(secrets, ref, others_names):
+            print(
+                "refused: backends.store.release_credential_ref holds the same login as the runtime, reset or "
+                "purge secret (two names, one DSN). Point it at the secret that holds the release role's own "
+                "DSN. Nothing was changed.",
+                file=sys.stderr,
+            )
+            return 2
         as_release = b.store.model_copy(
             update={"dsn_secret_name": ref, "purge_dsn_secret_name": None}
         )
@@ -603,9 +632,15 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
         )
         return 4 if is_connectivity_error(exc) else 2
     if state.on:
+        who = (
+            f"set by {state.by!r} at {state.ts.isoformat()}"
+            if state.by
+            else "set by someone unknown"
+        )
         print(
-            f"kill switch still ON (by {state.by!r}): the reset was written, but a stop is still open "
-            "(one committed while the reset ran) or the old flag is on. Run limits reset again.",
+            f"kill switch still ON ({who}): the reset was written, but a stop is still open. A colleague may "
+            "have just set it, or an older flag is on. Check the stop reason with them before resetting again: "
+            "a second reset erases that stop too.",
             file=sys.stderr,
         )
         return 2

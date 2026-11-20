@@ -223,7 +223,7 @@ def test_reset_exits_4_when_the_store_cannot_be_reached_at_the_clear(capsys, n):
     limits, audit = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 4
     out, err = capsys.readouterr()
-    assert "kill switch NOT reset: the store is unreachable. Nothing was changed." in err
+    assert "kill switch NOT reset: the store is unreachable. The connection was lost" in err
     assert "kill switch OFF" not in out + err
     assert audit.kinds() == ["limits.reset", "limits.reset_failed"]
 
@@ -253,7 +253,8 @@ def test_reset_exits_2_and_says_still_on_when_the_read_back_is_on(capsys):
     limits, audit = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 2
     out, err = capsys.readouterr()
-    assert "kill switch still ON (by 'ops:during')" in err and "Run limits reset again" in err
+    assert "kill switch still ON (set by 'ops:during' at " in err and "reset again" not in err
+    assert "Check the stop reason" in err
     assert "kill switch OFF" not in out + err
     assert audit.kinds() == ["limits.reset"] and store.reads == 1
 
@@ -282,14 +283,18 @@ def test_cli_limits_reset_exits_4_when_nothing_listens_at_the_store_address(
 
     def fake(capability, settings, *a, **k):
         if capability == "secrets":
-            return FakeSecretProvider({DSN_NAME: nowhere, RESET_REF: nowhere})
+            return FakeSecretProvider(
+                {DSN_NAME: nowhere, RESET_REF: nowhere + "&application_name=reset"}
+            )
         return real(capability, settings, *a, **k)
 
     monkeypatch.setattr(cli, "make", fake)
     argv = ["--config", str(_postgres(cfg_dir, ref)), "limits", "reset", "--by", "user:op"]
     assert cli.main(argv) == 4
     out, err = capsys.readouterr()
-    assert "kill switch NOT reset: the store is unreachable. Nothing was changed." in err
+    assert (
+        "kill switch NOT reset: the store is unreachable." in err and "Nothing was changed" in err
+    )
     assert "Traceback" not in err and "kill switch OFF" not in out + err
 
 
