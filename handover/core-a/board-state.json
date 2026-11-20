@@ -746,7 +746,21 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [],
+ "agents": [
+  {
+   "id": "rev-lead-tswm-2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead wip/lead-b-ts-watermark fix rounds 2-4 (head de8967aba): 0009 without a DO block, migrate validates, exit 75, runbook, core-b merge",
+   "started UTC": "15:19",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2",
+   "retries so far": 0,
+   "reason": "lead 15:17: branch moved since my review"
+  }
+ ],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1117,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:19 WHAT THE MAIN THREAD DID / WHY 0 AGENTS: the main thread only reads agent reports, writes reports and pushes the board; agents run the work. Between 15:05 and 15:17 there were 0 agents because every item on your lists was finished (not skipped): ts-watermark review (reviews/rev-lead-tswm.md), migrate review + targeted deploy-order/merge/keyword review (rev-lead-migrate.md, rev-lead-migrate-2.md), merge-c (all 4 commits superseded: nothing to merge), CRASH-MATRIX part 2 (done, 171 points), E-door-1 README (done and reviewed). NEW from your 15:17 note: wip/lead-b-ts-watermark moved to de8967aba (fix round 2: 0009 without a DO block, migrate validates; runbook; core-b merge): rev-lead-tswm-2 started on that delta (643-line diff). wip/lead-b-migrate is still 0891d81bd = the head I already reviewed twice; I will re-review when your fix round 1 is pushed (tell me the head). AGENTS 1.",
   "15:25 wip/lead-b-migrate TARGETED review done (reviews/rev-lead-migrate-2.md): MERGE: (1) cli.py `_migrate` positional chain: your caps_role and core-b's accept_changed_draft/reset_draft are appended in the SAME three places (signature, positional call, any() guard): a keep-both merge binds caps_role to the wrong tuple SILENTLY: make the call keyword-only; (2) NO textual conflict but a break: core-b tests/test_money_definer_pg.py:141/643-648 calls hadavin_set_cap as w.reset expecting 22023: after your branch the reset login has no EXECUTE (42501): switch to w.caps; (3) tests/stop_state_mutants.py:135-136 audit_entries anchor occurs 0 times (you reformatted that row): mutant 'NOT APPLIED'. DEPLOY ORDER: safe for running workers (runtime keeps reserve/settle/cap_matches); new code before `migrate --caps-role`: set-cap/sync-caps/check-caps refused with exit 2; missing caps role rolls back cleanly (exit 3, role name not shown); migrate must name ALL SIX roles every run (omitting --caps-role later is refused). ROLLBACK: caps_credential_ref + extra=forbid makes older builds fail to load the config; old set-cap exits 2; old migrate with --reset-role is refused until EXECUTE on set_cap/cap_matches is hand-REVOKEd from the caps role: neither CHANGELOG nor runbook says so. DOCS: runbook l.238-283 and CHANGELOG l.22/49-53 still say the reset login; no doc mentions --caps-role/caps_credential_ref. No agents running.",
   "15:12 AGENTS 1: rev-lead-migrate-2 (targeted review of wip/lead-b-migrate for DEPLOY ORDER, MERGE risk vs core-b's current head, KEYWORD-ARGUMENT risks: the three classes you named; the general review is already in reviews/rev-lead-migrate.md). Your other 15:08 items: (1b) ts-watermark reviewed (reviews/rev-lead-tswm.md); (2) merge-c DONE (nothing to merge: all 4 commits superseded; delete g2/g3 branches); (3) CRASH-MATRIX part 2 ALREADY DONE (171 kill points PG16 + memory); (4) README E-door-1 DONE and reviewed. I will not invent work to hold 3 agents: QUEUE.md has no open READY item for core-a; tell me what to build.",
   "15:20 MERGE PLAN (your item 4) DONE: nothing to merge: all 4 commits of wip/cloud-core-c/g2-p1d-a and g3-p2d-port that are not patch-equivalent are SUPERSEDED at core-c head (symbols and line cites in handover/core-c/requests/from-core-a-merge.md); applying the g3 'textnorm hash re-pin' would be WRONG (stale hash; head's manifest and CHANGELOG already carry the current one); merging either branch would regress core-c (pre-G4..G13 redact.py/runmap.py). Conclusion for core-c: delete wip/cloud-core-c/g2-p1d-a and g3-p2d-port. Branch wip/core-a-merge-c equals cloud/core-c (no diff, nothing pushed). A reduced guard run at head: 682 passed, 46 xfailed, 2 failed (test_p1d_a_rows::test_row_PU1_card and ::PU1_model: core-c's own, also seen at baseline in an earlier run). No agents running; every item on your 15:02 list is done or answered.",
