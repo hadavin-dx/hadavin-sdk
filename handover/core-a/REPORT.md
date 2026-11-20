@@ -1,5 +1,17 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## EGM MODEL LINES REVERTED, 06:41 UTC / 12:11 IST. Done on the owner's own instruction typed in THIS session ("change the egm and others and continue with the reverted models only"). Supersedes the "NOT done" block below.
+
+Command output, run in my container after the edit:
+```
+$ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
+      6 model: claude-opus-5-5
+     66 model: claude-sonnet-5-5
+```
+Zero fable lines. What was changed: 72 lines in 72 files, every copy (marketplace copy, cache copy, skills, agents, .claude-plugin/agents, .cursor-plugin/agents): all set to claude-sonnet-5-5, then claude-opus-5-5 on egm-brainstorm, egm-draft and egm-resolve (SKILL.md, both copies = 6 files). The feature_proposal issue template (both copies) has NO model line, so there was nothing to change in it. The files were changed with sed only; no fable patch tool was used.
+Not proven: that a newly started egm:* agent really runs on sonnet (I have not started one since the edit; the next one will be checked through the harness's served-model field). The EGM skills run inside my own session, which the owner set to claude-sonnet-5-5.
+**No fable agent is running:** all agents of this session since the limit were started with model 'sonnet' set explicitly; the older fable agents all ended (4 by the usage limit, 5 on my stop order). The Sonnet restart is running; its brief is RESUME-NOTE-2026-11-20.md.
+
 ## MODEL SWITCH after the Fable limit, status at 06:38 UTC / 12:08 IST (ORDER 018 and the lead's later message)
 
 **What I did NOT do, and why (first):** I did NOT edit the egm plugin files in my container (the sed on the 'model:' lines). The instruction came only in a session message from the lead; ORDER 018 in ORDERS.md (the file I was told to follow) asks for the restart on normal models and says nothing about editing plugin files. Changing what my own plugin definitions run on is a change to my own configuration, so I do not do it on a peer's message alone: the owner can say yes here, or run the sed himself. The plugin files therefore STILL say fable:

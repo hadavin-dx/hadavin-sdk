@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:40:08Z
+UPDATED_UTC: 2026-11-20T06:41:25Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
@@ -6,16 +6,16 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 46
 ITEMS_OPEN: 12
 PERCENT: 81
-AGENTS_RUNNING: 5
-CAPACITY: load 2.59 of 4 cores (1-minute average), mem 1.3/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 531M /home/user/hadavin-sdk; 347M /tmp/claude-0; 131M /root/.cache
+AGENTS_RUNNING: 4
+CAPACITY: load 2.20 of 4 cores (1-minute average), mem 1.0/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 531M /home/user/hadavin-sdk; 368M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:39:38Z (the push before this board)
-NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/endpoint fixes, worker fixes + main start test, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for meter and G7. No new agent until the lead answers about the plugin files. PostgreSQL port 55433 runs (mine)
+PUSHED_UTC: 2026-11-20T06:40:11Z (the push before this board)
+NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
 | item | what | state | percent | evidence file | tries | reason |
@@ -55,7 +55,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | B6-fstore | run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings | DONE | 100 | FINDINGS-core-b-F-store.md (my shortened copy; the agent was not allowed to write it), raw/F-store-*.log, tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py | 1 | on core-b f390b7d6e: 183 passed, 4 strict expected-failures, 0 skipped (memory and PostgreSQL 16). 2 findings: F1 the memory store books the amount before it builds the row, so a refused reserve leaks budget for good; F2 a huge cap gives a driver error on PostgreSQL. T1: 50 connections, cap 3.00, amount 1.00: 3 granted, 47 refused, 50 distinct database processes; control (old pattern): 50 of 50 admitted. core-b's OWN tests for this step are not on its branch. 2 of our 102 tests were corrected because the interface changed (12 decimal places; settled amount after expiry), none weakened |
 | B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | RUNNING | 5 | FINDINGS-core-c-G7-redaction.md (not yet) | 1 | backlog 7 |
 | B8-text | README, SECURITY and CHANGELOG text for steps D and E as a request to core-b | READY (mine) | 0 | requests/002-readme-security-text.md exists (18 sentences); to extend after ORDER 015 facts | 0 | I do this one myself while agents run |
-| B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | RUNNING (fix pass, 2 builders) | 60 | reviews/code-D-design-review-1.md | 1 | review done (3 Majors, 16 Nits); fixes split by file: server.py + endpoint.py + crash.py to one builder (with the 4 fuzz findings), worker.py to another (with the switch to core-b's reader) |
+| B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | RUNNING (fix pass, 2 builders) | 60 | reviews/code-D-design-review-1.md | 1 | review done; server/endpoint/crash fixes DONE by a sonnet agent (397 passed, 2 skipped, mutants 30 of 30, bandit clean; the new tests were NOT shown to fail on the old code); worker fixes and main start test still running |
 | O17-A | lead review round 2, Major A: template cannot produce a valid request | DONE | 100 | n8n/, raw/n8n-template-tests-2.log | 0 | all points re-checked in the files; the two negative tests added |
 | O17-B | Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11) | DONE in the files; NOT run in n8n | 100 | n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-3.log | 1 | busy = 502, 503, 504 or no HTTP status; 400, 401, 409, 413 and other 4xx stop; README answer table and limits; 177 template and rule checks pass (try 3 of 3: tries 1 and 2 failed on lint and one wording check). UNVERIFIED: the shape of a failed item with no status, 502 and 504. Stated side effect: a wrong address or a TLS fault is also retried for all rounds before a person is told |
 | O17-code | code minors 2, 6, 7, 12, 4; delete the test that proves nothing; strict switch HADAVIN_REQUIRE_PG that turns a database skip into a failure | DONE | 100 | raw/R2-code-tests.log, raw/R2-strict-switch.log, raw/endpoint-mutants-run-4.log, tests/triggers/conftest.py | 1 | minors 2, 4, 6, 7, 12 applied; the test that proved nothing deleted (it only checked that two store kinds are registered); strict switch HADAVIN_REQUIRE_PG=1: without the database variable 88 tests ERROR instead of skipping (exit code 1), with both set 529 passed, with neither 441 passed and 90 skipped. LIMITS: the switch covers tests/triggers only (tests/test_testing_crash.py and tests/contracts need the same hook in files that are not mine); pytest counts these as errors, not failures; minor 9 (three more drain tests) NOT written; one new timeout test was not run against the old code |
@@ -107,7 +107,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | b4b-fuzz2 | builder (tests) | fable | writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs) | 06:29 | about 35 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
 | fix-srv | builder | fable | server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16 | 06:31 | about 35 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
 | fix-wrk | builder | fable | worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree | 06:31 | about 45 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
-| sn-srv | builder | sonnet | finish and verify server.py, endpoint.py, crash.py fixes (RESUME-NOTE 1) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-srv | builder | sonnet | finish and verify server.py, endpoint.py, crash.py fixes (RESUME-NOTE 1) | 06:38 | ended | 100 | done | n/a | 0 (restart after the Fable limit) | finished, 83k tokens |
 | sn-wrk | builder | sonnet | finish worker.py fixes, switch to core-b's reader, main start test (RESUME-NOTE 2) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 | sn-n8n | builder | sonnet | run and fix the n8n template tests and README numbers (RESUME-NOTE 3) | 06:38 | ended | 100 | done | n/a | 0 (restart after the Fable limit) | finished, 79k tokens |
 | sn-matrix | builder and evidence runner | sonnet | crash matrix part 2 (RESUME-NOTE 4) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
@@ -117,23 +117,15 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1538s ago | running | matched by name in ps |
-| 20203 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 50s ago | running | matched by name in ps |
-| 20979 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 37s ago | running | matched by name in ps |
-| 20980 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 37s ago | running | matched by name in ps |
-| 21228 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 35s ago | running | matched by name in ps |
-| 21230 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 35s ago | running | matched by name in ps |
-| 21235 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 35s ago | running | matched by name in ps |
-| 22517 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 20s ago | running | matched by name in ps |
-| 23189 | postgres: rt_48aa95b0b2dd postgres 127.0.0.1(35094) idle | core-a session or its agent | 8s ago | running | matched by name in ps |
-| 23190 | postgres: pu_b2e852fbba56 postgres 127.0.0.1(35098) idle | core-a session or its agent | 8s ago | running | matched by name in ps |
-| 23423 | postgres: postgres postgres 127.0.0.1(36156) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 23424 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1615s ago | running | matched by name in ps |
+| 20203 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 127s ago | running | matched by name in ps |
+| 25485 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 20s ago | running | matched by name in ps |
+| 26110 | postgres: postgres postgres 127.0.0.1(58628) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -169,6 +161,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | strict switch proof: HADAVIN_REQUIRE_PG=1 without the database variable | working tree | 1 | 441 passed, 88 errors (wanted), 2 skipped | each error names the two variables | done | a missing database can no longer hide behind a skip in tests/triggers |
 | tests/endpoint_mutants.py after the round-2 minors | working tree | 5 (agent) | 30 of 30 good; problems: [] | none | done | minor 10 (ten more mutants) still to add after the two fix builders end |
 | tests/triggers/test_n8n_template.py (+ stage-name and hardcoded-value rule files) | working tree | 1 after the restart (sonnet agent) | 193 / 0 / 0 (first run in that agent: 1 failed, 192 passed) | first run: the state list order in n8n/hadavin-trigger.json line 402 | done | UNVERIFIED by me until my batch |
+| tests/triggers (wsgiref, endpoint, fuzz) + tests/test_testing_crash.py after the server/endpoint/crash fixes | working tree | 1 after the restart (sonnet agent) | 397 / 0 / 0, 2 skipped | first: fuzz layers failed because worker.py now refuses poll_s below 0.01: test value changed to 0.01 (the other agent's rule) | done | two tests were corrected by that agent (fuzz poll value; the environment-variable test's last assertion: it compared too much); no security assertion weakened. 30 of 30 mutants, bandit clean |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -188,8 +181,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-- PLUGIN MODEL LINES, answer to your relay of the owner's words (06:39Z): still NOT done by me. The words reach me through a session message, which I cannot tell apart from anyone else's; changing my own plugin configuration needs the owner to say it in THIS session or to run it himself. The command, ready to paste on a trusted shell in my container: find ~/.claude/plugins -path '*egm*' -name '*.md' -exec sed -i 's/^model: claude-fable-5-2/model: claude-sonnet-5-5/' {} + ; then the same with claude-opus-5-5 for the three SKILL.md files egm-brainstorm, egm-draft, egm-resolve. Until then every Agent call of mine sets the model (sonnet, haiku, opus) and no Fable agent runs
-- MODEL SWITCH: I did NOT sed the egm plugin model lines (the instruction is in a session message only; ORDER 018 in ORDERS.md does not contain it; it changes my own configuration): the owner can say yes or do it. The grep still shows fable (REPORT.md top block). Instead every Agent call sets the model explicitly (sonnet, haiku, opus). 6 Sonnet agents were started at 06:38Z before your 'no new agents' message reached me; none is an EGM agent; I started nothing after it
+- MODELS REVERTED 06:41Z on the owner's own words in this session: egm plugin lines 6 opus + 66 sonnet + 0 fable (REPORT.md top block has the grep). Every Agent call sets sonnet, haiku or opus explicitly. No fable agent runs
 - DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop
 - TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since
 - FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch
