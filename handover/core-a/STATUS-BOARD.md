@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T16:09:50Z
+UPDATED_UTC: 2026-11-20T16:11:22Z
 SESSION: core-a
-ORDER: 020 (002 to 019 standing)
+ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 1
-CAPACITY: load 0.44 of 4 cores (1-minute average), mem 1.5/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 56G 19%; 649M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+CAPACITY: load 0.78 of 4 cores (1-minute average), mem 1.5/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 56G 20%; 650M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T16:08:47Z (the push before this board)
+NEXT: 16:20 integ-pg (strict-PG run of tests/triggers etc. on the merged scratch tree) finishing; full mutant script (run 19) running on cloud/core-a 5a8c83fd3; then review new heads the minute core-b/core-c/lead-b-* move (migrate fix round 1 not pushed yet); nothing else READY in QUEUE.md/ORDERS.md (ORDER 020 and the 11:36 line were stale)
+PUSHED_UTC: 2026-11-20T16:09:55Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -111,19 +111,16 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 35722s ago | running | matched by name in ps |
-| 15170 | bash -c S=$(date +%s); uv run --all-extras --group test pytest -q -n 3 | core-a session or its agent | 734s ago | running | matched by name in ps |
-| 15172 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 734s ago | running | matched by name in ps |
-| 15178 | /home/user/wt/integ/.venv/bin/python /home/user/wt/integ/.venv/bin/pyt | core-a session or its agent | 734s ago | running | matched by name in ps |
-| 20879 | /home/user/wt/integ/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 20887 | postgres: postgres postgres 127.0.0.1(54618) idle | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 20959 | /home/user/wt/integ/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 13s ago | running | matched by name in ps |
-| 20969 | postgres: postgres postgres 127.0.0.1(55148) idle | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 35814s ago | running | matched by name in ps |
+| 15170 | bash -c S=$(date +%s); uv run --all-extras --group test pytest -q -n 3 | core-a session or its agent | 826s ago | running | matched by name in ps |
+| 15172 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 826s ago | running | matched by name in ps |
+| 15178 | /home/user/wt/integ/.venv/bin/python /home/user/wt/integ/.venv/bin/pyt | core-a session or its agent | 826s ago | running | matched by name in ps |
+| 22202 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 20s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -185,6 +182,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:20 ANSWERS written: handover/core-a/ANSWERS-1612.md: (1) A1-A6 table (A1 nothing to fix, A2/A3 done twice, A4 done + integ-pg running, A5 done, A6 done); (2) why 3 -> 1: packages ended; my NEXT/ORDER 020 lines were stale (fixed now); (3) mutant run 19 is NOT blocked any more: your G33d anchor edit landed; I started `.venv/bin/python tests/endpoint_mutants.py` myself at 16:15 on cloud/core-a 5a8c83fd3 (result file evidence/mutants-run19.md); exact command in the answers file. AGENTS 1 (integ-pg) + the mutant script in the background.
 - 16:25 core-b newest code reviewed (reviews/rev-b-newest2.md; appended to handover/core-b/requests/xr-from-core-a-reviews.md): no Blocker; the NEW start-up self-check of the runtime login's money rights (postgres.py:102-140) is a real improvement (refuses, effective privileges, no leak) BUT: MAJOR 1 a NOINHERIT route passes it, I CONFIRMED on the real PG16.15: `CREATE ROLE g NOLOGIN; GRANT UPDATE ON hadavin_caps TO g; GRANT g TO runtime WITH INHERIT FALSE, SET TRUE` -> as runtime has_table_privilege = false, has_any_column_privilege = false (check passes) but after `SET ROLE g` it is true: `UPDATE hadavin_caps SET day_cap=1e9` works; MAJOR 2 the owner skip is all-or-nothing: a login owning ONE money table skips the check on the other four; MAJOR 3 0011 edited in place: hadavin_add_spend's new +-max_day_skew window never reaches an already-migrated DB (ledger keeps the old checksum, migrate only warns) and the charge-failure handling is untested. Fine: clock hint, k1b audit code, attack-battery re-count (a tightening). Running: integ-pg only.
 - 16:20 A6 DONE (reviews/rev-c-rekey.md + NEW FILE handover/core-c/requests/from-core-a-review.md as you named it): core-c 2552bcc95 (pii recording re-keyed): no Blocker; the claim 'phone masked whole' is RIGHT ('+61 412 345 678.'+newline hits the G7-F3 sentence-end rule, not the glued '.'+letter case); MAJOR: the commit only ADDED the new-key recording, the OLD key's file seems still present (25 files, record.py would produce 24; three recordings contain 'Office chair'): a regression to the old partial mask would still find it and the test would pass: delete the stale file or regenerate. Running: integ-pg, A6b-rev-b-newest.
 - 16:14 AGENTS 3 (integ-pg, A6-rev-c-rekey, A6b-rev-b-newest): found NEW core-b code (head 0aab18e9d): 197e24cae 'start-up self-check of the runtime login's money rights (review M3)' = the startup check I asked for in rev-b-G Major 3; reviewer started on it plus e750160ec (clock hint), 2356179a8 (k1b audit code), ef465c3fd (attack battery counts a repeat that meets the range check as not refused: scrutinising whether that is a test loosening).
