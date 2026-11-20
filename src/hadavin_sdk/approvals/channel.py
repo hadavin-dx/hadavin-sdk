@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import re
+import time
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
+from hadavin_sdk import defaults
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import (
     defang_text,
@@ -30,6 +32,7 @@ def clean(text: str) -> str:
     # or a mention. After the final redaction only `defang_text` runs: it writes `.` as `[.]` and wide dots as `.`. Placeholders already in the text
     # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
     text = text.replace("\x00", "")
+    started = time.thread_time()
     mapping = _seeded(text)
     out = runmap.redact_text(text, mapping, neutralise=_neutralise)
     # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
@@ -40,8 +43,13 @@ def clean(text: str) -> str:
         joined_map = _seeded(joined)
         alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
         if _assignment_originals(joined_map) - _assignment_originals(mapping):
-            return _settled(defang_text(alt))
-    return _settled(defang_text(out))
+            return settled(defang_text(alt), started=started)
+    shown = defang_text(out)
+    # Nothing was masked, neutralised or defanged and no `[.]` was there to read back: the check pass would read the
+    # very text pass 1 read (same seeds), so it cannot differ (review M5).
+    if shown == text and "[.]" not in shown:
+        return shown
+    return settled(shown, started=started)
 
 
 # One pass is no fixed point. A placeholder the redactor writes can end a name or start a value for a pattern that ran
@@ -54,14 +62,35 @@ def clean(text: str) -> str:
 _MAX_REREADS = 3
 
 
-def _settled(shown: str) -> str:
-    for _ in range(_MAX_REREADS):
-        withheld = withhold_commands(undefang_text(shown))
-        again = defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))
-        if again == shown:
-            break
-        shown = again
-    return shown
+# What a card shows when it does not settle inside the bound, or the re-read is refused (too large, past the time budget):
+# a fixed text, never the unsettled one (fail closed, review M4). It holds no name, dot or placeholder, so it reads the same twice.
+SETTLE_NOTE = "[card withheld: its text did not settle]"
+
+
+def _reread(shown: str) -> str:
+    """One read of a stored card, exactly as `SlackChannel._blocks` reads it: undefang, withhold, redact, defang last."""
+    withheld = withhold_commands(undefang_text(shown))
+    return defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))
+
+
+def settled(shown: str, *, started: float | None = None) -> str:
+    """`shown` read again until a read changes nothing, at most `_MAX_REREADS` times. A text that is still changing at the
+    last read, a re-read the redactor refuses (the undefanged text can be longer than the first input) or one that starts
+    after `REDACT_BUDGET_S` CPU seconds of the calling thread since `started` (one budget for all the passes of a card)
+    gives `SETTLE_NOTE`, never the unsettled text. The one function `clean` and `SlackChannel._blocks` share."""
+    if started is None:
+        started = time.thread_time()
+    try:
+        for _ in range(_MAX_REREADS):
+            if time.thread_time() - started > defaults.REDACT_BUDGET_S:
+                return SETTLE_NOTE
+            again = _reread(shown)
+            if again == shown:
+                return shown
+            shown = again
+    except runmap.RedactionError:
+        return SETTLE_NOTE
+    return SETTLE_NOTE
 
 
 # A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).

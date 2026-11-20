@@ -46,15 +46,21 @@ def m(name, file, old, new, killer, expect=None):
 S = "sanitise_text"
 M = [
     m("A1", CH, "sanitise_text(text, defang=False)", "sanitise_text(text)", "test_row_H26_card"),
-    # G2 fix round: `clean` returns through `_settled` (the re-read); the two mutants keep their meaning.
-    m("A2", CH, "return _settled(defang_text(out))", "return out", "test_row_L1_card"),
-    m("A11", CH, "return _settled(defang_text(alt))", "return alt", "test_row_T1_card"),
+    # G2 fix round: `clean` returns through `settled` (the re-read); the two mutants keep their meaning.
+    m("A2", CH, "shown = defang_text(out)", "shown = out", "test_row_L1_card"),
+    m(
+        "A11",
+        CH,
+        "return settled(defang_text(alt), started=started)",
+        "return alt",
+        "test_row_TS1_card",
+    ),
     # G2 fix round: the re-read writes `[.]` last too.
     m(
         "A2s",
         CH,
-        "again = defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))",
-        "again = runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise)",
+        "return defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))",
+        "return runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise)",
         "test_row_L1_card",
     ),
     m(

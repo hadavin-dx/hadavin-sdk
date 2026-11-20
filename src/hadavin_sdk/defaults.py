@@ -50,8 +50,11 @@ CUT_MARGIN = 8192
 # characters of the alignment). NOT checked inside a direct pass of the pattern table, in `_views` (`neutralise`,
 # `canonical`, `composed`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the round in progress, the tail
 # of `_folded_line` (the fold of the body and the dry runs), `_withhold`, the `find` loop, `sweep` and the per-line fold
-# loops: one call can take the budget plus about five full pattern passes plus the sweep, and `clean()` makes two calls
-# (the text and its tag-stripped view).
+# loops: one call can take the budget plus about five full pattern passes plus the sweep. `clean()` makes one call for the
+# text, one more for its tag-stripped view only when tags were there, and a check read of its result (at most 3, none when
+# pass 1 changed nothing); the check reads share ONE budget (`channel.settled`, CPU seconds since `clean` began; a card over
+# it, or a read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms
+# -> 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
 REDACT_BUDGET_S = 6.0
 
 

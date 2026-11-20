@@ -161,24 +161,39 @@ def test_the_glued_digit_does_not_unmask_the_address_on_the_card_or_for_the_mode
             assert out.startswith("mail <EMAIL_1>"), (glue, out)
 
 
-def test_clean_reads_its_result_again_at_most_three_times_and_then_stops(monkeypatch):
-    """ORDER 016c item 14: the cap of `channel._settled`. A reader that never settles (every pass writes something
-    new) is read 3 times and the last result is returned: it does not loop and does not raise (it stops, as designed)."""
+def test_a_text_that_never_settles_is_read_three_times_and_then_withheld(monkeypatch):
+    """ORDER 016c item 14 and review M4: the cap of `channel.settled`. A reader that never settles (every pass writes
+    something new) is read 3 times, then the card is the fixed note (fail closed), never the unsettled text. Alternating
+    output (`a`, `b`, `a`, ...) is the same case."""
     assert channel._MAX_REREADS == 3
-    calls = []
+    for step in (lambda t: t + "x", lambda t: "b" if t != "b" else "a"):
+        calls = []
 
-    def never_settles(text, mapping, **kw):
-        calls.append(text)
-        return text + "x"
+        def never_settles(text, mapping, step=step, calls=calls, **kw):
+            calls.append(text)
+            return step(text)
 
-    monkeypatch.setattr(channel.runmap, "redact_text", never_settles)
-    shown = channel._settled("start")
-    # the stop is at the third re-read: three calls, and the text of the third is what comes back
-    assert len(calls) == 3, calls
-    assert shown == "start" + "xxx", shown
+        monkeypatch.setattr(channel.runmap, "redact_text", never_settles)
+        assert channel.settled("start") == channel.SETTLE_NOTE
+        assert len(calls) == 3, calls
+    monkeypatch.undo()
+    # the note is itself stable: no mask, no dot, nothing to defang
+    assert channel.clean(channel.SETTLE_NOTE) == channel.SETTLE_NOTE
+    assert _slack(channel.SETTLE_NOTE) == channel.SETTLE_NOTE
 
 
-def test_clean_stops_after_the_first_reread_when_nothing_changes(monkeypatch):
+def test_a_refused_reread_gives_the_note_and_so_does_a_spent_budget(monkeypatch):
+    def too_large(text, mapping, **kw):
+        raise runmap.InputTooLarge("InputTooLarge")
+
+    monkeypatch.setattr(channel.runmap, "redact_text", too_large)
+    assert channel.settled("some card") == channel.SETTLE_NOTE
+    monkeypatch.undo()
+    # one budget for the passes of a card: the clock of the caller is the start
+    assert channel.settled("some card", started=-1e9) == channel.SETTLE_NOTE
+
+
+def test_clean_skips_the_check_pass_when_pass_one_changed_nothing(monkeypatch):
     calls = []
     real = channel.runmap.redact_text
 
@@ -187,8 +202,11 @@ def test_clean_stops_after_the_first_reread_when_nothing_changes(monkeypatch):
         return real(text, mapping, **kw)
 
     monkeypatch.setattr(channel.runmap, "redact_text", count)
-    assert channel._settled("nothing to hide here") == "nothing to hide here"
-    assert len(calls) == 1
+    assert channel.clean("nothing to hide here") == "nothing to hide here"
+    assert len(calls) == 1  # review M5: no second read
+    calls.clear()
+    assert channel.clean("mail " + EM) == "mail <EMAIL_1>"
+    assert len(calls) == 2  # a mask was written: the card is read again
 
 
 @pytest.mark.parametrize("glue", ["9", "_x", "08", "_"])

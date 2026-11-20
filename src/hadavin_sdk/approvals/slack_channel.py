@@ -16,10 +16,8 @@ from typing import Any
 
 from hadavin_sdk.approvals import slack
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.channel import _neutralise, clean
-from hadavin_sdk.approvals.gate import defang_text, undefang_text, withhold_commands
+from hadavin_sdk.approvals.channel import clean, settled
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.common import post_json
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -68,18 +66,9 @@ class SlackChannel:
         step = f"Step {req.current_step + 1} of {len(req.steps)}"
         # `req.summary` was cleaned once when it was built (`summary()`); it is shown whole or not at all: a silent cut
         # would hide the end of what the approver is approving
-        # withholding commands can join what it removed around: redact once more through the choke point
-        # The map is seeded with the placeholders the summary already holds (a fake original that never occurs in text),
-        # so a placeholder this pass adds never reuses one of their numbers.
-        # Summaries stored by the old code hold defanged, unmasked addresses: undo that `[.]` first, redact, defang last.
-        withheld = withhold_commands(undefang_text(req.summary))
-        seeded = runmap.RunMap(
-            {
-                ph: "\0seed" + ph
-                for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
-            }
-        )
-        shown = defang_text(runmap.redact_text(withheld, seeded, neutralise=_neutralise))
+        # A stored card is read again by the one function `clean` ends with (`channel.settled`): undo the `[.]`, withhold
+        # commands, redact through the choke point, defang last, until it reads the same.
+        shown = settled(req.summary)
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [
