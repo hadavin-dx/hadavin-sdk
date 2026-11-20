@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:47:57Z
+UPDATED_UTC: 2026-11-20T10:48:08Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 78
 ITEMS_OPEN: 21
 PERCENT: 82
 AGENTS_RUNNING: 3
-CAPACITY: load 1.58 of 4 cores (1-minute average), mem 1.3/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 58G 17%; 583M /home/user/hadavin-sdk; 912M /tmp/claude-0; 160M /root/.cache
+CAPACITY: load 1.81 of 4 cores (1-minute average), mem 1.4/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 12G 58G 17%; 584M /home/user/hadavin-sdk; 912M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 10:48 UTC, BATCH9 (final tree, whole suite, REQUIRE_PG=1 -n 3): 13 failed: 10 strict-mode by design (pass on the combined tree) + dblink (needs PG default socket) + brand string (the lead's BRIEF-PREAMBLE.md) + ONE NEW: tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]: a 2xx status with an EMPTY body (JSONDecodeError at line ~822), passed in BATCH7/BATCH8 and all builder runs: agent flake2 investigates (hypothesis: worker killed mid-answer = truncated response; NOT assumed, NOT skipped, NOT weakened).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T10:47:26Z (the push before this board)
+PUSHED_UTC: 2026-11-20T10:48:01Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -109,16 +109,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 16408s ago | running | matched by name in ps |
-| 22222 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 22245 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 23219 | [postgres] | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 23225 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 16419s ago | running | matched by name in ps |
+| 22222 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 28s ago | running | matched by name in ps |
+| 22245 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 26s ago | running | matched by name in ps |
+| 23465 | postgres: rt_4f0fec778f0e postgres 127.0.0.1(39944) idle | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 23466 | postgres: pu_6c42fa4339e0 postgres 127.0.0.1(39958) idle | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 23666 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
