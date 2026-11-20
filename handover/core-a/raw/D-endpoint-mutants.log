@@ -56,3 +56,35 @@ verdict: CAUGHT (4 failing tests); last line: FAILED tests/triggers/test_endpoin
   FAILED tests/triggers/test_endpoint.py::test_tenant_is_part_of_the_run_id_at_the_endpoint
 
 restored sha256 c00f5d4d2ae217cc2f37113c73b5de37daf7d7a7be79e119559b0f6d2fb485d3 identical=True
+
+==== hand mutants after review-code-D-1 (ORDER 012), endpoint.py sha256 70f9b05ff37e40ad7311eb2689362edf452900c440639fb5a04faea29c0c6093
+
+== H1 int() around the clock removed in verify_any
+verdict: CAUGHT (6 failing tests); last line: 6 failed, 259 passed, 2 skipped in 0.46s
+  FAILED tests/triggers/test_endpoint.py::test_verify_any_window_edge_is_exact_with_a_fractional_clock[0.001--300-sender-a]
+  FAILED tests/triggers/test_endpoint.py::test_verify_any_window_edge_is_exact_with_a_fractional_clock[0.5--300-sender-a]
+  FAILED tests/triggers/test_endpoint.py::test_verify_any_window_edge_is_exact_with_a_fractional_clock[0.999--300-sender-a]
+  FAILED tests/triggers/test_endpoint.py::test_t5_3_timestamp_window_is_exact_with_a_fractional_clock[-300-202-0.001]
+  FAILED tests/triggers/test_endpoint.py::test_t5_3_timestamp_window_is_exact_with_a_fractional_clock[-300-202-0.5]
+  FAILED tests/triggers/test_endpoint.py::test_t5_3_timestamp_window_is_exact_with_a_fractional_clock[-300-202-0.999]
+
+== H2 whitespace check of a secret value removed
+verdict: CAUGHT (16 failing tests); last line: 16 failed, 249 passed, 2 skipped in 0.62s
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-both ends]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-leading newline]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-leading space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-no-break space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-trailing CRLF]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-trailing newline]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-trailing space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[0-trailing tab]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-both ends]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-leading newline]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-leading space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-no-break space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-trailing CRLF]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-trailing newline]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-trailing space]
+  FAILED tests/triggers/test_endpoint.py::test_check_secrets_refuses_whitespace_around_a_value_and_names_only_the_sender[1-trailing tab]
+
+restored sha256 70f9b05ff37e40ad7311eb2689362edf452900c440639fb5a04faea29c0c6093 identical=True
