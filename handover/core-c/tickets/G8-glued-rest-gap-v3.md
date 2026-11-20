@@ -14,7 +14,7 @@ What changed from v2, in one list (each with its finding):
   (`<PHONE_1><PHONE_2>`, the `+` inside the second placeholder).
 - IPv4 dashed forms glued before: the EC2 start is `(?<![A-Za-z0-9])` and the pod-DNS start `(?<![0-9])` (F4): rows 81-84
   closed, rows 85, 86 limit L10.
-- CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` (F6 / L9, measured: only K36 and K74 of the 166 data rows change; a new
+- CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` (F6 / L9, measured: only K36 and K74 of v2's 156 data rows change; a new
   decision L-D12 with the old behaviour as fallback).
 - Data: 86 rows (80 + 6), 80 must-keep rows (74 + 6), 3 full-stop rows, 6 at-rest rows (map and `storable()`).
 - Mutants: 30, all run on the patched and `ruff format`ed tree before handoff (section 8 phase 4, section 9): every expect is the
@@ -211,9 +211,9 @@ Rows that differ from v2 are marked (v3).
 ### 2.4 F1 measured: an IBAN-shaped tail inside an opaque token (scratch script f1.py; base, v3 and v3camel)
 Method: random tokens of the 62 ASCII letters and digits (seed 20261120), each written as `key <token> end` (HIGHENTROPY context)
 and `Authorization: Bearer <token> end` (BEARER context); "readable" = the longest run of the token's characters left outside the
-placeholders. Injected: the token ends `a` + `DE89` + 18 letters or digits. Measured on a5247ac4a's G8 trees (2e3a081ae for the
-first run, the same numbers on a5247ac4a for K75-K77; E9 touches neither IBAN nor HIGHENTROPY).
-| tokens | context | n | base: tokens with readable text / IBAN in the map | v3 (start `(?<![A-Za-z0-9])`) | v2 camelCase start (`v3camel`) |
+placeholders. Injected: the token ends `a` + `DE89` + 18 letters or digits. Run twice with the same seed: on archives of 2e3a081ae
+(G7 round 6, before E9) and of a5247ac4a (`base`, `mut`, `v3camel`): identical numbers, shown below.
+| tokens | context | n | base: tokens with readable text / IBAN in the map | v3 (`mut`, start `(?<![A-Za-z0-9])`) | v2 camelCase start (`v3camel`) |
 |---|---|---|---|---|---|
 | injected, 129-163 characters | key | 350 | 0 / 0 | 0 / 0 | 0 readable / 350 split (`<HIGHENTROPY_1><IBAN_1>`, two map entries) |
 | injected, 129-163 | Bearer | 350 | 0 / 0 | 0 / 0 | 0 readable / 350 split (`<BEARER_2>` + `<IBAN_1>` in the map) |
@@ -517,9 +517,9 @@ of today's HOSTNAME entry (scratch mkg4v4.py), on `base` (`base_g4`) and on `v3`
 `after_g4c` column with 0 differences in all 86 rows, the 80 must-keep rows (all equal to `after`), the 3 full-stop rows and
 the 6 at-rest rows. So the column v2 measured with G4 v3 holds with v4 unchanged: rows 60, 61, 62 and 66 change output only
 (`x <HOSTNAME_1> y`), rows 64 and 71 close, rows 67-70 and 78-80 stay leaks (L6), rows 81-86 are not affected (no host in them).
-G8 changes no host row with or without G4c. G4 v5 is being drafted: if its section 5.2 / 5.3 differs from v4's, the G4 builder
-re-runs `python -m tests.g8_cases` is not enough (it checks `now`); the G4 builder runs the G8 test file with `G4C_MERGED = True`
-(8.1 step G4-2) and a red host row is a finding to report, not an edit of the column.
+G8 changes no host row with or without G4c. G4 v5 is being drafted: if its section 5.2 / 5.3 differs from v4's, the column is
+checked by the G4 builder's run of the G8 test file with `G4C_MERGED = True` (8.1 step G4-2; `python -m tests.g8_cases` checks
+only `now` and does not cover it); a red host row there is a finding to report, not an edit of the column.
 G4a / G4b (base64, ENCODED; readiness Major 2): not measured (they are not built and live in `runmap.redact_text`'s base64 view).
 `test_must_keep_rows` calls `redact()`, which G4a does not change; K60 (`Zm9vYmFy_<PHONE_1>_YmF6`) and K66 (a base64 blob) are
 the two rows that a base64 view could move through `redact_text`. Rule for whoever lands second: run the G8 file (8.1); a
@@ -548,8 +548,8 @@ changed must-keep or probe row is a finding, reported, not edited away.
 | L-D9 (v3: default flipped, F6) | a phone without `+`, in groups, with a letter or `_` after | NOT masked: entry 6 is `+`-led only | K72 `415-555-0132x123` readable as today; K34, K70, K71 as today; the probe counts do not change (no probe row needs it; measured: v2h vs v3camel differ only in K34, K70, K71, K72 and row 75) | v2's branch A (10 digits, no run of 5) | K72 closed; K34, K71 grow, K70 over-masked (measured on `v2h`) |
 | L-D10 | a contiguous 10-16 digit run glued to `_` (entry 7) | masked | rows 26, 29, 30 closed; K26, K54-K60 over-masked, stored as PHONE | cut entry 7, let entry 8 take `tel_` | rows 26, 30 limits (not run) |
 | L-D11 | an SSN-shaped value glued to a letter | not taken as PHONE, except `+123-45-6789x` (K78, stored as PHONE) | `ssn 123-45-6789a` readable as today (L8, K73) | SSN-safe lookahead `(?!\+?\d{3}-\d{2}-\d{4}(?!\d))` in entry 6 | K78 readable as today (not run) |
-| L-D12 (new, F6 / L9) | a grouped card number glued to a letter or `_` | masked whole as CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` | K36 `x<CREDITCARD_1>`, K74 `card <CREDITCARD_1>x`, K80 `card_<CREDITCARD_1>_x`; the 12 digits no longer go to the map at rest as PHONE (CREDITCARD is a SECRET kind, never stored); measured: no other of the 166 data rows changes | keep `\b` (L9 stays a limit) | one group of the card readable, 12 digits stored as PHONE (today's behaviour) |
-| L-D13 (new, F6 / L7; ASK THE LEAD) | a phone number directly before a full stop (`call 415-555-0132.`) | unchanged: not masked (L7, F1-F3 pinned) | a phone at the end of a sentence leaks, as today | end guard `(?![0-9]|\.\d)` in entry 6 and the main entry | F1-F3 masked; measured over-masks: `build 1234567890.tar` -> `build <PHONE_1>.tar`, `pid 4155550132.log`, `at 1732095071. done` (an epoch); `ts 1732095071.123` and `v 415-555-0132.5` stay (variant `v3fs`, 80-row and keep tables otherwise identical). The default is not G8's to change: not glued, and the fallback trades evidence for a common leak |
+| L-D12 (new, F6 / L9) | a grouped card number glued to a letter or `_` | masked whole as CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` | K36 `x<CREDITCARD_1>`, K74 `card <CREDITCARD_1>x`, K80 `card_<CREDITCARD_1>_x`; the 12 digits no longer go to the map at rest as PHONE (CREDITCARD is a SECRET kind, never stored); measured on a variant against v2's 156 data rows (80 + 74 + 2): only K36 and K74 change; K80 added in v3 | keep `\b` (L9 stays a limit) | one group of the card readable, 12 digits stored as PHONE (today's behaviour) |
+| L-D13 (new, F6 / L7; ASK THE LEAD) | a phone number directly before a full stop (`call 415-555-0132.`) | unchanged: not masked (L7, F1-F3 pinned) | a phone at the end of a sentence leaks, as today | end guard `(?![0-9]|\.\d)` in entry 6 and the main entry | F1-F3 masked; measured over-masks: `build 1234567890.tar` -> `build <PHONE_1>.tar`, `pid 4155550132.log`, `at 1732095071. done` (an epoch); `ts 1732095071.123` and `v 415-555-0132.5` stay (variant `v3fs`; v2's 80 rows and 74 must-keep rows otherwise identical). The default is not G8's to change: not glued, and the fallback trades evidence for a common leak |
 | L-D14 (new, F6 / L11) | a piece of a secret with a stored kind's shape (AT1-AT3) | not fixed in G8; pinned (AT1-AT4); a follow-up ticket (owner core-c) | a password like `hunter192.0.2.10x` leaves `192.0.2.10` in the map at rest (as `a-192.0.2.10-b` does today) | in G8: `runmap.storable` refuses an original that is a substring of a SECRET-kind original of the same map | AT1-AT4 storable empty; not built, not measured |
 
 ## 7. Acceptance tests (appendix B; data appendix A; public names, plus `_has_bank_word` in one test)
@@ -654,10 +654,72 @@ output of phases 0-4. Owner: core-c (guard/redact.py, guard/runmap.py, guard/mod
 - The G8 test file: base `107 failed, 289 passed, 12 deselected, 20 xfailed`; `mut` `396 passed, 12 deselected, 20 xfailed`;
   `v3a` (G8a only) `3 failed, 393 passed, 12 deselected, 20 xfailed` (the three phase 1 ids).
 - F1 (2.4), at rest (2.5), the card and full-stop variants (L-D12, L-D13), the reviewers' examples (2.3).
-- (mutants, phase 2 list and cost: being run)
+- Phase 1+2 step 2 list (`-n 3`, `-m "not perf"`: tests/test_redact_g3_port.py, test_redact_idempotent_property.py,
+  test_redact_settle_loop.py, test_runmap_enforce_map.py, test_model_gate.py, tests/warden_port): `mut` (with the appendix E edits)
+  `2679 passed, 3 skipped in 53.85s`; `base` `2679 passed, 3 skipped in 41.71s`. So the edited oracle, the re-pointed g3 test and
+  the new enforce_map assertion run green inside their files, and the G7 boundary test is green.
+- Mutants (phase 4 command, run in `mut`: the patched tree after `ruff format`, appendices A-C copied in; `python
+  tests/g8_mutants.py` with the repository's `.venv` python; the runner sets the child's PYTHONPATH to its temp copy):
+  - run 1 (v3's first expects): `4 of 30 good`: 24 `BAD OTHER_TEST` (the expect matched, the pinned id lacked the case
+    `[row36]`, a v2 defect), 2 `BAD WRONG_REASON`: P1 (first line `ROW 21 redact: 'call x+<PHONE_1> now'`, expect was `ROW 18`)
+    and P4 (`ROW K5 keep (kept): 'sha <PHONE_1>abcdef...'`, expect was `ROW K29`). Fixed by the phase 4 rule (the pinned case
+    from the expect; the two expects set to the measured first lines). No mutant survived.
+  - run 2 (the corrected expects and pins, before a rename of the P-mutants' names only): `30 of 30 good`. Raw tail:
+    `ok  KILLED       G8-S5 TENANT given digits  [test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only]`
+    `ok  KILLED       G8-S6 PHONE copy beside a digit replaced too  [test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only]`
+    `30 of 30 good; problems: []`
+    Killers by case: I1 row36, I2 row41, I3 K75 (OPAQUE), U1 row14, U2 row51, V1 row2, V2 row7, V3 K2, V4 K1, V5 row72, V6 row81,
+    V7 row83, C1 K36, C2 K74, P1 row21, P2 row18, P3 row21, P4 K5, P5 row18, P8 K8, P9 K16, P10 K64, P11 row26, P12 row28, S1 row31,
+    S2 row31, S3-S6 the sweep test.
+  - run 3 (appendix C exactly as printed; 10:02Z, load 3.3): raw tail:
+    `ok  KILLED       G8-S4 IPV4 given digits  [test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only]`
+    `ok  KILLED       G8-S5 TENANT given digits  [test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only]`
+    `ok  KILLED       G8-S6 PHONE copy beside a digit replaced too  [test_sweep_masks_a_letter_glued_copy_of_a_known_phone_only]`
+    `30 of 30 good; problems: []`
+- `ruff format --check` on `src` and the eight changed or new test files of `mut`: `118 files already formatted`; `ruff check`:
+  `All checks passed!` (ruff 0.17.1, the repository's `.venv`).
+- Cost: section 10 (`base` vs `mut`, both calls, `0 rows break the rule`).
+- F1 on 2e3a081ae and on a5247ac4a (2.4): identical.
+- NOT RUN by the drafter (box rule): the whole suite (phase 0 (d) and 3 are the builder's); the perf tests under pytest (the cost
+  script of appendix F ran instead); `redact_mutants.py`, `p1d_a_mutants.py`, `gate_mutants.py`, `stage_mutants.py`,
+  `textnorm_mutants.py` (their anchors are not on G8 lines: checked by grep, not run); the approval-card and k1b suites.
 
 ## 10. Cost
-Being measured (draft).
+Script: appendix F, `tests/g8_cost.py` (not collected by pytest). `run OUT.json` times the six hostile texts of appendix B (`dots`
+`1.`, `digits and spaces` `x1 2 3 ...`, `underscore digits` `_4155550132`, `hex and dashes` `deadbeef-dead-beef-dead-`, `iban-ish`
+`aDE89` + 40 `A`, `plus digits` `a+1 415-555-0132`) repeated to 65,536 and 262,144 characters, through `redact()` and through
+`runmap.redact_text(t, RunMap())`, CPU seconds of the calling thread (`time.thread_time`), best of 3. `compare BASE.json BUILD.json`
+prints both side by side and exits 1 when a row breaks the rule.
+Acceptance rule (every text, both calls, on the build): the 262,144-character time is under 3.0 s; it is at most 6.0 times the
+65,536-character time; and it is at most 1.5 times the base's 262,144-character time plus 0.05 s. Both runs on the same box, load
+under 2 (`uptime`). Action on failure: re-run base and build once; a row that still fails is a STOP: both tables go to the lead,
+and no bound is changed by the builder.
+Drafter's run (2026-11-20 09:58-09:59Z, a5247ac4a, `base` vs `mut`, the repository's `.venv` Python 3.13, box load 3.1-4.3: so the
+absolute numbers are noisy; the phase 3 run on a quiet box is the one that counts): `0 rows break the rule`.
+| text / call | base 65,536 | base 262,144 | G8 65,536 | G8 262,144 | G8 4x ratio | G8 / base |
+|---|---|---|---|---|---|---|
+| digits and spaces / redact | 0.193 | 0.768 | 0.198 | 0.829 | 4.19 | 1.08 |
+| digits and spaces / redact_text | 0.193 | 0.785 | 0.200 | 0.782 | 3.91 | 1.00 |
+| dots / redact | 0.238 | 1.019 | 0.248 | 0.993 | 4.01 | 0.97 |
+| dots / redact_text | 0.243 | 1.035 | 0.249 | 0.995 | 3.99 | 0.96 |
+| hex and dashes / redact | 0.222 | 1.041 | 0.232 | 1.022 | 4.42 | 0.98 |
+| hex and dashes / redact_text | 0.201 | 1.046 | 0.209 | 1.037 | 4.96 | 0.99 |
+| iban-ish / redact | 0.123 | 0.509 | 0.133 | 0.538 | 4.04 | 1.06 |
+| iban-ish / redact_text | 0.128 | 0.496 | 0.133 | 0.531 | 4.01 | 1.07 |
+| plus digits / redact | 0.253 | 1.019 | 0.169 | 0.671 | 3.97 | 0.66 |
+| plus digits / redact_text | 0.281 | 1.020 | 0.167 | 0.697 | 4.17 | 0.68 |
+| underscore digits / redact | 0.160 | 0.798 | 0.192 | 0.798 | 4.15 | 1.00 |
+| underscore digits / redact_text | 0.158 | 0.865 | 0.194 | 0.767 | 3.96 | 0.89 |
+Read: G8 costs 0.66 to 1.08 times the base on these texts; `plus digits` is cheaper because the new `+` entry masks the number
+first and the main entry then has less to scan. The base's own 4x ratio reached 5.46 (`underscore digits / redact_text`) under
+this load, close to the 6.0 bound: that is why the rule needs a quiet box and allows one re-run. The perf test of appendix B
+(`test_glued_patterns_are_linear`, 12 cases, the same 3.0 s and 6.0 bounds without the base) was NOT run by the drafter.
+Relabelled earlier figures: v1's numbers (0d93f20, `redact()` only, ratio 3.2-4.4) and v2's "at most 4.6" (which had no v2 source)
+are v1-era figures and are not used for any bound here.
+Correction kept from v2: FOUR existing entries change their boundaries in v2 (IBAN, UUID, EC2, dotted IPV4); v3 adds the pod-DNS and
+CREDITCARD entries (six change) and adds THREE PHONE entries (PATTERNS grows from N to N+3; `tests/test_redact_fold_budget.py:78`
+reads `len(PATTERNS)` live); the sweep adds one dict lookup per swept copy.
+Builder effort: half a day (the data, tests, mutants and cost script are given; most of the time is the runs).
 
 ## 11. Stated limits after G8 (each pinned by a strict xfail or a must-keep / full-stop / at-rest row)
 - L1 A digit glued before a dotted IPv4 (`7192.0.2.10`): row 10; `2026.11.20.10` must stay (K3).

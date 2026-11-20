@@ -862,28 +862,28 @@ the mutants of 13.3 use the id as their `expect` text.
 | TB-3.5 | `test_short_blob_alone_is_encoded` | `SB` | `<ENCODED_1>`; map `{"<SECRET_1>": S12, "<ENCODED_1>": SB}` (MEASURED; base: `SB` unchanged) |
 | TB-3.6 | `test_decoded_secret_entry_kept_and_a_plain_copy_swept` (L8) | `SB + " and later " + S12 + " alone"` | `<ENCODED_1> and later <SECRET_1> alone` (MEASURED) |
 | TB-3.7 | `test_four_levels_one_entry` (I8, I14) | `"x " + b64^4("status ok")` = `x V1hwT1UyRkhVa2xXYm5CS1VucHNlUT09` | `x <ENCODED_1>`; exactly one new map entry (MEASURED output; base: unchanged) |
-| TB-3.8 | `test_three_levels_read` | `b64^3("pwd=Zq9xW4m")` = `WTBoa2ExQldjSGhQV0doWVRrY3dQUT09` | `<ENCODED_1>`; `leak_of("Zq9xW4m", out)[0] == "no"` (base: unchanged) |
-| TB-3.9 | `test_utf16_be_short` | `ADEAMAAuADIAMAAuADMAMAAuADQAMA==` | `<ENCODED_1>`; no IPV4 key (IPV4 is a stored kind) |
-| TB-3.10 | `test_too_deep_inside_a_decoded_view_is_masked_unread` (L4) | `b64("%" + "25"*9 + "41")` = `JTI1MjUyNTI1MjUyNTI1MjUyNTQx` | `<ENCODED_1>`; no `TooDeep` raised (base: unchanged) |
-| TB-3.11 | `test_tenant_held_blob_becomes_encoded` (L12) | `org_id=cHdkPUtwN3JUcTJX` (base64 of `pwd=Kp7rTq2W`) | `org_id=<ENCODED_1>`; no TENANT key (base: `org_id=<TENANT_1>`) |
-| TB-3.12 | `test_blob_after_an_ansi_escape` | `"\x1b[1m" + SB + "\x1b[0m"` | `<ENCODED_1>` |
+| TB-3.8 | `test_three_levels_read` | `b64^3("pwd=Zq9xW4m")` = `WTBoa2ExQldjSGhQV0doWVRrY3dQUT09` | `<ENCODED_1>`; `leak_of("Zq9xW4m", out)[0] == "no"` (MEASURED: map SECRET `Zq9xW4m` + ENCODED; base: unchanged) |
+| TB-3.9 | `test_utf16_be_short` | `ADEAMAAuADIAMAAuADMAMAAuADQAMA==` | `<ENCODED_1>`; map exactly `{"<ENCODED_1>": blob}`, no IPV4 key (IPV4 is a stored kind) (MEASURED) |
+| TB-3.10 | `test_too_deep_inside_a_decoded_view_is_masked_unread` (L4) | `b64("%" + "25"*9 + "41")` = `JTI1MjUyNTI1MjUyNTI1MjUyNTQx` | `<ENCODED_1>`; no `TooDeep` raised (MEASURED; base: unchanged) |
+| TB-3.11 | `test_tenant_held_blob_becomes_encoded` (L12) | `org_id=cHdkPUtwN3JUcTJX` (base64 of `pwd=Kp7rTq2W`) | `org_id=<ENCODED_1>`; map `{"<SECRET_1>": "Kp7rTq2W", "<ENCODED_1>": blob}`, no TENANT key (MEASURED; base: `org_id=<TENANT_1>`) |
+| TB-3.12 | `test_blob_after_an_ansi_escape` | `"\x1b[1m" + SB + "\x1b[0m"` | `<ENCODED_1>` (MEASURED) |
 | TB-3.13 | `test_percent_padding` (CHANGED, L21) | `"data=" + b64("password=Zq9xW4mT7pL")[:-1] + "%3D"` = `data=cGFzc3dvcmQ9WnE5eFc0bVQ3cEw%3D` | `data=<ENCODED_1>%3D`; map exactly `{"<SECRET_1>": "Zq9xW4mT7pL", "<ENCODED_1>": "cGFzc3dvcmQ9WnE5eFc0bVQ3cEw"}` (MEASURED; with an exact held compare: `data=<ENCODED_2>` and two ENCODED entries) |
-| TB-3.14 | `test_json_escaped_slashes` | `json.dumps({"data": b})` with `/` written `\/`, where `b` = the first base64 of `"pwd=" + 8 made-up characters` that holds a `/` (built in the test from a seeded `random.Random(20261120)`) | `{"data": "<ENCODED_1>"}` (BY READING) |
-| TB-3.15 | `test_known_value_seen_in_base64` | map `{"<SECRET_1>": S12}`, text `"x " + b64("note " + S12)` | `x <ENCODED_1>` (BY READING) |
-| TB-3.16 | `test_caps_fail_closed` (I13) | (a) `defaults.B64_MAX_UNITS` patched to 3, 4 distinct short blobs; (b) `defaults.B64_MAX_DECODED_CHARS` patched to 10, `SB`; (c) `runmap._b64_hits([runmap._B64Unit(0, 28, SB, SB, (SB,))], {}, runmap._ScanBudget(started=-1e9), 0)` with a spy on `runmap._b64_text`; (d) `B64_MAX_UNITS` patched to 1, `" ".join([SB] * 4)`; (e) `defaults.MAX_REDACT_CHARS` patched to 20 inside the call of `_b64_hits([unit of SB], {}, runmap._ScanBudget(time.thread_time()), 0)` | (a)-(c) each raise `InputTooLarge`; the caller's map is unchanged; (c) before any `_b64_text` call (spy count 0); (d) no raise, `<ENCODED_1> <ENCODED_1> <ENCODED_1> <ENCODED_1>` (MEASURED: the dedupe counts one unit); (e) `([True], {})` (the decoded join of 21 characters is over the patched cap: every unit a hit unread, no raise; BY READING) |
+| TB-3.14 | `test_json_escaped_slashes` | `json.dumps({"data": b})` with `/` written `\/`, where `b` = the first base64 of `"pwd=" + 8 characters drawn from letters, digits, `?` and `~`` that holds a `/` (a seeded `random.Random(20261120)`, at most 100,000 draws). CHANGED: v4 drew letters and digits only, and the base64 of ASCII letters and digits NEVER holds `/` (63 needs six one-bits, which no such byte gives at any position): the v4 recipe loops for ever (MEASURED: the drafter's first run hung) | `{"data": "<ENCODED_1>"}` (MEASURED) |
+| TB-3.15 | `test_known_value_seen_in_base64` | map `{"<SECRET_1>": S12}`, text `"x " + b64("note " + S12)` | `x <ENCODED_1>` (MEASURED) |
+| TB-3.16 | `test_caps_fail_closed` (I13) | (a) `defaults.B64_MAX_UNITS` patched to 3, 4 distinct short blobs; (b) `defaults.B64_MAX_DECODED_CHARS` patched to 10, `SB`; (c) `runmap._b64_hits([runmap._B64Unit(0, 28, SB, SB, (SB,))], {}, runmap._ScanBudget(started=-1e9), 0)` with a spy on `runmap._b64_text`; (d) `B64_MAX_UNITS` patched to 1, `" ".join([SB] * 4)`; (e) `defaults.MAX_REDACT_CHARS` patched to 20 inside the call of `_b64_hits([unit of SB], {}, runmap._ScanBudget(time.thread_time()), 0)` | (a)-(c) each raise `InputTooLarge`; the caller's map is unchanged; (c) before any `_b64_text` call (spy count 0); (d) no raise, `<ENCODED_1> <ENCODED_1> <ENCODED_1> <ENCODED_1>` (MEASURED: the dedupe counts one unit); (e) `([True], {})` (the decoded join of 21 characters is over the patched cap: every unit a hit unread, no raise). All five MEASURED on the prototype |
 | TB-3.17 | `test_separator_fallback` (I15, CHANGED input) | `_b64_hits(units, {}, runmap._ScanBudget(time.thread_time()), 0)` with `units = [runmap._B64Unit(0, 0, b, b, (b,)) for b in map(b64, P)]`, for `P = ['secret="', 'plain words" here', "x" * 12]` and the control `P = ['secret="', 'plain words here', "x" * 12]` | `[True, True, True]` (a closing quote in the next piece pulls the separator into the value: 2 pieces after); the control `[False, False, False]` (MEASURED both) |
 | TB-3.18 | `test_separator_survives_every_neutralise` | pieces `["status ok", "hello world", "x"]` joined by `runmap._B64_SEP`, through `runmap.neutralise_untrusted` (the step's hook), None, and `channel._neutralise` (the card hook, kept so that a return to it stays safe) | 3 pieces each time (MEASURED) |
 | TB-3.19 | `test_settle_chain_beside_a_blob` (I20 a, CHANGED expected, L20) | `CONSTRUCTED[0] + sep + SB` for sep in `" "`, `","`, `"\n"`, a fresh `RunMap` each | exactly `"password=<SECRET_2>\nBSB: <BANKCODE_1><SECRET_2>\npaid <BANKCODE_1>/<BANKACCT_1>" + sep + "<ENCODED_1>"`; `sorted(m) == ["<BANKACCT_1>", "<BANKCODE_1>", "<ENCODED_1>", "<SECRET_1>", "<SECRET_2>"]`; `m["<SECRET_1>"] == S12`; no `NotSettled` (MEASURED on the prototype, all three separators) |
 | TB-3.20 | `test_wrapped_chain_settles_inside_the_view` (I20 b) | `"\n".join(textwrap.wrap(b64(CONSTRUCTED[0]), 64))` | `<ENCODED_1>` (MEASURED) |
-| TB-3.21 | `test_fold_scan_runs_in_both_passes` (I20 c, d) | `"café " + SB`; `"Ꭺlice@example.com " + SB` | `café <ENCODED_1>`; `[line withheld: look-alike text hid a protected value] <EMAIL_1>` (base for the second: the same, v4 measured) |
+| TB-3.21 | `test_fold_scan_runs_in_both_passes` (I20 c, d) | `"café " + SB`; `"Ꭺlice@example.com " + SB` | `café <ENCODED_1>`; `[line withheld: look-alike text hid a protected value] <EMAIL_1>` (MEASURED on the prototype; the second is the same at the base, v4) |
 | TB-3.22 | `test_errors_of_the_second_pass_propagate` (I21) | a wrapper on `runmap.redact` raising `RedactionError("NotSettled")`, then `InputTooLarge("InputTooLarge")`, on call 2; text `SB` | `pytest.raises(RedactionError)` with `str(err.value) == "NotSettled"` (and an `InputTooLarge`); the caller's `RunMap` is equal to before |
-| TB-3.23 | `test_views_are_of_the_input` (I22) | `redact_untrusted(SB + " password%3D" + S12)` | holds `<ENCODED_1>` and a `<SECRET_` and no `‹ENCODED` |
+| TB-3.23 | `test_views_are_of_the_input` (I22) | `redact_untrusted(SB + " password%3D" + S12)` | holds `<ENCODED_1>` and a `<SECRET_` and no `‹ENCODED` (MEASURED: `<ENCODED_1> password%3D<SECRET_1>`) |
 | TB-3.24 | `test_card_two_benign_runs_and_one_secret` | `channel.clean(f"note {B1} then {B2} and {SB} end")` | exactly `f"note {B1} then {B2} and <ENCODED_1> end"` (MEASURED on the prototype; base: the input unchanged) |
-| TB-3.25 | `test_card_cap_refusal_is_a_raise` | `B64_MAX_UNITS` patched to 1; `channel.clean(f"a {B1} b {B2}")`; `cards.render_abstain("r", "x", [f"{B1} {B2}"])` | both raise `InputTooLarge` (no `SETTLE_NOTE`) |
+| TB-3.25 | `test_card_cap_refusal_is_a_raise` | `B64_MAX_UNITS` patched to 1; `channel.clean(f"a {B1} b {B2}")`; `cards.render_abstain("r", "x", [f"{B1} {B2}"])` | both raise `InputTooLarge` (no `SETTLE_NOTE`) (MEASURED) |
 | TB-3.26 | `test_card_tag_split_blob` (I24, CHANGED recipe) | `channel.clean(IP[:8] + "<i> </i>" + IP[8:])` with `IP = b64("10.20.30.40")` = `MTAuMjAuMzAuNDA=` | `<ENCODED_1>` (MEASURED; with ENCODED removed from `_ASSIGNMENT_KINDS`: `MTAuMjAu MzAuNDA=`, so the mutant is killed; base: `MTAuMjAu MzAuNDA=`) |
-| TB-3.27 | `test_encoded_through_enforce_map_and_snapshot` | `W = "\n".join(textwrap.wrap(b64("2026-11-20 deploy db_password=" + S12 + " applied"), 32))`, `m = RunMap({"<ENCODED_1>": W})`; `t = "x " + W + " y"` | `enforce_map(t, m) == "x <ENCODED_1> y"`; `held_value_left("x <ENCODED_1> y", snapshot(m)) is False`; `held_value_left(t, snapshot(m)) is True` (BY READING) |
+| TB-3.27 | `test_encoded_through_enforce_map_and_snapshot` | `W = "\n".join(textwrap.wrap(b64("2026-11-20 deploy db_password=" + S12 + " applied"), 32))`, `m = RunMap({"<ENCODED_1>": W})`; `t = "x " + W + " y"` | `enforce_map(t, m) == "x <ENCODED_1> y"`; `held_value_left("x <ENCODED_1> y", snapshot(m)) is False`; `held_value_left(t, snapshot(m)) is True` (MEASURED) |
 | TB-3.28 | `test_map_ceiling` (I23) | `k5_cfg(tmp_path, config={"evidence": {"max_map_entries": 40}})`, `build_runtime`, `handle` (tests/k5_support.py); a document of 15 (then 25) distinct `b64("password=" + rand12)` | 15: not stopped, the map holds 30 entries (ENCODED + SECRET each); 25: `NEEDS_PERSON` / `document_too_complex` (BY READING) |
-| TB-3.29 | `test_held_wrapped_original_is_not_decoded_again` | `t = W` (TB-3.27), `m = RunMap()`, `redact_text(t, m)` twice | the second call makes zero `_b64_text` calls (spy); same output |
+| TB-3.29 | `test_held_wrapped_original_is_not_decoded_again` | `t = W` (TB-3.27), `m = RunMap()`, `redact_text(t, m)` twice | the second call makes zero `_b64_text` calls (spy); same output (MEASURED: 1 call, then 0) |
 | TB-3.30 | `test_perf_step_overhead` (I16, `@pytest.mark.perf`) | 13.4 | 13.4 |
 | TB-3.31 | `test_card_url_credential_blob` (NEW, review B2) | `channel.clean(f"see {b64('http://u:' + PW + '@h.io')} now")` | `see <ENCODED_1> now` (MEASURED; base and v4's hook: the blob shown) |
 | TB-3.32 | `test_card_curl_credential_blob` (NEW, review B2) | `channel.clean(f"see {b64('curl -u user:' + PW)} now")` | `see <ENCODED_1> now` (MEASURED; base: shown) |
@@ -1383,8 +1383,9 @@ MEASURED by the v5 drafter (scratch archive of e8ff6de2b plus the prototype; scr
 - the snippet counts at the base and on the prototype (13.3), `len(redact_mutants.M) == 66`;
 - gate mutant R8 with and without the tie-break (9.3), the `len % 4 == 1` equivalence;
 - a 17-suite pytest selection on the prototype (11: 3,268 passed, 2 failed, both explained).
-BY READING (not run): TB-3.8 to TB-3.12, TB-3.14, TB-3.15, TB-3.16 (a)-(c), (e), TB-3.21 to TB-3.23, TB-3.25, TB-3.27 to TB-3.29
-(the v4 values, some measured by v4), every G4c value (v4 measured them in-process at cd8d375; redact.py's PATTERNS are unchanged
+Also MEASURED on the prototype: TB-2.9, TB-3.8 to TB-3.12, TB-3.14 (after fixing its recipe), TB-3.15, TB-3.16 (a)-(e), TB-3.21,
+TB-3.23, TB-3.25, TB-3.27, TB-3.29.
+BY READING (not run): TB-3.1, TB-3.3, TB-3.4, TB-3.22, TB-3.28, every G4c value (v4 measured them in-process at cd8d375; redact.py's PATTERNS are unchanged
 since), the TB-3.35 mutant's survival path, the dotted-value host-key mutant.
 NOT RE-MEASURED, with the reason:
 - the G4c patterns at e8ff6de2b (no PATTERNS change since cd8d375; Phase 0 (b) re-measures);
@@ -1398,6 +1399,9 @@ NOT RE-MEASURED, with the reason:
   TB-3.26, TB-3.16 (d), R8);
 - G8's rows under G4 (G8 is not merged; 0.3 makes it a builder step);
 - whether k1b fixtures hold base64 that decodes (they would gain an `ENCODED` count, and possibly a SECRET count under L8).
+FOUND by the v5 prototype run, inside G4 (neither reviewer listed them): test_e5's FAIL-BEFORE line goes red and gate R8 becomes
+equivalent under the tie-break (9.3, L24); v4's TB-3.14 recipe never terminates (10.3); v4's L-B2 strict xfail would XPASS (10.3);
+v4's TB-3.17 input gives no fallback (3.4); identical consecutive blob lines form one wrapped block (3.1 point 3).
 FOUND (outside G4): redact_mutants `N15 the alias build asks for no budget` has an `old` text that occurs 0 times at e8ff6de2b
 (L18). The scratch archive lacks `.gitleaks.toml`, so test_k5_round11's gitleaks test fails there only.
 
@@ -1464,6 +1468,7 @@ Codebase-details reviewer:
 | Design attacks | NOTED | no change needed; the `_build` tie-break interplay with gate R8 found by the v5 prototype run (L24) |
 | Tests red under the ticket | TAKEN | 9.3 table; plus a red neither reviewer listed: test_runmap_enforce_map.py::test_e5's FAIL-BEFORE line (measured, L24) and gate R8 equivalence; test_k5_fixes7/9 in Phase 3 step 2 (both green on the prototype) |
 | Citations | TAKEN | 0.1 re-derived at e8ff6de2b |
+| (drafter, not a review finding) | FIXED | v4's TB-3.14 recipe (letters and digits only) can never give a `/` in base64: the test would loop for ever; recipe changed and measured (10.3). v4's L-B2 xfail and TB-3.17 corrected (10.3) |
 
 Coordinator heads-up (E9 merged, e8ff6de2b): TAKEN. TB-2.2 rewritten to the E9 behaviour (measured); every cite of `_KIND`,
 `_OPENINGS` and "ENCODED in `_OWN_OUTPUT`" removed (header, 0.1, 2.4 step 3, 4 point 1).
