@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:10:51Z
+UPDATED_UTC: 2026-11-20T17:12:01Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:27Z REAL RUNNING AGENTS 4: G9c builder, G12e builder (=P9), G14 builder, P7 reviewer. Load (/proc/loadavg) 3.16 2.75 2.42. P7 MERGED (LimitsMeter adapter for core-b Limits.settle_for; gate tests 359 passed; gate mutants 150/151 builder; F2 strict xfail + ESCALATIONS E25 (builder recommends option b); F3 needs core-b: note in requests/for-core-b-p3-findings.md). head ce48897fa. 17:20Z REAL RUNNING AGENTS 3: G9c builder, G12e builder (= P9), P7 builder. Load (/proc/loadavg) 2.75 2.05 2.12. P8 DONE: handover/core-c/tickets/P8-flow-review-1-design.md (2 Blocker = F1/F2 already in flight; 5 Major: spend under-count, permanent r
+STATE: 17:33Z REAL RUNNING AGENTS 3: G9c builder, G12e builder, G14 builder. Load (/proc/loadavg) 2.66 2.67 2.42. P7 review recorded (0B/3M: tests for overshoot/error paths, constructor check of limits, one-gate-per-agent; tickets/P7-result-review-1-codebase.md): P7b builder starts after G14 lands (same file model_gate.py). 17:27Z REAL RUNNING AGENTS 4: G9c builder, G12e builder (=P9), G14 builder, P7 reviewer. Load (/proc/loadavg) 3.16 2.75 2.42. P7 MERGED (LimitsMeter adapter for core-b Limits.settle_for; gate tests 359 passed; gate mutants 150/151 builder; F2 strict 
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 3.2 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
-DISK: / 53G free, 24% used; git worktrees 63; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+AGENTS_RUNNING: 3
+CAPACITY: load 2.7 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 3, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 64; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:09:53+00:00
+PUSHED_UTC: 2026-11-20T17:11:59+00:00
 
-(22:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:42 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -57,7 +57,7 @@ PUSHED_UTC: 2026-11-20T17:09:53+00:00
 | g12e | builder | claude-sonnet-5-5 | BUILDS G12e: G12d review fixes (2 REPRODUCED leaks: <HUNTER2 / ‹ADMIN_1› / SECRET_001 bare copies; map budget in aggregate); /tmp/core-c-g12e | 17:05 | 17:35 | 1 | running | 1 | 0 |  |
 | p7 | builder | claude-sonnet-5-5 | P7: F1 LimitsMeter adapter, F2 strict xfail + E25, F3 note; /tmp/core-c-ff wip/cloud-core-c/f-findings | 17:12 | 17:45 | 1 | done | 1 | 0 |  |
 | p8 | reviewer | claude-sonnet-5-5 | P8: fresh egm-design end-to-end review of gate+guard+redact+runmap at a4c99a006 | 17:12 | 17:30 | 1 | done | 1 | 0 | EGM design |
-| p7-rev | reviewer | claude-sonnet-5-5 | FRESH review of the P7 LimitsMeter diff | 17:27 | 17:40 | 1 | running | 1 | 0 | EGM |
+| p7-rev | reviewer | claude-sonnet-5-5 | FRESH review of the P7 LimitsMeter diff | 17:27 | 17:40 | 1 | done | 1 | 0 | EGM |
 | g14 | builder | claude-sonnet-5-5 | G14: per-message enforce cache keyed by map version + audit-drop counter (P8 items 4, 7); /tmp/core-c-g14 | 17:27 | 18:00 | 1 | running | 1 | 0 |  |
 
 ## SHELLS AND PROCESSES
