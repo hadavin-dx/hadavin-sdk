@@ -1,5 +1,5 @@
 {
- "order": "006 (002 to 005 standing)",
+ "order": "008 (002 to 006 standing; no ORDER 007 in my file)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
  "next": "worker change and skeleton land: ONE batch run (new files, guard files, then one full pytest); ticket fix lands: push, T3 done",
@@ -118,11 +118,11 @@
   {
    "item": "BUILD-D-worker",
    "what": "src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py",
-   "state": "RUNNING",
-   "percent": 85,
+   "state": "DONE (coded and its own tests pass; full batch run still open)",
+   "percent": 100,
    "evidence file": "raw/D-worker-tests.log, -mutants.log (not yet)",
    "tries": 1,
-   "reason": "first version done: worker.py 379 lines, 24 tests pass 4 times in a row, 3 mutants caught; sent back for ONE change (poll the store when no slot is free, so two worker processes behave right); NOT tested: main beyond its two refusal paths, PostgreSQL, a child process"
+   "reason": "worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes"
   },
   {
    "item": "BATCH",
@@ -132,6 +132,15 @@
    "evidence file": "",
    "tries": 0,
    "reason": "lead: tests in batches only"
+  },
+  {
+   "item": "MUTANTS",
+   "what": "tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/endpoint-mutants-run.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 008: a guarantee with no mutant script counts as not done"
   }
  ],
  "agents": [
@@ -194,7 +203,7 @@
    "what exactly it is doing": "writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only",
    "started UTC": "05:27",
    "expected end": "about 15 min after start",
-   "percent": 70,
+   "percent": 85,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -229,15 +238,15 @@
   {
    "model": "fable",
    "started UTC": "05:30",
-   "expected end": "about 30 min after start",
-   "percent": 85,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "review runs alongside (0 of 1 started)",
    "retries so far": "0 (1 follow-up change, not a retry of a failure)",
    "id": "build-D-wk",
    "role": "builder",
    "what exactly it is doing": "worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants",
-   "reason": "resumed for one change after its first report (166k tokens so far)"
+   "reason": "finished, 189k tokens"
   },
   {
    "role": "reviewer",
@@ -272,11 +281,24 @@
    "what exactly it is doing": "applies the 33 accepted review fixes to ticket D and writes request 001 draft 3",
    "started UTC": "05:38",
    "expected end": "about 12 min after start",
-   "percent": 5,
+   "percent": 30,
    "state": "running",
    "review round n of cap": "1 of 1 (resolve step)",
    "retries so far": 0,
    "reason": "egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix)"
+  },
+  {
+   "id": "mutants",
+   "role": "builder (test tooling)",
+   "model": "fable",
+   "what exactly it is doing": "writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py",
+   "started UTC": "05:39",
+   "expected end": "about 20 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ORDER 008 item 1"
   }
  ],
  "tests": [
@@ -319,11 +341,11 @@
   {
    "suite or file": "tests/triggers/test_worker.py",
    "branch and SHA": "working tree",
-   "run number": "1 to 5 (builder, 5 runs to look for flaky timing)",
-   "passed / failed / errors": "24 / 0 / 0 each time",
+   "run number": "6 to 9 (builder, after the change)",
+   "passed / failed / errors": "32 / 0 / 0 each time",
    "first failing line": "none",
-   "state": "done, will re-run after the change",
-   "reason": "UNVERIFIED by me until the batch run"
+   "state": "done",
+   "reason": "one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run"
   },
   {
    "suite or file": "tests/triggers/test_t5_cases.py (skeleton, another agent's file)",
@@ -348,7 +370,7 @@
  "lost": [],
  "lead_actions": [
   "ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)",
-  "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message)",
+  "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one",
   "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you"
  ]
 }

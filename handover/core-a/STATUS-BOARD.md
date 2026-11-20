@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:38:54Z
+UPDATED_UTC: 2026-11-20T05:39:32Z
 SESSION: core-a
-ORDER: 006 (002 to 005 standing)
+ORDER: 008 (002 to 006 standing; no ORDER 007 in my file)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 14
+ITEMS_TOTAL: 15
 ITEMS_OPEN: 6
-PERCENT: 81
+PERCENT: 77
 AGENTS_RUNNING: 3
-CAPACITY: load 0.93 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.64 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 297M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: none
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: worker change and skeleton land: ONE batch run (new files, guard files, then one full pytest); ticket fix lands: push, T3 done
-PUSHED_UTC: 2026-11-20T05:38:45Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:38:56Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -32,8 +32,9 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | BUILD-E | build step E on wip/cloud-core-a/E | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/E-tests.log, raw/E-tests-pg16.log, raw/E-guards.log, raw/E-mutants.log | 1 | crash.py 197 lines, test file 698 lines (ticket guessed 110 and 190); 4 mutants caught; NOT checked: wheel contents, Windows exit code, Python 3.12 run by me |
 | T5-SKEL | T5 test file skeleton (tests/triggers/) and n8n template outline (n8n/) | RUNNING | 70 | tests/triggers/test_t5_cases.py, n8n/*.json, n8n/README-trigger.md (not yet) | 1 | lead message 05:27Z asks for it now; whole test module is skipped until the package exists |
 | BUILD-D-endpoint | src/hadavin_sdk/triggers/endpoint.py + tests/triggers/test_endpoint.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-endpoint-tests.log, -guards.log, -mutants.log (not yet) | 1 | endpoint.py 300 lines (draft guessed 130), 190 tests pass, 2 skipped; 3 mutants caught; NOT run: bandit, real socket, timing of the secret comparison |
-| BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | RUNNING | 85 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | first version done: worker.py 379 lines, 24 tests pass 4 times in a row, 3 mutants caught; sent back for ONE change (poll the store when no slot is free, so two worker processes behave right); NOT tested: main beyond its two refusal paths, PostgreSQL, a child process |
+| BUILD-D-worker | src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py | DONE (coded and its own tests pass; full batch run still open) | 100 | raw/D-worker-tests.log, -mutants.log (not yet) | 1 | worker.py 391 lines, 32 tests pass 4 times in a row (about 5.4 s), 4 mutants caught; in-process key table removed, no-slot path polls the stored row; KNOWN COST: a pool-full 503 for a new key takes the full ack wait (5 s) and holds a server thread, no cap on waiting requests; NOT run: main past its two refusal paths, PostgreSQL, two real processes |
 | BATCH | ONE batch test run when E and D are both coded | WAIT builds | 0 |  | 0 | lead: tests in batches only |
+| MUTANTS | tests/endpoint_mutants.py in the lead's batch format (ORDER 008 item 1), incl. crash helper mutants | RUNNING | 5 | raw/endpoint-mutants-run.log (not yet) | 1 | ORDER 008: a guarantee with no mutant script counts as not done |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -42,20 +43,19 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | a86435a3 | lookup | fable | T1: reads plan-v2, v3, v4-final and round-3 reviews, writes PLAN-READBACK.md | 05:19 | ended 05:24 | 100 | done | n/a | 0 | finished, 119k tokens, PLAN-READBACK.md written |
 | a8e21a19 | builder (ticket writer, no code) | fable | T2-D: checks every line of the lead draft of ticket D against the code, writes tickets/D-signed-endpoint.md, gives the step H verdict | 05:22 | ended | 100 | done | n/a | 0 | finished, 247k tokens, ticket D written |
 | ac060f95 | builder (ticket writer, no code) | fable | T2-E: writes tickets/E-test-helpers.md (helpers, where they live, guard tests they could break) | 05:22 | ended | 100 | done | n/a | 0 | finished, 220k tokens, ticket E written (nothing run for the ticket) |
-| t5-skel | builder (tests and templates, new files only) | fable | writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only | 05:27 | about 15 min after start | 70 | running | n/a | 0 | third parallel item; 3 agents now run |
+| t5-skel | builder (tests and templates, new files only) | fable | writes the T5 test skeleton and two n8n workflow outlines plus a README; runs ruff and pytest on its own folder only | 05:27 | about 15 min after start | 85 | running | n/a | 0 | third parallel item; 3 agents now run |
 | build-E | builder | fable | step E: src/hadavin_sdk/testing/crash.py and tests/test_testing_crash.py; ruff, its own test file, 6 guard test files, 4 mutants, bandit | 05:28 | ended | 100 | done | n/a (E needs no ticket review) | 0 | finished, 138k tokens |
 | build-D-ep | builder | fable | endpoint.py: run id derivation, signature check with two secrets, WSGI app, unit tests in-process, 3 mutants | 05:30 | ended | 100 | done | review runs alongside (0 of 1 started) | 0 | finished, 131k tokens |
-| build-D-wk | builder | fable | worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants | 05:30 | about 30 min after start | 85 | running | review runs alongside (0 of 1 started) | 0 (1 follow-up change, not a retry of a failure) | resumed for one change after its first report (166k tokens so far) |
+| build-D-wk | builder | fable | worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants | 05:30 | ended | 100 | done | review runs alongside (0 of 1 started) | 0 (1 follow-up change, not a retry of a failure) | finished, 189k tokens |
 | egm-impl-ready | reviewer | fable | egm:egm-implementation-readiness reads ticket D against its standard | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 131k tokens: 2 Blocker, 13 Major, 8 Nit on ticket D |
 | egm-codebase | reviewer | fable | egm:egm-codebase-details checks ticket D claims against the code | 05:31 | ended | 100 | done | 1 of 1 | 0 | finished, 200k tokens: 1 Blocker, 7 Major, 10 Nit |
-| ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | about 12 min after start | 5 | running | 1 of 1 (resolve step) | 0 | egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix) |
+| ticket-fix | builder (ticket text only) | fable | applies the 33 accepted review fixes to ticket D and writes request 001 draft 3 | 05:38 | about 12 min after start | 30 | running | 1 of 1 (resolve step) | 0 | egm-resolve output must be applied; 3 agents run (worker change, T5 skeleton, ticket fix) |
+| mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | about 20 min after start | 5 | running | n/a | 0 | ORDER 008 item 1 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 10463 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 24s ago | running | matched by name in ps |
-| 10920 | uv run --all-extras --group test pytest tests/triggers -q -p no:cachep | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 10924 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 7s ago | running | matched by name in ps |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -64,7 +64,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | 6 guard files (mutation_runner, lockin_guard, no_hardcoded_values, k5_producers, repo_rules, stage_names) | working tree | 1 (builder E) | 292 / 0 / 0 | none | done | new crash.py must not break repo rules |
 | tests/triggers/test_endpoint.py | working tree | 1 (builder) | 190 / 0 / 0, 2 skipped | none | done | UNVERIFIED by me: I have not re-run it; the batch run will |
 | 5 guard files for endpoint.py | working tree | 1 (builder) | 233 / 0 / 0 | none | done | same |
-| tests/triggers/test_worker.py | working tree | 1 to 5 (builder, 5 runs to look for flaky timing) | 24 / 0 / 0 each time | none | done, will re-run after the change | UNVERIFIED by me until the batch run |
+| tests/triggers/test_worker.py | working tree | 6 to 9 (builder, after the change) | 32 / 0 / 0 each time | none | done | one earlier run failed once on a bug in a new test (timer joined before start), fixed by the builder; UNVERIFIED by me until the batch run |
 | tests/triggers/test_t5_cases.py (skeleton, another agent's file) | working tree | 1 (worker builder, not ordered) | 65 / 0 / 0, 66 skipped | none | interim | skeleton writer still running; 66 skips must be explained before this counts |
 
 ## RESTARTS
@@ -84,5 +84,5 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 
 ## LEAD ACTIONS NEEDED
 - ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)
-- Please write 'GO BUILD D' into ORDERS.md (I acted on your session message)
+- Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one
 - requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you
