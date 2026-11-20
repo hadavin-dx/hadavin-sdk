@@ -761,19 +761,6 @@
    "reason": "lead run 5"
   },
   {
-   "id": "maint-gate",
-   "role": "builder (test maintenance)",
-   "model": "sonnet",
-   "what exactly it is doing": "my tests/contracts/test_model_gate_contract.py against core-c 7c31dbc97: _bind wraps a dict as runmap.RunMap; verify on a scratch copy of core-c's head (never on my tree)",
-   "started UTC": "12:27",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "cross review finding 3 (mine)"
-  },
-  {
    "id": "xr-g1g2",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -3031,6 +3018,19 @@
    "review round n of cap": "1 (cross review)",
    "retries so far": 0,
    "reason": "core-b D-config + provider mark: no Blocker, no provable Major; test gap: registry._trigger_problems unpinned (person principal, retired agent); the mark has no reader in this tree (inert by decision); nits: duplicate-name ConfigError keeps the whole config in __cause__.errors(), TriggerSettings built directly skips the collision check, README R-5 names a config key the config refuses; reports reviews/xreview-dconfig.md + handover/core-b/requests/xr-dconfig.md"
+  },
+  {
+   "id": "maint-gate",
+   "role": "builder (test maintenance)",
+   "model": "sonnet",
+   "what exactly it is doing": "my tests/contracts/test_model_gate_contract.py against core-c 7c31dbc97: _bind wraps a dict as runmap.RunMap; verify on a scratch copy of core-c's head (never on my tree)",
+   "started UTC": "12:27",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "gate contract test now wraps dicts as RunMap; 201 passed, 1 skipped, 0 failed on core-c a60da3394 (raw/MAINT-gate-2.log); before-count not measured; no finding"
   }
  ]
 }
