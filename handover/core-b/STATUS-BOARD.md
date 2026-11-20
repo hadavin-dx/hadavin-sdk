@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:50:29Z
+UPDATED_UTC: 2026-11-20T05:52:13Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -7,22 +7,23 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 70
 AGENTS_RUNNING: 6
-CAPACITY: load 0.08 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, agents light 2 heavy 4
-DISK: / 60G free, 15% used; worktrees /tmp/core-b-wt 609M
+CAPACITY: load 1.03 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 4
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 652M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: ticket B review found a Blocker in the built code (temporary tables can make the runtime read OFF): fix round 3 of 3 running; lead review A-1, B-2 being fixed; batch run 1: 3 failed (1 mine, fixed; 2 not from my code); E1 cron refused
 NEXT: land A fix, B fix 3, mutant scripts, F-store; tests for F-store by a different agent; ticket C and F-install review rounds; ONE batch run when F-store is coded
-PUSHED_UTC: 2026-11-20T05:48:25Z (previous push; this board is pushed right after writing)
-IST: 11:20 IST
+PUSHED_UTC: 2026-11-20T05:52:04Z (previous push; this board is pushed right after writing)
+IST: 11:22 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | abc08a01 | builder | fable | F-store: migration 0007, store reserve/settle/expire/purge, Limits.reserve and settle, sweep tick step; worktree F | 05:50 | +30 min | UNVERIFIED | running | round 2 alongside | 0 | lead ORDER 010 GO BUILD F-store |
 | a52e1b89 | builder (fix) | fable | step B fix round 3 (LAST): schema-qualified stop state, who-else-can-clear check, reset reports the real state, lead findings B-2 B-4 B-8; worktree B | 05:50 | +20 min | UNVERIFIED | running | none | 2 | ticket B review Blocker (temporary tables) and lead ORDER 011 |
-| ade5688d | builder (fix) | fable | step A fix round 1: a drain failure that is not an outage fails the step (lead A-1, A-2, A-4); worktree A2 | 05:50 | +12 min | UNVERIFIED | running | none | 0 | lead ORDER 011 |
+| a71d4b00 | builder (tests) | fable | tests for the step A fix (incl. INSERT revoked from a real runtime login) and 6 mutants; worktree A-tests | 05:53 | +15 min | UNVERIFIED | running | none | 0 | the fix builder did not prove A-1 on a real role |
+| ade5688d | builder (fix) | fable | step A fix round 1: commit 15c86e5 (chain.py, SECURITY.md) | 05:50 | done | 100 | done | none | 0 | 248 passed on 8 audit test files; A-1 on a real role NOT proven by the builder |
 | adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py and tests/price_mutants.py in the runner format; worktree M | 05:50 | +20 min | UNVERIFIED | running | none | 0 | lead ORDER 008: a guarantee with no mutant script counts as not run |
 | a9de240c | reviewer (egm-implementation-readiness) | fable | EGM round 2 of 3 on the RESOLUTION section of tickets/F-store.md | 05:51 | +6 min | UNVERIFIED | running | 2 of 3 | 0 | lead ORDER 010 item 5 |
 | a3b14e25 | reviewer (egm-codebase-details) | fable | same round: checks the changed settle design for deadlocks and replay | 05:51 | +8 min | UNVERIFIED | running | 2 of 3 | 0 | same stage |
@@ -51,6 +52,7 @@ IST: 11:20 IST
 | tests/test_price_constraint.py (new, 246 tests) | local/code-C-tests 35304a2 (737c93c) | 1 | 246 passed / 0 / 0 | none | done | evidence/C-tests-evidence.txt |
 | test_stop_state_roles, test_stop_state_loop, test_stage_names, test_no_hardcoded_values | cloud/core-b 7afdab2 | 1 | 218 passed / 0 / 0 | none | done | evidence/B-tests-after-fix.txt; real non-superuser logins on PostgreSQL 16; before the fix: 5 failed, 99 passed (evidence/B-tests-evidence-before-fix.txt) |
 | step B mutants by hand (tests/stop_state_mutants.py --hand) | cloud/core-b 2110ab3 | 2 | 17 killed / 1 SURVIVED | reset: ON CONFLICT is removed | done | evidence/B-mutants-after-fix.log; the survivor needs a two-resets test with the flag row missing (ticket S6); 2 pending mutants (serial id, loop hunk) still not in the list |
+| 8 audit and tick files | local/code-A2 b90e368 (15c86e5) | 1 | 248 passed / 0 / 0 | none | done | step A fix builder, PostgreSQL 16 |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
