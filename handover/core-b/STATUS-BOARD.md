@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:49:14Z
+UPDATED_UTC: 2026-11-20T10:52:12Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.85 of 4 cores, mem 2/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
+CAPACITY: load 1.54 of 4 cores, mem 2/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
 DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.4G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T10:48:57Z (previous push; this board is pushed right after writing)
-IST: 16:19 IST
+PUSHED_UTC: 2026-11-20T10:52:10Z (previous push; this board is pushed right after writing)
+IST: 16:22 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -217,3 +217,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 10:44Z OPTION B (F-money-definer): ticket REVISION 3 committed (plan review round 2 answered: expire bound dropped as a stated residual, core-a helpers named as lead question 8 / E14, table owners in the owner check, hadavin_limits mechanism chosen, tick-scheduler stop + smoke tick, builder file sets disjoint). STEPS 1-2 BUILDING NOW (both sonnet, started 10:47Z, due 11:30Z, no runtime behaviour change): builder A = migration 0011_money_definer.sql (hadavin_limits + reserve/settle/expire/purge definer functions, smoke-tested by hand against the Python store results) ; builder B = store/migrate.py (MONEY_FUNCTIONS re-pin, FUNCTION_GRANTS with the 'nobody else can execute' refusal, owner-consistency check, limits seeding, ledger/map checks, CHANGELOG + runbook). STEP 3 (store calls the functions) after step 2 is reviewed; STEPS 4-5 next session (lead's answers E14). LIVE AGENTS: A, B, evidence batch 9 (whole suite, since 10:41Z).
 
 10:48Z OPTION B STEP 1-2: BUILDER A DONE: 0011_money_definer.sql written and smoke-tested on PG16 (~100 checks, all pass: identical results to the Python store on a 21-step sequence, HD001-HD004/23505, 41 hostile argument rows refused, 51 concurrent reserves under cap 20 = exactly 20 winners, TEMP shadow attacks do not change behaviour, a mutant pinned pg_temp-first does reach the temp table so the check has teeth). Commits on local/code-MA (not merged until builder B's migrate.py checks land: the 'every hadavin_* function is in the map' check would fail it alone). Deviations (in the ticket): reservation-id rule = Python's; max_exponent not read (numeric has no exponent form); settle claims with SELECT FOR UPDATE. A2 STARTED: the 0010 owner-first guard reorder + the honest header text (0008/0010). RUNNING: builder B (migrate.py), A2, step-6 ticket editor, evidence batch 9. Step 3 starts when A+B are merged and reviewed.
+
+10:52Z STEP 6 PLAN REVIEW (round 3 of the ticket, EGM max reached after revision): FIX FIRST, 3 Blockers all ticket text (cap window must be the 0011 cap rule not the 1e9 amount window; step-6 broken-test list with owners + a seed_caps helper; deploy story: every run refused until sync-caps, reset login required), 3 Majors decided: M5 loud tick alert check_caps via a read-only hadavin_cap_matches; M6 FOLD step 6 into 0011 (0011 is unreleased: no 0012, no 7-argument reserve ever; lead: confirm 0011 may be edited); file sets fixed. Ticket revision (round 3 answers) RUNNING. Step 6 is the first to slip vs 12:30Z: I will hand over the exact next step then. LIVE: builder B (migrate.py), A2 (0010 owner-first), ticket reviser, evidence batch 9.
