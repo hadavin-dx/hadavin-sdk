@@ -274,9 +274,9 @@ H4 = [
 
 
 @pytest.mark.parametrize("value", H4, ids=repr)
-@pytest.mark.parametrize("stage", ["pilot", "demo"])
-def test_h4_only_a_plain_date_is_read(tmp_path, cfg_dir, today, value, stage):
-    root = pilot_cfg(tmp_path) if stage == "pilot" else cfg_dir
+@pytest.mark.parametrize("env_name", ["pilot", "demo"])
+def test_h4_only_a_plain_date_is_read(tmp_path, cfg_dir, today, value, env_name):
+    root = pilot_cfg(tmp_path) if env_name == "pilot" else cfg_dir
     text = refusal(edit(root, lambda d: d.__setitem__("prices_as_of", value)))
     assert "prices_as_of" in text
     shape = ("-" not in value) if isinstance(value, str) else True
@@ -357,13 +357,13 @@ def test_h1_e7_bad_price_refused_for_fake_in_demo(cfg_dir, value, why, field):
 @pytest.mark.parametrize(
     "value", ["-1", "-0", "NaN", "Infinity", "1000000.000001", "0.0000001", 0.0, True]
 )
-@pytest.mark.parametrize("stage", ["demo-real", "pilot", "prod"])
-def test_i1_bad_price_refused_in_every_stage_and_kind(tmp_path, cfg_dir, today, value, stage):
+@pytest.mark.parametrize("env_name", ["demo-real", "pilot", "prod"])
+def test_i1_bad_price_refused_in_every_stage_and_kind(tmp_path, cfg_dir, today, value, env_name):
     root = {
         "demo-real": lambda: real_kind(cfg_dir),
         "pilot": lambda: pilot_cfg(tmp_path),
         "prod": lambda: prod_cfg(tmp_path),
-    }[stage]()
+    }[env_name]()
     load_config(root)
     assert f"routes.default.{OUT}" in refusal(set_price(root, value, OUT))
 
