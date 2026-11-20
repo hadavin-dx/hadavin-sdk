@@ -522,7 +522,11 @@ at. If the workflow took them as an end, the gap described above would stay open
   tick gap, 2280 seconds (38 minutes).
 - The template's placeholders: a wait of 70 seconds ("Wait before next round"; above 65 seconds on purpose, see stated
   limit 15) and 45 checks ("Checks left?"), 3150 seconds (52 minutes), about 52 to 53 in a real run with the time the other nodes take. That is longer than the 2280 seconds of the example.
-- The rule for each client: checks times wait must be LONGER than that client's stuck limit plus one tick gap.
+- The rule for each client: checks times wait must be LONGER than that client's longest run plus its stuck limit plus one
+  tick gap. Why: the stuck limit counts from the run's last sign of life (a heartbeat or a state change), so a run that
+  dies just before its natural end is noticed up to the stuck limit plus one tick gap after that, which is the longest
+  run plus both. The figures in this section (2280 seconds, the check counts) leave out the longest run, which no
+  code states: they are the floor (the time to notice after the last sign of life); add the client's longest run.
   With the 70 second wait and the default model settings: `max_steps` 6 needs more than 17 checks, `max_steps` 12
   more than 32, `max_steps` 20 more than 53. When you change the number in "Checks left?", change the text of
   "Stop: still running" too. Keep the wait above 65 seconds (a 60 second wait was lost in a restart of n8n, a 120 second wait survived: stated limit 15; the 65 s figure itself comes from outside the evidence, the lead's brief), and do not restart n8n while events are in flight.
@@ -532,7 +536,7 @@ at. If the workflow took them as an end, the gap described above would stay open
   `round < 45`), and the checks, in the node "Checks left?" (the part `< 45`). Each is multiplied by the wait.
 - Busy rounds: the placeholder is 45. With the 70 second wait that is 45 waits, 3150 seconds, which is longer than the
   2280 seconds of the example. 45 rounds make 46 sends (the first send and one for each round). The same rule holds:
-  busy rounds times wait must be LONGER than the stuck limit plus one tick gap. The `Retry-After` header that the
+  busy rounds times wait must be LONGER than the stuck limit plus one tick gap (the floor; add the longest run, as for the checks). The `Retry-After` header that the
   worker sends with a 503 (1 second) is ignored: the template waits its own wait.
 - These numbers are a floor, not a recommendation. They are right for the example agent only; a client whose agent has
   a larger `max_steps` must raise them. Nobody has measured a real run.
@@ -613,7 +617,7 @@ nothing in this section may be read as if it did.
 ### How a sender reads the state: there is no read address
 
 There is NO way for an external sender to read a run state other than the signed request itself. The endpoint answers
-`POST` on the trigger path and `GET` on the health path only (`METHOD` and `HEALTH_PATH` in `endpoint.py`; the health
+`POST` on the trigger path and `GET` on the health path (`/health`) only (`METHOD` and `HEALTH_PATH` in `endpoint.py`; the health
 answer holds `status` and `store_failures` and nothing of any run). So the question "what is the state of this run?" is
 the same signed request with the same key and the same document, signed anew; the template's "Run still going?" loop
 does exactly that (`n8n/hadavin-trigger.json`, the nodes "Next check", "Stamp time", "Sign", "Send to Hadavin").
@@ -624,8 +628,9 @@ none that shows a run.
 ### A polling recipe
 
 - Ask right after the 2xx, then every wait of the template (70 seconds, "Wait before next round"), until the state is an ended one.
-- Ask for as long as the client's longest run plus the stuck limit plus one tick gap: the template's placeholder is 45
-  checks of 70 seconds, 3150 seconds (about 52 minutes), against 2280 seconds for the example agent; the arithmetic and the
+- Ask for as long as the client's longest run plus the stuck limit plus one tick gap (a run that dies late is noticed that
+  long after it started): the template's placeholder is 45 checks of 70 seconds, 3150 seconds (about 52 minutes),
+  against a floor of 2280 seconds (stuck limit plus tick gap only, no longest run) for the example agent; the arithmetic and the
   rule for each agent are in "The numbers" (`stuck_after_s` and `TICK_SLACK_S` in `src/hadavin_sdk/runtime/tick.py`).
 - Sign every check anew: a signature stops being valid 300 seconds after its timestamp (see "One run at a time").
 - On NO_ACTION or SUCCEEDED: done. On WAITING_FOR_APPROVAL: the run waits for a person; the template ends here as a success.
@@ -638,9 +643,10 @@ none that shows a run.
 
 Nobody is told. The tick moves a run that has been quiet for longer than its stuck limit to NEEDS_PERSON, with the
 reason "interrupted" for RECEIVED, WORKING and PLAN_READY, "outcome_unknown" for EXECUTING and "verify_interrupted" for
-VERIFYING (`STUCK` in `tick.py`); it writes an audit record and sends no message (`stuck` in `tick.py` calls `advance` and
+VERIFYING (`STUCK` in `tick.py`); the fourth reason a poller can see is "approval_missing": the same step moves a run in
+WAITING_FOR_APPROVAL that has no approval row (a crash before the request was saved) to NEEDS_PERSON; it writes an audit record and sends no message (`stuck` in `tick.py` calls `advance` and
 `app.audit.write_outcome` and nothing else). The same key then answers 200 NEEDS_PERSON forever. A run cut off before it finished is not started again,
-and its document was kept only in the worker's memory, so it is gone: the event must be sent again with a new key.
+and its document was kept only in the worker's memory, so the document itself is not stored (a per-run redaction map of the identifier values found in it is, not the text): the event must be sent again with a new key.
 This is the E-door-1 gap, open for the owner.
 
 ### Sending again after a timeout is safe
@@ -660,7 +666,7 @@ second one starts the run.
 - There is no read address and no command that shows a run (`endpoint.py`, `cli.py`); a sender outside n8n must build the
   signed re-send itself.
 - Nobody is told of a run that ends in NEEDS_PERSON "interrupted", except through a sender that polls (`tick.py`).
-- The document of a cut-off run is not stored; only a hash of it is kept (`trigger_ref`, `worker.py`).
+- The document itself of a cut-off run is not stored; a hash of it is kept (`trigger_ref`, `worker.py`), and a per-run redaction map of the identifier values found in it (`_save_map`, `agent_loop.py`).
 
 ## One run at a time: what the sender must do when it is not acknowledged
 

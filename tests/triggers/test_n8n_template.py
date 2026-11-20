@@ -1134,7 +1134,7 @@ def test_the_busy_rounds_outlast_the_stuck_limit_plus_one_tick_gap():
         f"the placeholder is {rounds}",
         f"{rounds} waits, {rounds * wait['amount']} seconds",
         f"{rounds + 1} sends",
-        "busy rounds times wait must be LONGER than the stuck limit plus one tick gap",
+        "busy rounds times wait must be LONGER than the stuck limit plus one tick gap (the floor",
         "`Retry-After` header",
         "is ignored",
         "These numbers are a floor, not a recommendation",
@@ -1768,7 +1768,7 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
         f"a wait of {wait['amount']} seconds",
         f"{checks} checks",
         f"{span} seconds ({minutes} minutes)",
-        "checks times wait must be LONGER than that client's stuck limit plus one tick gap",
+        "checks times wait must be LONGER than that client's longest run plus its stuck limit plus one tick",
     ):
         assert phrase in part, phrase
     # the three other examples of the README: the smallest whole number of checks that is NOT enough
@@ -2092,4 +2092,14 @@ def test_readme_has_the_sender_polls_section_and_its_true_claims():
     for state in RunState:  # every state the code has is named in the contract
         assert state.value in section, state.value
     assert tick.STUCK[RunState.EXECUTING] == "outcome_unknown"
+    for reason in (*tick.STUCK.values(), "approval_missing"):  # every reason a poller can see
+        assert f'"{reason}"' in section, reason
+    for state in worker.IN_PROGRESS:  # the 202 split
+        assert state.value in section.partition("2. The body")[0], state.value
+    assert "202" in section and "200" in section
+    for name in (endpoint.METHOD, endpoint.HEALTH_PATH, *endpoint.ANSWER_FIELDS):
+        assert name in section, name
+    assert "approval_missing" in Path(tick.__file__).read_text()
+    assert "(a per-run redaction map of the identifier values found in it is" in section
+    assert "longest run plus the stuck limit plus one tick gap" in section
     assert "FAILED" in section and "There is no state named FAILED" in section
