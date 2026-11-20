@@ -22,7 +22,14 @@ from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.redact import (
+    ARN_TAIL,
+    PATTERNS,
+    SECRET_KINDS,
+    _Redactor,
+    kind_of,
+    redact,
+)
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -489,7 +496,9 @@ def redact_text(
     return out
 
 
-def is_masked(text: str, mapping: Mapping[str, str]) -> bool:
+def is_masked(
+    text: str, mapping: Mapping[str, str], neutralise: Callable[[str], str] | None = None
+) -> bool:
     """True when redacting `text` with `mapping` would mask nothing more. Never writes `mapping`.
     (`Mapping` is `collections.abc.Mapping`: a plain dict, a RunMap or a read-only view all fit.)
 
@@ -507,6 +516,12 @@ def is_masked(text: str, mapping: Mapping[str, str]) -> bool:
     patterns are reused and the caller's cache is never written. A placeholder that is not in the map is
     left alone, here as in `redact_text`, so it does not make a text unmasked.
 
+    `neutralise` has the meaning it has in `redact_text`: pass the hook the text was redacted with
+    (`neutralise_untrusted` for the output of `redact_untrusted`). Without it an ESCAPED placeholder
+    look-alike in untrusted text (`&lt;ID_5&gt;`, `%3CID_5%3E`) reads as not masked, because its decoded
+    view holds a placeholder the text did not. With it the placeholders are counted after the hook, as
+    `redact_text` would see them.
+
     Returns a bool only: no masked text, no found value and no kind leaves this function. Raises
     InputTooLarge / TooDeep / RedactionError exactly as `redact_text` does: the caller treats any raise as
     NOT masked."""
@@ -515,10 +530,37 @@ def is_masked(text: str, mapping: Mapping[str, str]) -> bool:
     # The redactor only assigns the cache's two keys and never changes what they hold in place (redact.py
     # `_Redactor._build` builds new objects first), so a shallow copy is private.
     cache = dict(getattr(mapping, "redact_cache", None) or {})
-    out, current = _scan(text, dict(before), None, cache)
-    held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(_clean(text)))
+    out, current = _scan(text, dict(before), neutralise, cache)
+    seen = _clean(text) if neutralise is None else _clean(neutralise(_clean(text)))
+    held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(seen))
     held_after = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(out))
     return current == before and held_after == held_before
+
+
+def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
+    """`text` with every raw copy of a value the map already holds replaced by that value's EXISTING
+    placeholder. No pattern is run: nothing new is found, no entry is added, no placeholder is invented,
+    and `mapping` (a `collections.abc.Mapping`, placeholder -> original) and its `redact_cache` are never
+    written. Doing it twice changes nothing more, and a text that holds no raw copy comes back equal.
+
+    The replace is the redactor's own final sweep (`guard/redact.py` `_Redactor.sweep`), so the rules are
+    the ones every producer's output already follows: longest originals first (a value that contains
+    another is replaced whole); nothing is replaced inside a placeholder already in the text; every copy of
+    a secret is replaced, and an identifier where no ASCII letter or digit touches it.
+
+    Limit, on purpose: only the spelling held in the map is replaced. A copy hidden by full-width letters,
+    a zero-width space or an escape is NOT found here: finding those is the pattern redactor's work
+    (`redact_text`), and returning a decoded view from here could turn a look-alike into a real placeholder.
+
+    Same input cap as `redact_text` (`InputTooLarge`); any other failure (a map that is not text to text)
+    is a RedactionError that names the error's type and never the text."""
+    _within_cap(text)
+    try:
+        # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
+        cache = dict(getattr(mapping, "redact_cache", None) or {})
+        return _Redactor(dict(mapping), cache).sweep(text)
+    except Exception as exc:  # noqa: BLE001 - whatever the sweep raised, nothing is sent
+        raise RedactionError(type(exc).__name__) from None
 
 
 def _scan(

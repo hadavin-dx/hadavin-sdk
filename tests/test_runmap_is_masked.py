@@ -300,3 +300,115 @@ def test_round_trip_what_redact_text_returns_is_masked(untrusted):
         if not _check(out, runmap.RunMap(mapping)):
             failures.append(("the output is not masked for an equal map", i))
     assert failures == []  # indexes only: a failing text is never printed
+
+
+LOOKALIKES = [
+    "&lt;ID_5&gt;",
+    "\\u003cID_5\\u003e",
+    "%3CID_5%3E",
+    "&lt;IPV4_1&gt;",
+    "<IPV4_3>",
+    "<ipv4_2>",
+]
+
+
+def test_recorded_the_untrusted_hook_on_already_redacted_text_escapes_its_real_placeholders():
+    """Run 2026-11-20. `neutralise_untrusted` is made for RAW text: on text that is already redacted it
+    escapes the genuine placeholders, and `password=` followed by the escaped one is then a new secret.
+    So `redact_untrusted` is not a fixed point on its own output, and the hook is right for a text only
+    while it holds no genuine placeholder after a key (shape A below)."""
+    mapping = runmap.RunMap()
+    out = runmap.redact_untrusted(f"password={TOKEN} at {IP}", mapping)
+    assert out == "password=<SECRET_1> at <IPV4_1>"
+    assert _check(out, mapping) is True  # without the hook: masked
+    before = _frozen(mapping)
+    assert (
+        runmap.is_masked(out, mapping, runmap.neutralise_untrusted) is False
+    )  # with it: fails closed
+    assert _frozen(mapping) == before
+    again = runmap.redact_untrusted(out, runmap.RunMap(mapping))
+    assert again == "password=<SECRET_2> at \u2039IPV4_1\u203a"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="idempotence counter-example: `password=<SECRET_1>` (any key=placeholder) in redact_untrusted "
+    "output; the untrusted hook escapes the genuine placeholder and the escaped token is masked as a new "
+    "secret, so is_masked(redact_untrusted(t, m), m, neutralise_untrusted) is False for such texts",
+)
+def test_round_trip_of_redact_untrusted_with_the_same_hook_and_escaped_lookalikes():
+    """The same loop with placeholder look-alikes in the text, checked with the hook the text was redacted
+    with: `is_masked(redact_untrusted(t, m), m, neutralise_untrusted)` is True."""
+    rng = random.Random(7)  # noqa: S311 - a test fixture generator, not a secret
+    mapping = runmap.RunMap()
+    failures = []
+    for i in range(300):
+        if i % 25 == 0:
+            mapping = runmap.RunMap()
+        text = _random_text(rng) + " " + rng.choice(LOOKALIKES) + " " + _random_text(rng)
+        out = runmap.redact_untrusted(text, mapping)
+        before = _frozen(mapping)
+        if runmap.is_masked(out, mapping, runmap.neutralise_untrusted) is not True:
+            failures.append(i)
+        assert _frozen(mapping) == before
+    assert failures == []
+
+
+# --- shape A (G code review): an ESCAPED placeholder look-alike in untrusted text ---------------------------------
+
+
+@pytest.mark.parametrize("spelling", LOOKALIKES[:3], ids=["html-entity", "backslash-u", "percent"])
+def test_shape_a_an_escaped_lookalike_needs_the_hook_the_text_was_redacted_with(spelling):
+    """Run 2026-11-20, confirmed: redact_untrusted returns the text as written (the decoded view is
+    neutralised first), and a check WITHOUT the hook says "not masked", because the decoded view holds a
+    placeholder the text did not. With the same hook the round trip holds."""
+    mapping = runmap.RunMap()
+    text = f"see {spelling} here"
+    out = runmap.redact_untrusted(text, mapping)
+    assert out == text and dict(mapping) == {}
+    assert _check(out, mapping) is False  # the pinned behaviour without the hook
+    before = _frozen(mapping)
+    assert runmap.is_masked(out, mapping, runmap.neutralise_untrusted) is True
+    assert runmap.is_masked(out, mapping, neutralise=runmap.neutralise_untrusted) is True
+    assert _frozen(mapping) == before
+
+
+def test_the_hook_does_not_hide_a_real_value():
+    mapping = runmap.RunMap({"<IPV4_1>": IP})
+    hook = runmap.neutralise_untrusted
+    assert runmap.is_masked(f"see &lt;ID_5&gt; at {IP}", mapping, hook) is False
+    assert runmap.is_masked(f"see &lt;ID_5&gt; key {KEY}", mapping, hook) is False
+    assert runmap.is_masked(f"line {HIDDEN['percent-encoding']} end", mapping, hook) is False
+
+
+# --- shape B (G code review): one redact_text pass is not a fixed point for a bank code beside an account ---------
+BSB = "062" + "-" + "000"  # made-up digits, built from parts
+ACCOUNT = "1234" + "5678"
+BANK_LINES = f"BSB: {BSB}\npaid {BSB}/{ACCOUNT}"
+
+
+def test_shape_b_recorded_one_pass_leaves_the_account_number_and_a_second_pass_masks_it():
+    """Run 2026-11-20, confirmed (a gap of the redactor itself, reported, NOT fixed here: no pattern was
+    changed). Pass one masks the bank code and the sweep writes its placeholder on line 2; only a second
+    pass then reads `<BANKCODE_1>/digits` as an account."""
+    mapping = runmap.RunMap()
+    once = runmap.redact_text(BANK_LINES, mapping)
+    assert once == f"BSB: <BANKCODE_1>\npaid <BANKCODE_1>/{ACCOUNT}"
+    assert dict(mapping) == {"<BANKCODE_1>": BSB}
+    assert _check(once, mapping) is False  # is_masked does see it: it fails closed
+    twice = runmap.redact_text(once, mapping)
+    assert twice == "BSB: <BANKCODE_1>\npaid <BANKCODE_1>/<BANKACCT_1>"
+    assert dict(mapping) == {"<BANKCODE_1>": BSB, "<BANKACCT_1>": ACCOUNT}
+    assert _check(twice, mapping) is True
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="idempotence counter-example: `BSB: <bank code>` on one line and `<same bank code>/<account>` "
+    "on the next; one redact_text pass leaves the account number readable (redact.py BANKCODE then sweep, "
+    "BANKACCT only matches on a second pass)",
+)
+def test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account():
+    mapping = runmap.RunMap()
+    out = runmap.redact_text(BANK_LINES, mapping)
+    assert runmap.is_masked(out, mapping) is True
