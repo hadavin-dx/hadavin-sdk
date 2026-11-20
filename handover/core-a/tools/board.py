@@ -110,7 +110,7 @@ def main() -> int:
         )
         sh(["git", "commit", "-q", "-m", msg])
     sh(["git", "add", "-u", "handover/core-a"])
-    sh(["git", "add", "handover/core-a/STATUS-BOARD.md", "handover/core-a/board-state.json"])
+    sh(["git", "add", "handover/core-a"])
     rc, out = sh(["git", "commit", "-q", "-m", f"board {now}"])
     for attempt in (1, 2, 3):
         rc, out = sh(["git", "pull", "--rebase", "-q", "origin", BRANCH], timeout=90)
