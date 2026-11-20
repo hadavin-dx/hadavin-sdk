@@ -32,7 +32,7 @@ def test_memory_purge_keeps_an_expired_hold_and_a_late_settle_still_counts():
     settled, expired = new_id("res"), new_id("res")
     s.reserve_spend(settled, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG)
     s.reserve_spend(expired, AGENT, DAY, D("2.00"), day_cap=BIG, month_cap=BIG, run_id=run.run_id)
-    s.settle_spend(settled, D("0.50"))
+    s.settle_spend(settled, D("0.50"), agent_id=AGENT)
     with s._lock:  # age the open hold, then the real expire step
         r = s._reservations[expired]
         s._reservations[expired] = r.model_copy(update={"created_at": r.created_at - 2 * FAR})
@@ -40,7 +40,9 @@ def test_memory_purge_keeps_an_expired_hold_and_a_late_settle_still_counts():
     assert s.purge_spend_reservations(now() + FAR) == 1  # the settled row only
     assert set(s._reservations) == {expired}
     assert s.spend_totals(AGENT, DAY) == (D("2.50"), D("2.50"))
-    row, first = s.settle_spend(expired, D("5.00"))  # a late settle above the reserved amount
+    row, first = s.settle_spend(
+        expired, D("5.00"), agent_id=AGENT
+    )  # a late settle above the reserved amount
     assert first is True and row.settled_usd == D("5.00")
     assert s.spend_totals(AGENT, DAY) == (D("5.50"), D("5.50"))
     assert s.get_run(run.run_id).cost_usd == D("5.00")
@@ -73,7 +75,7 @@ def test_pg_purge_keeps_expired_deletes_settled_and_released_and_a_late_settle_c
     run = Run(agent_id=AGENT, principal_id="p", trigger_kind="event", trigger_ref="t")
     rt.create_run(run)
     settled = _reserve(rt, "1.00")
-    rt.settle_spend(settled, D("0.50"))
+    rt.settle_spend(settled, D("0.50"), agent_id=AGENT)
     released = _reserve(rt, "2.00")
     late = new_id("res")
     rt.reserve_spend(late, AGENT, DAY, D("4.00"), day_cap=BIG, month_cap=BIG, run_id=run.run_id)
@@ -89,7 +91,7 @@ def test_pg_purge_keeps_expired_deletes_settled_and_released_and_a_late_settle_c
     left = w.run("SELECT reservation_id, status FROM spend_reservations")
     assert left == [(keep, "expired")]
     assert _counters(w) == before  # a purge moves no counter
-    row, first = rt.settle_spend(keep, D("20.00"))  # late, above the reserved 8.00
+    row, first = rt.settle_spend(keep, D("20.00"), agent_id=AGENT)  # late, above the reserved 8.00
     assert first is True and row.settled_usd == D("20.00")
     assert _counters(w) == (before[0] + D("12.00"), before[1] + D("12.00"))
     assert rt.get_run(run.run_id).cost_usd == D("20.00")

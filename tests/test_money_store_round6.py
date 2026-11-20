@@ -175,7 +175,7 @@ def test_pg_settle_delta_in_our_context_prec5():
         st.reserve_spend("x1", "ag", DAY, D("0.5"), day_cap=D(10), month_cap=D(10))
         with decimal.localcontext() as ctx:
             ctx.prec = 5
-            st.settle_spend("x1", D("0.123456789012"))
+            st.settle_spend("x1", D("0.123456789012"), agent_id="ag")
         assert st.spend_totals("ag", DAY) == (D("0.123456789012"), D("0.123456789012"))
 
 
@@ -184,7 +184,7 @@ def test_memory_settle_prec5_same_result():
     st.reserve_spend("x1", "ag", DAY, D("0.5"), day_cap=D(10), month_cap=D(10))
     with decimal.localcontext() as ctx:
         ctx.prec = 5
-        st.settle_spend("x1", D("0.123456789012"))
+        st.settle_spend("x1", D("0.123456789012"), agent_id="ag")
     assert st.spend_totals("ag", DAY) == (D("0.123456789012"), D("0.123456789012"))
 
 

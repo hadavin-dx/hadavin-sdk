@@ -151,11 +151,13 @@ def test_a_settle_that_fails_before_the_row_is_closed_changes_nothing(monkeypatc
     with monkeypatch.context() as m:
         m.setattr(memory_mod, "now", _raise)  # read when the closed row is built
         with pytest.raises(Boom):
-            store.settle_spend(rid, D("0.40"))
+            store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert _state(store) == before
     assert store.get_run(run_id).cost_usd == 0
     assert store.spend_totals(AGENT, DAY) == (D("1.00"), D("1.00"))
-    row, applied = store.settle_spend(rid, D("0.40"))  # the first settle is still the first
+    row, applied = store.settle_spend(
+        rid, D("0.40"), agent_id=AGENT
+    )  # the first settle is still the first
     assert applied and row.settled_usd == D("0.40")
     assert store.get_run(run_id).cost_usd == D("0.40")
     assert store.spend_totals(AGENT, DAY) == (D("0.40"), D("0.40"))
@@ -169,7 +171,7 @@ def test_a_settle_that_fails_on_the_run_copy_changes_nothing(monkeypatch):
     with monkeypatch.context() as m:
         m.setattr(type(store._runs[run_id]), "model_copy", _raise)
         with pytest.raises(Boom):
-            store.settle_spend(rid, D("0.40"))
+            store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert _state(store) == before
 
 
@@ -185,7 +187,7 @@ def test_a_settle_with_the_counter_row_missing_raises_and_changes_nothing(with_r
         store._spend.clear()
     before = _state(store)
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        store.settle_spend(rid, D("2.00"))
+        store.settle_spend(rid, D("2.00"), agent_id=AGENT)
     assert _state(store) == before
     assert before[1][rid].status == ("expired" if expired else "open")
     if with_run:
@@ -199,10 +201,10 @@ def test_a_missing_counter_row_of_another_day_does_not_block_a_settle():
     other = _reserve(store, day=OTHER_DAY, usd="1.00")
     with store._lock:
         del store._spend[(AGENT, OTHER_DAY)]
-    row, applied = store.settle_spend(rid, D("0.50"))
+    row, applied = store.settle_spend(rid, D("0.50"), agent_id=AGENT)
     assert applied and row.settled_usd == D("0.50")
     with pytest.raises(RuntimeError, match="spend counter row missing"):
-        store.settle_spend(other, D("0.50"))
+        store.settle_spend(other, D("0.50"), agent_id=AGENT)
 
 
 @pytest.mark.parametrize("bad", [D("NaN"), D(-1), 1, 1.0, None, D("1E+10")], ids=repr)
@@ -211,7 +213,7 @@ def test_a_bad_settle_amount_changes_nothing(bad):
     rid = _reserve(store, usd="1.00", run_id=_run(store))
     before = _state(store)
     with pytest.raises(ValueError, match="amount"):
-        store.settle_spend(rid, bad)
+        store.settle_spend(rid, bad, agent_id=AGENT)
     assert _state(store) == before
 
 
@@ -277,7 +279,7 @@ def test_200_random_failing_and_succeeding_operations_keep_the_counters_equal_to
                 with monkeypatch.context() as m:
                     if rnd.random() < 0.15:
                         m.setattr(memory_mod, "now", _raise)
-                    store.settle_spend(rnd.choice(ids), amount)
+                    store.settle_spend(rnd.choice(ids), amount, agent_id=AGENT)
             else:
                 store.expire_spend_reservations(rnd.choice([0, 0, 10**9 // 100]))
             outcomes["ok"] += 1

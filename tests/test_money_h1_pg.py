@@ -247,7 +247,6 @@ def test_m1_a_young_hold_cannot_be_expired_nor_a_fresh_expiry_released(w):
     check_m1_min_expiry_age(w)
 
 
-@pytest.mark.xfail(reason="M2 deferred", strict=True)
 def test_m2_settle_without_an_agent_is_refused(w):
     check_m2_settle_needs_an_agent(w)
 

@@ -641,6 +641,8 @@ class PostgresStore:
         """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency. The
         bookings are done by the definer function `hadavin_add_spend` (the function is the authority; the Python
         check is the early, friendly refusal)."""
+        check_store_id(agent_id, "agent_id")  # the same early refusals as the memory store
+        check_spend_day(day)
         usd = clean_spend_amount(usd)  # a bad amount is a ValueError before any SQL; -0 becomes 0
         try:
             with self._lock, self._db.transaction():
@@ -943,12 +945,11 @@ class PostgresStore:
             raise _money_error(exc, reservation_id) from None
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
-        if agent_id is not None:
-            check_store_id(agent_id, "agent_id")
+        check_store_id(agent_id, "agent_id")
         try:
             with self._lock, self._db.transaction():
                 # The claim comes first, inside the function: a second caller waits on the row lock, finds the

@@ -148,7 +148,7 @@ def test_t1_cap_3_and_worst_1_grants_exactly_3_of_50(w):
     # afterwards the three settle: the worst case is replaced, and the freed budget can be reserved again
     winners = [r[0] for r in w.run("SELECT reservation_id FROM spend_reservations")]
     for rid in winners:
-        assert stores[0].settle_spend(rid, D("0.10"))[1] is True
+        assert stores[0].settle_spend(rid, D("0.10"), agent_id=AGENT)[1] is True
     assert reader.spend_totals(AGENT, DAY) == (D("0.30"), D("0.30"))
     again = _together(stores, _reserve(D("3.00")))
     assert (
@@ -243,6 +243,6 @@ def test_t1_with_a_role_default_of_repeatable_read_still_grants_exactly_3(w):
     _read_committed([*stores, reader])
     # the settle path waits on the same rows: eight settles of one id under that role default, one applies
     rid = w.run("SELECT reservation_id FROM spend_reservations LIMIT 1")[0][0]
-    applied = _together(stores[:8], lambda i, s: s.settle_spend(rid, D("0.25"))[1])
+    applied = _together(stores[:8], lambda i, s: s.settle_spend(rid, D("0.25"), agent_id=AGENT)[1])
     assert sorted(applied, key=str) == [False] * 7 + [True]
     assert reader.spend_totals(AGENT, DAY)[0] == D("2.25")
