@@ -672,6 +672,15 @@
    "evidence file": "reviews/D-code-result-review-4.md",
    "tries": 1,
    "reason": "batch6 hashes the tree"
+  },
+  {
+   "item": "DRIFT-n8n+tests",
+   "what": "drift fixes in n8n/README-trigger.md (+ test pins) and the missing tests E5 (empty document) and E11 (escaped body over the cap)",
+   "state": "QUEUED after batch7 (it copies n8n/ and tests/ into its combined tree)",
+   "percent": 0,
+   "evidence file": "DRIFT-REPORT.md",
+   "tries": 0,
+   "reason": "batch7 running"
   }
  ],
  "agents": [
@@ -702,17 +711,17 @@
    "reason": "after d-fix5"
   },
   {
-   "id": "drift",
-   "role": "drift-report runner (egm-drift-report skill)",
+   "id": "drift-docs",
+   "role": "builder (text only)",
    "model": "sonnet",
-   "what exactly it is doing": "drift of ticket D, ticket E, n8n README, CRASH-MATRIX, WINDOWS-NOTES against the code",
-   "started UTC": "09:07",
-   "expected end": "about 20 min",
+   "what exactly it is doing": "drift fixes in WINDOWS-NOTES, ticket D, ticket E, CRASH-MATRIX (documents follow the code)",
+   "started UTC": "09:11",
+   "expected end": "15 min",
    "percent": 5,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "READY item from the lead's list"
+   "reason": "drift report"
   }
  ],
  "tests": [
@@ -2337,6 +2346,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "core-b HAS answered all four (answer files 001-004 on origin/cloud/core-b f8af6fc02, found 09:08): ticket D last section and OPEN-ITEMS.md updated"
+  },
+  {
+   "id": "drift",
+   "role": "drift-report runner (egm-drift-report skill)",
+   "model": "sonnet",
+   "what exactly it is doing": "drift of ticket D, ticket E, n8n README, CRASH-MATRIX, WINDOWS-NOTES against the code",
+   "started UTC": "09:07",
+   "expected end": "about 20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "DRIFT-REPORT.md: 26 drifts (6 HIGH, 9 MEDIUM, 11 LOW); worst: n8n README says worker has built-in fallbacks/no connection cap/allow_non_loopback not settable (all three false now); WINDOWS-NOTES W01/W02 stale; ticket D omits Retry-After and the server's header refusals; E5/E11 have no test"
   }
  ]
 }

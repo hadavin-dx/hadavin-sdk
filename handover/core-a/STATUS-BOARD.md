@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T09:11:16Z
+UPDATED_UTC: 2026-11-20T09:11:35Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 74
-ITEMS_OPEN: 20
-PERCENT: 83
+ITEMS_TOTAL: 75
+ITEMS_OPEN: 21
+PERCENT: 81
 AGENTS_RUNNING: 3
-CAPACITY: load 2.99 of 4 cores (1-minute average), mem 2.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 58G 17%; 565M /home/user/hadavin-sdk; 484M /tmp/claude-0; 160M /root/.cache
+CAPACITY: load 2.62 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 58G 16%; 565M /home/user/hadavin-sdk; 484M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T09:11:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T09:11:19Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -94,29 +94,24 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | D-fix4 | round 3 fixes: config error text, log time+level, --host '', start/stop log lines, stale text, ticket line numbers | RUNNING (also strict-mode collection bug and G13b) | 5 | reviews/D-code-result-review-3.md | 1 | batch5 running |
 | E-nits | step E extra-pass nits (3.12 Windows exists(), 2 docstring lines, importorskip, 2 test names) | DONE | 100 | reviews/E-result-review-4.md | 1 | batch6 hashes crash.py |
 | D-fix5 | D-rev4 Majors R4-1..5 + nits + E-nits (one builder, tests + small code + crash.py nits + ticket) | DONE | 100 | reviews/D-code-result-review-4.md | 1 | batch6 hashes the tree |
+| DRIFT-n8n+tests | drift fixes in n8n/README-trigger.md (+ test pins) and the missing tests E5 (empty document) and E11 (escaped body over the cap) | QUEUED after batch7 (it copies n8n/ and tests/ into its combined tree) | 0 | DRIFT-REPORT.md | 0 | batch7 running |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | batch7 | evidence runner (never judges) | sonnet | WHOLE suite after d-fix5 with REQUIRE_PG=1 and PG env (dblink test), combined tree, mutants; evidence/BATCH7-* | 09:06 | about 20 min | 5 | running | n/a | 0 | after d-fix5 |
-| drift | drift-report runner (egm-drift-report skill) | sonnet | drift of ticket D, ticket E, n8n README, CRASH-MATRIX, WINDOWS-NOTES against the code | 09:07 | about 20 min | 5 | running | n/a | 0 | READY item from the lead's list |
+| drift-docs | builder (text only) | sonnet | drift fixes in WINDOWS-NOTES, ticket D, ticket E, CRASH-MATRIX (documents follow the code) | 09:11 | 15 min | 5 | running | n/a | 0 | drift report |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 10607s ago | running | matched by name in ps |
-| 17513 | postgres: postgres postgres 127.0.0.1(39416) DROP DATABASE | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 17666 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 17700 | postgres: postgres postgres 127.0.0.1(40454) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 31308 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 281s ago | running | matched by name in ps |
-| 31309 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 281s ago | running | matched by name in ps |
-| 31322 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 281s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 10626s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 10625s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 10625s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 10625s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 10625s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 10625s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
