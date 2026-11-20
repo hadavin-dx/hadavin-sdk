@@ -2,7 +2,7 @@
  "order": "017 on top of the backlog (016 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "code-minors agent ends: start in one batch (a) design-review code fixes + worker switch to App.trigger_secret + start test through main, (b) more mutants for all new guards",
+ "next": "the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block",
  "note": "PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -262,11 +262,11 @@
   {
    "item": "O14-3",
    "what": "switch the worker to core-b's bound reader and run the worker start test for real",
-   "state": "READY (queued behind O17-code, same file)",
-   "percent": 0,
+   "state": "RUNNING",
+   "percent": 10,
    "evidence file": "",
-   "tries": 0,
-   "reason": "core-b's NEW head has a bound reader, named App.trigger_secret (not trigger_resolve); my worker refuses to start on both heads until it reads that name; with the name supplied it starts (probed by the trial). Switch + the start test through main start when the agent editing worker.py ends"
+   "tries": 1,
+   "reason": "worker switched to core-b's bound reader as built and the start test through main on a combined scratch tree: same builder as the worker fixes"
   },
   {
    "item": "O15",
@@ -325,11 +325,11 @@
   {
    "item": "B9-review",
    "what": "hostile re-read of all my own code with egm:egm-design, one round, and fix",
-   "state": "REVIEW DONE; fixes queued behind O17-code (same files)",
-   "percent": 50,
+   "state": "RUNNING (fix pass, 2 builders)",
+   "percent": 60,
    "evidence file": "reviews/code-D-design-review-1.md",
    "tries": 1,
-   "reason": "no Blocker; 3 Majors, 16 Nits: (M1) a request whose first answer was lost in a crash later gets 202 and the sender believes it worked although nothing runs; (M2) nothing caps waiting request threads when the database hangs; (M3) a restart still burns a run that outlives the supervisor's grace period. 15 to fix, 3 declined, 3 points for the lead"
+   "reason": "review done (3 Majors, 16 Nits); fixes split by file: server.py + endpoint.py + crash.py to one builder (with the 4 fuzz findings), worker.py to another (with the switch to core-b's reader)"
   },
   {
    "item": "O17-A",
@@ -352,11 +352,11 @@
   {
    "item": "O17-code",
    "what": "code minors 2, 6, 7, 12, 4; delete the test that proves nothing; strict switch HADAVIN_REQUIRE_PG that turns a database skip into a failure",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/R2-code-tests.log, raw/R2-strict-switch.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/R2-code-tests.log, raw/R2-strict-switch.log, raw/endpoint-mutants-run-4.log, tests/triggers/conftest.py",
    "tries": 1,
-   "reason": "ORDER 017"
+   "reason": "minors 2, 4, 6, 7, 12 applied; the test that proved nothing deleted (it only checked that two store kinds are registered); strict switch HADAVIN_REQUIRE_PG=1: without the database variable 88 tests ERROR instead of skipping (exit code 1), with both set 529 passed, with neither 441 passed and 90 skipped. LIMITS: the switch covers tests/triggers only (tests/test_testing_crash.py and tests/contracts need the same hook in files that are not mine); pytest counts these as errors, not failures; minor 9 (three more drain tests) NOT written; one new timeout test was not run against the old code"
   },
   {
    "item": "O17-mutants",
@@ -370,11 +370,11 @@
   {
    "item": "O17-main",
    "what": "start-refusal test through main with a real config",
-   "state": "WAIT core-b",
-   "percent": 0,
+   "state": "RUNNING (same agent as O14-3)",
+   "percent": 10,
    "evidence file": "",
-   "tries": 0,
-   "reason": "WAIT core-b's bound reader"
+   "tries": 1,
+   "reason": "start and start-refusal through main with a real config, on a scratch tree = core-b's head + my trigger files"
   },
   {
    "item": "B5b-matrix-paths",
@@ -803,15 +803,15 @@
   {
    "model": "fable",
    "started UTC": "06:22",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "lead code review round 2 of 3",
    "retries so far": 0,
    "id": "o17-code",
    "role": "builder",
    "what exactly it is doing": "server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once",
-   "expected end": "about 30 min after start",
-   "reason": "ORDER 017; 8 agents run now (trial, fuzz, matrix, F-store, G7, design review, n8n, code minors)"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "id": "b5b-paths",
@@ -877,6 +877,32 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "7 agents run"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:31",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "own design review fix pass (round 1 of 1) + lead review round 2",
+   "retries so far": 0,
+   "id": "fix-srv",
+   "role": "builder",
+   "what exactly it is doing": "server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16",
+   "expected end": "about 35 min after start",
+   "reason": "design review + fuzz"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:31",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "own design review fix pass (round 1 of 1) + lead review round 2",
+   "retries so far": 0,
+   "id": "fix-wrk",
+   "role": "builder",
+   "what exactly it is doing": "worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree",
+   "expected end": "about 45 min after start",
+   "reason": "design review + ORDER 014 item 3 + ORDER 017; 9 agents run (G7, matrix part 2, meter, config tests, template state check, concurrent fuzz, 2 fix builders)... 8 counted from the agent list"
   }
  ],
  "tests": [
@@ -1122,6 +1148,33 @@
    "first failing line": "FINDING: HTTP/2.0 request line answered 505",
    "state": "done",
    "reason": "PostgreSQL 16.15 on port 55433"
+  },
+  {
+   "suite or file": "tests/triggers (7 files) after the round-2 minors, PostgreSQL 16",
+   "branch and SHA": "working tree",
+   "run number": "1 (agent)",
+   "passed / failed / errors": "529 / 0 / 0, 2 skipped",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "ORDER 017 minors"
+  },
+  {
+   "suite or file": "strict switch proof: HADAVIN_REQUIRE_PG=1 without the database variable",
+   "branch and SHA": "working tree",
+   "run number": "1",
+   "passed / failed / errors": "441 passed, 88 errors (wanted), 2 skipped",
+   "first failing line": "each error names the two variables",
+   "state": "done",
+   "reason": "a missing database can no longer hide behind a skip in tests/triggers"
+  },
+  {
+   "suite or file": "tests/endpoint_mutants.py after the round-2 minors",
+   "branch and SHA": "working tree",
+   "run number": "5 (agent)",
+   "passed / failed / errors": "30 of 30 good; problems: []",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "minor 10 (ten more mutants) still to add after the two fix builders end"
   }
  ],
  "restarts": [],
