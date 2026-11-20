@@ -87,8 +87,9 @@ def _deadline() -> _Deadline | None:
 def _left(deadline: _Deadline | None) -> float | None:
     """The CPU seconds left before ``deadline`` (from ``_deadline``, in the thread that runs the check), as the ``budget_s`` of one
     ``textnorm.scan_views_no_value`` call; None without a deadline. The wall time left, divided by the factor, is the other candidate (the call
-    sets its own wall deadline from its budget), and the smaller of the two is given, so the call carries both. Zero or less: that call raises
-    ``DeadlinePassed`` after its size rule."""
+    sets its own wall deadline from its budget), and the smaller of the two is given, so the call carries both. That makes the rule from the second
+    call on stricter than "2x the CPU budget of wall time": the CPU still needed must not exceed half the wall time left (a false flag, never a miss).
+    Zero or less: that call raises ``DeadlinePassed`` after its size rule."""
     if deadline is None:
         return None
     return min(

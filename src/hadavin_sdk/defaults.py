@@ -335,12 +335,14 @@ TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
 # one detector call on one text, may spend in the text fold; past them textnorm raises DeadlinePassed and the run is flagged guard_unavailable
 # (fail closed). Per check, not per run: a run that checks many texts (k1b: one check per tool result) may spend it once per check. None: no
 # deadline. A positive finite number; anything else flags every run. 30.0: about 1.9x the slowest ORDINARY text of 2,000,000 characters measured
-# on the build box (16.0 s; a constructed text took 185 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. CPU only: waiting for the GIL,
-# a lock or I/O does not count, and no call site of the injection check has a wall-clock limit.
+# on the build box (16.0 s; a constructed text took 185 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. A CPU budget: waiting for the GIL,
+# a lock or I/O does not count in it; a wall-clock deadline of INJECTION_WALL_FACTOR times it also applies (below).
 INJECTION_BUDGET_S = 30.0
 # INJECTION_WALL_FACTOR (guard.injection and guard.textnorm, M3 of the lead review xr-textfold-lead-1): the wall-clock allowance of one check, as a
 # multiple of the CPU budget, read from time.monotonic() in the calling thread when the check starts. The CPU clock does not advance while a thread
-# waits for the GIL, a lock or I/O, so without it a loaded machine stretches the 30 s without limit. 2.0 (the lead's "about 2x"): a check that is
-# starved for more than half of its wall time is flagged guard_unavailable (fail closed, as for the CPU budget). A finite number of at least 1;
+# waits for the GIL, a lock or I/O, so without it a loaded machine stretches the 30 s without limit. 2.0 (the lead's "about 2x"): a check whose wall time passes the factor times the CPU
+# budget is flagged guard_unavailable (fail closed, as for the CPU budget). Each later call of one check is given min(CPU left, wall left / factor), so
+# the real rule from the second call on is: the CPU still needed must not exceed half the wall time left (stricter than 2x; a false flag, never a miss).
+# The bound is the deadline plus the longest stretch between two readings (the size rule, one NFKD/NFKC pass, the regex search over the views). A finite number of at least 1;
 # anything else flags every run (a wall allowance below the CPU budget would flag a check that is on time). Not used when INJECTION_BUDGET_S is None.
 INJECTION_WALL_FACTOR = 2.0
