@@ -398,6 +398,7 @@ class NetworkLLM:
             detail=self.detail,
             http_status=self.http_status,
             refused_statuses=self.refused_statuses,
+            throttled_unbilled=self.throttled_unbilled,
         )
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
@@ -408,6 +409,10 @@ class NetworkLLM:
     http_status: Callable[[BaseException], int | None] | None = None
     # The statuses this kind counts as refused before any response (a kind behind routers or proxies narrows it).
     refused_statuses: frozenset[int] = REFUSED_STATUSES
+    # Whether a 429 of this kind is known to come before any model work (direct APIs only, set True per kind). The
+    # default is False (fail closed): a 429 can follow upstream work, so on exhaustion only never-sent attempts are
+    # unbilled.
+    throttled_unbilled: bool = False
 
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly

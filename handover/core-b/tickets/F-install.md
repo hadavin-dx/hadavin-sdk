@@ -280,3 +280,6 @@ About 110 lines added and 100 removed in src (64 of the removals are extract.py)
 
 ### B2 review 1 follow-up
 - M2: `_settle_model_call` returns the ended run on a bad cost, books the run cost directly only on a definite refusal (ValueError, NotFound), and books nothing on an ambiguous failure. m2: one code `limits.limits_unavailable`. m4: NOT GATED and listed: `cards.render_shadow(detector=...)` (cost not charged at all), `guard/bedrock_guardrail.apply_guardrail`. m1: runbook says an operator must release expired holds. m6: 6 mutants in tests/b2_mutants.py (6 of 6 good). m3 (a transient reserve failure is permanent for that run) and m5 (max_attempts by getattr) are stated, not changed.
+
+### B2 review 2 follow-up
+- B2-M1: `_settle_model_call` treats exactly the connectivity errors (`store.protocol.is_connectivity_error`) as ambiguous (no direct run-cost booking; the run ends NEEDS_PERSON `limits.limits_unavailable`); every other failure rolled back and the run cost is booked directly. m1: the method never raises (a store that is down: logged, run returned). m2 docs reworded. Mutants 8 of 8 good.

@@ -13,6 +13,7 @@ from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.models import AuditEvent, KillSwitch, OpenStop, audit_code, new_id, now
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import (
+    BookingDayRefused,
     NotFound,
     SpendCapExceeded,
     Store,
@@ -201,11 +202,13 @@ class Limits:
         except Exception as exc:  # noqa: BLE001 - fail closed: whatever the store raised, no model call
             # The log names the error class, never the message (a store message can carry host, user, SQL text);
             # the one fixed hint is for a missing cap row, which an operator fixes with sync-caps.
-            hint = (
-                " hint=no cap row: run limits sync-caps"
-                if "no cap for this agent" in str(exc)
-                else ""
-            )
+            hint = ""
+            if "no cap for this agent" in str(exc):
+                hint = " hint=no cap row: run limits sync-caps"
+            elif isinstance(
+                exc, BookingDayRefused
+            ):  # the day is outside the database window: a clock off by days
+                hint = " hint=check the app clock against the database clock"
             _LOG.warning(
                 "reserve refused: limits_unavailable error_kind=%s%s", type(exc).__name__, hint
             )

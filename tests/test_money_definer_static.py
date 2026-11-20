@@ -29,9 +29,13 @@ FUNCTION_NAMES = (
 )
 # Added by the caps work (builder E1): not called by the money paths of the store, but the same static rules apply.
 CAP_FUNCTION_NAMES = ("hadavin_set_cap", "hadavin_cap_matches")
+# The read-only view the tick alert `check_expired_holds` uses (runtime login, no table right); same static rules.
+READ_FUNCTION_NAMES = ("hadavin_expired_holds",)
 # 0011 replaces the release function of 0008 (review M1: the minimum age); the same static rules apply to it.
 RELEASE_FUNCTION_NAMES = ("hadavin_release_expired_spend",)
-ALL_FUNCTION_NAMES = FUNCTION_NAMES + CAP_FUNCTION_NAMES + RELEASE_FUNCTION_NAMES
+ALL_FUNCTION_NAMES = (
+    FUNCTION_NAMES + CAP_FUNCTION_NAMES + RELEASE_FUNCTION_NAMES + READ_FUNCTION_NAMES
+)
 # The defaults the limits are seeded with: none of them may appear as a literal in a function (parity with the
 # defaults would hide a hard-coded limit from every behavioural test that leaves the limits alone). A neighbouring
 # hyphen excludes the parts of a date literal such as DATE '9999-12-31' (the day window is not a limit).
@@ -206,5 +210,5 @@ def test_postgres_py_calls_the_money_functions_schema_qualified_and_writes_no_mo
 def test_postgres_py_has_no_unqualified_call_of_any_hadavin_function():
     text = _store_sql_text()
     _no_money_writes_or_skip(text)
-    unqualified = [m.group(0) for m in re.finditer(r"(?<![\w.])hadavin_[a-z_]+\s*\(", text)]
+    unqualified = [m.group(0) for m in re.finditer(r'(?<![\w."])hadavin_[a-z_]+\s*\(', text)]
     assert not unqualified, f"unqualified calls: {unqualified}"

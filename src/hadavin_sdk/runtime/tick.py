@@ -2,7 +2,7 @@
 
 Contract (design v5 kernel, section 4):
 * ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
-  reprobe_sources, audit_drain, expire_reservations, check_caps. Later PRs only **append** a ``TickStep``.
+  reprobe_sources, audit_drain, expire_reservations, check_caps, check_expired_holds. Later PRs only **append** a ``TickStep``.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -320,6 +320,34 @@ def check_caps(ctx: TickContext) -> None:
         )
 
 
+class ExpiredHoldsStale(RuntimeError):
+    """Expired spend holds nobody released are still booked past the alert age. The message names agent, day, number
+    of holds and the booked amount (money, not a secret), never a hold or run id."""
+
+
+def check_expired_holds(ctx: TickContext) -> None:
+    """After a provider outage or a revoked key every failed call leaves its worst-case hold booked (the safe
+    direction) until an operator runs `release-expired`; the agents then hit their daily budget with no
+    error anywhere. This step makes it loud: it reads the expired, unreleased holds closed more than
+    `defaults.EXPIRED_HOLD_ALERT_AFTER_S` ago (`expired_holds`, read-only, through a definer function: the runtime
+    login has no right on the table) and fails (the tick exits 1) naming agent, day, count and amount. Quiet when
+    there are none; a store without the method has nothing to check."""
+    reader = getattr(ctx.app.store, "expired_holds", None)
+    if reader is None:
+        return
+    groups = reader(defaults.EXPIRED_HOLD_ALERT_AFTER_S)
+    if not groups:
+        return
+    parts = [f"{g.agent_id[:64]} {g.day.isoformat()}: {g.holds} holds, {g.usd} USD" for g in groups]
+    for part in parts:
+        _LOG.error("check_expired_holds %s", part)
+    raise ExpiredHoldsStale(
+        f"expired spend holds are still booked after {defaults.EXPIRED_HOLD_ALERT_AFTER_S} s ("
+        + "; ".join(parts)
+        + "): run hadavin-sdk release-expired (until then the agents' daily budget stays reduced)"
+    )
+
+
 def heartbeat(ctx: TickContext) -> None:
     """After the steps (not a step): one line with this tick's outcome."""
     failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
@@ -346,6 +374,7 @@ STEPS: list[TickStep] = [
     TickStep("audit_drain", 0, audit_drain),
     TickStep("expire_reservations", 0, expire_reservations),
     TickStep("check_caps", 0, check_caps),
+    TickStep("check_expired_holds", 0, check_expired_holds),
 ]
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (

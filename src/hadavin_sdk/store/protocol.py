@@ -62,6 +62,11 @@ class SpendCapExceeded(RuntimeError):
         self.which = which
 
 
+class BookingDayRefused(ValueError):
+    """The database refused the booking day (outside its UTC date +/- the window): a clock off by days. A dedicated
+    class, so a hint never depends on the text of a message a caller could shape."""
+
+
 MAX_RESERVATION_ID_CHARS = 200
 _RESERVATION_ID = re.compile(r"[A-Za-z0-9._:-]+")
 
@@ -176,6 +181,29 @@ class SpendReleaser(Protocol):
     def release_expired_spend(
         self, agent_id: str, day: date, actor: str, audit: Any
     ) -> SpendRelease: ...
+
+
+EXPIRED_HOLDS_MAX_ROWS = 1000  # groups (agent, day) one `expired_holds` call returns; the SQL function has the same bound
+
+
+@dataclass(frozen=True)
+class ExpiredHolds:
+    """The expired holds of one agent and one day that nobody has released or settled (`expired_holds`): how many
+    and their summed reserved amount, which is still booked. No hold id, no run id."""
+
+    agent_id: str
+    day: date
+    holds: int
+    usd: Decimal
+
+
+class ExpiredHoldsReader(Protocol):
+    """Optional, like `CapAdmin`: a read-only view of the expired holds still booked, for the tick alert
+    (`check_expired_holds`). The runtime login has no right on the table, so Postgres answers through the definer
+    function `hadavin_expired_holds` (migration 0011). Holds closed no longer than `older_than_s` seconds ago are
+    left out; at most `EXPIRED_HOLDS_MAX_ROWS` groups, ordered by agent and day. ValueError for a bad age."""
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]: ...
 
 
 class CapAdmin(Protocol):

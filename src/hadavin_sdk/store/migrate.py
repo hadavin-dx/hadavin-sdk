@@ -131,6 +131,7 @@ MONEY_FUNCTIONS = (
     "hadavin_add_spend(text, date, numeric)",
     "hadavin_set_cap(text, numeric, numeric, text)",
     "hadavin_cap_matches(text, numeric, numeric)",
+    "hadavin_expired_holds(integer)",
 )
 # Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
 # purges; the release role (0008) releases; the reset role sets caps and compares them (step 6). The portal role runs none. Every other role, PUBLIC included,
@@ -144,6 +145,9 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     # Step 6: only the reset role sets a cap; the runtime (tick check) and the reset role compare one.
     MONEY_FUNCTIONS[5]: FunctionGrant(reset=True),
     MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, reset=True),
+    MONEY_FUNCTIONS[7]: FunctionGrant(
+        runtime=True
+    ),  # read-only: the tick alert on unreleased expired holds
     RELEASE_FUNCTION: FunctionGrant(release=True),
 }
 # Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.
@@ -1276,6 +1280,12 @@ def _released_hashes() -> dict[str, str]:
     return json.loads(RELEASED_MANIFEST.read_text(encoding="utf-8"))
 
 
+def _draft_versions() -> frozenset[str]:
+    """Versions an operator may reset or accept: unreleased AND not in the shipped manifest (if the lead forgets to
+    empty UNRELEASED_MIGRATIONS at a release, the manifest still wins)."""
+    return UNRELEASED_MIGRATIONS - _released_hashes().keys()
+
+
 def _read_migration(path: Path) -> tuple[str, str]:
     """(text to execute, checksum), from ONE read of the file. The checksum is SHA-256 of the bytes with Windows line
     endings read as Unix ones (the released manifest's rule); the text is decoded the way `read_text` does it."""
@@ -1322,10 +1332,10 @@ def _reset_draft(db, version: str, files: list[Path]) -> None:
     """Delete the ledger rows of an UNRELEASED version and every later one, so the next step applies them again.
     It does not drop anything the draft made: do that first (the files would fail on what already exists)."""
     stems = [p.stem for p in files]
-    if version not in UNRELEASED_MIGRATIONS or version not in stems:
+    if version not in _draft_versions() or version not in stems:
         raise ConfigError(
             f"reset_draft {version!r}: only an unreleased migration can be reset "
-            f"({', '.join(sorted(UNRELEASED_MIGRATIONS))})"
+            f"({', '.join(sorted(_draft_versions())) or 'none now'})"
         )
     later = [v for v in stems if v >= version]
     db.execute("DELETE FROM schema_migrations WHERE version = ANY(%s)", (later,))
@@ -1342,7 +1352,7 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
     differs; nothing of the changed file reaches the database. A NULL checksum on an unreleased file is trusted on
     first use (logged). `accept` names unreleased versions whose recorded checksum is set to the file's now."""
     rows = dict(db.execute("SELECT version, checksum FROM schema_migrations").fetchall())
-    for bad in sorted(set(accept) - UNRELEASED_MIGRATIONS):
+    for bad in sorted(set(accept) - _draft_versions()):
         raise ConfigError(
             f"accept_changed_draft {bad!r}: only an unreleased migration can be accepted"
         )

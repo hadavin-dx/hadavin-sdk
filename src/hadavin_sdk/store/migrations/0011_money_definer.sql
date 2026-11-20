@@ -117,7 +117,7 @@ BEGIN
     -- 2099-02-01 and so on would never meet a cap (review B3). The same 22023 as any other refused argument.
     v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
     IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
-        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+        RAISE EXCEPTION 'invalid argument: p_day window' USING ERRCODE = '22023';
     END IF;
     -- written positively: NaN sorts above every number and Infinity is above the window, both fail this test
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
@@ -382,6 +382,8 @@ DECLARE
     v_max_amount NUMERIC;
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
+    v_skew NUMERIC;
+    v_today DATE;
     v_month DATE;
 BEGIN
     SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
@@ -390,6 +392,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
     SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_skew FROM hadavin_limits l WHERE l.name = 'max_day_skew';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_day_skew missing' USING ERRCODE = 'HD004'; END IF;
 
     IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
        OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]' THEN
@@ -397,6 +401,11 @@ BEGIN
     END IF;
     IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) OR p_day < DATE '1970-01-01' OR p_day > DATE '9999-12-31' THEN
         RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- the same booking-day window as hadavin_reserve_spend (review m1): no far-day counter rows from the runtime
+    v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
+    IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
+        RAISE EXCEPTION 'invalid argument: p_day window' USING ERRCODE = '22023';
     END IF;
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
         RAISE EXCEPTION 'invalid argument: p_usd' USING ERRCODE = '22023';
@@ -514,3 +523,36 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_cap_matches(TEXT, NUMERIC, NUMERIC) FROM PUBLIC;
+
+-- hadavin_expired_holds: read-only. The expired holds (status 'expired': the worst case stays booked) that nobody has
+-- released or settled, closed more than p_older_than_s seconds ago (database clock), grouped by agent and day. The tick
+-- step `check_expired_holds` runs it under the runtime login, which has no right on spend_reservations. It returns the
+-- agent, the day, the number of holds and their summed reserved amount, and no id of a hold or a run; at most 1000 groups.
+CREATE OR REPLACE FUNCTION hadavin_expired_holds(p_older_than_s INTEGER)
+RETURNS TABLE (agent_id TEXT, day DATE, holds BIGINT, usd NUMERIC)
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $fn$
+#variable_conflict use_column
+DECLARE
+    v_max_age NUMERIC;
+BEGIN
+    SELECT l.value INTO v_max_age FROM hadavin_limits l WHERE l.name = 'max_expiry_age';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_expiry_age missing' USING ERRCODE = 'HD004'; END IF;
+    IF p_older_than_s IS NULL OR p_older_than_s < 0 OR p_older_than_s > v_max_age THEN
+        RAISE EXCEPTION 'invalid argument: p_older_than_s' USING ERRCODE = '22023';
+    END IF;
+    RETURN QUERY
+    SELECT r.agent_id, r.day, pg_catalog.count(*)::bigint, pg_catalog.sum(r.reserved_usd)::numeric
+      FROM spend_reservations r
+     WHERE r.status = 'expired'
+       AND r.closed_at <= pg_catalog.clock_timestamp()
+                          - pg_catalog.make_interval(secs => p_older_than_s::double precision)
+     GROUP BY r.agent_id, r.day
+     ORDER BY r.agent_id, r.day
+     LIMIT 1000;
+END
+$fn$;
+REVOKE ALL ON FUNCTION hadavin_expired_holds(INTEGER) FROM PUBLIC;

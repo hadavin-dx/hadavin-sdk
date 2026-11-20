@@ -206,7 +206,12 @@ runtime and not the reset login):
    DELETE or TRUNCATE a money table (PUBLIC and inherited memberships included, when roles are named). Residuals: a
    login that shares the migration owner (or is a member of the owner role) has no guard at all, so keep the runtime
    login separate from the owner; a superuser owner is not stopped; the runtime can still settle an open hold it can
-   name. `migrate` pins the trigger function's search path too.
+   name. `migrate` pins the trigger function's search path too. The store also checks at start that the runtime login
+   (and every role it is a member of, inherit option or not) holds no write right on the money tables and no EXECUTE
+   on set_cap, release or purge; a login that owns a table (or is a member of its owner) or a superuser is skipped for
+   that table with a WARNING in the log: this is the single-role dev escape hatch, never a production setup. Views and
+   materialized views that select from the money tables are not scanned (a residual: review who may write through
+   them).
    Drift: when a counter is already below the booked holds, a legal settle that lowers it is refused (fail closed) until
    the counter is repaired; `applied_usd` of a release shows such drift.
    Emergency switch-off (the OWNER only; the guards then do nothing until switched back on): `ALTER TABLE spend
@@ -232,6 +237,23 @@ runtime and not the reset login):
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
 
+### The alert: `check_expired_holds`
+
+A provider outage or a revoked key leaves the worst-case hold of every failed call booked (the safe direction) until an
+operator releases it; nothing else says so, the agents simply hit `daily_budget`. The tick step `check_expired_holds`
+(the last step, every tick, runtime login) makes it loud. It calls the read-only function `hadavin_expired_holds`
+(0011; the runtime has no right on `spend_reservations`, so the function answers: agent, day, number of holds and
+their summed amount, at most 1000 groups, no hold or run id). When any expired, unreleased hold was closed more than
+`EXPIRED_HOLD_ALERT_AFTER_S` ago (default 6 hours: past the one hour in which a late settle can still book the real
+cost and the release is refused, with room for an operator to respond) the step fails: an ERROR line
+`check_expired_holds <agent> <day>: N holds, X USD` per group and `step=check_expired_holds ...` from the tick, exit 1,
+the same text in `tick_state`. It is quiet when there are none, and clears on the first tick after the release.
+
+What it means: those holds still count against the agent's day and month counters although their calls never
+settled. Recover with `hadavin-sdk release-expired AGENT --day YYYY-MM-DD --by WHO` (the release login, steps
+above) for each agent and day named in the alert. If the call really did cost money (a provider that billed a failed
+call), release only after checking: a release lowers the counter and a later settle of that hold is then not found.
+
 ## Caps live in a table the runtime cannot write
 The day and month spend cap of every agent is read by the database from the table `hadavin_caps` (migration 0011).
 The runtime login has no right on that table and cannot run `hadavin_set_cap`; only the reset login can write a cap.
@@ -240,7 +262,7 @@ Where the two differ, the TABLE wins on PostgreSQL (the memory store has no tabl
 
 Status: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
 The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
-The live loop's main model call reserves before and settles after (B2), so concurrent runs cannot overshoot the cap for that call; the ungated sites (see the CHANGELOG money block) can.
+The live loop's main model call reserves before and settles after (B2): the reservation bounds the booked worst case per call, a reply costing more is booked in full (an overshoot, audited), and the kill switch is read before the reserve, not atomic with it; the ungated sites (see the CHANGELOG money block) are not bounded.
 login holds no INSERT, UPDATE or DELETE on `spend`, `spend_month` or `spend_reservations`, SELECT on the two
 counters only, and nothing on the reservations; every booking is a SECURITY DEFINER function it may EXECUTE. The
 purge login holds no table right either and may only EXECUTE the purge function.

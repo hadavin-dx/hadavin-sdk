@@ -10,20 +10,25 @@ errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
 
 The mark "refused before any response" (``ProviderError.refused_before_response``, read by the model gate, which
-then settles the spend reservation at 0 instead of the worst case) is set to True here and nowhere else (a kind
-may only clear it: openai_compat does, for its second request). It is True in two cases, and only when no
-attempt of the call got any other answer, timed out, was cut off or failed to parse:
+then settles the spend reservation at 0 instead of the worst case, for ``ProviderExhausted`` too) is set to True
+here and nowhere else (a kind may only clear it: openai_compat does, for its second request). Because the gate
+settles a marked call at 0, the mark is only set when that is safe: no attempt of the call got any other answer,
+timed out, was cut off or failed to parse, and:
   1. the final error is not retried, every earlier attempt was never sent (the connection was refused or the
      host name did not resolve: ``never_sent``), and the final error is itself never sent or carries an HTTP
      status the kind counts as refused (``refused_statuses``: ``REFUSED_STATUSES`` = 400, 401, 403, 404, 413,
      422 by default; the openai_compat kind narrows it to 401, 403, 404);
-  2. the retries ran out (``ProviderExhausted``) and EVERY attempt ended in HTTP 429 (throttled) or was never
-     sent, in any mix. NOT YET CONSUMED: the model gate ignores the mark on ``ProviderExhausted`` by type
-     (requests/to-core-c-1-exhausted-mark.md), so rule 2 sets the mark but settles nothing until the gate honours
-     it; it is not evidence that the case is covered. Rule 2 is also not narrowed for routers: a 429 from a router
-     (openai_compat) may follow upstream work, so a gate honouring it must treat that kind as unmarked.
+  2. the retries ran out (``ProviderExhausted``) and EVERY attempt was never sent or, only for a kind with
+     ``throttled_unbilled=True`` (set explicitly by the direct Claude API, gemini and bedrock kinds; the default of ``with_retry`` and of the base
+     kind is False, so a new kind never marks a 429 until someone decides it is safe), ended in HTTP 429.
+     A kind behind a router or gateway (openai_compat: OpenRouter, LiteLLM; the Claude kind on any platform but "api")
+     passes ``throttled_unbilled=False``: its 429 can follow upstream work, so there only never-sent attempts
+     count and a 429 on any attempt leaves the mark False (the worst case stays booked).
 Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
-retried (a 400 after a 429 stays unmarked), and a 429 that a kind chose not to retry. A parse failure of an
+retried (a 400 after a 429 stays unmarked), a 429 that a kind chose not to retry, and any 429 for a kind with
+``throttled_unbilled=False``. The True kinds assume the base URL is https-only and the operator's HTTPS_PROXY is a
+CONNECT tunnel: a plain-HTTP forward proxy answering 429 after upstream work would be wrongly marked (not reachable
+today). A parse failure of an
 answer is wrapped here into a new ``ProviderError`` like any other failure and gets the normal rule (unmarked
 unless never sent or status-refused); no adapter raises ``ProviderError`` from its own call.
 A cause chain longer than the walk limit counts as NOT never sent.
@@ -31,7 +36,7 @@ Stated limit (UNVERIFIED for every network kind): the list follows the HTTP mean
 the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
 429 was not verified against its billing rules. A provider that bills one of them is under-counted by that call.
 For a kind whose base_url can be any router or proxy (openai_compat) a 400, 413 or 422 may come from the
-router after the upstream model consumed tokens, so only 401, 403 and 404 count there. The anthropic kind
+router after the upstream model consumed tokens, so only 401, 403 and 404 count there. The Claude kind
 narrows the same way unless it is built for the direct Claude API (``direct_api``): on Vertex or Foundry a
 gateway can answer after the model started.
 """
@@ -140,10 +145,13 @@ def with_retry[T](
     detail: Callable[[BaseException], str] | None = None,
     http_status: Callable[[BaseException], int | None] | None = None,
     refused_statuses: frozenset[int] = REFUSED_STATUSES,
+    throttled_unbilled: bool = False,
 ) -> T:
     """``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
     ``status`` finds none; it only feeds the mark, never the retry decision. ``refused_statuses`` is the
-    kind's list of statuses that mean refused before any response (default ``REFUSED_STATUSES``)."""
+    kind's list of statuses that mean refused before any response (default ``REFUSED_STATUSES``).
+    ``throttled_unbilled``: True when a 429 of this kind is known to be answered before any model work (the
+    direct Claude API); False behind a router or gateway, where only never-sent attempts count as unbilled."""
     unsent = True  # every attempt so far failed before any request was sent
     unbilled = True  # every attempt so far was never sent or was answered 429 (throttled)
     for attempt in range(1, max_attempts + 1):
@@ -161,7 +169,9 @@ def with_retry[T](
                 error.refused_before_response = unsent and (this_unsent or code in refused_statuses)
                 raise error from exc
             unsent = unsent and this_unsent
-            unbilled = unbilled and (this_unsent or code == THROTTLED_STATUS)
+            unbilled = unbilled and (
+                this_unsent or (throttled_unbilled and code == THROTTLED_STATUS)
+            )
             if attempt == max_attempts:
                 exhausted = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
