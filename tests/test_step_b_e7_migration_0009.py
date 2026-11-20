@@ -73,8 +73,13 @@ class World:
             db.execute(f"INSERT INTO audit_entries {ROW}", (seq, f"ev-{seq}-{uuid.uuid4().hex}"))
 
 
-def make_world():
+def make_world(mixed=False):
     w = World()
+    if (
+        mixed
+    ):  # a schema name that needs quoting: the catalog names must never be re-parsed from text
+        w.schema = f"E7_Mixed_{w.sfx}"
+        w.scoped = make_conninfo(w.dsn, options=f'-c search_path="{w.schema}"')
     with psycopg.connect(w.dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(w.schema)))
         for r in w.roles:
@@ -242,7 +247,10 @@ def test_the_validate_step_refuses_when_the_stop_tables_are_not_in_the_schema():
 def test_migrate_refuses_a_database_that_ran_an_earlier_unreleased_0009(w):
     with w.admin() as db:
         db.execute("CREATE TABLE kill_switch_watermark (id BOOLEAN PRIMARY KEY DEFAULT TRUE)")
-    with pytest.raises(ConfigError, match="earlier unreleased 0009.*kill_switch_watermark"):
+    with pytest.raises(
+        ConfigError,
+        match="earlier unreleased 0009.*kill_switch_watermark.*--accept-changed-draft 0009_stop_state_hardening",
+    ):
         w.migrate()
     with w.admin() as db:
         db.execute("DROP TABLE kill_switch_watermark")
@@ -252,6 +260,115 @@ def test_migrate_refuses_a_database_that_ran_an_earlier_unreleased_0009(w):
         )
     with pytest.raises(ConfigError, match="hadavin_watermark_guard"):
         w.migrate()
+
+
+def test_a_mixed_case_schema_is_found_by_the_validate_step_and_the_leftover_check():
+    mixed = make_world(mixed=True)
+    try:
+        mixed.migrate()
+        make_not_valid(mixed)
+        done = migrate_mod.validate_stop_constraints(mixed.scoped)
+        assert (
+            sorted(done) == STOP_YEAR_CONSTRAINTS
+        )  # a re-parsed schema name made this [] ("validated: nothing")
+        with mixed.admin() as db:
+            db.execute(
+                "CREATE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql "
+                "AS $f$ BEGIN RETURN NEW; END $f$"
+            )
+        with pytest.raises(ConfigError, match="hadavin_watermark_guard"):
+            mixed.migrate()  # the leftover check was blind in such a schema
+    finally:
+        drop_world(mixed)
+
+
+OLD_CHECKSUM = "0" * 64  # what a database that applied an earlier 0009 text recorded
+
+
+def _pretend_an_earlier_0009_text_was_applied(w):
+    with w.admin() as db:
+        db.execute(
+            "UPDATE schema_migrations SET checksum = %s WHERE version = '0009_stop_state_hardening'",
+            (OLD_CHECKSUM,),
+        )
+
+
+def test_after_dropping_the_leftovers_migrate_with_accept_changed_draft_succeeds_and_validates(w):
+    _pretend_an_earlier_0009_text_was_applied(w)
+    with w.admin() as db:  # what the earlier 0009 made
+        db.execute("CREATE TABLE kill_switch_watermark (id BOOLEAN PRIMARY KEY DEFAULT TRUE)")
+        db.execute(
+            "CREATE FUNCTION hadavin_watermark_guard() RETURNS trigger LANGUAGE plpgsql "
+            "AS $f$ BEGIN RETURN NEW; END $f$"
+        )
+    make_not_valid(w)  # and its constraints were still NOT VALID
+    with pytest.raises(ConfigError, match="--accept-changed-draft"):
+        w.migrate()
+    with w.admin() as db:  # the documented step 1
+        db.execute("DROP TABLE kill_switch_watermark CASCADE")
+        db.execute("DROP FUNCTION hadavin_watermark_guard() CASCADE")
+    w.migrate(accept_changed_draft=("0009_stop_state_hardening",))  # step 2
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
+    row = w.run(
+        "SELECT checksum FROM schema_migrations WHERE version = '0009_stop_state_hardening'"
+    )
+    assert row[0][0] not in (None, OLD_CHECKSUM)  # the new text is now the recorded one
+
+
+def test_a_database_that_applied_an_earlier_0009_text_still_settles_while_the_checksum_warns(
+    w, caplog
+):
+    """The round 1 0009 (a DO block) and this one differ, so such a database has an old checksum: migrate warns
+    about the draft and must still run the settle step."""
+    _pretend_an_earlier_0009_text_was_applied(w)
+    make_not_valid(w)
+    with caplog.at_level("WARNING", logger="hadavin_sdk.migrate"):
+        w.migrate()
+    assert "differs from what this database applied" in caplog.text
+    assert _validated(w) == STOP_YEAR_CONSTRAINTS
+
+
+def test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(w):
+    make_not_valid(w, tables=("kill_switch_stops",))
+    before = w.run("SELECT count(*) FROM schema_migrations")[0][0]
+    with w.admin() as blocker:
+        blocker.execute("SET idle_in_transaction_session_timeout = '15s'")  # cannot hang the suite
+        blocker.execute("BEGIN")
+        blocker.execute("LOCK TABLE kill_switch_stops IN ACCESS EXCLUSIVE MODE")
+        with pytest.raises(migrate_mod.StopTablesBusy, match="locked by a long transaction"):
+            w.migrate()
+        blocker.execute("ROLLBACK")
+    assert w.run("SELECT count(*) FROM schema_migrations")[0][0] == before
+    assert "kill_switch_stops_ts_range" not in _validated(w)
+
+
+def test_the_settle_step_puts_the_transaction_timeouts_back(w):
+    make_not_valid(w)
+    with psycopg.connect(w.scoped) as db, db.transaction():
+        show = "SELECT current_setting('lock_timeout'), current_setting('statement_timeout')"
+        before = db.execute(show).fetchone()
+        assert migrate_mod.settle_stop_constraints(db) == []
+        assert db.execute(show).fetchone() == before  # the grant steps after it keep the old limits
+
+
+def test_the_validate_step_separates_a_lost_connection_from_a_refusal(w, monkeypatch):
+    make_not_valid(w, tables=("kill_switch_stops",))
+    for raised, expected in (
+        (
+            psycopg.OperationalError("server closed the connection unexpectedly"),
+            migrate_mod.StopTablesBusy,
+        ),
+        (errors.InsufficientPrivilege("must be owner of table kill_switch_stops"), ConfigError),
+        (errors.CheckViolation("check constraint is violated by some row"), ConfigError),
+    ):
+
+        def boom(db, table, name, raised=raised):
+            raise raised
+
+        with monkeypatch.context() as m:
+            m.setattr(migrate_mod, "_validate_one", boom)
+            with psycopg.connect(w.scoped) as db, db.transaction(), pytest.raises(expected):
+                migrate_mod.validate_constraints(db)
 
 
 def raw_0009_world(plant_stop=False, source=None):

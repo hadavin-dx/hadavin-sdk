@@ -7,6 +7,7 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -622,7 +623,8 @@ def not_valid_constraints(db) -> list[tuple[str, str]]:
     rows = db.execute(
         "SELECT c.relname, k.conname FROM pg_catalog.pg_constraint k "
         "JOIN pg_catalog.pg_class c ON c.oid = k.conrelid "
-        "WHERE c.relnamespace = pg_catalog.to_regnamespace(pg_catalog.current_schema()) AND NOT k.convalidated"
+        "JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = pg_catalog.current_schema() AND NOT k.convalidated"
     ).fetchall()
     return [pair for pair in NOT_VALID_BY_DESIGN if tuple(pair) in {tuple(r) for r in rows}]
 
@@ -649,8 +651,9 @@ def earlier_0009_leftovers(db) -> list[str]:
     ).fetchone()[0]:
         found.append("kill_switch_watermark")
     if db.execute(
-        "SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc WHERE proname = 'hadavin_watermark_guard' "
-        "AND pronamespace = pg_catalog.to_regnamespace(pg_catalog.current_schema()))"
+        "SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n "
+        "ON n.oid = p.pronamespace WHERE p.proname = 'hadavin_watermark_guard' "
+        "AND n.nspname = pg_catalog.current_schema())"
     ).fetchone()[0]:
         found.append("hadavin_watermark_guard()")
     return found
@@ -675,23 +678,56 @@ def _validate_one(db, table: str, name: str) -> None:
     )
 
 
+@contextlib.contextmanager
+def _stop_timeouts(db):
+    """`SET LOCAL` the lock and statement timeouts for the validation step only, and put the transaction's
+    previous values back afterwards (`migrate` runs the step inside its one transaction: the grant and function
+    steps after it must not inherit a 5 second lock limit). On an error the transaction is rolled back anyway."""
+    names = ("lock_timeout", "statement_timeout")
+    old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
+    db.execute(
+        "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
+        "pg_catalog.set_config('statement_timeout', %s, true)",
+        (VALIDATE_LOCK_TIMEOUT, VALIDATE_STATEMENT_TIMEOUT),
+    )
+    yield
+    db.execute(
+        "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
+        "pg_catalog.set_config('statement_timeout', %s, true)",
+        old,
+    )
+
+
+def _busy(exc: BaseException, what: str) -> StopTablesBusy:
+    return StopTablesBusy(
+        f"could not {what} ({type(exc).__name__}): the table is locked by a long transaction (waited "
+        f"{VALIDATE_LOCK_TIMEOUT}), the scan took longer than {VALIDATE_STATEMENT_TIMEOUT}, or the connection "
+        "failed; nothing was changed, run it again later"
+    )
+
+
 def settle_stop_constraints(db) -> list[tuple[str, str]]:
     """Run by `migrate` after the files: VALIDATE (silently) every constraint of `NOT_VALID_BY_DESIGN` that is still
     NOT VALID and whose table holds no row outside the year range, and return the ones that do (the caller warns
     about those only). This is why 0009 itself is plain SQL with no DO block: the repo's statement lexer refuses
-    DO, and a conditional VALIDATE cannot be written without it."""
-    planted = planted_ts_rows(db)
-    for pair in not_valid_constraints(db):
-        if pair not in planted:
-            _validate_one(db, *pair)
+    DO, and a conditional VALIDATE cannot be written without it. The lock and statement timeouts apply to this
+    step only; a lock wait, a timeout or a lost connection is `StopTablesBusy` (migrate rolls back as a whole)."""
+    with _stop_timeouts(db):
+        try:
+            planted = planted_ts_rows(db)
+            for pair in not_valid_constraints(db):
+                if pair not in planted:
+                    _validate_one(db, *pair)
+        except errors.OperationalError as exc:
+            raise _busy(exc, "validate the stop-year constraints") from None
     return planted
 
 
 def validate_constraints(db) -> list[str]:
     """VALIDATE every constraint `not_valid_constraints` lists; return their names. Run as the table owner, as a
-    step of its own (`hadavin-sdk migrate --validate-constraints`): a planted row makes it fail, naming the
-    constraint, and the operator must deal with that row first. The stop tables must be in `current_schema()`
-    (else ConfigError); a lock or time limit gives `StopTablesBusy`."""
+    step of its own (`hadavin-sdk migrate --validate-constraints`): a planted row (CheckViolation) or a login that
+    is not the table owner (InsufficientPrivilege) is a refusal (ConfigError); the stop tables must be in
+    `current_schema()` (else ConfigError); a lock wait, a time limit or a lost connection is `StopTablesBusy`."""
     missing = [
         table
         for table, _ in NOT_VALID_BY_DESIGN
@@ -706,29 +742,18 @@ def validate_constraints(db) -> list[str]:
             "hadavin-sdk migrate first, and check the search_path of HADAVIN_MIGRATE_DSN"
         )
     done = []
-    db.execute(sql.SQL("SET LOCAL lock_timeout = {}").format(sql.Literal(VALIDATE_LOCK_TIMEOUT)))
-    db.execute(
-        sql.SQL("SET LOCAL statement_timeout = {}").format(sql.Literal(VALIDATE_STATEMENT_TIMEOUT))
-    )
-    for table, name in not_valid_constraints(db):
-        try:
-            _validate_one(db, table, name)
-        except (errors.LockNotAvailable, errors.QueryCanceled) as exc:
-            raise StopTablesBusy(
-                f"could not validate {name} on {table} ({type(exc).__name__}): the table is locked by a long "
-                f"transaction (waited {VALIDATE_LOCK_TIMEOUT}) or the scan took longer than "
-                f"{VALIDATE_STATEMENT_TIMEOUT}; nothing was changed, run it again later"
-            ) from None
-        except (
-            errors.CheckViolation,
-            errors.InsufficientPrivilege,
-            errors.OperationalError,
-        ) as exc:
-            raise ConfigError(
-                f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
-                "2100-01-01, or this login is not the table owner); deal with that first and run it again"
-            ) from None
-        done.append(name)
+    with _stop_timeouts(db):
+        for table, name in not_valid_constraints(db):
+            try:
+                _validate_one(db, table, name)
+            except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
+                raise ConfigError(
+                    f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
+                    "2100-01-01, or this login is not the table owner); deal with that first and run it again"
+                ) from None
+            except errors.OperationalError as exc:
+                raise _busy(exc, f"validate {name} on {table}") from None
+            done.append(name)
     return done
 
 
@@ -1456,7 +1481,8 @@ def migrate(
             named
             and db.execute(
                 "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
-                "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                "WHERE p.pronamespace = (SELECT n.oid FROM pg_catalog.pg_namespace n "
+                "WHERE n.nspname = pg_catalog.current_schema()) AND p.proname = %s",
                 (RELEASE_FUNCTION.split("(")[0],),
             ).fetchone()[0]
         ):

@@ -238,16 +238,16 @@ def _main(argv: list[str] | None = None) -> int:
     if args.cmd == "migrate":
         return _migrate(
             cfg,
-            args.runtime_role,
-            args.portal_role,
-            args.purge_role,
-            args.reset_role,
-            args.release_role,
-            args.no_roles,
-            tuple(args.accept_admin_role),
-            tuple(args.accept_changed_draft),
-            args.reset_draft,
-            args.validate_constraints,
+            runtime_role=args.runtime_role,
+            portal_role=args.portal_role,
+            purge_role=args.purge_role,
+            reset_role=args.reset_role,
+            release_role=args.release_role,
+            no_roles=args.no_roles,
+            accepted_admin_roles=tuple(args.accept_admin_role),
+            accept_changed_draft=tuple(args.accept_changed_draft),
+            reset_draft=args.reset_draft,
+            validate_constraints=args.validate_constraints,
         )
     if args.cmd == "release-expired":  # its own path: it must never reach limits.reset below
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
@@ -496,7 +496,8 @@ def _say(text: str) -> None:
 
 def _migrate(
     cfg,
-    runtime_role: str | None,
+    *,  # keyword only: a role name must never bind to a flag by position (no_roles, validate_constraints)
+    runtime_role: str | None = None,
     portal_role: str | None = None,
     purge_role: str | None = None,
     reset_role: str | None = None,
@@ -522,7 +523,7 @@ def _migrate(
         no_roles
         or accepted_admin_roles
         or accept_changed_draft
-        or reset_draft
+        or reset_draft is not None
         or any((runtime_role, portal_role, purge_role, reset_role, release_role))
     ):
         print(
@@ -580,6 +581,9 @@ def _migrate(
             notes=notes,
             on_role_change=lambda note: print(f"changed: {note}", file=sys.stderr),
         )
+    except StopTablesBusy as exc:  # the whole run was rolled back: retry later, not a refusal
+        print(f"retry later: {exc} (nothing was applied)", file=sys.stderr)
+        return 75
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:
             _say(note)

@@ -4,12 +4,15 @@ HADAVIN_TEST_PG_DSN."""
 
 from __future__ import annotations
 
+import contextlib
 import os
 
+import psycopg
 import pytest
 
 pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as migrate_mod
 from tests import test_step_b_e7_migration_0009 as real
 from tests.test_step_b_e7_migration_0009 import (
@@ -160,7 +163,7 @@ def test_a_migrate_that_never_warns_is_killed(mw, monkeypatch):
     mw.migrate()
     monkeypatch.setattr(migrate_mod, "planted_ts_rows", lambda db: [])
     with pytest.raises(
-        BaseException
+        psycopg.errors.CheckViolation
     ) as err:  # never warns, so it validates the planted row: the upgrade fails
         real.test_migrate_warns_while_a_planted_row_blocks_validation_and_is_silent_without_one(mw)
     assert not isinstance(err.value, KeyboardInterrupt)
@@ -177,9 +180,14 @@ def test_a_0009_that_validates_unconditionally_is_killed():
     always = (
         SOURCE + "\nALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;\n"
     )
-    with pytest.raises(BaseException) as err:  # VALIDATE fails the upgrade on the planted row
+    with pytest.raises(
+        psycopg.errors.CheckViolation
+    ):  # VALIDATE fails the upgrade on the planted row
+        real.raw_0009_world(plant_stop=True, source=always)
+    with pytest.raises(
+        AssertionError
+    ):  # and on a clean database it validates early: the real check sees it
         real.check_real_0009_then_settle(source=always)
-    assert not isinstance(err.value, KeyboardInterrupt)
 
 
 def test_a_settle_step_that_never_validates_is_killed(mw, monkeypatch):
@@ -197,6 +205,62 @@ def test_a_settle_step_that_validates_a_planted_row_too_is_killed(mw, monkeypatc
     mw.migrate()
     real.make_not_valid(mw, plant="0100-01-01 BC", tables=("kill_switch_stops",))
     monkeypatch.setattr(migrate_mod, "settle_stop_constraints", everything)
-    with pytest.raises(BaseException) as err:  # the upgrade fails on the planted row
+    with pytest.raises(
+        psycopg.errors.CheckViolation
+    ) as err:  # the upgrade fails on the planted row
         mw.migrate()
     assert not isinstance(err.value, KeyboardInterrupt)
+
+
+# --- review round 3 ----------------------------------------------------------------------------------------------
+
+
+def test_a_settle_step_without_timeouts_is_killed(mw, monkeypatch):
+    @contextlib.contextmanager
+    def no_timeouts(db):
+        yield
+
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "_stop_timeouts", no_timeouts)
+    with pytest.raises(
+        pytest.fail.Exception
+    ):  # it waits for the blocker instead of giving up: DID NOT RAISE
+        real.test_migrate_gives_up_on_a_locked_stop_table_as_a_retry_condition_and_applies_nothing(
+            mw
+        )
+
+
+def test_a_settle_step_that_leaves_its_timeouts_behind_is_killed(mw, monkeypatch):
+    @contextlib.contextmanager
+    def leaky(db):
+        db.execute(
+            "SELECT set_config('lock_timeout', '5s', true), set_config('statement_timeout', '60s', true)"
+        )
+        yield
+
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "_stop_timeouts", leaky)
+    with pytest.raises(AssertionError):
+        real.test_the_settle_step_puts_the_transaction_timeouts_back(mw)
+
+
+def test_a_validate_step_that_calls_a_lost_connection_a_refusal_is_killed(mw, monkeypatch):
+    mw.migrate()
+    monkeypatch.setattr(migrate_mod, "_busy", lambda exc, what: ConfigError(what))
+    with pytest.raises(ConfigError):  # the real test expects StopTablesBusy for this case
+        real.test_the_validate_step_separates_a_lost_connection_from_a_refusal(mw, monkeypatch)
+
+
+def test_a_catalog_lookup_that_reparses_the_schema_name_is_killed(monkeypatch):
+    def reparsing(db):
+        rows = db.execute(
+            "SELECT c.relname, k.conname FROM pg_catalog.pg_constraint k "
+            "JOIN pg_catalog.pg_class c ON c.oid = k.conrelid "
+            "WHERE c.relnamespace = pg_catalog.to_regnamespace(pg_catalog.current_schema()) "
+            "AND NOT k.convalidated"
+        ).fetchall()
+        return [p for p in migrate_mod.NOT_VALID_BY_DESIGN if tuple(p) in {tuple(r) for r in rows}]
+
+    monkeypatch.setattr(migrate_mod, "not_valid_constraints", reparsing)
+    with pytest.raises(AssertionError):
+        real.test_a_mixed_case_schema_is_found_by_the_validate_step_and_the_leftover_check()
