@@ -1,0 +1,285 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+rc=0
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+unformatted: File would be reformatted
+   --> handover/core-a/tickets/E-test-helpers.md:81:1
+    |
+80  |
+81  +
+82  | class SimulatedCrash(BaseException):
+83  |     point: str
+84  +
+85  |     def __init__(self, point: str) -> None: ...
+86  |
+87  +
+88  | class CrashPoints:
+    -     def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None: ...
+89  +     def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
+90  +         ...
+91  |         # RuntimeError outside pytest; ValueError if mode == "exit" without flag_path, or "raise" with one
+92  +
+93  |     def __enter__(self) -> "CrashPoints": ...
+    -     def __exit__(self, exc_type, exc, tb) -> None: ...    # disarms; RuntimeError if still armed and no error in flight
+    -     def arm(self, point: str, *, nth: int = 1) -> None: ...  # ValueError: bad name, nth < 1, or already armed
+    -     def armed(self) -> str | None: ...                    # "store.create_run:after" or None
+    -     def hit(self, point: str) -> None: ...                # one-shot: raise SimulatedCrash, or print marker and os._exit
+    -     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T: ...
+94  +     def __exit__(
+95  +         self, exc_type, exc, tb
+96  +     ) -> None: ...  # disarms; RuntimeError if still armed and no error in flight
+97  +     def arm(
+98  +         self, point: str, *, nth: int = 1
+99  +     ) -> None: ...  # ValueError: bad name, nth < 1, or already armed
+100 +     def armed(self) -> str | None: ...  # "store.create_run:after" or None
+101 +     def hit(
+102 +         self, point: str
+103 +     ) -> None: ...  # one-shot: raise SimulatedCrash, or print marker and os._exit
+104 +     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
+105 +         ...
+106 |         # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m
+107 +
+108 |     @property
+    -     def fired(self) -> tuple[str, ...]: ...               # points that fired in this process, in order
+109 +     def fired(self) -> tuple[str, ...]: ...  # points that fired in this process, in order
+110 | ```
+--------------------------------------------------------------------------------
+115 | with CrashPoints() as cp:
+    -     rt, _ = build_runtime(cfg_dir, cp.wrap(ScriptLLM([{"noaction": True}]), "llm", ["chat"])); cp.arm("llm.chat:before")
+    -     with pytest.raises(SimulatedCrash): handle(rt, run_id=RID)      # the row stays WORKING; then run the tick
+116 +     rt, _ = build_runtime(cfg_dir, cp.wrap(ScriptLLM([{"noaction": True}]), "llm", ["chat"]))
+117 +     cp.arm("llm.chat:before")
+118 +     with pytest.raises(SimulatedCrash):
+119 +         handle(rt, run_id=RID)  # the row stays WORKING; then run the tick
+120 | ```
+121 | Usage 2, wrap the store after the app is built (the chain audit factory type-checks the store, S/audit/chain.py:520-525, so wrap afterwards; `Runtime.store` is a plain attribute, S/runtime/agent_loop.py:208):
+122 | ```python
+123 | rt.store = cp.wrap(rt.store, "store", ["create_run", "transition"])
+    - cp.arm("store.transition:after", nth=1)                # RECEIVED -> WORKING is written, nothing after it
+    - with pytest.raises(SimulatedCrash): handle(rt, run_id=RID)
+124 + cp.arm("store.transition:after", nth=1)  # RECEIVED -> WORKING is written, nothing after it
+125 + with pytest.raises(SimulatedCrash):
+126 +     handle(rt, run_id=RID)
+127 | ```
+128 | Usage 3, kill a child on PostgreSQL (the child script is the consumer's; it builds its app, wraps with `CrashPoints(mode="exit", flag_path=Path(sys.argv[1]))` and serves):
+129 | ```python
+130 | CrashPoints(mode="exit", flag_path=flag).arm("store.create_run:after")
+    - done = subprocess.run([sys.executable, str(child), str(flag)], capture_output=True, text=True, timeout=60)
+131 + done = subprocess.run(
+132 +     [sys.executable, str(child), str(flag)], capture_output=True, text=True, timeout=60
+133 + )
+134 | assert done.returncode == CRASH_EXIT_CODE and CRASH_MARKER in done.stdout and not flag.exists()
+    |
+
+unformatted: File would be reformatted
+   --> handover/core-a/tools/board.py:23:28
+    |
+22  |     try:
+    -         p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, check=False)  # noqa: S603
+23  +         p = subprocess.run(
+24  +             cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, check=False
+25  +         )  # noqa: S603
+26  |         return p.returncode, (p.stdout + p.stderr).strip()
+--------------------------------------------------------------------------------
+33  |     for r in rows:
+    -         out.append("| " + " | ".join(str(r.get(h, "")).replace("|", "/").replace("\n", " ") for h in head) + " |")
+34  +         out.append(
+35  +             "| "
+36  +             + " | ".join(str(r.get(h, "")).replace("|", "/").replace("\n", " ") for h in head)
+37  +             + " |"
+38  +         )
+39  |     if not rows:
+--------------------------------------------------------------------------------
+50  |             continue
+    -         if any(k in args for k in ("pytest", "uv run", "uv sync", "ruff", "postgres", "pg_ctl", "bandit")):
+    -             rows.append({"pid": pid, "command in short": args[:70], "started by": "core-a session or its agent",
+    -                          "since": f"{secs}s ago", "state": "running", "reason": "matched by name in ps"})
+51  +         if any(
+52  +             k in args
+53  +             for k in ("pytest", "uv run", "uv sync", "ruff", "postgres", "pg_ctl", "bandit")
+54  +         ):
+55  +             rows.append(
+56  +                 {
+57  +                     "pid": pid,
+58  +                     "command in short": args[:70],
+59  +                     "started by": "core-a session or its agent",
+60  +                     "since": f"{secs}s ago",
+61  +                     "state": "running",
+62  +                     "reason": "matched by name in ps",
+63  +                 }
+64  +             )
+65  |     return rows
+--------------------------------------------------------------------------------
+72  |     if boot != st.get("boot_id_first", boot):
+    -         st["interrupted"] = f"BOOT_ID changed {st['boot_id_first']} to {boot}: container restart, check LOST table"
+73  +         st["interrupted"] = (
+74  +             f"BOOT_ID changed {st['boot_id_first']} to {boot}: container restart, check LOST table"
+75  +         )
+76  |     load = Path("/proc/loadavg").read_text().split()[0]
+77  |     cores = os.cpu_count()
+    -     mem = {ln.split(":")[0]: int(ln.split()[1]) for ln in Path("/proc/meminfo").read_text().splitlines()[:5]}
+78  +     mem = {
+79  +         ln.split(":")[0]: int(ln.split()[1])
+80  +         for ln in Path("/proc/meminfo").read_text().splitlines()[:5]
+81  +     }
+82  |     used_gb = (mem["MemTotal"] - mem["MemAvailable"]) / 1048576
+83  |     tot_gb = mem["MemTotal"] / 1048576
+84  |     _, df = sh(["df", "-h", "--output=size,used,avail,pcent", "/"])
+85  |     df = " ".join(df.splitlines()[-1].split())
+    -     _, du = sh(["du", "-sh", str(REPO), str(Path(tempfile.gettempdir()) / "claude-0"), str(Path.home() / ".cache")])
+86  +     _, du = sh(
+87  +         [
+88  +             "du",
+89  +             "-sh",
+90  +             str(REPO),
+91  +             str(Path(tempfile.gettempdir()) / "claude-0"),
+92  +             str(Path.home() / ".cache"),
+93  +         ]
+94  +     )
+95  |     du = "; ".join(" ".join(x.split()) for x in du.splitlines() if "cannot" not in x)
+--------------------------------------------------------------------------------
+101 |     last_push = LAST_PUSH.read_text().strip() if LAST_PUSH.exists() else "none yet"
+    -     cap = (f"load {load} of {cores} cores (1-minute average), mem {used_gb:.1f}/{tot_gb:.1f} GB, "
+    -            f"{len(running)} language-model agents running (light), 0 heavy test slots unless TESTS shows one")
+102 +     cap = (
+103 +         f"load {load} of {cores} cores (1-minute average), mem {used_gb:.1f}/{tot_gb:.1f} GB, "
+104 +         f"{len(running)} language-model agents running (light), 0 heavy test slots unless TESTS shows one"
+105 +     )
+106 |     head = [
+    -         f"UPDATED_UTC: {now}", "SESSION: core-a", f"ORDER: {st['order']}", f"STATE: {st['state']}",
+    -         f"BOOT_ID: {boot}", f"ITEMS_TOTAL: {len(items)}", f"ITEMS_OPEN: {len(open_items)}", f"PERCENT: {pct}",
+    -         f"AGENTS_RUNNING: {len(running)}", f"CAPACITY: {cap}", f"DISK: / size used free {df}; {du}",
+    -         f"INTERRUPTED: {st.get('interrupted', 'none')}", f"FAILED: {st.get('failed', 'none')}",
+    -         f"SESSION_RESTARTS: {st.get('session_restarts', 0)}", f"CONTAINER_RESTARTS: {st.get('container_restarts', 0)}",
+    -         f"NEXT: {st['next']}", f"PUSHED_UTC: {last_push} (the push before this board)",
+107 +         f"UPDATED_UTC: {now}",
+108 +         "SESSION: core-a",
+109 +         f"ORDER: {st['order']}",
+110 +         f"STATE: {st['state']}",
+111 +         f"BOOT_ID: {boot}",
+112 +         f"ITEMS_TOTAL: {len(items)}",
+113 +         f"ITEMS_OPEN: {len(open_items)}",
+114 +         f"PERCENT: {pct}",
+115 +         f"AGENTS_RUNNING: {len(running)}",
+116 +         f"CAPACITY: {cap}",
+117 +         f"DISK: / size used free {df}; {du}",
+118 +         f"INTERRUPTED: {st.get('interrupted', 'none')}",
+119 +         f"FAILED: {st.get('failed', 'none')}",
+120 +         f"SESSION_RESTARTS: {st.get('session_restarts', 0)}",
+121 +         f"CONTAINER_RESTARTS: {st.get('container_restarts', 0)}",
+122 +         f"NEXT: {st['next']}",
+123 +         f"PUSHED_UTC: {last_push} (the push before this board)",
+124 |         f"NOTE: {st.get('note', 'none')}",
+125 |     ]
+    -     body = "\n".join(head) + "\n\n" + "\n\n".join([
+    -         "## QUEUE ITEMS\n" + table(["item", "what", "state", "percent", "evidence file", "tries", "reason"], items),
+    -         "## AGENTS\n" + table(["id", "role", "model", "what exactly it is doing", "started UTC", "expected end",
+    -                                "percent", "state", "review round n of cap", "retries so far", "reason"], agents),
+    -         "## SHELLS AND PROCESSES\n" + table(["pid", "command in short", "started by", "since", "state", "reason"],
+    -                                             procs()),
+    -         "## TESTS\n" + table(["suite or file", "branch and SHA", "run number", "passed / failed / errors",
+    -                               "first failing line", "state", "reason"], st.get("tests", [])),
+    -         "## RESTARTS\n" + table(["time UTC", "kind", "what was running", "what was lost", "restarted",
+    -                                  "still missing"], st.get("restarts", [])),
+    -         "## LOOPS (items tried more than once)\n" + table(["item", "tries", "review rounds", "last error",
+    -                                                            "reason it keeps failing"], st.get("loops", [])),
+    -         "## LOST OR INTERRUPTED\n" + table(["agent", "what it was doing", "cause", "restarted? new id",
+    -                                             "ACK by lead"], st.get("lost", [])),
+    -         "## LEAD ACTIONS NEEDED\n" + ("\n".join(f"- {x}" for x in st.get("lead_actions", [])) or "none"),
+    -     ]) + "\n"
+126 +     body = (
+127 +         "\n".join(head)
+128 +         + "\n\n"
+129 +         + "\n\n".join(
+130 +             [
+131 +                 "## QUEUE ITEMS\n"
+132 +                 + table(
+133 +                     ["item", "what", "state", "percent", "evidence file", "tries", "reason"], items
+134 +                 ),
+135 +                 "## AGENTS\n"
+136 +                 + table(
+137 +                     [
+138 +                         "id",
+139 +                         "role",
+140 +                         "model",
+141 +                         "what exactly it is doing",
+142 +                         "started UTC",
+143 +                         "expected end",
+144 +                         "percent",
+145 +                         "state",
+146 +                         "review round n of cap",
+147 +                         "retries so far",
+148 +                         "reason",
+149 +                     ],
+150 +                     agents,
+151 +                 ),
+152 +                 "## SHELLS AND PROCESSES\n"
+153 +                 + table(
+154 +                     ["pid", "command in short", "started by", "since", "state", "reason"], procs()
+155 +                 ),
+156 +                 "## TESTS\n"
+157 +                 + table(
+158 +                     [
+159 +                         "suite or file",
+160 +                         "branch and SHA",
+161 +                         "run number",
+162 +                         "passed / failed / errors",
+163 +                         "first failing line",
+164 +                         "state",
+165 +                         "reason",
+166 +                     ],
+167 +                     st.get("tests", []),
+168 +                 ),
+169 +                 "## RESTARTS\n"
+170 +                 + table(
+171 +                     [
+172 +                         "time UTC",
+173 +                         "kind",
+174 +                         "what was running",
+175 +                         "what was lost",
+176 +                         "restarted",
+177 +                         "still missing",
+178 +                     ],
+179 +                     st.get("restarts", []),
+180 +                 ),
+181 +                 "## LOOPS (items tried more than once)\n"
+182 +                 + table(
+183 +                     ["item", "tries", "review rounds", "last error", "reason it keeps failing"],
+184 +                     st.get("loops", []),
+185 +                 ),
+186 +                 "## LOST OR INTERRUPTED\n"
+187 +                 + table(
+188 +                     ["agent", "what it was doing", "cause", "restarted? new id", "ACK by lead"],
+189 +                     st.get("lost", []),
+190 +                 ),
+191 +                 "## LEAD ACTIONS NEEDED\n"
+192 +                 + ("\n".join(f"- {x}" for x in st.get("lead_actions", [])) or "none"),
+193 +             ]
+194 +         )
+195 +         + "\n"
+196 +     )
+197 |     (HERE / "STATUS-BOARD.md").write_text(body)
+--------------------------------------------------------------------------------
+223 |             _, sha = sh(["git", "rev-parse", "--short", "HEAD"])
+    -             _, new = sh(["git", "log", "-3", "--format=%h %an %s", "--", "handover/core-a/ORDERS.md",
+    -                          "handover/core-a/QUEUE.md"])
+    -             print(f"BOARD PUSHED {now} head {sha} try {attempt}\nlatest lead commits on ORDERS/QUEUE:\n{new}")
+224 +             _, new = sh(
+225 +                 [
+226 +                     "git",
+227 +                     "log",
+228 +                     "-3",
+229 +                     "--format=%h %an %s",
+230 +                     "--",
+231 +                     "handover/core-a/ORDERS.md",
+232 +                     "handover/core-a/QUEUE.md",
+233 +                 ]
+234 +             )
+235 +             print(
+236 +                 f"BOARD PUSHED {now} head {sha} try {attempt}\nlatest lead commits on ORDERS/QUEUE:\n{new}"
+237 +             )
+238 |             return 0
+    |
+
+2 files would be reformatted, 432 files already formatted
+rc=1
