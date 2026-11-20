@@ -1,5 +1,31 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## ORDER 013 report. 2026-11-20 06:09 UTC / 11:39 IST. Head at writing: 05b1b7a. STATE: WAITING-LEAD, 0 agents running
+
+**What failed, what is weak, what was not run (first):**
+1. The whole suite was NOT run again after ORDER 013 (owner rule: batches only). Batch 3 ran my own files and 6 rule files on PostgreSQL 16.15: 899 passed, 105 skipped, 0 failed (raw/BATCH3-own-files-pg16.log, test ids). The last whole-suite run is batch 2 (1 inherited failure from handover/BRIEF-PREAMBLE.md).
+2. Three of my new test files only SKIP on my branch, because the code they test lives on other branches: tests/test_trigger_config.py (core-b), tests/contracts/test_model_gate_contract.py (core-c), the two spend contract files (core-b, no code yet). The first two were run against scratch copies of those branches by the agents that wrote them; I did not re-run them.
+3. ORDER 013 item 3 (switch the worker to core-b's final names) is NOT done: against core-b's code as it is (commit 2b086c2) my worker refuses to start, because core-b hands out the whole secret store and no reader limited to the sender names. I did not build on that (finding F3). Waiting for core-b's answer.
+4. One agent repeated its test file 5 times against the no-loop rule. No harm; said here.
+5. Still not run anywhere here: PostgreSQL 17, python 3.12, a real n8n, real model clients.
+6. The gate contract test landed after batch 3, so it is not in that batch; in my checkout it skips.
+
+**Done (evidence under handover/core-a/):**
+| item | result | evidence |
+|---|---|---|
+| 1 mutant script extended | 30 of 30 good; 13 new mutants for the quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM | tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log |
+| 2 tests for core-b's trigger config | 93 passed, 16 strict expected-failures (7 findings), 20 skipped on core-b's code | tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md |
+| NUL character in a document | pinned: accepted and safe today (the redactor removes it; no document text is stored); U+0001 and U+001F are not removed | tests/triggers/test_t5_nul_document.py (29), raw/D-nul-document-pg16.log, ticket D lines 241 and 293 |
+| Ticket D line on kill tests | added (why the store is wrapped, what a hook would add) | tickets/D-signed-endpoint.md line 241 |
+| Batch of my own files | 899 passed, 105 skipped, lint and format clean (342 files) | raw/BATCH3-own-files-pg16.log |
+| Contract test for core-c's gate | 201 passed, 0 findings, 1 skipped on core-c's code (619a3e5); 7 planted mutants caught | tests/contracts/test_model_gate_contract.py, raw/gate-contract-tests-on-core-c.log |
+
+**Findings on other sessions' code (expected-failures listed, as ORDER 013 asks):** tests/test_trigger_config.py marks 16 cases in 7 findings: F2 shared platform secret name not refused (1); F3 no name-limited secrets reader (1); F4a a value typed as a secret name is echoed at start (1); F4b unclear refusal for a clash with an action secret (1); F5 blank or whitespace names and ids load (8); F8 booleans load as numbers (3); F7 body cap equals the document cap (1). Details and the 6 differences from request 001: FINDINGS-core-b-trigger-config.md. core-c's gate: none; two notes (no shipped worst-case formula for tools, documents and retries; stale ticket text on settle).
+
+**Rules used:** preamble 4 (no live model call: fake clients only), 6, 7 (mutants for each new guard), 11 (finding F3 is a least-privilege finding), 13 (tests written by a different agent than the builder; no plan or design made in this order, so no new EGM round: "EGM skipped: test writing against existing tickets"), 19, R456, MODEL-ROUTING (model fable on every Agent call). CODE-LAST n/a: tests and one mutant script, no new component.
+**Token use:** about 0.75 million agent tokens for this order (5 agent runs); about 4.7 million over 27 agent runs in total. **Clock:** ORDER 013 at 05:58 UTC, done 06:09 UTC.
+**Files changed:** tests/endpoint_mutants.py, tests/test_trigger_config.py, tests/triggers/test_t5_nul_document.py, tests/contracts/test_model_gate_contract.py, tickets/D-signed-endpoint.md (2 lines), FINDINGS-core-b-trigger-config.md, raw/ logs, DECISIONS.md, STATUS-BOARD.md.
+
 ## ORDERS 002 to 012, END OF ROUND report. 2026-11-20 05:57 UTC / 11:27 IST. Head at writing: a7c3063
 
 This block REPLACES points 1, 2, 3 and 8 of the interim block below; the rest of that block still holds. STATE: WAITING-LEAD, 0 agents running.

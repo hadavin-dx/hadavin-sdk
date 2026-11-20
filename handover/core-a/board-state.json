@@ -1,9 +1,9 @@
 {
  "order": "013 (002 to 012 standing)",
- "state": "WORKING",
+ "state": "WAITING-LEAD",
  "boot_id_first": "3f12152f",
- "next": "gate contract test for core-c lands: record findings; then report block; then waiting for the lead or core-b",
- "note": "the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes",
+ "next": "ORDER 013 is done; open: item 3 (switch worker names) waits for core-b's answer to request 001; waiting for the next order",
+ "note": "0 agents run: nothing in the queue is READY (O13-3 waits for core-b); PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) plus scratch copies of core-b's and core-c's trees under the session scratch folder (the safety check refuses folder deletes)",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -226,11 +226,11 @@
   {
    "item": "O13-gate",
    "what": "contract test file for core-c's gate module (non-builder)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/gate-contract-tests-on-core-c.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/contracts/test_model_gate_contract.py, raw/gate-contract-tests-on-core-c.log",
    "tries": 1,
-   "reason": "started early, see DECISIONS: it is a new file that depends on nothing of mine"
+   "reason": "on core-c's code (commit 619a3e5): 201 passed, 0 expected-failures, 1 skipped; 7 planted mutants in a scratch copy all caught. No finding against the gate. Two notes for the lead: no shipped worst-case formula covers tools, documents and retries yet (interface point 10 is tested only with a formula written in the test); core-c's ticket text on when to settle is stale, the code follows the interface. On my branch the file skips (module not here)"
   },
   {
    "item": "BATCH-3",
@@ -509,12 +509,12 @@
    "model": "fable",
    "what exactly it is doing": "reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder",
    "started UTC": "06:01",
-   "expected end": "about 30 min after start",
-   "percent": 5,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "ORDER 013 last paragraph; 4 agents run"
+   "reason": "finished"
   }
  ],
  "tests": [
@@ -724,6 +724,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "ORDER 013: one batch when items 1 and 2 are pushed"
+  },
+  {
+   "suite or file": "tests/contracts/test_model_gate_contract.py on core-c's tree (scratch copy)",
+   "branch and SHA": "origin/cloud/core-c 619a3e5",
+   "run number": "1 (agent)",
+   "passed / failed / errors": "201 passed, 0 xfailed, 1 skipped",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "non-builder contract test; not in my batch 3 (it landed after), in the checkout it skips"
   }
  ],
  "restarts": [],
@@ -757,7 +766,8 @@
   "requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
   "I cannot send you session messages (the send is refused for this cloud session); board, REPORT.md and DECISIONS.md are my only way to answer",
-  "NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model"
+  "NUL byte in a document (review minor 12): pinned as SAFE today (removed by the redactor, never stored as text). Your decision if wanted: the control characters U+0001 and U+001F are not removed and reach the model",
+  "Gate contract test: no finding against core-c's gate. For the plan: no shipped worst-case cost formula covers tool schemas, documents and retries yet (interface point 10); core-c's ticket text on settle after an error is stale"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
 }
