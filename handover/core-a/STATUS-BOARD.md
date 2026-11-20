@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:17:20Z
+UPDATED_UTC: 2026-11-20T16:17:52Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 6.49 of 4 cores (1-minute average), mem 1.9/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 56G 20%; 651M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+CAPACITY: load 4.41 of 4 cores (1-minute average), mem 1.4/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 56G 20%; 653M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 16:30 T1-merge (wip/core-a-t1-merge) and N3 docs table running; integ-pg finishing; mutant script run 19 running; N1 repeat the dry-run + update INTEGRATION-DRYRUN-2.md the minute core-b pushes the fixes for the 3 Majors; N2 fresh review of core-b's fix when it lands; branch core/integration-dryrun is on origin (6c89f0495)
-PUSHED_UTC: 2026-11-20T16:17:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:17:24Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,26 +107,21 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | integ-pg | evidence runner (never judges) | sonnet | strict-PG run on the MERGED scratch tree (PG16 at :55433): tests/triggers (my 10 by-design failures should pass), t5/contracts/grants, the three T1 files -> evidence/integ-pg-run.md | 15:58 | 25 min | 5 | running | - | 0 | the dry-run agent looked at the wrong socket |
-| T1-merge | builder in /home/user/wt/t1 (wip/core-a-t1-merge on core-b fbebb390f) | sonnet | DECISION T1: merge core-a's and core-c's EXTRA T1 cases into core-b's tests/contracts/test_t1_reserve_cap.py, PG16 before/after -> handover/core-a/T1-MERGE.md | 16:30 | 30 min | 5 | running | - | 0 | lead 16:22 |
 | docfix24 | builder (cloud/core-a) | sonnet | my own drifts from DOCS-CONSISTENCY-1: wire triggers.conflict_events_per_minute (dead setting) + tests, worker docstring truth, post-merge README patch file | 16:38 | 20 min | 5 | running | - | 0 | N3 findings owned by core-a |
+| rev-t1 | fresh independent reviewer (codebase-details), read-only | sonnet | review that the merged T1 file is not weaker than the originals (ported cases, duplicates, concurrency barriers, direct-statement refusals) | 16:48 | 12 min | 5 | running | 1 | 0 | fresh review of each diff |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 2713 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 269s ago | running | matched by name in ps |
-| 2718 | timeout 590 uv run --all-extras --group test pytest -q -n 3 -rfE --no- | core-a session or its agent | 269s ago | running | matched by name in ps |
-| 2719 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 269s ago | running | matched by name in ps |
-| 2726 | /home/user/wt/integ/.venv/bin/python /home/user/wt/integ/.venv/bin/pyt | core-a session or its agent | 269s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36172s ago | running | matched by name in ps |
-| 13194 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 13224 | .venv/bin/python -m pytest tests/triggers tests/test_mutants_anchors.p | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 14841 | postgres: rt_dce4dd76bfc0 postgres 127.0.0.1(55338) idle | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 14842 | postgres: pu_e9295bb68190 postgres 127.0.0.1(55342) idle | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36204s ago | running | matched by name in ps |
+| 13194 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 44s ago | running | matched by name in ps |
+| 13224 | .venv/bin/python -m pytest tests/triggers tests/test_mutants_anchors.p | core-a session or its agent | 44s ago | running | matched by name in ps |
+| 17550 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -188,6 +183,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 16:48 DECISION T1 DONE: branch wip/core-a-t1-merge pushed (on core-b fbebb390f; only tests/contracts/test_t1_reserve_cap.py changed): core-b's file is the base, 13 functions / 18 cases of core-a's and core-c's T1 ported (marked 'from core-a T1'/'from core-c T1'), 7 duplicates skipped, 7 -> 25 passed on PG16 (25 skipped without a DSN), ruff clean, mutation sanity on 3 cases (sweep no-op, settle always applied); two stale core-a role cases replaced by the stronger fact (no login has any right on spend_reservations after 0011; purge only via purge_spend_reservations). Text for core-b/core-c appended to handover/core-b/requests/xr-from-core-a-reviews.md and in handover/core-a/T1-MERGE.md: copy the file, delete the _core_a/_core_c copies in the integration. Fresh review rev-t1 running (weakening check).
 - 16:46 MUTANT RUN 19 DONE: `120 of 120 run are as expected; problems: []`, EXIT 0 on cloud/core-a head 5a8c83fd3 (evidence/mutants-run19.md, raw/mutants-run19.log). Run on my own box (no edit needed: your G33d anchor fix is in). Load overlapped (peak 8.6): the verdicts are assertion-based, not timing-based; re-run when load < 4 only if you want a timing-clean figure.
 - 16:42 LOAD NOTE (your 16:16): heavy at once = 2 (full mutant script run 19 + integ-pg -n 3 strict-PG run); the other 2 agents (T1-merge, docfix24) run small pytest sets (-n 2 / -n 0). Any timing-sensitive result recorded while load > 4 is marked INVALID-LOAD in its evidence file (integ-pg and the mutant log record uptime start/end; I will list those that start above 4). I start NO new heavy run until load < 4.
 - 16:38 N3 DONE (handover/core-a/DOCS-CONSISTENCY-1.md; 41 claims on the merged tree, 31 TRUE): FALSE: (core-b text) SECURITY.md:23-25 and README.md:58 say migrate does NOT refuse a runtime role that owns the audit tables, but migrate.py:448-449 (called at :1339) refuses it: the tamper-evidence text understates the code; SECURITY.md:28 points to handover/core-b/tickets/A-audit-rights.md which does not ship; CHANGELOG.md:9 calls 0007 unreleased (released since: migrations_released.json has 7 rows; unreleased = 0008-0011). (core-a, mine) the setting `triggers.conflict_events_per_minute` (CHANGELOG.md:13, config.py:420-425) is DEAD: my worker passes the constant 10 and never reads it: FIXING (agent docfix24); README-trigger l.51-54/803-806/675-677 and the 'One run at a time' heading are stale AFTER the merge (config block present; max_running defaults to 4; no reserve warning since core-b's limits have reserve): post-merge patch file prepared by docfix24 (handover/core-a/pr/README-trigger-postmerge.md); wk module text on spend corrected. Note: no separate 'caps role' exists in the merged tree (it lives only on your wip/lead-b-migrate): the runbook (reset login runs set-cap) is TRUE there. AGENTS 3 (integ-pg, T1-merge, docfix24) + mutant script.
