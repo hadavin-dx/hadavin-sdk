@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:57:18Z
+UPDATED_UTC: 2026-11-20T11:58:07Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 81
 ITEMS_OPEN: 23
 PERCENT: 81
 AGENTS_RUNNING: 1
-CAPACITY: load 1.41 of 4 cores (1-minute average), mem 1.4/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 2.50 of 4 cores (1-minute average), mem 1.4/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 17%; 601M /home/user/hadavin-sdk; 998M /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T11:57:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T11:57:22Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -110,20 +110,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 6258 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 60s ago | running | matched by name in ps |
-| 6276 | timeout 590 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f | core-a session or its agent | 59s ago | running | matched by name in ps |
-| 6277 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 59s ago | running | matched by name in ps |
-| 8154 | postgres: rt_f41b66e5c889 postgres 127.0.0.1(44682) idle | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 8155 | postgres: pu_7b8753783062 postgres 127.0.0.1(44692) idle | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 8362 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 8370 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 8372 | postgres: postgres postgres 127.0.0.1(45856) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 20570s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 20570s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 20570s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 20570s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 20570s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 20570s ago | running | matched by name in ps |
+| 6258 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 109s ago | running | matched by name in ps |
+| 6276 | timeout 590 /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f | core-a session or its agent | 109s ago | running | matched by name in ps |
+| 6277 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 109s ago | running | matched by name in ps |
+| 10144 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 10150 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 10153 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 20619s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 20619s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 20619s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 20619s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 20619s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 20619s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
