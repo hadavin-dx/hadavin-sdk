@@ -1,0 +1,11 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................s............... [ 50%]
+.....................s.................................................. [ 66%]
+........................................................................ [ 83%]
+.......................................................................  [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/triggers/test_endpoint.py:847: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_endpoint.py:864: an empty body is refused at Content-Length (own test)
+429 passed, 2 skipped in 80.08s (0:01:20)
