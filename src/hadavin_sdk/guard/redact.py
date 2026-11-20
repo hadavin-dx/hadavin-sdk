@@ -242,10 +242,13 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # `@` OR its URL-encoding `%40` — a URL-encoded email (normal in HTTP access logs, the exact
     # evidence source) reads as the email to both the model and an operator, so it must be masked too.
     # Bounded (RFC 5321: local part 64, domain 255): an unbounded run is quadratic on `a.a.a.` text.
+    # The address ends where its top-level domain's letters end, whatever follows (ORDER 016c): a digit or `_` glued
+    # behind it (`anna.m@example.org9`, `...org_x`) used to stop the match altogether (the pattern ended in a word
+    # boundary), so the whole address was shown, to the model and on the card. The glued character stays in the text.
     (
         "EMAIL",
         re.compile(
-            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}(?![A-Za-z])"
         ),
     ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
@@ -709,7 +712,7 @@ PATTERNS.append(
     (
         "EMAIL",
         re.compile(
-            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}(?![A-Za-z])"
         ),
     )
 )
