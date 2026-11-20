@@ -1,4 +1,4 @@
-"""Ticket G8 (glued-rest gap): the 92 probe rows, the must-keep rows, the full-stop rows, the at-rest rows and the
+"""Ticket G8 (glued-rest gap): the 101 probe rows, the must-keep rows, the full-stop rows, the at-rest rows and the
 untrusted rows, as data. Not collected by pytest.
 
 Every value is fake or a documentation value and is built from parts here (no literal of a full value elsewhere, as
@@ -33,6 +33,7 @@ V = {
     "PHONEUK": J(["+44 20 ", "5550 ", "1234"]),
     "IBAN_DE": J(["DE89", "3704", "0044", "0532", "0130", "00"]),  # the published example IBANs
     "IBAN_GB": J(["GB82", "WEST", "1234", "5698", "7654", "32"]),
+    "PAN": J(["4242", "4242", "4242", "4242"]),  # v6: a published test card number, contiguous
     "UUID": J(["123e4567-", "e89b-12d3-", "a456-426614174000"]),  # the RFC example
     "UUID2": J(["0f8fad5b-", "d9cb-469f-", "a165-70867728950e"]),
     "HOST": J(["db-7", ".corp", ".internal"]),  # made up
@@ -145,6 +146,18 @@ ROWS = [
     (90, 'iban', 'two _ segments after', 'pay {IBAN_DE}_a_b now', 'IBAN_DE', 'limit', 'pay {IBAN_DE}_a_b now', 'pay {IBAN_DE}_a_b now', None),
     (91, 'iban', 'path: / before, _x after', 'pay dir/{IBAN_DE}_x now', 'IBAN_DE', 'limit', 'pay dir/{IBAN_DE}_x now', 'pay dir/{IBAN_DE}_x now', None),
     (92, 'iban', 'dashed key: - before, _x after', 'pay acct-{IBAN_DE}_x now', 'IBAN_DE', 'limit', 'pay acct-{IBAN_DE}_x now', 'pay acct-{IBAN_DE}_x now', None),
+    # v6 (G8-review-5-design N2): more `_` shapes outside the short-word context (limit L4)
+    (93, 'iban', 'word of 11 letters + _ before', 'pay beneficiary_{IBAN_DE} now', 'IBAN_DE', 'limit', 'pay beneficiary_{IBAN_DE} now', 'pay beneficiary_{IBAN_DE} now', None),
+    (94, 'iban', 'word of 9 letters + _ before', 'pay recipient_{IBAN_DE} now', 'IBAN_DE', 'limit', 'pay recipient_{IBAN_DE} now', 'pay recipient_{IBAN_DE} now', None),
+    (95, 'iban', 'dashed key + iban_ before', 'pay customer-iban_{IBAN_DE} now', 'IBAN_DE', 'limit', 'pay customer-iban_{IBAN_DE} now', 'pay customer-iban_{IBAN_DE} now', None),
+    (96, 'iban', 'double _ before', 'pay iban__{IBAN_DE} now', 'IBAN_DE', 'limit', 'pay iban__{IBAN_DE} now', 'pay iban__{IBAN_DE} now', None),
+    # v6 (G8-review-5-design M2): a contiguous card number glued to a letter (limit L14: the PHONE entries refuse a letter)
+    (97, 'card', 'contiguous, letter before', 'pay x{PAN} now', 'PAN', 'limit', 'pay x{PAN} now', 'pay x{PAN} now', None),
+    (98, 'card', 'contiguous, letter after', 'pay {PAN}x now', 'PAN', 'limit', 'pay {PAN}x now', 'pay {PAN}x now', None),
+    (99, 'card', 'contiguous, word before', 'pay card{PAN} now', 'PAN', 'limit', 'pay card{PAN} now', 'pay card{PAN} now', None),
+    # v6 (G8-review-5-design N4): a phone word inside a longer word (limit L3: entry 8 refuses a letter before the word)
+    (100, 'phone', 'contiguous, telephone before', 'call telephone{PHONE10} now', 'PHONE10', 'limit', 'call telephone{PHONE10} now', 'call telephone{PHONE10} now', None),
+    (101, 'phone', 'contiguous, cellphone before', 'call cellphone{PHONE10} now', 'PHONE10', 'limit', 'call cellphone{PHONE10} now', 'call cellphone{PHONE10} now', None),
 ]
 # fmt: on
 
@@ -191,8 +204,8 @@ def _digits(s: str) -> str:
 
 def leak(kind: str, value: str, out: str) -> bool:
     """The G8 leak rule: is `value` (of probe kind `kind`) still readable in `out` outside the placeholders?
-    ipv4: 7 characters of the value in a row; iban, uuid: 8; phone: 4 digits in a row once spaces and hyphens are taken out
-    of both (a leading `+` of the value ignored); host: any label of the name other than HOST_SUFFIX_LABELS, or 2 or more
+    ipv4: 7 characters of the value in a row; iban, uuid: 8; phone and card (v6): 4 digits in a row once spaces and
+    hyphens are taken out of both (a leading `+` of the value ignored); host: any label of the name other than HOST_SUFFIX_LABELS, or 2 or more
     leading characters of such a label directly before a placeholder (`svc_db-<HOSTNAME_1>`)."""
     rest = PLACEHOLDER.sub("|", out)
     if kind == "host":
@@ -203,7 +216,7 @@ def leak(kind: str, value: str, out: str) -> bool:
         return any((x[:k] + "|") in low for x in labels for k in range(2, len(x)))
     if value in rest:
         return True
-    if kind == "phone":
+    if kind in ("phone", "card"):  # v6: card rows 97-99
         return _lcs(_digits(value).lstrip("+"), _digits(rest)) >= 4
     return _lcs(value, rest) >= LEAK_RUN[kind]
 
@@ -489,6 +502,20 @@ AT_REST = [
         "ORD" + J(["1234-", "5678-", "9012-", "3456"]),
         ("ORD" + J(["1234-", "5678-", "9012-", "3456"]), [], []),
         ("ORD<CREDITCARD_1>", [("<CREDITCARD_1>", J(["1234-", "5678-", "9012-", "3456"]))], []),
+    ),
+    # v6 (G8-review-5-design M2): a contiguous card number beside `_` is masked by PHONE entry 7 and STORED as PHONE (AT8);
+    # the base already stores a clean contiguous card number as PHONE (AT9, unchanged by G8).
+    (
+        "AT8",
+        "card_" + V["PAN"],
+        ("card_" + V["PAN"], [], []),
+        ("card_<PHONE_1>", [("<PHONE_1>", V["PAN"])], [("<PHONE_1>", V["PAN"])]),
+    ),
+    (
+        "AT9",
+        "card " + V["PAN"],
+        ("card <PHONE_1>", [("<PHONE_1>", V["PAN"])], [("<PHONE_1>", V["PAN"])]),
+        None,
     ),
 ]
 # v4 (G8-review-3-codebase M2): (id, call, text, expected): `redact_untrusted` escapes a placeholder-shaped literal to
