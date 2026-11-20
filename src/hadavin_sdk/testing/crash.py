@@ -5,14 +5,17 @@ object it already hands to the code under test (a store, a model double) and arm
 `<name>.<method>:before` or `<name>.<method>:after`. When the wrapped method reaches that point,
 mode "raise" raises `SimulatedCrash` in the same process, and mode "exit" ends the process at once.
 Mode "exit" is for a child process: the parent arms a flag file, the child reads it. One arm gives
-one crash: the point is disarmed (or its flag file deleted) before the crash, and if that fails
-nothing happens.
+one crash: the point is disarmed (or its flag file deleted) before the crash. If the delete is
+refused it is tried again; if it still fails nothing fires at that call, and the next matching call
+tries again.
 
 Flag file: one line of text, `<point>` or `<point>#<nth>`, written by `arm`. A missing, unreadable
-or malformed file means "not armed". Arm before the child starts, one child per case: a long-lived
-child counts the matching calls for as long as the flag stays armed. On leaving the `with` block a
-flag that never fired is deleted; if the delete is refused (Windows can refuse while a reader holds
-the file open) it is tried again up to 5 times, 20 ms apart, then `RuntimeError` names the path.
+or malformed file means "not armed". A read error (a sharing violation on Windows) means "not armed
+this time". Arm before the child starts, one child per case. Counts are never reset in a child: it
+counts the matching calls for as long as it lives. On leaving the `with` block a flag that never
+fired is deleted; if the delete is refused (Windows can refuse while a reader holds the file open)
+it is tried again, 20 times at 20 ms apart, then `RuntimeError` names the path. With an error
+already in flight the block reports nothing about a stuck flag and does not replace that error.
 
 What a test must know, or the helper misleads it:
 
@@ -36,12 +39,18 @@ What a test must know, or the helper misleads it:
   methods (wrap refuses those names). Coroutine, async generator and generator functions are
   refused too: their body runs after the call returns, so `:after` would be wrong. The refusal
   covers function kinds only, not a sync function that returns a coroutine or a generator.
+- Only references that go through the proxy are covered. Wrap EVERY reference the code under test
+  uses: the runtime keeps its own store reference, so wrapping the test's reference is not enough.
+  Two wraps with the same name and method share one point and one nth counter.
+- Mode "raise" behind a thread: the test thread sees nothing; poll `cp.fired`.
+- `hit` is an extension hook: a caller may subclass `CrashPoints` and override it.
 - Mode "raise" behind a worker pool: the crash is stored in the Future and the process lives on.
   Behind the real HTTP server it becomes a 503, not a crash. Use mode "exit" in a child there.
 """
 
 from __future__ import annotations
 
+import functools
 import inspect
 import os
 import re
@@ -61,6 +70,8 @@ _NAME: Final[re.Pattern[str]] = re.compile(_WORD)
 _POINT: Final[re.Pattern[str]] = re.compile(rf"{_WORD}\.{_WORD}:(?:before|after)")
 _NTH: Final[re.Pattern[str]] = re.compile(r"[1-9][0-9]{0,8}")
 _NTH_LIMIT: Final[int] = 10**9
+_UNLINK_TRIES: Final[int] = 20  # tries to delete the flag file (a refused delete is retried)
+_UNLINK_PAUSE_S: Final[float] = 0.02  # pause between two tries
 
 
 class SimulatedCrash(BaseException):
@@ -106,6 +117,8 @@ class CrashPoints:
             )
         if mode not in ("raise", "exit"):
             raise ValueError(f"unknown mode: {mode!r}")
+        if flag_path is not None and not isinstance(flag_path, Path):
+            raise TypeError(f"flag_path is a pathlib.Path, not {type(flag_path).__name__}")
         if mode == "exit" and flag_path is None:
             raise ValueError('mode "exit" needs a flag_path')
         if mode == "raise" and flag_path is not None:
@@ -121,11 +134,11 @@ class CrashPoints:
         return self
 
     def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        """Delete a flag that never fired. With an error already in flight, report nothing."""
         with self._lock:
             left = self._current()
             if left is not None:
-                self._take()
-                self._retry_unlink()
+                self._disarm()
             stuck = left is not None and self._flag is not None and self._flag.exists()
         if exc_type is not None:
             return
@@ -168,7 +181,9 @@ class CrashPoints:
 
     def hit(self, point: str) -> None:
         """Called at a crash point. Does nothing unless exactly this point is armed and this is its
-        nth call."""
+        nth call. Extension hook: a caller may override it. The flag is deleted first, retried if
+        the delete is refused. If it is still refused nothing fires at this call and the next
+        matching call tries again; if another process took the flag, nothing fires."""
         with self._lock:
             current = self._current()
             if current is None or current[0] != point:
@@ -176,8 +191,8 @@ class CrashPoints:
             self._seen[point] = self._seen.get(point, 0) + 1
             if self._seen[point] < current[1]:
                 return
-            # Disarm BEFORE the crash. If the flag could not be deleted, another process took it.
-            if not self._take():
+            # Disarm BEFORE the crash. Fire only if our own delete took the flag.
+            if not self._disarm():
                 return
             self._fired.append(point)
             if self._mode == "raise":
@@ -219,6 +234,7 @@ class CrashPoints:
     def _edge(self, target: object, name: str, method: str) -> Callable[..., Any]:
         before, after = f"{name}.{method}:before", f"{name}.{method}:after"
 
+        @functools.wraps(getattr(target, method))
         def call(*args: Any, **kwargs: Any) -> Any:
             self.hit(before)
             result = getattr(target, method)(*args, **kwargs)
@@ -241,24 +257,27 @@ class CrashPoints:
             return None
         return point, int(count) if sep else 1
 
-    def _retry_unlink(self) -> None:
-        """After a refused delete: try again, a few times. Call with the lock held."""
-        if self._flag is None:
-            return
-        for _ in range(5):
-            if not self._flag.exists():
-                return
-            time.sleep(0.02)
-            self._take()
+    def _disarm(self) -> bool:
+        """Delete the flag, trying again if the delete is refused. True only if our own delete
+        took it; False if another process took it or it stays refused. Call with the lock held."""
+        for attempt in range(_UNLINK_TRIES):
+            outcome = self._take()
+            if outcome != "refused":
+                return outcome == "taken"
+            if attempt < _UNLINK_TRIES - 1:
+                time.sleep(_UNLINK_PAUSE_S)
+        return False
 
-    def _take(self) -> bool:
-        """Disarm. False if a flag file could not be deleted (someone else took it). Call with the
-        lock held."""
+    def _take(self) -> Literal["taken", "gone", "refused"]:
+        """One try to disarm. "gone": a flag file is already missing (someone else took it).
+        "refused": the file is still there after an error. Call with the lock held."""
         if self._flag is None:
             self._memory = None
-            return True
+            return "taken"
         try:
             self._flag.unlink()
+        except FileNotFoundError:
+            return "gone"
         except OSError:
-            return False
-        return True
+            return "refused" if self._flag.exists() else "gone"
+        return "taken"

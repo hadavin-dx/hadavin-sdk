@@ -9,6 +9,7 @@ child process is always started with a timeout and has ended before its test ret
 from __future__ import annotations
 
 import ast
+import inspect
 import os
 import re
 import subprocess
@@ -287,7 +288,7 @@ finally:
 
 
 def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_written(tmp_path):
-    """Design review 1, N16: the flag is deleted before the marker is printed. If the print fails,
+    """A closed stdout: the flag is deleted before the marker is printed. If the print fails,
     the child must still end with the crash code and run no `finally`: not go on as an ordinary
     exception inside the code under test, with the flag already gone."""
     flag = tmp_path / "flag"
@@ -298,13 +299,12 @@ def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_
     assert "survived" not in done.stderr and "finally ran" not in done.stderr
 
 
-def test_the_facts_that_decide_a_tests_correctness_are_written_down():
-    """The constants are what tests compare with, and the module text tells a test author to assert
-    `cp.fired` and that the exit code alone is not proof (loose: the facts, not the sentences)."""
-    assert CRASH_EXIT_CODE == 137 and CRASH_MARKER == "simulate crash"
+def test_the_module_text_tells_a_test_author_the_three_facts():
+    """The module text names `cp.fired`, the marker line and the exit code (short stable phrases)."""
     text = " ".join((crash_mod.__doc__ or "").split())
-    assert "assert `cp.fired`" in text
-    assert "exit code alone" in text or "exit code 137" in text.lower() or "alone" in text
+    assert "cp.fired" in text
+    assert "marker" in text
+    assert "exit code" in text
 
 
 def test_f2_the_constants_are_the_ones_other_tests_assert_against():
@@ -483,6 +483,23 @@ def test_e6_a_missing_empty_or_garbage_flag_never_fires(tmp_path, no_real_exit, 
     assert flag.exists() is (content is not None)
 
 
+@pytest.mark.parametrize(
+    "content",
+    ["thing.other:before", POINT + "#0", POINT + "#-1", POINT + "#x", POINT + "#", POINT + "#01"],
+)
+def test_e6_a_flag_with_another_point_or_a_bad_count_never_fires(tmp_path, no_real_exit, content):
+    """Kill mode, a flag holding another point or a bad count (zero, negative, letter, empty, a
+    leading zero): no crash, no error inside the code under test, the file is left alone. The
+    counts fail if the count pattern allowed a zero first or if the `#` check were dropped."""
+    flag = tmp_path / "flag"
+    flag.write_text(content, encoding="utf-8")
+    with CrashPoints(mode="exit", flag_path=flag) as cp:
+        thing = cp.wrap(Thing(), "thing", ["step"])
+        assert thing.step() == 1 and thing.step() == 2
+        assert cp.armed() is None and cp.fired == ()
+    assert flag.read_text(encoding="utf-8") == content
+
+
 def test_e6_a_directory_as_flag_never_fires(tmp_path, no_real_exit):
     """E6: an unreadable flag (a directory at that path) means not armed."""
     with CrashPoints(mode="exit", flag_path=tmp_path) as cp:
@@ -585,6 +602,107 @@ def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, 
         raise KeyError("in flight")
     monkeypatch.undo()
     flag.unlink()
+
+
+def stub_unlink(monkeypatch, tmp_path, refusals):
+    """Path.unlink refuses `refusals` times (None: always) with PermissionError, then works.
+    Sleeping is recorded, not done. Returns the call counter and the pauses."""
+    real, calls, pauses = Path.unlink, [], []
+
+    def flaky(self, *args, **kwargs):
+        calls.append(1)
+        if refusals is None or len(calls) <= refusals:
+            raise PermissionError("held open")
+        real(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", flaky)
+    monkeypatch.setattr(crash_mod.time, "sleep", pauses.append)
+    return calls, pauses
+
+
+def test_the_unlink_retry_is_20_tries_at_20_ms():
+    assert crash_mod._UNLINK_TRIES == 20
+    assert crash_mod._UNLINK_PAUSE_S == 0.02
+
+
+def test_a_delete_refused_for_every_try_but_the_last_works_without_error(tmp_path, monkeypatch):
+    """Leaving the block: the delete is refused for every try but the last; the number of calls is
+    the tries constant and the only error is the usual 'never fired'."""
+    flag = tmp_path / "flag"
+    calls, pauses = stub_unlink(monkeypatch, tmp_path, crash_mod._UNLINK_TRIES - 1)
+    with (
+        pytest.raises(RuntimeError, match="never fired"),
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
+        cp.arm(POINT)
+    monkeypatch.undo()
+    assert len(calls) == crash_mod._UNLINK_TRIES and not flag.exists()
+    assert pauses == [crash_mod._UNLINK_PAUSE_S] * (crash_mod._UNLINK_TRIES - 1)
+
+
+def test_a_delete_refused_every_time_is_tried_the_tries_constant_then_named(tmp_path, monkeypatch):
+    """Leaving the block: every try refused; the calls equal the tries constant and the error names
+    the path."""
+    flag = tmp_path / "flag"
+    calls, _ = stub_unlink(monkeypatch, tmp_path, None)
+    with (
+        pytest.raises(RuntimeError, match="could not be deleted") as caught,
+        CrashPoints(mode="exit", flag_path=flag) as cp,
+    ):
+        cp.arm(POINT)
+    monkeypatch.undo()
+    assert len(calls) == crash_mod._UNLINK_TRIES and str(flag) in str(caught.value)
+    flag.unlink()
+
+
+def test_hit_retries_a_refused_delete_and_crashes_at_this_call(tmp_path, no_real_exit, monkeypatch):
+    """A delete refused twice inside `hit` (a reader holds the file): the crash happens at THIS
+    call, once, and the flag is gone."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    thing = cp.wrap(Thing(), "thing", ["step"])
+    cp.arm(POINT)
+    calls, _ = stub_unlink(monkeypatch, tmp_path, 2)
+    with pytest.raises(Killed):
+        thing.step()
+    monkeypatch.undo()
+    assert len(calls) == 3 and not flag.exists() and cp.fired == (POINT,)
+    assert thing.step() == 1  # the flag is gone: one arm, one crash
+
+
+def test_hit_with_a_delete_refused_every_time_does_not_crash_and_leaves_the_flag(
+    tmp_path, no_real_exit, monkeypatch
+):
+    """A delete refused on every try inside `hit`: no crash at this call, no exception in the code
+    under test, the flag stays, the tries are the tries constant."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    thing = cp.wrap(Thing(), "thing", ["step"])
+    cp.arm(POINT)
+    calls, _ = stub_unlink(monkeypatch, tmp_path, None)
+    assert thing.step() == 1 and cp.fired == ()
+    monkeypatch.undo()
+    assert len(calls) == crash_mod._UNLINK_TRIES and flag.read_text(encoding="utf-8") == POINT
+    with pytest.raises(Killed):  # the next matching call tries again and now crashes
+        thing.step()
+    assert not flag.exists()
+
+
+def test_the_flag_path_must_be_a_path(tmp_path):
+    """A str flag path is refused at the constructor, in both modes."""
+    with pytest.raises(TypeError, match="flag_path"):
+        CrashPoints(mode="exit", flag_path=str(tmp_path / "flag"))  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="flag_path"):
+        CrashPoints(flag_path=str(tmp_path / "flag"))  # type: ignore[arg-type]
+
+
+def test_the_proxy_call_shows_the_targets_name_and_signature():
+    """`wraps`: the method seen through the proxy has the target method's name and signature."""
+    target = Thing()
+    with CrashPoints() as cp:
+        proxy = cp.wrap(target, "thing", ["step"])
+        assert proxy.step.__name__ == target.step.__name__ == "step"
+        assert inspect.signature(proxy.step) == inspect.signature(target.step)
 
 
 BAD_POINTS = {
@@ -725,6 +843,7 @@ def test_h6_the_helper_file_keeps_its_own_rules():
             imported.add((n.module or "").split(".")[0])
     assert imported == {
         "__future__",
+        "functools",
         "inspect",
         "os",
         "re",
@@ -807,8 +926,8 @@ def test_f2_many_threads_released_together_give_exactly_one_crash_each_time():
 
 
 def test_f9_a_flag_that_is_refused_twice_is_deleted_at_the_third_try(tmp_path, monkeypatch):
-    """G2: the delete is tried again (Windows can refuse while a reader holds the file); no "could not be
-    deleted" error when a retry works."""
+    """A delete refused twice: it is tried again (Windows can refuse while a reader holds the file);
+    no "could not be deleted" error when a retry works."""
     flag, real, calls = tmp_path / "flag", Path.unlink, []
 
     def flaky(self, *args, **kwargs):
