@@ -12,9 +12,10 @@ the other copies of each found value - every copy of a SECRET, every standalone 
 (see _sweep). Strings that belong together (one incident's lines, labels, errors) are redacted as ONE
 text: a value found in any of them is masked in all of them (redact_many, second review 2026-09-30).
 A placeholder written by the sweep can change what a pattern reads (a bank code now stands before an account; a short token
-beside a known secret is long enough). So after the first sweep the table runs again over the strings the sweep changed, and
-the strings that sweep changes in turn go round again, to a fixed point with a hard cap (`_SETTLE_ROUNDS`, 4): a call that
-is still changing at the cap is refused (RedactionError), never returned half masked (G7, ORDER 020 MJ-B; see `settle`).
+beside a known secret is long enough). So after the first sweep the table runs again over the strings the first pass or sweep
+changed, and every later round runs over the strings the previous round changed (by the table or by the sweep), until a round
+changes no text: a fixed point with a hard cap (`_SETTLE_ROUNDS`, 4 rounds). A call that is still changing in the last round
+is refused (RedactionError("NotSettled")), never returned half masked (G7, ORDER 020 MJ-B and fix round 3; see `settle`).
 
 ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
 the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
@@ -737,18 +738,18 @@ _CARD_SHAPE = next(
     p for label, p in PATTERNS if label == "CREDITCARD"
 )  # _mask leaves a card to CREDITCARD
 
-# G7 (2026-11-20, ORDERS 012 and 013): ONE more pattern pass after the sweep. A pattern's result can change once
-# placeholders stand in the text, and the sweep writes them after every pattern ran:
+# G7 (2026-11-20, ORDERS 012 and 013, fix rounds 2 and 3): the table runs again after the sweep, to a capped fixed point. A pattern's
+# result can change once placeholders stand in the text, and the sweep writes them after every pattern ran:
 #   - `BSB: 062-000` on one line, `paid 062-000/12345678` on the next: the account pattern needs `<BANKCODE_n>`
 #     before the digits, and on line 2 only the sweep writes it (E3);
 #   - `password=V` on one line, `Bearer Vxy` on the next (a token under BEARER's 12 characters): swept to
-#     `Bearer <SECRET_1>xy`, which IS 12 characters, so only a second pass masked the tail (E5; the same for BASIC,
+#     `Bearer <SECRET_1>xy`, which IS 12 characters, so only a later pass masked the tail (E5; the same for BASIC,
 #     `authorization:` and every value class that admits `<` and `>` and has a minimum length).
-# Which patterns can change is not cheap to tell with certainty (any value class that admits `<`, any guard that
-# reads the text around a match), so the whole table runs again, once, over the swept text, and what that pass
-# finds is swept once (_Redactor.settle). Never a loop: at most two pattern passes and two sweeps per call. A text
-# the first pass and its sweep left unchanged is not scanned again (the same patterns over the same text with the
-# same state give the same result), so a text with nothing to mask costs what it did.
+# Which patterns can change is not cheap to tell with certainty (any value class that admits `<`, any guard that reads the text
+# around a match), so the whole table runs again over the strings that changed (_Redactor.settle). It is a LOOP: round after
+# round until a round changes no text, at most `_SETTLE_ROUNDS` rounds, a refusal past that. A text the first pass and its
+# sweep left unchanged is not scanned again (the same patterns over the same text with the same state give the same result),
+# so a text with nothing to mask costs what it did.
 
 
 def _has_bank_word(text: str) -> bool:
@@ -1105,6 +1106,7 @@ class _Redactor:
                     self.counters[kind] + 1, int(suffix) if _countable(suffix) else 0
                 )
         self._built_for = -1
+        self._build_deadline: float | None = None  # set by `sweep` for the build it triggers
         self.alias: dict[
             str, str
         ] = {}  # folded spelling -> placeholder, for written slices that differ from their fold (internal)
@@ -1116,9 +1118,13 @@ class _Redactor:
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
-        # secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it) -> its placeholder;
-        # swept as a literal before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail
-        self._spelled: dict[str, str] = {}
+        # A secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it): swept as a literal
+        # before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail.
+        # Indexed by the FIRST placeholder token the written form holds -> {offset of that token in the form -> a character trie of
+        # the forms}; a terminal node (key "") holds (placeholder, full value). Sweeping looks the tokens of the text up: linear in
+        # the text, not entries x text. An entry whose placeholder no longer maps to its full value (a rolled-back line, the number
+        # reissued for another value) is ignored when read, so a ghost never writes a wrong placeholder.
+        self._spelled: dict[str, dict[int, dict[str, Any]]] = {}
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
@@ -1139,36 +1145,50 @@ class _Redactor:
         return out
 
     def settle(self, originals: list[str], swept: list[str]) -> list[str]:
-        """The pattern passes after the first sweep, to a fixed point with a hard cap (G7; ORDER 020 MJ-B).
+        """The pattern passes after the first sweep, to a fixed point with a hard cap (G7; ORDER 020 MJ-B; fix round 3).
 
-        `swept`: one call's strings after find() and sweep(), `originals` the strings they were made from. Round 1:
-        every string the first pass or its sweep changed goes through the whole table once more. If that found a
-        NEW value (the map grew) every string is swept once more, so the value's other copies go too, and only the
-        strings THAT sweep changed (a placeholder now stands where a value stood, which can change what a pattern
-        reads) go through the table again: round 2, and so on. A round that adds nothing to the map ends it. After
-        `_SETTLE_ROUNDS` rounds a text that the last sweep still changed is NOT settled: a pass 5 might have found
-        more, so the call is refused (RedactionError, nothing is shown), never returned half masked. A text that
-        needs no more passes pays nothing extra. Every round checks the call's deadline first (`InputTooLarge`,
-        never a skipped pass: that would fail open); each pass and sweep is linear in the text."""
+        `swept`: one call's strings after find() and sweep(), `originals` the strings they were made from. A ROUND is:
+        the whole table over every string in `todo`; if that found a NEW value (the map grew) every string is swept
+        once more (the value's other copies go), else only the strings the table changed are swept (a placeholder
+        written beside text can complete a spelled form). `todo` for the next round is the UNION of the strings the
+        table changed and the strings the sweep changed in the round just run, because a placeholder written where
+        a value stood can change what a pattern reads, and so can a rewrite through a value the map already held.
+        Round 1 starts from the strings the first pass or its sweep changed. The loop ends when a round changes no text
+        (no map growth is possible then): a real fixed point of "table, then sweep" over the call's strings, not "the
+        map stopped growing".
+
+        Acceptance rule, exactly: the call is settled when some round r with 1 <= r <= `_SETTLE_ROUNDS` (4) changes no
+        text. So a chain whose last change is made in round 3 is accepted (round 4 confirms); a chain that still changes a
+        text in round 4 is refused (`RedactionError("NotSettled")`, nothing is shown), because no round has read that
+        text since. The cap is a fail-closed margin over the measured depth (tests/test_redact_settle_loop.py), not a
+        derived bound. A text that needs no more passes pays nothing extra: the confirming round runs over the strings
+        the previous round changed, and a clean text, or one whose second pass finds nothing, ends in round 1.
+
+        Time: the call's deadline (CPU clock of the creating thread) is checked before every round and inside every sweep
+        and `_build` of the round (`InputTooLarge`, never a skipped pass: that would fail open). A pattern pass over one
+        string is not interruptible: the bound is the budget plus one pass over the largest string (see defaults.py)."""
         cur = list(swept)
-        todo = [
+        todo = {
             i for i, (o, t) in enumerate(zip(originals, cur, strict=True)) if t != strip_ansi(o)
-        ]
+        }
         for _ in range(_SETTLE_ROUNDS):
             if not todo:
                 return cur
             self._check_deadline()
             known = len(self.mapping)
-            for i in todo:
-                cur[i] = self.find(cur[i])
-            if len(self.mapping) == known:
-                return cur
-            self._check_deadline()
-            todo = []
-            for i, text in enumerate(cur):
-                cur[i] = self.sweep(text)
-                if cur[i] != text:
-                    todo.append(i)
+            changed: set[int] = set()
+            for i in sorted(todo):
+                text = self.find(cur[i])
+                if text != cur[i]:
+                    cur[i] = text
+                    changed.add(i)
+            scope = range(len(cur)) if len(self.mapping) != known else sorted(changed)
+            for i in scope:
+                text = self.sweep(cur[i], self._deadline)
+                if text != cur[i]:
+                    cur[i] = text
+                    changed.add(i)
+            todo = changed
         if todo:
             from hadavin_sdk.guard.runmap import RedactionError  # runmap imports this module
 
@@ -1527,6 +1547,8 @@ class _Redactor:
                 self.mapping.pop(a, None)
                 if self.reverse.get(b) == a:
                     del self.reverse[b]
+        # a `_spelled` entry of the rolled-back registrations stays in its index but is ignored: its placeholder no longer maps to
+        # its full value (`_spelled_hit`), and a number reissued to ANOTHER value does not revive it
         self.counters = counters
         # the masks of the discarded rounds changed no text that is kept
         self.actions = self._journal_actions
@@ -1611,7 +1633,7 @@ class _Redactor:
         self.mapping[placeholder] = full
         self.reverse[full] = placeholder
         if label in SECRET_KINDS and original != full and len(full) >= 4:
-            self._spelled[original] = placeholder
+            self._spell(original, placeholder, full)
         if self._journal is not None:
             self._journal.append(("map", placeholder, full))
         for piece in (
@@ -1625,15 +1647,64 @@ class _Redactor:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         return placeholder
 
+    def _spell(self, original: str, placeholder: str, full: str) -> None:
+        """Register the written form `original` (it holds at least one placeholder token, since it differs from `full`)."""
+        first = _PLACEHOLDER.search(original)
+        if first is None:
+            return
+        node = self._spelled.setdefault(first.group(1), {}).setdefault(first.start(), {})
+        for ch in original:
+            node = node.setdefault(ch, {})
+        node[""] = (placeholder, full)
+
+    def _spelled_sweep(self, out: str, deadline: float | None) -> str:
+        """Replace the written forms of compound secrets (`<SECRET_1>xy`) by their placeholder, left to right, the longest form at
+        a position. One look-up per placeholder token of the text and a walk of a character trie, so the cost is linear in the text
+        and independent of the number of forms; a deadline is checked every 256 tokens."""
+        if not self._spelled:
+            return out
+        pieces: list[str] = []
+        last = 0
+        for n, m in enumerate(_PLACEHOLDER.finditer(out)):
+            by_offset = self._spelled.get(m.group(1))
+            if by_offset is None:
+                continue
+            if deadline is not None and n % 256 == 0:
+                self._over_budget(deadline)
+            for offset, root in by_offset.items():
+                start = m.start() - offset
+                if start < last:
+                    continue
+                node, best, i = root, None, start
+                while True:
+                    term = node.get("")
+                    if term is not None and self.mapping.get(term[0]) == term[1]:
+                        best = (i, term[0])
+                    if i >= len(out) or (node := node.get(out[i])) is None:
+                        break
+                    i += 1
+                if best is not None:
+                    end, placeholder = best
+                    pieces += (out[last:start], placeholder)
+                    last = end
+                    self.actions += 1
+                    break
+        if not pieces:
+            return out
+        pieces.append(out[last:])
+        return "".join(pieces)
+
     def _build(self) -> None:
+        # the deadline of the sweep that triggered the build (`sweep` sets it), else the call's own, as before
+        deadline = self._deadline if self._build_deadline is None else self._build_deadline
         # the alias index: the folded spelling of every stored value that is not ASCII and differs from its fold; its keys
         # become sweep rules too, so a clear copy of a masked written variant is masked (one fold per stored value)
         alias: dict[str, str] = {}
         for placeholder, original in self.mapping.items():
             if _plain(original):
                 continue
-            if self._deadline is not None:
-                self._over_budget(self._deadline)
+            if deadline is not None:
+                self._over_budget(deadline)
             for key in _alias_keys(original):
                 if key and key != original:
                     alias.setdefault(key, placeholder)
@@ -1645,6 +1716,8 @@ class _Redactor:
         )
         self._rules = {}
         for n, (placeholder, original) in enumerate(self._ordered):
+            if deadline is not None and n % 512 == 0:
+                self._over_budget(deadline)
             rule = _sweep(placeholder, original)
             if rule is not None and original not in self._rules:
                 self._rules[original] = (n, placeholder, rule)
@@ -1701,20 +1774,20 @@ class _Redactor:
         # Which values occur in a segment is found by ONE trie-shaped regex over all of them, built once
         # per map: testing every value against every segment was quadratic - 217 s for 2,000 lines of
         # 22,500 distinct values (fourth review, 2026-09-30).
-        # `deadline` (default None: unchecked, as before): a time.thread_time() value, the clock of `_deadline`. Checked before each
-        # segment and before each value replaced, so many short known values over a large text stop at it (InputTooLarge, nothing returned).
+        # `deadline` (default None: unchecked): a time.thread_time() value, the clock of `_deadline` (CPU time of the thread that
+        # made this redactor; see defaults.REDACT_BUDGET_S). `_Redactor.settle` passes its own. Checked in `_build`, every 256th
+        # placeholder token of the spelled-form scan, every 32nd free segment and before each value replaced (InputTooLarge,
+        # nothing returned). A single `str.replace` or one finder pass over one segment is not interrupted.
         if self._built_for != len(self.mapping):
-            self._build()
+            self._build_deadline = deadline
+            try:
+                self._build()
+            finally:
+                self._build_deadline = None
         # A compound secret found late (`Bearer <SECRET_1>xy` stored as V+xy): the first sweep already cut its other copies to
         # `<SECRET_1>xy`, which the whole value no longer matches. Its placeholder-spelled form goes first, as a literal on the
         # text before it is split at the placeholders (dz-2, cb-M4).
-        for spelled in sorted(self._spelled, key=len, reverse=True):
-            placeholder = self._spelled[spelled]
-            if (
-                spelled in out and placeholder in self.mapping
-            ):  # a rolled-back entry is gone from the map
-                self.actions += out.count(spelled)
-                out = out.replace(spelled, placeholder)
+        out = self._spelled_sweep(out, deadline)
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
@@ -1722,7 +1795,9 @@ class _Redactor:
             segment = parts[i]
             if not segment:
                 continue
-            if deadline is not None:
+            if (
+                deadline is not None and i % 64 == 0
+            ):  # every 32nd free segment (a text of 100,000 placeholders has 100,000)
                 self._over_budget(deadline)
             present = {w for w in self._slow if w in segment}
             for finder, prefixes in self._finders:
@@ -1746,8 +1821,11 @@ class _Redactor:
 
 
 _MAX_NESTING = 200
-# The most rounds (a pattern pass over the strings the last sweep changed, then a sweep) `_Redactor.settle` makes after the first sweep.
-# Real chains need 1 (a bank code freed by the sweep) or 2 (a code glued to a secret, then an account after it); past this the call is refused.
+# The most rounds (a pattern pass over the strings the previous round changed, then a sweep) `_Redactor.settle` makes after the first
+# sweep. A call is settled when some round within the cap changes no text, so the last CHANGING round that is accepted is round 3 (round
+# 4 confirms). A margin that fails closed, not a derived bound: measured over 8,000 generated compositions of 4 to 8 lines with a
+# pre-seeded map, the most rounds run were 3 (a chain of three needs 3: two that change and one that confirms); a chain that changes
+# a text in round 4 is refused (RedactionError("NotSettled")).
 _SETTLE_ROUNDS = 4
 
 
