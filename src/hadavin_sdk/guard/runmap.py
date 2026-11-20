@@ -17,12 +17,19 @@ import html
 import re
 import time
 import unicodedata
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.redact import (
+    ARN_TAIL,
+    PATTERNS,
+    SECRET_KINDS,
+    _Redactor,
+    kind_of,
+    redact,
+)
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -276,10 +283,16 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
 def canonical(text: str) -> str:
     """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
     full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it)."""
-    return "".join(
-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
-    )
+    space inside a token no longer hides it). It is THE SAME TEXT as the first result of `_canonical_view`: NFKC is applied one
+    character at a time, so the text a match is searched in and the text the match positions refer to never differ (they did when
+    the whole text was composed: a + U+0301 became U+00E1 here and not in the view). A base letter and a combining mark are therefore
+    not composed."""
+    if text.isascii():
+        return text  # NFKC changes nothing and ASCII has no format character
+    return _canonical_view(text)[0]
+
+
+_ASCII_OR_ONE = re.compile(r"[\x00-\x7f]+|[^\x00-\x7f]")  # a run of ASCII, or one other character
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
@@ -287,11 +300,16 @@ def _canonical_view(text: str) -> tuple[str, list[int]]:
     character, the index of the original character it came from."""
     chars: list[str] = []
     index: list[int] = []
-    for i, c in enumerate(text):
-        for d in unicodedata.normalize("NFKC", c):
+    for run in _ASCII_OR_ONE.finditer(text):
+        piece = run.group()
+        if piece.isascii():  # NFKC changes no ASCII character and ASCII has no format character (Cf): the run is copied whole
+            chars.append(piece)
+            index.extend(range(run.start(), run.end()))
+            continue
+        for d in unicodedata.normalize("NFKC", piece):
             if unicodedata.category(d) != "Cf":
                 chars.append(d)
-                index.append(i)
+                index.append(run.start())
     return "".join(chars), index
 
 
@@ -398,16 +416,38 @@ def _clean(text: str) -> str:
     return text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8", "replace")
 
 
+def composed(text: str) -> str:
+    """The COMPOSED form of `text`: the invisible format characters removed first (so one between a letter and its accent does
+    not keep them apart), then NFKC of the WHOLE text, which joins a base letter and its combining marks (e + U+0301 becomes the
+    precomposed letter) and Hangul conjoining jamo. `canonical` normalises one character at a time (so its match positions stay
+    exact) and so composes nothing; a value that was stored precomposed and is written decomposed (macOS file names, many PDF
+    extractors) is found only in this view. The text returned has no index back into the original: it is used to FIND, never to cut."""
+    if text.isascii():
+        return text
+    kept = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    return unicodedata.normalize("NFKC", kept)
+
+
 def _views(text: str) -> list[str]:
-    """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
-    with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
+    """Other forms a secret can hide in: the canonical view (NFKC one character at a time, invisible characters removed), the same
+    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks).
+    Only forms that differ from `text` are returned; a text with no combining sequence has the same composed and canonical view,
+    so it costs nothing."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
     # would come back with real newlines whenever the second pass finds anything.
     unescaped = fits_after_nfkc(json_unescape(text, simple="/"))
     out = []
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
-    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
+    undone = fits_after_nfkc(undo(text))
+    for view in (
+        canonical(text),
+        canonical(unescaped),
+        undone,
+        composed(text),
+        composed(unescaped),
+        composed(undone),
+    ):
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)
@@ -461,6 +501,15 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
     return view
 
 
+def _cache_of(mapping: Mapping[str, str]) -> dict[str, Any] | None:
+    """The run's built patterns (`RunMap.redact_cache`), or None. A mapping whose attribute access raises is
+    a RedactionError like any other failure of the redactor (it names the error's type, never a text)."""
+    try:
+        return getattr(mapping, "redact_cache", None)
+    except Exception as exc:  # noqa: BLE001 - fail closed
+        raise RedactionError(type(exc).__name__) from None
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
@@ -483,6 +532,121 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
+    out, current = _scan(text, mapping, neutralise, _cache_of(mapping))
+    # No `clear()` first: another thread (the model gate holds this map by reference) must never read it
+    # empty. `current` is always the old map plus new entries: the redactor copies the map, only ever adds
+    # to its copy, and numbers a new placeholder above every number already held (`redact._Redactor`).
+    mapping.update(current)
+    return out
+
+
+def is_masked(
+    text: str, mapping: Mapping[str, str], neutralise: Callable[[str], str] | None = None
+) -> bool:
+    """True when redacting `text` with `mapping` would mask nothing more. Never writes `mapping`.
+    (`Mapping` is `collections.abc.Mapping`: a plain dict, a RunMap or a read-only view all fit.)
+
+    It runs the same scan as `redact_text` (same views, caps and time budget) on a COPY of the map and
+    throws the result away. The text counts as masked only when both hold: the copy did not change (no new
+    value was found), and the result holds exactly the placeholders the input held, each as many times.
+    Both parts are needed for the first pass and for the views alike: a new secret grows the map; a second
+    copy of a known value only adds a placeholder. A count alone is not enough: a placeholder followed by
+    more readable text (`password=<UUID_1>.rest`) can be a value the map already holds whole, so one
+    placeholder is swapped for another, and two placeholders can merge into one, with the map unchanged
+    and the count the same or lower. The texts themselves are never compared: cleaning and NFKC change a
+    text without masking anything.
+
+    The redactor works on a private shallow copy of the run's cache (`mapping.redact_cache`), so the built
+    patterns are reused and the caller's cache is never written. A placeholder that is not in the map is
+    left alone, here as in `redact_text`, so it does not make a text unmasked.
+
+    `neutralise` has the meaning it has in `redact_text`: pass the hook the text was redacted with
+    (`neutralise_untrusted` for the output of `redact_untrusted`). Without it an ESCAPED placeholder
+    look-alike in untrusted text (`&lt;ID_5&gt;`, `%3CID_5%3E`) reads as not masked, because its decoded
+    view holds a placeholder the text did not. With it the placeholders are counted after the hook, as
+    `redact_text` would see them.
+
+    Returns a bool only: no masked text, no found value and no kind leaves this function. Raises
+    InputTooLarge / TooDeep / RedactionError exactly as `redact_text` does: the caller treats any raise as
+    NOT masked."""
+    _within_cap(text)
+    before = dict(mapping)
+    # The redactor only assigns the cache's two keys and never changes what they hold in place (redact.py
+    # `_Redactor._build` builds new objects first), so a shallow copy is private.
+    cache = dict(_cache_of(mapping) or {})
+    out, current = _scan(text, dict(before), neutralise, cache)
+    seen = _clean(text) if neutralise is None else _clean(neutralise(_clean(text)))
+    held_before = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(seen))
+    held_after = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(out))
+    return current == before and held_after == held_before
+
+
+# Any substring of a placeholder token (`<KIND_12>`) is made of these characters only: the cheap first test.
+_TOKEN_PART = re.compile(r"<?[A-Z0-9]*_?[0-9]*>?")
+
+
+def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
+    """`text` with every raw copy of a value the map already holds replaced by that value's EXISTING
+    placeholder. No pattern is run: nothing new is found, no entry is added, no placeholder is invented,
+    and `mapping` (a `collections.abc.Mapping`, placeholder -> original) and its `redact_cache` are never
+    written. Doing it twice changes nothing more, and a text that holds no raw copy comes back equal.
+
+    The replace is the redactor's own final sweep (`guard/redact.py` `_Redactor.sweep`), so the rules are
+    the ones every producer's output already follows: longest originals first (a value that contains
+    another is replaced whole); nothing is replaced inside a placeholder already in the text. Which copies
+    (`redact._sweep`): a value of a secret kind of 4 characters or more, every copy; any other value, only
+    where no ASCII letter or digit touches it.
+
+    One thing is added to the sweep. Inside one stretch of text the sweep replaces value after value and
+    does not look again at the placeholders it has just written, so a shorter known value that is itself a
+    piece of a placeholder of this map (`SECRET`, `UUID_1`) would be replaced INSIDE a placeholder written
+    a moment before (`<<SECRET_1>_2>`). Such values are therefore held back and swept afterwards, one at a
+    time, longest first: each of those sweeps starts by setting every placeholder in the text aside.
+
+    Limits, on purpose (each pinned by a test in tests/test_runmap_enforce_map.py):
+    - NOT replaced at all: a value under 3 characters; and, unless it is a secret kind of 4 characters or
+      more, a value that is all digits and under 6 characters or a common word (`redact._COMMON`).
+    - A value that is not a secret kind of 4 or more is left where an ASCII letter or digit touches it.
+    - Only the spelling held in the map is replaced. A copy hidden by full-width letters, a zero-width
+      space or an escape is NOT found here: finding those is the pattern redactor's work (`redact_text`),
+      and returning a decoded view from here could turn a look-alike into a real placeholder.
+    - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in
+      `abcdef`): the longer one (the earlier in the map when equal) is replaced and the rest of the other
+      stays (`<A_1>ef`); when neither is a secret kind, neither is replaced there.
+
+    Same input cap as `redact_text` (`InputTooLarge`); any other failure (a map that is not text to text)
+    is a RedactionError that names the error's type and never the text."""
+    _within_cap(text)
+    try:
+        known = dict(mapping)
+        tokens = "\n".join(known)
+        late = {
+            ph: original
+            for ph, original in known.items()
+            if _TOKEN_PART.fullmatch(original) and original in tokens
+        }
+        if not late:
+            # a private shallow copy of the run's built patterns: reused, and the caller's cache is not written
+            cache = dict(getattr(mapping, "redact_cache", None) or {})
+            return _Redactor(known, cache).sweep(text)
+        first = {ph: original for ph, original in known.items() if ph not in late}
+        out = _Redactor(first, None).sweep(text)
+        for ph, original in sorted(late.items(), key=lambda kv: -len(kv[1])):
+            if original in out:
+                out = _Redactor({ph: original}, None).sweep(out)
+        return out
+    except Exception as exc:  # noqa: BLE001 - whatever the sweep raised, nothing is sent
+        raise RedactionError(type(exc).__name__) from None
+
+
+def _scan(
+    text: str,
+    mapping: dict[str, str],
+    neutralise: Callable[[str], str] | None,
+    cache: dict[str, Any] | None,
+) -> tuple[str, dict[str, str]]:
+    """The work of `redact_text` without its write: (redacted text, the map as it would be afterwards).
+    `mapping` is only read. Callers check the input cap first (`_within_cap`)."""
     started = time.monotonic()
     try:
         text = fits_after_nfkc(_clean(text))
@@ -490,7 +654,6 @@ def redact_text(
             text = fits_after_nfkc(neutralise(text))
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
-        cache = getattr(mapping, "redact_cache", None)
         result = redact(text, mapping=mapping, _cache=cache)
         out, current = result.text, result.mapping
         if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
@@ -521,9 +684,7 @@ def redact_text(
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None
-    mapping.clear()
-    mapping.update(current)
-    return out
+    return out, current
 
 
 SAFE_HEAD_NOTE = "(details withheld)"

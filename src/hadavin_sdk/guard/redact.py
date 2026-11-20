@@ -701,6 +701,30 @@ _CARD_SHAPE = next(
     p for label, p in PATTERNS if label == "CREDITCARD"
 )  # _mask leaves a card to CREDITCARD
 
+# G7 (2026-11-20): the patterns whose match can depend on a placeholder that is ALREADY in the text. Both account
+# patterns: the second names `<BANKCODE_n>` in its regex; the first counts only with bank context (_bank_context),
+# and one form of that context is a `<BANKCODE_n>` nearby. The pattern pass writes that placeholder only where a
+# code stands beside its keyword; the sweep writes it on every other copy of the code, AFTER the account patterns
+# ran, so `BSB: 062-000` on one line and `paid 062-000/12345678` on the next left the account readable after one
+# pass (a second pass masked it). These patterns are therefore run again after the sweep (_Redactor.settle).
+# The cookie header pattern names a placeholder too, as a negative guard (`Cookie: <KIND_n>` is not a value): a
+# placeholder the sweep writes can only stop it from matching, so it is not run again.
+_CONTEXT_PATTERNS = tuple((label, p) for label, p in PATTERNS if label == "BANKACCT")
+_CONTEXT_MARK = "<BANKCODE_"  # without it in the text no context pattern can match anything it did not match before
+# The most rounds of (context patterns, then sweep) after the first sweep. One round does the work: an account the
+# round finds is swept as a BANKACCT placeholder, and no context pattern reads that one. A further round has work
+# only if that sweep wrote a NEW bank-code placeholder, which takes a planted adjacency (the sweep does not look
+# again at a value once a shorter neighbour is replaced after it). Past the bound nothing is returned.
+_CONTEXT_ROUNDS = 4
+
+
+class ContextNotSettled(RuntimeError):
+    """The context patterns still found a value after `_CONTEXT_ROUNDS` rounds: no text is returned (fail closed).
+    `guard/runmap.py` turns it into its RedactionError, like any other failure of the redactor."""
+
+    def __init__(self) -> None:
+        super().__init__("ContextNotSettled")  # never the text or a value
+
 
 def _has_bank_word(text: str) -> bool:
     """A strong bank word or a bank code anywhere in `text`: the context for every account in a batch. UUIDs are
@@ -815,6 +839,9 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
+# An ESCAPED placeholder look-alike, exactly as `runmap.escape_placeholders` writes one in untrusted text
+# (`<SECRET_1>` becomes U+2039 `SECRET_1` U+203A): not a placeholder, and not a value either (see _mask).
+_ESCAPED_LOOKALIKE = re.compile("\u2039[A-Za-z][A-Za-z0-9]*_[0-9]+\u203a")
 # A terminal escape sequence (colour, cursor, title): not text, and glued to a key it hid the key from every pattern
 # that needs a word boundary - `ESC[1mAKIA...` read as `mAKIA...` (ninth review, 2026-10-01).
 _ANSI = re.compile(
@@ -877,7 +904,7 @@ def redact(
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
-        out = r.sweep(out)
+        out = r.settle([r.sweep(out)])[0]
     return RedactionResult(text=out, mapping=r.mapping)
 
 
@@ -922,6 +949,31 @@ class _Redactor:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
+    def _find_context(self, text: str) -> str:
+        """The context patterns only (_CONTEXT_PATTERNS), over a text the sweep has been through."""
+        for label, pattern in _CONTEXT_PATTERNS:
+            text = pattern.sub(lambda m, label=label: self._mask(m, label), text)
+        return text
+
+    def settle(self, texts: list[str]) -> list[str]:
+        """`texts` (one call's swept strings, one namespace) with the context patterns run again until they find
+        nothing more: an account beside a bank-code placeholder that only the sweep wrote is masked in the same
+        call. When a round finds a NEW value every text is swept again, so its other copies go too. Each round is
+        two pattern passes and at most one sweep, each linear in the text, and there are at most _CONTEXT_ROUNDS
+        of them plus one check; a text with no bank-code placeholder costs one substring test. If the last check
+        still finds a value, ContextNotSettled is raised and no text is returned."""
+        for round_ in range(_CONTEXT_ROUNDS + 1):
+            if not any(_CONTEXT_MARK in text for text in texts):
+                return texts
+            known = len(self.mapping)
+            again = [self._find_context(t) if _CONTEXT_MARK in t else t for t in texts]
+            if again == texts:
+                return texts
+            if round_ == _CONTEXT_ROUNDS:
+                break
+            texts = [self.sweep(t) for t in again] if len(self.mapping) != known else again
+        raise ContextNotSettled
+
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""
         # group(1) exists for TENANT, where only the value is sensitive, not the key name.
@@ -949,6 +1001,16 @@ class _Redactor:
         if _PLACEHOLDER.search(original) and not re.search(
             r"[A-Za-z0-9]", _PLACEHOLDER.sub("", original)
         ):
+            return m.group(0)
+        # Nor is a value of escaped look-alikes alone (G7, ORDER 012): untrusted redaction run over its own output
+        # (a tool's error text is redacted with a throwaway map, then with the run's) escapes the first pass's
+        # placeholders, and `password=` before the escaped token made it a new secret: a junk entry in the run's map.
+        # Only when nothing else is in the value but spaces, `;` and `,` between tokens: with any other character
+        # besides (a secret glued to a look-alike, be it one letter, a digit or punctuation only) the value is masked
+        # whole, as before. No entry is made, so the token restores to nothing.
+        if _ESCAPED_LOOKALIKE.search(original) and not _ESCAPED_LOOKALIKE.sub(
+            "", _PLACEHOLDER.sub("", original)
+        ).strip(" \t;,"):
             return m.group(0)
         placeholder = (
             self.reverse[full] if full in self.reverse else self._place(label, full, original)
@@ -1253,4 +1315,4 @@ def redact_many(
     r = _Redactor(mapping)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     found = [r.find(item) for item in items]
-    return [r.sweep(text) for text in found], r.mapping
+    return r.settle([r.sweep(text) for text in found]), r.mapping

@@ -12,6 +12,18 @@ Rules:
 - The core never imports anything from `demos/` (a test enforces it), so a client delivery can take the core alone.
 - Demo data is synthetic only. No client data, secrets, account ids or personal details are ever committed.
 
+## Python version
+
+**Production and pilot must run Python 3.13.x (Unicode 15.1.0). Python 3.12 (Unicode 15.0.0) is for demos only.** The text fold in
+`guard/textnorm.py` depends on the interpreter's Unicode data, and its look-alike table is the Unicode 15.1.0 table. On another Python the
+fold still runs, but every check name starts with a tag and never equals one made on 3.13. `require_pinned_unidata()` raises on the wrong
+Python; `app.build` calls it when the stage is pilot or prod, so a start on other Unicode data is refused. Moving the pin to a later Python (for example
+3.14) is a data migration, not a version bump: see the CHANGELOG.
+
+Requirement since the text fold (ticket G, part G1): pilot and prod need a Python whose Unicode data is 15.1.0 (3.13). `app.build` now calls
+the start-up check `textnorm.require_pinned_unidata` for pilot and prod, and on any other Unicode data (Python 3.12.3 carries 15.0.0) the
+check refuses to start: it raises `UnidataMismatch` and nothing runs. The check is not loosened; a demo may still run on 3.12.
+
 ## K1b-lite: replay check (report only)
 
 `hadavin-sdk replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]` runs a client's recorded
