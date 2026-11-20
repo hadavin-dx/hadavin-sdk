@@ -124,6 +124,22 @@ def widening_expire(original):
     return expire_spend_reservations
 
 
+def widening_add_spend(original):
+    """Wrap `PostgresStore.add_spend`: widen the window first (`hadavin_add_spend` has the day window of reserve, review
+    m1), as `seeding_reserve` does. Tests that carry `no_cap_seed` keep the real value."""
+
+    def add_spend(self, agent_id, day, usd):
+        dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+        if dsn:
+            try:
+                widen_day_window(dsn, self._schema)
+            except Exception:  # noqa: BLE001, S110 - no limits table yet: the store refuses below
+                pass
+        return original(self, agent_id, day, usd)
+
+    return add_spend
+
+
 def seed_registry_caps(dsn_or_conn, schema: str | None, registry) -> None:
     """Seed the caps of every non-retired agent of `registry` with the registry's own budget, as the owner: the
     state `limits sync-caps` leaves, so a FULL tick (step `check_caps`) finds no drift."""
