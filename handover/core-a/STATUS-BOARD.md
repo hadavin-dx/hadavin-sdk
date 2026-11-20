@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:18:57Z
+UPDATED_UTC: 2026-11-20T16:19:12Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 4
-CAPACITY: load 2.25 of 4 cores (1-minute average), mem 1.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 56G 20%; 653M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+CAPACITY: load 1.99 of 4 cores (1-minute average), mem 1.6/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 56G 20%; 654M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes
-PUSHED_UTC: 2026-11-20T16:18:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:19:03Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -114,15 +114,21 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36270s ago | running | matched by name in ps |
-| 17970 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 43s ago | running | matched by name in ps |
-| 17973 | .venv/bin/python -m pytest tests/triggers -q -n 2 -p no:cacheprovider | core-a session or its agent | 43s ago | running | matched by name in ps |
-| 19115 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 36285s ago | running | matched by name in ps |
+| 19375 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 19404 | uv run --all-extras --group test pytest -q -n 2 -rfE --no-header -p no | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 19409 | /home/user/wt/cfix/.venv/bin/python /home/user/wt/cfix/.venv/bin/pytes | core-a session or its agent | 7s ago | running | matched by name in ps |
+| 19441 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 19444 | .venv/bin/python -m pytest tests/triggers -q -n 2 -p no:cacheprovider | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 20042 | postgres: postgres postgres 127.0.0.1(41588) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 20052 | postgres: postgres postgres 127.0.0.1(41592) CREATE FUNCTION | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 20070 | postgres: postgres postgres 127.0.0.1(41624) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 20081 | postgres: postgres postgres 127.0.0.1(41630) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
