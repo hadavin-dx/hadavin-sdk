@@ -645,6 +645,15 @@
    "evidence file": "reviews/D-code-result-review-2 (to write)",
    "tries": 1,
    "reason": "mut-fix reads the same source files now"
+  },
+  {
+   "item": "D-fix4",
+   "what": "round 3 fixes: config error text, log time+level, --host '', start/stop log lines, stale text, ticket line numbers",
+   "state": "QUEUED after batch5 ends (batch5 reads the tree)",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-3.md",
+   "tries": 0,
+   "reason": "batch5 running"
   }
  ],
  "agents": [
@@ -1708,11 +1717,11 @@
    "what exactly it is doing": "round 3 (last under the cap) read-only review of the step D code",
    "started UTC": "08:19",
    "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "3 of 3",
    "retries so far": 0,
-   "reason": "after d-fix3"
+   "reason": "round 3: 0 Blocker, 4 Major (thin-door size = lead decision E7; config error text; log format; stale ticket line numbers), 8 Nits; round 3 is the cap"
   },
   {
    "id": "batch5",
@@ -2098,6 +2107,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "E7 (ESCALATIONS.md): step D code round 3 left one Major that is yours: is the stdlib-based server (316 lines: connection cap + total read deadline + quiet handler) acceptable, or drop cap/deadline to the proxy, or vet a server library? Default if you say nothing: keep it and fix the ticket's size sentence.",
   "Reply to lead's list of 7 (07:31): (1) template retry fix from evidence-n8n-2: DONE (ORDER 019 in n8n-fix1, 3 review rounds, round 3 clean, 88 template tests, raw/n8n-template-tests-8.log). (2),(3),(5) are ONE agent d-fix2 running since 07:30 (connection cap, read deadline, REQUIRE_PG skip rule, direct field access, shared helpers): they edit the same three source files and one test folder, so splitting them into parallel agents would make them overwrite each other; core-b REQUEST 001 has not landed on any head I can read, so no getattr fallbacks can be dropped for fields core-b lacks (blocker, exact: need core-b settings fields host/port/allow_non_loopback/poll_s/max_waiting or a decision that they are CLI options). (4) mutants for new guards: BLOCKED by d-fix2 (anchors depend on its final code; 4 anchors already stale: G7a, G18c, G20b, G20e); starts the minute d-fix2 ends. (6) full-suite batch with -rf + -rs + REQUIRE_PG=1: BLOCKED by d-fix2 and (4); then runs. (7) fresh reviewer: after (6). Capacity is idle only because of these file locks; nothing else is queued that touches other files.",
   "Skips (SKIP-REPORT.md): REQUIRE_PG=1 only turns skips into failures inside tests/triggers. Skips elsewhere with a database reason (tests/contracts/kinds/store_postgres.py:24, test_p2_postgres, test_p7_store, test_k5_round8/10_postgres) stay skips. In the final batch I will run with -rs so every skip reason is in the log; to make those fail under REQUIRE_PG I must edit a shared conftest/helper: request to core-b if it is theirs.",
   "Lead ask answered in the plan: the next evidence batch (after d-fix2 and ORDER 020) runs the WHOLE suite with -rf and REQUIRE_PG=1 on PG16 and lists the failing ids; I will not run an extra whole suite on the half-edited tree (owner rule: one whole batch). Your 5 failed ids at 5bacdc05f: if you can send them from your log (grep ' FAILED ') I can start fixing before my batch.",
