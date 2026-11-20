@@ -5,4 +5,8 @@ configfile: pyproject.toml
 plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
 collecting ... collected 162 items / 159 deselected / 3 selected
 
-tests/test_redact_idempotence_property.py::test_I4_bank_fuzz_the_redactor_never_gives_up_at_the_round_bound 
+tests/test_redact_idempotence_property.py::test_I4_bank_fuzz_the_redactor_never_gives_up_at_the_round_bound PASSED [ 33%]
+tests/test_redact_idempotence_property.py::test_P1_I2_I4_bank_fuzz_a_second_pass_finds_no_account_the_first_pass_left PASSED [ 66%]
+tests/test_redact_idempotence_property.py::test_P1_I2_bank_fuzz_one_pass_is_a_fixed_point PASSED [100%]
+
+====================== 3 passed, 159 deselected in 2.12s =======================
