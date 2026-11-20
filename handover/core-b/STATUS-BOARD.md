@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:01:42Z
+UPDATED_UTC: 2026-11-20T06:02:13Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 2.76 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 0 heavy 3
+CAPACITY: load 2.75 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 0 heavy 3
 DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 752M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: F-store ticket review round 2 NOT clean (3 Blockers, 12 Majors): answered and sent to the builder; step B used its 3 fix rounds, tests for round 3 running; batch run 1: 3 failed (1 mine, fixed); E1 cron refused
 NEXT: land the test commits; resolve ticket C review; F-install review round; wait for core-c gate module before building F-install
-PUSHED_UTC: 2026-11-20T06:00:20Z (previous push; this board is pushed right after writing)
-IST: 11:31 IST
+PUSHED_UTC: 2026-11-20T06:01:42Z (previous push; this board is pushed right after writing)
+IST: 11:32 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
