@@ -53,7 +53,7 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
-from hadavin_sdk.models import AuditEvent, new_id
+from hadavin_sdk.models import AuditEvent, audit_code, new_id
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.stages import is_live
@@ -819,11 +819,11 @@ def _cap_event(by: str, agent: str, result: str, error: str | None = None) -> Au
         run_id="-",
         domain="limits",
         operation="set_cap",
-        principal=by,
+        principal=audit_code(by),
         source="cli",
-        object_ref=agent,
-        result=result,
-        error_code=error,
+        object_ref=audit_code(agent),
+        result=audit_code(result),
+        error_code=audit_code(error) if error is not None else None,
     )
 
 

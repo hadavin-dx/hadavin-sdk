@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.runmap import safe_head
-from hadavin_sdk.models import AuditEvent, RunState, TickState
+from hadavin_sdk.models import AuditEvent, RunState, TickState, audit_code
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import MAX_EXPIRY_AGE_S, StaleState, is_connectivity_error
 
@@ -140,7 +140,7 @@ def stuck(ctx: TickContext) -> None:
                     principal="system:tick",
                     source="tick",
                     result=S.NEEDS_PERSON.value,
-                    error_code=reason,
+                    error_code=audit_code(reason),
                 )
             )
 
