@@ -89,7 +89,7 @@ Each limit has its own status, evidence and owner in the gaps: see K46 (a value 
 
 ## Spend limits (stated limits)
 
-Exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
+Exact money and the no-lowering wall are in force. Every model call the runtime, the judge, the shadow-card screen, `gate` and `replay` make goes through the model gate, which reserves the worst case before the call and settles after (F-install, on its branch; not on the main line until it merges). A failed call that was not clearly refused before any response keeps its worst case booked until the expiry step closes it.
 
 In force on PostgreSQL after migration 0011: money is exact decimal, and the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). The caps live in the table `hadavin_caps`, written only under the reset login. The reserve and settle functions exist and are tested.
 

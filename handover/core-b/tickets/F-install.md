@@ -1,4 +1,5 @@
 Built on wip/cloud-core-b/Y-integration and wip/cloud-core-b/F-install-4, not yet on cloud/core-b.
+STATUS 2026-11-20 (builder P1, local branch local/code-MP1): merged cloud/core-b (B2) and core-c f065c628e; the gate owns the ONE reserve/settle (the loop's own reserve block is removed; its settle-failure rule lives in `_RunMeter`); the gate's meter is `Limits.for_agent(agent_id)` / `Budget.for_agent(agent_id)` (request to-core-c-f1-meter-adapter.md); the run map goes to the judge and shadow screen, NO_MAP only on eval/replay. Open: core-c's test_no_error_the_adapters_raise_today_carries_the_mark (after builder P7).
 # TICKET F-install: install the model gate in every consumer, delete the old charge sites, delete extract.py (owner core-b SPINE)
 Written 2026-11-20 05:33 UTC from the lead's draft (inputs/draft-ticket-F-install.md, kept word for word below the line). Path class: money. Migration: none. Depends on: F-store built; core-c's gate module for commit 5. Ticket review: one EGM round together with F-store and core-c's gate ticket. NO source code before GO BUILD F.
 
