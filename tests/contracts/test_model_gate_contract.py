@@ -110,7 +110,9 @@ class _Recorder:
             self.__dict__.setdefault("probes", []).append(name)
         raise AttributeError(name)
 
-    def charge(self, *args, **kwargs):  # the old after-the-fact booking: the gate must never call it
+    def charge(
+        self, *args, **kwargs
+    ):  # the old after-the-fact booking: the gate must never call it
         self.charged.append((args, kwargs))
         raise AssertionError("charge was called")
 
@@ -195,7 +197,9 @@ class Inner(_Recorder):
 
     def __init__(self, events: list[str], *, reply=None, raises=None, attempts: int = 1) -> None:
         super().__init__(events)
-        self.reply = Reply(text=REPLY_TEXT, cost_usd=COST, model_id=MODEL) if reply is None else reply
+        self.reply = (
+            Reply(text=REPLY_TEXT, cost_usd=COST, model_id=MODEL) if reply is None else reply
+        )
         self.raises, self.attempts = raises, attempts
         self.calls = 0
         self.requests = 0
@@ -246,7 +250,9 @@ class Sink(_Recorder):
 class Rig:
     """One gate with its doubles, all writing to ONE ordered event log."""
 
-    def __init__(self, meter_cls, *, inner=None, sink="default", worst_case=None, enforce=None, **bind):
+    def __init__(
+        self, meter_cls, *, inner=None, sink="default", worst_case=None, enforce=None, **bind
+    ):
         self.events: list[str] = []
         self.meter = meter_cls(self.events)
         self.inner = Inner(self.events) if inner is None else inner
@@ -453,7 +459,9 @@ FAILED_CALLS = [
 
 
 @pytest.mark.parametrize("make", FAILED_CALLS)
-def test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_unchanged(meter_cls, make):
+def test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_unchanged(
+    meter_cls, make
+):
     """Contract point 4 and Major M2 of the code review: when the inner call raises or times out the real cost
     is unknown (a plain ProviderError may be a billed reply that failed to parse), so settle is NOT called,
     the worst case stays booked, reserve is not repeated, and the original exception object comes out with
@@ -465,7 +473,9 @@ def test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_u
         rig.chat()
     assert caught.value is error and error.args == args_before
     assert error.__cause__ is None and error.__context__ is None
-    assert rig.meter.settle_calls == [], "a call of unknown cost was settled: the worst case is released"
+    assert rig.meter.settle_calls == [], (
+        "a call of unknown cost was settled: the worst case is released"
+    )
     assert len(rig.meter.reserve_calls) == 1 and rig.inner.calls == 1
     assert rig.meter.open() == set(rig.meter.booked) and len(rig.meter.booked) == 1
     assert rig.meter.booked[next(iter(rig.meter.booked))] == WORST
@@ -477,7 +487,12 @@ def test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_u
 
 @pytest.mark.parametrize(
     "error",
-    [RuntimeError("store down"), ConnectionError("gone"), LookupError("unknown id"), ValueError("bad")],
+    [
+        RuntimeError("store down"),
+        ConnectionError("gone"),
+        LookupError("unknown id"),
+        ValueError("bad"),
+    ],
     ids=lambda e: type(e).__name__,
 )
 def test_point5_when_settle_raises_the_reply_is_still_returned_and_reserve_is_not_retried(
@@ -630,7 +645,9 @@ def sent_bytes(system, messages, tools, documents, output_schema) -> int:
     return total
 
 
-def contract_worst_case(input_price: Decimal, output_price: Decimal, max_tokens: int, max_attempts: int):
+def contract_worst_case(
+    input_price: Decimal, output_price: Decimal, max_tokens: int, max_attempts: int
+):
     """The formula of contract point 10 as an installer would hand it to the gate: (bytes sent at the input
     price + max_tokens at the output price) times max_attempts; prices are USD per million tokens. Every
     step runs with the Inexact trap on: a rounded result is an error, not a number."""
@@ -661,7 +678,9 @@ class BillingInner(Inner):
         received = len(seen["system"].encode("utf-8"))
         for message in seen["messages"]:
             received += sum(len(str(v).encode("utf-8")) for v in message.values())
-        received += sum(len(json.dumps(t, ensure_ascii=False).encode()) for t in seen["tools"] or [])
+        received += sum(
+            len(json.dumps(t, ensure_ascii=False).encode()) for t in seen["tools"] or []
+        )
         received += sum(len(d) for d in seen["documents"] or [])
         if seen["output_schema"] is not None:
             received += len(json.dumps(seen["output_schema"], ensure_ascii=False).encode())
@@ -677,11 +696,15 @@ class BillingInner(Inner):
                 cost += (used_in * self.prices[0] + used_out * self.prices[1]).scaleb(-6)
         self.requests = requests
         return Reply(
-            text="ok", cost_usd=cost, model_id=MODEL, input_tokens=tokens_in, output_tokens=tokens_out
+            text="ok",
+            cost_usd=cost,
+            model_id=MODEL,
+            input_tokens=tokens_in,
+            output_tokens=tokens_out,
         )
 
 
-ALPHABET = "abc XYZ 0123 .,:{}\"\\\n" + "é" + "ß" + "й" + "漢" + "字" + "​" + "\U0001f600"
+ALPHABET = 'abc XYZ 0123 .,:{}"\\\n' + "é" + "ß" + "й" + "漢" + "字" + "\u200b" + "\U0001f600"
 
 
 def _text(rng, limit: int) -> str:
@@ -697,7 +720,11 @@ def _case(rng):
         None
         if rng.random() < 0.3
         else [
-            {"name": "tool_" + str(n), "description": _text(rng, 80), "input_schema": {"type": "object"}}
+            {
+                "name": "tool_" + str(n),
+                "description": _text(rng, 80),
+                "input_schema": {"type": "object"},
+            }
             for n in range(rng.randint(0, 3))
         ]
     )
@@ -737,7 +764,9 @@ def test_point10_the_reserved_worst_case_is_never_below_the_real_cost_of_any_rep
         ((_, settled),) = rig.meter.settle_calls
         assert type(reserved) is Decimal and type(settled) is Decimal
         assert settled == reply.cost_usd
-        assert reserved >= reply.cost_usd, f"case {number}: reserved {reserved} < cost {reply.cost_usd}"
+        assert reserved >= reply.cost_usd, (
+            f"case {number}: reserved {reserved} < cost {reply.cost_usd}"
+        )
         assert rig.meter.overshoots == [Decimal(0)]
         whole = Fraction(
             (
@@ -754,8 +783,8 @@ def test_point10_each_thing_sent_reaches_the_worst_case_step_and_raises_the_rese
     """Contract point 10 ("must cover everything sent: system prompt, messages, tool schemas, documents"):
     the gate hands ALL of them to its worst-case step and books what the step returns, so adding any one of
     them raises the reserved amount by exactly its bytes at the input price."""
-    price = Decimal("3")
-    worst_case = contract_worst_case(price, Decimal("15"), 100, 2)
+    price = Decimal(3)
+    worst_case = contract_worst_case(price, Decimal(15), 100, 2)
 
     def reserved_for(**sent) -> Decimal:
         call = {
@@ -779,7 +808,10 @@ def test_point10_each_thing_sent_reaches_the_worst_case_step_and_raises_the_rese
         "messages": (reserved_for(messages=[message]), len(json.dumps(message))),
         "tools": (reserved_for(tools=[tool]), len(json.dumps(tool))),
         "documents": (reserved_for(documents=[b"d" * 70, b"e" * 30]), 100),
-        "output_schema": (reserved_for(output_schema={"type": "object"}), len('{"type": "object"}')),
+        "output_schema": (
+            reserved_for(output_schema={"type": "object"}),
+            len('{"type": "object"}'),
+        ),
     }
     for name, (amount, size) in grown.items():
         assert amount - base == (Decimal(size) * price * 2).scaleb(-6), f"{name} is not covered"
@@ -794,9 +826,7 @@ def test_point10_multi_byte_text_counts_one_token_per_byte_not_per_character(met
     plain = Rig(meter_cls, worst_case=worst_case)
     plain.chat([{"role": "user", "content": "a" * 100}], system="b" * 100, documents=[b"c" * 100])
     rig = Rig(meter_cls, worst_case=worst_case)
-    rig.chat(
-        [{"role": "user", "content": wide}], system=wide, documents=[wide.encode("utf-8")]
-    )
+    rig.chat([{"role": "user", "content": wide}], system=wide, documents=[wide.encode("utf-8")])
     extra = rig.meter.reserve_calls[0][1] - plain.meter.reserve_calls[0][1]
     assert extra == Decimal(3 * 200).scaleb(-6)
     assert rig.inner.seen[0]["messages"][0]["content"] == wide  # sent as written
@@ -806,7 +836,7 @@ def test_point10_the_worst_case_is_computed_on_what_is_really_sent(meter_cls):
     """Contract point 10 with Amendment 1 item 7: when the enforce step makes a text LONGER (a placeholder
     longer than the value it stands for), the reservation covers the longer text the client receives."""
     value, placeholder = "v" + "9k2", "<" + "LONG_PLACEHOLDER_NAME_" + "1" + ">"
-    price = Decimal("2")
+    price = Decimal(2)
 
     def enforce(text, mapping):
         for token, original in mapping.items():
@@ -823,20 +853,22 @@ def test_point10_the_worst_case_is_computed_on_what_is_really_sent(meter_cls):
     documents = [(value + "\n").encode() * 40]
     rig.chat(messages, system="", documents=documents)
     seen = rig.inner.seen[0]
-    assert value not in seen["messages"][0]["content"] and value.encode() not in seen["documents"][0]
+    assert (
+        value not in seen["messages"][0]["content"] and value.encode() not in seen["documents"][0]
+    )
     received = sent_bytes("", seen["messages"], None, seen["documents"], None)
     assert received > sent_bytes("", messages, None, documents, None)
     assert rig.meter.reserve_calls[0][1] == (Decimal(received) * price).scaleb(-6)
 
 
 @pytest.mark.parametrize("max_attempts", [0, -1, -5, True, 1.0, None], ids=repr)
-def test_point10_max_attempts_zero_or_negative_books_nothing_and_calls_nothing(meter_cls, max_attempts):
+def test_point10_max_attempts_zero_or_negative_books_nothing_and_calls_nothing(
+    meter_cls, max_attempts
+):
     """Contract point 10 ("times the client's max_attempts"): an attempt count of 0 or below (or one that is
     not a whole number) has no worst case. The gate must not fall back to booking 0 and calling: no
     reservation, no call, and the error of the worst-case step comes out."""
-    rig = Rig(
-        meter_cls, worst_case=contract_worst_case(Decimal(3), Decimal(15), 100, max_attempts)
-    )
+    rig = Rig(meter_cls, worst_case=contract_worst_case(Decimal(3), Decimal(15), 100, max_attempts))
     with pytest.raises(ValueError, match="max_attempts"):
         rig.chat()
     assert rig.meter.reserve_calls == [] and rig.inner.calls == 0
@@ -892,7 +924,9 @@ def test_hostile_a_reply_with_no_cost_field_is_returned_and_not_settled(meter_cl
 
 
 @pytest.mark.parametrize("cost", [0.1, 1, "0.5", b"1", [Decimal(1)]], ids=repr)
-def test_hostile_a_cost_of_another_type_never_reaches_settle_as_anything_but_a_decimal(meter_cls, cost):
+def test_hostile_a_cost_of_another_type_never_reaches_settle_as_anything_but_a_decimal(
+    meter_cls, cost
+):
     """Exact Decimal arithmetic (contract point 10, INTERFACE (i) "nothing rounded"): a float, an int or text
     as the cost must never be handed to settle as it is. Either it is not settled (the worst case stays
     booked) or what is settled is a finite Decimal that is not negative. The reply is returned either way."""
@@ -997,13 +1031,19 @@ def test_i3_i4_the_map_and_the_callers_objects_are_never_written_and_system_and_
     assert (messages, documents, tools, mapping) == before
     assert seen_by_enforce == ["first " + value, "clean", "doc " + value, "plain"]
     seen = rig.inner.seen[0]
-    assert seen["messages"][0] == {"role": "user", "content": "first " + placeholder, "name": "kept"}
+    assert seen["messages"][0] == {
+        "role": "user",
+        "content": "first " + placeholder,
+        "name": "kept",
+    }
     assert seen["documents"] == [("doc " + placeholder).encode(), b"plain"]
     assert seen["system"] == "system " + value and seen["tools"] is tools
     assert seen["messages"][1] is messages[1] and seen["documents"][1] is documents[1]
 
 
-def test_i12_the_map_is_held_by_reference_a_value_added_later_is_enforced_on_the_next_call(meter_cls):
+def test_i12_the_map_is_held_by_reference_a_value_added_later_is_enforced_on_the_next_call(
+    meter_cls,
+):
     """Ticket I12: the bound gate keeps the run's LIVE map, so a value the run masks after the first call is
     replaced in the same earlier message on the next call."""
     value, placeholder = "pw" + "x44" + "tk", "<" + "LATE_" + "1" + ">"
@@ -1038,16 +1078,23 @@ def test_i13_i14_i15_the_shipped_enforce_step_on_a_real_run_map(meter_cls):
     clean = [{"role": "user", "content": masked}]
     documents = [masked.encode()]
     rig.chat(clean, documents=documents)
-    assert rig.inner.seen[0]["messages"][0] is clean[0] and rig.inner.seen[0]["documents"][0] is documents[0]
+    assert (
+        rig.inner.seen[0]["messages"][0] is clean[0]
+        and rig.inner.seen[0]["documents"][0] is documents[0]
+    )
     rig.chat([{"role": "user", "content": "raw again: " + known}], documents=[known.encode()])
     sent = rig.inner.seen[1]
-    assert known not in sent["messages"][0]["content"] and known.encode() not in sent["documents"][0]
+    assert (
+        known not in sent["messages"][0]["content"] and known.encode() not in sent["documents"][0]
+    )
     once = runmap.enforce_map("raw again: " + known + " and " + masked, mapping)
     assert runmap.enforce_map(once, mapping) == once and masked in once
     assert mapping == before
 
 
-def test_i8_exactly_one_audit_row_per_call_on_every_path_and_a_raising_sink_changes_nothing(meter_cls):
+def test_i8_exactly_one_audit_row_per_call_on_every_path_and_a_raising_sink_changes_nothing(
+    meter_cls,
+):
     """Ticket I8: one row per chat call whatever the outcome; a sink that raises never turns a paid call into
     an exception, never hides a refusal and never stops the settle; `audit=None` works on every path."""
     for rig in _all_paths(meter_cls):
@@ -1100,7 +1147,9 @@ def test_the_gate_uses_only_reserve_and_settle_of_its_meter_and_never_tests_its_
     used = {
         node.attr
         for node in ast.walk(tree)
-        if isinstance(node, ast.Attribute) and is_meter(node.value) and isinstance(node.ctx, ast.Load)
+        if isinstance(node, ast.Attribute)
+        and is_meter(node.value)
+        and isinstance(node.ctx, ast.Load)
     }
     assert used - {"_meter"} == {"reserve", "settle"}, used
     probes = [
@@ -1122,12 +1171,11 @@ def test_both_meter_shapes_give_the_same_outcome_on_every_path():
         for cls in (StoreStyleMeter, MemoryStyleMeter)
     }
     assert logs["StoreStyleMeter"] == logs["MemoryStyleMeter"]
-    ids = {cls.__name__: next(iter(_all_paths(cls)[0].meter.booked)) for cls in logs_classes()}
+    ids = {
+        cls.__name__: next(iter(_all_paths(cls)[0].meter.booked))
+        for cls in (StoreStyleMeter, MemoryStyleMeter)
+    }
     assert ids["StoreStyleMeter"] != ids["MemoryStyleMeter"]
-
-
-def logs_classes():
-    return (StoreStyleMeter, MemoryStyleMeter)
 
 
 # --- threads: ticket I10 and T15 ------------------------------------------------------------------------------
@@ -1135,7 +1183,9 @@ def logs_classes():
 THREADS, ROUNDS = 12, 6
 
 
-def test_threads_reserve_and_settle_counts_match_and_no_reservation_gets_another_calls_cost(meter_cls):
+def test_threads_reserve_and_settle_counts_match_and_no_reservation_gets_another_calls_cost(
+    meter_cls,
+):
     """Ticket I10 and T15 (as far as the ticket claims: the gate has no state of its own, the meter and the
     client look after theirs): 12 threads, each with its own bound gate from ONE `ModelGate`, 6 calls each,
     plus 12 threads sharing ONE bound gate. Every call makes one reservation and one settle; each
@@ -1188,7 +1238,11 @@ def test_threads_reserve_and_settle_counts_match_and_no_reservation_gets_another
         assert cost == Decimal(number).scaleb(-3), f"reservation {rid} got the cost of another call"
     for agent, worst, run in meter.reserve_calls:
         thread = (int(worst) - 1000) // 100
-        expected = ("agent-shared", "run-shared") if thread >= THREADS else (f"agent-{thread}", f"run-{thread}")
+        expected = (
+            ("agent-shared", "run-shared")
+            if thread >= THREADS
+            else (f"agent-{thread}", f"run-{thread}")
+        )
         assert (agent, run) == expected
 
 
