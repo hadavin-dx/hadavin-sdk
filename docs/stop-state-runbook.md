@@ -238,6 +238,23 @@ runtime and not the reset login):
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
 
+### The alert: `check_expired_holds`
+
+A provider outage or a revoked key leaves the worst-case hold of every failed call booked (the safe direction) until an
+operator releases it; nothing else says so, the agents simply hit `daily_budget`. The tick step `check_expired_holds`
+(the last step, every tick, runtime login) makes it loud. It calls the read-only function `hadavin_expired_holds`
+(0011; the runtime has no right on `spend_reservations`, so the function answers: agent, day, number of holds and
+their summed amount, at most 1000 groups, no hold or run id). When any expired, unreleased hold was closed more than
+`EXPIRED_HOLD_ALERT_AFTER_S` ago (default 6 hours: past the one hour in which a late settle can still book the real
+cost and the release is refused, with room for an operator to respond) the step fails: an ERROR line
+`check_expired_holds <agent> <day>: N holds, X USD` per group and `step=check_expired_holds ...` from the tick, exit 1,
+the same text in `tick_state`. It is quiet when there are none, and clears on the first tick after the release.
+
+What it means: those holds still count against the agent's day and month counters although their calls never
+settled. Recover with `hadavin-sdk release-expired AGENT --day YYYY-MM-DD --by WHO` (the release login, steps
+above) for each agent and day named in the alert. If the call really did cost money (a provider that billed a failed
+call), release only after checking: a release lowers the counter and a later settle of that hold is then not found.
+
 ## Caps live in a table the runtime cannot write
 The day and month spend cap of every agent is read by the database from the table `hadavin_caps` (migration 0011).
 The runtime login has no right on that table and cannot run `hadavin_set_cap`; only the reset login can write a cap.
