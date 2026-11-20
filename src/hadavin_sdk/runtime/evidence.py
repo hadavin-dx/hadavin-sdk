@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import functools
 import re
+import unicodedata
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -53,8 +54,17 @@ class Checked:
 Validator = Callable[[Run, AgentRecord, ActionContract, ToolCall, str, dict[str, str]], Checked]
 
 
+def _composed(text: str) -> str:
+    """``runmap.canonical`` (NFKC one character at a time, so match positions stay exact for the redactor) followed by NFC over the whole text. The
+    redactor needs the per-character form; a comparison does not, and it must treat ``e`` + U+0301 and the precomposed U+00E9 as the same letter
+    (whole-text NFKC did before P1b, so a decomposed text no longer found a precomposed identifier). NFC joins a base letter and its combining
+    mark and nothing else, so the comparison stays EXACT: no look-alike and no dropped mark is read (see ``normalise``). ASCII is its own form."""
+    canon = runmap.canonical(text)
+    return canon if canon.isascii() else unicodedata.normalize("NFC", canon)
+
+
 def normalise(text: str) -> str:
-    return runmap.canonical(text).casefold().strip()
+    return _composed(text).casefold().strip()
 
 
 # The value being looked for is NEVER put into a regular expression: `re` keeps every pattern it compiles in a
@@ -84,8 +94,8 @@ def contains(text: str, value: str, *, casefold: bool = False, suffix: str | Non
     ignore case. A name followed by `suffix` (a restricted pattern the tool's manifest declares for a generated
     suffix, such as a pod's `-7f9d8c6b4-xk2lp`) also counts; without one a name never matches the front of a
     longer one."""
-    want = runmap.canonical(value).strip()
-    hay = runmap.canonical(text)
+    want = _composed(value).strip()
+    hay = _composed(text)
     if not want:
         return False
     if m := _NUMERIC.fullmatch(want.casefold()):
@@ -148,8 +158,8 @@ def grounded(
         if not isinstance(value, str):
             return False  # an identifier that is not a string cannot be grounded
         if (
-            runmap.canonical(value) != value
-        ):  # the value the executor gets is the one that is compared
+            _composed(value) != value
+        ):  # the value the executor gets is the one that is compared (a decomposed identifier is refused, as before P1b)
             return False
         redacted = runmap.redact_text(
             value, mapping
