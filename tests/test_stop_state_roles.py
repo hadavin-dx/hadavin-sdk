@@ -464,7 +464,11 @@ def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
         assert db.execute("SELECT to_regclass('kill_switch_stops')").fetchone()[0] is None
         db.execute('UPDATE kill_switch SET "on" = TRUE, "by" = \'user:before\'')
     roles = {"runtime_role": w.runtime, "reset_role": w.reset, "purge_role": w.purge}
-    assert migrate(old, **roles) == ["0006_stop_state", "0007_spend_reservations"]
+    assert migrate(
+        old, **roles
+    ) == [  # every file from 0006 on: a new migration never breaks this test
+        p.stem for p in sorted(migrate_mod.MIGRATIONS.glob("*.sql")) if p.stem >= "0006"
+    ]
     rt = w.store(w.runtime, old)
     ks = rt.get_kill_switch()
     assert (ks.on, ks.by) == (True, "user:before")

@@ -204,7 +204,7 @@ class SpendCapExceeded(RuntimeError):
 def reserve_spend(self, reservation_id: str, agent_id: str, day: date, usd: Decimal, *,
                   day_cap: Decimal, month_cap: Decimal, run_id: str | None = None) -> None:
     """Book usd on day and month or book nothing: SpendCapExceeded, StaleState (id exists), ValueError (amount)."""
-def settle_spend(self, reservation_id: str, actual_usd: Decimal) -> SpendReservation:
+def settle_spend(self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None) -> SpendReservation:  # agent_id added by ORDER 020 m2
     """The stored row after the call. NotFound for an unknown id; ValueError for a bad amount."""
 def expire_spend_reservations(self, older_than_s: int) -> int: ...
 def purge_spend_reservations(self, before: datetime) -> int: ...

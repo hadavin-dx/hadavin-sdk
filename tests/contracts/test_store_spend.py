@@ -630,11 +630,15 @@ def test_the_four_methods_have_the_signatures_of_the_ticket():
     assert (
         "created_at" not in reserve
     )  # invariant 10: the age is the database clock's, never the caller's
-    assert list(inspect.signature(Store.settle_spend).parameters) == [
+    settle = inspect.signature(Store.settle_spend).parameters
+    assert list(settle) == [
         "self",
         "reservation_id",
         "actual_usd",
+        "agent_id",  # ORDER 020 m2: optional, keyword-only; another agent's row is NotFound
     ]
+    assert settle["agent_id"].kind is inspect.Parameter.KEYWORD_ONLY
+    assert settle["agent_id"].default is None
     assert list(inspect.signature(Store.expire_spend_reservations).parameters) == [
         "self",
         "older_than_s",
