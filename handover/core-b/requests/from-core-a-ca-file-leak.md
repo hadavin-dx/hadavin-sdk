@@ -12,3 +12,6 @@ a failed connect).
 Wanted (store owner): remove the file after the connection has used it (`finally` after connect, or read the PEM into
 `ssl` context / `sslrootcert` bytes without a file), or keep one file per store object and delete it on close.
 core-a did not edit this file.
+
+## Added 17:27 (rev-dfix27-r4): store CA path
+worker.py:994-999 with store/postgres.py:136-146: the store's own sslrootcert is passed to libpq as a path. If libpq reports an unreadable or missing root cert as OperationalError (unverified), the worker treats it as "store down" and retries every 5 s forever (/health 503, only the class name logged). Please make the store raise a ConfigError (not a connectivity error) for an unreadable sslrootcert/ca_file, then the worker exits 2 (d-fix26/27 handle that).
