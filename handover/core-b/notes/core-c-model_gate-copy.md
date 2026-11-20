@@ -1,4 +1,4 @@
-# COPY for reviewers, read-only: core-c's gate module as pushed on origin/cloud/core-c at 619a3e5, marked by core-c 'work in progress, not verified'. Not core-b's code.
+# COPY for reviewers, read-only: core-c's gate module on origin/cloud/core-c at 93f7f24 (core-a's contract test passed 201 of 201 on it, per the lead). Not core-b's code.
 ```python
 """The model gate: one wrapper around the model client (step F).
 
@@ -48,14 +48,18 @@ from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import AuditEvent, Reply
 
 # ======================================================================================================
-# ASSUMED INTERFACE (ii): switch here when core-b publishes it
-# `Meter` mirrors INTERFACE (ii) as the lead published it (ORDER 006; inputs/draft-ticket-F-store-with-
-# INTERFACE-ii.md lines 113-135). It is a local structural Protocol: `limits.SpendRefused` does not exist
-# yet and is NOT imported; its `.reason` is read with getattr. Nothing outside this block names a meter
-# method, an audit string or the worst_case arguments.
+# INTERFACE (ii), version 2 (README 2.1), as core-b PUBLISHED it: switch here if it changes
+# `Meter` mirrors handover/core-c/inputs/interfaces-from-core-b/ii_meter.py line for line (same method names,
+# argument order and keywords) and follows the ten contract points of the README.md beside it. That file is a
+# signature file, not package code, and `limits.SpendRefused` is not in src/hadavin_sdk/limits.py yet, so the
+# Protocol is kept here as a local structural one and SpendRefused is NOT imported: its `.reason` is read with
+# getattr. When step F lands them, import both from hadavin_sdk.limits and delete this copy. Nothing outside
+# this block names a meter method, an audit string or the worst_case arguments.
 # ------------------------------------------------------------------------------------------------------
 # reserve: returns a reservation id only after the worst case is booked; ANY exception means no model call.
-# settle: returns the overshoot; the first call for a reservation wins.
+# settle: returns the overshoot; the first call for a reservation wins. If it raises (the store is down, or
+# NotFound for an id it does not know), the reply is returned anyway and reserve is never retried. The store
+# adds the settled cost to the run's cost: the gate adds nothing anywhere else.
 # THE ONE SETTLE RULE (ORDER 011; it replaces ORDER 006 item 8):
 #   (a) a reply came back with a usable cost            -> settle that cost;
 #   (b) the adapter MARKED the error as refused before any response (`refused_before_response`)
@@ -64,7 +68,11 @@ from hadavin_sdk.models import AuditEvent, Reply
 #       exception, KeyboardInterrupt / SystemExit, an abandoned thread, a reply whose cost is missing,
 #       negative or not a number)                       -> NO settle: the worst case stays booked and the
 #                                                          store's sweep closes the reservation.
-# worst_case: supplied by the installer; it resolves the route name and covers the client's retries.
+#   README contract 3 ("a request that was refused before sending and cost nothing: settle 0") is rule (b);
+#   contract 4 ("real cost unknown: do NOT settle"; the sweep closes the row after 3600 seconds) is rule (c).
+# worst_case: README contract 10 makes the amount the gate's job. The gate takes the function from the
+# installer (core-b offers `llm.common.worst_case_usd` in the install ticket); it must cover system, messages,
+# tool schemas and documents at the input price plus max_tokens at the output price, times max_attempts.
 
 
 class Meter(Protocol):
@@ -96,18 +104,33 @@ RESULT_FAILED = "failed"
 CODE_GATE_REFUSED = "gate_refused"
 CODE_MASK_REFUSED = "mask_refused"
 CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
-CODE_PROVIDER_REFUSED = "provider_refused"  # rule (b): marked refused before any response, settled at 0
+CODE_PROVIDER_REFUSED = (
+    "provider_refused"  # rule (b): marked refused before any response, settled at 0
+)
 CODE_PROVIDER_ERROR = "provider_error"  # rule (c): an unmarked ProviderError, NOT settled
 CODE_PROVIDER_EXHAUSTED = "provider_exhausted"  # rule (c): retries used up, NOT settled
 CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the client, NOT settled
 CODE_CALL_INTERRUPTED = "call_interrupted"  # rule (c): KeyboardInterrupt, SystemExit, NOT settled
 CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
 CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
-# The reasons INTERFACE (ii) publishes for `SpendRefused.reason`. Only these become an audit error code: a
-# `.reason` on any other exception (urllib's URLError has one) is never copied.
+# The reasons ii_meter.py publishes for `SpendRefused.reason` (README contract 1). Only these are copied from
+# a meter's exception into an audit row: a `.reason` on any other exception that is not one of them (urllib's
+# URLError has one) is never copied.
 SPEND_REASONS = frozenset(
     {"kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount"}
 )
+# Every error code a row of this module can carry: the published reasons plus the gate's own.
+AUDIT_CODES = SPEND_REASONS | {
+    CODE_MASK_REFUSED,
+    CODE_RESERVE_REFUSED,
+    CODE_PROVIDER_REFUSED,
+    CODE_PROVIDER_ERROR,
+    CODE_PROVIDER_EXHAUSTED,
+    CODE_CALL_FAILED,
+    CODE_CALL_INTERRUPTED,
+    CODE_COST_UNKNOWN,
+    CODE_SETTLE_FAILED,
+}
 
 
 def refused_before_response(exc: BaseException) -> bool:
@@ -127,7 +150,7 @@ def usable_cost(reply: Any) -> Decimal | None:
     return None
 
 
-# END OF ASSUMED INTERFACE (ii)
+# END OF INTERFACE (ii)
 # ======================================================================================================
 
 
@@ -246,7 +269,9 @@ class BoundGate:
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation)
             raise
         cost = usable_cost(reply)
-        if cost is None:  # rule (c): the call is paid and its reply is returned; nothing to settle with
+        if (
+            cost is None
+        ):  # rule (c): the call is paid and its reply is returned; nothing to settle with
             self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation)
         else:  # rule (a)
             self._settle(reservation, cost, RESULT_OK, None)
