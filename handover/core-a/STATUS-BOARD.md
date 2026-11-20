@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:28:07Z
+UPDATED_UTC: 2026-11-20T11:28:19Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 81
 ITEMS_OPEN: 23
 PERCENT: 81
 AGENTS_RUNNING: 2
-CAPACITY: load 2.23 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 58G 17%; 592M /home/user/hadavin-sdk; 950M /tmp/claude-0; 182M /root/.cache
+CAPACITY: load 2.27 of 4 cores (1-minute average), mem 1.3/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 12G 58G 17%; 592M /home/user/hadavin-sdk; 959M /tmp/claude-0; 182M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
-FAILED: 10:48 UTC, BATCH9 (final tree, whole suite, REQUIRE_PG=1 -n 3): 13 failed: 10 strict-mode by design (pass on the combined tree) + dblink (needs PG default socket) + brand string (the lead's BRIEF-PREAMBLE.md) + ONE NEW: tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]: a 2xx status with an EMPTY body (JSONDecodeError at line ~822), passed in BATCH7/BATCH8 and all builder runs: agent flake2 investigates (hypothesis: worker killed mid-answer = truncated response; NOT assumed, NOT skipped, NOT weakened). || 11:07 LEAD ORDER: the pg-kill failure is treated as a REAL defect until proven otherwise (my 'test race' verdict rests on reading + one isolated client check, not on a reproduction): A-repro (20 runs + 40-run harness), B-read (analysis), then C-single-write (server hardening); D is NOT tagged green until closed.
+FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T11:27:19Z (the push before this board)
+PUSHED_UTC: 2026-11-20T11:28:11Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -111,12 +111,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 18818s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 18818s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 18818s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 18818s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 18818s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 18818s ago | running | matched by name in ps |
+| 6104 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 10s ago | running | matched by name in ps |
+| 6130 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 9s ago | running | matched by name in ps |
+| 6783 | postgres: postgres postgres 127.0.0.1(38138) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 6784 | postgres: postgres postgres 127.0.0.1(38152) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 6786 | postgres: postgres postgres 127.0.0.1(38176) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 6787 | postgres: postgres postgres 127.0.0.1(38192) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 18831s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 18830s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 18830s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 18830s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 18830s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 18830s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +184,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 11:28 BATCH10 (independent, after the one-write fix): whole suite 12 failed / 12366 passed: the SAME 12 as BATCH7/8 (10 strict-mode by design, dblink env, brand string in YOUR BRIEF-PREAMBLE.md): the pg-kill test passed in the suite; combined tree result follows from the same agent. Review of the one-write change: no Blocker (nits fixed). Remaining open: the blocked mutant run 19 (owner go-ahead).
 - 11:16 pg-kill empty-body 2xx CLOSED on my side, 3 numbers: CAUSE (by reading, not reproduced in 60 serial runs): 4 separate writes per answer + a kill between them; FIX d-fix13: one write per answer; 20-RUN COUNT AFTER THE FIX: 20 PASS 0 FAIL (raw/REPRO-pgkill-after-fix-20.log); MUTANT: G34 (buffering removed) killed by test_every_answer_is_one_write[202], run alone (the full mutant script still cannot start: the blocked G33d anchor). The new tests also fail on the old code (29 of 49) and the golden-byte tests pass on both (wire equality). A fresh read-only review of the change runs now (rev-1write), BATCH10 (independent whole suite) after it. D is not tagged green by me until the review is clean.
 - 11:10 REPRO COUNTS (A-repro): the pg-kill id: 20 runs 20 PASS 0 FAIL (log raw/REPRO-pgkill-20.log); 40-run harness with the OLD client behaviour (truncated 2xx returned as 2xx + partial body): 40 complete answers, 0 truncated, 0 no answer (raw/REPRO-pgkill-incomplete.log). So the failure is NOT reproducible serially (60 runs), only seen once under -n 3 load in BATCH9; the mechanism (4 separate writes, a kill between them) is shown by reading the stdlib and our server, not by a run. C-single-write removes the mechanism anyway; I will then run the 40-run harness UNDER CPU LOAD before and after (the load case A did not try) and post both counts.
 - 11:09 pg-kill empty-body 2xx: CAUSE found by reading (B-read): the server sends each answer as 4 separate writes (wsgiref, wbufsize 0); a kill after the status line leaves a bare 'HTTP/1.0 202 Accepted' and http.client returns 2xx with an empty body, no exception. NOT a lost-answer path for the guarantee (the run row is created before the answer is written, in every interleaving) but a real wire-level defect (a client cannot tell a truncated 2xx from a complete one). FIX: one write per answer (C-single-write, started 11:09, 3rd agent). A-repro: 20 of 20 PASS with the client guard in place (that masks it); its 40-run harness with the OLD client behaviour is still running. After the fix: 20-run count + a mutant G34 (if the permission classifier lets me edit the mutants file; the earlier edit was denied) will be on the board.
