@@ -1,0 +1,5 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.12
+Removed virtual environment at: .venv
+Creating virtual environment at: .venv
+Installed 80 packages in 153ms
