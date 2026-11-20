@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import Context, Decimal, localcontext
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
 from urllib.parse import urlsplit
@@ -63,6 +63,13 @@ def _money(v: object) -> object:
     if isinstance(v, float):
         # ValueError, not TypeError: pydantic turns only ValueError into a validation error.
         raise ValueError("money must be a decimal string, not a float")  # noqa: TRY004
+    if isinstance(v, str) and not (
+        v.isascii() and v.strip() == v and "_" not in v and v.isprintable()
+    ):
+        # pydantic reads "5_0" as 50, " 5 " as 5 and non-ASCII digits as digits: a typo or a hidden digit
+        raise ValueError(
+            "a price must be written with ASCII digits only (no spaces, underscores or other scripts)"
+        )
     return v
 
 
@@ -92,7 +99,14 @@ class Route(_Strict):
             raise ValueError("a price must not be negative")
         if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
             raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
-        if v != v.quantize(Decimal("1E-6")):
+        try:
+            with localcontext(
+                Context(prec=defaults.MONEY_DECIMAL_PRECISION)
+            ):  # not the caller's precision
+                fine = v == v.quantize(Decimal("1E-6"))
+        except ArithmeticError as exc:
+            raise ValueError("a price could not be checked for decimal places") from exc
+        if not fine:
             raise ValueError("a price may have at most 6 decimal places")
         return v
 
@@ -560,6 +574,11 @@ def _sends_text_out(b: Backends) -> list[str]:
     return out
 
 
+def _plain(name: str) -> str:
+    """A route name for an error line: control characters escaped, so a name cannot forge a line."""
+    return repr(name)[1:-1]
+
+
 def _today() -> date:
     return datetime.now(UTC).date()  # a function, so a test can set the day
 
@@ -571,7 +590,7 @@ def _price_refusals(cfg: Config) -> list[str]:
     out = []
     if live or cfg.backends.llm.kind != "fake":
         out = [
-            f"routes.{name}.{field}: a zero price is allowed only for the fake llm kind in demo"
+            f"routes.{_plain(name)}.{field}: a zero price is allowed only for the fake llm kind in demo"
             for name, route in sorted(cfg.routes.items())
             for field in ("input_usd_per_mtok", "output_usd_per_mtok")
             if getattr(route, field) == 0
@@ -681,5 +700,11 @@ def load_config(config_dir: Path | None = None) -> Config:
         raise
     except ValidationError as exc:
         raise ConfigError(_validation_text(exc)) from exc
+    except (
+        ArithmeticError
+    ) as exc:  # a decimal error is not a ValueError: never let it out as a traceback
+        raise ConfigError(
+            f"routes: a price field could not be checked ({type(exc).__name__})"
+        ) from exc
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(str(exc)) from exc
