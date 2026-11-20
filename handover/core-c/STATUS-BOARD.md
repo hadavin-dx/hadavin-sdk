@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:44:05Z
+UPDATED_UTC: 2026-11-20T15:49:15Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:58Z full non-perf suite at idle on cloud/core-c c16ed1f42: 16071 passed, 561 skipped, 61 xfailed, 2 failed in 425 s: (1) test_no_vendor_brand_string_is_tracked = 'Port.io' in lead file handover/BRIEF-PREAMBLE.md (lead's), (2) test_k5_recorded_answers_keyed_by_redacted_document: the pii recording was keyed by an old LEAKY redaction ('<PHONE_1> 678'); current redaction masks the phone whole; recording re-keyed and pushed (recording-related tests 1410 passed). Agents alive 0. Perf-marked tests: re-run at idle next. 15:50Z per owner order 15:43: core-a takes grant tests and cfull fixes; I started NO more of them. Already done before the order and pushed: grant tests re-pinned vs core-b head 133803834 on wip/cloud-core-c/grants b55d21865 (117 passed on PG16; core-a can take it); cfull fixes fdfa/py3.12/E22 were fixed earlier on cloud/core-c, perf re-run idle pending. Agents alive 0; idle full suite finishing (
-BOOT_ID: 8493e966
+STATE: 16:01Z agents 0 (one heavy run: perf-marked tests at idle, single process, started 16:01). Lanes 1-2 are core-a's (I started none; grant re-pin already on wip/cloud-core-c/grants b55d21865). ONE head cloud/core-c 2552bcc95. F-install blockers need NO new builder: NO_MAP request 3, usd_cap in SPEND_REASONS, mark on ProviderExhausted are built, tested and merged on cloud/core-c; the mark is inert until core-b's retry layer sets it (core-b action); K5 is Q17 (lead: which K5 item; core-a's K5 branch already merged, core-c owes none). Full non-perf suite 16071 passed, 2 failed (Port.io lead file; k5 recording fixed in 2552bcc95).
+BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 0
-CAPACITY: load 1.7 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
+CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
-CONTAINER_RESTARTS: 0
-INTERRUPTED: 
+CONTAINER_RESTARTS: 1
+INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:44:01+00:00
+PUSHED_UTC: 2026-11-20T15:44:05+00:00
 
-(21:14 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:19 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -110,7 +110,7 @@ PUSHED_UTC: 2026-11-20T15:44:01+00:00
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
 |---|---|---|---|---|
-| none | | | | |
+| 2026-11-20T15:49:15Z | container restart: BOOT_ID 8493e966 -> d22e08d6 | see AGENTS | not yet | to be checked by the session |
 
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
