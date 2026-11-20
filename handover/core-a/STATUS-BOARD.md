@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:36:33Z
+UPDATED_UTC: 2026-11-20T05:38:03Z
 SESSION: core-a
 ORDER: 006 (002 to 005 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 14
 ITEMS_OPEN: 6
 PERCENT: 79
 AGENTS_RUNNING: 3
-CAPACITY: load 0.44 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.60 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.3G 60G 14%; 297M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: none
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: codebase review lands: resolve both reviews into tickets/D-review-1.md, fix ticket D text, unresolved to ESCALATIONS.md; worker and skeleton land: align skeleton with real signatures, then ONE batch run
-PUSHED_UTC: 2026-11-20T05:36:25Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:36:36Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -52,9 +52,13 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 7058 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 48s ago | running | matched by name in ps |
-| 7401 | uv run --all-extras --group test pytest tests/triggers/test_t5_cases.p | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 7406 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 6s ago | running | matched by name in ps |
+| 8322 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 35s ago | running | matched by name in ps |
+| 8783 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 24s ago | running | matched by name in ps |
+| 8784 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 24s ago | running | matched by name in ps |
+| 9086 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 9091 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 9182 | uv run --all-extras --group test pytest tests/triggers -q -p no:cachep | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 9185 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 8s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
