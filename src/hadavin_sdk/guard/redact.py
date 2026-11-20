@@ -828,9 +828,22 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
-# An ESCAPED placeholder look-alike, exactly as `runmap.escape_placeholders` writes one in untrusted text
-# (`<SECRET_1>` becomes U+2039 `SECRET_1` U+203A): not a placeholder, and not a value either (see _mask).
-_ESCAPED_LOOKALIKE = re.compile("\u2039[A-Za-z][A-Za-z0-9]*_[0-9]+\u203a")
+# Own output (G7 + fix round 1): a SECRET value made of nothing but tokens this redactor wrote. One anchored shape,
+# built from the redactor's own labels (upper case, as it issues them; an escaped look-alike of any other kind or case
+# is not its own) and ASCII digits only (`runmap._LOOKALIKE` uses `\d`, so a look-alike with a non-ASCII digit is
+# escaped there but NEVER exempt here: the redactor writes ASCII digits). A token is a genuine `<KIND_n>` or an
+# ESCAPED look-alike as `runmap.escape_placeholders` writes one (`<SECRET_1>` becomes U+2039 `SECRET_1` U+203A),
+# separated by spaces, tabs, `;` or `,`; optionally the value ends in a placeholder opening cut off by
+# `tools.error_reason`'s length cut (`<SECRET_1`, `<SECRET_`, `<SEC`). The whole value must match: any other
+# character, a mixed form, an unknown kind or a glued secret is masked whole, as before G7.
+_KIND = "|".join(sorted(_LABELS, key=len, reverse=True))
+_OPENINGS = "|".join(
+    sorted({lab[:n] for lab in _LABELS for n in range(1, len(lab) + 1)}, key=len, reverse=True)
+)
+_OWN_TOKEN = rf"(?:<(?:{_KIND})_[0-9]+>|\u2039(?:{_KIND})_[0-9]+\u203a)"
+_OWN_OUTPUT = re.compile(
+    rf"[ \t;,]*(?:{_OWN_TOKEN}[ \t;,]*)*(?:<(?:{_KIND})_[0-9]*|<(?:{_OPENINGS}))?"
+)
 # A terminal escape sequence (colour, cursor, title): not text, and glued to a key it hid the key from every pattern
 # that needs a word boundary - `ESC[1mAKIA...` read as `mAKIA...` (ninth review, 2026-10-01).
 _ANSI = re.compile(
@@ -979,15 +992,11 @@ class _Redactor:
             r"[A-Za-z0-9]", _PLACEHOLDER.sub("", original)
         ):
             return m.group(0)
-        # Nor is a value of escaped look-alikes alone (G7, ORDER 012): untrusted redaction run over its own output
-        # (a tool's error text is redacted with a throwaway map, then with the run's) escapes the first pass's
-        # placeholders, and `password=` before the escaped token made it a new secret: a junk entry in the run's map.
-        # Only when nothing else is in the value but spaces, `;` and `,` between tokens: with any other character
-        # besides (a secret glued to a look-alike, be it one letter, a digit or punctuation only) the value is masked
-        # whole, as before. No entry is made, so the token restores to nothing.
-        if _ESCAPED_LOOKALIKE.search(original) and not _ESCAPED_LOOKALIKE.sub(
-            "", _PLACEHOLDER.sub("", original)
-        ).strip(" \t;,"):
+        # Nor is a SECRET value of this redactor's own output alone (G7, ORDER 012; hardened in fix round 1): untrusted
+        # redaction run over its own output (a tool's error text is redacted with a throwaway map, then with the
+        # run's) escapes the first pass's placeholders, and `password=` before the escaped token made it a new secret:
+        # a junk entry in the run's map. The shape is `_OWN_OUTPUT`, matched whole; no entry is made.
+        if label == "SECRET" and original.strip(" \t;,") and _OWN_OUTPUT.fullmatch(original):
             return m.group(0)
         placeholder = (
             self.reverse[full] if full in self.reverse else self._place(label, full, original)
