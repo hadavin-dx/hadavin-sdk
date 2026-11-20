@@ -52,6 +52,31 @@ def sha256_hex(obj: Any) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
 
 
+MAX_SPEND_USD = (
+    10**9
+)  # exclusive upper bound of one amount; the same bound as the table CHECK of 0007
+MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
+MAX_SPEND_EXPONENT = (
+    9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
+)
+
+
+def check_spend_amount(usd: object) -> Decimal:
+    """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+    bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+    ValueError and nothing is booked."""
+    if (
+        type(usd) is not Decimal
+        or not usd.is_finite()
+        or not 0 <= usd < MAX_SPEND_USD
+        or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+    ):
+        raise ValueError(
+            "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+        )
+    return usd
+
+
 class Shape(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
@@ -304,10 +329,18 @@ class Reply(Shape):
     tool_calls: list[ToolCall] = []
     input_tokens: int = 0
     output_tokens: int = 0
-    cost_usd: Decimal = Decimal(0)
+    # None = the cost is unknown. Anything else must pass `check_spend_amount`: an invalid cost cannot be built.
+    cost_usd: Decimal = Decimal(
+        0
+    )  # None (cost unknown) arrives with the model gate install (Y-integration), not on this branch
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0
+
+    @field_validator("cost_usd", mode="before")
+    @classmethod
+    def _cost_is_valid(cls, v: object) -> object:
+        return check_spend_amount(v)
 
 
 class Verdict(Shape):
@@ -318,6 +351,11 @@ class Verdict(Shape):
     cost_usd: Decimal = Decimal(
         0
     )  # a model-backed detector's call (llm_judge), charged by the caller
+
+    @field_validator("cost_usd", mode="before")
+    @classmethod
+    def _cost_is_valid(cls, v: object) -> object:
+        return check_spend_amount(v)
 
 
 class RunResult(Shape):

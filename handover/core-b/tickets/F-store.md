@@ -445,3 +445,12 @@ from `reply()`/FakeLLM, which are now valid by construction.
   OPEN hold below its reserved amount lowers the counters legitimately, so the counters may fall by the holds settled
   in the same transaction and never below the booked holds. Known limit: non-hold charges can be lowered by that
   amount. Tests: tests/test_money_guard_pg.py, tests/test_money_guard_mutants.py.
+
+### Update (F8): model-layer validators
+`Reply.cost_usd` (None allowed = unknown cost) and `Verdict.cost_usd` now carry a `field_validator` (mode "before") that applies
+`check_spend_amount` (moved into models.py with MAX_SPEND_*; store/protocol.py re-exports it, no import cycle). With the
+validators the call sites can no longer see an invalid cost from a Reply/Verdict built by a custom LLM or Detector: it is a
+ValueError at construction (inside the provider boundary / `injection_check`'s fail-closed except). The try/except ValueError
+above remains a safety net and should still be part of the install commit. Caveat: a Reply with `cost_usd=None` now exists;
+agent_loop.py:513 must treat None as 0 (or abstain) before `Limits.charge`, and guard/judge.py:86,96 copies `reply.cost_usd`
+into a Verdict (None would be refused there: fail-closed, owner core-c should use `or Decimal(0)`).
