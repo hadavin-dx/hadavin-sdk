@@ -226,7 +226,7 @@ def test_an_amount_of_zero_is_booked_as_a_row_below_the_cap(store):
     rid = _reserve(store, "0", day_cap="1.00")
     assert _totals(store) == ZERO
     assert _rows(store)[rid].reserved_usd == 0
-    row, applied = store.settle_spend(rid, D("0.25"))
+    row, applied = store.settle_spend(rid, D("0.25"), agent_id=AGENT)
     assert applied and row.settled_usd == D("0.25")
     assert _totals(store) == (D("0.25"), D("0.25"))
 
@@ -294,7 +294,7 @@ def test_a_full_day_does_not_block_the_next_day_and_a_full_month_does(store):
 @pytest.mark.parametrize("actual", ["0", "0.40", "1.00", "1.75", "5.00"])
 def test_settle_lower_equal_and_higher_books_the_actual_amount(store, actual):
     rid = _reserve(store, "1.00", day_cap="3.00")
-    row, applied = store.settle_spend(rid, D(actual))
+    row, applied = store.settle_spend(rid, D(actual), agent_id=AGENT)
     assert applied is True
     assert (row.status, row.settled_usd, row.reserved_usd) == ("settled", D(actual), D("1.00"))
     assert row.closed_at is not None and row.closed_at >= row.created_at
@@ -304,7 +304,7 @@ def test_settle_lower_equal_and_higher_books_the_actual_amount(store, actual):
 
 def test_an_overshoot_blocks_every_later_reserve_of_that_day_until_the_next_day(store):
     rid = _reserve(store, "0.60", day_cap="1.00")
-    store.settle_spend(rid, D("1.50"))
+    store.settle_spend(rid, D("1.50"), agent_id=AGENT)
     assert _totals(store) == (D("1.50"), D("1.50"))
     _refused(store, MICRO, "day", day_cap="1.00")
     _refused(store, "0", "day", day_cap="1.00")
@@ -315,7 +315,7 @@ def test_an_overshoot_blocks_every_later_reserve_of_that_day_until_the_next_day(
 def test_settle_to_zero_releases_the_whole_booking(store):
     rid = _reserve(store, "1.00", day_cap="1.00")
     _refused(store, MICRO, "day", day_cap="1.00")
-    row, applied = store.settle_spend(rid, D(0))
+    row, applied = store.settle_spend(rid, D(0), agent_id=AGENT)
     assert applied and (row.status, row.settled_usd) == ("settled", D(0))
     assert _totals(store) == ZERO
     _reserve(store, "1.00", day_cap="1.00")
@@ -325,26 +325,29 @@ def test_settle_to_zero_releases_the_whole_booking(store):
 def test_settle_twice_the_first_wins_and_the_second_changes_nothing(store, second):
     run_id = _new_run(store)
     rid = _reserve(store, "1.00", run_id=run_id)
-    first, applied = store.settle_spend(rid, D("0.40"))
+    first, applied = store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert applied is True
-    again, applied_again = store.settle_spend(rid, D(second))
+    again, applied_again = store.settle_spend(rid, D(second), agent_id=AGENT)
     assert applied_again is False
     assert again == first and again.settled_usd == D("0.40")
     assert _rows(store)[rid] == first
     assert _totals(store) == (D("0.40"), D("0.40"))
     assert _cost(store, run_id) == D("0.40")
-    assert store.settle_spend(rid, D(second)) == (first, False)  # any number of times
+    assert store.settle_spend(rid, D(second), agent_id=AGENT) == (
+        first,
+        False,
+    )  # any number of times
 
 
 def test_settle_with_an_unknown_id_is_not_found_and_changes_nothing(store):
     rid = _reserve(store, "1.00")
     rows = _rows(store)
     with pytest.raises(NotFound):
-        store.settle_spend(new_id("res"), D("0.10"))
+        store.settle_spend(new_id("res"), D("0.10"), agent_id=AGENT)
     with pytest.raises(KeyError):  # NotFound is a KeyError (contract point 4)
-        store.settle_spend("res-unknown", D("0.10"))
+        store.settle_spend("res-unknown", D("0.10"), agent_id=AGENT)
     assert _rows(store) == rows and _totals(store) == (D("1.00"), D("1.00"))
-    assert store.settle_spend(rid, D("0.10"))[1] is True  # the store still works
+    assert store.settle_spend(rid, D("0.10"), agent_id=AGENT)[1] is True  # the store still works
 
 
 # --- amounts -------------------------------------------------------------------------------------------------------
@@ -385,10 +388,10 @@ def test_a_hostile_amount_on_settle_is_a_value_error_and_the_row_stays_open(stor
     rid = _reserve(store, "1.00", run_id=run_id)
     before = _rows(store)
     with pytest.raises(ValueError):
-        store.settle_spend(rid, HOSTILE[name])
+        store.settle_spend(rid, HOSTILE[name], agent_id=AGENT)
     assert _rows(store) == before and before[rid].status == "open"
     assert _totals(store) == (D("1.00"), D("1.00")) and _cost(store, run_id) == 0
-    assert store.settle_spend(rid, D("0.50"))[1] is True
+    assert store.settle_spend(rid, D("0.50"), agent_id=AGENT)[1] is True
 
 
 @pytest.mark.parametrize(
@@ -399,7 +402,7 @@ def test_an_amount_inside_the_bounds_is_booked_exactly_nothing_is_rounded(store,
     rid = _reserve(store, amount, day_cap=big, month_cap=big)
     assert _totals(store) == (D(amount), D(amount))
     assert _rows(store)[rid].reserved_usd == D(amount)
-    row, _ = store.settle_spend(rid, D(amount))
+    row, _ = store.settle_spend(rid, D(amount), agent_id=AGENT)
     assert row.settled_usd == D(amount) and _totals(store) == (D(amount), D(amount))
 
 
@@ -437,9 +440,9 @@ def test_settle_adds_the_actual_amount_to_the_cost_of_a_run_that_exists(store):
     first = _reserve(store, "1.00", run_id=run_id)
     second = _reserve(store, "2.00", run_id=run_id)
     assert _cost(store, run_id) == 0  # a reserve books nothing on the run
-    store.settle_spend(first, D("0.40"))
+    store.settle_spend(first, D("0.40"), agent_id=AGENT)
     assert _cost(store, run_id) == D("0.40")
-    store.settle_spend(second, D("2.75"))
+    store.settle_spend(second, D("2.75"), agent_id=AGENT)
     assert _cost(store, run_id) == D("3.15")  # the sum of the real amounts
     assert _cost(store, bystander) == 0
     assert _totals(store) == (D("3.15"), D("3.15"))
@@ -448,7 +451,7 @@ def test_settle_adds_the_actual_amount_to_the_cost_of_a_run_that_exists(store):
 def test_settle_with_a_run_id_that_has_no_run_row_moves_only_the_counters(store):
     bystander = _new_run(store)
     rid = _reserve(store, "1.00", run_id="run-" + "0" * 32)
-    row, applied = store.settle_spend(rid, D("0.40"))
+    row, applied = store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert applied and (row.status, row.settled_usd, row.run_id) == (
         "settled",
         D("0.40"),
@@ -463,7 +466,7 @@ def test_settle_with_a_run_id_that_has_no_run_row_moves_only_the_counters(store)
 def test_settle_without_a_run_id_touches_no_run(store):
     bystander = _new_run(store)
     rid = _reserve(store, "1.00")
-    row, applied = store.settle_spend(rid, D("0.40"))
+    row, applied = store.settle_spend(rid, D("0.40"), agent_id=AGENT)
     assert applied and row.run_id is None
     assert _cost(store, bystander) == 0 and _totals(store) == (D("0.40"), D("0.40"))
 
@@ -472,7 +475,7 @@ def test_a_replayed_settle_adds_to_the_run_cost_once(store):
     run_id = _new_run(store)
     rid = _reserve(store, "1.00", run_id=run_id)
     for amount in ("0.40", "0.40", "0.90"):
-        store.settle_spend(rid, D(amount))
+        store.settle_spend(rid, D(amount), agent_id=AGENT)
     assert _cost(store, run_id) == D("0.40")
 
 
@@ -482,10 +485,10 @@ def test_expired_then_settled_adds_the_real_amount_to_the_run_cost(store, actual
     rid = _reserve(store, "1.00", run_id=run_id)
     assert _expire_all(store) == 1
     assert _cost(store, run_id) == 0  # an expired, unsettled reservation is not in the run's cost
-    _, applied = store.settle_spend(rid, D(actual))
+    _, applied = store.settle_spend(rid, D(actual), agent_id=AGENT)
     assert applied is True
     assert _cost(store, run_id) == D(actual)
-    store.settle_spend(rid, D("9"))
+    store.settle_spend(rid, D("9"), agent_id=AGENT)
     assert _cost(store, run_id) == D(actual)
 
 
@@ -506,7 +509,7 @@ def test_expire_closes_old_rows_only_and_the_counters_do_not_move(store):
     _older(store, old, 7200)
     _older(store, other, 3700)
     _older(store, done, 7200)
-    settled, _ = store.settle_spend(done, D("0.10"))
+    settled, _ = store.settle_spend(done, D("0.10"), agent_id=AGENT)
     totals = _totals(store)
     assert totals == (D("3.35"), D("3.35"))
     assert store.expire_spend_reservations(3600) == 2
@@ -543,14 +546,14 @@ def test_an_expired_reservation_still_blocks_at_the_cap(store):
 def test_expired_then_settled_lower_settles_the_row_and_keeps_the_counters(store, actual):
     rid = _reserve(store, "1.00")
     assert _expire_all(store) == 1
-    row, applied = store.settle_spend(rid, D(actual))
+    row, applied = store.settle_spend(rid, D(actual), agent_id=AGENT)
     assert applied is True
     # what stays booked: after expiry the booking never goes down
     assert (row.status, row.settled_usd, row.reserved_usd) == ("settled", D("1.00"), D("1.00"))
     assert row.closed_at is not None
     assert _rows(store)[rid] == row
     assert _totals(store) == (D("1.00"), D("1.00"))
-    assert store.settle_spend(rid, D("5")) == (row, False)  # settled is terminal
+    assert store.settle_spend(rid, D("5"), agent_id=AGENT) == (row, False)  # settled is terminal
     assert _totals(store) == (D("1.00"), D("1.00"))
     assert _expire_all(store) == 0
 
@@ -559,11 +562,11 @@ def test_expired_then_settled_higher_raises_the_counters_to_the_actual(store):
     rid = _reserve(store, "1.00")
     keep = _reserve(store, "0.25")
     assert _expire_all(store) == 2
-    row, applied = store.settle_spend(rid, D("2.50"))
+    row, applied = store.settle_spend(rid, D("2.50"), agent_id=AGENT)
     assert applied is True
     assert (row.status, row.settled_usd, row.reserved_usd) == ("settled", D("2.50"), D("1.00"))
     assert _totals(store) == (D("2.75"), D("2.75"))
-    assert store.settle_spend(rid, D("0.10")) == (row, False)
+    assert store.settle_spend(rid, D("0.10"), agent_id=AGENT) == (row, False)
     assert _totals(store) == (D("2.75"), D("2.75"))
     assert _rows(store)[keep].status == "expired"
 
@@ -576,11 +579,11 @@ def test_purge_removes_settled_rows_only_and_keeps_an_expired_unsettled_hold(sto
     # stays until it is settled.
     open_old, settled, expired = (_reserve(store, "1.00") for _ in range(3))
     recent, open_new = _reserve(store, "0.50"), _reserve(store, "0.25")
-    store.settle_spend(settled, D("0.40"))
+    store.settle_spend(settled, D("0.40"), agent_id=AGENT)
     _older(store, expired, 7200)
     _older(store, open_old, 1800)
     assert store.expire_spend_reservations(3600) == 1
-    store.settle_spend(recent, D("0.50"))
+    store.settle_spend(recent, D("0.50"), agent_id=AGENT)
     for rid in (settled, expired):
         _closed_earlier(store, rid, 500)
     _older(store, open_old, 500 * 86400)  # very old and still open: never purged
@@ -599,13 +602,15 @@ def test_purge_removes_settled_rows_only_and_keeps_an_expired_unsettled_hold(sto
     assert _totals(store) == totals  # a purge never moves a counter
     assert store.purge_spend_reservations(cutoff) == 0
     with pytest.raises(NotFound):
-        store.settle_spend(settled, D("0.10"))  # the purged row is gone
-    assert store.settle_spend(open_old, D("0.10"))[1] is True  # the open one was kept
+        store.settle_spend(settled, D("0.10"), agent_id=AGENT)  # the purged row is gone
+    assert (
+        store.settle_spend(open_old, D("0.10"), agent_id=AGENT)[1] is True
+    )  # the open one was kept
 
 
 def test_purge_with_a_cutoff_in_the_future_still_keeps_open_rows(store):
     opened, closed = _reserve(store, "1.00"), _reserve(store, "1.00")
-    store.settle_spend(closed, D("1.00"))
+    store.settle_spend(closed, D("1.00"), agent_id=AGENT)
     assert store.purge_spend_reservations(now() + timedelta(days=1)) == 1
     assert set(_rows(store)) == {opened}
     assert _totals(store) == (D("2.00"), D("2.00"))
@@ -633,7 +638,7 @@ def test_a_settle_on_the_next_day_moves_only_the_day_and_month_of_the_reserve(st
     rid = _reserve(store, "1.00")
     today = now().date()
     assert today not in (DAY, NEXT) and (today.year, today.month) != (DAY.year, DAY.month)
-    row, applied = store.settle_spend(rid, D(actual))
+    row, applied = store.settle_spend(rid, D(actual), agent_id=AGENT)
     assert applied and row.day == DAY
     assert _totals(store) == (D(actual), D(actual))  # January 31 and January
     assert _totals(store, day=NEXT) == ZERO  # February 1 and February stay empty
@@ -647,7 +652,7 @@ def test_a_settle_when_the_clock_says_the_next_day_moves_only_the_reserved_day(
     assert memory_mod.now().date() == NEXT
     rid = _reserve(store, "1.00")
     _reserve(store, "0.30", day=NEXT)  # February has its own counter rows
-    row, applied = store.settle_spend(rid, D(actual))
+    row, applied = store.settle_spend(rid, D(actual), agent_id=AGENT)
     assert applied and row.day == DAY
     assert _totals(store) == (D(actual), D(actual))
     assert _totals(store, day=NEXT) == (D("0.30"), D("0.30"))
@@ -658,7 +663,7 @@ def test_expire_and_a_late_settle_act_on_the_stored_day(store):
     assert _expire_all(store) == 1
     assert _rows(store)[rid].day == DAY
     assert _totals(store) == (D("1.00"), D("1.00"))
-    store.settle_spend(rid, D("1.60"))
+    store.settle_spend(rid, D("1.60"), agent_id=AGENT)
     assert _totals(store) == (D("1.60"), D("1.60"))
     assert _totals(store, day=NEXT) == ZERO and _totals(store, day=now().date()) == ZERO
 
@@ -688,10 +693,10 @@ def test_the_four_methods_have_the_signatures_of_the_ticket():
         "self",
         "reservation_id",
         "actual_usd",
-        "agent_id",  # ORDER 020 m2: optional, keyword-only; another agent's row is NotFound
+        "agent_id",  # keyword-only and REQUIRED (M2); another agent's row is NotFound
     ]
     assert settle["agent_id"].kind is inspect.Parameter.KEYWORD_ONLY
-    assert settle["agent_id"].default is None
+    assert settle["agent_id"].default is inspect.Parameter.empty
     assert list(inspect.signature(Store.expire_spend_reservations).parameters) == [
         "self",
         "older_than_s",
@@ -750,3 +755,43 @@ def test_the_cap_error_carries_which_cap_it_was():
         exc = SpendCapExceeded(which)
         assert exc.which == which and str(exc) == f"{which} cap reached"
         assert isinstance(exc, RuntimeError)
+
+
+# --- the agent is required on settle; add_spend and reserve refuse the same days and agents on both stores ---------
+
+
+def test_settle_requires_an_agent_and_another_agents_hold_is_not_found(store):
+    rid = _reserve(store, "1.00")
+    with pytest.raises(TypeError):
+        store.settle_spend(rid, D("0.50"))  # type: ignore[call-arg]  # no agent-less path
+    for bad in (None, "", "a\x00b", 7):
+        with pytest.raises(ValueError, match="agent_id"):
+            store.settle_spend(rid, D("0.50"), agent_id=bad)  # type: ignore[arg-type]
+    with pytest.raises(NotFound):
+        store.settle_spend(rid, D("0.50"), agent_id=OTHER)
+    assert _rows(store)[rid].status == "open"
+    assert store.settle_spend(rid, D("0.50"), agent_id=AGENT)[1] is True
+
+
+@pytest.mark.parametrize(
+    ("agent", "day"),
+    [
+        ("", DAY),
+        ("a\x00b", DAY),
+        ("a\nb", DAY),
+        (None, DAY),
+        (AGENT, date(1969, 12, 31)),
+        (AGENT, date(1, 1, 1)),
+        (AGENT, "2025-01-01"),
+        (AGENT, datetime(2025, 1, 1, tzinfo=UTC)),
+    ],
+)
+def test_add_spend_and_reserve_refuse_the_same_bad_agent_or_day(store, agent, day):
+    """core-a M6: memory used to book what the database refuses."""
+    before = store.spend_totals(AGENT, DAY)
+    with pytest.raises(ValueError):
+        store.add_spend(agent, day, D(1))
+    with pytest.raises(ValueError):
+        store.reserve_spend(new_id("res"), agent, day, D(1), day_cap=BIG, month_cap=BIG)
+    assert store.spend_totals(AGENT, DAY) == before
+    assert _rows(store) == {}

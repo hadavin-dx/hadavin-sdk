@@ -80,7 +80,7 @@ def test_memory_settle_spend_booking():
     s.add_spend("a", DAY, D(0))
     s.reserve_spend("r1", "a", DAY, BIG, day_cap=D("99999"), month_cap=D("99999"))
     with low_precision():
-        s.settle_spend("r1", EXACT)
+        s.settle_spend("r1", EXACT, agent_id="a")
     assert s.spend_totals("a", DAY)[0] == EXACT
 
 
@@ -113,7 +113,7 @@ def test_limits_settle_overshoot():
     lim = Limits(MemoryStore(), Sink(), reg)
     rid = lim.reserve("a", BIG)
     with low_precision():
-        assert lim.settle(rid, EXACT) == TINY
+        assert lim.settle(rid, EXACT, agent_id="a") == TINY
 
 
 def test_evals_cost_sum_and_division(cfg_dir):

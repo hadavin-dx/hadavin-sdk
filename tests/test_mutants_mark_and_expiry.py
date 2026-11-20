@@ -80,9 +80,9 @@ def test_budget_late_settle_after_forfeit_can_only_raise_the_booking():
     budget = Budget(Decimal(100))
     rid = budget.reserve("a", Decimal(5), run_id="run-1")
     budget.forfeit("run-1")
-    assert budget.settle(rid, Decimal(1)) == Decimal(0)
+    assert budget.settle(rid, Decimal(1), agent_id="a") == Decimal(0)
     assert budget.spent == Decimal(5)  # the worst case stays
     rid2 = budget.reserve("a", Decimal(5), run_id="run-2")
     budget.forfeit("run-2")
-    assert budget.settle(rid2, Decimal(7)) == Decimal(2)
+    assert budget.settle(rid2, Decimal(7), agent_id="a") == Decimal(2)
     assert budget.spent == Decimal(12)

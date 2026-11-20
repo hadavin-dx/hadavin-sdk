@@ -163,8 +163,8 @@ REVOKE ALL ON FUNCTION hadavin_reserve_spend(TEXT, TEXT, DATE, NUMERIC, TEXT) FR
 -- booked on the counters: the actual amount, or for a row that was expired the larger of the actual and the reserved amount
 -- (after expiry the booking never goes down). The counters move by settled - reserved on the row's own day and month,
 -- day first. The run cost is added as the actual amount (a missing run row is ignored). An unknown id or another agent's id
--- (when p_agent is given) is HD002, the same error for both; a missing counter row is HD003. p_agent NULL means "any
--- agent" (the documented residual).
+-- is HD002, the same error for both; a missing counter row is HD003. p_agent is required: NULL is refused (22023), there
+-- is no agent-less settle.
 CREATE OR REPLACE FUNCTION hadavin_settle_spend(p_id TEXT, p_actual NUMERIC, p_agent TEXT)
 RETURNS TABLE (
     reservation_id TEXT, agent_id TEXT, day DATE, run_id TEXT, reserved_usd NUMERIC, settled_usd NUMERIC,
@@ -197,19 +197,19 @@ BEGIN
     IF p_actual IS NULL OR NOT (p_actual >= 0 AND p_actual < v_max_amount) OR pg_catalog.scale(p_actual) > v_max_decimals THEN
         RAISE EXCEPTION 'invalid argument: p_actual' USING ERRCODE = '22023';
     END IF;
-    IF p_agent IS NOT NULL AND (pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
-                                OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]') THEN
+    IF p_agent IS NULL OR pg_catalog.char_length(p_agent) NOT BETWEEN 1 AND v_max_id
+       OR p_agent ~ E'[\\x01-\\x1f\\x7f-\\x9f]' THEN
         RAISE EXCEPTION 'invalid argument: p_agent' USING ERRCODE = '22023';
     END IF;
 
     -- the claim: the lock reads the status BEFORE the change (after a lock wait READ COMMITTED re-checks the row, so a
     -- concurrent settle or expire cannot be misread)
     SELECT r.status INTO v_was FROM spend_reservations r
-     WHERE r.reservation_id = p_id AND (p_agent IS NULL OR r.agent_id = p_agent) AND r.status IN ('open', 'expired')
+     WHERE r.reservation_id = p_id AND r.agent_id = p_agent AND r.status IN ('open', 'expired')
        FOR UPDATE;
     IF NOT FOUND THEN
         SELECT * INTO rec FROM spend_reservations r WHERE r.reservation_id = p_id;
-        IF NOT FOUND OR (p_agent IS NOT NULL AND rec.agent_id <> p_agent) THEN
+        IF NOT FOUND OR rec.agent_id <> p_agent THEN
             RAISE EXCEPTION 'reservation not found' USING ERRCODE = 'HD002';
         END IF;
         reservation_id := rec.reservation_id; agent_id := rec.agent_id; day := rec.day; run_id := rec.run_id;
