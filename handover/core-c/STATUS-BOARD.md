@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:08:51Z
+UPDATED_UTC: 2026-11-20T15:10:35Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:08Z load 8.8. Agents 4: G4c (host patterns), G9b (E23 fixes), gm (gate mutants G13d/G13e/E19g/E19i), rec (g2/g3 leftovers into ONE head; core-c head has priority over core-a merge-c). cloud/core-c head = 7a602867f (contains G13c, G12c, G12b, G13b, G9, G4 P0-3, E9, E14, G8, G10; g2/g3 mostly cherry-picked, 4 commits under reconcile). F-install blockers: NO_MAP r3 merged; usd_cap in SPEND_REASONS merged; mark on ProviderExhausted merged (inert until core-b retry layer sets it); K5 Q17 waiting lead. Grant tests vs core-b 0006/0007: queued, need core-b store. Reviews: E9 r3, G9 r2 recorded (E23). cfull fixes done.
+STATE: 15:11Z FREEZE per lead 15:10: load was 9 (over cap). Heavy runs ALIVE (2): (1) G9b pytest settle-loop/g12 batch (/tmp/core-c-g9b), (2) rec pytest -n 3 batch (/tmp/core-c-rec). SIGSTOPped (resumed when load < 3.5): gm gate_mutants tree (/tmp/core-c-gm) and rec's older duplicate -x batch. No new heavy run starts. Timings taken 15:00-15:11 are INVALID-LOAD and are re-run idle. Light work now: reviews, merges, edits. 15:08Z load 8.8. Agents 4: G4c (host patterns), G9b (E23 fixes), gm (gate mutants G13d/G13e/E19g/E19i), rec (g2/g3 leftovers into ONE head; core-c head has priority over core-a merge-c). cloud/core-c head = 7a602867f (contains G13c, G12c, G12b, G13b, G9, G4 P0-3, E9, E14, G8, G10; g2/g3 mostly cherr
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 8.8 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+CAPACITY: load 8.4 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: Build G9b (E23 M1-M3), check gate mutants G13d/G13e/E19g/E19i, docs root pass, then G11 once lead decides E16.
-PUSHED_UTC: 2026-11-20T15:03:38+00:00
+NEXT: Wait for load < 3.5, SIGCONT gm; collect G9b/rec/G4c/gm; light work only meanwhile.
+PUSHED_UTC: 2026-11-20T15:08:52+00:00
 
-(20:38 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
