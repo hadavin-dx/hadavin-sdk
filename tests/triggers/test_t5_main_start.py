@@ -27,9 +27,8 @@ import pytest
 
 from tests.triggers.conftest import require_core_b
 
-require_core_b(
-    allow_module_level=True
-)  # with HADAVIN_REQUIRE_PG=1 a missing config is a failure, not a skip
+REQUIRES_CORE_B = True  # read by conftest: with HADAVIN_REQUIRE_PG=1 every test below FAILS when core-b is missing
+require_core_b(allow_module_level=True)  # without the switch: the whole module is skipped
 
 from hadavin_sdk.config import load_config
 from hadavin_sdk.registry import load_registry

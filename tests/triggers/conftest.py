@@ -60,13 +60,24 @@ def core_b_trigger_config() -> bool:
 
 def require_core_b(*, allow_module_level: bool = False) -> None:
     """Skip, or with HADAVIN_REQUIRE_PG=1 FAIL, when core-b's trigger config is not on this tree: a run handed in
-    as evidence cannot pass by skipping the tests that read a real config."""
+    as evidence cannot pass by skipping the tests that read a real config.
+
+    The failure happens at TEST time, never at collection (an error at collection stops the whole pytest run, and
+    nothing else is run). So at module level with the switch set this returns, and the module sets
+    `REQUIRES_CORE_B = True`: `pytest_pyfunc_call` below then fails each of its tests with the message."""
     if core_b_trigger_config():
         return
     reason = "core-b trigger config (TriggerSettings, Config.triggers) not on this tree"
     if strict():
-        message = f"{STRICT_VARIABLE}=1: {reason}; the tests that need it must run, not skip."
         if allow_module_level:
-            raise ImportError(message)  # a collection error: the run fails
-        pytest.fail(message, pytrace=False)
+            return  # each test of the module fails in `pytest_pyfunc_call`
+        pytest.fail(f"{STRICT_VARIABLE}=1: {reason}; the tests that need it must run, not skip.", pytrace=False)
     pytest.skip(reason, allow_module_level=allow_module_level)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> None:
+    """A test of a module that sets `REQUIRES_CORE_B = True` fails (strict) or skips here when core-b's config is
+    missing: in the call phase, so it is reported FAILED, not as a setup ERROR."""
+    if getattr(pyfuncitem.module, "REQUIRES_CORE_B", False):
+        require_core_b()
