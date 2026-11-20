@@ -241,7 +241,7 @@ Where the two differ, the TABLE wins on PostgreSQL (the memory store has no tabl
 
 Status: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
 The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
-The live loop's main model call reserves before and settles after (B2), so concurrent runs cannot overshoot the cap for that call; the ungated sites (see the CHANGELOG money block) can.
+The live loop's main model call reserves before and settles after (B2): the reservation bounds the booked worst case per call, a reply costing more is booked in full (an overshoot, audited), and the kill switch is read before the reserve, not atomic with it; the ungated sites (see the CHANGELOG money block) are not bounded.
 login holds no INSERT, UPDATE or DELETE on `spend`, `spend_month` or `spend_reservations`, SELECT on the two
 counters only, and nothing on the reservations; every booking is a SECURITY DEFINER function it may EXECUTE. The
 purge login holds no table right either and may only EXECUTE the purge function.
