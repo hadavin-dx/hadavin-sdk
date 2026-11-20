@@ -248,3 +248,28 @@ tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-grant-then-settle-lower] PASSED [ 91%]
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 92%]
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-refused-then-freed-by-a-settle-at-zero] PASSED [ 92%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-higher-then-zero] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-lower-then-higher] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-money-still-counts-against-the-cap] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-higher] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-lower] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-the-cap-reached-exactly] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-a-free-call-that-cost-something] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-overshoot-past-the-cap-refuses-the-next-call] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-unknown-id] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-bad-amounts-change-nothing] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-grant-then-settle-lower] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-refused-then-freed-by-a-settle-at-zero] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-higher-then-zero] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-lower-then-higher] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-money-still-counts-against-the-cap] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-higher] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-lower] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-the-cap-reached-exactly] PASSED [100%]
+
+=========================== short test summary info ============================
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-int] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-float] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-tuple] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+======================= 259 passed, 3 xfailed in 30.36s ========================

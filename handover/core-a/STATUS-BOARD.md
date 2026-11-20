@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:38:47Z
+UPDATED_UTC: 2026-11-20T06:38:56Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 46
-ITEMS_OPEN: 13
-PERCENT: 78
-AGENTS_RUNNING: 6
-CAPACITY: load 1.11 of 4 cores (1-minute average), mem 1.4/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 530M /home/user/hadavin-sdk; 347M /tmp/claude-0; 131M /root/.cache
+ITEMS_OPEN: 12
+PERCENT: 81
+AGENTS_RUNNING: 5
+CAPACITY: load 1.40 of 4 cores (1-minute average), mem 1.2/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 531M /home/user/hadavin-sdk; 347M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:36:38Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:38:50Z (the push before this board)
 NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/endpoint fixes, worker fixes + main start test, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for meter and G7. No new agent until the lead answers about the plugin files. PostgreSQL port 55433 runs (mine)
 
 ## QUEUE ITEMS
@@ -64,7 +64,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | B5b-matrix-paths | crash matrix part 2: kills on the paths with a read-tool call, a proposal waiting for approval, and (if buildable) execute and verify; retry before and after the tick | RUNNING | 5 | raw/D-crash-matrix-paths-pg16.log (not yet) | 1 | ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in |
 | CFG-2 | update tests/test_trigger_config.py to core-b's new head: its fixes make all 16 strict expected-failures pass (so the file shows 17 failures there until the markers are removed); add tests for the bound reader | RUNNING | 5 | raw/trigger-config-tests-on-core-b-run2.log (not yet) | 1 | found by the trial integration; started in the same batch |
 | METER | non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py | RUNNING | 5 | raw/meter-contract-on-core-b.log (not yet) | 1 | ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch |
-| M1-template | n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end' | RUNNING | 5 | raw/n8n-template-tests-4.log (not yet) | 1 | design review Major M1: the only place this gap can be closed today |
+| M1-template | n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end' | DONE in the files; NOT run in n8n | 100 | n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-4.log | 1 | after the restart the template checks gave 193 passed (first run 1 failed: a list order in the JSON, cosmetic, fixed; lint fixed). Graph and README numbers re-checked against tick.py and models.py: they match. 27 UNVERIFIED marks remain. Not run in n8n: the 7 new nodes, the 45-check loop, signing. Known gap: the workflow cannot tell a dead run from a live one, and WAITING_FOR_APPROVAL ends it as a success |
 | B4b-fuzz-concurrent | concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load | RUNNING | 5 | raw/D-fuzz-concurrent-pg16.log (not yet) | 1 | ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths |
 
 ## AGENTS
@@ -109,7 +109,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | fix-wrk | builder | fable | worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree | 06:31 | about 45 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
 | sn-srv | builder | sonnet | finish and verify server.py, endpoint.py, crash.py fixes (RESUME-NOTE 1) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 | sn-wrk | builder | sonnet | finish worker.py fixes, switch to core-b's reader, main start test (RESUME-NOTE 2) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
-| sn-n8n | builder | sonnet | run and fix the n8n template tests and README numbers (RESUME-NOTE 3) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
+| sn-n8n | builder | sonnet | run and fix the n8n template tests and README numbers (RESUME-NOTE 3) | 06:38 | ended | 100 | done | n/a | 0 (restart after the Fable limit) | finished, 79k tokens |
 | sn-matrix | builder and evidence runner | sonnet | crash matrix part 2 (RESUME-NOTE 4) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 | sn-fuzz | builder (tests) | sonnet | concurrent fuzz (RESUME-NOTE 5) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 | sn-findings | evidence runner | sonnet | findings files for the meter and G7 tests (RESUME-NOTE 6, 7) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
@@ -117,23 +117,15 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1458s ago | running | matched by name in ps |
-| 17002 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 33s ago | running | matched by name in ps |
-| 17003 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 33s ago | running | matched by name in ps |
-| 17009 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 33s ago | running | matched by name in ps |
-| 17412 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 29s ago | running | matched by name in ps |
-| 17413 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 29s ago | running | matched by name in ps |
-| 18847 | postgres: rt_21c4e098a925 postgres 127.0.0.1(33978) idle | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 18848 | postgres: pu_935e7eeef959 postgres 127.0.0.1(33986) idle | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 18924 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 18928 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 18935 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 19332 | postgres: postgres postgres 127.0.0.1(35938) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1466s ago | running | matched by name in ps |
+| 18924 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 18928 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 18935 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 12s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -168,6 +160,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | tests/triggers (7 files) after the round-2 minors, PostgreSQL 16 | working tree | 1 (agent) | 529 / 0 / 0, 2 skipped | none | done | ORDER 017 minors |
 | strict switch proof: HADAVIN_REQUIRE_PG=1 without the database variable | working tree | 1 | 441 passed, 88 errors (wanted), 2 skipped | each error names the two variables | done | a missing database can no longer hide behind a skip in tests/triggers |
 | tests/endpoint_mutants.py after the round-2 minors | working tree | 5 (agent) | 30 of 30 good; problems: [] | none | done | minor 10 (ten more mutants) still to add after the two fix builders end |
+| tests/triggers/test_n8n_template.py (+ stage-name and hardcoded-value rule files) | working tree | 1 after the restart (sonnet agent) | 193 / 0 / 0 (first run in that agent: 1 failed, 192 passed) | first run: the state list order in n8n/hadavin-trigger.json line 402 | done | UNVERIFIED by me until my batch |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |

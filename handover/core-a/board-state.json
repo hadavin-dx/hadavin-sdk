@@ -406,11 +406,11 @@
   {
    "item": "M1-template",
    "what": "n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end'",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/n8n-template-tests-4.log (not yet)",
+   "state": "DONE in the files; NOT run in n8n",
+   "percent": 100,
+   "evidence file": "n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-4.log",
    "tries": 1,
-   "reason": "design review Major M1: the only place this gap can be closed today"
+   "reason": "after the restart the template checks gave 193 passed (first run 1 failed: a list order in the JSON, cosmetic, fixed; lint fixed). Graph and README numbers re-checked against tick.py and models.py: they match. 27 UNVERIFIED marks remain. Not run in n8n: the 7 new nodes, the 45-check loop, signing. Known gap: the workflow cannot tell a dead run from a live one, and WAITING_FOR_APPROVAL ends it as a success"
   },
   {
    "item": "B4b-fuzz-concurrent",
@@ -933,15 +933,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:38",
-   "percent": 3,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": "0 (restart after the Fable limit)",
    "id": "sn-n8n",
    "role": "builder",
    "what exactly it is doing": "run and fix the n8n template tests and README numbers (RESUME-NOTE 3)",
-   "expected end": "about 40 min after start",
-   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+   "expected end": "ended",
+   "reason": "finished, 79k tokens"
   },
   {
    "model": "sonnet",
@@ -1253,6 +1253,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "minor 10 (ten more mutants) still to add after the two fix builders end"
+  },
+  {
+   "suite or file": "tests/triggers/test_n8n_template.py (+ stage-name and hardcoded-value rule files)",
+   "branch and SHA": "working tree",
+   "run number": "1 after the restart (sonnet agent)",
+   "passed / failed / errors": "193 / 0 / 0 (first run in that agent: 1 failed, 192 passed)",
+   "first failing line": "first run: the state list order in n8n/hadavin-trigger.json line 402",
+   "state": "done",
+   "reason": "UNVERIFIED by me until my batch"
   }
  ],
  "restarts": [],
