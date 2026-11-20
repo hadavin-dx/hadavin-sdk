@@ -698,19 +698,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "drift-docs",
-   "role": "builder (text only)",
-   "model": "sonnet",
-   "what exactly it is doing": "drift fixes in WINDOWS-NOTES, ticket D, ticket E, CRASH-MATRIX (documents follow the code)",
-   "started UTC": "09:11",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "drift report"
-  },
-  {
    "id": "n8n-drift",
    "role": "builder",
    "model": "sonnet",
@@ -2386,6 +2373,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "BATCH7: whole suite 12 failed (10 strict by design, brand string in lead's BRIEF-PREAMBLE.md, dblink env) / 12256 passed / 458 skipped / 75 xfailed; combined tree core-b 2bdbba391: 1327 passed 4 skipped 0 failed; mutants 90 of 90 (89 killed + 1 crash-accepted); ruff: 2 errors in my tools/board.py (noqa moved by the formatter): fixed"
+  },
+  {
+   "id": "drift-docs",
+   "role": "builder (text only)",
+   "model": "sonnet",
+   "what exactly it is doing": "drift fixes in WINDOWS-NOTES, ticket D, ticket E, CRASH-MATRIX (documents follow the code)",
+   "started UTC": "09:11",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "17 drifts fixed in ticket D, ticket E, CRASH-MATRIX, WINDOWS-NOTES (documents follow the code, Fix log in DRIFT-REPORT.md); open: D6 (test line cites), N1-N7 (n8n README: n8n-drift running), test gaps E5/E11 (e5-e11 running); nothing run"
   }
  ]
 }
