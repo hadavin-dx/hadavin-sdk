@@ -707,17 +707,30 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "e1-fix",
-   "role": "builder",
+   "id": "mut-e1",
+   "role": "builder (mutants)",
    "model": "sonnet",
-   "what exactly it is doing": "E1 gaps: degraded worker recovers when the store returns (no restart), /health ping bounded to 2 s, warning when App has no audit",
-   "started UTC": "09:41",
-   "expected end": "20 min",
+   "what exactly it is doing": "mutants for E1 (conflict audit, cap, /health, recovery, ping bound, audit warning) + E5/E11 mutants run; ONE full mutant run (run 17)",
+   "started UTC": "09:50",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "after e1"
+   "reason": "E1 built"
+  },
+  {
+   "id": "E1-rev",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only adversarial review of the E1 code (audit event leaks, cap, /health leaks and DoS, degraded switch races)",
+   "started UTC": "09:50",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of n (behaviour-changing code: no cap)",
+   "retries so far": 0,
+   "reason": "E1 built"
   }
  ],
  "tests": [
@@ -1090,6 +1103,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.",
   "STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.",
   "E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.",
   "E5: fresh round 5 of step E found NO Blocker and NO Major (7 nits, fixed by E-nits2): by your rule the rounds end here; evidence after the fixes: the 09:55 full batch.",
@@ -2504,6 +2518,19 @@
    "review round n of cap": "7, no cap (lead ruling)",
    "retries so far": 0,
    "reason": "round 7: NO Blocker, NO Major: ROUNDS END (lead rule); 3 nits fixed by me (os.path.isdir in the PermissionError handler, `if not took`, stub_unlink docstring); revert checks of all 5 new tests judged non-vacuous by reading; simplicity nit (delete the ~35-line unreadable-flag machinery) DECLINED: tested, documented, a revert to the old state would need new review rounds; test_testing_crash 111 passed 2 skipped"
+  },
+  {
+   "id": "e1-fix",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 gaps: degraded worker recovers when the store returns (no restart), /health ping bounded to 2 s, warning when App has no audit",
+   "started UTC": "09:41",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "3 gaps fixed: degraded worker recovers in-process (_Degraded switch, 5 s re-check), /health ping bounded 2 s with one thread at most, audit warning from _prepare; 7 new tests with kill checks; tests/triggers+crash 1352 passed 5 skipped; bandit not confirmed"
   }
  ]
 }

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:50:07Z
+UPDATED_UTC: 2026-11-20T09:50:48Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 76
 ITEMS_OPEN: 21
 PERCENT: 82
-AGENTS_RUNNING: 2
-CAPACITY: load 2.21 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 58G 16%; 573M /home/user/hadavin-sdk; 600M /tmp/claude-0; 160M /root/.cache
+AGENTS_RUNNING: 3
+CAPACITY: load 1.08 of 4 cores (1-minute average), mem 1.0/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 58G 16%; 574M /home/user/hadavin-sdk; 600M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T09:49:19Z (the push before this board)
+PUSHED_UTC: 2026-11-20T09:50:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -101,17 +101,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
-| e1-fix | builder | sonnet | E1 gaps: degraded worker recovers when the store returns (no restart), /health ping bounded to 2 s, warning when App has no audit | 09:41 | 20 min | 5 | running | n/a | 0 | after e1 |
+| mut-e1 | builder (mutants) | sonnet | mutants for E1 (conflict audit, cap, /health, recovery, ping bound, audit warning) + E5/E11 mutants run; ONE full mutant run (run 17) | 09:50 | 25 min | 5 | running | n/a | 0 | E1 built |
+| E1-rev | fresh reviewer (codebase-details) | sonnet | read-only adversarial review of the E1 code (audit event leaks, cap, /health leaks and DoS, degraded switch races) | 09:50 | 15 min | 5 | running | 1 of n (behaviour-changing code: no cap) | 0 | E1 built |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 12937s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 12937s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 12937s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 12937s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 12937s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 12937s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 12979s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 12979s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 12979s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 12979s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 12979s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 12979s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -173,6 +174,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.
 - STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.
 - E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.
 - E5: fresh round 5 of step E found NO Blocker and NO Major (7 nits, fixed by E-nits2): by your rule the rounds end here; evidence after the fixes: the 09:55 full batch.
