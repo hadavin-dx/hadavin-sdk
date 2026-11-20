@@ -1,0 +1,142 @@
+=== git HEAD: 5f549616ba34ba10f6d189a7faa75bbc9fd7f85c (tests written on top, uncommitted at run time)
+=== pytest WITH HADAVIN_TEST_PG_DSN (PostgreSQL 16, local trust login)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 74%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+290 passed in 50.42s
+
+=== pytest WITHOUT HADAVIN_TEST_PG_DSN (PostgreSQL cases SKIP = NOT RUN)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 24%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 49%]
+ss...................................................................... [ 74%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_stop_state_roles.py:204: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:213: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:225: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:235: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:247: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:262: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:274: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:286: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:296: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:308: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:329: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:340: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:347: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:370: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:402: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:414: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:424: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:433: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:451: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:476: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [13] tests/test_stop_state_roles.py:506: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:516: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:528: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [20] tests/test_stop_state_roles.py:560: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:567: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [6] tests/test_stop_state_roles.py:573: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [6] tests/test_stop_state_roles.py:595: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:612: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:619: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:626: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:634: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:641: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:654: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:662: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:668: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:677: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [9] tests/test_stop_state_roles.py:693: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:704: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:797: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:819: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:830: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:849: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:858: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:878: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [4] tests/test_stop_state_roles.py:901: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:939: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:950: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:981: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:997: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1011: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/test_stop_state_roles.py:1067: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1087: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1096: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1103: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1116: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1127: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1136: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [4] tests/test_stop_state_roles.py:1172: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:1182: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1191: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1199: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1214: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1221: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:1227: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1236: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1278: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1295: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1306: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1340: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1368: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/test_stop_state_roles.py:1382: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:1409: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:1417: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/test_stop_state_roles.py:1428: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1441: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1455: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1482: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1514: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_stop_state_roles.py:1535: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+144 passed, 146 skipped in 6.23s
+
+=== python tests/stop_state_mutants.py --hand
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+KILLED   | grants: the runtime may append to kill_switch_clears | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the runtime is read-write on kill_switch again | src/hadavin_sdk/store/migrate.py | test_runtime_login_is_denied_and_the_switch_stays_on
+KILLED   | grants: the reset role may not append to audit_entries | src/hadavin_sdk/store/migrate.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | migrate: the reset block is skipped | src/hadavin_sdk/store/migrate.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | migrate: effective_problems is not run for the reset role | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_public_right_the_reset_role_would_inherit
+KILLED   | migrate: reset_role is left out of the named roles | src/hadavin_sdk/store/migrate.py | test_migrate_refuses_a_reset_role_that_is_the_runtime_role
+KILLED   | migrate: the forbidden role names are not checked | src/hadavin_sdk/store/migrate.py | test_h4_a_role_name_that_is_not_one_plain_role_is_refused_before_any_connection
+KILLED   | read: the NOT EXISTS is dropped (a cleared stop still counts) | src/hadavin_sdk/store/postgres.py | test_n2_a_reset_by_the_reset_login_reads_off
+KILLED   | read: open stops are ignored | src/hadavin_sdk/store/postgres.py | test_n1_a_stop_by_the_runtime_login_reads_on_from_a_second_connection
+KILLED   | read: a flag that is ON reads OFF | src/hadavin_sdk/store/postgres.py | test_e5_a_flag_set_on_by_the_owner_reads_on_and_a_reset_turns_it_off
+KILLED   | read: a missing flag row reads OFF | src/hadavin_sdk/store/postgres.py | test_e6_a_deleted_flag_row_reads_on_and_a_reset_fails_loudly_and_stays_on
+KILLED   | reset: ON CONFLICT is removed | src/hadavin_sdk/store/postgres.py | test_s6_a_reset_that_meets_an_uncommitted_clear_of_the_same_stop_succeeds
+KILLED   | reset: the flag update and the clears are not one transaction | src/hadavin_sdk/store/postgres.py | test_e8_a_refused_clear_leaves_the_flag_on
+KILLED   | reset: not one transaction (through the command line) | src/hadavin_sdk/store/postgres.py | test_s6_cli_reset_whose_clear_insert_is_refused_leaves_the_flag_on
+KILLED   | limits: the reset clears before the intent is written | src/hadavin_sdk/limits.py | test_e8_cli_reset_with_the_audit_down_exits_3_and_clears_nothing
+KILLED   | limits: reset_failed is not written | src/hadavin_sdk/limits.py | test_cli_reset_on_the_runtime_dsn_exits_2_stays_on_and_audits_reset_failed
+KILLED   | migration 0006: the append-only triggers are removed | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_the_owner_is_refused_by_the_append_only_trigger
+KILLED   | cli: the reset ignores reset_credential_ref | src/hadavin_sdk/cli.py | test_n3_cli_round_trip_in_pilot_with_only_the_reset_dsn_for_the_reset
+KILLED   | cli: the pilot and prod refusal is removed | src/hadavin_sdk/cli.py | test_e10_reset_without_the_ref_is_refused_before_any_connection
+KILLED   | S1: the stops table is not schema-qualified (read) | src/hadavin_sdk/store/postgres.py | test_s1_temporary_tables_on_the_runtime_connection_do_not_hide_an_open_stop
+KILLED   | S1: the stops table is not schema-qualified (a stop lands in the temporary table) | src/hadavin_sdk/store/postgres.py | test_s1_temporary_tables_made_before_any_stop_do_not_swallow_the_stop
+KILLED   | S1: the clears table is not schema-qualified | src/hadavin_sdk/store/postgres.py | test_s1_temporary_tables_on_the_runtime_connection_do_not_hide_an_open_stop
+KILLED   | S1: the flag table is not schema-qualified (read) | src/hadavin_sdk/store/postgres.py | test_s1_a_temporary_flag_table_does_not_hide_a_real_flag_that_is_on
+KILLED   | S2: who_else_can_clear is not called | src/hadavin_sdk/store/migrate.py | test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear
+KILLED   | S2: a column-level privilege is not counted | src/hadavin_sdk/store/migrate.py | test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear
+KILLED   | S2: membership without inheritance is not counted | src/hadavin_sdk/store/migrate.py | test_s2_migrate_refuses_a_member_of_the_reset_role
+KILLED   | S2: a role is not counted for the group it can SET ROLE to | src/hadavin_sdk/store/migrate.py | test_s2_migrate_refuses_the_runtime_role_as_a_noinherit_member_of_a_group_that_can_clear
+KILLED   | S2: the check runs only when a reset role is named | src/hadavin_sdk/store/migrate.py | test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call
+KILLED   | S7: the missing-row raise is removed | src/hadavin_sdk/store/postgres.py | test_e6_a_deleted_flag_row_reads_on_and_a_reset_fails_loudly_and_stays_on
+KILLED   | S7: the missing-row raise is removed (through the command line) | src/hadavin_sdk/store/postgres.py | test_s7_cli_reset_with_the_flag_row_missing_exits_2_audits_reset_failed_and_stays_on
+KILLED   | S7: the missing-row raise is removed (the stop is cleared behind the missing row) | src/hadavin_sdk/store/postgres.py | test_s7_a_reset_with_the_flag_row_missing_clears_nothing_so_the_stop_survives_the_repair
+KILLED   | B-2: the read-back after the reset is removed | src/hadavin_sdk/cli.py | test_b2_cli_reset_says_still_on_when_a_stop_commits_after_its_clear_statement_began
+KILLED   | B-4: the same-secret refusal is removed | src/hadavin_sdk/cli.py | test_b4_a_reset_ref_equal_to_the_runtime_secret_name_is_refused_before_any_connection
+KILLED   | S12: the isfinite CHECK is removed from the stops | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_s12_a_stop_row_cannot_carry_an_infinite_ts_even_by_hand
+KILLED   | S12: the isfinite CHECK is removed from the clears | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand
+KILLED   | S12: the stop sends the caller's ts | src/hadavin_sdk/store/postgres.py | test_s12_the_stores_own_stop_does_not_send_ts
+KILLED   | migration 0006: the stop id is a serial number again (BIGSERIAL) | src/hadavin_sdk/store/migrations/0006_stop_state.sql | test_h2_the_runtime_login_cannot_make_a_later_stop_fail
+KILLED   | loop: the limits_unavailable hunk is removed (first check) | src/hadavin_sdk/runtime/agent_loop.py | test_e9_an_unreadable_stop_state_at_the_first_check_means_no_model_call
+KILLED   | loop: the limits_unavailable hunk is removed (after the plan) | src/hadavin_sdk/runtime/agent_loop.py | test_e9_a_stop_state_that_turns_unreadable_at_any_later_read_means_no_card_and_no_action
+KILLED   | loop: the limits_unavailable hunk is removed (recheck) | src/hadavin_sdk/runtime/agent_loop.py | test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action
+mutant script exit code: 0

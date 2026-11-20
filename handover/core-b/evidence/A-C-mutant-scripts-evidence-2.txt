@@ -1,0 +1,171 @@
+### 1. price_mutants.py (tree as committed)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       M1 the zero rule does not look at the environment  [test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals]
+ok  KILLED       M2 the zero rule does not look at the llm kind  [test_e2_zero_refused_for_a_real_kind_in_demo['0'-input_usd_per_mtok]]
+ok  KILLED       M3 the zero rule compares with < 0  [test_h5_a_config_changed_by_model_copy_is_still_named_by_the_helper]
+ok  KILLED       M4 only the input field is checked for zero  [test_e3_zero_on_a_route_no_agent_uses_is_refused]
+ok  KILLED       M4b only the output field is checked for zero  [test_e3_zero_on_a_judge_route_is_refused[input_usd_per_mtok]]
+ok  KILLED       M5 the is_signed branch is removed  [test_fail_before_negative_price_with_the_fake_kind_is_refused]
+ok  KILLED       M5b is_signed becomes v < 0 (minus zero loads)  [test_h1_e7_bad_price_refused_for_fake_in_demo['-0'-'a price must not be neg-input_usd_per_]
+ok  KILLED       M6a the ceiling branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['1000000.000001'-'a price may be at most -in]
+ok  KILLED       M6b the decimals branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['0.0000001'-'a price may have at mos-input_u]
+ok  CRASH        M6c the ceiling itself is refused (> becomes >=)  [test_e7_prices_at_the_bounds_load['1000000'-input_usd_per_mtok]]
+ok  CRASH        M7 the date is required in demo too  [test_n1_demo_fake_priced_loads_without_a_date]
+ok  KILLED       M8 the required-date rule is removed  [test_e5_date_required_in_pilot_and_prod[pilot]]
+ok  CRASH        M9 a date of today counts as the future (> becomes >=)  [test_e6_today_and_old_dates_load[text-today]]
+ok  KILLED       M9b the future rule is removed  [test_e6_future_date_refused_in_every_stage[1]]
+ok  KILLED       M10 _plain_date returns the value unchecked  [test_h4_only_a_plain_date_is_read[pilot-0]]
+ok  KILLED       M10b a datetime object is allowed  [test_h4_a_datetime_object_is_refused_directly]
+ok  KILLED       M10c the date text is matched at its start only  [test_h4_only_a_plain_date_is_read[pilot-'2026-11-20T00:00:00']]
+ok  KILLED       M10d the date text may hold digits that are not ASCII  [test_h4_only_a_plain_date_is_read[pilot-'\u0662\u0660\u0662\u0666-\u0661\u0661-\u0662\u066]
+ok  KILLED       M11 the price refusals are not added to the refused list  [test_e5_zero_refused_for_a_real_kind_in_pilot_and_prod[pilot-input_usd_per_mtok]]
+ok  KILLED       M12 the routes are sorted last name first  [test_h3_all_zero_fields_in_one_error_sorted_by_route]
+ok  KILLED       M12b the routes are not sorted  [test_h3_the_refusals_are_sorted_by_route_when_the_routes_are_not]
+21 of 21 good; problems: []
+exit=0
+
+### 2. audit_drain_mutants.py (tree as committed)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Traceback (most recent call last):
+  File "/tmp/core-b-wt/M/tests/audit_drain_mutants.py", line 234, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<6 lines>...
+        timeout=300,
+    )
+  File "/tmp/core-b-wt/M/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/tmp/core-b-wt/M/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
+exit=1
+
+### 3. audit_drain_mutants.py --hand (tree as committed)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+KILLED   | M9 a SELECT error that is not an outage is swallowed (a missing grant) | src/hadavin_sdk/audit/chain.py | test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step
+KILLED   | M2 the audit_drain body is empty (two processes) | src/hadavin_sdk/runtime/tick.py | test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+KILLED   | M1 the STEPS row is removed (two processes) | src/hadavin_sdk/runtime/tick.py | test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+KILLED   | F1 an append failure that is not an outage is treated as an outage (a missing INSERT grant) | src/hadavin_sdk/audit/chain.py | test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+4 of 4 good by hand
+exit=0
+
+### 4. audit_drain_mutants.py with a TEMPORARY, UNCOMMITTED one-line repair of tests/test_audit_drain.py line 590
+###    (LAST = [tick.STEPS[-1]]  ->  LAST = [s for s in tick.STEPS if s.name == STEP]); the file was restored after the run
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  CRASH        M1 the STEPS row is removed  [test_n1_audit_drain_is_the_last_tick_step]
+      first line: E       StopIteration
+ok  KILLED       M2 the audit_drain body is empty  [test_n2_one_tick_writes_a_parked_outcome_to_the_chain]
+      first line: E       AssertionError: assert (0 == 1)
+ok  KILLED       M3a the flush call is removed from write_intent  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent]]
+      first line: E       AssertionError: assert [AuditEvent(s...e, rows=None)] == []
+ok  KILLED       M3b the flush call is removed from write_outcome  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_outcome]]
+      first line: E       AssertionError: assert [AuditEvent(s...e, rows=None)] == []
+ok  KILLED       M4 the flush does not remove a drained event  [test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent]]
+      first line: E       AssertionError: assert [AuditEvent(s...e, rows=None)] == []
+ok  KILLED       M5 the outbox row is deleted when its append failed  [test_an_outbox_row_that_cannot_be_written_yet_is_kept]
+      first line: E           AssertionError: assert [] == ['evt-c96d4b1...093a346e5b32']
+ok  KILLED       M6a an unreadable body raises at once  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+      first line: E       AssertionError: assert ['evt-a'] == ['evt-a', 'evt-e']
+ok  KILLED       M6b a body under another row's id raises at once  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+      first line: E       AssertionError: assert ['evt-a'] == ['evt-a', 'evt-e']
+ok  KILLED       M7a an unreadable body is deleted  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+      first line: E       assert [('evt-d', '{...rows":null}')] == [('evt-b', 'n...rows":null}')]
+ok  KILLED       M7b a body under another row's id is deleted  [test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them]
+      first line: E       assert [('evt-b', 'n...-not-leak"}')] == [('evt-b', 'n...rows":null}')]
+ok  KILLED       M8a the flush runs after a failed append (write_intent)  [test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_intent]]
+      first line: E       AssertionError: assert (['evt-55a9f86...3d78484a5c58'] == ['evt-55a9f86...203c6035dcbe']
+ok  KILLED       M8b the flush runs after a failed append (write_outcome)  [test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_outcome]]
+      first line: E       AssertionError: assert (['evt-bbac919...1709b5ed033c'] == ['evt-bbac919...c93435b08416']
+ok  KILLED       M9 a SELECT error that is not an outage is swallowed  [test_an_outbox_that_answers_with_an_error_fails_the_step]
+      first line: E       AssertionError: assert 0 == 1
+ok  KILLED       F1 an append failure that is not an outage is treated as an outage  [test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing]
+      first line: E       AssertionError: assert 0 == 1
+ok  KILLED       F2 a row that is not writable is deleted  [test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing]
+      first line: E       assert [] == [('evt-b', '{...rows":null}')]
+ok  KILLED       F3 a DELETE failure ends the loop  [test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[refused]]
+      first line: E       AssertionError: assert ['evt-a'] == ['evt-a', 'evt-b', 'evt-c']
+ok  KILLED       F4 the counts are dropped from the RuntimeError  [test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only]
+      first line: E       AssertionError: assert 'audit outbox: rows kept' == 'audit outbox... not writable'
+ok  KILLED       F5 the flush stops at a failure that is not an outage  [test_f5_a_flush_moves_a_refused_event_aside_and_writes_the_ones_after_it]
+      first line: E       assert 1 == 2
+ok  KILLED       F6 the flush moves an outage failure aside  [test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order[OSError]]
+      first line: E           assert 2 == 1
+by hand (--hand): M9 a SELECT error that is not an outage is swallowed (a missing grant) -> test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step
+by hand (--hand): M2 the audit_drain body is empty (two processes) -> test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+by hand (--hand): M1 the STEPS row is removed (two processes) -> test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+by hand (--hand): F1 an append failure that is not an outage is treated as an outage (a missing INSERT grant) -> test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+19 of 19 good; problems: []
+exit=0
+
+### 5. the baseline failure behind run 2 (diagnostic, tree as committed)
+INFO     hadavin_sdk.tick:tick.py:282 tick ok=True failed=-
+=========================== short test summary info ============================
+FAILED tests/audit_drain_mutants.py::test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok[OSError]
+FAILED tests/audit_drain_mutants.py::test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok[StoreUnavailable]
+FAILED tests/audit_drain_mutants.py::test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok[OperationalError]
+FAILED tests/audit_drain_mutants.py::test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok[InterfaceError]
+FAILED tests/audit_drain_mutants.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[refused]
+FAILED tests/audit_drain_mutants.py::test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate[outage]
+FAILED tests/audit_drain_mutants.py::test_f4_a_clean_drain_after_a_failed_one_raises_nothing
+FAILED tests/audit_drain_mutants.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts0-audit outbox: 2 unreadable rows kept, 1 rows not writable, 3 rows not deleted]
+FAILED tests/audit_drain_mutants.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts1-audit outbox: 1 unreadable rows kept, 2 rows not deleted]
+FAILED tests/audit_drain_mutants.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts2-audit outbox: 3 unreadable rows kept, 2 rows not writable]
+FAILED tests/audit_drain_mutants.py::test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order[counts3-audit outbox: 4 rows not writable, 1 rows not deleted]
+11 failed, 36 passed, 6 skipped in 11.66s
+
+### 6. price_mutants.py, FINAL (after the review additions: stronger UTC test, one-outcome zero test, M13); replaces run 1
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       M1 the zero rule does not look at the environment  [test_e4_fake_in_pilot_with_zero_is_refused_beside_the_other_refusals]
+      first line: E       AssertionError: assert 'routes.default.input_usd_per_mtok: a zero price is allowed only for the fake llm kind in demo' in '1 validation error for Config\n  Value error, environment pilot: refu
+ok  KILLED       M2 the zero rule does not look at the llm kind  [test_e2_zero_refused_for_a_real_kind_in_demo['0'-input_usd_per_mtok]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M3 the zero rule compares with < 0  [test_h5_a_config_changed_by_model_copy_is_still_named_by_the_helper]
+      first line: E       AssertionError: assert [] == ['routes.defa...kind in demo']
+ok  KILLED       M4 only the input field is checked for zero  [test_e3_zero_on_a_route_no_agent_uses_is_refused]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M4b only the output field is checked for zero  [test_e3_zero_on_a_judge_route_is_refused[input_usd_per_mtok]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M5 the is_signed branch is removed  [test_fail_before_negative_price_with_the_fake_kind_is_refused]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M5b is_signed becomes v < 0 (minus zero loads)  [test_h1_e7_bad_price_refused_for_fake_in_demo['-0'-'a price must not be neg-input_usd_per_]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M6a the ceiling branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['1000000.000001'-'a price may be at most -in]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M6b the decimals branch is removed  [test_h1_e7_bad_price_refused_for_fake_in_demo['0.0000001'-'a price may have at mos-input_u]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  CRASH        M6c the ceiling itself is refused (> becomes >=)  [test_e7_prices_at_the_bounds_load['1000000'-input_usd_per_mtok]]
+      first line: E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+ok  CRASH        M7 the date is required in demo too  [test_n1_demo_fake_priced_loads_without_a_date]
+      first line: E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+ok  KILLED       M8 the required-date rule is removed  [test_e5_date_required_in_pilot_and_prod[pilot]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  CRASH        M9 a date of today counts as the future (> becomes >=)  [test_e6_today_and_old_dates_load[text-today]]
+      first line: E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+ok  KILLED       M9b the future rule is removed  [test_e6_future_date_refused_in_every_stage[1]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M10 _plain_date returns the value unchecked  [test_h4_only_a_plain_date_is_read[pilot-0]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M10b a datetime object is allowed  [test_h4_a_datetime_object_is_refused_directly]
+      first line: E       Failed: DID NOT RAISE ValueError
+ok  KILLED       M10c the date text is matched at its start only  [test_h4_only_a_plain_date_is_read[pilot-'2026-11-20T00:00:00']]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M10d the date text may hold digits that are not ASCII  [test_h4_only_a_plain_date_is_read[pilot-'\u0662\u0660\u0662\u0666-\u0661\u0661-\u0662\u066]
+      first line: E           AssertionError: assert 'prices_as_of must be a date written YYYY-MM-DD' in '1 validation error for Config\nprices_as_of\n  Input should be a valid date or datetime, invalid character in ye
+ok  KILLED       M11 the price refusals are not added to the refused list  [test_e5_zero_refused_for_a_real_kind_in_pilot_and_prod[pilot-input_usd_per_mtok]]
+      first line: E       Failed: DID NOT RAISE ConfigError
+ok  KILLED       M12 the routes are sorted last name first  [test_h3_all_zero_fields_in_one_error_sorted_by_route]
+      first line: E       AssertionError: assert 'routes.alpha.input_usd_per_mtok: a zero price is allowed only for the fake llm kind in demo, routes.alpha.output_usd_... the fake llm kind in demo, routes.zeta.input_us
+ok  KILLED       M12b the routes are not sorted  [test_h3_the_refusals_are_sorted_by_route_when_the_routes_are_not]
+      first line: E       AssertionError: assert ['routes.zeta...kind in demo'] == ['routes.alph...kind in demo']
+ok  KILLED       M13 _today uses the local date  [test_today_is_the_utc_date]
+      first line: E       assert datetime.date(2026, 11, 20) == datetime.date(2026, 11, 21)
+22 of 22 good; problems: []
+exit=0
+
+### 7. pytest of the allowed set, final tree
+........................................................................ [ 86%]
+..........................................................               [100%]
+418 passed in 34.75s

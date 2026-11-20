@@ -1,0 +1,10 @@
+# on f40f369, 2026-11-20T06:12:23Z
+$ python tests/audit_drain_mutants.py
+by hand (--hand): M1 the STEPS row is removed (two processes) -> test_cross_process_an_outcome_parked_by_one_process_is_written_by_the_tick_of_another
+by hand (--hand): F1 an append failure that is not an outage is treated as an outage (a missing INSERT grant) -> test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row
+18 of 19 good; problems: ['M1 the STEPS row is removed']
+$ python tests/price_mutants.py
+22 of 22 good; problems: []
+$ pytest -q tests/test_stop_state_roles.py tests/test_stop_state_unit.py tests/test_stop_state_loop.py tests/test_audit_drain.py tests/test_price_constraint.py
+ERROR tests/test_stop_state_roles.py::test_runtime_login_is_denied_and_the_switch_stays_on[TRUNCATE kill_switch]
+2 failed, 475 passed, 1 error in 42.40s
