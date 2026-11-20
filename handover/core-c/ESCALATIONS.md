@@ -78,3 +78,11 @@ Reviewer egm:egm-design, read-only, NOTHING executed: each scenario is derived f
 - `runmap.is_masked` is promised by G0, G3-I5, "Interfaces: Offered" and the proposed G6 text but was deleted (lead m7); tests/test_runmap_is_masked.py is gone and the G7 ticket still cites it.
 - The redactor exempts a SECRET value made only of its own tokens of any kind (`_OWN_OUTPUT`, redact.py:866-883): `password=‹EMAIL_1› host` stays unmasked; README K43 and decision 7 say only `‹SECRET_n›`.
 Handling: docstring fixes wait for the lanes that own the files (redact.py: G7 round 3 builder; approvals/gate.py: P1d-a builder); I start a docstring and ticket correction agent when both have reported. NOT fixed yet. The wording drafter v5 is told K39-K43 facts must be re-read at HEAD.
+
+## E10 (G7 fix round 5) Overlap of written forms completed only in a later round (design M2, second half) NOT FIXED
+- Item: round 4 design M2, "across rounds": round 2 registers F1 `<SECRET_1>ab` and sweeps `xyz<SECRET_1>ab` to `xyz<F1>`; round 3 registers F2 `xyz<SECRET_1>`; F2 cannot match the already consumed text and `xyz` stays readable.
+- Fixed in the same round: the overlap inside ONE sweep (the union is registered on the spot, tests with a long tail and a chain).
+- Tries: 2 designs considered on paper, none built: (1) register derived forms `A<Q_E>rest` for every earlier entry E compatible with a new form (cost grows with the number of E under one token: the quadratic risk the caps were removed for); (2) scan an expanded text where each placeholder with a written form is replaced by it (changes every offset, doubles the scan). Neither fits one round without a new cap.
+- State: stated limit in `_spelled_sweep`, defaults.py note, ticket ROUND 5; pinned by `test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit`. Leak size: the literal prefix or tail of the later form.
+- Needed: an owner decision (accept the limit in SECURITY wording, or a design round for derived forms).
+

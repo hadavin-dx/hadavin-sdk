@@ -64,14 +64,19 @@ CUT_MARGIN = 8192
 # (`neutralise`, `canonical`, `composed`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the tail of
 # `_folded_line` (the fold of the body and the dry runs), `_withhold`, one `str.replace` or finder pass over one segment and the per-line fold
 # loops.
-# THE BOUND, one statement (the tests enforce it, tests/test_redact_settle_loop.py T4): a call can overrun the budget by the pass in
-# progress when it crosses the budget (pass 1 over every string, or the pass of one round) plus the one `str.replace` or finder pass of a
-# sweep that was running; the test asserts budget + twice the measured UNIT (one pattern pass and one sweep over the biggest text) + 0.5 s,
-# which is looser than that claim (pass 1 and sweep 1 are the two parts of it that the first check cannot reach). A text for which pass 1
-# alone costs more than the budget is refused at the first check after it. `redact_untrusted` can start a call per view, each stopping at
-# the same absolute deadline. The clock is `time.thread_time()`: CPU time of the calling thread, not wall time (a thread that waits for the
-# GIL or blocks does not advance it), and a `_deadline` is valid only in the thread that created it (thread CPU clocks are per thread). A
-# caller that needs a wall-clock bound (a request timeout) must add its own guard. The outbound gate (`runmap.EnforceBudget`) keeps TWO
+# THE BOUND, one statement (the tests enforce it, tests/test_redact_settle_loop.py T4). For ONE call of `redact` or `redact_many` the time past
+# the budget is at most the pass in progress when the budget is crossed (pass 1 over the strings, or the pass of a round) plus the one
+# `str.replace` or finder pass of the sweep that was running. A `bank_near` flip (a bank word found only in a folded view) reads again only
+# the strings read before it, each after a deadline check, so it adds one string pass at most, never a second pass over every string.
+# `redact_text` and `redact_untrusted` are a SERIES of such calls (the text, then up to a handful of views) against ONE absolute deadline, so
+# their worst case is: budget + the pass of the call in progress + one sweep + 0.5 s PER VIEW for what no check reaches (a regex pass, `_views`,
+# `_keep_earlier_masks`, the final `_clean`). The test asserts budget + twice the measured UNIT (one pattern pass and one sweep over the biggest
+# text) + 0.5 s on a text with one view, which is looser than the claim for one view and does not cover several views at the cap (not claimed).
+# A text for which pass 1 alone costs more than the budget is refused at the first check after it. The clock is `time.thread_time()`: CPU time of
+# the calling thread, not wall time, so `redact_text` has ONLY the CPU clock: a thread that waits for the
+# GIL or blocks does not advance it, and a `_deadline` is valid only in the thread that created it (thread CPU clocks are per thread). A
+# caller that needs a wall-clock bound (a request timeout) must add its own guard at the call: that is the CALLER's job (core-b; listed in
+# handover/core-c/tickets/G7-context-after-sweep.md, `For core-b`), not something `redact_text` does. The outbound gate (`runmap.EnforceBudget`) keeps TWO
 # clocks and does not convert one into the other: a `thread_time` deadline that it passes INTO `_Redactor.sweep` and the held-back sweeps
 # (checked inside them, as above), and a monotonic wall deadline that only its own `check()` reads (every 64th held-back value and after each
 # sweep, together with the CPU one). `clean()` makes one call for the text, one
@@ -80,15 +85,20 @@ CUT_MARGIN = 8192
 # read the redactor refuses, shows `SETTLE_NOTE`). Measured 2026-11-20 on the test machine: a 174-character card 1.3 ms ->
 # 3.6 ms with the check read, a 71,179-character card 367 ms -> 655 ms.
 REDACT_BUDGET_S = 6.0
-# The scan of the written forms of compound secrets (`guard.redact._Redactor._spelled_sweep`; a secret found whole after its first copy
-# was cut, `<SECRET_1>xy`) walks, for each placeholder token of a text, every offset registered under that token, down a character trie.
-# The cost is tokens x offsets under the token x walk depth, so two caps bound the work per token: the most DISTINCT OFFSETS (where the first
-# placeholder token stands inside the written form) and the most FORMS registered under ONE first token. A registration past either is
-# refused with InputTooLarge (fail closed: the call shows nothing), before anything is stored. A real run sits far below both (an offset is the
-# length of text written in front of the placeholder inside one value, 0 to 2 in practice; a form is one compound value that starts with the
-# same known secret); a hostile text of many forms `password=a<SECRET_1>Z`, `password=aa<SECRET_1>Z`, ... reaches them and is refused.
-SPELLED_MAX_OFFSETS = 32
-SPELLED_MAX_FORMS = 256
+# The scan of the written forms of compound secrets (`guard.redact._Redactor._spelled_sweep`; a secret found whole after its first copy was cut,
+# `<SECRET_1>xy`, or a value with a placeholder inside it, `a=1; sid=<JWT_1>`) looks each placeholder token of a text up in a trie of the forms
+# registered under it: backwards over what stood BEFORE the token in the form, forwards over what stood after it. The cost of a token is the
+# prefix that really matches the text plus the suffix walks of the prefixes that matched, whatever the NUMBER of forms or of distinct prefix
+# lengths registered (before round 5 a cap on offsets (32) and on forms (256) per token refused honest cookie logs: a header preceded by cookies
+# of another length on every line is a new offset on every line). Instead the total work of one scan (every step of a walk and every token counts
+# one unit) is counted, read every 1,024 units together with the deadline, and refused past this many units (`InputTooLarge("SpelledWorkTooMuch")`,
+# nothing shown). The figure is measured, not chosen (evidence handover/core-c/evidence/G7-1.md, fix round 5): across the repo's real-shaped corpora
+# (1,835 inputs of tests/test_redact_idempotent_property.py) no first token has more than 1 offset and 1 form registered under it, and across 2,000
+# generated compositions at most 1 offset and 6 forms; the worst HONEST case built (300 cookie lines with 300 different prefix lengths, 262,144
+# characters of copies of them) needs about 243,000 units and 300 signed-id forms about 77,000: the limit is 16 times the first. A hostile text of
+# 300 prefixes x 60-character suffixes at 130 KB needs about 5e6 units and is refused in about 0.4 s. The deadline (`REDACT_BUDGET_S`) bounds the time
+# of a scan on a slower machine whatever this says.
+SPELLED_MAX_WORK = 4_000_000
 
 
 def cut_margin(length: int) -> int:

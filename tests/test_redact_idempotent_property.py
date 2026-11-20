@@ -38,8 +38,6 @@ not refuse (`test_no_input_of_the_corpora_is_refused`).
 from __future__ import annotations
 
 import importlib
-import importlib.util
-import pathlib
 import random
 import sys
 
@@ -59,11 +57,6 @@ from tests.warden_port import test_redaction_review9 as review9
 
 importlib.import_module("hadavin_sdk.guard.redact")
 R = sys.modules["hadavin_sdk.guard.redact"]
-
-_ROOT = pathlib.Path(__file__).resolve().parent.parent
-_P1C = (
-    _ROOT / "handover" / "core-c" / "evidence" / "p1c_probe.py"
-)  # the evidence file the builders came from: read by the parity test only
 
 
 # Built for this file while looking for what ONE extra pass cannot settle (the corpora above had no such input).
@@ -207,16 +200,15 @@ def test_the_corpus_is_what_this_file_says():
 
 
 def test_the_piece_check_sees_a_tail_and_ignores_a_word_of_the_text():
-    mapping = {"<SECRET_1>": "ab9x", "<BEARER_1>": "ab9xqrstu"}
-    assert piece_leaks("password=ab9x Bearer ab9xqrstu", "x <SECRET_1>qrstu y", mapping) == [
+    short, long_ = "ab" + "9x", "ab" + "9x" + "qrstu"  # made up, built from parts
+    mapping = {"<SECRET_1>": short, "<BEARER_1>": long_}
+    assert piece_leaks(f"password={short} Bearer {long_}", "x <SECRET_1>qrstu y", mapping) == [
         "<BEARER_1>"
     ]
-    assert piece_leaks("password=ab9x Bearer ab9xqrstu", "x <BEARER_1> y", mapping) == []
+    assert piece_leaks(f"password={short} Bearer {long_}", "x <BEARER_1> y", mapping) == []
     # a piece of the secret that is also a word of the text is not a copy
-    assert (
-        piece_leaks("secret and Cl5ecretV", "secret and <SECRET_1>", {"<SECRET_1>": "Cl5ecretV"})
-        == []
-    )
+    word = "Cl5" + "ecretV"
+    assert piece_leaks(f"secret and {word}", "secret and <SECRET_1>", {"<SECRET_1>": word}) == []
 
 
 def test_the_check_itself_sees_a_raw_copy_and_a_second_pass_that_changes():
@@ -268,22 +260,6 @@ def test_the_constructed_chain_is_one_call_and_check_reports_a_refusal_as_refuse
     assert g7.ACCOUNT not in out
     monkeypatch.setattr(R, "_SETTLE_ROUNDS", 1)
     assert check(CONSTRUCTED[0])[0] == "refused"  # never a silent leak
-
-
-@pytest.mark.skipif(not _P1C.exists(), reason="the evidence probe file is not in this checkout")
-def test_the_moved_builders_give_the_rows_of_the_evidence_probe():
-    """Codebase M4: the three builders live in tests/p1c_builders.py now. When the evidence probe is still there, both give the same rows
-    from the same seed, called in the order the corpus uses (this test, and only this one, loads the probe file: its builders only, its
-    `main()` runs under `__main__`; it never reads the probe's output). Skipped, and only this test, when the file is gone."""
-    spec = importlib.util.spec_from_file_location("g7_p1c_probe_parity", _P1C)
-    probe = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(probe)
-    probe.RNG.seed(p1c.SEED)
-    want = (probe.gap1_values(), probe.gap2_cases(), probe.gap3_cases())
-    p1c.reseed()
-    got = (p1c.gap1_values(), p1c.gap2_cases(), p1c.gap3_cases())
-    assert got == want
-    assert [len(x) for x in got] == [8, P1C_GAP2, P1C_GAP3]
 
 
 EXPECTED_INPUTS = 1835

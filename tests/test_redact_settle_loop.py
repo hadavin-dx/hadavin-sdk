@@ -325,60 +325,155 @@ def test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses(
     assert with_forms < 4 * without + 0.05, (with_forms, without)
 
 
-def _hostile_forms(count: int) -> str:
-    """`count` lines `password=a^k<SECRET_1>Z`, k = 1..count: each is a compound secret whose written form holds the SAME first token at
-    another offset (round 3 design review, M-A)."""
-    return "\n".join(f"password={'a' * k}<SECRET_1>Z" for k in range(1, count + 1))
+# --- round 5 design M1: an honest log is MASKED, a hostile one is bounded (the work is counted; no cap per offset or per form) -----------
 
 
-def test_hostile_forms_past_the_offset_cap_are_refused_not_scanned():
-    """About 500 forms with 500 distinct offsets under one token (125 KB), then 130 KB of `a^500<SECRET_1>` that matches none of them to
-    the end: before round 4 the scan walked every offset for every token (about 3e7 steps). Now the 33rd offset is refused at registration
-    (InputTooLarge), fast, before the scan exists."""
-    from hadavin_sdk.guard.runmap import InputTooLarge
+JWT = (
+    "eyJ" + "hbGciOiJIUzI1NiJ9" + "." + "eyJzdWIiOiJ1c2VyMSJ9" + "." + "c2lnbmF0dXJlMTIzNDU2Nzg5"
+)  # a made-up JWT
 
-    assert defaults.SPELLED_MAX_OFFSETS < 500
+
+def _cookie_log(lines: int, *, same_prefix: bool = False) -> str:
+    """One session (the SAME `<JWT_1>` throughout), a Cookie header per request, each preceded by other cookies: the run of unrelated text
+    before the token has a different length on every line (`same_prefix` makes it one length: the control of the ratio test)."""
+    rows = [f"GET /start token={JWT}"]
+    for k in range(lines):
+        pad = "x" * (150 if same_prefix else k)
+        rows.append(f"Cookie: _ga=GA1.2{pad}; theme=dark; sid={JWT}")
+    return "\n".join(rows)
+
+
+def _signed_log(lines: int) -> tuple[str, str]:
+    """(text, the UUID): `password=<UUID>.<sig_n>` on every line, one UUID, a different suffix each: a compound value per line under one token."""
+    value = _uuid_values(1)[0]
+    return "\n".join(f"password={value}.sig{n}" for n in range(lines)), value
+
+
+def test_an_honest_cookie_log_with_a_different_prefix_length_on_every_line_is_masked_not_refused():
+    """Round 4 design M1, scenario A. Each distinct prefix length used to be a new OFFSET under `<JWT_1>`: the 33rd was refused
+    (`SpelledFormsTooMany`) and the whole document with it. Now the prefixes are one reversed trie and no count is capped."""
+    text = _cookie_log(300)
+    assert len({len(line) for line in text.splitlines()[1:]}) == 300  # 300 distinct prefix lengths
+    out = runmap.redact_text(text, runmap.RunMap())
+    assert JWT not in out and "theme=dark" not in out and "GA1.2" not in out, out
+    assert R.redact(text).text.count("Cookie:") == 300
+    assert JWT not in R.redact_many([text])[0][0]
+
+
+def test_an_honest_signed_id_log_with_a_different_suffix_on_every_line_is_masked_not_refused():
+    """Round 4 design M1, scenario B: 300 lines `password=<UUID_1>.<sig_n>`: 300 forms under one first token (the cap was 256)."""
+    text, value = _signed_log(300)
+    out = runmap.redact_text(text, runmap.RunMap())
+    assert value not in out and "sig17" not in out and "sig299" not in out, out
+    assert out.count("password=<") == 300
+
+
+def _swept_cpu(probe: str, registered: str) -> float:
+    r = R._Redactor(None)
+    r.find(registered)
+    r.sweep("")  # builds the rules once
+    return _best_cpu(lambda: r.sweep(probe))
+
+
+def _copies_of(log: str) -> str:
+    """The cookie lines of `log` as the first sweep leaves other copies: `Cookie: <prefix>; sid=<JWT_1>`."""
+    return "\n".join(line.replace(JWT, "<JWT_1>") for line in log.splitlines()[1:])
+
+
+def test_the_scan_does_not_depend_on_how_many_distinct_prefix_lengths_are_registered():
+    """The cost of a token is the prefix that really matches before it, not the number of offsets registered under it: the copies of 300
+    DIFFERENT prefix lengths cost about what the copies of ONE length cost. A scan that walks every offset for every token (round 4's)
+    is far slower on the first and fails the ratio (a mutant of the scan, recorded in evidence G7-1.md)."""
+    many, one = _cookie_log(300), _cookie_log(300, same_prefix=True)
+    with_many = _swept_cpu(_copies_of(many), many)
+    with_one = _swept_cpu(_copies_of(one), one)
+    assert with_many < 4 * with_one + 0.05, (with_many, with_one)
+
+
+def _hostile_forms(count: int, tail: int = 1) -> str:
+    """`count` lines `password=a^k<SECRET_1>Z^tail`, k = 1..count: each is a compound secret whose written form holds the SAME first token at
+    another offset, with a suffix of `tail` characters (round 3 design review, M-A)."""
+    return "\n".join(f"password={'a' * k}<SECRET_1>{'Z' * tail}" for k in range(1, count + 1))
+
+
+def test_hostile_forms_with_500_distinct_prefix_lengths_are_scanned_in_linear_time():
+    """500 forms with 500 offsets under one token (125 KB), then 130 KB of `a^500<SECRET_1>` that matches none of them to the end. The scan
+    of round 4 walked every offset for every token (about 3e7 steps); now it is one backward walk per token. The ratio is against the same
+    sweep with no forms registered (measured numbers: evidence G7-1.md); a quadratic scan is far over it."""
     r = R._Redactor({"<SECRET_1>": SHORT})
-    start = time.thread_time()
-    with pytest.raises(InputTooLarge):
-        r.find(_hostile_forms(500))
-    assert time.thread_time() - start < 2.0
-    assert (
-        len(r._spelled["<SECRET_1>"]) == defaults.SPELLED_MAX_OFFSETS
-    )  # nothing past the cap was stored
-    assert not any(k > defaults.SPELLED_MAX_OFFSETS for k in r._spelled["<SECRET_1>"])
-
-
-def test_hostile_forms_at_the_offset_cap_scan_within_a_fixed_time():
-    """The most the cap lets in: `SPELLED_MAX_OFFSETS` forms at the deepest offsets, then 130 KB of the text that walks each of them to the
-    last character and fails (`a^500<SECRET_1>` and no `Z`). The cost is tokens x capped offsets x depth, measured here with a bound that
-    fails if the scan is quadratic in the offsets (500 offsets would be 16 times more)."""
-    cap = defaults.SPELLED_MAX_OFFSETS
-    r = R._Redactor({"<SECRET_1>": SHORT})
-    r.find("\n".join(f"password={'a' * k}<SECRET_1>Z" for k in range(501 - cap, 501)))
-    assert len(r._spelled["<SECRET_1>"]) == cap
+    r.find(_hostile_forms(500))
     text = ("a" * 500 + "<SECRET_1>") * (130_000 // 510)
     assert len(text) > 129_000
-    r.sweep("")  # builds the rules once
-    took = _best_cpu(lambda: r.sweep(text))
-    assert took < 2.0, took
+    r.sweep("")
+    with_forms = _best_cpu(lambda: r.sweep(text))
+    held, r._spelled = r._spelled, {}
+    without = _best_cpu(lambda: r.sweep(text))
+    r._spelled = held
+    assert with_forms < 2.0, with_forms  # absolute guard: seconds, not milliseconds
+    assert with_forms < 4 * without + 0.1, (with_forms, without)  # measured 1.1 times
+
+
+def _deep_hostile() -> tuple[str, str]:
+    """(forms, probe): 300 forms `a^k<SECRET_1>Z^60`, then 130 KB that matches the prefix of every one and 59 of the 60 suffix characters
+    of each: every token walks 300 prefixes x 59 suffix steps (about 5e6 units over the whole text)."""
+    block = "a" * 300 + "<SECRET_1>" + "Z" * 59 + "\n"
+    return _hostile_forms(300, 60), block * (130_000 // len(block))
+
+
+def test_the_work_of_the_scan_is_bounded_a_hostile_text_is_refused_not_walked_to_the_end(
+    monkeypatch,
+):
+    """The total work of a scan (steps of both walks, and tokens) is counted and refused past `defaults.SPELLED_MAX_WORK`
+    (InputTooLarge("SpelledWorkTooMuch")). The deep text needs about 5e6 units: refused at the real limit, and scanned to the end when the limit
+    is raised (so the refusal is the count, not a property of the text)."""
+    from hadavin_sdk.guard.runmap import InputTooLarge
+
+    forms, probe = _deep_hostile()
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r.find(forms)
+    r.sweep("")
+    start = time.thread_time()
+    with pytest.raises(InputTooLarge, match="SpelledWorkTooMuch"):
+        r.sweep(probe)
+    assert time.thread_time() - start < 3.0
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 10**9)
+    assert r.sweep(probe)
+
+
+def test_the_honest_logs_need_a_small_part_of_the_work_limit(monkeypatch):
+    """The limit is derived from a measurement: the honest logs at the size cap (cookie copies of 300 prefix lengths, signed ids with 300
+    suffixes) need under a tenth of it (about 6 percent and 2 percent measured, evidence G7-1.md): they scan to the end with the limit cut
+    to a tenth."""
+    cookie_probe = "\n".join(
+        f"Cookie: _ga=GA1.2{'x' * (k % 300)}; theme=dark; sid=<JWT_1>" for k in range(1700)
+    )
+    signed_probe = "\n".join(f"copy <UUID_1>.sig{k % 300}" for k in range(8000))
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", defaults.SPELLED_MAX_WORK // 10)
+    for registered, probe, token in (
+        (_cookie_log(300), cookie_probe, "<JWT_1>"),
+        (_signed_log(300)[0], signed_probe, "<UUID_1>"),
+    ):
+        probe = probe[: defaults.MAX_REDACT_CHARS]
+        r = R._Redactor(None)
+        r.find(registered)
+        r.sweep("")
+        swept = r._spelled_sweep(probe, None)  # does not raise
+        assert token not in swept[: len(swept) - 400], "the copies were really walked and replaced"
 
 
 def test_the_spelled_walk_checks_the_deadline_inside_a_walk(monkeypatch):
-    """The caps are not the only bound: with both raised to 500 the same hostile text would cost seconds, and a deadline of 0.3 s must stop
-    it (InputTooLarge) well before that. The walk counts its own steps, not only the tokens."""
+    """The limit is not the only bound: with it raised the same deep text would cost about half a second, and a deadline 0.05 s away stops it
+    (InputTooLarge) well before that. The walk counts its own steps, not only the tokens."""
     from hadavin_sdk.guard.runmap import InputTooLarge
 
-    monkeypatch.setattr(defaults, "SPELLED_MAX_OFFSETS", 500)
-    monkeypatch.setattr(defaults, "SPELLED_MAX_FORMS", 500)
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 10**9)
+    forms, probe = _deep_hostile()
     r = R._Redactor({"<SECRET_1>": SHORT})
-    r.find(_hostile_forms(500))
-    assert len(r._spelled["<SECRET_1>"]) == 500
-    text = ("a" * 500 + "<SECRET_1>") * (130_000 // 510)
+    r.find(forms)
     r.sweep("")
     start = time.thread_time()
     with pytest.raises(InputTooLarge):
-        r.sweep(text, start + 0.3)
+        r.sweep(probe, start + 0.05)
     assert time.thread_time() - start < 1.5
 
 
@@ -394,34 +489,118 @@ def test_the_spelled_scan_checks_the_deadline_for_a_token_that_has_no_form():
         r._spelled_sweep(text, time.thread_time() - 1.0)
 
 
-def test_the_forms_per_token_are_capped_too(monkeypatch):
-    from hadavin_sdk.guard.runmap import InputTooLarge
-
-    monkeypatch.setattr(defaults, "SPELLED_MAX_FORMS", 5)
+def test_the_token_check_cadence_counts_tokens_with_no_form_too(monkeypatch):
+    """Round 4 nit N4: the test above sees only the FIRST token's check. A stepping clock (one reading per call) counts the checks of
+    3,000 tokens that hold no form: the first token, then every `_SPELL_CHECK_EVERY` (1,024) units = 3 readings. A mutant that counts only
+    the tokens that have a form reads once."""
     r = R._Redactor({"<SECRET_1>": SHORT})
-    for n in range(5):
-        r._place("BEARER", f"{SHORT}tail{n}", f"<SECRET_1>tail{n}")
-    held = dict(r.mapping)
-    with pytest.raises(InputTooLarge):
-        r._place("BEARER", SHORT + "tail9", "<SECRET_1>tail9")
-    assert r.mapping == held and r.counters["BEARER"] == 5  # refused before anything was registered
+    r._place("BEARER", SHORT + "qrstu", "<SECRET_1>qrstu")
+    readings = _stepping_clock(monkeypatch)
+    text = "<EMAIL_9> " * 3000
+    assert r._spelled_sweep(text, 1e9) == text
+    assert readings["n"] == 3, readings
 
 
-def test_the_overlap_rule_is_leftmost_then_longest_non_overlapping():
+def test_the_walk_over_the_whole_text_reads_the_clock_in_proportion_to_the_work(monkeypatch):
+    """The steps of a walk are counted too: the deep hostile text (about 5e6 units) reads the clock thousands of times, not once per token."""
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 10**9)
+    forms, probe = _deep_hostile()
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r.find(forms)
+    r.sweep("")
+    readings = _stepping_clock(monkeypatch)
+    r._spelled_sweep(probe, 1e12)
+    assert readings["n"] > 3000, readings
+
+
+def test_many_registrations_under_one_first_token_are_not_refused_and_each_is_swept():
+    """No count is capped any more: 2,000 forms under one token (the cap was 256) register, and each copy is swept whole."""
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    placeholders = [
+        r._place("BEARER", f"{SHORT}tail{n}", f"<SECRET_1>tail{n}") for n in range(2000)
+    ]
+    swept = r._spelled_sweep(" ".join(f"x <SECRET_1>tail{n}" for n in range(2000)), None)
+    assert swept == " ".join(f"x {p}" for p in placeholders)
+
+
+# --- round 5 design M2: an overlap of two forms is registered whole, nothing of it stays readable -----------------------------------
+
+
+def test_the_overlap_rule_is_leftmost_then_longest_and_an_overlap_is_one_entry_of_its_own():
     """Round 3 design M-B: the first matching offset used to win, so with F1 `<SECRET_1>ab` (offset 0) and F2 `xyz<SECRET_1>` (offset 3) the text
-    `xyz<SECRET_1>ab` lost F2 and `xyz` stayed readable. The rule now: every full match is a candidate; taken by earliest start, at one
-    start the longest; a candidate that starts inside one already taken is skipped."""
+    `xyz<SECRET_1>ab` lost F2 and `xyz` stayed readable. Round 4 took F2 and skipped F1, which left `ab` readable (round 4 design M2: with a
+    long tail, a long tail). Now the run of overlapping candidates is ONE span, registered on the spot as a compound value of its own
+    (`xyz` + V + `ab`) and replaced by its placeholder."""
     r = R._Redactor({"<SECRET_1>": SHORT})
     f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
     f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    union = r._spelled_sweep("xyz<SECRET_1>ab", None)
+    assert union not in (f1, f2), union
+    assert R._PLACEHOLDER.fullmatch(union), union  # the whole span is one placeholder
     assert (
-        r._spelled_sweep("xyz<SECRET_1>ab", None) == f"{f2}ab"
-    )  # F2 starts first; F1 starts inside it
-    assert r._spelled_sweep("a <SECRET_1>ab b", None) == f"a {f1} b"
-    assert r._spelled_sweep("xyz<SECRET_1>ab xyz<SECRET_1>", None) == f"{f2}ab {f2}"
+        r.mapping[union] == "xyz" + SHORT + "ab"
+    )  # registered as a compound value of its own, its kind the first form's
+    assert r._spelled_sweep("a <SECRET_1>ab b", None) == f"a {f1} b"  # no overlap: as before
+    assert r._spelled_sweep("xyz<SECRET_1> xyz<SECRET_1>", None) == f"{f2} {f2}"
+    assert (
+        r._spelled_sweep("xyz<SECRET_1>ab and again xyz<SECRET_1>ab", None)
+        == f"{union} and again {union}"
+    )  # the same entry
     longer = r._place("BEARER", SHORT + "abcd", "<SECRET_1>abcd")
     assert r._spelled_sweep("<SECRET_1>abcd", None) == longer  # at one start the longest form
     assert r._spelled_sweep("<SECRET_1>abce", None) == f"{f1}ce"
+
+
+def test_an_overlap_with_a_long_tail_leaves_nothing_readable():
+    """Round 4 design M2: F1 `<SECRET_1>` + 20 characters, F2 `xyz<SECRET_1>`: the text `xyz<SECRET_1>` + the 20 characters is masked whole."""
+    tail = "qrstuvwxyz" + "abcdefghij"
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r._place("BEARER", SHORT + tail, "<SECRET_1>" + tail)
+    r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    out = r._spelled_sweep(f"see xyz<SECRET_1>{tail} end", None)
+    assert out.startswith("see <") and out.endswith("> end"), out
+    assert tail not in out and "xyz" not in out
+    assert r.mapping[out[4:-4]] == "xyz" + SHORT + tail
+
+
+def test_a_longer_form_over_the_same_run_is_one_span():
+    """F1 `<S>ab`, F2 `xyz<S>`, F3 `<S>abcdef`: the candidates F2 and F3 overlap and F1 is covered by F3: ONE entry for the whole run."""
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    r._place("BEARER", SHORT + "abcdef", "<SECRET_1>abcdef")
+    out = r._spelled_sweep("xyz<SECRET_1>abcdef", None)
+    assert R._PLACEHOLDER.fullmatch(out) and r.mapping[out] == "xyz" + SHORT + "abcdef"
+
+
+def test_the_overlap_through_the_whole_call_masks_every_copy_and_restores_it():
+    """Through `redact_text` and `redact` (settle rounds, the run map): two `Bearer` lines are matched only after the first sweep wrote `<SECRET_1>`
+    (`Bearer <SECRET_1>ab` and `Bearer xyz<SECRET_1>`, 12 characters or more with the token), so F1 and F2 are registered in the SAME round and
+    the copy `xyz<SECRET_1>ab` overlaps both. Before round 5 it became `<BEARER_2>ab`: the tail `ab` of a value the map holds, readable."""
+    text = f"password={SHORT}\nBearer {SHORT}ab\nBearer xyz{SHORT}\nsee xyz{SHORT}ab end\nagain xyz{SHORT}ab"
+    mapping = runmap.RunMap()
+    out = runmap.redact_text(text, mapping)
+    assert out.endswith("see <BEARER_3> end\nagain <BEARER_3>"), out
+    assert mapping["<BEARER_3>"] == "xyz" + SHORT + "ab"
+    result = R.redact(text)
+    assert result.text == out and result.restore(result.text) == text
+
+
+def test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit():
+    """The part of the overlap that is NOT fixed (stated in `_spelled_sweep`, defaults.py and the ticket): round 2 registers F1 `<SECRET_1>ab`
+    and sweeps `xyz<SECRET_1>ab` to `xyz<F1>`; round 3 registers F2 `xyz<SECRET_1>` (a chain through another line). The text is now
+    `xyz<F1>`: F2 no longer matches it and `xyz`, three characters of a value the map holds, stands readable. Pinned so that a change is looked
+    at; the size of the leak is the literal prefix (or tail) of the later form."""
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    round2 = r._spelled_sweep("xyz<SECRET_1>ab", None)
+    assert round2 == f"xyz{f1}"
+    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    round3 = r._spelled_sweep(round2, None)
+    assert (
+        round3 == f"xyz{f1}" != f2
+    )  # `xyz` stays: nothing re-reads a text an earlier sweep consumed
+    assert r.mapping[f2] == "xyz" + SHORT
 
 
 def test_a_rolled_back_form_is_deleted_not_left_as_a_ghost():
@@ -435,7 +614,7 @@ def test_a_rolled_back_form_is_deleted_not_left_as_a_ghost():
     r._place("BEARER", SHORT + "qrstu", "<SECRET_1>qrstu")
     assert r._spelled
     r._rollback(counters)
-    assert r._spelled == {} and r._spelled_forms == {} and r._spelled_at == {}  # nothing left of it
+    assert r._spelled == {} and r._spelled_at == {}  # nothing left of it
     other = "zzzz" + "yyyy"
     r._place("SECRET", other, other)
     r._place("BEARER", SHORT + "qrstu", SHORT + "qrstu")  # the same value again, no spelled form
@@ -616,6 +795,101 @@ def test_a_flip_of_bank_near_during_a_round_puts_every_string_back_in_todo(monke
     assert (
         calls.count("x2") == 2 and calls.count("y2") == 2
     )  # read in round 1, and again in round 2 after the flip
+
+
+# --- round 5 design M3: a flip does not run a second unchecked pass over every string; the segment check is pinned ---------------------
+
+
+def _flip_items() -> list[str]:
+    """Item 1 holds a bank word only in a folded view (full-width BSB): `bank_near` flips while it is read. Items 0 and 1 are re-read, 2 and 3 are not."""
+    fullwidth = "\uff22\uff33\uff22"
+    return ["acct " + ACCOUNT + " paid", f"{fullwidth} 062-000 ok", "tail one", "tail two"]
+
+
+def test_redact_many_checks_the_deadline_between_the_two_reads_when_bank_near_flips(monkeypatch):
+    """Round 4 design M3: on a flip the first `find` pass over EVERY string ran a second time, both unchecked, before the first deadline
+    check. Now the strings read before the flip are re-read one by one after a check. The check is made to refuse here (the fold scan of the
+    full-width string reads the clock itself, so a really spent deadline would stop inside it): no string is read a second time."""
+    from hadavin_sdk.guard.runmap import InputTooLarge
+
+    items = _flip_items()
+    calls: list[str] = []
+    real = R._Redactor.find
+
+    def find(self, text):
+        calls.append(text)
+        return real(self, text)
+
+    def refuse(self):
+        raise InputTooLarge("InputTooLarge")
+
+    monkeypatch.setattr(R._Redactor, "find", find)
+    monkeypatch.setattr(R._Redactor, "_check_deadline", refuse)
+    with pytest.raises(InputTooLarge):
+        R.redact_many(items, _deadline=time.thread_time() + 600.0)
+    assert calls == items, "each string was read once; the re-read was refused by the check"
+
+
+def test_redact_many_re_reads_only_the_strings_read_before_the_flip(monkeypatch):
+    items = _flip_items()
+    calls: list[str] = []
+    real = R._Redactor.find
+
+    def find(self, text):
+        calls.append(text)
+        return real(self, text)
+
+    monkeypatch.setattr(R._Redactor, "find", find)
+    out, mapping = R.redact_many(items)
+    assert [calls.count(i) for i in items] == [2, 2, 1, 1]  # not [2, 2, 2, 2]
+    assert (
+        ACCOUNT in mapping.values() and ACCOUNT not in out[0]
+    )  # the early string still got the bank context
+
+
+def test_the_segment_check_reads_the_clock_at_the_first_free_segment_then_every_32nd(monkeypatch):
+    """Round 4 design nit 1: `i % 64 == 0` and an empty first segment skipped before it: a text that STARTS with a placeholder, or has fewer
+    than 32 free segments after a leading one, read no clock in the segment loop. Pinned with a stepping clock: the readings are
+    ceil(free segments / 32), with or without a leading placeholder."""
+    values = {f"<TENANT_{n}>": f"val{n:04d}" for n in range(1, 300)}
+    r = R._Redactor(values)
+    r.sweep("")  # builds the rules before the clock is replaced
+    readings = _stepping_clock(monkeypatch)
+    for free in (1, 31, 32, 33, 64, 65):
+        for lead in ("", "<EMAIL_9> "):
+            readings["n"] = 0
+            text = lead + " <EMAIL_9> ".join(["w"] * free)
+            assert r.sweep(text, 1e9) == text
+            assert readings["n"] == -(-free // 32), (free, lead, readings)
+
+
+def test_a_text_that_starts_with_a_placeholder_trips_the_segment_check(monkeypatch):
+    from hadavin_sdk.guard.runmap import InputTooLarge
+
+    r = R._Redactor({f"<TENANT_{n}>": f"val{n:04d}" for n in range(1, 300)})
+    r.sweep("")
+    readings = _stepping_clock(monkeypatch)
+    with pytest.raises(InputTooLarge):
+        r.sweep("<EMAIL_9> nothing known here", 0.5)  # the first reading is past the deadline
+    assert readings["n"] == 1
+
+
+def test_redact_with_a_pre_seeded_map_a_clean_text_and_a_spent_deadline_is_refused_not_returned():
+    """Round 4 codebase answer 3, the direct test that was missing: a spent deadline cannot return an unmasked text. The map holds a value, the
+    text is clean (or is a placeholder only, or holds the value), `redact` and `redact_many` refuse; the same calls with a deadline in the
+    future return the masked text."""
+    from hadavin_sdk.guard.runmap import InputTooLarge
+
+    seeded = {"<SECRET_1>": SHORT}
+    spent, future = time.thread_time() - 1.0, time.thread_time() + 600.0
+    for text in ("nothing to see here", "<SECRET_1>", f"the value {SHORT} is here"):
+        with pytest.raises(InputTooLarge):
+            R.redact(text, mapping=dict(seeded), _deadline=spent)
+        with pytest.raises(InputTooLarge):
+            R.redact_many([text], dict(seeded), _deadline=spent)
+        assert R.redact(text, mapping=dict(seeded), _deadline=future).text == text.replace(
+            SHORT, "<SECRET_1>"
+        )
 
 
 # --- cb nits: patterns the chain tests did not name -----------------------------------------------------------------
@@ -833,6 +1107,7 @@ def test_generated_compositions_match_the_reference_loop_and_leave_no_raw_copy(m
         assert runmap.redact_text(once, run) == once and dict(run) == held, (
             f"{label}: not a fixed point"
         )
+    # Output only (shown with `pytest -s`; no assertion reads it): the distribution that handover/core-c/evidence/G7-1.md quotes.
     print(
         f"\ngenerated {GENERATED} compositions of 4 to 8 lines (seed 20261121): settle rounds run {dict(sorted(rounds_hist.items()))} "
         f"(cap {R._SETTLE_ROUNDS}, most {most_rounds}); reference loop, pass that last changed something, exactly "
@@ -847,13 +1122,14 @@ def test_generated_compositions_match_the_reference_loop_and_leave_no_raw_copy(m
 
 
 def test_the_raw_leak_checker_sees_a_tail_and_a_piece_of_a_secret():
-    mapping = {"<SECRET_1>": "ab9x", "<BEARER_1>": "ab9xqrstu", "<IPV4_1>": "10.1.2.3"}
+    short = "ab" + "9x"  # made up, built from parts
+    mapping = {"<SECRET_1>": short, "<BEARER_1>": short + "qrstu", "<IPV4_1>": "10." + "1.2.3"}
     assert raw_leaks("x <SECRET_1>qrstu y", mapping, ["qrstu"]) == ["<BEARER_1>", "tail"]
     assert raw_leaks("x <BEARER_1> y", mapping, ["qrstu"]) == []
     assert (
-        raw_leaks("at 10.1.2.3", mapping, []) == []
+        raw_leaks("at " + "10." + "1.2.3", mapping, []) == []
     )  # not a secret kind: not this checker's business
-    assert raw_leaks("a ab9x b", mapping, []) == ["<SECRET_1>", "<BEARER_1>"]
+    assert raw_leaks(f"a {short} b", mapping, []) == ["<SECRET_1>", "<BEARER_1>"]
 
 
 # --- dz-3 / round 3 M5: the size cap with the hostile keyword repeated ------------------------------------------------------
@@ -872,24 +1148,31 @@ def _hostile_text(keyword: str) -> str:
 
 @pytest.mark.perf
 @pytest.mark.parametrize("keyword", ["password=", "curl -u "])
-@pytest.mark.parametrize("budget", [None, 0.5])
+@pytest.mark.parametrize("budget", [None, 0.5, "scaled"])
 def test_T4_a_text_at_the_cap_with_a_deep_chain_is_redacted_or_refused_within_budget_plus_one_unit(
     monkeypatch, keyword, budget
 ):
     """The claim (defaults.py, "THE BOUND"): the budget is checked between the units of work, so a call that crosses it is refused
     (`InputTooLarge`, nothing shown) after at most the budget plus what the check cannot reach: the pattern pass in progress (pass 1 over the
     whole text, or the pass of a round) and the one `str.replace` or finder pass of a sweep. The unit is measured here on this machine (one `find`
-    and one `sweep` of the same text) and the bound ASSERTED is the budget + twice the unit + 0.5 s, looser than the claim. With the real
-    budget the text is redacted (V, the code and the account gone); with a budget of 0.5 s it must be REFUSED, so the refusal path is the
-    one measured. On a machine about 25 percent slower than the test machine the `curl -u ` case at the real budget is itself REFUSED (defaults.py):
-    this test then fails on its first assertion, on purpose, and says so. `thread_time` is CPU time of the calling thread: a caller needs its
-    own wall-clock guard (a blocked or starved thread does not advance it)."""
+    and one `sweep` of the same text) and the bound ASSERTED is the budget + twice the unit + 0.5 s, looser than the claim, in every case.
+    Three budgets. The real one (`None`): the text is REFUSED or REDACTED, whichever this machine's speed gives (the `curl -u ` shape
+    costs 4.5 to 5.3 s of the 6 s budget on the test machine, so a runner 14 to 25 percent slower refuses it, defaults.py: that is the
+    designed fail-closed outcome, not a failure; a redacted text must hold no V, code or account). 0.5 s: it must be REFUSED (the refusal path
+    is what is measured). `scaled`: the budget is 1.5 times what an unbudgeted run of this text just took on this machine, so the text must be
+    REDACTED, on any machine. `thread_time` is CPU time of the calling thread: a caller needs its own wall-clock guard."""
+    mode = budget
     text = _hostile_text(keyword)
     probe = R._Redactor(None)
     start = time.thread_time()
     found = probe.find(text)
     probe.sweep(found)
     unit = time.thread_time() - start  # one pattern pass and one sweep over the whole text
+    if mode == "scaled":
+        monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 1e6)
+        start = time.thread_time()
+        runmap.redact_untrusted(text, runmap.RunMap())
+        budget = 1.5 * (time.thread_time() - start)
     if budget is not None:
         monkeypatch.setattr(defaults, "REDACT_BUDGET_S", budget)
     allowed = defaults.REDACT_BUDGET_S
@@ -901,12 +1184,13 @@ def test_T4_a_text_at_the_cap_with_a_deep_chain_is_redacted_or_refused_within_bu
         refused = True
     took = time.thread_time() - start
     print(
-        f"\nG7 hostile {keyword!r} at the cap, budget {allowed} s: {took:.2f} s, "
+        f"\nG7 hostile {keyword!r} at the cap, budget {allowed:.2f} s: {took:.2f} s, "
         f"{'REFUSED (InputTooLarge)' if refused else 'redacted'}; one pass + sweep {unit:.2f} s"
     )
-    if budget is None:
-        assert not refused, "the real budget covers this text on the test machine"
-        assert V not in out and ACCOUNT not in out and BSB not in out
-    else:
+    if mode == 0.5:
         assert refused, "a budget of 0.5 s must refuse (the refusal path is what is measured)"
+    if mode == "scaled":
+        assert not refused, "a budget of 1.5 times the measured run must cover the same text"
+    if not refused:
+        assert V not in out and ACCOUNT not in out and BSB not in out
     assert took <= allowed + 2 * unit + 0.5

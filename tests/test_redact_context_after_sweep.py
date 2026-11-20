@@ -501,3 +501,49 @@ def test_a_secret_value_made_only_of_own_label_tokens_is_left_unmasked_a_stated_
     spelled like that is therefore NOT masked: a limit stated in the comment above `_OWN_OUTPUT`, pinned here so a change is looked at."""
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
+
+
+# Round 4 codebase nit N5: which of the eight shapes above are held by `_OWN_OUTPUT`, and which by the older rule (a value that is nothing but
+# genuine placeholders, in `_decide`, which returns first). Checked by switching `_OWN_OUTPUT` off: the first list is left as typed all the same,
+# the second is masked (a junk entry in the map) without it.
+_PLACEHOLDERS_ONLY_RULE_HOLDS = [
+    "password=<EMAIL_1> <IPV4_1>",
+    "password=<EMAIL_1>\t<IPV4_1>",
+    "password=<EMAIL_1>;<IPV4_1>",
+    "password=<EMAIL_1>,<IPV4_1>",
+    "password=<EMAIL_1> <SEC",
+]
+_NEEDS_OWN_OUTPUT = [
+    "password=\u2039EMAIL_1\u203a host",  # an escaped look-alike
+    "password=<SEC",  # a value that is only a cut-off opening
+    "password=<SECRET_",
+]
+
+
+@pytest.mark.parametrize("text", _PLACEHOLDERS_ONLY_RULE_HOLDS)
+def test_five_own_output_shapes_are_held_by_the_placeholders_only_rule_not_by_own_output(
+    text, monkeypatch
+):
+    import re
+
+    monkeypatch.setattr(R, "_OWN_OUTPUT", re.compile(r"(?!)"))  # never matches
+    result = R.redact(text)
+    assert result.text == text and result.mapping == {}
+
+
+@pytest.mark.parametrize("text", _NEEDS_OWN_OUTPUT)
+def test_three_own_output_shapes_need_own_output(text, monkeypatch):
+    import re
+
+    assert R.redact(text).text == text  # held by the real pattern
+    monkeypatch.setattr(R, "_OWN_OUTPUT", re.compile(r"(?!)"))
+    result = R.redact(text)
+    assert result.text != text and result.mapping  # masked, and a map entry made, without it
+
+
+def test_the_two_lists_are_the_eight_shapes_of_the_stated_limit_test():
+    marks = (
+        test_a_secret_value_made_only_of_own_label_tokens_is_left_unmasked_a_stated_limit.pytestmark
+    )
+    texts = [p for m in marks for p in m.args[1]]
+    assert sorted(texts) == sorted(_PLACEHOLDERS_ONLY_RULE_HOLDS + _NEEDS_OWN_OUTPUT)
