@@ -313,21 +313,24 @@ LOOKALIKES = [
 
 
 def test_recorded_the_untrusted_hook_on_already_redacted_text_escapes_its_real_placeholders():
-    """Run 2026-11-20. `neutralise_untrusted` is made for RAW text: on text that is already redacted it
-    escapes the genuine placeholders, and `password=` followed by the escaped one is then a new secret.
-    So `redact_untrusted` is not a fixed point on its own output, and the hook is right for a text only
-    while it holds no genuine placeholder after a key (shape A below)."""
+    """Changed by G7 follow-up, 2026-11-20 (guard/redact.py `_mask` leaves a value made only of escaped
+    look-alikes and genuine placeholders alone). `neutralise_untrusted` still escapes the genuine
+    placeholders of a text that is already redacted, but the escaped token after `password=` is no longer
+    masked as a new secret: no junk map entry, and the text reads as masked with the hook too.
+    Before the fix: `is_masked(out, mapping, hook)` was False and the second pass gave `<SECRET_2>`."""
     mapping = runmap.RunMap()
     out = runmap.redact_untrusted(f"password={TOKEN} at {IP}", mapping)
     assert out == "password=<SECRET_1> at <IPV4_1>"
     assert _check(out, mapping) is True  # without the hook: masked
     before = _frozen(mapping)
     assert (
-        runmap.is_masked(out, mapping, runmap.neutralise_untrusted) is False
-    )  # with it: fails closed
+        runmap.is_masked(out, mapping, runmap.neutralise_untrusted) is True
+    )  # with it: masked too
     assert _frozen(mapping) == before
-    again = runmap.redact_untrusted(out, runmap.RunMap(mapping))
-    assert again == "password=<SECRET_2> at \u2039IPV4_1\u203a"
+    second = runmap.RunMap(mapping)
+    again = runmap.redact_untrusted(out, second)
+    assert again == "password=\u2039SECRET_1\u203a at \u2039IPV4_1\u203a"
+    assert dict(second) == dict(mapping)  # nothing new was learned from the escaped tokens
 
 
 def test_round_trip_of_redact_untrusted_with_the_same_hook_and_escaped_lookalikes():
