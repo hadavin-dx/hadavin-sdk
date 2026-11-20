@@ -1980,6 +1980,79 @@ def test_d9_the_snapshot_is_taken_once_per_call_so_every_text_sees_the_same_entr
     assert gate._llm.sent[1]["messages"][0]["content"] == "<TENANT_1>"
 
 
+class _RealShapeLimits:
+    """The call shapes of core-b's `limits.Limits` (origin/cloud/core-b): `settle` needs the keyword `agent_id`,
+    `settle_for` takes the agent first. Records every call; no database."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def reserve(self, agent_id, worst_usd, *, run_id=None):
+        self.calls.append(("reserve", agent_id, worst_usd, run_id))
+        return "res_1"
+
+    def settle(self, reservation_id, actual_usd, *, agent_id):
+        self.calls.append(("settle", agent_id, reservation_id, actual_usd))
+        return Decimal(0)
+
+    def settle_for(self, agent_id, reservation_id, actual_usd):
+        self.calls.append(("settle_for", agent_id, reservation_id, actual_usd))
+        return Decimal(0)
+
+
+def test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent():
+    limits = _RealShapeLimits()
+    meter = model_gate.LimitsMeter(limits, "agent-1")
+    assert meter.settle("res_9", Decimal("0.12")) == Decimal(0)
+    assert limits.calls == [("settle_for", "agent-1", "res_9", Decimal("0.12"))], (
+        "the adapter did not settle through settle_for with the bound agent"
+    )
+
+
+def test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent():
+    limits = _RealShapeLimits()
+    meter = model_gate.LimitsMeter(limits, "agent-1")
+    assert meter.reserve("agent-1", Decimal("0.4"), run_id="run-1") == "res_1"
+    assert limits.calls == [("reserve", "agent-1", Decimal("0.4"), "run-1")], (
+        "the adapter did not reserve with the agent and the run id"
+    )
+    with pytest.raises(TypeError):
+        meter.reserve("agent-2", Decimal("0.4"), run_id="run-1")
+    assert len(limits.calls) == 1, "a reserve for another agent reached the limits"
+    with pytest.raises(TypeError):
+        model_gate.LimitsMeter(limits, "")
+
+
+def test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case():
+    limits = _RealShapeLimits()
+    log: list = []
+    gate = ModelGate(
+        Client(log),
+        meter=model_gate.LimitsMeter(limits, "agent-1"),
+        audit=Sink(log),
+        worst_case=worst,
+    )
+    gate.bind("agent-1", "run-1", mapping=NO_MAP).chat(CLEAN, system="s", route="main")
+    assert limits.calls[-1] == ("settle_for", "agent-1", "res_1", COST), (
+        "the paid call was not settled at its real cost through the real Limits shape"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="F2 (ESCALATIONS E25, owner decision): the gate masks what it sends, not the reply",
+)
+def test_f2_a_reply_with_a_planted_secret_is_returned_unmasked():
+    planted = "Zx9qPlantedSecret77"
+    client = Client()
+    client.reply = Reply(text=f"use {planted} now", cost_usd=COST, model_id="fake-model")
+    mapping = runmap.RunMap()
+    runmap.redact_text(f"password={planted}", mapping)
+    bound, _, _, _ = build(client, mapping=mapping)
+    out = bound.chat(CLEAN, system="s", route="main")
+    assert planted not in out.text
+
+
 def test_d8_every_test_the_module_docstring_names_exists():
     """D8: the docstring says each stated limit is pinned by the test it names (T:: = this file, E:: =
     tests/test_runmap_enforce_map.py). A name that does not exist, or a limit with no name that is not marked

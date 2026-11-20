@@ -595,6 +595,23 @@ M = [
         '                else _starts_one(seps, piece)\n', '                else (_starts_one(seps, piece) and len(piece) > 8)\n',
         'test_g13d_1_values_of_only_separators_refuse_a_run_of_four_beside_a_key_a_stated_limit', 'G13d-1 the stated limit changed',
         file=RUNMAP, test=MAP_TEST),
+    # --- F1: the adapter from the real Limits shape to the Meter ---
+    mutant("F1a the adapter settles through Limits.settle (no agent) instead of settle_for",
+        "        return self._limits.settle_for(self._agent_id, reservation_id, actual_usd)\n",
+        "        return self._limits.settle(reservation_id, actual_usd, agent_id=self._agent_id)\n",
+        "test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent", "did not settle through settle_for"),
+    mutant("F1b the adapter drops the run id of the reserve",
+        "        return self._limits.reserve(agent_id, worst_usd, run_id=run_id)\n",
+        "        return self._limits.reserve(agent_id, worst_usd, run_id=None)\n",
+        "test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent", "did not reserve with the agent and the run id"),
+    mutant("F1c the adapter reserves for another agent than the one it settles for",
+        "        if agent_id != self._agent_id:  # fail closed: settle names the bound agent only\n            raise TypeError(\"agent_id is not the agent this meter is bound to\")\n",
+        "",
+        "test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent", "DID NOT RAISE", ),
+    mutant("F1d the adapter settles for no agent at all (settle fills a different agent)",
+        "        return self._limits.settle_for(self._agent_id, reservation_id, actual_usd)\n",
+        "        return self._limits.settle_for(\"\", reservation_id, actual_usd)\n",
+        "test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case", "was not settled at its real cost"),
 ]  # fmt: skip
 
 
