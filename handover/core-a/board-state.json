@@ -631,8 +631,8 @@
   {
    "item": "D-fix2",
    "what": "fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest",
-   "state": "RUNNING (code + tests); mutant script fix after it",
-   "percent": 5,
+   "state": "code+tests DONE; mutant script fix and fresh review RUNNING; then evidence batch",
+   "percent": 60,
    "evidence file": "reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md",
    "tries": 1,
    "reason": "d-fix1 still edits the same files"
@@ -1621,11 +1621,11 @@
    "what exactly it is doing": "ORDER 020 code (connection cap, read deadline, helpers, REQUIRE_PG skip) + test review T-1/T-4/T-5/T-6",
    "started UTC": "07:30",
    "expected end": "about 30 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3 (fix)",
    "retries so far": 0,
-   "reason": "after d-fix1"
+   "reason": "ORDER 020 code done: REQUIRE_PG fails the core-b skip (untested path: no combined tree yet), direct config access, connection cap 256 + 30 s total read deadline, sender_map shared, qualified_agents public in worker (cli/agent_loop copies are core-b's: requests/004), dead asserts deleted, log on sdk logger only; T-1,T-4,T-5c,T-6 tests; tests/triggers 1148 passed 5 skipped (own run); 4 mutant anchors stale"
   },
   {
    "id": "ticket-D",
@@ -1639,6 +1639,32 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "ticket D lines 140, 299, 377-379 now match the pack (one Crypto v2 sign node, Retry off, required state check, 45 rounds, 45000 ms); not run in n8n"
+  },
+  {
+   "id": "mut-fix",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "mutant script: 4 stale anchors, loud anchor count, win32 not-run, new mutants for the new guards, one complete run",
+   "started UTC": "07:43",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "after d-fix2"
+  },
+  {
+   "id": "D-rev2",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "round 2 read-only review of the step D code after d-fix1 and d-fix2",
+   "started UTC": "07:43",
+   "expected end": "about 15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3",
+   "retries so far": 0,
+   "reason": "after d-fix2"
   }
  ],
  "tests": [
