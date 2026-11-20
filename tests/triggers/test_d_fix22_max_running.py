@@ -22,7 +22,7 @@ def _pool_bound(runner) -> int:
 
 
 def _make(rt, **over):  # noqa: F811
-    wsgi, runner = worker.make_app(_app(rt, _settings(**over)))
+    _wsgi, runner = worker.make_app(_app(rt, _settings(**over)))
     return runner
 
 
@@ -64,7 +64,10 @@ def test_runner_has_no_default_for_max_running():
 
 
 def _named_max_running(name: str | None) -> bool:
-    return name is not None and "max_running" in name.lower().replace("-", "_")
+    """A name for the number of runs; the CEILING (an upper bound the config is checked against) is not a default."""
+    return (
+        name is not None and "max_running" in name.lower() and not name.lower().endswith("ceiling")
+    )
 
 
 def test_worker_source_has_no_numeric_default_for_max_running():
