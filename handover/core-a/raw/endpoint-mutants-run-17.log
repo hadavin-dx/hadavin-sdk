@@ -1,0 +1,14 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+# endpoint mutants run, python 3.13.18, platform linux
+# sha256 8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
+# sha256 fdd9ae116d6add8229daefdae674975d80582fa9528bf693c3d65b86a804651f  src/hadavin_sdk/triggers/endpoint.py
+# sha256 8cd743ed0552a4d7ef3c058cbd0634f00b5be9edd9160dbfcc368bafea883e84  src/hadavin_sdk/triggers/server.py
+# sha256 0ccc674b8eec32a8b1856aaa2c626238c0e45277f402bb98f0c5c5b937faaedc  src/hadavin_sdk/triggers/worker.py
+# sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
+# sha256 f72b674d6fc6b24dc3f62ef8d395802239b6f157b0292a15c88afc609a74be1d  tests/endpoint_mutants.py
+ok  KILLED       G1a the tenant is dropped from derive_run_id  [test_tenant_is_part_of_the_run_id_at_the_endpoint]
+ok  KILLED       G1b the sender is dropped from derive_run_id  [test_two_senders_same_key_give_two_run_ids_and_their_own_identity]
+ok  KILLED       G1c the NUL separator is dropped from the hash input  [test_derive_run_id_separates_tenant_sender_and_key]
+ok  KILLED       G2a the document hash is dropped from trigger_ref  [test_trigger_ref_changes_with_the_document]
+ok  KILLED       G2b Runner.start skips the trigger_ref comparison on a hit  [test_same_key_with_another_document_is_409_and_writes_nothing]
+ok  KILLED       G3a 202 right after submit, the row is not read  [test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken]
