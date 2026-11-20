@@ -44,7 +44,7 @@ PREFIX = {
 }
 
 CHECK = "if time.thread_time() > deadline:"
-SLASH = 'c.isalnum() or c == "." or (c == "/" and "\\u2044" in f)'
+SLASH = 'c.isalnum() or c == "." or (c == "/" and "\\u2044" in src)'
 
 
 def m(name, file, old, new, test_file, killer, expect, **kw):

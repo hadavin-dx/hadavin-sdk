@@ -959,12 +959,20 @@ MAX_FOLD_ROUNDS = 4  # rounds of in-place masking per line before the line is wi
 FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
 
 
+_TYPED_PUNCT = frozenset({"-", "'", '"'})
+_TYPED_CATEGORIES = frozenset({"Pd", "Pi", "Pf"})  # dashes, opening and closing quotes
+
+
 @functools.lru_cache(maxsize=65536)
 def _char_class(ch: str) -> tuple[str, int] | None:
     """What the fold does to ONE non-ASCII-printable character: (its folded text, 1 if it is a look-alike or sign that must not sit inside a
-    masked value else 0), or ``None`` when the fold does something a legitimate text does not (see ``_Redactor._aligned_fold``)."""
+    masked value else 0), or ``None`` when the fold does something a legitimate text does not (see ``_Redactor._aligned_fold``). Written
+    for fold4 on P2d-1 and adapted to fold5 in two places, both because fold5 maps punctuation (gap 4): a dash or a typographic quote
+    is its ASCII form with flag 0, and a fraction sign is known by the U+2044 of its decomposition."""
     f = fold(ch)
     flag = 0
+    # the fold (fold5, gap 4) writes the fraction slash as "/" itself, so a sign that holds one is known by its decomposition, not by its fold
+    src = unicodedata.normalize("NFKD", ch)
     if ch == "\u2044":
         return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)
     if f == ch or f == "":
@@ -975,6 +983,15 @@ def _char_class(ch: str) -> tuple[str, int] | None:
     elif unicodedata.category(ch) == "Nd":
         if not (len(f) == 1 and f.isascii() and f.isdigit()):
             return None
+    elif (
+        f in _TYPED_PUNCT
+        and (unicodedata.category(ch) in _TYPED_CATEGORIES or ch == "\u2212")
+        and unicodedata.normalize("NFKC", ch) == ch
+    ):
+        # a dash, the minus sign or a typographic quote, which the fold (fold5, gap 4) reads as ASCII `-`, `'` or `"`: ordinary typography,
+        # one character for one, so a value beside or around it is masked in the line as written (like a digit of another script). A
+        # full-width or small form (U+FF0D, U+FE63) is a compatibility character and is refused below, as before.
+        pass
     elif len(f) == 1 and f.isalpha():
         nfd = unicodedata.normalize("NFD", ch)
         if nfd[0] == f and all(unicodedata.category(c) == "Mn" for c in nfd[1:]):
@@ -986,7 +1003,7 @@ def _char_class(ch: str) -> tuple[str, int] | None:
         else:
             return None  # a full-width or compatibility letter: live ASCII after the fold
     elif (g := f.replace("\u2044", "/")).isascii() and all(
-        c.isalnum() or c == "." or (c == "/" and "\u2044" in f) for c in g
+        c.isalnum() or c == "." or (c == "/" and "\u2044" in src) for c in g
     ):
         f = g  # a fraction slash (U+2044, as in a one-half sign) is a plain slash here; any other character that folds to "/" is refused
         flag = 1  # a sign that spells letters, digits or dots (an ellipsis, TM, a ligature, a superscript digit): masked around, never inside
