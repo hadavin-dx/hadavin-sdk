@@ -2946,3 +2946,93 @@ def test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call():
     assert code == "held_value_left" and client.sent == [], (
         "G13-13 the prefix beside a key was sent"
     )
+
+
+# --- G13b (design M-1, M-2): no false refusal beside a placeholder; a long secret does not refuse a long chunk -------------
+WEBHOOK = "https://hooks.slack.com/services/T0000000/B0000000/" + "q" * 24
+G13B_MAP = {
+    "<SECRET_1>": WEBHOOK,
+    "<HOST_1>": "db1.corp.example.org",
+    "<SECRET_2>": "zq" * 8 + "9x",
+}
+
+
+def _g13b_call(bound, text, history=()):
+    return _g13_outcome(bound, [*history, {"role": "user", "content": text}])
+
+
+def test_g13b_1_a_url_scheme_beside_a_key_is_sent_while_a_webhook_value_is_in_the_map():
+    """G13b-1 (design M-1, reproduced: `https://<HOST_1>/x` was refused `held_value_left` with a webhook value in the map): the
+    public start of a value (scheme, `Bearer `) and separators beside a key are sent; a piece that goes past it, and the
+    G13 leak cases, are still refused."""
+    bearer = "Bearer " + "abcdef123456XY"
+    mapping = runmap.RunMap(
+        {**G13B_MAP, "<SECRET_3>": bearer, "<SECRET_4>": "-----BEGIN KEY-----x"}
+    )
+    bound, *_ = build(mapping=mapping)
+    for text in (
+        "see https://<HOST_1>/x ok",
+        "see https:<HOST_1> ok",
+        "Authorization: Bearer <SECRET_2>",
+        "----- <HOST_1> -----<HOST_1>",
+    ):
+        assert _g13b_call(bound, text) == "sent", f"G13b-1 refused ordinary text: {text}"
+    for text in ("go hunter2-<HOST_1> y", "https://h<HOST_1>", "x Bearer a<HOST_1>"):
+        mapping = runmap.RunMap(
+            {**G13B_MAP, "<SECRET_3>": bearer, "<SECRET_5>": "hunter2-" + "ABCDEFGH"}
+        )
+        bound, *_ = build(mapping=mapping)
+        assert _g13b_call(bound, text) == "held_value_left", f"G13b-1 sent a leak piece: {text}"
+
+
+def test_g13b_2_a_planted_value_does_not_refuse_every_later_call_of_the_run():
+    """G13b-2: the message that holds `https://<HOST_1>/health` stays in the history; a second and a third call with the
+    same history are sent too (before G13b each was refused for as long as the run lasted)."""
+    bound, *_ = build(mapping=runmap.RunMap(G13B_MAP))
+    history = [{"role": "assistant", "content": "I will check https://<HOST_1>/health now"}]
+    for n in range(3):
+        assert _g13b_call(bound, f"and then call {n}", history) == "sent", (
+            f"G13b-2 call {n} refused"
+        )
+
+
+def _long_secret(n):
+    return "".join(chr(97 + (i * 7 + i // 26) % 26) for i in range(n))
+
+
+def test_g13b_3_a_long_secret_does_not_refuse_a_long_non_ascii_chunk():
+    """G13b-3 (design M-2): a 4,000-character secret in the map; a 100 KB chunk with non-ASCII letters is sent when clean
+    (it was `mask_budget_exceeded`), refused when it holds the secret full-width across a window edge or anywhere; a
+    65,000-character value does not refuse it either."""
+    secret = _long_secret(4_000)
+    wide = "".join(chr(ord(c) + 0xFEE0) for c in secret)
+    filler = "wörd " * 20_000  # 100,000 characters
+    mapping = runmap.RunMap({"<SECRET_1>": secret})
+    bound, *_ = build(mapping=mapping)
+    assert _g13_outcome(bound, documents=[filler.encode()]) == "sent", (
+        "G13b-3 a clean long chunk was refused"
+    )
+    for at in (10, runmap.VIEW_WINDOW - 2_000, runmap.VIEW_WINDOW - 30, 90_000):
+        doc = (filler[:at] + wide + filler[at:]).encode()
+        bound, *_ = build(mapping=mapping)
+        assert _g13_outcome(bound, documents=[doc]) == "held_value_left", f"G13b-3 missed at {at}"
+    huge = runmap.RunMap({"<SECRET_1>": _long_secret(65_000)})
+    bound, *_ = build(mapping=huge)
+    assert _g13_outcome(bound, documents=[filler.encode()]) == "sent", (
+        "G13b-3 a 65,000-char value refused a chunk"
+    )
+
+
+def test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_sent():
+    """G13b-5 (N3): a base64 copy of a secret is not read by the gate (the producers' G4 step reads it); a copy of an
+    identifier split by NUL passes as written. Both are the claims of the module docstring."""
+    import base64
+
+    mapping = runmap.RunMap({"<SECRET_1>": TOKEN, "<HOST_1>": "db1.corp.example.org"})
+    bound, *_ = build(mapping=mapping)
+    doc = b"blob " + base64.b64encode(TOKEN.encode())
+    assert _g13_outcome(bound, documents=[doc]) == "sent", "G13b-5 a base64 copy was refused"
+    split = chr(0).join("db1.corp.example.org")
+    assert _g13_outcome(bound, [{"role": "user", "content": f"a {split} b"}]) == "sent", (
+        "G13b-5 a NUL-split identifier was refused"
+    )

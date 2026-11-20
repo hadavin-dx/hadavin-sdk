@@ -26,6 +26,7 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
 - The gate does not clean the text it sends. A copy of a SECRET value split by NUL characters (a UTF-16 document: the
   gate reads documents as UTF-8) refuses the call (G13: the net reads the text without NUL); a copy of an identifier split
   so, and any copy split by an ANSI colour sequence, passes as written.
+  T::test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_sent
   T::test_d7_a_copy_split_by_nul_or_utf16_refuses_the_call_an_ansi_split_copy_passes
   E::test_stated_limit_a_copy_split_by_nul_characters_is_not_found
 - A known value that itself holds a placeholder-shaped token is never replaced, and a known value written inside
@@ -63,11 +64,21 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   refuse every value that merely lies inside a fixed word (`ESULT`). G13 (E19): the net also refuses (1) a piece of 4 or
   more characters of a SECRET value that touches a key of the map and is the value's start (before the key) or end (after
   it): `hunter2-<SECRET_2>`, and (2) a SECRET value found in a decoded form of the chunk (`runmap.held_in_views`: without
-  NUL, NFKC, invisible characters removed, JSON/percent/entity/backslash escapes undone, composed). NOT read: a piece from
-  the middle of a value between two keys, a piece one character away from a key, a piece shorter than 4, another letter
-  case, an ANSI-split copy, a base64-encoded copy (the producers' G4 step).
+  NUL, NFKC, invisible characters removed, JSON/percent/entity/backslash escapes undone, composed). G13b: a piece that is
+  only the public start of a value (`https://` of a webhook URL, `Bearer `) or only separator characters is not read,
+  so `https://<HOSTNAME_1>/health` is sent beside a webhook value (a secret whose own first characters are ordinary
+  words still refuses text that starts so beside a key: a stated limit). A text over `runmap.VIEW_WINDOW` is read in
+  windows; a value of more than 1,636 characters gets an overlap of `runmap.WINDOW_OVERLAP_MAX` only (its raw copy is
+  found on the whole text). NOT read: a piece from the middle of a value between two keys, a piece one character
+  away from a key, a piece shorter than 4, another letter case, an ANSI-split copy, a base64-encoded copy (the
+  producers' G4 step), a copy in several stacked escape layers (`%26%23...`) that crosses a window edge of a text over
+  `VIEW_WINDOW` characters and is longer than the overlap, and the forms the decoder does not undo: UTF-7,
+  quoted-printable, hex or ROT13 dumps, reversed text, homoglyphs NFKC leaves alone, a secret wrapped across lines.
   T::test_g13_10_a_secret_in_a_decoded_form_refuses_the_call
   T::test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call
+  T::test_g13b_1_a_url_scheme_beside_a_key_is_sent_while_a_webhook_value_is_in_the_map
+  T::test_g13b_3_a_long_secret_does_not_refuse_a_long_non_ascii_chunk
+  T::test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_sent
   E::test_g13_4_boundaries_of_the_piece_rule
   T::test_r3_m3_a_secret_hidden_in_a_placeholder_shaped_token_that_is_not_a_key_refuses_the_call
   T::test_r3_m3_the_net_covers_every_secret_value_not_only_the_held_back_ones
@@ -713,7 +724,7 @@ class BoundGate:
         replaced, so a binary one is decoded lossily). The live map is copied ONCE here (`runmap.snapshot`): every
         text of this call is enforced against the same entries and shares one budget, and the patterns are built at
         most once per map change (kept in this bound gate). The fixed words of a tool-result token are never
-        replaced (`_enforce_text`). Every enforced chunk is checked by the safety net (`runmap.held_value_left`)."""
+        replaced (`_enforce_text`). Every enforced chunk is checked by the safety net (`runmap.held_value_left` and, G13, `runmap.held_in_views`)."""
         mapping = self._mapping
         try:
             if isinstance(mapping, _NoMap):
@@ -763,7 +774,8 @@ class BoundGate:
 
     def _chunk(self, text: str, mapping: Mapping[str, str]) -> tuple[str, str | None]:
         """(the enforced text, None) or ("", a failure code): one stretch enforced and then checked by the safety net
-        (a value of a secret kind still raw in it)."""
+        (a value of a secret kind still raw in it; since G13 also a piece of one beside a key of the map and a secret value
+        in a decoded form of the text: `runmap.held_value_left` and `runmap.held_in_views`)."""
         fixed = self._enforce(text, mapping)
         if not isinstance(fixed, str):
             return "", CODE_MASK_REFUSED
