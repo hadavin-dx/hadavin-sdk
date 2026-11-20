@@ -51,6 +51,8 @@ LIMITS = {
     99: "L14",
     100: "L3",  # v6: rows 100, 101 (design N4)
     101: "L3",
+    102: "L7",  # G8T: G7-F3 review N2, a spaced number before `.` + a word
+    103: "L7",
     85: "L10",
     86: "L10",
 }
@@ -136,7 +138,8 @@ def test_must_keep_rows(k):
 @pytest.mark.parametrize("fid,text,now,after", [pytest.param(*f, id=f[0]) for f in G.FULL_STOP])
 def test_phone_before_a_full_stop_is_masked(fid, text, now, after):
     """G7-F3 (was the stated limit L7): a number before a full stop that ends a sentence is masked up to the full stop, in all
-    four PHONE entries (F4: the last group no longer stays readable). The rows are pinned as they are now."""
+    four PHONE entries (F1 dashed, F2 contiguous, F3 `+`, F4 after a letter, F5 `_` before, F6 phone word before: F1-F6; F4 no
+    longer leaves the last group readable). The rows are pinned as they are now."""
     out = redact(text).text
     assert out == after, f"ROW {fid} full stop: {out!r}"
 
@@ -155,7 +158,8 @@ def test_an_iban_never_starts_inside_an_opaque_token(k):
 def test_at_rest_rows(aid, text, now, after):
     """G8-review-2 F6: what `redact()` writes to the map and what `runmap.storable` keeps of it. AT1-AT3 pin limit L11 (a
     piece of a secret with a stored kind's shape is stored), AT5 and AT6 the IBAN start's effect on stored originals,
-    AT8 and AT9 a contiguous card number stored as PHONE (v6). AT4 and AT7 are the base-equal and over-mask rows (AT4: a piece
+    AT8 and AT9 a contiguous card number stored as PHONE (v6), AT10 (G7-F3 review N1) the sweep's follow-on: after `ref <10 digits>. Next` is masked, a later
+    `<10 digits>.tar` becomes `<PHONE_1>.tar` (a stated consequence). AT4 and AT7 are the base-equal and over-mask rows (AT4: a piece
     set off by `-` is registered the same way on the base; AT7: `ORD1234-5678-9012-3456` is over-masked as a card, not storable)."""
     r = redact(text)
     got = (r.text, sorted(r.mapping.items()), sorted(runmap.storable(dict(r.mapping)).items()))
@@ -263,11 +267,15 @@ def test_g9_read_back_follows_the_sweeps_joins():
 def test_a_value_inside_an_opaque_token_is_a_stated_limit(o):
     """Review round 1 (design Major), limit L15: a UUID or a phone number set off by `_` or a letter inside a long opaque
     token is cut out by its own pattern and the remainder (under HIGHENTROPY's 40 characters) stays readable; the base masked
-    the token whole. Pinned as measured (`after`, and `base` for the record)."""
-    oid, shape, text, _tail, base, after = o
+    the token whole. Pinned as measured (`after`); `base` is the output measured on the base (G8T): placeholders only, none of the
+    tail readable (OL3 is `<HIGHENTROPY_1><ACCOUNTID_1>`, the others one `<HIGHENTROPY_1>`)."""
+    oid, shape, text, tail, base, after = o
     out = redact(text)
     assert out.text == after, f"OL {oid} ({shape}): {out.text!r}"
-    assert base != after  # the base output differed: this is a change G8 made
+    assert not G.PLACEHOLDER.sub("", base), (
+        f"OL {oid} base: {base!r}"
+    )  # the base text is placeholders only
+    assert not G.leak("uuid", tail, base), f"OL {oid} base leaks: {base!r}"
 
 
 @pytest.mark.parametrize(
@@ -297,6 +305,26 @@ def test_phone_word_or_underscore_before_a_full_stop_is_masked(f):
     assert not G.leak("phone", G.P10, out), f"ROW {f[0]} full stop: {out!r}"
 
 
+@pytest.mark.parametrize(
+    "k",
+    [
+        pytest.param(
+            k,
+            id=k["id"],
+            marks=pytest.mark.xfail(
+                strict=True, reason="over-mask, G7-F3 review N3 (a dotted token, base64 alphabets)"
+            ),
+        )
+        for k in G.KEEP
+        if k["id"] in ("K91", "K92", "K93")
+    ],
+)
+def test_dotted_token_with_a_symbol_segment_is_kept(k):
+    """G7-F3 review N3: a dotted token (10+ digits, `.`, a segment that starts with `-`, `+` or `/`) is not protected by the
+    `.` + word rule, so its digits are masked (pinned in test_must_keep_rows). The DESIRED output is the token unchanged; strict xfail."""
+    assert redact(k["text"]).text == k["text"], f"ROW {k['id']}"
+
+
 def test_gate_sweep_of_a_held_back_phone_value_uses_the_phone_joins():
     """Review round 1 (design N3): `runmap._sweep_held` (runmap.py, the gate's held-back values) passes `_joins(placeholder)`
     too. A PHONE value that is a piece of another placeholder of the map is held back (here `<TENANT_4155550132>`, a made-up
@@ -315,16 +343,16 @@ def test_row_counts_are_pinned():
     from collections import Counter
 
     assert (
-        len(G.CASES) == 101
-        and len(G.KEEP) == 90
+        len(G.CASES) == 103
+        and len(G.KEEP) == 93
         and len(G.FULL_STOP) == 6
-        and len(G.AT_REST) == 9
+        and len(G.AT_REST) == 10
         and len(G.UNTRUSTED) == 2
     )
     assert Counter(c["cls"] for c in G.CASES) == {
         "closed": 48,
         "unchanged": 15,
-        "limit": 33,
+        "limit": 35,
         "changed": 3,
         "g4c": 2,
     }

@@ -1,4 +1,4 @@
-"""Ticket G8 (glued-rest gap): the 101 probe rows, the must-keep rows, the full-stop rows, the at-rest rows and the
+"""Ticket G8 (glued-rest gap): the 103 probe rows, the must-keep rows, the full-stop rows, the at-rest rows and the
 untrusted rows, as data. Not collected by pytest.
 
 Every value is fake or a documentation value and is built from parts here (no literal of a full value elsewhere, as
@@ -32,6 +32,8 @@ V = {
     "PHONE_P2": J(["+1 415-", "555-", "0199"]),
     "PHONE10": J(["415", "555", "0132"]),
     "PHONEUK": J(["+44 20 ", "5550 ", "1234"]),
+    "PHONEUK2": J(["+44 20 ", "7946 ", "0958"]),  # G7-F3 review N2
+    "PHONE00": J(["0044 20 ", "5550 ", "1234"]),
     "IBAN_DE": J(["DE89", "3704", "0044", "0532", "0130", "00"]),  # the published example IBANs
     "IBAN_GB": J(["GB82", "WEST", "1234", "5698", "7654", "32"]),
     "PAN": J(["4242", "4242", "4242", "4242"]),  # v6: a published test card number, contiguous
@@ -159,6 +161,10 @@ ROWS = [
     # v6 (G8-review-5-design N4): a phone word inside a longer word (limit L3: entry 8 refuses a letter before the word)
     (100, 'phone', 'contiguous, telephone before', 'call telephone{PHONE10} now', 'PHONE10', 'limit', 'call telephone{PHONE10} now', 'call telephone{PHONE10} now', None),
     (101, 'phone', 'contiguous, cellphone before', 'call cellphone{PHONE10} now', 'PHONE10', 'limit', 'call cellphone{PHONE10} now', 'call cellphone{PHONE10} now', None),
+    # G7-F3 review N2 (limit L7, measured: the base does the same, no regex change): a spaced number whose last group is followed by `.` + a
+    # letter or digit is masked only up to the last group, which stays readable (the backtracked end of the `+` / main entry)
+    (102, 'phone', 'spaced + number, .word after', 'call {PHONEUK2}.Thanks', 'PHONEUK2', 'limit', 'call <PHONE_1> 0958.Thanks', 'call <PHONE_1> 0958.Thanks', None),
+    (103, 'phone', 'spaced 00 number, .digit after', 'call {PHONE00}.5', 'PHONE00', 'limit', 'call <PHONE_1> 1234.5', 'call <PHONE_1> 1234.5', None),
 ]
 # fmt: on
 
@@ -243,6 +249,8 @@ def opaque(n: int) -> str:
 # remainder is under HIGHENTROPY's 40-character minimum, so up to 32 characters of the token stay readable. Stated limit L15, pinned as
 # measured (`after`, test_a_value_inside_an_opaque_token_is_a_stated_limit); the ideal (no 8-character run of `tail` readable) is a
 # strict xfail. (id, shape, text, tail, base, after): `base` is the output before G8 (a git archive of the parent of the G8 commits).
+# `base` was measured through redact() on that archive (G8T): OL3 is `<HIGHENTROPY_1><ACCOUNTID_1>` (the 20-character head is masked whole as a
+# HIGHENTROPY and the UUID as an ACCOUNTID), the others one `<HIGHENTROPY_1>`; in every row no character of the tail stays readable.
 _T32, _T40, _T20 = opaque(32), opaque(40)[::-1], opaque(20)[::-1]
 OPAQUE_LIMITS = [
     (
@@ -471,6 +479,30 @@ MUST_KEEP = [
     ("K88", "call +1 415-555-0132.x", None, None, "kept (G7-F3, + entry)"),
     ("K89", "tel_4155550132.x", None, None, "kept (G7-F3, _ entry)"),
     ("K90", "tel4155550132.5", None, None, "kept (G7-F3, phone-word entry)"),
+    # G7-F3 review N3: a dotted token whose first segment is 10 or more digits and whose second starts with `-`, `+` or `/` (base64
+    # alphabets) is not protected by the `.` + word rule: the digits are masked (an over-mask; the base kept the token). Pinned as measured;
+    # the desired output (the token unchanged) is a strict xfail in tests/test_redact_glued_rest.py.
+    (
+        "K91",
+        "tok " + P10 + ".-Ab9 x",
+        "tok " + P10 + ".-Ab9 x",
+        "tok <PHONE_1>.-Ab9 x",
+        "over-mask (G7-F3 N3)",
+    ),
+    (
+        "K92",
+        "tok " + P10 + ".+Ab9 x",
+        "tok " + P10 + ".+Ab9 x",
+        "tok <PHONE_1>.+Ab9 x",
+        "over-mask (G7-F3 N3)",
+    ),
+    (
+        "K93",
+        "tok " + P10 + "./Ab9 x",
+        "tok " + P10 + "./Ab9 x",
+        "tok <PHONE_1>./Ab9 x",
+        "over-mask (G7-F3 N3)",
+    ),
     # v4 (G8-review-3-codebase M1): an IBAN shape inside a base64url token: after `_` and before `-` (K83), after `-` and
     # before `_` (K84). Both are whole HIGHENTROPY tokens on the base and must stay so.
     (
@@ -591,6 +623,19 @@ AT_REST = [
         "card " + V["PAN"],
         ("card <PHONE_1>", [("<PHONE_1>", V["PAN"])], [("<PHONE_1>", V["PAN"])]),
         None,
+    ),
+    # G7-F3 review N1, a stated consequence and not a defect: `ref <10 digits>. Next` is masked now (a number before a full stop that ends
+    # a sentence); once it is known the sweep also replaces a later copy glued to a `.` + letter (`<10 digits>.tar` -> `<PHONE_1>.tar`), which
+    # K86 keeps only when no copy was masked earlier in the same text. The epoch `1732095071.123` is another number and stays.
+    (
+        "AT10",
+        "ref 1234567890. Next then 1234567890.tar and 1732095071.123",
+        ("ref 1234567890. Next then 1234567890.tar and 1732095071.123", [], []),
+        (
+            "ref <PHONE_1>. Next then <PHONE_1>.tar and 1732095071.123",
+            [("<PHONE_1>", "1234567890")],
+            [("<PHONE_1>", "1234567890")],
+        ),
     ),
 ]
 # v4 (G8-review-3-codebase M2): (id, call, text, expected): `redact_untrusted` escapes a placeholder-shaped literal to
