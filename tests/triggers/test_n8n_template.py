@@ -1,10 +1,13 @@
 """The n8n outline files: what can be checked without an n8n.
 
-The two workflow files and their README were written from notes and were not run in n8n. These tests pin
-their shape (they parse, nodes and connections line up, the guard sits before the sign node, a 503 leads
-through a Wait back to a new signature), keep secrets out of them, and tie the signing recipe as the sign
-node and the README word it to ``hmac_v0`` so the three cannot drift. They do not show that n8n accepts
-the files. The fake secret is built from parts.
+An earlier version of the two workflow files was run in n8n 2.47.7 by the lead (the record is
+handover/core-a/inputs/lead-evidence-n8n-1.md). The files were then changed to follow that record and
+were not imported again. These tests pin what the record showed must hold: Set nodes on 3.4, a webhookId,
+the signing value in a credential and nowhere else, the status read from error.status, Retry On Fail off,
+the guard before the hash node and the sign node, a 503 leading through a Wait back to a new signature.
+They tie the signing recipe as the sign node and the README word it to ``hmac_v0``, and they list the
+nodes that still hold something nobody has seen working. They do not show that n8n accepts the files.
+The fake secret is built from parts.
 """
 
 from __future__ import annotations
@@ -26,31 +29,77 @@ from tests.test_no_hardcoded_values import PATTERNS
 N8N = Path(__file__).resolve().parents[2] / "n8n"
 MAIN, ERROR, README = "hadavin-trigger.json", "hadavin-trigger-error.json", "README-trigger.md"
 PREFIX = "n8n-nodes-base."
-PLACEHOLDER = "$env.HADAVIN_TRIGGER_SECRET"
-SECRET_EXPRESSION = "={{ " + PLACEHOLDER + " }}"
+EVIDENCE = "handover/core-a/inputs/lead-evidence-n8n-1.md"
+SEEN = "SEEN IN n8n 2.47.7:"
+OPEN = "UNVERIFIED:"
+NOT_REIMPORTED = "this version not re-imported"
+WEBHOOK_ID = (
+    "00000000-0000-4000-8000-000000000000"  # the made-up placeholder, replaced per installation
+)
+SET_VERSION = 3.4  # with 3, n8n 2.47.7 ignored "assignments" and reported no error
+# Field names that would hold a typed-in secret, and texts that would read one from outside a credential.
+SECRET_FIELDS = ("secret", "password", "passphrase", "token", "apikey", "privatekey")
+SECRET_READS = ("$env", "$vars", "$secrets", "createHmac", "require(")
+# The nodes whose note still names something nobody has seen working. Change this list with the notes.
+OPEN_NODES = {
+    MAIN: {
+        "Trigger placeholder",
+        "Answer caller: refused",
+        "Stop: id or text missing",
+        "Answer caller: taken",
+        "Sign",
+        "Send to Hadavin",
+        "Busy and rounds left?",
+        "Wait before next round",
+        "Check state (optional)",
+    },
+    ERROR: set(),
+}
+# What nobody has run, as the README's status part must name it.
+NOT_RUN = (
+    "These two files as they stand now",
+    "INSIDE the full chain",
+    'The two "Answer caller" nodes',
+    "A manual retry of a failed execution from the n8n editor",
+    "30 rounds with 60 second waits",
+    "The real Hadavin endpoint (a stub answered)",
+    "One webhook call that starts two executions",
+    "n8n Cloud and queue mode",
+    "n8n versions other than 2.47.7",
+)
+# What the run measured for n8n's own Retry On Fail, as the README must state it.
+RETRY_FACTS = (
+    "3 requests, about 1 and 2 seconds apart",
+    "n8n sent 5 requests, about 5 seconds apart",
+    "capped at 5",
+    "capped at about 5 seconds",
+    "Every retry reused the same timestamp and the same signature",
+    "It can never outlast a run",
+    "Only the loop above can",
+)
 FAKE_SECRET = "fake" + "-trigger-value" * 2  # 32 characters, built from parts, never a real one
 FIXED_TS = 1_800_000_000
 FIXED_BODY = json.dumps({"key": "ab" * 32, "document": 'line "one"\nzwei ä'}, ensure_ascii=False)
 
 # One phrase for each item of the README's verify list, in order.
 VERIFY_ITEMS = (
-    "byte-identical",
-    "where the HMAC secret can live",
-    "the Crypto node itself",
-    "HTTP Request timeout",
-    "Retry On Fail",
+    "these two files as they stand now import without error",
+    "typeVersion 2 with the credential inside the full chain",
+    "placeholder credential id",
+    'the two "Answer caller" nodes',
+    "placeholder `webhookId`",
+    "reads `error.status` only",
     "runs the sign node again",
-    "error workflow runs only when published",
+    "30 rounds with 60 second waits",
+    "the real Hadavin endpoint",
     "two executions still yields one run",
-    "n8n version is pinned",
+    "n8n Cloud, queue mode",
+    "n8n versions other than 2.47.7",
+    "HTTP Request timeout timed live",
+    "no answer at all",
+    "editor menu for importing a file",
+    "larger than 300 KB",
     "one exception to",
-    "both files import without error",
-    "Content-Length header",
-    "`$env` can be read in an expression",
-    "Code node's return shape",
-    "the guard:",
-    "the 503 loop:",
-    "the loop ends after the set number of rounds",
 )
 
 
@@ -117,6 +166,45 @@ def _sign_node(flow: dict[str, Any]) -> str:
     return names[0]
 
 
+def _hash_node(flow: dict[str, Any]) -> str:
+    """The node that computes the key."""
+    names = [
+        name
+        for name, node in _nodes(flow).items()
+        if node["type"] == PREFIX + "crypto" and node["parameters"].get("action") == "hash"
+    ]
+    assert len(names) == 1, names
+    return names[0]
+
+
+def _params(flow: dict[str, Any]) -> list[str]:
+    """Every text inside the parameters of every node (names of fields and values), notes left out."""
+    return [s for node in flow["nodes"] for s in _strings(node.get("parameters", {}))]
+
+
+def _typed_in_secrets(flow: dict[str, Any]) -> list[str]:
+    """Places where a node holds, or reads from outside a credential, a signing value."""
+
+    def keys(value: Any) -> list[str]:
+        if isinstance(value, dict):
+            return [k for key, v in value.items() for k in [key, *keys(v)]]
+        if isinstance(value, list):
+            return [k for v in value for k in keys(v)]
+        return []
+
+    out = []
+    for node in flow["nodes"]:
+        params = node.get("parameters", {})
+        for key in keys(params):
+            if any(word in key.lower().replace("_", "") for word in SECRET_FIELDS):
+                out.append(f"{node['name']}: field {key}")
+        for text in _strings(params):
+            out += [f"{node['name']}: reads {word}" for word in SECRET_READS if word in text]
+        if node["type"] == PREFIX + "code":
+            out.append(f"{node['name']}: a Code node")
+    return out
+
+
 def _concat(expression: str, values: dict[str, str]) -> str:
     """Evaluate a recipe written as quoted texts and names joined by ' + ' (the only form used)."""
     out = []
@@ -144,23 +232,64 @@ def _code_signature() -> dict[str, str]:
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
-def test_file_parses_and_says_it_was_not_run(name):
+def test_file_parses_and_says_this_version_was_not_imported_again(name):
     flow = _load(name)
-    assert "not run in n8n" in flow["name"]
+    assert "run in n8n 2.47.7" in flow["name"] and NOT_REIMPORTED in flow["name"]
     assert flow["active"] is False
-    assert flow["notes"].startswith("UNVERIFIED:")
+    assert flow["notes"].startswith(OPEN) and "has not been imported" in flow["notes"]
+    assert EVIDENCE in flow["notes"]
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
-def test_every_node_has_a_name_a_type_and_an_unverified_note(name):
+def test_every_node_has_a_name_a_type_and_a_note_that_says_what_was_seen(name):
     nodes = _load(name)["nodes"]
     assert nodes
     for node in nodes:
         assert isinstance(node.get("name"), str) and node["name"].strip(), node
         assert isinstance(node.get("type"), str) and node["type"].startswith(PREFIX), node
-        # No type version or parameter name is confirmed by the n8n notes, so every node says so.
-        assert node.get("notes", "").startswith("UNVERIFIED:"), node["name"]
+        # Every note opens with one of the two marks: seen as written, or something still open.
+        assert node.get("notes", "").startswith((SEEN, OPEN)), node["name"]
     assert len({node["name"] for node in nodes}) == len(nodes)
+    # The nodes that still hold something nobody has seen working are exactly the listed ones.
+    still_open = {node["name"] for node in nodes if OPEN in node["notes"]}
+    assert still_open == OPEN_NODES[name], still_open ^ OPEN_NODES[name]
+
+
+def test_a_node_that_was_not_in_the_run_does_not_claim_it_was_seen():
+    nodes = _nodes(_load(MAIN))
+    added = [name for name, node in nodes.items() if node["type"] == PREFIX + "respondToWebhook"]
+    assert len(added) == 2
+    for name in [*added, _sign_node(_load(MAIN)), _load(MAIN)["nodes"][0]["name"]]:
+        assert nodes[name]["notes"].startswith(OPEN), name
+    for name in added:
+        assert SEEN not in nodes[name]["notes"] and "NOT part of the run" in nodes[name]["notes"]
+
+
+@pytest.mark.parametrize("name", [MAIN, ERROR])
+def test_every_set_node_is_on_the_version_that_builds_its_fields(name):
+    sets = [node for node in _load(name)["nodes"] if node["type"] == PREFIX + "set"]
+    assert len(sets) == {MAIN: 3, ERROR: 1}[name]
+    for node in sets:
+        assert node["typeVersion"] == SET_VERSION, node["name"]
+        assert node["parameters"]["assignments"]["assignments"], node["name"]
+        assert "Keep typeVersion 3.4" in node["notes"], node["name"]
+
+
+def test_the_webhook_node_has_a_webhook_id_and_the_readme_says_why():
+    flow = _load(MAIN)
+    webhook = _nodes(flow)[_one(flow, "webhook")]
+    assert webhook is flow["nodes"][0]
+    assert webhook["webhookId"] == WEBHOOK_ID
+    assert re.fullmatch(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}", webhook["webhookId"])
+    assert (
+        "webhookId" not in webhook["parameters"]
+    )  # it is a field of the node, beside the parameters
+    assert "placeholder" in webhook["notes"] and "fresh UUID" in webhook["notes"]
+    readme = " ".join(_readme().split())
+    assert f"`{WEBHOOK_ID}`, is a made-up placeholder" in readme
+    assert "This address only works when the webhook node has a `webhookId`" in readme
+    assert "`<address of your n8n>/webhook/<path>`" in readme
+    assert "replace it in the JSON with a fresh UUID" in readme
 
 
 @pytest.mark.parametrize("name", [MAIN, ERROR])
@@ -207,24 +336,65 @@ def test_the_scan_would_catch_a_planted_secret():
     assert any(PATTERNS["long-secret-shape"].search(s) for s in _strings(planted))
 
 
-def test_the_secret_is_only_a_placeholder_reference():
+def test_the_sign_node_takes_its_secret_from_a_credential_and_from_nowhere_else():
+    flow = _load(MAIN)
+    sign = _nodes(flow)[_sign_node(flow)]
+    assert sign["typeVersion"] == 2  # version 1 has a typed-in field, version 2 has none
+    assert set(sign["parameters"]) == {"action", "type", "value", "dataPropertyName", "encoding"}
+    assert set(sign["credentials"]) == {"crypto"}
+    reference = sign["credentials"]["crypto"]
+    assert set(reference) == {"id", "name"}  # a reference only: an id and a name
+    assert reference["id"].startswith("REPLACE-") and reference["name"].strip()
+    # no other node refers to a credential, and no node of either file holds or reads a secret itself
+    others = [n["name"] for n in flow["nodes"] if "credentials" in n and n is not sign]
+    assert others == []
     for name in (MAIN, ERROR):
-        for node in _load(name)["nodes"]:
-            params = node.get("parameters", {})
-            for key, value in params.items():
-                if "secret" in key.lower() or "password" in key.lower():
-                    assert value == SECRET_EXPRESSION, (name, node["name"], key)
-            code = params.get("jsCode", "")
-            if "createHmac" in code:
-                assert f"const secret = {PLACEHOLDER};" in code
-                assert re.search(r"createHmac\('sha256', secret\)", code)
-                assert not re.search(r"secret\s*=\s*['\"`]", code)
-    main = _nodes(_load(MAIN))
-    assert main[_sign_node(_load(MAIN))]["parameters"]["secret"] == SECRET_EXPRESSION
-    # outside the notes, the variable name appears only inside the placeholder
-    for node in main.values():
-        for s in _strings(node.get("parameters", {})):
-            assert s.count("HADAVIN_TRIGGER_SECRET") == s.count(PLACEHOLDER)
+        assert _typed_in_secrets(_load(name)) == [], name
+        text = (N8N / name).read_text(encoding="utf-8")
+        assert "hmacSecret" not in text and "HADAVIN_TRIGGER_SECRET" not in text, name
+        assert all("credentials" not in n for n in _load(ERROR)["nodes"])
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"secret": "={{ $json.x }}"},
+        {"options": {"hmac_secret": "x"}},
+        {"value": "={{ $env.SOME_NAME }}"},
+        {"jsCode": "const c = require('crypto');"},
+    ],
+)
+def test_the_typed_in_secret_check_would_catch_one(parameters):
+    planted = {"nodes": [{"name": "x", "type": PREFIX + "crypto", "parameters": parameters}]}
+    assert _typed_in_secrets(planted)
+
+
+def test_a_code_node_is_caught_too():
+    planted = {"nodes": [{"name": "x", "type": PREFIX + "code", "parameters": {}}]}
+    assert _typed_in_secrets(planted) == ["x: a Code node"]
+
+
+def test_readme_names_the_credential_way_and_holds_no_secret_value():
+    raw = _readme()
+    readme = " ".join(raw.split())
+    assert "The template has ONE way" in readme
+    assert "credential of the type `crypto`" in readme
+    assert "`n8n import:credentials --input=<that file>`" in readme
+    # the one place a value would stand holds placeholder words in angle brackets
+    values = re.findall(r'"hmacSecret": "([^"]*)"', raw)
+    assert values and all(re.fullmatch(r"<[A-Z-]+>", v) for v in values), values
+    assert "DELETE the file" in readme
+    # the other ways are named as not used, with the two settings and the two refusals as they were seen
+    _head, _, other = readme.partition("Ways the template does NOT use:")
+    for phrase in (
+        "Never do this",
+        "two non-default settings",
+        "`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`",
+        "`NODE_FUNCTION_ALLOW_BUILTIN=crypto`",
+        '"access to env vars denied"',
+        "\"Module 'crypto' is disallowed\"",
+    ):
+        assert phrase in other, phrase
 
 
 def test_the_address_is_a_placeholder():
@@ -242,22 +412,58 @@ def test_guard_comes_before_hashing_and_signing():
     trigger = flow["nodes"][0]["name"]
     assert edges[trigger] and all(nodes[n]["type"] == PREFIX + "if" for n in edges[trigger])
     (guard,) = edges[trigger]
-    sign = _sign_node(flow)
-    hashing = [name for name, node in nodes.items() if node["parameters"].get("action") == "hash"]
-    assert sign in _reach(flow, guard)
+    sign, hashing = _sign_node(flow), _hash_node(flow)
+    assert sign in _reach(flow, guard) and hashing in _reach(flow, guard)
     # with the guard taken out, nothing that hashes, signs or sends can be reached from the trigger
     past = _reach(flow, trigger, without=guard)
     assert past == set(), past
-    assert hashing and all(name in _reach(flow, guard) for name in hashing)
+    # the guard is the ONLY way into the hash node, and the hash node comes before the sign node
+    into_hash = [source for source, targets in edges.items() if hashing in targets]
+    assert into_hash == [guard], into_hash
+    assert sign in _reach(flow, hashing) and hashing not in _reach(flow, sign)
+    assert (
+        "String(" in nodes[hashing]["parameters"]["value"]
+    )  # which is why the guard must come first
+    assert "REQUIRED" in nodes[guard]["notes"]
     condition = json.dumps(nodes[guard]["parameters"])
     for field in ("$json.body.record_id", "$json.body.text"):
         assert f"typeof {field} === 'string'" in condition
         assert f"{field}.trim() !== ''" in condition
-    # the false branch (second output) fails the execution
+    # the false branch (second output) answers the caller with an error status, then fails the execution
     true_branch, false_branch = flow["connections"][guard]["main"]
-    assert [nodes[link["node"]]["type"] for link in false_branch] == [PREFIX + "stopAndError"]
-    assert sign in _reach(flow, true_branch[0]["node"]) | {true_branch[0]["node"]}
-    assert sign not in _reach(flow, false_branch[0]["node"])
+    (refuse,) = [link["node"] for link in false_branch]
+    assert nodes[refuse]["type"] == PREFIX + "respondToWebhook"
+    assert 400 <= nodes[refuse]["parameters"]["options"]["responseCode"] <= 499
+    assert [nodes[n]["type"] for n in edges[refuse]] == [PREFIX + "stopAndError"]
+    assert _reach(flow, refuse) == set(edges[refuse])  # nothing but the stop node follows
+    assert true_branch[0]["node"] == hashing
+    assert sign in _reach(flow, hashing)
+    assert not {sign, hashing} & _reach(flow, refuse)
+
+
+def test_the_caller_is_answered_and_the_readme_says_this_was_not_run():
+    flow = _load(MAIN)
+    nodes, edges = _nodes(flow), _edges(flow)
+    webhook = flow["nodes"][0]
+    assert webhook["parameters"]["responseMode"] == "responseNode"
+    answers = {n for n, node in nodes.items() if node["type"] == PREFIX + "respondToWebhook"}
+    (guard,) = edges[webhook["name"]]
+    true_branch, false_branch = flow["connections"][guard]["main"]
+    taken = [link["node"] for link in true_branch if link["node"] in answers]
+    refused = [link["node"] for link in false_branch if link["node"] in answers]
+    assert len(taken) == 1 and len(refused) == 1 and set(taken + refused) == answers
+    assert nodes[taken[0]]["parameters"]["options"]["responseCode"] == 202
+    assert (
+        edges.get(taken[0], []) == []
+    )  # the answer to the caller is a side branch: nothing after it
+    # it is placed above the sending chain, so that it is the first branch n8n runs (not seen in n8n)
+    assert nodes[taken[0]]["position"][1] < nodes[_hash_node(flow)]["position"][1]
+    for name in answers:
+        assert "body" not in json.dumps(nodes[name]["parameters"]).lower()  # an empty answer
+    readme = " ".join(_readme().split())
+    assert "This branch was NOT run in n8n." in readme
+    assert "the caller got HTTP 200 from n8n although the guard had stopped the event" in readme
+    assert "It does NOT mean that Hadavin accepted it" in readme
 
 
 def test_a_503_leads_through_a_wait_to_a_new_signature():
@@ -265,6 +471,8 @@ def test_a_503_leads_through_a_wait_to_a_new_signature():
     nodes = _nodes(flow)
     http, sign, wait = _one(flow, "httpRequest"), _sign_node(flow), _one(flow, "wait")
     assert nodes[http].get("retryOnFail") is False  # a node retry would reuse the old signature
+    assert "maxTries" not in nodes[http] and "waitBetweenTries" not in nodes[http]
+    assert nodes[http].get("onError") == "continueErrorOutput"
     ok_out, error_out = flow["connections"][http]["main"]
     (decide,) = [link["node"] for link in error_out]
     assert nodes[decide]["type"] == PREFIX + "if"
@@ -308,6 +516,46 @@ def test_the_loop_span_is_longer_than_one_signature_lives():
     assert f"{wait['amount']} seconds and {rounds} rounds" in _readme()
 
 
+@pytest.mark.parametrize("name", [MAIN, ERROR])
+def test_the_status_is_read_from_error_status_and_nowhere_else(name):
+    flow = _load(name)
+    texts = _params(flow)
+    assert not [t for t in texts if "httpcode" in t.lower()]  # no such field on the failed item
+    assert not [t for t in texts if "statusCode" in t]
+    reads = [t for t in texts if "$json.error" in t or "'503'" in t]
+    assert len(reads) == {MAIN: 1, ERROR: 0}[name]
+    for text in reads:
+        assert "String($json.error?.status ?? '') === '503'" in text
+        assert re.findall(r"\$json\.error\??\.(\w+)", text) == ["status"]
+
+
+def test_readme_says_where_the_status_is_and_gives_the_retry_numbers_of_the_run():
+    readme = " ".join(_readme().split())
+    assert "in the field `error.status`" in readme
+    assert "There is no field `error.httpCode`." in readme
+    _head, _, part = readme.partition("### Why n8n's own Retry On Fail stays off")
+    part = part.partition("## ")[0]
+    assert part, "the Retry On Fail part is gone"
+    assert "It is OFF in this workflow and must stay off for the 503 case" in part
+    for fact in RETRY_FACTS:
+        assert fact in part, fact
+
+
+def test_readme_setup_list_says_the_error_workflow_must_be_published():
+    _head, _, part = _readme().partition("## Set-up")
+    part = part.partition("\n## ")[0]
+    numbers = re.findall(r"^(\d+)\. ", part, re.MULTILINE)
+    assert numbers == [str(i) for i in range(1, len(numbers) + 1)] and len(numbers) >= 5
+    steps = [" ".join(s.split()) for s in re.split(r"^\d+\. ", part, flags=re.MULTILINE)[1:]]
+    publish = [s for s in steps if "The error workflow must be PUBLISHED (active)" in s]
+    assert len(publish) == 1
+    assert "does nothing" in publish[0] and "nobody was told" in publish[0]
+    assert "Every step is required." in part
+    assert any("credential" in s for s in steps) and any("webhookId" in s for s in steps)
+    error_trigger = _load(ERROR)["nodes"][0]
+    assert "ONLY while it was published" in error_trigger["notes"]
+
+
 # ---- the signing recipe: sign node, README and hmac_v0 agree ----
 
 
@@ -328,18 +576,6 @@ def test_sign_node_recipe_gives_the_signature_of_hmac_v0():
     got = _recipe(text, prefix.replace("$json.hmac", "hmac"), names)
     assert got == _code_signature()[endpoint.SIGNATURE_HEADER.lower()]
     assert nodes[_one(flow, "httpRequest")]["parameters"]["body"] == "={{ $json.body }}"
-
-
-def test_option_b_code_node_uses_the_same_recipe():
-    flow = _load(MAIN)
-    code = _nodes(flow)[_one(flow, "code", connected=False)]
-    assert code.get("disabled") is True
-    js = code["parameters"]["jsCode"]
-    text = re.search(r"const base = (.+);", js).group(1)
-    names = {"$json.ts": str(FIXED_TS), "$json.body": FIXED_BODY}
-    got = _recipe(text, "'v0=' + hmac", names)
-    assert got == _code_signature()[endpoint.SIGNATURE_HEADER.lower()]
-    assert ".update(base, 'utf8').digest('hex')" in js
 
 
 def test_readme_recipe_gives_the_signature_of_hmac_v0():
@@ -373,9 +609,24 @@ def test_readme_recipe_gives_the_signature_of_hmac_v0():
 # ---- the README states what the code does ----
 
 
-def test_readme_says_not_run_and_lists_every_verify_item():
+def test_readme_status_says_what_was_run_what_was_not_and_lists_every_verify_item():
     readme = _readme()
-    assert "not run in n8n" in readme
+    flat = " ".join(readme.split())
+    # the status stands at the very top: the first paragraph after the title
+    status = " ".join(readme.split("\n\n")[1].split())
+    assert status.startswith(
+        "**Status: an earlier version of these two files was run in n8n 2.47.7"
+    )
+    assert f"`{EVIDENCE}`" in status
+    assert "have NOT been imported or run in any n8n since" in status
+    assert "Nobody has run this exact version." in status
+    assert "not run in n8n" not in flat.replace("NOT run in n8n", "")  # the old status line is gone
+    _head, _, listed = flat.partition("NOT run by anybody")
+    listed = listed.partition("Words used here")[0]
+    for phrase in NOT_RUN:
+        assert phrase in listed, phrase
+    seen = flat.partition("Run by the lead in n8n 2.47.7")[2].partition("NOT run by anybody")[0]
+    assert re.findall(r"(?<!\d)(\d)\. ", seen)[:8] == [str(i) for i in range(1, 9)]
     _head, _, tail = readme.partition("## VERIFY ON A REAL n8n BEFORE ANY CLIENT USE")
     assert tail, "the verify list is gone"
     items = re.findall(r"^(\d+)\. NOT VERIFIED", tail, re.MULTILINE)

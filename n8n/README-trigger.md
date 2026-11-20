@@ -164,8 +164,8 @@ Ways the template does NOT use:
   a Code node needs; a Crypto node with only the first setting was not run on its own.) It also needs a Crypto node
   of typeVersion 1, because typeVersion 2 has no field for a secret.
 - Signing in a Code node. On default settings n8n refuses it: "Module 'crypto' is disallowed". With only the
-  crypto module allowed, the Code node was still refused the environment variable. A Code node cannot read a
-  credential.
+  crypto module allowed, the Code node was still refused the environment variable. The Code node's definition
+  lists no credential, so it cannot take the secret from one.
 - n8n variables (`$vars`): reading one that does not exist gave no key at all; creating one was not run.
 
 Rules for the value:
