@@ -1,9 +1,9 @@
 {
- "order": "015 (002 to 014 standing)",
+ "order": "016 standing (backlog), 014 and 015 in work",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "trial lands: record findings; at every board: look for core-b's requests/001.answer.md",
- "note": "PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before",
+ "next": "first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile",
+ "note": "two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -252,7 +252,7 @@
   },
   {
    "item": "O14-2",
-   "what": "missing mutant scripts for core-b's steps (audit drain, price)",
+   "what": "missing mutant scripts for core-b's steps (audit drain, price) (= backlog 3)",
    "state": "SKIPPED (they exist)",
    "percent": 100,
    "evidence file": "git ls-tree origin/cloud/core-b: tests/audit_drain_mutants.py and tests/price_mutants.py are there (also stop_state_mutants.py)",
@@ -276,6 +276,60 @@
    "evidence file": "inputs/lead-evidence-n8n-1.md (lead), raw/n8n-template-tests-2.log (not yet)",
    "tries": 1,
    "reason": "ORDER 015. My outline was WRONG in 4 places a real n8n showed: Set nodes built nothing, the webhook URL answered 404, the secret way did not work on default settings, the status field name was wrong"
+  },
+  {
+   "item": "B4-fuzz",
+   "what": "fuzz test for the endpoint: 2000 seeded requests in-process, 300 over a real socket, 300 on PostgreSQL",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-fuzz-pg16.log (not yet)",
+   "tries": 1,
+   "reason": "backlog 4"
+  },
+  {
+   "item": "B5-matrix",
+   "what": "crash matrix for step D: kill at every store call on the request path, PostgreSQL 16, expected end state per point",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "CRASH-MATRIX.md, raw/D-crash-matrix-pg16.log (not yet)",
+   "tries": 1,
+   "reason": "backlog 5"
+  },
+  {
+   "item": "B6-fstore",
+   "what": "run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "FINDINGS-core-b-F-store.md (not yet)",
+   "tries": 1,
+   "reason": "backlog 6: core-b's code has reserve_spend now, so the tests must run, not skip"
+  },
+  {
+   "item": "B7-g7",
+   "what": "non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "FINDINGS-core-c-G7-redaction.md (not yet)",
+   "tries": 1,
+   "reason": "backlog 7"
+  },
+  {
+   "item": "B8-text",
+   "what": "README, SECURITY and CHANGELOG text for steps D and E as a request to core-b",
+   "state": "READY (mine)",
+   "percent": 0,
+   "evidence file": "requests/002-readme-security-text.md exists (18 sentences); to extend after ORDER 015 facts",
+   "tries": 0,
+   "reason": "I do this one myself while agents run"
+  },
+  {
+   "item": "B9-review",
+   "what": "hostile re-read of all my own code with egm:egm-design, one round, and fix",
+   "state": "QUEUED",
+   "percent": 0,
+   "evidence file": "",
+   "tries": 0,
+   "reason": "starts when one of the 6 running agents ends (6 run now)"
   }
  ],
  "agents": [
@@ -577,6 +631,58 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "ORDER 015; 2 agents run (trial integration, n8n fix)"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:16",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "b4-fuzz",
+   "role": "builder (tests)",
+   "what exactly it is doing": "writes tests/triggers/test_t5_fuzz.py and runs it once",
+   "expected end": "about 25 min after start",
+   "reason": "backlog 4"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:16",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "b5-matrix",
+   "role": "builder (tests) and evidence runner",
+   "what exactly it is doing": "writes tests/triggers/test_t5_crash_matrix.py and CRASH-MATRIX.md, child processes killed on PostgreSQL",
+   "expected end": "about 40 min after start",
+   "reason": "backlog 5"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:16",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "b6-fstore",
+   "role": "evidence runner (non-builder)",
+   "what exactly it is doing": "runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings",
+   "expected end": "about 35 min after start",
+   "reason": "backlog 6"
+  },
+  {
+   "model": "fable",
+   "started UTC": "06:16",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "b7-g7",
+   "role": "builder (tests, non-builder of the code)",
+   "what exactly it is doing": "writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree",
+   "expected end": "about 35 min after start",
+   "reason": "backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line"
   }
  ],
  "tests": [
@@ -823,10 +929,9 @@
  ],
  "lost": [],
  "lead_actions": [
-  "ORDER 015 read at 06:13Z: fixing the template now. Note: the edited files will follow your evidence but nobody will have re-imported THAT version; a second import on your n8n is needed before a client sees it",
-  "ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so",
-  "Item 3: core-b's answer file exists but is the DRAFT 1 answer (App.secrets = the whole store, max_running default 4, body cap 262144). I do not switch the worker to the whole store (finding F3); I wait for the bound-reader version",
-  "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
+  "STANDING ORDER 016 read at 06:16Z: WAITING-LEAD dropped, 6 agents running, backlog items 4, 5, 6, 7 started; 3 needs no work (core-b has both scripts); 8 is mine now; 9 queued",
+  "ORDER 015: template fix in work; the fixed files need a second import on your n8n before a client sees them",
+  "Item O14-3: core-b's answer file is the DRAFT 1 answer (whole secret store); I wait for the bound reader",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
  "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"

@@ -1,0 +1,19 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+unformatted: File would be reformatted
+    --> src/hadavin_sdk/guard/redact.py:1059:1
+     |
+1058 |     return tuple(dict.fromkeys(keys))
+1059 +
+1060 +
+1061 | # `_Redactor._sub_glued`: a character no e-mail address holds, and the most characters of one token it copies.
+--------------------------------------------------------------------------------
+1150 |         raise ContextNotSettled
+1151 +
+1152 |     @staticmethod
+--------------------------------------------------------------------------------
+1488 |         return f"{FOLD_NOTE} {' '.join(dict.fromkeys(hits))}{eol}" if hits else line
+1489 +
+1490 |     def _sub_glued(self, pattern: re.Pattern[str], label: str, text: str) -> str:
+     |
+
+1 file would be reformatted, 394 files already formatted
