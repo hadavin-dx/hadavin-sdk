@@ -1908,7 +1908,8 @@ def test_s12_a_clear_row_cannot_carry_an_infinite_ts_even_by_hand(w, ts):
     assert w.count("kill_switch_clears") == 0 and w.read().on is True
 
 
-@pytest.mark.parametrize("ts", ["1970-01-01T00:00:00Z", "2999-01-01T00:00:00Z"])
+# 0009 refuses a planted year outside 2000..2100 (the ts CHECK): the in-range edges are the dates a runtime can still plant
+@pytest.mark.parametrize("ts", ["2000-01-01T00:00:00Z", "2099-12-31T00:00:00Z"])
 def test_s12_a_hand_inserted_stop_with_another_date_is_an_open_stop_and_a_reset_clears_it(w, ts):
     with w.as_(w.runtime) as db:
         db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("ops:dated", ts))
@@ -1919,6 +1920,24 @@ def test_s12_a_hand_inserted_stop_with_another_date_is_an_open_stop_and_a_reset_
     _stop(w, "ops:now")  # and an honest stop after it is open, whatever dates lie in the table
     ks = w.read()
     assert (ks.on, ks.by) == (True, "ops:now")
+
+
+@pytest.mark.parametrize(
+    "ts",
+    [
+        "1970-01-01T00:00:00Z",
+        "0100-01-01T00:00:00Z",
+        "2999-01-01T00:00:00Z",
+        "20000-01-01T00:00:00Z",
+    ],
+)
+def test_s12_a_planted_year_outside_the_range_is_refused_at_insert(w, ts):
+    """Migration 0009 (E12 Low 6): a stop dated outside 2000..2100 is refused by the CHECK, so it cannot make every read raise."""
+    import psycopg
+
+    with pytest.raises(psycopg.errors.CheckViolation), w.as_(w.runtime) as db:
+        db.execute('INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', ("ops:planted", ts))
+    assert w.count("kill_switch_stops") == 0
 
 
 def test_s12_the_stores_own_stop_does_not_send_ts(w):
