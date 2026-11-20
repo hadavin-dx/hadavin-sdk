@@ -1,5 +1,32 @@
 # REPORT from core-a (newest on top, UTC and IST)
 
+## ORDERS 002 to 012, END OF ROUND report. 2026-11-20 05:57 UTC / 11:27 IST. Head at writing: a7c3063
+
+This block REPLACES points 1, 2, 3 and 8 of the interim block below; the rest of that block still holds. STATE: WAITING-LEAD, 0 agents running.
+
+**What failed, what is weak, what was not run (first):**
+1. Whole suite, second and last run for this round (after the lead-review fixes): **1 failed, 10865 passed, 640 skipped in 100 s** (raw/BATCH2-full-suite.log). The 1 failure is INHERITED from the handover folder: handover/BRIEF-PREAMBLE.md (lead's file) names vendor products and trips tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked. No NEW failure. The first run (before the review fixes) had one more, a timing race of mine, fixed in code.
+2. That run had no database variable, so database tests are among the 640 skips (also the 102 contract tests waiting for core-b). My own files ran separately on **PostgreSQL 16.15 only**: 13 of 13 database and kill tests (raw/D-tests-pg16.log, with test ids), all of tests/triggers plus the step E file 578 passed, 4 skipped (raw/D-E-all-tests-pg16.log). PostgreSQL 17, python 3.12, Docker, a real n8n: NOT run here, they are the lead's evidence run.
+3. One test agent could not start the database (the session scratch folder is not readable by the postgres user); it reported that and did not work around it. I started the server from the postgres user's own folder and ran the tests myself. The server is stopped.
+4. ORDER 012, what is NOT done or done differently: no crash= hook points in the worker (kill tests wrap the store instead); a backed-off wait (10 store reads) instead of "503 at once"; minor 8 strict only for foreign errors; minor 6 (literal defaults) waits for core-b; minor 12 (NUL byte inside a document) not fixed. Each is on the board under LEAD ACTIONS.
+5. The mutant script (17 of 17 on the final endpoint and worker code) does not yet cover server.py, the secret count and whitespace checks, the back-off and the SIGTERM drain: those have hand mutants only (raw/E2-mutants.log, raw/D-endpoint-mutants.log).
+6. Contract tests for core-b's interface (i) are written but have never run against real code (none exists): 102 skipped. Against a throwaway fake outside the repo: 47 of 47, and 11 seeded bugs all caught. The interface has 3 contradictions and 10 gaps (requests/003).
+7. Two database data folders are left on disk (the session's safety check refuses folder deletes): /tmp/claude-0/pgprobe1 and /var/lib/postgresql/core-a-test.
+
+**Added since the interim block (evidence):**
+| item | result | evidence |
+|---|---|---|
+| Lead review Major 1 | backed-off no-slot wait; a waiting request takes a freed slot; n8n loop for 503 with re-sign | raw/E2-tests.log, n8n/, tests/triggers/test_n8n_template.py |
+| Lead review Major 2 | SIGTERM drains and exits 0 (child process test on worker.serve) | tests/triggers/test_t5_process.py |
+| Lead review Major 3 | n8n guard node before hashing (outline, not run in n8n) | n8n/hadavin-trigger.json |
+| Lead review Major 4 | database, kill, two-process, start-refusal, oversize, two-sender tests | tests/triggers/test_t5_postgres.py, test_t5_process.py, crash_launcher.py |
+| ESCALATION E2 | the standard server leaked; fixed by src/hadavin_sdk/triggers/server.py | raw/E2-wsgiref-before.log, raw/E2-wsgiref-after.log |
+| Queue item T4 | 2 contract test files, 102 tests, skip until step F | tests/contracts/test_store_spend_reservations.py, tests/contracts/test_t1_reserve_cap.py, raw/T4-contract-tests.log |
+| Requests | 002 (README and SECURITY text), 003 (interface questions) | requests/ |
+
+**Token use:** about 3.9 million agent tokens over 22 agent runs (harness figures); main session not metered here. **Clock:** GO about 05:17 UTC, this block 05:57 UTC.
+**Files changed in this round:** see FILE-INDEX of the block below, plus src/hadavin_sdk/triggers/server.py, tests/triggers/test_t5_wsgiref.py, test_t5_postgres.py, test_t5_process.py, crash_launcher.py, test_n8n_template.py, tests/contracts/test_store_spend_reservations.py, tests/contracts/test_t1_reserve_cap.py, requests/002 and 003.
+
 ## ORDERS 002 to 012, INTERIM report. 2026-11-20 05:52 UTC / 11:22 IST. Head at writing: 6aa8cce (the board carries the newest head)
 
 Not final: 2 agents still run (database and kill tests; contract tests for core-b's interface). This block is rewritten when they land.

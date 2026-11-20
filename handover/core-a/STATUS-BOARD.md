@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:57:10Z
+UPDATED_UTC: 2026-11-20T05:57:32Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
 STATE: WAITING-LEAD
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 20
 ITEMS_OPEN: 1
 PERCENT: 100
 AGENTS_RUNNING: 0
-CAPACITY: load 1.04 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.68 of 4 cores (1-minute average), mem 0.7/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.8G 60G 15%; 348M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: all queue items and ORDER 012 items are done or handed to the lead; waiting for: lead verdicts (below), core-b's Config.triggers and App.trigger_resolve, round 2 of the lead's code review if any
-PUSHED_UTC: 2026-11-20T05:52:13Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:57:13Z (the push before this board)
 NOTE: no agent runs now because every open item waits on the lead or on core-b; the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
