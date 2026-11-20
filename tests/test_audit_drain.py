@@ -7,6 +7,7 @@ the two cross-process cases, which start real child processes) skip without HADA
 import json
 import logging
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -17,6 +18,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from hadavin_sdk import defaults
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
 from hadavin_sdk.approvals import FakeChannel
@@ -48,7 +50,9 @@ def _ids(log):
 
 
 def _outbox(log):
-    return log._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
+    """The outbox rows by their original event id: a poison row is renamed with the quarantine prefix."""
+    rows = log._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
+    return sorted((i.removeprefix(defaults.AUDIT_QUARANTINE_PREFIX), b) for i, b in rows)
 
 
 def _park(log, event):
@@ -269,7 +273,9 @@ def test_an_outbox_that_answers_with_an_error_fails_the_step(app, caplog):
     app.audit._db.run("DROP TABLE audit_outbox")
     caplog.set_level("INFO", logger="hadavin_sdk.tick")
     assert run_tick(app) == 1
-    assert app.store.get_tick_state(STEP).last_error.startswith("OperationalError: ")
+    assert app.store.get_tick_state(STEP).last_error.startswith(
+        "RuntimeError: audit outbox: read failed (OperationalError)"
+    )
     assert "failed=audit_drain" in caplog.text
 
 
@@ -509,7 +515,12 @@ def test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step(pg, caplog
         caplog.set_level("INFO", logger="hadavin_sdk.tick")
         assert run_tick(app) == 1
         state = app.store.get_tick_state(STEP)
-        assert state.last_error.startswith("InsufficientPrivilege: ") and state.last_ok_at is None
+        assert (
+            state.last_error.startswith(
+                "RuntimeError: audit outbox: read failed (InsufficientPrivilege)"
+            )
+            and state.last_ok_at is None
+        )
         assert "failed=audit_drain" in caplog.text
         assert pg.chain_ids() == [] and pg.outbox_ids() == [event.event_id]
         pg.grant("GRANT", "SELECT", "audit_outbox")
@@ -607,6 +618,20 @@ def _refuse(log, *events):
         log._db.run("INSERT INTO test_refused (event_id) VALUES (?)", (e.event_id,))
 
 
+def _release(log):
+    """The operator action of tickets/A-audit-drain.md: put every quarantined row back under its own event id."""
+    prefix = defaults.AUDIT_QUARANTINE_PREFIX
+    for (qid,) in log._db.run(
+        "SELECT event_id FROM audit_outbox WHERE event_id LIKE ?", (prefix + "%",)
+    ):
+        log._db.run(
+            "INSERT INTO audit_outbox (event_id, body) SELECT substr(event_id, ?), body FROM audit_outbox "
+            "WHERE event_id = ?",
+            (len(prefix) + 1, qid),
+        )
+        log._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (qid,))
+
+
 def _allow_all(log):
     log._db.run("DELETE FROM test_refused")
 
@@ -692,7 +717,11 @@ def test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothin
     assert log.verify().ok
     assert run_tick(app) == 1 and [r[0] for r in _outbox(log)] == [b.event_id]  # every tick says so
     _allow_all(log)
-    assert run_tick(app) == 0  # the refusal is gone: the same row is drained, once
+    assert run_tick(app) == 1  # a quarantined row stays quarantined until the operator releases it
+    _release(log)
+    assert (
+        run_tick(app) == 0
+    )  # the refusal is gone: the same row is drained, once: the same row is drained, once
     assert _ids(log) == [a.event_id, c.event_id, b.event_id] and _outbox(log) == []
     assert app.store.get_tick_state(STEP).last_error is None and log.verify().ok
 
@@ -739,7 +768,9 @@ def test_f2_a_sqlite_error_on_append_is_not_an_outage(monkeypatch):
     log, event = _log(), _event()
     _park(log, event)
     _append_fails_for(monkeypatch, log, audit.sqlite3.OperationalError("disk I/O error"), event)
-    with pytest.raises(RuntimeError, match=r"^audit outbox: 1 rows not writable$"):
+    # A sqlite3 OperationalError (locked, I/O) is transient, not an outage and not permanent: the row is refused
+    # for now, stays in the outbox, and the step says so.
+    with pytest.raises(RuntimeError, match=r"^audit outbox: 1 rows refused for a transient error"):
         log.reconcile()
     assert [r[0] for r in _outbox(log)] == [event.event_id] and log.events() == []
 
@@ -836,8 +867,15 @@ def test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order(counts, text,
         assert str(caught.value) == text
         assert [r[0] for r in _outbox(log)] == kept  # nothing but the good rows left the outbox
         assert run_tick(app, steps=LAST) == 1
-    # the tick was a second pass: the undeletable rows are in the chain by then and their delete failed again
-    assert app.store.get_tick_state(STEP).last_error == "RuntimeError: " + text
+    # the tick was a second pass: the undeletable rows are in the chain by then and their delete failed again, and
+    # the refused rows are the quarantined ones of the first pass
+    second = re.sub(
+        r"(\d+) rows not writable",
+        r"\1 poison rows quarantined earlier (event_id prefix 'poison:'; "
+        r"operator removal: tickets/A-audit-drain.md)",
+        text,
+    )
+    assert app.store.get_tick_state(STEP).last_error == "RuntimeError: " + second
     assert MARK not in caplog.text and REFUSAL not in caplog.text
     assert (
         "audit outbox: drained=2 unreadable={} not_writable={} not_deleted={} (kept)".format(
@@ -857,6 +895,7 @@ def test_f4_a_clean_drain_after_a_failed_one_raises_nothing(app):
         _mixed(log, mp, 0, 1, 1)
         assert run_tick(app, steps=LAST) == 1
     _allow_all(log)
+    _release(log)
     assert run_tick(app, steps=LAST) == 0 and _outbox(log) == []
     assert sorted(_ids(log)) == ["evt-0-d", "evt-0-g", "evt-0-r", "evt-1-g"] and log.verify().ok
 
@@ -932,7 +971,7 @@ def test_f5_reconcile_still_drains_the_outbox_after_its_flush_moved_an_event_asi
         log.reconcile()
     # b from memory, c from the outbox; no outbox row has a problem
     assert _ids(log) == [b.event_id, c.event_id] and log._unwritable == [a] and _outbox(log) == []
-    assert "audit pending flush: written=1 not_writable=1 (kept in memory, total=1)" in caplog.text
+    assert "audit outbox: drained=2 unreadable=0 not_writable=0" in caplog.text
 
 
 # --- (7) the writers' contracts when the flush moves events aside ---------------------------------------------
@@ -1107,17 +1146,45 @@ def _driver_error(name, sqlstate="__none__"):
         (_driver_error("OperationalError", "08001"), True),
         (_driver_error("OperationalError", "57P01"), True),  # administrator shutdown
         (_driver_error("OperationalError", "57P03"), True),  # cannot connect now
-        (_driver_error("OperationalError", "54000"), False),  # row too large for an index
-        (_driver_error("OperationalError", "57014"), False),  # query cancelled (statement timeout)
-        (_driver_error("OperationalError", "53100"), False),  # disk full
-        (_driver_error("OperationalError", "25006"), False),  # read-only transaction
-        (_driver_error("ProgrammingError", "42501"), False),  # missing grant
+        # Not an outage (the database answered) but NOT permanent either: see test_f9_permanent_classes.
+        (_driver_error("OperationalError", "57014"), False),
+        (_driver_error("OperationalError", "25006"), False),
+        (_driver_error("ProgrammingError", "42501"), False),
         (RuntimeError("something else"), False),
         (ValueError("bad row"), False),
     ],
 )
 def test_f9_only_connection_level_errors_are_an_outage(exc, outage):
     assert audit._is_outage(exc) is outage
+
+
+@pytest.mark.parametrize(
+    ("exc", "permanent"),
+    [
+        (_driver_error("DataError", "22021"), True),  # class 22 (NUL in text)
+        (_driver_error("IntegrityError", "23505"), True),  # class 23
+        (_driver_error("ProgrammingError", "42501"), True),  # missing grant
+        (_driver_error("OperationalError", "54000"), True),  # row too large for an index
+        (_driver_error("DataError"), True),  # no SQLSTATE, a data error by class
+        (ValueError("bad row"), True),
+        (audit.sqlite3.IntegrityError("trigger refused"), True),
+        # Wrong before (f9 pinned 57014 and 25006 as permanent): these all heal by waiting.
+        (_driver_error("OperationalError", "57014"), False),  # statement timeout
+        (_driver_error("OperationalError", "55P03"), False),  # lock not available
+        (_driver_error("OperationalError", "40001"), False),  # serialization failure
+        (_driver_error("OperationalError", "40P01"), False),  # deadlock
+        (_driver_error("OperationalError", "53300"), False),  # too many connections
+        (_driver_error("OperationalError", "53100"), False),  # disk full: an operator frees it
+        (_driver_error("OperationalError", "25006"), False),  # read-only transaction (a failover)
+        (_driver_error("OperationalError", "08006"), False),
+        (_driver_error("OperationalError", "57P01"), False),
+        (_driver_error("OperationalError"), False),
+        (OSError("refused"), False),
+        (audit.sqlite3.OperationalError("locked"), False),
+    ],
+)
+def test_f9_only_the_known_permanent_classes_are_permanent(exc, permanent):
+    assert audit._is_permanent(exc) is permanent
 
 
 def test_f9_a_store_unavailable_is_an_outage():

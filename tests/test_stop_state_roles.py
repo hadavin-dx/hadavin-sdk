@@ -907,13 +907,17 @@ def test_h1_a_hostile_by_ends_with_a_clean_exit_code(w, cfg_dir, monkeypatch, ca
     _provide(w, monkeypatch, {"pg-dsn": w.dsn_of(w.runtime), RESET_REF: w.dsn_of(w.reset)})
     code = _limits(cfg, "stop", by)
     err = capsys.readouterr().err
-    assert code in (0, 2), err[:300]
+    assert code == (2 if case == "nul" else 0), err[
+        :300
+    ]  # a NUL cannot be stored: refused, never a crash
     assert "Traceback" not in err and "failed:" not in err
     assert w.read().on is (code == 0)  # the state agrees with the exit code
     _stop(w, "ops:real")
     code = _limits(cfg, "reset", by)
     err = capsys.readouterr().err
-    assert code in (0, 2), err[:300]
+    assert code == (2 if case == "nul" else 0), err[
+        :300
+    ]  # a NUL cannot be stored: refused, never a crash
     assert "Traceback" not in err and "failed:" not in err
     assert w.read().on is (code != 0)
 
