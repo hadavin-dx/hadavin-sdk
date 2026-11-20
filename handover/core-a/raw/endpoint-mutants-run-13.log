@@ -5,5 +5,19 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 # sha256 a3cd1d45ff9d89d9305529b7c9e4db8f0b8d9cea5b8a373895955f218622a055  src/hadavin_sdk/triggers/server.py
 # sha256 1ed57ccf928bd4a62416643375ce7880c9612448841c68a10b47614143a62d99  src/hadavin_sdk/triggers/worker.py
 # sha256 54fdff27f9baa03f45d474041e649cbbfc6e8124b5b56bdd4c2a7a3f36b10826  src/hadavin_sdk/testing/crash.py
-# sha256 99fbae0df24006592c6ed553777b4d03012ba215e161f522462a5a557c4df409  tests/endpoint_mutants.py
-ERROR anchor of 'G29c check_senders does not refuse a principal that is not of kind service' occurs 0 times in src/hadavin_sdk/triggers/worker.py (must be 1)
+# sha256 40ab29c2a6a125d4d837926b89e2a44cb4946e0feae73e30f6fc2d9ed3f05370  tests/endpoint_mutants.py
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/tests/endpoint_mutants.py", line 1126, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<7 lines>...
+        baseline_timeout=900,
+    )
+  File "/home/user/hadavin-sdk/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/home/user/hadavin-sdk/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
