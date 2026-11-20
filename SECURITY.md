@@ -19,21 +19,27 @@ write to the chain.
 
 Tamper evidence of past rows is conditional. It holds only while the database roles are set up with `migrate` and the
 operator keeps them apart: the runtime login (1) does not own the audit tables, (2) has no UPDATE, DELETE or TRUNCATE
-on `audit_entries`, (3) cannot write a checkpoint, and (4) cannot delete a parked event that is not in the chain.
+on `audit_entries`, (3) cannot write a checkpoint, and (4) cannot delete a parked event unless an `audit_entries` row with that event id exists.
 `migrate --runtime-role` enforces all four. It refuses a runtime role (or any other named role) that owns an audit
 table or is a member of the owner role (an owner can disable the append-only triggers). It grants the runtime login
 SELECT and INSERT on `audit_entries`, SELECT only on `audit_checkpoints`, and SELECT and INSERT (no DELETE, no UPDATE)
 on `audit_outbox`; the append-only triggers also refuse UPDATE, DELETE and TRUNCATE on the chain (a test proves the
 real attempts fail). A parked event leaves the outbox only through two `SECURITY DEFINER` functions (migration 0012):
 `hadavin_audit_outbox_done` deletes it only when an `audit_entries` row with that event id exists, and
-`hadavin_audit_outbox_quarantine` renames it (nothing is lost). Signed checkpoints are written by their own role
+`hadavin_audit_outbox_quarantine` renames it (to a unique name when the name is taken; a row that duplicates a quarantined one is removed, nothing else is ever deleted). Signed checkpoints are written by their own role
 (`migrate --checkpoint-role`, its own login and `backends.store.checkpoint_dsn_secret_name`): the tick `checkpoint`
 step writes through it and the runtime login never attempts the INSERT. Honest limits that remain: a superuser or the
 table owner is outside all of this; a runtime process that holds the signer key can still sign a bad checkpoint by
 calling the tick `checkpoint` step (the gain is that a stray write path or an SQL injection in the runtime cannot);
 the runtime can still INSERT any row into the outbox and rename (quarantine) a parked row, which hides it from the
-drain but loses nothing; and a deployment migrated without `--checkpoint-role` (the memory store, demo, `--no-roles`)
-keeps the runtime login as the checkpoint writer. Checkpoints written by the tick are signed once per tick, not every
+drain but loses nothing; and the runtime can append an `audit_entries` row with event id E and then call
+`hadavin_audit_outbox_done(E)`, which deletes the real parked event E: a forged hash makes `audit verify` fail loudly
+(the row is append-only and stays), but a correctly computed hash (the hash is unkeyed, the runtime can compute it)
+verifies and is signed by the next checkpoint. That adds no authority beyond what the runtime already had (it can append
+any row); the wall stops accidental loss, a stray code path and an SQL-injection DELETE. A deployment migrated without
+`--checkpoint-role` (demo, dev, `--no-roles`) writes NO checkpoint at all with postgres: the runtime login holds SELECT
+only on `audit_checkpoints`, the chain stays unsigned, and `app.build` logs one warning at start (pilot and prod refuse to
+start). Only the memory store keeps the inline checkpoint. Checkpoints written by the tick are signed once per tick, not every
 `checkpoint_every` rows, so the unsigned tail is at most one tick long. Even then this is tamper evidence of past rows, not authenticity: a
 runtime process that is itself taken over can append new rows with valid hashes, and the chain cannot tell those from
 true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they do not remove it.

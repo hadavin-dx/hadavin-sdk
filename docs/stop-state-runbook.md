@@ -328,4 +328,5 @@ The runtime login no longer writes audit checkpoints and no longer deletes from 
    parked events or write checkpoints. Nothing in the chain is affected either way: intent and outcome writes need only
    SELECT and INSERT on `audit_entries`.
 5. Checkpoints are signed once per tick (not every `checkpoint_every` rows) when the checkpoint login is set; the memory
-   store and a deployment without the role keep the inline checkpoint.
+   store keeps the inline checkpoint. A postgres deployment without the role writes NO checkpoint at all (the runtime login holds
+   SELECT only on `audit_checkpoints`): migrate warns, `app.build` logs one warning, and pilot and prod refuse to start.
