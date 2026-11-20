@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:51:18Z
+UPDATED_UTC: 2026-11-20T06:52:25Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 49
+ITEMS_TOTAL: 50
 ITEMS_OPEN: 9
 PERCENT: 88
 AGENTS_RUNNING: 2
-CAPACITY: load 1.60 of 4 cores (1-minute average), mem 1.3/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.07 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 534M /home/user/hadavin-sdk; 377M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T06:51:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:51:21Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -68,7 +68,8 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | B4b-fuzz-concurrent | concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load | DONE, no finding | 100 | tests/triggers/test_t5_fuzz_concurrent.py, raw/D-fuzz-concurrent-pg16.log | 1 | 9 tests passed in 14 s (3 runs by the agent; run 1 failed on the agent's own test bugs, fixed). Layers: 16-thread bursts with max_running 1, 2 and 4 (both 503 paths hit; 40 to 41 keys with overlapping requests per layer), a slow and failing store (503 during the outage window, full recovery), a moving clock (69 jumps and 136 backward steps: accept and refuse matched the clock the endpoint saw), raw sockets from 8 threads, PostgreSQL 16 with 8 threads (no 503 occurred there so the retry check did not apply), close under load (no row appeared after close, all later requests 503). NOT covered: one seed per layer only and no same-seed rerun; no store fault, outage or moving clock on PostgreSQL; no model-call count per document hash; the test reads private fields of the worker and the store |
 | EGM-SEQ | owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report) | RUNNING | 20 | EGM-LEDGER.md | 1 | step E: round 1 of 3 done (2 fresh reviewers on sonnet, resolve through the skill): no Blocker, 5 Major, report reviews/E-result-review-1.md; fixes by a separate builder started now; then an evidence runner, then round 2. The same sequence for step D, the tests and the n8n template waits for the other builders to end |
 | FU-3 | follow-ups: Retry-After 1 on 503, rename trigger_resolve to trigger_secret in 2 test helpers and delete the old-name fallback in worker.py | DONE | 100 | raw/DR3-followups-tests.log, raw/endpoint-mutants-run-9.log | 1 | Retry-After: 1 on every 503 (empty body); old reader keyword removed from worker.py and from the two test helpers; 421 passed, 2 skipped; 30 of 30 mutants. GAPS: the new Retry-After test was not run without the change (it reads a constant that would not exist); NO test pins that the old keyword is refused (to add); the concurrent fuzz file still used the old keyword (told its writer) |
-| E-fix-1 | step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts) | RUNNING | 5 | reviews/E-result-review-1.md | 1 | EGM sequence: fix by a builder who is not the reviewer |
+| E-fix-1 | step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts) | DONE (builder's run); evidence runner and round 2 next | 100 | raw/E-fix1-tests.log | 1 | F2 to F9 applied by a builder who is not the author or reviewer: 472 passed in 38 s, ruff and bandit clean; the 9 mutants the builder applied were each killed by the matching test (restored, cmp-checked); F5, F6, F9 tests call new names so they fail on old code by construction. BEHAVIOUR CHANGE not asked for: the crash marker is now written with os.write instead of print (a flushed print also flushed pending text: required by F3). One test edit: it reads the marker with capfd. Note: this shell has PYTHONUNBUFFERED=1, the F3 test strips it from the child |
+| E-evidence-2 | EVIDENCE RUNNER for step E: identity (hashes, database version), tests with ids, guards and users, 14 formal hand mutants in a scratch copy, hostile inputs; no verdicts | RUNNING | 5 | raw/E-evidence-2-*.log (not yet) | 1 | EGM sequence: evidence after the fix, before round 2 |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -119,26 +120,22 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | egm-E-codebase | reviewer (egm:egm-codebase-details, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | RESULT review of step E: crash.py against ticket E, the builder's tests and the evidence logs | 06:44 | ended | 100 | done | 1 of 3 | 0 | finished; served model claude-sonnet-5-5 (transcript) |
 | egm-E-design | reviewer (egm:egm-design, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | hostile design review of the same result | 06:44 | ended | 100 | done | 1 of 3 | 0 | finished; served model claude-sonnet-5-5 (transcript) |
 | sn-fu3 | builder | sonnet | Retry-After header, reader rename, fallback removal, one test run and one mutant run | 06:46 | ended | 100 | done | n/a | 0 | finished, 81k tokens |
-| e-fix1 | builder | sonnet | applies F2 to F9 to crash.py and test_testing_crash.py | 06:48 | about 20 min | 5 | running | step E round 1 of 3 (fix pass) | 0 | result review round 1 |
+| e-fix1 | builder | sonnet | applies F2 to F9 to crash.py and test_testing_crash.py | 06:48 | ended | 100 | done | step E round 1 of 3 (fix pass) | 0 | finished |
+| e-evidence2 | evidence runner (records, never judges) | sonnet | runs tests, guards, 14 mutants in a scratch copy and hostile inputs on the fixed crash helper | 06:52 | about 25 min | 5 | running | step E round 1 of 3, evidence | 0 | EGM sequence |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1023 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 245s ago | running | matched by name in ps |
-| 1026 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 245s ago | running | matched by name in ps |
-| 1051 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 245s ago | running | matched by name in ps |
-| 1057 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 245s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 2208s ago | running | matched by name in ps |
-| 16426 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 16455 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 16461 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 20573 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 20581 | [postgres] | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 1023 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 312s ago | running | matched by name in ps |
+| 1026 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 312s ago | running | matched by name in ps |
+| 1051 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 312s ago | running | matched by name in ps |
+| 1057 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 312s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 2276s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 2276s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 2276s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 2276s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 2276s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 2276s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

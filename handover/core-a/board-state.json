@@ -442,11 +442,20 @@
   {
    "item": "E-fix-1",
    "what": "step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts)",
+   "state": "DONE (builder's run); evidence runner and round 2 next",
+   "percent": 100,
+   "evidence file": "raw/E-fix1-tests.log",
+   "tries": 1,
+   "reason": "F2 to F9 applied by a builder who is not the author or reviewer: 472 passed in 38 s, ruff and bandit clean; the 9 mutants the builder applied were each killed by the matching test (restored, cmp-checked); F5, F6, F9 tests call new names so they fail on old code by construction. BEHAVIOUR CHANGE not asked for: the crash marker is now written with os.write instead of print (a flushed print also flushed pending text: required by F3). One test edit: it reads the marker with capfd. Note: this shell has PYTHONUNBUFFERED=1, the F3 test strips it from the child"
+  },
+  {
+   "item": "E-evidence-2",
+   "what": "EVIDENCE RUNNER for step E: identity (hashes, database version), tests with ids, guards and users, 14 formal hand mutants in a scratch copy, hostile inputs; no verdicts",
    "state": "RUNNING",
    "percent": 5,
-   "evidence file": "reviews/E-result-review-1.md",
+   "evidence file": "raw/E-evidence-2-*.log (not yet)",
    "tries": 1,
-   "reason": "EGM sequence: fix by a builder who is not the reviewer"
+   "reason": "EGM sequence: evidence after the fix, before round 2"
   }
  ],
  "agents": [
@@ -1051,15 +1060,28 @@
   {
    "model": "sonnet",
    "started UTC": "06:48",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 1 of 3 (fix pass)",
    "retries so far": 0,
    "id": "e-fix1",
    "role": "builder",
    "what exactly it is doing": "applies F2 to F9 to crash.py and test_testing_crash.py",
-   "expected end": "about 20 min",
-   "reason": "result review round 1"
+   "expected end": "ended",
+   "reason": "finished"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:52",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 1 of 3, evidence",
+   "retries so far": 0,
+   "id": "e-evidence2",
+   "role": "evidence runner (records, never judges)",
+   "what exactly it is doing": "runs tests, guards, 14 mutants in a scratch copy and hostile inputs on the fixed crash helper",
+   "expected end": "about 25 min",
+   "reason": "EGM sequence"
   }
  ],
  "tests": [
