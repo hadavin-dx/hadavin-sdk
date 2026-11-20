@@ -7,7 +7,12 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
-from hadavin_sdk.approvals.gate import defang_text, sanitise_text, withhold_commands
+from hadavin_sdk.approvals.gate import (
+    defang_text,
+    sanitise_text,
+    undefang_text,
+    withhold_commands,
+)
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -35,8 +40,28 @@ def clean(text: str) -> str:
         joined_map = _seeded(joined)
         alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
         if _assignment_originals(joined_map) - _assignment_originals(mapping):
-            return defang_text(alt)
-    return defang_text(out)
+            return _settled(defang_text(alt))
+    return _settled(defang_text(out))
+
+
+# One pass is no fixed point. A placeholder the redactor writes can end a name or start a value for a pattern that ran
+# before it (`08::<HOSTNAME_2>` reads as an IPv6 address, `password=<SECRET_2>&<EMAIL_4>=...` as one value), and the
+# wide dot `defang_text` writes as `.` can complete a link the cleaning did not see (`//x<U+3002>_`). A channel that
+# reads the stored text again (`SlackChannel._blocks`) then showed another card than the one stored and hashed. So
+# `clean` reads its own result again, exactly as that channel does (undefang, withhold, redact, defang last), until
+# nothing changes. The bound keeps a text that never settles from looping; the seeded texts of the P1d-a properties
+# need at most one more pass.
+_MAX_REREADS = 3
+
+
+def _settled(shown: str) -> str:
+    for _ in range(_MAX_REREADS):
+        withheld = withhold_commands(undefang_text(shown))
+        again = defang_text(runmap.redact_text(withheld, _seeded(withheld), neutralise=_neutralise))
+        if again == shown:
+            break
+        shown = again
+    return shown
 
 
 # A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
@@ -101,7 +126,8 @@ class FakeChannel:
         self.notices: list[tuple[str, str]] = []
 
     def send(self, req: ApprovalRequest, approver_ids: list[str]) -> str:
-        self.sent.append((req.approval_id, clean(req.summary), list(approver_ids)))
+        # A summary stored by the old code holds defanged, unmasked addresses (as in `SlackChannel._blocks`).
+        self.sent.append((req.approval_id, clean(undefang_text(req.summary)), list(approver_ids)))
         return f"fake-{len(self.sent)}"
 
     def update(self, req: ApprovalRequest) -> None:
