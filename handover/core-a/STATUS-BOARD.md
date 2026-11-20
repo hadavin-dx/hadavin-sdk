@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T07:08:29Z
+UPDATED_UTC: 2026-11-20T07:09:31Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 58
-ITEMS_OPEN: 12
+ITEMS_TOTAL: 59
+ITEMS_OPEN: 13
 PERCENT: 86
-AGENTS_RUNNING: 5
-CAPACITY: load 1.46 of 4 cores (1-minute average), mem 1.1/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 58G 16%; 536M /home/user/hadavin-sdk; 409M /tmp/claude-0; 131M /root/.cache
+AGENTS_RUNNING: 4
+CAPACITY: load 1.16 of 4 cores (1-minute average), mem 1.1/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 536M /home/user/hadavin-sdk; 409M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:08:00Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:08:32Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -76,8 +76,9 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | BATCH-4 | ONE batch of my own files on PostgreSQL 16: lint, format, bandit, tests/triggers + crash helper + trigger config + spend, gate, meter contract tests + redaction property + rule files, with the strict database switch HADAVIN_REQUIRE_PG=1 | DONE | 100 | raw/BATCH4-own-files-pg16.log | 1 | ruff check and format clean (351 files), bandit -ll no finding; tests/triggers + crash helper + trigger config + spend, gate and meter contract tests + redaction property + 6 rule files on PostgreSQL 16.15 with HADAVIN_REQUIRE_PG=1 (a missing database fails instead of skipping): 1567 passed, 455 skipped, 75 xfailed, 0 failed in 164 s. Skips are all 'the code is on another session's branch' (core-b meter 261, store step F 1, k1b Budget 1, one corpus file): expected. The 75 xfailed are the redaction fix (core-c G7) that is not on my branch. NOT run: the whole suite (the owner's rule: one whole batch only; last whole suite was batch 2), Python 3.12, PostgreSQL 17 |
 | MUT-3 | extend tests/endpoint_mutants.py to all guards added since (design review, fuzz, lead minor 10) | RUNNING | 5 | raw/endpoint-mutants-run-10.log | 1 | lead's reminder at 07:05Z and the EGM sequence |
 | EGM-n8n | fresh EGM result review of the n8n pack: naive reader (egm:egm-comprehension) and hostile design (egm:egm-design) | RUNNING | 5 | reviews/n8n-result-review-1.md | 1 | naive-reader review done: 1 Blocker (the README never says where the Hadavin URL and the secret come from, so steps 1 and 8 cannot be done from the page), 9 Majors (caller payload shape unstated; the key rule cannot be followed with the template: two events on one record share a key and a re-send needs a new key the template cannot make; a test event starts a real run; a duplicate reaches Done and the client's follow-up runs twice; the error message does not hold the key or event; publish steps need an id; credential order fragile; the loop numbers are inside expressions and the default is shorter than the README's own example; some 'seen in n8n' notes are not backed by the evidence file); waiting for the design reviewer, then resolve |
-| E-round-3 | step E result review ROUND 3 of 3 (the cap): fresh egm:egm-codebase-details and egm:egm-design on the simplified helper | RUNNING | 5 | reviews/E-result-review-3.md (not yet) | 1 | EGM sequence; a Blocker or Major left after this round goes to ESCALATIONS.md |
+| E-round-3 | step E result review ROUND 3 of 3 (the cap): fresh egm:egm-codebase-details and egm:egm-design on the simplified helper | RESOLVED at the cap; fix pass H1 to H6 running; NO round 4 (ESCALATIONS E5) | 70 | reviews/E-result-review-3.md | 1 | both fresh reviewers done: no Blocker, 2 Major (untested flag-file parsing; a refused delete on Windows moves the crash to a later call), 14 Nit; fixes by a separate builder now; the question 'grant one more fresh pass' is in ESCALATIONS E5 |
 | EGM-D-code | fresh EGM result review of the step D code (endpoint, worker, server) after all fixes, with the batch and fuzz and matrix logs as evidence | RUNNING | 5 | reviews/D-code-result-review-1.md (not yet) | 1 | EGM sequence: evidence (BATCH4) first, then a fresh reviewer who is not the author; dispatched directly following the loaded review-loop procedure (resolve will go through the Skill) |
+| E-fix-3 | step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line) | RUNNING | 5 | raw/E-fix3-tests.log (not yet) | 1 | EGM sequence: fix by a builder who is not author or reviewer |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -137,23 +138,23 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | egm-n8n-comp | reviewer (egm:egm-comprehension, fresh) | sonnet | naive-reader review of n8n/README-trigger.md | 07:05 | ended | 100 | done | 1 of 3 | 0 | finished, report in hand: 1 Blocker, 9 Major, 2 Nit (naive reader) |
 | egm-n8n-design | reviewer (egm:egm-design, fresh) | sonnet | hostile design review of the workflow graph and the README | 07:05 | about 15 min | 5 | running | 1 of 3 | 0 | EGM sequence |
-| egm-E3-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | round 3: did the deletions and the unlink retry break a guarantee; dead leftovers; do the tests prove the invariants | 07:06 | about 15 min | 5 | running | step E round 3 of 3 | 0 | EGM sequence |
-| egm-E3-design | reviewer (egm:egm-design, fresh) | sonnet | round 3: hostile design review of the final helper | 07:06 | about 15 min | 5 | running | step E round 3 of 3 | 0 | EGM sequence |
+| egm-E3-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | round 3: did the deletions and the unlink retry break a guarantee; dead leftovers; do the tests prove the invariants | 07:06 | ended | 100 | done | step E round 3 of 3 | 0 | finished |
+| egm-E3-design | reviewer (egm:egm-design, fresh) | sonnet | round 3: hostile design review of the final helper | 07:06 | ended | 100 | done | step E round 3 of 3 | 0 | finished |
 | egm-D-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes | 07:08 | about 20 min | 5 | running | step D code round 1 of 3 | 0 | EGM sequence |
+| e-fix3 | builder | sonnet | applies H1 to H6 to crash.py, its tests and one ticket line | 07:09 | about 20 min | 5 | running | step E after round 3 (cap reached) | 0 | round 3 resolve |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 3484 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3239s ago | running | matched by name in ps |
-| 31925 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 31927 | uv run --all-extras --group test python tests/endpoint_mutants.py G13  | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 31931 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 21s ago | running | matched by name in ps |
+| 3944 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3301s ago | running | matched by name in ps |
+| 31925 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 83s ago | running | matched by name in ps |
+| 31927 | uv run --all-extras --group test python tests/endpoint_mutants.py G13  | core-a session or its agent | 83s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -214,6 +215,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)
 - Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code
 - CRASH MATRIX part 2 (CRASH-MATRIX.md): 171 kill points per store, no broken invariant, but 4 behaviours you should know for the plan: (1) kill after WAITING and before the approval request is saved: NEEDS_PERSON approval_missing and NO card, nobody is told; (2) kill between sending the card and recording the send: a duplicate approval card; (3) approved but killed before the executor runs: the action never runs, NEEDS_PERSON outcome_unknown; (4) PLAN_READY, EXECUTING and VERIFYING are answered 200 to a retry, so a sender cannot tell still-going from ended (my n8n template treats them as still going)
 - STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history

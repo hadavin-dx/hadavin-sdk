@@ -514,11 +514,11 @@
   {
    "item": "E-round-3",
    "what": "step E result review ROUND 3 of 3 (the cap): fresh egm:egm-codebase-details and egm:egm-design on the simplified helper",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "reviews/E-result-review-3.md (not yet)",
+   "state": "RESOLVED at the cap; fix pass H1 to H6 running; NO round 4 (ESCALATIONS E5)",
+   "percent": 70,
+   "evidence file": "reviews/E-result-review-3.md",
    "tries": 1,
-   "reason": "EGM sequence; a Blocker or Major left after this round goes to ESCALATIONS.md"
+   "reason": "both fresh reviewers done: no Blocker, 2 Major (untested flag-file parsing; a refused delete on Windows moves the crash to a later call), 14 Nit; fixes by a separate builder now; the question 'grant one more fresh pass' is in ESCALATIONS E5"
   },
   {
    "item": "EGM-D-code",
@@ -528,6 +528,15 @@
    "evidence file": "reviews/D-code-result-review-1.md (not yet)",
    "tries": 1,
    "reason": "EGM sequence: evidence (BATCH4) first, then a fresh reviewer who is not the author; dispatched directly following the loaded review-loop procedure (resolve will go through the Skill)"
+  },
+  {
+   "item": "E-fix-3",
+   "what": "step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/E-fix3-tests.log (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence: fix by a builder who is not author or reviewer"
   }
  ],
  "agents": [
@@ -1249,28 +1258,28 @@
   {
    "model": "sonnet",
    "started UTC": "07:06",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 3 of 3",
    "retries so far": 0,
    "id": "egm-E3-codebase",
    "role": "reviewer (egm:egm-codebase-details, fresh)",
    "what exactly it is doing": "round 3: did the deletions and the unlink retry break a guarantee; dead leftovers; do the tests prove the invariants",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "sonnet",
    "started UTC": "07:06",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 3 of 3",
    "retries so far": 0,
    "id": "egm-E3-design",
    "role": "reviewer (egm:egm-design, fresh)",
    "what exactly it is doing": "round 3: hostile design review of the final helper",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "sonnet",
@@ -1284,6 +1293,19 @@
    "what exactly it is doing": "checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes",
    "expected end": "about 20 min",
    "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:09",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E after round 3 (cap reached)",
+   "retries so far": 0,
+   "id": "e-fix3",
+   "role": "builder",
+   "what exactly it is doing": "applies H1 to H6 to crash.py, its tests and one ticket line",
+   "expected end": "about 20 min",
+   "reason": "round 3 resolve"
   }
  ],
  "tests": [
@@ -1647,6 +1669,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)",
   "Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code",
   "CRASH MATRIX part 2 (CRASH-MATRIX.md): 171 kill points per store, no broken invariant, but 4 behaviours you should know for the plan: (1) kill after WAITING and before the approval request is saved: NEEDS_PERSON approval_missing and NO card, nobody is told; (2) kill between sending the card and recording the send: a duplicate approval card; (3) approved but killed before the executor runs: the action never runs, NEEDS_PERSON outcome_unknown; (4) PLAN_READY, EXECUTING and VERIFYING are answered 200 to a retry, so a sender cannot tell still-going from ended (my n8n template treats them as still going)",
   "STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history",
