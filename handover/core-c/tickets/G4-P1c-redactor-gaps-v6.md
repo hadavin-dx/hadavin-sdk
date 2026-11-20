@@ -946,7 +946,7 @@ Phase 4 the 19 G4c keys, Phase 5 deletes `OPEN_ROWS` itself. Every commit of the
 | TB-2.5 | `test_place_encoded_identifier_original_gets_a_new_entry` | `m={"<TENANT_1>": X}`, runs `[X]` | `["<ENCODED_1>"]`; `m == {"<TENANT_1>": X, "<ENCODED_1>": X}` |
 | TB-2.6 | `test_place_encoded_reuses_an_encoded_original` | `m={"<ENCODED_3>": X}`, runs `[X]` | `["<ENCODED_3>"]`; `len(m) == 1` |
 | TB-2.7 | `test_tie_break_same_original_secret_rule_first` (I7b) | `redact_mod.redact("pre"+X+"post and "+X+" alone", mapping={"<TENANT_1>": X, "<ENCODED_1>": X}).text` | `pre<ENCODED_1>post and <ENCODED_1> alone` (MEASURED; base with SECRET standing in: `preQUJDREVGR0hJpost and <TENANT_1> alone`) |
-| TB-2.8 | `test_tie_break_keeps_the_order_of_different_originals` | `runmap.enforce_map("x ab-cd-ef y", m)` for the 4 maps of 4 point 5 | the 4 outputs of that table, in order (MEASURED, base = prototype) |
+| TB-2.8 | `test_tie_break_keeps_the_order_of_different_originals` | `runmap.enforce_map("x ab-cd-ef y", m)` for the 4 maps of 4 point 5; CHANGED in v6 (N1): plus the fifth map of 4 point 5 through `runmap._Redactor(m, None).sweep("x ab-cd-ef y")` and through `enforce_map` | the 4 outputs of that table, in order (MEASURED, base = prototype); the fifth map: `x <SECRET_1>-ef y` both ways (BY READING; base of the redactor's own sweep `x ab-<TENANT_1> y`, so that row is FAIL-BEFORE) |
 | TB-2.9 | `test_encoded_is_never_restored_or_stored` (I6) | `m={"<ENCODED_1>": SB}` | `runmap.restore_text("x <ENCODED_1>", m) == "x <ENCODED_1>"`; the same with `kinds=frozenset({"ENCODED"})`; `runmap.storable(m) == {}`; `runmap.storable(m, frozenset({"ENCODED"})) == {}` |
 | TB-2.10 | `test_assignment_kinds_hold_encoded` | - | `"ENCODED" in channel._ASSIGNMENT_KINDS` |
 
