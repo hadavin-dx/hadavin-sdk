@@ -789,19 +789,6 @@
    "reason": "EGM"
   },
   {
-   "id": "grantfix4",
-   "role": "builder (tests)",
-   "model": "sonnet",
-   "what exactly it is doing": "make the grant tests date/clock independent (round 5 Majors + MAINTAIN/COLUMNS nits)",
-   "started UTC": "17:50",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "after cap",
-   "retries so far": 0,
-   "reason": "EGM cap"
-  },
-  {
    "id": "mutant-run-21",
    "role": "evidence runner",
    "model": "script",
@@ -1688,6 +1675,19 @@
    "review round n of cap": "4 of 5",
    "retries so far": 0,
    "reason": "round 4: round-3 Major closed; 1 Major = older limit (store CA unreadable retried forever) settled+routed to core-b; 5 nits incl. weak test assertion; reviews/rev-dfix27-r4.md; nit fix pass after run 21"
+  },
+  {
+   "id": "grantfix4",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "make the grant tests date/clock independent (round 5 Majors + MAINTAIN/COLUMNS nits)",
+   "started UTC": "17:50",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "after cap",
+   "retries so far": 0,
+   "reason": "after-cap fix 741b7b4a3: strict 49 passed; no DSN 23+26 skipped; 6 mutants killed; ESCALATIONS E-grant-1 (cap reached, not re-reviewed); a recursion incident in the meta-test draft (killed, 0 stray) added ~2 min load: run 21 timing results must be checked for INVALID-LOAD"
   }
  ]
 }
