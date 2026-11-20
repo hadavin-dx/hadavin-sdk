@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:45:56Z
+UPDATED_UTC: 2026-11-20T06:46:59Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 7
-CAPACITY: load 0.79 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 3 heavy 4
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1.1G
+AGENTS_RUNNING: 6
+CAPACITY: load 1.52 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 3 heavy 4
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:44:10Z (previous push; this board is pushed right after writing)
-IST: 12:15 IST
+PUSHED_UTC: 2026-11-20T06:45:57Z (previous push; this board is pushed right after writing)
+IST: 12:16 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -39,17 +39,17 @@ Order required: brainstorm, draft, plan review, resolve, build, evidence runner,
 | A audit drain | none ordered (lead) | done | tests and mutants by other agents | lead review x2, hostile re-read (fresh, 1 round) | drift report |
 | B stop state | 1 round | done (3 fix rounds, cap) | tests and mutants | ticket review round (fresh), hostile re-read (fresh); the lead has taken the rest | drift report (lead) |
 | C price constraint | AFTER the build (order reversed), 1 round | done | tests and mutants | the ticket review round doubled as result review (fresh) | drift report |
-| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review; egm result review RUNNING (ac7e13a5) | resolve its findings; drift report |
+| D-config | NONE | done (fix 1; fix 2 running) | core-a's tests (92 of 109 pass, marks to remove) | lead review + egm result review DONE (0 Blockers, 3 Majors) | fix 2 and its evidence; re-review of the fix; drift report |
 | F-store | 2 rounds | done (fix 1 and 2) | tests, mutants, random-sequence model test | hostile re-read RUNNING (sonnet) | result review resolve; drift report |
-| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review RUNNING (a879d0f3; post-hoc ticket tickets/F-provider-mark.md) | resolve its findings; drift report |
+| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review DONE (0 Blockers, 2 Majors) | fix round 1 QUEUED behind the merge; evidence; re-review; drift report |
 | F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
 Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a879d0f3 | reviewer (egm-codebase-details) | sonnet | RESULT review of the provider mark against the built code (missing step found by the EGM audit) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
-| ac7e13a5 | reviewer (egm-codebase-details) | sonnet | RESULT review of the trigger config (D-config) against the built code (missing step) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
+| adc513b3 | builder (fix) | sonnet | D-config fix round 2: canonical secret names; worktree D3 | 07:03 | +15 min | UNVERIFIED | running | none | 1 | result review Major 1 |
+| a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
 | ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
 | a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
