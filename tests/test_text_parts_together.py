@@ -19,7 +19,7 @@ import pytest
 
 from hadavin_sdk.approvals import channel, gate, slack_channel
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.redact import FOLD_NOTE
+from hadavin_sdk.guard.redact import FOLD_NOTE, redact
 from hadavin_sdk.guard.textnorm import fold
 
 EM = "anna" + "." + "m" + "@" + "example" + "." + "org"
@@ -159,3 +159,74 @@ def test_the_glued_digit_does_not_unmask_the_address_on_the_card_or_for_the_mode
         for out in (card, model):
             assert "@" not in out and "example" not in out, (glue, out)
             assert out.startswith("mail <EMAIL_1>"), (glue, out)
+
+
+def test_clean_reads_its_result_again_at_most_three_times_and_then_stops(monkeypatch):
+    """ORDER 016c item 14: the cap of `channel._settled`. A reader that never settles (every pass writes something
+    new) is read 3 times and the last result is returned: it does not loop and does not raise (it stops, as designed)."""
+    assert channel._MAX_REREADS == 3
+    calls = []
+
+    def never_settles(text, mapping, **kw):
+        calls.append(text)
+        return text + "x"
+
+    monkeypatch.setattr(channel.runmap, "redact_text", never_settles)
+    shown = channel._settled("start")
+    # the stop is at the third re-read: three calls, and the text of the third is what comes back
+    assert len(calls) == 3, calls
+    assert shown == "start" + "xxx", shown
+
+
+def test_clean_stops_after_the_first_reread_when_nothing_changes(monkeypatch):
+    calls = []
+    real = channel.runmap.redact_text
+
+    def count(text, mapping, **kw):
+        calls.append(text)
+        return real(text, mapping, **kw)
+
+    monkeypatch.setattr(channel.runmap, "redact_text", count)
+    assert channel._settled("nothing to hide here") == "nothing to hide here"
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("glue", ["9", "_x", "08", "_"])
+def test_glued_email_regression_digit_or_underscore_behind_the_address(glue):
+    """ORDER 016c item 15: `anna.m@example.org9` was shown whole to the model and on the card (the pattern ended in `\\b`)."""
+    text = f"contact {EM}{glue} today"
+    for out in (channel.clean(text), runmap.redact_text(text, runmap.RunMap())):
+        assert "@" not in out and "example" not in out and "anna" not in out, out
+        assert out.startswith("contact <EMAIL_1>"), out
+        assert f"{glue} today" in out, out
+
+
+GLUED = ("9", "_x", "a")
+KINDS = {
+    "host name": "db-7" + ".corp" + ".internal",
+    "IPv4": "10.20." + "30.40",
+    "phone": "+49 30 " + "1234567",
+    "IBAN": "DE89" + "3704" + "0044" + "0532" + "0130" + "00",
+}
+
+
+@pytest.mark.parametrize("kind", ["host name", "tenant id", "account id", "secret", "bearer token"])
+def test_glued_rest_other_kinds_with_no_gap(kind):
+    """The value kinds probed for the glued-rest gap that have none (ORDER 016c item 15): the value is masked whatever follows."""
+    text = {
+        "host name": "x " + KINDS["host name"] + "{g} y",
+        "tenant id": "tenant_id=acme" + "-corp-42{g} y",
+        "account id": "account_id: 88123" + "456{g} y",
+        "secret": "password=hunter" + "2xyz{g} y",
+        "bearer token": "Bearer abcdef" + "0123456789abcd{g} y",
+    }[kind]
+    secret = {
+        "host name": "db-7.corp",
+        "tenant id": "acme-corp-42",
+        "account id": "88123456",
+        "secret": "hunter2xyz",
+        "bearer token": "abcdef0123456789abcd",
+    }[kind]
+    for g in GLUED:
+        out = redact(text.format(g=g)).text
+        assert secret not in out, (kind, g, out)

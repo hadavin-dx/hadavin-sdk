@@ -128,7 +128,7 @@ M = [
         GATE,
         'parts = [line] if "``" in line else _INLINE_CODE.split(line)',
         "parts = _INLINE_CODE.split(line)",
-        "test_row_G2_card",
+        "test_row_G2_undefang",
     ),
     m(
         "A38",

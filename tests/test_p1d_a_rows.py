@@ -146,3 +146,15 @@ def test_stored_card_round_trip():
         stored = channel.clean(x)
         if len(stored) <= 2900:
             assert C.e_slack(stored) == stored, f"ROUND TRIP: {x!r}: {stored!r}"
+
+
+def test_row_G2_undefang():
+    # A43 (ORDER 014 / P1d-a): a line with a double backtick run is read as prose by `undefang_text` too (`_per_part` does not
+    # split it), so the `[.]` inside the single-backtick span is undone as well. Without the guard the span would count as code
+    # and keep its `[.]`, and a stored card would then be read differently from the text the redactor saw.
+    out = gate.undefang_text("a``b `x[.]y` c")
+    assert out == "a``b `x.y` c", f"ROW G2 undefang: {out!r}"
+    clean_line = gate.undefang_text(
+        "a `x[.]y` c"
+    )  # one backtick pair: the span is code, left as it is
+    assert clean_line == "a `x[.]y` c", f"ROW G2 undefang: {clean_line!r}"
