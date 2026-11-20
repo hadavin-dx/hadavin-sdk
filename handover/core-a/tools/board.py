@@ -8,13 +8,14 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
 REPO = HERE.parent.parent
 BRANCH = "cloud/core-a"
-LAST_PUSH = Path("/tmp/claude-0/core-a-last-push.txt")
+LAST_PUSH = Path.home() / ".cache" / "core-a-last-push.txt"
 
 
 def sh(cmd: list[str], cwd: Path = REPO, timeout: int = 60) -> tuple[int, str]:
@@ -60,7 +61,7 @@ def main() -> int:
     tot_gb = mem["MemTotal"] / 1048576
     _, df = sh(["df", "-h", "--output=size,used,avail,pcent", "/"])
     df = " ".join(df.splitlines()[-1].split())
-    _, du = sh(["du", "-sh", str(REPO), "/tmp/claude-0", str(Path.home() / ".cache")])
+    _, du = sh(["du", "-sh", str(REPO), str(Path(tempfile.gettempdir()) / "claude-0"), str(Path.home() / ".cache")])
     du = "; ".join(" ".join(x.split()) for x in du.splitlines() if "cannot" not in x)
     agents = st.get("agents", [])
     running = [a for a in agents if a.get("state") == "running"]
