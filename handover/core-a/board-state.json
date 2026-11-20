@@ -702,17 +702,17 @@
    "reason": "batch6 failures"
   },
   {
-   "id": "n8n-fix4",
-   "role": "builder",
+   "id": "n8n-rev5",
+   "role": "fresh reviewer (design)",
    "model": "sonnet",
-   "what exactly it is doing": "n8n pack and tests updated to the lead's real n8n 2.47.7 run (evidence-n8n-3.md): waits above 65 s survive a restart, Respond then Stop-and-Error, chained Respond; numbers re-derived",
-   "started UTC": "08:59",
-   "expected end": "about 20 min",
+   "what exactly it is doing": "read-only review of the n8n pack after evidence-n8n-3: SEEN vs inferred, arithmetic at 70 s, stale numbers",
+   "started UTC": "09:03",
+   "expected end": "about 15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "n/a",
+   "review round n of cap": "1 of 3 (new evidence round)",
    "retries so far": 0,
-   "reason": "lead: E6 settled"
+   "reason": "after n8n-fix4"
   }
  ],
  "tests": [
@@ -2269,6 +2269,19 @@
    "retries so far": 0,
    "reason": "BATCH6 done: whole suite 14 failed / 12221 passed (10 strict-mode by design, 4 real: brand string, k5 slice, dblink env, fuzz C1 under load); combined tree core-b 70c61a4b6 + my files + n8n/: 1294 passed, 4 skipped, 0 failed (182 s)",
    "what_exactly_it_is_doing": "waiting for its own background combined-tree pytest (72%, slow crash-matrix tests under -n 3); everything else reported"
+  },
+  {
+   "id": "n8n-fix4",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n pack and tests updated to the lead's real n8n 2.47.7 run (evidence-n8n-3.md): waits above 65 s survive a restart, Respond then Stop-and-Error, chained Respond; numbers re-derived",
+   "started UTC": "08:59",
+   "expected end": "about 20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "template at 70 s waits (45 rounds, 45 checks; about 52 min per loop), SEEN marks for the 3 behaviours with evidence-n8n-3 line cites (each ran once), restart loss as an operator step; 91 template tests pass; 70 s is inferred (only 60 and 120 were run)"
   }
  ]
 }

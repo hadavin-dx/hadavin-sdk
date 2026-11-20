@@ -60,3 +60,18 @@ A sonnet BUILDER (not the author, not a reviewer) edits n8n/*.json, n8n/README-t
 | 7 | (not in this list) | n/a |
 
 Checks: both JSON files load; ruff check and format clean; pytest log handover/core-a/raw/n8n-template-tests-7.log. Not run: n8n.
+
+## n8n-fix4 (builder, core-a; evidence `handover/core-a/inputs/evidence-n8n-3.md`, real n8n 2.47.7, each case ran once)
+
+Facts checked against the evidence text before use: (1) restart in a wait: 60 s, restart at about second 20, execution crashed and never resumed, lines 51 to 63; 120 s, restart at about second 30, saved as waiting, survived, success about 2 s after the planned end, lines 65 to 78. (2) Respond then Stop and Error: caller 200 with the Respond body, execution error, error workflow once 0.12 s after the start, lines 82 to 96. (3) Respond then Respond: caller got the first body only; with a Set node between, R2 received the Set item; no warning in the log, lines 98 to 118.
+
+Choice (a): wait 70 s (kept the 45 rounds and 45 checks). Arithmetic from the code: stuck limit 12 x 60 x 3 + 60 = 2220 s, plus one tick gap 60 s = 2280 s. 45 x 70 = 3150 s > 2280 (about 52 minutes; busy rounds and checks both). Minimum checks: `max_steps` 6 (1200 s) more than 17, 12 (2280 s) more than 32, 20 (3720 s) more than 53 (were 20/38/62 at 60 s). No-answer worst case: 3150 s + 46 sends x 45 s = 5220 s, about 87 minutes (was 79); both loops together 6300 s, about 105 minutes (was about 90). 70 s is an inference above the 65 s threshold; only 60 s and 120 s were run.
+
+| Change | Where |
+|---|---|
+| wait 70, numbers 52/87/105 minutes, 17/32/53, notes and error message of "Stop: still running" | trigger json, README (numbers, limit 15, set-up steps 10 and 12, verify 8 and 22), tests |
+| behaviours 1 to 3 marked SEEN, each once, with line cites; UNVERIFIED kept for the node as written (noData, 202), early answer before a long chain, 70 s in a restart, lost execution notice, crash of n8n, longer stop timeout | JSON notes, README, tests |
+| restart fact moved into the stated limits and the set-up checklist ("do not restart n8n while an event is in flight" is now a known fact with the 60 s and 120 s numbers) | README step 12, limit 15 |
+| new tests: wait above 65 and every derived number, restart fact in limits and checklist, Respond then Stop and Error and the guard shape | `tests/triggers/test_n8n_template.py` |
+
+Checks: both JSON files load; ruff check and format clean; pytest log `handover/core-a/raw/n8n-template-tests-9.log` (91 passed; three runs were needed because two of my new test phrases did not match the wording, no code changed between them). Not run: the real loop with 70 s waits.
