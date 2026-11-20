@@ -1,0 +1,26 @@
+# INTERFACE (ii): the Meter the model gate calls. FINAL after the F-store ticket review and the lead's ORDER 010 (2026-11-20 05:50 UTC)
+Lives in src/hadavin_sdk/limits.py when step F-store lands (GO BUILD given; not built yet, nothing run). Full context: interfaces/README.md (version 2.1).
+
+```python
+class SpendRefused(RuntimeError):
+    """Do not call the model. reason is one of:
+    kill_switch | daily_budget | monthly_budget | limits_unavailable | bad_amount"""
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason); self.reason = reason
+
+class Meter(Protocol):   # implemented by Limits (store-backed) and by k1b Budget (in memory, with a lock)
+    def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str: ...
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal: ...
+```
+
+What the gate can rely on:
+1. reserve returns a reservation id only after the worst case is booked. Any exception from reserve means: do not call the model. SpendRefused.reason is the audit error code. An unknown agent raises KeyError (still no call).
+2. worst_usd must be exactly a Decimal, finite, 0 or more and below 1000000000. A float, bool, int, None, NaN, Infinity or negative value raises SpendRefused("bad_amount").
+3. settle returns the overshoot, max(0, settled minus reserved), taken from the STORED row: the first settle wins; a repeat with another amount returns the first result and changes nothing.
+4. settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters. settle with a bad amount raises ValueError.
+5. Cost known (also 0 for a request that was refused before sending): settle(rid, cost). Cost unknown (timeout, abandoned thread, crash): either settle(rid, worst_usd) or do not settle; both keep the worst case booked. Never settle lower than the truth.
+6. If settle raises (store down after the call), return the reply anyway; the worst case stays booked. Never retry reserve.
+7. One reserve covers the whole chat call including the client's own retries; so worst_usd must cover system prompt, messages, tool schemas and documents at the input price (at most one token per byte) plus route.max_tokens at the output price, times the client's max_attempts. core-b supplies this as the worst_case= callable at each install site (helper worst_case_usd in src/hadavin_sdk/llm/common.py).
+8. The settled cost is added to the run's cost by the store (when run_id was given). The gate and the agent loop must not add it again; nothing calls Limits.charge for a gated call.
+9. A stop set between the stop-state read and the booking lets that one call through; it takes effect at the next reserve. The Budget meter (command-line eval and replay) does not read the stop state.
+10. An open reservation older than the expiry age (the larger of 3600 seconds and the stuck-run age) is closed by a tick step at its worst case; a later settle can only raise the booked amount, never lower it.
