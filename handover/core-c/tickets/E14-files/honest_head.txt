@@ -1,0 +1,9 @@
+property corpus: builds=2933 max_finder_chars=8571 cpu_s=7.93 inputs=1836 outcomes={'ok': 1836} worst=('round12-fuzz:202', 8571)
+k5_round10 full-size run (1,500 IPs + 40 x 5 args): builds=6 max_finder_chars=14392 cpu_s=0.53 entries=1505 value_chars=14392
+k5_perf unit 'curl -u ' at the cap: builds=1 max_finder_chars=262144 cpu_s=2.41 entries=1 value_chars=262144
+k5_perf unit 'password= ' at the cap: builds=1 max_finder_chars=9 cpu_s=1.02 entries=1 value_chars=9
+k5_perf unit 'ｐａｓｓｗｏｒｄ＝ ' at the cap: builds=1 max_finder_chars=9 cpu_s=5.20 entries=1 value_chars=9
+k5_perf unit '\\u0070assword= ' at the cap: builds=2 max_finder_chars=9 cpu_s=1.15 entries=1 value_chars=9
+k5_perf unit 'pass\u200bword= ' at the cap: builds=0 max_finder_chars=0 cpu_s=2.10 refused TextTooLong
+k5_perf unit 'curl -u ' at the cap: builds=1 max_finder_chars=262144 cpu_s=2.31 entries=1 value_chars=262144
+2,000 HIGHENTROPY of 131 (one document): builds=1 max_finder_chars=252505 cpu_s=1.23 entries=1928 value_chars=252505 kinds=['HIGHENTROPY']

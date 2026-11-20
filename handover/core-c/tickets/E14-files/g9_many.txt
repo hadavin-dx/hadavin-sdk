@@ -1,0 +1,2 @@
+build N=3 L=262144 chars=786432 peak_MB=360 retained_MB=16 cpu_s=2.06 ok finders=1 slow=0
+many N=8 L=260000 chars=2080000 peak_MB=960 retained_MB=20 cpu_s=8.86 ok entries=8 maxlen=260000

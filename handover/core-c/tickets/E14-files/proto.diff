@@ -1,0 +1,89 @@
+diff -ru -x __pycache__ head/src/hadavin_sdk/config.py proto/src/hadavin_sdk/config.py
+--- head/src/hadavin_sdk/config.py	2026-11-20 12:25:46.000000000 +0000
++++ proto/src/hadavin_sdk/config.py	2026-11-20 12:40:36.819235070 +0000
+@@ -243,6 +243,7 @@
+     # A run whose document or tool results plant more distinct values than this ends `document_too_complex`:
+     # building the redactor over a bigger map is CPU the client's text should not be able to spend.
+     max_map_entries: int = Field(default=defaults.MAX_MAP_ENTRIES, gt=0)
++    max_map_chars: int = Field(default=defaults.MAX_MAP_CHARS, gt=0, le=defaults.MAX_FINDER_CHARS)
+     max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
+     max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
+     # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
+diff -ru -x __pycache__ head/src/hadavin_sdk/defaults.py proto/src/hadavin_sdk/defaults.py
+--- head/src/hadavin_sdk/defaults.py	2026-11-20 12:25:46.000000000 +0000
++++ proto/src/hadavin_sdk/defaults.py	2026-11-20 12:37:52.683919169 +0000
+@@ -123,6 +123,8 @@
+ # 330 times the largest (1,000,000 / 3,017). The hostile case above is refused after about 4 strings (186 MB peak). A SINGLE string is not refused for 260,000 characters
+ # (49 MB of registry); its other costs (the sweep's finder for a 260,000-character value) are not this limit's.
+ SPELLED_MAX_CHARS = 1_000_000
++MAX_MAP_CHARS = 2 * MAX_REDACT_CHARS
++MAX_FINDER_CHARS = MAX_MAP_CHARS + MAX_REDACT_CHARS
+ 
+ 
+ def cut_margin(length: int) -> int:
+diff -ru -x __pycache__ head/src/hadavin_sdk/guard/redact.py proto/src/hadavin_sdk/guard/redact.py
+--- head/src/hadavin_sdk/guard/redact.py	2026-11-20 12:25:46.000000000 +0000
++++ proto/src/hadavin_sdk/guard/redact.py	2026-11-20 12:37:52.683654733 +0000
+@@ -2035,7 +2035,7 @@
+         # until every group is shallow enough for a finder of its own: checking them one by one against every
+         # segment was quadratic - a comb of 8,008 values within the log caps took 126-144 s a pass (fifth
+         # review, 2026-10-01). Only if no split works are they checked one by one.
+-        trie = _trie(self._rules)
++        trie = _trie(self._rules, limit=defaults.MAX_FINDER_CHARS)
+         deep = {w for w in self._rules if _nesting(trie, w) > _MAX_NESTING}
+         fast = [w for w in self._rules if w not in deep]
+         split = _split(sorted(deep)) if deep else []
+@@ -2172,10 +2172,17 @@
+         return compiled
+ 
+ 
+-def _trie(words) -> dict[str, dict]:
++def _trie(words, limit: int | None = None) -> dict[str, dict]:
+     root: dict[str, dict] = {}
++    held = 0
+     for w in words:
+         node = root
++        if limit is not None:
++            held += _new_nodes(root, w)
++            if held > limit:
++                from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
++
++                raise InputTooLarge("FinderMemoryTooMuch")
+         for ch in w:
+             node = node.setdefault(ch, {})
+         node[""] = {}
+diff -ru -x __pycache__ head/src/hadavin_sdk/runtime/agent_loop.py proto/src/hadavin_sdk/runtime/agent_loop.py
+--- head/src/hadavin_sdk/runtime/agent_loop.py	2026-11-20 12:25:46.000000000 +0000
++++ proto/src/hadavin_sdk/runtime/agent_loop.py	2026-11-20 12:40:36.818694778 +0000
+@@ -95,6 +95,10 @@
+     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+ 
+ 
++def _map_chars(rmap) -> int:
++    return sum(map(len, set(rmap.values())))
++
++
+ class Unqualified(RuntimeError):
+     """The agent has no green gate run for its current model, prompt and config."""
+ 
+@@ -424,7 +428,7 @@
+             self._save_map(run, rmap)  # before anything is sent: a crash now loses no placeholder
+         except Exception:  # noqa: BLE001
+             return self._evidence_unavailable(run, cited, "map")
+-        if len(rmap) > self._evidence.max_map_entries:  # too many distinct values to redact cheaply
++        if len(rmap) > self._evidence.max_map_entries or _map_chars(rmap) > self._evidence.max_map_chars:
+             self._note(
+                 run, "guard", "document", result="stopped", error_code="document_too_complex"
+             )
+@@ -544,7 +548,10 @@
+                     self.store.add_tool_call(record)
+                 except Exception:  # noqa: BLE001 - evidence that cannot be kept cannot be cited
+                     return self._evidence_unavailable(run, cited, call.name)
+-                if len(rmap) > self._evidence.max_map_entries:
++                if (
++                    len(rmap) > self._evidence.max_map_entries
++                    or _map_chars(rmap) > self._evidence.max_map_chars
++                ):
+                     self._note(
+                         run, "tool", call.name, result="stopped", error_code="document_too_complex"
+                     )

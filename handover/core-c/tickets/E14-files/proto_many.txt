@@ -1,0 +1,4 @@
+many N=8 L=260000 chars=2080000 peak_MB=145 retained_MB=3 cpu_s=3.97 refused InputTooLarge(FinderMemoryTooMuch) entries=0
+runmap N=8 L=260000 chars=2080000 peak_MB=369 retained_MB=46 cpu_s=5.23 refused InputTooLarge(FinderMemoryTooMuch) entries=3
+build N=3 L=262144 chars=786432 peak_MB=360 retained_MB=15 cpu_s=1.95 ok finders=1 slow=0
+build N=4 L=262144 chars=1048576 peak_MB=139 retained_MB=4 cpu_s=0.46 refused InputTooLarge(FinderMemoryTooMuch) entries=0
