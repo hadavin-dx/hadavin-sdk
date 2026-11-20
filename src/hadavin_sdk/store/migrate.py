@@ -70,6 +70,10 @@ GRANTS: dict[str, Grant] = {
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
     "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
     "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
+    # Stop state hardening (0009): the reset's own record (the runtime role holds nothing on it) and the watermark
+    # of cleared stops (the runtime role reads it; only the reset role writes it).
+    "kill_switch_resets": Grant("table", "", reset=_APPEND),
+    "kill_switch_watermark": Grant("table", "SELECT", reset="SELECT, INSERT, UPDATE"),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND, release=_APPEND),
     "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT", release="SELECT"),
