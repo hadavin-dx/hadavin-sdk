@@ -291,7 +291,10 @@ def test_e1_health_needs_no_signature_and_leaks_nothing(tmp_path, caplog):
             ):
                 assert private not in text, private
     health_lines = [r.getMessage() for r in caplog.records if "health" in r.getMessage()]
-    assert all("status=" in line and "{" not in line for line in health_lines)
+    assert health_lines and all(
+        "{" not in line and "private text" not in line for line in health_lines
+    )
+    assert "store_failures" not in caplog.text  # the body is never logged
 
 
 def test_e1_without_a_health_callable_the_path_is_an_ordinary_404(rt):
