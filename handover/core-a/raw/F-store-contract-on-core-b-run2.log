@@ -189,4 +189,13 @@ tests/contracts/test_t1_reserve_cap.py::test_the_cap_holds_when_the_login_defaul
 tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_settling_one_reservation_apply_it_once PASSED [ 97%]
 tests/contracts/test_t1_reserve_cap.py::test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows PASSED [ 97%]
 tests/contracts/test_t1_reserve_cap.py::test_the_runtime_role_may_not_delete_reservations PASSED [ 98%]
-tests/contracts/test_t1_reserve_cap.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at 
+tests/contracts/test_t1_reserve_cap.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at PASSED [ 98%]
+tests/contracts/test_t1_reserve_cap.py::test_the_portal_role_may_not_read_reservations PASSED [ 99%]
+tests/contracts/test_t1_reserve_cap.py::test_the_reset_role_may_not_read_reservations PASSED [100%]
+
+=========================== short test summary info ============================
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error[postgres] - FINDING F2: a finite cap too large for NUMERIC (1E+200000) is not refused by check_spend_cap (no upper bound) and PostgreSQL raises psycopg NumericValueOutOfRange, an error the interface does not list; the memory store grants the same call
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-run-id-int] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-reservation-id-int] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+XFAIL tests/contracts/test_store_spend_reservations.py::test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-agent-none] - FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+======================= 183 passed, 4 xfailed in 31.76s ========================
