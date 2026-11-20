@@ -573,3 +573,460 @@ def test_tick_logs_the_drain_count_on_the_tick_logger(app, caplog):
         assert run_tick(app, steps=[tick.STEPS[-1]]) == 0
     lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.tick"]
     assert lines[0] == "audit_drain drained=1" and len(lines) == 2  # then the summary line
+
+
+# =========================================================================================================
+# Fix round 1 (tests by a different agent than the builder): a drain failure that is not an outage fails the
+# step, and one bad event no longer blocks the rest. "Refused" below is the database answering with an error
+# (on the memory chain a real sqlite3 error from a trigger); an "outage" is OSError, StoreUnavailable or
+# psycopg's OperationalError/InterfaceError.
+# =========================================================================================================
+
+LAST = [tick.STEPS[-1]]
+# Stands for row text inside the database's own error message.
+REFUSAL = "REFUSALTEXT-must-not-leak"
+
+
+def _refuse(log, *events):
+    """The memory database now rejects the chain row of these events (sqlite3.IntegrityError): the stand-in for
+    a missing INSERT grant or a row the database will not take. `_allow_all` takes it back."""
+    log._db.run("CREATE TABLE IF NOT EXISTS test_refused (event_id TEXT PRIMARY KEY)")
+    log._db.run(
+        "CREATE TRIGGER IF NOT EXISTS test_refuse BEFORE INSERT ON audit_entries "
+        "WHEN NEW.event_id IN (SELECT event_id FROM test_refused) "
+        "BEGIN SELECT RAISE(ABORT, 'REFUSALTEXT-must-not-leak'); END"
+    )
+    for e in events:
+        log._db.run("INSERT INTO test_refused (event_id) VALUES (?)", (e.event_id,))
+
+
+def _allow_all(log):
+    log._db.run("DELETE FROM test_refused")
+
+
+def _append_fails_for(mp, log, exc, *events):
+    """`_append` raises `exc` for these events only; every other event is appended for real."""
+    real, ids, tried = log._append, {e.event_id for e in events}, []
+
+    def flaky(event):
+        tried.append(event.event_id)
+        if event.event_id in ids:
+            raise exc
+        return real(event)
+
+    mp.setattr(log, "_append", flaky)
+    return tried
+
+
+def _delete_fails_for(mp, log, exc, *events):
+    """The outbox DELETE of these events raises `exc`; every other statement runs for real."""
+    real, ids = log._db.run, {e.event_id for e in events}
+
+    def run(sql, params=()):
+        if sql.startswith("DELETE FROM audit_outbox") and params and params[0] in ids:
+            raise exc
+        return real(sql, params)
+
+    mp.setattr(log._db, "run", run)
+
+
+def _outage(kind):
+    if kind == "OSError":
+        return ConnectionRefusedError("refused " + REFUSAL)
+    if kind == "StoreUnavailable":
+        from hadavin_sdk.store.protocol import StoreUnavailable
+
+        return StoreUnavailable("gone " + REFUSAL)
+    psycopg = pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
+    return getattr(psycopg, kind)("dropped " + REFUSAL)
+
+
+OUTAGES = ["OSError", "StoreUnavailable", "OperationalError", "InterfaceError"]
+
+
+def _three(**kw):
+    return [_event(i, event_id=f"evt-{c}", **kw) for i, c in enumerate("abc")]
+
+
+def _park_in_memory(log, *events):
+    """As after a write with the whole database down: the events wait in this process's memory."""
+    with pytest.MonkeyPatch.context() as mp:
+        _database_down(mp, log)
+        for e in events:
+            assert log.write_outcome(e) is None
+    assert log._pending == list(events) and _outbox(log) == []
+
+
+# --- (1) a row the database refuses, between two good rows ----------------------------------------------------
+
+
+def test_f1_a_refused_row_between_two_good_rows_fails_the_step_and_blocks_nothing(app, caplog):
+    log, (a, b, c) = app.audit, _three(result=MARK)
+    for e in (a, b, c):
+        _park(log, e)
+    _refuse(log, b)
+    with pytest.raises(
+        audit.sqlite3.IntegrityError, match=REFUSAL
+    ):  # the refusal is a real sqlite error
+        log._append(b)
+    caplog.set_level("DEBUG")
+    assert run_tick(app) == 1
+    assert _ids(log) == [a.event_id, c.event_id]  # the row after the refused one was drained
+    assert _outbox(log) == [(b.event_id, b.model_dump_json())]  # kept, unchanged
+    state = app.store.get_tick_state(STEP)
+    assert state.last_error == "RuntimeError: audit outbox: 1 rows not writable"
+    assert state.last_ok_at is None
+    for text in (MARK, REFUSAL, b.event_id, b.model_dump_json()):
+        assert text not in state.last_error
+    assert MARK not in caplog.text and REFUSAL not in caplog.text
+    assert "step=audit_drain error_kind=RuntimeError" in caplog.text
+    assert "failed=audit_drain" in caplog.text
+    assert "audit outbox: drained=2 unreadable=0 not_writable=1 not_deleted=0 (kept)" in caplog.text
+    assert log.verify().ok
+    assert run_tick(app) == 1 and [r[0] for r in _outbox(log)] == [b.event_id]  # every tick says so
+    _allow_all(log)
+    assert run_tick(app) == 0  # the refusal is gone: the same row is drained, once
+    assert _ids(log) == [a.event_id, c.event_id, b.event_id] and _outbox(log) == []
+    assert app.store.get_tick_state(STEP).last_error is None and log.verify().ok
+
+
+def test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_only():
+    log, (a, b, c) = _log(), _three(result=MARK)
+    for e in (a, b, c):
+        _park(log, e)
+    _refuse(log, a, b)
+    with pytest.raises(RuntimeError) as caught:
+        log.reconcile()
+    assert str(caught.value) == "audit outbox: 2 rows not writable"
+    assert type(caught.value) is RuntimeError and caught.value.__cause__ is None
+    assert _ids(log) == [c.event_id] and [r[0] for r in _outbox(log)] == [a.event_id, b.event_id]
+
+
+# --- (2) an outage on append stays quiet ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("kind", OUTAGES)
+def test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok(kind, app, monkeypatch, caplog):
+    log, (a, b, c) = app.audit, _three()
+    for e in (a, b, c):
+        _park(log, e)
+    caplog.set_level("DEBUG")
+    with monkeypatch.context() as mp:
+        _append_fails_for(mp, log, _outage(kind), b)
+        assert log.reconcile() == 2  # no raise, and the outage row is not counted as drained
+        assert [r[0] for r in _outbox(log)] == [b.event_id]
+        assert run_tick(app, steps=LAST) == 0
+        assert [r[0] for r in _outbox(log)] == [b.event_id]  # still kept
+    state = app.store.get_tick_state(STEP)
+    assert state.last_error is None and state.last_ok_at is not None
+    assert "not_writable" not in caplog.text and "failed=audit_drain" not in caplog.text
+    assert REFUSAL not in caplog.text
+    assert _ids(log) == [a.event_id, c.event_id]
+    assert run_tick(app, steps=LAST) == 0  # the database is back
+    assert _ids(log) == [a.event_id, c.event_id, b.event_id] and _outbox(log) == []
+
+
+def test_f2_a_sqlite_error_on_append_is_not_an_outage(monkeypatch):
+    """On the memory chain any sqlite3 error (here OperationalError, the class name psycopg uses for an outage)
+    is the database answering, so it is counted."""
+    log, event = _log(), _event()
+    _park(log, event)
+    _append_fails_for(monkeypatch, log, audit.sqlite3.OperationalError("disk I/O error"), event)
+    with pytest.raises(RuntimeError, match=r"^audit outbox: 1 rows not writable$"):
+        log.reconcile()
+    assert [r[0] for r in _outbox(log)] == [event.event_id] and log.events() == []
+
+
+def test_f2_an_outage_does_not_hide_a_refused_row_of_the_same_drain(monkeypatch):
+    log, (a, b, c) = _log(), _three()
+    for e in (a, b, c):
+        _park(log, e)
+    _refuse(log, c)
+    _append_fails_for(monkeypatch, log, OSError("down"), a)
+    with pytest.raises(RuntimeError, match=r"^audit outbox: 1 rows not writable$"):
+        log.reconcile()
+    assert _ids(log) == [b.event_id] and [r[0] for r in _outbox(log)] == [a.event_id, c.event_id]
+
+
+# --- (3) a DELETE that fails for one row ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [audit.sqlite3.OperationalError("database is locked " + REFUSAL), OSError("down " + REFUSAL)],
+    ids=["refused", "outage"],
+)
+def test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate(
+    exc, app, monkeypatch, caplog
+):
+    log, (a, b, c) = app.audit, _three(result=MARK)
+    for e in (a, b, c):
+        _park(log, e)
+    caplog.set_level("DEBUG")
+    with monkeypatch.context() as mp:
+        _delete_fails_for(mp, log, exc, a)
+        assert run_tick(app, steps=LAST) == 1
+    assert _ids(log) == [
+        e.event_id for e in (a, b, c)
+    ]  # a is in the chain; b and c were not blocked
+    assert [r[0] for r in _outbox(log)] == [a.event_id]  # only the row whose delete failed is left
+    state = app.store.get_tick_state(STEP)
+    assert state.last_error == "RuntimeError: audit outbox: 1 rows not deleted"
+    assert MARK not in caplog.text and REFUSAL not in caplog.text
+    assert "audit outbox: drained=2 unreadable=0 not_writable=0 not_deleted=1 (kept)" in caplog.text
+    assert run_tick(app, steps=LAST) == 0  # the second drain: the row goes, the chain is unchanged
+    assert _outbox(log) == [] and _ids(log) == [e.event_id for e in (a, b, c)]
+    assert _ids(log).count(a.event_id) == 1 and log.verify().ok
+    assert app.store.get_tick_state(STEP).last_error is None
+
+
+# --- (4) the combined text ------------------------------------------------------------------------------------
+
+
+def _mixed(log, mp, unreadable, refused, undeletable, good=2):
+    """An outbox with that many rows of each kind, interleaved by id. Returns the ids that must stay."""
+    kept, refused_events, undeletable_events = [], [], []
+    for i in range(unreadable):
+        log._db.run(
+            "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)",
+            (f"evt-{i}-u", f"junk {MARK}"),
+        )
+        kept.append(f"evt-{i}-u")
+    for i in range(refused):
+        refused_events.append(_event(i, event_id=f"evt-{i}-r", result=MARK))
+    for i in range(undeletable):
+        undeletable_events.append(_event(i, event_id=f"evt-{i}-d", result=MARK))
+    for i in range(good):
+        _park(log, _event(i, event_id=f"evt-{i}-g"))
+    for e in refused_events + undeletable_events:
+        _park(log, e)
+        kept.append(e.event_id)
+    if refused_events:
+        _refuse(log, *refused_events)
+    _delete_fails_for(mp, log, audit.sqlite3.OperationalError("locked"), *undeletable_events)
+    return sorted(kept)
+
+
+@pytest.mark.parametrize(
+    ("counts", "text"),
+    [
+        (
+            (2, 1, 3),
+            "audit outbox: 2 unreadable rows kept, 1 rows not writable, 3 rows not deleted",
+        ),
+        ((1, 0, 2), "audit outbox: 1 unreadable rows kept, 2 rows not deleted"),
+        ((3, 2, 0), "audit outbox: 3 unreadable rows kept, 2 rows not writable"),
+        ((0, 4, 1), "audit outbox: 4 rows not writable, 1 rows not deleted"),
+    ],
+)
+def test_f4_the_error_text_is_the_non_zero_counts_in_a_fixed_order(counts, text, app, caplog):
+    log = app.audit
+    caplog.set_level("DEBUG")
+    with pytest.MonkeyPatch.context() as mp:
+        kept = _mixed(log, mp, *counts)
+        with pytest.raises(RuntimeError) as caught:
+            log.reconcile()
+        assert str(caught.value) == text
+        assert [r[0] for r in _outbox(log)] == kept  # nothing but the good rows left the outbox
+        assert run_tick(app, steps=LAST) == 1
+    # the tick was a second pass: the undeletable rows are in the chain by then and their delete failed again
+    assert app.store.get_tick_state(STEP).last_error == "RuntimeError: " + text
+    assert MARK not in caplog.text and REFUSAL not in caplog.text
+    assert (
+        "audit outbox: drained=2 unreadable={} not_writable={} not_deleted={} (kept)".format(
+            *counts
+        )
+        in caplog.text
+    )
+    assert sorted(_ids(log)) == sorted(
+        [f"evt-{i}-g" for i in range(2)] + [f"evt-{i}-d" for i in range(counts[2])]
+    )
+    assert log.verify().ok
+
+
+def test_f4_a_clean_drain_after_a_failed_one_raises_nothing(app):
+    log = app.audit
+    with pytest.MonkeyPatch.context() as mp:
+        _mixed(log, mp, 0, 1, 1)
+        assert run_tick(app, steps=LAST) == 1
+    _allow_all(log)
+    assert run_tick(app, steps=LAST) == 0 and _outbox(log) == []
+    assert sorted(_ids(log)) == ["evt-0-d", "evt-0-g", "evt-0-r", "evt-1-g"] and log.verify().ok
+
+
+# --- (5) _flush_pending ---------------------------------------------------------------------------------------
+
+
+def test_f5_a_flush_moves_a_refused_event_aside_and_writes_the_ones_after_it(caplog):
+    log, (a, b, c) = _log(), _three(result=MARK)
+    _park_in_memory(log, a, b, c)
+    _refuse(log, b)
+    caplog.set_level("DEBUG")
+    assert log._flush_pending() == 2  # nothing raised; b is not counted as written
+    assert _ids(log) == [a.event_id, c.event_id]  # first and third, in order
+    assert log._unwritable == [b] and log._pending == [] and _outbox(log) == []
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert [r.getMessage() for r in warnings] == [
+        "audit pending flush: written=2 not_writable=1 (kept in memory, total=1)"
+    ]
+    assert MARK not in caplog.text and REFUSAL not in caplog.text and b.event_id not in caplog.text
+    assert log.verify().ok
+    # a later flush with another refused event: the total counts what is kept, the count what this flush moved
+    d, e = _event(3, event_id="evt-d"), _event(4, event_id="evt-e")
+    _park_in_memory(log, d, e)
+    _refuse(log, d)
+    caplog.clear()
+    assert log._flush_pending() == 1
+    assert log._unwritable == [b, d] and log._pending == []
+    assert _ids(log) == [a.event_id, c.event_id, e.event_id]
+    assert "audit pending flush: written=1 not_writable=1 (kept in memory, total=2)" in caplog.text
+    caplog.clear()
+    assert (
+        log._flush_pending() == 0 and caplog.text == ""
+    )  # nothing pending: no warning, no retry of b, d
+    assert log._unwritable == [b, d]
+
+
+def test_f5_a_flush_with_every_event_refused_empties_pending_and_raises_nothing(caplog):
+    log, (a, b, c) = _log(), _three()
+    _park_in_memory(log, a, b, c)
+    _refuse(log, a, b, c)
+    caplog.set_level("WARNING")
+    assert log._flush_pending() == 0
+    assert log._unwritable == [a, b, c] and log._pending == [] and log.events() == []
+    assert "audit pending flush: written=0 not_writable=3 (kept in memory, total=3)" in caplog.text
+
+
+@pytest.mark.parametrize("kind", OUTAGES)
+def test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order(kind, monkeypatch, caplog):
+    log, (a, b, c) = _log(), _three()
+    _park_in_memory(log, a, b, c)
+    caplog.set_level("DEBUG")
+    with monkeypatch.context() as mp:
+        tried = _append_fails_for(mp, log, _outage(kind), b)
+        assert log._flush_pending() == 1
+        assert tried == [a.event_id, b.event_id]  # c was not tried after the outage at b
+    assert _ids(log) == [a.event_id]
+    assert log._pending == [b, c] and log._unwritable == []
+    assert "not_writable" not in caplog.text
+    assert log._flush_pending() == 2  # the database is back
+    assert _ids(log) == [e.event_id for e in (a, b, c)] and log._pending == [] and log.verify().ok
+
+
+def test_f5_reconcile_counts_only_outbox_rows_in_its_error_not_events_moved_aside(caplog):
+    """A refused memory-parked event is moved aside by the flush inside reconcile; the outbox drain after it
+    still runs, and the error text speaks of outbox rows only."""
+    log, (a, b, c) = _log(), _three()
+    _park_in_memory(log, a, b)
+    _park(log, c)
+    _refuse(log, a)
+    caplog.set_level("WARNING")
+    assert log.reconcile() == 2  # b from memory, c from the outbox; no outbox row has a problem
+    assert _ids(log) == [b.event_id, c.event_id] and log._unwritable == [a] and _outbox(log) == []
+    assert "audit pending flush: written=1 not_writable=1 (kept in memory, total=1)" in caplog.text
+
+
+# --- (7) the writers' contracts when the flush moves events aside ---------------------------------------------
+
+
+@pytest.mark.parametrize("writer", ["write_intent", "write_outcome"])
+def test_f7_a_writer_whose_flush_moves_events_aside_returns_its_key(writer, caplog):
+    log, (a, b, c), later = _log(), _three(), _event(9, event_id="evt-z")
+    _park_in_memory(log, a, b, c)
+    _refuse(log, a, c)
+    caplog.set_level("WARNING")
+    assert getattr(log, writer)(later) == later.event_id  # nothing raised
+    assert _ids(log) == [later.event_id, b.event_id]
+    assert log._unwritable == [a, c] and log._pending == []
+    assert "audit pending flush: written=1 not_writable=2 (kept in memory, total=2)" in caplog.text
+    assert log.verify().ok
+
+
+def test_f7_write_outcome_never_raises_and_write_intent_raises_only_its_two_errors(monkeypatch):
+    log, (a, b, c) = _log(), _three()
+    _park_in_memory(log, a)
+    _refuse(log, a, b)
+    first = _event(5, event_id="evt-first")
+    assert log.write_intent(first) == first.event_id  # its flush moves `a` aside
+    assert log._unwritable == [a]
+    with pytest.raises(audit.DuplicateEvent):
+        log.write_intent(first)
+    assert log.write_outcome(first) == first.event_id  # a duplicate outcome is not an error
+    # the writer's own event is refused: the intent is "unavailable", the outcome is parked in the outbox
+    with pytest.raises(audit.AuditUnavailable) as caught:
+        log.write_intent(b)
+    assert type(caught.value) is audit.AuditUnavailable and REFUSAL not in str(caught.value)
+    assert log.write_outcome(b) is None
+    assert [r[0] for r in _outbox(log)] == [b.event_id]
+    assert (
+        log._unwritable == [a] and log._pending == []
+    )  # the writer's own refusal is not "moved aside"
+    # with the database down the two contracts are the same as before
+    with monkeypatch.context() as mp:
+        _database_down(mp, log)
+        with pytest.raises(audit.AuditUnavailable):
+            log.write_intent(c)
+        assert log.write_outcome(c) is None
+    assert log._pending == [c] and log._unwritable == [a]
+    assert _ids(log) == [first.event_id] and log.verify().ok
+
+
+# --- (6) PostgreSQL: a real runtime-role login without INSERT on audit_entries --------------------------------
+
+
+def test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row(pg):
+    event = _event(event_id="evt-" + secrets.token_hex(8), result=MARK)
+    pg.park([event])
+    pg.grant("REVOKE", "INSERT", "audit_entries")
+    ticked = pg.cli("tick")  # a real child process that logs in as the runtime role
+    assert ticked.returncode == 1, ticked.stderr
+    assert "step=audit_drain error_kind=RuntimeError" in ticked.stderr
+    assert "audit outbox: 1 rows not writable" in ticked.stderr
+    assert "failed=audit_drain" in ticked.stderr and "audit_drain drained=" not in ticked.stderr
+    assert MARK not in ticked.stderr and MARK not in ticked.stdout
+    assert pg.outbox_ids() == [event.event_id] and pg.chain_ids() == []  # the row is still parked
+    app = pg.app()
+    try:
+        state = app.store.get_tick_state(STEP)
+        assert state.last_error == "RuntimeError: audit outbox: 1 rows not writable"
+        assert state.last_ok_at is None
+    finally:
+        _close(app)
+    pg.grant("GRANT", "INSERT", "audit_entries")
+    again = pg.cli("tick")
+    assert again.returncode == 0, again.stderr
+    assert "audit_drain drained=1" in again.stderr and "failed=-" in again.stderr
+    assert pg.chain_ids() == [event.event_id] and pg.outbox_ids() == []  # exactly once
+    app = pg.app()
+    try:
+        assert app.store.get_tick_state(STEP).last_error is None
+        v = app.audit.verify()
+        assert v.ok and v.rows == 1, v.problems
+    finally:
+        _close(app)
+
+
+def test_f6_pg_in_one_process_the_refused_row_does_not_block_and_is_drained_after_the_grant(
+    pg, caplog
+):
+    """The same refusal on the tick's own connection: the failed INSERT's transaction is rolled back, so the
+    connection still works for the next tick."""
+    a, b = _event(0, event_id="evt-a-" + secrets.token_hex(4)), _event(1, event_id="evt-b-x")
+    pg.park([a, b])
+    pg.grant("REVOKE", "INSERT", "audit_entries")
+    app = pg.app()
+    try:
+        caplog.set_level("INFO")
+        assert run_tick(app) == 1
+        state = app.store.get_tick_state(STEP)
+        assert state.last_error == "RuntimeError: audit outbox: 2 rows not writable"
+        assert pg.chain_ids() == [] and pg.outbox_ids() == sorted([a.event_id, b.event_id])
+        assert (
+            "permission denied" not in caplog.text
+        )  # counts only: the database's text is not logged
+        pg.grant("GRANT", "INSERT", "audit_entries")
+        assert run_tick(app) == 0
+        assert sorted(pg.chain_ids()) == sorted([a.event_id, b.event_id]) and pg.outbox_ids() == []
+        assert app.store.get_tick_state(STEP).last_error is None and app.audit.verify().ok
+    finally:
+        _close(app)
