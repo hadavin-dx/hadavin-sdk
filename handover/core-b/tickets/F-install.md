@@ -1,3 +1,4 @@
+Built on wip/cloud-core-b/Y-integration and wip/cloud-core-b/F-install-4, not yet on cloud/core-b.
 # TICKET F-install: install the model gate in every consumer, delete the old charge sites, delete extract.py (owner core-b SPINE)
 Written 2026-11-20 05:33 UTC from the lead's draft (inputs/draft-ticket-F-install.md, kept word for word below the line). Path class: money. Migration: none. Depends on: F-store built; core-c's gate module for commit 5. Ticket review: one EGM round together with F-store and core-c's gate ticket. NO source code before GO BUILD F.
 

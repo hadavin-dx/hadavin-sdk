@@ -13,5 +13,5 @@ N3. A cause chain longer than the walk limit (8) counts as NOT never-sent.
 N5 (corrected 07:30 UTC after the test writer's finding). `except ProviderError: raise` in with_retry is KEPT: a ProviderError that an adapter's own call raises passes through unchanged and unmarked (the safe direction); no built adapter raises one. Parse failures (KeyError, ValueError, JSON errors) are wrapped by with_retry into a new ProviderError and get the rule.
 N6. protocol.py docstring: "no response seen and no work known", not "nothing was billed".
 N7. New tests: 429 then 400 stays unmarked; a kind that does not retry a 429; a TLS error stays unmarked; one gate-level case once core-c's gate honours the mark.
-Code for M1, M2, N3, N5, N6, N7 is "provider mark fix round 1": QUEUED until the merge of cloud/core-b into the F-install integration tree is finished (llm/retry.py is being merged).
+Code for M1, M2, N3, N5, N6, N7 is "provider mark fix round 1": BUILT on cloud/core-b (retry.py rule 2 INERT at llm/retry.py:56-58; `OpenAICompatLLM.refused_statuses = {401, 403, 404}` at llm/openai_compat.py:78; N6 wording at llm/protocol.py:15-17).
 

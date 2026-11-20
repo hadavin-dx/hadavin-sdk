@@ -1,5 +1,5 @@
 # INTERFACE (ii): the Meter the model gate calls. FINAL after the F-store ticket review and the lead's ORDER 010 (2026-11-20 05:50 UTC)
-BUILT: src/hadavin_sdk/limits.py on cloud/core-b (commit 8db9c29 and fix round 1; tests tests/test_limits_reserve.py, tests/contracts/test_store_spend.py, tests/contracts/test_t1_reserve_cap.py: 471 passed on PostgreSQL 16 in this container; the lead's PostgreSQL 17 run is the one that counts). The in-memory Budget meter arrives with step F-install. Full context: interfaces/README.md (version 2.3).
+BUILT: src/hadavin_sdk/limits.py on cloud/core-b (commit 8db9c29 and fix round 1; tests tests/test_limits_reserve.py, tests/contracts/test_store_spend.py, tests/contracts/test_t1_reserve_cap.py: 471 passed on PostgreSQL 16 in this container; the lead's PostgreSQL 17 run is the one that counts). The in-memory Budget meter is built (limits.py:41, reserve, settle, forfeit, "usd_cap"). Full context: interfaces/README.md (version 2.3).
 
 ```python
 class SpendRefused(RuntimeError):
@@ -14,7 +14,7 @@ class Meter(Protocol):   # implemented by Limits (store-backed) and by k1b Budge
 ```
 
 SIX reasons since 06:20 UTC (lead ORDER 014): usd_cap is raised only by the in-memory Budget meter (the eval and replay command lines) when its one total cap would be passed or the budget was closed after an abandoned call. Allowlist all six.
-Provider errors: `ProviderError.refused_before_response` (class attribute, default False; set True only in llm/retry.py with_retry) marks an error where the provider refused before any response: every attempt was a refused connection or a failed name lookup, or the final answer was HTTP 400, 401, 403, 404, 413 or 422 with no earlier attempt answered or timed out. Built in commit "code F: providers mark an error ..." on cloud/core-b. OPEN (request to core-c, requests/to-core-c-1-exhausted-mark.md): an error that used up its retries arrives as ProviderExhausted, which the gate excludes by type even when the mark is True; HTTP 429 and refused connections end that way.
+Provider errors: `ProviderError.refused_before_response` (class attribute, default False; set True only in llm/retry.py with_retry) marks an error where the provider refused before any response: every attempt was a refused connection or a failed name lookup, or the final answer was HTTP 400, 401, 403, 404, 413 or 422 (openai_compat narrows these never-sent statuses to 401, 403, 404, llm/openai_compat.py:78) with no earlier attempt answered or timed out. Built in commit "code F: providers mark an error ..." on cloud/core-b. OPEN (request to core-c, requests/to-core-c-1-exhausted-mark.md): an error that used up its retries arrives as ProviderExhausted, which the gate excludes by type even when the mark is True; HTTP 429 and refused connections end that way.
 
 What the gate can rely on:
 1. reserve returns a reservation id only after the worst case is booked. Any exception from reserve means: do not call the model. SpendRefused.reason is the audit error code. An unknown agent raises KeyError (still no call).

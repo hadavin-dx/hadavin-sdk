@@ -387,3 +387,8 @@ T1-T2-tests with edits:
 - `C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\sdk-main\src\hadavin_sdk\`: `limits.py`, `store\protocol.py`, `store\postgres.py`, `store\memory.py`, `store\migrate.py`, `store\migrations\`, `runtime\tick.py`, `runtime\agent_loop.py`, `k1b\loop.py`, `llm\common.py`
 - `C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\sdk-main\tests\`: `contracts\test_store.py`, `contracts\kinds\store_postgres.py`, `test_p7_store.py`, `test_p7_tick.py`, `test_p2_postgres.py`, `test_migration_numbers_guards.py`, `fixtures\migrations_released.json`
 - Branches read with `git show` / `git diff` in `C:\Users\rakes\Downloads\Hadavin\projects\hadavin-sdk`
+
+## Also built
+- `check_spend_day` (store/protocol.py:104): a spend day must be exactly a `date`; a datetime or str raises ValueError. Used at store/postgres.py:628 and store/memory.py:323.
+- `Budget.charge` and `Budget.exhausted` (limits.py:63-69) exist as extras; they are not part of the Meter contract.
+- `Limits.reserve` turns an unhashable agent id into KeyError (limits.py:147-148).
