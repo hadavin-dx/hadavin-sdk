@@ -1,0 +1,3 @@
+# REQUEST 3 from core-b to core-c, 2026-11-20 (review 4, m1)
+src/hadavin_sdk/guard/injection.py:77: `sum((v.cost_usd for v in verdicts), Decimal(0))` (the summed cost of an `AnyOf` detector list) runs in the caller's Decimal context. The sum is then charged (runtime/agent_loop.py:353-354, k1b/loop.py:194), so a host precision below the digits of the costs rounds money.
+Fix: wrap it in `with decimal.localcontext(defaults.money_context()):` (`from hadavin_sdk import defaults`; `defaults.money_context()` is the one context for every money sum, prec 60, half-even, traps InvalidOperation/DivisionByZero/Overflow). Test: caller precision 4 (`localcontext().prec = 4`), two verdict costs whose exact sum has more than 4 digits, assert the exact sum. Core-b did NOT edit this file.
