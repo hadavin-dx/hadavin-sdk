@@ -310,6 +310,9 @@ def test_dm_2_257_decomposed_names_refuse_the_text_and_256_do_not():
     # name and each one took a slot of MAX_DECODED_MASKS. On the fold `canonical` is NFKC of one character at a time and composes nothing: an
     # NFD name is its own decoded spelling and takes no slot (second half of this test). A full-width first letter is still decoded, so the
     # names carry one and the 257 / 256 edge is the one P2d-1 pinned.
+    # OLD expectation (P2d-1, names = NFD("Zo\u00e9<X><nnnn> M\u00fcller") with an ASCII Z): 257 such names raise InputTooLarge, 256 do not.
+    # NEW expectation (the fold): the same 257 / 256 edge holds for names that start with a full-width Z (U+FF3A); 257 NFD names with
+    # an ASCII Z are NOT refused and every one of them is masked (ORDER 014 item 10: both are named here).
     wide_z = chr(0xFF3A)
 
     def names(n, first=wide_z):

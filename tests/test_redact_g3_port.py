@@ -161,3 +161,43 @@ def test_fold5_the_class_of_every_dash_quote_and_slash_of_the_fold_table_is_pinn
     assert all(typed[cp] is None for cp in (0x2215, 0x29F8, 0xFF0F, 0x2571))
     # a compatibility dash is refused
     assert typed[0xFF0D] is None and typed[0xFE63] is None and typed[0x2011] is None
+
+
+# ---- 4. one test per class of the typography decision (ORDER 014 items 9 to 11, confirmed by the lead) ----------------------------
+ACCENTED = "josé@example.com"  # a value the fold scan finds (not ASCII as written)
+
+
+def test_typography_an_em_dash_is_ordinary_the_value_beside_it_is_masked_in_the_line():
+    out = redact(f"mail {ACCENTED} — thanks")
+    assert out.text == "mail <EMAIL_1> — thanks", "TYPO-EMDASH: " + out.text
+    assert out.mapping == {"<EMAIL_1>": ACCENTED} and out.actions == 1
+
+
+def test_typography_a_curly_quote_is_ordinary_the_value_inside_the_quotes_is_masked_in_the_line():
+    out = redact(f"‘{ACCENTED}’ said so, it’s fine")
+    assert out.text == "‘<EMAIL_1>’ said so, it’s fine", "TYPO-QUOTE: " + out.text
+    assert out.mapping == {"<EMAIL_1>": ACCENTED} and out.actions == 1
+
+
+def _slash_lookalike(cp: int) -> None:
+    slash = chr(cp)
+    out = redact(f"a{slash}b mail {ACCENTED}")
+    # refused: the line is never shown masked-in-place, it is withheld whole; the slash and the written value are gone
+    assert out.text == f"{FOLD_NOTE} <EMAIL_1>", f"TYPO-SLASH-{cp:04X}: {out.text}"
+    assert slash not in out.text and "example.com" not in out.text
+    assert out.actions == 2  # the hit and the withheld line
+    # the character alone hides nothing: a line with no protected value is left as written
+    alone = redact(f"a{slash}b and nothing else")
+    assert alone.text == f"a{slash}b and nothing else" and alone.actions == 0
+
+
+def test_typography_the_division_slash_u2215_withholds_a_line_with_a_lookalike_value():
+    _slash_lookalike(0x2215)
+
+
+def test_typography_the_box_drawing_diagonal_u2571_withholds_a_line_with_a_lookalike_value():
+    _slash_lookalike(0x2571)
+
+
+def test_typography_the_big_solidus_u29f8_withholds_a_line_with_a_lookalike_value():
+    _slash_lookalike(0x29F8)
