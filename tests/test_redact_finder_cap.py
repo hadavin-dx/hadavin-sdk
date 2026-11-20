@@ -12,13 +12,16 @@ import random
 import string
 import sys
 import time
+from decimal import Decimal
 
 import pytest
 from pydantic import ValidationError
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config import EvidenceSettings
-from hadavin_sdk.guard import runmap
+from hadavin_sdk.guard import model_gate, runmap
+from hadavin_sdk.guard.model_gate import ModelGate
+from hadavin_sdk.models import Reply
 from hadavin_sdk.models import RunState as S
 from tests.fixtures import k5_tools
 from tests.k5_support import ScriptLLM, build_runtime, handle, k5_cfg
@@ -102,6 +105,62 @@ def test_t4_refuse_never_skip(monkeypatch):
     assert mine == before, "E14-T4 redact_many changed the caller's dict on a refusal"
 
 
+class _Client:
+    """A model client that records what it is sent."""
+
+    def __init__(self):
+        self.sent = []
+
+    def chat(self, messages, **kw):
+        self.sent.append((messages, kw))
+        return Reply(text="ok", cost_usd=Decimal("0.01"), model_id="m")
+
+
+class _Meter:
+    def __init__(self):
+        self.reserved, self.settles = {}, []
+
+    def reserve(self, agent_id, worst_usd, *, run_id=None):
+        self.reserved[f"r{len(self.reserved)}"] = worst_usd
+        return f"r{len(self.reserved) - 1}"
+
+    def settle(self, reservation_id, actual_usd):
+        self.settles.append(reservation_id)
+        return Decimal(0)
+
+
+class _Sink:
+    def __init__(self):
+        self.rows = []
+
+    def write_outcome(self, event):
+        self.rows.append(event)
+        return event.event_id
+
+    def codes(self):
+        return [(e.result, e.error_code) for e in self.rows]
+
+
+def test_t5_the_model_gate_sends_nothing_for_a_map_over_the_cap(monkeypatch):
+    va, vb = v("a", 600), v("b", 600)
+    monkeypatch.setattr(defaults, "MAX_FINDER_CHARS", 1000, raising=False)
+    client, meter, sink = _Client(), _Meter(), _Sink()
+    gate = ModelGate(client, meter=meter, audit=sink, worst_case=lambda *a: Decimal("0.25"))
+    bound = gate.bind(
+        "agent-1", "run-1", mapping=runmap.RunMap({"<SECRET_1>": va, "<SECRET_2>": vb})
+    )
+    try:
+        bound.chat([{"role": "user", "content": "x " + va}], system="s", route="main")
+    except model_gate.MaskBudgetExceeded:
+        pass
+    else:
+        _fail("E14-T5 the gate did not refuse a map over the cap")
+    assert client.sent == [] and meter.reserved == {} and meter.settles == [], (
+        "E14-T5 something was sent or reserved"
+    )
+    assert sink.codes() == [("refused", "mask_budget_exceeded")], f"E14-T5 {sink.codes()}"
+
+
 def test_t5_the_gate_refuses_too(monkeypatch):
     va, vb = v("a", 600), v("b", 600)
     m = runmap.RunMap({"<SECRET_1>": va, "<SECRET_2>": vb})
@@ -133,6 +192,14 @@ def test_t6_document_path_boundary(tmp_path):
     )
 
 
+@pytest.fixture(autouse=True)
+def _clean_k5_tool_results():
+    """T7 plants a tool result; no other test may see it."""
+    k5_tools.RESULTS.pop("app", None)
+    yield
+    k5_tools.RESULTS.pop("app", None)
+
+
 def test_t7_tool_path_boundary(tmp_path):
     k5_tools.RESULTS["app"] = " ".join(f"10.2.2.{i}" for i in range(1, 10))
     cfg = k5_cfg(
@@ -144,16 +211,16 @@ def test_t7_tool_path_boundary(tmp_path):
         map(len, set(rt.store.get_redaction_map(run.run_id).values()))
     )  # the default document alone
     results = {}
-    for name, cap in (("tight", held + 71), ("loose", held + 200)):
+    for name, cap in (("exact", held + 72), ("tight", held + 71)):  # nine values of 8 characters
         cfg = k5_cfg(tmp_path / name, config={"evidence": {"max_map_chars": cap}})
         rt, _ = build_runtime(cfg, ScriptLLM([{"tool": "app"}, {"noaction": True}]))
         run = handle(rt)
         results[name] = (run.state, run.reason_code)
-    assert results["tight"] == (S.NEEDS_PERSON, "document_too_complex"), (
-        f"E14-T7 tool path at the cap: {results}"
+    assert results["exact"][1] != "document_too_complex", (
+        f"E14-T7 tool path accepted exactly at the cap: {results}"
     )
-    assert results["loose"][1] != "document_too_complex", (
-        f"E14-T7 tool path under the cap stopped: {results}"
+    assert results["tight"] == (S.NEEDS_PERSON, "document_too_complex"), (
+        f"E14-T7 tool path one over the cap must stop: {results}"
     )
 
 
@@ -218,6 +285,5 @@ def test_t12_honest_sizes_stay_far_under():
     assert held < defaults.MAX_MAP_CHARS // 30, (
         f"E14-T12 an honest k5-size run holds {held} characters"
     )
-    assert 8_571 < defaults.MAX_MAP_CHARS // 30, (
-        "E14-T12 the property corpus' worst build is not far under"
-    )
+    # The property corpus' worst build (8,571 characters, ticket E14-files/honest_head.txt) is a ~8 s CPU measurement over 1,836
+    # inputs, not a unit test: a literal compared with a constant here would assert nothing, so it is not repeated.

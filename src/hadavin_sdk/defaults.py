@@ -54,6 +54,8 @@ MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # `MAX_REDACT_CHARS` lets the call that crosses the run cap finish. No per-value cap: one value as long as the text (the `curl -u ` perf shape, 262,144) is honest and
 # memory depends on the total only. Honest maxima stay far under: property corpus 8,571, k5 full-size run 14,392, 2,000 HIGHENTROPY values 252,505.
 # MAX_MAP_CHARS: 524,288 characters of distinct originals one run's map may hold (config evidence.max_map_chars).
+# Only originals are counted: the trie also holds the NFKC alias keys of non-ASCII values (up to about 4 spellings each), so such a map can pass this cap and still be
+# refused by MAX_FINDER_CHARS (fail closed, a different reason code).
 MAX_MAP_CHARS = 2 * MAX_REDACT_CHARS
 # MAX_FINDER_CHARS: 786,432 trie nodes one finder build may hold; past it InputTooLarge("FinderMemoryTooMuch").
 MAX_FINDER_CHARS = MAX_MAP_CHARS + MAX_REDACT_CHARS
