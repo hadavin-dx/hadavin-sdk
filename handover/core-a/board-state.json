@@ -640,8 +640,8 @@
   {
    "item": "D-fix3",
    "what": "round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start)",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "DONE; round 3 fresh review + evidence batch RUNNING",
+   "percent": 90,
    "evidence file": "reviews/D-code-result-review-2 (to write)",
    "tries": 1,
    "reason": "mut-fix reads the same source files now"
@@ -1695,11 +1695,37 @@
    "what exactly it is doing": "round 2 code nits + test pollution fix, then one mutant run",
    "started UTC": "07:54",
    "expected end": "about 30 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3 (fix)",
    "retries so far": 0,
-   "reason": "after mut-fix"
+   "reason": "R2-2..R2-8 done (ConfigError naming a missing core-b field, nested slot release, cap warning once a minute, bounds checks, Runner.ack_wait_s, handler on hadavin_sdk.triggers only + test pollution gone); tests/triggers 1175 passed 5 skipped (own run, default order); mutants 90 of 90 as expected (run 13); bandit printed no summary line (unconfirmed)"
+  },
+  {
+   "id": "D-rev3",
+   "role": "fresh reviewer (zoom-out)",
+   "model": "sonnet",
+   "what exactly it is doing": "round 3 (last under the cap) read-only review of the step D code",
+   "started UTC": "08:19",
+   "expected end": "about 15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "3 of 3",
+   "retries so far": 0,
+   "reason": "after d-fix3"
+  },
+  {
+   "id": "batch5",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "ONE batch: lint, bandit, WHOLE suite with REQUIRE_PG=1 and -rfsx (failed ids + skip reasons), combined-tree start tests on core-b head, mutant script",
+   "started UTC": "08:19",
+   "expected end": "about 25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead asked: whole suite, failing ids, skip reasons"
   }
  ],
  "tests": [

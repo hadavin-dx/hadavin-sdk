@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T08:18:15Z
+UPDATED_UTC: 2026-11-20T08:19:17Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 71
-ITEMS_OPEN: 20
-PERCENT: 82
-AGENTS_RUNNING: 2
-CAPACITY: load 0.90 of 4 cores (1-minute average), mem 1.2/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 551M /home/user/hadavin-sdk; 467M /tmp/claude-0; 134M /root/.cache
+ITEMS_OPEN: 19
+PERCENT: 83
+AGENTS_RUNNING: 3
+CAPACITY: load 0.41 of 4 cores (1-minute average), mem 0.9/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 552M /home/user/hadavin-sdk; 467M /tmp/claude-0; 134M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:18:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:18:18Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -90,7 +90,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | O20 | ORDER 020 (lead review round 3 of endpoint + worker: 0 Blocker, 2 Major, 7 Minor): Major 1 make HADAVIN_REQUIRE_PG also fail the 'trigger config not on this branch' skip and use core-b's fields directly (no getattr fallbacks for fields core-b has); Major 2 a bounded semaphore on connections plus an absolute per-request deadline before the signature check; minors: one shared qualified-agents helper, one sender-map helper, README permanent-fault versus outage text, delete dead 'status < 500 or == 503' asserts, log level on hadavin_sdk loggers only (no root basicConfig), README: worker is for Linux and containers | QUEUED behind D-fix-1 (same files: worker.py, server.py, endpoint.py and their tests) | 0 | inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log | 0 | no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too |
 | MAINT-1 | update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files | DONE (one last re-run on core-c's newest head at the final batch) | 95 | raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet) | 1 | found by the rerun |
 | D-fix2 | fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest | code+tests DONE; mutant script fix and fresh review RUNNING; then evidence batch | 60 | reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md | 1 | d-fix1 still edits the same files |
-| D-fix3 | round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start) | RUNNING | 5 | reviews/D-code-result-review-2 (to write) | 1 | mut-fix reads the same source files now |
+| D-fix3 | round 2 code nits (validate read_deadline_s/max_connections/port as ConfigError, AttributeError -> ConfigError naming the field, nested finally for slot release, rate-limited WARNING on cap hit, public Runner.ack_wait_s, handler on hadavin_sdk.triggers only, make_wsgi docstring on custom start) | DONE; round 3 fresh review + evidence batch RUNNING | 90 | reviews/D-code-result-review-2 (to write) | 1 | mut-fix reads the same source files now |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -175,21 +175,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | mut-fix | builder | sonnet | mutant script: 4 stale anchors, loud anchor count, win32 not-run, new mutants for the new guards, one complete run | 07:43 | about 30 min | 100 | done | n/a | 0 | run 12: 88 killed, 2 crash-accepted (G20j, G29b), 0 known survivors, 90 of 90 as expected; 4 stale anchors fixed; anchor-count guard; win32 not-run (exit 3); finding: test-order pollution (a test_worker test leaves the stderr handler on the sdk logger: 44 failures when it runs first) |
 | D-rev2 | fresh reviewer (codebase-details) | sonnet | round 2 read-only review of the step D code after d-fix1 and d-fix2 | 07:43 | about 15 min | 100 | done | 2 of 3 | 0 | round 2: 0 Blocker in the code, 1 Major (ticket text stale vs d-fix2 code), 6 Nits (AttributeError not ConfigError for missing core-b field; release in same finally as shutdown_request; cap hit logged at DEBUG only; read_deadline_s/max_connections/port not validated; private _ack_wait_s access; INFO handler on whole hadavin_sdk logger). Not read by reviewer: tests, cli, stores |
 | ticket-D2 | builder (text only) | sonnet | rewrite the superseded ticket D passages to the code as it is; re-cite line numbers | 07:45 | about 10 min | 100 | done | 2 of 3 (fix) | 0 | ticket D rewritten to the code (invariants 7,8,10-16, sections 6,7,7b,9,10b,14); ~75 cites re-done, ~45 checked; test-file line numbers and cites outside triggers/ not re-verified; 'main exits 3 on this tree' from reading only |
-| d-fix3 | builder | sonnet | round 2 code nits + test pollution fix, then one mutant run | 07:54 | about 30 min | 5 | running | 2 of 3 (fix) | 0 | after mut-fix |
+| d-fix3 | builder | sonnet | round 2 code nits + test pollution fix, then one mutant run | 07:54 | about 30 min | 100 | done | 2 of 3 (fix) | 0 | R2-2..R2-8 done (ConfigError naming a missing core-b field, nested slot release, cap warning once a minute, bounds checks, Runner.ack_wait_s, handler on hadavin_sdk.triggers only + test pollution gone); tests/triggers 1175 passed 5 skipped (own run, default order); mutants 90 of 90 as expected (run 13); bandit printed no summary line (unconfirmed) |
+| D-rev3 | fresh reviewer (zoom-out) | sonnet | round 3 (last under the cap) read-only review of the step D code | 08:19 | about 15 min | 5 | running | 3 of 3 | 0 | after d-fix3 |
+| batch5 | evidence runner (never judges) | sonnet | ONE batch: lint, bandit, WHOLE suite with REQUIRE_PG=1 and -rfsx (failed ids + skip reasons), combined-tree start tests on core-b head, mutant script | 08:19 | about 25 min | 5 | running | n/a | 0 | lead asked: whole suite, failing ids, skip reasons |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4474 | sh -c uv run --all-extras --group test pytest -q -p no:cacheprovider - | core-a session or its agent | 367s ago | running | matched by name in ps |
-| 4476 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rfs te | core-a session or its agent | 367s ago | running | matched by name in ps |
-| 4479 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 366s ago | running | matched by name in ps |
-| 11488 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.crash_launch | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 7426s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 7426s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 7426s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 7426s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 7426s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 7426s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 7488s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 7488s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 7488s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 7488s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 7488s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 7488s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
