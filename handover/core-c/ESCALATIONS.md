@@ -1,5 +1,13 @@
 # ESCALATIONS of core-c (newest on top)
 
+## E3. Redactor gap on main, CONFIRMED BY A RUN: one redaction pass leaves a bank account number readable (2026-11-20T05:55Z)
+- Found by the ticket G code review (cb-1-3 shape B), then run by the gate builder. Pinned as a strict expected-failure test: tests/test_runmap_is_masked.py::test_shape_b_round_trip_holds_for_a_bank_code_beside_an_account. Raw output: evidence/F-G0-1.md.
+- Input shape (made-up digits): line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account number>`.
+- One `redact_text` pass gives `BSB: <BANKCODE_1>` and `paid <BANKCODE_1>/12345678`: the account number is still there. A second pass gives `<BANKCODE_1>/<BANKACCT_1>`.
+- Cause: the account pattern needs a literal bank-code placeholder before the digits (guard/redact.py:339-349); that placeholder is only written on line 2 by the sweep, after the pattern pass (1011-1050).
+- Not fixed, no pattern changed: a pattern-order change in the redactor is outside the ordered parts of step G. Options: (a) re-run the two context patterns after the sweep inside redact() (recommended, small, I can build it as part G7 with the failing test already in place); (b) accept as a stated limit.
+- Second, smaller finding from the same run: `redact_untrusted` applied to its own output with its hook escapes genuine placeholders and can turn `password=<SECRET_1>` into a new secret. Pinned as a strict expected-failure test. No caller does this today as far as read; not traced through every caller: UNVERIFIED.
+
 ## E4. Fold G1: one test fails because two input heads give `has_mixed_script` opposite rules (2026-11-20T05:47Z)
 - Item: BUILD G1, tries 1. Branch wip/cloud-core-c/g1-fold (pushed, 5 commits on main 51c9fc4, tip 8e4d234). Raw output: evidence/G1-fold.md.
 - Failing test (NEW, not edited): tests/test_textnorm_round1.py::test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word, `AssertionError: assert (True is False)` for `has_mixed_script("ab" + U+0903 + "cd")`.

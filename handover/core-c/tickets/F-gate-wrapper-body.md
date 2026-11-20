@@ -137,3 +137,15 @@ Lead decisions written in: ORDER 006 items 3, 4, 8; ORDER 007 (decision on escal
 10. Tests T5 to T11 are reworked accordingly (a raw secret NOT in the map passes through: detection is the producers' job). Mutant script tests/gate_mutants.py in the format of tests/stage_mutants.py (ORDER 008): no call without a reservation; enforce failure means no call; known originals replaced.
 11. `runmap.is_masked` (ticket G part G0) is still delivered as plan row G's check-only function, but the gate does not call it.
 12. Still for SPINE: requests/1-producers.patch; per-site handling of `GateRefused` and of `SpendRefused`; deletion of agent_loop.py:483, 491 with the charge sites.
+
+## AS BUILT (2026-11-20 05:55 UTC, commit "code F:" 45156c1; evidence/F-G0-1.md). Differences from Amendment 1, each for the lead's verdict
+1. Constructor keyword is `enforce=runmap.enforce_map` (a function (text, mapping) -> str), NOT `mask_check=`. SPINE's draft install line `mask_check=MASK_CHECK` must change to `enforce=` or be dropped (the default is right).
+2. `runmap.enforce_map` reuses the redactor's own sweep (`redact._Redactor.sweep`, a private class imported into runmap.py): longest value first, never inside a placeholder token, every copy of a secret, identifiers only as standalone words (`xabc1234` is not touched when `abc1234` is known).
+3. STATED LIMIT: a known value written in a look-alike or hidden-character spelling is NOT replaced by the gate (returning a decoded view could turn a look-alike into a real placeholder). Pinned by a test. The fold scan (G3) covers this at the producers.
+4. `ModelGate(llm)` raises TypeError when `llm` is already a ModelGate or a BoundGate.
+5. Audit error codes: mask_refused, reserve_refused (or the meter's `reason` when it is a short lower-case code), provider_error, provider_exhausted, call_failed, call_interrupted, settle_failed. A row has run id, domain llm, operation chat, principal, source, result, error code: no route and no agent id.
+6. Unchanged messages and documents are sent as the caller's same objects in new lists; a changed document is re-encoded as UTF-8 (bad bytes become U+FFFD).
+7. With a map (even an empty one) a text over the redactor's size cap is refused; with mapping=None only the types are looked at.
+8. Size: 269 lines (target was 120 to 180).
+Verified: 140 tests pass in the three new files, 2 strict expected failures (E3); mutant script tests/gate_mutants.py "12 of 12 good"; ruff clean; bandit no findings; the 23 existing test files that use runmap: 6336 passed, 1 failed (tests/test_k5_producers.py, expected until requests/1-producers.patch is applied).
+NOT checked: the full suite; Python 3.12; the cost of the enforce step per call; the real Limits / SpendRefused (not built yet); type check.
