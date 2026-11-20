@@ -1,28 +1,28 @@
-UPDATED_UTC: 2026-11-20T05:36:48Z
+UPDATED_UTC: 2026-11-20T05:37:25Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
 BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
-PERCENT: 55
-AGENTS_RUNNING: 7
-CAPACITY: load 0.99 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 3 heavy 4
-DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 486M
+PERCENT: 60
+AGENTS_RUNNING: 5
+CAPACITY: load 0.94 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 2 heavy 3
+DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 502M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: step B first build has a safety gap (serial stop id), fix round 2 running; E1 cron refused (accepted by lead)
 NEXT: resolve the F-store review; land test commits; EGM round on tickets B and C; then ONE batch full-suite run
-PUSHED_UTC: 2026-11-20T05:36:15Z (previous push; this board is pushed right after writing)
-IST: 11:06 IST
+PUSHED_UTC: 2026-11-20T05:37:09Z (previous push; this board is pushed right after writing)
+IST: 11:07 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | B-tests | builder (tests) | fable | tests/test_stop_state_roles.py with real database logins, and mutants; worktree /tmp/core-b-wt/B-tests | 05:38 | +30 min | UNVERIFIED | running | none | 0 | the B builder proved nothing under a real non-owner login |
 | a87e21e9 | builder (tests) | fable | tests/test_price_constraint.py, fail-before proof, mutants; worktree C-tests | 05:36 | +15 min | UNVERIFIED | running | none | 0 | tests by a different agent |
-| a27419bd | builder | fable | D-config: trigger settings in config.py, registry cross-check, App.secrets; worktree D | 05:36 | +15 min | UNVERIFIED | running | none | 0 | request 001 from core-a, accepted |
+| a27419bd | builder | fable | D-config: commit on cloud/core-b (95 lines added in 4 files) | 05:36 | done | 100 | done | none | 0 | 577 passed, 17 skipped on the config, registry, app files; no new tests yet; full suite NOT run |
 | a6122910 | builder (fix) | fable | step B fix round 2: stop id becomes a random UUID, limits-unavailable stop, missed test pins; worktree B | 05:37 | +15 min | UNVERIFIED | running | none | 1 | ticket check found the serial id lets the runtime login block a later stop |
 | a86102dd | builder (tests) | fable | tests/test_audit_drain.py: commit 3394b2c, 26 tests | 05:32 | done | 100 | done | none | 0 | 26 passed with PostgreSQL 16, 22 passed and 4 skipped without; mutants M1 to M9 all killed |
 | a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:33 | +5 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3, through the Skill tool |
@@ -57,7 +57,7 @@ IST: 11:06 IST
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
-| REQUEST 001 from core-a (config for step D) | RUNNING | 30 | requests/001.answer.md (accepted) | 0 | built as 'code D-config:' after C lands: both edit config.py |
+| REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
 | BUILD B stop state | RUNNING | 50 | commit 80a07ce (source, needs the fix) | 2 | fix round 2 running; role tests, mutants, docs and the review round not done |
 | BUILD C price constraint | RUNNING | 60 | commit eb775a8 (source) | 1 | new test file, mutants, CHANGELOG line and the review round not done |
