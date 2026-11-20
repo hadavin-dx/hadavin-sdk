@@ -487,11 +487,11 @@
   {
    "item": "BATCH-4",
    "what": "ONE batch of my own files on PostgreSQL 16: lint, format, bandit, tests/triggers + crash helper + trigger config + spend, gate, meter contract tests + redaction property + rule files, with the strict database switch HADAVIN_REQUIRE_PG=1",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "after the builders ended; raw/BATCH4-own-files-pg16.log",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/BATCH4-own-files-pg16.log",
    "tries": 1,
-   "reason": "lead's reminder at 07:05Z and the EGM sequence"
+   "reason": "ruff check and format clean (351 files), bandit -ll no finding; tests/triggers + crash helper + trigger config + spend, gate and meter contract tests + redaction property + 6 rule files on PostgreSQL 16.15 with HADAVIN_REQUIRE_PG=1 (a missing database fails instead of skipping): 1567 passed, 455 skipped, 75 xfailed, 0 failed in 164 s. Skips are all 'the code is on another session's branch' (core-b meter 261, store step F 1, k1b Budget 1, one corpus file): expected. The 75 xfailed are the redaction fix (core-c G7) that is not on my branch. NOT run: the whole suite (the owner's rule: one whole batch only; last whole suite was batch 2), Python 3.12, PostgreSQL 17"
   },
   {
    "item": "MUT-3",
@@ -519,6 +519,15 @@
    "evidence file": "reviews/E-result-review-3.md (not yet)",
    "tries": 1,
    "reason": "EGM sequence; a Blocker or Major left after this round goes to ESCALATIONS.md"
+  },
+  {
+   "item": "EGM-D-code",
+   "what": "fresh EGM result review of the step D code (endpoint, worker, server) after all fixes, with the batch and fuzz and matrix logs as evidence",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/D-code-result-review-1.md (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence: evidence (BATCH4) first, then a fresh reviewer who is not the author; dispatched directly following the loaded review-loop procedure (resolve will go through the Skill)"
   }
  ],
  "agents": [
@@ -1261,6 +1270,19 @@
    "role": "reviewer (egm:egm-design, fresh)",
    "what exactly it is doing": "round 3: hostile design review of the final helper",
    "expected end": "about 15 min",
+   "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:08",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step D code round 1 of 3",
+   "retries so far": 0,
+   "id": "egm-D-codebase",
+   "role": "reviewer (egm:egm-codebase-details, fresh)",
+   "what exactly it is doing": "checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes",
+   "expected end": "about 20 min",
    "reason": "EGM sequence"
   }
  ],
