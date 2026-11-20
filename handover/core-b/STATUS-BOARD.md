@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:16:43Z
+UPDATED_UTC: 2026-11-20T13:17:54Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.51 of 4 cores, mem 1/15 GB, disk 45G free, 36% used, agents light 4 heavy 2
+CAPACITY: load 1.37 of 4 cores, mem 1/15 GB, disk 45G free, 36% used, agents light 4 heavy 2
 DISK: / 45G free, 36% used; worktrees /tmp/core-b-wt 4.0G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T13:15:58Z (previous push; this board is pushed right after writing)
-IST: 18:46 IST
+PUSHED_UTC: 2026-11-20T13:17:15Z (previous push; this board is pushed right after writing)
+IST: 18:47 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -295,3 +295,5 @@ Also running: F6 (step 6 review fixes, since 12:41Z, worktree MF6). After all la
 B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the model call and Limits.settle after, in agent_loop.py, without core-c's gate: where the gate later arrives it moves that call. Without core-c's provider mark every failed call stays booked at the worst case (over-count, the safe direction). It waits for M2 (Meter signature). Builder B2 starts after P1; until then the PR text says what the lead requires: exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
 
 13:35Z MERGED on cloud/core-b since 13:25Z: A2 (audit rights test + conditional wording + ticket A-audit-rights.md), A4 (Anthropic allowlist), G (step 4: runtime SELECT only on counters, nothing on spend_reservations, purge EXECUTE-only, writer check; lead B1, M3, M7), A3 (audit_code sanitiser, _note never raises), H1 (B3 day window, M1 min_expiry_age, N1 CHECK usd, M5 header; core-a M1). RUNNING: merged-head money batch (mine, one process), R9 fresh review of step 4 (since 13:30Z), M6 checksum ledger (MM6), T2 cap rows in full-tick tests (MT2). NEXT (READY now): I1 idempotent reserve retry (core-a M5: 0011 reserve + postgres.py), then P1 (M2 p_agent NOT NULL + memory parity core-a M6), then B2 (reserve/settle in agent_loop), M4 own role for set_cap + A-audit-rights migrate change (migrate.py, after M6 merges). Fresh review of H1 diff next.
+
+13:50Z G is DONE and merged (not running): lead-build-4.md written for the laptop with the remaining migrate.py items (M4, isolation check, A-audit-rights). Chain H1 (merged, 096c0f870) -> I1 (idempotent reserve, then M2/parity; MI1, since 13:36Z) -> B2 (after I1). Reviews running: step 4 (R9), H1 diff (R10). M6 (MM6), T2 (MT2) running.
