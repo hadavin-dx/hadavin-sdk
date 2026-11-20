@@ -1,0 +1,147 @@
+module file: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/e-evidence4/src/hadavin_sdk/testing/crash.py
+
+=== outside pytest, child without PYTEST_CURRENT_TEST
+rc 1 stderr tail: ['RuntimeError: CrashPoints is a test tool: it can only be built inside a pytest run']
+
+=== arm bad names
+arm empty: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm upper: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm path: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm newline: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm hash: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm 300chars: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm nonstr: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm None: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+arm bytes: ValueError: ValueError('a point is <name>.<method>:before or <name>.<method>:after, lower case')
+   armed: None
+
+=== arm bad nth
+nth True: TypeError: TypeError('nth is a whole number, not a bool: True')
+   armed: None
+nth 0: ValueError: ValueError('nth must be 1 or more: 0')
+   armed: None
+nth -1: ValueError: ValueError('nth must be 1 or more: -1')
+   armed: None
+nth 1.0: ValueError: ValueError('nth must be 1 or more: 1.0')
+   armed: None
+nth 1e9: ValueError: ValueError('nth must be 1 or more: 1000000000')
+   armed: None
+nth 1e30: ValueError: ValueError('nth must be 1 or more: 1000000000000000000000000000000')
+   armed: None
+nth str: ValueError: ValueError("nth must be 1 or more: '2'")
+   armed: None
+nth None: ValueError: ValueError('nth must be 1 or more: None')
+   armed: None
+
+=== wrap bad
+wrap dunder: TypeError: TypeError('t.__len__: dunder methods cannot be wrapped')
+   armed: None
+wrap dunder-call: TypeError: TypeError('t.__call__: dunder methods cannot be wrapped')
+   armed: None
+wrap async def: TypeError: TypeError('t.co: async and generator methods cannot be wrapped')
+   armed: None
+wrap async gen: TypeError: TypeError('t.ag: async and generator methods cannot be wrapped')
+   armed: None
+wrap generator: TypeError: TypeError('t.gen: async and generator methods cannot be wrapped')
+   armed: None
+wrap missing: AttributeError: AttributeError("'T' object has no attribute 'nope'")
+   armed: None
+wrap not callable: TypeError: TypeError('t.notmeth is not a method')
+   armed: None
+wrap str methods: TypeError: TypeError('methods is a collection of method names, not one string')
+   armed: None
+wrap bad name: ValueError: ValueError("bad name: 'T'")
+   armed: None
+wrap bad method name: ValueError: ValueError("bad method name: 'Ok'")
+   armed: None
+wrap nonstr method: ValueError: ValueError('bad method name: 3')
+   armed: None
+wrap nonstr name: ValueError: ValueError('bad name: 3')
+   armed: None
+wrap ok: OK -> 1
+
+=== flag files
+flag other point!r='other.pt:before': armed='other.pt:before': OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag garbage!r='zzz!!': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag empty!r='': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag #0!r='t.ok:before#0': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag #-1!r='t.ok:before#-1': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag #x!r='t.ok:before#x': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag '#'!r='#': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag #01!r='t.ok:before#01': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag valid #2!r='t.ok:before#2': armed='t.ok:before': OK -> None
+   (skip in-process exit-mode call: would os._exit)
+   file exists after: True
+flag valid trailing nl!r='t.ok:before\n': armed='t.ok:before': OK -> None
+   (skip in-process exit-mode call: would os._exit)
+   file exists after: True
+flag two newlines!r='t.ok:before\n\n': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+flag binary!r='ÿþ': armed=None: OK -> None
+   3 calls: OK -> [1, 1, 1]
+   file exists after: True
+
+=== flag_path as str
+str flag_path: TypeError: TypeError('flag_path is a pathlib.Path, not str')
+exit without flag_path: ValueError: ValueError('mode "exit" needs a flag_path')
+raise with flag_path: ValueError: ValueError('mode "raise" takes no flag_path')
+bad mode: ValueError: ValueError("unknown mode: 'x'")
+
+=== stub refusing unlink twice then works inside hit
+hit -> SimulatedCrash ('t.ok:before',)
+unlink calls: 3 file exists: False fired: ('t.ok:before',)
+
+=== two processes racing for one flag, 20 pairs
+pair 0: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 1: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 2: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 3: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 4: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 5: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 6: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 7: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 8: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 9: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 10: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 11: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 12: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 13: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 14: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 15: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 16: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 17: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_exists=False
+pair 18: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+pair 19: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_exists=False
+crash counts per pair: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] all==1: True
+
+=== marker read text mode / closed reader
+text mode: rc 137 splitlines ['simulate crash'] stderr 
+bytes: rc 137 b'simulate crash\n'
+closed reader: rc 137 stderr 
+devnull stdout: rc 137
+closed fd1: rc 137 

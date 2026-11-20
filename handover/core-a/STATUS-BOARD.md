@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T07:16:17Z
+UPDATED_UTC: 2026-11-20T07:17:13Z
 SESSION: core-a
-ORDER: 017 on top of the backlog (016 standing)
+ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 67
-ITEMS_OPEN: 19
-PERCENT: 80
+ITEMS_TOTAL: 68
+ITEMS_OPEN: 20
+PERCENT: 79
 AGENTS_RUNNING: 8
-CAPACITY: load 2.48 of 4 cores (1-minute average), mem 1.2/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 538M /home/user/hadavin-sdk; 439M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 1.39 of 4 cores (1-minute average), mem 1.0/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 539M /home/user/hadavin-sdk; 439M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:16:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:16:20Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -87,6 +87,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | WIN-notes | Windows risk inventory for the lead's laptop: one checklist from all reviews (what to run, expected Linux result) | RUNNING | 5 | WINDOWS-NOTES.md (not yet) | 1 | owner: the lead's campaign runs on Windows; everything of mine ran on Linux only |
 | RERUN-heads | re-run my non-builder tests on the NEWEST heads of core-b and core-c; list findings that now look fixed | RUNNING | 5 | TRIAL-RERUN.md, raw/RERUN-core-*.log (not yet) | 1 | both sessions pushed since my last runs |
 | O19 | ORDER 019: apply the real n8n error-item shapes to the retry loop (evidence-n8n-2.md); then a fresh EGM review of the pack | RUNNING (sent to the n8n fix builder as an addition) | 10 | n8n/, raw/n8n-template-tests-5.log (not yet) | 1 | same files as the n8n fix builder, so it takes the order as an addition, not a second agent |
+| O20 | ORDER 020 (lead review round 3 of endpoint + worker: 0 Blocker, 2 Major, 7 Minor): Major 1 make HADAVIN_REQUIRE_PG also fail the 'trigger config not on this branch' skip and use core-b's fields directly (no getattr fallbacks for fields core-b has); Major 2 a bounded semaphore on connections plus an absolute per-request deadline before the signature check; minors: one shared qualified-agents helper, one sender-map helper, README permanent-fault versus outage text, delete dead 'status < 500 or == 503' asserts, log level on hadavin_sdk loggers only (no root basicConfig), README: worker is for Linux and containers | QUEUED behind D-fix-1 (same files: worker.py, server.py, endpoint.py and their tests) | 0 | inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log | 0 | no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -161,17 +162,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 10969 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 11313 | postgres: postgres postgres 127.0.0.1(49388) DROP SCHEMA | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3708s ago | running | matched by name in ps |
-| 28199 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 93s ago | running | matched by name in ps |
-| 28602 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 32s ago | running | matched by name in ps |
-| 29222 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 61s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3764s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -232,6 +228,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- ORDER 020 read at 07:17Z (your ledger rows D-R3-1, D-R3-2). Two points I decide the way I read them, say CHANGE if wrong: (a) core-b's settings have NO host, port, allow_non_loopback, poll_s or max_waiting: those become worker command-line options and named constants, not settings read with getattr; the fields core-b has (tenant, senders, max_body_bytes, max_running, ack_wait_s) are read directly; (b) with HADAVIN_REQUIRE_PG=1 the main-start tests FAIL on my own branch (core-b's config is not here), so my evidence batch runs them on the combined scratch tree. The cap on connections: I had declined it (README only) in my own review; your Major 2 overrules it and I build it
 - ESCALATIONS E6: three n8n behaviours need your next real n8n run: a wait above 65 s and an n8n restart during a wait; a Respond-to-Webhook node followed by Stop-and-Error; the Respond node passing its item on. Also from the n8n review: the webhook had no authentication (anyone could start runs): fixed in the pack, shape unverified
 - ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)
 - Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code

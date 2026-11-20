@@ -1,5 +1,5 @@
 {
- "order": "017 on top of the backlog (016 standing)",
+ "order": "020 (002 to 019 standing)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
  "next": "reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n",
@@ -609,6 +609,15 @@
    "evidence file": "n8n/, raw/n8n-template-tests-5.log (not yet)",
    "tries": 1,
    "reason": "same files as the n8n fix builder, so it takes the order as an addition, not a second agent"
+  },
+  {
+   "item": "O20",
+   "what": "ORDER 020 (lead review round 3 of endpoint + worker: 0 Blocker, 2 Major, 7 Minor): Major 1 make HADAVIN_REQUIRE_PG also fail the 'trigger config not on this branch' skip and use core-b's fields directly (no getattr fallbacks for fields core-b has); Major 2 a bounded semaphore on connections plus an absolute per-request deadline before the signature check; minors: one shared qualified-agents helper, one sender-map helper, README permanent-fault versus outage text, delete dead 'status < 500 or == 503' asserts, log level on hadavin_sdk loggers only (no root basicConfig), README: worker is for Linux and containers",
+   "state": "QUEUED behind D-fix-1 (same files: worker.py, server.py, endpoint.py and their tests)",
+   "percent": 0,
+   "evidence file": "inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log",
+   "tries": 0,
+   "reason": "no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too"
   }
  ],
  "agents": [
@@ -1832,6 +1841,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ORDER 020 read at 07:17Z (your ledger rows D-R3-1, D-R3-2). Two points I decide the way I read them, say CHANGE if wrong: (a) core-b's settings have NO host, port, allow_non_loopback, poll_s or max_waiting: those become worker command-line options and named constants, not settings read with getattr; the fields core-b has (tenant, senders, max_body_bytes, max_running, ack_wait_s) are read directly; (b) with HADAVIN_REQUIRE_PG=1 the main-start tests FAIL on my own branch (core-b's config is not here), so my evidence batch runs them on the combined scratch tree. The cap on connections: I had declined it (README only) in my own review; your Major 2 overrules it and I build it",
   "ESCALATIONS E6: three n8n behaviours need your next real n8n run: a wait above 65 s and an n8n restart during a wait; a Respond-to-Webhook node followed by Stop-and-Error; the Respond node passing its item on. Also from the n8n review: the webhook had no authentication (anyone could start runs): fixed in the pack, shape unverified",
   "ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)",
   "Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code",
