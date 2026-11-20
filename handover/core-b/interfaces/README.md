@@ -11,7 +11,7 @@ Receipts and work items: NO store method is offered (the lead's draft ticket D n
 Plain words: a reservation is money set aside for one model call before the call. The store books it on the agent's day and month counters in one database transaction and refuses when a counter would pass its cap. After the call the real cost replaces it. A reservation nobody closed (the process died) is marked expired by a sweep and stays booked at the full amount.
 | method | does | errors |
 |---|---|---|
-| reserve_spend(reservation_id, agent_id, day, usd, *, day_cap, month_cap, run_id=None) -> None | books usd on day and month, or books nothing | SpendCapExceeded(which = "day" or "month", day checked first); StaleState (id exists); ValueError (amount not a finite Decimal >= 0; reservation id not a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -) |
+| reserve_spend(reservation_id, agent_id, day, usd, *, day_cap, month_cap, run_id=None) -> None | books usd on day and month, or books nothing | SpendCapExceeded(which = "day" or "month", day checked first); StaleState (id exists); ValueError (amount not a finite Decimal >= 0; reservation id not a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -; agent_id or run_id not a str of 1 to 200 characters without control characters; cap not a finite Decimal >= 0 with exponent -12 to 9) |
 | settle_spend(reservation_id, actual_usd) -> tuple[SpendReservation, bool] | first call closes the row (open or expired), moves day and month by actual minus reserved on the row's own day (an expired row only upward) and adds the actual amount to the run's cost when the row has a run; later calls return the stored row with False and change nothing | NotFound; ValueError (amount as above; reservation id breaks the same rule, checked before the lookup) |
 | expire_spend_reservations(older_than_s) -> int | open rows older than that (database clock) become expired; counters do not move | |
 | purge_spend_reservations(before) -> int | deletes closed rows only (purge role) | |
@@ -24,7 +24,7 @@ Invariants (the same numbers as in tickets/F-store.md):
 6. Midnight rule: the day is the UTC date at reserve time, stored in the row; settle and expire act on that stored day and its month.
 7. Overshoot: a settle above the reserved amount is booked in full with no cap check.
 8. Fail closed: any exception from the store or the stop-state read inside Limits.reserve becomes SpendRefused("limits_unavailable"); no error path returns an id.
-9. Amounts are exactly Decimal, finite, 0 <= x < 10**9, at most 12 decimal places; nothing is rounded; caps are validated the same way (from fix round 1 on).
+9. Amounts are exactly Decimal, finite, 0 <= x < 10**9, at most 12 decimal places; nothing is rounded; caps are a finite Decimal >= 0 with the same exponent window (-12 to 9) and no other upper bound (from fix round 1 on; fix round 3 added the window). `agent_id` and `run_id` are strs of 1 to 200 characters without control characters. `expire_spend_reservations` takes an age 0 to 10**7 s; `purge_spend_reservations` a timezone-aware datetime (ValueError otherwise).
 10. Expiry uses the database clock only.
 11. Stated limit: the runtime database login can UPDATE its own counters; the memory store guarantees nothing across processes.
 12. Purge deletes rows that are not open (settled or expired) and older than the bound; never an open row.

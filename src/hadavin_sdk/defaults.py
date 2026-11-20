@@ -154,3 +154,8 @@ RESERVATION_EXPIRE_S = 3600
 # provider (UNVERIFIED); a lead may raise it.
 WORST_CASE_OVERHEAD_BYTES = 4096
 
+
+# Milliseconds a store call may wait for a row lock (store/postgres.py `build`, the runtime connection only; the migrate
+# connection sets none). A call that waits longer fails loudly instead of holding the process-wide store lock for ever;
+# the runtime maps it to limits_unavailable. It does not limit how long a statement itself runs.
+STORE_LOCK_TIMEOUT_MS = 10000

@@ -142,7 +142,10 @@ class Limits:
             check_spend_amount(worst_usd)
         except ValueError:
             raise SpendRefused("bad_amount") from None
-        budget = self.registry.agents[agent_id].budget_usd
+        try:
+            budget = self.registry.agents[agent_id].budget_usd
+        except TypeError:  # an unhashable agent id
+            raise KeyError(agent_id) from None
         try:
             if self.store.get_kill_switch().on:
                 raise SpendRefused("kill_switch")

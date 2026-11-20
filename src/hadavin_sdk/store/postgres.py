@@ -27,6 +27,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
     OPEN_STATES,
@@ -50,9 +51,11 @@ from hadavin_sdk.store.protocol import (
     StaleState,
     StoreUnavailable,
     check_expiry_age,
+    check_purge_bound,
     check_reservation_id,
     check_spend_amount,
     check_spend_cap,
+    check_store_id,
 )
 
 _LOG = logging.getLogger("hadavin_sdk.store")
@@ -185,6 +188,11 @@ def build(settings, deps) -> PostgresStore:
         raise StoreUnavailable(
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
+    # A store call that waits on a row lock for longer than this fails loudly instead of holding the process-wide
+    # store lock. Set here, not in `connect()`: the migrate path shares `connect()` and its statements may run long.
+    conn.execute(
+        sql.SQL("SET lock_timeout = {}").format(sql.Literal(defaults.STORE_LOCK_TIMEOUT_MS))
+    )
     return PostgresStore(conn)
 
 
@@ -614,6 +622,9 @@ class PostgresStore:
         month_cap: Decimal,
         run_id: str | None = None,
     ) -> None:
+        check_store_id(agent_id, "agent_id")
+        if run_id is not None:
+            check_store_id(run_id, "run_id")
         check_reservation_id(reservation_id)
         check_spend_amount(usd)
         check_spend_cap(day_cap)  # before any SQL: a NaN cap would compare as no cap
@@ -722,6 +733,7 @@ class PostgresStore:
 
     def purge_spend_reservations(self, before: datetime) -> int:
         """Closed rows only (run by the purge role, which reads `status` and `closed_at` and nothing else)."""
+        check_purge_bound(before)
         with self._lock:
             return self._exec(
                 "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %s",

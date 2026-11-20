@@ -344,7 +344,10 @@ def _sender_secrets(secrets: SecretProvider, names: set[str]) -> Callable[[str],
     def read(name: str) -> str:
         if name not in allowed:
             raise PermissionError("not one of the secret names under triggers.senders")
-        return secrets.get(name)
+        try:
+            return secrets.get(name)
+        except Exception:  # noqa: BLE001 - a provider's own error may carry the name
+            raise RuntimeError("sender secret unavailable") from None
 
     return read
 

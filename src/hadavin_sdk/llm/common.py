@@ -90,7 +90,7 @@ def worst_case_usd(
     size = len(system.encode("utf-8", "surrogatepass")) + _json_bytes(messages)
     if tools is not None:
         size += _json_bytes(tools)
-    size += sum(len(d) for d in documents or [])
+    size += sum(len(d.decode("utf-8", "replace").encode("utf-8")) for d in documents or [])
     if output_schema is not None:
         size += 2 * _json_bytes(output_schema)
     size += defaults.WORST_CASE_OVERHEAD_BYTES

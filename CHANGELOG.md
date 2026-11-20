@@ -57,6 +57,17 @@
     runs can now refuse because another call's hold is open or expired. (d) A real cost above the reserved amount is
     booked in full with no cap check, and one audit outcome is written (domain `limits`, operation `overshoot`,
     result `booked`); every later reserve on that day or month is refused until the counter is below the cap.
+  - **Fix round 3.** `agent_id` and `run_id` of `reserve_spend` are validated in both stores (exactly a str of 1 to 200
+    characters, no control character, UTF-8 encodable; `ValueError` names the field, never the value). Caps follow the
+    amount rule's exponent window (finite, >= 0, exponent -12 to 9; no other upper bound). `expire_spend_reservations`
+    refuses an age above 10**7 and `purge_spend_reservations` a naive datetime (`ValueError`). The memory store builds the
+    reservation row before it moves a counter, and a settle whose counter row is missing raises `RuntimeError` as
+    PostgreSQL does. `Limits.reserve` raises `KeyError` for an unhashable agent id. The trigger sender secret reader
+    raises `RuntimeError("sender secret unavailable")` and never the provider's own error. The runtime PostgreSQL
+    connection sets `lock_timeout` to 10000 ms (`defaults.STORE_LOCK_TIMEOUT_MS`): a store call that waits longer for a
+    row lock fails (the runtime reports `limits_unavailable`) instead of holding the process-wide store lock for ever.
+    Stated limit: it bounds lock waits only, not a statement's own run time, and the migrate connection sets none.
+    The worst-case price of a document counts the bytes sent (an invalid byte becomes U+FFFD, 3 bytes).
   - **Stated limits.** A call that takes longer than the expiry age is charged its worst case or more (after expiry
     a settle can raise the booked amount, never lower it). A reservation that is never settled is in the day and
     month totals but not in the run's cost. The overshoot audit row is written after the settle commits: a crash in
