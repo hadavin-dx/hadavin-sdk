@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "grantfix2",
-   "role": "builder (tests)",
-   "model": "sonnet",
-   "what exactly it is doing": "fix 11 failures of test_grants_negative_0007.py on the merged tree (release role)",
-   "started UTC": "17:05",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "dry-run 3 finding"
-  },
-  {
    "id": "A7-drift-door",
    "role": "builder/reviewer",
    "model": "sonnet",
@@ -811,6 +798,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 17:02 order A7-A10"
+  },
+  {
+   "id": "rev-grantfix2",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh result review of dc2dd9a81 (grant tests after 0011)",
+   "started UTC": "17:10",
+   "expected end": "10 min",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "reason": "EGM"
   }
  ],
  "tests": [
@@ -1478,6 +1478,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "5 PR files rewritten + handover/core-b/requests/from-core-a-B8-text.md; unverified claims listed in the hand-back; fresh review still to do; found duplicated block in crash_launcher.py (fixed: 18 lines removed, ruff clean, paths test 175 passed)"
+  },
+  {
+   "id": "grantfix2",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix 11 failures of test_grants_negative_0007.py on the merged tree (release role)",
+   "started UTC": "17:05",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "test_grants_negative_0007 fixed for core-b 0011 model: wip/core-a-grant-fix2 dc2dd9a81, 31 passed PG16 strict (was 11 failed), 2 mutants killed; fresh review rev-grantfix2 running"
   }
  ]
 }
