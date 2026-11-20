@@ -601,4 +601,306 @@ tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_
 tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-bool-false] PASSED [ 84%]
 tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-int] PASSED [ 84%]
 tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-str] PASSED [ 84%]
-tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-none] 
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-none] PASSED [ 84%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-thirteen-decimal-places] PASSED [ 84%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-ten-to-the-ninth] PASSED [ 84%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-ten-to-the-ninth-as-integer-decimal] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-negative] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-nan] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-signalling-nan] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-infinity] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-minus-infinity] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-float] PASSED [ 85%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-float-nan] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-bool-true] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-bool-false] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-int] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-str] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-none] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-thirteen-decimal-places] PASSED [ 86%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-ten-to-the-ninth] PASSED [ 87%]
+tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-ten-to-the-ninth-as-integer-decimal] PASSED [ 87%]
+tests/contracts/test_meter.py::test_without_a_settle_the_worst_case_stays_booked_also_after_the_sweep[limits-memory] PASSED [ 87%]
+tests/contracts/test_meter.py::test_without_a_settle_the_worst_case_stays_booked_also_after_the_sweep[limits-postgres] PASSED [ 87%]
+tests/contracts/test_meter.py::test_without_a_settle_the_worst_case_stays_booked_also_after_the_sweep[budget] PASSED [ 87%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0-0-0.60] PASSED [ 87%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.10-0-0.60] PASSED [ 87%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.60-0-0.60] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.85-0.25-0.85] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0-0-0.60] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.10-0-0.60] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.60-0-0.60] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.85-0.25-0.85] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0-0-0.60] PASSED [ 88%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.10-0-0.60] PASSED [ 89%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.60-0-0.60] PASSED [ 89%]
+tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.85-0.25-0.85] PASSED [ 89%]
+tests/contracts/test_meter.py::test_the_tick_step_expires_by_age_and_leaves_the_counters_alone[limits-memory] PASSED [ 89%]
+tests/contracts/test_meter.py::test_the_tick_step_expires_by_age_and_leaves_the_counters_alone[limits-postgres] PASSED [ 89%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-runtime-error] PASSED [ 89%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-os-error] PASSED [ 89%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-timeout] PASSED [ 90%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-runtime-error] PASSED [ 90%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-os-error] PASSED [ 90%]
+tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-timeout] PASSED [ 90%]
+tests/contracts/test_meter.py::test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays PASSED [ 90%]
+tests/contracts/test_meter.py::test_the_settled_cost_is_added_to_the_run_exactly_once[limits-memory] PASSED [ 90%]
+tests/contracts/test_meter.py::test_the_settled_cost_is_added_to_the_run_exactly_once[limits-postgres] PASSED [ 90%]
+tests/contracts/test_meter.py::test_the_cap_is_exact_decimal_arithmetic[limits-memory] PASSED [ 91%]
+tests/contracts/test_meter.py::test_the_cap_is_exact_decimal_arithmetic[limits-postgres] PASSED [ 91%]
+tests/contracts/test_meter.py::test_the_cap_is_exact_decimal_arithmetic[budget] PASSED [ 91%]
+tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[limits-memory] PASSED [ 91%]
+tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[limits-postgres] PASSED [ 91%]
+tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[budget] PASSED [ 91%]
+tests/contracts/test_meter.py::test_a_cap_reached_exactly_refuses_even_a_zero_amount[limits-memory] PASSED [ 91%]
+tests/contracts/test_meter.py::test_a_cap_reached_exactly_refuses_even_a_zero_amount[limits-postgres] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-memory-0-100-daily_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-memory-100-0-monthly_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-memory-0-0-daily_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-postgres-0-100-daily_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-postgres-100-0-monthly_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-postgres-0-0-daily_budget] PASSED [ 92%]
+tests/contracts/test_meter.py::test_the_month_cap_holds_across_the_days_of_a_month_and_a_new_month_is_free[limits-memory] PASSED [ 93%]
+tests/contracts/test_meter.py::test_the_month_cap_holds_across_the_days_of_a_month_and_a_new_month_is_free[limits-postgres] PASSED [ 93%]
+tests/contracts/test_meter.py::test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that_day[limits-memory] PASSED [ 93%]
+tests/contracts/test_meter.py::test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that_day[limits-postgres] PASSED [ 93%]
+tests/contracts/test_meter.py::test_threads_through_one_limits_on_the_memory_store_get_exactly_three_grants PASSED [ 93%]
+tests/contracts/test_meter.py::test_connections_through_limits_on_postgres_get_exactly_three_grants[3.00-1000-daily_budget] PASSED [ 93%]
+tests/contracts/test_meter.py::test_connections_through_limits_on_postgres_get_exactly_three_grants[1000-3.00-monthly_budget] PASSED [ 93%]
+tests/contracts/test_meter.py::test_threads_on_one_budget_get_exactly_floor_cap_over_amount_grants PASSED [ 94%]
+tests/contracts/test_meter.py::test_threads_settling_one_reservation_on_the_memory_store_apply_it_once PASSED [ 94%]
+tests/contracts/test_meter.py::test_connections_settling_one_reservation_on_postgres_apply_it_once PASSED [ 94%]
+tests/contracts/test_meter.py::test_the_budget_does_not_read_the_stop_state PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-a-free-call-that-cost-something] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-an-overshoot-past-the-cap-refuses-the-next-call] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-an-unknown-id] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-bad-amounts-change-nothing] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-grant-then-settle-lower] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-refused-then-freed-by-a-settle-at-zero] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-higher-then-zero] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-lower-then-higher] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-money-still-counts-against-the-cap] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-higher] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-lower] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-the-cap-reached-exactly] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-a-free-call-that-cost-something] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-overshoot-past-the-cap-refuses-the-next-call] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-unknown-id] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-bad-amounts-change-nothing] PASSED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-grant-then-settle-lower] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-refused-then-freed-by-a-settle-at-zero] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-higher-then-zero] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-lower-then-higher] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-money-still-counts-against-the-cap] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-higher] PASSED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-lower] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-the-cap-reached-exactly] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-a-free-call-that-cost-something] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-overshoot-past-the-cap-refuses-the-next-call] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-unknown-id] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-bad-amounts-change-nothing] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-grant-then-settle-lower] PASSED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-refused-then-freed-by-a-settle-at-zero] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-higher-then-zero] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-lower-then-higher] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-money-still-counts-against-the-cap] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-higher] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-lower] PASSED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-the-cap-reached-exactly] PASSED [100%]
+
+=================================== FAILURES ===================================
+______________ test_secret_name_characters_allowed_as_built[all] _______________
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-358/test_secret_name_characters_al2/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 2 validation errors for Config
+E           triggers.senders.s1.secret_names.0
+E             String should match pattern '^[A-Za-z0-9_.:-]{1,128}$' [type=string_pattern_mismatch]
+E               For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+E           triggers.senders.s1.secret_names
+E             Tuple should have at least 1 item after validation, not 0 [type=too_short]
+E               For further information visit https://errors.pydantic.dev/2.14/v/too_short
+
+src/hadavin_sdk/config.py:679: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-358/test_secret_name_characters_al2/config')
+name = 'Key_one.v2:eu/primary-1'
+
+    @pytest.mark.parametrize(
+        "name", ["k", "K" * 128, "Key_one.v2:eu/primary-1"], ids=["one", "128", "all"]
+    )
+    def test_secret_name_characters_allowed_as_built(cfg_dir, name):
+        """Case: the secret names the character rule lets through as built: one character, 128 characters, and one
+        name with every allowed kind of character (letters of both cases, digits, underscore, dot, colon, slash,
+        hyphen). Loads unchanged."""
+>       sender = _load(cfg_dir, _block({"s1": _sender(name)})).triggers.senders["s1"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_trigger_config.py:356: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_trigger_config.py:81: in _load
+    return load_config(cfg_dir)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-358/test_secret_name_characters_al2/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except ValidationError as exc:
+>           raise ConfigError(_validation_text(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 2 validation errors for Config
+E           triggers.senders.s1.secret_names.0
+E             String should match pattern '^[A-Za-z0-9_.:-]{1,128}$' [type=string_pattern_mismatch]
+E               For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+E           triggers.senders.s1.secret_names
+E             Tuple should have at least 1 item after validation, not 0 [type=too_short]
+E               For further information visit https://errors.pydantic.dev/2.14/v/too_short
+
+src/hadavin_sdk/config.py:683: ConfigError
+__ test_env_kind_alias_of_a_secret_name_fails_the_start[action-secret-upper] ___
+[XPASS(strict)] FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one variable for two senders or for both names of one sender. The start is not refused (config.py _trigger_refusals, platform_secrets.check_senders)
+___ test_env_kind_alias_of_a_secret_name_fails_the_start[action-secret-dot] ____
+[XPASS(strict)] FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one variable for two senders or for both names of one sender. The start is not refused (config.py _trigger_refusals, platform_secrets.check_senders)
+______ test_env_kind_alias_of_a_secret_name_fails_the_start[two-senders] _______
+[XPASS(strict)] FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one variable for two senders or for both names of one sender. The start is not refused (config.py _trigger_refusals, platform_secrets.check_senders)
+____ test_env_kind_alias_of_a_secret_name_fails_the_start[one-sender-pair] _____
+[XPASS(strict)] FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one variable for two senders or for both names of one sender. The start is not refused (config.py _trigger_refusals, platform_secrets.check_senders)
+_ test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error[postgres] _
+[XPASS(strict)] FINDING F2: a finite cap too large for NUMERIC (1E+200000) is not refused by check_spend_cap (no upper bound) and PostgreSQL raises psycopg NumericValueOutOfRange, an error the interface does not list; the memory store grants the same call
+_ test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-run-id-int] _
+[XPASS(strict)] FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+_ test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-reservation-id-int] _
+[XPASS(strict)] FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+_ test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change[memory-agent-none] _
+[XPASS(strict)] FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) the exception leaves the amount booked with no row, so nothing can ever settle or expire it
+_ test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-int] _
+[XPASS(strict)] FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.limits:limits.py:168 reserve refused: limits_unavailable error_kind=ValueError
+_ test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-float] _
+[XPASS(strict)] FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.limits:limits.py:168 reserve refused: limits_unavailable error_kind=ValueError
+_ test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-tuple] _
+[XPASS(strict)] FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.limits:limits.py:168 reserve refused: limits_unavailable error_kind=ValueError
+_ test_settle_with_an_unknown_id_is_not_found_from_both_meters[limits-memory] __
+
+rig = <function _builder.<locals>.build at 0x7fa0447f3600>
+
+    def test_settle_with_an_unknown_id_is_not_found_from_both_meters(rig):
+        """ii 4: "settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters"."""
+        r = rig(cap=WIDE)
+        rid = r.meter.reserve(AGENT, D("0.60"))
+        for unknown in ("res-" + uuid.uuid4().hex, rid + "x", ""):
+            with pytest.raises(NotFound) as caught:
+>               r.meter.settle(unknown, D("0.10"))
+
+tests/contracts/test_meter.py:573: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/limits.py:175: in settle
+    row, applied = self.store.settle_spend(reservation_id, actual_usd)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/memory.py:352: in settle_spend
+    check_reservation_id(reservation_id)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+reservation_id = ''
+
+    def check_reservation_id(reservation_id: object) -> str:
+        """The one id rule of the spend reservations, used by both stores before any lock or SQL: exactly a str of
+        1 to 200 characters, only A-Z a-z 0-9 . _ : - (a NUL, for one, would reach PostgreSQL as a DataError).
+        Anything else is a ValueError that names the rule, never the value."""
+        if (
+            type(reservation_id) is not str
+            or not 1 <= len(reservation_id) <= MAX_RESERVATION_ID_CHARS
+            or _RESERVATION_ID.fullmatch(reservation_id) is None
+        ):
+>           raise ValueError(
+                "reservation id must be a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -"
+            )
+E           ValueError: reservation id must be a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -
+
+src/hadavin_sdk/store/protocol.py:81: ValueError
+_ test_settle_with_an_unknown_id_is_not_found_from_both_meters[limits-postgres] _
+
+rig = <function _builder.<locals>.build at 0x7fa04a4f98a0>
+
+    def test_settle_with_an_unknown_id_is_not_found_from_both_meters(rig):
+        """ii 4: "settle with an unknown reservation id raises NotFound (a KeyError subclass) from both meters"."""
+        r = rig(cap=WIDE)
+        rid = r.meter.reserve(AGENT, D("0.60"))
+        for unknown in ("res-" + uuid.uuid4().hex, rid + "x", ""):
+            with pytest.raises(NotFound) as caught:
+>               r.meter.settle(unknown, D("0.10"))
+
+tests/contracts/test_meter.py:573: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/limits.py:175: in settle
+    row, applied = self.store.settle_spend(reservation_id, actual_usd)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/postgres.py:686: in settle_spend
+    check_reservation_id(reservation_id)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+reservation_id = ''
+
+    def check_reservation_id(reservation_id: object) -> str:
+        """The one id rule of the spend reservations, used by both stores before any lock or SQL: exactly a str of
+        1 to 200 characters, only A-Z a-z 0-9 . _ : - (a NUL, for one, would reach PostgreSQL as a DataError).
+        Anything else is a ValueError that names the rule, never the value."""
+        if (
+            type(reservation_id) is not str
+            or not 1 <= len(reservation_id) <= MAX_RESERVATION_ID_CHARS
+            or _RESERVATION_ID.fullmatch(reservation_id) is None
+        ):
+>           raise ValueError(
+                "reservation id must be a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -"
+            )
+E           ValueError: reservation id must be a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -
+
+src/hadavin_sdk/store/protocol.py:81: ValueError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_trigger_config.py:158: field not built on this branch: a limit on the number of triggers.senders
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:92: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.allow_non_loopback
+================= 14 failed, 671 passed, 20 skipped in 58.73s ==================
