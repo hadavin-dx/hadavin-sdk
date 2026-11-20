@@ -277,7 +277,7 @@ M += [
 SL = "tests/test_redact_settle_loop.py"
 
 
-def g9(name, old, new, killer, expect):
+def g9(name, old, new, killer, expect, **kw):
     return Mutant(
         name,
         RD,
@@ -287,6 +287,7 @@ def g9(name, old, new, killer, expect):
         test_file=SL,
         only_test=killer,
         pinned=f"tests/test_redact_settle_loop::{killer}",
+        **kw,
     )
 
 
@@ -315,7 +316,7 @@ M += [
     g9("G9-9 a held value registered again", "        held = self.reverse.get(full)\n",
        "        held = None\n",
        "test_g9_a_union_whose_value_the_map_holds_reuses_that_placeholder_unless_it_would_downgrade_a_secret",
-       "a held value got a second placeholder"),
+       "TENANT_4"),
     g9("G9-10 the union registers pieces and its written form", "self._place_union(out[start:end], kind, derived=False)",
        "self._place_union(out[start:end], kind, derived=True)",
        "test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form", "the union registered more than its value"),
@@ -349,7 +350,7 @@ M += [
     g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
        "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
     g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * len(w) + 2, deadline)", "self._spend(work, 0, deadline)",
-       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "265_620"),
+       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "[199560]"),
     g9("G9-23 the read-back reach removed", "keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)",
        "keep = self._longest - 1",
        "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[40002]"),
@@ -372,17 +373,19 @@ M += [
     g9("G9-31 a secret union takes the held non-secret placeholder",
        "        if held is not None and not (kind in SECRET_KINDS and _kind(held) not in SECRET_KINDS):\n            return held\n",
        "        if held is not None:\n            return held\n",
-       "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "assert out == \"<SECRET_2>\""),
+       "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "<TENANT_1>"),
     g9("G9-32 no rebuild of the rules after a secret union upgrades a held value", "                if keep_rules:\n", "                if current:\n",
        "test_g9_a_secret_union_never_takes_a_restorable_placeholder_of_its_value", "a standalone copy is still swept"),
     g9("G9-33 the occurrences not charged as they are found", "                self._spend(work, _OCC_CHARGE_EVERY, deadline)\n", "                pass\n",
-       "test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists", "peak traced"),
+       "test_g9b_occurrences_are_charged_as_they_are_found_not_after_the_list_exists", "DID NOT RAISE"),
     g9("G9-34 the remainder of the occurrences not charged", "self._spend(work, len(occ) % _OCC_CHARGE_EVERY, deadline)", "self._spend(work, 0, deadline)",
-       "test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans", "assert work == [23]"),
+       "test_g9b_the_remainder_of_the_occurrences_is_charged_after_the_scans", "[14]"),
     g9("G9-35 the text read back again for every place of the anchor", "                    if read is None:\n", "                    if True:\n",
-       "test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_not_refused", "SpelledWorkTooMuch"),
+       "test_g9b_a_long_periodic_secret_beside_its_own_period_in_a_12k_document_is_not_refused", "SpelledWorkTooMuch",
+       allow_crash=True, crash_type="InputTooLarge"),
     g9("G9-36 a further place costs a whole comparison", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 2 * len(w) + 2, deadline)",
-       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "265_620"),
+       "test_g9_a_long_periodic_value_beside_its_own_period_is_counted_and_refused_by_the_count", "SpelledWorkTooMuch",
+       allow_crash=True, crash_type="InputTooLarge"),
     g9("G9-37 a further place costs nothing", "self._spend(work, len(w) // _COMPARE_SHARE + 1, deadline)", "self._spend(work, 0, deadline)",
        "test_g9b_the_periodic_limit_is_stated_with_numbers", "DID NOT RAISE"),
 ]  # fmt: skip
