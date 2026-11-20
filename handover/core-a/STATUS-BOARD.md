@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:33:43Z
+UPDATED_UTC: 2026-11-20T05:34:08Z
 SESSION: core-a
 ORDER: 006 (002 to 005 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 54
 AGENTS_RUNNING: 6
-CAPACITY: load 0.39 of 4 cores (1-minute average), mem 0.6/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.92 of 4 cores (1-minute average), mem 1.0/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.2G 60G 14%; 248M /home/user/hadavin-sdk; 39M /tmp/claude-0; 130M /root/.cache
 INTERRUPTED: none
 FAILED: none
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviews land: resolve, write tickets/D-review-1.md, pass accepted fixes to the D builders; builds land: commit and ONE batch run
-PUSHED_UTC: 2026-11-20T05:33:30Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:33:45Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -52,7 +52,14 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 4979 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 7s ago | running | matched by name in ps |
+| 4985 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 7s ago | running | matched by name in ps |
+| 5026 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 5028 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 5029 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 5034 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 3s ago | running | matched by name in ps |
+| 5070 | /home/user/hadavin-sdk/.venv/bin/python -c import signal, sys signal.s | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 5072 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

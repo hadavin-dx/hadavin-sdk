@@ -1,5 +1,29 @@
 === MUTANT 1: drop the disarm before the crash ===
-71 passed, 2 skipped in 1.23s
+137,138c137
+<             if not self._take():
+<                 return
+---
+>             self._seen.clear()
+        target, gate, crashed, passed = Thing(), threading.Barrier(2), [], []
+                    passed.append(thing.step())
+>           assert crashed == [POINT] and len(passed) == 1 and cp.fired == (POINT,)
+FAILED tests/test_testing_crash.py::test_n2_before_crashes_and_nothing_was_written
+FAILED tests/test_testing_crash.py::test_n3_after_crashes_and_the_write_is_there
+FAILED tests/test_testing_crash.py::test_n4_one_arm_gives_one_crash
+FAILED tests/test_testing_crash.py::test_n5_nth_two_lets_the_first_call_pass
+FAILED tests/test_testing_crash.py::test_n6_crash_before_the_model_call_leaves_the_run_working
+FAILED tests/test_testing_crash.py::test_n6_store_wrapped_after_the_build_crashes_after_the_first_transition
+FAILED tests/test_testing_crash.py::test_n7_kill_mode_ends_a_child_process_once
+FAILED tests/test_testing_crash.py::test_n7_kill_mode_counts_the_nth_call_from_the_flag
+FAILED tests/test_testing_crash.py::test_e1_everything_not_listed_is_the_targets
+FAILED tests/test_testing_crash.py::test_e2_the_targets_own_error_passes_and_after_does_not_fire
+FAILED tests/test_testing_crash.py::test_e3_two_threads_at_once_give_one_crash
+FAILED tests/test_testing_crash.py::test_e3_two_child_threads_and_one_flag_give_one_kill
+FAILED tests/test_testing_crash.py::test_e3_a_flag_taken_by_someone_else_means_no_crash
+FAILED tests/test_testing_crash.py::test_e4_a_crash_in_a_pool_task_lands_in_the_future
+FAILED tests/test_testing_crash.py::test_e5_arming_twice_without_a_hit_is_refused
+FAILED tests/test_testing_crash.py::test_h4_control_a_well_formed_flag_does_fire
+16 failed, 55 passed, 2 skipped in 0.80s
 restored: cmp identical
 === MUTANT 2: derive SimulatedCrash from Exception ===
 36c36
@@ -17,10 +41,10 @@ restored: cmp identical
 <             )
 FAILED tests/test_testing_crash.py::test_h1_cannot_be_built_outside_a_pytest_run
 FAILED tests/test_testing_crash.py::test_h1_a_child_without_the_pytest_variable_cannot_kill_itself
-2 failed, 69 passed, 2 skipped in 0.77s
+2 failed, 69 passed, 2 skipped in 0.75s
 restored: cmp identical
 === MUTANT 4: swap before and after ===
-164c164
+163c163
 <         before, after = f"{name}.{method}:before", f"{name}.{method}:after"
 ---
 >         after, before = f"{name}.{method}:before", f"{name}.{method}:after"
@@ -34,5 +58,5 @@ FAILED tests/test_testing_crash.py::test_n7_kill_mode_counts_the_nth_call_from_t
 FAILED tests/test_testing_crash.py::test_e2_the_targets_own_error_passes_and_after_does_not_fire
 FAILED tests/test_testing_crash.py::test_e4_a_crash_in_a_pool_task_lands_in_the_future
 FAILED tests/test_testing_crash.py::test_h4_a_flag_for_another_point_or_a_bad_count_never_fires[thing.step:after]
-10 failed, 61 passed, 2 skipped in 0.76s
+10 failed, 61 passed, 2 skipped in 0.80s
 restored: cmp identical

@@ -2,4 +2,4 @@
 s                                                                        [100%]
 =========================== short test summary info ============================
 SKIPPED [2] tests/contracts/kinds/store_postgres.py:24: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
-71 passed, 2 skipped in 0.75s
+71 passed, 2 skipped in 0.80s
