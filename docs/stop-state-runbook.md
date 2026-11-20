@@ -294,16 +294,26 @@ kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same 
 them, then validate: the next `migrate` does it by itself, or run as the owner `hadavin-sdk migrate
 --validate-constraints` (only validates; it cannot be combined with a role flag, `--no-roles`, `--accept-admin-role`,
 `--accept-changed-draft` or `--reset-draft`; it needs the stop tables in the schema of HADAVIN_MIGRATE_DSN).
-Timeouts and exit codes. The 5-second lock wait and 60-second statement limit apply to the validation step ONLY, in
-both places it runs: `migrate --validate-constraints`, and the settle step at the end of the file loop of every
-plain `migrate` (a `SET LOCAL` for that step, put back before the grant and function steps; the rest of `migrate`
-has no such limit). In both, a lock wait, a timeout or a lost database connection is "retry later", not a refusal:
-exit code 75, and a plain `migrate` rolls back as a whole (nothing is applied, run it again). Exit code 2 is a
-refusal: a bad row, a login that is not the table owner, stop tables not found in the schema, or a flag
-combination that is not allowed. 0 is done. The 60-second limit assumes small stop tables (they hold one row per stop
-and per clear; not measured for millions of rows); on a far larger table raise `VALIDATE_STATEMENT_TIMEOUT` in
-`store/migrate.py` and say so in the change record. The migration takes a short ACCESS EXCLUSIVE lock on the stop
-tables for the ADD CONSTRAINT and the index build.
+Timeouts and exit codes. The 5-second lock wait and 60-second statement limit (`VALIDATE_LOCK_TIMEOUT`,
+`VALIDATE_STATEMENT_TIMEOUT` in `store/migrate.py`) apply to the validation step ONLY, in both places it runs:
+`migrate --validate-constraints`, and the settle step at the end of the file loop of every plain `migrate` (set with
+`set_config(..., true)`, the same effect as `SET LOCAL`, and put back before the grant and function steps). The rest
+of `migrate` has NO lock or statement limit, on purpose: a second `migrate` waits for the first on a
+transaction-level advisory lock, and a lock limit would kill that wait. Exit codes, the same in both places:
+- 75 (retry later, not a refusal): a lock wait over 5 seconds, a scan over 60 seconds, or a connection lost WHILE the
+  validation step runs. A plain `migrate` rolls back as a whole (nothing is applied, run it again).
+- 2 (refusal): a row outside the range, a login that is not the table owner (also when it only fails to read the stop
+  tables), stop tables not found in the schema, or a flag combination that is not allowed.
+- 3 (any other error, as for every command): including a connection that cannot be opened or is lost BEFORE the
+  validation step (file loop, grants). Nothing is kept of a failed `migrate`: it is one transaction.
+- 0: done.
+The 60-second limit assumes small stop tables (they hold one row per stop and per clear; not measured for millions
+of rows); on a far larger table raise `VALIDATE_STATEMENT_TIMEOUT` and say so in the change record. Locks: the
+migration takes a brief ACCESS EXCLUSIVE lock on the stop tables for the ADD CONSTRAINT and the index build, and
+because `migrate` runs every file in ONE transaction it holds that lock until the whole run commits (the settle,
+grants and checks). The wait for that lock has no time limit (see above), so it queues behind any long transaction
+on the stop tables, and while it queues every stop read and write behind it waits too. Stop the runtimes (or at
+least their stop-table readers) before the upgrade, and check for old transactions (`pg_stat_activity`).
 
 0009 has no watermark table (nothing read it). A database that ran an EARLIER, unreleased 0009 still has
 `kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Steps:

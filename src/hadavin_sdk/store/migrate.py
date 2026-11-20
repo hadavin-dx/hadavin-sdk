@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from psycopg import errors, sql
+from psycopg import errors, pq, sql
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
@@ -398,7 +398,7 @@ def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
         what = sql.SQL(
             "SEQUENCE" if grant.kind == "sequence" else "TABLE"
         )  # a view is granted as a table
-        rel = sql.Identifier(name)
+        rel = sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(name))
         db.execute(sql.SQL("REVOKE ALL ON {} {} FROM {}").format(what, rel, role))
         if wanted := privileges(grant):
             db.execute(sql.SQL("GRANT {} ON {} {} TO {}").format(sql.SQL(wanted), what, rel, role))
@@ -611,6 +611,12 @@ def _check_stop_relations(db) -> None:
         )
 
 
+def _in_schema(db, table: str) -> sql.Composable:
+    """`current_schema()`.`table` as a quoted identifier pair (a bare name follows the search_path: see `_qualified`)."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    return sql.SQL("{}.{}").format(sql.Identifier(schema), sql.Identifier(table))
+
+
 # The constraints 0009 adds NOT VALID (so an upgrade never fails on a planted row): (table, constraint).
 NOT_VALID_BY_DESIGN = (
     ("kill_switch_stops", "kill_switch_stops_ts_range"),
@@ -638,7 +644,7 @@ def planted_ts_rows(db) -> list[tuple[str, str]]:
         if db.execute(
             sql.SQL(
                 "SELECT EXISTS (SELECT 1 FROM {} WHERE NOT (ts BETWEEN '2000-01-01' AND '2100-01-01'))"
-            ).format(sql.Identifier(table))
+            ).format(_in_schema(db, table))
         ).fetchone()[0]
     ]
 
@@ -673,16 +679,18 @@ VALIDATE_STATEMENT_TIMEOUT = (
 def _validate_one(db, table: str, name: str) -> None:
     db.execute(
         sql.SQL("ALTER TABLE {} VALIDATE CONSTRAINT {}").format(
-            sql.Identifier(table), sql.Identifier(name)
+            _in_schema(db, table), sql.Identifier(name)
         )
     )
 
 
 @contextlib.contextmanager
 def _stop_timeouts(db):
-    """`SET LOCAL` the lock and statement timeouts for the validation step only, and put the transaction's
-    previous values back afterwards (`migrate` runs the step inside its one transaction: the grant and function
-    steps after it must not inherit a 5 second lock limit). On an error the transaction is rolled back anyway."""
+    """Set the lock and statement timeouts for the validation step only (`set_config(..., true)`, the same effect
+    as `SET LOCAL`), and put the transaction's previous values back afterwards, also when the step raises
+    (`migrate` runs the step inside its one transaction: the grant and function steps after it must not inherit a
+    5 second lock limit). After a DATABASE error the transaction is aborted and refuses any statement: the restore
+    is skipped then (the caller rolls back) so the original error is never replaced by InFailedSqlTransaction."""
     names = ("lock_timeout", "statement_timeout")
     old = [db.execute("SELECT pg_catalog.current_setting(%s)", (n,)).fetchone()[0] for n in names]
     db.execute(
@@ -690,12 +698,15 @@ def _stop_timeouts(db):
         "pg_catalog.set_config('statement_timeout', %s, true)",
         (VALIDATE_LOCK_TIMEOUT, VALIDATE_STATEMENT_TIMEOUT),
     )
-    yield
-    db.execute(
-        "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
-        "pg_catalog.set_config('statement_timeout', %s, true)",
-        old,
-    )
+    try:
+        yield
+    finally:
+        if db.info.transaction_status == pq.TransactionStatus.INTRANS:
+            db.execute(
+                "SELECT pg_catalog.set_config('lock_timeout', %s, true), "
+                "pg_catalog.set_config('statement_timeout', %s, true)",
+                old,
+            )
 
 
 def _busy(exc: BaseException, what: str) -> StopTablesBusy:
@@ -706,18 +717,41 @@ def _busy(exc: BaseException, what: str) -> StopTablesBusy:
     )
 
 
+def _validate_mapped(db, table: str, name: str) -> None:
+    """`_validate_one` with the ONE mapping of its errors, shared by `settle_stop_constraints` (plain `migrate`) and
+    `validate_constraints` (`--validate-constraints`): a planted row (CheckViolation) or a login that is not the
+    table owner (InsufficientPrivilege) is a refusal (ConfigError, exit 2); a lock wait, a time limit or a lost
+    connection (OperationalError) is `StopTablesBusy` (exit 75)."""
+    try:
+        _validate_one(db, table, name)
+    except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
+        raise ConfigError(
+            f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
+            "2100-01-01, or this login is not the table owner); deal with that first and run it again"
+        ) from None
+    except errors.OperationalError as exc:
+        raise _busy(exc, f"validate {name} on {table}") from None
+
+
 def settle_stop_constraints(db) -> list[tuple[str, str]]:
     """Run by `migrate` after the files: VALIDATE (silently) every constraint of `NOT_VALID_BY_DESIGN` that is still
     NOT VALID and whose table holds no row outside the year range, and return the ones that do (the caller warns
     about those only). This is why 0009 itself is plain SQL with no DO block: the repo's statement lexer refuses
     DO, and a conditional VALIDATE cannot be written without it. The lock and statement timeouts apply to this
-    step only; a lock wait, a timeout or a lost connection is `StopTablesBusy` (migrate rolls back as a whole)."""
+    step only. Errors are mapped as in `_validate_mapped`; a login that may not read the stop tables is a refusal
+    too (migrate rolls back as a whole in every case). `planted_ts_rows` and the loop each read the catalog list
+    once more: both read the same transaction snapshot, and the list is two names."""
     with _stop_timeouts(db):
         try:
             planted = planted_ts_rows(db)
             for pair in not_valid_constraints(db):
                 if pair not in planted:
-                    _validate_one(db, *pair)
+                    _validate_mapped(db, *pair)
+        except errors.InsufficientPrivilege as exc:
+            raise ConfigError(
+                f"cannot read the stop tables: {type(exc).__name__} (this login is not the table owner); "
+                "run migrate as the owner of the stop tables"
+            ) from None
         except errors.OperationalError as exc:
             raise _busy(exc, "validate the stop-year constraints") from None
     return planted
@@ -744,15 +778,7 @@ def validate_constraints(db) -> list[str]:
     done = []
     with _stop_timeouts(db):
         for table, name in not_valid_constraints(db):
-            try:
-                _validate_one(db, table, name)
-            except (errors.CheckViolation, errors.InsufficientPrivilege) as exc:
-                raise ConfigError(
-                    f"cannot validate {name} on {table}: {type(exc).__name__} (a row outside 2000-01-01 to "
-                    "2100-01-01, or this login is not the table owner); deal with that first and run it again"
-                ) from None
-            except errors.OperationalError as exc:
-                raise _busy(exc, f"validate {name} on {table}") from None
+            _validate_mapped(db, table, name)
             done.append(name)
     return done
 
@@ -959,10 +985,20 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+def _qualified(db, name: str) -> str:
+    """`name` (a function signature or a table name) prefixed with `current_schema()`, quoted: a bare name is
+    resolved through the whole search_path, so with an odd one it finds ANOTHER schema's object of that name and the
+    step would alter, grant on or read it. Every catalog lookup and every ALTER / GRANT / REVOKE on one of OUR
+    objects goes through this."""
+    schema = db.execute("SELECT pg_catalog.current_schema()").fetchone()[0]
+    return '"' + schema.replace('"', '""') + '".' + name
+
+
 def _pin_search_path(db, signature: str) -> None:
     """Pin the search path of one function of ours to pg_catalog, this schema, pg_temp (temp schema LAST): the file
     cannot know the schema, so every migrate run does it again (a hand-run CREATE OR REPLACE resets it)."""
-    fn = sql.SQL(signature)
+    qualified = _qualified(db, signature)
+    fn = sql.SQL(qualified)
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     try:
         db.execute(
@@ -973,7 +1009,7 @@ def _pin_search_path(db, signature: str) -> None:
     except errors.InsufficientPrivilege as exc:
         owner = db.execute(
             "SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid = to_regprocedure(%s)",
-            (signature,),
+            (qualified,),
         ).fetchone()[0]
         raise ConfigError(
             f"cannot pin the search path of {signature}: it is owned by {owner}, and only its owner (or a "
@@ -985,7 +1021,10 @@ def _pin_money_guard(db) -> None:
     """The trigger functions of 0009 (audit seq, checkpoint) and 0010 (money guard): each is pinned like the release
     function's. A database from before the migration that creates one has none, and nothing is done for it."""
     for signature in TRIPWIRE_FUNCTIONS:
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+        if (
+            db.execute("SELECT to_regprocedure(%s)", (_qualified(db, signature),)).fetchone()[0]
+            is not None
+        ):
             _pin_search_path(db, signature)
 
 
@@ -993,7 +1032,10 @@ def _pin_money_functions(db) -> None:
     """The five money functions of 0011, pinned like the tripwire functions on EVERY run (also when 0011 is already
     applied). A database from before 0011 has none, and nothing is done for it."""
     for signature in MONEY_FUNCTIONS:
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+        if (
+            db.execute("SELECT to_regprocedure(%s)", (_qualified(db, signature),)).fetchone()[0]
+            is not None
+        ):
             _pin_search_path(db, signature)
 
 
@@ -1053,7 +1095,7 @@ def _unmapped_functions(db) -> list[str]:
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     known = set()
     for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS):
-        row = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        row = db.execute("SELECT to_regprocedure(%s)::oid", (_qualified(db, sig),)).fetchone()[0]
         if row is not None:
             known.add(row)
     return [
@@ -1074,7 +1116,7 @@ def _unnamed_money_executors(db, named: list[str]) -> list[str]:
     problems: list[str] = []
     sigs = list(FUNCTION_GRANTS)
     for sig in sigs:
-        oid = db.execute("SELECT to_regprocedure(%s)::oid", (sig,)).fetchone()[0]
+        oid = db.execute("SELECT to_regprocedure(%s)::oid", (_qualified(db, sig),)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1111,7 +1153,7 @@ def _money_table_writers(db) -> list[str]:
     the definer functions (run as the owner) may write them. Names only."""
     problems: list[str] = []
     for table in ("spend", "spend_month", "spend_reservations"):
-        oid = db.execute("SELECT to_regclass(%s)::oid", (table,)).fetchone()[0]
+        oid = db.execute("SELECT to_regclass(%s)::oid", (_qualified(db, table),)).fetchone()[0]
         if oid is None:
             continue
         if db.execute(
@@ -1134,7 +1176,10 @@ def _money_table_writers(db) -> list[str]:
 def _seed_limits(db) -> None:
     """The rows the money functions read, from the Python constants, on every run (a changed default reaches the
     functions at the next migrate). A database without 0011 has no table, and nothing is done."""
-    if db.execute("SELECT to_regclass('hadavin_limits')").fetchone()[0] is None:
+    if (
+        db.execute("SELECT to_regclass(%s)", (_qualified(db, "hadavin_limits"),)).fetchone()[0]
+        is None
+    ):
         return
     limits = money_limits()
     for name, value in limits.items():
@@ -1154,9 +1199,10 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
     apply (`_apply_release_function`); it is checked here too."""
     _pin_money_functions(db)
     for signature, grant in FUNCTION_GRANTS.items():
-        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is None:
+        qualified = _qualified(db, signature)
+        if db.execute("SELECT to_regprocedure(%s)", (qualified,)).fetchone()[0] is None:
             continue
-        fn = sql.SQL(signature)
+        fn = sql.SQL(qualified)
         for kind, role in roles.items():
             if not role:
                 continue
@@ -1171,7 +1217,7 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
             can = (
                 db.execute(
                     "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
-                    (role, signature),
+                    (role, qualified),
                 ).fetchone()[0]
                 if role
                 else False
@@ -1187,9 +1233,10 @@ def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
 def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
     """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
     role that can still run it (through PUBLIC or a role it is a member of) is refused."""
-    if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
+    release = _qualified(db, RELEASE_FUNCTION)
+    if db.execute("SELECT to_regprocedure(%s)", (release,)).fetchone()[0] is None:
         return
-    fn = sql.SQL(RELEASE_FUNCTION)
+    fn = sql.SQL(release)
     # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
     # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
     _pin_search_path(db, RELEASE_FUNCTION)
@@ -1202,7 +1249,7 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
     for role in others:
         if db.execute(
             "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
-            (role, RELEASE_FUNCTION),
+            (role, release),
         ).fetchone()[0]:
             raise ConfigError(f"{role} can run {RELEASE_FUNCTION}: only the release role may")
 
