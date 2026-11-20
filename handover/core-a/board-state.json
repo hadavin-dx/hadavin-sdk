@@ -266,7 +266,7 @@
    "percent": 0,
    "evidence file": "",
    "tries": 0,
-   "reason": "no requests/001.answer.md on core-b's branch yet (checked 06:12Z); I check at every board"
+   "reason": "CORRECTION of my last board: core-b's requests/001.answer.md DOES exist (written 05:33Z, built 05:38Z) but it answers DRAFT 1: the worker would read app.secrets.get(name), the whole secret store. The bound reader that ORDER 014 names is not in it yet. I wait for that version and check at every board"
   }
  ],
  "agents": [
@@ -802,7 +802,7 @@
  "lost": [],
  "lead_actions": [
   "ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so",
-  "Item 3 waits for core-b's requests/001.answer.md",
+  "Item 3: core-b's answer file exists but is the DRAFT 1 answer (App.secrets = the whole store, max_running default 4, body cap 262144). I do not switch the worker to the whole store (finding F3); I wait for the bound-reader version",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
