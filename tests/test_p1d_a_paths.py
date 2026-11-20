@@ -349,6 +349,29 @@ def test_property_no_linkable_host_after_defang_text():
             )
 
 
+def test_property_no_linkable_host_on_the_card_and_the_card_reads_the_same_twice():
+    slack = _slack()
+    for x in [*_glue("G2-card", _PIECES), *_glue("G2-card-code", _PIECES_CODE)]:
+        shown = channel.clean(x)
+        for text in _text_tokens(shown):
+            for rx in _LINKABLE:
+                assert not rx.search(text), (
+                    f"LINK: {x!r} -> {shown!r}: {text!r} matches {rx.pattern}"
+                )
+        if "`" not in shown:
+            _assert_not_linkable(shown, x)
+        plain = shown.replace("[.]", ".")
+        # The card shows no address or host the model's view masks. (An address with a digit or `_` glued behind
+        # it is masked in neither: the EMAIL pattern ends at a word boundary. Not part of this fix.)
+        model = runmap.redact_text(x, runmap.RunMap())
+        for value in (EM, HOST):
+            assert plain.count(value) <= model.count(value), f"SHOWN: {value!r}: {x!r} -> {shown!r}"
+        again = slack._blocks(_request(shown), None)[0]["text"]["text"]
+        assert again == shown, f"ROUND TRIP: {x!r}: {shown!r} / {again!r}"
+        # a stored card is read again through `undefang_text` (SlackChannel._blocks, FakeChannel.send)
+        assert channel.clean(gate.undefang_text(shown)) == shown, f"CLEAN TWICE: {x!r}: {shown!r}"
+
+
 def test_glued_addresses_are_masked_whole_in_one_pass():
     for n in (2, 3, 5):
         for tail in ("", "sq", " end"):
@@ -358,6 +381,23 @@ def test_glued_addresses_are_masked_whole_in_one_pass():
             seeded = runmap.RunMap({p: "\0seed" + p for p in mapping})
             assert runmap.redact_text(out, seeded) == out, (n, tail, out)
     assert _masked(EM + " " + EM) == "<EMAIL_1> <EMAIL_1>"  # separate addresses: as before
+
+
+def test_card_of_a_text_whose_placeholder_starts_another_match_is_stable():
+    for x in (
+        "/08::" + "duglq" + HOST + " end",
+        "pass" + "word=" + EM + "=&" + EM + "=g#c " + HOST,
+    ):
+        shown = channel.clean(x)
+        assert _slack()._blocks(_request(shown), None)[0]["text"]["text"] == shown, (x, shown)
+
+
+def test_stored_request_from_before_the_change_is_masked_by_the_fake_channel():
+    old = gate.withhold_commands(gate.sanitise_text(TEXT))
+    ch = channel.FakeChannel()
+    ch.send(_request(old), ["fake:a"])
+    assert ch.sent[0][1] == channel.clean(TEXT)
+    assert EM not in ch.sent[0][1].replace("[.]", ".")
 
 
 @pytest.mark.perf  # a wall-clock bound: measured well under 1 s each
