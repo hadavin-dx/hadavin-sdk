@@ -1,14 +1,15 @@
 """Crash points for tests: stop the program at a named place and look at what is left.
 
-Test-only. Not public API, not exported from any package, not used at run time. A `CrashPoints` object cannot be
-built outside a pytest run. A test wraps an object it already hands to the code under test (a store, a model
-double) and arms one point named `<name>.<method>:before` or `<name>.<method>:after`. When the wrapped method
-reaches that point, mode "raise" raises `SimulatedCrash` in the same process, and mode "exit" ends the process
-at once. Mode "exit" is for a child process: the parent arms a flag file, the child reads it. One arm gives one
-crash: the point is disarmed (or its flag file deleted) before the crash, and if that fails nothing happens.
+Test-only. Not public API, not exported from any package, not used at run time. A `CrashPoints`
+object cannot be built outside a pytest run. A test wraps an object it already hands to the code
+under test (a store, a model double) and arms one point named `<name>.<method>:before` or
+`<name>.<method>:after`. When the wrapped method reaches that point, mode "raise" raises
+`SimulatedCrash` in the same process, and mode "exit" ends the process at once. Mode "exit" is for
+a child process: the parent arms a flag file, the child reads it. One arm gives one crash: the
+point is disarmed (or its flag file deleted) before the crash, and if that fails nothing happens.
 
-Flag file: one line of text, `<point>` or `<point>#<nth>`. A missing, unreadable or malformed file means
-"not armed".
+Flag file: one line of text, `<point>` or `<point>#<nth>`. A missing, unreadable or malformed file
+means "not armed".
 """
 
 from __future__ import annotations
@@ -33,8 +34,8 @@ _NTH_LIMIT: Final[int] = 10**9
 
 
 class SimulatedCrash(BaseException):
-    """The same-process crash. A `BaseException` on purpose: code that catches `Exception` to tidy up must not
-    catch it, because a real crash tidies nothing up."""
+    """The same-process crash. A `BaseException` on purpose: code that catches `Exception` to tidy
+    up must not catch it, because a real crash tidies nothing up."""
 
     def __init__(self, point: str) -> None:
         super().__init__(point)
@@ -42,7 +43,8 @@ class SimulatedCrash(BaseException):
 
 
 class _Proxy:
-    """Stands in for the target: the listed methods go through the crash points, all else is the target's."""
+    """Stands in for the target: the listed methods go through the crash points, all else is the
+    target's."""
 
     __slots__ = ("_crash_calls", "_crash_target")
 
@@ -59,7 +61,8 @@ class _Proxy:
 
 
 class CrashPoints:
-    """The set of crash points of one test. Use it in a `with` block: a point still armed at the end is an error."""
+    """The set of crash points of one test. Use it in a `with` block: a point still armed at the
+    end is an error."""
 
     def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
         if _GATE not in os.environ:
@@ -121,7 +124,8 @@ class CrashPoints:
         return None if current is None else current[0]
 
     def hit(self, point: str) -> None:
-        """Called at a crash point. Does nothing unless exactly this point is armed and this is its nth call."""
+        """Called at a crash point. Does nothing unless exactly this point is armed and this is its
+        nth call."""
         with self._lock:
             current = self._current()
             if current is None or current[0] != point:
@@ -140,8 +144,9 @@ class CrashPoints:
             os._exit(CRASH_EXIT_CODE)
 
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
-        """A stand-in for `target` whose listed methods pass `<name>.<method>:before` and `:after`. Everything
-        else, results and exceptions included, is the target's. `AttributeError` if the target lacks a method, `TypeError` if it is no method."""
+        """A stand-in for `target` whose listed methods pass `<name>.<method>:before` and `:after`.
+        Everything else, results and exceptions included, is the target's. `AttributeError` if the
+        target lacks a method, `TypeError` if it is no method."""
         if not isinstance(name, str) or not _NAME.fullmatch(name):
             raise ValueError(f"bad name: {name!r}")
         if isinstance(methods, str):
@@ -167,7 +172,8 @@ class CrashPoints:
         return call
 
     def _current(self) -> tuple[str, int] | None:
-        """The armed point and its nth, from memory or from the flag file. Call with the lock held."""
+        """The armed point and its nth, from memory or from the flag file. Call with the lock
+        held."""
         if self._flag is None:
             return self._memory
         try:
@@ -180,7 +186,8 @@ class CrashPoints:
         return point, int(count) if sep else 1
 
     def _take(self) -> bool:
-        """Disarm. False if a flag file could not be deleted (someone else took it). Call with the lock held."""
+        """Disarm. False if a flag file could not be deleted (someone else took it). Call with the
+        lock held."""
         if self._flag is None:
             self._memory = None
             return True

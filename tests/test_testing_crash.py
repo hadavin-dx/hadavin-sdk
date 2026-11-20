@@ -1,8 +1,9 @@
-"""Tests of `hadavin_sdk.testing.crash`: the crash points that later tests use to stop a run half-way.
+"""Tests of `hadavin_sdk.testing.crash`: the crash points that later tests use to stop a run
+half-way.
 
-Case ids (N1..N7, E1..E6, H1..H6, P1) are those of the step E ticket. Everything runs on the memory store or on
-plain objects, except P1, which needs HADAVIN_TEST_PG_DSN and is skipped without it. A child process is always
-started with a timeout and has ended before its test returns.
+Case ids (N1..N7, E1..E6, H1..H6, P1) are those of the step E ticket. Everything runs on the memory
+store or on plain objects, except P1, which needs HADAVIN_TEST_PG_DSN and is skipped without it. A
+child process is always started with a timeout and has ended before its test returns.
 """
 
 from __future__ import annotations
@@ -114,7 +115,8 @@ class Killed(BaseException):
 
 @pytest.fixture
 def no_real_exit(monkeypatch):
-    """Kill mode inside the pytest process: the exit call raises `Killed` instead of ending pytest."""
+    """Kill mode inside the pytest process: the exit call raises `Killed` instead of ending
+    pytest."""
 
     def fake(code):
         raise Killed(code)
@@ -145,7 +147,7 @@ def start_child(tmp_path: Path, source: str, flag: Path, *args: str, env: dict |
     )
 
 
-# --- normal -----------------------------------------------------------------------------------------------
+# --- normal ---------------------------------------------------------------------------------------
 
 
 def test_n1_unarmed_wrap_behaves_as_the_target():
@@ -214,8 +216,8 @@ def test_n5_nth_two_lets_the_first_call_pass():
 
 
 def test_n6_crash_before_the_model_call_leaves_the_run_working(tmp_path):
-    """N6: through the real runtime the run stays WORKING, and a handler for `Exception` does not see the crash.
-    An ordinary model error, for contrast, is tidied up into NEEDS_PERSON."""
+    """N6: through the real runtime the run stays WORKING, and a handler for `Exception` does not
+    see the crash. An ordinary model error, for contrast, is tidied up into NEEDS_PERSON."""
     assert issubclass(SimulatedCrash, BaseException) and not issubclass(SimulatedCrash, Exception)
     store, llm = MemoryStore(), ScriptLLM([{"noaction": True}])
     with CrashPoints() as cp:
@@ -240,8 +242,8 @@ def test_n6_crash_before_the_model_call_leaves_the_run_working(tmp_path):
 
 
 def test_n6_store_wrapped_after_the_build_crashes_after_the_first_transition(tmp_path):
-    """N6 (usage 2): the store is wrapped on the built runtime; the crash after the first transition leaves the
-    run WORKING with no model call."""
+    """N6 (usage 2): the store is wrapped on the built runtime; the crash after the first
+    transition leaves the run WORKING with no model call."""
     store, llm = MemoryStore(), ScriptLLM([{"noaction": True}])
     with CrashPoints() as cp:
         rt, _ = build_runtime(k5_cfg(tmp_path), llm, store=store)
@@ -254,8 +256,9 @@ def test_n6_store_wrapped_after_the_build_crashes_after_the_first_transition(tmp
 
 
 def test_n7_kill_mode_ends_a_child_process_once(tmp_path):
-    """N7: the armed child exits with the crash code and the marker, runs no `finally` and no exit handler, and
-    the flag is gone; started again it ends normally. Also pins that a child inherits the pytest variable."""
+    """N7: the armed child exits with the crash code and the marker, runs no `finally` and no exit
+    handler, and the flag is gone; started again it ends normally. Also pins that a child inherits
+    the pytest variable."""
     assert GATE in os.environ
     flag = tmp_path / "flag"
     arming = CrashPoints(mode="exit", flag_path=flag)
@@ -271,7 +274,8 @@ def test_n7_kill_mode_ends_a_child_process_once(tmp_path):
 
 
 def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, capsys):
-    """N7 (flag format): `<point>#<nth>` is written by arm and counted by hit; the marker is printed once."""
+    """N7 (flag format): `<point>#<nth>` is written by arm and counted by hit; the marker is
+    printed once."""
     flag = tmp_path / "flag"
     cp = CrashPoints(mode="exit", flag_path=flag)
     thing = cp.wrap(Thing(), "thing", ["step"])
@@ -285,7 +289,7 @@ def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, 
     assert thing.step() == 3
 
 
-# --- edge -------------------------------------------------------------------------------------------------
+# --- edge -----------------------------------------------------------------------------------------
 
 
 def test_e1_everything_not_listed_is_the_targets():
@@ -305,7 +309,8 @@ def test_e1_everything_not_listed_is_the_targets():
 
 
 def test_e2_the_targets_own_error_passes_and_after_does_not_fire():
-    """E2: the target's exception comes out unchanged and `:after` stays armed for the next good call."""
+    """E2: the target's exception comes out unchanged and `:after` stays armed for the next good
+    call."""
     target = Thing()
     with CrashPoints() as cp:
         thing = cp.wrap(target, "thing", ["step"])
@@ -368,7 +373,8 @@ def test_e3_a_flag_taken_by_someone_else_means_no_crash(tmp_path, no_real_exit, 
 
 
 def test_e4_a_crash_in_a_pool_task_lands_in_the_future():
-    """E4: SimulatedCrash raised inside a ThreadPoolExecutor task is kept by the future; the pool works on."""
+    """E4: SimulatedCrash raised inside a ThreadPoolExecutor task is kept by the future; the pool
+    works on."""
     with CrashPoints() as cp, ThreadPoolExecutor(max_workers=1) as pool:
         thing = cp.wrap(Thing(), "thing", ["step"])
         cp.arm(POINT)
@@ -380,7 +386,8 @@ def test_e4_a_crash_in_a_pool_task_lands_in_the_future():
 
 
 def test_e5_arming_twice_without_a_hit_is_refused(tmp_path):
-    """E5: a second arm while one is pending raises ValueError, in both modes; the first arm stays."""
+    """E5: a second arm while one is pending raises ValueError, in both modes; the first arm
+    stays."""
     with CrashPoints() as cp:
         thing = cp.wrap(Thing(), "thing", ["step"])
         cp.arm(POINT)
@@ -401,7 +408,8 @@ def test_e5_arming_twice_without_a_hit_is_refused(tmp_path):
 
 @pytest.mark.parametrize("content", [None, b"", b"\n", b"garbage", b"\xff\xfe\x00", b"a\nb\n"])
 def test_e6_a_missing_empty_or_garbage_flag_never_fires(tmp_path, no_real_exit, content):
-    """E6: kill mode with a missing, empty or garbage flag file: no crash, no error, the file is left alone."""
+    """E6: kill mode with a missing, empty or garbage flag file: no crash, no error, the file is
+    left alone."""
     flag = tmp_path / "flag"
     if content is not None:
         flag.write_bytes(content)
@@ -418,7 +426,7 @@ def test_e6_a_directory_as_flag_never_fires(tmp_path, no_real_exit):
         assert cp.wrap(Thing(), "thing", ["step"]).step() == 1 and cp.armed() is None
 
 
-# --- hostile ----------------------------------------------------------------------------------------------
+# --- hostile --------------------------------------------------------------------------------------
 
 
 def test_h1_cannot_be_built_outside_a_pytest_run(tmp_path, monkeypatch):
@@ -431,7 +439,8 @@ def test_h1_cannot_be_built_outside_a_pytest_run(tmp_path, monkeypatch):
 
 
 def test_h1_a_child_without_the_pytest_variable_cannot_kill_itself(tmp_path):
-    """H1: a child started with the variable stripped fails at the constructor; the armed flag stays."""
+    """H1: a child started with the variable stripped fails at the constructor; the armed flag
+    stays."""
     flag = tmp_path / "flag"
     arming = CrashPoints(mode="exit", flag_path=flag)
     arming.arm(POINT)
@@ -444,8 +453,9 @@ def test_h1_a_child_without_the_pytest_variable_cannot_kill_itself(tmp_path):
 
 
 def test_h2_left_armed_is_an_error_and_is_disarmed(tmp_path, no_real_exit):
-    """H2: leaving the block armed raises RuntimeError naming the point; the point is dead afterwards; in kill
-    mode the flag file is deleted. An error already in flight is not replaced."""
+    """H2: leaving the block armed raises RuntimeError naming the point; the point is dead
+    afterwards; in kill mode the flag file is deleted. An error already in flight is not
+    replaced."""
     target = Thing()
     with pytest.raises(RuntimeError, match="thing.step:before"), CrashPoints() as cp:
         thing = cp.wrap(target, "thing", ["step"])
@@ -497,7 +507,8 @@ def test_h2_left_armed_is_an_error_and_is_disarmed(tmp_path, no_real_exit):
     ],
 )
 def test_h3_bad_point_names_are_refused_at_arm(tmp_path, point):
-    """H3: empty, upper case, a path, dots, a newline, a `#`, 300 characters: ValueError, nothing armed or written."""
+    """H3: empty, upper case, a path, dots, a newline, a `#`, 300 characters: ValueError, nothing
+    armed or written."""
     flag = tmp_path / "flag"
     for cp in (CrashPoints(), CrashPoints(mode="exit", flag_path=flag)):
         with pytest.raises(ValueError, match="point"):
@@ -516,8 +527,8 @@ def test_h3_bad_nth_is_refused_at_arm(nth):
 
 
 def test_h3_wrap_refuses_what_the_target_lacks_and_bad_names():
-    """H3: a method the target lacks is an AttributeError at wrap time; a plain attribute is a TypeError; bad names are
-    ValueError; one string instead of a list is a TypeError."""
+    """H3: a method the target lacks is an AttributeError at wrap time; a plain attribute is a
+    TypeError; bad names are ValueError; one string instead of a list is a TypeError."""
     cp, target = CrashPoints(), Thing()
     with pytest.raises(AttributeError):
         cp.wrap(target, "thing", ["step", "nope"])
@@ -562,7 +573,8 @@ def test_h3_constructor_refuses_a_wrong_mode_and_flag_pairing(tmp_path):
     ],
 )
 def test_h4_a_flag_for_another_point_or_a_bad_count_never_fires(tmp_path, no_real_exit, content):
-    """H4: a flag naming another point, or `#0`, `#-1`, `#x`: the watched point never fires and nothing raises."""
+    """H4: a flag naming another point, or `#0`, `#-1`, `#x`: the watched point never fires and
+    nothing raises."""
 
     class Before(Thing):  # only `:before` of `step` is ever reached: the body fails first
         def step(self, fail: bool = False) -> int:
@@ -579,8 +591,8 @@ def test_h4_a_flag_for_another_point_or_a_bad_count_never_fires(tmp_path, no_rea
 
 
 def test_h4_control_a_well_formed_flag_does_fire(tmp_path, no_real_exit):
-    """H4 (control): the same set-up with the right flag fires, so the cases above are not empty; one trailing
-    newline is allowed."""
+    """H4 (control): the same set-up with the right flag fires, so the cases above are not empty;
+    one trailing newline is allowed."""
     flag = tmp_path / "flag"
     flag.write_text(POINT + "#1\n", encoding="utf-8")
     cp = CrashPoints(mode="exit", flag_path=flag)
@@ -605,7 +617,8 @@ def crash_importers(package: Path) -> list[str]:
 
 
 def test_h5_no_runtime_module_imports_the_crash_helper(tmp_path):
-    """H5: invariant 2 as a class test, over the real package; the scan is shown to catch planted files."""
+    """H5: invariant 2 as a class test, over the real package; the scan is shown to catch planted
+    files."""
     assert crash_importers(PACKAGE) == []
     assert len(list(PACKAGE.rglob("*.py"))) > 20  # the scan looked at the real tree
     fake = tmp_path / "hadavin_sdk"
@@ -625,8 +638,8 @@ def test_h5_no_runtime_module_imports_the_crash_helper(tmp_path):
 
 
 def test_h6_the_helper_file_keeps_its_own_rules():
-    """H6: invariants 10 and 11 on our own file: no `chat` or `apply_guardrail` attribute call, no URL or host
-    shaped text, standard library imports only, no assert, no dynamic import."""
+    """H6: invariants 10 and 11 on our own file: no `chat` or `apply_guardrail` attribute call, no
+    URL or host shaped text, standard library imports only, no assert, no dynamic import."""
     tree = ast.parse(CRASH_FILE.read_text(encoding="utf-8"))
     nodes = list(ast.walk(tree))
     called = {
@@ -638,7 +651,8 @@ def test_h6_the_helper_file_keeps_its_own_rules():
     }
     assert "__import__" not in plain_calls
     shaped = re.compile(
-        r"https?://|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|dev|ai|cloud|internal|local)\b", re.IGNORECASE
+        r"https?://|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|dev|ai|cloud|internal|local)\b",
+        re.IGNORECASE,
     )
     texts = [n.value for n in nodes if isinstance(n, ast.Constant) and isinstance(n.value, str)]
     assert len(texts) > 10 and [t for t in texts if shaped.search(t)] == []
@@ -654,13 +668,13 @@ def test_h6_the_helper_file_keeps_its_own_rules():
     assert not any(isinstance(n, ast.Assert) for n in nodes)
 
 
-# --- real PostgreSQL (skipped without HADAVIN_TEST_PG_DSN) -------------------------------------------------
+# --- real PostgreSQL (skipped without HADAVIN_TEST_PG_DSN) ----------------------------------------
 
 
 @pytest.mark.parametrize("edge,row_is_there", [("after", True), ("before", False)])
 def test_p1_kill_mode_on_a_real_database(tmp_path, edge, row_is_there):
-    """P1: a child that opens the postgres store on a fresh schema is killed at `store.create_run:<edge>`; the
-    parent then finds the row (after) or no row (before)."""
+    """P1: a child that opens the postgres store on a fresh schema is killed at
+    `store.create_run:<edge>`; the parent then finds the row (after) or no row (before)."""
     for dsn in pg_schema():
         from hadavin_sdk.store.postgres import PostgresStore, connect
 
