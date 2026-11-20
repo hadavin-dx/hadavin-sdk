@@ -28,9 +28,11 @@ from hadavin_sdk.store.protocol import (
     SpendCapExceeded,
     StaleState,
     check_expiry_age,
+    check_purge_bound,
     check_reservation_id,
     check_spend_amount,
     check_spend_cap,
+    check_store_id,
 )
 
 
@@ -314,6 +316,9 @@ class MemoryStore:
         month_cap: Decimal,
         run_id: str | None = None,
     ) -> None:
+        check_store_id(agent_id, "agent_id")
+        if run_id is not None:
+            check_store_id(run_id, "run_id")
         check_reservation_id(reservation_id)
         check_spend_amount(usd)
         check_spend_cap(day_cap)
@@ -327,8 +332,8 @@ class MemoryStore:
             month = self._month_total(agent_id, day)
             if not (month < month_cap and month + usd <= month_cap):
                 raise SpendCapExceeded("month")
-            self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
-            self._reservations[reservation_id] = SpendReservation(
+            # the row is built first: a model that refuses its input must leave the counter alone
+            row = SpendReservation(
                 reservation_id=reservation_id,
                 agent_id=agent_id,
                 day=day,
@@ -336,6 +341,8 @@ class MemoryStore:
                 reserved_usd=usd,
                 created_at=now(),
             )
+            self._spend[(agent_id, day)] = booked + usd  # the month is the sum over its days
+            self._reservations[reservation_id] = row
 
     def settle_spend(
         self, reservation_id: str, actual_usd: Decimal
@@ -350,15 +357,20 @@ class MemoryStore:
                 return row, False
             # settled_usd is what stays booked: after expiry the booked amount never goes down
             booked = max(actual_usd, row.reserved_usd) if row.status == "expired" else actual_usd
-            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            if (row.agent_id, row.day) not in self._spend:
+                raise RuntimeError("spend counter row missing")
             run = self._runs.get(row.run_id) if row.run_id is not None else None
-            if run is not None:  # a missing run row moves only the counters
-                self._runs[run.run_id] = run.model_copy(
-                    update={"cost_usd": run.cost_usd + actual_usd}
-                )
+            new_run = (  # a missing run row moves only the counters
+                run.model_copy(update={"cost_usd": run.cost_usd + actual_usd})
+                if run is not None
+                else None
+            )
             row = row.model_copy(
                 update={"status": "settled", "settled_usd": booked, "closed_at": now()}
             )
+            self._spend[(row.agent_id, row.day)] += booked - row.reserved_usd
+            if new_run is not None:
+                self._runs[new_run.run_id] = new_run
             self._reservations[reservation_id] = row
             return row, True
 
@@ -379,6 +391,7 @@ class MemoryStore:
             return len(old)
 
     def purge_spend_reservations(self, before: datetime) -> int:
+        check_purge_bound(before)
         with self._lock:
             gone = [
                 k

@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.secret_name import canonical_secret_name
 
 
 def secret_names(settings: BaseModel) -> set[str]:
@@ -75,11 +76,12 @@ def check_senders(
     once. Every refusal is found before the first read. A message names the sender and the field, never the name:
     a mistyped config may hold the secret itself there, so the provider's own error is not chained either."""
     senders = {sender_id: sorted(set(names)) for sender_id, names in sorted(senders.items())}
+    other_names = {canonical_secret_name(n) for n in other_names}
     if shared := [
         f"{sender_field(sender_id)}: a name is also used by another part of the config "
         "(a backend, an action, a read tool, a source or the restored-hash key); give the sender its own secret"
         for sender_id, names in senders.items()
-        if other_names.intersection(names)
+        if other_names.intersection(canonical_secret_name(n) for n in names)
     ]:
         raise ConfigError("; ".join(shared))
     for sender_id, names in senders.items():

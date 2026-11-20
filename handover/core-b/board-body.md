@@ -20,22 +20,27 @@ Order required: brainstorm, draft, plan review, resolve, build, evidence runner,
 | A audit drain | none ordered (lead) | done | tests and mutants by other agents | lead review x2, hostile re-read (fresh, 1 round) | drift report |
 | B stop state | 1 round | done (3 fix rounds, cap) | tests and mutants | ticket review round (fresh), hostile re-read (fresh); the lead has taken the rest | drift report (lead) |
 | C price constraint | AFTER the build (order reversed), 1 round | done | tests and mutants | the ticket review round doubled as result review (fresh) | drift report |
-| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review; egm result review RUNNING (ac7e13a5) | resolve its findings; drift report |
+| D-config | NONE | done (fix 1; fix 2 running) | core-a's tests (92 of 109 pass, marks to remove) | lead review + egm result review DONE (0 Blockers, 3 Majors) | fix 2 and its evidence; re-review of the fix; drift report |
 | F-store | 2 rounds | done (fix 1 and 2) | tests, mutants, random-sequence model test | hostile re-read RUNNING (sonnet) | result review resolve; drift report |
-| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review RUNNING (a879d0f3; post-hoc ticket tickets/F-provider-mark.md) | resolve its findings; drift report |
+| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review DONE (0 Blockers, 2 Majors) | fix round 1 QUEUED behind the merge; evidence; re-review; drift report |
 | F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
 Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a879d0f3 | reviewer (egm-codebase-details) | sonnet | RESULT review of the provider mark against the built code (missing step found by the EGM audit) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
-| ac7e13a5 | reviewer (egm-codebase-details) | sonnet | RESULT review of the trigger config (D-config) against the built code (missing step) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
-| ae188231 | builder | sonnet | F-install Y2 and Y3: Reply.cost_usd None when unknown, retries never under-book; worktree Y on the F-install tree | 06:55 | +25 min | UNVERIFIED | running | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
-| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
-| a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
+| adab2bba | builder (tests) | sonnet | tests for the provider mark fix and the canonical sender secret names, 4 mutants; worktree PMT | 07:12 | +20 min | UNVERIFIED | running | none | 0 | the fix builders write no tests |
+| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: commit 37c8e93 landed (per-kind refused statuses for routers, truncated chain, docstrings); 334 passed, 1 skipped | 07:08 | done | 100 | done | none | 1 | result review Majors 1 and 2 |
+| a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
+| ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
+| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
+| a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
 | a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
-| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config | 06:46 | +10 min | UNVERIFIED | running | 1 of 1 | 1 | restart after the limit |
+| a8678338 | builder (tests) | sonnet | tests for F-store fix round 3 (ids, caps, memory atomicity, sender secret reader, document sizing, lock timeout) and 7 mutants; worktree FT | 07:15 | +25 min | UNVERIFIED | running | none | 0 | the fix builder wrote no tests |
+| a99a298a | builder (fix) | sonnet | F-store fix round 3: commit 83b1bb7 landed (F1 to F7); 862 passed on its list; lock timeout set in build(), not on the migrate connection | 06:58 | done | 100 | done | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
+| abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |
+| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config: 2 doc Blockers, 7 Majors, 10 Nits; report tickets/F-store-hostile-review-1.md | 06:46 | done | 100 | done | 1 of 1 | 1 | answered: code in fix round 3, docs fixed |
 | earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
 | 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
 | 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |

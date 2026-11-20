@@ -71,7 +71,8 @@
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
     and refuses at the cap (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
-    `limits_unavailable`, `bad_amount`). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
+    `limits_unavailable`, `bad_amount`; a sixth, `usd_cap`, comes with the in-memory meter of the eval and replay
+    commands). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
     real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
     reservation nobody settled (a crash, a timeout) is marked expired by the new tick step `expire_reservations` after
     3600 seconds (`defaults.RESERVATION_EXPIRE_S`), or after the stuck-run age when that is longer; it stays booked at
@@ -85,6 +86,17 @@
     the model calls use `reserve` every call is refused as `limits_unavailable`. (3) A custom store must add four
     methods (`reserve_spend`, `settle_spend`, `expire_spend_reservations`, `purge_spend_reservations`); without them
     the app refuses to start and names them (`ConfigError`).
+  - **Stated limits (found by a hostile re-read).** (a) The day is chosen from the clock before the booking; a reserve
+    that waits on a row lock across 00:00 UTC books and checks the previous day. (b) If the database commits a
+    reservation and the connection drops before the caller sees it, the call is refused (`limits_unavailable`) but the
+    booking exists with no id returned; it is closed only by the expiry step and the counters never go down, so the
+    worst case of a call that never started stays counted for the rest of the day and month; a flapping network can use
+    up a tight daily cap this way. (c) A model adapter must not stream: a stream needs its own rule for the
+    "refused before any response" mark. (d) A sender of the signed trigger endpoint whose agent is retired after the
+    app started keeps being served until the next restart, and the next start then refuses (remove or repoint the
+    sender first, then retire the agent). (e) The store connection sets a lock timeout of
+    `defaults.STORE_LOCK_TIMEOUT_MS` (10 seconds): a store call that waits longer for a row lock fails with
+    `limits_unavailable`; a statement's own run time is not limited.
   - **Rollback.** Revert only the Python code. Keep the file `0007_spend_reservations.sql`, its grant row and its
     manifest entry: `migrate` refuses a database whose ledger names a migration that has no file. The table is then
     unused.
@@ -96,6 +108,17 @@
     runs can now refuse because another call's hold is open or expired. (d) A real cost above the reserved amount is
     booked in full with no cap check, and one audit outcome is written (domain `limits`, operation `overshoot`,
     result `booked`); every later reserve on that day or month is refused until the counter is below the cap.
+  - **Fix round 3.** `agent_id` and `run_id` of `reserve_spend` are validated in both stores (exactly a str of 1 to 200
+    characters, no control character, UTF-8 encodable; `ValueError` names the field, never the value). Caps follow the
+    amount rule's exponent window (finite, >= 0, exponent -12 to 9; no other upper bound). `expire_spend_reservations`
+    refuses an age above 10**7 and `purge_spend_reservations` a naive datetime (`ValueError`). The memory store builds the
+    reservation row before it moves a counter, and a settle whose counter row is missing raises `RuntimeError` as
+    PostgreSQL does. `Limits.reserve` raises `KeyError` for an unhashable agent id. The trigger sender secret reader
+    raises `RuntimeError("sender secret unavailable")` and never the provider's own error. The runtime PostgreSQL
+    connection sets `lock_timeout` to 10000 ms (`defaults.STORE_LOCK_TIMEOUT_MS`): a store call that waits longer for a
+    row lock fails (the runtime reports `limits_unavailable`) instead of holding the process-wide store lock for ever.
+    Stated limit: it bounds lock waits only, not a statement's own run time, and the migrate connection sets none.
+    The worst-case price of a document counts the bytes sent (an invalid byte becomes U+FFFD, 3 bytes).
   - **Stated limits.** A call that takes longer than the expiry age is charged its worst case or more (after expiry
     a settle can raise the booked amount, never lower it). A reservation that is never settled is in the day and
     month totals but not in the run's cost. The overshoot audit row is written after the settle commits: a crash in

@@ -84,6 +84,23 @@ def check_reservation_id(reservation_id: object) -> str:
     return reservation_id
 
 
+def check_store_id(value: object, what: str) -> str:
+    """The id rule of `agent_id` and `run_id` in the spend methods, used by both stores before any lock or SQL:
+    exactly a str of 1 to 200 characters, no NUL or other control character, encodable as UTF-8 (a lone surrogate
+    is not). A ValueError names `what`, never the value."""
+    if (
+        type(value) is not str
+        or not 1 <= len(value) <= MAX_RESERVATION_ID_CHARS
+        or any(ord(c) < 32 or 127 <= ord(c) < 160 for c in value)
+    ):
+        raise ValueError(f"{what} must be a str of 1 to 200 characters with no control characters")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError(f"{what} must be encodable as UTF-8") from None
+    return value
+
+
 def check_spend_amount(usd: object) -> Decimal:
     """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
     bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
@@ -102,19 +119,37 @@ def check_spend_amount(usd: object) -> Decimal:
 
 def check_spend_cap(cap: object) -> Decimal:
     """The cap rule of `reserve_spend`, used by both stores before any lock or SQL: a Decimal (not a float, an
-    int, a bool, a str or None), finite, 0 <= cap; no upper bound. Anything else is a ValueError and nothing is
-    booked. A NaN cap must never reach the comparison: PostgreSQL sorts NaN above every number, so it would be
-    no cap at all."""
-    if type(cap) is not Decimal or not cap.is_finite() or cap < 0:
-        raise ValueError("spend cap must be a finite Decimal with 0 <= cap")
+    int, a bool, a str or None), finite, 0 <= cap, with the exponent window of an amount (-12 to 9); no other
+    upper bound. Anything else is a ValueError and nothing is booked. A NaN cap must never reach the comparison:
+    PostgreSQL sorts NaN above every number, so it would be no cap at all."""
+    if (
+        type(cap) is not Decimal
+        or not cap.is_finite()
+        or cap < 0
+        or not -MAX_SPEND_DECIMALS <= cap.as_tuple().exponent <= MAX_SPEND_EXPONENT
+    ):
+        raise ValueError(
+            "spend cap must be a finite Decimal with 0 <= cap, at most 12 decimal places and an exponent of at most 9"
+        )
     return cap
+
+
+MAX_EXPIRY_AGE_S = 10**7  # a larger age overflows a timestamp (memory) or a PostgreSQL interval
+
+
+def check_purge_bound(before: object) -> datetime:
+    """The bound of `purge_spend_reservations`, used by both stores: a timezone-aware datetime. Anything else
+    (a naive datetime, a date, a str) is a ValueError and nothing is deleted."""
+    if not isinstance(before, datetime) or before.tzinfo is None or before.utcoffset() is None:
+        raise ValueError("purge bound must be a timezone-aware datetime")
+    return before
 
 
 def check_expiry_age(older_than_s: object) -> int:
     """The age rule of `expire_spend_reservations`, used by both stores: an int (not a bool) that is not
     negative. Anything else is a ValueError and nothing expires."""
-    if type(older_than_s) is not int or older_than_s < 0:
-        raise ValueError("older_than_s must be an int with 0 <= older_than_s")
+    if type(older_than_s) is not int or not 0 <= older_than_s <= MAX_EXPIRY_AGE_S:
+        raise ValueError("older_than_s must be an int with 0 <= older_than_s <= 10**7")
     return older_than_s
 
 

@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 
 import yaml
 from pydantic import (
+    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -36,6 +37,7 @@ from hadavin_sdk.backends.table import (
 )
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
+from hadavin_sdk.secret_name import canonical_secret_name
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
 __all__ = [
@@ -346,9 +348,21 @@ TriggerId = Annotated[str, Field(pattern=_TRIGGER_ID)]
 # The NAME of a sender's secret, and the agent and principal ids a sender points to: no blank, no line break, no
 # control character. The repo had no shared rule for either, so these two are the trigger block's own. A value
 # that does not match is refused without being shown (`hide_input_in_errors`).
-_TRIGGER_NAME_RULE = r"^[A-Za-z0-9_.:/-]{1,128}$"
+_TRIGGER_NAME_RULE = r"^[A-Za-z0-9_.:-]{1,128}$"
 _TRIGGER_REF_ID = r"^[A-Za-z0-9_.:-]{1,128}$"
-_SecretName = Annotated[str, Field(pattern=_TRIGGER_NAME_RULE)]
+
+
+def _no_path_trick(name: str) -> str:
+    """No "." or ".." and no ".." inside a name (a file-backed provider would read a path), and a name that
+    canonicalises to nothing (only "." ":" "-" "_") is no name. The text never shows the value."""
+    if ".." in name or not canonical_secret_name(name):
+        raise ValueError(
+            "a secret name must not be '.', '..' or contain '..', and needs a letter or digit"
+        )
+    return name
+
+
+_SecretName = Annotated[str, Field(pattern=_TRIGGER_NAME_RULE), AfterValidator(_no_path_trick)]
 _RefId = Annotated[str, Field(pattern=_TRIGGER_REF_ID)]
 
 
@@ -394,9 +408,10 @@ def _trigger_refusals(triggers: TriggerSettings | None) -> list[str]:
     out: list[str] = []
     owner: dict[str, str] = {}
     for sender_id, sender in sorted((triggers.senders if triggers else {}).items()):
-        if len(set(sender.secret_names)) != len(sender.secret_names):
+        canon = [canonical_secret_name(n) for n in sender.secret_names]
+        if len(set(canon)) != len(canon):
             out.append(f"triggers.senders.{sender_id}.secret_names: the same name twice")
-        for name in set(sender.secret_names):
+        for name in set(canon):
             if name in owner:
                 out.append(
                     f"triggers.senders.{sender_id}.secret_names: a name is also used by sender {owner[name]}"
