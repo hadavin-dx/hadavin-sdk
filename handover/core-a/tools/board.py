@@ -100,6 +100,12 @@ def main() -> int:
     if "--no-push" in sys.argv:
         print(body[:600])
         return 0
+    # Code files stay in their own commits, never mixed with handover/ files (ORDER 005 item 2).
+    sh(["git", "add", "src", "tests", "n8n"])
+    if sh(["git", "diff", "--cached", "--quiet"])[0] != 0:
+        sh(["git", "commit", "-q", "-m", f"code D+E: WIP snapshot {now} (builders running, not the tested state)\n\n"
+            "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n"
+            "Claude-Session: https://claude.ai/code/session_014pRo39MRxnYCnugNxyoaw6"])
     sh(["git", "add", "-u", "handover/core-a"])
     sh(["git", "add", "handover/core-a/STATUS-BOARD.md", "handover/core-a/board-state.json"])
     rc, out = sh(["git", "commit", "-q", "-m", f"board {now}"])
