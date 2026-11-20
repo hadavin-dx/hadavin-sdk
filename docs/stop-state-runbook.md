@@ -31,12 +31,14 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
 `hadavin-sdk limits stop --by <who>` adds one stop. It works even when the audit log is down (the audit row is written afterwards).
 
 ## Reset
-`hadavin-sdk limits reset --by <who>` on the operator's machine. The reset is written to the audit log first; then every
-stop visible to the clear statement is cleared. A stop committed after that statement began stays ON; a stop committed
-between the audit row and that statement is cleared. The command then reads the state back: it prints
-`kill switch OFF` and exits 0 only when the state really is OFF; when it is still ON it says who set it and when (if
-known), that a colleague may have just set it, and exits 2. Check the stop reason with that person BEFORE resetting
-again: a second reset erases the new stop too. A reset that finds no `kill_switch` row fails (exit 2, audit outcome `limits.reset_failed`): run migrate.
+`hadavin-sdk limits reset --by <who>` on the operator's machine. The reset is compare-and-clear: it first reads the open
+stops, writes the audit row (the intent) WITH their ids, their count and a hash of the ids, and then clears exactly those
+ids (one `kill_switch_clears` row each, the old flag turned off in the same transaction). A stop that is not in that list
+(one set while the audit row was being written, or while the clear ran) is NOT cleared and keeps the switch ON. The command
+then reads the state back: it prints `kill switch OFF (by <who>; cleared N stop(s))` and exits 0 only when the state really
+is OFF; when it is still ON it says who set the oldest open stop and when, lists each stop it did not clear (id, who, when),
+and exits 2. Check the stop reason with that person BEFORE resetting again: the next reset clears every stop it lists. A
+reset that finds no `kill_switch` row fails (exit 2, audit outcome `limits.reset_failed`): run migrate.
 If the audit log is also down at that moment, the `reset_failed` outcome cannot be kept for later by this command (the login it runs under has no right to park events): the refusal is then shown only on the screen and in the exit code.
 The command refuses (exit 2, before any connection) when `backends.store.reset_credential_ref` names the same secret
 as `backends.store.dsn_secret_name`, or when the two names hold the same DSN. `release_credential_ref` is checked the same way
@@ -123,6 +125,15 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   runs when HADAVIN_TEST_PG_DSN points at 17 or newer (not yet run).
 - The guarantee is about the state stored in the database. A runtime process that is itself taken over can ignore any
   switch: stop the process too.
+- Start-up self-check (E6): every runtime store (`limits stop` too) asks the database, with `has_table_privilege`, what
+  its own login can do on `kill_switch`, `kill_switch_stops` and `kill_switch_clears` and refuses to start (ConfigError,
+  naming the right and the table, for example `INSERT on kill_switch_clears`, never a value) when it holds any right the
+  grant map does not give the runtime: UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES, INSERT on the clears table, and
+  so on, directly, by column grant, through a role it is a member of, or through PUBLIC. A `GRANT ALL ON ALL TABLES` run
+  after migrate is caught at the next start. The reset login (marked by the `limits reset` command, not by any config
+  setting) and a superuser or a member of the tables' owner (outside the guarantee) are not held to this. Only the
+  runtime login is checked; the other roles still drift until the next `migrate`, so schedule `migrate` (it names all
+  roles) after any provisioning step.
 - "Audited first" is done by the `limits reset` command. The database does not force it: a person with the reset
   login can clear a stop by hand without an audit row.
 - The reset login cannot add a stop row. It can set the old flag in `kill_switch` ON, which is also a stop.

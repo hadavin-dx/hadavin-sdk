@@ -212,3 +212,8 @@ S12 (nits). Code: the stop INSERT does not pass ts (the database clock sets it) 
 - PostgresStore refuses to start when the search path names no existing schema.
 - Open code findings of the hostile re-read (2 to 6, 11 to 16) are with the lead: ESCALATIONS.md E5. Step B is at its 3-try cap; core-b changes no step B code.
 
+
+## ADDENDUM 2 (2026-11-20, builder B6a; hostile review 2, Major 1 and Major 2)
+- Invariant 4 now reads: a reset clears exactly the stops it read and showed (compare-and-clear); any stop not in that list stays ON, the command names it and exits 2. The audit intent carries the ids (object_ref, up to 50), the count and a SHA-256 of the sorted ids (inputs_hash). Invariant 11 changes: `Store` gains `open_stops()` and `clear_stops(by, ids)`; `Limits.reset` returns the cleared stops; `set_kill_switch(on=False)` stays (clear all visible) for direct callers. The memory store now keeps a list of open stops with ids and has the same read.
+- New start-up self-check in `postgres.build()` (own_stop_rights_problems): the runtime login may hold only what GRANTS gives it on the three stop tables. A private settings attribute `_login_role` ("reset" set by the CLI) skips it for the reset login; a login that owns the tables or is a superuser is skipped (outside the guarantee). No migration.
+- Tests: tests/test_step_b_e6_reset_compare.py, tests/test_step_b_e6_self_check.py. Edited existing tests: tests/test_stop_state_roles.py `World.store` marks the reset login; tests/test_stop_state_unit.py `StoreStub` gets `open_stops` and `clear_stops` (they pinned the old unconditional `set_kill_switch(on=False)` call of `Limits.reset`).
