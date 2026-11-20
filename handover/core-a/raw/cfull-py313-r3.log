@@ -1,0 +1,14 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.................                                                        [100%]
+============================= slowest 10 durations =============================
+40.83s call     tests/test_redact_fold_budget.py::test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse
+10.93s call     tests/test_redact_settle_loop.py::test_the_work_of_the_scan_is_bounded_a_hostile_text_is_refused_not_walked_to_the_end
+3.92s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact_text]
+3.75s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact_text]
+3.74s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact]
+3.64s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact]
+3.59s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact_text]
+3.38s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact]
+3.37s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact]
+3.16s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact_text]
+17 passed in 94.13s (0:01:34)

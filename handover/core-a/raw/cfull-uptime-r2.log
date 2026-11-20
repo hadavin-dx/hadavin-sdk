@@ -1,0 +1,2 @@
+py313 r2 before:  15:45:45 up 10:26,  0 user,  load average: 1.12, 0.75, 0.44
+exit 0; after:  15:47:18 up 10:28,  0 user,  load average: 1.02, 0.82, 0.49

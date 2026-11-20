@@ -3,3 +3,16 @@ Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
 Removed virtual environment at: .venv
 Creating virtual environment at: .venv
 Installed 80 packages in 244ms
+.................                                                        [100%]
+============================= slowest 10 durations =============================
+41.98s call     tests/test_redact_fold_budget.py::test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse
+12.39s call     tests/test_redact_settle_loop.py::test_the_work_of_the_scan_is_bounded_a_hostile_text_is_refused_not_walked_to_the_end
+5.25s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact]
+4.63s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact_text]
+4.55s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact_text]
+4.28s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact]
+4.19s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact]
+4.14s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact_text]
+3.91s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact_text]
+3.69s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact]
+17 passed in 106.58s (0:01:46)

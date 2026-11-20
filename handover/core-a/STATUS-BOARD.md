@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:44:23Z
+UPDATED_UTC: 2026-11-20T15:48:52Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 1
-CAPACITY: load 1.42 of 4 cores (1-minute average), mem 1.2/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.00 of 4 cores (1-minute average), mem 2.0/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 56G 19%; 646M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:44:08Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:44:28Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -111,15 +111,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 9197 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 128s ago | running | matched by name in ps |
-| 11303 | uv run --python 3.12 --all-extras --group test pytest -q -n 0 -p no:ca | core-a session or its agent | 29s ago | running | matched by name in ps |
-| 11312 | /home/user/wt/cfull/.venv/bin/python /home/user/wt/cfull/.venv/bin/pyt | core-a session or its agent | 28s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34195s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 34195s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 34195s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 34195s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34195s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34195s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34464s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 34464s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 34464s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 34464s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34464s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34464s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -181,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:46 LANE TABLE (your 15:43 order; your 15:47 GO crossed my pushes): LANE 1 grant tests: DONE (agent grants-run; both versions green on core-b fa21e8fbb PG16.15: core-c 85 passed, mine 88 passed, take mine (superset); evidence/grants-a-vs-b.md; handover/core-c/requests/from-core-a-grants.md). LANE 2 cfull fixes: RUNNING (agent cfull-run: verifies fdfa / py3.12 Unicode / glued-linear perf margin / settle-loop on py3.13 AND 3.12 on a quiet box; core-c says these were fixed earlier on cloud/core-c) -> evidence/cfull-fix-check.md. LANE 3 reviews lead-b-migrate (0891d81bd) and lead-b-ts-watermark (de8967aba): DONE twice each, findings in handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md (heads unchanged: tell me when fix round 1 lands and I review the delta). LANE 4 crash matrix part 2 + E-door-1 README: DONE (reviewed fresh, fixed). AGENTS 1 (cfull-run). 3 lanes are finished, not skipped; no open lane without an agent.
 - 15:57 LANE 1 DONE (evidence/grants-a-vs-b.md): both grant-test versions are GREEN against core-b's current head fa21e8fbb on PG16.15: core-c's (wip/cloud-core-c/grants b55d21865) 85 passed [its commit message says 117: not reproduced], mine (wip/core-a-for-grant-tests 3ffb442f1) 88 passed; no failing id in either; every test of A is also in B and B has 3 more pins (release identity cells; runtime writes no money table and books through functions; money functions are SECURITY DEFINER with EXECUTE only to the named roles): TAKE B (superset). Without a DSN: A 46 passed/39 skipped, B 48/40. Running: cfull-run (LANE 2).
 - 15:50 OWNER ORDER 15:43, lanes: LANE 1 grant tests: BOTH versions exist (core-c's wip/cloud-core-c/grants b55d21865 117 passed PG16; mine wip/core-a-for-grant-tests 3ffb442f1 88 passed): grants-run now runs both on core-b's CURRENT head (handover/core-c/requests/from-core-a-grants.md written). LANE 2 cfull: core-c says fdfa/py3.12/E22 are already fixed on cloud/core-c: cfull-run verifies on py3.13 AND 3.12 on a quiet box (perf 3 repeats; load now ~0.1). LANE 3: reviews of wip/lead-b-migrate (0891d81bd) and wip/lead-b-ts-watermark (de8967aba) DONE earlier; written to handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md as asked (heads unchanged: tell me when fix round 1 lands). LANE 4 CRASH-MATRIX part 2 + E-door-1 README: DONE. AGENTS 2.
 - 15:46 core-c G9b reviewed (reviews/rev-c-G9b.md, appended to the core-c request file): no Blocker; ONE Major: the M1 occurrence charge counts only ACCEPTED occurrences (redact.py:2294-2308): ones rejected by `_joins` or with no rule cost a Python call but 0 units, and the deadline is read only between finder groups: TENANT_k='a'*(k+3) for k=1..200 with text '<TENANT_200>x'*17000 gives ~100 uncharged adds per char; the G9b perf test uses SECRET values (nothing is rejected) so it never hits it. Fix: charge every add call or read the deadline inside add. Nits: PU1 re-pin SECRET_3->SECRET_2 is a real map-size change (3 values -> 1), measured at 64948390a not the head, unpinned; M2 leaves one value with two placeholders; G9-9/31/35/36 mutant expects weak. My older open findings (stacked-encoding overlap, guillemet core drop, U+226E) are untouched. No agents running.

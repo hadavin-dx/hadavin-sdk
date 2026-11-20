@@ -1,0 +1,18 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.12
+Removed virtual environment at: .venv
+Creating virtual environment at: .venv
+Installed 80 packages in 203ms
+.................                                                        [100%]
+============================= slowest 10 durations =============================
+38.92s call     tests/test_redact_fold_budget.py::test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse
+10.80s call     tests/test_redact_settle_loop.py::test_the_work_of_the_scan_is_bounded_a_hostile_text_is_refused_not_walked_to_the_end
+3.82s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact_text]
+3.73s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact_text]
+3.65s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[hex and dashes-redact]
+3.62s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[dots-redact]
+3.50s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact_text]
+3.46s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[digits and spaces-redact]
+3.43s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact_text]
+3.26s call     tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact]
+17 passed in 91.49s (0:01:31)
