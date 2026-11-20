@@ -266,9 +266,19 @@ def _refused_as_not_text(call, bad) -> None:
 
 
 def test_a_bad_budget_is_refused_before_any_reading(monkeypatch):
-    """D-7. A ``bool``, a string, NaN, an infinity or a list is refused with ``NotText`` before the clock is read once."""
+    """D-7. A ``bool``, a string, NaN, an infinity, a list or an ``int`` too large for a float (``10**400``: ``math.isfinite`` raises ``OverflowError`` on it) is refused with ``NotText`` before the clock is read once."""
     clock = _clock(monkeypatch)
-    for bad in (True, False, "1", float("nan"), float("inf"), float("-inf"), [1.0]):
+    for bad in (
+        True,
+        False,
+        "1",
+        float("nan"),
+        float("inf"),
+        float("-inf"),
+        [1.0],
+        10**400,
+        -(10**400),
+    ):
         _refused_as_not_text(lambda b: scan_holds(text="a summary", value="Mary", budget_s=b), bad)
         _refused_as_not_text(lambda b: scan_views_no_value("a summary", budget_s=b), bad)
     assert clock.reads == 0, f"DEADLINE-TYPE: the clock was read {clock.reads} times"
@@ -277,7 +287,7 @@ def test_a_bad_budget_is_refused_before_any_reading(monkeypatch):
 def test_the_injection_check_flags_a_run_past_its_budget(monkeypatch, caplog):
     """D-8. With a budget of 0.5 (stepping clock: reading 1 sets the check's deadline 1.5, reading 2 gives the fold -0.5 s left, the fold's start
     is reading 3 and its first reading after the size rule, reading 4, raises) a clean text is flagged ``guard_unavailable`` because of ``DeadlinePassed``, for
-    the detector alone and inside an ``AnyOf`` list (``AnyOf.check``, injection.py, is one of the six call sites of ``injection_check``); with the
+    the detector alone and inside an ``AnyOf`` list (``AnyOf.check``, injection.py, calls ``injection_check`` too); with the
     budget None the verdicts are today's."""
     for detector in (injection.RegexDetector(0.5), injection.AnyOf([injection.RegexDetector(0.5)])):
         clock = _clock(monkeypatch)
@@ -364,9 +374,10 @@ class _Raises:
 
 
 def test_a_detector_that_raises_deadline_passed_is_flagged_at_every_wrapper(caplog):
-    """D-8b. ``injection_check`` is the one place that catches the error, and the six call sites of the runtime all go through it: a fake detector
-    raising ``DeadlinePassed`` is flagged ``guard_unavailable`` (never passed) alone, inside ``AnyOf`` (any position) and inside a nested
-    ``AnyOf``; an ``except`` added at one call site would let it through."""
+    """D-8b. ``injection_check`` is the one place that catches the error: a fake detector raising ``DeadlinePassed`` is flagged ``guard_unavailable``
+    (never passed) through ``injection_check`` alone, inside ``AnyOf`` (any position) and inside a nested ``AnyOf``, and through ``combine``. This
+    test exercises those three paths, not the six call sites of the runtime (that every site goes through ``injection_check`` is read from the source,
+    not run here)."""
     ok = injection.RegexDetector(0.5)
     detectors = {
         "alone": _Raises(),
@@ -531,3 +542,59 @@ def test_the_wall_factor_setting_is_checked(monkeypatch):
         assert verdict.reason_code == "guard_unavailable", (
             f"WALL-FACTOR-UNCHECKED: {bad!r} not flagged"
         )
+
+
+class _Fixed:
+    """A clock for a test: ``thread_time()`` and ``monotonic()`` return the two attributes, which the test sets."""
+
+    def __init__(self, cpu: float, wall: float) -> None:
+        self.cpu = cpu
+        self.wall = wall
+
+    def thread_time(self) -> float:
+        return self.cpu
+
+    def monotonic(self) -> float:
+        return self.wall
+
+
+def test_a_wall_factor_of_exactly_one_is_accepted(monkeypatch):
+    """M3 N3. The factor is "a finite number of at least 1": exactly 1 (an ``int``) and 1.0 are accepted in both deadlines, and the wall deadline is
+    then the budget itself; only a factor under 1 is refused (``test_the_wall_factor_setting_is_checked``)."""
+    monkeypatch.setattr(injection, "time", _Fixed(5.0, 7.0))
+    monkeypatch.setattr(textnorm, "time", _Fixed(5.0, 7.0))
+    monkeypatch.setattr(defaults, "INJECTION_BUDGET_S", 3.0)
+    for factor in (1, 1.0):
+        monkeypatch.setattr(defaults, "INJECTION_WALL_FACTOR", factor)
+        for who, call in (
+            ("injection", injection._deadline),
+            ("textnorm", lambda: textnorm._deadline_of(3.0)),
+        ):
+            try:
+                got = call()
+            except ValueError as exc:
+                raise AssertionError(
+                    f"WALL-FACTOR-ONE: {who}: a factor of {factor!r} was refused: {exc}"
+                ) from None
+            assert got == (8.0, 10.0), (
+                f"WALL-FACTOR-ONE: {who}, factor {factor!r}: the deadline is {got}"
+            )
+
+
+def test_the_seconds_left_are_the_smaller_of_the_cpu_left_and_the_wall_left_over_the_factor(
+    monkeypatch,
+):
+    """M3 N4 (the real rule of ``injection._left``). Budget 30 s of CPU, factor 2: deadline (cpu 30, wall 60) from a clock at (0, 0). After 10 s of
+    CPU in 40 s of wall, CPU left is 20 and wall left is 20, and the fold gets 20 / 2 = 10 s: the CPU still needed must not exceed half the wall time
+    left. Dropping the division gives 20, taking the larger gives 20, ignoring the wall gives 20."""
+    clock = _Fixed(0.0, 0.0)
+    monkeypatch.setattr(injection, "time", clock)
+    monkeypatch.setattr(defaults, "INJECTION_BUDGET_S", 30.0)
+    monkeypatch.setattr(defaults, "INJECTION_WALL_FACTOR", 2.0)
+    deadline = injection._deadline()
+    assert deadline == (30.0, 60.0), f"LEFT-RULE: the deadline is {deadline}"
+    clock.cpu, clock.wall = 10.0, 40.0
+    left = injection._left(deadline)
+    assert left == 10.0, f"LEFT-RULE: {left} s left, not 10.0 (CPU left 20, wall left 20, factor 2)"
+    clock.cpu, clock.wall = 28.0, 41.0  # the other side: CPU left 2 is the smaller of 2 and 19 / 2
+    assert injection._left(deadline) == 2.0, "LEFT-RULE: the CPU seconds left are not the cap"

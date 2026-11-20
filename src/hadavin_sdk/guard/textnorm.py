@@ -22,7 +22,11 @@ calls only ``fold``, ``fold_view``, ``without_spacing_marks``, ``SPACING_CATEGOR
 ``scan_views_no_value`` (``guard/injection.py``), ``require_pinned_unidata`` (``app.build``) and the exceptions. These have NO production caller
 today (an unwired DENY API, kept as working code with its tests and mutants; whether to move or delete it is the owner's decision, O-1): ``scan_holds``,
 ``register_value``, ``Coverage``, ``scan_cache``, ``scan_needles``, ``identity_key``, ``identity_keys``, ``could_be_same_person``, ``allow_equal``,
-``names_equal``, ``has_mixed_script``, ``has_hidden_channel``, ``value_scripts`` and ``scan_views``. Where this text says a caller, a consumer or a package
+``names_equal``, ``has_mixed_script``, ``has_hidden_channel``, ``value_scripts`` and ``scan_views``. The other 8 public names are neither listed
+here as called nor unwired: they are internal helpers, reached only from inside this module and with no caller in any other module of ``src``:
+``FILLERS`` (read by ``fold`` and ``has_mixed_script``, so by production code through ``fold``), ``key_tag`` and ``FOLD_VERSION`` (the tag of a check
+name, part of ``identity_key``), ``squeeze`` (the squeeze check name, no production use), ``AllowVerdict`` (the result type of ``allow_equal``), and
+``fold_views``, ``squeeze_views`` and ``scan_keyset`` (the views and keys that the unwired scan reads). Where this text says a caller, a consumer or a package
 "uses" or "will use" one of them, read it as a design for a caller that does not exist yet.
 
 THE RULE (read before using ``fold``): ``fold`` makes look-alike text EQUAL. That is what a DENY decision wants (separation of
@@ -385,7 +389,8 @@ class TextTooLong(TextnormError):
 
 class NotText(TextnormError):
     """The argument is not a plain ``str`` (a ``str`` subclass and an enum member are refused too); for ``scripts`` it is not a ``frozenset`` of
-    plain ``str``."""
+    plain ``str``; for ``budget_s`` it is not ``None`` or a finite ``int`` or ``float`` that is not a ``bool`` (an infinity, NaN and an ``int`` too
+    large for a float included)."""
 
 
 class ViewTooShort(TextnormError):
@@ -621,7 +626,13 @@ def _deadline_of(budget_s: float | None) -> _Deadline | None:
     time a thread spends waiting (GIL, lock, I/O), which the CPU clock does not count."""
     if budget_s is None:
         return None
-    if type(budget_s) not in (int, float) or not math.isfinite(budget_s):
+    if type(budget_s) not in (int, float):
+        raise NotText("budget_s must be a finite number of CPU seconds or None")
+    try:
+        finite = math.isfinite(budget_s)
+    except OverflowError:  # an int too large for a float (10**400) is not a finite budget either
+        finite = False
+    if not finite:
         raise NotText("budget_s must be a finite number of CPU seconds or None")
     factor = defaults.INJECTION_WALL_FACTOR
     if type(factor) not in (int, float) or not 1 <= factor < math.inf:
@@ -1606,9 +1617,11 @@ def scan_holds(*, text: str, value: str, budget_s: float | None = None) -> bool:
     row are easy to swap, and a swap would scan the value for the text. Nothing of the text is kept after the call; to scan ONE text for
     hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``. ``budget_s``: None (no clock is read) or the
     CPU seconds this call may spend, counted from its start on the thread that runs it; past them the scan raises ``DeadlinePassed`` (see
-    "DEADLINE" in the module docstring). A consumer passes its own budget (the seconds left before its own deadline; no production code calls this function today) and converts at
+    "DEADLINE" in the module docstring). A consumer passes its own budget (the seconds left before its own deadline) and converts at
     the call, ``except textnorm.DeadlinePassed: raise InputTooLarge("InputTooLarge") from None``, with that function listed in the refusal
-    handlers of ``tests/test_textnorm_callers.py``."""
+    handlers of ``tests/test_textnorm_callers.py``. The call also ends at ``defaults.INJECTION_WALL_FACTOR`` times the budget on the wall clock
+    (``time.monotonic()``), so a consumer with its own wall deadline needs the rule of ``injection._left``: the smaller of the CPU seconds left and
+    the wall seconds left divided by the factor. No production code calls this function today."""
     deadline = _deadline_of(budget_s)
     _checked(text, value)
     _tick(deadline)

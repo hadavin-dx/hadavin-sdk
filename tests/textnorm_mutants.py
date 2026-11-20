@@ -9,7 +9,14 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-263 mutants (the list of P1b, 216, the 10 of P1a fix8 and the 14 of the two P1b fix rounds, 9 of round 1 and 5 of round 2, and the 23 of G10 and M3, the deadline of the fold and its wall clock, last), in the order of the list: 28 re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 12 new ones of the first package, 9 of fold2, 3 of fold3 (U+0345), 16 of fold4 (the spelling variants, the length check, the caseless form; the first of them is the fold2 mutant "no case fold before the marks are dropped" that fold3 removed and that is restored here), 9 of fix4 (the 15.1.0 data pin, the marks, the plain-words messages, the weight pre-check), 27 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 30 of fix7 (the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens) and 27 of the P1b fix batch (the composed view of the redactor, the Mc and Sk keys, the digit and key minimums, the proof rule of EmptyView, the cache, the one required value of scan_views, the floor, the one-inserted-letter match and its limits). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
+268 mutants, in the order of the list. The total is the sum of the groups, which ``tests/test_textnorm_meta.py`` (test a) checks by slice:
+77 + 26 + 14 + 5 + 31 + 10 + 77 + 28 = 268. In that order: 77 of the text fold and P1a fix4 (28 re-pointed mutants of the earlier text-fold list, the
+killers moved with their tests, + 12 of the first package + 9 of fold2 + 3 of fold3 (U+0345) + 16 of fold4 + 9 of fix4 = 77; the first fold4 mutant is the
+fold2 mutant "no case fold before the marks are dropped", restored), 26 of P1b (the scan keys, the scan, the callers), 14 of fix5 (the marks-dropped
+views, the letter and digit name rules, the pin constant), 5 of fix6 (the script views, the minimum view length, the supplement merge), 31 of fix7
+(the script view per script, the minimum per kind of view, the checks of the minimums, the proof rule, what loose loosens), 10 of fix8, 77 of the P1b
+fix batch (30 of the first batch + 33 of order 137 + 9 of round 1 + 5 of round 2 = 77) and 28 of G10, M3 and the tidy (16 of G10, the deadline of the
+fold, + 7 of M3, its wall clock, + 5 of the tidy, the huge budget and the boundaries of the wall factor, last: 16 + 7 + 5 = 28). Two mutants of fix7 are gone: "a bool is a minimum" (the floor of 2 refuses a bool anyway, so it cannot change a result: equivalent) and "scan_views: the scripts are not checked" (scan_views no longer takes scripts). The dead branch of the old script view is an equivalent mutant (it could not change a result), so it has no entry. Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -881,8 +888,8 @@ M = [
         "class DeadlinePassed(TextTooLong):",
         "test_the_error_is_not_a_size_refusal_and_ends_the_chunked_read_at_once", "DEADLINE-NOT-SIZE", test_file=DL),
     mutant("deadline: a bad budget is no budget", TN,
-        "    if type(budget_s) not in (int, float) or not math.isfinite(budget_s):\n",
-        "    if False:\n",
+        "    if type(budget_s) not in (int, float):\n        raise NotText(\"budget_s must be a finite number of CPU seconds or None\")\n    try:\n        finite = math.isfinite(budget_s)\n    except OverflowError:  # an int too large for a float (10**400) is not a finite budget either\n        finite = False\n    if not finite:\n        raise NotText(\"budget_s must be a finite number of CPU seconds or None\")\n",
+        "    pass\n",
         "test_a_bad_budget_is_refused_before_any_reading", "DEADLINE-TYPE", test_file=DL),
     mutant("deadline: the views of the text are built without the deadline", TN,
         "    bundle = _text_bundle(text, deadline)\n",
@@ -960,6 +967,26 @@ M = [
         "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
         "    return deadline[0] - time.thread_time()\n",
         "test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold", "WALL-INJECTION", test_file=DL),
+    mutant("deadline: a huge int budget raises OverflowError", TN,
+        "    try:\n        finite = math.isfinite(budget_s)\n    except OverflowError:  # an int too large for a float (10**400) is not a finite budget either\n        finite = False\n",
+        "    finite = math.isfinite(budget_s)\n",
+        "test_a_bad_budget_is_refused_before_any_reading", "DEADLINE-TYPE", test_file=DL),
+    mutant("deadline: a wall factor of exactly 1 is refused", TN,
+        "or not 1 <= factor < math.inf:",
+        "or not 1 < factor < math.inf:",
+        "test_a_wall_factor_of_exactly_one_is_accepted", "WALL-FACTOR-ONE", test_file=DL),
+    mutant("injection: a wall factor of exactly 1 is refused", INJ,
+        "or not 1 <= factor < float(\"inf\"):",
+        "or not 1 < factor < float(\"inf\"):",
+        "test_a_wall_factor_of_exactly_one_is_accepted", "WALL-FACTOR-ONE", test_file=DL),
+    mutant("injection: the wall seconds left are not divided by the factor", INJ,
+        "        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,\n    )\n",
+        "        (deadline[1] - time.monotonic()),\n    )\n",
+        "test_the_seconds_left_are_the_smaller_of_the_cpu_left_and_the_wall_left_over_the_factor", "LEFT-RULE", test_file=DL),
+    mutant("injection: the seconds left are the larger of the two", INJ,
+        "    return min(\n        deadline[0] - time.thread_time(),\n        (deadline[1]",
+        "    return max(\n        deadline[0] - time.thread_time(),\n        (deadline[1]",
+        "test_the_seconds_left_are_the_smaller_of_the_cpu_left_and_the_wall_left_over_the_factor", "LEFT-RULE", test_file=DL),
 ]  # fmt: skip
 
 
