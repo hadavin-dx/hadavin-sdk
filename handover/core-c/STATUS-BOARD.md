@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:03:28Z
+UPDATED_UTC: 2026-11-20T17:05:19Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 1703Z REAL RUNNING AGENTS 4: G9c builder, G12e builder (= P9), P7 builder, P8 reviewer. Load (/proc/loadavg) 1.93 1.72 2.05. P10 perf waits for G9c+G12e merge. Details: ANSWERS-1703Z.md. 17:05Z REAL RUNNING AGENTS 2: G9c builder, G12e builder. Load (/proc/loadavg) 1.61 1.77 2.22. G12d review: 0B/2M, leaks REPRODUCED on head (password=<HUNTER2, HUNTER2 leaves the second copy; same for ‹ADMIN_1›, <ABCD1234!, SECRET_001): a regression of my G12d merge, fix in flight (G12e). G13d review
+STATE: 17:20Z REAL RUNNING AGENTS 3: G9c builder, G12e builder (= P9), P7 builder. Load (/proc/loadavg) 2.75 2.05 2.12. P8 DONE: handover/core-c/tickets/P8-flow-review-1-design.md (2 Blocker = F1/F2 already in flight; 5 Major: spend under-count, permanent refusal/quadratic history, scan cost numbers disagree, safety net not independent, lossy audit row; ledger with owner and next step inside). G14 (per-message result cache, audit-drop counter) starts after P7 merges (same file model_gate.py). 1703Z REAL RUNNING AGENTS 4: G9c builder, G12e builder (= P9), P7 builder, P8 reviewer. Load (/proc/loadavg) 1.93 1.72 2.05. P10 perf waits for G9c+G12e merge. Details: ANSWERS-1703Z.md. 17:05Z REAL RUNNING AGENTS 2: G9c builder, G12e builder. Load (/proc/loadavg) 1.61 1.77 2.22. G12d review: 0B/2M,
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 1.9 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+AGENTS_RUNNING: 3
+CAPACITY: load 2.7 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 3, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 63; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:03:25+00:00
+PUSHED_UTC: 2026-11-20T17:05:12+00:00
 
-(22:33 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:35 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -56,7 +56,7 @@ PUSHED_UTC: 2026-11-20T17:03:25+00:00
 | g4d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G4d fix diff | 17:23 | 17:35 | 1 | done | 1 | 0 | EGM |
 | g12e | builder | claude-sonnet-5-5 | BUILDS G12e: G12d review fixes (2 REPRODUCED leaks: <HUNTER2 / ‹ADMIN_1› / SECRET_001 bare copies; map budget in aggregate); /tmp/core-c-g12e | 17:05 | 17:35 | 1 | running | 1 | 0 |  |
 | p7 | builder | claude-sonnet-5-5 | P7: F1 LimitsMeter adapter, F2 strict xfail + E25, F3 note; /tmp/core-c-ff wip/cloud-core-c/f-findings | 17:12 | 17:45 | 1 | running | 1 | 0 |  |
-| p8 | reviewer | claude-sonnet-5-5 | P8: fresh egm-design end-to-end review of gate+guard+redact+runmap at a4c99a006 | 17:12 | 17:30 | 1 | running | 1 | 0 | EGM design |
+| p8 | reviewer | claude-sonnet-5-5 | P8: fresh egm-design end-to-end review of gate+guard+redact+runmap at a4c99a006 | 17:12 | 17:30 | 1 | done | 1 | 0 | EGM design |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
