@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:01:48Z
+UPDATED_UTC: 2026-11-20T16:06:57Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:15Z AGENTS 1 (docs root pass builder), load 0.1. Of the three lead items: (a) core-a grant tests: DONE/answered: file identical to core-c's, 28 fail on core-b head; re-pinned version wip/cloud-core-c/grants b55d21865 (117 passed PG16); (b) F-install blockers: ALL DONE+MERGED, nothing running (NO_MAP r3, usd_cap, mark on ProviderExhausted; K5 = Q17 lead); (c) one merged head: DONE = cloud/core-c (g2/g3 superseded, REC-notes). Perf 96 passed idle; non-perf 16071 passed, 2 failed (Port.io lead file; k5 fixed).
+STATE: 16:17Z load 0.2. Agents 1: DOCS builder ad19c825 (SECURITY/CHANGELOG/README from v7, running). NOT idle. F-install builders are NOT to be started: all three are already in src on cloud/core-c, evidence: guard/model_gate.py:285 MODE_NO_MAP + :130-135 NO_MAP/mapping required keyword (request 3); :303-311 usd_cap in SPEND_REASONS (sixth reason); :214 + :340 refused_before_response honoured on ProviderExhausted (settle at 0). Tests: test_model_gate.py + test_gate_mutants_picked_up.py 274 passed; gate_mutants 139/140 (R8 equivalent). Remaining for no-overspend: core-b's retry layer must SET the mark and core-b must install the gate in the Runtime (their lane). K5 = Q17, lead must say which item.
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 1
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 1, heavy agents 0
+CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 1, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 51; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:56:49+00:00
+PUSHED_UTC: 2026-11-20T16:01:49+00:00
 
-(21:31 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:36 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
