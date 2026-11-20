@@ -599,6 +599,10 @@ _B64_LINE = re.compile(r"[A-Za-z0-9+/_\-]+={0,2}")  # one line of a block, match
 _B64_RUN = re.compile(
     rf"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+/_\-]{{{defaults.B64_MIN_CHARS},}}={{0,2}}(?![A-Za-z0-9+/_\-=])"
 )
+# Blanked before runs are found (3.1 point 2): a placeholder of ours, or a marker shape. STATED LIMIT (L-B6, design result review 1 N6): the
+# `[A-Z][A-Z0-9_]*` branch blanks ANY all-uppercase-and-digit text in angle brackets, so a blob whose base64 characters are all
+# uppercase letters, digits and `_`, written between `<` and `>` (or `‹` and `›`), is never a run: an author who controls the payload
+# bytes can pick a payload that encodes so. No input a real secret would produce has that shape (pinned by TB-3.3b).
 _B64_TOKEN_SKIP = re.compile(r"[<‹](?:[A-Za-z][A-Za-z0-9]*_\d+|[A-Z][A-Z0-9_]*)[>›]")
 _B64_SEP = "\n\n;\n\n"  # between decoded texts: survives `neutralise_untrusted`, holds no run character, no `\`, `%` or `&`
 
@@ -689,6 +693,13 @@ def _b64_held(unit: _B64Unit, secret: frozenset[str], wholes: str) -> bool:
 
 
 def _printable_text(s: str | None) -> str | None:
+    """`s` when at least `defaults.B64_PRINTABLE_SHARE` of its characters are printable (tab, line feed and carriage return count),
+    else None. STATED LIMIT (L-B8, design result review 1 M2): a decoded text with 10 % or more non-printable characters is never
+    scanned, and `str.isprintable()` is False for NBSP and U+3000 as well as for control characters. A blob padded on purpose with
+    such characters, or a binary container (protobuf, msgpack) that holds an ASCII credential among its non-text bytes, is not a
+    unit hit and stays readable beside pass one's misses. No fallback is built (a lead decision; an ASCII-strings extraction of at
+    least 8 characters changed 0 of the 142 probe rows and 0 of the 1,978 property inputs, measured: G4-build-notes.md). Pinned by
+    `test_limit_padded_blob` (strict xfail)."""
     if (
         s is not None
         and s
@@ -821,7 +832,10 @@ _ONLY_PLACEHOLDERS = re.compile(r"(?:<ENCODED_[1-9][0-9]{0,5}>)+")
 
 def _only_encoded(t2: str, base: dict[str, str]) -> bool:
     """True when `t2` is nothing but `<ENCODED_n>` placeholders and no stored original (ASCII, so with no folded spelling) occurs
-    inside it: a second `redact` over such a text reads nothing and writes nothing."""
+    inside it: a second `redact` over such a text reads nothing and writes nothing.
+
+    A performance win for all-ASCII maps only (E22): the shortcut is OFF whenever any stored value is non-ASCII (its folded spelling
+    is not known here, so `redact` runs) or occurs in `t2`. Pinned by TB-3.44 and TB-3.45 and three mutants."""
     if not _ONLY_PLACEHOLDERS.fullmatch(t2):
         return False
     return all(v.isascii() and v not in t2 for v in base.values())
@@ -957,7 +971,8 @@ def redact_text(
     is, then views, decoded masks and nested base64 to `defaults.B64_MAX_DEPTH`), and a run whose decoded text held anything that
     scan masks is replaced whole by one `<ENCODED_n>` before pass one runs again. ENCODED is a secret kind, never stored or restored.
     A wrapped block (lines of one length) is decoded joined; when the join holds nothing, its lines are decoded one by one, and those
-    lines are not counted as units (their decoded characters have a count of their own under the same limit). At most
+    lines are not counted as units (their decoded characters have a count of their own under the same limit); a block of 3 or more lines
+    is also tried with its first or its last line left out (`unit.trims`, a trimmed join), counted the same way in `part_chars`. At most
     `defaults.B64_MAX_UNITS` units and `defaults.B64_MAX_DECODED_CHARS` decoded characters per call, the deadline read before
     each unit; past either, `InputTooLarge`; the decoded texts are scanned joined by a line holding `;`, and a decoded value of a kind
     that is never stored stays in the run's map (its plain copies are masked).

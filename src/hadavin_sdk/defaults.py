@@ -153,13 +153,15 @@ SPELLED_MAX_UNION_CHARS = 1_000_000
 B64_MIN_CHARS = 12
 # shortest first line of a wrapped base64 block; every line but the last has its length
 B64_WRAP_MIN_CHARS = 16
-# share of printable characters a decoded run needs to count as text
+# share of printable characters a decoded run needs to count as text. STATED LIMIT (L-B8): a decoded text below it is never scanned
+# (`str.isprintable()` is False for NBSP and U+3000 too): a blob padded on purpose with such characters, or a binary container with
+# an ASCII credential among its non-text bytes, is not read; no fallback is built (see `runmap._printable_text`, `test_limit_padded_blob`)
 B64_PRINTABLE_SHARE = 0.90
 # share of zero bytes at the odd (LE) or even (BE) positions that reads a decoded run as UTF-16
 B64_UTF16_ZERO_SHARE = 0.90
-# decodable, not held base64 units per redact_text call (all views, all depths; a wrapped block counts once, its lines tried alone do not count); one more is refused (InputTooLarge)
+# decodable, not held base64 units per redact_text call (all views, all depths; a wrapped block counts once, its lines and its trimmed joins (`unit.trims`) tried alone do not count); one more is refused (InputTooLarge)
 B64_MAX_UNITS = MAX_MAP_ENTRIES
-# decoded characters per redact_text call, and again for the lines of blocks tried alone; past either the call is refused (InputTooLarge)
+# decoded characters per redact_text call, and again for the lines and trimmed joins of blocks tried alone (`part_chars`); past either the call is refused (InputTooLarge)
 B64_MAX_DECODED_CHARS = MAX_REDACT_CHARS
 # longest base64 unit that is decoded; a longer one that pass one did not hold is masked unread
 B64_MAX_UNIT_CHARS = 1 << 16
