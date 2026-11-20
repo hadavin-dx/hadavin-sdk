@@ -4,6 +4,8 @@ The key=value value class keeps a comma that begins no `key=` pair and reads `.`
 (`authorization:` reads `;` too), so `password=hunter22, hunter22` stored `hunter22,` and the every-copy sweep of that value left the
 clear copy `hunter22` readable. `_place` registers the value without its trailing punctuation as an entry of its own (as a piece).
 The E18 probe as written replaced the 6th character (`4`, not `x`) by U+FF58: its "plain copy" is another value (pinned below).
+G12b (result review round 1): ONE rule strips both ends of a value (`_bare`: characters that are not letters or digits, markup tags, escaped
+`\\n` `\\r` `\\t`), for the core `_place` registers and for the words `_decide` exempts, and the core is registered for a wrapper too.
 Every assertion message starts with its id (`G12-n `): the mutants of tests/g12_mutants.py expect it."""
 
 from __future__ import annotations
@@ -115,3 +117,118 @@ def test_g12_a_g9_union_registers_its_value_only_and_no_core():
     r = R._Redactor(None)
     r._place("SECRET", PW + ",", PW + ",", derived=False)
     assert r.mapping == {"<SECRET_1>": PW + ","}, f"G12-12 {r.mapping}"
+
+
+# --- G12b ---------------------------------------------------------------------------------------------------------------------
+
+NOT_VALUES = [
+    "none",
+    "null",
+    "true",
+    "false",
+    "set",
+    "empty",
+    "missing",
+    "required",
+    "invalid",
+    "nil",
+    "unset",
+]
+
+
+@pytest.mark.parametrize("word", NOT_VALUES)
+@pytest.mark.parametrize("mark", ["!", "?", "}", ".", ",", "`", "**", "]"])
+def test_g12_a_word_that_says_there_is_no_value_is_exempt_with_its_punctuation_too(word, mark):
+    """M-1: `password=none` is exempt; `password=none!` stored whole, and its core `none` swept every `none` of the text."""
+    text = f"password={word}{mark} {word} un{word}"
+    r = R.redact(text)
+    assert r.text == text and r.mapping == {}, f"G12-13 {r.text} {r.mapping}"
+
+
+def test_g12_the_exemption_and_the_core_use_one_rule_on_both_ends():
+    for text in ("password=*none* none", "password=(null), null", "password=<b>true</b> true"):
+        r = R.redact(text)
+        assert r.text == text and r.mapping == {}, f"G12-13 {text} -> {r.text} {r.mapping}"
+    # a value that is not one of those words is still masked, with its core
+    r = R.redact("password=none1! none1")
+    assert r.text == "password=<SECRET_1> <SECRET_2>", f"G12-13 {r.text}"
+
+
+WRAPPED = [
+    ("`password=hunter22` hunter22", "`password=<SECRET_1> <SECRET_2>"),
+    ("**password=hunter22** hunter22", "**password=<SECRET_1> <SECRET_2>"),
+    ("<b>password=hunter22</b> hunter22", "<b>password=<SECRET_1> <SECRET_2>"),
+    ("password=<b>hunter22</b> hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("~password=hunter22~ hunter22", "~password=<SECRET_1> <SECRET_2>"),
+    ("|password=hunter22| hunter22", "|password=<SECRET_1> <SECRET_2>"),
+    ("password=hunter22… hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=hunter22。 hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=hunter22） hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=「hunter22」 hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=hunter22\\n hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=\\thunter22 hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=(hunter22), hunter22", "password=<SECRET_1> <SECRET_2>"),  # L-G12a, closed
+    ("password=[hunter22]. hunter22", "password=<SECRET_1> <SECRET_2>"),
+    ("password=--hunter22-- hunter22", "password=<SECRET_1> <SECRET_2>"),
+]
+
+
+@pytest.mark.parametrize(("text", "masked"), WRAPPED, ids=[str(i) for i in range(len(WRAPPED))])
+def test_g12_a_wrapper_at_either_end_does_not_leave_the_clear_copy(text, masked):
+    r = R.redact(text)
+    assert PW not in r.text, f"G12-14 {r.text}"
+    assert r.text == masked, f"G12-14 {r.text}"
+    assert PW in r.mapping.values() and len(r.mapping) == 2, f"G12-14 {r.mapping}"
+
+
+def test_g12_a_wrapper_around_a_three_character_core_is_swept_standalone_only():
+    r = R.redact("password=*abc*, xabcx abc")
+    assert r.text == "password=<SECRET_1> xabcx <SECRET_2>", f"G12-14 {r.text}"
+
+
+def test_g12_a_value_takes_at_most_two_entries():
+    """N-1: the core is one entry; the budget (E14, MAX_MAP_ENTRIES) sees at most twice the distinct values."""
+    values = [f"zq{n:04d}x" for n in range(40)]
+    text = "\n".join(f"password={v}, x" for v in values)
+    assert len(R.redact(text).mapping) == 2 * len(values), "G12-15 trailing"
+    wrapped = "\n".join(f"password=(`{v}`), x" for v in values)
+    assert len(R.redact(wrapped).mapping) == 2 * len(values), "G12-15 wrapped"
+    plain = "\n".join(f"password={v}" for v in values)
+    assert len(R.redact(plain).mapping) == len(values), "G12-15 control"
+    for text in (f"password={PW},, {PW}", f"password=({PW}), {PW}", f"password=<b>{PW}</b> {PW}"):
+        assert len(R.redact(text).mapping) <= 2, f"G12-15 {text}"
+
+
+def test_g12_the_core_of_a_value_holding_a_placeholder_is_cut_from_the_resolved_value():
+    """The stored value is the resolved one (`full`), so is its core: a placeholder is never inside a registered value."""
+    text = "password=zq9xk\npassword=<SECRET_1>-hunter22, zq9xk-hunter22"
+    r = R.redact(text)
+    assert r.mapping == {
+        "<SECRET_1>": "zq9xk",
+        "<SECRET_2>": "zq9xk-hunter22,",
+        "<SECRET_3>": "zq9xk-hunter22",
+    }, f"G12-16 {r.mapping}"
+    assert r.text == "password=<SECRET_1>\npassword=<SECRET_2> <SECRET_3>", f"G12-16 {r.text}"
+
+
+@pytest.mark.parametrize("value", ["....", "a.", "!!", "...,", "ab.", "..a.."])
+def test_g12_an_all_punctuation_or_short_value_gets_no_core(value):
+    r = R.redact(f"password={value} {value}")
+    assert set(r.mapping.values()) <= {value}, (
+        f"G12-17 {r.mapping}"
+    )  # the value itself, never a core
+
+
+def test_g12_a_core_of_exactly_three_characters_is_swept_standalone_only():
+    for wrap in ("{0},", "({0})", "*{0}*", "{0}..."):
+        stored = wrap.format("abc")
+        r = R.redact(f"password={stored} xabcx abc")
+        assert r.text == "password=<SECRET_1> xabcx <SECRET_2>", f"G12-17 {stored} {r.text}"
+    # two characters: no core
+    assert R.redact("password=(ab), ab").text == "password=<SECRET_1> ab", "G12-17 ab"
+
+
+def test_g12_the_edge_rule_is_linear_on_a_long_run_of_tags():
+    big = "<a>" * 60_000 + "x" + "</b>" * 60_000
+    assert R._bare(big) == "x"
+    assert R._bare("<b>" * 50_000) == ""

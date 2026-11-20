@@ -924,10 +924,34 @@ _KEPT_HOST = re.compile(
 )
 
 _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
-# Prose punctuation a SECRET value can take in at its END (G12, escalation E18 G7-F4): the key=value value class keeps a comma that
-# begins no `key=` pair and reads `.` and `)` as value characters, so `password=hunter22, hunter22` stored `hunter22,` and the
-# every-copy sweep of that value left the clear copy `hunter22` readable. `_place` registers the value without them as well.
-_TRAIL = ".,;:!?)]}"
+# The one edge rule of a SECRET value (G12, G12b): at either end, what is not part of the value is a character that is not a letter or a
+# digit, a markup tag (`<b>`, `</b>`) or an escaped `\\n` `\\r` `\\t`. The key=value value class keeps a comma that begins no `key=`
+# pair and reads `.` `)` `!` and many more as value characters, so `password=hunter22, hunter22` stored `hunter22,` and the every-copy
+# sweep of that value left the clear copy `hunter22` readable (E18 G7-F4); the same with a wrapper (`(hunter22)`, a backtick, `**x**`,
+# `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own, and
+# `_decide` tests the "says no value" words (`none!`, `null?`) after the SAME strip, so a word that is exempt without punctuation is
+# exempt with it (else its core would sweep every `none` of the text).
+_EDGE_OPEN = re.compile(r"<[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt]")
+_EDGE_CLOSE = re.compile(r"(?:</[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt])\Z")
+
+
+def _bare(text: str) -> str:
+    """`text` without what is not part of a value at either end (see above). Works on indexes and looks at the last 64 characters of the
+    end only: linear, whatever the text holds."""
+    start, end = 0, len(text)
+    while start < end:
+        if (m := _EDGE_OPEN.match(text, start, end)) is not None:
+            start = m.end()
+        elif (m := _EDGE_CLOSE.search(text, max(start, end - 64), end)) is not None:
+            end = m.start()
+        elif not text[start].isalnum():
+            start += 1
+        elif not text[end - 1].isalnum():
+            end -= 1
+        else:
+            break
+    return text[start:end]
+
 
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(
@@ -1726,7 +1750,7 @@ class _Redactor:
         # The first group that took part: a pattern may offer the value in several written forms.
         original = next((g for g in m.groups() if g is not None), m.group(0))
         if label == "SECRET" and (
-            original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
+            _bare(original).lower() in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
         ):
             return None
         if label == "HOSTNAME" and _KEPT_HOST.search(
@@ -1768,7 +1792,7 @@ class _Redactor:
 
     def _place(self, label: str, full: str, original: str, derived: bool = True) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it and one for `full` without the
-        prose punctuation it ends with (`_TRAIL`, G12)."""
+        characters that are not letters or digits at its ends (`_bare`, G12)."""
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
@@ -1789,9 +1813,9 @@ class _Redactor:
                 self.reverse[piece] = f"<{label}_{self.counters[label]}>"
                 if self._journal is not None:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
-        # G12: the value without the prose punctuation it ends with, an entry of its own (as a piece), so its copies are swept as the
+        # G12: the value without the non-alphanumeric characters at its ends, an entry of its own (as a piece), so its copies are swept as the
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
-        core = full.rstrip(_TRAIL) if derived and label in SECRET_KINDS else full
+        core = _bare(full) if derived and label in SECRET_KINDS else full
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
             self.mapping[f"<{label}_{self.counters[label]}>"] = core
