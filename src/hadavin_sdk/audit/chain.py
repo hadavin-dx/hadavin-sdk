@@ -32,7 +32,7 @@ import sqlite3
 import threading
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from hadavin_sdk import defaults
@@ -99,7 +99,9 @@ def _is_permanent(exc: BaseException) -> bool:
     grant), 54000 (limit exceeded), a psycopg DataError or IntegrityError without a SQLSTATE, and local data
     errors (ValueError, TypeError, sqlite3 data, integrity and programming errors). EVERY other psycopg or OS
     error is transient (timeouts 57014 and 55P03, 40001, 40P01, 53300, 25006, class 08, 57P): the event stays in
-    the retry set. An error of no known database kind is permanent (a bug does not heal by waiting)."""
+    the retry set. An error of NO known kind (not a database, OS or local data error) is NOT permanent: it is
+    treated as transient and reported by name (`_is_unclassified`), so a bug in a wrapped connection never
+    quarantines a row that could be written."""
     if isinstance(exc, StoreUnavailable | OSError):
         return False
     names = _driver_names(exc)
@@ -108,7 +110,24 @@ def _is_permanent(exc: BaseException) -> bool:
         if isinstance(state, str):
             return state.startswith(defaults.AUDIT_PERMANENT_SQLSTATES)
         return bool(names & {"DataError", "IntegrityError"})
+    return isinstance(exc, ValueError | TypeError | sqlite3.Error) and not isinstance(
+        exc, sqlite3.OperationalError
+    )
+
+
+def _is_unclassified(exc: BaseException) -> bool:
+    """True for an exception that is neither a known permanent refusal nor a known transient database or OS error
+    (an AttributeError or RuntimeError from a wrapped connection, say). It is retried like a transient error and
+    fails the reconcile step with its own text."""
+    if _is_permanent(exc) or _is_outage(exc) or _driver_names(exc):
+        return False
     return not isinstance(exc, sqlite3.OperationalError)
+
+
+def _sort_ts(event: AuditEvent) -> datetime:
+    """The ordering instant of an event: a naive `ts` is read as UTC (it would otherwise raise in the comparison
+    with an aware one); only the order uses this, the event keeps its own `ts`."""
+    return event.ts if event.ts.tzinfo is not None else event.ts.replace(tzinfo=UTC)
 
 
 def _takes_meta(put: Callable) -> bool:
@@ -176,6 +195,7 @@ class _Pass:
     unreadable: int = 0
     not_writable: int = 0
     deferred: int = 0
+    unclassified: int = 0
     not_deleted: int = 0
     marked: int = 0
     select_error: Exception | None = None
@@ -380,6 +400,10 @@ class ChainAudit:
                 (r.not_writable, f"{r.not_writable} rows not writable"),
                 (earlier, quarantine_text),
                 (r.deferred, deferred_text),
+                (
+                    r.unclassified,
+                    f"{r.unclassified} items refused for an unclassified error (retried, not quarantined)",
+                ),
                 (r.not_deleted, f"{r.not_deleted} rows not deleted"),
                 (in_memory, f"{in_memory} events not writable in memory"),
             )
@@ -409,7 +433,7 @@ class ChainAudit:
         )
         return (
             "SELECT event_id, body FROM audit_outbox WHERE event_id NOT LIKE ? "  # noqa: S608 - ts is a constant
-            f"ORDER BY ({ts} IS NULL), {ts}, event_id LIMIT ?"
+            f"ORDER BY ({ts} IS NULL), {ts}, event_id LIMIT ? OFFSET ?"
         )
 
     def _drain_pass(self, retry_refused: bool = True) -> _Pass:
@@ -420,33 +444,43 @@ class ChainAudit:
             # Events refused earlier go back in front of the queue: one retry per pass.
             if retry_refused:
                 self._pending[:0], self._unwritable = self._unwritable, []
-            try:
-                queued = self._db.run(
-                    self._outbox_sql(),
-                    (defaults.AUDIT_QUARANTINE_PREFIX + "%", defaults.AUDIT_DRAIN_BATCH),
-                )
-            except Exception as exc:  # noqa: BLE001
-                r.select_error = exc
-                queued = []
             items: list[tuple[AuditEvent, str | None]] = [(e, None) for e in self._pending]
-            for event_id, body in queued:
+            # Rows that are not readable never use a slot of the batch: the read pages on until it holds
+            # `AUDIT_DRAIN_BATCH` readable rows or the table is exhausted.
+            seen = good = 0
+            while good < defaults.AUDIT_DRAIN_BATCH:
+                want = defaults.AUDIT_DRAIN_BATCH - good
                 try:
-                    event = AuditEvent.model_validate_json(body)
-                except ValueError:
-                    r.unreadable += 1
-                    continue
-                if event.event_id != event_id:
-                    r.unreadable += 1
-                    continue
-                items.append((event, event_id))
-            items.sort(key=lambda it: (it[0].ts, it[0].event_id))
+                    page = self._db.run(
+                        self._outbox_sql(), (defaults.AUDIT_QUARANTINE_PREFIX + "%", want, seen)
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    r.select_error = exc
+                    break
+                seen += len(page)
+                for event_id, body in page:
+                    try:
+                        event = AuditEvent.model_validate_json(body)
+                    except ValueError:
+                        r.unreadable += 1
+                        continue
+                    if event.event_id != event_id:
+                        r.unreadable += 1
+                        continue
+                    items.append((event, event_id))
+                    good += 1
+                if len(page) < want:
+                    break
+            items.sort(key=lambda it: (_sort_ts(it[0]), it[0].event_id))
             for event, row_id in items:
-                self._drain_item(event, row_id, r)
-            if r.select_error is None and not queued:
+                if self._drain_item(event, row_id, r):
+                    break  # a transient refusal stops the pass: nothing newer is written past it
+            if r.select_error is None and not seen:
                 self._outbox_dirty = False
         return r
 
-    def _drain_item(self, event: AuditEvent, row_id: str | None, r: _Pass) -> None:
+    def _drain_item(self, event: AuditEvent, row_id: str | None, r: _Pass) -> bool:
+        """Drain one item. True when the pass must stop here (a transient refusal)."""
         failed = self._drain(event)
         if failed is None:
             if row_id is None:
@@ -456,9 +490,9 @@ class ChainAudit:
                     self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
                 except Exception:  # noqa: BLE001 - in the chain; the next drain dedupes and deletes
                     r.not_deleted += 1
-                    return
+                    return False
             r.done += 1
-            return
+            return False
         if _is_permanent(failed):
             if row_id is None:
                 self._pending.remove(event)
@@ -468,11 +502,14 @@ class ChainAudit:
                 # A missing grant (42501) is mended by the operator and then every row drains: no quarantine.
                 if getattr(failed, "sqlstate", None) != "42501":
                     r.marked += self._quarantine(event, row_id)
-            return
+            return False
         if row_id is None:
             self._transient_stuck = not _is_outage(failed)
         elif not _is_outage(failed):
             r.deferred += 1
+        if _is_unclassified(failed):
+            r.unclassified += 1
+        return True
 
     def _quarantine(self, event: AuditEvent, row_id: str) -> int:
         """Mark a poison row: kept in the outbox under the quarantine prefix, skipped by every later read."""
