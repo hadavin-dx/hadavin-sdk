@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:24:01Z
+UPDATED_UTC: 2026-11-20T15:27:48Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:25Z load 2.1. cloud/core-c head 5828a355f (code head 875b905a8 incl. G4c, G13c, G12c, gate mutant fixes). Agents alive 3: G9b (E23), rec (g2/g3 leftovers into one head), grants (8 grant tests vs core-b 0006/0007, started 15:24). F-install blockers: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
+STATE: 15:28Z load 1.4. Agents 3: G9b (E23), rec (g2/g3 leftovers into one head), grants (8 grant tests vs core-b 0006/0007: running since 15:24, no result yet). cloud/core-c head ca1534140. F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 3
-CAPACITY: load 2.1 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
-DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
+CAPACITY: load 1.4 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
+DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect G9b and rec, then idle full-suite run; docs root pass; grant tests vs core-b head.
-PUSHED_UTC: 2026-11-20T15:19:37+00:00
+PUSHED_UTC: 2026-11-20T15:24:02+00:00
 
-(20:54 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:57 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
