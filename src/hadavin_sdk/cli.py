@@ -387,24 +387,25 @@ def _migrate(
     from hadavin_sdk.store.postgres import ca_file
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
-    applied = migrate(
-        dsn,
-        runtime_role=runtime_role,
-        portal_role=portal_role,
-        purge_role=purge_role,
-        reset_role=reset_role,
-        accepted_admin_roles=accepted_admin_roles,
-        iam_auth=store.iam_auth,
-        region=store.region,
-        sslmode=store.sslmode,
-        sslrootcert=ca,
-    )
-    print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
-    if accepted_admin_roles:
-        print(
-            "accepted administrator roles (you vouch for them; not checked as able to clear a stop): "
-            + ", ".join(accepted_admin_roles)
+    notes: list[str] = []
+    try:
+        applied = migrate(
+            dsn,
+            runtime_role=runtime_role,
+            portal_role=portal_role,
+            purge_role=purge_role,
+            reset_role=reset_role,
+            accepted_admin_roles=accepted_admin_roles,
+            iam_auth=store.iam_auth,
+            region=store.region,
+            sslmode=store.sslmode,
+            sslrootcert=ca,
+            notes=notes,
         )
+    finally:  # printed on a refusal too: the CI log is the record of who vouched
+        for note in notes:
+            print(note)
+    print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:
         print(
             "warning: new tables have no runtime grants; run again with --runtime-role <role>",

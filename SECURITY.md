@@ -32,8 +32,9 @@ cleared; the command reads the state back and exits 2 while it is still ON. (5) 
 until the next run), `migrate` refuses, when it applies grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
 in a role that holds one (or in the reset role), through UPDATE, DELETE or TRUNCATE on `kill_switch`, INSERT on
 `kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE
-(an operator who vouches for such a role can name it with `--accept-admin-role`; it is then printed and logged, and a
-grant on the stop tables still lists it), from 16 every holder of the ADMIN option on such a role or on the reset
+(an operator who vouches for such a role can name it with `--accept-admin-role`; the names are printed and logged, the
+CI log of that run is the record of who vouched, and a grant on the stop tables still lists the role and its members are
+still listed), from 16 every holder of the ADMIN option on such a role or on the reset
 role (so the login that created the reset role is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
 uses. A plain `migrate` that names no role applies and checks no grants and leaves old ones in place, so name all roles
 in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the

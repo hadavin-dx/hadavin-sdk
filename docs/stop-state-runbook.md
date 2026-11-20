@@ -74,11 +74,14 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   looks at the whole server, not this schema. If a listed role is not a person or process that can use CREATEROLE to
   grant the reset role to itself (for example a managed service's own administrator login), you may name it with
   `--accept-admin-role <role>` (repeat the flag for several; in code `accepted_admin_roles`). Rules: you vouch for it;
-  each name must be a plain role name (no `PUBLIC`, no wildcard) and not one of the roles migrate grants; it is
-  left out of the CREATEROLE listing only, and is still listed when it holds a grant on the stop tables or is a
-  member of a listed role; it is printed by the command and logged at warning level; it changes nothing from
-  PostgreSQL 16. Use it only when you can say who holds that login; the other way out is `REVOKE CREATEROLE` from it
-  or PostgreSQL 16 or later.
+  a name is any text of 1 to 63 bytes with no control character and no space at either end (`Admin`, `my-admin`,
+  `user@server` are fine), compared as exact text, never `PUBLIC`, `session_user`, `current_user`, `*` or `%`, and
+  not one of the roles migrate grants; it is left out of the CREATEROLE listing only, and is still listed when it
+  holds a grant on the stop tables. Its MEMBERS are still listed (a member can `SET ROLE` to it and use its
+  CREATEROLE): vouching covers the role itself, not who may become it. Below PostgreSQL 16 the command prints the
+  accepted names (also when it refuses) and logs them at warning level: the record of who vouched is the CI log of
+  that run. From PostgreSQL 16 the option has no effect and the command says so in one line. Use it only when you
+  can say who holds that login; the other way out is `REVOKE CREATEROLE` from it or PostgreSQL 16 or later.
 - The append-only triggers are not enforced while `session_replication_role` is `replica`. From PostgreSQL 15 a
   superuser can let any role set it (`GRANT SET ON PARAMETER session_replication_role`). A role with DELETE or
   TRUNCATE on a stop table plus that right could remove a stop: migrate does not look at parameter rights, so do

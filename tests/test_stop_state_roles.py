@@ -1416,6 +1416,19 @@ def test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_s
         assert vouched in caplog.text and "NOT checked" in caplog.text
 
 
+def test_s2_below_16_a_member_of_an_accepted_createrole_role_is_listed_and_the_role_alone_is_not(w):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
+    with _server_wide_createrole(w) as (vouched,):
+        member = w.new_role("mv", "LOGIN")
+        w.grant("GRANT {} TO {}", vouched, member)
+        assert _who(w.scoped, w.reset, (vouched,)) == [member]
+        names = _refused_naming(w, member, lambda: w.migrate(accepted_admin_roles=(vouched,)))
+        assert vouched not in names
+        w.grant("REVOKE {} FROM {}", vouched, member)
+        assert _who(w.scoped, w.reset, (vouched,)) == []
+
+
 def test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_listed(w):
     """The allow-list is for the CREATEROLE listing only, never for a grant on the stop tables or a membership."""
     with _server_wide_createrole(w) as (creator,):
@@ -1432,16 +1445,42 @@ def test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_li
         assert _who(w.scoped, w.reset, (creator,)) == []
 
 
-@pytest.mark.parametrize(
-    "bad", ["public", "PUBLIC", "*", "%", "a b", "x; DROP ROLE y", "", "Reset", "session_user"]
-)
-def test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection(bad):
-    with pytest.raises(ConfigError, match="accepted_admin_roles must be plain database role names"):
+_BAD_ACCEPTED = "accepted_admin_roles must be database role names"
+FORMAT_BAD = [
+    "a" * 64,
+    "admin ",
+    " admin",
+    "",
+    "ad" + chr(7) + "min",
+    "ad" + chr(10) + "min",
+    "ad" + chr(127) + "min",
+]
+FORBIDDEN = ["public", "PUBLIC", "Public", "session_user", "SESSION_USER", "Current_User", "*", "%"]
+
+
+@pytest.mark.parametrize("bad", FORMAT_BAD)
+def test_s2_an_accepted_role_name_of_the_wrong_format_is_refused_before_any_connection(bad):
+    with pytest.raises(ConfigError, match=_BAD_ACCEPTED):
         migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=(bad,))
 
 
+@pytest.mark.parametrize("bad", FORBIDDEN)
+def test_s2_a_forbidden_accepted_role_name_is_refused_before_any_connection(bad):
+    with pytest.raises(ConfigError, match=_BAD_ACCEPTED):
+        migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=(bad,))
+
+
+@pytest.mark.parametrize(
+    "name", ["Admin", "my-admin", "user@server", "a" * 63, "a b", "x'; DROP TABLE kill_switch; --"]
+)
+def test_s2_an_accepted_role_name_of_a_managed_service_is_taken_as_exact_text(w, name):
+    assert w.migrate(accepted_admin_roles=(name,)) == []
+    assert w.exists("kill_switch")  # the name is a bound parameter, never SQL
+    assert _who(w.scoped, w.reset, (name,)) == []
+
+
 def test_s2_accepted_roles_given_as_one_string_are_refused():
-    with pytest.raises(ConfigError, match="accepted_admin_roles must be plain"):
+    with pytest.raises(ConfigError, match=_BAD_ACCEPTED):
         migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles="sb_y")
 
 
@@ -1474,17 +1513,36 @@ def test_cli_migrate_prints_and_logs_every_accepted_admin_role(
         w.reset,
     ]
     assert cli.main(base) == 0
-    assert "accepted administrator roles" not in capsys.readouterr().out
+    assert "accepted" not in capsys.readouterr().out
     argv = [*base, "--accept-admin-role", one, "--accept-admin-role", two]
     with caplog.at_level(logging.WARNING, logger="hadavin_sdk.store"):
         assert cli.main(argv) == 0
-    line = [
-        x
-        for x in capsys.readouterr().out.splitlines()
-        if x.startswith("accepted administrator roles")
-    ]
+    # below 16 the line says who is vouched for; from 16 it says the option has no effect (one line either way)
+    start = "accepted administrator roles" if _below_16(w) else "accepted_admin_roles has no effect"
+    line = [x for x in capsys.readouterr().out.splitlines() if x.startswith(start)]
     assert len(line) == 1 and one in line[0] and two in line[0]
     assert one in caplog.text and two in caplog.text
+
+
+def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
+    w, cfg_dir, monkeypatch, capsys
+):
+    _demo(cfg_dir)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+    third, vouched = w.new_role("x3", "NOLOGIN"), f"sb_ac3_{w.sfx}"
+    w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        w.runtime,
+        "--reset-role",
+        w.reset,
+    ]
+    assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
+    captured = capsys.readouterr()
+    assert vouched in captured.out and third in captured.err
 
 
 def test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively():

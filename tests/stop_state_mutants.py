@@ -279,9 +279,21 @@ HAND = [
         "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv\n"
         "      AND a.grantee NOT IN (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname::text = ANY(%(accepted)s::text[]))\n",
         "test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_listed", "assert ["),
-    mutant("S2: the allow-list names are not validated", MIG,
-        "not _ROLE.fullmatch(a) or a in _FORBIDDEN_ROLES for a in accepted", "False for a in accepted",
-        "test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection", "accepted_admin_roles must be plain"),
+    mutant("S2: the allow-list name format check is removed", MIG,
+        "    if not all(_accepted_name_ok(a) for a in accepted):", "    if False:",
+        "test_s2_an_accepted_role_name_of_the_wrong_format_is_refused_before_any_connection", "Regex pattern did not match"),
+    mutant("S2: the allow-list forbidden names check is removed", MIG,
+        "    if any(_accepted_name_forbidden(a) for a in accepted):", "    if False:",
+        "test_s2_a_forbidden_accepted_role_name_is_refused_before_any_connection", "Regex pattern did not match"),
+    mutant("S2: the allow-list bare string check is removed", MIG,
+        "    if isinstance(accepted_admin_roles, str):", "    if False:",
+        "test_s2_accepted_roles_given_as_one_string_are_refused", "Regex pattern did not match"),
+    mutant("S2: the allow-list without named roles is accepted", MIG,
+        "    if accepted and not named:", "    if False:",
+        "test_s2_accepted_roles_without_named_roles_are_refused", "Regex pattern did not match"),
+    mutant("S2: the members of an accepted CREATEROLE role are not listed", MIG,
+        'vouched = "FALSE" if new else _VOUCHED', 'vouched = "FALSE"',
+        "test_s2_below_16_a_member_of_an_accepted_createrole_role_is_listed_and_the_role_alone_is_not", "assert ["),
     mutant("S2: the allow-list may name a role the command grants", MIG,
         "    if overlap := sorted(set(accepted) & set(named)):", "    if False:",
         "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "Regex pattern did not match"),
@@ -377,6 +389,7 @@ LT16 = {
     "S2: below 16 a membership is not counted",
     "S2: below 16 a CREATEROLE login is not listed",
     "S2: the allow-list is removed (an accepted CREATEROLE role is listed)",
+    "S2: the members of an accepted CREATEROLE role are not listed",
 }
 
 
