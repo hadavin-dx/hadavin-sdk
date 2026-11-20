@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:49:20Z
+UPDATED_UTC: 2026-11-20T15:52:16Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.73 of 4 cores (1-minute average), mem 1.1/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 13G 56G 19%; 647M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
+AGENTS_RUNNING: 1
+CAPACITY: load 0.04 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 13G 57G 19%; 647M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:49:13Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:49:25Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| integ-dryrun | builder (scratch worktree /home/user/wt/integ, never pushed) | sonnet | dry-run merge core-b head -> cloud/core-a -> cloud/core-c, handover excluded: conflict list + resolution plan -> handover/core-a/INTEGRATION-DRYRUN-2.md | 15:55 | 40 min | 5 | running | - | 0 | lead 15:52 item (c) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34493s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 34493s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 34493s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 34493s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34493s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34493s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34670s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 34670s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 34670s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 34670s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34670s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34670s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:55 LEAD 15:52: your four items: (a) lane 2 cfull: DONE (all 5 ids pass at core-c fc4af41a7 on py3.13 x3 and py3.12: evidence/cfull-fix-check.md); no wip/core-a-for-c-cfull needed: nothing to fix; (b) lane 3 reviews of lead-b-migrate/ts-watermark: DONE twice (xr-review-wip-lead-b-*.md); heads unchanged; (c) integration prep: STARTED (agent integ-dryrun: scratch worktree, merge core-b head -> cloud/core-a -> cloud/core-c with handover excluded, lists every conflict incl. the five you named, resolution plan -> handover/core-a/INTEGRATION-DRYRUN-2.md; never pushed); (d) crash matrix part 2: DONE. AGENTS 1. Lane 1 skipped as you said. If lanes are empty I can take core-b's S1/R1/W1 test files that do not touch migrate.py: send me the list or the file names.
 - 15:53 LANE 2 DONE (evidence/cfull-fix-check.md): the cfull ids ALL PASS at core-c fc4af41a7 on py3.13.12 (3 repeats) and py3.12.3 (1 run) on a quiet box (start load 0.04): 17 passed, 0 failed per run: test_hostile_1 'fdfa', the py3.12 Unicode 15.1.0 test (passes, not skipped), test_glued_patterns_are_linear all 12 params, settle-loop thread_time test; whole-test times 3.2-4.3 s (3.13) and up to 5.25 s (3.12) for the glued ids, 11-12 s settle-loop, 39-42 s fold_budget. No fix needed from core-a: core-c's earlier fixes hold. ALL FOUR LANES DONE. AGENTS 0; nothing open on my side; waiting for new heads or orders.
 - 15:46 LANE TABLE (your 15:43 order; your 15:47 GO crossed my pushes): LANE 1 grant tests: DONE (agent grants-run; both versions green on core-b fa21e8fbb PG16.15: core-c 85 passed, mine 88 passed, take mine (superset); evidence/grants-a-vs-b.md; handover/core-c/requests/from-core-a-grants.md). LANE 2 cfull fixes: RUNNING (agent cfull-run: verifies fdfa / py3.12 Unicode / glued-linear perf margin / settle-loop on py3.13 AND 3.12 on a quiet box; core-c says these were fixed earlier on cloud/core-c) -> evidence/cfull-fix-check.md. LANE 3 reviews lead-b-migrate (0891d81bd) and lead-b-ts-watermark (de8967aba): DONE twice each, findings in handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md (heads unchanged: tell me when fix round 1 lands and I review the delta). LANE 4 crash matrix part 2 + E-door-1 README: DONE (reviewed fresh, fixed). AGENTS 1 (cfull-run). 3 lanes are finished, not skipped; no open lane without an agent.
 - 15:57 LANE 1 DONE (evidence/grants-a-vs-b.md): both grant-test versions are GREEN against core-b's current head fa21e8fbb on PG16.15: core-c's (wip/cloud-core-c/grants b55d21865) 85 passed [its commit message says 117: not reproduced], mine (wip/core-a-for-grant-tests 3ffb442f1) 88 passed; no failing id in either; every test of A is also in B and B has 3 more pins (release identity cells; runtime writes no money table and books through functions; money functions are SECURITY DEFINER with EXECUTE only to the named roles): TAKE B (superset). Without a DSN: A 46 passed/39 skipped, B 48/40. Running: cfull-run (LANE 2).
