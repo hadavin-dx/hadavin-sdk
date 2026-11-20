@@ -690,6 +690,15 @@
    "evidence file": "raw/endpoint-mutants-run-17.log",
    "tries": 0,
    "reason": "tree is changing"
+  },
+  {
+   "item": "E1-fix3",
+   "what": "E1 round-2 Major E1b-1 (non-connectivity ping failure counts toward the fatal counter, class logged at WARNING) + nits E1b-2/3",
+   "state": "QUEUED after mut17 ends (it reads worker.py)",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-5.md (round 2 table)",
+   "tries": 0,
+   "reason": "mutant run in progress"
   }
  ],
  "agents": [
@@ -718,19 +727,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "tree quiet"
-  },
-  {
-   "id": "E1-rev2",
-   "role": "fresh reviewer (design)",
-   "model": "sonnet",
-   "what exactly it is doing": "E1 round 2: are the 4 Major fixes real, new bugs from the fixes (pending flags, locks, exit codes, logs)",
-   "started UTC": "10:03",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "2, no cap (behaviour-changing)",
-   "retries so far": 0,
-   "reason": "after e1-fix2"
   },
   {
    "id": "flake",
@@ -2585,6 +2581,19 @@
    "review round n of cap": "fix after round 1 (no cap)",
    "retries so far": 0,
    "reason": "E1 review Majors 1-4 + test gaps + nits fixed: close App stores on every failed try, ping assigned after start, bounded audit write (2 s, one pending), 5 non-store recovery failures = exit 3, ack_wait nit; 12 new tests, kill checks by scratch mutants; tests/triggers+crash 1363 passed 1 failed 5 skipped: the failure is a RARE FLAKE test_t5_crash_matrix_paths::test_memory_raise_at_point[propose01-store.create_run-1-before] (passed 4 reruns): under investigation; bandit: no issues"
+  },
+  {
+   "id": "E1-rev2",
+   "role": "fresh reviewer (design)",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 round 2: are the 4 Major fixes real, new bugs from the fixes (pending flags, locks, exit codes, logs)",
+   "started UTC": "10:03",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "2, no cap (behaviour-changing)",
+   "retries so far": 0,
+   "reason": "E1 round 2: NO Blocker; 1 arguable Major (a store that refuses is counted as store-down and retried forever, cause logged at DEBUG), 3 nits; the 4 round-1 fixes verified real, new tests fail on revert"
   }
  ]
 }

@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T10:04:17Z
+UPDATED_UTC: 2026-11-20T10:05:09Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 76
-ITEMS_OPEN: 21
-PERCENT: 82
-AGENTS_RUNNING: 4
-CAPACITY: load 1.23 of 4 cores (1-minute average), mem 1.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_TOTAL: 77
+ITEMS_OPEN: 22
+PERCENT: 81
+AGENTS_RUNNING: 3
+CAPACITY: load 2.73 of 4 cores (1-minute average), mem 1.3/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 17%; 576M /home/user/hadavin-sdk; 860M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 10:03 UTC: 1 failed in my last builder run: tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose01-store.create_run-1-before] (tick left NEEDS_PERSON/approval_missing; passed 4 reruns): a RARE FLAKE under investigation (agent flake): I will not skip or weaken it; verdict in FINDINGS-flake-crash-matrix.md. Everything else 1363 passed, 5 skipped. Last independent whole suite BATCH7: see lead_actions.
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T10:04:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T10:04:20Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -96,36 +96,29 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | D-fix5 | D-rev4 Majors R4-1..5 + nits + E-nits (one builder, tests + small code + crash.py nits + ticket) | DONE | 100 | reviews/D-code-result-review-4.md | 1 | batch6 hashes the tree |
 | DRIFT-n8n+tests | drift fixes in n8n/README-trigger.md (+ test pins) and the missing tests E5 (empty document) and E11 (escaped body over the cap) | DONE (n8n README, tickets, E5/E11 tests); mutants for E5/E11 guards still to add | 95 | DRIFT-REPORT.md | 1 | batch7 running |
 | MUT-RUN-17 | ONE full mutant run on the final tree (after e1 and E-nits2) incl. new G30a/b, G31 and mutants for E1 (conflict audit, rate cap, /health) | QUEUED after e1 ends | 0 | raw/endpoint-mutants-run-17.log | 0 | tree is changing |
+| E1-fix3 | E1 round-2 Major E1b-1 (non-connectivity ping failure counts toward the fatal counter, class logged at WARNING) + nits E1b-2/3 | QUEUED after mut17 ends (it reads worker.py) | 0 | reviews/D-code-result-review-5.md (round 2 table) | 0 | mutant run in progress |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | mut17 | builder (mutants) | sonnet | anchors re-checked, mutants for the e1-fix2 guards, ONE full mutant run 17 (E1, E5/E11, all) | 10:03 | 25 min | 5 | running | n/a | 0 | tree quiet |
-| E1-rev2 | fresh reviewer (design) | sonnet | E1 round 2: are the 4 Major fixes real, new bugs from the fixes (pending flags, locks, exit codes, logs) | 10:03 | 15 min | 5 | running | 2, no cap (behaviour-changing) | 0 | after e1-fix2 |
 | flake | investigator | sonnet | rare flake test_memory_raise_at_point[propose01-store.create_run-1-before]: code race or test race (read + 2 runs) | 10:03 | 20 min | 5 | running | n/a | 0 | 1 failure in 1364 under -n 3 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 412 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 413 | timeout 590 .venv/bin/python -m pytest tests/triggers/test_t5_crash_ma | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 414 | .venv/bin/python -m pytest tests/triggers/test_t5_crash_matrix_paths.p | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 871 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 14s ago | running | matched by name in ps |
-| 892 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 14s ago | running | matched by name in ps |
-| 894 | uv run python tests/endpoint_mutants.py G33 | core-a session or its agent | 14s ago | running | matched by name in ps |
-| 919 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 14s ago | running | matched by name in ps |
-| 5441 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 5459 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 5460 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 5461 | postgres: postgres postgres 127.0.0.1(48618) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 5466 | [postgres] | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 13788s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 13788s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 13788s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 13788s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 13788s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 13788s ago | running | matched by name in ps |
+| 412 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 77s ago | running | matched by name in ps |
+| 413 | timeout 590 .venv/bin/python -m pytest tests/triggers/test_t5_crash_ma | core-a session or its agent | 77s ago | running | matched by name in ps |
+| 414 | .venv/bin/python -m pytest tests/triggers/test_t5_crash_matrix_paths.p | core-a session or its agent | 77s ago | running | matched by name in ps |
+| 7722 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 7736 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 13840s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 13840s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 13840s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 13840s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 13840s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 13840s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
