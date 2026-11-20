@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:27:20Z
+UPDATED_UTC: 2026-11-20T06:28:35Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 44
+ITEMS_TOTAL: 45
 ITEMS_OPEN: 14
-PERCENT: 71
-AGENTS_RUNNING: 8
-CAPACITY: load 1.37 of 4 cores (1-minute average), mem 1.2/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 15%; 528M /home/user/hadavin-sdk; 323M /tmp/claude-0; 131M /root/.cache
+PERCENT: 75
+AGENTS_RUNNING: 7
+CAPACITY: load 1.23 of 4 cores (1-minute average), mem 1.0/15.7 GB, 7 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 15%; 528M /home/user/hadavin-sdk; 336M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: code-minors agent ends: start (a) worker switch to App.trigger_secret + start test through main, (b) 10 more mutants; design review ends: resolve through the Skill tool and fix
-PUSHED_UTC: 2026-11-20T06:26:25Z (the push before this board)
+NEXT: code-minors agent ends: start in one batch (a) design-review code fixes + worker switch to App.trigger_secret + start test through main, (b) more mutants for all new guards
+PUSHED_UTC: 2026-11-20T06:27:23Z (the push before this board)
 NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder
 
 ## QUEUE ITEMS
@@ -55,15 +55,16 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | B6-fstore | run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings | DONE | 100 | FINDINGS-core-b-F-store.md (my shortened copy; the agent was not allowed to write it), raw/F-store-*.log, tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py | 1 | on core-b f390b7d6e: 183 passed, 4 strict expected-failures, 0 skipped (memory and PostgreSQL 16). 2 findings: F1 the memory store books the amount before it builds the row, so a refused reserve leaks budget for good; F2 a huge cap gives a driver error on PostgreSQL. T1: 50 connections, cap 3.00, amount 1.00: 3 granted, 47 refused, 50 distinct database processes; control (old pattern): 50 of 50 admitted. core-b's OWN tests for this step are not on its branch. 2 of our 102 tests were corrected because the interface changed (12 decimal places; settled amount after expiry), none weakened |
 | B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | RUNNING | 5 | FINDINGS-core-c-G7-redaction.md (not yet) | 1 | backlog 7 |
 | B8-text | README, SECURITY and CHANGELOG text for steps D and E as a request to core-b | READY (mine) | 0 | requests/002-readme-security-text.md exists (18 sentences); to extend after ORDER 015 facts | 0 | I do this one myself while agents run |
-| B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | RUNNING | 5 |  | 1 | backlog 9: one hostile design reviewer (egm:egm-design) reads endpoint.py, worker.py, server.py, crash.py; started in the same batch the n8n agent returned in |
-| O17-A | lead review round 2, Major A: template cannot produce a valid request | DONE, being re-checked | 0 | n8n/, raw/n8n-template-tests-2.log | 0 | ORDER 017: this is ORDER 015, DONE 06:20Z in the files (not re-imported); the n8n agent re-checks each point and adds the two negative tests |
-| O17-B | Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11) | RUNNING | 5 | raw/n8n-template-tests-3.log (not yet) | 1 | ORDER 017 |
+| B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | REVIEW DONE; fixes queued behind O17-code (same files) | 50 | reviews/code-D-design-review-1.md | 1 | no Blocker; 3 Majors, 16 Nits: (M1) a request whose first answer was lost in a crash later gets 202 and the sender believes it worked although nothing runs; (M2) nothing caps waiting request threads when the database hangs; (M3) a restart still burns a run that outlives the supervisor's grace period. 15 to fix, 3 declined, 3 points for the lead |
+| O17-A | lead review round 2, Major A: template cannot produce a valid request | DONE | 100 | n8n/, raw/n8n-template-tests-2.log | 0 | all points re-checked in the files; the two negative tests added |
+| O17-B | Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11) | DONE in the files; NOT run in n8n | 100 | n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-3.log | 1 | busy = 502, 503, 504 or no HTTP status; 400, 401, 409, 413 and other 4xx stop; README answer table and limits; 177 template and rule checks pass (try 3 of 3: tries 1 and 2 failed on lint and one wording check). UNVERIFIED: the shape of a failed item with no status, 502 and 504. Stated side effect: a wrong address or a TLS fault is also retried for all rounds before a person is told |
 | O17-code | code minors 2, 6, 7, 12, 4; delete the test that proves nothing; strict switch HADAVIN_REQUIRE_PG that turns a database skip into a failure | RUNNING | 5 | raw/R2-code-tests.log, raw/R2-strict-switch.log (not yet) | 1 | ORDER 017 |
 | O17-mutants | minor 10: ten more mutants in tests/endpoint_mutants.py | QUEUED | 0 |  | 0 | starts when O17-code ends (the script replaces exact text in the files that agent edits) |
 | O17-main | start-refusal test through main with a real config | WAIT core-b | 0 |  | 0 | WAIT core-b's bound reader |
 | B5b-matrix-paths | crash matrix part 2: kills on the paths with a read-tool call, a proposal waiting for approval, and (if buildable) execute and verify; retry before and after the tick | RUNNING | 5 | raw/D-crash-matrix-paths-pg16.log (not yet) | 1 | ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in |
 | CFG-2 | update tests/test_trigger_config.py to core-b's new head: its fixes make all 16 strict expected-failures pass (so the file shows 17 failures there until the markers are removed); add tests for the bound reader | RUNNING | 5 | raw/trigger-config-tests-on-core-b-run2.log (not yet) | 1 | found by the trial integration; started in the same batch |
 | METER | non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py | RUNNING | 5 | raw/meter-contract-on-core-b.log (not yet) | 1 | ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch |
+| M1-template | n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end' | RUNNING | 5 | raw/n8n-template-tests-4.log (not yet) | 1 | design review Major M1: the only place this gap can be closed today |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -95,28 +96,29 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | b5-matrix | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix.py and CRASH-MATRIX.md, child processes killed on PostgreSQL | 06:16 | ended | 100 | done | n/a | 0 | finished |
 | b6-fstore | evidence runner (non-builder) | fable | runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings | 06:16 | ended | 100 | done | n/a | 0 | finished; the harness refused its findings file write, it returned the text and I saved a shortened copy |
 | b7-g7 | builder (tests, non-builder of the code) | fable | writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree | 06:16 | about 35 min after start | 5 | running | n/a | 0 | backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line |
-| b9-design | reviewer | fable | egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review | 06:20 | about 15 min after start | 5 | running | 1 of 1 | 0 | backlog 9; 6 agents run |
-| o17-n8n | builder (templates and text) | fable | busy statuses in the retry loop, README answer table and limits, template checks | 06:22 | about 20 min after start | 5 | running | lead code review round 2 of 3 | 0 | ORDER 017 Major B |
+| b9-design | reviewer | fable | egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review | 06:20 | ended | 100 | done | 1 of 1 | 0 | finished, 135k tokens |
+| o17-n8n | builder (templates and text) | fable | busy statuses in the retry loop, README answer table and limits, template checks | 06:22 | ended | 100 | done | lead code review round 2 of 3 | 0 | finished |
 | o17-code | builder | fable | server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once | 06:22 | about 30 min after start | 5 | running | lead code review round 2 of 3 | 0 | ORDER 017; 8 agents run now (trial, fuzz, matrix, F-store, G7, design review, n8n, code minors) |
 | b5b-paths | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix_paths.py, kills child processes on PostgreSQL on the tool, proposal and approval paths | 06:25 | about 45 min after start | 5 | running | n/a | 0 | 8 agents run |
 | meter | builder (tests, non-builder of the code) and evidence runner | fable | writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite | 06:27 | about 40 min after start | 5 | running | n/a | 0 | ORDER 016 item 4c |
 | cfg-2 | builder (tests, non-builder) | fable | removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use | 06:27 | about 25 min after start | 5 | running | n/a | 0 | trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests) |
+| m1-n8n | builder (templates and text) | fable | adds the required state check loop to the template, the README section and checks | 06:28 | about 20 min after start | 5 | running | own design review, fix pass | 0 | 7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 8220 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 8222 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 8233 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 8235 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 8238 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 4s ago | running | matched by name in ps |
-| 8527 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.crash_launch | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 771s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 771s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 771s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 771s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 771s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 771s ago | running | matched by name in ps |
+| 9291 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 56s ago | running | matched by name in ps |
+| 9305 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 56s ago | running | matched by name in ps |
+| 10417 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 10420 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 10782 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 10798 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 845s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 845s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -166,6 +168,7 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop
 - TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since
 - FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch
 - core-b's new head fixes all 7 trigger-config findings and has the bound reader (App.trigger_secret): I switch the worker as soon as the agent editing worker.py ends

@@ -2,7 +2,7 @@
  "order": "017 on top of the backlog (016 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "code-minors agent ends: start (a) worker switch to App.trigger_secret + start test through main, (b) 10 more mutants; design review ends: resolve through the Skill tool and fix",
+ "next": "code-minors agent ends: start in one batch (a) design-review code fixes + worker switch to App.trigger_secret + start test through main, (b) more mutants for all new guards",
  "note": "PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -325,29 +325,29 @@
   {
    "item": "B9-review",
    "what": "hostile re-read of all my own code with egm:egm-design, one round, and fix",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "",
+   "state": "REVIEW DONE; fixes queued behind O17-code (same files)",
+   "percent": 50,
+   "evidence file": "reviews/code-D-design-review-1.md",
    "tries": 1,
-   "reason": "backlog 9: one hostile design reviewer (egm:egm-design) reads endpoint.py, worker.py, server.py, crash.py; started in the same batch the n8n agent returned in"
+   "reason": "no Blocker; 3 Majors, 16 Nits: (M1) a request whose first answer was lost in a crash later gets 202 and the sender believes it worked although nothing runs; (M2) nothing caps waiting request threads when the database hangs; (M3) a restart still burns a run that outlives the supervisor's grace period. 15 to fix, 3 declined, 3 points for the lead"
   },
   {
    "item": "O17-A",
    "what": "lead review round 2, Major A: template cannot produce a valid request",
-   "state": "DONE, being re-checked",
-   "percent": 0,
+   "state": "DONE",
+   "percent": 100,
    "evidence file": "n8n/, raw/n8n-template-tests-2.log",
    "tries": 0,
-   "reason": "ORDER 017: this is ORDER 015, DONE 06:20Z in the files (not re-imported); the n8n agent re-checks each point and adds the two negative tests"
+   "reason": "all points re-checked in the files; the two negative tests added"
   },
   {
    "item": "O17-B",
    "what": "Major B: retry loop treats 502, 503, 504 and 'no status' as busy; stops stay 400, 401, 409, 413; README answer table and stated limits (minors 1, 3, 4, 5, 9, 11)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/n8n-template-tests-3.log (not yet)",
+   "state": "DONE in the files; NOT run in n8n",
+   "percent": 100,
+   "evidence file": "n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-3.log",
    "tries": 1,
-   "reason": "ORDER 017"
+   "reason": "busy = 502, 503, 504 or no HTTP status; 400, 401, 409, 413 and other 4xx stop; README answer table and limits; 177 template and rule checks pass (try 3 of 3: tries 1 and 2 failed on lint and one wording check). UNVERIFIED: the shape of a failed item with no status, 502 and 504. Stated side effect: a wrong address or a TLS fault is also retried for all rounds before a person is told"
   },
   {
    "item": "O17-code",
@@ -402,6 +402,15 @@
    "evidence file": "raw/meter-contract-on-core-b.log (not yet)",
    "tries": 1,
    "reason": "ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch"
+  },
+  {
+   "item": "M1-template",
+   "what": "n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end'",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/n8n-template-tests-4.log (not yet)",
+   "tries": 1,
+   "reason": "design review Major M1: the only place this gap can be closed today"
   }
  ],
  "agents": [
@@ -762,25 +771,25 @@
    "model": "fable",
    "what exactly it is doing": "egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review",
    "started UTC": "06:20",
-   "expected end": "about 15 min after start",
-   "percent": 5,
-   "state": "running",
+   "expected end": "ended",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 1",
    "retries so far": 0,
-   "reason": "backlog 9; 6 agents run"
+   "reason": "finished, 135k tokens"
   },
   {
    "model": "fable",
    "started UTC": "06:22",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "lead code review round 2 of 3",
    "retries so far": 0,
    "id": "o17-n8n",
    "role": "builder (templates and text)",
    "what exactly it is doing": "busy statuses in the retry loop, README answer table and limits, template checks",
-   "expected end": "about 20 min after start",
-   "reason": "ORDER 017 Major B"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -833,6 +842,19 @@
    "what exactly it is doing": "removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use",
    "expected end": "about 25 min after start",
    "reason": "trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests)"
+  },
+  {
+   "id": "m1-n8n",
+   "role": "builder (templates and text)",
+   "model": "fable",
+   "what exactly it is doing": "adds the required state check loop to the template, the README section and checks",
+   "started UTC": "06:28",
+   "expected end": "about 20 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "own design review, fix pass",
+   "retries so far": 0,
+   "reason": "7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check)"
   }
  ],
  "tests": [
@@ -1097,6 +1119,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop",
   "TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since",
   "FINDINGS-core-b-F-store.md: 2 findings (memory store leaks budget on a refused reserve; unbounded cap) and the note that core-b's own spend tests are not on its branch",
   "core-b's new head fixes all 7 trigger-config findings and has the bound reader (App.trigger_secret): I switch the worker as soon as the agent editing worker.py ends",

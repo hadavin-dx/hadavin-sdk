@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /home/user/hadavin-sdk
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 4 items
+
+tests/triggers/test_t5_fuzz.py::test_fuzz_layer_1_in_process_2000_requests_on_the_memory_store PASSED [ 25%]
+tests/triggers/test_t5_fuzz.py::test_fuzz_layer_3_in_process_300_requests_on_postgresql PASSED [ 50%]
+tests/triggers/test_t5_fuzz.py::test_fuzz_layer_2_raw_socket_300_requests_against_the_quiet_server PASSED [ 75%]
+tests/triggers/test_t5_fuzz.py::test_finding_layer_2_http_version_2_or_higher_is_answered_505 XFAIL [100%]
+
+============================= slowest 5 durations ==============================
+10.01s call     tests/triggers/test_t5_fuzz.py::test_fuzz_layer_1_in_process_2000_requests_on_the_memory_store
+3.69s call     tests/triggers/test_t5_fuzz.py::test_fuzz_layer_2_raw_socket_300_requests_against_the_quiet_server
+1.73s call     tests/triggers/test_t5_fuzz.py::test_fuzz_layer_3_in_process_300_requests_on_postgresql
+0.10s setup    tests/triggers/test_t5_fuzz.py::test_fuzz_layer_3_in_process_300_requests_on_postgresql
+0.10s call     tests/triggers/test_t5_fuzz.py::test_finding_layer_2_http_version_2_or_higher_is_answered_505
+======================== 3 passed, 1 xfailed in 15.99s =========================

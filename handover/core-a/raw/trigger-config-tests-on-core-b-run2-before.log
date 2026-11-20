@@ -1,0 +1,71 @@
+...F...............................................FFFFFFFF.......ss...s [ 55%]
+s...ss...ss...ss....sFFFssssssss...........FFFF.Fs.......                [100%]
+=================================== FAILURES ===================================
+__________ test_default_body_cap_leaves_room_for_a_full_size_document __________
+[XPASS(strict)] FINDING: the default body cap (TRIGGER_MAX_BODY_BYTES) equals MAX_DOCUMENT_BYTES, so a full-size document cannot fit once it is wrapped and escaped as JSON (review finding 7; request 001 asked for 2 x)
+________________ test_blank_or_newline_secret_name_refused[' '] ________________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+_______________ test_blank_or_newline_secret_name_refused['\\t'] _______________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+_______________ test_blank_or_newline_secret_name_refused['   '] _______________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+___________ test_blank_or_newline_secret_name_refused['key-one\\n'] ____________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+____________ test_blank_or_newline_secret_name_refused['key\\none'] ____________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+____________ test_blank_or_newline_secret_name_refused[' key-one'] _____________
+[XPASS(strict)] FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)
+_________ test_blank_agent_or_principal_refused_by_the_model[agent_id] _________
+[XPASS(strict)] FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review finding 5)
+_______ test_blank_agent_or_principal_refused_by_the_model[principal_id] _______
+[XPASS(strict)] FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value passes the config model and is refused only later, by the registry, as an unknown id (review finding 5)
+____________________ test_true_is_not_a_number[max_running] ____________________
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+__________________ test_true_is_not_a_number[max_body_bytes] ___________________
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+____________________ test_true_is_not_a_number[ack_wait_s] _____________________
+[XPASS(strict)] FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are not strict), so a mistyped switch becomes a limit of 1 (review finding 8)
+______ test_a_sender_secret_name_that_is_an_action_secret_fails_the_start ______
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-179/test_a_sender_secret_name_that0/config')
+
+    def test_a_sender_secret_name_that_is_an_action_secret_fails_the_start(cfg_dir):
+        """Case: a sender lists the name of an action executor's secret. The start is refused."""
+>       with pytest.raises(ConfigError, match="secret names used by both") as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'secret names used by both'
+E         Actual message: 'triggers.senders.s1.secret_names: a name is also used by another part of the config (a backend, an action, a read tool, a source or the restored-hash key); give the sender its own secret'
+
+tests/test_trigger_config.py:535: AssertionError
+______________ test_shared_action_secret_refusal_names_the_sender ______________
+[XPASS(strict)] FINDING: a sender secret name shared with an action secret is refused with the backend sentence ('used by both a backend and an action executor ... give the backend its own secret'); the text does not name the sender or the triggers block (review finding 4, request 001 R1c)
+_______ test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name _______
+[XPASS(strict)] FINDING: text typed into secret_names is echoed by the start-up check (secret '<text>' cannot be read at start-up), although config.py says a mistyped config may hold the secret itself there and names only the sender (review finding 4)
+__ test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start ___
+[XPASS(strict)] FINDING: a sender secret name may equal another platform secret name (here the restored-hash key; the same holds for a tool secret or a source token): the names are put into one set and never compared, so the signing secret held by the sender could be an internal credential (review finding 2)
+_______________ test_reader_refuses_a_name_that_no_sender_lists ________________
+[XPASS(strict)] FINDING: the only way to a sender secret is App.secrets, the WHOLE secret provider; there is no reader limited to the sender names (no App.trigger_resolve), so the worker can read every secret of the app (review finding 3, request 001 R1d)
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:83: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:83: field not built on this branch: triggers.allow_non_loopback
+SKIPPED [1] tests/test_trigger_config.py:626: field not built on this branch: App.trigger_resolve
+FAILED tests/test_trigger_config.py::test_default_body_cap_leaves_room_for_a_full_size_document
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' ']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['\\t']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['   ']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key-one\\n']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused['key\\none']
+FAILED tests/test_trigger_config.py::test_blank_or_newline_secret_name_refused[' key-one']
+FAILED tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[agent_id]
+FAILED tests/test_trigger_config.py::test_blank_agent_or_principal_refused_by_the_model[principal_id]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[max_running]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[max_body_bytes]
+FAILED tests/test_trigger_config.py::test_true_is_not_a_number[ack_wait_s] - ...
+FAILED tests/test_trigger_config.py::test_a_sender_secret_name_that_is_an_action_secret_fails_the_start
+FAILED tests/test_trigger_config.py::test_shared_action_secret_refusal_names_the_sender
+FAILED tests/test_trigger_config.py::test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name
+FAILED tests/test_trigger_config.py::test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start
+FAILED tests/test_trigger_config.py::test_reader_refuses_a_name_that_no_sender_lists
+17 failed, 92 passed, 20 skipped in 1.95s

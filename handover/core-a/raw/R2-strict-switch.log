@@ -1,1 +1,19 @@
 ## run 1: HADAVIN_REQUIRE_PG=1, no HADAVIN_TEST_PG_DSN (the failures are in the fixture, so pytest counts them as errors)
+exit code: 1
+      2 SKIPPED tests/triggers/test_endpoint.py: an empty body is refused at Content-Length (own test)
+     64 ERROR tests/triggers/test_t5_cases.py
+     11 ERROR tests/triggers/test_t5_nul_document.py
+     13 ERROR tests/triggers/test_t5_postgres.py
+first error text:
+441 passed, 2 skipped, 88 errors in 15.14s
+## run 2: HADAVIN_REQUIRE_PG=1 and HADAVIN_TEST_PG_DSN set
+exit code: 0
+      2 SKIPPED tests/triggers/test_endpoint.py: an empty body is refused at Content-Length (own test)
+529 passed, 2 skipped in 33.53s
+## run 3: neither variable set
+exit code: 0
+      2 SKIPPED tests/triggers/test_endpoint.py: an empty body is refused at Content-Length (own test)
+     21 SKIPPED tests/triggers/test_t5_cases.py: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+      4 SKIPPED tests/triggers/test_t5_nul_document.py: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+     13 SKIPPED tests/triggers/test_t5_postgres.py: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+441 passed, 90 skipped in 15.47s
