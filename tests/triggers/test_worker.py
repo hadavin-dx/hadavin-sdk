@@ -488,12 +488,10 @@ def test_closed_runner_takes_no_new_work(rt):
 def test_bad_arguments_are_refused(rt):
     for kw in ({"max_running": 0}, {"ack_wait_s": 0}, {"poll_s": 0}):
         with pytest.raises(ValueError) as refused:
-            Runner(rt, rt.store, **kw)
+            Runner(rt, rt.store, **{"max_running": 1, **kw})
         assert "above zero" in str(refused.value), f"bound {kw} refused with another text"
     with Runner(rt, rt.store, max_running=1) as runner:
-        assert (
-            runner._slots._value == 1
-        )  # the default is one loop at a time (spend, see the module text)
+        assert runner._slots._value == 1  # the Runner has no default: the value given is the bound
 
 
 # --- crash after the row (step E helper) --------------------------------------------------------------------
@@ -1103,12 +1101,12 @@ def test_n7_a_base_exception_of_a_run_thread_is_logged_by_class_name_and_frees_t
 )
 def test_n15_runner_bounds_are_refused(rt, kw, words):
     with pytest.raises(ValueError, match=words):
-        Runner(rt, rt.store, **kw)
+        Runner(rt, rt.store, **{"max_running": 1, **kw})
 
 
 def test_n15_the_bounds_themselves_are_allowed(rt):
     for kw in ({"max_running": 64}, {"ack_wait_s": 30.0}, {"poll_s": 0.01}, {"poll_s": 1.0}):
-        Runner(rt, rt.store, **kw).close(0)
+        Runner(rt, rt.store, **{"max_running": 1, **kw}).close(0)
 
 
 def test_n15_make_app_turns_a_bound_into_a_config_error(rt):
@@ -1318,7 +1316,10 @@ def _missing(name, base):
 
 @pytest.mark.parametrize("field", ["max_running", "ack_wait_s"])
 def test_d3_a_settings_object_without_a_field_is_a_config_error_naming_it(rt, field):
-    with pytest.raises(ConfigError, match=f"triggers.{field} is missing") as refused:
+    words = (
+        "triggers.max_running missing" if field == "max_running" else f"triggers.{field} is missing"
+    )
+    with pytest.raises(ConfigError, match=words) as refused:
         worker.make_app(_app(rt, _missing(field, _settings())))
     assert not isinstance(refused.value, AttributeError)
 

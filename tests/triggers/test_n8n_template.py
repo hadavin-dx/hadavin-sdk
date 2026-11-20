@@ -1313,7 +1313,7 @@ def test_readme_numbers_are_the_code_numbers():
 def test_readme_names_the_stated_limits():
     readme = " ".join(_readme().split())
     for phrase in (
-        "ONE run at a time",
+        "as many runs at a time as `triggers.max_running` says",
         "is not queued",
         "LONGER than its longest run",
         "NEVER the same value as the approvals secret",
