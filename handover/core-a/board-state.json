@@ -681,6 +681,15 @@
    "evidence file": "DRIFT-REPORT.md",
    "tries": 1,
    "reason": "batch7 running"
+  },
+  {
+   "item": "MUT-RUN-17",
+   "what": "ONE full mutant run on the final tree (after e1 and E-nits2) incl. new G30a/b, G31 and mutants for E1 (conflict audit, rate cap, /health)",
+   "state": "QUEUED after e1 ends",
+   "percent": 0,
+   "evidence file": "raw/endpoint-mutants-run-17.log",
+   "tries": 0,
+   "reason": "tree is changing"
   }
  ],
  "agents": [
@@ -696,19 +705,6 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "minor 10 + new guards"
-  },
-  {
-   "id": "mut-e5e11",
-   "role": "builder (mutants)",
-   "model": "sonnet",
-   "what exactly it is doing": "mutants G30a/G30b/G31 for the E5 and E11 guards, one full mutant run (run 16)",
-   "started UTC": "09:24",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "never idle"
   },
   {
    "id": "e1",
@@ -2441,6 +2437,19 @@
    "review round n of cap": "5, no cap (lead ruling)",
    "retries so far": 0,
    "reason": "fresh round 5: NO Blocker, NO Major, 7 nits (flag left on disk if the read fails once at __exit__; untested nth claim; test names; global sleep patch; ids; long lines; stale ticket lines); round-4 fixes verified correct; 10 docstring claims checked true"
+  },
+  {
+   "id": "mut-e5e11",
+   "role": "builder (mutants)",
+   "model": "sonnet",
+   "what exactly it is doing": "mutants G30a/G30b/G31 for the E5 and E11 guards, one full mutant run (run 16)",
+   "started UTC": "09:24",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "G30a killed, G30b re-pinned (not re-run), G31 crash-accepted; full run did NOT complete: baseline failed twice because e1 is editing worker/endpoint at the same time (a /health endpoint appeared; G17a anchor made unique) and a port 8081 clash; the full mutant run is redone after e1 ends"
   }
  ]
 }
