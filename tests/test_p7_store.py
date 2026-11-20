@@ -152,8 +152,15 @@ def test_append_only_tables_get_no_update(fresh_dsn):
             for table in ("approval_decisions", "dead_letters", "gate_decisions"):
                 assert can(table, "INSERT") and can(table, "SELECT")
                 assert not can(table, "UPDATE") and not can(table, "DELETE"), table
-            for table in ("runs", "approval_requests", "spend_month", "tick_state"):
+            for table in ("runs", "approval_requests", "tick_state"):
                 assert can(table, "UPDATE") and not can(table, "DELETE"), table
+            # Money (F-money-definer step 4): the counters are written by definer functions only.
+            for table in ("spend", "spend_month"):
+                assert can(table, "SELECT"), table
+                assert not any(can(table, p) for p in ("INSERT", "UPDATE", "DELETE")), table
+            assert not any(
+                can("spend_reservations", p) for p in ("SELECT", "INSERT", "UPDATE", "DELETE")
+            )
             # Stop state (0006): the runtime may add a stop and read; nothing it holds turns the switch off.
             assert can("kill_switch_stops", "INSERT") and can("kill_switch_stops", "SELECT")
             for table, privs in (

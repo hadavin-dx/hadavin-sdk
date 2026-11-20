@@ -74,10 +74,13 @@ GRANTS: dict[str, Grant] = {
     "approval_requests": Grant("table", _RW, portal=True),
     "approval_decisions": Grant("table", _APPEND, portal=True),
     "dead_letters": Grant("table", _APPEND),
-    # Spend reservations (0007): the runtime books and closes them; only the purge role deletes closed rows.
-    "spend_reservations": Grant("table", _RW, purge="DELETE", purge_cols=("status", "closed_at")),
-    "spend": Grant("table", _RW),
-    "spend_month": Grant("table", _RW),
+    # Step 4 of F-money-definer: no table of the money family is written by the runtime login; every booking is a
+    # SECURITY DEFINER function (0011). `spend` and `spend_month` stay readable (`spend_totals` reads them as the
+    # runtime); `spend_reservations` is not even readable (the ids of other agents' open holds stay private). The purge
+    # role holds nothing on it: it runs the purge function.
+    "spend_reservations": Grant("table", ""),
+    "spend": Grant("table", "SELECT"),
+    "spend_month": Grant("table", "SELECT"),
     # Stop state (0006): the runtime may add a stop and read; it holds no right that turns the switch off. Only
     # the reset role clears stops (and turns the old flag off), and it writes the reset into the audit chain.
     "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
@@ -947,6 +950,32 @@ def _unnamed_money_executors(db, named: list[str]) -> list[str]:
     return problems
 
 
+def _money_table_writers(db) -> list[str]:
+    """Every role other than the table owner and superusers that holds INSERT, UPDATE, DELETE or TRUNCATE on one of
+    the three money tables (PUBLIC included), named in this command or not, by a direct grant or a membership. Only
+    the definer functions (run as the owner) may write them. Names only."""
+    problems: list[str] = []
+    for table in ("spend", "spend_month", "spend_reservations"):
+        oid = db.execute("SELECT to_regclass(%s)::oid", (table,)).fetchone()[0]
+        if oid is None:
+            continue
+        if db.execute(
+            "SELECT EXISTS (SELECT 1 FROM pg_class c, pg_catalog.aclexplode(c.relacl) a WHERE c.oid = %s "
+            "AND a.grantee = 0 AND a.privilege_type IN ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'))",
+            (oid,),
+        ).fetchone()[0]:
+            problems.append(f"PUBLIC can write {table}")
+        for role, priv in db.execute(
+            "SELECT r.rolname, p.priv FROM pg_roles r, pg_class c, "
+            "(VALUES ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE')) AS p(priv) "
+            "WHERE c.oid = %s AND NOT r.rolsuper AND r.oid <> c.relowner AND r.rolname !~ '^pg_' "
+            "AND has_table_privilege(r.oid, c.oid, p.priv) ORDER BY 1, 2",
+            (oid,),
+        ).fetchall():
+            problems.append(f"role {role} can {priv} {table}")
+    return problems
+
+
 def _seed_limits(db) -> None:
     """The rows the money functions read, from the Python constants, on every run (a changed default reaches the
     functions at the next migrate). A database without 0011 has no table, and nothing is done."""
@@ -1200,6 +1229,11 @@ def migrate(
                 raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
+        if any(roles) and (writers := _money_table_writers(db)):
+            raise ConfigError(
+                "a role other than the owner can write a money table (only the definer functions may): "
+                + "; ".join(writers[:20])
+            )
         note = ""
         if named:
             for note in check_role_settings(db, named):
