@@ -101,7 +101,9 @@ class CrashPoints:
     def armed(self) -> str | None: ...  # "store.create_run:after" or None
     def hit(
         self, point: str
-    ) -> None: ...  # one-shot: raise SimulatedCrash, or write the marker with os.write(1, ...) and os._exit
+    ) -> (
+        None
+    ): ...  # one-shot: raise SimulatedCrash, or write the marker with os.write(1, ...) and os._exit
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         ...
         # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m;

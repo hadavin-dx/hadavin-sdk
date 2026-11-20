@@ -256,8 +256,8 @@ ____________________ test_no_vendor_brand_string_is_tracked ____________________
                 continue
             bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
 >       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
-E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-a/evidence/BATCH7-suite.log: 'Port.io'; handover/core-a/evidence/BATCH7-summary.md: 'Port.io'
-E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'", "handover/core-a/evidence/BATCH7-suite.log: 'Port.io'", "handover/core-a/evidence/BATCH7-summary.md: 'Port.io'"]
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: '[vendor-brand]'; handover/core-a/evidence/BATCH7-suite.log: '[vendor-brand]'; handover/core-a/evidence/BATCH7-summary.md: '[vendor-brand]'
+E       assert not ["handover/BRIEF-PREAMBLE.md: '[vendor-brand]'", "handover/core-a/evidence/BATCH7-suite.log: '[vendor-brand]'", "handover/core-a/evidence/BATCH7-summary.md: '[vendor-brand]'"]
 
 tests/test_no_reference_material.py:87: AssertionError
 ____ test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker ____

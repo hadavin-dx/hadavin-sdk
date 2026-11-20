@@ -703,10 +703,10 @@
   {
    "item": "E1-fix4",
    "what": "delete the fatal-after-5 machinery (churn), WARNING per 5 min with the class name while the store is down, tests and mutant G33d adjusted, ticket",
-   "state": "QUEUED after batch8 ends (it runs the whole suite on the current tree)",
-   "percent": 0,
+   "state": "RUNNING",
+   "percent": 5,
    "evidence file": "reviews/D-code-result-review-5.md round 3",
-   "tries": 0,
+   "tries": 1,
    "reason": "batch8 running"
   }
  ],
@@ -725,17 +725,17 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "batch8",
-   "role": "evidence runner (never judges)",
+   "id": "e1-fix4",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "independent WHOLE suite (REQUIRE_PG=1, -n 3), lint+bandit, combined tree with n8n/; evidence/BATCH8-*",
-   "started UTC": "10:19",
-   "expected end": "15 min",
+   "what exactly it is doing": "churn decision on E1: delete the exit-3-after-5 machinery, WARNING per 5 min, tests + mutants adjusted, one test run, whole mutant run 18",
+   "started UTC": "10:29",
+   "expected end": "35 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "n/a",
+   "review round n of cap": "fix after round 3 (no cap)",
    "retries so far": 0,
-   "reason": "after e1-fix3"
+   "reason": "E1 review round 3"
   }
  ],
  "tests": [
@@ -1157,7 +1157,7 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "10:20 UTC: none in my files at the last builder run (tests/triggers+crash 1369 passed 5 skipped; crash matrices 429 passed). The earlier flake (test race) is fixed in the test. Independent BATCH8 (whole suite) running.",
+ "failed": "10:30 UTC: BATCH8 (independent, after E1 fixes, whole suite): 12 failed = 10 strict-mode by design in the checkout (pass on the combined tree: 1376 passed 0 failed) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the DEFAULT socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md; my evidence logs redacted). None in my own code.",
  "interrupted": "Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md",
  "agents_done": [
   {
@@ -2643,6 +2643,19 @@
    "review round n of cap": "3, no cap (behaviour-changing)",
    "retries so far": 0,
    "reason": "E1 round 3: NO Blocker; 1 arguable Major (OSError = connectivity: a typo'd file path is retried forever, never exit 3) + nits; CHURN: rounds 2 and 3 both hit the 'exit 3 after 5 non-store failures' machinery that round 1 asked for and the lead's verdict does not require (~35 lines)"
+  },
+  {
+   "id": "batch8",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "independent WHOLE suite (REQUIRE_PG=1, -n 3), lint+bandit, combined tree with n8n/; evidence/BATCH8-*",
+   "started UTC": "10:19",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "BATCH8 (head afe4f052d, after E1 fixes): whole suite 12 failed (10 strict-mode by design; brand string: now in my BATCH7 logs too, REDACTED; dblink needs the default PG socket) / 12305 passed / 458 skipped / 75 xfailed in 326 s; combined tree core-b b32f358fd: 1376 passed 4 skipped 0 failed; ruff: 1 file to format (E-test-helpers.md, fixed), bandit 0 medium/high"
   }
  ]
 }

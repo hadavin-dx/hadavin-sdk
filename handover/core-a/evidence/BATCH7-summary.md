@@ -27,7 +27,7 @@ xfail count: 75
 - tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
   E psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection; DETAIL: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
 - tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
-  E vendor brand strings in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-a/board-state.json: 'Port.io'; handover/core-a/STATUS-BOARD.md: 'Port.io'
+  E vendor brand strings in the repo: handover/BRIEF-PREAMBLE.md: '[vendor-brand]'; handover/core-a/board-state.json: '[vendor-brand]'; handover/core-a/STATUS-BOARD.md: '[vendor-brand]'
 
 ### Skip table (reason -> count; top 8 of the SKIPPED lines)
 264	 core-b meter not on this branch yet
