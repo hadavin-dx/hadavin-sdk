@@ -93,3 +93,6 @@ Consequence for the lead: the fold's false-hit rate is above the documented rate
 - State: stated limit in `_spelled_sweep`, defaults.py note, ticket ROUND 5; pinned by `test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit`. Leak size: the literal prefix or tail of the later form.
 - Needed: an owner decision (accept the limit in SECURITY wording, or a design round for derived forms).
 
+
+## E12 (09:12Z) redact_mutants.py: mutant "N15 the alias build asks for no budget" has an `old` text that occurs 0 times at HEAD (found by the G4 v4 drafter)
+The base already reports SNIPPET NOT FOUND for N15: a G7 round 3/4 leftover in tests/redact_mutants.py (hand-run script, not collected by pytest). It must be re-pointed at the alias build code after G7 round 5, and the whole redact_mutants.py run on HEAD must be recorded (the G7 rounds never ran it). Owner: core-c (G7 lane). Queued after the G7 round 5 reviews. NOT fixed yet.
