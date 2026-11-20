@@ -10,7 +10,6 @@ import argparse
 import math
 from datetime import date
 from decimal import Decimal
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -213,11 +212,31 @@ def test_the_release_ref_is_compared_in_canonical_form(monkeypatch, capsys):
     assert cli.release_expired_cmd(folded, "a", DAY, "u") == 2
 
 
-def test_a_tool_secret_that_folds_to_the_release_ref_stops_the_start():
+@pytest.mark.parametrize("ref_field", ["release_credential_ref", "reset_credential_ref"])
+def test_a_secret_that_folds_to_the_release_or_reset_ref_stops_the_start(
+    cfg_dir, monkeypatch, ref_field
+):
+    """Behavioural: the app is built with a restored-hash key secret whose name folds to the login's ref."""
     from hadavin_sdk import app as app_mod
+    from hadavin_sdk.config import ConfigError, load_config
+    from hadavin_sdk.registry import load_registry
+    from tests.conftest import qualify
+    from tests.k5_support import edit_config
 
-    src = Path(app_mod.__file__).read_text()
-    assert "release_credential_ref" in src and "canonical_secret_name" in src
+    edit_config(
+        cfg_dir, lambda d: d.update(evidence={"restored_hash_key_secret_name": "Release.Login"})
+    )
+    monkeypatch.setattr(
+        type(load_config(cfg_dir).backends.store), ref_field, "release-login", raising=False
+    )
+
+    class Provider:
+        def get(self, name):
+            return "v" * 40
+
+    qualify(load_registry(load_config(cfg_dir)))
+    with pytest.raises(ConfigError, match=f"backends.store.{ref_field} names a secret"):
+        app_mod.build(cfg_dir, ["test-agent"], secrets=Provider())
 
 
 def test_the_outcome_failing_after_commit_exits_5_and_names_the_intent(monkeypatch, capsys):

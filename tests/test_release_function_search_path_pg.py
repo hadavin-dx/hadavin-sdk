@@ -47,6 +47,11 @@ def test_a_temp_table_trigger_of_the_release_login_does_not_fire(w):
         rl.execute(
             "INSERT INTO pg_temp.spend_reservations VALUES (%s, %s, 'expired', 0, 1)", (AGENT, DAY)
         )
+        # counter rows too, so the OLD (hijackable) function runs to the end and the `fired` count is what fails
+        rl.execute("INSERT INTO pg_temp.spend VALUES (%s, %s, 5)", (AGENT, DAY))
+        rl.execute(
+            "INSERT INTO pg_temp.spend_month VALUES (%s, %s, 5)", (AGENT, DAY.replace(day=1))
+        )
         rl.execute(
             "CREATE FUNCTION pg_temp.evil() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN "
             "INSERT INTO pg_temp.fired SELECT current_user, "
@@ -70,9 +75,28 @@ def test_a_temp_table_trigger_of_the_release_login_does_not_fire(w):
         rl.close()
 
 
-def test_the_pin_survives_a_second_migrate(w):
-    w.migrate(release_role=w.release)
+def _pin(w):
     cfg = w.run(
         "SELECT proconfig FROM pg_proc WHERE oid = to_regprocedure('hadavin_release_expired_spend(text, date)')"
     )[0][0]
-    assert cfg[0].endswith("pg_temp") or any(c.endswith("pg_temp") for c in cfg)
+    (entry,) = [c for c in cfg if c.startswith("search_path=")]
+    return [p.strip().strip('"') for p in entry.split("=", 1)[1].split(",")]
+
+
+def test_the_pin_survives_a_second_migrate(w):
+    w.migrate(release_role=w.release)
+    assert _pin(w) == ["pg_catalog", w.schema, "pg_temp"]  # not the 0008 placeholder
+
+
+def test_a_hand_run_create_or_replace_drops_the_pin_and_migrate_puts_it_back(w):
+    from hadavin_sdk.store.migrate import MIGRATIONS
+
+    text = (MIGRATIONS / "0008_release_expired_spend.sql").read_text()
+    start = text.index("CREATE OR REPLACE FUNCTION")
+    w.do(text[start : text.index("$fn$;", text.index("AS $fn$") + 7) + len("$fn$;")])
+    assert _pin(w) == [
+        "pg_catalog",
+        "pg_temp",
+    ]  # the reset: fails closed, the money tables are not found
+    w.migrate(release_role=w.release)
+    assert _pin(w) == ["pg_catalog", w.schema, "pg_temp"]

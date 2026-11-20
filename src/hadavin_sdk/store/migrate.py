@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from psycopg import sql
+from psycopg import errors, sql
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.postgres import connect
@@ -365,11 +365,21 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
     # SECURITY DEFINER: the search path is pinned with the catalog first and the temp schema last, so neither a
     # temp table of the caller nor a writable schema can stand in for a money table or a catalog function.
     schema = db.execute("SELECT current_schema()").fetchone()[0]
-    db.execute(
-        sql.SQL("ALTER FUNCTION {} SET search_path = pg_catalog, {}, pg_temp").format(
-            fn, sql.Identifier(schema)
+    try:
+        db.execute(
+            sql.SQL("ALTER FUNCTION {} SET search_path = pg_catalog, {}, pg_temp").format(
+                fn, sql.Identifier(schema)
+            )
         )
-    )
+    except errors.InsufficientPrivilege as exc:
+        owner = db.execute(
+            "SELECT pg_get_userbyid(proowner) FROM pg_proc WHERE oid = to_regprocedure(%s)",
+            (RELEASE_FUNCTION,),
+        ).fetchone()[0]
+        raise ConfigError(
+            f"cannot pin the search path of {RELEASE_FUNCTION}: it is owned by {owner}, and only its owner (or a "
+            f"member of that role) may alter it. Run migrate as {owner}."
+        ) from exc
     for role in others:
         db.execute(sql.SQL("REVOKE ALL ON FUNCTION {} FROM {}").format(fn, sql.Identifier(role)))
     if release_role:
