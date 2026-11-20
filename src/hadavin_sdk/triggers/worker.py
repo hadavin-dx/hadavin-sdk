@@ -44,7 +44,7 @@ from collections.abc import Callable, Iterable, Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import wait as wait_all
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Self
 from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
 
 from hadavin_sdk.errors import ConfigError
@@ -90,7 +90,7 @@ class Runner:
         self._flying: dict[str, Future[None]] = {}  # run_id -> the handle call of this process
         self._closed = False
 
-    def __enter__(self) -> Runner:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
@@ -290,7 +290,7 @@ class _Server(socketserver.ThreadingMixIn, WSGIServer):
 
 
 class _QuietHandler(WSGIRequestHandler):
-    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 - the base class's name
+    def log_message(self, format: str, *args: Any) -> None:
         """Nothing: the request line can hold text chosen by the caller; the endpoint logs its own line."""
 
 
