@@ -1560,6 +1560,39 @@ def test_s2_below_16_a_vouched_role_is_not_listed_for_being_a_member_of_another_
         assert _who(w.scoped, w.reset, (a, b)) == [c]
 
 
+def test_s2_a_vouched_role_that_is_a_member_of_a_listed_role_is_listed(w):
+    """Vouching covers the CREATEROLE listing only: a vouched role that is a member of a role that holds a right
+    (case 1), or of a CREATEROLE role that is not accepted (case 2, below 16), is listed for the membership."""
+    with _server_wide_createrole(w, 2) as (b, p2):
+        below = _below_16(w)
+        p = w.new_role("pu", "NOLOGIN")
+        w.grant("GRANT UPDATE ON kill_switch TO {}", p)
+        w.grant("GRANT {} TO {}", p, b)
+        assert _who(w.scoped, w.reset, (b,)) == sorted([b, p] + ([p2] if below else []))
+        w.grant("REVOKE {} FROM {}", p, b)
+        w.grant("REVOKE UPDATE ON kill_switch FROM {}", p)
+        if below:
+            w.grant("GRANT {} TO {}", p2, b)
+            assert _who(w.scoped, w.reset, (b,)) == sorted([b, p2])
+
+
+def test_s2_below_16_a_member_of_an_accepted_owner_is_not_listed(w):
+    """The owner of the stop tables is outside the guarantee: vouching for it (it holds CREATEROLE here) seeds
+    nothing, and its members are not followed, exactly as without the vouching."""
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
+    with pg_gate.exclusive():
+        two, owner, _rt2, rs2 = _second_schema(w)
+        member = w.new_role("mw", "LOGIN")
+        w.grant("GRANT {} TO {}", owner, member)
+        w.grant("ALTER ROLE {} CREATEROLE", owner)
+        try:
+            assert _who(two, rs2) == []
+            assert _who(two, rs2, (owner,)) == []
+        finally:
+            w.grant("ALTER ROLE {} NOCREATEROLE", owner)
+
+
 def test_s2_below_16_a_member_of_an_accepted_superuser_is_not_listed(w):
     if not _below_16(w):
         pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
@@ -1651,6 +1684,44 @@ def test_cli_migrate_refuses_a_lone_surrogate_in_an_accepted_role_with_exit_2(
         w.reset,
     ]
     assert cli.main([*argv, "--accept-admin-role", chr(0xD800)]) == 2
+
+
+class _BrokenNoteOut(io.StringIO):
+    """A stdout whose write fails (closed, broken pipe) for the accepted-roles note only."""
+
+    def __init__(self, needle):
+        super().__init__()
+        self.needle = needle
+
+    def write(self, text):
+        if self.needle in text:
+            raise OSError("broken pipe")
+        return super().write(text)
+
+
+def test_cli_migrate_a_broken_stdout_never_replaces_the_refusal_or_fails_a_success(
+    w, cfg_dir, monkeypatch
+):
+    _demo(cfg_dir)
+    vouched = f"sb_ac4_{w.sfx}"
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        w.runtime,
+        "--reset-role",
+        w.reset,
+        "--accept-admin-role",
+        vouched,
+    ]
+    monkeypatch.setattr(sys, "stdout", _BrokenNoteOut(vouched))
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
+    assert cli.main(argv) == 0  # success: the note is lost, the run is not
+    third = w.new_role("x4", "NOLOGIN")
+    w.grant("GRANT UPDATE ON kill_switch TO {}", third)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+    assert cli.main(argv) == 2  # refusal: the ConfigError is not replaced by the OSError
 
 
 def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(

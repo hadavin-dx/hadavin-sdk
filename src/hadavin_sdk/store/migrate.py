@@ -325,6 +325,9 @@ WITH RECURSIVE want(relname, priv) AS (
 ), outside AS (
     SELECT relowner AS oid FROM rel UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper
 ), vouched AS (
+    -- Seeds of the membership walk, never listed for being vouched. Superusers and the owner are `outside`: never
+    -- seeds, and their members are not followed. A vouched role that is only a member of another VOUCHED role stays
+    -- unlisted (`listed` FALSE); a member that is not vouched, or any member of a LISTED role, is listed.
     SELECT r.oid FROM pg_catalog.pg_roles r WHERE {vouched} AND r.oid NOT IN (SELECT oid FROM outside)
 ), can(oid, listed) AS (
     SELECT s.oid, TRUE FROM (SELECT grantee AS oid FROM acl
@@ -352,8 +355,6 @@ _CREATORS = "(r.rolcreaterole AND r.rolname::text <> ALL(%(accepted)s::text[]))"
 # The accepted CREATEROLE roles themselves are not listed, but they SEED the membership walk: a member can SET ROLE to
 # one and use its CREATEROLE, so vouching covers the role, not its members (`listed` is FALSE for the seed row).
 _VOUCHED = "(r.rolcreaterole AND r.rolname::text = ANY(%(accepted)s::text[]))"
-# A vouched role that is a member of another vouched role is not listed for that (`listed` stays FALSE); a member that is
-# not vouched is. Superusers and the owner are `outside` and never seeds.
 _REFUSED_CATEGORIES = frozenset(
     {"Cc", "Cf", "Zl", "Zp"}
 )  # control, format (zero-width, bidi), line and paragraph separator
@@ -696,7 +697,8 @@ def migrate(
     role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
     clear a stop, and exit 0. Every search_path default of a named role that migrate changed is passed to
     `on_role_change` (role, database scope, old and new value) and logged (`hadavin_sdk.migrate`, warning).
-    `accepted_admin_roles`: role names (1 to 63 bytes, any characters but control ones, compared as exact text)
+    `accepted_admin_roles`: role names (1 to 63 bytes, no control, format, line-separator or paragraph-separator
+    character, no space at either end, compared as exact text)
     the operator vouches for (cannot grant the reset role to itself; for
     example a managed service's administrator). Below PostgreSQL 16 they are left out of the CREATEROLE listing and
     nowhere else; each one is logged at warning level (logger `hadavin_sdk.store`) and the command line prints
