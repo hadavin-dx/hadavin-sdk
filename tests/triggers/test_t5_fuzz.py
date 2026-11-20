@@ -17,8 +17,10 @@ Every assertion message starts with the seed and the case number. To replay one 
 `make_case`/`wire_cases` are pure functions of the seed (no answer feeds back into the generator),
 so `inproc_cases(SEED, n)[i]` or `wire_cases(SEED, n)[i]` is that case again.
 
-FINDING kept below: a request line with HTTP version 2.0 or higher gets 505 from the stdlib parser
-under the quiet server. The wire loop does not send that case class; one strict xfail replays it.
+FINDING, fixed: a request line with HTTP version 2.0 or higher got 505 from the stdlib parser under
+the quiet server. It is 400 now; the wire loop sends that case class and one test replays a case.
+Also refused with 400 by the quiet server since then: header names with an underscore, more than
+one Content-Length header, any Transfer-Encoding header.
 """
 
 from __future__ import annotations
@@ -890,8 +892,7 @@ class WireCase:
     tail: str = "read"  # "read": read to the end; "half": half-close, then read; "drop": close
     pieces: int = 1  # the bytes are sent in this many parts
     # what must come back: "model" (the base's own expectation), "status" (exactly `status`),
-    # "nothing" (the connection is closed with no byte), "refusal" (any refusal or nothing),
-    # "finding" (not sent by the loop)
+    # "nothing" (the connection is closed with no byte), "refusal" (any refusal or nothing)
     expect: str = "model"
     status: int = 0
 
@@ -1006,15 +1007,22 @@ def make_wire(rng: random.Random, index: int) -> WireCase:
         return WireCase(index, kind, base, once + once)
     if kind == "expect-100":
         return WireCase(index, kind, base, render(base, rng, more=(b"Expect: 100-continue",)))
-    if kind == "same-length-twice":
-        return WireCase(index, kind, base, render(base, rng, more=(b"Content-Length: %d" % n,)))
-    if kind == "underscore-names":
-        return WireCase(index, kind, base, render(base, rng, underscore=True))
-    # --- FINDING: answered 505 by the stdlib request parser ---
-    if kind == "version-2-up":
-        line = b"POST /v1/trigger " + rng.choice(VERSION_FINDING)
-        return WireCase(index, kind, base, render(base, rng, line=line), expect="finding")
     # --- refused by the server or the endpoint with one known status ---
+    if kind == "same-length-twice":  # two Content-Length headers, also two equal ones
+        more = (b"Content-Length: %d" % n,)
+        base.unread = True
+        return WireCase(
+            index, kind, base, render(base, rng, more=more), expect="status", status=400
+        )
+    if kind == "underscore-names":  # no header name with an underscore is taken
+        base.unread = True
+        data = render(base, rng, underscore=True)
+        return WireCase(index, kind, base, data, expect="status", status=400)
+    if kind == "version-2-up":  # was the FINDING: the stdlib parser's 505 is sent as 400
+        line = b"POST /v1/trigger " + rng.choice(VERSION_FINDING)
+        return WireCase(
+            index, kind, base, render(base, rng, line=line), expect="status", status=400
+        )
     if kind == "broken-line":
         line = rng.choice(BROKEN_LINES)
         return WireCase(
@@ -1058,11 +1066,11 @@ def make_wire(rng: random.Random, index: int) -> WireCase:
         return WireCase(
             index, kind, base, render(base, rng, more=more), expect="status", status=401
         )
-    if kind == "length-twice-first-wrong":  # the first length counts: fewer bytes than were signed
+    if kind == "length-twice-first-wrong":  # two different lengths: refused before the body is read
         first = (b"Content-Length: %d" % (n - 1),)
         base.unread = True
         return WireCase(
-            index, kind, base, render(base, rng, first=first), expect="status", status=401
+            index, kind, base, render(base, rng, first=first), expect="status", status=400
         )
     if kind == "no-end-half-close":
         data = render(base, rng, end=False)
@@ -1204,11 +1212,6 @@ def fuzz_wire(seed: int, count: int, wsgi, rows) -> Stats:
                 stats.kinds[case.kind] += 1
                 if case.base is not None:
                     signatures.add(case.base.made_sig)
-                if case.expect == "finding":
-                    # FINDING (see test_finding_...): an HTTP version of 2.0 or more in the request
-                    # line is answered 505 by the stdlib parser. Only this case class is not sent.
-                    stats.skipped += 1
-                    continue
                 seen = exchange(server.server_port, case)
                 check_wire(case, seen, model, where)
                 if case.expect == "model":
@@ -1258,16 +1261,13 @@ def test_fuzz_layer_2_raw_socket_300_requests_against_the_quiet_server(tmp_path,
 FINDING_CASE = 144  # the first "version-2-up" case of SEED_WIRE (the others: 164, 201)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: a request line with HTTP version 2.0 or higher (HTTP/2.0, HTTP/3.0, HTTP/9.9,"
-    " HTTP/10.1) is answered '505 HTTP Version Not Supported' by the stdlib request parser under"
-    " the quiet server: a 5xx that is not 503. Empty body, nothing started, nothing printed.",
-)
-def test_finding_layer_2_http_version_2_or_higher_is_answered_505(tmp_path):
-    """Replays exactly one case of the wire layer: seed SEED_WIRE, case FINDING_CASE."""
+def test_finding_layer_2_http_version_2_or_higher_is_answered_400_not_505(tmp_path):
+    """Replays exactly one case of the wire layer: seed SEED_WIRE, case FINDING_CASE. The FINDING
+    was: a request line with HTTP version 2.0 or higher (HTTP/2.0, HTTP/3.0, HTTP/9.9, HTTP/10.1)
+    is answered '505 HTTP Version Not Supported' by the stdlib request parser under the quiet
+    server, a 5xx that is not 503. Now: 400, empty body, nothing started."""
     case = wire_cases(SEED_WIRE, FINDING_CASE + 1)[FINDING_CASE]
-    assert case.kind == "version-2-up" and case.expect == "finding"
+    assert case.kind == "version-2-up" and case.expect == "status" and case.status == 400
     store = MemoryStore()
     wsgi, runner = make_stack(tmp_path, store)
     try:
@@ -1278,6 +1278,4 @@ def test_finding_layer_2_http_version_2_or_higher_is_answered_505(tmp_path):
     assert memory_rows(store) == []
     assert seen.raw.startswith(b"HTTP/1.") and seen.body == b""
     where = case.where(SEED_WIRE)
-    assert seen.status is not None and (seen.status < 500 or seen.status == 503), (
-        f"{where} a 5xx that is not 503: {seen.raw[:120]!r}"
-    )
+    assert seen.status == 400, f"{where} not 400: {seen.raw[:120]!r}"

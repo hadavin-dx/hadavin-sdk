@@ -342,7 +342,7 @@ def test_verify_any_window_edge_is_exact_with_a_fractional_clock(offset, sender,
 def test_check_secrets_accepts_a_good_set():
     check_secrets(SECRETS)
     check_secrets({"sender-a": ("z" * 32,)})
-    check_secrets({"sender-a": ("z" * 16 + " \t" + "z" * 16,)})  # whitespace inside is kept
+    check_secrets({"sender-a": ("z" * 16 + "  " + "z" * 16,)})  # spaces inside are kept
     assert endpoint.MAX_SECRETS_PER_SENDER == 2
 
 
@@ -443,6 +443,57 @@ def test_check_secrets_refuses_an_unseen_character_anywhere_in_a_value(name, pla
         assert value not in text
     with pytest.raises(ValueError):
         make_wsgi(FakeSettings(), secrets, Recorder())
+
+
+CONTROL = {
+    "NUL": "\x00",
+    "tab": "\t",
+    "newline": "\n",
+    "escape": "\x1b",
+    "DEL": "\x7f",
+    "C1": "\x85",
+}
+
+
+@pytest.mark.parametrize("name", sorted(CONTROL))
+def test_check_secrets_refuses_a_control_character_inside_a_value(name):
+    """Design review 1, N12: any character of Unicode category Cc (NUL included) inside a value is
+    refused at start, also through make_wsgi; the error names the sender only."""
+    char = CONTROL[name]
+    bad = STRANGER[:20] + char + STRANGER[20:]
+    assert bad == bad.strip()  # inside the value, so the whitespace rule does not see it
+    secrets = {"sender-a": (NEW_A, bad), "sender-b": (ONLY_B,)}
+    with pytest.raises(ValueError) as info:
+        check_secrets(secrets)
+    text = str(info.value)
+    assert "sender-a" in text and "control character" in text
+    assert "sender-b" not in text
+    for value in (bad, STRANGER, STRANGER[:20], NEW_A, ONLY_B, char):
+        assert value not in text
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), secrets, Recorder())
+
+
+def test_make_wsgi_has_its_own_upper_bounds_for_a_callers_settings_object():
+    """Design review 1, N15: the body cap and the number of senders are bounded here, not only in a
+    config model the caller may not use."""
+    from hadavin_sdk import defaults
+
+    limit = endpoint.MAX_BODY_BYTES_LIMIT
+    assert limit == 8 * defaults.MAX_DOCUMENT_BYTES
+    make_wsgi(FakeSettings(max_body_bytes=limit), SECRETS, Recorder())
+    for over in (limit + 1, 10**12):
+        with pytest.raises(ValueError, match="max_body_bytes is over"):
+            make_wsgi(FakeSettings(max_body_bytes=over), SECRETS, Recorder())
+    assert endpoint.MAX_SENDERS == 8
+    for count, good in ((8, True), (9, False)):
+        senders = tuple(FakeSender(f"sender-{i}", "agent-a", "svc-a") for i in range(count))
+        secrets = {f"sender-{i}": (f"{i}" * 40,) for i in range(count)}
+        if good:
+            make_wsgi(FakeSettings(senders=senders), secrets, Recorder())
+        else:
+            with pytest.raises(ValueError, match="more than 8 trigger senders"):
+                make_wsgi(FakeSettings(senders=senders), secrets, Recorder())
 
 
 def test_check_secrets_refuses_the_same_value_twice_for_one_sender():
@@ -919,16 +970,31 @@ def test_one_line_per_request_and_the_409_line_is_left_to_start(caplog):
     body = body_of()
     good = signed(body, OLD_A)
 
+    levels: list[str] = []
+
     def lines():
-        got = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+        mine = [r for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+        levels[:] = [r.levelname for r in mine]
         caplog.clear()
-        return got
+        return [r.getMessage() for r in mine]
 
     app, _ = build()
     assert call(app, headers=good, body=body)[0] == 202
-    assert lines() == ["trigger status=202 sender=sender-a"]
+    assert lines() == ["trigger status=202 sender=sender-a"] and levels == ["INFO"]
+    # Design review 1, N10: not verified, so DEBUG (the number of these lines is the caller's choice)
     refused(call(app, headers=signed(body, STRANGER), body=body), 401)
-    assert lines() == ["trigger status=401 sender=-"]
+    assert lines() == ["trigger status=401 sender=-"] and levels == ["DEBUG"]
+    refused(call(app, method="GET", headers=good, body=body), 405)
+    refused(call(app, path="/other", headers=good, body=body), 404)
+    refused(call(app, headers=good, body=body, length=None), 400)
+    refused(call(app, headers=good, body=body, length=str(CAP + 1)), 413)
+    assert [text[:18] for text in lines()] == [
+        "trigger status=" + s for s in ("405", "404", "400", "413")
+    ]
+    assert levels == ["DEBUG"] * 4
+    bad = b"{not json"  # verified, then refused: the sender is known, so INFO
+    refused(call(app, headers=signed(bad, OLD_A), body=bad), 400)
+    assert lines() == ["trigger status=400 sender=sender-a"] and levels == ["INFO"]
 
     app, _ = build(Recorder(answer=(409, {})))  # a start that logs nothing
     refused(call(app, headers=good, body=body), 409)
@@ -956,7 +1022,12 @@ def test_endpoint_imports_no_runtime_store_or_app_module():
             assert node.level == 0
             names |= {node.module} | {f"{node.module}.{a.name}" for a in node.names}
     ours = {n for n in names if n.startswith("hadavin_sdk")}
-    assert ours == {"hadavin_sdk.approvals", "hadavin_sdk.approvals.hmac_v0"}
+    assert ours == {
+        "hadavin_sdk.approvals",
+        "hadavin_sdk.approvals.hmac_v0",
+        "hadavin_sdk.defaults",  # constants only: the document cap the body bound is built from
+        "hadavin_sdk.defaults.MAX_DOCUMENT_BYTES",
+    }
 
 
 def test_constants_are_the_wire_contract():

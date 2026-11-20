@@ -10,7 +10,8 @@ request for the same key may be writing it right now. While it waits it takes a 
 it looks at the store less and less often (the pause doubles up to one second, about ten reads in five seconds);
 with neither a slot nor a row by the end of `ack_wait_s` it gets 503. At most
 one run per key rests on the primary key of the runs table, and every answer on the stored row: nothing in this
-process remembers keys.
+process remembers keys. At most `max_waiting` requests are inside `start` at one time; one more is answered
+503 at once and the store is not asked (a store that hangs must not pile up request threads without end).
 
 Several threads at once: what was read, and what was not
 - `Runtime` keeps no per-run state on itself: its fields are set once in `__init__` (runtime/agent_loop.py:208-213)
@@ -23,7 +24,8 @@ Several threads at once: what was read, and what was not
 - The local audit sink writes under a lock (audit/local_dir.py:30, 82); the recorded model double too (llm/fake.py:27).
 - Spend is NOT safe in the money sense: the budget is read before a model call and the cost is added after it
   (limits.py:17-30), so N runs of one agent in parallel can pass a budget by up to N calls. This is why
-  `max_running` defaults to 1.
+  `max_running` defaults to 1 here, and why a configured value above 1 is warned about at start as long as the
+  runtime's limits object has no `reserve` method.
 - NOT READ, so not shown safe: the real model clients, the detector, the read tools, the card channel, the
   PostgreSQL store and the chain audit under threads. With `max_running` 1 only one loop runs at a time, but the
   short `get_run` reads of request threads still run next to it.
@@ -51,16 +53,29 @@ from pathlib import Path
 from typing import Any, Final, Self
 from wsgiref.simple_server import WSGIServer
 
+from hadavin_sdk import defaults as _defaults
 from hadavin_sdk.errors import ConfigError as AnyConfigError
 from hadavin_sdk.models import Run, RunState, now
-from hadavin_sdk.store.protocol import NotFound, StoreUnavailable, is_connectivity_error
+from hadavin_sdk.store.protocol import (
+    NotFound,
+    StaleState,
+    StoreUnavailable,
+    is_connectivity_error,
+)
 from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi
 from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
 NO_SLOT_POLL_CAP_S: Final[float] = 1.0  # with no free slot the wait doubles from POLL_S up to this
-MAX_RUNNING: Final[int] = 1  # see the module text: parallel runs can pass a budget
-ACK_WAIT_S: Final[float] = 5.0
+POLL_S_MIN: Final[float] = 0.01
+POLL_S_MAX: Final[float] = 1.0
+# NOT taken from `defaults.TRIGGER_MAX_RUNNING` (4 there): see the module text, parallel runs can pass a budget.
+MAX_RUNNING: Final[int] = 1
+# Taken from `hadavin_sdk.defaults` where the constant exists; the literal is for a tree that has none yet.
+MAX_RUNNING_CEILING: Final[int] = getattr(_defaults, "TRIGGER_MAX_RUNNING_CEILING", 64)
+ACK_WAIT_S: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S", 5.0)
+ACK_WAIT_S_CEILING: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S_CEILING", 30.0)
+MAX_WAITING: Final[int] = 32  # requests inside `start` at one time; one more is answered 503 at once
 CLOSE_WAIT_S: Final[float] = 30.0  # how long `close` waits for running loops
 SOCKET_SLACK_S: Final[float] = 10.0  # a connection may stay open ack_wait_s plus this
 LOOPBACK: Final[str] = "127.0.0.1"
@@ -81,6 +96,19 @@ class ConfigError(AnyConfigError):
     Any other config or store error is printed by class name only (its text could hold a value)."""
 
 
+# What a store raises when it answered and the answer is a refusal. A database driver's own error classes are
+# recognised by module name (no driver import here).
+STORE_ERRORS: Final[tuple[type[BaseException], ...]] = (StoreUnavailable, StaleState, NotFound)
+STORE_ERROR_MODULES: Final[tuple[str, ...]] = ("psycopg", "sqlite3")
+
+
+def is_store_error(exc: BaseException) -> bool:
+    """True for an error that comes from the store: not reachable, or reached and refusing."""
+    if isinstance(exc, STORE_ERRORS) or is_connectivity_error(exc):
+        return True
+    return any(c.__module__.split(".")[0] in STORE_ERROR_MODULES for c in type(exc).__mro__)
+
+
 class Runner:
     """Starts at most `max_running` agent loops at a time and tells the endpoint what to answer."""
 
@@ -92,12 +120,22 @@ class Runner:
         ack_wait_s: float = ACK_WAIT_S,
         *,
         poll_s: float = POLL_S,
+        max_waiting: int = MAX_WAITING,
     ) -> None:
         if max_running < 1 or ack_wait_s <= 0 or poll_s <= 0:
             raise ValueError("max_running, ack_wait_s and poll_s must be above zero")
+        if max_running > MAX_RUNNING_CEILING:
+            raise ValueError(f"max_running must be at most {MAX_RUNNING_CEILING}")
+        if ack_wait_s > ACK_WAIT_S_CEILING:
+            raise ValueError(f"ack_wait_s must be at most {ACK_WAIT_S_CEILING:g}")
+        if not POLL_S_MIN <= poll_s <= POLL_S_MAX:
+            raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
+        if isinstance(max_waiting, bool) or not isinstance(max_waiting, int) or max_waiting < 1:
+            raise ValueError("max_waiting must be a whole number above zero")
         self._runtime, self._store = runtime, store
         self._ack_wait_s, self._poll_s = float(ack_wait_s), float(poll_s)
         self._slots = threading.BoundedSemaphore(max_running)
+        self._waiting = threading.BoundedSemaphore(max_waiting)  # requests inside `start`
         self._pool = ThreadPoolExecutor(max_workers=max_running, thread_name_prefix="trigger-run")
         self._lock = threading.Lock()  # guards _jobs and _closed
         self._jobs: set[Future[None]] = set()  # handle calls not yet ended, for `close` only
@@ -114,15 +152,35 @@ class Runner:
 
         From this call on `start` begins no loop: a key with no row gets 503, a key whose row exists is still
         answered from that row. A loop that is already running is NOT cut off: it runs to its end, also after
-        `wait_s` has passed (its thread then keeps the process alive until it ends). May be called twice."""
+        `wait_s` has passed (its thread then keeps the process alive until it ends). May be called twice.
+
+        When loops are still running after `wait_s`, one WARNING line gives their number. The operator must
+        give the process a grace period longer than the longest run: a process that is killed before a loop
+        has ended leaves that run cut off, and its key then ends as "interrupted" with a person."""
         with self._lock:
             self._closed = True
             jobs = list(self._jobs)
         self._pool.shutdown(wait=False, cancel_futures=True)
-        wait_all(jobs, timeout=wait_s)
+        going = len(wait_all(jobs, timeout=wait_s).not_done)
+        if going:
+            _LOG.warning(
+                "trigger worker: %d run(s) still going after the close wait; a kill now cuts them off"
+                " (the grace period must be longer than the longest run)",
+                going,
+            )
 
     def start(self, req: Accepted) -> tuple[int, dict[str, str]]:
-        """The status and answer body for one verified request. Never raises for a store or loop failure."""
+        """The status and answer body for one verified request. Never raises for a store or loop failure.
+        With `max_waiting` requests already in here the answer is 503 at once and the store is not asked."""
+        if not self._waiting.acquire(blocking=False):
+            _LOG.warning("trigger start: too many waiting requests, refused")
+            return NO_ACK
+        try:
+            return self._decide(req)
+        finally:
+            self._waiting.release()
+
+    def _decide(self, req: Accepted) -> tuple[int, dict[str, str]]:
         try:
             found = self._row(req.run_id)
             if found is not None:
@@ -143,12 +201,17 @@ class Runner:
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
                 if job is None:  # no slot so far: take a free one, else look less often
+                    if self._closed:
+                        return NO_ACK  # closed while it waited: no loop begins here any more
                     job = self._submit(req)[0]
                     pause = self._poll_s if job is not None else min(pause * 2, pause_cap)
                 time.sleep(min(pause, left))
-        except Exception as exc:  # noqa: BLE001 - the store failed: no ack, the sender retries
-            what = "store unreachable" if is_connectivity_error(exc) else "store error"
-            _LOG.warning("trigger start: %s (%s)", what, type(exc).__name__)
+        except Exception as exc:  # noqa: BLE001 - no ack in every case, the sender retries
+            if is_store_error(exc):
+                what = "store unreachable" if is_connectivity_error(exc) else "store error"
+                _LOG.warning("trigger start: %s (%s)", what, type(exc).__name__)
+            else:  # a bug, not the store: a retry will not help, so it must stand out in the log
+                _LOG.error("trigger start: internal error (%s)", type(exc).__name__)
             return NO_ACK
 
     def _row(self, run_id: str) -> Run | None:
@@ -179,6 +242,11 @@ class Runner:
         with self._lock:
             self._jobs.discard(job)
         self._slots.release()
+        # `_run` logs an Exception itself, so what is left here is a BaseException (or a failure outside `_run`).
+        exc = None if job.cancelled() else job.exception()
+        if exc is not None:
+            level = logging.WARNING if isinstance(exc, Exception) else logging.ERROR
+            _LOG.log(level, "trigger run: the loop thread ended with %s", type(exc).__name__)
 
     def _run(self, req: Accepted) -> None:
         try:
@@ -285,29 +353,66 @@ def check_bind(host: str, allow_non_loopback: bool) -> None:
         )
 
 
+def secret_reader(app: Any) -> Callable[[str], str]:
+    """The reader of sender secrets the App was built with: `App.trigger_secret`, a callable from a secret NAME
+    to its value that refuses every name no sender lists. `trigger_resolve` is the older name of the same thing
+    (test launchers still pass it). Without one the worker does not start."""
+    for name in ("trigger_secret", "trigger_resolve"):
+        reader = getattr(app, name, None)
+        if callable(reader):
+            return reader
+    raise ConfigError("App.trigger_secret is not available: the trigger secrets cannot be read")
+
+
+def check_durable(store: Any) -> bool:
+    """False, with one warning, when the store keeps its rows in this process only. Never stops the start."""
+    from hadavin_sdk.store.memory import MemoryStore
+
+    if not isinstance(store, MemoryStore):
+        return True
+    _LOG.warning(
+        "trigger worker: the store is the memory kind: acknowledged requests do not survive a restart"
+    )
+    return False
+
+
+def check_spend(runtime: Any, max_running: int) -> bool:
+    """False, with one warning, when more than one loop may run at a time and the runtime's limits object has
+    no `reserve` method: the cost is then added after the model call, so parallel runs can pass a budget.
+    Never stops the start: the configured value is used as it is."""
+    if max_running <= 1 or hasattr(getattr(runtime, "limits", None), "reserve"):
+        return True
+    _LOG.warning(
+        "trigger worker: max_running is %d and spend is not reserved before a model call: parallel runs can"
+        " pass a budget; set triggers.max_running: 1 to rule that out",
+        max_running,
+    )
+    return False
+
+
 def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, Runner]:
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
     choice). The caller closes the Runner."""
     settings = trigger_settings(app.config)
-    resolve = getattr(app, "trigger_resolve", None)
-    if resolve is None:
-        raise ConfigError(
-            "App.trigger_resolve is not available: the trigger secrets cannot be read"
-        )
+    resolve = secret_reader(app)
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
+    max_running = getattr(settings, "max_running", MAX_RUNNING)
     try:
         check_secrets(secrets)
         runner = Runner(
             app.runtime,
             app.store,
-            getattr(settings, "max_running", MAX_RUNNING),
+            max_running,
             getattr(settings, "ack_wait_s", ACK_WAIT_S),
             poll_s=getattr(settings, "poll_s", POLL_S),
+            max_waiting=getattr(settings, "max_waiting", MAX_WAITING),
         )
     except ValueError as exc:  # these messages name senders and bounds, never a value
         raise ConfigError(str(exc)) from None
+    check_durable(app.store)
+    check_spend(app.runtime, max_running)
     try:
         return make_wsgi(settings, secrets, runner.start, clock), runner
     except ValueError as exc:

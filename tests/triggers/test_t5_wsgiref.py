@@ -406,3 +406,284 @@ def test_a_timeout_after_the_read_phase_is_not_answered_as_a_stall(monkeypatch, 
     assert "connection ended: TimeoutError" in caplog.text
     assert "refused before the endpoint" not in caplog.text
     check_quiet(seen, capsys, caplog)
+
+
+# --- design review 1 and the fuzz findings F1 to F4 --------------------------------------------------------
+
+
+def custom(
+    body: bytes,
+    *,
+    line: str | None = None,
+    lengths: tuple[int, ...] | None = None,
+    underscore: bool = False,
+    sign: bool = True,
+    more: tuple[str, ...] = (),
+    with_body: bool = True,
+) -> bytes:
+    """A complete request whose request line, length headers and header names are the test's own."""
+    lines = [
+        line if line is not None else f"POST {endpoint.PATH} HTTP/1.1",
+        f"Host: {worker.LOOPBACK}",
+    ]
+    lines += [f"Content-Length: {n}" for n in ((len(body),) if lengths is None else lengths)]
+    if sign:
+        signed = hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)
+        lines += [
+            f"{name.replace('-', '_') if underscore else name}: {value}"
+            for name, value in signed.items()
+        ]
+    lines += more
+    head = "\r\n".join(lines).encode("ascii") + b"\r\n\r\n"
+    return head + body if with_body else head
+
+
+def trigger_records(caplog) -> list[tuple[str, str]]:
+    return [
+        (r.levelname, r.getMessage()) for r in caplog.records if r.name == "hadavin_sdk.triggers"
+    ]
+
+
+@pytest.mark.parametrize("version", ["HTTP/2.0", "HTTP/3.0", "HTTP/9.9", "HTTP/10.1"])
+def test_f1_http_version_2_or_higher_is_400_empty_never_a_5xx(version, capsys, caplog):
+    """Fuzz F1. The stdlib parser answers 505 for these; the quiet server turns every 5xx of the
+    parser into 400 with an empty body. The log line holds the status that was sent."""
+    start = FakeStart()
+    body = body_bytes()
+    with serving(make_wsgi(start)) as server:
+        seen = exchange(server.server_port, custom(body, line=f"POST {endpoint.PATH} {version}"))
+    assert seen.status_line.endswith(b" 400 Bad Request"), seen
+    assert start.calls == []
+    assert (
+        "DEBUG",
+        "trigger status=400 sender=- (refused before the endpoint)",
+    ) in trigger_records(caplog)
+    assert "505" not in caplog.text
+    check_quiet(seen, capsys, caplog)
+
+
+def test_f2_a_request_line_without_a_version_is_closed_on_purpose(capsys, caplog):
+    """Fuzz F2. `GET /v1/trigger` with no version: no answer, the connection is closed, and the log
+    holds one fixed DEBUG line, not the class name of an internal error."""
+    start = FakeStart()
+    with serving(make_wsgi(start)) as server:
+        seen = exchange(server.server_port, custom(body_bytes(), line=f"GET {endpoint.PATH}"))
+    assert seen.raw == b"" and seen.end in ("closed", "reset"), seen
+    assert start.calls == []
+    assert trigger_records(caplog) == [
+        ("DEBUG", "trigger server: request line without an HTTP version, closed with no answer")
+    ]
+    check_quiet(seen, capsys, caplog)
+
+
+@pytest.mark.parametrize("case", ["signed names", "one more header"])
+def test_f3_a_header_name_with_an_underscore_is_400_empty(case, capsys, caplog):
+    """Fuzz F3. The signature and timestamp headers written with underscores verified as if they had
+    hyphens; any header name with an underscore is refused before the endpoint."""
+    start = FakeStart()
+    body = body_bytes()
+    data = (
+        custom(body, underscore=True)
+        if case == "signed names"
+        else custom(body, more=("X_Other: 1",))
+    )
+    with serving(make_wsgi(start)) as server:
+        seen = exchange(server.server_port, data)
+        hyphens = exchange(server.server_port, custom(body, more=("X-Other: 1",)))
+    assert seen.status_line.endswith(b" 400 Bad Request"), seen
+    assert hyphens.status == 202 and len(start.calls) == 1  # the hyphen form is still taken
+    check_quiet(seen, capsys, caplog)
+
+
+@pytest.mark.parametrize(
+    "case", ["two equal lengths", "two different lengths", "chunked", "identity", "no body sent"]
+)
+def test_f4_two_content_lengths_or_a_transfer_encoding_is_400_before_the_body_is_read(
+    case, capsys, caplog
+):
+    """Fuzz F4. `no body sent`: the header block ends and no body byte follows; the answer comes at
+    once, long before the socket timeout, so nothing waited for a body."""
+    start = FakeStart()
+    body = body_bytes()
+    n = len(body)
+    data = {
+        "two equal lengths": custom(body, lengths=(n, n)),
+        "two different lengths": custom(body, lengths=(n, n + 1)),
+        "chunked": custom(body, more=("Transfer-Encoding: chunked",)),
+        "identity": custom(body, more=("transfer-encoding: identity",)),
+        "no body sent": custom(body, lengths=(n, n), with_body=False),
+    }[case]
+    timeout_s = 4.0
+    with serving(make_wsgi(start), timeout_s) as server:
+        seen = exchange(server.server_port, data)
+    assert seen.status_line.endswith(b" 400 Bad Request"), seen
+    assert seen.seconds < timeout_s / 2
+    assert start.calls == []
+    check_quiet(seen, capsys, caplog)
+
+
+class _TimesOutOnce:
+    """Stands for a socket whose send buffer is full: the first write times out, later ones are kept."""
+
+    def __init__(self, attempts: list[bytes]) -> None:
+        self.attempts = attempts
+
+    def write(self, data: bytes) -> int:
+        self.attempts.append(bytes(data))
+        if len(self.attempts) == 1:
+            raise TimeoutError(BOOM_MARK)
+        return len(data)
+
+    def flush(self) -> None:
+        return None
+
+    def close(self) -> None:
+        return None
+
+
+def test_n9_a_timeout_while_a_refusal_is_written_gives_no_second_status_line(
+    monkeypatch, capsys, caplog
+):
+    """Review N9. The stdlib parser writes the 431 itself, inside the step whose timeout counts as a
+    stalled client. When that write times out, nothing more is written: one attempt, then the close."""
+    attempts: list[bytes] = []
+    real_setup = server_module.QuietRequestHandler.setup
+
+    def setup(self):
+        real_setup(self)
+        self.wfile = _TimesOutOnce(attempts)
+
+    monkeypatch.setattr(server_module.QuietRequestHandler, "setup", setup)
+    start = FakeStart()
+    many = tuple(f"X-N{i}: {i}" for i in range(120))
+    with serving(make_wsgi(start)) as server:
+        seen = exchange(server.server_port, custom(body_bytes(), more=many))
+    assert seen.raw == b"", seen
+    assert len(attempts) == 1 and attempts[0].startswith(b"HTTP/1.0 431 "), attempts
+    assert ("DEBUG", "trigger server: timeout while an answer was written, closed") in (
+        trigger_records(caplog)
+    )
+    assert start.calls == []
+    check_quiet(seen, capsys, caplog)
+
+
+LARGE_ANSWER = 8 * 1024 * 1024
+
+
+def large_app(environ, start_response):
+    start_response("200 OK", [("Content-Length", str(LARGE_ANSWER))])
+    return [b"a" * LARGE_ANSWER]
+
+
+@pytest.mark.parametrize("answer", ["endpoint", "large"])
+def test_n9_a_client_that_never_reads_gets_one_status_line_and_the_server_goes_on(
+    answer, monkeypatch, capsys, caplog
+):
+    """Review N9 on a real socket: a valid request from a client with a small receive buffer that
+    does not read. `endpoint`: the short answer fits in the socket buffers. `large`: the write
+    times out in the middle of the body. Either way the bytes that arrived hold one status line,
+    the connection thread ends, and the next request is served."""
+    real_setup = server_module.QuietRequestHandler.setup
+
+    def setup(self):
+        self.request.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+        real_setup(self)
+
+    monkeypatch.setattr(server_module.QuietRequestHandler, "setup", setup)
+    start = FakeStart()
+    body = body_bytes()
+    with serving(make_wsgi(start) if answer == "endpoint" else large_app) as server:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+            sock.settimeout(CLIENT_TIMEOUT_S)
+            sock.connect((worker.LOOPBACK, server.server_port))
+            sock.sendall(request(body, declared=len(body)))
+            assert _handlers_done()  # not one byte was read by the client, and the thread is gone
+            raw = b""
+            with contextlib.suppress(ConnectionResetError):
+                while part := sock.recv(65536):
+                    raw += part
+        finally:
+            sock.close()
+        after = drive_signed(server.server_port)
+    seen = Seen(raw[:4096], "closed", 0.0)
+    assert raw.count(b"HTTP/1.") == 1 and raw.startswith(b"HTTP/1.0 20"), raw[:120]
+    if answer == "large":
+        assert len(raw) < LARGE_ANSWER  # the write did time out
+        assert "TimeoutError" in caplog.text
+        assert after.status == 200
+    else:
+        assert after.status == 202 and len(start.calls) == 2
+    assert "refused before the endpoint" not in caplog.text
+    check_quiet(seen if answer == "endpoint" else Seen(b"", "closed", 0.0), capsys, caplog)
+
+
+def test_n10_refusals_before_the_signature_are_debug_and_a_verified_request_is_info(capsys, caplog):
+    """Review N10. Whoever reaches the port chooses how many of these there are: an idle connection,
+    a broken or too long request line, 400 on the length, 401, 404, 405. None writes a line above
+    DEBUG. A verified request keeps its one INFO line."""
+    start = FakeStart()
+    body = body_bytes()
+    n = len(body)
+    with serving(make_wsgi(start)) as server:
+        port = server.server_port
+        statuses = [
+            drive_silent_client(port).status,
+            drive_garbage(port).status,
+            drive_long_request_line(port).status,
+            drive_no_content_length(port).status,
+            exchange(port, custom(body, sign=False)).status,
+            exchange(port, custom(body, line="POST /v1/other HTTP/1.1")).status,
+            exchange(port, custom(body, line=f"GET {endpoint.PATH} HTTP/1.1")).status,
+            exchange(port, custom(body, lengths=(n, n))).status,
+        ]
+        assert statuses == [400, 400, 414, 400, 401, 404, 405, 400]
+        assert _handlers_done()
+        refusals = trigger_records(caplog)
+        caplog.clear()
+        seen = drive_signed(port)
+    assert len(refusals) == len(statuses), refusals
+    assert {level for level, _ in refusals} == {"DEBUG"}, refusals
+    assert seen.status == 202
+    assert trigger_records(caplog) == [("INFO", f"trigger status=202 sender={SENDER}")]
+    check_quiet(seen, capsys, caplog)
+
+
+def test_n11_a_process_variable_cannot_stand_in_for_a_missing_header(monkeypatch, capsys, caplog):
+    """Review N11. The stdlib application handler starts every request environment from a copy of
+    the process environment (taken when `wsgiref.handlers` is first imported, so the test takes the
+    copy again after it planted its variables). A request without the signature and timestamp
+    headers must be 401 although the process holds variables with a valid signature for its body;
+    one without Content-Length must be 400 although the process holds the right length."""
+    import wsgiref.handlers
+
+    start = FakeStart()
+    body = body_bytes()
+    signed = hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)
+    for name, value in signed.items():
+        monkeypatch.setenv("HTTP_" + name.upper().replace("-", "_"), value)
+    monkeypatch.setenv("CONTENT_LENGTH", str(len(body)))
+    monkeypatch.setenv("CONTENT_TYPE", "text/" + LINE_MARK)
+    planted = wsgiref.handlers.read_environ()
+    assert len([k for k in planted if k.startswith("HTTP_X_HADAVIN_")]) == 2
+    monkeypatch.setattr(wsgiref.handlers.BaseHandler, "os_environ", planted)
+    seen_environ: dict[str, object] = {}
+    wsgi = make_wsgi(start)
+
+    def spy(environ, start_response):
+        seen_environ.update(environ)
+        return wsgi(environ, start_response)
+
+    with serving(spy) as server:
+        unsigned = exchange(server.server_port, custom(body, sign=False))
+        no_length = exchange(server.server_port, custom(body, lengths=()))
+        control = exchange(server.server_port, custom(body))
+    assert unsigned.status == 401, unsigned
+    assert no_length.status == 400, no_length
+    assert control.status == 202 and len(start.calls) == 1
+    assert not set(seen_environ) & set(planted) - {"CONTENT_LENGTH", "CONTENT_TYPE"}
+    assert (
+        seen_environ["CONTENT_TYPE"] == "text/plain"
+    )  # the stdlib's own default, not the variable
+    check_quiet(unsigned, capsys, caplog)

@@ -378,8 +378,8 @@ at. If the workflow took them as an end, the gap described above would stay open
    work (see "When a run shows NEEDS_PERSON after a restart or a crash").
 
 Also know: the workflow stops watching at WAITING_FOR_APPROVAL. If the plan is later rejected, expires, or fails
-when it is carried out, this execution has already ended as a success; those ends are told to people by Hadavin's
-own approval messages, not by this template. And an event that is sent again with the key of a run that ended
+when it is carried out, this execution has already ended as a success, and this template tells nobody about
+those later ends. And an event that is sent again with the key of a run that ended
 badly fails again, every time: that is meant, the key is used up.
 
 UNVERIFIED: all of this section's n8n side. The state check was added after the lead's run and nobody has run it

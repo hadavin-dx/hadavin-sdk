@@ -60,7 +60,9 @@ class QuietWSGIHandler(ServerHandler):
     error_status = STATUS_TEXT[503]
     error_headers: ClassVar[list[tuple[str, str]]] = [("Content-Length", "0")]
     error_body = b""
-    os_environ: ClassVar[dict[str, str]] = {}  # the stdlib default is a copy of the process environment
+    os_environ: ClassVar[
+        dict[str, str]
+    ] = {}  # the stdlib default is a copy of the process environment
 
     def log_exception(self, exc_info: Any) -> None:
         kind = exc_info[0] if exc_info else None
@@ -86,7 +88,9 @@ class QuietRequestHandler(WSGIRequestHandler):
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
         """Status line and an empty body. `message` and `explain` can repeat the request and are dropped."""
-        if code >= SERVER_ERROR:  # the stdlib parser answers 505 for HTTP/2.0 and up: a caller's mistake
+        if (
+            code >= SERVER_ERROR
+        ):  # the stdlib parser answers 505 for HTTP/2.0 and up: a caller's mistake
             code = STALLED_STATUS
         self._answer_begun = True
         _LOG.debug("trigger status=%d sender=- (refused before the endpoint)", code)
@@ -122,8 +126,12 @@ class QuietRequestHandler(WSGIRequestHandler):
             return
         if not parsed:  # it has answered through send_error, or the client sent nothing
             return
-        if not isinstance(self.headers, Message):  # a request line with no version has no header block
-            _LOG.debug("trigger server: request line without an HTTP version, closed with no answer")
+        if not isinstance(
+            self.headers, Message
+        ):  # a request line with no version has no header block
+            _LOG.debug(
+                "trigger server: request line without an HTTP version, closed with no answer"
+            )
             return
         if self._bad_headers():
             self.send_error(STALLED_STATUS)

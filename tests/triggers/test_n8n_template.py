@@ -6,6 +6,9 @@ were not imported again. These tests pin what the record showed must hold: Set n
 the signing value in a credential and nowhere else, the status read from error.status, Retry On Fail off,
 the guard before the hash node and the sign node, a 502, 503, 504 or missing status leading through a Wait
 back to a new timestamp and a new signature, and 400, 401, 409, 413 stopping at once.
+They also pin the state check that was added after the run: a 202 or 200 answer is not the end of the workflow;
+it asks again, signed anew, until the state says how the run ended, and the state names it sorts by are
+loaded from the code.
 They tie the signing recipe as the sign node and the README word it to ``hmac_v0``, and they list the
 nodes that still hold something nobody has seen working. They do not show that n8n accepts the files.
 The fake secret is built from parts.
@@ -23,8 +26,12 @@ from typing import Any
 
 import pytest
 
+from types import SimpleNamespace
+
 from hadavin_sdk.approvals import hmac_v0
+from hadavin_sdk.backends import table
 from hadavin_sdk.models import OPEN_STATES, RunState
+from hadavin_sdk.runtime import runs, tick
 from hadavin_sdk.triggers import endpoint, worker
 from tests.test_no_hardcoded_values import PATTERNS
 
@@ -52,9 +59,16 @@ OPEN_NODES = {
         "Sign",
         "Send to Hadavin",
         "Busy and rounds left?",
+        "Next round",
         "Wait before next round",
         "Stop: refused or gave up",
-        "Check state (optional)",
+        "Run still going?",
+        "Checks left?",
+        "Next check",
+        "Run ended well?",
+        "Done: finished or waits for approval",
+        "Stop: run did not end well",
+        "Stop: still running",
     },
     ERROR: set(),
 }
@@ -65,6 +79,7 @@ NOT_RUN = (
     'The two "Answer caller" nodes',
     "A manual retry of a failed execution from the n8n editor",
     "30 rounds with 60 second waits",
+    "The state check after a 202 or 200 answer",
     "The real Hadavin endpoint (a stub answered)",
     "One webhook call that starts two executions",
     "n8n Cloud and queue mode",
@@ -118,7 +133,18 @@ VERIFY_ITEMS = (
     "larger than 300 KB",
     "one exception to",
     "an answer 502 or 504 goes the busy way",
+    "the state check after a 202 or 200",
+    "the gap itself, against a real worker and a real tick",
 )
+# The state check. How the workflow sorts the state of an answer, taken from the code so that a renamed or a new
+# state fails here: "still going" = the states the tick's stuck step ends when a run stops moving; "success" = the
+# three named here; "error" = every other state a run can end in.
+STATE_READ = "String($json.state ?? '')"
+CHECKS_READ = "($('Stamp time').last().json.checks ?? 0)"
+GOING = frozenset(tick.STUCK)
+SUCCESS = frozenset({RunState.NO_ACTION, RunState.SUCCEEDED, RunState.WAITING_FOR_APPROVAL})
+ENDED_BADLY = frozenset(runs.FINAL) - SUCCESS
+EXAMPLE_STEPS = 12  # the README's worked example: an agent with max_steps 12 on the default model settings
 
 
 def _load(name: str) -> dict[str, Any]:
@@ -357,7 +383,7 @@ def test_a_node_that_was_not_in_the_run_does_not_claim_it_was_seen():
 def test_every_set_node_is_on_the_version_that_builds_its_fields(name):
     flow = _load(name)
     sets = [node for node in flow["nodes"] if node["type"] == PREFIX + "set"]
-    assert len(sets) == {MAIN: 3, ERROR: 1}[name]
+    assert len(sets) == {MAIN: 4, ERROR: 1}[name]
     assert _set_problems(flow) == []
     for node in sets:
         assert node["typeVersion"] == SET_VERSION, node["name"]
@@ -645,8 +671,8 @@ def test_a_busy_answer_leads_through_a_wait_to_a_new_timestamp_and_a_new_signatu
         n for n, node in nodes.items() if "JSON.stringify" in json.dumps(node["parameters"])
     ]
     assert len(builders) == 1 and builders[0] not in after_wait
-    # the success output does not lead back into the loop
-    assert http not in _reach(flow, ok_out[0]["node"])
+    # the success output leads to the state check and to nothing else (see the state-check tests below)
+    assert [nodes[link["node"]]["type"] for link in ok_out] == [PREFIX + "if"]
 
 
 def test_the_retry_path_never_reuses_a_timestamp_or_a_signature():
@@ -678,7 +704,7 @@ def test_the_retry_path_never_reuses_a_timestamp_or_a_signature():
             # a Set node on the way drops the old ts and the old signature: it keeps named fields only
             assert node["parameters"]["includeOtherFields"] is False, name
             built = {a["name"] for a in node["parameters"]["assignments"]["assignments"]}
-            assert built == {"body", "round"}, (name, built)
+            assert built == {"body", "round", "checks"}, (name, built)
         texts = json.dumps(node["parameters"])
         assert "ts" not in re.findall(r"\.json\.(\w+)", texts), name  # no old timestamp is read
         assert "hmac" not in texts and "Date.now" not in texts, name
@@ -1041,7 +1067,7 @@ def test_readme_has_the_answer_table_in_plain_words():
     assert "SAME key, a NEW timestamp and a NEW signature" in busy[2]
     assert "At most 30 rounds" in busy[2] and "then the error workflow" in busy[2]
     assert "refused, timed out or was reset" in table["no answer"][1]
-    assert "No retry" in table["202 or 200"][2]
+    assert table["202 or 200"][2].startswith('NOT the end. Goes on to the state check "Run still going?"')
     flat = " ".join(part.split())
     assert 'UNVERIFIED: the "no answer" row and the 502 and 504 part of the row above it.' in flat
     assert "is NOT known" in flat and "The lead runs one more n8n evidence step" in flat
@@ -1083,3 +1109,382 @@ def test_readme_words_503_one_way_and_says_why_a_restart_must_not_reach_the_erro
     banned = (" d" + "ev ", "stag" + "ing", "produc" + "tion")
     for word in banned:
         assert word not in readme.lower(), word
+
+
+# ---- the state check: a 202 or 200 is not the end ----
+
+
+def _state_list(expression: str) -> set[str]:
+    """The state names of the one list in an expression of the form [..].includes(<the state of the answer>)."""
+    found = re.findall(r"\[([^\]]*)\]\.includes\(" + re.escape(STATE_READ) + r"\)", expression)
+    assert len(found) == 1, expression
+    names = re.findall(r"'([A-Z_]+)'", found[0])
+    assert found[0] == ", ".join(f"'{n}'" for n in names)  # nothing but quoted names
+    assert len(set(names)) == len(names)
+    return set(names)
+
+
+def _check_nodes(flow: dict[str, Any]) -> SimpleNamespace:
+    """The nodes of the state check, found by following the connections from the send node's first output."""
+    nodes, links = _nodes(flow), flow["connections"]
+    http = _one(flow, "httpRequest")
+    (check,) = [link["node"] for link in links[http]["main"][0]]
+    (left,), (verdict,) = ([link["node"] for link in out] for out in links[check]["main"])
+    (again,), (too_long,) = ([link["node"] for link in out] for out in links[left]["main"])
+    (done,), (bad,) = ([link["node"] for link in out] for out in links[verdict]["main"])
+    for name in (check, left, verdict):
+        assert nodes[name]["type"] == PREFIX + "if", name
+        (rule,) = nodes[name]["parameters"]["conditions"]["conditions"]
+        assert rule["operator"] == {"type": "boolean", "operation": "true", "singleValue": True}
+    return SimpleNamespace(
+        http=http, check=check, left=left, verdict=verdict, again=again, too_long=too_long, done=done, bad=bad
+    )
+
+
+def _rule(flow: dict[str, Any], name: str) -> str:
+    return _nodes(flow)[name]["parameters"]["conditions"]["conditions"][0]["leftValue"]
+
+
+def _state_check_problems(flow: dict[str, Any]) -> list[str]:
+    """Ways in which an acknowledged request (2xx) could reach a good end without the state check."""
+    nodes, edges, links = _nodes(flow), _edges(flow), flow["connections"]
+    http = _one(flow, "httpRequest")
+    out: list[str] = []
+    first = [link["node"] for link in links[http]["main"][0]]
+    if len(first) != 1 or nodes[first[0]]["type"] != PREFIX + "if":
+        return [f"the send node's first output leads to {first}, not to one state check"]
+    check = first[0]
+    try:
+        going = _state_list(_rule(flow, check))
+    except (AssertionError, KeyError, IndexError):
+        return [f"{check} does not test the state of the answer"]
+    if going != {s.value for s in GOING}:
+        out.append(f"{check} tests {sorted(going)}")
+    outputs = links.get(check, {}).get("main", [])
+    if len(outputs) != 2 or any(len(o) != 1 for o in outputs):
+        return [*out, f"{check} does not have one node on each output"]
+    still, verdict = outputs[0][0]["node"], outputs[1][0]["node"]
+    # A good end: a node after the send node from which nothing follows and which does not fail the execution.
+    after = _reach(flow, http)
+    ends = {n for n in after if not edges.get(n) and nodes[n]["type"] != PREFIX + "stopAndError"}
+    if len(ends) != 1:
+        out.append(f"good ends after the send node: {sorted(ends)}")
+    for end in sorted(ends):
+        if end in _reach(flow, http, without=check):
+            out.append(f"{end} can be reached without {check}")
+        if end in _reach(flow, http, without=verdict):
+            out.append(f"{end} can be reached without {verdict}")
+        if end in _reach(flow, still, without=http) | {still}:
+            out.append(f"{end} can be reached from the still-going branch without a new send")
+        if [source for source, targets in edges.items() if end in targets] != [verdict]:
+            out.append(f"{end} has another way in than {verdict}")
+        if [link["node"] for link in links.get(verdict, {}).get("main", [[]])[0]] != [end]:
+            out.append(f"{end} is not the true branch of {verdict}")
+        if end in _reach(flow, flow["nodes"][0]["name"], without=http):
+            out.append(f"{end} can be reached without sending")
+    if nodes[verdict]["type"] != PREFIX + "if":
+        out.append(f"{verdict} is not a condition")
+    elif [source for source, targets in edges.items() if verdict in targets] != [check]:
+        out.append(f"{verdict} has another way in than {check}")
+    else:
+        try:
+            good = _state_list(_rule(flow, verdict))
+        except (AssertionError, KeyError, IndexError):
+            good = set()
+        if good != {s.value for s in SUCCESS}:
+            out.append(f"{verdict} takes {sorted(good)} as a success")
+    return out
+
+
+def test_the_three_groups_of_states_cover_every_state_of_the_code():
+    assert GOING | SUCCESS | ENDED_BADLY == set(RunState)
+    assert not GOING & SUCCESS and not GOING & ENDED_BADLY and not SUCCESS & ENDED_BADLY
+    # "still going" holds the two states answered 202 and is every open state but the wait for an approval
+    assert worker.IN_PROGRESS <= GOING
+    assert GOING == set(OPEN_STATES) - {RunState.WAITING_FOR_APPROVAL}
+    assert SUCCESS - set(OPEN_STATES) <= runs.FINAL
+    assert RunState.NEEDS_PERSON in ENDED_BADLY and RunState.STOPPED in ENDED_BADLY
+    assert set(tick.STUCK.values()) >= {"interrupted"}
+    assert "FAILED" not in {s.value for s in RunState}  # the README says there is no such state
+
+
+def test_the_workflow_sorts_the_states_exactly_as_the_code_names_them():
+    flow = _load(MAIN)
+    nodes, c = _nodes(flow), _check_nodes(flow)
+    assert _rule(flow, c.check) == "={{ " + _list_text(GOING) + ".includes(" + STATE_READ + ") }}"
+    assert _rule(flow, c.verdict) == "={{ " + _list_text(SUCCESS) + ".includes(" + STATE_READ + ") }}"
+    assert _state_list(_rule(flow, c.check)) == {s.value for s in GOING}
+    assert _state_list(_rule(flow, c.verdict)) == {s.value for s in SUCCESS}
+    message = nodes[c.bad]["parameters"]["errorMessage"]
+    assert nodes[c.bad]["type"] == PREFIX + "stopAndError"
+    assert _state_list(message) == {s.value for s in ENDED_BADLY}
+    # every state name written anywhere in the parameters of the workflow is a state of the code
+    written = {w for text in _params(flow) for w in re.findall(r"'([A-Z][A-Z_]{3,})'", text)}
+    assert written == {s.value for s in RunState}, written ^ {s.value for s in RunState}
+    # the message names the state, says that the answer holds no reason, and holds nothing of the request
+    assert "'the run ended in state ' + " + STATE_READ in message
+    assert "The answer holds no reason" in message and "NEW key" in message
+    assert "the answer held no state that this workflow knows" in message  # unknown state: fails too
+    for word in ("$json.body", "$json.ts", "$json.hmac", "document", "$('Build request')"):
+        assert word not in message, word
+    for name in (c.check, c.verdict):
+        assert "REQUIRED" in nodes[c.check]["notes"]
+        assert nodes[name]["notes"].startswith(OPEN), name
+
+
+def _list_text(states: frozenset[RunState]) -> str:
+    """The list as the workflow writes it: in the order of the code's enum."""
+    return "[" + ", ".join(f"'{s.value}'" for s in RunState if s in states) + "]"
+
+
+def test_no_acknowledged_request_reaches_a_good_end_without_the_state_check():
+    flow = _load(MAIN)
+    nodes, c = _nodes(flow), _check_nodes(flow)
+    assert _state_check_problems(flow) == []
+    # the two other ends of the check fail the execution, and nothing follows them
+    for name in (c.bad, c.too_long):
+        assert nodes[name]["type"] == PREFIX + "stopAndError" and _reach(flow, name) == set(), name
+    assert nodes[c.done]["type"] == PREFIX + "noOp" and _reach(flow, c.done) == set()
+    # every node after the send node's first output is part of the check, or of the loop back to the send
+    assert c.done not in _reach(flow, c.http, without=c.check)
+    assert "optional" not in " ".join(nodes).lower()  # no node says the check may be left out
+    assert "taken by the workflow, not done" in nodes["Answer caller: taken"]["notes"]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "send straight to the good end",
+        "send to the good end beside the check",
+        "still going leads to the good end",
+        "checks used up leads to the good end",
+        "verdict outputs swapped",
+        "still going taken as a success",
+        "a failed state taken as a success",
+        "one still-going state left out",
+        "a second good end after the check",
+    ],
+)
+def test_a_way_round_the_state_check_is_caught(change):
+    flow = _load(MAIN)
+    c = _check_nodes(flow)
+    broken = copy.deepcopy(flow)
+    links, nodes = broken["connections"], _nodes(broken)
+    to = lambda name: {"node": name, "type": "main", "index": 0}  # noqa: E731
+    if change == "send straight to the good end":
+        links[c.http]["main"][0] = [to(c.done)]
+    elif change == "send to the good end beside the check":
+        links[c.http]["main"][0].append(to(c.done))
+    elif change == "still going leads to the good end":
+        links[c.check]["main"][0] = [to(c.done)]
+    elif change == "checks used up leads to the good end":
+        links[c.left]["main"][1] = [to(c.done)]
+    elif change == "verdict outputs swapped":
+        links[c.verdict]["main"].reverse()
+    elif change == "still going taken as a success":
+        links[c.check]["main"].reverse()
+    elif change == "a failed state taken as a success":
+        rule = nodes[c.verdict]["parameters"]["conditions"]["conditions"][0]
+        rule["leftValue"] = rule["leftValue"].replace("'NO_ACTION'", "'NO_ACTION', 'NEEDS_PERSON'")
+    elif change == "one still-going state left out":
+        rule = nodes[c.check]["parameters"]["conditions"]["conditions"][0]
+        rule["leftValue"] = rule["leftValue"].replace(", 'VERIFYING'", "")
+    else:
+        broken["nodes"].append({"name": "x", "type": PREFIX + "noOp", "parameters": {}})
+        links[c.verdict]["main"][1] = [to("x")]
+    assert _state_check_problems(broken), change
+    assert _state_check_problems(flow) == []
+
+
+def test_every_state_check_round_waits_and_signs_again_with_the_same_body():
+    flow = _load(MAIN)
+    nodes, edges, c = _nodes(flow), _edges(flow), _check_nodes(flow)
+    stamp, sign, wait = _one_stamp(flow), _sign_node(flow), _one(flow, "wait")
+    # from "still going" the send node is reached again, and only through the wait, the stamp and the sign node
+    assert c.http in _reach(flow, c.left)
+    for must_pass in (c.again, wait, stamp, sign):
+        assert c.http not in _reach(flow, c.left, without=must_pass), must_pass
+    assert edges[c.again] == [wait] and edges[wait] == [stamp] and edges[stamp] == [sign]
+    assert sorted(s for s, targets in edges.items() if wait in targets) == sorted(
+        [c.again, flow["connections"][flow["connections"][c.http]["main"][1][0]["node"]]["main"][0][0]["node"]]
+    )
+    # the node that prepares the next question: the same body, the round count kept, the check count plus one
+    again = nodes[c.again]
+    assert again["type"] == PREFIX + "set" and again["parameters"]["includeOtherFields"] is False
+    (builder,) = [n for n, node in nodes.items() if "JSON.stringify" in json.dumps(node["parameters"])]
+    fields = {a["name"]: a["value"] for a in again["parameters"]["assignments"]["assignments"]}
+    assert fields == {
+        "body": f"={{{{ $('{builder}').first().json.body }}}}",
+        "round": f"={{{{ $('{stamp}').last().json.round }}}}",
+        "checks": "={{ " + CHECKS_READ + " + 1 }}",
+    }
+    assert f"$('{stamp}')" in CHECKS_READ
+    # nothing between the answer and the stamp node reads the clock, an old timestamp or an old signature
+    for name in (c.check, c.left, c.again, wait):
+        texts = json.dumps(nodes[name]["parameters"])
+        assert "ts" not in re.findall(r"\.json\.(\w+)", texts), name
+        assert "hmac" not in texts and "Date.now" not in texts and "JSON.stringify" not in texts, name
+
+
+def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap():
+    flow = _load(MAIN)
+    nodes, c = _nodes(flow), _check_nodes(flow)
+    form = re.fullmatch(r"=\{\{ " + re.escape(CHECKS_READ) + r" < (\d+) \}\}", _rule(flow, c.left))
+    assert form, "the count condition changed its form: update this test with it"
+    checks = int(form.group(1))
+    assert 1 <= checks <= 1000
+    # the count goes up by one in every check round and is carried, never set back, over a busy round
+    busy = flow["connections"][c.http]["main"][1][0]["node"]
+    next_round = nodes[flow["connections"][busy]["main"][0][0]["node"]]
+    carried = {a["name"]: a["value"] for a in next_round["parameters"]["assignments"]["assignments"]}
+    assert carried["checks"] == "={{ " + CHECKS_READ[1:-1] + " }}"
+    writers = [
+        name
+        for name, node in nodes.items()
+        if any(
+            a["name"] == "checks"
+            for a in node["parameters"].get("assignments", {}).get("assignments", [])
+        )
+    ]
+    assert sorted(writers) == sorted([c.again, next_round["name"]])
+    # the busy rounds are bounded too, and a check round does not hand out new ones
+    _listed, _pattern, rounds = _busy_parts(_rule(flow, busy))
+    assert 1 <= rounds <= 1000
+    # the span of the checks against the code's own numbers, for the README's example agent
+    wait = nodes[_one(flow, "wait")]["parameters"]
+    assert wait["unit"] == "seconds" and 0 < wait["amount"] <= 60  # a wait above 65 s was never run
+    llm = SimpleNamespace(
+        call_timeout_s=table.AnthropicSettings.model_fields["call_timeout_s"].default,
+        max_attempts=table.AnthropicSettings.model_fields["max_attempts"].default,
+    )
+    app = SimpleNamespace(
+        config=SimpleNamespace(backends=SimpleNamespace(llm=llm)),
+        registry=SimpleNamespace(agents={"a": SimpleNamespace(max_steps=EXAMPLE_STEPS)}),
+    )
+    stuck = tick.stuck_after_s(app, "a")
+    assert stuck == EXAMPLE_STEPS * llm.call_timeout_s * llm.max_attempts + 60
+    span, limit = checks * wait["amount"], stuck + tick.TICK_SLACK_S
+    assert span > limit
+    minutes = span // 60
+    message = nodes[c.too_long]["parameters"]["errorMessage"]
+    assert f"still shown as running after {checks} checks, about {minutes} minutes" in message
+    assert "=" not in message[:2]  # a fixed text
+    readme = " ".join(_readme().split())
+    part = readme.partition("### The numbers")[2].partition("### Three limits")[0]
+    assert part, "the numbers part is gone"
+    for phrase in (
+        "`stuck_after_s` in `src/hadavin_sdk/runtime/tick.py`",
+        "`max_steps` times `call_timeout_s` times `max_attempts`, plus 60 seconds",
+        f"the defaults {llm.call_timeout_s:g} seconds and {llm.max_attempts}",
+        f"{tick.TICK_SLACK_S} seconds as the longest gap (`TICK_SLACK_S`",
+        f"`max_steps` {EXAMPLE_STEPS} on the defaults: {EXAMPLE_STEPS} x {llm.call_timeout_s:g} x "
+        f"{llm.max_attempts} + 60 = {stuck:g} seconds",
+        f"{limit:g} seconds",
+        f"a wait of {wait['amount']} seconds",
+        f"{checks} checks",
+        f"{span} seconds ({minutes} minutes)",
+        "checks times wait must be LONGER than that client's stuck limit plus one tick gap",
+    ):
+        assert phrase in part, phrase
+    # the three other examples of the README: the smallest whole number of checks that is NOT enough
+    for steps, not_enough in re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part):
+        need = int(steps) * llm.call_timeout_s * llm.max_attempts + 60 + tick.TICK_SLACK_S
+        assert int(not_enough) * wait["amount"] <= need < (int(not_enough) + 1) * wait["amount"], steps
+    assert len(re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part)) == 3
+
+
+def test_readme_says_why_a_202_is_not_the_end_and_has_a_row_for_every_state():
+    raw = _readme()
+    section = raw.partition("\n## A 202 is not the end\n")[2].partition("\n## ")[0]
+    assert section, "the section is gone"
+    flat = " ".join(section.split())
+    assert "The state check is a REQUIRED part of the main workflow, not an extra." in flat
+    # the sequence of four steps
+    why = section.partition("### Why")[2].partition("\n### ")[0]
+    steps = [" ".join(s.split()) for s in re.split(r"^\d+\. ", why, flags=re.MULTILINE)[1:]]
+    assert len(steps) == 4
+    for step, phrases in zip(
+        steps,
+        (
+            ("stores the run", "the worker process dies", "no acknowledgement"),
+            ("tries again", "answers 202", "no work is going on anywhere"),
+            ("finishes as a success", "Nothing tries again after a 2xx"),
+            ("the tick", 'NEEDS_PERSON with the reason "interrupted"', "NO message to a person"),
+        ),
+        strict=True,
+    ):
+        for phrase in phrases:
+            assert phrase in step, phrase
+    assert "shows a success, the work was never done, and nobody is told" in flat
+    assert "killed during a restart" in flat
+    # the table: one row for each state of the code, sorted the way the workflow sorts it
+    table_part = section.partition("### The states")[2].partition("\n### ")[0]
+    rows = [
+        [cell.strip() for cell in line.strip().strip("|").split("|")]
+        for line in table_part.splitlines()
+        if line.startswith("|")
+    ]
+    assert rows[0] == ["State", "What it means in plain words", "What the template does"]
+    by_state = {row[0]: row for row in rows[2:]}
+    assert len(by_state) == len(rows) - 2  # no state twice
+    assert set(by_state) == {s.value for s in RunState}
+    assert all(len(row) == 3 and all(row) for row in by_state.values())
+    for group, opening in ((GOING, "STILL GOING:"), (SUCCESS, "SUCCESS:"), (ENDED_BADLY, "ERROR:")):
+        for state in group:
+            assert by_state[state.value][2].startswith(opening), state
+    assert "There is no state named FAILED in the code" in flat
+    assert "The answer holds no reason" in flat
+    assert "fails closed" in flat
+    assert 'UNVERIFIED: all of this section\'s n8n side.' in flat
+    # the nodes the section names exist
+    names = set(_nodes(_load(MAIN)))
+    for name in re.findall(r'"([^"]+)"', flat):
+        if name[0].isupper() and ("?" in name or name.startswith(("Stop:", "Done:", "Next ", "Wait "))):
+            assert name in names, name
+    # the caller's early answer is worded plainly
+    whole = " ".join(raw.split())
+    assert 'the caller\'s 202 means "taken by the workflow", not "done"' in whole
+    assert "Check state (optional)" not in whole
+
+
+def test_readme_states_the_three_limits_of_the_state_check():
+    raw = _readme()
+    section = raw.partition("\n## A 202 is not the end\n")[2].partition("\n## ")[0]
+    part = section.partition("### Three limits")[2]
+    items = [" ".join(s.split()) for s in re.split(r"^\d+\. ", part, flags=re.MULTILINE)[1:]]
+    assert len(items) == 3
+    for item, phrases in zip(
+        items,
+        (
+            (
+                "Until the tick has run, a dead run looks alive.",
+                "RECEIVED or WORKING",
+                "up to the stuck limit plus one tick gap to notice",
+            ),
+            (
+                "The worker itself tells no person about an interrupted run.",
+                "This template's error workflow is the only notice today.",
+            ),
+            (
+                "set the process supervisor's stop grace period longer than the longest run",
+                "forced kill",
+                'ends as "interrupted"',
+                "its key is never run again",
+                "a NEW key is needed to redo the work",
+            ),
+        ),
+        strict=True,
+    ):
+        for phrase in phrases:
+            assert phrase in item, phrase
+    # the first two are in the list of stated limits too, the third is there as limit 11 (pinned above)
+    limits = " ".join(raw.partition("## Stated limits")[2].partition("## VERIFY ON A REAL n8n")[0].split())
+    assert "A dead run looks alive until the tick has run." in limits
+    assert "The worker tells no person about an interrupted run." in limits
+    assert "a NEW key is needed to redo the work" in limits
+    # the error workflow's note names what lands there now
+    notify = _load(ERROR)["nodes"][-1]["notes"]
+    assert "a run that ended in a state that is not a success" in notify
+    assert "ONLY notice a person gets today" in notify
+    for state in ENDED_BADLY:
+        assert state.value in notify, state

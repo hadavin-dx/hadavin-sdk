@@ -273,6 +273,45 @@ def test_n7_kill_mode_ends_a_child_process_once(tmp_path):
     assert again.stdout.splitlines() == ["start", "survived", "finally ran", "atexit ran"]
 
 
+CHILD_CLOSED_STDOUT = (
+    CHILD_HEAD
+    + """
+os.close(1)  # the parent's end of the pipe is gone, or stdout was closed: the marker cannot be written
+try:
+    thing.step()
+    os.write(2, b"survived\\n")
+finally:
+    os.write(2, b"finally ran\\n")
+"""
+)
+
+
+def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_written(tmp_path):
+    """Design review 1, N16: the flag is deleted before the marker is printed. If the print fails,
+    the child must still end with the crash code and run no `finally`: not go on as an ordinary
+    exception inside the code under test, with the flag already gone."""
+    flag = tmp_path / "flag"
+    CrashPoints(mode="exit", flag_path=flag).arm(POINT)
+    done = start_child(tmp_path, CHILD_CLOSED_STDOUT, flag)
+    assert done.returncode == CRASH_EXIT_CODE, (done.returncode, done.stderr)
+    assert done.stdout == "" and not flag.exists()
+    assert "survived" not in done.stderr and "finally ran" not in done.stderr
+
+
+def test_h7_the_module_text_states_what_can_mislead_a_test():
+    """Design review 1, N16: the four limits are written where a test author reads them."""
+    text = " ".join((crash_mod.__doc__ or "").split())
+    for phrase in (
+        f"Exit code {CRASH_EXIT_CODE} is also what a real forced kill shows",
+        "asserts the marker line on the child's stdout AND the exit code",
+        "A flag file left on disk kills the next child that uses the same path",
+        "delete the flag in a `finally`",
+        'Mode "raise" behind the real trigger server does not simulate a crash',
+        "answers 503",
+    ):
+        assert phrase in text, phrase
+
+
 def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, capsys):
     """N7 (flag format): `<point>#<nth>` is written by arm and counted by hit; the marker is
     printed once."""
