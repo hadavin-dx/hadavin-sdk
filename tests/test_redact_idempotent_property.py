@@ -19,6 +19,7 @@ The corpora (nothing is dropped from any of them; `test_the_corpus_is_what_this_
   round12-fuzz   tests/test_k5_round12_fuzz.py                    `_case`, its seed, its 1,200 cases
   round-trip     tests/redact_corpus_support.py                   `random_text`, its seed, 300 texts; LOOKALIKES
   p1c            tests/p1c_builders.py                            gap1_values (short and long), gap2_cases, gap3_cases
+  p1c-b64        tests/p1c_cases.py                               the 142 base64 rows (G4)
   g7             tests/test_redact_context_after_sweep.py         SHAPES, MUST_KEEP, E5 (the shapes G7 was built on)
   constructed    this file                                        CONSTRUCTED: built to find what one extra pass misses
 Measured 2026-11-20 (fix round 3, settle as a real fixed point): 1,835 inputs, 0 refused (asserted), 0 fail. With settle
@@ -45,6 +46,7 @@ import pytest
 
 from hadavin_sdk.guard import runmap
 from tests import p1c_builders as p1c
+from tests import p1c_cases
 from tests import redact_corpus_support as round_trip
 from tests import test_k5_round8 as round8
 from tests import test_k5_round12_fuzz as round12
@@ -116,6 +118,9 @@ def _build() -> list[tuple[str, str]]:
     add("p1c-gap1", [v[k] for v in values for k in ("short", "long")])
     add("p1c-gap2", [text for _, _, text in p1c.gap2_cases()])
     add("p1c-gap3", [text for _, _, text in p1c.gap3_cases()])
+    add(
+        "p1c-b64", [text for _, _, text in p1c_cases.build().b64]
+    )  # G4: the 142 base64 rows of the probe
     add("g7-shapes", [g7.SHAPES[k] for k in sorted(g7.SHAPES)])
     add("g7-must-keep", g7.MUST_KEEP)
     add("g7-e5", [g7.E5[k][0] for k in sorted(g7.E5)])
@@ -217,6 +222,7 @@ def test_the_corpus_is_what_this_file_says():
     assert len(CORPUS) == sum(counts.values()) == EXPECTED_INPUTS
     assert len({case_id for case_id, _ in CORPUS}) == len(CORPUS)
     assert counts["p1c-gap2"] == P1C_GAP2 and counts["p1c-gap3"] == P1C_GAP3
+    assert counts["p1c-b64"] == P1C_B64
 
 
 def test_the_piece_check_sees_a_tail_and_ignores_a_word_of_the_text():
@@ -282,6 +288,7 @@ def test_the_constructed_chain_is_one_call_and_check_reports_a_refusal_as_refuse
     assert check(CONSTRUCTED[0])[0] == "refused"  # never a silent leak
 
 
-EXPECTED_INPUTS = 1836
+EXPECTED_INPUTS = 1978  # 1836 + the 142 `p1c-b64` rows
 P1C_GAP2 = 44  # the p1c probe's gap2 and gap3 cases, pinned: a probe that shrinks must be looked at
+P1C_B64 = 142  # the probe's base64 rows (1b 128 + 1c 14)
 P1C_GAP3 = 43  # measured 2026-11-20: a corpus that grows or shrinks must be looked at
