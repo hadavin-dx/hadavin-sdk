@@ -141,7 +141,7 @@ class Runner:
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
                 if job is None:  # no slot so far: take a free one, else look less often
-                    job = None
+                    job = self._submit(req)[0]
                     pause = self._poll_s if job is not None else min(pause * 2, pause_cap)
                 time.sleep(min(pause, left))
         except Exception as exc:  # noqa: BLE001 - the store failed: no ack, the sender retries

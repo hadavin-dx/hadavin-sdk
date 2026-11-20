@@ -22,8 +22,10 @@ Environment: ``TRIGGER_CHILD_SECRETS`` is a JSON object sender id -> fake secret
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -31,6 +33,7 @@ from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
+from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.models import Reply, RunState, now
 from hadavin_sdk.store import MemoryStore
 from hadavin_sdk.triggers import worker
@@ -41,6 +44,9 @@ HOST = "127.0.0.1"
 SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
 RUNTIME_POINTS = ("create_run", "transition", "touch")
 RUNNER_POINTS = ("get_run",)
+ROOT = Path(__file__).resolve().parents[2]
+PATH, PREFIX = "/v1/trigger", "X-Hadavin"
+START_WAIT_S, EXIT_WAIT_S, REQUEST_TIMEOUT_S = 60.0, 30.0, 30.0
 
 
 class CountingLLM(ScriptLLM):
@@ -73,6 +79,119 @@ def _all_runs(store) -> list:
     return [run for state in RunState for run in store.list_runs(state, later, limit=1000)]
 
 
+def make_trigger_app(runtime, store, secrets: dict[str, str], **over):
+    """The stand-in for a built App (the config block `triggers` does not exist yet): every sender
+    of `secrets` runs as the test agent and its service principal. `store` goes to the Runner."""
+    senders = [
+        SimpleNamespace(
+            id=sender, secret_names=[f"{sender}-secret"], agent_id=AGENT, principal_id=PRINCIPAL
+        )
+        for sender in sorted(secrets)
+    ]
+    base = {
+        "tenant": TENANT,
+        "senders": senders,
+        "max_body_bytes": 65536,
+        "max_running": 2,
+        "ack_wait_s": 5.0,
+        "poll_s": 0.02,
+    }
+    by_name = {f"{sender}-secret": value for sender, value in secrets.items()}
+    return SimpleNamespace(
+        config=SimpleNamespace(triggers=SimpleNamespace(**{**base, **over})),
+        registry=runtime.registry,
+        runtime=runtime,
+        store=store,
+        trigger_resolve=by_name.__getitem__,
+    )
+
+
+# --- the parent's side: start a child, talk to it over a real socket ------------------------------
+
+
+class Child:
+    """One launcher process. Its output goes to two files, so a full pipe never blocks it. Use it
+    in a `with` block: the process is killed at the end whatever happened."""
+
+    def __init__(self, work_dir: Path, config_dir: Path, secrets: dict[str, str], *args: str,
+                 dsn: str | None = None) -> None:
+        work_dir.mkdir(parents=True, exist_ok=True)
+        self._out, self._err = work_dir / "stdout.txt", work_dir / "stderr.txt"
+        env = {**os.environ, SECRETS_ENV: json.dumps(secrets)}
+        if dsn is not None:
+            env[DSN_ENV] = dsn
+        store = "postgres" if dsn is not None else "memory"
+        command = [sys.executable, "-m", "tests.triggers.crash_launcher", "--config-dir",
+                   str(config_dir), "--store", store, *args]
+        with self._out.open("wb") as out, self._err.open("wb") as err:
+            self.proc = subprocess.Popen(  # noqa: S603 - this interpreter, this repo's launcher, no shell
+                command, cwd=ROOT, env=env, stdout=out, stderr=err, stdin=subprocess.DEVNULL
+            )
+        self.port = 0
+
+    def __enter__(self) -> Child:
+        try:
+            self.port = self._wait_for_port()
+        except BaseException:
+            self.kill()
+            raise
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        self.kill()
+
+    def _wait_for_port(self) -> int:
+        deadline = time.monotonic() + START_WAIT_S
+        while time.monotonic() < deadline:
+            first = self.stdout().partition("\n")
+            if first[1] and first[0].startswith("port "):
+                return int(first[0].split()[1])
+            if self.proc.poll() is not None:
+                break
+            time.sleep(0.05)
+        raise AssertionError(
+            f"the child did not print its port (exit {self.proc.poll()}): {self.stderr()[-2000:]}"
+        )
+
+    def stdout(self) -> str:
+        return self._out.read_text(encoding="utf-8", errors="replace")
+
+    def stderr(self) -> str:
+        return self._err.read_text(encoding="utf-8", errors="replace")
+
+    def wait(self, timeout_s: float = EXIT_WAIT_S) -> int:
+        """The exit code; the child is killed and the test fails if it does not end in time."""
+        try:
+            return self.proc.wait(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            self.kill()
+            raise AssertionError(f"the child did not end within {timeout_s} s") from None
+
+    def kill(self) -> None:
+        if self.proc.poll() is None:
+            self.proc.kill()
+        self.proc.wait(timeout=EXIT_WAIT_S)
+
+
+def wire_body(key: str, document: str) -> bytes:
+    return json.dumps({"key": key, "document": document}).encode("utf-8")
+
+
+def signed_post(port: int, body: bytes, secret: str) -> tuple[int | None, bytes]:
+    """One signed POST over a real loopback socket, signed now. (status, body), or (None, the
+    class name of the connection error) when no answer came."""
+    headers = hmac_v0.sign(body, int(time.time()), secret, PREFIX)
+    conn = http.client.HTTPConnection(HOST, port, timeout=REQUEST_TIMEOUT_S)
+    try:
+        conn.request("POST", PATH, body=body, headers=headers)
+        reply = conn.getresponse()
+        return reply.status, reply.read()
+    except (OSError, http.client.HTTPException) as exc:
+        return None, type(exc).__name__.encode()
+    finally:
+        conn.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m tests.triggers.crash_launcher")
     parser.add_argument("--config-dir", type=Path, required=True)
@@ -97,27 +216,13 @@ def main(argv: list[str] | None = None) -> int:
         runtime.store = points.wrap(plain, "store", RUNTIME_POINTS)
         for_runner = points.wrap(plain, "store", RUNNER_POINTS)
 
-    senders = [
-        SimpleNamespace(
-            id=sender, secret_names=[f"{sender}-secret"], agent_id=AGENT, principal_id=PRINCIPAL
-        )
-        for sender in sorted(secrets)
-    ]
-    settings = SimpleNamespace(
-        tenant=TENANT,
-        senders=senders,
+    app = make_trigger_app(
+        runtime,
+        for_runner,
+        secrets,
         max_body_bytes=args.max_body_bytes,
         max_running=args.max_running,
         ack_wait_s=args.ack_wait_s,
-        poll_s=0.02,
-    )
-    by_name = {f"{sender}-secret": value for sender, value in secrets.items()}
-    app = SimpleNamespace(
-        config=SimpleNamespace(triggers=settings),
-        registry=runtime.registry,
-        runtime=runtime,
-        store=for_runner,
-        trigger_resolve=by_name.__getitem__,
     )
     wsgi, runner = worker.make_app(app)
     server = worker.make_server(HOST, 0, wsgi, args.ack_wait_s + worker.SOCKET_SLACK_S)
