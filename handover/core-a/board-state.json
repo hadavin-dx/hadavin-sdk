@@ -748,17 +748,17 @@
  ],
  "agents": [
   {
-   "id": "rev-door",
-   "role": "fresh independent reviewer (codebase-details), read-only",
+   "id": "door-money",
+   "role": "builder in /home/user/wt/doorm",
    "model": "sonnet",
-   "what exactly it is doing": "review of the crash-matrix support patch: points/assertions not weakened, RESERVES switch correct on both trees",
-   "started UTC": "17:25",
-   "expected end": "12 min",
+   "what exactly it is doing": "rev-door Majors: static per-point money end state (reservation rows, status, totals, no double booking on the retry) for RESERVES mode + RESERVES guard + documented widening limit; red proofs; second patch",
+   "started UTC": "17:35",
+   "expected end": "30 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1",
+   "review round n of cap": "-",
    "retries so far": 0,
-   "reason": "fresh review of each diff"
+   "reason": "rev-door Majors"
   }
  ],
  "tests": [
@@ -1131,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "17:35 rev-door (review of the crash-matrix support patch): NO Blocker; with RESERVES False the matrix is EXACTLY the old one (every removed line returns verbatim, counts kept). TWO MAJORS with core-b's reserve/settle: the crash tests assert the run row, model-call count and retry answer but NOTHING about the MONEY state (no read of spend_reservations/totals): a leaked or stuck-open hold or a double booking on the retry would pass; and the child's seeding widens max_day_skew to 100000 and min_expiry_age to 0, so the matrix proves nothing about the real day window/expiry floor (acceptable only for the one-row/one-approval/one-hold claims: to be stated). door-money builds static per-point money end states (before reserve: no row; between reserve and settle: one OPEN row, reserved=worst case; after settle: one settled row; after the retry: at most one row) with red proofs, a RESERVES guard and the documented limit. NOTE: the first patch is already applied to cloud/core-a (83 passed); the second goes in once reviewed. AGENTS 1.",
   "17:25 DOOR ON THE MERGED TREE FIXED (agent doorm; branch wip/core-a-door-merged 435ca8500; patch handover/core-a/pr/door-merged-support.patch; write-up handover/core-a/INTEGRATION-DOOR-FIX.md): tests/triggers on the merged tree: 144 failed -> 1374 passed, 4 skipped, 0 failed (PG16, HADAVIN_REQUIRE_PG=1): TEST SUPPORT ONLY, no src change: (1) the crash-matrix children never got core-b's hadavin_caps seeding (it is a conftest monkeypatch): with no cap row core-b's reserve-before-call sends the run to NEEDS_PERSON `limits.limits_unavailable`; (2) the crash tables were stale: the merged loop calls reserve_spend before llm.chat and settle_spend after it, never add_spend/add_cost, so the `store.add_spend:*` points were never reached and the child never ended (the '20 s/30 s' errors). Fix: tests/triggers/crash_launcher.py (RESERVES = hasattr(Limits, 'reserve'); install_pg_test_seeding() installs core-b's seed wrappers inside a child, nothing if tests/money_caps_seed.py is absent) + the two crash-matrix files switch their wrapped-method lists/point counts on RESERVES. I APPLIED the same patch to cloud/core-a (it degrades to the old tables there): crash matrix 83 passed on core-a alone. Product bugs found: NONE. rev-door reviews the patch (not weakened?). Remaining on the merged tree: the stale test_meter/test_store_spend_reservations (fixed by wip/core-a-contract-fix), the T1 copies (delete) and test_grants_negative_roles (take mine). AGENTS 1.",
   "16:30 wip/core-a-contract-fix (c545aaef1) reviewed fresh: NO Blocker, NO Major: every added agent_id matches the reservation's agent; the replaced reserve tests pin the check order amount/caps -> id -> cap well; the purge test proves expired and open holds are kept on both stores; test function counts unchanged (store 35, meter 37), nothing loosened, no new skips. Nits (gaps in what this file proves, not loosening): no foreign-agent settle test here (core-b has them: test_store_spend.py:786, test_money_definer_pg.py:850/867), test_both_implementers_have_the_meter_shape does not pin agent_id as keyword-only AND required, a duplicate id with a different run_id or day and an identical call on an EXPIRED hold are untested. Ready to cherry-pick. Running: doorm only.",
   "17:15 cfix DONE (branch wip/core-a-contract-fix c545aaef1, files tests/contracts/test_meter.py and tests/contracts/test_store_spend_reservations.py: NOTE the path: tests/contracts/, not tests/): on the merged tree 308 failed / 133 passed -> 441 passed with the PG16 DSN (253 passed / 188 skipped without): 302 failures were the missing `agent_id` in settle()/settle_spend() (71 calls); 4 tests REPLACED because the claim no longer holds on core-b's design: an identical reserve retry on an OPEN hold is idempotent (not StaleState) and purge keeps expired holds; the new tests assert the stronger/true claims; skip guards unchanged so the files still skip on core-a's own tree. Fresh review rev-cfix running. Running: doorm, rev-cfix.",
@@ -4147,6 +4148,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "doorm: 144 door failures on the merged tree FIXED in test support only (no src): causes = no hadavin_caps seeding in crash-matrix children (core-b's loop reserves before the call -> NEEDS_PERSON) + stale crash tables (merged loop calls reserve_spend/settle_spend, not add_spend/add_cost); tests/triggers 1374 passed 4 skipped 0 failed on the merged tree (PG16, REQUIRE_PG=1); branch wip/core-a-door-merged 435ca8500; same patch applied to cloud/core-a: crash matrix 83 passed"
+  },
+  {
+   "id": "rev-door",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the crash-matrix support patch: points/assertions not weakened, RESERVES switch correct on both trees",
+   "started UTC": "17:25",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "crash-matrix support patch review: NO Blocker; RESERVES=False matrix unchanged (every removed line verbatim in the else branch; counts 19 / 2*33-7 / 2*45-10 / 2*18-4 kept); seeding ordering safe, import guarded; TWO MAJORS: with RESERVES True nothing asserts the MONEY state (no read of the reservations table: a leaked/stuck-open hold or a double booking on the retry would pass) in the 43-point and the 61 read + 82 propose points; the child's widened day window/min age (skew 100000, age 0) means the matrix proves nothing about the real window; nits: RESERVES not tied to what the loop really calls, no early guard if the seed module is absent"
   }
  ]
 }
