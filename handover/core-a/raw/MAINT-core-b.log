@@ -7,4 +7,10 @@
 ........................................................................ [ 70%]
 ........................................................................ [ 80%]
 ........................................................................ [ 90%]
-.
+....................................................................     [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_trigger_config.py:158: field not built on this branch: a limit on the number of triggers.senders
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.poll_s
+SKIPPED [7] tests/test_trigger_config.py:92: field not built on this branch: triggers.port
+SKIPPED [6] tests/test_trigger_config.py:92: field not built on this branch: triggers.allow_non_loopback
+696 passed, 20 skipped in 61.75s (0:01:01)
