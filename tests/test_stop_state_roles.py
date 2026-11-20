@@ -287,7 +287,9 @@ def test_the_other_roles_hold_exactly_their_rights_on_the_stop_relations(w):
         "kill_switch": {"SELECT"},
         "kill_switch_stops": {"SELECT", "INSERT"},
         "kill_switch_clears": {"SELECT"},
-        "kill_switch_watermark": {"SELECT"},  # 0009: read only; no right at all on kill_switch_resets
+        "kill_switch_watermark": {
+            "SELECT"
+        },  # 0009: read only; no right at all on kill_switch_resets
     }
     for role in (w.portal, w.purge):
         assert not stop & set(w.rights(role)), role
