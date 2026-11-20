@@ -299,20 +299,59 @@ def test_n7_kill_mode_still_exits_with_the_crash_code_when_the_marker_cannot_be_
 
 
 def test_h7_the_module_text_states_what_can_mislead_a_test():
-    """Design review 1, N16: the four limits are written where a test author reads them."""
+    """Design review 1, N16 and F7: the limits are written where a test author reads them. Pins
+    facts (numbers, names), not sentences."""
     text = " ".join((crash_mod.__doc__ or "").split())
-    for phrase in (
-        f"Exit code {CRASH_EXIT_CODE} is also what a real forced kill shows",
-        "asserts the marker line on the child's stdout AND the exit code",
-        "A flag file left on disk kills the next child that uses the same path",
-        "delete the flag in a `finally`",
-        'Mode "raise" behind the real trigger server does not simulate a crash',
-        "answers 503",
+    for fact in (
+        "137",
+        "128 + 9",
+        "503",
+        "Future",
+        "PYTEST_CURRENT_TEST",
+        "marker",
+        "exit code",
+        "`with`",
+        "setattr",
+        "isinstance",
+        "latch",
+        "require_claim",
+        "expect_fired",
+        "flag_taken",
+        "os.replace",
+        "descriptor 1",
     ):
-        assert phrase in text, phrase
+        assert fact in text, fact
 
 
-def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, capsys):
+def test_f2_the_constants_are_the_ones_other_tests_assert_against():
+    """F2: kills a changed exit code or marker text (a changed constant would still match itself in
+    every other test)."""
+    assert CRASH_EXIT_CODE == 137
+    assert CRASH_MARKER == "simulate crash"
+
+
+CHILD_BUFFERED = (
+    CHILD_HEAD
+    + """
+print("start", flush=True)
+sys.stdout.write("buffered")  # no flush: a real crash loses it
+thing.step()
+print("survived", flush=True)
+"""
+)
+
+
+def test_f3_text_still_buffered_in_the_child_is_lost_but_the_marker_is_there(tmp_path):
+    """F3 / invariant 7: nothing buffered is written by the crash; the marker still is."""
+    flag = tmp_path / "flag"
+    CrashPoints(mode="exit", flag_path=flag).arm(POINT)
+    done = start_child(tmp_path, CHILD_BUFFERED, flag)
+    assert done.returncode == CRASH_EXIT_CODE, done.stderr
+    assert "buffered" not in done.stdout
+    assert done.stdout.splitlines() == ["start", CRASH_MARKER]
+
+
+def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, capfd):
     """N7 (flag format): `<point>#<nth>` is written by arm and counted by hit; the marker is
     printed once."""
     flag = tmp_path / "flag"
@@ -324,7 +363,7 @@ def test_n7_kill_mode_counts_the_nth_call_from_the_flag(tmp_path, no_real_exit, 
     with pytest.raises(Killed) as killed:
         thing.step()
     assert killed.value.args == (CRASH_EXIT_CODE,) and not flag.exists()
-    assert capsys.readouterr().out == CRASH_MARKER + "\n"
+    assert capfd.readouterr().out == CRASH_MARKER + "\n"
     assert thing.step() == 3
 
 
@@ -702,7 +741,16 @@ def test_h6_the_helper_file_keeps_its_own_rules():
         if isinstance(n, ast.ImportFrom):
             assert n.level == 0
             imported.add((n.module or "").split(".")[0])
-    assert imported == {"__future__", "os", "re", "threading", "collections", "pathlib", "typing"}
+    assert imported == {
+        "__future__",
+        "inspect",
+        "os",
+        "re",
+        "threading",
+        "collections",
+        "pathlib",
+        "typing",
+    }
     assert imported - {"__future__"} <= sys.stdlib_module_names
     assert not any(isinstance(n, ast.Assert) for n in nodes)
 

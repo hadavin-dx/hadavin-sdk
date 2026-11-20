@@ -140,10 +140,10 @@ class CrashPoints:
             stuck = left is not None and self._flag is not None and self._flag.exists()
         if exc_type is not None:
             return
-        if left is not None:
-            raise RuntimeError(f"crash point left armed, it never fired: {left[0]}")
         if stuck:
             raise RuntimeError(f"the flag file could not be deleted: {self._flag}")
+        if left is not None:
+            raise RuntimeError(f"crash point left armed, it never fired: {left[0]}")
         if self._require_claim:
             loose = [p for p in dict.fromkeys(self._fired) if p not in self._claimed]
             if loose:
@@ -161,6 +161,8 @@ class CrashPoints:
             raise ValueError(
                 "a point is <name>.<method>:before or <name>.<method>:after, lower case"
             )
+        if isinstance(nth, bool):
+            raise TypeError(f"nth is a whole number, not a bool: {nth!r}")
         if not isinstance(nth, int) or not 1 <= nth < _NTH_LIMIT:
             raise ValueError(f"nth must be 1 or more: {nth!r}")
         with self._lock:
@@ -168,10 +170,14 @@ class CrashPoints:
             if current is not None:
                 raise ValueError(f"already armed: {current[0]}")
             self._seen.clear()
+            self._was_armed = True
             if self._flag is None:
                 self._memory = (point, nth)
             else:
-                self._flag.write_text(point if nth == 1 else f"{point}#{nth}", encoding="utf-8")
+                # Write beside the flag, then swap: a reader sees the old flag or the new, never half.
+                temp = self._flag.with_name(f"{self._flag.name}.{os.getpid()}.tmp")
+                temp.write_text(point if nth == 1 else f"{point}#{nth}", encoding="utf-8")
+                os.replace(temp, self._flag)
 
     def armed(self) -> str | None:
         """The armed point, or None."""
@@ -194,16 +200,37 @@ class CrashPoints:
                 return
             self._fired.append(point)
             if self._mode == "raise":
+                if self._latch:
+                    self._latched = point
                 raise SimulatedCrash(point)
             try:
-                print(CRASH_MARKER, flush=True)
+                # Straight to the descriptor: text still buffered in sys.stdout stays unwritten.
+                os.write(1, f"{CRASH_MARKER}\n".encode())
             finally:  # a closed stdout must not turn the crash into an ordinary exception
                 os._exit(CRASH_EXIT_CODE)
+
+    def expect_fired(self, point: str) -> None:
+        """Claim a point that fired in this process. `RuntimeError` naming the point if it did not
+        (a crash that something swallowed, or a call that never happened)."""
+        with self._lock:
+            if point not in self._fired:
+                raise RuntimeError(f"crash point did not fire: {point}")
+            self._claimed.add(point)
+
+    def flag_taken(self) -> bool:
+        """Mode "exit", in the parent: True once a child took the flag, that is, the flag file armed
+        by this object no longer exists. False if nothing was armed yet."""
+        if self._flag is None:
+            raise RuntimeError('flag_taken is for mode "exit"')
+        with self._lock:
+            return self._was_armed and not self._flag.exists()
 
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         """A stand-in for `target` whose listed methods pass `<name>.<method>:before` and `:after`.
         Everything else, results and exceptions included, is the target's. `AttributeError` if the
-        target lacks a method, `TypeError` if it is no method."""
+        target lacks a method, `TypeError` if it is no method, or if it is a coroutine, async
+        generator or generator function, or has a dunder name (the proxy cannot sit in front of
+        those). The proxy is not transparent: no setattr, no `isinstance`."""
         if not isinstance(name, str) or not _NAME.fullmatch(name):
             raise ValueError(f"bad name: {name!r}")
         if isinstance(methods, str):
@@ -212,8 +239,17 @@ class CrashPoints:
         for method in methods:
             if not isinstance(method, str) or not _NAME.fullmatch(method):
                 raise ValueError(f"bad method name: {method!r}")
-            if not callable(getattr(target, method)):
+            if method.startswith("__") and method.endswith("__"):
+                raise TypeError(f"{name}.{method}: dunder methods cannot be wrapped")
+            func = getattr(target, method)
+            if not callable(func):
                 raise TypeError(f"{name}.{method} is not a method")
+            if (
+                inspect.iscoroutinefunction(func)
+                or inspect.isasyncgenfunction(func)
+                or inspect.isgeneratorfunction(func)
+            ):
+                raise TypeError(f"{name}.{method}: async and generator methods cannot be wrapped")
             calls[method] = self._edge(target, name, method)
         return cast(T, _Proxy(target, calls))
 
@@ -238,10 +274,15 @@ class CrashPoints:
         try:
             text = self._flag.read_text(encoding="utf-8")
         except (OSError, ValueError):
-            return None
+            text = ""
         point, sep, count = text.removesuffix("\n").partition("#")
         if not _POINT.fullmatch(point) or (sep and not _NTH.fullmatch(count)):
+            self._text = None
+            self._seen.clear()
             return None
+        if text != self._text:  # another process armed again: count from the start
+            self._text = text
+            self._seen.clear()
         return point, int(count) if sep else 1
 
     def _take(self) -> bool:
