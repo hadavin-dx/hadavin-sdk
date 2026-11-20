@@ -316,7 +316,9 @@ M = [
         "",
         TC,
         "test_n2_before_crashes_and_nothing_was_written",
-        "('store.create_run:before',) == ('store.create_run:before',)",
+        # line 178 of the test, `assert fired == (..) and armed() is None`: only the SECOND conjunct fails here, so
+        # pytest's first line shows the first one equal to itself, and no other fault gives that line
+        "AssertionError: assert (('store.create_run:before',) == ('store.create_run:before',)",
     ),
     mutant(
         "G7b SimulatedCrash derives from Exception",
@@ -891,7 +893,7 @@ M = [
         "        if False:\n",
         TS,
         "test_connections_above_the_cap_are_closed_at_once_unread_and_the_cap_frees_again",
-        "XXXX",
+        "end='client timeout'",
     ),
     mutant(
         "G21b the absolute read deadline is replaced by the pause limit of each recv",
@@ -900,7 +902,7 @@ M = [
         "        left = 10**9\n",
         TS,
         "test_a_slow_body_is_cut_at_the_absolute_deadline_not_at_the_pause_limit",
-        "XXXX",
+        "Seen(raw=b'HTTP/1.0 202 Accepted",
     ),
     mutant(
         "G21c QuietServer.handle_error is deleted (the stdlib prints a traceback)",
@@ -908,8 +910,8 @@ M = [
         "    def handle_error(self, request: Any, client_address: Any) -> None:\n",
         "    def _not_handle_error(self, request: Any, client_address: Any) -> None:\n",
         TS,
-        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line",
-        "XXXX",
+        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line[setup-RuntimeError-WARNING]",
+        "AssertionError: []",
     ),
     mutant(
         "G21d QuietServer.process_request_thread is deleted (a BaseException reaches the thread hook)",
@@ -917,8 +919,8 @@ M = [
         "    def process_request_thread(self, request: Any, client_address: Any) -> None:\n",
         "    def _not_process_request_thread(self, request: Any, client_address: Any) -> None:\n",
         TS,
-        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line",
-        "XXXX",
+        "test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_line[setup-Boom-WARNING]",
+        "AssertionError: []",
     ),
     # --- G22 Runner.close
     mutant(
@@ -928,7 +930,7 @@ M = [
         "            pass\n",
         TW,
         "test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_pool_is_never_asked",
-        "XXXX",
+        "assert [(<bound meth",
     ),
     # --- G23 the 409 rule of _answer: agent and principal, one mutant each
     mutant(
@@ -938,7 +940,7 @@ M = [
         "        found.principal_id",
         TW,
         "test_same_key_and_ref_but_another_agent_or_principal_is_409[agent_id]",
-        "XXXX",
+        "'RECEIVED'}) == (409, {})",
     ),
     mutant(
         "G23b _answer does not compare the principal of the row (T-1)",
@@ -947,7 +949,7 @@ M = [
         "",
         TW,
         "test_same_key_and_ref_but_another_agent_or_principal_is_409[principal_id]",
-        "XXXX",
+        "'RECEIVED'}) == (409, {})",
     ),
     # --- G24 the header set of a refusal
     mutant(
@@ -958,7 +960,7 @@ M = [
         '        if status == 401:\n            response_headers.append(("X-Reason", "bad"))\n',
         TE,
         "test_t5_8b_removed_old_secret_is_refused",
-        "XXXX",
+        "'X-Reason': 'bad'}",
     ),
     # --- G25 sender_map
     mutant(
@@ -967,9 +969,8 @@ M = [
         "        if sender.id in out:\n",
         "        if False:\n",
         TE,
-        "NO_TEST_EXISTS",
-        "no test",
-        known_survivor=True,
+        "test_make_wsgi_refuses_a_bad_setup",
+        "DID NOT RAISE ValueError",
     ),
     # --- G26 parse_body
     mutant(
@@ -978,8 +979,8 @@ M = [
         'json.loads(body.decode("utf-8"), object_pairs_hook=_no_duplicates)',
         'json.loads(body.decode("utf-8"))',
         TE,
-        "test_parse_body_refuses[duplicate key]",
-        "XXXX",
+        "test_parse_body_refuses[duplicate document]",
+        "DID NOT RAISE BadRequest",
     ),
     mutant(
         "G26b parse_body does not require exactly key and document",
@@ -988,7 +989,7 @@ M = [
         ":",
         TE,
         "test_parse_body_refuses[extra NaN]",
-        "XXXX",
+        "DID NOT RAISE BadRequest",
     ),
     # --- G27 the Content-Length guard
     mutant(
@@ -997,8 +998,8 @@ M = [
         "    if not isinstance(raw, str) or not (raw.isascii() and raw.isdigit()):\n",
         "    if not isinstance(raw, str):\n",
         TE,
-        "test_t5_7b_content_length_missing_or_not_digits_or_zero_is_400[abc]",
-        "XXXX",
+        "test_t5_7b_content_length_missing_or_not_digits_or_zero_is_400[]",
+        "assert 503 == 400",
     ),
     # --- G28 the bind switch
     mutant(
@@ -1008,7 +1009,7 @@ M = [
         "    if not loopback and not allow_non_loopback:\n",
         TW,
         "test_non_loopback_host_needs_the_switch",
-        "XXXX",
+        "DID NOT RAISE ConfigError",
     ),
     # --- G29 check_senders, the three refusals
     mutant(
@@ -1018,7 +1019,7 @@ M = [
         "        if False:\n",
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-agent]",
-        "XXXX",
+        "DID NOT RAISE ConfigError",
     ),
     mutant(
         "G29b check_senders does not refuse a principal that is unknown",
@@ -1027,7 +1028,9 @@ M = [
         "        if False:\n",
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-principal]",
-        "XXXX",
+        "'NoneType' object has no attribute 'kind'",
+        allow_crash=True,  # the next line, `principal.kind`, then fails on None: the refusal is gone, a crash shows it
+        crash_type="AttributeError",
     ),
     mutant(
         "G29c check_senders does not refuse a principal that is not of kind service",
@@ -1036,7 +1039,7 @@ M = [
         "        if False:\n",
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-service]",
-        "XXXX",
+        "DID NOT RAISE ConfigError",
     ),
 ]
 
@@ -1111,12 +1114,14 @@ if __name__ == "__main__":
     known = [n for n, v, _, _ in res if n in KNOWN_SURVIVORS and v == "SURVIVED"]
     bad = [n for n, v, _, g in res if not g and not (n in KNOWN_SURVIVORS and v == "SURVIVED")]
     killed = sum(1 for n, v, _, g in res if g and v == "KILLED" and n not in KNOWN_SURVIVORS)
-    crash = sum(1 for n, v, _, g in res if g and v == "CRASH")
-    print(f"{killed} killed, {crash} crash-accepted (G20j), {len(known)} known survivors")
+    crashed = [n.split()[0] for n, v, _, g in res if g and v == "CRASH"]
+    print(
+        f"{killed} killed, {len(crashed)} crash-accepted ({', '.join(crashed)}), {len(known)} known survivors"
+    )
     print(
         "KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass"
     )
-    for n in sorted(known):
+    for n in sorted(known) or ["(none: every mutant of the list has a killer test)"]:
         print(f"  - {n}")
     if skipped:
         print(f"NOT RUN HERE (win32): {skipped}")
