@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:24:10Z
+UPDATED_UTC: 2026-11-20T05:24:32Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,23 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 6
 PERCENT: 52
-AGENTS_RUNNING: 2
-CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 2, heavy agents 0
-DISK: / 60G free, 13% used; git worktrees 1; 376K	/tmp/claude-0;116M	/root/.cache/uv;
+AGENTS_RUNNING: 4
+CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 4, heavy agents 0
+DISK: / 60G free, 13% used; git worktrees 1; 388K	/tmp/claude-0;116M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
-NEXT: when T1 and the surveys end: write tickets G and F, then one EGM round each
-PUSHED_UTC: 2026-11-20T05:23:48+00:00
+NEXT: resolve ticket F findings into tickets/F-review-1.md; write ticket G when the two surveys end; then one EGM round on G
+PUSHED_UTC: 2026-11-20T05:24:10+00:00
 
 (10:54 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a8830db0 | reviewer | fable | EGM plan review of tickets/F-gate-wrapper-body.md against the implementation-readiness standard (egm:egm-implementation-readiness) | 05:24 | 05:32 | 10 | running | 1 of 1 | 0 | ORDER 004 item 3: one round per ticket |
+| a112f9c8 | reviewer | fable | EGM plan review of ticket F: checks every cited file:line and code reuse (egm:egm-codebase-details) | 05:24 | 05:34 | 10 | running | 1 of 1 | 0 | ORDER 004 item 3: one round per ticket |
 | a0321052 | lookup | fable | Q2: reads repo docs and src/hadavin_sdk layout, writes LANE-MAP.md | 05:20 | 05:30 | 100 | done | n/a | 0 | finished 05:22, LANE-MAP.md written (48 lines, 16 modules); guard/textnorm* does not exist on main |
 | aa61ba5c | lookup | fable | T1: reads plan-v2, v3, v4-final and the two round-3 reviews, writes PLAN-READBACK.md | 05:20 | 05:35 | 100 | done | n/a | 0 | finished 05:24, PLAN-READBACK.md written (164 lines); one cited fact DIFFERS (Runtime built in 7 test files by literal grep, review said 17) |
 | a33582f6 | lookup | fable | reads input heads core/P1a, rebase/P1a, core/P1b, P1b-fixwip, rebase/P1b-o140 with git diff only; writes tickets/G-survey-P1a-P1b.md | 05:24 | 05:40 | 10 | running | n/a | 0 | ticket G must name the one head to fold from |
