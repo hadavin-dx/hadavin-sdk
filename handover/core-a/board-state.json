@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "cfix",
-   "role": "builder (own worktree, nothing pushed by it)",
-   "model": "sonnet",
-   "what exactly it is doing": "fix MY stale contract tests (test_meter.py, test_store_spend_reservations.py) to core-b's current API (settle agent_id, caps from hadavin_caps, no right on spend_reservations) on the merged tree",
-   "started UTC": "16:55",
-   "expected end": "35 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "integ-pg findings: my tests break on the combined tree"
-  },
-  {
    "id": "doorm",
    "role": "builder (own worktree, nothing pushed by it)",
    "model": "sonnet",
@@ -772,6 +759,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "integ-pg findings: my tests break on the combined tree"
+  },
+  {
+   "id": "rev-cfix",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the contract test updates: wrong-agent settle calls, the 4 replaced tests, purge semantics, silent skips, loosening",
+   "started UTC": "17:15",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1144,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "17:15 cfix DONE (branch wip/core-a-contract-fix c545aaef1, files tests/contracts/test_meter.py and tests/contracts/test_store_spend_reservations.py: NOTE the path: tests/contracts/, not tests/): on the merged tree 308 failed / 133 passed -> 441 passed with the PG16 DSN (253 passed / 188 skipped without): 302 failures were the missing `agent_id` in settle()/settle_spend() (71 calls); 4 tests REPLACED because the claim no longer holds on core-b's design: an identical reserve retry on an OPEN hold is idempotent (not StaleState) and purge keeps expired holds; the new tests assert the stronger/true claims; skip guards unchanged so the files still skip on core-a's own tree. Fresh review rev-cfix running. Running: doorm, rev-cfix.",
   "17:10 T1 FIXED: wip/core-a-t1-merge e4b0c2331 (the file to COPY; 276365373 is superseded): the reviewer's Major is fixed (a positive read as each login runs BEFORE the refusals, so a missing schema USAGE can no longer pass the refusal tests silently), all four logins are refused SELECT/INSERT/UPDATE/DELETE/TRUNCATE on spend_reservations and rights() is empty for all four, purge keeps the expired, the newer-settled and the open row and deletes only the old settled one, three of core-b's cases strengthened (month cap over two days, settles below the reserve, control), 'settle at exactly the reserved amount: the cap stays shut' added; 26 cases pass on PG16 (26 skip without a DSN); mutation proof: month counter +0.25 turns 4 cases red. Races still accept either order (interleaving cannot be asserted deterministically). Running: cfix, doorm. Details: handover/core-a/T1-MERGE.md (review round 1 fixes).",
   "16:31 d-fix24 reviewed fresh: NO Blocker/Major (the conflict setting is read only from the settings on the production path; the cap test uses the real limiter and an injected clock, drops are counted, per sender). Nits: the Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT: add post-merge `worker.CONFLICT_EVENTS_PER_MINUTE == defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT` (cannot be written on core-a alone); README post-merge patch: one overclaim and one wrong cite fixed in the notes of handover/core-a/pr/README-trigger-postmerge.md. Running: t1-fix, cfix, doorm.",
   "17:05 d-fix24 BUILT (cloud/core-a): the dead setting triggers.conflict_events_per_minute is now read by the worker from core-b's TriggerSettings (ConfigError if missing; no make_app parameter any more), 5 tests (3 -> 3 written + 27 dropped of 30; 3 vs 7 -> (3,27) vs (7,23); red proof 3 of 5), worker spend docstring corrected, post-merge README patch text in handover/core-a/pr/README-trigger-postmerge.md; tests/triggers + anchors + runner 1259 passed 312 skipped 0 failed. Note the Runner keeps a default 10 for ~50 direct callers (a second source; reviewer checks the drift). Fresh review rev-dfix24 running. AGENTS 4 (t1-fix, cfix, doorm, rev-dfix24).",
@@ -4118,6 +4119,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "wip/core-a-t1-merge e4b0c2331 pushed: rev-t1 Major fixed (positive read as portal/reset/runtime/purge before the refusals), 5 statement kinds x 4 logins + rights() check, purge keeps expired/newer-settled/open, 3 duplicates strengthened, exact-reserve settle case; 25 -> 26 cases, 26 pass with PG16 DSN, 26 skip without; red proofs (USAGE revoke, month counter +0.25 turns 4 cases red)"
+  },
+  {
+   "id": "cfix",
+   "role": "builder (own worktree, nothing pushed by it)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix MY stale contract tests (test_meter.py, test_store_spend_reservations.py) to core-b's current API (settle agent_id, caps from hadavin_caps, no right on spend_reservations) on the merged tree",
+   "started UTC": "16:55",
+   "expected end": "35 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "wip/core-a-contract-fix c545aaef1 pushed (on the merged tree): tests/contracts/test_meter.py + test_store_spend_reservations.py: 308 failed/133 passed -> 441 passed with the DSN (253 passed/188 skipped without); settle/settle_spend now pass agent_id (71 calls: fixes 302), 4 tests REPLACED where the claim no longer holds on core-b (idempotent reserve retry on an open hold; purge keeps expired holds), red proofs; reviewer started"
   }
  ]
 }

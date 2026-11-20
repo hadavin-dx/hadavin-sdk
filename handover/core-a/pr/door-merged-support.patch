@@ -1,0 +1,255 @@
+diff --git a/tests/triggers/crash_launcher.py b/tests/triggers/crash_launcher.py
+index 316a2838a..316ac47f9 100644
+--- a/tests/triggers/crash_launcher.py
++++ b/tests/triggers/crash_launcher.py
+@@ -35,11 +35,15 @@ from types import SimpleNamespace
+ from typing import Self
+ 
+ from hadavin_sdk.approvals import hmac_v0
++from hadavin_sdk.limits import Limits
+ from hadavin_sdk.models import Reply, RunState, now
+ from hadavin_sdk.store import MemoryStore
+ from hadavin_sdk.triggers import worker
+ from tests.k5_support import ScriptLLM, build_runtime
+ 
++# The live loop reserves the worst case before a model call and settles after (core-b); an older loop
++# books with add_spend/add_cost after the call. The crash tables follow whichever the code under test does.
++RESERVES = hasattr(Limits, "reserve")
+ AGENT, PRINCIPAL, TENANT = "test-agent", "svc:test-agent", "tenant-a"
+ HOST = "127.0.0.1"
+ SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
+@@ -67,11 +71,32 @@ class CountingLLM(ScriptLLM):
+         return Reply(text="Nothing to do.", model_id="fake-model")
+ 
+ 
++def install_pg_test_seeding() -> None:
++    """For a CHILD process on PostgreSQL: the same test-only wrappers that tests/conftest.py
++    (`_seed_caps_before_reserve`) puts on PostgresStore in the parent, which a child never gets.
++    Where the money-caps seed module does not exist (a checkout without it) nothing is installed."""
++    if not os.environ.get(DSN_ENV):
++        return
++    try:
++        from tests.money_caps_seed import seeding_reserve, widening_add_spend, widening_expire
++    except ImportError:
++        return
++    from hadavin_sdk.store import postgres as pg
++
++    # the seed writes with HADAVIN_TEST_PG_DSN (the owner); the child's own DSN carries the same server
++    os.environ.setdefault("HADAVIN_TEST_PG_DSN", os.environ[DSN_ENV])
++    cls = pg.PostgresStore
++    cls.reserve_spend = seeding_reserve(cls.reserve_spend)
++    cls.expire_spend_reservations = widening_expire(cls.expire_spend_reservations)
++    cls.add_spend = widening_add_spend(cls.add_spend)
++
++
+ def _store(kind: str):
+     if kind == "memory":
+         return MemoryStore()
+     from hadavin_sdk.store.postgres import PostgresStore, connect
+ 
++    install_pg_test_seeding()
+     return PostgresStore(connect(os.environ[DSN_ENV]))
+ 
+ 
+diff --git a/tests/triggers/test_t5_crash_matrix.py b/tests/triggers/test_t5_crash_matrix.py
+index 9372dd866..94465b71b 100644
+--- a/tests/triggers/test_t5_crash_matrix.py
++++ b/tests/triggers/test_t5_crash_matrix.py
+@@ -60,11 +60,13 @@ from tests.triggers.crash_launcher import (
+     PATH,
+     PREFIX,
+     PRINCIPAL,
++    RESERVES,
+     ROOT,
+     SECRETS_ENV,
+     Child,
+     CountingLLM,
+     _all_runs,
++    install_pg_test_seeding,
+     make_trigger_app,
+     signed_post,
+     wire_body,
+@@ -97,8 +99,16 @@ FIRE_WAIT_S = 10.0
+ # What the child (and the memory run) wraps. "store" = the write and limits methods of the runtime
+ # plus `get_run` of the store handed to the Runner; "loop" = `get_run` as the runtime calls it (a
+ # name of its own, so a point can tell the Runner's reads from the loop's reads).
+-STORE_POINTS = ("create_run", "transition", "touch", "put_redaction_map", "add_cost")
+-LIMITS_POINTS = ("get_kill_switch", "spend_totals", "add_spend")
++STORE_POINTS = (
++    ("create_run", "transition", "touch", "put_redaction_map")
++    if RESERVES  # the settle books the run cost: `add_cost` is no call of the loop any more
++    else ("create_run", "transition", "touch", "put_redaction_map", "add_cost")
++)
++LIMITS_POINTS = (
++    ("get_kill_switch", "spend_totals", "reserve_spend", "settle_spend")
++    if RESERVES
++    else ("get_kill_switch", "spend_totals", "add_spend")
++)
+ RUNNER_POINTS = ("get_run",)
+ 
+ # --- the expectation table (written before the first run) ------------------------------------------
+@@ -122,9 +132,20 @@ HANDLE_STEPS: tuple[tuple[str, int, str, str | None, str, int, int], ...] = (
+     ("store.get_kill_switch", 2, "466 via limits.py:21", "WORKING", "WORKING", 0, 0),
+     ("store.spend_totals", 2, "466 via limits.py:23", "WORKING", "WORKING", 0, 0),
+     ("store.touch", 1, "468 heartbeat", "WORKING", "WORKING", 0, 0),
+-    ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
+-    ("store.add_spend", 1, "485 via limits.py:18", "WORKING", "WORKING", 1, 1),
+-    ("store.add_cost", 1, "486", "WORKING", "WORKING", 1, 1),
++    *(
++        (  # the worst case is reserved before the call and settled after it (limits.reserve / settle)
++            ("store.get_kill_switch", 3, "limits.reserve stop state", "WORKING", "WORKING", 0, 0),
++            ("store.reserve_spend", 1, "limits.reserve the worst case", "WORKING", "WORKING", 0, 0),
++            ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
++            ("store.settle_spend", 1, "limits.settle the real cost", "WORKING", "WORKING", 1, 1),
++        )
++        if RESERVES
++        else (
++            ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
++            ("store.add_spend", 1, "485 via limits.py:18", "WORKING", "WORKING", 1, 1),
++            ("store.add_cost", 1, "486", "WORKING", "WORKING", 1, 1),
++        )
++    ),
+     ("loop.get_run", 2, "330 via 496, 616", "WORKING", "WORKING", 1, 1),
+     ("store.transition", 2, "331 WORKING to NO_ACTION (final)", "WORKING", FINAL, 1, 1),
+     ("audit.write_outcome", 3, "332 state NO_ACTION", FINAL, FINAL, 1, 1),
+@@ -280,7 +301,7 @@ def _observe(store: str, point: Point, **seen: object) -> None:
+ def test_the_table_covers_every_wrapped_call_once():
+     """The table itself: 19 calls of `handle`, each before and after, plus 5 request-thread
+     points; unique ids; every point names a wrapped method; the four named moments all appear."""
+-    assert len(HANDLE_STEPS) == 19 and len(POINTS) == 2 * 19 + 5
++    assert len(HANDLE_STEPS) == (20 if RESERVES else 19) and len(POINTS) == 2 * len(HANDLE_STEPS) + 5
+     assert len({p.id for p in POINTS}) == len(POINTS)
+     assert len({(p.point, p.nth, p.slow_create_s, p.llm_delay_s) for p in POINTS}) == len(POINTS)
+     wrapped = {f"store.{m}" for m in (*STORE_POINTS, *LIMITS_POINTS, *RUNNER_POINTS)}
+@@ -619,6 +640,7 @@ def child_main(argv: list[str] | None = None) -> int:
+     args = parser.parse_args(argv)
+ 
+     secrets = json.loads(os.environ[SECRETS_ENV])
++    install_pg_test_seeding()
+     plain = PostgresStore(connect(os.environ[DSN_ENV]))
+     llm = CountingLLM(args.calls_file, args.llm_delay_s)
+     runtime, _cards = build_runtime(args.config_dir, llm, store=plain)
+diff --git a/tests/triggers/test_t5_crash_matrix_paths.py b/tests/triggers/test_t5_crash_matrix_paths.py
+index 26a9b2e3d..d83efc985 100644
+--- a/tests/triggers/test_t5_crash_matrix_paths.py
++++ b/tests/triggers/test_t5_crash_matrix_paths.py
+@@ -68,9 +68,11 @@ from tests.triggers.crash_launcher import (
+     DSN_ENV,
+     HOST,
+     PRINCIPAL,
++    RESERVES,
+     ROOT,
+     SECRETS_ENV,
+     Child,
++    install_pg_test_seeding,
+     make_trigger_app,
+     signed_post,
+     wire_body,
+@@ -104,14 +106,18 @@ STORE_WRITES = (
+     "transition",
+     "touch",
+     "put_redaction_map",
+-    "add_cost",
++    *(() if RESERVES else ("add_cost",)),  # with reserve/settle the settle books the run cost
+     "add_tool_call",
+     "save_plan",
+     "save_gate_decision",
+     "save_approval_request",
+     "update_approval_request",
+ )
+-LIMITS_READS = ("get_kill_switch", "spend_totals", "add_spend")
++LIMITS_READS = (
++    ("get_kill_switch", "spend_totals", "reserve_spend", "settle_spend")
++    if RESERVES
++    else ("get_kill_switch", "spend_totals", "add_spend")
++)
+ PURE_READS = ("store.get_kill_switch", "store.spend_totals", "loop.get_run")
+ 
+ # --- the expectation tables (written before the first run) ------------------------------------------
+@@ -129,6 +135,29 @@ PURE_READS = ("store.get_kill_switch", "store.spend_totals", "loop.get_run")
+ Row = tuple[str, str, str | None, int, int, str | None, int, int]
+ 
+ W, R = "WORKING", "RECEIVED"
++
++
++def _reserve(llm: int, tool: int) -> tuple[Row, ...]:
++    """Where the live loop reserves the worst case before a model call (core-b: limits.reserve reads
++    the stop state, then `reserve_spend`). Older loops book nothing before the call."""
++    if not RESERVES:
++        return ()
++    return (
++        ("store.get_kill_switch", "limits.reserve stop state", W, llm, tool, None, 0, 0),
++        ("store.reserve_spend", "limits.reserve the worst case", W, llm, tool, None, 0, 0),
++    )
++
++
++def _book(llm: int, tool: int) -> tuple[Row, ...]:
++    """The booking after the model call: `settle_spend` (one store call, books the run cost too) with
++    reserve/settle; `add_spend` and `add_cost` before."""
++    if RESERVES:
++        return (("store.settle_spend", "limits.settle the real cost", W, llm, tool, None, 0, 0),)
++    return (
++        ("store.add_spend", "485 via limits.py:18", W, llm, tool, None, 0, 0),
++        ("store.add_cost", "486", W, llm, tool, None, 0, 0),
++    )
++
+ _COMMON: tuple[Row, ...] = (
+     ("store.create_run", "389", R, 0, 0, None, 0, 0),
+     ("audit.write_outcome", "394 run received", R, 0, 0, None, 0, 0),
+@@ -142,9 +171,9 @@ _COMMON: tuple[Row, ...] = (
+     ("store.get_kill_switch", "466 step 1", W, 0, 0, None, 0, 0),
+     ("store.spend_totals", "466 step 1", W, 0, 0, None, 0, 0),
+     ("store.touch", "468 heartbeat", W, 0, 0, None, 0, 0),
++    *_reserve(0, 0),
+     ("llm.chat", "470 model call 1 (a read-tool call)", W, 1, 0, None, 0, 0),
+-    ("store.add_spend", "485 via limits.py:18", W, 1, 0, None, 0, 0),
+-    ("store.add_cost", "486", W, 1, 0, None, 0, 0),
++    *_book(1, 0),
+     ("store.get_kill_switch", "505 before the tool", W, 1, 0, None, 0, 0),
+     ("store.spend_totals", "505 before the tool", W, 1, 0, None, 0, 0),
+     ("tool.invoke", "513 the read tool", W, 1, 1, None, 0, 0),
+@@ -158,9 +187,9 @@ _COMMON: tuple[Row, ...] = (
+ )
+ READ_ROWS: tuple[Row, ...] = (
+     *_COMMON,
++    *_reserve(1, 1),
+     ("llm.chat", "470 model call 2 (nothing to do)", W, 2, 1, None, 0, 0),
+-    ("store.add_spend", "485 via limits.py:18", W, 2, 1, None, 0, 0),
+-    ("store.add_cost", "486", W, 2, 1, None, 0, 0),
++    *_book(2, 1),
+     ("loop.get_run", "330 via 496", W, 2, 1, None, 0, 0),
+     ("store.transition", "331 WORKING to NO_ACTION (final)", "NO_ACTION", 2, 1, None, 0, 0),
+     ("audit.write_outcome", "332 state NO_ACTION", "NO_ACTION", 2, 1, None, 0, 0),
+@@ -170,9 +199,9 @@ READ_ROWS: tuple[Row, ...] = (
+ _P, _WA = "PLAN_READY", "WAITING_FOR_APPROVAL"
+ PROPOSE_ROWS: tuple[Row, ...] = (
+     *_COMMON,
++    *_reserve(1, 1),
+     ("llm.chat", "470 model call 2 (a proposal)", W, 2, 1, None, 0, 0),
+-    ("store.add_spend", "485 via limits.py:18", W, 2, 1, None, 0, 0),
+-    ("store.add_cost", "486", W, 2, 1, None, 0, 0),
++    *_book(2, 1),
+     ("store.put_redaction_map", "694 proposal check", W, 2, 1, None, 0, 0),
+     ("audit.write_outcome", "705 cited evidence", W, 2, 1, None, 0, 0),
+     ("store.save_plan", "713", W, 2, 1, None, 0, 0),
+@@ -610,8 +639,10 @@ def test_the_tables_are_well_formed():
+     points = [p for ps in ALL_POINTS.values() for p in ps]
+     assert len({p.id for p in points}) == len(points)
+     assert {name: len(ps) for name, ps in ALL_POINTS.items()} == {
+-        "read": 2 * 33 - 7,
+-        "propose": 2 * 45 - 10,
++        # reserve/settle: per model call two rows more (stop state, reserve_spend) and one less (settle books
++        # the run cost, so no add_cost); the two extra `get_kill_switch` rows add no `:after` point (pure read)
++        "read": 2 * 35 - 9 if RESERVES else 2 * 33 - 7,
++        "propose": 2 * 47 - 12 if RESERVES else 2 * 45 - 10,
+         "approve": 2 * 18 - 4,
+     }
+     assert {p.point.partition(".")[0] for p in points} == {
+@@ -1008,6 +1039,7 @@ def child_main(argv: list[str] | None = None) -> int:
+     parser.add_argument("--mode", choices=("serve", "tick"), required=True)
+     args = parser.parse_args(argv)
+ 
++    install_pg_test_seeding()
+     plain = PostgresStore(connect(os.environ[DSN_ENV]))
+     points = CrashPoints(mode="exit", flag_path=args.flag)
+     stack = build_stack(args.config_dir, plain, Files(args.files_dir), PATHS[args.path], points)
