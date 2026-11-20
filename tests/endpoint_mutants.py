@@ -1132,7 +1132,7 @@ M = [
         "            if False:\n",
         T6,
         "test_e1_the_11th_conflict_in_a_minute_writes_no_event_but_is_still_409_and_counted",
-        "assert (10 == 10 and 0 == 1)",
+        "assert (11 == 10)",
     ),
     mutant(
         "G32b the conflict event result carries the payload text",
@@ -1158,7 +1158,7 @@ M = [
         '"store_failures": failures}',
         '"store_failures": failures, "extra": 1}',
         T6,
-        "test_e1_start_with_the_store_down_starts_and_health_is_503",
+        "test_e1_start_with_the_store_down_starts_and_health_is_503[StoreUnavailable]",
         "'extra': 1} == {'status'",
     ),
     mutant(
