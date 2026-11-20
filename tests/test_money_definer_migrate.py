@@ -40,21 +40,23 @@ NEEDS_PG = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),
     reason="HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)",
 )
-MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 5)
-RESERVE, SETTLE, EXPIRE, PURGE, ADD = MF
-LIMIT_NAMES = ("max_amount", "max_decimals", "max_exponent", "max_id_chars", "max_expiry_age")
+MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 7)
+RESERVE, SETTLE, EXPIRE, PURGE, ADD, SET_CAP, CAP_MATCHES = MF
+LIMIT_NAMES = ("max_amount", "max_decimals", "max_id_chars", "max_expiry_age")
 
 
 # --- the maps (no database) ---------------------------------------------------------------------------------
 
 
-def test_the_shared_function_list_is_exactly_the_five_new_functions():
+def test_the_shared_function_list_is_exactly_the_seven_new_functions():
     assert mig.MONEY_FUNCTIONS == (
         "hadavin_reserve_spend(text, text, date, numeric, numeric, numeric, text)",
         "hadavin_settle_spend(text, numeric, text)",
         "hadavin_expire_spend_reservations(integer)",
         "hadavin_purge_spend_reservations(timestamptz)",
         "hadavin_add_spend(text, date, numeric)",
+        "hadavin_set_cap(text, numeric, numeric, text)",
+        "hadavin_cap_matches(text, numeric, numeric)",
     )
 
 
@@ -65,6 +67,7 @@ def test_function_grants_name_the_roles_the_ticket_names():
         "hadavin_settle_spend",
         "hadavin_expire_spend_reservations",
         "hadavin_add_spend",
+        "hadavin_cap_matches",
     )
     for sig, g in who.items():
         name = sig.split("(")[0]
@@ -72,9 +75,11 @@ def test_function_grants_name_the_roles_the_ticket_names():
             name in runtime_only,
             name == "hadavin_purge_spend_reservations",
             name == "hadavin_release_expired_spend",
-            False,
+            name in ("hadavin_set_cap", "hadavin_cap_matches"),
             False,
         ), sig
+    assert mig.FUNCTION_GRANTS[SET_CAP].runtime is False
+    assert mig.FUNCTION_GRANTS[CAP_MATCHES].runtime is True
     assert set(who) == {*mig.MONEY_FUNCTIONS, mig.RELEASE_FUNCTION}
 
 
@@ -85,6 +90,19 @@ def test_the_trigger_functions_are_the_excluded_set_and_not_in_the_map():
 
 def test_the_limits_relation_is_owner_only_in_the_grant_map():
     g = mig.GRANTS["hadavin_limits"]
+    assert (g.kind, g.runtime, g.portal, g.purge, g.reset, g.release, g.purge_cols) == (
+        "table",
+        "",
+        False,
+        "",
+        "",
+        "",
+        (),
+    )
+
+
+def test_the_caps_relation_is_owner_only_in_the_grant_map():
+    g = mig.GRANTS["hadavin_caps"]
     assert (g.kind, g.runtime, g.portal, g.purge, g.reset, g.release, g.purge_cols) == (
         "table",
         "",
@@ -140,7 +158,6 @@ def test_the_limits_come_from_the_python_constants_and_nothing_else():
     assert mig.money_limits() == {
         "max_amount": MAX_SPEND_USD,
         "max_decimals": MAX_SPEND_DECIMALS,
-        "max_exponent": MAX_SPEND_EXPONENT,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
     }
@@ -228,7 +245,7 @@ def test_the_search_path_of_each_money_function_is_pinned_with_the_temp_schema_l
 
 
 @NEEDS_PG
-@pytest.mark.parametrize("index", range(5))
+@pytest.mark.parametrize("index", range(7))
 def test_migrate_again_re_pins_a_function_whose_pin_was_lost(w, index):
     sig = mig.MONEY_FUNCTIONS[index]
     w.do(f"ALTER FUNCTION {sig} SET search_path = pg_catalog, pg_temp")
@@ -278,7 +295,7 @@ def test_migrate_takes_a_hand_grant_of_execute_back_from_the_wrong_role(w, index
 
 
 @NEEDS_PG
-@pytest.mark.parametrize("index", range(5))
+@pytest.mark.parametrize("index", range(7))
 def test_migrate_refuses_when_public_can_run_a_money_function(w, index):
     sig = mig.MONEY_FUNCTIONS[index]
     w.do(f"GRANT EXECUTE ON FUNCTION {sig} TO PUBLIC")
@@ -297,12 +314,12 @@ def test_migrate_refuses_when_a_role_reaches_execute_through_a_membership(w):
 
 @NEEDS_PG
 def test_the_reset_role_slot_gives_execute_to_exactly_the_mapped_function(w, monkeypatch):
-    """Step 6 maps the cap functions to the reset role; the slot works now (one mapped function stands in)."""
+    """The reset slot works for a mapped function (add_spend stands in beside the two cap functions)."""
     monkeypatch.setitem(mig.FUNCTION_GRANTS, ADD, mig.FunctionGrant(runtime=True, reset=True))
     w.migrate(release_role=w.release)
     assert _can_exec(w, w.reset, ADD) is True
     for sig in mig.FUNCTION_GRANTS:
-        if sig != ADD:
+        if sig not in (ADD, SET_CAP, CAP_MATCHES):
             assert _can_exec(w, w.reset, sig) is False, sig
 
 
@@ -314,6 +331,30 @@ def test_migrate_refuses_execute_for_the_reset_role_on_any_other_function(w, ind
     w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", helper)
     w.grant("GRANT {} TO {}", helper, w.reset)
     with pytest.raises(ConfigError, match=rf"{w.reset} can run"):
+        w.migrate(release_role=w.release)
+
+
+@NEEDS_PG
+def test_the_reset_role_holds_execute_on_exactly_the_two_cap_functions_and_passes_migrate(w):
+    ran = {sig for sig in mig.FUNCTION_GRANTS if _can_exec(w, w.reset, sig)}
+    assert ran == {SET_CAP, CAP_MATCHES}
+    assert w.migrate(release_role=w.release) == []
+
+
+@NEEDS_PG
+@pytest.mark.parametrize("sig_name", ["SET_CAP", "CAP_MATCHES"])
+def test_migrate_refuses_the_cap_functions_for_roles_that_may_not_run_them(w, sig_name):
+    sig = {"SET_CAP": SET_CAP, "CAP_MATCHES": CAP_MATCHES}[sig_name]
+    wants = mig.FUNCTION_GRANTS[sig]
+    for role in (w.portal, w.purge, w.release):
+        w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", role)
+    w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", w.runtime)
+    w.migrate(release_role=w.release)
+    assert _can_exec(w, w.runtime, sig) is wants.runtime
+    for role in (w.portal, w.purge, w.release):
+        assert _can_exec(w, role, sig) is False
+    w.do(f"GRANT EXECUTE ON FUNCTION {sig} TO PUBLIC")
+    with pytest.raises(ConfigError, match=r"can run .*hadavin_"):
         w.migrate(release_role=w.release)
 
 
@@ -397,7 +438,8 @@ def test_a_named_role_that_is_a_member_of_the_function_owner_is_refused(w):
 
 @NEEDS_PG
 @pytest.mark.parametrize(
-    "table", ["spend", "spend_month", "spend_reservations", "runs", "hadavin_limits"]
+    "table",
+    ["spend", "spend_month", "spend_reservations", "runs", "hadavin_limits", "hadavin_caps"],
 )
 def test_a_money_table_with_another_owner_than_the_functions_is_refused(w, table):
     fo = w.new_role("fo", "NOLOGIN")
@@ -467,7 +509,7 @@ def test_the_sql_limits_equal_the_python_constants_the_validators_use(w):
     got = _limits(w)
     assert got["max_amount"] == D(MAX_SPEND_USD)
     assert got["max_decimals"] == MAX_SPEND_DECIMALS
-    assert got["max_exponent"] == MAX_SPEND_EXPONENT
+    assert "max_exponent" not in got
     assert got["max_id_chars"] == MAX_RESERVATION_ID_CHARS
     assert got["max_expiry_age"] == MAX_EXPIRY_AGE_S
 
