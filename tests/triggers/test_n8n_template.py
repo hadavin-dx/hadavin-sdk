@@ -1616,7 +1616,10 @@ def test_no_acknowledged_request_reaches_a_good_end_without_the_state_check():
     assert c.done not in _reach(flow, c.http, without=c.check)
     assert "optional" not in " ".join(nodes).lower()  # no node says the check may be left out
     assert "taken by the workflow, not done" in nodes["Answer caller: taken"]["notes"]
-    assert "queue mode required for no event loss" in nodes["Answer caller: taken"]["notes"]
+    notes_taken = nodes["Answer caller: taken"]["notes"]
+    assert "the deployment requirement we ask for, unverified" in notes_taken
+    assert "queue mode was never run" in notes_taken
+    assert "a restart during a 60 s wait lost the run" in notes_taken
 
 
 @pytest.mark.parametrize(
