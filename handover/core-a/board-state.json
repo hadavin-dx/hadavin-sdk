@@ -785,19 +785,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "rev-t1 findings"
-  },
-  {
-   "id": "rev-dfix24",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review of d-fix24 (conflict_events_per_minute wiring) + the post-merge README patch text",
-   "started UTC": "17:05",
-   "expected end": "12 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1170,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:31 d-fix24 reviewed fresh: NO Blocker/Major (the conflict setting is read only from the settings on the production path; the cap test uses the real limiter and an injected clock, drops are counted, per sender). Nits: the Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT: add post-merge `worker.CONFLICT_EVENTS_PER_MINUTE == defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT` (cannot be written on core-a alone); README post-merge patch: one overclaim and one wrong cite fixed in the notes of handover/core-a/pr/README-trigger-postmerge.md. Running: t1-fix, cfix, doorm.",
   "17:05 d-fix24 BUILT (cloud/core-a): the dead setting triggers.conflict_events_per_minute is now read by the worker from core-b's TriggerSettings (ConfigError if missing; no make_app parameter any more), 5 tests (3 -> 3 written + 27 dropped of 30; 3 vs 7 -> (3,27) vs (7,23); red proof 3 of 5), worker spend docstring corrected, post-merge README patch text in handover/core-a/pr/README-trigger-postmerge.md; tests/triggers + anchors + runner 1259 passed 312 skipped 0 failed. Note the Runner keeps a default 10 for ~50 direct callers (a second source; reviewer checks the drift). Fresh review rev-dfix24 running. AGENTS 4 (t1-fix, cfix, doorm, rev-dfix24).",
   "17:00 rev-t1 DONE: the merged T1 file (wip/core-a-t1-merge 276365373): NO Blocker; all 18 ported cases are at least as strict as the originals; ONE Major: the portal/reset refusal case lost core-a's positive read as the login (a missing schema USAGE would make every statement fail with 42501 and the test would pass without testing the table grant) -> being restored; nits (being fixed by t1-fix): statement kinds incomplete for purge/portal/reset, purge 'keeps expired/newer-settled' untested, three of CORE-B's 'duplicate' cases are WEAKER than the originals (month cap over two days drops the per-day counter and row count; settles-below-reserve drops the 5-row/open-id/settled_usd checks; control drops the month counter) and 'settle at exactly the reserved amount then the cap stays shut' was in no case, races accept a serial order (cannot prove interleaving). Everything in the file is PG-only (no proof without a DSN). Do NOT copy 276365373 yet: wait for the t1-fix push.",
   "16:55 INTEGRATION FINDING (integ-pg on the merged tree 6c89f0495, PG16.15, HADAVIN_REQUIRE_PG=1): MY tests break on the combined tree, so the dry-run is NOT clean: (1) tests/triggers 144 failed / 1218 passed: crash matrix 22 + 120 and t5_postgres 2, first error 'the child did not end within 20 s' (83) / 30 s (8) and `assert () == ('store.add_spend:before',)`: the crash-point children never reach their points; suspected cause: since core-b's live loop reserves before the call, the child's schema has no hadavin_caps rows (core-b seeds them through a conftest wrapper a child process does not get): agent doorm diagnoses with evidence and fixes the TEST SUPPORT (patch for the lead: handover/core-a/pr/door-merged-support.patch); (2) test_meter.py 152 and test_store_spend_reservations.py 156 failures = MY contract tests still use the old `settle` without agent_id (TypeError) and direct rights on spend_reservations (InsufficientPrivilege): agent cfix re-expresses them on core-b's API; (3) test_t1_reserve_cap_core_c 19 + _core_a 6 failures: same causes, SUPERSEDED by the merged T1 (wip/core-a-t1-merge): delete the two copies; (4) test_grants_negative_roles.py 17: core-c's file: take mine (wip/core-a-for-grant-tests, 88 passed on core-b). Also: the lead's literal command `pytest tests/test_t5*.py` matches no file (the t5 tests live in tests/triggers/). Details: handover/core-a/evidence/integ-pg-run.md. AGENTS 4 (cfix, doorm, docfix24, rev-t1).",
@@ -4116,6 +4104,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "d-fix24 on cloud/core-a: worker reads triggers.conflict_events_per_minute from settings (ConfigError if missing), 5 new tests (3 -> 3 written/27 dropped, 3 vs 7, missing, no make_app parameter, AST), red proof 3 of 5 when hard-coded; stand-ins updated; worker spend docstring corrected; handover/core-a/pr/README-trigger-postmerge.md (exact old/new text for README-t l.51-54, 803-808, 671 heading, 673-680, handover cites); tests/triggers + anchors + runner 1259 passed 312 skipped 0 failed; Runner keeps a default 10 for direct callers"
+  },
+  {
+   "id": "rev-dfix24",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of d-fix24 (conflict_events_per_minute wiring) + the post-merge README patch text",
+   "started UTC": "17:05",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "d-fix24 review: NO Blocker/Major; no other cap source on the production path; the 3-vs-7 test uses the real limiter + rate_clock (counted drops, per sender); nits: Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT (post-merge test needed), test does not cross the 60 s boundary (covered by test_d_fix6_e1:160-169), worker has no upper bound (core-b config enforces 1..1000), no test drives a bad value through make_app to ConfigError; README patch: 1 overclaim (ACK_WAIT_S default of a direct Runner), 1 wrong line cite (defaults.py:281 is the ceiling), 2 unverified claims: notes appended to the patch file"
   }
  ]
 }

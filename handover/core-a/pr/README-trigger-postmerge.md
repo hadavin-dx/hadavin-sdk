@@ -119,3 +119,10 @@ repository's handover/ folder, not shipped". Example for line 3, replace
 The same note goes once after the first citation of each of the records 1, 2 and 3 in line 3. The line numbers cited
 ("line 46", "lines 47 and 48", ...) point into those files and cannot be checked from a client's copy.
 ```
+
+## Review notes (fresh reviewer rev-dfix24, 16:30 UTC): apply when merging
+- The sentence 'the 5 seconds for `ack_wait_s` is the configuration default' omits that `Runner` keeps its own `ACK_WAIT_S` default for directly built runners: say 'the configuration default (core-b's defaults.py); a Runner built directly keeps its own ACK_WAIT_S'.
+- The header cites `defaults.py:280-282`: line 281 is the ceiling (`TRIGGER_MAX_RUNNING_CEILING` = 64); the conflict defaults are at defaults.py:285-287: cite both.
+- 'ungated sites are still charged after the fact' is verified only for `agent_loop.py:392` (`limits.charge`) and `k1b/loop.py:165-201`; the document-screen and shadow-card sites were not verified.
+- The 'exit 2' for an out-of-bounds value assumes config load maps to exit 2: not verified.
+- Post-merge TEST to add (cannot be written on core-a alone): `worker.CONFLICT_EVENTS_PER_MINUTE == defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT`, so the Runner default cannot drift from core-b's default.
