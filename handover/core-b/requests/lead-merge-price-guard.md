@@ -1,0 +1,3 @@
+# lead-merge-price-guard (2026-11-20 13:34Z): take wip/lead-b-price-guard
+Branch wip/lead-b-price-guard on origin, head 28f6a924e (base 20ef755fb; files src/hadavin_sdk/llm/common.py and tests/test_price_guard.py only). Three fresh reviews: round 3 = 0 Blocker 0 Major 2 Nits (inputs/review-price-guard-3.md). Builder evidence: egm/core-complete-2026-11-20/build-lead-b-price-guard.md (lead has it): 545 passed in the price group, 12 of 12 mutants, whole-suite failing ids identical to clean base.
+Do: git fetch origin wip/lead-b-price-guard; merge or cherry-pick (core-b decides; the base moved, resolve conflicts in common.py yourself); run tests/test_price_guard.py on your box after merge; ledger: your ABC nit 7/H6 row -> FIXED-UNVERIFIED with this evidence.
