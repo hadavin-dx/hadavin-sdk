@@ -146,7 +146,7 @@
    "item": "E2-SOCKET",
    "what": "real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2)",
    "state": "RUNNING",
-   "percent": 5,
+   "percent": 50,
    "evidence file": "raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet)",
    "tries": 1,
    "reason": "lead decision: in scope, do it without asking"
@@ -155,7 +155,7 @@
    "item": "R12-worker",
    "what": "lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14",
    "state": "RUNNING",
-   "percent": 5,
+   "percent": 50,
    "evidence file": "raw/E2-tests.log (not yet)",
    "tries": 1,
    "reason": "ORDER 012; same agent as E2-SOCKET because one agent owns worker.py"
@@ -163,11 +163,11 @@
   {
    "item": "R12-endpoint",
    "what": "lead review fixes in endpoint.py: minors 1, 5, parse edges",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-endpoint-tests-2.log (not yet)",
+   "state": "DONE (its own tests pass; final batch re-run still open)",
+   "percent": 100,
+   "evidence file": "raw/D-endpoint-tests-2.log, raw/D-endpoint-mutants.log",
    "tries": 1,
-   "reason": "ORDER 012"
+   "reason": "minors 1 and 5 applied, 409 line left to the worker only; 265 tests pass, 2 skipped; 2 new hand mutants caught. NOT applied: minor 6 (literals stay until core-b's defaults exist), minor 12 (a NUL byte inside the document is still accepted and not checked downstream). Stated side effect: a request up to 300.999 s old by a real clock is accepted"
   },
   {
    "item": "R12-n8n",
@@ -361,15 +361,15 @@
   {
    "model": "fable",
    "started UTC": "05:46",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "lead code review round 1 of 3",
    "retries so far": 0,
    "id": "r12-endpoint",
    "role": "builder",
    "what exactly it is doing": "endpoint.py minors of the lead review plus boundary and parse-edge tests",
-   "expected end": "about 15 min after start",
-   "reason": "ORDER 012"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -519,6 +519,15 @@
    "first failing line": "none",
    "state": "done, re-run pending",
    "reason": "worker.py and endpoint.py are still being changed for ORDER 012; a mutant whose old text no longer matches would show as a problem"
+  },
+  {
+   "suite or file": "tests/triggers/test_endpoint.py (after lead review fixes)",
+   "branch and SHA": "working tree",
+   "run number": "2 (builder)",
+   "passed / failed / errors": "265 / 0 / 0, 2 skipped",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "UNVERIFIED by me until the final run of my files"
   }
  ],
  "restarts": [],
@@ -545,7 +554,8 @@
   "ORDER 012 Major 1: I chose 'back the poll off' (about 10 reads per refused request) over '503 at once', see DECISIONS",
   "ORDERS 007, 010 and 011 are not in my ORDERS.md: tell me if they were meant for me",
   "'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)",
-  "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once"
+  "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once",
+  "Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400"
  ],
  "failed": "2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work"
 }
