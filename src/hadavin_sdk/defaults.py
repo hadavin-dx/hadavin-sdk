@@ -45,6 +45,20 @@ MAX_DOCUMENT_BYTES = (
 MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
+# The redactor's finder build (`_Redactor._build`) costs about 0.46 KB of transient memory per character of the map's rule originals and 2.6-2.9 us
+# of CPU per character, whatever the number of entries (ticket E14, measured: 262,144 characters 113 MB, 524,288 237 MB, 1,048,576 480 MB, 2,097,152 965 MB).
+# E14's shape (8 plain values of 260,000 characters) cost 960 MB and 9 s in one call and was accepted. Nothing bounded the characters: `MAX_MAP_ENTRIES` bounds
+# entries only. Two caps, defaults of ticket E14 (the lead has not approved them): `MAX_MAP_CHARS` is the run-level cap (`evidence.max_map_chars`, checked by the
+# agent loop next to `max_map_entries`, ends `document_too_complex`; about 240 MB and 1.25 s a build); `MAX_FINDER_CHARS` is the hard per-build cap, counted as
+# trie nodes of the first trie, past it every build is refused with `InputTooLarge("FinderMemoryTooMuch")` (about 360 MB and 2 s). The margin of one
+# `MAX_REDACT_CHARS` lets the call that crosses the run cap finish. No per-value cap: one value as long as the text (the `curl -u ` perf shape, 262,144) is honest and
+# memory depends on the total only. Honest maxima stay far under: property corpus 8,571, k5 full-size run 14,392, 2,000 HIGHENTROPY values 252,505.
+MAX_MAP_CHARS = (
+    2 * MAX_REDACT_CHARS
+)  # 524,288: characters of distinct originals one run's map may hold (config evidence.max_map_chars)
+MAX_FINDER_CHARS = (
+    MAX_MAP_CHARS + MAX_REDACT_CHARS
+)  # 786,432: trie nodes one finder build may hold; past it InputTooLarge("FinderMemoryTooMuch")
 # A text over the redaction cap is cut at the cap, redacted, and this many characters of the result's end are dropped: a
 # secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192; 8,192 covers all three with slack), and it is the
 # part dropped, never shown.
