@@ -1,1 +1,11 @@
 ## attempt 1: -n 0, the test alone
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C1/1 seed=2026112041: sent=1504 valid=1018 (68%) rows=50 overlapping_keys=35 samples=27 model_calls=50 statuses[200:321, 202:15, 400:271, 401:135, 404:33, 405:29, 409:180, 413:18, 503:502] retried_503=502
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 20.19s
+## attempt 2: -n 3, with test_t5_fuzz_concurrent (all) and test_t5_crash_matrix as load

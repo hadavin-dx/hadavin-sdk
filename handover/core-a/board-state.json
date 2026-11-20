@@ -695,11 +695,12 @@
    "what exactly it is doing": "WHOLE suite with REQUIRE_PG=1 -n 3 (FAILED ids, skip table), combined tree core-b + our files with n8n/, mutants; logs in handover/core-a/evidence/",
    "started UTC": "08:47",
    "expected end": "about 25 min",
-   "percent": 5,
+   "percent": 80,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "lead: full suite, failing ids"
+   "reason": "lead: full suite, failing ids",
+   "what_exactly_it_is_doing": "waiting for its own background combined-tree pytest (72%, slow crash-matrix tests under -n 3); everything else reported"
   },
   {
    "id": "d-fix5",
@@ -1085,6 +1086,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "batch6 interim: ruff format flagged 2 of my files (tickets/E-test-helpers.md, tools/board.py): formatted, repo now 437 files formatted, ruff check clean, bandit -ll 'No issues identified'. Skips by reason (458): 264 core-b meter not on this branch, 187 core-b step F (Store.reserve_spend missing), 2 empty-body own test, 1 each: model gate, trigger config, Stubber malformed Converse, k1b Budget, textnorm_corpus.json. Combined tree (core-b 70c61a4b6 + my files + n8n/) pytest still running at 72%, no failures so far.",
   "WHOLE SUITE (batch6, evidence/BATCH6-suite.log, head ~9feb435, HADAVIN_REQUIRE_PG=1, -n 3, PG16, python 3.13): 14 failed, 12221 passed, 458 skipped, 75 xfailed in 320 s. FAILED ids: (A) strict-mode by design, tree has no core-b config: tests/triggers/test_t5_main_start.py::test_1,test_2a,test_2b,test_2c,test_2d,test_2e,test_3; tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2; tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block; tests/triggers/test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker (all pass on the combined tree). (B) test_no_reference_material::test_no_vendor_brand_string_is_tracked: the brand string was in MY three log files (fixed now, 08:55) AND in YOUR handover/BRIEF-PREAMBLE.md ('Port.io'): please remove it there. (C) tests/test_k5_producers.py::test_no_message_is_cut_with_a_slice_before_it_is_redacted: lists tools.py:1011, tools.py:1012 (not mine: core-b/core-c?) and triggers/worker.py:655 (mine, a [:80] slice in _fields: fixing in d-fix5). (D) tests/demo_askdata/test_validate_harm.py::...[dblink-connect]: needs PostgreSQL on /var/run/postgresql/.s.PGSQL.5432 (default socket); my PG is on port 55433: environment, will set PGHOST/PGPORT in the next batch. (E) tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]: 'I8 the retry of a 503 got 503' (seed 2026112041 case 65) under -n 3 load: mine, investigating in d-fix5 (it passed in 1182 earlier). Skips 458: see BATCH6-summary.md when batch6 ends.",
   "Verdicts received 08:47: E7 = (a) keep the stdlib server, ticket size sentence corrected by d-fix4 (in its brief). E5 = yes: E-rev4 running. E6 = you run n8n 2.47.7: outline stays 'not run' until inputs/evidence-n8n-3.md arrives. REQ-001..004: building on my recommended answers and marking each in ticket D, after d-fix4 stops editing the ticket. Open items today are 4 (REQ-001..004; E5/E6/E7 answered), not 20: if the 20 you count are in QUEUE.md rows, tell me which rows.",
   "OPEN-ITEMS.md (handover/core-a/): 7 open items. Waiting for core-b: REQ-001..REQ-004 (oldest 05:41 UTC). Waiting for you: E5 (one more fresh pass on step E?), E6 (three n8n behaviours need a real n8n run), E7 (stdlib server size / cap and deadline). Nothing else is open.",

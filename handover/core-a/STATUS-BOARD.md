@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:57:16Z
+UPDATED_UTC: 2026-11-20T08:57:57Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 74
 ITEMS_OPEN: 22
 PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 3.11 of 4 cores (1-minute average), mem 1.4/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 58G 17%; 560M /home/user/hadavin-sdk; 484M /tmp/claude-0; 160M /root/.cache
+CAPACITY: load 5.08 of 4 cores (1-minute average), mem 1.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 560M /home/user/hadavin-sdk; 484M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:57:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:57:19Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -99,27 +99,29 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
-| batch6 | evidence runner (never judges) | sonnet | WHOLE suite with REQUIRE_PG=1 -n 3 (FAILED ids, skip table), combined tree core-b + our files with n8n/, mutants; logs in handover/core-a/evidence/ | 08:47 | about 25 min | 5 | running | n/a | 0 | lead: full suite, failing ids |
+| batch6 | evidence runner (never judges) | sonnet | WHOLE suite with REQUIRE_PG=1 -n 3 (FAILED ids, skip table), combined tree core-b + our files with n8n/, mutants; logs in handover/core-a/evidence/ | 08:47 | about 25 min | 80 | running | n/a | 0 | lead: full suite, failing ids |
 | d-fix5 | builder | sonnet | whole-suite failures C (slice in worker._fields) and E (fuzz C1 retry-503 under load), D-rev4 Majors R4-1..5 + nits, E-nits, mutant re-anchor, one run + mutants | 08:56 | about 30 min | 5 | running | fixes after the extra passes | 0 | batch6 failures |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1432 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 111s ago | running | matched by name in ps |
-| 1449 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 111s ago | running | matched by name in ps |
-| 6043 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 6044 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 6045 | timeout 280 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 6047 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 0 -r | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 6051 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 6203 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 6213 | postgres: postgres postgres 127.0.0.1(37934) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 9767s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 9767s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 9767s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 9767s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 9767s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 9767s ago | running | matched by name in ps |
+| 1432 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 152s ago | running | matched by name in ps |
+| 1449 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 151s ago | running | matched by name in ps |
+| 7386 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 7387 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 7388 | timeout 550 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 7391 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 7398 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 19s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 9807s ago | running | matched by name in ps |
+| 13013 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 13015 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 13024 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 13026 | postgres: postgres postgres 127.0.0.1(55786) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -181,6 +183,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- batch6 interim: ruff format flagged 2 of my files (tickets/E-test-helpers.md, tools/board.py): formatted, repo now 437 files formatted, ruff check clean, bandit -ll 'No issues identified'. Skips by reason (458): 264 core-b meter not on this branch, 187 core-b step F (Store.reserve_spend missing), 2 empty-body own test, 1 each: model gate, trigger config, Stubber malformed Converse, k1b Budget, textnorm_corpus.json. Combined tree (core-b 70c61a4b6 + my files + n8n/) pytest still running at 72%, no failures so far.
 - WHOLE SUITE (batch6, evidence/BATCH6-suite.log, head ~9feb435, HADAVIN_REQUIRE_PG=1, -n 3, PG16, python 3.13): 14 failed, 12221 passed, 458 skipped, 75 xfailed in 320 s. FAILED ids: (A) strict-mode by design, tree has no core-b config: tests/triggers/test_t5_main_start.py::test_1,test_2a,test_2b,test_2c,test_2d,test_2e,test_3; tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2; tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block; tests/triggers/test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker (all pass on the combined tree). (B) test_no_reference_material::test_no_vendor_brand_string_is_tracked: the brand string was in MY three log files (fixed now, 08:55) AND in YOUR handover/BRIEF-PREAMBLE.md ('Port.io'): please remove it there. (C) tests/test_k5_producers.py::test_no_message_is_cut_with_a_slice_before_it_is_redacted: lists tools.py:1011, tools.py:1012 (not mine: core-b/core-c?) and triggers/worker.py:655 (mine, a [:80] slice in _fields: fixing in d-fix5). (D) tests/demo_askdata/test_validate_harm.py::...[dblink-connect]: needs PostgreSQL on /var/run/postgresql/.s.PGSQL.5432 (default socket); my PG is on port 55433: environment, will set PGHOST/PGPORT in the next batch. (E) tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]: 'I8 the retry of a 503 got 503' (seed 2026112041 case 65) under -n 3 load: mine, investigating in d-fix5 (it passed in 1182 earlier). Skips 458: see BATCH6-summary.md when batch6 ends.
 - Verdicts received 08:47: E7 = (a) keep the stdlib server, ticket size sentence corrected by d-fix4 (in its brief). E5 = yes: E-rev4 running. E6 = you run n8n 2.47.7: outline stays 'not run' until inputs/evidence-n8n-3.md arrives. REQ-001..004: building on my recommended answers and marking each in ticket D, after d-fix4 stops editing the ticket. Open items today are 4 (REQ-001..004; E5/E6/E7 answered), not 20: if the 20 you count are in QUEUE.md rows, tell me which rows.
 - OPEN-ITEMS.md (handover/core-a/): 7 open items. Waiting for core-b: REQ-001..REQ-004 (oldest 05:41 UTC). Waiting for you: E5 (one more fresh pass on step E?), E6 (three n8n behaviours need a real n8n run), E7 (stdlib server size / cap and deadline). Nothing else is open.

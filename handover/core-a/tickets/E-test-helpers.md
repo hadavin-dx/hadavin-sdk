@@ -78,41 +78,59 @@ CRASH_EXIT_CODE: Final[int] = 137
 CRASH_MARKER: Final[str] = "simulate crash"
 Mode = Literal["raise", "exit"]
 
+
 class SimulatedCrash(BaseException):
     point: str
+
     def __init__(self, point: str) -> None: ...
 
+
 class CrashPoints:
-    def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None: ...
+    def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
+        ...
         # RuntimeError outside pytest; ValueError if mode == "exit" without flag_path, or "raise" with one
+
     def __enter__(self) -> "CrashPoints": ...
-    def __exit__(self, exc_type, exc, tb) -> None: ...    # disarms; RuntimeError if still armed and no error in flight
-    def arm(self, point: str, *, nth: int = 1) -> None: ...  # ValueError: bad name, nth < 1, or already armed
-    def armed(self) -> str | None: ...                    # "store.create_run:after" or None
-    def hit(self, point: str) -> None: ...                # one-shot: raise SimulatedCrash, or print marker and os._exit
-    def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T: ...
+    def __exit__(
+        self, exc_type, exc, tb
+    ) -> None: ...  # disarms; RuntimeError if still armed and no error in flight
+    def arm(
+        self, point: str, *, nth: int = 1
+    ) -> None: ...  # ValueError: bad name, nth < 1, or already armed
+    def armed(self) -> str | None: ...  # "store.create_run:after" or None
+    def hit(
+        self, point: str
+    ) -> None: ...  # one-shot: raise SimulatedCrash, or print marker and os._exit
+    def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
+        ...
         # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m
+
     @property
-    def fired(self) -> tuple[str, ...]: ...               # points that fired in this process, in order
+    def fired(self) -> tuple[str, ...]: ...  # points that fired in this process, in order
 ```
 Flag file (kill mode): one UTF-8 line `<point>` or `<point>#<nth>`; `arm` writes it, `hit` reads it on every call, counts matching calls in the process, deletes it, then exits. An unreadable or missing file means "not armed".
 
 Usage 1, same process, memory store (D's case on memory; `ScriptLLM`, `build_runtime`, `handle` from tests/k5_support.py:129, 165, 218):
 ```python
 with CrashPoints() as cp:
-    rt, _ = build_runtime(cfg_dir, cp.wrap(ScriptLLM([{"noaction": True}]), "llm", ["chat"])); cp.arm("llm.chat:before")
-    with pytest.raises(SimulatedCrash): handle(rt, run_id=RID)      # the row stays WORKING; then run the tick
+    rt, _ = build_runtime(cfg_dir, cp.wrap(ScriptLLM([{"noaction": True}]), "llm", ["chat"]))
+    cp.arm("llm.chat:before")
+    with pytest.raises(SimulatedCrash):
+        handle(rt, run_id=RID)  # the row stays WORKING; then run the tick
 ```
 Usage 2, wrap the store after the app is built (the chain audit factory type-checks the store, S/audit/chain.py:520-525, so wrap afterwards; `Runtime.store` is a plain attribute, S/runtime/agent_loop.py:208):
 ```python
 rt.store = cp.wrap(rt.store, "store", ["create_run", "transition"])
-cp.arm("store.transition:after", nth=1)                # RECEIVED -> WORKING is written, nothing after it
-with pytest.raises(SimulatedCrash): handle(rt, run_id=RID)
+cp.arm("store.transition:after", nth=1)  # RECEIVED -> WORKING is written, nothing after it
+with pytest.raises(SimulatedCrash):
+    handle(rt, run_id=RID)
 ```
 Usage 3, kill a child on PostgreSQL (the child script is the consumer's; it builds its app, wraps with `CrashPoints(mode="exit", flag_path=Path(sys.argv[1]))` and serves):
 ```python
 CrashPoints(mode="exit", flag_path=flag).arm("store.create_run:after")
-done = subprocess.run([sys.executable, str(child), str(flag)], capture_output=True, text=True, timeout=60)
+done = subprocess.run(
+    [sys.executable, str(child), str(flag)], capture_output=True, text=True, timeout=60
+)
 assert done.returncode == CRASH_EXIT_CODE and CRASH_MARKER in done.stdout and not flag.exists()
 ```
 
