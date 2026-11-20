@@ -228,9 +228,9 @@
    "what": "contract test file for core-c's gate module (non-builder)",
    "state": "RUNNING",
    "percent": 5,
-   "evidence file": "",
+   "evidence file": "raw/gate-contract-tests-on-core-c.log (not yet)",
    "tries": 1,
-   "reason": "WAIT: ORDER 013 says after items 1 and 2 are pushed and one batch of my own files"
+   "reason": "started early, see DECISIONS: it is a new file that depends on nothing of mine"
   }
  ],
  "agents": [
@@ -493,6 +493,19 @@
    "what exactly it is doing": "follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop",
    "expected end": "about 20 min after start",
    "reason": "ORDER 013; 3 agents run"
+  },
+  {
+   "id": "o13-gate",
+   "role": "builder (tests, non-builder of the code under test)",
+   "model": "fable",
+   "what exactly it is doing": "reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder",
+   "started UTC": "06:01",
+   "expected end": "about 30 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ORDER 013 last paragraph; 4 agents run"
   }
  ],
  "tests": [

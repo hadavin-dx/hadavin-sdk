@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:01:08Z
+UPDATED_UTC: 2026-11-20T06:01:47Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 25
 ITEMS_OPEN: 6
 PERCENT: 81
-AGENTS_RUNNING: 3
-CAPACITY: load 0.34 of 4 cores (1-minute average), mem 0.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 4
+CAPACITY: load 0.25 of 4 cores (1-minute average), mem 0.8/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.4G 60G 14%; 350M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:00:20Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:01:11Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -44,7 +44,7 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | RUNNING | 5 | raw/trigger-config-tests-on-core-b.log (not yet) | 1 | ORDER 013 item 2; failing tests become strict expected-failures = findings |
 | O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | RUNNING | 5 | raw/D-nul-document-pg16.log (not yet) | 1 | ORDER 013 verdict on review minor 12 |
 | O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: only when core-b's answer to requests/001 changes (a reader bound to the sender names is coming); item O13-2 reports the differences |
-| O13-gate | contract test file for core-c's gate module (non-builder) | RUNNING | 5 |  | 1 | WAIT: ORDER 013 says after items 1 and 2 are pushed and one batch of my own files |
+| O13-gate | contract test file for core-c's gate module (non-builder) | RUNNING | 5 | raw/gate-contract-tests-on-core-c.log (not yet) | 1 | started early, see DECISIONS: it is a new file that depends on nothing of mine |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -69,14 +69,14 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013 item 1 |
 | o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | about 25 min after start | 5 | running | n/a | 0 | ORDER 013 item 2 |
 | o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013; 3 agents run |
+| o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | about 30 min after start | 5 | running | n/a | 0 | ORDER 013 last paragraph; 4 agents run |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 3851 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 57s ago | running | matched by name in ps |
-| 3855 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 57s ago | running | matched by name in ps |
-| 4289 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 10s ago | running | matched by name in ps |
-| 4290 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 10s ago | running | matched by name in ps |
+| 4375 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 4377 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 4382 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
