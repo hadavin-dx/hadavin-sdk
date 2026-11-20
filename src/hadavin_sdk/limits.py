@@ -195,10 +195,15 @@ class Limits:
         except SpendCapExceeded as exc:
             raise SpendRefused(_CAP_REASON.get(exc.which, "limits_unavailable")) from None
         except Exception as exc:  # noqa: BLE001 - fail closed: whatever the store raised, no model call
+            # The log names the error class, never the message (a store message can carry host, user, SQL text);
+            # the one fixed hint is for a missing cap row, which an operator fixes with sync-caps.
+            hint = (
+                " hint=no cap row: run limits sync-caps"
+                if "no cap for this agent" in str(exc)
+                else ""
+            )
             _LOG.warning(
-                "reserve refused: limits_unavailable error_kind=%s detail=%s",
-                type(exc).__name__,
-                exc,
+                "reserve refused: limits_unavailable error_kind=%s%s", type(exc).__name__, hint
             )
             raise SpendRefused("limits_unavailable") from None
 

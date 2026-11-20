@@ -307,11 +307,11 @@ def check_caps(ctx: TickContext) -> None:
         try:
             state = matches(agent.id, agent.budget_usd.daily, agent.budget_usd.monthly)
         except Exception as exc:  # noqa: BLE001 - name the agent and go on: one bad id must not hide the others
-            _LOG.error("check_caps agent=%s error_kind=%s", agent.id, type(exc).__name__)
-            bad.append(f"{agent.id}:error")
+            _LOG.error("check_caps agent=%.64s error_kind=%s", agent.id, type(exc).__name__)
+            bad.append(f"{agent.id[:64]}:error")
             continue
         if state != "same":
-            bad.append(f"{agent.id}:{state}")
+            bad.append(f"{agent.id[:64]}:{state}")
     if bad:
         raise CapsDrift(
             "the caps table differs from the registry for "
