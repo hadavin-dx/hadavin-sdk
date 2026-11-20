@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:42:15Z
+UPDATED_UTC: 2026-11-20T11:42:58Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 81
 ITEMS_OPEN: 23
 PERCENT: 81
-AGENTS_RUNNING: 2
-CAPACITY: load 0.62 of 4 cores (1-minute average), mem 1.2/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 12G 57G 18%; 595M /home/user/hadavin-sdk; 982M /tmp/claude-0; 182M /root/.cache
+AGENTS_RUNNING: 1
+CAPACITY: load 0.76 of 4 cores (1-minute average), mem 1.3/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 12G 58G 17%; 596M /home/user/hadavin-sdk; 982M /tmp/claude-0; 182M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T11:42:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T11:42:19Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -105,24 +105,20 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| mut-guard | builder | sonnet | mutant script (lead's laptop findings): T13 (and T14 for the new G35 mutant) into TESTS, a missing-test-file guard with a clean nonzero exit + unit test, find and fix why the script exited 0 after a traceback; does NOT touch line 1251 and does NOT run the script | 11:40 | 20 min | 5 | running | n/a | 0 | lead 11:40 |
 | py-matrix | investigator + builder | sonnet | lead's run 2: test_d_fix13 [400-garbage] x3 fails on CPython 3.13.12 (laptop), passes on 3.13.18 (this box): which stdlib path answers a garbage request line, per-Python results (3.13.18, system 3.12, 3.13.12 if installable), product defect or test dependence, fix (never skip) | 11:41 | 30 min | 5 | running | n/a | 0 | lead order 11:42 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 19667s ago | running | matched by name in ps |
-| 18878 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 25s ago | running | matched by name in ps |
-| 18883 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 25s ago | running | matched by name in ps |
-| 18897 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 25s ago | running | matched by name in ps |
-| 19111 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 19447 | .venv/bin/python -m pytest -q -p no:cacheprovider tests/triggers/test_ | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 19507 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 19710s ago | running | matched by name in ps |
+| 20120 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 20122 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 20125 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 5s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

@@ -739,19 +739,6 @@
  ],
  "agents": [
   {
-   "id": "mut-guard",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "mutant script (lead's laptop findings): T13 (and T14 for the new G35 mutant) into TESTS, a missing-test-file guard with a clean nonzero exit + unit test, find and fix why the script exited 0 after a traceback; does NOT touch line 1251 and does NOT run the script",
-   "started UTC": "11:40",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead 11:40"
-  },
-  {
    "id": "py-matrix",
    "role": "investigator + builder",
    "model": "sonnet",
@@ -2894,6 +2881,19 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "a stale row since 07:05: the mutant-script work it described was done by mut-fix (07:30-07:55), mut-e1, mut17 and e1-fix4 (run 18: 109 of 109); nothing runs under this id"
+  },
+  {
+   "id": "mut-guard",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "mutant script (lead's laptop findings): T13 (and T14 for the new G35 mutant) into TESTS, a missing-test-file guard with a clean nonzero exit + unit test, find and fix why the script exited 0 after a traceback; does NOT touch line 1251 and does NOT run the script",
+   "started UTC": "11:40",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "T13+T14 in TESTS, mutant G35 (headers_sent=True -> pass; killable under --noconftest, fails with the TimeoutError/TypeError log pair on a scratch copy; full-script verdict is the lead's), main() calls check_test_files first: a mutant whose killer file is missing from TESTS = clean message + exit 2 (no traceback); new tests/mutation_exit.py exit_guard: uncaught exception = exit 1, Ctrl-C 130, SystemExit kept; tests/test_mutation_runner_exit.py 6 tests; the exit 0 you saw: by the code the script exits 1 on an uncaught ValueError, so the 0 came from a pipe (`| tail` reports tail's status; use set -o pipefail): NOT confirmed by a run (I do not run the script); tools/mutation_runner.py untouched (its sha256 is pinned in tests/fixtures/mutation_manifest.json); line 1251 (G33d anchor, now ~1255) untouched; docstring 'Thirty-four groups' and the G-list header still lack G35"
   }
  ]
 }
