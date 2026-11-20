@@ -90,7 +90,7 @@ A fourth run (record: `handover/core-a/inputs/evidence-n8n-4.md`, 2026-11-20, on
 - Both files imported and published; after one container restart both were listed as active (line 46).
 - A new event: the caller got HTTP 202 with an empty body after 0.18 seconds (the Respond node set to noData with the code 202), the receiver answered 202 RECEIVED, the workflow waited, asked again with the same key and the receiver answered 200 NO_ACTION; the execution ended in success at "Done: finished or waits for approval" (line 47). The same event again: receiver 200, caller 202, with the same run id and no second run (line 48). The early answer before the long chain, and the item passed on unchanged by the Respond node set to noData, were SEEN here (lines 84 to 86); the earlier text of this page said they were not.
 - The same key with a changed text: 409 with an empty body, "Stop: refused or gave up", and the error workflow ran once, 0.047 seconds later (line 49). A wrong signing value: 401, no second round, the error workflow ran (line 51).
-- A receiver that was down (about two minutes): ECONNREFUSED in rounds 0 and 1, each after the 70 second wait; the receiver came back, round 2 was answered 202, the next check 200 NO_ACTION; the execution ended in success and the error workflow did NOT run (lines 50 and 124).
+- A receiver that was down (about two minutes): ECONNREFUSED in rounds 0 and 1 (round 0 was sent at once; only round 1 followed the 70 second wait); the receiver came back, round 2 was answered 202, the next check 200 NO_ACTION; the execution ended in success and the error workflow did NOT run (lines 50 and 124).
 - A slow run (answered WORKING twice): checks 1 and 2, waits of 73.7 and 75.6 seconds, then success (line 58). The waits of the loop ran 72.8 to 75.6 seconds from one send to the next (line 105).
 - A missing record id, an id above the safe integer limit, an empty event or a text of spaces: the caller got HTTP 500 with the body {"message":"Error in workflow"}, the execution ended at "Stop: id or text missing", the error workflow ran, nothing was sent (lines 59 and 62 to 64). A call with no webhook header or a wrong value: HTTP 403 "Authorization data is wrong!" and no execution (line 60).
 - A restart of n8n 5 seconds into a wait of 70 seconds: the execution stayed waiting, the wait resumed, the next send was made and the execution finished with success (line 66).
@@ -119,7 +119,7 @@ NOT run by anybody (each is also in the list at the end):
   504 or 520 to 524, or no answer at all), the workflow waits, signs the same body again with a new timestamp, and sends
   again, for a fixed number of rounds. When Hadavin does acknowledge it (202 or 200), the workflow is NOT finished:
   it asks again, with the same key, until the answer shows how the run ended, and it fails (so that a person is
-  told) when the run ended badly or never ends (see "A 202 is not the end").
+  told, but only once the error workflow is published and its 'Notify placeholder' node was replaced) when the run ended badly or never ends (see "A 202 is not the end").
 - `hadavin-trigger-error.json` (error workflow): when the main workflow fails, n8n starts this one, but only if it
   is published. It builds a short message (workflow name, execution link, last node, error text) for a chat or
   e-mail node that you add.
@@ -206,10 +206,9 @@ To change that, one node was added AFTER the run, and the webhook node's respons
   try to send it. It does NOT mean that Hadavin accepted it; a later refusal reaches a person through the error
   workflow, not the caller. In plain words: the caller's 202 means "taken by the workflow", not "done". The caller
   never learns from this answer how the run ended. What 202 really means: nothing is durable yet, neither in n8n beyond
-  this one execution nor in Hadavin. Queue mode required for no event loss: without it, an n8n restart loses the event
-  after the caller was told 202.
+  this one execution nor in Hadavin. Queue mode required for no event loss is the deployment requirement we ask for, unverified: Run n8n in queue mode (recommended; NOT VERIFIED here, queue mode was never run). In default mode a restart during a 60 s wait lost the run; waits of 70 s and 120 s survived once each; a restart during a send was not run.
 - A refused event (the guard's second output) has NO answer node. "Stop: id or text missing" is the only node on that
-  output, so a refused event always fails the execution and the error workflow tells a person. The caller then gets
+  output, so a refused event always fails the execution and the error workflow tells a person (once it is published and its 'Notify placeholder' node was replaced). The caller then gets
   n8n's own error answer. SEEN IN n8n 2.47.7 (fourth record, once each, lines 59, 62 to 64 and 83): with the response mode `responseNode` and no answer node run, that answer is HTTP 500 with the body
   `{"message":"Error in workflow"}` (the second record had seen the same answer with the mode "last node", after the whole execution had ended, lines 285 to 293 of `handover/core-a/inputs/evidence-n8n-2.md`; the first run, with another response mode, gave the caller 200). A caller
   should treat only a 202 as "taken".
@@ -391,7 +390,7 @@ The fourth record (lines 50, 98 to 102, once each) adds, against the endpoint an
 
 Still UNVERIFIED: 520 to 524 (added to the list after the run), a redirect, a TLS failure, a receiver that answers after
 the timeout, Retry On Fail switched on, the loop with the real values (45 rounds, 70 second wait, 45 second timeout),
-the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode. Queue mode required for no event loss: the 202 to the caller is given before anything is stored in Hadavin, and in the default (non-queue) mode an n8n restart loses the execution that holds the event.
+the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode. The 202 to the caller is given before anything is stored in Hadavin. "Queue mode required for no event loss" is the deployment requirement we ask for, unverified. Run n8n in queue mode (recommended; NOT VERIFIED here, queue mode was never run). In default mode a restart during a 60 s wait lost the run; waits of 70 s and 120 s survived once each; a restart during a send was not run.
 
 Two things follow from "no answer counts as busy", and both are meant:
 
@@ -479,7 +478,7 @@ the process supervisor waited a shorter time than the run needed.
 - A check that is answered 502, 503, 504 or 520 to 524, or not answered, goes the busy way like any other send (wait,
   sign again, send again). The busy rounds are counted over the whole execution: 45 in all, not 45 for each check, and
   one counter serves the first send and every check.
-- Every failure starts the error workflow, which tells a person. The workflow fails closed: a state it does not
+- Every failure starts the error workflow, which tells a person only once that workflow is published and its 'Notify placeholder' node was replaced (n8n's own crash and a lost execution tell nobody). The workflow fails closed: a state it does not
   know, or an answer without a state, is treated as "did not end well".
 
 ### The states
@@ -538,7 +537,7 @@ at. If the workflow took them as an end, the gap described above would stay open
 - These numbers are a floor, not a recommendation. They are right for the example agent only; a client whose agent has
   a larger `max_steps` must raise them. Nobody has measured a real run.
 - With too few checks nothing is lost: the workflow then fails at "Stop: still running" for a run that is merely
-  slow, and a person gets a notice that was not needed. It never ends as a success for a run that is not done.
+  slow, and a person gets a notice that was not needed. It never ends as a success for a run still in RECEIVED, WORKING, PLAN_READY, EXECUTING or VERIFYING (WAITING_FOR_APPROVAL does go to Done as a success).
 
 ### Which failures are permanent and which are an outage
 
@@ -598,6 +597,9 @@ In plain words: with the default setting the worker handles ONE run at a time.
   call; until then two runs side by side could together go over a spending limit.
 - A second event that arrives while a run is going is not queued. The worker holds the request for up to
   `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503.
+- Limit: at most 128 requests may wait at once (MAX_WAITING, worker.py:110, 329-331); a request over that gets an immediate 503.
+- Limit: the request header may be 16384 bytes in total including the blank line (16382 before it; server.py MAX_HEADER_BYTES); more gets 431.
+- 503 also comes when the app raised (endpoint.py ~382-384) and from the degraded worker while the store is down (worker.py ~1050).
 - What 503 means: not acknowledged; send again with the same key; it may already be running. (In most cases
   nothing was stored. But a request that gets the free slot just before its wait is over can be answered 503
   although its run has started. The next send with the same key then finds that run and is answered 202 or 200.)
@@ -720,7 +722,7 @@ These are known limits of this version. They are written down so that nobody ass
    control characters are not removed. Removing NUL characters before sending stays the simple way.
 7. The worker has no fallback numbers for the `triggers` block of the configuration. If the block is missing, or a
    field it reads (`max_running`, `ack_wait_s`, the senders, the trigger secret) is missing or misspelled, the worker
-   refuses to start with a configuration error and exit code 2; it never runs on silent defaults. The defaults 1 for
+   refuses to start with a configuration error and exit code 2; it never runs on silent defaults. Exit codes: 0 clean stop, 2 configuration refused at start, 3 any other start failure; a store that is down at start is NOT an exit: the worker starts degraded, /health answers 503 and it recovers without restart. The defaults 1 for
    `max_running` and 5 seconds for `ack_wait_s` named in this README are the defaults of the worker's `Runner`
    class, not a fallback for a missing setting. Only the address and port have defaults, and they are command-line
    options (address `127.0.0.1`, port 8081: `--host`, `--port`). Check the worker's start line for the port it serves on.
@@ -741,7 +743,7 @@ These are known limits of this version. They are written down so that nobody ass
     or a crash"). As the code reads, a second stop signal does nothing
     while the worker waits for its runs (up to 30 seconds); after that wait the worker does NOT kill the process or
     cut the run: a run still going keeps the process alive until it ends (one WARNING line says how many runs are
-    still going), and only the supervisor's kill ends it earlier. Ctrl-C does the same as SIGTERM. Not tested: a request
+    still going), and only the supervisor's kill ends it earlier. Ctrl-C does the same as SIGTERM; a second Ctrl-C aborts the wait. Not tested: a request
     that waits for a free slot when the signal comes, a request that arrives between the signal and the closing of
     the port, and a second signal.
 12. There is no fairness among waiting requests: a later request can be served before an earlier one. A request
