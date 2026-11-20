@@ -1,0 +1,83 @@
+module file: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/e-evidence3/src/hadavin_sdk/testing/crash.py
+== outside pytest, child
+rc 1 ['RuntimeError: CrashPoints is a test tool: it can only be built inside a pytest run']
+exit-mode rc 1 ['RuntimeError: CrashPoints is a test tool: it can only be built inside a pytest run']
+== arm bad names
+arm empty: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm upper: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm path: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm slash: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm newline: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm hash: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm 300: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm int: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm None: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm bytes: ValueError: 'a point is <name>.<method>:before or <name>.<method>:after, lower case'
+arm ok: ok -> None
+== nth
+nth True: TypeError: 'nth is a whole number, not a bool: True'
+nth False: TypeError: 'nth is a whole number, not a bool: False'
+nth 0: ValueError: 'nth must be 1 or more: 0'
+nth -1: ValueError: 'nth must be 1 or more: -1'
+nth 1.0: ValueError: 'nth must be 1 or more: 1.0'
+nth 1000000000: ValueError: 'nth must be 1 or more: 1000000000'
+nth 999999999: ok -> None
+nth 1000000000000000000000000000000: ValueError: 'nth must be 1 or more: 1000000000000000000000000000000'
+nth '2': ValueError: "nth must be 1 or more: '2'"
+nth None: ValueError: 'nth must be 1 or more: None'
+== wrap
+wrap dunder: TypeError: 't.__call__: dunder methods cannot be wrapped'
+wrap dunder init: TypeError: 't.__init__: dunder methods cannot be wrapped'
+wrap async def: TypeError: 't.co: async and generator methods cannot be wrapped'
+wrap asyncgen: TypeError: 't.ag: async and generator methods cannot be wrapped'
+wrap generator: TypeError: 't.gen: async and generator methods cannot be wrapped'
+wrap missing: AttributeError: "'T' object has no attribute 'nope'"
+wrap string methods: TypeError: 'methods is a collection of method names, not one string'
+wrap not callable: TypeError: 't.notm is not a method'
+wrap bad name: ValueError: "bad name: 'T'"
+wrap sync returns coroutine: ok -> <hadavin_sdk.testing.crash._Proxy object at 0x7fe347d8cac0>
+wrap empty methods: ok -> <hadavin_sdk.testing.crash._Proxy object at 0x7fe347d8cac0>
+wrap ok: ok -> <hadavin_sdk.testing.crash._Proxy object at 0x7fe347df1210>
+== flag file contents (point a.b:before, call once, mode exit child)
+flag garbage: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag empty: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag a.b:before#0: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag a.b:before#-1: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag a.b:before#: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag a.b:before#01: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+flag a.b:before#2: rc=137 stdout='call 0 ret\nsimulate crash\n' flag_exists_after=False
+flag a.b:before: rc=137 stdout='simulate crash\n' flag_exists_after=False
+flag a.b:before newline: rc=137 stdout='simulate crash\n' flag_exists_after=False
+flag a.b:before crlf: rc=137 stdout='simulate crash\n' flag_exists_after=False
+flag binary garbage: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=False
+flag missing: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=False
+flag a.b:after: rc=137 stdout='simulate crash\n' flag_exists_after=False
+flag wrong point: rc=0 stdout='call 0 ret\ncall 1 ret\ncall 2 ret\ndone\n' flag_exists_after=True
+== race, 20 pairs
+pair 0: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 1: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 2: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 3: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 4: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 5: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 6: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 7: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 8: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 9: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 10: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_left=False
+pair 11: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 12: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_left=False
+pair 13: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 14: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 15: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_left=False
+pair 16: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 17: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 18: [('simulate crash', 137), ('survived', 0)] crashes=1 flag_left=False
+pair 19: [('survived', 0), ('simulate crash', 137)] crashes=1 flag_left=False
+pairs with exactly one crash: 20 of 20; counts: [1]
+== marker read text mode / closed pipe
+text mode splitlines: ['simulate crash'] rc 137
+bytes: b'simulate crash\n' rc 137
+pipe reader closed: rc 137 stderr b''
+devnull rc 137
+closed fd1 rc 137 b''
