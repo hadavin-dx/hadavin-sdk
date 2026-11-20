@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:59:45Z
+UPDATED_UTC: 2026-11-20T06:03:55Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,16 +7,16 @@ ITEMS_TOTAL: 18
 ITEMS_OPEN: 9
 PERCENT: 73
 AGENTS_RUNNING: 5
-CAPACITY: load 3.0 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
+CAPACITY: load 5.6 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 4; 53M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: combined tree: 2 known failing tests (producers patch for SPINE; E4 for the lead). G2: 2 inherited tests (fix running)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:59:04+00:00
+PUSHED_UTC: 2026-11-20T05:59:47+00:00
 
-(11:29 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:33 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
