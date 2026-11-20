@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "rev-lead-tswm-2",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "lead wip/lead-b-ts-watermark fix rounds 2-4 (head de8967aba): 0009 without a DO block, migrate validates, exit 75, runbook, core-b merge",
-   "started UTC": "15:19",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "2",
-   "retries so far": 0,
-   "reason": "lead 15:17: branch moved since my review"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:25 YOUR wip/lead-b-ts-watermark de8967aba (fix rounds 2-4) reviewed fresh (reviews/rev-lead-tswm-2.md): NO Blocker, NO Major provable. VALIDATE now runs inside the migrate transaction: a crash rolls back 0009 AND the validate (no forever-NOT-VALID window); a planted row only warns; 0009 is still NOT released (manifest 0001-0007, UNRELEASED 0008-0011); no semantic conflict with the core-b merge; exit 75 (EX_TEMPFAIL) is real and tested with stubs. Nits for your round: (1) tests/test_migrations_0009_0010_round2.py:195 `'VALIDATE CONSTRAINT' in 0009.sql` passes only because of the comment at 0009.sql:23 and :201 pins a runbook string: text-matching vacuity, replace with behaviour tests; (2) NO test runs the documented chain leftovers -> DROP -> --accept-changed-draft -> migrate succeeds; and accepting the checksum does not verify the old draft has the constraints/index; (3) the in-migrate settle has NO lock_timeout/statement_timeout (only the standalone command has 5 s/60 s) and ADD CONSTRAINT/CREATE INDEX hold ACCESS EXCLUSIVE until the whole migrate transaction commits: the runbook's 'short lock' is true only on small tables; (4) handover/core-b/MIGRATIONS.md:16 stale; (5) test_a_migrate_that_never_warns_is_killed loosened to BaseException. No agents running.",
   "15:19 WHAT THE MAIN THREAD DID / WHY 0 AGENTS: the main thread only reads agent reports, writes reports and pushes the board; agents run the work. Between 15:05 and 15:17 there were 0 agents because every item on your lists was finished (not skipped): ts-watermark review (reviews/rev-lead-tswm.md), migrate review + targeted deploy-order/merge/keyword review (rev-lead-migrate.md, rev-lead-migrate-2.md), merge-c (all 4 commits superseded: nothing to merge), CRASH-MATRIX part 2 (done, 171 points), E-door-1 README (done and reviewed). NEW from your 15:17 note: wip/lead-b-ts-watermark moved to de8967aba (fix round 2: 0009 without a DO block, migrate validates; runbook; core-b merge): rev-lead-tswm-2 started on that delta (643-line diff). wip/lead-b-migrate is still 0891d81bd = the head I already reviewed twice; I will re-review when your fix round 1 is pushed (tell me the head). AGENTS 1.",
   "15:25 wip/lead-b-migrate TARGETED review done (reviews/rev-lead-migrate-2.md): MERGE: (1) cli.py `_migrate` positional chain: your caps_role and core-b's accept_changed_draft/reset_draft are appended in the SAME three places (signature, positional call, any() guard): a keep-both merge binds caps_role to the wrong tuple SILENTLY: make the call keyword-only; (2) NO textual conflict but a break: core-b tests/test_money_definer_pg.py:141/643-648 calls hadavin_set_cap as w.reset expecting 22023: after your branch the reset login has no EXECUTE (42501): switch to w.caps; (3) tests/stop_state_mutants.py:135-136 audit_entries anchor occurs 0 times (you reformatted that row): mutant 'NOT APPLIED'. DEPLOY ORDER: safe for running workers (runtime keeps reserve/settle/cap_matches); new code before `migrate --caps-role`: set-cap/sync-caps/check-caps refused with exit 2; missing caps role rolls back cleanly (exit 3, role name not shown); migrate must name ALL SIX roles every run (omitting --caps-role later is refused). ROLLBACK: caps_credential_ref + extra=forbid makes older builds fail to load the config; old set-cap exits 2; old migrate with --reset-role is refused until EXECUTE on set_cap/cap_matches is hand-REVOKEd from the caps role: neither CHANGELOG nor runbook says so. DOCS: runbook l.238-283 and CHANGELOG l.22/49-53 still say the reset login; no doc mentions --caps-role/caps_credential_ref. No agents running.",
   "15:12 AGENTS 1: rev-lead-migrate-2 (targeted review of wip/lead-b-migrate for DEPLOY ORDER, MERGE risk vs core-b's current head, KEYWORD-ARGUMENT risks: the three classes you named; the general review is already in reviews/rev-lead-migrate.md). Your other 15:08 items: (1b) ts-watermark reviewed (reviews/rev-lead-tswm.md); (2) merge-c DONE (nothing to merge: all 4 commits superseded; delete g2/g3 branches); (3) CRASH-MATRIX part 2 ALREADY DONE (171 kill points PG16 + memory); (4) README E-door-1 DONE and reviewed. I will not invent work to hold 3 agents: QUEUE.md has no open READY item for core-a; tell me what to build.",
@@ -3856,6 +3843,19 @@
    "review round n of cap": "2 (targeted)",
    "retries so far": 0,
    "reason": "lead wip/lead-b-migrate targeted: NO Blocker; 4 Majors: (1) cli.py _migrate positional chain collides with core-b's accept_changed_draft/reset_draft in 3 places (keep-both binds the wrong values silently: make the call keyword-only), (2) semantic merge break tests/test_money_definer_pg.py:643-648 calls set_cap as w.reset (42501 after merge: use w.caps), (3) stop_state_mutants.py:135-136 anchor matches 0 times (reformatted audit_entries row: NOT APPLIED), (4) rollback: caps_credential_ref + extra=forbid breaks older builds, old set-cap exit 2, old migrate refuses; docs/runbook/CHANGELOG still say the reset login; deploy order analysed; reviews/rev-lead-migrate-2.md"
+  },
+  {
+   "id": "rev-lead-tswm-2",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead wip/lead-b-ts-watermark fix rounds 2-4 (head de8967aba): 0009 without a DO block, migrate validates, exit 75, runbook, core-b merge",
+   "started UTC": "15:19",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "2",
+   "retries so far": 0,
+   "reason": "lead ts-watermark fix rounds 2-4 (de8967aba): NO Blocker/Major provable; VALIDATE runs inside the migrate transaction (a crash rolls back everything, no forever-NOT-VALID), planted row warns only; 0009 still unreleased; no semantic conflict with the core-b merge; nits: in-migrate settle has no lock/statement timeout, ACCESS EXCLUSIVE held to the end of the whole migrate transaction (runbook 'short' lock only true on small tables), text-matching vacuity test_migrations_0009_0010_round2.py:195/201, no test for the leftovers->DROP->accept-changed-draft chain, MIGRATIONS.md:16 stale, mutant test loosened to BaseException; reviews/rev-lead-tswm-2.md"
   }
  ]
 }
