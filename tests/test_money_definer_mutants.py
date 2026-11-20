@@ -52,7 +52,7 @@ def in_fn(fn: str, pattern: str, repl: str, flags: int = re.DOTALL):
 
 def everywhere(old: str, new: str):
     def mutate(text: str) -> str:
-        cut = text.index("CREATE TABLE hadavin_limits")
+        cut = text.index("CREATE TABLE IF NOT EXISTS hadavin_limits")
         assert old in text[cut:], old
         return text[:cut] + text[cut:].replace(old, new)
 

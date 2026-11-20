@@ -641,7 +641,7 @@ def check_limits_are_read_not_hardcoded(w):
     put("max_decimals", 2)
     assert refused(w, "add", "ag", DAY, D("0.001"))[0] == "22023"
     # the caps are not arguments of reserve any more: the scale limit is enforced by hadavin_set_cap (reset login)
-    with w.as_(w.reset) as rdb:
+    with w.as_(w.caps) as rdb:
         state, _ = refused(w, "set_cap", "ag", D("5.001"), D(1), "op", db=rdb)
     assert state == "22023"
     assert call(w, "add", "ag", DAY, D("0.01"))

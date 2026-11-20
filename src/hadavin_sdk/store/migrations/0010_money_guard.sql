@@ -85,10 +85,13 @@ BEGIN
 END
 $fn$;
 REVOKE ALL ON FUNCTION hadavin_money_guard() FROM PUBLIC;
+DROP TRIGGER IF EXISTS spend_money_guard ON spend;
 CREATE TRIGGER spend_money_guard BEFORE UPDATE ON spend
     FOR EACH ROW EXECUTE FUNCTION hadavin_money_guard();
+DROP TRIGGER IF EXISTS spend_month_money_guard ON spend_month;
 CREATE TRIGGER spend_month_money_guard BEFORE UPDATE ON spend_month
     FOR EACH ROW EXECUTE FUNCTION hadavin_money_guard();
+DROP TRIGGER IF EXISTS spend_reservations_money_guard ON spend_reservations;
 CREATE TRIGGER spend_reservations_money_guard BEFORE UPDATE ON spend_reservations
     FOR EACH ROW EXECUTE FUNCTION hadavin_money_guard();
 -- the two aggregates of the guard (per agent and day, per agent and month range) filter on these columns

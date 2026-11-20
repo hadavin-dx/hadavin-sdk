@@ -51,20 +51,40 @@
 -- max_decimals (scale), max_id_chars, max_expiry_age, min_expiry_age (youngest age a hold may be expired at, and how long
 -- an expired hold is kept before the release function may lower it), max_day_skew (days a booking day may be from the
 -- database's UTC date). Written by `migrate` as the owner; no other role has any right.
-CREATE TABLE hadavin_limits (
+-- Idempotent while this file is unreleased: a database that ran an older draft keeps its table (and rows) through
+-- `migrate --reset-draft 0011_money_definer`; an existing table with other columns stops the run (checked below).
+CREATE TABLE IF NOT EXISTS hadavin_limits (
     name TEXT PRIMARY KEY,
     value NUMERIC NOT NULL
 );
+DO $chk$
+BEGIN
+    IF (SELECT string_agg(attname || ':' || format_type(atttypid, NULL), ',' ORDER BY attname)
+          FROM pg_attribute WHERE attrelid = to_regclass('hadavin_limits') AND attnum > 0 AND NOT attisdropped)
+       IS DISTINCT FROM 'name:text,value:numeric' THEN
+        RAISE EXCEPTION 'hadavin_limits exists with other columns than this migration creates: drop it (migrate rewrites its rows) and run migrate again';
+    END IF;
+END
+$chk$;
 REVOKE ALL ON hadavin_limits FROM PUBLIC;
 
 -- The counters refuse a negative or infinite amount by themselves (review N1), whoever writes them: NaN sorts above every
 -- number, so it fails the second test. Added NOT VALID (no long lock on a big table) and validated at once (this file is
 -- unreleased: a database that already holds a bad row stops here, which is the point). The reservation amounts have
 -- the same bounds since 0007.
-ALTER TABLE spend ADD CONSTRAINT spend_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
-ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;
-ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
-ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
+-- Guarded by an existence check: a draft database that already has them keeps them (--reset-draft 0011 needs no drops).
+DO $cons$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spend_usd_range' AND conrelid = to_regclass('spend')) THEN
+        ALTER TABLE spend ADD CONSTRAINT spend_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+        ALTER TABLE spend VALIDATE CONSTRAINT spend_usd_range;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spend_month_usd_range' AND conrelid = to_regclass('spend_month')) THEN
+        ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_range CHECK (usd >= 0 AND usd < 'Infinity'::numeric) NOT VALID;
+        ALTER TABLE spend_month VALIDATE CONSTRAINT spend_month_usd_range;
+    END IF;
+END
+$cons$;
 
 -- hadavin_reserve_spend: book the worst case of one model call on the day and month counters, in the transaction that
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
@@ -429,13 +449,23 @@ REVOKE ALL ON FUNCTION hadavin_add_spend(TEXT, DATE, NUMERIC) FROM PUBLIC;
 -- definer functions below touch it as owner. The CHECKs are the part of the cap rule that is a property of the value
 -- (>= 0 and finite; NaN sorts above every number, so it fails the second test); the scale limit comes from
 -- hadavin_limits and is enforced inside hadavin_set_cap. NOT the amount window: a cap of 10 to the 30th is valid.
-CREATE TABLE hadavin_caps (
+CREATE TABLE IF NOT EXISTS hadavin_caps (
     agent_id TEXT PRIMARY KEY,
     day_cap NUMERIC NOT NULL CHECK (day_cap >= 0 AND day_cap < 'Infinity'::numeric),
     month_cap NUMERIC NOT NULL CHECK (month_cap >= 0 AND month_cap < 'Infinity'::numeric),
     set_by TEXT NOT NULL,
     set_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
 );
+DO $chk$
+BEGIN
+    IF (SELECT string_agg(attname || ':' || format_type(atttypid, NULL), ',' ORDER BY attname)
+          FROM pg_attribute WHERE attrelid = to_regclass('hadavin_caps') AND attnum > 0 AND NOT attisdropped)
+       IS DISTINCT FROM 'agent_id:text,day_cap:numeric,month_cap:numeric,set_at:timestamp with time zone,set_by:text' THEN
+        RAISE EXCEPTION 'hadavin_caps exists with other columns than this migration creates: back it up (copy it to a table of another name)'
+            ' drop it and run migrate again, then re-enter the caps (limits sync-caps)';
+    END IF;
+END
+$chk$;
 REVOKE ALL ON hadavin_caps FROM PUBLIC;
 
 -- hadavin_set_cap: upsert the caps of one agent (the reset login runs it; the runtime cannot). Arguments are validated

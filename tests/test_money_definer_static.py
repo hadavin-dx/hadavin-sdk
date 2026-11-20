@@ -113,7 +113,7 @@ def test_the_real_0011_has_no_static_problem():
 def test_the_rules_are_not_vacuous_each_plant_is_found():
     base = SQL_FILE.read_text(encoding="utf-8")
     cut = base.index(
-        "CREATE TABLE hadavin_limits"
+        "CREATE TABLE IF NOT EXISTS hadavin_limits"
     )  # the header comment names every one of these words
 
     def plant(old: str, new: str, count: int = 1) -> str:

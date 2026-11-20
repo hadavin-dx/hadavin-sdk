@@ -163,8 +163,13 @@ def test_reset_draft_deletes_that_row_and_every_later_one_only(env):
 @NEEDS_PG
 def test_a_refused_run_with_reset_draft_leaves_the_ledger_alone(env):
     mig.migrate(env, no_roles=True)
-    # the draft's objects still exist, so applying 0011 again fails; the transaction rolls back the delete
-    with pytest.raises(psycopg.Error):
+    # a stray function a table default depends on: the reset cannot drop it (no CASCADE), so the whole run rolls back
+    with psycopg.connect(env, autocommit=True) as db:
+        db.execute(
+            "CREATE FUNCTION hadavin_dep(integer) RETURNS integer LANGUAGE sql AS 'SELECT 1'"
+        )
+        db.execute("CREATE TABLE uses_dep (x integer DEFAULT hadavin_dep(1))")
+    with pytest.raises(ConfigError, match="hadavin_dep"):
         mig.migrate(env, no_roles=True, reset_draft="0011_money_definer")
     assert "0011_money_definer" in _ledger(env)
 

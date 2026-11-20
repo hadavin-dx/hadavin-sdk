@@ -940,9 +940,10 @@ def _owner_problems(db, named: list[str]) -> list[str]:
     return problems
 
 
-def _unmapped_rows(db) -> list[tuple[int, str, str, str]]:
+def _unmapped_rows(db) -> list[tuple[int, str, str, list[str]]]:
     """hadavin_* functions of the schema in neither map: (oid, schema, name, argument types), by FULL signature (an
-    overload of a mapped name is unmapped: it would be unpinned and open to PUBLIC)."""
+    overload of a mapped name is unmapped: it would be unpinned and open to PUBLIC). Each type comes from
+    `format_type`, which quotes and schema-qualifies it where needed."""
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     known = set()
     for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS):
@@ -950,9 +951,10 @@ def _unmapped_rows(db) -> list[tuple[int, str, str, str]]:
         if row is not None:
             known.add(row)
     return [
-        (oid, schema, name, types)
+        (oid, schema, name, list(types))
         for (oid, name, types) in db.execute(
-            "SELECT p.oid, p.proname, pg_catalog.oidvectortypes(p.proargtypes) FROM pg_proc p "
+            "SELECT p.oid, p.proname, ARRAY(SELECT pg_catalog.format_type(t, NULL) FROM "
+            "unnest(p.proargtypes) WITH ORDINALITY AS u(t, i) ORDER BY i) FROM pg_proc p "
             "JOIN pg_namespace n ON n.oid = p.pronamespace "
             "WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 2, 3",
             (schema,),
@@ -963,15 +965,21 @@ def _unmapped_rows(db) -> list[tuple[int, str, str, str]]:
 
 def _unmapped_functions(db) -> list[str]:
     """The unmapped functions as `name(types)` (see `_unmapped_rows`)."""
-    return [f"{name}({types})" for (_oid, _schema, name, types) in _unmapped_rows(db)]
+    return [f"{name}({', '.join(types)})" for (_oid, _schema, name, types) in _unmapped_rows(db)]
+
+
+def _quote(name: str) -> str:
+    return '"' + name.replace('"', '""') + '"'
+
+
+def _drop_statement(schema: str, name: str, types: list[str]) -> str:
+    return f"DROP FUNCTION {_quote(schema)}.{_quote(name)}({', '.join(types)})"
 
 
 def _unmapped_message(db) -> str:
     rows = _unmapped_rows(db)
-    shown = "; ".join(f"{sch}.{name}({types})" for (_o, sch, name, types) in rows[:20])
-    drops = "; ".join(
-        f'DROP FUNCTION "{sch}"."{name}"({types})' for (_o, sch, name, types) in rows[:20]
-    )
+    shown = "; ".join(f"{sch}.{name}({', '.join(t)})" for (_o, sch, name, t) in rows[:20])
+    drops = "; ".join(_drop_statement(sch, name, t) for (_o, sch, name, t) in rows[:20])
     return (
         "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS "
         f"(an older draft of a migration left them; a role may still be able to run them): {shown}. "
@@ -980,12 +988,31 @@ def _unmapped_message(db) -> str:
     )
 
 
-def _drop_unmapped_functions(db) -> list[str]:
-    """For --reset-draft: drop the unmapped hadavin_* functions of the schema that the migration owner (the current
-    login) owns, so the re-applied files do not leave an older overload behind. Never another owner's function,
-    never a name outside hadavin_*, never another schema."""
+def _function_names_of_files_before(version: str) -> set[str]:
+    """Names of the functions created by shipped migration files OLDER than `version` (they are not re-applied by a
+    reset of `version`, so an unmapped function of that name belongs to an earlier migration, or to a branch whose map
+    this one lacks: --reset-draft leaves it). A file at or after `version` is applied again, and a stale overload of
+    its functions (the 7-argument reserve) is exactly what the reset must drop."""
+    pattern = re.compile(
+        r"\bFUNCTION\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"?\w+\"?\.)?\"?(hadavin_\w+)", re.IGNORECASE
+    )
+    names: set[str] = set()
+    for path in _migration_files():
+        if path.stem < version:
+            names.update(m.lower() for m in pattern.findall(_read_migration(path)[0]))
+    return names
+
+
+def _drop_unmapped_functions(db, version: str) -> list[str]:
+    """For --reset-draft `version`: drop the unmapped hadavin_* functions of the schema that the migration owner (the
+    current login) owns and that no migration file OLDER than `version` creates, so the re-applied files do not leave
+    an older overload behind. Never another owner's function, never a name outside hadavin_*, never another schema,
+    never CASCADE: a dependent object is a ConfigError naming it."""
+    spared = _function_names_of_files_before(version)
     dropped = []
     for oid, sch, name, types in _unmapped_rows(db):
+        if name.lower() in spared:
+            continue
         owned = db.execute(
             "SELECT proowner = (SELECT oid FROM pg_roles WHERE rolname = current_user) "
             "FROM pg_proc WHERE oid = %s",
@@ -993,12 +1020,17 @@ def _drop_unmapped_functions(db) -> list[str]:
         ).fetchone()[0]
         if not owned:
             continue
-        db.execute(
-            sql.SQL("DROP FUNCTION {}.{}({})").format(
-                sql.Identifier(sch), sql.Identifier(name), sql.SQL(types)
-            )
-        )
-        dropped.append(f"{sch}.{name}({types})")
+        stmt = _drop_statement(sch, name, types)
+        try:
+            with db.transaction():
+                db.execute(stmt)
+        except errors.DependentObjectsStillExist as exc:
+            detail = (exc.diag.message_detail or "").replace("\n", "; ")
+            raise ConfigError(
+                f"--reset-draft cannot drop {sch}.{name}({', '.join(types)}): other objects depend on it "
+                f"({detail}). Drop or change those first; migrate never uses CASCADE"
+            ) from exc
+        dropped.append(f"{sch}.{name}({', '.join(types)})")
     if dropped:
         _log.warning("migrate: reset-draft dropped unmapped functions: %s", ", ".join(dropped))
     return dropped
@@ -1258,6 +1290,19 @@ def _verify_applied(
             continue
         if old == new:
             continue
+        if strict and path.stem in MONEY_WALL_DRAFTS:
+            # a NULL checksum (a draft applied before checksums existed) is no exception: 0010 and 0011 were never
+            # released, so a NULL here is an unverified draft, not a trusted release
+            raise ConfigError(
+                f"{path.name}: this database holds an older draft of an unreleased migration (applied checksum "
+                f"{'NULL, recorded before checksums existed' if old is None else old[:12]}, file now {new[:12]}). "
+                "Nothing of the changed file reaches it: the old function bodies keep running (a draft's reserve "
+                "may let the caller pick its own caps) and the named roles keep whatever the draft granted. Fix: "
+                f"run migrate with --reset-draft {path.stem} (0011 is re-applied over what exists: tables and "
+                "constraints are kept, see docs/migration-checksums.md for the 0010 triggers and the functions); "
+                f"or, when the objects in this database already match the file, run migrate with "
+                f"--accept-changed-draft {path.stem}. (Without roles, --no-roles, this is only a warning.)"
+            )
         if old is None:
             if path.stem in UNRELEASED_MIGRATIONS:
                 _log.warning(
@@ -1266,17 +1311,6 @@ def _verify_applied(
                 )
             db.execute(
                 "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
-            )
-        elif strict and path.stem in MONEY_WALL_DRAFTS:
-            raise ConfigError(
-                f"{path.name}: this database holds an older draft of an unreleased migration (applied checksum "
-                f"{old[:12]}, file now {new[:12]}). Nothing of the changed file reaches it: the old function bodies "
-                "keep running (a draft's reserve may let the caller pick its own caps) and the named roles keep "
-                "whatever the draft granted. Fix: drop what the draft made (the money functions, the hadavin_caps "
-                "and hadavin_limits tables, the guard triggers of the draft: see docs/migration-checksums.md) and run "
-                f"migrate with --reset-draft {path.stem}; or, when the objects in this database already match the "
-                f"file, run migrate with --accept-changed-draft {path.stem}. (Without roles, --no-roles, this is "
-                "only a warning.)"
             )
         elif path.stem in UNRELEASED_MIGRATIONS:
             _log.warning(
@@ -1402,7 +1436,7 @@ def migrate(
         _check_released({p: t[1] for p, t in texts.items()})
         if reset_draft is not None:
             _reset_draft(db, reset_draft, files)
-            _drop_unmapped_functions(db)
+            _drop_unmapped_functions(db, reset_draft)
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         _verify_applied(
             db,
