@@ -92,7 +92,7 @@ M = [
     m("G8-P16 the main entry end back to refusing a full stop (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?![\w.])"', FS, "ROW F1 "),
     m("G8-P17 the _ entry end back to refusing a full stop (G7-F3)", r'\d{10,16}(?![0-9A-Za-z>›]|\.\w)"', r'\d{10,16}(?![0-9A-Za-z.>›])"', FS, "ROW F5 "),
     m("G8-P18 the phone-word entry end back to refusing a full stop (G7-F3)", r'(\d{10,16})(?![0-9a-z]|\.\w)"', r'(\d{10,16})(?![0-9a-z.])"', FS, "ROW F6 "),
-    m("G8-P19 the main entry end drops the .word rule (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?!\w)"', KEEP, "ROW K87 "),
+    m("G8-P19 the main entry end drops the .word rule (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?!\w)"', KEEP, "ROW K85 "),  # K85 (`ts 1732095071.123`) is the first row to fail; K87 fails too
     m("G8-P20 the + entry end drops the .word rule (G7-F3)", r'\d(?![0-9]|\.\w)"', r'\d(?![0-9])"', KEEP, "ROW K88 "),
     m("G8-P21 the _ entry end drops the .word rule (G7-F3)", r'\d{10,16}(?![0-9A-Za-z>›]|\.\w)"', r'\d{10,16}(?![0-9A-Za-z>›])"', KEEP, "ROW K89 "),
     m("G8-P22 the phone-word entry end drops the .word rule (G7-F3)", r'(\d{10,16})(?![0-9a-z]|\.\w)"', r'(\d{10,16})(?![0-9a-z])"', KEEP, "ROW K90 "),
