@@ -865,7 +865,9 @@ _KEPT_HOST = re.compile(
 _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
-_LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
+_LABELS = tuple(
+    dict.fromkeys([*(label for label, _ in PATTERNS), "ENCODED"])
+)  # ENCODED: a base64 run (runmap, G4); not a pattern
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # Own output (G7 + fix round 1; E9(2) restricted to SECRET tokens): a SECRET value made of nothing but SECRET tokens this
 # redactor wrote. One anchored shape: a token is a genuine `<SECRET_n>` or an ESCAPED look-alike as
@@ -1969,7 +1971,13 @@ class _Redactor:
             if deadline is not None and n % 512 == 0:
                 self._over_budget(deadline)
             rule = _sweep(placeholder, original)
-            if rule is not None and original not in self._rules:
+            if rule is not None and (
+                original not in self._rules
+                or (
+                    _kind(placeholder) in SECRET_KINDS
+                    and _kind(self._rules[original][1]) not in SECRET_KINDS
+                )
+            ):
                 self._rules[original] = (n, placeholder, rule)
         # Values nested deeper than _MAX_NESTING (a planted chain like `aaaaZ`, `aaaaaZ`, ...) would nest one
         # finder's groups past the recursion limit. They are split into groups, round-robin in sorted order,
@@ -2195,6 +2203,7 @@ SECRET_KINDS = frozenset(
         "HIGHENTROPY",
         "IBAN",
         "CREDITCARD",
+        "ENCODED",
     }
 )
 _COMMON = frozenset(
@@ -2284,6 +2293,26 @@ def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
         i = j + n
     out.append(segment[i:])
     return "".join(out)
+
+
+def place_encoded(mapping: dict[str, str], runs: list[str]) -> list[str]:
+    """The placeholder each base64 run gets, `<ENCODED_n>`, added to `mapping` IN PLACE (exactly one entry per new run; nothing else).
+
+    The only writer of an ENCODED entry for a base64 unit (guard/runmap.py `_pass_one`). The next number is the redactor's own
+    counter (`_Redactor(dict(mapping)).counters`), so numbers continue after the highest one in the map. A run that is already the
+    original of an ENCODED placeholder gets that placeholder; a run held under an identifier kind gets a NEW ENCODED entry."""
+    n = _Redactor(dict(mapping)).counters["ENCODED"]
+    held = {original: ph for ph, original in mapping.items() if _kind(ph) == "ENCODED"}
+    placeholders: list[str] = []
+    for run in runs:
+        ph = held.get(run)
+        if ph is None:
+            n += 1
+            ph = f"<ENCODED_{n}>"
+            mapping[ph] = run
+            held[run] = ph
+        placeholders.append(ph)
+    return placeholders
 
 
 def redact_many(

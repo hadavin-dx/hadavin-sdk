@@ -729,7 +729,8 @@ def enforce_map(text: str, mapping: Mapping[str, str]) -> str:
       as `<ABC_1>`) is taken for a placeholder and left.
     - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in
       `abcdef`): one is replaced and the rest of the other stays (`<A_1>ef`). Which one: among values that
-      are not held back, the longer (the earlier in the map when equal); a held-back value always loses to
+      are not held back, the longer (the earlier in the map when equal; since G4, an original that is also held under a
+      secret kind takes the place of that secret entry); a held-back value always loses to
       one that is not, even when it is longer. When neither is a secret kind, neither is replaced there.
     - A known value that begins with the tail of a placeholder (`>abc`) or ends with its head is swept first,
       on the raw text, with every placeholder set aside; where it touches a placeholder that is ALREADY in the
@@ -904,8 +905,9 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
         if len(late) > ENFORCE_MAX_HELD:
             raise InputTooLarge("InputTooLarge")
         if _rules_conflict(known):
-            # One original under two placeholders (E5): the redactor keeps the FIRST placeholder's rule, so
-            # the stronger rule (every copy, a secret kind) goes first. Built fresh: the run's cache holds
+            # One original under two placeholders (E5). Since G4 the redactor itself keeps the secret kind's rule for that
+            # original (the `_build` tie-break); this re-sort is kept because it also puts every every-copy entry before the others,
+            # which decides the order of DIFFERENT overlapping originals at the gate (test_e5b). Built fresh: the run's cache holds
             # the map's own order.
             ordered = dict(sorted(known.items(), key=lambda kv: _sweep(*kv) is not _EVERY_COPY))
             first = _built(
