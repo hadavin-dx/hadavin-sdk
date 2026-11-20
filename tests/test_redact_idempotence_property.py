@@ -965,6 +965,7 @@ def test_P2_P3_P4_glue_fuzz_the_map_only_grows_and_the_text_behind_the_placehold
     _no_failures(failures, GLUE_FUZZ_CASES)
 
 
+@needs_g7
 def test_P1_glue_fuzz_one_pass_is_a_fixed_point():
     failures = [
         (text, first.text, second.text)
@@ -984,6 +985,7 @@ _GLUED = {
 }
 
 
+@needs_g7
 @pytest.mark.parametrize("kind", sorted(_GLUED))
 def test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass(kind):
     """Smallest form: `password=<V>` on line 1; on line 2 an identifier with <V> glued to its end. One pass
@@ -993,11 +995,13 @@ def test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pas
     assert value not in result.text
 
 
+@needs_g7
 def test_P1_a_tenant_id_after_a_glued_copy_of_a_known_secret_is_masked_in_one_pass():
     result = R.redact(f"password={_PW}\n{_PW}tenant_id=acme-42")
     assert "acme-42" not in result.text
 
 
+@needs_g7
 @pytest.mark.parametrize(
     ("scheme", "length"), [("Bearer ", 8), ("Basic ", 4), ("authorization: ", 4)]
 )
