@@ -30,3 +30,6 @@ ok  KILLED       G8d the Server header names the Python version again  [test_sig
 ok  KILLED       G9a more than two secrets per sender are accepted  [test_check_secrets_refuses_more_than_two_secrets_per_sender]
 ok  KILLED       G9b whitespace around a secret value is accepted  [test_check_secrets_refuses_whitespace_around_a_value_and_names_only_th]
 ok  KILLED       G10 the clock is not cut to whole seconds in verify_any  [test_verify_any_window_edge_is_exact_with_a_fractional_clock[0.001--30]
+ok  KILLED       G11a the pause never grows while no slot is free  [test_a_refused_request_reads_the_store_a_few_times_not_a_hundred]
+ok  KILLED       G11b a waiting request never takes a freed slot  [test_a_waiting_request_takes_the_slot_as_soon_as_it_is_free]
+ok  KILLED       G12a check_bind accepts a non-loopback address without the switch  [test_non_loopback_host_needs_the_switch]
