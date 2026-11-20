@@ -1,0 +1,10 @@
+Fri Nov 20 10:41:27 UTC 2026
+Python 3.13.18
+Python 3.13.18
+32eae7c1717e568b8acdb9d9056d190f1c99fc18
+8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
+fdd9ae116d6add8229daefdae674975d80582fa9528bf693c3d65b86a804651f  src/hadavin_sdk/triggers/endpoint.py
+8cd743ed0552a4d7ef3c058cbd0634f00b5be9edd9160dbfcc368bafea883e84  src/hadavin_sdk/triggers/server.py
+e426352fee2f4468975e2b996bbea874887c62c1c78fbef743dd23d8adb6757a  src/hadavin_sdk/triggers/worker.py
+ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
+b050c6629161ff65ba8dc380884b6e6040b01bf8c24605dfa9d7d5b25b943520  tests/endpoint_mutants.py
