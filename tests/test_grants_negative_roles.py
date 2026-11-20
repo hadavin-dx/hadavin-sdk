@@ -870,10 +870,8 @@ def test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only(
     assert store_settings.dsn_secret_name == RESET_REF  # not "pg-dsn", the runtime login
     assert store_settings.purge_dsn_secret_name is None
     assert made[2][2] == {"store": both, "signer": None, "anchor": None}
-    assert both.calls[:2] == ["open_stops", "intent:reset:off:user:op"]
-    assert (
-        "clear:user:op:1" in both.calls
-    )  # the clear, by id (Limits.reset), not set_kill_switch(on=False)
+    # exact: open_stops, the audit intent, then the clear by id (Limits.reset), nothing else (no set_kill_switch(on=False))
+    assert both.calls == ["open_stops", "intent:reset:off:user:op", "clear:user:op:1"]
 
 
 # --- (b) PostgreSQL ----------------------------------------------------------------------------------
