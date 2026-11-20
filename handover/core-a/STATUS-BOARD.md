@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:25:19Z
+UPDATED_UTC: 2026-11-20T06:25:29Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 42
 ITEMS_OPEN: 14
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: load 0.85 of 4 cores (1-minute average), mem 1.0/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.03 of 4 cores (1-minute average), mem 1.1/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 15%; 527M /home/user/hadavin-sdk; 323M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile
-PUSHED_UTC: 2026-11-20T06:25:08Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:25:21Z (the push before this board)
 NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)
 
 ## QUEUE ITEMS
@@ -101,15 +101,16 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4122 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 16s ago | running | matched by name in ps |
-| 4575 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 4579 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 649s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 649s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 649s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 649s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 649s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 649s ago | running | matched by name in ps |
+| 4122 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 26s ago | running | matched by name in ps |
+| 4575 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 11s ago | running | matched by name in ps |
+| 4579 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 11s ago | running | matched by name in ps |
+| 5488 | /home/user/hadavin-sdk/.venv/bin/python -m hadavin_sdk.triggers.worker | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 659s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 659s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 659s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 659s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 659s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 659s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
