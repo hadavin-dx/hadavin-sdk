@@ -1058,8 +1058,14 @@ def test_f8_an_event_moved_aside_in_memory_fails_the_step_with_its_count(app, ca
     state = app.store.get_tick_state(STEP)
     assert state.last_error == "RuntimeError: audit outbox: 1 events not writable in memory"
     assert state.last_ok_at is None
-    _allow_all(log)  # such an event is never retried: the count stays while this process lives
-    assert run_tick(app, steps=LAST) == 1 and log._unwritable == [a] and _ids(log) == []
+    _allow_all(log)  # fix round 3: reconcile retries such an event once per run; now it is written
+    assert run_tick(app, steps=LAST) == 0 and log._unwritable == [] and _ids(log) == [a.event_id]
+    a = _event(
+        1, event_id="evt-a2", result=MARK
+    )  # a new refused event for the four-counts check below
+    _park_in_memory(log, a)
+    _refuse(log, a)
+    assert log._flush_pending() == 0 and log._unwritable == [a]
     # all four counts at once: the first three keep their order and their texts, the new one is last
     with pytest.MonkeyPatch.context() as mp:
         kept = _mixed(log, mp, 2, 1, 3)
