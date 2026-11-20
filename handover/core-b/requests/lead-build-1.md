@@ -1,0 +1,16 @@
+# lead-build-1: two items for the laptop (core-b, 2026-11-20 ~13:05Z)
+
+Items already held by core-b builders (do NOT take): AuditEvent limits, outbox ts order, isolation pin, mark narrowing and mark-test deletion (H2); migrate.py, agent_loop.py, 0011, limits.py (G, H1). These two are disjoint from all of them.
+Base branch for both: cloud/core-b at the head you fetch (git fetch origin cloud/core-b). Push to wip/lead-b-<item>. Commit "code <item>:" touching only src/tests; docs in a separate commit. Trailer lines as in ORDERS. No secrets, no live model calls.
+
+## Item 1: lead-b-ts-watermark (review N2 + N3 of xr-money-lead-1)
+Worktree: `git worktree add /tmp/lead-b-ts-watermark -b wip/lead-b-ts-watermark origin/cloud/core-b`
+Files owned: src/hadavin_sdk/store/migrations/0009_stop_state_hardening.sql (comments, the two kill_switch_*_ts_range constraints, watermark table), the watermark code in src/hadavin_sdk/store/postgres.py (kill_switch_watermark writers only; no other function in that file), tests/test_stop_state_*.py and tests/stop_state_mutants.py for those lines only.
+Task: (N2) the NOT VALID constraints kill_switch_*_ts_range are never validated: add `ALTER TABLE ... VALIDATE CONSTRAINT` in 0009 (0009 is unreleased, edit in place; planted-bad-row upgrade test in tests/test_migrations_0009_0010_round2.py must still say what it says: it plants a bad ts and expects upgrade to SUCCEED, so validation must be a separate migrate step/command, not in the 0009 file: choose the migrate-time check `verify_schema` reporting NOT VALID constraints as a warning and a CLI/migrate flag to validate; document the choice). (N3) kill_switch_watermark has no reader (the gate read uses count(stops) > count(clears)): if you find no reader in src, remove the table writes and the table (0009 edit, plus the grants and tests), else add the reader test. State which in the commit message.
+Acceptance: `uv run --all-extras --group test pytest -q tests/test_stop_state_*.py tests/test_migrations_0009_0010_round2.py tests/test_step_b_e*.py` green on real PostgreSQL 15 and 17 (HADAVIN_TEST_PG_DSN); a mutant that leaves the constraint NOT VALID after the validate step is killed; ruff clean.
+
+## Item 2: lead-b-price-guard (review ABC nit 7, H6)
+Worktree: `git worktree add /tmp/lead-b-price-guard -b wip/lead-b-price-guard origin/cloud/core-b`
+Files owned: src/hadavin_sdk/config.py (Route price validation only, ~lines 84-109 and 590-608), src/hadavin_sdk/llm/common.py (price check at client build only), tests/test_price_*.py (new file tests/test_price_guard.py).
+Task: no runtime guard exists that a route price is positive when the client is not the fake one: Route.model_construct and demos/ask-your-data/askdata/config.py bypass the config check. Add one check at the point the real (non-fake) LLM client is built that refuses a Route whose input/output price is not a positive Decimal within the existing ceiling, raising the existing ConfigError type; fake client exempt. Do not change the price constants.
+Acceptance: new tests: model_construct Route with price 0 / negative / NaN refused at client build for a non-fake provider, accepted for fake; existing tests/test_config*.py and tests/test_price*.py green; ruff clean.
