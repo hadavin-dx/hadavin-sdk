@@ -288,3 +288,15 @@ B2 ANSWER: yes, Runtime.handle can call Limits.reserve (worst case) before the m
 14:10Z MERGED since 13:58Z: A3 fix round (23aaddb6b: ASCII audit patterns, leap-year ts regex, _note fallback keeps fields), price guard from the laptop (wip/lead-b-price-guard, ledger row FIXED-UNVERIFIED), M6 fix round (repeating warning, --accept-changed-draft/--reset-draft, packaged released hashes), limits-test fix, I1 (db9cd8c58: reserve idempotent retry = core-a M5; settle requires agent_id everywhere = lead M2; memory add_spend/reserve parity = core-a M6; ~130 test call sites). Lead items status: B1 DONE (G), B2 IN PROGRESS (builder MB2), B3 DONE, M1 DONE, M2 DONE, M3 DONE, M4 laptop, M5 DONE, M6 DONE (fixed after review), M7 DONE except column grants (laptop), N1 DONE, N2/N3 laptop (lead-b-ts-watermark), N8 DECISIONS. ABC: M1 DONE, M2 DONE, M3 DONE + allowlist, nit 2/3 DONE, nit 7 merged. AGENTS LIVE (sonnet, 4): B2 builder (MB2) | F7 regression fixer for the 16 PG failures I1 found on the base (MF7; tests only; own database hadavin_test_mf7) | R13 reviewer of I1 diff (read-only; own database) | none else. Known open: laptop evidence PG15/17 pending; evidence batch 11 on the merged head to start after F7 and B2 land (cap 2 heavy).
 
 13:52Z MODEL CHECK (get_session on core-b): configured_model=claude-sonnet-5-5, session_context.model=claude-sonnet-5-5, external_metadata.model=claude-sonnet-5-5, last_served_model=claude-sonnet-5-5. NOT FABLE-SERVED. Running agents (B2 builder, F7 fixer, R13 reviewer): model sonnet set explicitly, none inherited.
+
+14:15Z LASER EVIDENCE (laptop, PG15/17, head 7e1b9750d: NOT GREEN) vs newest head: item | builder | state.
+(1) money_definer_pg / _mutants collection unpack: fixed in G/H1/F7 for the pg file; mutants file + whole battery re-run: builder R1 (MR1, since 14:14Z, sonnet, own DB hadavin_test_mr1)
+(2) test_audit_drain 7 failures: fixed by T1+T2 (merged); re-confirm: R1
+(3) test_spend_reservations_pg 6 failures: step order fixed by T1, rest by F7+I1 (merged); re-confirm: R1
+(4) test_stop_state_roles 11 failures + e7 flag test: builder S1 (MS1, since 14:14Z, sonnet, own DB hadavin_test_ms1)
+(5) contracts test_store_spend_ids_caps 3: FIXED by F7 (money_caps_seed DataError), merged 84fa98213
+(6) test_store_spend_model seed137 PG17-only: R1 tries to reproduce
+(7) test_limits_reserve refusal-log-line: FIXED by me (log names class only, 79 tests); test_money_definer_review_fixes::test_m2: FIXED by F7; test_migrations_0009_0010_round2: S1 re-confirms
+(8) mutant baselines: audit_drain/reserve/price/stage repinned by T1 (merged; kill counts 20/20, 31/31, 22/22, 37/37 on its run); reserve --hand H7/H9/H10 + price/stage re-run: R1; stop_state_mutants --hand (2 survivors S12 isfinite, 13 other): S1
+(9) Port.io in handover/BRIEF-PREAMBLE.md: lead's file, ignored.
+Also live: B2 builder (MB2). Waiting: laptop wip/lead-b-migrate (M4, isolation, audit-rights, column grants). After S1+R1+B2 land: I re-request laptop PG evidence on the final head.
