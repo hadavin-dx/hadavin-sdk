@@ -137,10 +137,15 @@ def rt_conn(w: World, role: str | None = None):
     return w.as_(role or w.runtime)
 
 
+# not in NAMES/TYPES (those are the five booking functions the other checks zip over)
+_EXTRA = {"set_cap": ("hadavin_set_cap", ("text", "numeric", "numeric", "text"))}
+
+
 def _call_sql(w: World, key: str) -> sql.Composed:
-    casts = [sql.SQL("%s::" + t) for t in TYPES[key]]
+    name, types = _EXTRA[key] if key in _EXTRA else (NAMES[key], TYPES[key])
+    casts = [sql.SQL("%s::" + t) for t in types]
     return sql.SQL("SELECT * FROM {}.{}({})").format(
-        sql.Identifier(w.schema), sql.Identifier(NAMES[key]), sql.SQL(", ").join(casts)
+        sql.Identifier(w.schema), sql.Identifier(name), sql.SQL(", ").join(casts)
     )
 
 
@@ -394,18 +399,6 @@ def check_hostile_arguments(w):
         (
             "reserve",
             ("r", "ag", DAY, D(1), BIG, BIG, None),
-            "p_day_cap",
-            [(4, None), (4, D(-1)), (4, D("NaN")), (4, D("Infinity")), (4, D("0.0000000000001"))],
-        ),
-        (
-            "reserve",
-            ("r", "ag", DAY, D(1), BIG, BIG, None),
-            "p_month_cap",
-            [(5, None), (5, D(-1)), (5, D("NaN")), (5, D("Infinity")), (5, D("0.0000000000001"))],
-        ),
-        (
-            "reserve",
-            ("r", "ag", DAY, D(1), BIG, BIG, None),
             "p_run_id",
             [(6, ""), (6, "a" * 201), (6, "a\nb"), (6, "a\x01")],
         ),
@@ -647,7 +640,10 @@ def check_limits_are_read_not_hardcoded(w):
     put("max_amount", 10**9)
     put("max_decimals", 2)
     assert refused(w, "add", "ag", DAY, D("0.001"))[0] == "22023"
-    assert refused(w, "reserve", "l3", "ag", DAY, D(1), D("5.001"), BIG, None)[0] == "22023"
+    # the caps are not arguments of reserve any more: the scale limit is enforced by hadavin_set_cap (reset login)
+    with w.as_(w.reset) as rdb:
+        state, _ = refused(w, "set_cap", "ag", D("5.001"), D(1), "op", db=rdb)
+    assert state == "22023"
     assert call(w, "add", "ag", DAY, D("0.01"))
     put("max_decimals", 12)
     put("max_id_chars", 5)
