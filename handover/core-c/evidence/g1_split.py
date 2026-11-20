@@ -139,15 +139,16 @@ print("chunks per latin corpus:", {k: len(v) for k, v in CH_LATIN.items()}, "non
 import re
 def proj(chunk):
     sq, ka, kb = [], [], []   # (string, index-of-original) built as lists
-    P = {"sq": ([], []), "ka": ([], []), "kb": ([], [])}
+    P = {"sq": ([], []), "ka": ([], []), "kb": ([], []), "sp": ([], [])}
     for i, ch in enumerate(chunk):
         if ch.isascii() and ch.isalnum():
             lo = ch.lower(); s = ch.upper()
             a = lo.translate(textnorm._CLASS_MAP); 
-            outs = {"sq": s, "ka": a, "kb": a}
+            outs = {"sq": s, "ka": a, "kb": a, "sp": ""}
         else:
             outs = {"sq": (textnorm.squeeze_views(ch) or ("",))[0],
-                    "ka": textnorm._scan_key(ch, textnorm._pass_a), "kb": textnorm._scan_key(ch, textnorm._pass_b)}
+                    "ka": textnorm._scan_key(ch, textnorm._pass_a), "kb": textnorm._scan_key(ch, textnorm._pass_b),
+                    "sp": "".join(c for c in textnorm.fold(ch, casefold=True) if not c.isascii() and c.isalpha())}   # script view, one character at a time
         for k, o in outs.items():
             if o:
                 P[k][0].append(o); P[k][1].extend([i] * len(o))
@@ -173,6 +174,11 @@ def locate(chunk, p, value):
             o = classify(chunk, p, nd, "sq")
             if o: occ, path = o, "exact (squeeze needle)"; break
     if not occ:
+        for kd, nd in needle_pairs:
+            if kd == "script":
+                o = classify(chunk, p, nd, "sp")
+                if o: occ, path = o, "script needle (non-Latin letters only)"; break
+    if not occ:
         for key in sorted(textnorm.scan_keyset(value)):
             for kind in ("ka", "kb"):
                 o = classify(chunk, p, key, kind)
@@ -181,7 +187,7 @@ def locate(chunk, p, value):
     return path, occ
 RS = random.Random(7)
 res = {}   # class -> dict
-SPLIT_ONLY = ("name-4", "name-5", "name-6", "street/host (corpus word", "digits-6", "short ascii id")
+SPLIT_ONLY = () if os.environ.get("G1_STAGE") == "real" else ("name-4", "name-5", "name-6", "street/host (corpus word", "digits-6", "short ascii id")
 t0 = time.process_time(); allres = {}
 for cname, (kind, vals) in classes().items():
     if not cname.startswith(SPLIT_ONLY): continue
@@ -225,3 +231,51 @@ for cname, (kind, vals) in classes().items():
     allres[cname] = dict(hits=hits, scans=scans, refused=refused, buckets={f"{a}|{b}": n for (a, b), n in buckets.items()}, sub=dict(sub), occ=dict(occb), paths=dict(paths),
                          samples={k: v for k, v in samples.items()})
 json.dump(allres, open(os.environ.get("G1_SPLIT_OUT", "g1_split.json"), "w"), ensure_ascii=False, indent=1)
+
+# ======================= stage 2 (G1_STAGE=real): REAL non-Latin text from the box =======================
+# Real text: the translated message catalogs (.mo, read with the stdlib gettext) of vim under /usr/share/vim/*/lang (Russian ru, Chinese zh_CN/zh_TW/...):
+# real human translations of program messages and help lines (UI/technical register, not literary prose; short lines; no Arabic or Devanagari catalog exists).
+# Values are random strings drawn from the REAL corpus's own character frequencies (they are not words of the text on purpose, same as the Latin classes).
+if os.environ.get("G1_STAGE") == "real":
+    import gettext, re
+    def catalog_text(globpat, rx):
+        seen = set(); out = []
+        for p in sorted(glob.glob(globpat, recursive=True)):
+            try: t = gettext.GNUTranslations(open(p, "rb"))
+            except Exception: continue
+            for v in t._catalog.values():
+                if isinstance(v, str) and re.search(rx, v) and v not in seen: seen.add(v); out.append(v)
+        return "\n".join(out)
+    RUS = catalog_text("/usr/share/vim/**/lang/ru/LC_MESSAGES/*.mo", r"[\u0400-\u04ff]")
+    HAN = catalog_text("/usr/share/vim/**/lang/zh_*/LC_MESSAGES/*.mo", r"[\u4e00-\u9fff]")
+    print("REAL corpora chars:", {"russian(vim ru .mo)": len(RUS), "chinese(vim zh_* .mo)": len(HAN)})
+    RR = random.Random(99)
+    def real_row(label, text, valfun, nv):
+        starts = list(range(0, max(1, len(text) - CH + 1), CH)); cl = [text[s:s + CH] for s in starts] or [text]
+        vals = [valfun() for _ in range(nv)]
+        scans = hits = refused = 0; b = collections.Counter(); samples = collections.defaultdict(list); paths = collections.Counter(); hv = set()
+        for chunk in cl:
+            p = None
+            with textnorm.scan_cache():
+                for v in vals:
+                    try: h = textnorm.scan_holds(text=chunk, value=v)
+                    except textnorm.TextnormError: refused += 1; continue
+                    scans += 1
+                    if not h: continue
+                    hits += 1; hv.add(v)
+                    if p is None: p = proj(chunk)
+                    path, occ = locate(chunk, p, v)
+                    if not occ: b["unlocated"] += 1; paths["unlocated"] += 1; continue
+                    best = min(occ, key=lambda o: rank(o[0])); b[best[0]] += 1; paths[path] += 1
+                    i0, i1 = best[1], best[2]
+                    if len(samples[best[0]]) < 5: samples[best[0]].append((v, chunk[max(0, i0 - 25):i0] + "[[" + chunk[i0:i1 + 1] + "]]" + chunk[i1 + 1:i1 + 26]))
+        print(f"\n== REAL {label}: chunks {len(cl)} x {CH} chars, values {nv}: hits {hits}/{scans} = {100*hits/max(scans,1):.3f}%  refused {refused}  distinct values hit {len(hv)}")
+        print("   split:", dict(b), " path:", dict(paths))
+        for k, lst in samples.items():
+            for v, c in lst: print("   SAMPLE", k, "| value", repr(v), "|", repr(c.replace("\n", "\\n")))
+    rcnt = collections.Counter(c for c in RUS if "\u0400" <= c <= "\u04ff"); rl, rw = zip(*rcnt.items())
+    real_row("Russian, values 4-8 letters drawn by the corpus letter frequency", RUS, lambda: "".join(RR.choices(rl, rw, k=RR.randint(4, 8))).capitalize(), 300)
+    hcnt = collections.Counter(c for c in HAN if "\u4e00" <= c <= "\u9fff"); hl, hw = zip(*hcnt.items())
+    for L in (2, 3, 4):
+        real_row(f"Chinese, {L}-character values drawn by corpus frequency", HAN, lambda: "".join(RR.choices(hl, hw, k=L)), 300)
+        real_row(f"Chinese, {L}-character values drawn uniformly from the distinct characters", HAN, lambda: "".join(RR.choice(hl) for _ in range(L)), 300)
