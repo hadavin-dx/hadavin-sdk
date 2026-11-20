@@ -1056,7 +1056,7 @@ M = [
         CAP_GUARD,
         "",
         TE,
-        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[nul]",
+        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[nul-document0]",
         "assert 202 == 413",
     ),
     mutant(
@@ -1066,7 +1066,7 @@ M = [
         READ_AND_PARSE
         + "        if len(document) > max_body:\n            return 413, sender, None\n",
         TE,
-        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[controls]",
+        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[controls-document3]",
         "assert 202 == 413",
     ),
     mutant(
@@ -1076,7 +1076,9 @@ M = [
         '    if not document:\n        raise BadRequest("empty document")\n    try:\n        return key, document.encode("utf-8")\n',
         TE,
         "test_parse_body_round_trip",
-        "BadRequest",
+        "BadRequest: empty document",
+        allow_crash=True,
+        crash_type="BadRequest",
     ),
     # --- G28 the bind switch
     mutant(
