@@ -108,6 +108,14 @@ def test_every_module_that_calls_a_model_is_registered():
 
 
 def _is_str_call(node: ast.AST) -> bool:
+    """`str(x)` / `repr(x)`, also under `_sanitise(...)` (which only makes the text encodable, it redacts nothing)."""
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "_sanitise"
+        and len(node.args) == 1
+    ):
+        return _is_str_call(node.args[0])
     return (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
@@ -115,12 +123,40 @@ def _is_str_call(node: ast.AST) -> bool:
     )
 
 
-def test_no_message_is_cut_with_a_slice_before_it_is_redacted():
-    """A cut of exception or message text (`str(x)[:N]`, or a name assigned from `str(x)` and then sliced) is the
-    cut-before-redact bug class: use `safe_head`. The check follows one assignment (`m = str(exc)` ... `m[:N]`)."""
+def _is_bounded_redaction(node: ast.AST) -> bool:
+    """`runmap.redact_bounded(...)[0]` or the fixed `runmap.SAFE_HEAD_NOTE`: the two values `error_reason` assigns."""
+    while isinstance(node, ast.Subscript):
+        node = node.value
+    if isinstance(node, ast.Call):
+        f = node.func
+        return (f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")) == "redact_bounded"
+    return (isinstance(node, ast.Attribute) and node.attr == "SAFE_HEAD_NOTE") or (
+        isinstance(node, ast.Name) and node.id == "SAFE_HEAD_NOTE"
+    )
+
+
+def _is_error_reason_post_redaction(rel: str, fn: ast.AST, node: ast.Subscript) -> bool:
+    """The ONE exemption: `tools.py` function `error_reason`, slicing a name that an EARLIER assignment in that function
+    set from `redact_bounded` / `SAFE_HEAD_NOTE`. Any other slice of `str(exc)` anywhere, tools.py included, is a finding."""
+    if rel != "tools.py" or getattr(fn, "name", "") != "error_reason":
+        return False
+    v = node.value
+    if not isinstance(v, ast.Name):
+        return False
+    return any(
+        isinstance(a, ast.Assign)
+        and _is_bounded_redaction(a.value)
+        and any(isinstance(t, ast.Name) and t.id == v.id for t in a.targets)
+        and (a.end_lineno or a.lineno) < node.lineno
+        for a in ast.walk(fn)
+    )
+
+
+def _unredacted_message_slices(sources: dict[str, str]) -> list[str]:
+    """Head slices of `str(x)` (or a name assigned from it) in the given {relative path: source}, minus the one exemption."""
     bad = []
-    for path in ROOT.rglob("*.py"):
-        tree = _tree(path)
+    for rel, source in sources.items():
+        tree = ast.parse(source)
         for fn in ast.walk(tree):
             if not isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef):
                 continue
@@ -138,10 +174,56 @@ def test_no_message_is_cut_with_a_slice_before_it_is_redacted():
                     and n.slice.lower is None
                 ):
                     v = n.value
-                    if _is_str_call(v) or (isinstance(v, ast.Name) and v.id in strs):
-                        bad.append(f"{path.relative_to(ROOT).as_posix()}:{n.lineno}")
-    # `tools.error_reason` slices a message that was ALREADY redacted into `message` (assigned from redact_bounded)
-    assert not [b for b in bad if not b.startswith("tools.py:")], bad
+                    if (
+                        _is_str_call(v) or (isinstance(v, ast.Name) and v.id in strs)
+                    ) and not _is_error_reason_post_redaction(rel, fn, n):
+                        bad.append(f"{rel}:{n.lineno}")
+    return bad
+
+
+def test_no_message_is_cut_with_a_slice_before_it_is_redacted():
+    """A cut of exception or message text (`str(x)[:N]`, or a name assigned from `str(x)` and then sliced) is the
+    cut-before-redact bug class: use `safe_head`. The check follows one assignment (`m = str(exc)` ... `m[:N]`). The only
+    exemption is `tools.error_reason` slicing a name already assigned from `redact_bounded` / `SAFE_HEAD_NOTE`."""
+    sources = {
+        p.relative_to(ROOT).as_posix(): p.read_text(encoding="utf-8") for p in ROOT.rglob("*.py")
+    }
+    bad = _unredacted_message_slices(sources)
+    assert not bad, bad
+
+
+_ERROR_REASON_OK = """
+def error_reason(exc):
+    message = _sanitise(str(exc))
+    message = runmap.redact_bounded(message, {})[0]
+    return message[:160]
+"""
+
+
+def test_the_exemption_holds_for_the_real_error_reason_shape():
+    assert _unredacted_message_slices({"tools.py": _ERROR_REASON_OK}) == []
+
+
+def test_the_exemption_does_not_cover_a_planted_slice_in_another_tools_function():
+    planted = _ERROR_REASON_OK + "\ndef other(exc):\n    return str(exc)[:10]\n"
+    assert _unredacted_message_slices({"tools.py": planted}) == ["tools.py:8"]
+    named = _ERROR_REASON_OK + "\ndef other(exc):\n    m = str(exc)\n    return m[:10]\n"
+    assert _unredacted_message_slices({"tools.py": named}) == ["tools.py:9"]
+
+
+def test_the_exemption_does_not_cover_a_slice_before_the_redaction_in_error_reason():
+    early = """
+def error_reason(exc):
+    message = _sanitise(str(exc))
+    head = message[:10]
+    message = runmap.redact_bounded(message, {})[0]
+    return head
+"""
+    assert _unredacted_message_slices({"tools.py": early}) == ["tools.py:4"]
+
+
+def test_the_exemption_is_only_for_tools_py():
+    assert _unredacted_message_slices({"other.py": _ERROR_REASON_OK}) == ["other.py:5"]
 
 
 REDACTORS = {
