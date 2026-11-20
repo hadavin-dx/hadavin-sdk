@@ -1,31 +1,31 @@
-UPDATED_UTC: 2026-11-20T06:36:55Z
+UPDATED_UTC: 2026-11-20T06:38:11Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
-BOOT_ID: 70253298
+BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 26
 ITEMS_OPEN: 12
 PERCENT: 72
-AGENTS_RUNNING: 5
-CAPACITY: load 2.0 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
-DISK: / 60G free, 15% used; git worktrees 6; 63M	/tmp/claude-0;397M	/root/.cache/uv;
+AGENTS_RUNNING: 0
+CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 0, heavy agents 0
+DISK: / 60G free, 15% used; git worktrees 6; 66M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
-CONTAINER_RESTARTS: 0
-INTERRUPTED: the Fable limit stopped all agents at ~06:36 UTC; the same work is restarted on claude-sonnet-5-5 (5 agents running)
+CONTAINER_RESTARTS: 1
+INTERRUPTED: container restart at 2026-11-20T06:38:11Z, BOOT_ID changed
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
-NEXT: restart gate round 2 + ORDER 017, the G2/G3 integration, the grants rework, the G7 result review on claude-sonnet-5-5
-PUSHED_UTC: 2026-11-20T06:36:27+00:00
+NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
+PUSHED_UTC: 2026-11-20T06:36:55+00:00
 
-(12:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:08 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) r-g7D | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:42 | 06:57 | 5 | running | 1 of 3 | 0 | the first two reviewers died at the limit before reporting |
-| (new) r-g7C | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:42 | 07:00 | 5 | running | 1 of 3 | 0 | same |
-| (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | running | 3 of 3 not used yet | 0 | restart after the Fable limit; see RESUME-NOTE item 1 |
-| (new) r-int | builder | claude-sonnet-5-5 | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then the ORDER 014/016c follow-ups, one batch | 06:40 | 07:40 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 2; HEAVY at its end |
-| (new) r-grants | builder (tests only) | claude-sonnet-5-5 | restart: grants negative tests reworked for core-b step B map, local PostgreSQL 16 | 06:40 | 07:10 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 3 |
+| (new) r-g7D | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:42 | 06:57 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
+| (new) r-g7C | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:42 | 07:00 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
+| (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | INTERRUPTED | 3 of 3 not used yet | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
+| (new) r-int | builder | claude-sonnet-5-5 | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then the ORDER 014/016c follow-ups, one batch | 06:40 | 07:40 | 2 | INTERRUPTED | n/a | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
+| (new) r-grants | builder (tests only) | claude-sonnet-5-5 | restart: grants negative tests reworked for core-b step B map, local PostgreSQL 16 | 06:40 | 07:10 | 2 | INTERRUPTED | n/a | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
 | (new) g7D | reviewer | fable | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | (new) g7C | reviewer | fable | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | ae03e30a | builder | fable | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identifier glued to a shorter secret), budget check, six refusal reasons, extra stated limits, deletes runmap.is_masked, fixes the stage-name sample word, runs gate_mutants on the final code | 06:26 | 07:20 | 5 | INTERRUPTED | 2 of 3 (lead review) | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
@@ -113,7 +113,7 @@ PUSHED_UTC: 2026-11-20T06:36:27+00:00
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
 |---|---|---|---|---|
-| none | | | | |
+| 2026-11-20T06:38:11Z | container restart: BOOT_ID 70253298 -> 1e29cf8a | see AGENTS | not yet | to be checked by the session |
 
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
@@ -131,6 +131,13 @@ PUSHED_UTC: 2026-11-20T06:36:27+00:00
 | ae03e30a lead review round 2 of the gate (ORDER 015): enforce_map mad | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identi | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
 | a4bfb7dd reworks tests/test_grants_negative_roles.py so it is correct | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
 | ad457b53 integration: cherry-picks P1d-a (5 commits) and the P2d-1 po | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto  | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
+| (new) r-g7D | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) r-g7C | restart: EGM RESULT review of the G7 change and tests (egm:egm-codebas | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) r-gate | restart: gate round 2 findings + ORDER 017 (mapping required with NO_M | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) r-int | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, th | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) r-grants | restart: grants negative tests reworked for core-b step B map, local P | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) g7D | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
+| (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-RESTART RUNNING on claude-sonnet-5-5: gate round 2 + ORDER 017, G2/G3 integration, grants rework, G7 result review (2 reviewers). Resume note: handover/core-c/RESUME-NOTE-2026-11-20.md. P1c build waits for the integration. E1 cron denied.
+EGM SETUP PROVEN in REPORT.md: 6 opus-5-5 lines (brainstorm/draft/resolve, both copies), 66 sonnet-5-5, 0 fable. Container restarted again at 06:37 UTC; all agents stopped; restarting now on sonnet with explicit models.
