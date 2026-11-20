@@ -53,3 +53,9 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-b/inputs/ in th
 7. Everything from ORDER 002 and 003 stays: one-minute board with the tables and reasons, DECISIONS.md, ESCALATIONS.md at 3 tries, never idle, no conflicts, no secrets, no live model call, no merge.
 
 ## LEAD NOTE 05:20Z: inputs/draft-tickets-C-D.md (lead-made drafts, read from the code; use as the starting text of tickets C and D, check every line, keep or contest its three findings in DECISIONS.md) and inputs/lead-baselines-SUMMARY.md (the lead runs the baselines of the input heads on the laptop: skip queue items Q3 onward; main itself: 10821 passed, 2 failed only for a missing .git in the lead copy).
+
+## ORDER 005 (lead, 05:21Z) VERDICTS and two changes
+1. DECISIONS so far: all OK (keep all board tables over 3 KB; board at the end of every tool batch after the cron denial; skip Q3 onward baselines; harness commit trailer). Do not retry the cron and do not build a loop around the denial: correct. The lead sends you a short message whenever your board is older than 3 minutes, so you are never left waiting silently.
+2. CHANGE (code branch): do NOT wait for a new branch. Put code on your own branch cloud/core-b in SEPARATE commits that touch only src/, tests/, tools/ or n8n/ (never mixed with handover/ files; commit message starts "code <step letter>:"). The lead picks those commits out by path. This replaces "wip/cloud-core-b/*" in ORDER 004 item 5.
+3. Use MORE parallel agents now: every READY item gets its own agent (model fable) at once; while agents run, you write the next ticket yourself. Target 3 agents running whenever 3 independent items exist; say in the board REASON column why fewer run.
+4. Evidence that needs PostgreSQL 17 or Docker runs on the lead's laptop (it has both). PostgreSQL 16 in your box may be used for your own per-file tests if it starts as a non-root user; if not, mark those tests NOT RUN and go on.
