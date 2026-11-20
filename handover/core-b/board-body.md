@@ -4,6 +4,7 @@
 | a51b4a37 | builder (tests) | fable | F-store tests: store contract, T1 with 50 connections, Limits, crash and role tests, tests/reserve_mutants.py; worktree F-tests | 06:02 | +40 min | UNVERIFIED | running | none | 0 | tests by a different agent than the builder |
 | a04243c0 | builder (tests) | fable | tests and mutants for step B fix round 3; worktree B-tests | 05:58 | +25 min | UNVERIFIED | running | none | 0 | the fix builder committed no tests for its new checks |
 | a7034d35 | builder (tests) | fable | re-anchors 2 audit mutants after the fix, adds 6, closes one hole in the price tests; worktree M | 06:02 | +12 min | UNVERIFIED | running | none | 1 | audit_drain_mutants.py gave 11 of 13 good on the fixed code |
+| a6d00510, afa273dd | reviewers (egm) | fable | ticket F-install round 1 of 1, against core-c's pushed gate module and the built meter | 06:09 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | lead ORDER 010 item 6 |
 | a9b3b5a5, aac315f5 | reviewers (egm) | fable | ticket C round 1 of 1: 0 Blockers, 11 Majors, 15 Nits; built code equals the ticket; report tickets/C-review-1.md | 05:59 | done | 100 | done | 1 of 1 | 0 | answered in the ticket (P1 to P8); no source change |
 | abc08a01 | builder | fable | F-store: commit 8db9c29 on cloud/core-b (540 added, 24 removed in 18 files), with the round 2 corrections | 05:50 | done | 100 | done | 2 of 3 | 0 | 673 passed on 14 test files, PostgreSQL 16; its own test files not written yet |
 | adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py (13) and tests/price_mutants.py (20): landed | 05:50 | done | 100 | done | none | 0 | found a hole: one price mutant survives because the test configs are written with sorted keys |
@@ -52,7 +53,7 @@
 | BUILD F-store | RUNNING | 70 | commit 8db9c29 (source, pins, changelog) | 1 | lead GO BUILD F-store |
 | BUILD B stop state | RUNNING (3 of 3 fix rounds used) | 85 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except batch run 2 | 97 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
-| T3 EGM review rounds | RUNNING | 55 | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
+| T3 EGM review rounds | RUNNING | 80 | tickets/C-review-1.md (0 Blockers, answered); F-install round running; | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
 ## RESTARTS
