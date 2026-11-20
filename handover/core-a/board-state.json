@@ -743,17 +743,17 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "n8n-rev6",
-   "role": "fresh reviewer (comprehension)",
+   "id": "n8n-fix7",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "read-only review of the n8n pack after the real-run update: are the SEEN marks exactly what evidence-n8n-4 shows; contradictions; silent-recovery section",
-   "started UTC": "11:02",
+   "what exactly it is doing": "n8n review Major (round count) + nits, tests",
+   "started UTC": "11:04",
    "expected end": "10 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1 on the new evidence",
+   "review round n of cap": "fix after round 1 on the new evidence",
    "retries so far": 0,
-   "reason": "lead: capacity idle"
+   "reason": "after n8n-rev6"
   }
  ],
  "tests": [
@@ -2758,6 +2758,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "evidence-n8n-4 applied: 8 notes UNVERIFIED -> SEEN IN n8n 2.47.7 (evidence-n8n-4.md, once) with line numbers, 11 more notes keep UNVERIFIED for the part not run; 7 verify items DONE; contradictions fixed (noData/202/early answer SEEN, refused event = HTTP 500, 70 s wait survived once, 'not re-imported' wrong); silent recovery documented as deliberate (52-min bound); 92 template tests pass. I verified by script: nodes (without notes) and connections of both JSON files are IDENTICAL between head 02226ce04 (the run) and now; only names and notes changed"
+  },
+  {
+   "id": "n8n-rev6",
+   "role": "fresh reviewer (comprehension)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only review of the n8n pack after the real-run update: are the SEEN marks exactly what evidence-n8n-4 shows; contradictions; silent-recovery section",
+   "started UTC": "11:02",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 on the new evidence",
+   "retries so far": 0,
+   "reason": "n8n review after the real run: NO Blocker, 1 Major (ECONNREFUSED 'three rounds' is wrong in README:3 and two JSON notes: the evidence shows rounds 0 and 1, round 2 answered 202), nits (caller 202 vs receiver 200; two executions mixed; an UNVERIFIED mark on a stub-seen row; 105 min = waiting only; proxy part unverified); all other SEEN marks match the evidence lines; stale numbers gone; arithmetic recomputed correct"
   }
  ]
 }
