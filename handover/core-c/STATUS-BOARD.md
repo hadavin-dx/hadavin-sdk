@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:29:45Z
+UPDATED_UTC: 2026-11-20T08:33:05Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 6.8 of 4 cores, mem 2/15 GB, disk 59G free, 16% used, light agents 8, heavy agents 0
-DISK: / 59G free, 16% used; git worktrees 13; 188M	/tmp/claude-0;476M	/root/.cache/uv;
+AGENTS_RUNNING: 7
+CAPACITY: load 7.6 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, light agents 7, heavy agents 0
+DISK: / 59G free, 16% used; git worktrees 13; 189M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 7 agents running, none blocked (g7fix4, p1dr3, g8, fold evidence, g4R3, g4C3 + merged-tree batch done). Board pushed after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:26:14+00:00
+PUSHED_UTC: 2026-11-20T08:33:02+00:00
 
-(13:59 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -104,7 +104,7 @@ PUSHED_UTC: 2026-11-20T08:26:14+00:00
 | (new) g7C3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-codebase-details) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: 1 Blocker (doc claim, stale at HEAD), 5 Major, nits (G7-result-review-3.md) |
 | (new) p1dr3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix: oracle boundaries, four exclusions, linkifier dependency | 08:22 | 08:50 | 1 | running | 3 | 0 | from G2-result-review-2.md |
 | (new) g7fix4 | builder | claude-sonnet-5-5 | G7 fix round 4 (bounded spelled scan, overlap rule, deadline tests, builders moved, bank_near, docstrings E9) | 08:25 | 08:55 | 1 | running | 4 | 0 | from G7-result-review-3.md |
-| (new) g4R3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: implementation readiness | 08:27 | 08:42 | 2 | running | 3 | 0 | build P1c only after a clean plan review |
+| (new) g4R3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: implementation readiness | 08:27 | 08:42 | 100 | done | 3 | 0 | reported: G4 v3 NOT READY (1 Blocker: stop condition tripped by merges; 7 Major) (G4-review-3.md) |
 | (new) g4C3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: codebase details (current tree with gate r4 and G7 r3) | 08:27 | 08:42 | 2 | running | 3 | 0 | same |
 
 ## SHELLS AND PROCESSES
