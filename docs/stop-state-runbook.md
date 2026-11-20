@@ -47,11 +47,10 @@ against the runtime, reset and purge secrets.
 ### What a reset records (migration 0009, B8)
 In the same transaction as the clears, the reset (the reset login only) inserts one row into `kill_switch_resets`
 (`by`, `at`, `cleared_ids` = the ids it really cleared, `audit_seq` = the audit chain seq of its intent when the store
-knows it, otherwise NULL: the chain returns an event id, not a seq) and moves `kill_switch_watermark.through` to the
-newest cleared stop time (never lower). This record survives if the audit row is lost. The runtime login holds nothing
-on `kill_switch_resets` and only SELECT on the watermark. Read it as the database owner:
+knows it, otherwise NULL: the chain returns an event id, not a seq). This record survives if the audit row is lost. The runtime login holds nothing
+on `kill_switch_resets`. Read it as the database owner:
 `SELECT at, "by", cardinality(cleared_ids), audit_seq FROM kill_switch_resets ORDER BY at;`.
-The gate read does NOT hide stops below the watermark: a stop with an old `ts` (planted, or hand-inserted after a reset)
+There is no time watermark, so the gate read hides no stop: a stop with an old `ts` (planted, or hand-inserted after a reset)
 that has no clear still reads as ON. The read compares `count(kill_switch_stops)` with `count(kill_switch_clears)`
 (every clear names one distinct stop, so a surplus of stops means an open stop; both are index-only counts, about
 tens of milliseconds for 200000 rows) and only then looks for the oldest open stop.
@@ -284,9 +283,11 @@ directly with no audit line (the same is true of `release-expired`). Keep the re
 already there are not, so the upgrade cannot fail on a database holding a planted `ts` (the stop tables are
 append-only, such a row cannot be deleted below a superuser). Later, once you have looked for such rows (`SELECT id, ts
 FROM kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same on `kill_switch_clears`), run as
-the owner `ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT kill_switch_stops_ts_range;` and `ALTER TABLE
-kill_switch_clears VALIDATE CONSTRAINT kill_switch_clears_ts_range;`. VALIDATE fails naming the constraint while a bad
-row exists. The migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the
+the owner `hadavin-sdk migrate --validate-constraints` (it runs `ALTER TABLE kill_switch_stops VALIDATE CONSTRAINT
+kill_switch_stops_ts_range;` and the same for `kill_switch_clears_ts_range`, only for a constraint still NOT VALID, and
+changes nothing else). It fails naming the constraint while a bad row exists. Every `migrate` run prints a warning
+while either constraint is still NOT VALID, so the step cannot be forgotten. 0009 has no watermark table (nothing read
+it). The migration takes a short ACCESS EXCLUSIVE lock on the (small) stop tables for the ADD CONSTRAINT and the
 index build.
 
 ## Going back to the release before the stop state
