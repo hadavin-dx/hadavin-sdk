@@ -565,15 +565,19 @@ def test_e5_one_original_under_two_placeholders_follows_the_stronger_rule():
 
 def test_e5b_a_conflict_puts_every_secret_entry_first_also_for_other_originals():
     """TB-2.11 (G4). One original held twice (E5) makes `snapshot` put every every-copy entry first, so two DIFFERENT originals that
-    overlap follow the secret one as well. The redactor's own `_build` tie-break does not do that (it works per original), so gate
-    mutant R8 (no re-sort) is not equivalent: it leaves the identifier's order and `ab-cd` stays readable after `<TENANT_1>`."""
+    overlap follow the secret one as well. Under G4 alone the redactor's own `_build` tie-break does not do that (it works per
+    original), so gate mutant R8 (no re-sort) was not equivalent: it left the identifier's order and `ab-cd` readable after
+    `<TENANT_1>`. RE-PINNED on the merged G9 + G4 tree (E20): G9's sweep masks the overlap with the placeholders already held,
+    in text order, whatever the map order, so the output is `x <SECRET_1><TENANT_1> y` with and without the re-sort (measured:
+    36,000 random small conflict maps, 4,878 with a rules conflict, no output differs): R8 is EQUIVALENT under G9 (lead
+    decision, ESCALATIONS E20). The assert still pins the outcome, and that no value of the map is readable."""
     v = "Zq9x" + "Lm4w"
     mapping = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<TENANT_2>": v, "<SECRET_2>": v}
     try:
         outcome = _enforce("x ab-cd-ef y", mapping)
     except runmap.RedactionError as exc:  # the outcome string keeps the id on the failure line
         outcome = f"{type(exc).__name__}({exc})"
-    assert outcome == "x <SECRET_1>-ef y", "TB-2.11 E5b the secret entries were not put first"
+    assert outcome == "x <SECRET_1><TENANT_1> y", "TB-2.11 E5b the secret entries were not put first"
 
 
 # --- lead review round 1, M4: redact_text never empties the live map ----------------------------------------------

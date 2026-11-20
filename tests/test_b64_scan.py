@@ -117,20 +117,23 @@ def test_tie_break_same_original_secret_rule_first():
 
 def test_tie_break_keeps_the_order_of_different_originals():
     text = "x ab-cd-ef y"
+    # Re-pinned on the merged G9 + G4 tree (E20): G9's sweep masks an overlap with the placeholders already held
+    # (no secret value stays readable; the G4 base text kept a half of the other value), so the output is the two
+    # placeholders in text order in every map; the order follows the position in the text, not the map order.
     maps = [
-        ({"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"}, "x ab-<TENANT_1> y"),
-        ({"<SECRET_1>": "ab-cd", "<TENANT_1>": "cd-ef"}, "x <SECRET_1>-ef y"),
-        ({"<TENANT_1>": "ab-cd", "<SECRET_1>": "cd-ef"}, "x <TENANT_1>-ef y"),
-        ({"<SECRET_1>": "cd-ef", "<TENANT_1>": "ab-cd"}, "x ab-<SECRET_1> y"),
+        ({"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"}, "x <SECRET_1><TENANT_1> y"),
+        ({"<SECRET_1>": "ab-cd", "<TENANT_1>": "cd-ef"}, "x <SECRET_1><TENANT_1> y"),
+        ({"<TENANT_1>": "ab-cd", "<SECRET_1>": "cd-ef"}, "x <TENANT_1><SECRET_1> y"),
+        ({"<SECRET_1>": "cd-ef", "<TENANT_1>": "ab-cd"}, "x <TENANT_1><SECRET_1> y"),
     ]
     for i, (m, want) in enumerate(maps, start=1):
         got = _outcome(lambda m=m: runmap.enforce_map(text, dict(m)))
         assert got == want, f"TB-2.8 map {i}"
     fifth = {"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd", "<SECRET_2>": "cd-ef"}
     got = _outcome(lambda: runmap._Redactor(dict(fifth), None).sweep(text))
-    assert got == "x <SECRET_1>-ef y", "TB-2.8 fifth map, the redactor's own sweep"
+    assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, the redactor's own sweep"
     got = _outcome(lambda: runmap.enforce_map(text, dict(fifth)))
-    assert got == "x <SECRET_1>-ef y", "TB-2.8 fifth map, enforce_map"
+    assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, enforce_map"
 
 
 def test_encoded_is_never_restored_or_stored():
@@ -331,14 +334,18 @@ def test_no_run_no_extra_work(monkeypatch):
         _step_off(mp)
         off = run()
     assert on == off, "TB-3.4 the step does extra work on a text with no run"
-    # the same counts as the commit before G4 (MEASURED there): (calls of `redact`, reads of `time.thread_time`) per text and function
+    # the counts MEASURED on this tree (see NO_RUN_WORK): (calls of `redact`, reads of `time.thread_time`) per text and function
     assert on[0] == NO_RUN_WORK, "TB-3.4 the work of a text with no run is not the base commit's"
 
 
-# measured at the base commit with the same wrappers (the text `prose` and `blob48` read the clock per 1,024 characters or per segment)
+# measured with the same wrappers (the text `prose` and `blob48` read the clock per 1,024 characters or per segment).
+# Re-measured on the merged G4 + G8 + G9 + E14 + G10 tree (E20): the two `redact_untrusted` rows of the marker texts
+# (`<HIGHENTROPY_7>`, `<CREDITCARD_12>`) read the clock 160 times, not 154 (the G4 base): the six extra reads come from G8's glued-rest
+# commit 6a852c7d3 (its look-behind IPV4 / CREDITCARD pattern edits; measured at the commit before it: 154, at it: 160, unchanged by G9,
+# E14 and G10). The on == off check above is unchanged: the base64 step adds no read.
 NO_RUN_WORK = [
     (2, 3), (2, 3), (2, 3), (2, 3), (1, 1), (1, 1), (1, 3),
-    (1, 3), (1, 1), (1, 154), (1, 1), (1, 154), (1, 1), (1, 1),
+    (1, 3), (1, 1), (1, 160), (1, 1), (1, 160), (1, 1), (1, 1),
 ]  # fmt: skip
 
 
