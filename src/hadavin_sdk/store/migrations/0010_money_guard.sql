@@ -14,11 +14,16 @@
 -- plain add_spend charge of the day can be erased); (H2) a forged settled hold (INSERT of a row already settled, or
 -- raising reserved_usd of a settled row in the same transaction); (L2) a login that is the owner of the release function
 -- (migrate and runtime sharing one login, or a member of the owner role) has no guard at all. A counter also holds
--- charges that are no hold (add_spend); those are tied to no row. The real fix is a redesign, queued as its own ticket:
--- the runtime gets no UPDATE/INSERT on spend, spend_month and spend_reservations, and reserve/settle/expire become
--- SECURITY DEFINER functions (owner = the migration owner, search path pinned) that are the only writers. Until then
--- the promise is "accidents and naive attacks are refused", and the audit chain and the release function's own record
--- are the evidence. Drift: when a counter is already below the booked holds (applied_usd of the release shows it) a
+-- charges that are no hold (add_spend); those are tied to no row.
+-- OWNER FIRST (option B, tickets/F-money-definer.md): the owner check comes first and a login that is the function
+-- owner returns NEW at once; the aggregate (reserved minus settled holds) is computed only for other logins, so the
+-- per-row cost is one pg_proc lookup. Consequence: the definer functions (reserve, settle, expire, release) run as the
+-- owner, so this trigger no longer protects against a bug INSIDE them. Until option B steps 4-6 ship the guard is a
+-- tripwire. The honest sentence "a compromised runtime login can bypass the cap but cannot lower a booked amount"
+-- applies only after step 4 (grants flipped: no UPDATE/INSERT for the runtime on the money tables) and step 6 (caps in
+-- a table). Until step 6 ships: a compromised runtime login can bypass the cap, and until step 4 it can also lower a
+-- booked amount through the reproduced bypasses above. The audit chain and the release function's own record are the
+-- evidence. Drift: when a counter is already below the booked holds (applied_usd of the release shows it) a
 -- legal settle that lowers it is refused (fail closed) until an operator repairs the counter.
 -- Emergency switch-off (the OWNER, then switch it back on): ALTER TABLE spend DISABLE TRIGGER spend_money_guard; the
 -- same for spend_month (spend_month_money_guard) and spend_reservations (spend_reservations_money_guard), later

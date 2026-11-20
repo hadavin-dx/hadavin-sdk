@@ -2,9 +2,10 @@
 -- hadavin_release_expired_spend(agent, day) is the one SUPPORTED way the booked amount of an expired hold goes down.
 -- A runtime login that writes its own UPDATE is refused by the guard trigger of 0010, which is a TRIPWIRE (accidents and
 -- naive attacks), not a wall: a login composing a settle with lowering updates, forging a settled hold, or sharing the
--- migration owner's login is not stopped (tests/test_migrations_0009_0010_round2.py pins each as xfail). The promise
--- becomes true by construction only with the planned redesign (runtime without UPDATE/INSERT on the money tables,
--- definer functions). It is
+-- migration owner's login is not stopped (tests/test_migrations_0009_0010_round2.py pins each as xfail). After option B
+-- (tickets/F-money-definer.md: the runtime without UPDATE/INSERT on the money tables, reserve/settle/expire as
+-- SECURITY DEFINER functions) the definer functions are the only writers of the money tables, release among them; until
+-- its steps 4-6 ship this stays a tripwire. It is
 -- owned by the migration owner (SECURITY DEFINER), so the release login needs no right on the money tables
 -- at all: `migrate --release-role` grants it EXECUTE on this one function and the audit append path, and nothing
 -- else. Nobody else may run it: EXECUTE is taken from PUBLIC here, and `migrate` refuses a run where the
