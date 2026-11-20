@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:36:13Z
+UPDATED_UTC: 2026-11-20T07:39:51Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.70 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, agents light 4 heavy 2
-DISK: / 57G free, 18% used; worktrees /tmp/core-b-wt 1.7G
+CAPACITY: load 1.90 of 4 cores, mem 1/15 GB, disk 57G free, 19% used, agents light 4 heavy 2
+DISK: / 57G free, 19% used; worktrees /tmp/core-b-wt 1.7G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T07:35:56Z (previous push; this board is pushed right after writing)
-IST: 13:06 IST
+PUSHED_UTC: 2026-11-20T07:39:49Z (previous push; this board is pushed right after writing)
+IST: 13:09 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -162,3 +162,6 @@ MODELS (07:21Z): every Agent call of core-b sets model sonnet or haiku explicitl
 07:25Z: ORDERS 020 and 021 received and read. Running (sonnet): step A fix round 4 (ORDER 021 Majors 1+2, transient errors, order by ts; local/code-A4), release command + F-store minors m1-m5 (ORDER 020; local/code-REL), PG test isolation, provider-mark mutants. Next after those: evidence batch, fresh reviewers, M1-M3 minors of ORDER 021.
 
 07:33Z: round 1 of the lead's step B fix (c73b6afae..c0d8f5ec8) is cherry-picked on cloud/core-b (HEAD 2c16b26e8). Waiting for the lead's round 2 commit range (3 Majors); I cherry-pick it as extra commits. Evidence batch 4 (clean worktree, 1 worker and -n 3) is running.
+
+07:38Z: DONE and pushed on cloud/core-b since 07:20: step A fix round 4 (ORDER 021 Majors), step B who-else round 1 (lead's range), release command + F-store minors (ORDER 020, migration 0008). Running: A fix round 5 (review-4 Major), evidence batch 4, fresh reviewer of the release command, PG test isolation, provider-mark mutants.
+F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on wip/cloud-core-b/Y-integration + wip/cloud-core-b/F-install-4 (fix rounds 1-2 of the run-state hostile review done). Blocked by core-c only: (1) request 3 (bind needs REQUIRED mapping, NO_MAP) not published, (2) usd_cap not in SPEND_REASONS, (3) gate ignores the mark on ProviderExhausted, (4) K5 import chain in guard/injection.py. core-b side is ready: once the gate lands on cloud/core-c I merge Y-integration and run the evidence batch.
