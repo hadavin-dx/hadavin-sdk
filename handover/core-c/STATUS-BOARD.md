@@ -1,32 +1,33 @@
-UPDATED_UTC: 2026-11-20T07:26:59Z
+UPDATED_UTC: 2026-11-20T07:28:50Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 40
-ITEMS_OPEN: 25
-PERCENT: 70
+ITEMS_OPEN: 24
+PERCENT: 73
 AGENTS_RUNNING: 6
-CAPACITY: load 2.7 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 6, heavy agents 0
-DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;398M	/root/.cache/uv;
+CAPACITY: load 2.8 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 6, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 6; 70M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: tests/test_gate_mutants_picked_up.py fails on purpose (24 mutants out of sync, re-sync by the gate fix agent); producers registry (core-b patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:26:46+00:00
+PUSHED_UTC: 2026-11-20T07:26:59+00:00
 
-(12:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:58 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) g7f2 | builder | claude-sonnet-5-5 | G7 fix round 2 (lead ORDER 020 MJ-B): capped fixed-point loop in the redactor with RedactionError past the cap, tail leak, deadline inside pass 2, a property generator with a reference fixed point, duplicate TEXTNORM_PINNED_PYTHON | 07:33 | 08:15 | 2 | running | 2 of 3 (G7 result review) | 0 | starts the minute the pick landed; lane: redact.py + defaults.py comments + G7 tests |
 | addcb0ba | drafter | claude-opus-5-5 | rewrites the owner-facing security wording as v2 from both reviews (verdict first, glossary, five status words, plain labels) | 07:41 | 08:10 | 2 | running | round 2 of the wording review follows | 0 | EGM: draft/resolve on opus |
 | (new) g4v2 | drafter | claude-opus-5-5 | rewrites ticket G4 (P1c) as v2 resolving all 8 Blockers and 12 Majors of the plan review | 07:41 | 08:15 | 2 | running | plan review round 2 follows | 0 | EGM: draft/resolve on opus; nothing is built before the plan review is clean |
 | a5e0642d | reviewer | claude-sonnet-5-5 | EGM RESULT review of the owner-facing wording draft (egm:egm-comprehension): naive reader | 07:40 | 07:52 | 100 | done | 1 of 3 | 0 | finished: naive reader: not ready: 4 Blockers, 19 Majors, 9 Nits |
 | aad54501 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the wording draft (egm:egm-style): calibrated claims, status words, owner summary stands alone | 07:40 | 07:52 | 100 | done | 1 of 3 | 0 | finished: style: not ready: 3 Blockers, 12 Majors, 8 Nits |
 | a5bed957 | builder (tests only) | claude-sonnet-5-5 | ORDER 020 test files: install test that parses src for model callers (strict xfail until core-b installs), micro-sign/Han/Hangul mixed-script pins, mutants pickup wrapper | 07:36 | 08:10 | 100 | done | n/a | 0 | finished: 3 new test files committed: install-callers test (3 strict xfails until core-b installs), micro/Han pins (answer: exactly one Han code point U+3007 has a Latin look-alike and passes as not mixed: pinned limit), mutants pickup wrapper (FAILS today: 24 mutants out of sync with the files the gate fix agent is editing) |
-| (new) pick | builder | claude-sonnet-5-5 | picks the integration (16 commits) onto cloud/core-c in its own worktree /tmp/core-c-pick (branch wip-pick), resolves redact.py/runmap.py conflicts with the hardened own-output rule and the fold fix, one batch | 07:27 | 08:20 | 2 | running | n/a | 0 | lane: own worktree; the gate files in the main checkout are not touched; HEAVY at its end |
+| a94894e2 | builder | claude-sonnet-5-5 | picks the integration (16 commits) onto cloud/core-c in its own worktree /tmp/core-c-pick (branch wip-pick), resolves redact.py/runmap.py conflicts with the hardened own-output rule and the fold fix, one batch | 07:27 | 08:20 | 100 | done | n/a | 0 | finished: 18 of 20 commits picked; merged into cloud/core-c as d95a727 with no conflict. In the pick worktree: 12,392 passed, 2 failed (a re-pinned test, fixed in the last commit; the producers registry), 108 skipped, 7 xfailed; perf 64 passed; gate mutants 66 of 66; bandit clean. Not run: Python 3.12, PostgreSQL 17, textnorm mutants, p1d_a mutants after the last change |
 | ae4fa9bc | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 (P1c) readiness (egm:egm-implementation-readiness) | 07:20 | 07:35 | 100 | done | 1 of 3 | 0 | finished: ticket G4 NOT READY: 4 Blockers, 5 Majors |
 | ace8a24b | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 against the real code (egm:egm-codebase-details) | 07:20 | 07:40 | 100 | done | 1 of 3 | 0 | finished: ticket G4 against the code: 2 Blockers, 7 Majors; ENCODED cannot be created as written (KeyError in the counters); 90 non-leaked rows would change kind |
 | (new) gfix2 | builder | claude-sonnet-5-5 | gate fix round for the EGM result review round 2: forged framing token leak (Blocker), edge-value leak, framing DoS, audit marker, interrupts, bounds; reproduce first, mutants | 07:20 | 08:10 | 2 | running | 2 of 3 then lead round 3 | 0 | lane: model_gate.py + enforce functions of runmap.py only |
@@ -103,6 +104,7 @@ PUSHED_UTC: 2026-11-20T07:26:46+00:00
 | redact users + 3 new G7 files + warden_port | cloud/core-c 4864984 | 1 | 9663 passed / 1 failed, 35 skipped, 3 xfailed | tests/test_k5_producers.py (SPINE patch) | done | 25 perf-marked redactor tests pass serially (70 s); 100,000 characters: 0.206 s before, 0.484 s now |
 | tests/test_grants_negative_roles.py + 0007 file | core-b 576f292 (worktree) and main, PostgreSQL 16.15 | 3 | 106 passed (core-b, DSN); 54 passed 52 skipped (core-b, no DSN); main: 37 passed 2 xfailed (DSN) | none | done | PostgreSQL 17 NOT RUN |
 | undo/injection/app + textnorm + tools users (G1 fix batch) | cloud/core-c working tree (committed after) | 1 | 7707 passed / 0 failed | none | done | perf 19 passed; Python 3.12 NOT RUN |
+| 135 files (pick worktree, before merge) | wip-pick cfda4d0 | 1 | 12392 passed / 2 failed, 108 skipped, 7 xfailed | tests/test_redact_fold_budget.py::test_dm_2_257 (fixed by the last commit); producers registry | done | perf 64 passed; gate mutants 66 of 66; ruff format --check fails on 2 files already unformatted on the base (runmap.py:123 nfkc, tests/test_undo_composes.py:21) |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -119,8 +121,8 @@ PUSHED_UTC: 2026-11-20T07:26:46+00:00
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | DONE | 100 | evidence/F-G0-1.md | 1 | committed and pushed as "code G: G0" and "code F:"; as-built differences listed at the end of ticket F |
 | BUILD G1 fold | DONE (fix round 1 verified) | 100 | evidence/G1-fold.md | 1 | B1, B2, M8 fixed and committed; open: M3-M7, M9-M10 of the fold review (time bound, over-matching, grounding widening for the lead, mutants not run) |
-| BUILD G2 P1d-a | DONE (integrated); pick onto cloud/core-c running | 90 | evidence/G2-p1d-a.md | 1 | both failures fixed with regression tests; wip/cloud-core-c/g2-p1d-a tip a3bae9b |
-| BUILD G3 P2d-1 port | DONE (integrated); pick onto cloud/core-c running | 90 | evidence/G3-p2d-port.md | 1 | wip/cloud-core-c/g3-p2d-port tip ef09bf5 |
+| BUILD G2 P1d-a | DONE and merged | 100 | evidence/G2-p1d-a.md | 1 | on cloud/core-c as d95a727 |
+| BUILD G3 P2d-1 port | DONE and merged | 100 | evidence/G3-p2d-port.md | 1 | on cloud/core-c as d95a727 |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT integration | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | P1c edits the same two files; it is built on the integrated tree |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 | Gate: lead code review round 2 fixes (ORDER 015) | DONE (built) | 100 | evidence/F-G0-1.md | 2 | committed in the WIP snapshots (verified by the builder: 66 of 66 mutants, 8596 passed); EGM result review round 2 running; lead review round 3 can start |
@@ -140,12 +142,12 @@ PUSHED_UTC: 2026-11-20T07:26:46+00:00
 | EGM plan review of ticket G4 (P1c) | DONE (round 1) | 100 | tickets/G4-review-1.md | 1 | NOT READY: 6 distinct Blockers, 12 Majors; ticket v2 being drafted on opus |
 | Fold false-hit and cost measurement | RUNNING | 2 | evidence/G1-false-hits-and-cost.md | 1 | evidence runner, no code |
 | SECURITY and README wording final | rewrite v2 running (opus) | 70 | SECURITY-README-final.md | 1 | tickets/SEC-wording-review-1.md has the condensed list |
-| Pick of the integration onto cloud/core-c | RUNNING | 2 | evidence/PICK-int-onto-core-c.md | 1 | one builder in a worktree |
+| Pick of the integration onto cloud/core-c | DONE | 100 | evidence/PICK-int-onto-core-c.md | 1 | merged d95a727; verified in the worktree |
 | Glued-rest gap of IPv4, phone, IBAN, UUID, host name (from the integration probe) | READY (needs a ticket + plan review) | 0 | evidence/INT-g2-g3.md | 0 | ORDER 016c item 15 asked for a look at the other kinds: listed, not fixed |
 | ORDER 020 (lead review round 3): MJ-A, MJ-D, minors | RUNNING | 10 | tickets/F-result-review-2.md, evidence/F-G0-1.md | 1 | gate fix agent has them (MJ-A = dz2-B1) |
-| ORDER 020 MJ-B: redactor fixed-point loop with cap + RedactionError (G7 fix round 2) | READY (waits for the pick: same file redact.py) | 0 | none | 0 | designed; starts the minute the pick lands |
+| ORDER 020 MJ-B: redactor fixed-point loop with cap + RedactionError (G7 fix round 2) | RUNNING | 5 | none | 0 | builder on the merged tree |
 | ORDER 020 MJ-C, m-4, mutants pickup: test files | DONE | 100 | evidence/TW-order020.md | 1 | committed; the mutants pickup test FAILS today on purpose until the gate fix agent re-syncs its mutants (told) |
-| ORDER 020 m-3: duplicate TEXTNORM_PINNED_PYTHON in defaults.py | READY (after the pick) | 0 | none | 0 | one-line change |
+| ORDER 020 m-3: duplicate TEXTNORM_PINNED_PYTHON in defaults.py | RUNNING (with MJ-B) | 0 | none | 0 | one-line change |
 | Ticket G4 v2 (opus draft) then plan review round 2 | RUNNING | 10 | tickets/G4-P1c-redactor-gaps-v2.md | 1 | drafter on opus |
 
 ## RESTARTS
