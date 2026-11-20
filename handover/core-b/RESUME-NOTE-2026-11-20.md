@@ -27,3 +27,8 @@ Shared PG at 127.0.0.1:55439 serialises everything and role names are cluster-wi
 
 ## Stopped
 Board loop stopped (no cron was ever created; the loops were background Bash). No agents started after the stop order.
+
+## P5 final report (arrived after the first note; tip 0251a5700, already pushed, 0 uncommitted)
+Done: strict ConfigError also for a NULL checksum (named roles), format_type-quoted DROPs, dependent-object ConfigError (no CASCADE), 0010 DROP TRIGGER IF EXISTS before CREATE, 0011 re-runnable (CREATE TABLE IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, constraints dropped and re-added) so `--reset-draft 0011` keeps the caps rows; merge of laptop wip/lead-b-ts-watermark 5c4d1faf8 (one cli.py conflict). Sweep: 734 passed, 9 skipped, 0 failed (stop-state, migrations, step-B, money-definer, start check); stop_state_mutants --hand: 137 mutants, 125 killed, 11 N/A (need a PG16+ server variant), 0 survived, 1 OTHER: 'grants: the reset role may not append to audit_entries' NOT APPLIED (its snippet is gone from migrate.py): re-anchor it.
+Deviations to know: (a) the statement lexer refuses DO blocks, so a draft table with extra/different-typed columns is NOT detected (docs say so; a missing NOT NULL column on a table with rows fails loudly); (b) --reset-draft <v> spares only functions created by files OLDER than <v> (a stale 7-arg hadavin_reserve_spend is still dropped); (c) the laptop's 0009 edit (drops kill_switch_watermark, no CHECK validation, new index) is in UNRELEASED_MIGRATIONS so an old-0009 DB only gets the 'differs' warning: the dead watermark table stays until `--reset-draft 0009`.
+Still owed: fresh review of P5's fix round and the ts-watermark merge.
