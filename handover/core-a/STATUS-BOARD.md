@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T14:50:58Z
+UPDATED_UTC: 2026-11-20T14:51:11Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 2
-CAPACITY: load 3.57 of 4 cores (1-minute average), mem 2.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 3.48 of 4 cores (1-minute average), mem 2.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 56G 19%; 636M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T14:46:20Z (the push before this board)
+PUSHED_UTC: 2026-11-20T14:51:03Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -112,24 +112,23 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 11504 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 179s ago | running | matched by name in ps |
-| 11510 | /tmp/ca-b-run/.venv/bin/python /tmp/ca-b-run/.venv/bin/pytest -q -n 3  | core-a session or its agent | 179s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 30990s ago | running | matched by name in ps |
-| 21423 | postgres: rt_9bdf9669fb5c postgres 127.0.0.1(45860) idle | core-a session or its agent | 55s ago | running | matched by name in ps |
-| 21424 | postgres: pu_3fff970a9979 postgres 127.0.0.1(45864) idle | core-a session or its agent | 55s ago | running | matched by name in ps |
-| 21452 | postgres: rt_0027d46b8bf6 postgres 127.0.0.1(46138) idle | core-a session or its agent | 54s ago | running | matched by name in ps |
-| 21453 | postgres: pu_3fbdf2eaae40 postgres 127.0.0.1(46140) idle | core-a session or its agent | 54s ago | running | matched by name in ps |
-| 31960 | postgres: rt_02223d98ce12 postgres 127.0.0.1(48110) idle | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 31961 | postgres: pu_09c892e50fef postgres 127.0.0.1(48120) idle | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 32177 | postgres: postgres postgres 127.0.0.1(50130) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 32181 | postgres: postgres postgres 127.0.0.1(50188) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 32218 | postgres: postgres postgres 127.0.0.1(34162) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 32221 | postgres: postgres postgres 127.0.0.1(34198) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 883 | postgres: rt_a46d3735e137 postgres 127.0.0.1(56690) idle | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 884 | postgres: pu_c6c44ff22122 postgres 127.0.0.1(56692) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 992 | postgres: postgres postgres 127.0.0.1(57732) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 995 | postgres: postgres postgres 127.0.0.1(57766) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 1010 | postgres: postgres postgres 127.0.0.1(57888) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11504 | uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no | core-a session or its agent | 192s ago | running | matched by name in ps |
+| 11510 | /tmp/ca-b-run/.venv/bin/python /tmp/ca-b-run/.venv/bin/pytest -q -n 3  | core-a session or its agent | 192s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 31003s ago | running | matched by name in ps |
+| 21423 | postgres: rt_9bdf9669fb5c postgres 127.0.0.1(45860) idle | core-a session or its agent | 68s ago | running | matched by name in ps |
+| 21424 | postgres: pu_3fff970a9979 postgres 127.0.0.1(45864) idle | core-a session or its agent | 67s ago | running | matched by name in ps |
+| 21452 | postgres: rt_0027d46b8bf6 postgres 127.0.0.1(46138) idle | core-a session or its agent | 67s ago | running | matched by name in ps |
+| 21453 | postgres: pu_3fbdf2eaae40 postgres 127.0.0.1(46140) idle | core-a session or its agent | 67s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
