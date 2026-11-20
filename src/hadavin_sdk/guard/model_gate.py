@@ -52,9 +52,10 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   untouched and would show it. A host or tenant named `tool` or `search` does not stop a run. A document
   is enforced whole: a framing token inside a document is data.
   T::test_o17_6_reproduction_a_planted_value_that_equals_a_framing_word_rewrites_the_trusted_marker
-  T::test_o17_6_a_value_that_only_lies_inside_a_framing_token_leaves_the_token_alone
+  T::test_o17_6_a_value_that_only_lies_inside_a_framing_word_leaves_the_fixed_words_alone
   T::test_r2_b1_a_known_value_inside_a_token_slot_never_reaches_the_client
   T::test_o17_6_a_tool_name_from_the_tools_list_or_an_assistant_line_counts_too
+  T::test_r2_m4_an_identifier_kind_value_equal_to_a_tool_name_does_not_stop_the_run
 - With no map (`bind(..., mapping=NO_MAP)`: the eval and replay command lines only) there is no enforce step;
   every audit row of such a gate says so (`AuditEvent.decision` is `no_map`). `map_enforced` is written only when
   the enforce function is the module default (`runmap.enforce_map`) AND the call's map held an entry
@@ -263,19 +264,17 @@ def refused_before_response(exc: BaseException) -> bool:
     return marked and isinstance(exc, ProviderError) and not isinstance(exc, ProviderExhausted)
 
 
-def spend_refused_shape(exc: BaseException) -> bool:
-    """True for what the gate passes on unchanged from `reserve`: an exception whose `.reason` is one of the
-    published reasons, whose class (or a base) is named `SpendRefused` and that chains no cause. Duck typing until
-    `limits.SpendRefused` exists (then: isinstance). The attribute read is guarded: a property that raises is
-    simply not a SpendRefused."""
+def spend_reason(error: BaseException) -> str | None:
+    """The published reason of a `SpendRefused`-shaped error, else None. Shaped: a class (or a base) named
+    `SpendRefused` and a `.reason` that is one of SPEND_REASONS. Duck typing until `limits.SpendRefused` exists
+    (then: isinstance). The attribute read is guarded: a property that raises is not a SpendRefused. Nothing of
+    the error is returned but one of the fixed reasons."""
     try:
-        reason = getattr(exc, "reason", None)
-        named = any(cls.__name__ == "SpendRefused" for cls in type(exc).__mro__)
-        return (
-            named and isinstance(reason, str) and reason in SPEND_REASONS and exc.__cause__ is None
-        )
+        reason = getattr(error, "reason", None)
+        named = any(cls.__name__ == "SpendRefused" for cls in type(error).__mro__)
     except Exception:  # noqa: BLE001 - a hostile property
-        return False
+        return None
+    return reason if named and isinstance(reason, str) and reason in SPEND_REASONS else None
 
 
 def usable_amount(value: Any) -> bool:
@@ -336,6 +335,12 @@ class UnmaskedInput(GateRefused):
     the cap, a bad map, any failure of the enforce step). Never raised because a pattern matched."""
 
     code = CODE_MASK_REFUSED
+
+
+class HeldValueLeft(UnmaskedInput):
+    """Safety net: a held-back secret value still stood raw after the sweeps (it is a bug if this is ever raised)."""
+
+    code = CODE_HELD_LEFT
 
 
 class WorstCaseInvalid(GateRefused):
@@ -459,6 +464,8 @@ class BoundGate:
             self._note(RESULT_REFUSED, enforced, decision=MODE_FAILED)
             if enforced == CODE_FRAMING_REFUSED:
                 raise FramingRefused  # raised outside any `except`: no cause and no context to leak
+            if enforced == CODE_HELD_LEFT:
+                raise HeldValueLeft
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
         messages, documents, mode = enforced  # from here on only the enforced copies are used
         failure: str | None = None
@@ -478,8 +485,9 @@ class BoundGate:
             try:
                 reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
             except Exception as exc:
-                if spend_refused_shape(exc):
-                    self._note(RESULT_REFUSED, exc.reason, decision=mode)  # type: ignore[attr-defined]
+                reason = spend_reason(exc)
+                if reason is not None:
+                    self._note(RESULT_REFUSED, reason, decision=mode)
                     raise  # a SpendRefused passes unchanged
                 failure = CODE_RESERVE_REFUSED  # a KeyError, a down store: a code, not the error
             except (

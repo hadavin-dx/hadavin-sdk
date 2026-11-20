@@ -596,3 +596,38 @@ def test_m4_smoke_a_reader_thread_never_sees_a_known_key_missing_during_many_wri
     assert not any(t.is_alive() for t in readers)
     assert errors == [] and missing == [] and raw == []
     assert len(mapping) > 400
+
+
+# --- review round 2, code reviewer M4: the snapshot is consistent while the writer is between two writes ----------
+
+
+class _HookedCache(dict):
+    """The redactor writes `cache["map"]` and then `cache["state"]`, and the run's map is updated after both
+    (`redact_text`). A reader in between sees the NEW cache map with the OLD map and state: the deterministic case
+    a probabilistic thread test cannot pin."""
+
+    def __init__(self, on_map) -> None:
+        super().__init__()
+        self.on_map = on_map
+
+    def __setitem__(self, key, value) -> None:
+        super().__setitem__(key, value)
+        if key == "map":
+            self.on_map()
+
+
+def test_r2_m4_a_reader_between_the_cache_write_and_the_map_update_sees_a_whole_snapshot():
+    mapping = runmap.RunMap()
+    runmap.redact_text(f"host {IP}", mapping)
+    seen: list[str] = []
+    mapping.redact_cache = _HookedCache(
+        lambda: seen.append(runmap.enforce_map(f"host {IP} token {TOKEN}", mapping))
+    )
+    runmap.redact_text(f"password={TOKEN}", mapping)  # the writer: learns TOKEN
+    assert seen, "the hook did not run"
+    # TOKEN is not in the map yet at that moment: only the old value is replaced, nothing is half built or raw-old
+    assert seen[0] == f"host <IPV4_1> token {TOKEN}"
+    mapping.redact_cache = {}
+    assert runmap.enforce_map(f"host {IP} token {TOKEN}", mapping) == (
+        "host <IPV4_1> token <SECRET_1>"
+    )
