@@ -73,7 +73,7 @@ Reviewer egm:egm-design, read-only, NOTHING executed: each scenario is derived f
 - Not tried on purpose: a background shell loop that pushes every minute. That would go around the denial (ORDER 003 item 4: do not work around a denial).
 - Needed from the owner: allow the cron in this cloud session's permission prompt/settings, or accept boards per tool batch.
 
-## E8 (08:12Z) Drift report found promises in code docstrings that no code keeps (evidence/DRIFT-G1-G2-G3.md, top drift 1 and 2)
+## E9 (08:12Z) Drift report found promises in code docstrings that no code keeps (evidence/DRIFT-G1-G2-G3.md, top drift 1 and 2)
 - `guard/redact.py:15-17` says the outbound gate's "G5 re-runs them, independently, on everything that leaves"; `approvals/gate.py:42-44` says text that still holds a secret is blocked (G5); `gate.py:59-63` names `enforce`, `for_terminal`, `outbound_data` and a BLOCK verdict that do not exist. The gate's `enforce_map` replaces known values only and runs no pattern. The G6 wording fix is not applied.
 - `runmap.is_masked` is promised by G0, G3-I5, "Interfaces: Offered" and the proposed G6 text but was deleted (lead m7); tests/test_runmap_is_masked.py is gone and the G7 ticket still cites it.
 - The redactor exempts a SECRET value made only of its own tokens of any kind (`_OWN_OUTPUT`, redact.py:866-883): `password=‹EMAIL_1› host` stays unmasked; README K43 and decision 7 say only `‹SECRET_n›`.
