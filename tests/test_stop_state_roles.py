@@ -1563,7 +1563,7 @@ def test_s2_below_16_a_vouched_role_is_not_listed_for_being_a_member_of_another_
 def test_s2_below_16_a_member_of_an_accepted_superuser_is_not_listed(w):
     if not _below_16(w):
         pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
-    su, member = w.new_role("sv", "LOGIN SUPERUSER"), w.new_role("sm", "LOGIN")
+    su, member = w.new_role("sv", "LOGIN SUPERUSER CREATEROLE"), w.new_role("sm", "LOGIN")
     w.grant("GRANT {} TO {}", su, member)
     assert _who(w.scoped, w.reset, (su,)) == []
 
