@@ -28,3 +28,4 @@ Sources: ESCALATIONS.md, DECISIONS.md, requests/ (001-004), QUESTIONS.md, ORDERS
 
 - DECISIONS.md: 29 rows, the lead verdict column is empty on every row. Not listed: ORDER 002 A.4 says reversible choices do not wait for a verdict. ORDER 005 covers the rows up to 05:21 ("all OK"); ORDER 013 answers the crash-hook row and the back-off row.
 - No git command was run. Only this file was written.
+- Drift report 2 (d-fix21): R2-28 (root README has no trigger-worker section) waits for REQ-002 (core-b's README text). R2-25 (mutant script exits 2: the G33d anchor `now - last_warned` must become `at - last_warned`, and the xfail text in tests/test_mutants_anchors.py says line 1255, the mutant is at 1236) and R2-26, R2-27 (docstring of tests/endpoint_mutants.py) need the owner to allow the edit of that file.
