@@ -524,6 +524,31 @@ at. If the workflow took them as an end, the gap described above would stay open
 - With too few checks nothing is lost: the workflow then fails at "Stop: still running" for a run that is merely
   slow, and a person gets a notice that was not needed. It never ends as a success for a run that is not done.
 
+### Which failures are permanent and which are an outage
+
+| Kind | Answers | Who acts | What to do |
+|---|---|---|---|
+| Permanent | 400, 401, 409, 413 (and every other 4xx, and 500) | A person must act. Sending again never helps. | Stop. Fix the document, the secret, the clocks or the size, or look at the 409 (the key was used with another document). A new key is needed only if the document really is new. |
+| Outage | 503 from the worker; 502 or 504 from the proxy; no HTTP answer; a timeout | Nobody yet: the worker or its store is busy, restarting or not reachable. | Send again with the SAME key. The first send may already be running; the key makes a repeat safe. |
+
+One limit of this table: in the code, an exception inside the worker's start step is answered 503 whatever its
+cause, so a fault that is really permanent can look like an outage and the template then tries again until its
+rounds run out. This is the lead's reviewer's finding (round 3, Minor 5); the answer is not split in this version.
+
+### Where the worker runs
+
+- Start the worker on Linux or in a container. The stop signal SIGTERM (close the port, start no new run, let the
+  running one finish, exit 0) is handled by `serve` in `src/hadavin_sdk/triggers/worker.py`, and the tests that show it run on Linux.
+- On a Windows laptop only Ctrl-C stops the worker cleanly. SIGTERM is never delivered there, so a stop by n8n's
+  host, a service wrapper or `taskkill` is a hard kill with no drain, and the tick later sets a cut run to
+  NEEDS_PERSON "interrupted" (`handover/core-a/WINDOWS-NOTES.md`, W02). The worker's docstring says Ctrl-Break
+  (SIGBREAK) is handled like SIGTERM, but WINDOWS-NOTES says it kills the process; which is true is UNVERIFIED.
+- The worker listens on 127.0.0.1 by default and refuses another host unless `allow_non_loopback` is true, which
+  a config cannot set today (stated limit 7). n8n in a container cannot reach a loopback-only worker: inside a
+  container 127.0.0.1 is the container itself (`WINDOWS-NOTES.md`, W03). The operator must put a TLS proxy in front
+  of the worker, or run n8n on the same host and network as the worker (for example both natively, or in one
+  network namespace). Whether a given Docker setup can then reach it is UNVERIFIED; nobody has run it.
+
 ### Three limits
 
 1. Until the tick has run, a dead run looks alive. A run whose process died keeps the state RECEIVED or WORKING
