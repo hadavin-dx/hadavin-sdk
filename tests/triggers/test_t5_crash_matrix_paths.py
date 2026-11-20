@@ -77,6 +77,13 @@ from tests.triggers.crash_launcher import (
     signed_post,
     wire_body,
 )
+from tests.triggers.crash_money import (
+    assert_end_state,
+    assert_kill_state,
+    calls_done,
+    memory_money,
+    pg_money,
+)
 from tests.triggers.test_t5_crash_matrix import (
     FIRE_WAIT_S,
     SECRET,  # the fake secret of part 1 (`_wsgi_post` signs with it)
@@ -317,6 +324,29 @@ def _points(path: Path_) -> list[Point]:
 
 
 ALL_POINTS: dict[str, list[Point]] = {name: _points(path) for name, path in PATHS.items()}
+
+
+# Money at the start of a path (RESERVES): `approve` starts from a whole propose run (two model calls, each
+# reserved and settled); the others start with nothing booked.
+MONEY_START: dict[str, tuple[int, int]] = {"approve": (2, 2)}
+
+
+def money_at_kill(point: Point) -> tuple[int, int]:
+    """(reservations booked, settled) at the kill, from the TABLE of the path (not from a run): a
+    `reserve_spend` / `settle_spend` row counts once its `:after` point is passed and not at its `:before`."""
+    start = MONEY_START.get(point.path, (0, 0))
+    number = int(point.id[len(point.path) : len(point.path) + 2])
+    reserved, settled = calls_done(
+        [row[0] for row in PATHS[point.path].rows], number, point.point.rpartition(":")[2]
+    )
+    return start[0] + reserved, start[1] + settled
+
+
+def money_full(path: str) -> int:
+    """Reservations of a whole run of the path: the start plus one per `reserve_spend` row."""
+    return MONEY_START.get(path, (0, 0))[0] + sum(
+        row[0] == "store.reserve_spend" for row in PATHS[path].rows
+    )
 
 
 def after_tick(path: str, row: str | None, req: str | None) -> tuple[str, str | None] | None:
@@ -848,6 +878,9 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
         len(files.executed()),
     )
     assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
+    if RESERVES:  # one open hold between reserve and settle, none before, settled after; open stays open
+        money_kill = assert_kill_state(*pg_money(dsn, run_id), {money_at_kill(point)}, point.id)
+        assert row is not None or money_kill == (0, 0)  # no run row, no hold
     assert ack_status in ((None,) if row is None else (None, 202, 200)), (ack_status, ack_data)
     if ack_status in OK:
         assert rows and json.loads(ack_data)["run_id"] == run_id
@@ -888,6 +921,8 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
     want_cards = path.fresh_cards if row is None else point.cards + (req == "unsent")
     seen = _check_invariants(files, point, row, calls_at_kill, state_after)
     assert seen["cards"] == want_cards, (seen, want_cards)
+    if RESERVES:  # no second hold from the restart, the tick or the retry; the day total is the rows' sum
+        assert_end_state(*pg_money(dsn, run_id), money_kill, row, money_full(point.path), point.id)
     _observe(
         "postgres",
         point,
@@ -970,6 +1005,9 @@ def test_memory_raise_at_point(point: Point, tmp_path):
         len(files.executed()),
     )
     assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
+    if RESERVES:
+        money_kill = assert_kill_state(*memory_money(store, run_id), {money_at_kill(point)}, point.id)
+        assert row is not None or money_kill == (0, 0)
     if path.via == "worker":  # the request thread survives the loop thread and always answers
         assert ack_status in ((503,) if row is None else (202, 200)), (ack_status, ack_data)
 
@@ -1008,6 +1046,8 @@ def test_memory_raise_at_point(point: Point, tmp_path):
     want_cards = path.fresh_cards if row is None else point.cards + (req == "unsent")
     seen = _check_invariants(files, point, row, calls_at_kill, state_after)
     assert seen["cards"] == want_cards, (seen, want_cards)
+    if RESERVES:
+        assert_end_state(*memory_money(store, run_id), money_kill, row, money_full(point.path), point.id)
     _observe(
         "memory",
         point,

@@ -15,6 +15,18 @@ Stdout, line by line: ``port <n>`` (first line, once the socket is bound); after
 ``run <run_id> <STATE>`` line per stored run and then ``stopped``. The model double appends one
 byte to ``--calls-file`` per call, so the parent can count model calls across restarts.
 
+LIMIT of the seeding: on PostgreSQL the child installs the test-only money wrappers (`install_pg_test_seeding`),
+which write ``hadavin_caps`` and WIDEN ``max_day_skew`` to 100000 days and ``min_expiry_age`` to 0. So the
+matrix does NOT exercise the real day window or the 3600 s expiry floor and proves nothing about either; it
+only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
+state of `crash_money.py`).
+
+LIMIT of the seeding: on PostgreSQL the child installs the test-only money wrappers (`install_pg_test_seeding`),
+which write ``hadavin_caps`` and WIDEN ``max_day_skew`` to 100000 days and ``min_expiry_age`` to 0. So the
+matrix does NOT exercise the real day window or the 3600 s expiry floor and proves nothing about either; it
+only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
+state of `crash_money.py`).
+
 Environment: ``TRIGGER_CHILD_SECRETS`` is a JSON object sender id -> fake secret value;
 ``CRASH_CHILD_DSN`` is the PostgreSQL DSN for ``--store postgres``.
 """
@@ -23,6 +35,8 @@ from __future__ import annotations
 
 import argparse
 import http.client
+import inspect
+import inspect
 import json
 import os
 import subprocess
@@ -44,6 +58,42 @@ from tests.k5_support import ScriptLLM, build_runtime
 # The live loop reserves the worst case before a model call and settles after (core-b); an older loop
 # books with add_spend/add_cost after the call. The crash tables follow whichever the code under test does.
 RESERVES = hasattr(Limits, "reserve")
+
+
+def check_reserves_wiring() -> None:
+    """RESERVES must be what the loop REALLY does: the live loop calls `self.limits.reserve(` (and `Limits` has
+    `reserve`), or neither is true. A mismatch would run the wrong crash table; and with RESERVES the child needs
+    tests/money_caps_seed.py, else every run would end late in a NEEDS_PERSON timeout."""
+    from hadavin_sdk.runtime import agent_loop
+
+    calls = "limits.reserve(" in inspect.getsource(agent_loop)
+    assert RESERVES == calls, (
+        f"RESERVES={RESERVES} but the agent loop {'calls' if calls else 'does not call'} limits.reserve: "
+        "the crash tables follow the wrong booking"
+    )
+    if RESERVES and not (ROOT / "tests" / "money_caps_seed.py").exists():
+        raise AssertionError(
+            "RESERVES is True but tests/money_caps_seed.py is missing: the children could not seed hadavin_caps "
+            "and every run would end in NEEDS_PERSON"
+        )
+
+
+def check_reserves_wiring() -> None:
+    """RESERVES must be what the loop REALLY does: the live loop calls `self.limits.reserve(` (and `Limits` has
+    `reserve`), or neither is true. A mismatch would run the wrong crash table; and with RESERVES the child needs
+    tests/money_caps_seed.py, else every run would end late in a NEEDS_PERSON timeout."""
+    from hadavin_sdk.runtime import agent_loop
+
+    calls = "limits.reserve(" in inspect.getsource(agent_loop)
+    assert RESERVES == calls, (
+        f"RESERVES={RESERVES} but the agent loop {'calls' if calls else 'does not call'} limits.reserve: "
+        "the crash tables follow the wrong booking"
+    )
+    if RESERVES and not (ROOT / "tests" / "money_caps_seed.py").exists():
+        raise AssertionError(
+            "RESERVES is True but tests/money_caps_seed.py is missing: the children could not seed hadavin_caps "
+            "and every run would end in NEEDS_PERSON"
+        )
 AGENT, PRINCIPAL, TENANT = "test-agent", "svc:test-agent", "tenant-a"
 HOST = "127.0.0.1"
 SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
@@ -52,6 +102,8 @@ RUNNER_POINTS = ("get_run",)
 ROOT = Path(__file__).resolve().parents[2]
 PATH, PREFIX = "/v1/trigger", "X-Hadavin"
 START_WAIT_S, EXIT_WAIT_S, REQUEST_TIMEOUT_S = 60.0, 30.0, 30.0
+check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
+check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
 
 
 class CountingLLM(ScriptLLM):
