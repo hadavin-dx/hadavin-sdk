@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "anchors",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "re-anchor G8c, G16a, G16b to the d-fix16 text (killer expects found on a scratch copy, never by running the script); a PURE anchor-check unit test (every mutant's old text occurs exactly once; G33d xfail(strict) pending the owner); real-subprocess exit-code tests for anchor error / baseline failure / runner exception",
-   "started UTC": "12:10",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead run 4"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -2948,6 +2934,19 @@
    "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
    "retries so far": 0,
    "reason": "d-fix16 review: NO Blocker, NO Major; 4 nits (dead hasattr guard, unreachable 408/417 + missing rows for 431/unknown code/close_connection, docstring 'no answer' only for a complete versionless request (3.12 still answers a stalled/over-limit one), a long f-string); known limit: handle_expect_100 writes the interim 100 outside send_error (dead while protocol_version stays HTTP/1.0)"
+  },
+  {
+   "id": "anchors",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "re-anchor G8c, G16a, G16b to the d-fix16 text (killer expects found on a scratch copy, never by running the script); a PURE anchor-check unit test (every mutant's old text occurs exactly once; G33d xfail(strict) pending the owner); real-subprocess exit-code tests for anchor error / baseline failure / runner exception",
+   "started UTC": "12:10",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "G8c, G16a, G16b re-anchored to the d-fix16 text (each killer checked on a scratch copy with --noconftest: G8c fails with an HTML page, G16a with a 505 status line, G16b with the WARNING/AttributeError log pair: the whole `request_version == HTTP/0.9 or not isinstance(headers, Message)` condition is replaced because on 3.13 the second part alone still closes); NEW tests/test_mutants_anchors.py: every mutant's old text occurs exactly once (G33d = the ONLY stale anchor: xfail strict 'pending the owner'); 3 real-subprocess exit tests (stale anchor via check_anchors/exit_guard exit 2 no traceback; failing baseline exit 1; runner exception exit 1); 196 passed 1 xfailed; other stale anchors: none; unused constants EMPTY_REFUSAL, NO_VERSION left in the script"
   }
  ]
 }
