@@ -20,9 +20,9 @@ LAST_PUSH = Path.home() / ".cache" / "core-a-last-push.txt"
 
 def sh(cmd: list[str], cwd: Path = REPO, timeout: int = 60) -> tuple[int, str]:
     try:
-        p = subprocess.run(
+        p = subprocess.run(  # noqa: S603
             cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, check=False
-        )  # noqa: S603
+        )
         return p.returncode, (p.stdout + p.stderr).strip()
     except subprocess.TimeoutExpired:
         return 124, "TIMEOUT"

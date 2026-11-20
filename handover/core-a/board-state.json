@@ -698,19 +698,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "batch7",
-   "role": "evidence runner (never judges)",
-   "model": "sonnet",
-   "what exactly it is doing": "WHOLE suite after d-fix5 with REQUIRE_PG=1 and PG env (dblink test), combined tree, mutants; evidence/BATCH7-*",
-   "started UTC": "09:06",
-   "expected end": "about 20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "after d-fix5"
-  },
-  {
    "id": "drift-docs",
    "role": "builder (text only)",
    "model": "sonnet",
@@ -2360,6 +2347,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "DRIFT-REPORT.md: 26 drifts (6 HIGH, 9 MEDIUM, 11 LOW); worst: n8n README says worker has built-in fallbacks/no connection cap/allow_non_loopback not settable (all three false now); WINDOWS-NOTES W01/W02 stale; ticket D omits Retry-After and the server's header refusals; E5/E11 have no test"
+  },
+  {
+   "id": "batch7",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "WHOLE suite after d-fix5 with REQUIRE_PG=1 and PG env (dblink test), combined tree, mutants; evidence/BATCH7-*",
+   "started UTC": "09:06",
+   "expected end": "about 20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "BATCH7: whole suite 12 failed (10 strict by design, brand string in lead's BRIEF-PREAMBLE.md, dblink env) / 12256 passed / 458 skipped / 75 xfailed; combined tree core-b 2bdbba391: 1327 passed 4 skipped 0 failed; mutants 90 of 90 (89 killed + 1 crash-accepted); ruff: 2 errors in my tools/board.py (noqa moved by the formatter): fixed"
   }
  ]
 }
