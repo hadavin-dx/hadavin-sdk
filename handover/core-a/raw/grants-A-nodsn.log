@@ -1,0 +1,7 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+..........................................ssssssssssssss.sssssssssssssss [ 84%]
+sssss...sssss                                                            [100%]
+46 passed, 39 skipped in 22.44s
