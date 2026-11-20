@@ -71,4 +71,10 @@ Redaction is pattern based and treats the end of a value the way the redactor's 
 
 Control that does not depend on these limits: a tool is not handed a secret it does not need (least privilege).
 
-On PostgreSQL after migration 0011, the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
+## Spend limits (stated limits)
+
+Exact money and the no-lowering wall are in force; no-overspend is NOT in force until the model gate installs reserve/settle (F-install).
+
+In force on PostgreSQL after migration 0011: money is exact decimal, and the runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). The caps live in the table `hadavin_caps`, written only under the reset login. The reserve and settle functions exist and are tested.
+
+Not in force: the live path does not reserve before a model call. It calls `Limits.blocked()` before the call and books the cost after it, so concurrent runs can each pass the check and overshoot a cap by up to (concurrent runs x the cost of one call). No text of this package may claim a hard spend cap, or that a budget cannot be exceeded, until the model gate installs reserve/settle (F-install).
