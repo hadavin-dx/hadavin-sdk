@@ -323,8 +323,9 @@ def test_level2_memory_same_key_with_and_without_the_nul_are_two_documents(memor
     document with a NUL has been stored, the same key with the NUL taken out is 409 with an empty
     body and writes nothing; and the other way round. Safe: a sender that strips the NUL on a
     retry gets a plain refusal, never a second run."""
-    with_nul, without = CASES["nul_in_the_middle"][0], CASES["nul_in_the_middle"][0].replace(
-        NUL, ""
+    with_nul, without = (
+        CASES["nul_in_the_middle"][0],
+        CASES["nul_in_the_middle"][0].replace(NUL, ""),
     )
     assert memory_door.post(with_nul, "key-1").status in (200, 202)
     memory_door.settled(_run_id("key-1"))
