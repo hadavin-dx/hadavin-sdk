@@ -319,7 +319,10 @@ _ASCII_OR_ONE = re.compile(r"[\x00-\x7f]+|[^\x00-\x7f]")  # a run of ASCII, or o
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
     """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
-    character, the index of the original character it came from."""
+    character, the index of the original character it came from. Known limit (pinned by an expected failure in
+    tests/test_runmap_e19_combining_marker.py): NFKC runs per character, so a combining mark (U+0338, U+0301, ...) beside a
+    marker character is kept in the view and a marker spelled with one is not matched. Dropping marks here would change the
+    canonical text every caller (redaction, comparison) sees, so it is not done."""
     chars: list[str] = []
     index: list[int] = []
     for run in _ASCII_OR_ONE.finditer(text):
@@ -363,7 +366,11 @@ def escape_placeholders(text: str) -> str:
     """Untrusted text may contain a literal `<IPV4_2>` in any case (`<ipv4_2>`, `<Ipv4_2>`). Left as typed it
     would look like the placeholder the redactor later issues to a different value, and restore or the grounding
     check would treat it as that value. Every placeholder-shaped literal becomes a non-placeholder. Call it on
-    `canonical(text)`, so Unicode look-alikes are already ASCII."""
+    `canonical(text)`: that folds Unicode COMPATIBILITY forms (NFKC: full-width, circled, small-form letters) to ASCII and
+    drops invisible format characters. It does NOT fold UTS #39 confusables (a Cyrillic or Greek look-alike letter stays
+    as it is), and, because NFKC is applied per character, a combining mark inside a placeholder (`<IPV4` + U+0338 + `_2>`)
+    composes with nothing and keeps the literal from matching: such a spelling is not escaped (a model-visible spoof only;
+    it is never a key of the run map, so nothing is restored from it)."""
     return replace_canonical(text, _LOOKALIKE, lambda m: f"\u2039{m.group(1)}_{m.group(2)}\u203a")
 
 
