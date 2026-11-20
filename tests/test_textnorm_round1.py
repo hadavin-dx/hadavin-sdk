@@ -425,9 +425,27 @@ def test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_wor
     assert has_mixed_script("ab \u0903 " + cyr) is False, (
         "a space between the words still splits them"
     )
+    # The first clause was ``is False`` on core/P1b-fixwip (round 1, M16: a Latin word with a foreign spacing mark is not mixed). The fold keeps
+    # rule (b) of P1a fix8 (rebase/P1b-o140): a Latin letter with a spacing mark (Mc) of a script that no letter of the word owns IS mixed script.
+    # The two heads never met; flagging is the stricter side; lead decision 2026-11-20 (ORDER 010, escalation E4). The Cyrillic clause does not
+    # depend on the decision: both rules need a Latin letter, and that word has none.
     assert (
-        has_mixed_script("ab\u0903cd") is False and has_mixed_script(cyr + "\u0903" + cyr) is False
+        has_mixed_script("ab\u0903cd") is True and has_mixed_script(cyr + "\u0903" + cyr) is False
     )
+
+
+def test_order010_a_latin_word_carrying_a_foreign_spacing_mark_is_flagged_as_mixed_script():
+    """Pins the case ORDER 010 decided (escalation E4): rule (b) of P1a fix8 stays in the fold. A Latin word that carries a spacing mark (Mc) of
+    another script is flagged wherever the mark sits; the same mark next to letters of its own script, or in a word with no Latin letter, is not.
+    PASSES on the fold and on rebase/P1b-o140; on core/P1b-fixwip (round 1's rule) the first group would not be flagged (read, not run)."""
+    for word in ("ab\u0903cd", "ab\u093ecd", "abcd\u0903", "ab\u0903"):
+        assert has_mixed_script(word) is True, (
+            f"FOREIGN-MARK-FLAGGED: the Latin word {word.encode('unicode_escape').decode()} with a Devanagari spacing mark is not flagged"
+        )
+    for word in ("\u0930\u093e\u092e", "\u0430\u0431\u0903\u0430\u0431", "abcd"):
+        assert has_mixed_script(word) is False, (
+            f"FOREIGN-MARK-FLAGGED: {word.encode('unicode_escape').decode()} holds no Latin letter with a foreign spacing mark and is flagged"
+        )
 
 
 def test_m16_the_apostrophe_limit_is_pinned_and_named():

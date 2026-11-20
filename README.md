@@ -20,6 +20,10 @@ fold still runs, but every check name starts with a tag and never equals one mad
 Python; nothing in this package calls it yet (the next package, P1b, calls it in `app.build`). Moving the pin to a later Python (for example
 3.14) is a data migration, not a version bump: see the CHANGELOG.
 
+Requirement since the text fold (ticket G, part G1): pilot and prod need a Python whose Unicode data is 15.1.0 (3.13). `app.build` now calls
+the start-up check `textnorm.require_pinned_unidata` for pilot and prod, and on any other Unicode data (Python 3.12.3 carries 15.0.0) the
+check refuses to start: it raises `UnidataMismatch` and nothing runs. The check is not loosened; a demo may still run on 3.12.
+
 ## K1b-lite: replay check (report only)
 
 `hadavin-sdk replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]` runs a client's recorded
