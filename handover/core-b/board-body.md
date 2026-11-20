@@ -28,25 +28,15 @@ Order required: brainstorm, draft, plan review, resolve, build, evidence runner,
 | F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
 Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
-## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
-| id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
-|---|---|---|---|---|---|---|---|---|---|---|
-| adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
-| adab2bba | builder (tests) | sonnet | tests for the provider mark fix and the canonical sender secret names, 4 mutants; worktree PMT | 07:12 | +20 min | UNVERIFIED | running | none | 0 | the fix builders write no tests |
-| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: commit 37c8e93 landed (per-kind refused statuses for routers, truncated chain, docstrings); 334 passed, 1 skipped | 07:08 | done | 100 | done | none | 1 | result review Majors 1 and 2 |
-| a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
-| ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
-| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a8ee3c2e | builder (merge) | sonnet | second merge of cloud/core-b into the integration tree (retry.py, defaults.py, ii-meter.md) and the F-install test commit on top; worktree Y | 07:22 | +20 min | UNVERIFIED | running | none | 0 | the integration tree must carry the mark fix, F-store fix 3 and D-config fix 2 before batch run 3 |
-| a9cce047 | builder (tests) | sonnet | F-install tests: commit 6a312ef (test_model_gate_install, contracts/test_meter, gate_install_mutants): 579 passed, 2 failed (both are core-c's gate: it has no usd_cap and its own test about the mark); mutants 28 of 28 killed | 06:46 | done | 100 | done | none | 0 | evidence/F-install-tests-evidence.txt |
-| a8678338 | builder (tests) | sonnet | tests for F-store fix round 3 (ids, caps, memory atomicity, sender secret reader, document sizing, lock timeout) and 7 mutants; worktree FT | 07:15 | +25 min | UNVERIFIED | running | none | 0 | the fix builder wrote no tests |
-| a99a298a | builder (fix) | sonnet | F-store fix round 3: commit 83b1bb7 landed (F1 to F7); 862 passed on its list; lock timeout set in build(), not on the migrate connection | 06:58 | done | 100 | done | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
-| abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |
-| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config: 2 doc Blockers, 7 Majors, 10 Nits; report tickets/F-store-hostile-review-1.md | 06:46 | done | 100 | done | 1 of 1 | 1 | answered: code in fix round 3, docs fixed |
-| earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
-| 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
-| 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
+## AGENTS (REWRITTEN 16:55Z; all sonnet or haiku, none fable; the old 07:xx rows are history in git; load 0.46 0.76 1.22; pytest processes by ps: 4)
+| name | role | model | package / files held | worktree | started UTC | state |
+|---|---|---|---|---|---|---|
+| AB5 | builder | sonnet | P2 B5 audit-rights fixes (review M1 texts, M2 quarantine collision, minors): migrate.py audit grants, chain.py, app.py, SECURITY.md | MAB5 (wip/cloud-core-b/audit-rights fdf4b214e pushed) | 15:00 | running |
+| P1 | builder | sonnet | F-install: merge core-c 0e33c0641 + core-b head into the F-install branch; agent_loop gate/reserve decision; guard/model_gate wiring | MP1 | 16:55 | running |
+| P3 | builder | sonnet | F-store-hostile-review-1 (2 doc Blockers + 7 Majors): status table + fixes, docs and tests (NOT migrate.py) | MP3 | 16:55 | running |
+| P4 | reviewer (read-only) | sonnet | D-config fix 2 + provider-mark round 1 re-review | none | 16:55 | running |
+| P5 | builder | sonnet | 0010/0011 draft checksum hard ConfigError + unmapped old overload + upgrade-path tests (migrate.py ledger region) on wip/cloud-core-b/merge-migrate | MP5 | 16:55 | running |
+| P6 | evidence batch run 3 (haiku) | haiku | ONE heavy run on the merged tree after P1 lands | own DB | not started | waits for P1 |
 
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
@@ -359,3 +349,5 @@ Waiting for the lead's 'clean': wip/lead-b-migrate (merge prepared as wip/cloud-
 16:38Z LOAD 2.00 1.54 1.47. B5 audit-rights (AB5, MAB5): commits so far 6 on top of the laptop-merge base; not pushed until it reports. TA (expired-hold alert, MTA) running. xr-from-core-a-3.md: not landed yet. RUNNING 2.
 
 16:51Z LOAD 0.39 1.13 1.45. B5 audit-rights BUILT (AB5, 7 commits, tip 8977977ab) and pushed as wip/cloud-core-b/audit-rights (base wip/cloud-core-b/merge-migrate 55df54150, i.e. includes the laptop's unreviewed migrate branch): 0012 outbox functions (done/quarantine, extra rule: no rename onto an existing row), checkpoint role (--checkpoint-role, checkpoint_dsn_secret_name, pilot/prod require it), runtime loses DELETE audit_outbox and INSERT audit_checkpoints, 2 xfail pins flipped, 10/10 mutants killed, tests: 980 passed/1 failed(fixed) in the migrate set, 2040 passed/9 failed(fixed, 114 re-run) in the wider set; 26 new tests. Known caveats AB5 is fixing now: unit tests for the 3 app.py refusals, close the checkpoint connection on refusal, loud warning for demo/dev checkpoint loss. FRESH REVIEWER RAB5 running (since 16:51Z, writes tickets/A-audit-rights-build-review-1.md). NOT on cloud/core-b: lands after wip/lead-b-migrate is clean. RUNNING 2 (AB5 caveats, RAB5).
+
+16:55Z LOAD 0.46 0.76 1.22 (ps pytest count 6). Lead order 16:55Z: P1 F-install (merge core-c 0e33c0641), P2 B5 = AB5 (branch pushed: wip/cloud-core-b/audit-rights fdf4b214e; left: its review's M1 texts, M2 quarantine collision, minors; then fresh reviewer), P3 F-store hostile fixes, P4 re-reviews, P5 hard ConfigError, P6 batch 3 after P1: all started or queued per the AGENTS table above. Each package ends with a fresh egm:* reviewer in sequence.
