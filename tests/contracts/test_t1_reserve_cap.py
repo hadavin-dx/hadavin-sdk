@@ -150,12 +150,20 @@ def test_t1_cap_3_and_worst_1_grants_exactly_3_of_50(w):
     for rid in winners:
         assert stores[0].settle_spend(rid, D("0.10"), agent_id=AGENT)[1] is True
     assert reader.spend_totals(AGENT, DAY) == (D("0.30"), D("0.30"))
-    again = _together(stores, _reserve(D("3.00")))
+    again, new_ids = _reserve_ids(stores)
     assert (
         again.count("granted") == 2 and again.count("day") == CALLERS - 2
     )  # 0.30 + 2 x 1.00 fits, a third not
-    assert reader.spend_totals(AGENT, DAY)[0] == D("2.30")
+    assert reader.spend_totals(AGENT, DAY) == (D("2.30"), D("2.30"))
     assert len(outcomes) == CALLERS
+    new_granted = {new_ids[i] for i, o in enumerate(again) if o == "granted"}
+    rows = _rows(w)
+    assert len(rows) == 5  # the 45 refusals left no row
+    assert {rid for rid, v in rows.items() if v[2] == "open"} == new_granted
+    assert sorted(v[1] for v in rows.values() if v[2] == "settled") == [D("0.10")] * 3
+    assert {rid: v for rid, v in rows.items() if rid in new_granted} == {
+        rid: (WORST, None, "open", False) for rid in new_granted
+    }
 
 
 def test_t1_cap_2_50_grants_exactly_2(w):
@@ -193,6 +201,11 @@ def test_t1_the_month_cap_holds_across_two_days_of_the_month(w):
     other, _ = reader.spend_totals(AGENT, eve)
     _verdict(outcomes, month, granted=3, refused_by="month", cap=cap)
     assert one + other == D("3.00")
+    # each day's counter equals that day's grants, and a refused caller left no row behind
+    on_day = sum(1 for i, o in enumerate(outcomes) if o == "granted" and i % 2)
+    on_eve = sum(1 for i, o in enumerate(outcomes) if o == "granted" and not i % 2)
+    assert (on_day + on_eve, one, other) == (3, WORST * on_day, WORST * on_eve)
+    assert len(_open_rows(w)) == 3
 
 
 def test_t1_fifty_agents_with_one_caller_each_do_not_block_each_other(w):
@@ -222,9 +235,12 @@ def test_control_the_old_check_then_add_spend_pattern_admits_more_than_3(w):
         return "granted"
 
     outcomes = _together(stores, old_pattern)
-    day, _ = reader.spend_totals(AGENT, DAY)
+    day, month = reader.spend_totals(AGENT, DAY)
     assert outcomes.count("granted") > 3, outcomes
     assert day > cap
+    assert (
+        day == month == WORST * outcomes.count("granted")
+    )  # every admitted caller booked both counters
     with pytest.raises(AssertionError):
         _verdict(outcomes, day, granted=3, refused_by="day", cap=cap)
 
@@ -391,6 +407,24 @@ def test_t1_a_settle_at_zero_gives_the_whole_reservation_back(w):
     assert reader.spend_totals(AGENT, DAY) == (D("3.00"), D("3.00"))
 
 
+def test_t1_a_settle_at_exactly_the_reserved_amount_leaves_the_cap_shut(w):
+    """The boundary between "below" (frees room) and "above" (overshoots): all three settle at EXACTLY the reserved
+    1.00. The counters stay at 3.00, the rows say 1.00 settled, and the cap is still shut: 50 reservations are all
+    refused and a single reserve that would raise does raise."""
+    stores, reader, granted = _three_open(w)
+    for rid in granted:
+        row, applied = reader.settle_spend(rid, WORST, agent_id=AGENT)
+        assert applied is True and (row.reserved_usd, row.settled_usd) == (WORST, WORST)
+    assert reader.spend_totals(AGENT, DAY) == (D("3.00"), D("3.00"))
+    assert _rows(w) == {rid: (WORST, WORST, "settled", True) for rid in granted}
+    with pytest.raises(SpendCapExceeded):
+        reader.reserve_spend(new_id("res"), AGENT, DAY, WORST, day_cap=D("3.00"), month_cap=BIG)
+    again, _ = _reserve_ids(stores)
+    assert again == ["day"] * CALLERS
+    assert reader.spend_totals(AGENT, DAY) == (D("3.00"), D("3.00"))
+    assert len(_rows(w)) == 3
+
+
 def test_t1_expired_reservations_stay_booked_and_keep_the_cap_shut(w):
     """from core-c T1: an open row nobody closed is marked expired by the sweep and stays booked at the full amount;
     the counters do not move, the cap stays shut, a second sweep expires nothing."""
@@ -412,7 +446,9 @@ def test_t1_expired_reservations_stay_booked_and_keep_the_cap_shut(w):
 
 
 def test_t1_fifty_sweeps_at_once_expire_each_reservation_once(w):
-    """from core-c T1: 50 connections run the sweep at the same moment over three open rows: counts add up to 3."""
+    """from core-c T1: 50 connections run the sweep at the same moment over three open rows: counts add up to 3.
+    Which sweep expires which row (and how the 3 are split between the 50 counts) is up to the row locks and is not
+    asserted; only the total, the counters and the rows' final state are."""
     stores, reader, granted = _three_open(w)
     counts = _together(stores, lambda i, s: s.expire_spend_reservations(0))
     assert all(isinstance(c, int) for c in counts), counts
@@ -449,7 +485,12 @@ def test_t1_a_settle_after_expiry_never_lowers_the_counters(w):
 def test_t1_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows(w):
     """from core-a T1: 40 connections each settle their own open reservation of 1.00 at 0.25 while 10 run the sweep
     (age 0). Afterwards every row is settled, each says 0.25 (settled while open) or 1.00 (expired first: never
-    down), the day counter equals the sum over the rows, and the run's cost is 40 times the real 0.25."""
+    down), the day counter equals the sum over the rows, and the run's cost is 40 times the real 0.25.
+
+    The 50 threads leave one Barrier together, but which settle meets which sweep first is up to the scheduler and
+    the row locks, so how many rows end at 0.25 and how many at 1.00 is NOT asserted (anything from 0 to 40 is
+    right); what is asserted holds for every interleaving. No assertion here requires a settle to complete after a
+    sweep started: that would be flaky."""
     from hadavin_sdk.models import Run
 
     stores, reader = _callers(w)
@@ -485,7 +526,8 @@ def test_t1_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows(w):
 
 def test_t1_one_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results(w):
     """from core-c T1: 25 connections settle ONE open reservation at 0.25 while 25 run the sweep. One settle is
-    applied and the counters equal what the row says is booked: 0.25 (settle first) or the full 1.00 (sweep first)."""
+    applied and the counters equal what the row says is booked: 0.25 (settle first) or the full 1.00 (sweep first).
+    The assertions accept either order on purpose (the winner is not deterministic) and are not made stricter."""
     stores, reader = _callers(w)
     rid, actual = new_id("res"), D("0.25")
     reader.reserve_spend(rid, AGENT, DAY, WORST, day_cap=D("3.00"), month_cap=D("3.00"))
@@ -511,6 +553,31 @@ def test_t1_one_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results(w)
 
 # --- the grants on spend_reservations (from core-a T1 / core-c T1; core-b's World has all four logins) -----------
 
+# the five statement kinds; every login of the file is refused every one of them on the table
+_REFUSED = (
+    "SELECT count(*) FROM spend_reservations",
+    "INSERT INTO spend_reservations (reservation_id) VALUES ('res-x')",
+    "UPDATE spend_reservations SET status = 'open'",
+    "DELETE FROM spend_reservations",
+    "TRUNCATE spend_reservations",
+)
+
+
+def _may_not_touch_reservations(w, role, *, positive, extra=()):
+    """`positive` is a read the login IS meant to make: it proves the login works and the schema is usable (a
+    refusal for lack of USAGE on the schema is the same 42501 and would pass every statement below without testing
+    the table's grant). Then all five statement kinds (and `extra`) are refused, and `rights()` shows none of the
+    seven privileges on the table."""
+    with w.as_(role) as db:
+        assert db.execute("SELECT current_user").fetchone()[0] == role
+        db.execute(
+            positive
+        ).fetchall()  # not refused: the refusals below are about the table's grant
+        for statement in (*_REFUSED, *extra):
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                db.execute(statement)
+    assert w.rights(role).get("spend_reservations") is None
+
 
 def test_t1_the_runtime_role_may_not_delete_reservations(w):
     """from core-a T1: no DELETE, no TRUNCATE, and the purge method fails for the runtime login too. core-a wrote
@@ -524,16 +591,7 @@ def test_t1_the_runtime_role_may_not_delete_reservations(w):
     with pytest.raises(psycopg.errors.InsufficientPrivilege):  # no EXECUTE on the purge function
         store.purge_spend_reservations(now() + timedelta(days=1))
     assert list(_rows(w)) == [rid]  # nothing was deleted
-    with w.as_(w.runtime) as db:
-        for statement in (
-            "DELETE FROM spend_reservations",
-            "TRUNCATE spend_reservations",
-            "SELECT count(*) FROM spend_reservations",
-            "UPDATE spend_reservations SET status = 'open'",
-            "INSERT INTO spend_reservations (reservation_id) VALUES ('res-x')",
-        ):
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                db.execute(statement)
+    _may_not_touch_reservations(w, w.runtime, positive="SELECT count(*) FROM spend")
     assert list(_rows(w)) == [rid]
 
 
@@ -541,40 +599,66 @@ def test_t1_the_purge_role_deletes_closed_rows_only_through_the_purge_function(w
     """from core-a T1: the purge login deletes closed rows and never an open one. core-a wrote "purge holds DELETE
     plus SELECT on status and closed_at"; on core-b (0011) the purge login holds nothing on the table and reaches it
     only through `purge_spend_reservations`, so every direct statement, SELECT of status and closed_at included, is
-    asserted refused (stricter than core-a's)."""
+    asserted refused (stricter than core-a's). The function's rule (0011): delete rows with status 'settled' AND
+    closed_at < p_before; an open row, an expired-and-unsettled row (still booked) and a settled row newer than the
+    cutoff are KEPT."""
     runtime, purge = w.store(w.runtime), w.store(w.purge)
-    closed, kept = new_id("res"), new_id("res")
-    for rid in (closed, kept):
-        runtime.reserve_spend(rid, AGENT, DAY, WORST, day_cap=D("3.00"), month_cap=D("3.00"))
-    runtime.settle_spend(closed, WORST, agent_id=AGENT)
-    assert purge.purge_spend_reservations(now() + timedelta(days=1)) == 1
-    assert list(_rows(w)) == [kept]  # the open row was not deleted
+    expired, closed, newer, kept = (new_id("res") for _ in range(4))
+    runtime.reserve_spend(expired, AGENT, DAY, WORST, day_cap=D("9.00"), month_cap=D("9.00"))
+    assert (
+        runtime.expire_spend_reservations(0) == 1
+    )  # only this one exists: it is expired, nobody settled it
+    for rid in (closed, newer, kept):
+        runtime.reserve_spend(rid, AGENT, DAY, WORST, day_cap=D("9.00"), month_cap=D("9.00"))
+    for rid in (closed, newer):
+        runtime.settle_spend(rid, WORST, agent_id=AGENT)
+    # age the closed and the expired row two days (owner side), so only the rule, not the clock, keeps the expired one
+    for rid in (closed, expired):
+        w.run(
+            "UPDATE spend_reservations SET closed_at = closed_at - interval '2 days' "
+            "WHERE reservation_id = %s RETURNING 1",
+            (rid,),
+        )
+    cutoff = now() - timedelta(days=1)
+    assert purge.purge_spend_reservations(cutoff) == 1  # the old settled row only
+    rows = _rows(w)
+    assert set(rows) == {expired, newer, kept}
+    assert rows[expired][2:] == ("expired", True)  # expired and unsettled: kept
+    assert rows[newer][2:] == ("settled", True)  # settled but newer than the cutoff: kept
+    assert rows[kept][2:] == ("open", False)  # open: kept
+    assert purge.purge_spend_reservations(cutoff) == 0  # nothing more to delete at that cutoff
+    assert (
+        purge.purge_spend_reservations(now() + timedelta(days=1)) == 1
+    )  # now the newer settled row goes
+    assert set(_rows(w)) == {expired, kept}  # an expired hold and an open one are never purged
     assert runtime.settle_spend(kept, WORST, agent_id=AGENT)[1] is True
-    with w.as_(w.purge) as db:
-        for statement in (
+    assert (
+        runtime.settle_spend(expired, WORST, agent_id=AGENT)[1] is True
+    )  # a late settle still finds the row
+    _may_not_touch_reservations(
+        w,
+        w.purge,
+        positive="SELECT run_id, state, updated_at FROM runs",  # the purge login's column right on runs
+        extra=(
             "SELECT status, closed_at FROM spend_reservations",
             "SELECT reserved_usd FROM spend_reservations",
             "SELECT * FROM spend_reservations",
-            "DELETE FROM spend_reservations",
-            "UPDATE spend_reservations SET status = 'open'",
-            "INSERT INTO spend_reservations (reservation_id) VALUES ('res-x')",
-        ):
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                db.execute(statement)
+        ),
+    )
 
 
 @pytest.mark.parametrize("who", ["portal", "reset"])
 def test_t1_the_portal_and_the_reset_role_may_not_read_reservations(w, who):
-    """from core-a T1: portal and reset hold nothing on spend_reservations."""
-    role = getattr(w, who)
-    with w.as_(role) as db:
-        assert db.execute("SELECT current_user").fetchone()[0] == role
-        for statement in (
-            "SELECT * FROM spend_reservations",
-            "SELECT status FROM spend_reservations",
-            "DELETE FROM spend_reservations",
-            "UPDATE spend_reservations SET status = 'open'",
-        ):
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                db.execute(statement)
-    assert w.rights(role).get("spend_reservations") is None
+    """from core-a T1: portal and reset hold nothing on spend_reservations. core-a first read `runs` as the portal
+    login to prove the login and the schema work; that positive read is kept for both logins here (portal: `runs`;
+    reset: `kill_switch`, on which GRANTS gives it SELECT, UPDATE), so each refusal is about the table's grant and
+    not about the schema."""
+    positive = {"portal": "SELECT count(*) FROM runs", "reset": "SELECT count(*) FROM kill_switch"}[
+        who
+    ]
+    _may_not_touch_reservations(
+        w,
+        getattr(w, who),
+        positive=positive,
+        extra=("SELECT * FROM spend_reservations", "SELECT status FROM spend_reservations"),
+    )
