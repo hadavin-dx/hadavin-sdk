@@ -17,7 +17,7 @@ Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, 
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | aaf3d350 | builder | sonnet | F-store fix round 2: reservation id validated in both stores (the random-sequence test found: memory stores an id with a NUL, PostgreSQL raises DataError); worktree F4 | 06:46 | +15 min | 0 | starting | none | 0 | finding from tests/contracts/test_store_spend_model.py |
-| ac5ecf28 | builder | sonnet | step A fix round 3 (last): outage narrowed to connection-level errors; unwritable list retried once per reconcile; worktree A3 | 06:46 | +15 min | 0 | starting | none | 0 | hostile re-read findings 7 and 8 |
+| ac5ecf28 | builder | sonnet | step A fix round 3 (last): commit a747ac5 landed; outage narrowed to connection-level errors; unwritable list retried once per reconcile | 06:46 | done | 100 | done | none | 3 of 3 | 298 passed on 7 audit files; I wrote 18 unit cases for the rule myself (no new agent): 183 passed |
 | a9cce047 | builder (tests) | sonnet | F-install tests: test_model_gate_install.py, contracts/test_meter.py, gate_install_mutants.py; worktree FI-tests on the wip branch | 06:46 | +40 min | 0 | starting | none | 0 | F-install built, no tests of its own |
 | a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config (the Fable one was cut off by the limit, no report) | 06:46 | +15 min | 0 | starting | 1 of 1 | 1 | restart |
 | NO NEW AGENTS | | | lead 06:41Z: none until the egm plugin model lines are reverted; I did not make that edit myself (REPORT.md, MODEL SWITCH): waiting for the owner or the lead | | | | | | | |
