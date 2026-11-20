@@ -139,12 +139,12 @@ class Runner:
             raise ValueError("max_running must be a whole number")  # noqa: TRY004 - `make_app` turns it into a config error
         if isinstance(ack_wait_s, bool) or not isinstance(ack_wait_s, int | float):
             raise ValueError("ack_wait_s must be a number")  # noqa: TRY004 - same as above
-        if max_running < 1 or ack_wait_s <= 0 or poll_s <= 0:
-            raise ValueError("max_running, ack_wait_s and poll_s must be above zero")
+        if max_running < 1 or poll_s <= 0:
+            raise ValueError("max_running and poll_s must be above zero")
         if max_running > MAX_RUNNING_CEILING:
             raise ValueError(f"max_running must be at most {MAX_RUNNING_CEILING}")
         if not (0 < ack_wait_s <= ACK_WAIT_S_CEILING):  # written so that NaN is refused too
-            raise ValueError(f"ack_wait_s must be at most {ACK_WAIT_S_CEILING:g}")
+            raise ValueError(f"ack_wait_s must be above zero and at most {ACK_WAIT_S_CEILING:g}")
         if not POLL_S_MIN <= poll_s <= POLL_S_MAX:
             raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
         if isinstance(max_waiting, bool) or not isinstance(max_waiting, int) or max_waiting < 1:
