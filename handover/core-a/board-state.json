@@ -759,6 +759,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead verdicts"
+  },
+  {
+   "id": "rev-dfix17",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the d-fix17 diff (dead guard, REFUSAL_TEXT 408/417, G15d)",
+   "started UTC": "12:46",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 12:45"
   }
  ],
  "tests": [
@@ -1131,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:46 Answer to 12:45: rev-dfix17 started (fresh review of the d-fix17 diff). I did NOT split door-code into four builders: one builder already holds all four files open (server.py, worker.py, endpoint_mutants.py, tests) and four editors in the same mutant file would overwrite each other; it ends in ~10 min, then I start the fresh review of its diff. All xreview reports are already pushed (fstore, dconfig, gate-g7, g1g2).",
   "12:38 door-docs done: B1(a) reword, ESCALATIONS E-door-1 (owner decision: store document + notify, default sender polls), n8n README/note M5, N4 ANSWER: hadavin_sdk.testing.crash and mutation.py ARE meant to ship in the wheel (tickets/E-test-helpers.md:40 'ships in the wheel but is dead code at run time', :60); plan-v4-final item E has no packaging statement. door-code (M1/M3/M4/M6/N1) still running.",
   "12:32 nits16 (d-fix17) done: head will be pushed now; G15d gone, G33d xfail unchanged. door-code builder started (M1/M3/M4/M6/N1); then a fresh review of the diff, then your mutant run.",
   "12:36 XREVIEW core-c G1 fold + G2 P1d-a DONE: reviews/xreview-g1g2.md + NEW FILE handover/core-c/requests/xr-g1g2.md (copy into cloud/core-c). No Blocker; 1 Major (error_reason crash on lone surrogate), accepted xfail leaks, test exemption too wide.",
