@@ -299,8 +299,8 @@ MUTANTS = {
             ("reserve", "p_run_id"),
             ("reserve", "p_day"),
             ("reserve", "p_usd"),
-            ("reserve", "p_day_cap"),
-            ("reserve", "p_month_cap"),
+            # no ("reserve", "p_day_cap") / "p_month_cap": the caps are read from hadavin_caps now, not passed in; the
+            # missing-cap-row guard (HD005) is killed by tests/test_money_caps_mutants.py
             ("settle", "p_id"),
             ("settle", "p_actual"),
             ("settle", "p_agent"),
@@ -347,28 +347,28 @@ MUTANTS = {
     ),
     # M-i: the cap comparison weakened
     "i_day_cap_weakened": (
-        in_fn("reserve", r"s\.usd < p_day_cap", "s.usd <= p_day_cap"),
+        in_fn("reserve", r"s\.usd < v_day_cap", "s.usd <= v_day_cap"),
         None,
         None,
         {"cap_comparison"},
         False,
     ),
     "i_month_cap_weakened": (
-        in_fn("reserve", r"m\.usd < p_month_cap", "m.usd <= p_month_cap"),
+        in_fn("reserve", r"m\.usd < v_month_cap", "m.usd <= v_month_cap"),
         None,
         None,
         {"cap_comparison"},
         False,
     ),
     "i_sum_check_dropped_on_the_day": (
-        in_fn("reserve", r" AND s\.usd \+ p_usd <= p_day_cap", ""),
+        in_fn("reserve", r" AND s\.usd \+ p_usd <= v_day_cap", ""),
         None,
         None,
         {"behaviour"},
         False,
     ),
     "i_month_cap_ignored": (
-        in_fn("reserve", r"AND m\.usd < p_month_cap AND m\.usd \+ p_usd <= p_month_cap", ""),
+        in_fn("reserve", r"AND m\.usd < v_month_cap AND m\.usd \+ p_usd <= v_month_cap", ""),
         None,
         None,
         {"cap_comparison"},

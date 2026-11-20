@@ -444,7 +444,11 @@ class _Pg:
 
     def child(self, *argv):
         """A real child process: its own interpreter, its own connection, the runtime role's DSN."""
-        env = {**os.environ, **self.secrets, "PYTHONPATH": str(REPO)}
+        env = {
+            **os.environ,
+            **self.secrets,
+            "PYTHONPATH": os.pathsep.join([str(REPO), str(REPO / "src")]),
+        }
         env.pop("HADAVIN_CONFIG_DIR", None)
         return subprocess.run(  # noqa: S603 (fixed argv, no shell)
             [sys.executable, *argv],

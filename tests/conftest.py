@@ -131,13 +131,18 @@ def _seed_caps_before_reserve(request):
     except ImportError:  # no psycopg: no Postgres test can run
         yield
         return
-    from tests.money_caps_seed import seeding_reserve
+    from tests.money_caps_seed import seeding_reserve, widening_expire
 
     mp = pytest.MonkeyPatch()
     mp.setattr(
         postgres_mod.PostgresStore,
         "reserve_spend",
         seeding_reserve(postgres_mod.PostgresStore.reserve_spend),
+    )
+    mp.setattr(
+        postgres_mod.PostgresStore,
+        "expire_spend_reservations",
+        widening_expire(postgres_mod.PostgresStore.expire_spend_reservations),
     )
     yield
     mp.undo()
