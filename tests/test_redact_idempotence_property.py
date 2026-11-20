@@ -68,6 +68,10 @@ F2 = (
     "FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; "
     "the sweep masks the secret, and only a second pass then reads the identifier at its new boundary"
 )
+F4 = (
+    "FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and "
+    "once plainly in the same text: one of the two stays readable after one pass"
+)
 F3 = "FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\\w.])`)"
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -361,8 +365,9 @@ def test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass(link):
         if ACCOUNT in R.redact(text).text:
             failures.append(("redact", text, R.redact(text).text))
         mapping = runmap.RunMap()
-        if ACCOUNT in runmap.redact_text(text, mapping) or ACCOUNT not in mapping.values():
-            failures.append(("redact_text", text, dict(mapping)))
+        out = runmap.redact_text(text, mapping)
+        if ACCOUNT in out or _plain(out, mapping) != text:  # masked, and held by the map (as an account, or
+            failures.append(("redact_text", text, out))  # inside a longer number: code + account as a phone)
     for keyword, code in CODE_KEYWORDS.items():
         for items in (
             [keyword + code, "paid " + code + link + ACCOUNT],
@@ -600,7 +605,7 @@ SEPARATORS = (" ", "\n", "; ", ", ", " | ", "\t", " - ", "\n\n", "\r\n")
 ENDS_A_NAME = tuple(s for s in SEPARATORS if s not in (" ", "\t", " - "))
 GENERATED_CASES = 2500
 
-Case = collections.namedtuple("Case", "text values filler labels")
+Case = collections.namedtuple("Case", "text values filler labels lookalike_and_copy")
 
 
 @functools.cache
@@ -613,6 +618,7 @@ def _generated() -> tuple[Case, ...]:
         values: list[str] = []
         filler: list[str] = []
         planted_labels = []
+        lookalike_and_copy = False
         for k in range(rng.randrange(1, 5)):
             # every kind in turn first, then at random: each kind is planted at least 78 times
             label = labels[n % len(labels)] if k == 0 else rng.choice(labels)
@@ -626,18 +632,44 @@ def _generated() -> tuple[Case, ...]:
             parts.append(planted)
             if rng.random() < 0.2:  # the same value again, on its own
                 parts += [rng.choice(ENDS_A_NAME), found[-1]]
+                lookalike_and_copy |= not planted.isascii()
             parts.append(rng.choice(ENDS_A_NAME if label == "NAME" else SEPARATORS))
             values += found
             planted_labels.append(label)
         tail = [rng.choice(WORDS) for _ in range(rng.randrange(1, 3))]
         filler += tail
-        cases.append(Case("".join(parts) + " ".join(tail), values, filler, planted_labels))
+        text = "".join(parts) + " ".join(tail)
+        cases.append(Case(text, values, filler, planted_labels, lookalike_and_copy))
     return tuple(cases)
 
 
 @functools.cache
 def _generated_passes() -> tuple[Passes, ...]:
     return tuple(_passes(case.text) for case in _generated())
+
+
+def _generated_pairs(lookalike_and_copy: bool = False) -> list[tuple[Case, Passes]]:
+    """The generated cases with their passes. One shape is kept apart (finding G7-F4) and has its own strict
+    xfail test, so it can hide nothing in the rest: a value planted in a look-alike spelling AND written again
+    plainly in the same text."""
+    pairs = zip(_generated(), _generated_passes(), strict=True)
+    return [(c, p) for c, p in pairs if c.lookalike_and_copy == lookalike_and_copy]
+
+
+def _gone_fixed_and_whole(case: Case, p: Passes) -> list:
+    """P6 gone, P1 same map and fresh map, P2 and P3, for one generated case: the list of what does not hold."""
+    problems: list = []
+    seen = runmap.canonical(p.o1)
+    readable = [v for v in case.values if v in p.o1 or v in seen]
+    if readable:
+        problems.append(("still readable", readable))
+    if not _is_fixed_point(p) or (p.o3, p.h3) != (p.o2, p.h2):
+        problems.append(("same map", p.o2))
+    fresh = runmap.RunMap()
+    if runmap.redact_text(p.o1, fresh) != p.o1 or dict(fresh):
+        problems.append(("fresh map", dict(fresh)))
+    problems += _map_problems(p)
+    return problems
 
 
 def test_P6_there_is_a_planter_for_every_detector_kind_and_each_plants_its_kind():
@@ -654,39 +686,57 @@ def test_P6_there_is_a_planter_for_every_detector_kind_and_each_plants_its_kind(
     assert set(planted_kinds) == set(LABELS) and min(planted_kinds.values()) >= GENERATED_CASES // 32
 
 
-def test_P6_every_planted_value_is_gone_after_one_pass():
-    """Not in the output as written, and not in its canonical form (look-alike spellings undone)."""
+def test_P6_P1_P2_P3_generated_every_planted_value_is_gone_and_one_pass_is_a_fixed_point():
+    """Every planted value is gone after one pass: not in the output as written, and not in its canonical form
+    (look-alike spellings undone). One pass is a fixed point with the same map (I2: claimed by the ticket for its
+    shapes, and true of every generated text whose values stand apart, a separator on each side) and with a
+    fresh map (not claimed; it holds here too, so it is pinned). The map obeys P2 and P3. Through `redact_text`,
+    and the fixed point through the bare `redact()` as well."""
     failures = []
-    for case, p in zip(_generated(), _generated_passes(), strict=True):
-        seen = runmap.canonical(p.o1)
-        gone = [v for v in case.values if v in p.o1 or v in seen]
-        if gone:
-            failures.append((case.labels, gone, case.text, p.o1))
-    _no_failures(failures, GENERATED_CASES)
-
-
-def test_P1_I2_generated_one_pass_is_a_fixed_point_with_the_same_map_and_with_a_fresh_map():
-    """Same map: claimed by the ticket for its shapes, and true of every generated text whose values stand apart
-    (a separator on each side). Fresh map: not claimed; it holds here too, so it is pinned."""
-    failures = []
-    for case, p in zip(_generated(), _generated_passes(), strict=True):
-        if not _is_fixed_point(p) or p.o3 != p.o2 or p.h3 != p.h2:
-            failures.append(("same map", case.text, p.o1, p.o2))
-        fresh = runmap.RunMap()
-        if runmap.redact_text(p.o1, fresh) != p.o1 or dict(fresh):
-            failures.append(("fresh map", case.text, p.o1, dict(fresh)))
+    pairs = _generated_pairs()
+    for case, p in pairs:
+        problems = _gone_fixed_and_whole(case, p)
         first = R.redact(case.text)
         second = R.redact(first.text, mapping=first.mapping)
         if (second.text, second.mapping) != (first.text, first.mapping):
-            failures.append(("redact()", case.text, first.text, second.text))
-    _no_failures(failures, 3 * GENERATED_CASES)
+            problems.append(("redact()", first.text, second.text))
+        if problems:
+            failures.append((problems, case.text, p.o1))
+    assert len(pairs) >= GENERATED_CASES * 9 // 10
+    _no_failures(failures, len(pairs))
 
 
-def test_P2_P3_generated_the_map_only_grows_and_no_placeholder_is_redacted_again():
+@pytest.mark.xfail(strict=True, reason=F4)
+def test_P6_P1_generated_a_value_in_a_look_alike_spelling_and_again_plainly():
+    """The shape kept apart above: the same properties, over the generated cases that have it."""
+    pairs = _generated_pairs(lookalike_and_copy=True)
+    assert len(pairs) >= 50
     failures = [
-        (probs, p.x, p.o1, p.o2) for p in _generated_passes() if (probs := _map_problems(p))
+        (problems, case.text, p.o1)
+        for case, p in pairs
+        if (problems := _gone_fixed_and_whole(case, p))
     ]
-    _no_failures(failures, GENERATED_CASES)
+    _no_failures(failures, len(pairs))
+
+
+_JWT = ("eyJ" + "VK3ULlyZQHRKcjIcCa", "eyJ" + "BS6Z963kPUhLKicK", "jORUp4pQRb" + "DeFRu7q24mZqU1wf86tB")
+
+
+@pytest.mark.xfail(strict=True, reason=F4)
+@pytest.mark.parametrize("shape", ["password-then-comma", "token-in-three-parts"])
+def test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places(shape):
+    """Smallest forms. (1) `password=<V with one full-width letter>, <V>`: the plain copy of V stays readable
+    after any number of passes. (2) a three-part token whose middle part holds one full-width character, and
+    the same token plainly on the next line: the middle part stays readable after one pass (a second pass
+    masks it)."""
+    if shape == "password-then-comma":
+        wide = _PW[:5] + _fullwidth(_PW[5]) + _PW[6:]
+        text, secret = f"password={wide}, {_PW}", _PW
+    else:
+        middle = _JWT[1][:9] + _fullwidth(_JWT[1][9]) + _JWT[1][10:]
+        text, secret = f"jwt {_JWT[0]}.{middle}.{_JWT[2]}\n{'.'.join(_JWT)}", _JWT[1]
+    out = runmap.redact_text(text, runmap.RunMap())
+    assert secret not in runmap.canonical(out), out
 
 
 def test_P4_P6_generated_nothing_but_the_sensitive_values_is_taken_and_restore_gives_the_text_back():
@@ -892,11 +942,12 @@ def test_P1_a_tenant_id_after_a_glued_copy_of_a_known_secret_is_masked_in_one_pa
 
 
 @pytest.mark.xfail(strict=True, reason=F1)
-@pytest.mark.parametrize("scheme", ["Bearer ", "Basic ", "authorization: "])
-def test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point(scheme):
+@pytest.mark.parametrize(("scheme", "length"), [("Bearer ", 8), ("Basic ", 4), ("authorization: ", 4)])
+def test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point(scheme, length):
     """The ticket lists this as RELATED, NOT FIXED: `password=V` then `Bearer V+xy` gives `Bearer <SECRET_1>+xy`
-    after one pass (the two-character tail readable) and one placeholder after two."""
-    short = _PW[:8]
+    after one pass (the two-character tail readable) and one placeholder after two. The token must be shorter
+    than the pattern's minimum (12 after Bearer, 8 after Basic and authorization) for the first pass to miss it."""
+    short = _PW[:length]
     first = R.redact(f"password={short}\n{scheme}{short}+xy")
     second = R.redact(first.text, mapping=first.mapping)
     assert (second.text, second.mapping) == (first.text, first.mapping)
