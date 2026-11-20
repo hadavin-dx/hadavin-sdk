@@ -748,17 +748,17 @@
  ],
  "agents": [
   {
-   "id": "doorm",
-   "role": "builder (own worktree, nothing pushed by it)",
+   "id": "rev-door",
+   "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "root cause of the 144 trigger-door failures on the merged tree (crash-matrix children never end: suspected missing hadavin_caps seed in the child schema) + fix in test support only",
-   "started UTC": "16:55",
-   "expected end": "35 min",
+   "what exactly it is doing": "review of the crash-matrix support patch: points/assertions not weakened, RESERVES switch correct on both trees",
+   "started UTC": "17:25",
+   "expected end": "12 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "1",
    "retries so far": 0,
-   "reason": "integ-pg findings: my tests break on the combined tree"
+   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1131,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "17:25 DOOR ON THE MERGED TREE FIXED (agent doorm; branch wip/core-a-door-merged 435ca8500; patch handover/core-a/pr/door-merged-support.patch; write-up handover/core-a/INTEGRATION-DOOR-FIX.md): tests/triggers on the merged tree: 144 failed -> 1374 passed, 4 skipped, 0 failed (PG16, HADAVIN_REQUIRE_PG=1): TEST SUPPORT ONLY, no src change: (1) the crash-matrix children never got core-b's hadavin_caps seeding (it is a conftest monkeypatch): with no cap row core-b's reserve-before-call sends the run to NEEDS_PERSON `limits.limits_unavailable`; (2) the crash tables were stale: the merged loop calls reserve_spend before llm.chat and settle_spend after it, never add_spend/add_cost, so the `store.add_spend:*` points were never reached and the child never ended (the '20 s/30 s' errors). Fix: tests/triggers/crash_launcher.py (RESERVES = hasattr(Limits, 'reserve'); install_pg_test_seeding() installs core-b's seed wrappers inside a child, nothing if tests/money_caps_seed.py is absent) + the two crash-matrix files switch their wrapped-method lists/point counts on RESERVES. I APPLIED the same patch to cloud/core-a (it degrades to the old tables there): crash matrix 83 passed on core-a alone. Product bugs found: NONE. rev-door reviews the patch (not weakened?). Remaining on the merged tree: the stale test_meter/test_store_spend_reservations (fixed by wip/core-a-contract-fix), the T1 copies (delete) and test_grants_negative_roles (take mine). AGENTS 1.",
   "16:30 wip/core-a-contract-fix (c545aaef1) reviewed fresh: NO Blocker, NO Major: every added agent_id matches the reservation's agent; the replaced reserve tests pin the check order amount/caps -> id -> cap well; the purge test proves expired and open holds are kept on both stores; test function counts unchanged (store 35, meter 37), nothing loosened, no new skips. Nits (gaps in what this file proves, not loosening): no foreign-agent settle test here (core-b has them: test_store_spend.py:786, test_money_definer_pg.py:850/867), test_both_implementers_have_the_meter_shape does not pin agent_id as keyword-only AND required, a duplicate id with a different run_id or day and an identical call on an EXPIRED hold are untested. Ready to cherry-pick. Running: doorm only.",
   "17:15 cfix DONE (branch wip/core-a-contract-fix c545aaef1, files tests/contracts/test_meter.py and tests/contracts/test_store_spend_reservations.py: NOTE the path: tests/contracts/, not tests/): on the merged tree 308 failed / 133 passed -> 441 passed with the PG16 DSN (253 passed / 188 skipped without): 302 failures were the missing `agent_id` in settle()/settle_spend() (71 calls); 4 tests REPLACED because the claim no longer holds on core-b's design: an identical reserve retry on an OPEN hold is idempotent (not StaleState) and purge keeps expired holds; the new tests assert the stronger/true claims; skip guards unchanged so the files still skip on core-a's own tree. Fresh review rev-cfix running. Running: doorm, rev-cfix.",
   "17:10 T1 FIXED: wip/core-a-t1-merge e4b0c2331 (the file to COPY; 276365373 is superseded): the reviewer's Major is fixed (a positive read as each login runs BEFORE the refusals, so a missing schema USAGE can no longer pass the refusal tests silently), all four logins are refused SELECT/INSERT/UPDATE/DELETE/TRUNCATE on spend_reservations and rights() is empty for all four, purge keeps the expired, the newer-settled and the open row and deletes only the old settled one, three of core-b's cases strengthened (month cap over two days, settles below the reserve, control), 'settle at exactly the reserved amount: the cap stays shut' added; 26 cases pass on PG16 (26 skip without a DSN); mutation proof: month counter +0.25 turns 4 cases red. Races still accept either order (interleaving cannot be asserted deterministically). Running: cfix, doorm. Details: handover/core-a/T1-MERGE.md (review round 1 fixes).",
@@ -4133,6 +4134,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "contract-fix review: NO Blocker/Major: every added agent_id matches the reservation's agent; replaced reserve tests pin amount/caps -> id -> cap order well (identical retry succeeds with cap full; other content StaleState before cap; bad amount/cap on a duplicate id still ValueError); purge test proves expired/open kept on both stores; function counts unchanged (35/37), nothing loosened; nits: no foreign-agent settle test in this file (core-b has them elsewhere), the meter-shape test does not pin agent_id keyword-only/required, run_id/day mismatch on a duplicate id and an identical call on an EXPIRED hold untested; no new skips"
+  },
+  {
+   "id": "doorm",
+   "role": "builder (own worktree, nothing pushed by it)",
+   "model": "sonnet",
+   "what exactly it is doing": "root cause of the 144 trigger-door failures on the merged tree (crash-matrix children never end: suspected missing hadavin_caps seed in the child schema) + fix in test support only",
+   "started UTC": "16:55",
+   "expected end": "35 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "doorm: 144 door failures on the merged tree FIXED in test support only (no src): causes = no hadavin_caps seeding in crash-matrix children (core-b's loop reserves before the call -> NEEDS_PERSON) + stale crash tables (merged loop calls reserve_spend/settle_spend, not add_spend/add_cost); tests/triggers 1374 passed 4 skipped 0 failed on the merged tree (PG16, REQUIRE_PG=1); branch wip/core-a-door-merged 435ca8500; same patch applied to cloud/core-a: crash matrix 83 passed"
   }
  ]
 }

@@ -60,11 +60,13 @@ from tests.triggers.crash_launcher import (
     PATH,
     PREFIX,
     PRINCIPAL,
+    RESERVES,
     ROOT,
     SECRETS_ENV,
     Child,
     CountingLLM,
     _all_runs,
+    install_pg_test_seeding,
     make_trigger_app,
     signed_post,
     wire_body,
@@ -97,8 +99,16 @@ FIRE_WAIT_S = 10.0
 # What the child (and the memory run) wraps. "store" = the write and limits methods of the runtime
 # plus `get_run` of the store handed to the Runner; "loop" = `get_run` as the runtime calls it (a
 # name of its own, so a point can tell the Runner's reads from the loop's reads).
-STORE_POINTS = ("create_run", "transition", "touch", "put_redaction_map", "add_cost")
-LIMITS_POINTS = ("get_kill_switch", "spend_totals", "add_spend")
+STORE_POINTS = (
+    ("create_run", "transition", "touch", "put_redaction_map")
+    if RESERVES  # the settle books the run cost: `add_cost` is no call of the loop any more
+    else ("create_run", "transition", "touch", "put_redaction_map", "add_cost")
+)
+LIMITS_POINTS = (
+    ("get_kill_switch", "spend_totals", "reserve_spend", "settle_spend")
+    if RESERVES
+    else ("get_kill_switch", "spend_totals", "add_spend")
+)
 RUNNER_POINTS = ("get_run",)
 
 # --- the expectation table (written before the first run) ------------------------------------------
@@ -122,9 +132,20 @@ HANDLE_STEPS: tuple[tuple[str, int, str, str | None, str, int, int], ...] = (
     ("store.get_kill_switch", 2, "466 via limits.py:21", "WORKING", "WORKING", 0, 0),
     ("store.spend_totals", 2, "466 via limits.py:23", "WORKING", "WORKING", 0, 0),
     ("store.touch", 1, "468 heartbeat", "WORKING", "WORKING", 0, 0),
-    ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
-    ("store.add_spend", 1, "485 via limits.py:18", "WORKING", "WORKING", 1, 1),
-    ("store.add_cost", 1, "486", "WORKING", "WORKING", 1, 1),
+    *(
+        (  # the worst case is reserved before the call and settled after it (limits.reserve / settle)
+            ("store.get_kill_switch", 3, "limits.reserve stop state", "WORKING", "WORKING", 0, 0),
+            ("store.reserve_spend", 1, "limits.reserve the worst case", "WORKING", "WORKING", 0, 0),
+            ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
+            ("store.settle_spend", 1, "limits.settle the real cost", "WORKING", "WORKING", 1, 1),
+        )
+        if RESERVES
+        else (
+            ("llm.chat", 1, "470 the model call", "WORKING", "WORKING", 0, 1),
+            ("store.add_spend", 1, "485 via limits.py:18", "WORKING", "WORKING", 1, 1),
+            ("store.add_cost", 1, "486", "WORKING", "WORKING", 1, 1),
+        )
+    ),
     ("loop.get_run", 2, "330 via 496, 616", "WORKING", "WORKING", 1, 1),
     ("store.transition", 2, "331 WORKING to NO_ACTION (final)", "WORKING", FINAL, 1, 1),
     ("audit.write_outcome", 3, "332 state NO_ACTION", FINAL, FINAL, 1, 1),
@@ -280,7 +301,7 @@ def _observe(store: str, point: Point, **seen: object) -> None:
 def test_the_table_covers_every_wrapped_call_once():
     """The table itself: 19 calls of `handle`, each before and after, plus 5 request-thread
     points; unique ids; every point names a wrapped method; the four named moments all appear."""
-    assert len(HANDLE_STEPS) == 19 and len(POINTS) == 2 * 19 + 5
+    assert len(HANDLE_STEPS) == (20 if RESERVES else 19) and len(POINTS) == 2 * len(HANDLE_STEPS) + 5
     assert len({p.id for p in POINTS}) == len(POINTS)
     assert len({(p.point, p.nth, p.slow_create_s, p.llm_delay_s) for p in POINTS}) == len(POINTS)
     wrapped = {f"store.{m}" for m in (*STORE_POINTS, *LIMITS_POINTS, *RUNNER_POINTS)}
@@ -619,6 +640,7 @@ def child_main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     secrets = json.loads(os.environ[SECRETS_ENV])
+    install_pg_test_seeding()
     plain = PostgresStore(connect(os.environ[DSN_ENV]))
     llm = CountingLLM(args.calls_file, args.llm_delay_s)
     runtime, _cards = build_runtime(args.config_dir, llm, store=plain)
