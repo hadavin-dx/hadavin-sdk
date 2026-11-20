@@ -1413,7 +1413,7 @@ def test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_s
         w.grant("ALTER ROLE {} NOCREATEROLE", other)
         with caplog.at_level(logging.WARNING, logger="hadavin_sdk.store"):
             assert w.migrate(accepted_admin_roles=(vouched,)) == []
-        assert vouched in caplog.text and "NOT checked" in caplog.text
+        assert vouched in caplog.text and "not checked" in caplog.text
 
 
 def test_s2_below_16_a_member_of_an_accepted_createrole_role_is_listed_and_the_role_alone_is_not(w):
