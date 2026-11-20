@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:44:27Z
+UPDATED_UTC: 2026-11-20T09:45:21Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 9
-CAPACITY: load 3.3 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 9, heavy agents 0
+AGENTS_RUNNING: 8
+CAPACITY: load 3.7 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
 DISK: / 58G free, 17% used; git worktrees 18; 1.2G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only (7). G7 round 6 landed 9d8bc580a; fresh result reviews of round 6 and merged-tree batch 5 start now. ORDER 023: E9(1)(3) done, E9(2) building, E10 ticket G9 drafting then plan review round 1, E11 ticket G10 + split running, E12 Q9 builder, Q16 done.
-PUSHED_UTC: 2026-11-20T09:44:20+00:00
+PUSHED_UTC: 2026-11-20T09:45:18+00:00
 
-(15:14 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:15 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -27,7 +27,6 @@ PUSHED_UTC: 2026-11-20T09:44:20+00:00
 | a2db832a | drafter | claude-opus-5-5 | ticket G4 v5 (plan review round 4 findings; card-path fix) | plan review round 5 next | 09:37 | 10:10 | 0 | running | 5 | 1 | container restart 09:35Z |
 | ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
 | a83c98d5 | evidence runner | claude-sonnet-5-5 | E11(c) split of Latin false hits (low load only) | 09:37 | 10:00 | 0 | running | 1 | 1 | container restart 09:35Z |
-| ae2b0483 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 6 of G7 (design) | 09:41 | 09:55 | 2 | running | 6 | 0 | fresh reviewer after fixes |
 | a627ab3b | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 6 of G7 (codebase) | 09:41 | 09:55 | 2 | running | 6 | 0 | fresh reviewer after fixes |
 | aa9ec347 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 1 of E9(2) (_OWN_OUTPUT restricted to SECRET tokens) | 09:44 | 09:58 | 2 | running | 1 | 0 | fresh reviewer after build |
 
