@@ -7,6 +7,7 @@ ported from WARDEN `audit.py:migrate` (main a1e76cbf). Rollback = restore the sn
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
 import unicodedata
@@ -1023,6 +1024,75 @@ def _apply_release_function(db, release_role: str | None, others: list[str]) -> 
             raise ConfigError(f"{role} can run {RELEASE_FUNCTION}: only the release role may")
 
 
+# Unreleased migrations: a file here may still change before its release, so a changed checksum is a loud warning,
+# not a refusal. A file NOT here that differs from its recorded checksum is refused. At merge of the release that
+# ships them, the lead adds their hashes to tests/fixtures/migrations_released.json and empties this set (see
+# docs/migration-checksums.md).
+UNRELEASED_MIGRATIONS = frozenset(
+    {
+        "0008_release_expired_spend",
+        "0009_stop_state_hardening",
+        "0010_money_guard",
+        "0011_money_definer",
+    }
+)
+
+
+def _checksum(path: Path) -> str:
+    """SHA-256 of the file bytes, Windows line endings read as Unix ones (the same rule as the released manifest)."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _ensure_ledger(db) -> None:
+    """The ledger table and its checksum column. The column is added here, not by a numbered migration, so a ledger
+    made before this change gets it on the next run."""
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS schema_migrations "
+        "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+    db.execute("ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT")
+
+
+def _verify_applied(db, files: list[Path]) -> None:
+    """Compare every applied file with the checksum recorded when it was applied. A changed file that is not in
+    UNRELEASED_MIGRATIONS is refused (ConfigError naming it). A changed unreleased file is NOT re-run (the function
+    bodies are re-applied by migrate, the table definitions are not): the new checksum is recorded and a warning
+    names the file, because a changed table definition does not reach a database that already has the old one. A row
+    with no checksum (applied before checksums existed) gets the file's current one; that is trust on first use,
+    and is logged."""
+    rows = dict(db.execute("SELECT version, checksum FROM schema_migrations").fetchall())
+    for path in files:
+        old = rows.get(path.stem, False)
+        if old is False:
+            continue
+        new = _checksum(path)
+        if old == new:
+            continue
+        if old is None:
+            _log.warning(
+                "migrate: %s was applied before checksums were recorded; recording the current file as its checksum",
+                path.name,
+            )
+        elif path.stem in UNRELEASED_MIGRATIONS:
+            _log.warning(
+                "migrate: UNRELEASED migration %s changed since it was applied (checksum %s, now %s). It is NOT "
+                "re-run: function bodies are re-applied, but a changed table, column or constraint definition is "
+                "not applied to this database. Drop what it made and run migrate again if the tables changed",
+                path.name,
+                old[:12],
+                new[:12],
+            )
+        else:
+            raise ConfigError(
+                f"applied migration {path.name} was changed after it was applied (recorded checksum {old[:12]}, "
+                f"file now {new[:12]}). A released migration never changes: restore the file, and put the change in "
+                "a new numbered migration"
+            )
+        db.execute(
+            "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
+        )
+
+
 def migrate(
     dsn: str,
     *,
@@ -1103,10 +1173,7 @@ def migrate(
         db.transaction(),
     ):
         db.execute("SELECT pg_advisory_xact_lock(%s)", (_LOCK,))
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-        )
+        _ensure_ledger(db)
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
             raise ConfigError(
@@ -1115,11 +1182,15 @@ def migrate(
                 "schema_migrations table to the new file name); if its content changed too, drop what it made and "
                 "run migrate again"
             )
+        _verify_applied(db, files)
         for path in files:
             if path.stem in done:
                 continue
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
-            db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
+            db.execute(
+                "INSERT INTO schema_migrations (version, checksum) VALUES (%s, %s)",
+                (path.stem, _checksum(path)),
+            )
             applied.append(path.stem)
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
