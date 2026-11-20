@@ -63,6 +63,7 @@ MARK = "test_g12_a_trailing_mark_does_not_leave_the_clear_copy"
 PH = "test_g12_a_core_that_is_a_placeholders_own_text_is_not_registered"
 CAPS = "test_g12_an_all_caps_name_with_a_number_or_a_label_prefix_is_a_value_and_keeps_its_core"
 LK = "test_g12_a_value_of_tokens_or_the_cut_body_of_a_real_label_gets_no_core"
+E1 = "test_g12e_a_cut_off_opener_of_a_caps_word_or_leading_zeros_keep_the_core"
 LB = "test_g12_a_lookalike_bracket_at_an_edge_or_inside_still_gets_a_core"
 EDGE = "test_g12_an_escaped_or_encoded_edge_does_not_leave_the_clear_copy"
 START = "test_g12_an_escaped_or_encoded_edge_at_the_start_does_not_leave_the_clear_copy"
@@ -93,7 +94,7 @@ M = [
     m("G12-M15 a no-value core is registered", "    if core.lower() in _NOT_A_VALUE or ", "    if ", "test_g12_the_second_none_is_neither_masked_nor_swept", "G12-13 "),
     # G12c, G12d: the declined cores (`_core_is_declined`), the budget, the sweep's look-alikes, the close search
     m("G12-M18 a placeholder's own text is registered", "    if _LABEL_TEXT.fullmatch(core) is not None:\n", "    if False:\n", "test_g12_a_value_that_is_a_placeholders_text_keeps_the_real_placeholders_intact", "G12-20 "),
-    m("G12-M19 a label-shaped value is never registered", "int(number) <= redactor.counters.get(label, 0)", "True", "test_g12_a_label_shaped_value_beyond_the_counter_keeps_its_core[password=SECRET_123, SECRET_123]", "G12-31 "),
+    m("G12-M19 a label-shaped value is never registered", "        and int(number) <= counters.get(label, 0)\n", "        and True\n", "test_g12_a_label_shaped_value_beyond_the_counter_keeps_its_core[password=SECRET_123, SECRET_123]", "G12-31 "),
     m("G12-M21 a `<` anywhere declines a cut-off start", '        and full[start - 1] == "<"\n', "", "test_g12_the_open_bracket_is_a_cut_off_form_only_right_before_the_core", "G12-34 "),
     m("G12-M22 a value of tokens gets a core", '    if core.lower() in _NOT_A_VALUE or not re.search(r"[^\\W_]", _ANY_TOKEN.sub("", full)):\n', "    if core.lower() in _NOT_A_VALUE:\n", "test_g12_a_value_of_tokens_alone_gets_no_core", "G12-35 "),
     m("G12-M23 the cut body of a real label gets a core", '    if "\\u2039" in full[:start] and _LABEL_PREFIX.fullmatch(core) is not None:\n', "    if False:\n", LK + "[\\u2039SECRET_x\\u203a]", "G12-22 "),
@@ -103,14 +104,24 @@ M = [
     m("G12-M37 a cut bracket at the end of a token is not declined", '    if full[end : end + 1] == "\\u203a" and _TOKEN_BODY_END.search(core):\n', "    if False:\n", LK + "[hunter22\\u2039SECRET_1\\u203a]", "G12-22 "),
     m("G12-M38 a stray bracket before a core declines it", '    if full[start - 1 : start] == "\\u2039" and _TOKEN_BODY_START.match(core):\n', '    if full[start - 1 : start] == "\\u2039":\n', "test_g12_one_stray_lookalike_bracket_keeps_the_core[\\u2039hunter22,]", "G12-28 "),
     m("G12-M24 any look-alike bracket declines the core", '    if core.lower() in _NOT_A_VALUE or not re.search(r"[^\\W_]", _ANY_TOKEN.sub("", full)):\n', '    if core.lower() in _NOT_A_VALUE or "\\u2039" in full or "\\u203a" in full:\n', "test_g12_an_interior_lookalike_bracket_keeps_the_core_of_the_value", "G12-21 "),
-    m("G12-M25 a large core is never registered", "        return held + len(core) > _CORE_BUDGET\n", "        return True\n", "test_g12_a_large_value_gets_a_core_unless_it_would_push_the_map_past_half_its_cap", "G12-26 "),
-    m("G12-M39 a large core is always registered", "        return held + len(core) > _CORE_BUDGET\n", "        return False\n", "test_g12_a_large_value_gets_a_core_unless_it_would_push_the_map_past_half_its_cap", "G12-26 "),
+    m("G12-M25 a large core is never registered", "    return redactor._map_chars + len(core) > _CORE_BUDGET\n", "    return True\n", "test_g12_a_large_value_gets_a_core_unless_it_would_push_the_map_past_half_its_cap", "G12-26 "),
+    m("G12-M39 a large core is always registered", "    return redactor._map_chars + len(core) > _CORE_BUDGET\n", "    return False\n", "test_g12_a_large_value_gets_a_core_unless_it_would_push_the_map_past_half_its_cap", "G12-26 "),
     m("G12-M40 the sweep does not skip look-alikes", '                if "\\u2039" in segment and "\\u2039" not in original and "\\u203a" not in original:\n', "                if False:\n", "test_g12_a_core_that_is_the_tail_of_a_real_label_never_corrupts_an_escaped_lookalike", "G12-30 "),
-    m("G12-M41 the sweep skips the look-alike that is the value", "                inner != original or (len(number) < 10 and int(number) <= self.counters[label])\n", "                True\n", "test_g12_a_lookalike_that_is_the_value_itself_is_swept", "G12-31 "),
+    m("G12-M41 the sweep skips the look-alike that is the value", "                and (inner != original or _issued(label, number, self.counters))\n", "                and True\n", "test_g12_a_lookalike_that_is_the_value_itself_is_swept", "G12-31 "),
     m("G12-M42 the close search is tried for every last character", '        elif (last in ";>%" or last.isalnum()) and (\n', "        elif True and (\n", "test_g12_a_run_of_non_edge_characters_does_not_search_for_a_close_form", "G12-33 "),
     m("G12-M36 a self-closing tag at the end is kept", EF, EF.replace(" {0,3}/?>", ">"), "test_g12_the_end_of_value_unlisted_tag_is_stripped_by_the_whole_form", "G12-32 "),
     m("G12-M16 the core is cut from the written value", C, C.replace("_bare_span(full)", "_bare_span(original)"), "test_g12_the_core_of_a_value_holding_a_placeholder_is_cut_from_the_resolved_value", "G12-16 "),
     m("G12-M17 the core is registered twice over", I, "        if core != full and len(core) >= 3 and core not in self.reverse:\n            self.reverse[core + ' '] = full\n            self.mapping['<SECRET_x>'] = full\n", "test_g12_a_value_takes_one_extra_entry_besides_its_own", "G12-15 "),
+    # G12e: the label-built `_ANY_TOKEN`, the running map count, the canonical counter, the look-alikes without the original
+    m("G12e-M43 a cut-off opener of any caps word declines the core", "{_LABEL_CUTS})(?=", "{_LABEL_CUTS}|[A-Z][A-Z0-9]*)(?=", E1 + "[password=<HUNTER2, HUNTER2-HUNTER2]", "G12e-1 "),
+    m("G12e-M44 the escaped look-alike of any caps word declines the core", "\\u2039(?:{_LABEL_ALT})_[0-9]+\\u203a", "\\u2039[A-Z][A-Z0-9]*_[0-9]+\\u203a", E1 + "[password=\\u2039ADMIN_1\\u203a then ADMIN_1-ADMIN_1]", "G12e-1 "),
+    m("G12e-M45 an opener needs no end or separator", "(?=[ \\t;,]|\\\\Z)", "", "test_g12e_the_any_token_alternatives_are_the_real_labels", "G12e-3 "),
+    m("G12e-M46 a leading-zero number counts as issued", '        and f"{label}_{int(number)}" == f"{label}_{number}"\n', "", E1 + "[password=SECRET_001, SECRET_001-SECRET_001]", "G12e-1 "),
+    m("G12e-M47 the running map count ignores a core", "            self._map_chars += len(core)\n", "            pass\n", "test_g12e_many_values_just_under_the_old_floor_cannot_double_the_map", "G12e-2 "),
+    m("G12e-M48 a rollback keeps the count", '                self._map_chars -= len(self.mapping.pop(a, ""))\n', '                self.mapping.pop(a, "")\n', "test_g12e_the_running_map_count_follows_every_add_and_rollback", "G12e-5 "),
+    m("G12e-M49 the budget is the 4,096 floor again", "    return redactor._map_chars + len(core) > _CORE_BUDGET\n", "    return len(core) >= 4096 and redactor._map_chars + len(core) > _CORE_BUDGET\n", "test_g12e_many_values_just_under_the_old_floor_cannot_double_the_map", "G12e-2 "),
+    m("G12e-M50 every real look-alike is kept", "                original in inner\n                and label in self.counters\n", "                label in self.counters\n", "test_g12e_lookalikes_without_the_original_cost_one_replace_call", "G12e-4 "),
+    m("G12e-M51 a real label beyond the counter is declined", "        and int(number) <= counters.get(label, 0)\n", "        and True\n", "test_g12e_a_real_label_beyond_the_counter_keeps_its_core[password=EMAIL_2024. EMAIL_2024]", "G12e-6 "),
 ]  # fmt: skip
 
 if __name__ == "__main__":
