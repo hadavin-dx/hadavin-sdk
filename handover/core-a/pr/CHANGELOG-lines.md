@@ -1,0 +1,10 @@
+Place under `### Added` in `## Unreleased` of CHANGELOG.md (style: bold lead, then plain sentences) [CHANGELOG.md lines 222-266].
+
+- **Signed trigger door** (`python -m hadavin_sdk.triggers.worker`). One signed POST (`v0` HMAC, 300 second window) starts one run per key; the answer is sent only after the run row exists (202 while RECEIVED or WORKING, 200 later), and the same key with another document is a 409 with one `trigger.conflict` audit event. A new `triggers:` block in `config.yaml` is needed; without it the worker exits 2.
+- **Door answers.** Every refusal has an empty body: 400, 401, 404, 405, 413 (body over the cap, before it is read), 431 (request line and headers over 16382 bytes); 503 (store unreachable, no row in time, too many waiting) always carries `Retry-After: 1`. Each answer leaves in one write.
+- **Door limits.** A bounded pool (`max_running`, default 1 until spend reservation exists), at most 256 connections, an absolute read deadline, and a SIGTERM that drains and exits 0 (exit codes 0, 2, 3). It listens on 127.0.0.1 unless `--allow-non-loopback` is given.
+- **`GET /health`** answers 200, or 503 with a failure counter while the store is down. A worker that starts with the store down logs one WARNING, serves `/health` 503 and recovers by itself.
+- **The memory store is refused outside the `demo` stage** by the door; `max_running` above 1 logs a warning at start.
+- **What the door does not do.** After the 2xx, a cut-off run ends as NEEDS_PERSON with no notification and no stored document; the sender must poll the run state. A reverse proxy with per-peer connection limits is required. One secret per tenant and per stage: the tenant is not in the signed string.
+- **`hadavin_sdk.testing.crash.CrashPoints`** (test tooling): stops a test at `<object>.<method>:before` or `:after`, in process or as a child exit (code 137); it can be built only inside pytest.
+- **n8n sender template** (`n8n/hadavin-trigger.json`, `n8n/hadavin-trigger-error.json`, `n8n/README-trigger.md`), run in n8n 2.47.7 only; queue mode is required for no event loss. The README marks what was not run.
