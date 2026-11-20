@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:51:39Z
+UPDATED_UTC: 2026-11-20T08:56:02Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.93 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, agents light 4 heavy 2
-DISK: / 53G free, 24% used; worktrees /tmp/core-b-wt 2.4G
+CAPACITY: load 1.48 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, agents light 4 heavy 2
+DISK: / 53G free, 24% used; worktrees /tmp/core-b-wt 2.5G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T08:51:36Z (previous push; this board is pushed right after writing)
-IST: 14:21 IST
+PUSHED_UTC: 2026-11-20T08:55:59Z (previous push; this board is pushed right after writing)
+IST: 14:26 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -179,3 +179,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 08:47Z CORE-A REQUESTS (lead's order, due within 15 min of 08:47Z): four agents, one per file, sonnet: 001 FINAL answer (trigger config as built incl. hardening round 3) | 002 verdict per sentence R/S/C | 003 re-verify all 25 questions against the code now, C1 (purge of expired rows) first | 004 build shared qualified_agents helper in runtime/agent_loop.py + cli.py use + answer file. OTHER AGENTS (sonnet): B5a step B search_path/PG17 lock/role-less migrate (running since 08:35Z) | step A mutation check | step C round 4 (one money context everywhere) | D-config round 3 review. DONE since 08:35: step B E5b merged and reviewed CLEAN (review 5), D-config round 3 merged, C round 3 merged.
 
 08:50Z CORE-A ANSWERS PUSHED: 001 FINAL, 002 FINAL (R-9 HOLD, S-6 DROP, rest accept/reword; open for lead: max_running default 4 vs 1), 003 FINAL (C1: purge DOES delete an expired unsettled row: expiry sets closed_at, the 0007 CHECK forbids a non-open row without it; core-a's recommended rule cannot be built), 004 BUILT (qualified_agents in runtime/agent_loop.py, cli tick uses it; core-a can replace worker.qualified_agents by an import; only Unqualified is skipped, other errors propagate). Open point for lead: the purge role holds table-level DELETE; 'closed rows only' is the WHERE of purge_spend_reservations, not database-enforced.
+
+08:55Z STATUS FOR THE LEAD. CORE-A ANSWER FILES: 001 DONE, 002 DONE, 003 DONE, 004 DONE (all pushed 08:50Z). ORDER 022: (1) E5 FIXES: B5b DONE+reviewed CLEAN, B5a (search_path decoy, PG17 MAINTAIN, plain migrate refused unless --no-roles) MERGED on cloud/core-b, review next, PG17 real-server test skipped here (server is 16); step A Majors DONE; (2) who_else cherry-pick 7caa8c15c DONE, stop-state suite twice green; (3) F-install: release/outbox order/transient retry DONE; core-c blockers unchanged; (4) evidence batch 7: after reviewer of B5a. LIVE AGENTS (sonnet): step C round 5 builder (memory.py sums, overflow mapping; since 08:51) | D-config round 4 merged just now | none else: starting hostile reviewer for B5a and evidence batch 7 next.
