@@ -802,6 +802,7 @@ def test_serve_gives_the_previous_sigterm_handler_back():
 
     class Closes:
         closed = False
+        running = 0
 
         def close(self):
             self.closed = True

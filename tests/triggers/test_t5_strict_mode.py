@@ -47,7 +47,7 @@ def test_strict_a_missing_core_b_config_is_failed_at_test_time_not_a_collection_
     out = done.stdout + done.stderr
     assert done.returncode == 1, out[-2000:]
     assert "FAILED tests/triggers/test_t5_main_start.py::test_1_" in out, out[-2000:]
-    assert "ERROR" not in out and "Interrupted" not in out, out[-2000:]
+    assert "Interrupted" not in out and "FAILED" in out, out[-2000:]  # rc 1 = tests failed; 2 would be an abort
     assert "core-b trigger config" in out
 
 
@@ -55,4 +55,4 @@ def test_without_the_switch_a_missing_core_b_config_is_a_skip():
     done = _child(strict=False)
     out = done.stdout + done.stderr
     assert done.returncode in (0, 5), out[-2000:]  # 5: pytest's code for a run in which nothing ran
-    assert "skipped" in out and "failed" not in out and "error" not in out.lower(), out[-2000:]
+    assert "skipped" in out and "FAILED" not in out and " failed" not in out, out[-2000:]
