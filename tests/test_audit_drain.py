@@ -749,17 +749,19 @@ def test_f2_an_outage_on_append_keeps_the_row_and_the_step_ok(kind, app, monkeyp
     caplog.set_level("DEBUG")
     with monkeypatch.context() as mp:
         _append_fails_for(mp, log, _outage(kind), b)
-        assert log.reconcile() == 2  # no raise, and the outage row is not counted as drained
-        assert [r[0] for r in _outbox(log)] == [b.event_id]
+        assert (
+            log.reconcile() == 1
+        )  # no raise; the pass stops at the outage row (nothing newer past it)
+        assert [r[0] for r in _outbox(log)] == [b.event_id, c.event_id]
         assert run_tick(app, steps=LAST) == 0
-        assert [r[0] for r in _outbox(log)] == [b.event_id]  # still kept
+        assert [r[0] for r in _outbox(log)] == [b.event_id, c.event_id]  # still kept
     state = app.store.get_tick_state(STEP)
     assert state.last_error is None and state.last_ok_at is not None
     assert "not_writable" not in caplog.text and "failed=audit_drain" not in caplog.text
     assert REFUSAL not in caplog.text
-    assert _ids(log) == [a.event_id, c.event_id]
+    assert _ids(log) == [a.event_id]
     assert run_tick(app, steps=LAST) == 0  # the database is back
-    assert _ids(log) == [a.event_id, c.event_id, b.event_id] and _outbox(log) == []
+    assert _ids(log) == [a.event_id, b.event_id, c.event_id] and _outbox(log) == []
 
 
 def test_f2_a_sqlite_error_on_append_is_not_an_outage(monkeypatch):
@@ -779,11 +781,11 @@ def test_f2_an_outage_does_not_hide_a_refused_row_of_the_same_drain(monkeypatch)
     log, (a, b, c) = _log(), _three()
     for e in (a, b, c):
         _park(log, e)
-    _refuse(log, c)
-    _append_fails_for(monkeypatch, log, OSError("down"), a)
+    _refuse(log, a)
+    _append_fails_for(monkeypatch, log, OSError("down"), b)
     with pytest.raises(RuntimeError, match=r"^audit outbox: 1 rows not writable$"):
         log.reconcile()
-    assert _ids(log) == [b.event_id] and [r[0] for r in _outbox(log)] == [a.event_id, c.event_id]
+    assert _ids(log) == [] and [r[0] for r in _outbox(log)] == [a.event_id, b.event_id, c.event_id]
 
 
 # --- (3) a DELETE that fails for one row ----------------------------------------------------------------------
