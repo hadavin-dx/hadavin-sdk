@@ -815,30 +815,17 @@
    "reason": "EGM"
   },
   {
-   "id": "rev-dfix25",
-   "role": "reviewer",
+   "id": "d-fix26",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "fresh round 2 of d-fix25 (check_fields, degraded start, docstring)",
-   "started UTC": "17:21",
-   "expected end": "10 min",
-   "percent": 10,
-   "state": "running",
-   "review round n of cap": "2 of 3",
-   "retries so far": 0,
-   "reason": "EGM"
-  },
-  {
-   "id": "mutant-run-21",
-   "role": "evidence runner",
-   "model": "script",
-   "what exactly it is doing": "full endpoint_mutants.py on the d-fix25 tree (/tmp/mut-run21.log)",
-   "started UTC": "17:21",
-   "expected end": "35 min",
+   "what exactly it is doing": "degraded start: a non-connectivity ConfigError is fatal (exit 2), ack_wait_s in check_fields, value checks before store",
+   "started UTC": "17:26",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "fix of round 2",
    "retries so far": 0,
-   "reason": "worker.py changed"
+   "reason": "EGM"
   }
  ],
  "tests": [
@@ -1584,6 +1571,19 @@
    "review round n of cap": "2 of 3",
    "retries so far": 0,
    "reason": "round 2 CLEAN: no Blocker/Major, 5 nits; reviews/rev-grantfix2-r2.md; round 3 started"
+  },
+  {
+   "id": "rev-dfix25",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh round 2 of d-fix25 (check_fields, degraded start, docstring)",
+   "started UTC": "17:21",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "2 of 3",
+   "retries so far": 0,
+   "reason": "round 2: no Blocker, 1 new Major (other config errors hidden in degraded start; _watch swallows ConfigError); reviews/rev-dfix25-r2.md; d-fix26 started"
   }
  ]
 }
