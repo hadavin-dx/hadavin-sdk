@@ -20,4 +20,135 @@ bringing up nodes...
 ........................................................................ [ 84%]
 ........................................................................ [ 89%]
 ........................................................................ [ 94%]
-..........................s...........................
+..........................s............................................. [100%]
+=================================== FAILURES ===================================
+_______ test_memory_raise_at_point[propose01-store.create_run-1-before] ________
+[gw0] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+point = Point(id='propose01-store.create_run-1-before', path='propose', point='store.create_run:before', nth=1, where='389', row=None, llm=0, tool=0, req=None, cards=0, acts=0)
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-758/popen-gw0/test_memory_raise_at_point_pro0')
+
+    @pytest.mark.parametrize("point", _all(XFAIL_MEMORY))
+    def test_memory_raise_at_point(point: Point, tmp_path):
+        """The thread that reaches `point` dies there (memory store); then a new Runtime and Runner on
+        the same store, (a) the request again, (b) the tick steps a later clock, (c) the request again."""
+        path = PATHS[point.path]
+        body, run_id = wire_body(KEY, DOCUMENT), _run_id(SENDER, KEY)
+        identity = (run_id, AGENT, PRINCIPAL, _ref(SENDER, KEY, DOCUMENT))
+        config_dir, files, store = (
+            make_config(tmp_path / "w", path),
+            Files(tmp_path / "state"),
+            MemoryStore(),
+        )
+        ack_status, ack_data = None, b""
+        if path.via == "tick":
+            start_waiting_run(build_stack(config_dir, store, files, path), store, run_id)
+        with CrashPoints() as points:
+            stack = build_stack(config_dir, store, files, path, points)
+            points.arm(point.point, nth=point.nth)
+            if path.via == "worker":
+                wsgi, runner = worker.make_app(make_trigger_app(stack.runtime, stack.for_runner, ONE))
+                try:
+                    ack_status, ack_data = _wsgi_post(wsgi, body)
+                    deadline = time.monotonic() + FIRE_WAIT_S
+                    while not points.fired and time.monotonic() < deadline:
+                        time.sleep(0.005)
+                finally:
+                    runner.close()
+            else:
+                try:
+                    run_tick(stack, config_dir, store)
+                except SimulatedCrash:
+                    pass
+            assert points.fired == (point.point,)
+    
+        rows = _memory_rows(store)
+        assert len(rows) <= 1 and all(found[:4] == identity for found in rows)
+        row = rows[0][4] if rows else None
+        req = req_state(_memory_requests(store))
+        calls_at_kill = files.model_calls()
+        at_kill = (
+            row,
+            calls_at_kill,
+            len(files.tool_calls()),
+            req,
+            files.cards(),
+            len(files.executed()),
+        )
+        assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
+        if path.via == "worker":  # the request thread survives the loop thread and always answers
+            assert ack_status in ((503,) if row is None else (202, 200)), (ack_status, ack_data)
+    
+        expected = after_tick(point.path, row, req)
+        state_after = path.final if expected is None else expected[0]
+        stack = build_stack(config_dir, store, files, path)
+        wsgi, runner = worker.make_app(make_trigger_app(stack.runtime, store, ONE))
+        try:
+            status_a, data_a = _wsgi_post(wsgi, body)  # (a) before any tick
+            if row is None:
+                assert status_a in OK, (status_a, data_a)
+                _memory_wait(store, run_id, path.final)
+            else:
+                assert status_a == (202 if row in IN_PROGRESS else 200), (status_a, data_a)
+                assert json.loads(data_a) == {"run_id": run_id, "state": row}
+                assert _memory_rows(store) == rows
+            calls_after_a = files.model_calls()
+            assert run_tick(stack, config_dir, store) == 0  # (b)
+            after = _memory_rows(store)
+            want_after = (*identity, state_after, None if expected is None else expected[1])
+>           assert after == [want_after]
+E           AssertionError: assert [('run-e02518...val_missing')] == [('run-e02518...ROVAL', None)]
+E             
+E             At index 0 diff: ('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab623ae8', 'NEEDS_PERSON', 'approval_missing') != ('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab623ae8', 'WAITING_FOR_APPROVAL', None)
+E             Use -v to get more diff
+
+tests/triggers/test_t5_crash_matrix_paths.py:958: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.triggers:worker.py:653 trigger worker: max_running is 2 and spend is not reserved before a model call: parallel runs can pass a budget; set triggers.max_running: 1 to rule that out
+ERROR    hadavin_sdk.triggers:worker.py:463 trigger run: the loop thread ended with SimulatedCrash
+WARNING  hadavin_sdk.triggers:worker.py:641 trigger worker: the store is the memory kind: acknowledged requests do not survive a restart
+WARNING  hadavin_sdk.triggers:worker.py:653 trigger worker: max_running is 2 and spend is not reserved before a model call: parallel runs can pass a budget; set triggers.max_running: 1 to rule that out
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/1 seed=2026112041: sent=1506 valid=1020 (68%) rows=50 overlapping_keys=39 samples=27 model_calls=50 statuses[200:332, 202:4, 400:271, 401:135, 404:33, 405:29, 409:180, 413:18, 503:504] retried_503=504
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/2 seed=2026112042: sent=1514 valid=1044 (69%) rows=53 overlapping_keys=42 samples=49 model_calls=53 statuses[200:295, 202:29, 400:251, 401:148, 404:32, 405:21, 409:209, 413:18, 503:511] retried_503=511
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/4 seed=2026112043: sent=1008 valid=542 (54%) rows=57 overlapping_keys=40 samples=92 model_calls=57 statuses[200:214, 202:100, 400:245, 401:156, 404:26, 405:23, 409:225, 413:16, 503:3] retried_503=3
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:933: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C2 seed=2026112044: sent=1364 valid=731 (54%) rows=60 overlapping_keys=42 samples=123 model_calls=60 statuses[200:315, 202:53, 400:346, 401:194, 404:37, 405:34, 409:302, 413:22, 503:61] retried_503=61 get_run_calls=1097 raised=57 slowed=301
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C3 seed=2026112045: sent=1506 valid=193 (13%) rows=51 overlapping_keys=26 samples=106 model_calls=51 statuses[200:90, 202:44, 400:152, 401:1059, 404:36, 405:35, 409:56, 413:31, 503:3] retried_503=3 clock_calls=1331 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=35 samples=28 model_calls=48 statuses[200:65, 202:111, 400:117, 401:78, 404:13, 405:13, 409:98, 413:8] retried_503=0
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:1121: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=100 no_answer=14 retried_503=0 statuses[0:14, 200:79, 202:155, 400:110, 401:45, 404:7, 405:13, 409:20, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=38 overlapping_keys=16 samples=156 model_calls=38 statuses[200:266, 202:26, 400:625, 401:382, 404:60, 405:68, 409:95, 413:44, 503:938] close_took=0.00s requests_after_close=1149 new_keys_after_close=930
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose01-store.create_run-1-before]
+SKIPPED [3] tests/triggers/conftest.py:101: core-b trigger config (TriggerSettings, Config.triggers) not on this tree
+SKIPPED [1] tests/triggers/test_endpoint.py:847: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_endpoint.py:864: an empty body is refused at Content-Length (own test)
+1 failed, 1363 passed, 5 skipped, 9 warnings in 195.95s (0:03:15)
