@@ -713,24 +713,25 @@
    "what exactly it is doing": "mutants for E1 (conflict audit, cap, /health, recovery, ping bound, audit warning) + E5/E11 mutants run; ONE full mutant run (run 17)",
    "started UTC": "09:50",
    "expected end": "25 min",
-   "percent": 5,
+   "percent": 60,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "E1 built"
+   "reason": "E1 built",
+   "what_exactly_it_is_doing": "told to stop the full mutant run (tree changes under e1-fix2); keeps its mutant edits; full run redone after the fixes"
   },
   {
-   "id": "E1-rev",
-   "role": "fresh reviewer (codebase-details)",
+   "id": "e1-fix2",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "read-only adversarial review of the E1 code (audit event leaks, cap, /health leaks and DoS, degraded switch races)",
-   "started UTC": "09:50",
-   "expected end": "15 min",
+   "what exactly it is doing": "E1 review Majors 1-4 + test gaps + nits; one test run; bandit line",
+   "started UTC": "09:52",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1 of n (behaviour-changing code: no cap)",
+   "review round n of cap": "fix after round 1 (no cap)",
    "retries so far": 0,
-   "reason": "E1 built"
+   "reason": "after E1-rev"
   }
  ],
  "tests": [
@@ -2531,6 +2532,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "3 gaps fixed: degraded worker recovers in-process (_Degraded switch, 5 s re-check), /health ping bounded 2 s with one thread at most, audit warning from _prepare; 7 new tests with kill checks; tests/triggers+crash 1352 passed 5 skipped; bandit not confirmed"
+  },
+  {
+   "id": "E1-rev",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only adversarial review of the E1 code (audit event leaks, cap, /health leaks and DoS, degraded switch races)",
+   "started UTC": "09:50",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 of n (behaviour-changing code: no cap)",
+   "retries so far": 0,
+   "reason": "E1 review: 0 Blocker, 4 Major (App leak on each failed recovery try; ping wedge if Thread.start raises; sync unbounded audit write; persistent non-store error loops forever), 2 test gaps (unsigned writes no event; per-sender cap vacuous), nits; answers: no payload/signature/secret leak, 409 unaffected by audit failure, no 2xx before the real Runner, one run per key holds"
   }
  ]
 }
