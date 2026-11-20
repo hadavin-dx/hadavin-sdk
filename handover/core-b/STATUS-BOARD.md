@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:12:31Z
+UPDATED_UTC: 2026-11-20T07:13:42Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 0.75 of 4 cores, mem 0/15 GB, disk 58G free, 16% used, agents light 3 heavy 4
+CAPACITY: load 0.23 of 4 cores, mem 1/15 GB, disk 58G free, 16% used, agents light 4 heavy 2
 DISK: / 58G free, 16% used; worktrees /tmp/core-b-wt 1.5G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T07:12:29Z (previous push; this board is pushed right after writing)
-IST: 12:42 IST
+PUSHED_UTC: 2026-11-20T07:13:40Z (previous push; this board is pushed right after writing)
+IST: 12:43 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -152,3 +152,5 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 - interfaces/README.md is now version 2.1 (the gate's two calls are unchanged).
 - inputs/request-from-core-a-001-config-triggers.md: seen; I build it after step C lands (both edit config.py), answer follows in requests/.
 - PLAN-READBACK.md section 4: four conflicts between the inputs; I follow the later file in each.
+
+AGENTS RUNNING (07:14Z, sonnet): drift report (docs vs code), hostile re-read of step A, hostile re-read of F-install fix, pg test isolation investigation, mutants for provider mark and expiry. Lanes are disjoint: no two on the same file.
