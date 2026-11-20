@@ -70,24 +70,33 @@ change in place, the first was XPASS(strict) and the second FAILED (old `once`: 
 | guard/judge.py:71, guard/bedrock_guardrail.py, runtime/evidence.py, approvals/channel.py, approvals/slack_channel.py | already redacted text | They use `redact_text` without the untrusted hook (judge, guardrail, evidence) or with the channel's own hook that keeps placeholders (channel): not this finding |
 | demos/ | none of the three names occurs | No caller |
 
-Verdict: ONE caller can and does: the tool-error path (both loops). No value leaks (the text is masked twice); the harm
-is a junk secret entry in the run map (`<SECRET_n>` = `‹SECRET_1›`, swept as every-copy from later texts) and
-`is_masked(..., neutralise_untrusted)` False for such output. The escape of the throwaway `<IPV4_1>` in the second
-pass is REQUIRED (it is not the run map's `<IPV4_1>`), so the double pass cannot simply keep placeholders.
-
-Fix, NOT APPLIED (it changes what a strict expected-failure test in a held file reports, and one option is in tools.py):
-- (a) in `guard/redact.py` `_Redactor._mask`: a value that is nothing but ESCAPED look-alikes (`‹KIND_n›`) and genuine
-  placeholders is left alone, as a value of genuine placeholders already is. About 4 lines. Tried as a monkeypatch,
-  not in the file: the error path then gives `password=‹SECRET_1› host ‹IPV4_1›` with an empty run map, and
-  `test_round_trip_of_redact_untrusted_with_the_same_hook_and_escaped_lookalikes` PASSES (so its strict xfail marker
-  must go in the same change). Gives up: a real password spelled exactly `‹WORD_1›` is not masked.
-- (b) in tools.py: `error_reason` returns the scrubbed message without its own pattern pass when the caller redacts
-  next (both callers do). Removes the double pass at its source; does not help an echoing tool.
-Recommended: (a), then (b) if the lead wants one pass on the error path.
+Verdict: ONE caller can and does: the tool-error path (both loops); an echoing tool does the same. FIXED in the
+follow-up (coordinator order after ORDER 012 item 2), in `guard/redact.py` `_Redactor._mask` only:
+- Rule: a value that is nothing but ESCAPED look-alikes (`_ESCAPED_LOOKALIKE`: U+2039, letters/digits, `_`, ASCII digits,
+  U+203A, exactly what `runmap.escape_placeholders` writes) and genuine placeholders, with nothing else but spaces, `;`
+  and `,`, is left alone, as a value of genuine placeholders alone already was. No map entry is made.
+- Result (through `tools.error_reason` then `tools.prepare_output`): `password=‹SECRET_1› host ‹IPV4_1›`, run map
+  unchanged; `is_masked(out, map, neutralise_untrusted)` True; `redact_untrusted` of that output returns it unchanged.
+- The escape of the throwaway `<IPV4_1>` in the second pass is REQUIRED and untouched (it is not the run map's).
+- Security, each tested (tests/test_redact_own_output.py, 23 tests): a look-alike PLUS anything else (a secret after,
+  before or between, one letter, one digit, non-ASCII letters, punctuation only, a dot between two look-alikes) is masked
+  whole as before; a secret beside a look-alike as its own value is masked; only the exact escaped shape qualifies
+  (no number, no kind, not closed, a secret inside the brackets: all masked); an escaped token gets no map entry, so
+  `restore_text` / `restore` return it as typed and `has_placeholder` is False; a typed genuine placeholder in untrusted
+  text is still escaped.
+- Gives up: a real credential spelled exactly `‹WORD_1›` is not masked (as a credential spelled `<nil>` is not).
+- Fail-before: 8 of the first 20 tests failed on the code before the rule (evidence).
+- tests/test_runmap_is_masked.py: the strict xfail marker of `test_round_trip_of_redact_untrusted_with_the_same_hook_and_escaped_lookalikes`
+  removed (one exact-string edit, nothing else); it passes.
+- CHANGED OUTCOME, NOT EDITED (held file): `tests/test_runmap_is_masked.py::test_recorded_the_untrusted_hook_on_already_redacted_text_escapes_its_real_placeholders`
+  now FAILS: it records the old behaviour. Old: `is_masked(out, mapping, neutralise_untrusted) is False` and
+  `again == "password=<SECRET_2> at ‹IPV4_1›"`; new: `True` and `"password=‹SECRET_1› at ‹IPV4_1›"`. Its owner must
+  rewrite or remove it.
+- Still open, tools.py (not mine): `error_reason` redacting before `prepare_output` is a double pattern pass; harmless now.
 
 ## Stays out
 No pattern regex, no pattern order, no change to `runmap.py`, `tools.py`, the sweep rule or the caps. BEARER / BASIC /
-authorization length case (above). The second finding's fix.
+authorization length case (above): goes to the lead.
 
 ## NOT CHECKED
 - A text that really needs more than one round (the planted adjacency) was not constructed; the bound is tested by
