@@ -63,3 +63,11 @@ Input: tickets/A-hostile-review-2.md (repros in /tmp/core-b-scratch-A/, not trac
 2. MAJOR chain.py:303-306: the outbox SELECT still uses is_connectivity_error: a statement or lock timeout there returns quietly, drained=0 for ever.
 Minor: poison row fails the step every tick (no quarantine); the outbox is read whole (20000 rows x 5KB = 45 s, 106 MB).
 The cap is reached, so no builder is started. Lead: decide (a) the inverted classifier and one classifier for append and SELECT, (b) inline flush retries _unwritable, (c) LIMIT per tick, (d) poison-row quarantine. I can build it as a new ticket on your word.
+
+## E10 (2026-11-20 08:42Z) plan review of the three ticket drafts: none is ready to build; the lead rules
+Report: tickets/plan-review-Q14-Q15-Q17.md (fresh reviewer, ~80 citations checked).
+- All three: plan-v2.md:26 puts AK-G15 (executor identity), P4b2 and P4c in TIER 2 "not built this round"; PLAN-READBACK s3 says no tier 2 code. The QUEUE rows authorise drafts only. Nothing is built until the lead lifts tier 2.
+- P4b2 billing classes: DROP as code, cut to documentation (a per-kind table in ii-meter.md, the vendor-page verification task, core-c's open request to honour the mark on ProviderExhausted). The class would be a renamed bool; making the mark a property breaks tests/test_refused_before_response.py:164-165.
+- P4c run cap and loud wall: FIX FIRST: the alert never fires on the normal wall path (_limits_stop ends the run before any reserve); the lock order runs->day->month deadlocks with settle_spend (day->month->runs); needs core-c's SPEND_REASONS and ii-meter reopened for a 7th reason; a pilot agent with max_run_usd below one call's worst case would refuse every run.
+- Executor identity: DROP for this round (ledger row): the executor reads no database, so the proposed grants have no consumer; an empty executor set in platform_secrets.check removes its overlap refusal.
+Lead: confirm (a) tier 2 stays unbuilt, (b) P4b2 becomes documentation only, (c) P4c gets a rewritten ticket only if you lift tier 2.
