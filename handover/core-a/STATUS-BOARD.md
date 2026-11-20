@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:01:47Z
+UPDATED_UTC: 2026-11-20T06:02:08Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -14,7 +14,7 @@ FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's 
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:01:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:01:49Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -74,9 +74,12 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4375 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4377 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4382 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 4773 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 4774 | postgres: checkpointer  | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 4775 | postgres: background writer  | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 4777 | postgres: walwriter  | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 4778 | postgres: autovacuum launcher  | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 4779 | postgres: logical replication launcher  | core-a session or its agent | 1s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
