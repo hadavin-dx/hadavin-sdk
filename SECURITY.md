@@ -21,7 +21,16 @@ write to the chain.
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
 runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to
 the audit log first. The reset login can append audit rows (as the runtime login already can). The database owner and
-a superuser are outside this guarantee. The memory store guarantees nothing.
+a superuser are outside this guarantee. The memory store guarantees nothing. Stated limits: (1) the guarantee is about
+the state stored in the database, and the store names its schema in every stop-state statement so a temporary table
+cannot hide a stop; a runtime process that is itself taken over can ignore any switch, so stop the process as well.
+(2) "Audited first" is done by the `limits reset` command; the database does not force it, so a person holding the
+reset login can clear a stop by hand with no audit row. (3) The reset login cannot add a stop row, but it can set the
+old flag ON, which is also a stop (the safe direction). (4) A reset clears the stops visible to its clear statement:
+a stop committed after that statement began stays ON, and one committed between the audit row and that statement is
+cleared; the command reads the state back and exits 2 while it is still ON. (5) `migrate` refuses, when it applies
+grants, any other role that could clear a stop; a plain `migrate` that names no role applies and checks no grants and
+leaves old ones in place, so name all roles in ONE command.
 
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT

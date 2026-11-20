@@ -220,7 +220,10 @@ def test_the_old_flag_still_reads_on_and_a_reset_turns_it_off(store):
 def test_a_missing_flag_row_stays_on_after_a_reset(store):
     with store._lock:
         store._exec("DELETE FROM kill_switch")
-    store.set_kill_switch(KillSwitch(on=False, by="admin"))
+    with pytest.raises(
+        ConfigError, match="kill_switch row missing"
+    ):  # ticket S7: a reset of nothing fails
+        store.set_kill_switch(KillSwitch(on=False, by="admin"))
     assert store.get_kill_switch().by == "system:kill_switch_row_missing"
 
 

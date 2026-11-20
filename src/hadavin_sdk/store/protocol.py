@@ -115,8 +115,10 @@ class Store(Protocol):
         ...
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
-        """`on=True` adds a stop. `on=False` clears the stops it can see; on Postgres only the reset role may (the
-        runtime role is refused by the database) and a stop committed meanwhile stays ON."""
+        """`on=True` adds a stop. `on=False` clears the stops visible to its clear statement; on Postgres only the
+        reset role may (the runtime role is refused by the database). A stop committed after that statement began
+        stays ON; one committed between the audit intent and that statement is cleared. A reset that finds no
+        switch row raises (the state stays ON)."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...

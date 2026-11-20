@@ -202,6 +202,15 @@ def _main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
+        if reset_ref and reset_ref == b.store.dsn_secret_name:
+            # Before any connection: the reset must not run on the runtime's own login.
+            print(
+                "refused: backends.store.reset_credential_ref names the same secret as "
+                "backends.store.dsn_secret_name, so the reset would run on the runtime login. Point it at the "
+                "secret that holds the reset role's DSN. The kill switch was not changed.",
+                file=sys.stderr,
+            )
+            return 2
     try:
         secrets = make("secrets", b.secrets)
         if reset_ref:
@@ -432,8 +441,9 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
 def kill_switch(limits: Limits, action: str, by: str) -> int:
     """Run stop/reset for a caller (the CLI once a shared store exists, or an in-process admin hook).
 
-    Exit codes: 0 done; 2 the store answered with an error (a reset by a login that is not the reset role lands
-    here, with a `reset_failed` audit outcome); 3 reset refused because the audit store is unavailable (the switch
+    Exit codes: 0 done (for a reset: the state was read back and is OFF); 2 the store answered with an error (a
+    reset by a login that is not the reset role lands here, with a `reset_failed` audit outcome) or the state
+    still reads ON after the reset; 3 reset refused because the audit store is unavailable (the switch
     stays ON); 4 the store is unreachable (the switch was NOT changed).
     """
     if action == "stop":
@@ -456,6 +466,22 @@ def kill_switch(limits: Limits, action: str, by: str) -> int:
         return 3
     except Exception as exc:  # noqa: BLE001 - classified below
         return _kill_switch_store_down("reset", exc)
+    try:  # report what the store reads now, not what was asked for
+        state = limits.store.get_kill_switch()
+    except Exception as exc:  # noqa: BLE001 - classified below
+        print(
+            f"reset written, but the kill switch could not be read back ({type(exc).__name__}): "
+            "treat it as ON until a read succeeds.",
+            file=sys.stderr,
+        )
+        return 4 if is_connectivity_error(exc) else 2
+    if state.on:
+        print(
+            f"kill switch still ON (by {state.by!r}): the reset was written, but a stop is still open "
+            "(one committed while the reset ran) or the old flag is on. Run limits reset again.",
+            file=sys.stderr,
+        )
+        return 2
     print(f"kill switch OFF (by {by})")
     return 0
 

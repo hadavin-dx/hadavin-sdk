@@ -274,6 +274,33 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
     return problems
 
 
+_CAN_CLEAR = """
+WITH rel AS (
+    SELECT c.oid, c.relname, c.relowner FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = current_schema() AND c.relname IN ('kill_switch', 'kill_switch_clears')
+), holder AS (
+    SELECT r.oid FROM pg_roles r WHERE EXISTS (
+        SELECT 1 FROM rel WHERE has_any_column_privilege(
+            r.oid, rel.oid, CASE rel.relname WHEN 'kill_switch' THEN 'UPDATE' ELSE 'INSERT' END))
+)
+SELECT r.rolname FROM pg_roles r
+WHERE NOT r.rolsuper AND r.rolname !~ '^pg_' AND r.rolname <> ALL(%s)
+  AND r.oid NOT IN (SELECT relowner FROM rel)
+  AND (r.oid IN (SELECT oid FROM holder)
+       OR EXISTS (SELECT 1 FROM holder h WHERE h.oid <> r.oid AND pg_has_role(r.oid, h.oid, 'MEMBER')))
+ORDER BY r.rolname
+"""
+
+
+def who_else_can_clear(db, reset_role: str | None) -> list[str]:
+    """Every role of the database, other than superusers, the owner of the stop relations and the reset role, that
+    could clear a stop: it can INSERT into kill_switch_clears or UPDATE kill_switch (a column grant counts), or it
+    is a member, with or without inheritance, of a role that can (the reset role, the owner and superusers too:
+    a member can SET ROLE). PostgreSQL's own `pg_*` roles are not listed themselves; a member of one is."""
+    rows = db.execute(_CAN_CLEAR, ([reset_role] if reset_role else [],)).fetchall()
+    return [r[0] for r in rows]
+
+
 def _excess_privileges(db, role: str) -> list[str]:
     """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
     extra = []
@@ -378,4 +405,12 @@ def migrate(
                 raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                     f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
                 )
+        if named and (others := who_else_can_clear(db, reset_role)):
+            raise ConfigError(
+                "roles other than the reset role could clear a stop (a right on kill_switch or "
+                "kill_switch_clears, or membership in a role that holds one): "
+                + ", ".join(others[:20])
+                + ". Name the runtime, portal, purge and reset roles in ONE migrate command, and revoke the "
+                "right or the membership of any other role"
+            )
     return applied

@@ -26,14 +26,15 @@ def test_unreadable_limits_at_the_recheck_needs_a_person_and_nothing_runs(
 ):
     run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
     monkeypatch.setattr(app.limits, "blocked", _boom)
+    app.runtime.llm.calls.clear()  # the calls that made the plan, before the limits became unreadable
     _approve(app, _pending(app, run.run_id))
     final = app.store.get_run(run.run_id)
     assert (final.state, final.reason_code) == (S.NEEDS_PERSON, "recheck.limits_unavailable")
-    assert fake_system.creates == 0
+    assert fake_system.creates == 0 and app.runtime.llm.calls == []
 
 
 def test_unreadable_limits_at_the_first_check_needs_a_person(app, fake_system, monkeypatch):
     monkeypatch.setattr(app.limits, "blocked", _boom)
     run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits_unavailable")
-    assert fake_system.creates == 0
+    assert fake_system.creates == 0 and app.runtime.llm.calls == []

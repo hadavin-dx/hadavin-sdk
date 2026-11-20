@@ -195,6 +195,10 @@ class PostgresStore:
     def __init__(self, conn: psycopg.Connection) -> None:
         self._db = conn
         self._lock = threading.Lock()
+        # Resolved once: the stop-state statements name this schema (`current_schema()` never answers pg_temp).
+        self._schema = conn.execute("SELECT current_schema()").fetchone()[0]
+        if not self._schema:
+            raise ConfigError("store postgres: the search_path names no schema that exists")
 
     # --- generic helpers ---------------------------------------------------------------------------------
 
@@ -441,8 +445,24 @@ class PostgresStore:
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
 
+    def _stop_tables(self) -> dict[str, sql.Composed]:
+        """The three stop-state relations with the schema named. An unqualified name is looked up in the session's
+        temporary schema first, so a temporary table called `kill_switch` would shadow the real one."""
+        s = sql.Identifier(self._schema)
+        return {
+            "flag": sql.SQL("{}.kill_switch").format(s),
+            "stops": sql.SQL("{}.kill_switch_stops").format(s),
+            "clears": sql.SQL("{}.kill_switch_clears").format(s),
+        }
+
     def get_kill_switch(self) -> KillSwitch:
-        found = self._select(KillSwitch, "kill_switch", "id = 1", ())
+        t = self._stop_tables()
+        cols = sql.SQL(", ").join(sql.Identifier(c) for c in KillSwitch.model_fields)
+        with self._lock:
+            rows = self._exec(
+                sql.SQL("SELECT {} FROM {flag} WHERE id = 1").format(cols, **t)
+            ).fetchall()
+        found = [KillSwitch.model_validate(r) for r in rows]
         if not found:  # migrate seeds the row: its absence means a broken schema, so fail closed
             _LOG.error(
                 "kill_switch row missing: treating the kill switch as ON; run hadavin-sdk migrate"
@@ -454,32 +474,45 @@ class PostgresStore:
             self._lock
         ):  # the flag is off: any stop with no clear still means ON (the oldest one is reported)
             stop = self._exec(
-                'SELECT s."by", s.ts FROM kill_switch_stops s WHERE NOT EXISTS '
-                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) ORDER BY s.ts, s.id LIMIT 1"
+                sql.SQL(
+                    'SELECT s."by", s.ts FROM {stops} s WHERE NOT EXISTS '
+                    "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) ORDER BY s.ts, s.id LIMIT 1"
+                ).format(**t)
             ).fetchone()
         if stop is not None:
             return KillSwitch(on=True, by=stop["by"], ts=stop["ts"])
         return found[0]
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
+        t = self._stop_tables()
         if ks.on:  # a stop is one INSERT: all the runtime role may do to the stop state
-            with self._lock:
-                self._exec(
-                    'INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', (ks.by, ks.ts)
-                )
+            with self._lock:  # no ts: the database clock sets it (the column default)
+                self._exec(sql.SQL('INSERT INTO {stops} ("by") VALUES (%s)').format(**t), (ks.by,))
             return
-        # A reset (the reset role only): the old flag off and one clear per stop this statement can see, in one
-        # transaction. A stop committed during or after it has no clear, so the switch stays ON.
+        # A reset (the reset role only): the old flag off and one clear per stop the clear statement can see, in
+        # one transaction. A stop committed after that statement began has no clear, so the switch stays ON; a
+        # stop committed before it began (also one committed after the caller's audit intent) is cleared.
         with self._lock, self._db.transaction():
-            self._exec(
-                'UPDATE kill_switch SET "on" = FALSE, "by" = %s, ts = %s WHERE id = 1',
+            flag = self._exec(
+                sql.SQL('UPDATE {flag} SET "on" = FALSE, "by" = %s, ts = %s WHERE id = 1').format(
+                    **t
+                ),
                 (ks.by, ks.ts),
             )
+            if (
+                flag.rowcount != 1
+            ):  # a broken schema reads ON whatever is cleared: say so, clear nothing
+                raise ConfigError(
+                    "kill_switch row missing: the kill switch stays ON and nothing was cleared; "
+                    "run hadavin-sdk migrate"
+                )
             self._exec(
-                'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT s.id, %s, %s '
-                "FROM kill_switch_stops s WHERE NOT EXISTS "
-                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) "
-                "ON CONFLICT (stop_id) DO NOTHING",
+                sql.SQL(
+                    'INSERT INTO {clears} (stop_id, "by", ts) SELECT s.id, %s, %s '
+                    "FROM {stops} s WHERE NOT EXISTS "
+                    "(SELECT 1 FROM {clears} c WHERE c.stop_id = s.id) "
+                    "ON CONFLICT (stop_id) DO NOTHING"
+                ).format(**t),
                 (ks.by, ks.ts),
             )
 

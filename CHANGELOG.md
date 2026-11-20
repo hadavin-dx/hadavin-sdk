@@ -18,6 +18,11 @@
     its own stop fails loudly because the runtime login lost UPDATE on `kill_switch`.
   - **`limits reset` in pilot and prod** is refused (exit 2, before any connection) unless
     `backends.store.reset_credential_ref` is set. In demo it keeps using the runtime connection.
+    It is also refused when that name equals `backends.store.dsn_secret_name`. After a reset the command reads the
+    state back and reports the real state: it exits 2 and says "still ON" when a stop is still open, and a reset
+    that finds no `kill_switch` row fails (exit 2, `limits.reset_failed`).
+  - **`migrate` with any role named** refuses when another role (not a superuser, the owner or the named reset role)
+    could clear a stop; a plain `migrate` with no role leaves old grants in place.
   - **New behaviour in a run.** When the stop state or the budgets cannot be read, the run ends with a person
     (`NEEDS_PERSON`, reason `limits_unavailable`, or `recheck.limits_unavailable` just before an approved action); no
     model call is made.

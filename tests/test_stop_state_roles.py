@@ -430,12 +430,22 @@ def test_e5_a_flag_set_on_by_the_owner_reads_on_and_a_reset_turns_it_off(w):
     assert w.run('SELECT "on" FROM kill_switch')[0][0] is False
 
 
-def test_e6_a_deleted_flag_row_reads_on_and_stays_on_after_a_reset(w):
+def test_e6_a_deleted_flag_row_reads_on_and_a_reset_fails_loudly_and_stays_on(w):
+    """Ticket S7: a reset that finds no flag row raises, clears nothing and is audited as reset_failed."""
+    _stop(w)
     w.do("DELETE FROM kill_switch")
     assert w.read().on is True
-    w.store(w.reset).set_kill_switch(OFF)
+    rs = w.store(w.reset)
+    with pytest.raises(ConfigError, match="kill_switch row missing"):
+        rs.set_kill_switch(OFF)
+    audit = make("audit", ChainSettings(kind="chain"), store=rs, signer=None, anchor=None)
+    with pytest.raises(ConfigError):
+        Limits(rs, audit, None).reset("admin:r")
+    assert w.kinds() == ["limits.reset", "limits.reset_failed"]
+    assert cli.kill_switch(Limits(rs, audit, None), "reset", "admin:r") == 2
     ks = w.read()
     assert (ks.on, ks.by) == (True, "system:kill_switch_row_missing")
+    assert w.count("kill_switch_clears") == 0
 
 
 def test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade(w, monkeypatch):
