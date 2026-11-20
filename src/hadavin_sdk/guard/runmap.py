@@ -115,7 +115,12 @@ def nfkc(text: str) -> str:
     the redactor's cap is refused first (InputTooLarge, a RedactionError), as redact_text does for its own views."""
     if text.isascii():  # NFKC leaves ASCII alone, and ASCII has no invisible format characters
         return text
-    return canonical(fits_after_nfkc(text))
+    # the WHOLE text is composed (a base letter joins its combining mark, Hangul jamo join), then the invisible characters go:
+    # main's `canonical`. `canonical` itself is per character now (index fidelity for replacement) and composes nothing,
+    # which is wrong for decoding: a secret stored precomposed and shown decomposed must be found
+    return "".join(
+        c for c in unicodedata.normalize("NFKC", fits_after_nfkc(text)) if unicodedata.category(c) != "Cf"
+    )
 
 
 _HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2}))")

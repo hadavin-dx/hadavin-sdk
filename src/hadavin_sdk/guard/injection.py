@@ -69,6 +69,10 @@ def _holds(window: str, need_kept: int, need_letters: int) -> bool:
     characters) holds nothing."""
     # A mark on both sides: a view that drops everything of ``window`` (the tag characters, which read as letters in one view only) is then still a
     # view (of the marks, with no letter), not a view that is left out because it is empty, so it counts as zero.
+    # The RAW text is read too (``_score`` squashes it to ASCII a-z only), so the window must hold the letters in the raw spelling as well: a full-width or
+    # look-alike letter counts in a fold view but not in the raw squash, and padding of them aimed at a boundary would otherwise hide a phrase from the raw read.
+    if len(_SQUASH.sub("", window.lower())) < need_letters:
+        return False
     views = textnorm.scan_views_no_value("|" + window + "|")
     if not views:
         return False

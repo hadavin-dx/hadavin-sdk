@@ -17,7 +17,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from hadavin_sdk import defaults
 from hadavin_sdk.config import Route
 from hadavin_sdk.guard import model_gate, runmap
 from hadavin_sdk.guard.model_gate import BoundGate, GateRefused, ModelGate, UnmaskedInput
@@ -816,7 +815,7 @@ def test_d2_a_worst_case_that_is_not_a_finite_decimal_of_zero_or_more_is_refused
 def test_d2_a_zero_worst_case_is_allowed():
     free = Client()
     free.reply = Reply(cost_usd=Decimal(0), model_id="fake-model")
-    bound, client, meter, sink = build(free, worst_case=lambda *args: Decimal(0))
+    bound, _client, meter, sink = build(free, worst_case=lambda *args: Decimal(0))
     bound.chat(CLEAN, system="s", route="main")
     assert meter.reserved["res_1"][1] == Decimal(0) and sink.codes() == [("ok", None)]
 

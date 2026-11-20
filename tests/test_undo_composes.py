@@ -25,7 +25,7 @@ _JAMO = "한글"  # the same two syllables as conjoining jamo
 
 @pytest.mark.parametrize("precomposed", [_NAME, _VIET, _HANGUL, "café-" + "Pw1"])
 def test_undo_of_nfd_input_is_the_precomposed_text(precomposed):
-    assert _nfd(precomposed) != precomposed or precomposed == "".join(precomposed)
+    assert _nfd(precomposed) != precomposed
     assert runmap.undo(_nfd(precomposed)) == precomposed
     assert runmap.undo(precomposed) == precomposed
     assert runmap.nfkc(_nfd(precomposed)) == precomposed

@@ -126,12 +126,13 @@ def build(
             f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
             "in pilot and prod pass allow_test_doubles=True only from a test"
         )
+    if live:
+        # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
+        # Before any backend is built (`make`, `load_registry`), like the refusal above.
+        textnorm.require_pinned_unidata()
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    if live:
-        # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
-        textnorm.require_pinned_unidata()
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
