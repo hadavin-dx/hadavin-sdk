@@ -13,7 +13,7 @@ from decimal import Decimal, localcontext
 from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.guard import judge, runmap
-from hadavin_sdk.guard.model_gate import BoundGate, ModelGate
+from hadavin_sdk.guard.model_gate import NO_MAP, BoundGate, ModelGate
 from hadavin_sdk.limits import Budget
 from hadavin_sdk.llm.common import worst_case_for
 from hadavin_sdk.llm.protocol import LLM
@@ -72,7 +72,7 @@ def gate(
         )
     # One payer for the whole call; the judge below gets this bound client too. No run map: every document is
     # redacted with its own fresh map just before it is sent.
-    llm = llm.bind(f"eval:{agent_id}", new_id("eval"))
+    llm = llm.bind(f"eval:{agent_id}", new_id("eval"), mapping=NO_MAP)
     # The golden set, its documents and judge.jsonl, hashed before the run and again after it: a file that
     # changed while the run read it was not the set it qualifies on, so the run is never green.
     golden_before = registry.golden_sha256(agent_id)

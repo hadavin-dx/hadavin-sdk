@@ -23,6 +23,7 @@ from typing import Any
 
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import injection_check
+from hadavin_sdk.guard.model_gate import NO_MAP
 from hadavin_sdk.llm.common import ANSWER_TOOL
 from hadavin_sdk.models import Verdict
 
@@ -68,10 +69,17 @@ class JudgeDetector:
     def __init__(self, llm: Any, route: str, threshold: float) -> None:
         self.llm, self.route, self.threshold = llm, route, threshold
 
-    def bind(self, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> JudgeDetector:
+    def bind(
+        self, wrap: Callable[[Any], Any], agent_id: str, run_id: str, mapping: Any = None
+    ) -> JudgeDetector:
         """The same judge on a metered client: `wrap` turns the raw client into a model gate, which is bound to
-        the payer. No run map is passed: the judge redacts its input with its own fresh map in ``check``."""
-        return JudgeDetector(wrap(self.llm).bind(agent_id, run_id), self.route, self.threshold)
+        the payer, with the run's `mapping` enforced by the gate (``NO_MAP`` for the eval and replay command lines);
+        the judge also redacts its input with its own fresh map in ``check``."""
+        return JudgeDetector(
+            wrap(self.llm).bind(agent_id, run_id, mapping=NO_MAP if mapping is None else mapping),
+            self.route,
+            self.threshold,
+        )
 
     def check(self, text: str, source: str) -> Verdict:
         # defence in depth: the judge is a model, so its input goes through the choke point even when the caller

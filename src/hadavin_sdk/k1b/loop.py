@@ -21,7 +21,7 @@ from typing import Any
 
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.injection import bind as bind_detector
-from hadavin_sdk.guard.model_gate import GateRefused, ModelGate
+from hadavin_sdk.guard.model_gate import NO_MAP, GateRefused, ModelGate
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.diagnosis import Diagnosis, parse_diagnosis, parse_diagnosis_text
@@ -127,7 +127,7 @@ def run_case(
     out = CaseOutcome(status="ok")
     case_run_id = f"{run_id}:{bundle.case_id}"
     try:
-        llm = gate.bind(agent_id, case_run_id)
+        llm = gate.bind(agent_id, case_run_id, mapping=NO_MAP)
         bound = bind_detector(detector, wrap, agent_id, case_run_id)
         _steps(
             out,

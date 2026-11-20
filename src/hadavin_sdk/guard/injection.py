@@ -243,8 +243,10 @@ class AnyOf:
     def __init__(self, detectors: list[Detector]) -> None:
         self.detectors = detectors
 
-    def bind(self, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> AnyOf:
-        return AnyOf([bind(d, wrap, agent_id, run_id) for d in self.detectors])
+    def bind(
+        self, wrap: Callable[[Any], Any], agent_id: str, run_id: str, mapping: Any = None
+    ) -> AnyOf:
+        return AnyOf([bind(d, wrap, agent_id, run_id, mapping) for d in self.detectors])
 
     def check(self, text: str, source: str) -> Verdict:
         verdicts = [injection_check(d, text, source) for d in self.detectors]
@@ -262,14 +264,21 @@ def combine(detectors: list[Detector]) -> Detector:
     return detectors[0] if len(detectors) == 1 else AnyOf(detectors)
 
 
-def bind(detector: Detector, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> Detector:
+def bind(
+    detector: Detector,
+    wrap: Callable[[Any], Any],
+    agent_id: str,
+    run_id: str,
+    mapping: Any = None,
+) -> Detector:
     """The detector for one payer: a detector that calls a model (it has a ``bind`` method: ``JudgeDetector``,
     ``AnyOf``) is given back with its model client wrapped by `wrap` (client -> model gate) and bound to the agent
     and the run, so its calls are reserved, settled and audited for that run. Any other detector is returned as
     it is. The Detector protocol does not change: a ``check`` called on an unbound model detector runs on its
-    raw client, outside every meter."""
+    raw client, outside every meter. `mapping` is the run's map (a ``runmap.RunMap``) the gate enforces on what the
+    judge sends; None (the default: the judge's gate gets ``model_gate.NO_MAP``) only for the eval and replay command lines."""
     fn = getattr(detector, "bind", None)
-    return fn(wrap, agent_id, run_id) if callable(fn) else detector
+    return fn(wrap, agent_id, run_id, mapping) if callable(fn) else detector
 
 
 def injection_check(detector: Detector, text: str, source: str) -> Verdict:

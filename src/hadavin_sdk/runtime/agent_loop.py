@@ -462,21 +462,25 @@ class Runtime:
         except Exception:  # noqa: BLE001 - no gate, no call
             raise _GateError from None
 
-    def _bound_detector(self, run: Run) -> Detector:
+    def _bound_detector(self, run: Run, mapping: Any = None) -> Detector:
         """The detector with its model calls (llm_judge) booked to this agent and run."""
         try:
             meter = self.limits.for_agent(run.agent_id)
             return bind_detector(
-                self.detector, lambda llm: self._gate(llm, meter), run.agent_id, run.run_id
+                self.detector,
+                lambda llm: self._gate(llm, meter),
+                run.agent_id,
+                run.run_id,
+                mapping if isinstance(mapping, runmap.RunMap) else runmap.RunMap(mapping or {}),
             )
         except Exception:  # noqa: BLE001 - no gate, no call
             raise _GateError from None
 
-    def _screen(self, run: Run, text: str, source: str):
+    def _screen(self, run: Run, text: str, source: str, mapping: Any = None):
         """The injection check. A model-backed detector (llm_judge) calls through the run's gate, which books the
         call; nothing is charged here. Raises SpendRefused or GateRefused when the gate made no call: the caller
         ends the run with `_refused`."""
-        return injection_check(self._bound_detector(run), text, source)
+        return injection_check(self._bound_detector(run, mapping), text, source)
 
     def _refused(self, run: Run, exc: SpendRefused | GateRefused, cited: list[str]) -> Run:
         """End a run whose model call the meter or the gate refused (no provider was contacted): never WORKING.
@@ -633,7 +637,7 @@ class Runtime:
             )
             return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
         try:
-            verdict = self._screen(run, safe_text, "document")
+            verdict = self._screen(run, safe_text, "document", rmap)
         except (SpendRefused, GateRefused) as exc:
             return self._refused(run, exc, cited)
         if verdict.flagged:
@@ -782,7 +786,7 @@ class Runtime:
                     error_code="tool_error" if out.error else None,
                 )
                 try:
-                    verdict = self._screen(run, out.text, f"tool:{call.name}")
+                    verdict = self._screen(run, out.text, f"tool:{call.name}", rmap)
                 except (SpendRefused, GateRefused) as exc:
                     return self._refused(run, exc, cited)
                 if verdict.flagged:  # tool output is untrusted text too
@@ -865,13 +869,23 @@ class Runtime:
         return run
 
     def _shadow(
-        self, run: Run, plan: Plan, decision: GateDecision, diagnosis: str, cited: list[str]
+        self,
+        run: Run,
+        plan: Plan,
+        decision: GateDecision,
+        diagnosis: str,
+        cited: list[str],
+        mapping: Any = None,
     ) -> Run:
         """Shadow: the would-be outcome is shown and never acted on."""
         try:
             # The judge's screen of the diagnosis is a model call of this run: bound, so it is booked.
             card: Card | None = cards.render_shadow(
-                plan, decision, cited, diagnosis=diagnosis, detector=self._bound_detector(run)
+                plan,
+                decision,
+                cited,
+                diagnosis=diagnosis,
+                detector=self._bound_detector(run, mapping),
             )
         except (
             SpendRefused,
@@ -977,7 +991,7 @@ class Runtime:
             return self._to(run, S.DENIED, decision.rule_id)
         level = self._level(agent, contract.id)
         if level == "shadow":
-            return self._shadow(run, plan, decision, diagnosis, cited)
+            return self._shadow(run, plan, decision, diagnosis, cited, mapping)
         if decision.outcome == "deny":
             return self._to(run, S.DENIED, decision.rule_id)
         if level == "suggest" and decision.outcome != "needs_approval":
