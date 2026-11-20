@@ -348,7 +348,7 @@ HAND = [
     mutant('cli: the note is not printed', CLI, '            _say(note)', '            pass',
         'test_cli_migrate_prints_and_logs_every_accepted_admin_role', 'assert'),
     mutant('cli: the note is printed without escaping (a stdout that cannot encode the name)', CLI, '    print(text.encode(enc, "backslashreplace").decode(enc))', '    print(text)',
-        'test_cli_migrate_notes_never_fail_on_a_stdout_that_cannot_encode_the_name', 'assert 3 == 0'),
+        'test_cli_migrate_notes_never_fail_on_a_stdout_that_cannot_encode_the_name', 'u4e2d'),
     mutant("S2: the from-16 'no effect' note is removed", MIG, '                note = f"accepted_admin_roles has no effect from PostgreSQL 16 on (named, not used: {names})"', '                note = ""',
         'test_cli_migrate_prints_and_logs_every_accepted_admin_role', 'assert'),
     mutant('S2: the note is not appended to the refusal message', MIG, '                + (f". {note}" if note.startswith("accepted administrator") else "")', '                + ""',
