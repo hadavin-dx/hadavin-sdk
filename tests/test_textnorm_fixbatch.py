@@ -320,7 +320,7 @@ def test_no_caller_in_the_package_omits_the_value_or_the_scripts():
     )
     for file, name, nargs, kws in calls:
         if name == "scan_views_no_value":
-            assert nargs == 1 and not kws, (
+            assert nargs == 1 and kws <= {"budget_s"}, (
                 f"scan_views_no_value in {file} is called with more than the text"
             )
         elif name == "scan_views":
@@ -663,9 +663,9 @@ def test_the_hebrew_word_for_password_is_refused_as_too_short():
 
 
 def test_the_module_docstring_lists_every_public_name():
-    """Item 8. The 36 names (33 of the fold, 3 for the fold scan of the redactor) are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
+    """Item 8. The 37 names (34 of the fold, 3 for the fold scan of the redactor) are documented once, in the module docstring; the list in ``tests/test_textnorm.py`` pins the names."""
     doc = textnorm.__doc__
-    assert len(textnorm.__all__) == 36
+    assert len(textnorm.__all__) == 37
     for name in textnorm.__all__:
         assert f"``{name}``" in doc, f"{name} is not documented in the module docstring"
 

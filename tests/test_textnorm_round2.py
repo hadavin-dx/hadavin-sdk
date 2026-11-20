@@ -341,7 +341,9 @@ def test_canonically_equivalent_spellings_have_one_grounding_key_and_different_l
 # ---- the time of the chunked read at its ceiling (run ALONE: ``pytest -m perf tests/test_textnorm_round2.py -s``) ---------------------------------------------------
 @pytest.mark.perf
 @pytest.mark.parametrize("name", ["ascii", "cyrillic"])
-def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_the_bound(name):
+def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_the_bound(
+    name, monkeypatch
+):
     """Perf row (printed with -s): a clean text of exactly ``TEXTNORM_INJECTION_MAX_CHARS`` (the longest text the chunked read takes) is read, not
     flagged. The bound (120 s) is generous because the evidence run of round 1 measured 3.6 s (ASCII) and 11.1 s (Cyrillic) under a load of 3.5; the real
     numbers of the final run are in the report. FAILS before by behaviour (every over-cap text was flagged)."""
@@ -352,6 +354,9 @@ def test_perf_the_chunked_read_at_its_ceiling_is_not_flagged_and_stays_within_th
     )
     n = defaults.TEXTNORM_INJECTION_MAX_CHARS
     text = (unit * (n // len(unit) + 2))[:n]
+    monkeypatch.setattr(
+        defaults, "INJECTION_BUDGET_S", None
+    )  # the row times the read; the budget has its own tests (G10)
     start = time.perf_counter()
     verdict = _check(text)
     took = time.perf_counter() - start
