@@ -275,12 +275,9 @@ HAND = [
         " AND r.rolname::text <> ALL(%(accepted)s::text[])", "",
         "test_s2_below_16_an_accepted_createrole_role_is_not_listed_and_another_one_still_is", "assert ["),
     mutant("S2: the allow-list is applied to grants too", MIG,
-        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
-",
-        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
-"
-        "      AND a.grantee NOT IN (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname::text = ANY(%(accepted)s::text[]))
-",
+        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv\n",
+        "SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv\n"
+        "      AND a.grantee NOT IN (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname::text = ANY(%(accepted)s::text[]))\n",
         "test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_listed", "assert ["),
     mutant("S2: the allow-list names are not validated", MIG,
         "not _ROLE.fullmatch(a) or a in _FORBIDDEN_ROLES for a in accepted", "False for a in accepted",

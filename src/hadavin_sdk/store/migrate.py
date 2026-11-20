@@ -447,11 +447,17 @@ def migrate(
     if isinstance(accepted_admin_roles, str) or any(
         not _ROLE.fullmatch(a) or a in _FORBIDDEN_ROLES for a in accepted
     ):
-        raise ConfigError(f"accepted_admin_roles must be plain database role names: {accepted_admin_roles!r}")
+        raise ConfigError(
+            f"accepted_admin_roles must be plain database role names: {accepted_admin_roles!r}"
+        )
     if accepted and not named:
-        raise ConfigError("accepted_admin_roles is only read when roles are named: it changes the who-else check")
+        raise ConfigError(
+            "accepted_admin_roles is only read when roles are named: it changes the who-else check"
+        )
     if overlap := sorted(set(accepted) & set(named)):
-        raise ConfigError(f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}")
+        raise ConfigError(
+            f"accepted_admin_roles must not name a role this command grants: {', '.join(overlap)}"
+        )
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
