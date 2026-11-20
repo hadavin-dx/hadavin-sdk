@@ -97,19 +97,32 @@ REDACT_BUDGET_S = 6.0
 # total work of one scan (every step of a walk, every token and every entry looked up counts one unit; registering a union of overlapping forms counts one per
 # character) is counted, read every 1,024 units together with the deadline, and refused past this many units (`InputTooLarge("SpelledWorkTooMuch")`,
 # nothing shown). The figure is CHOSEN, not measured: a round number with a margin over the honest shapes MEASURED on the Linux test machine
-# (evidence handover/core-c/evidence/G7-1.md "G7 fix round 6", script g7r6_units.py): the grown cookie jar 305,000 units (330 lines, 64-character suffix) and
-# 255,000 (275 lines, 128 characters), 300 cookie lines of 300 prefix lengths 245,000, 300 signed ids 98,000: the limit is 13 times the largest. The
-# repo's corpora (1,835 inputs of tests/test_redact_idempotent_property.py) have at most 1 offset and 1 form under a first token, 2,000 generated
-# compositions at most 1 offset and 6 forms. A hostile text (2,800 forms, 70 prefixes x 40 suffix lengths in 213,000 characters, then 262,000 characters of
-# copies) needs 6.3 million units and is refused after 0.53 s of CPU; the measured cost is 0.09 to 0.23 microseconds per unit (0.115 on the hostile text),
-# so the limit costs 0.4 to 0.9 s at most. WHAT THIS DOES NOT BOUND: with no deadline the scan is 4 million units per sweep per string per round,
-# no total bound (stated); the deadline (`REDACT_BUDGET_S`) bounds the time on a slower machine whatever this says. A hostile author can therefore FORCE A
-# REFUSAL of the whole document (`SpelledWorkTooMuch` is an `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost
-# (SECURITY wording). MEMORY (no cap by count; bounded by the input cap): a registration costs about one dict per character of its written form: a single
-# 200,000-character compound value (the generic SECRET class has no length cap) is about 200,000 trie nodes, 37 MB measured, per registration, and the
-# registry lives for one call of `redact` or `redact_many`. Two OPEN limits (E10, pinned by tests): an overlap of forms completed in a LATER round (registered after the earlier form's text was swept) leaves the swallowed
-# literal prefix or tail readable, and two compound values that overlap as RAW text leave the tail of one readable in the literal sweep.
+# (evidence handover/core-c/evidence/G7-1.md "G7 fix round 6" and "round 7", script g7r6_units.py): the largest honest shape that is a valid input
+# (the registered text under the 262,144-character cap) is the grown cookie jar of 275 lines with a 128-character signed suffix, 254,629 units, so the
+# limit is 15.7 times it (the 330-line jar, 304,221 units, registers 320,924 characters, over the cap: a measure of the walk only, 13.1 times);
+# 300 cookie lines of 300 prefix lengths 245,093 units, 300 signed ids 98,227. A shape that grows at BOTH ends (front variants x end variants, every
+# combination a distinct registered value) is not among the honest ones: 20 x 20 (400 forms in 16,399 characters) takes 2.28 million units (8.7 per
+# character of the text, 57 percent of the limit), 30 x 30 3.56 million (89 percent), about 32 x 32 is refused: each combination is a real match, so its
+# cost is the product and no scan can do better. Corpus: the 1,836 inputs of tests/test_redact_idempotent_property.py (the jar, 12 forms at 12 offsets
+# under `<JWT_1>`, is one of them) register a spelled form in 4 inputs, at most 105 characters (script g7r7_registry.py). A hostile text (2,800 forms,
+# 70 prefixes x 40 suffix lengths in 213,000 characters, then 262,000 characters of copies) needs 6.3 million units and is refused after 0.49 s of CPU;
+# the measured cost is 0.09 to 0.21 microseconds per unit (0.13 on the hostile text), so the limit costs 0.4 to 0.9 s at most. WHAT THIS DOES NOT
+# BOUND: with no deadline the scan is 4 million units per sweep per string per round, no total bound (stated); the deadline (`REDACT_BUDGET_S`) bounds
+# the time on a slower machine whatever this says. A hostile author can therefore FORCE A REFUSAL of the whole document (`SpelledWorkTooMuch` is an
+# `InputTooLarge`): fail closed, nothing shown, and a legitimate document in the same text is lost (SECURITY wording). Two OPEN limits (E10, pinned by
+# tests): an overlap of forms completed in a LATER round (registered after the earlier form's text was swept) leaves the swallowed literal prefix or
+# tail readable, and two compound values that overlap as RAW text leave the tail of one readable in the literal sweep.
 SPELLED_MAX_WORK = 4_000_000
+# MEMORY of the registry (round 7): the tries hold one dict per character of every registered written form that is not already a node (prefix and
+# suffix; about 185 bytes each, measured: 37.2 MB per 200,000 characters, 49 MB per 260,000, tracemalloc, evidence g7r6_units.py `memory()` and
+# g7r7_registry.py). Before round 7 nothing limited it: a forged token the map already held (`password=<SECRET_1>` + 260,000 characters) registered
+# a form per string, 8 strings (the 8 x 262,144 bundle cap) held 8 x 49 MB of registry, and the call peaked at 2.3 GB under tracemalloc (the rest is the sweep's finders for the 8 large values, 956 MB with no registry at all: a separate cost, not this limit's). Now `_Redactor._spell` (every registration: `find`
+# and the union of an overlap) counts the characters held per call and refuses the CALL past this many (`InputTooLarge("SpelledMemoryTooMuch")`,
+# nothing shown; the registration is never skipped: that would fail open). CHOSEN: 1,000,000 characters, about 190 MB of registry at most. Honest
+# shapes hold far fewer (they share nodes): the 330-line grown jar 1,720, the 275-line jar 1,469, 300 cookie lines 3,017, the corpus 105 at most:
+# 330 times the largest (1,000,000 / 3,017). The hostile case above is refused after about 4 strings (186 MB peak). A SINGLE string is not refused for 260,000 characters
+# (49 MB of registry); its other costs (the sweep's finder for a 260,000-character value) are not this limit's.
+SPELLED_MAX_CHARS = 1_000_000
 
 
 def cut_margin(length: int) -> int:

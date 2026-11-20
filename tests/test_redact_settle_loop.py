@@ -24,6 +24,7 @@ import random
 import re
 import sys
 import time
+import tracemalloc
 import types
 import uuid
 from collections import Counter
@@ -819,7 +820,7 @@ def test_a_flip_of_bank_near_during_a_round_puts_every_string_back_in_todo(monke
 
 
 def _flip_items() -> list[str]:
-    """Item 1 holds a bank word only in a folded view (full-width BSB): `bank_near` flips while it is read. Items 0 and 1 are re-read, 2 and 3 are not."""
+    """Item 1 holds a bank word only in a folded view (full-width BSB): `bank_near` flips while it is read. Item 0 is re-read, 1, 2 and 3 are not."""
     fullwidth = "\uff22\uff33\uff22"
     return ["acct " + ACCOUNT + " paid", f"{fullwidth} 062-000 ok", "tail one", "tail two"]
 
@@ -849,6 +850,7 @@ def test_redact_many_checks_the_deadline_between_the_two_reads_when_bank_near_fl
 
 
 def test_redact_many_re_reads_only_the_strings_read_before_the_flip(monkeypatch):
+    """Items 0 and 1 hold the bank context as a full-width BSB in item 1: item 0 is read again, item 1 (read with the flag set) is not."""
     items = _flip_items()
     calls: list[str] = []
     real = R._Redactor.find
@@ -859,7 +861,12 @@ def test_redact_many_re_reads_only_the_strings_read_before_the_flip(monkeypatch)
 
     monkeypatch.setattr(R._Redactor, "find", find)
     out, mapping = R.redact_many(items)
-    assert [calls.count(i) for i in items] == [2, 2, 1, 1]  # not [2, 2, 2, 2]
+    assert [calls.count(i) for i in items] == [
+        2,
+        1,
+        1,
+        1,
+    ]  # not [2, 2, 1, 1] (string 1 itself was read with the flag set)
     assert (
         ACCOUNT in mapping.values() and ACCOUNT not in out[0]
     )  # the early string still got the bank context
@@ -1235,10 +1242,12 @@ def _jar_log(lines: int, suffix_chars: int) -> tuple[str, str]:
 
 
 def test_a_growing_cookie_jar_with_a_long_signed_suffix_is_masked_not_refused(monkeypatch):
-    """Round 5 design M-A: the suffix walk ran once per matched prefix form (P x S). 275 lines (a registered log of about 250,000 characters, inside the
-    size cap) of a jar that grows by one cookie per line, every line ending in the same signed suffix of 128 characters, then 262,144 characters of
-    copies: about 6 million units of work on round 5's scan (refused as SpelledWorkTooMuch: an honest log lost), about 0.2 million now (one backward
-    walk and ONE forward walk per token). The limit is cut to a tenth to show the margin: the copies are scanned to the end and replaced."""
+    """Round 5 design M-A: the suffix walk ran once per matched prefix form (P x S). 275 lines (a registered log of about 236,000 characters, inside the
+    size cap) of a jar that grows by one cookie per line, every line ending in the same signed suffix of 128 characters, then copies up to the cap.
+    Units of work (evidence g7r6_units.py, G7-1.md): round 5's scan 3,606,794 for a 219,999-character probe (90 percent of the real limit; about 4.3
+    million, over it, for the stretched 262,144-character probe used here: TYPED, scaled), refused as SpelledWorkTooMuch (an honest log lost); now
+    254,629 and 301,360 (a walk of the prefix and ONE walk of the suffix per token). The limit is cut to a tenth (400,000) in this test: the new scan
+    passes with a margin of 1.3, the round 5 scan fails by a factor of 10. The copies are scanned to the end and replaced."""
     text, probe = _jar_log(275, 128)
     assert len(text) <= defaults.MAX_REDACT_CHARS
     probe = (probe + "\n" + probe)[: defaults.MAX_REDACT_CHARS]
@@ -1404,9 +1413,9 @@ def test_an_account_beside_a_bank_word_only_a_folded_view_shows_is_masked_in_eve
         assert ACCOUNT not in runmap.redact_text(text, runmap.RunMap()), text
 
 
-def test_redact_reads_the_text_again_when_the_flag_flipped_during_the_first_read(monkeypatch):
-    """The safety net: a flip of `bank_near` inside `find` makes `redact` read the text once more (as `redact_many` does), after a deadline check.
-    No flip, no second read."""
+def test_redact_reads_the_text_once_even_when_the_flag_flips_during_the_read(monkeypatch):
+    """Round 7 (design nit): round 6 read the text a second time after a flip of `bank_near` (a safety net that also counted `actions` twice).
+    The flag is set before any decision of the same `find` (next test), so the one read already had the context: ONE read, flip or not."""
     reads = []
     real = R._Redactor.find
 
@@ -1416,33 +1425,74 @@ def test_redact_reads_the_text_again_when_the_flag_flipped_during_the_first_read
 
     monkeypatch.setattr(R._Redactor, "find", counting)
     flips = f"{_fullwidth('account')}: {ACCOUNT}\nrou\u200bting number\n"
-    R.redact(flips, _sweep_copies=False)
-    assert reads == [flips, flips]
+    result = R.redact(flips, _sweep_copies=False)
+    assert reads == [flips] and ACCOUNT not in result.text
     reads.clear()
     R.redact("account: 12\n", _sweep_copies=False)
     assert len(reads) == 1
     reads.clear()
-    R.redact(
-        flips, near=("the bank account is ours",), _sweep_copies=False
-    )  # the flag was set before: nothing flips
+    R.redact(flips, near=("the bank account is ours",), _sweep_copies=False)
     assert len(reads) == 1
 
 
-def test_the_second_read_of_a_flip_checks_the_deadline(monkeypatch):
-    flips = f"{_fullwidth('account')}: {ACCOUNT}\nrou\u200bting number\n"
-    seen = {"n": 0}
-    real = R._Redactor._check_deadline
+def test_actions_of_a_text_whose_flag_flipped_are_counted_once():
+    """Round 7 design nit: `RedactionResult.actions` ("how many times the redactor changed the text of this call") was about twice the real count
+    after a flip (the second read re-masked from the raw text and `r.actions` was not reset). The same text with the context given up front
+    (`near=`: no flip, one read) is the reference."""
+    for flips in (
+        f"{_fullwidth('account')}: {ACCOUNT}\nrou\u200bting number\n",
+        f"{_fullwidth('account')}: {ACCOUNT}\nrou\u200bting number\n{_fullwidth('account')}: {ACCOUNT}2\n",
+    ):
+        flipped = R.redact(flips, _sweep_copies=False)
+        given = R.redact(flips, near=("the bank account is ours",), _sweep_copies=False)
+        assert flipped.text == given.text
+        assert flipped.actions == given.actions > 0, (flipped.actions, given.actions)
+    full = R.redact(flips)  # with the sweep and settle
+    assert full.actions == R.redact(flips, near=("the bank account is ours",)).actions
 
-    def spy(self):
-        seen["n"] += 1
-        return real(self)
 
-    monkeypatch.setattr(R._Redactor, "_check_deadline", spy)
-    R.redact(flips, _sweep_copies=False, _deadline=time.thread_time() + 600.0)
-    assert seen["n"] == 1  # once, before the second read
-    seen["n"] = 0
-    R.redact("account: 12\n", _sweep_copies=False, _deadline=time.thread_time() + 600.0)
-    assert seen["n"] == 0
+def _flag_grid_texts() -> list[str]:
+    texts = list(_hidden_bank_word_texts()) + _flip_items()
+    for keyword in ("account", "acct", "BSB", "routing"):
+        for bank in ("bank", "routing number", "\uff22\uff33\uff22"):
+            for order in (0, 1):
+                a, b = f"{_fullwidth(keyword)}: {ACCOUNT}", f"filler {bank[:4]}\u200b{bank[4:]}"
+                texts.append("\n".join((a, b) if order == 0 else (b, a)) + "\n")
+    return texts
+
+
+def test_every_decision_of_a_find_sees_the_flag_as_it_is_when_that_find_ends(monkeypatch):
+    """Round 7: the proof that makes the second read of round 6 redundant. `bank_near` is read by `_decide` alone; the fold scan sets it before
+    anything is decided (its `_line_hits` and `_dry_hits` never decide), so in ONE `find` every `_decide` call sees the flag as it is when
+    the `find` ends. Checked on a grid of keyword spellings x bank-word spellings x order (and the hidden-bank-word texts): at least 10 texts
+    flip the flag inside their `find`, with decisions made in it, and none was made before the flip. A change that decides before the fold scan has set the flag
+    (g7r7_mutants.py defers the write) fails here."""
+    seen: list[tuple[bool, int]] = []
+    state = {"calls": []}
+    real_decide, real_find = R._Redactor._decide, R._Redactor.find
+
+    def decide(self, m, label):
+        state["calls"].append(self.bank_near)
+        return real_decide(self, m, label)
+
+    def find(self, text):
+        state["calls"] = []
+        out = real_find(self, text)
+        seen.append((self.bank_near, len(state["calls"])))
+        assert all(flag == self.bank_near for flag in state["calls"]), (text, state["calls"])
+        return out
+
+    monkeypatch.setattr(R._Redactor, "_decide", decide)
+    monkeypatch.setattr(R._Redactor, "find", find)
+    flipped = decided = 0
+    for text in _flag_grid_texts():
+        r = R._Redactor(None)
+        r.find(text)
+        flipped += r.bank_near
+        decided += (
+            seen[-1][1] if r.bank_near else 0
+        )  # decisions made in a find that flipped the flag
+    assert flipped >= 10 and decided >= 10, (flipped, decided)
 
 
 # --- M-E: an entry the FIRST sweep registered counts as growth for the first round ----------------------------------------------------------
@@ -1505,3 +1555,257 @@ def test_union_registration_is_counted_and_checked(monkeypatch):
     with pytest.raises(runmap.InputTooLarge):
         fresh()._spelled_sweep(text, time.thread_time() - 1.0)
     assert fresh()._spelled_sweep(text, time.thread_time() + 600.0).startswith("see <BEARER_")
+
+
+# --- G7 fix round 7 (G7 result review 6): registry memory limit, per-round growth record, smaller-side lookup, both-ends grid ----------------
+
+
+def _hostile_memory_items(strings: int = 8) -> list[str]:
+    """Line 1 gives `<SECRET_1>` a value; every other string is `password=<SECRET_1>` + 260,000 secret-class characters (a forged token the map
+    already holds makes the written form differ from the value, so each string registers a form of its own: the strings differ in 3 characters)."""
+    value = "hun" + "ter" + "22"
+    tail = ("Ab3x" * 65_000)[:260_000]
+    return ["password=" + value] + [f"password=<SECRET_1>Zq{i}" + tail for i in range(strings)]
+
+
+def test_a_text_that_registers_about_a_million_characters_of_forms_is_refused_in_bounded_time_and_memory():
+    """Round 7 design MAJOR (memory DoS). Before: the 8 strings registered 8 x 260,000 characters (about 185 bytes each): the call peaked at 2.3 GB
+    under tracemalloc (79 s), nothing refused it. Now the registry counts the characters it holds per call and refuses the call past
+    `defaults.SPELLED_MAX_CHARS` (1,000,000) at the REGISTRATION (never skipped): about 4 strings in, peak about 190 MB (3.6 s)."""
+    items = _hostile_memory_items()
+    held = {"<SECRET_1>": "hun" + "ter" + "22"}
+    before = dict(held)
+    tracemalloc.start()
+    t0 = time.thread_time()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledMemoryTooMuch"):
+            R.redact_many(items, held)
+        took = time.thread_time() - t0
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 400_000_000, (
+        f"peak {peak / 1e6:.0f} MB: the registry was not bounded"
+    )  # 1.3 M nodes x 185 B is 240 MB; 2.3 GB before
+    assert took < 40.0, took  # 3.6 s measured under tracemalloc; 79 s before
+    assert held == before, "the caller's map is the caller's: a refused call changed nothing in it"
+
+
+def test_one_string_of_the_hostile_shape_registers_once_and_is_masked_not_refused():
+    """The single-string `redact` of the same shape registers ONE form of 260,000 characters (49 MB, under the limit): masked, not refused. The
+    limit bounds the sum over the call's strings, not one string (that one is bounded by the input cap)."""
+    value = "hun" + "ter" + "22"
+    text = _hostile_memory_items(1)[1]
+    result = R.redact(text, mapping={"<SECRET_1>": value})
+    assert "Ab3xAb3x" not in result.text and result.text.startswith("password=<SECRET_")
+
+
+def test_the_registry_counter_is_per_call_and_a_refusal_leaves_the_next_call_alone(monkeypatch):
+    """One call may hold up to the limit; the counter starts at 0 in every call (a counter shared between calls would refuse the second)."""
+    value = "hun" + "ter" + "22"
+    items = [
+        "password=" + value,
+        "password=<SECRET_1>" + "q" * 1500,
+        "password=<SECRET_1>" + "r" * 1500,
+    ]
+    monkeypatch.setattr(defaults, "SPELLED_MAX_CHARS", 4000)
+    for _ in range(3):  # 3,000 characters of forms per call, under 4,000; three calls: 9,000 in all
+        out, _ = R.redact_many(items)
+        assert "q" * 100 not in "".join(out) and "r" * 100 not in "".join(out)
+    monkeypatch.setattr(defaults, "SPELLED_MAX_CHARS", 2000)
+    with pytest.raises(runmap.InputTooLarge, match="SpelledMemoryTooMuch"):
+        R.redact_many(items)
+    monkeypatch.setattr(defaults, "SPELLED_MAX_CHARS", 4000)
+    assert "q" * 100 not in "".join(R.redact_many(items)[0])  # the refusal kept nothing
+    assert R._Redactor(None)._spelled_chars == 0
+
+
+def test_the_memory_limit_also_stops_the_union_of_an_overlap(monkeypatch):
+    """The union registered by a sweep (`_place_union` -> `_place` -> `_spell`) is charged like any registration: F1 = `<SECRET_1>ab<SECRET_2>`,
+    F2 = `b<SECRET_2>` + a 3,000-character tail overlap in the text, and their union adds the 3,000-character tail under a third trie path."""
+    tail = "q" * 3000
+
+    def fresh():
+        r = R._Redactor({"<SECRET_1>": SHORT, "<SECRET_2>": "zz" + "q7"})
+        r._place("BEARER", SHORT + "abzzq7", "<SECRET_1>ab<SECRET_2>")
+        r._place("BEARER", "bzzq7" + tail, "b<SECRET_2>" + tail)
+        return r
+
+    text = "see <SECRET_1>ab<SECRET_2>" + tail + " end"
+    monkeypatch.setattr(defaults, "SPELLED_MAX_CHARS", 7000)
+    ok = fresh()
+    assert ok._spelled_sweep(text, None).startswith("see <BEARER_")
+    assert 3000 < ok._spelled_chars <= 7000
+    registered = fresh()._spelled_chars
+    assert 3000 < registered < 3100
+    monkeypatch.setattr(
+        defaults, "SPELLED_MAX_CHARS", registered + 100
+    )  # the forms fit, the union's 3,000 more characters do not
+    victim = fresh()
+    with pytest.raises(runmap.InputTooLarge, match="SpelledMemoryTooMuch"):
+        victim._spelled_sweep(text, None)
+
+
+def test_the_counter_is_the_number_of_trie_nodes_after_registrations_and_rollbacks():
+    """`_spelled_chars` is what the tries really hold: counted by walking both tries after 60 random registrations, then after the rollback of
+    all of them (0). A registration over a path that exists adds only the missing nodes."""
+    rng = random.Random(707)  # noqa: S311 - a seeded test generator
+
+    def nodes(r) -> int:
+        count, stack = 0, [t for pair in r._spelled.values() for t in pair]
+        while stack:
+            node = stack.pop()
+            for key, child in node.items():
+                if key and isinstance(child, dict):
+                    count += 1
+                    stack.append(child)
+        return count
+
+    r = R._Redactor({"<SECRET_1>": SHORT, "<SECRET_2>": "zz" + "q7"})
+    counters = r._open_journal()
+    for _ in range(60):
+        token = rng.choice(["<SECRET_1>", "<SECRET_2>"])
+        pre = "".join(rng.choice("abc") for _ in range(rng.randint(0, 6)))
+        suf = "".join(rng.choice("xyz") for _ in range(rng.randint(0, 6)))
+        original = f"{pre}{token}{suf}"
+        full = original.replace("<SECRET_1>", SHORT).replace("<SECRET_2>", "zzq7")
+        if len(full) >= 5 and original != full:
+            r._place("BEARER", full, original)
+            assert r._spelled_chars == nodes(r), original
+    assert r._spelled_chars > 20
+    r._rollback(counters)
+    assert nodes(r) == 0 and r._spelled_chars == 0
+
+
+def test_honest_shapes_hold_a_tiny_part_of_the_memory_limit():
+    """Measured (evidence g7r7_registry.py): the grown jars hold 1,469 and 1,720 characters (shared nodes), 300 cookie lines 3,017; the limit is
+    1,000,000. The jar is masked, not refused, with the REAL limit, in one `redact_many` call."""
+    text, probe = _jar_log(275, 128)
+    r = R._Redactor(None)
+    r.find(text)
+    assert 1000 < r._spelled_chars < defaults.SPELLED_MAX_CHARS // 100, r._spelled_chars
+    out, _ = R.redact_many([text, probe[:2000]])
+    assert JWT not in "".join(out)
+    rows = [f"Cookie: _ga=GA1.2{'x' * k}; theme=dark; sid={JWT}" for k in range(300)]
+    cookies = R._Redactor(None)
+    cookies.find("\n".join(rows))
+    assert cookies._spelled_chars < defaults.SPELLED_MAX_CHARS // 100, cookies._spelled_chars
+
+
+# --- round 7 design nit: the growth record is made before the sweeps of EVERY round -------------------------------------------------------
+
+
+def test_a_union_registered_by_a_sweep_of_a_later_round_puts_every_string_back(monkeypatch):
+    """Round 6 read the map size before the sweeps of the first round only. A union a sweep registers in round 2 or later (a stand-in: the sweep of
+    one string adds a map entry) is growth too: every string is read again and, in the next round, swept again (round 7: `known` is recorded before the
+    sweep loop of every round). The strings: `s1` is never changed by anything, so only a sweep of every string reaches it."""
+    r = R._Redactor(None)
+    swept: list[tuple[int, str]] = []
+    round_of = {"n": 0}
+
+    def find(self, text):
+        round_of["n"] += 1 if text in ("s0", "u0") else 0
+        return {"s0": "t0", "u0": "v0"}.get(text, text)
+
+    def sweep(self, text, deadline=None):
+        swept.append((round_of["n"], text))
+        if text == "v0":
+            self.mapping["<SECRET_9>"] = "grown-by-a-sweep"
+            return "w0"
+        return {"t0": "u0"}.get(text, text)
+
+    monkeypatch.setattr(R._Redactor, "find", find)
+    monkeypatch.setattr(R._Redactor, "sweep", sweep)
+    assert r.settle(["o0", "o1"], ["s0", "s1"]) == ["w0", "s1"]
+    assert (2, "v0") in swept, swept
+    assert [t for n, t in swept if n >= 2 and t == "s1"], (
+        "the untouched string was swept again after the growth in round 2"
+    )
+
+
+def test_growth_by_a_sweep_in_the_last_round_is_not_settled(monkeypatch):
+    """`NotSettled` stays the cap: a sweep that registers an entry in round 4 leaves every string in `todo`, and no round reads them again."""
+    r = R._Redactor(None)
+    calls = {"find": 0}
+
+    def find(self, text):
+        calls["find"] += 1
+        return text + "x"  # changes every round: round 4 changes too
+
+    def sweep(self, text, deadline=None):
+        self.mapping[f"<SECRET_{len(self.mapping) + 1}>"] = "v" * (len(self.mapping) + 8)
+        return text
+
+    monkeypatch.setattr(R._Redactor, "find", find)
+    monkeypatch.setattr(R._Redactor, "sweep", sweep)
+    with pytest.raises(runmap.RedactionError, match="NotSettled"):
+        r.settle(["o"], ["s"])
+
+
+# --- round 7 codebase nit 6: the smaller side of the terminal lookup is iterated; both-ends grid ----------------------------------------
+
+
+def _units_of_sweep(r, probe: str) -> int:
+    lo, hi, held = 0, 10**9, defaults.SPELLED_MAX_WORK
+    try:
+        while hi - lo > 1024:
+            mid = (lo + hi) // 2
+            defaults.SPELLED_MAX_WORK = mid
+            try:
+                r._spelled_sweep(probe, None)
+                hi = mid
+            except runmap.InputTooLarge:
+                lo = mid
+    finally:
+        defaults.SPELLED_MAX_WORK = held
+    return hi
+
+
+def test_many_matched_prefixes_and_a_one_entry_terminal_cost_the_one_entry_not_the_prefixes():
+    """Round 6 codebase nit 6: `_spelled_sweep` looks the SMALLER side up in the larger at a terminal. 275 forms `a`*k + token + `Z`*k (275 nested
+    prefixes, each with ITS OWN suffix): a token preceded by 275 `a` matches all 275 prefixes (M = 275) and every terminal of its suffix path holds ONE
+    entry (T = 1). Iterating `matched` at every terminal would cost 275 units at each of 275 terminals (75,000 per token); the smaller side costs 1
+    (about 830 per token: 275 + 275 + 275). 400 such tokens: about 330,000 units, and about 30 million with the mutant (`always iterate matched`,
+    g7r7_mutants.py)."""
+    forms = "\n".join(f"password={'a' * k}<SECRET_1>{'Z' * k}" for k in range(1, 276))
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r.find(forms)
+    r.sweep("")
+    assert len(r._spelled_at) == 275
+    probe = ("a" * 275 + "<SECRET_1>" + "Z" * 275 + "\n") * 400
+    units = _units_of_sweep(r, probe)
+    assert units < 450_000, units  # 400 tokens x about 830
+    assert units > 250_000, (
+        units
+    )  # the walks really ran (a vacuous pass would be a scan that matched nothing)
+    r._spelled_sweep(probe, None)
+
+
+def test_a_grid_that_grows_at_both_ends_costs_the_product_of_its_sides_per_token_and_is_refused_past_the_limit():
+    """Round 6 design nit: an honest-looking shape that is not one of the four measured ones. Forms `a`*i + token + `Z`*j for every i <= F and
+    j <= B (every combination a distinct value): each combination is a real match, so a token costs about F x B units. Measured (evidence
+    g7r6_units.py): 20 x 20 takes 2.28 million units (8.7 per character of the text), 30 x 30 3.56 million; the limit refuses about 32 x 32. Pinned
+    at 20 x 20 (fits, 400 forms) and 40 x 40 (refused)."""
+
+    def grid(front: int, back: int) -> tuple[str, str]:
+        forms = "\n".join(
+            f"password={'a' * i}<SECRET_1>{'Z' * j}"
+            for i in range(1, front + 1)
+            for j in range(1, back + 1)
+        )
+        block = "a" * front + "<SECRET_1>" + "Z" * back + "\n"
+        return forms, block * (defaults.MAX_REDACT_CHARS // len(block))
+
+    forms, probe = grid(20, 20)
+    r = R._Redactor({"<SECRET_1>": SHORT})
+    r.find(forms)
+    r.sweep("")
+    assert len(r._spelled_at) == 400
+    units = _units_of_sweep(r, probe)
+    assert 1_500_000 < units < 3_500_000 and units / len(probe) > 5, units
+    forms, probe = grid(40, 40)
+    big = R._Redactor({"<SECRET_1>": SHORT})
+    big.find(forms)
+    big.sweep("")
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        big._spelled_sweep(probe, None)

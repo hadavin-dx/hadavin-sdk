@@ -1,22 +1,20 @@
 """G7 fix round 6: count the units of work of `_Redactor._spelled_sweep` on the honest shapes and the hostile one (scratch script kept as evidence).
 
-Run: uv run --all-extras --group test python handover/core-c/evidence/g7r6_units.py
+Run: uv run --all-extras --group test python handover/core-c/evidence/g7r6_units.py   (relocatable: the repo root is found from this file)
 The units are read by bisection of `defaults.SPELLED_MAX_WORK` (the scan refuses past it, checked every 1,024 units, so exact to 1,024).
 Every credential is made up and built from parts.
 """
 
 from __future__ import annotations
 
+import importlib
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
-from hadavin_sdk import defaults  # noqa: E402
-import importlib  # noqa: E402
-
-from hadavin_sdk.guard.runmap import InputTooLarge  # noqa: E402
-
+defaults = importlib.import_module("hadavin_sdk.defaults")
+InputTooLarge = importlib.import_module("hadavin_sdk.guard.runmap").InputTooLarge
 importlib.import_module("hadavin_sdk.guard.redact")
 R = sys.modules["hadavin_sdk.guard.redact"]
 
@@ -91,8 +89,9 @@ def report(label: str, registered: str, probe: str, seed: dict[str, str] | None 
     r.sweep("")
     n, took = units(r, probe)
     print(
-        f"{label}: registered={len(registered)} probe={len(probe)} forms={len(r._spelled_at)} "
-        f"units={n} ({n / defaults.SPELLED_MAX_WORK:.1%} of the limit) scan_s={took:.4f} us_per_unit={took / max(n, 1) * 1e6:.3f}"
+        f"{label}: registered={len(registered)} probe={len(probe)} forms={len(r._spelled_at)} registry_chars={r._spelled_chars} "
+        f"units={n} ({n / defaults.SPELLED_MAX_WORK:.1%} of the limit) units_per_probe_char={n / max(len(probe), 1):.2f} "
+        f"scan_s={took:.4f} us_per_unit={took / max(n, 1) * 1e6:.3f}"
     )
 
 
@@ -114,7 +113,7 @@ def refusal_timing(
 
 
 def memory() -> None:
-    """Registry memory of ONE compound value of 200,000 characters with a leading placeholder (the generic SECRET class has no length cap)."""
+    """Registry memory of ONE compound value of 200,000 characters with a leading placeholder (the generic SECRET class has no length cap); also the characters the registry counts for it."""
     import tracemalloc
 
     value = "q" * 200_000
@@ -131,7 +130,7 @@ def memory() -> None:
         nodes += 1
         stack.extend(v for k, v in node.items() if k and isinstance(v, dict))
     print(
-        f"registry memory: one 200,000-character compound value: {used / 1e6:.1f} MB traced, about {nodes:,} trie nodes"
+        f"registry memory: one 200,000-character compound value: {used / 1e6:.1f} MB traced, about {nodes:,} trie nodes, registry_chars={r._spelled_chars}"
     )
 
 
@@ -145,8 +144,13 @@ def main() -> None:
     forms, probe = grid(70, 40)
     report("hostile grid 70 x 40", forms, probe, {"<SECRET_1>": "ab" + "9x"})
     refusal_timing("hostile grid 70 x 40", forms, probe, {"<SECRET_1>": "ab" + "9x"})
-    if hasattr(R._Redactor, "_refuse_late_overlap"):
-        memory()
+    for front, back in (
+        (20, 20),
+        (30, 30),
+    ):  # both ends grow: front variants x end variants, all combinations
+        forms, probe = grid(front, back)
+        report(f"both-ends grid {front} x {back}", forms, probe, {"<SECRET_1>": "ab" + "9x"})
+    memory()
 
 
 if __name__ == "__main__":

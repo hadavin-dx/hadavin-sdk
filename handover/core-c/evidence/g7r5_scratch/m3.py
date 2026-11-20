@@ -1,6 +1,8 @@
+# round 5 scratch (a record, run from the repository root: m2.py puts "." on sys.path); it reuses the definitions of m2.py next to it
 import sys, time
+from pathlib import Path
 sys.argv=[__file__]
-exec(open("/tmp/claude-0/-home-user/1ecfcb92-30a8-505b-a8c3-27491ed2aff6/scratchpad/m2.py").read().split('if __name__')[0])
+exec(Path(__file__).with_name("m2.py").read_text().split('if __name__')[0])
 def run(name, reg, probe):
     defaults.SPELLED_MAX_WORK = 4_000_000
     r = R._Redactor(None); r.find(reg)
