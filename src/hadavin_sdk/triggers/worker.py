@@ -24,10 +24,12 @@ Several threads at once: what was read, and what was not
   principal and `trigger_ref` are equal, else raises `StaleState` again (agent_loop.py:335-349, 388-393). Two
   parallel `start` calls with one key therefore give one row and one loop.
 - The local audit sink writes under a lock (audit/local_dir.py:30, 82); the recorded model double too (llm/fake.py:27).
-- Spend is NOT safe in the money sense: the budget is read before a model call and the cost is added after it
-  (limits.py:17-30), so N runs of one agent in parallel can pass a budget by up to N calls. This is why
-  `max_running` comes from the configuration only (no default here), and why a configured value above 1 is
-  warned about at start as long as the runtime's limits object has no `reserve` method.
+- Spend: with core-b's limits the main call reserves the worst case before and settles after (agent_loop
+  reserve/settle), so parallel runs cannot overshoot through the main call; the ungated sites (document screen,
+  shadow cards, k1b/evals) are still charged after the fact. Without core-b's limits (this branch alone) the budget
+  is read before a model call and the cost is added after it (limits.py:17-30), so N runs of one agent in parallel
+  can pass a budget by up to N calls. `max_running` comes from the configuration only (no default here), and a
+  configured value above 1 is warned about at start as long as the runtime's limits object has no `reserve` method.
 - NOT READ, so not shown safe: the real model clients, the detector, the read tools, the card channel, the
   PostgreSQL store and the chain audit under threads. With `max_running` 1 only one loop runs at a time, but the
   short `get_run` reads of request threads still run next to it.
@@ -123,7 +125,9 @@ CONFLICT: Final[tuple[int, dict[str, str]]] = (409, {})
 EXIT_OK, EXIT_CONFIG, EXIT_FAILED = 0, 2, 3
 # A signed 409 is written to the audit as `trigger.conflict` (domain "trigger", operation "conflict"; the chain
 # audit stores `domain.operation` as the entry kind). At most this many per sender per minute: the 409 is still
-# answered, the extra events are only counted. Core-b's config field is proposed in requests/005.
+# answered, the extra events are only counted. `make_app` reads the number from `config.triggers.
+# conflict_events_per_minute` (core-b's `TriggerSettings`, d-fix24) and passes it on; this constant is only the value
+# of a Runner built directly (tests, library use), never what the worker uses.
 CONFLICT_EVENTS_PER_MINUTE: Final[int] = 10
 CONFLICT_WINDOW_S: Final[float] = 60.0
 CONFLICT_DOMAIN: Final[str] = "trigger"
@@ -698,7 +702,6 @@ def make_app(
     clock: Callable[[], float] = time.time,
     poll_s: float = POLL_S,
     max_waiting: int = MAX_WAITING,
-    conflict_events_per_minute: int = CONFLICT_EVENTS_PER_MINUTE,
     rate_clock: Callable[[], float] = time.monotonic,
 ) -> tuple[Any, Runner]:
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
@@ -711,6 +714,9 @@ def make_app(
     if not hasattr(settings, "max_running"):
         raise ConfigError("triggers.max_running missing: core-b TriggerSettings required")
     max_running = settings.max_running
+    if not hasattr(settings, "conflict_events_per_minute"):
+        raise ConfigError("triggers.conflict_events_per_minute missing: core-b TriggerSettings required")
+    conflict_events_per_minute = settings.conflict_events_per_minute  # the one source (d-fix24)
     ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
     try:
         check_secrets(secrets)

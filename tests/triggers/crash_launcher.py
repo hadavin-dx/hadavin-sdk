@@ -95,6 +95,7 @@ def make_trigger_app(runtime, store, secrets: dict[str, str], **over):
         "max_body_bytes": 65536,
         "max_running": 2,
         "ack_wait_s": 5.0,
+        "conflict_events_per_minute": 10,
     }
     by_name = {f"{sender}-secret": value for sender, value in secrets.items()}
     return SimpleNamespace(

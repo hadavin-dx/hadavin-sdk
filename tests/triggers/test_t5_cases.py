@@ -123,6 +123,7 @@ def _settings(senders=None, **over):
         "max_body_bytes": 524288,
         "max_running": 1,
         "ack_wait_s": 5.0,
+        "conflict_events_per_minute": 10,
     }
     return SimpleNamespace(**{**base, **over})
 
