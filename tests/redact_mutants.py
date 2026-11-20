@@ -264,7 +264,9 @@ M += [
         f"Q9 U+{cp:04X} {Q9_NAMES[cp]} is given back its P2d-1 class",
         RD,
         Q9_AT,
-        Q9_AT + f'    if ch == "\\u{cp:04x}":\n        return ch, 0\n' if cp <= 0xFFFF else Q9_AT + f'    if ch == "\\U{cp:08x}":\n        return ch, 0\n',
+        Q9_AT + f'    if ch == "\\u{cp:04x}":\n        return ch, 0\n'
+        if cp <= 0xFFFF
+        else Q9_AT + f'    if ch == "\\U{cp:08x}":\n        return ch, 0\n',
         Q9_KILLER[cp][1],
         test_file=G3,
         only_test=Q9_KILLER[cp][0],
