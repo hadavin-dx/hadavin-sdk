@@ -21,6 +21,9 @@ unmutated copy would not pass. It kills no mutant of this list and is deselected
 (`NEEDS_CONFTEST`, handed to the pytest child as `PYTEST_ADDOPTS`); no file is changed for it. When that test builds its
 config folder without the conftest fixture, delete `NEEDS_CONFTEST` and the two lines that use it.
 
+G1 has no mutant for the guard `"\\0" in value` of `derive_run_id`: dropping it changes nothing (the two field patterns
+already refuse a NUL, so every bad triple is still a ValueError and the mutant SURVIVES). The separator mutant is G1c.
+
 Most killer assertions are bare (no message text), so `expect` is then a fragment of the compared VALUES in the first failing
 line (`400 == 401`, `== (409, {})`), and the kill is tied to its test by `pinned`. Run from the repo root (no database, no
 network; exit 0 only when every mutant is good, and the last line is `N of N good; problems: []`):
@@ -88,7 +91,8 @@ M = [
         'joined = f"{sender}\\0{key}".encode()',
         TE,
         "test_tenant_is_part_of_the_run_id_at_the_endpoint",
-        "assert 'run-",
+        # both tenants give the id of sha256(b"sender-a\\0order-1")
+        "'run-3896ff0f114a33cd96d0f2f9807ef7c1' != 'run-3896ff0f114a33cd96d0f2f9807ef7c1'",
     ),
     mutant(
         "G1b the sender is dropped from derive_run_id",
@@ -97,7 +101,8 @@ M = [
         'joined = f"{tenant}\\0{key}".encode()',
         TE,
         "test_two_senders_same_key_give_two_run_ids_and_their_own_identity",
-        "assert 'run-",
+        # both senders give the id of sha256(b"tenant-one\\0order-1")
+        "'run-b8214310dd20928c17270600a192fdb2' != 'run-b8214310dd20928c17270600a192fdb2'",
     ),
     mutant(
         "G1c the NUL separator is dropped from the hash input",
@@ -106,16 +111,8 @@ M = [
         'joined = f"{tenant}{sender}{key}".encode()',
         TE,
         "test_derive_run_id_separates_tenant_sender_and_key",
-        "assert 'run-",
-    ),
-    mutant(
-        "G1d the NUL check on the three fields is dropped",
-        ENDPOINT,
-        'or "\\0" in value ',
-        "",
-        TE,
-        "test_derive_run_id_refuses_bad_input",
-        "DID NOT RAISE",
+        # ("ab", "c", "d") and ("a", "bc", "d") both give the id of sha256(b"abcd")
+        "'run-88d4266fd4e6338d13b845fcf289579d' != 'run-88d4266fd4e6338d13b845fcf289579d'",
     ),
     # --- G2 the payload-hash conflict
     mutant(
@@ -134,7 +131,7 @@ M = [
         "",
         TW,
         "test_same_key_with_another_document_is_409_and_writes_nothing",
-        "== (409, {})",
+        "'NO_ACTION'}) == (409, {})",
     ),
     # --- G3 the ack only after the run row exists
     mutant(
@@ -146,7 +143,7 @@ M = [
         + '                return 202, {"run_id": req.run_id, "state": "RECEIVED"}\n',
         TW,
         "test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken",
-        "== (503, {})",
+        "'RECEIVED'}) == (503, {})",
     ),
     mutant(
         "G3b the slot is released right after submit",
@@ -194,7 +191,7 @@ M = [
         PARSE_FIRST + VERIFY,
         TE,
         "test_t5_2_bad_signature_is_401_and_the_body_is_never_parsed[altered body]",
-        "== []",
+        "hellp\"}'] == []",
     ),
     # --- G6 the secrets at start
     mutant(
@@ -204,7 +201,7 @@ M = [
         "            if False:\n",
         TE,
         SECRETS_TEST + "[secrets2-sender-a]",
-        "DID NOT RAISE",
+        "DID NOT RAISE ValueError",
     ),
     mutant(
         "G6b two senders may share a secret",
@@ -213,7 +210,7 @@ M = [
         "            if False:\n",
         TE,
         SECRETS_TEST + "[secrets0-sender-b]",
-        "DID NOT RAISE",
+        "DID NOT RAISE ValueError",
     ),
     # --- G7 the crash helper (step E)
     mutant(
@@ -223,7 +220,7 @@ M = [
         "",
         TC,
         "test_n2_before_crashes_and_nothing_was_written",
-        "is None",
+        "('store.create_run:before',) == ('store.create_run:before',)",
     ),
     mutant(
         "G7b SimulatedCrash derives from Exception",
@@ -232,7 +229,7 @@ M = [
         "class SimulatedCrash(Exception):",
         TC,
         "test_n6_crash_before_the_model_call_leaves_the_run_working",
-        "assert",
+        "assert (True and not True)",
     ),
     mutant(
         "G7c the pytest-only gate is dropped",
@@ -241,7 +238,7 @@ M = [
         "        if False:\n",
         TC,
         "test_h1_cannot_be_built_outside_a_pytest_run",
-        "DID NOT RAISE",
+        "DID NOT RAISE RuntimeError",
     ),
     mutant(
         "G7d before and after are swapped",
@@ -250,7 +247,7 @@ M = [
         'after, before = f"{name}.{method}:before", f"{name}.{method}:after"',
         TC,
         "test_n2_before_crashes_and_nothing_was_written",
-        "DID NOT RAISE",
+        "DID NOT RAISE NotFound",
     ),
 ]
 
