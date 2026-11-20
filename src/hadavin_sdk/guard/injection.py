@@ -62,10 +62,14 @@ def _check_geometry() -> None:
         )
 
 
-def _deadline() -> float | None:
-    """The CPU deadline of one ``RegexDetector.check``: ``defaults.INJECTION_BUDGET_S`` seconds of the CPU clock of the thread that runs the
-    check, from now (``time.thread_time()``; read and used in that one call, never handed to another thread), or None (no deadline) when the
-    budget is None. A budget that is not a positive finite number (a ``bool``, a string, zero, a negative number, NaN, infinity) raises
+_Deadline = tuple[float, float]
+
+
+def _deadline() -> _Deadline | None:
+    """The deadline of one ``RegexDetector.check``, a pair read here once in the thread that runs the check (never handed to another thread):
+    ``defaults.INJECTION_BUDGET_S`` seconds of its CPU clock from now (``time.thread_time()``) and ``defaults.INJECTION_WALL_FACTOR`` times that
+    on the wall clock (``time.monotonic()``); None (no deadline, no clock read) when the budget is None. A budget that is not a positive finite
+    number (a ``bool``, a string, zero, a negative number, NaN, infinity), or a factor that is not a finite number of at least 1, raises
     ``ValueError``, which ``injection_check`` turns into a flag, as for a bad setting of the chunked read (``_check_geometry``)."""
     budget = defaults.INJECTION_BUDGET_S
     if budget is None:
@@ -74,16 +78,28 @@ def _deadline() -> float | None:
         raise ValueError(
             "defaults.INJECTION_BUDGET_S must be a positive number of CPU seconds or None"
         )
-    return time.thread_time() + budget
+    factor = defaults.INJECTION_WALL_FACTOR
+    if type(factor) not in (int, float) or not 1 <= factor < float("inf"):
+        raise ValueError("defaults.INJECTION_WALL_FACTOR must be a finite number of at least 1")
+    return time.thread_time() + budget, time.monotonic() + factor * budget
 
 
-def _left(deadline: float | None) -> float | None:
+def _left(deadline: _Deadline | None) -> float | None:
     """The CPU seconds left before ``deadline`` (from ``_deadline``, in the thread that runs the check), as the ``budget_s`` of one
-    ``textnorm.scan_views_no_value`` call; None without a deadline. Zero or less: that call raises ``DeadlinePassed`` after its size rule."""
-    return None if deadline is None else deadline - time.thread_time()
+    ``textnorm.scan_views_no_value`` call; None without a deadline. The wall time left, divided by the factor, is the other candidate (the call
+    sets its own wall deadline from its budget), and the smaller of the two is given, so the call carries both. Zero or less: that call raises
+    ``DeadlinePassed`` after its size rule."""
+    if deadline is None:
+        return None
+    return min(
+        deadline[0] - time.thread_time(),
+        (deadline[1] - time.monotonic()) / defaults.INJECTION_WALL_FACTOR,
+    )
 
 
-def _holds(window: str, need_kept: int, need_letters: int, deadline: float | None = None) -> bool:
+def _holds(
+    window: str, need_kept: int, need_letters: int, deadline: _Deadline | None = None
+) -> bool:
     """True when EVERY view of ``window`` (``textnorm.scan_views_no_value``, the views the scan reads) keeps at least ``need_kept`` characters and holds at
     least ``need_letters`` a-z letters. A phrase is read in one of the views, so a count that holds in all of them holds in the one that matters. A view
     drops what the fold drops (invisible characters, spaces) and turns a look-alike into its letter (a Cyrillic o gives one), so padding is not counted
@@ -101,7 +117,7 @@ def _holds(window: str, need_kept: int, need_letters: int, deadline: float | Non
     )
 
 
-def _start_of_next(text: str, start: int, end: int, deadline: float | None = None) -> int:
+def _start_of_next(text: str, start: int, end: int, deadline: _Deadline | None = None) -> int:
     """Where the piece after ``text[start:end]`` starts. Going back from ``end``, the new piece must hold at least
     ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` characters of the old one, AND in every view of it at least ``defaults.TEXTNORM_INJECTION_PHRASE_CHARS`` + 1
     characters the fold keeps, AND more letters than the longest squeezed phrase (``_holds``). Then a phrase cut by the boundary would have to hold all
@@ -133,7 +149,9 @@ class RegexDetector:
         self.threshold = threshold
 
     @staticmethod
-    def _read(text: str, deadline: float | None = None) -> Iterator[tuple[str, tuple[str, ...]]]:
+    def _read(
+        text: str, deadline: _Deadline | None = None
+    ) -> Iterator[tuple[str, tuple[str, ...]]]:
         """``(piece, its scan views)``: the text whole when the fold takes it; otherwise (over the size rule) overlapping pieces of about
         ``defaults.TEXTNORM_INJECTION_CHUNK_CHARS`` characters, each halved until the fold takes it, so a long document is READ, not flagged.
         A piece starts where ``_start_of_next`` says (at least ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` before the end of the one before,
@@ -161,7 +179,9 @@ class RegexDetector:
             start = _start_of_next(text, start, end, deadline)
 
     @staticmethod
-    def _fit(piece: str, deadline: float | None = None) -> Iterator[tuple[str, tuple[str, ...]]]:
+    def _fit(
+        piece: str, deadline: _Deadline | None = None
+    ) -> Iterator[tuple[str, tuple[str, ...]]]:
         try:
             yield piece, textnorm.scan_views_no_value(piece, budget_s=_left(deadline))
         except textnorm.TextTooLong:
@@ -181,11 +201,11 @@ class RegexDetector:
             yield from RegexDetector._fit(piece[:cut], deadline)
             yield from RegexDetector._fit(piece[second:], deadline)
 
-    def _score(self, text: str, deadline: float | None = None) -> float:
+    def _score(self, text: str, deadline: _Deadline | None = None) -> float:
         """1.0 when the raw text OR any view of it (``textnorm.scan_views_no_value``: the look-alike fold, the squeeze, the scan keys; there is no protected value here) holds a
         steering phrase, so a Cyrillic o or an inserted mark does not hide it. A text over the size rule of the fold is read in overlapping pieces
         (``_read``); a text over ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises ``TextnormError``, which ``injection_check`` turns into a flag
-        (fail closed). ``deadline`` (None: none; a ``time.thread_time()`` value of this thread, from ``_deadline``) gives every
+        (fail closed). ``deadline`` (None: none; a pair of ``time.thread_time()`` and ``time.monotonic()`` values of this thread, from ``_deadline``) gives every
         ``textnorm.scan_views_no_value`` call the seconds left (``_left``); past it ``textnorm`` raises its
         ``DeadlinePassed``, which no reader here catches, so ``injection_check`` flags the run (``guard_unavailable``)."""
         for piece, views in self._read(text, deadline):

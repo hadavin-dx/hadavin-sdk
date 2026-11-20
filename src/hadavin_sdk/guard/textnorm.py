@@ -17,6 +17,14 @@ letters and modifier symbols dropped, see "MARKS AND SCANS"), or a scan key of `
 Nothing in v1 stores a check name: a package that must keep a person or an id for a later
 comparison stores the RAW text under its own access rules and folds it again with the current ``identity_key``.
 
+PRODUCTION CALLERS (stated after the lead review xr-textfold-lead-1, M4; owner item O-1 in ``handover/core-c/ESCALATIONS.md`` E19). Production code
+calls only ``fold``, ``fold_view``, ``without_spacing_marks``, ``SPACING_CATEGORIES`` (``guard/redact.py``, ``guard/runmap.py``),
+``scan_views_no_value`` (``guard/injection.py``), ``require_pinned_unidata`` (``app.build``) and the exceptions. These have NO production caller
+today (an unwired DENY API, kept as working code with its tests and mutants; whether to move or delete it is the owner's decision, O-1): ``scan_holds``,
+``register_value``, ``Coverage``, ``scan_cache``, ``scan_needles``, ``identity_key``, ``identity_keys``, ``could_be_same_person``, ``allow_equal``,
+``names_equal``, ``has_mixed_script``, ``has_hidden_channel``, ``value_scripts`` and ``scan_views``. Where this text says a caller, a consumer or a package
+"uses" or "will use" one of them, read it as a design for a caller that does not exist yet.
+
 THE RULE (read before using ``fold``): ``fold`` makes look-alike text EQUAL. That is what a DENY decision wants (separation of
 duties: "alice" and the Cyrillic-a "alice" may be the same person; a blocklist; a leak scan). It is WRONG for an ALLOW decision ("this
 address equals the verified address", an allowlist): folding there lets a look-alike address through.
@@ -223,7 +231,8 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   reaches its minimum, even if a spelling view does: a spelling view keeps the separators, so one inserted space hides a value that only it can find
   (a three-letter name, "w" plus one ideograph). The cost, stated: a protected value of three letters or fewer is refused, and so is a mixed value
   whose script part is shorter than four letters; the caller looks for it with its own exact search. A caller that scans must use ``scan_needles``
-  (no module of the SDK scans for a protected value through this module yet; the one that does must take its needles from it and not repeat the numbers).
+  (no module of the SDK scans for a protected value through this module today, see "PRODUCTION CALLERS" above; the one that does must take its
+  needles from it and not repeat the numbers).
   FRAGMENTATION, stated: a value whose letters the table reads as several ASCII letters (or digits) counts those, not the characters typed, so a
   value can pass with fewer characters than the minimum, and a value of the minimum length in a script the table does not read is refused if its
   script part is shorter than the minimum.
@@ -249,7 +258,10 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   into ASCII text is a different word to the squeeze view ("pasxsword"); that stays a limit.
   DEADLINE (G10, ORDER 023): ``scan_holds`` and ``scan_views_no_value`` take a keyword ``budget_s``: None (the default: no clock is read and
   every result is what it was before) or a finite ``int`` or ``float`` of CPU seconds. The call itself reads ``time.thread_time()`` once at its
-  start and counts the budget from there, on the clock of the thread that runs it (a call made in a worker thread is timed on that thread).
+  start and counts the budget from there, on the clock of the thread that runs it (a call made in a worker thread is timed on that thread). It
+  reads ``time.monotonic()`` there too and sets a second, WALL-CLOCK deadline of ``defaults.INJECTION_WALL_FACTOR`` (2.0) times the budget (M3 of the
+  lead review: a thread waiting for the GIL, a lock or I/O does not advance the CPU clock, so a busy machine could stretch the budget without
+  limit); each reading checks both, and either one at its deadline raises. A setting that is not a finite number of at least 1 raises ``ValueError``.
   Anything else (a ``bool``, a string, NaN, an infinity) raises ``NotText`` before any reading and any work; zero or less is a budget already
   spent. The clock is read at fixed points BETWEEN whole passes, never inside one (NFKD and NFKC are single calls over the whole text, so a pass
   is never cut): after the size rule, after the value's needles, before each of the two prefix passes of each text of ``_readings``, per
@@ -279,8 +291,8 @@ INSERTED into a name this over-matches (the safe side). When it REPLACES a lette
 look-alike letter assigned after Unicode 15.1, or a private-use character drawn as a letter by a font, would hide the name. So ``could_be_same_person``
 answers True when either text holds such a code point, and ``allow_equal`` follows (LOOKALIKE; identical strings stay EQUAL). Cost, stated plainly: a
 name that holds an emoji newer than Unicode 15.1, or a private-use character, is "could be the same person" with EVERY other name, so a person must
-look. The scan side (``fold_views``, ``squeeze_views``) has the same miss and is NOT changed here; it belongs to the packages that scan (the
-redaction package and the hold check of P1b).
+look. The scan side (``fold_views``, ``squeeze_views``) has the same miss and is NOT changed here; it belongs to a package that scans for a
+protected value, and none does today (the redactor has its own aligned fold; see "PRODUCTION CALLERS").
 
 Honest limits: a letter in neither the data nor the supplement nor a name rule is not folded (the known cases are listed in ``tests/test_textnorm.py``). Dropping unassigned code points (Cn) depends on the
 Python build's Unicode version (``require_pinned_unidata``): a look-alike letter assigned after Unicode 15.1 is DROPPED, not folded, on the
@@ -396,7 +408,7 @@ class FoldNotConverged(TextnormError):
 
 class DeadlinePassed(TextnormError):
     """The scan used up the caller's CPU budget (``budget_s`` seconds of ``time.thread_time()`` of the thread that runs the call, counted from
-    the call's start); nothing was decided. A DENY caller REFUSES, as for any ``TextnormError``; the injection check flags the run. It is not a
+    the call's start) or its wall-clock allowance (``INJECTION_WALL_FACTOR`` times that, ``time.monotonic()``); nothing was decided. A DENY caller REFUSES, as for any ``TextnormError``; the injection check flags the run. It is not a
     ``TextTooLong``: a reader that halves a text that is too long must not start more work after the deadline. The message holds no text, no
     value and no length."""
 
@@ -598,20 +610,31 @@ def _checked(*texts: str) -> None:
             )
 
 
-def _deadline_of(budget_s: float | None) -> float | None:
+# The deadline of one call: (the CPU clock of the calling thread, the wall clock ``time.monotonic()``) at which it must stop.
+_Deadline = tuple[float, float]
+
+
+def _deadline_of(budget_s: float | None) -> _Deadline | None:
     """The ``budget_s`` rule of ``scan_holds`` and ``scan_views_no_value``: None (no deadline, no reading), or a finite ``int`` or ``float``
-    that is not a ``bool``. The deadline is the CPU clock of the thread that runs the call, read here once, plus the budget (zero or less: spent)."""
+    that is not a ``bool``. The deadline is a pair, both read here once in the calling thread: the CPU clock of the thread that runs the call plus the
+    budget, and ``time.monotonic()`` plus ``defaults.INJECTION_WALL_FACTOR`` times the budget (zero or less: spent). The wall deadline bounds the
+    time a thread spends waiting (GIL, lock, I/O), which the CPU clock does not count."""
     if budget_s is None:
         return None
     if type(budget_s) not in (int, float) or not math.isfinite(budget_s):
         raise NotText("budget_s must be a finite number of CPU seconds or None")
-    return time.thread_time() + budget_s
+    factor = defaults.INJECTION_WALL_FACTOR
+    if type(factor) not in (int, float) or not 1 <= factor < math.inf:
+        raise ValueError("defaults.INJECTION_WALL_FACTOR must be a finite number of at least 1")
+    return time.thread_time() + budget_s, time.monotonic() + factor * budget_s
 
 
-def _tick(deadline: float | None) -> None:
-    """One reading of the calling thread's CPU clock (``time.thread_time()``, through the module attribute so a test can replace it):
-    ``DeadlinePassed`` once the clock has reached the deadline (fail closed); nothing at all without a deadline."""
-    if deadline is not None and time.thread_time() >= deadline:
+def _tick(deadline: _Deadline | None) -> None:
+    """One reading of the calling thread's CPU clock (``time.thread_time()``) and of the wall clock (``time.monotonic()``), both through the module
+    attribute so a test can replace them: ``DeadlinePassed`` once either clock has reached its deadline (fail closed); nothing at all without a deadline."""
+    if deadline is not None and (
+        time.thread_time() >= deadline[0] or time.monotonic() >= deadline[1]
+    ):
         raise DeadlinePassed("the scan passed its deadline")
 
 
@@ -768,7 +791,7 @@ def _readings(
     collapse_ws: bool,
     marks_dropped: bool = False,
     marks_only: bool = False,
-    deadline: float | None = None,
+    deadline: _Deadline | None = None,
 ) -> list[tuple[bool, str]]:
     """Every spelling reading of ``raw`` as ``(marks, view)`` in the order of ``_READINGS``, WITH repeats: ``marks`` is False for the readings of
     the text itself and True for those of the text without its Mc, Lm and Sk characters (``marks_dropped``; with ``marks_only`` only those are
@@ -824,7 +847,7 @@ def _view_pairs(
     marks_dropped: bool = False,
     marks_only: bool = False,
     scripts: frozenset[str] = frozenset(),
-    deadline: float | None = None,
+    deadline: _Deadline | None = None,
 ) -> list[tuple[str, str]]:
     """Every view of ``raw`` as ``(kind, view)``, kind ``"spelling"`` or ``"script"``, in the order of ``_READINGS``; a pair is not repeated (the
     same text may be both kinds). With ``marks_dropped`` the same spelling variants of the text WITHOUT its Mc, Lm and Sk characters follow (a
@@ -850,7 +873,7 @@ def _views(
     collapse_ws: bool,
     marks_dropped: bool = False,
     scripts: frozenset[str] = frozenset(),
-    deadline: float | None = None,
+    deadline: _Deadline | None = None,
 ) -> tuple[str, ...]:
     """Every view of ``raw`` as a string, without repeats (``_view_pairs`` without the kinds): at most three spelling variants, twice as many with
     ``marks_dropped`` (the check names of ``identity_keys`` are these, at most six), three times as many with ``scripts``."""
@@ -1098,7 +1121,9 @@ def squeeze_views(raw: str, *, loose: bool = False) -> tuple[str, ...]:
     return _squeezed(raw, loose=loose)
 
 
-def _squeezed(raw: str, *, loose: bool = False, deadline: float | None = None) -> tuple[str, ...]:
+def _squeezed(
+    raw: str, *, loose: bool = False, deadline: _Deadline | None = None
+) -> tuple[str, ...]:
     """``squeeze_views`` on a text that was already checked."""
     out: list[str] = []
     for view in _views(
@@ -1272,7 +1297,7 @@ def _tag_texts(raw: str) -> list[str]:
     return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]
 
 
-def _converge(text: str, step, deadline: float | None = None) -> str:
+def _converge(text: str, step, deadline: _Deadline | None = None) -> str:
     """Repeat ``step`` until its output equals its input, for at most ``defaults.TEXTNORM_MAX_PASSES`` passes (the confirming pass
     included); a text still changing after that raises ``FoldNotConverged``."""
     passes = _validated_max_passes()
@@ -1306,7 +1331,7 @@ def _pass_b(text: str) -> str:
 _CLASS_MAP = str.maketrans("zl", "3i")
 
 
-def _scan_key(text: str, step, deadline: float | None = None) -> str:
+def _scan_key(text: str, step, deadline: _Deadline | None = None) -> str:
     """One scan key of one marks variant of one tag text, read by one spelling variant (A or B): the text to its fixed point, the class maps ``z`` to ``3`` and ``l``
     to ``i``, then only letters and digits (every character for which ``str.isalnum()`` is False, and every modifier letter (category
     Lm), is removed)."""
@@ -1336,7 +1361,7 @@ def scan_keyset(raw: str) -> frozenset[str]:
     return _scan_keys(raw)
 
 
-def _scan_keys(raw: str, deadline: float | None = None) -> frozenset[str]:
+def _scan_keys(raw: str, deadline: _Deadline | None = None) -> frozenset[str]:
     """``scan_keyset`` on a text that was already checked."""
     no_lm = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")
     # A spacing mark (Mc) or a modifier symbol (Sk) is a table source in a few cases (U+0C02, U+0C82, U+0D02, U+0D82 read as ``o``, U+0B03 as
@@ -1402,7 +1427,7 @@ def scan_cache() -> Iterator[None]:
         _SCAN_CACHE.reset(token)
 
 
-def _text_bundle(raw: str, deadline: float | None = None) -> _Bundle:
+def _text_bundle(raw: str, deadline: _Deadline | None = None) -> _Bundle:
     """What every scan of one TEXT shares, whatever the protected value: the spelling readings (``_readings``, case folded, whitespace collapsed,
     with the marks-dropped ones), the squeeze views and the sorted scan keys. Built once per ``scan_cache`` scope (see there) and again for every
     call outside one; only the script views depend on the value, and they are cut from the marks-dropped readings in a pass over each. All
@@ -1499,7 +1524,7 @@ def _one_off(window: str, target: str) -> bool:
     return window[i + 1 :] == target[i:] if i < n else True
 
 
-def _holds_with_one_insertion(view: str, needle: str, deadline: float | None = None) -> bool:
+def _holds_with_one_insertion(view: str, needle: str, deadline: _Deadline | None = None) -> bool:
     """True when ``view`` holds ``needle`` with at most ONE extra character inserted between two of its characters. Bounded and linear in the text
     for a text that is not built to defeat it: whatever the insertion is, one half of the needle is intact, so the text is searched for each half
     exactly (``str.find``) and each hit is checked against the other half by ``_one_off``. Needles of 2 characters or fewer, and the callers'
@@ -1581,7 +1606,7 @@ def scan_holds(*, text: str, value: str, budget_s: float | None = None) -> bool:
     row are easy to swap, and a swap would scan the value for the text. Nothing of the text is kept after the call; to scan ONE text for
     hundreds of values at the cost of one text pass, call this inside ``with scan_cache():``. ``budget_s``: None (no clock is read) or the
     CPU seconds this call may spend, counted from its start on the thread that runs it; past them the scan raises ``DeadlinePassed`` (see
-    "DEADLINE" in the module docstring). A consumer passes its own budget (the redactor: the seconds left before its deadline) and converts at
+    "DEADLINE" in the module docstring). A consumer passes its own budget (the seconds left before its own deadline; no production code calls this function today) and converts at
     the call, ``except textnorm.DeadlinePassed: raise InputTooLarge("InputTooLarge") from None``, with that function listed in the refusal
     handlers of ``tests/test_textnorm_callers.py``."""
     deadline = _deadline_of(budget_s)
@@ -1646,7 +1671,7 @@ def register_value(value: str, *, strict: bool | None = None) -> Coverage:
     value, and a value of a script alone whose script needles are all outside the one-inserted-letter band, raise ``CoverageRefused`` instead of
     being registered. A value with an ASCII squeeze needle (an ordinary password or API key) is NOT refused although its coverage is ``exact_only``:
     its exact view is the best a scan can have (measured on 200 made-up ASCII secrets: 200 refused before, 0 after; CHANGELOG, order 165 M3). A caller that registers values calls this once per value; the
-    modules of this package call it from no code path yet (the consumers arrive with the redaction package, see the CHANGELOG)."""
+    modules of this package call it from no code path today (see "PRODUCTION CALLERS" in the module docstring)."""
     _checked(value)
     if strict is None:
         strict = defaults.TEXTNORM_STRICT_COVERAGE

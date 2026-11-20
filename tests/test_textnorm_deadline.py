@@ -2,7 +2,9 @@
 the CPU seconds the call may spend, counted from its start on the thread that runs it) and read the clock at fixed points between whole passes;
 past the deadline they raise ``DeadlinePassed`` (fail closed), and the injection check flags the run. The clock is replaced on the MODULE
 attribute (``textnorm.time``, ``injection.time``) by a stepping clock: reading n returns n; reading 1 is the start, so ``budget_s=k - 0.5``
-(deadline k + 0.5) raises at reading k + 1. Made-up data only.
+(deadline k + 0.5) raises at reading k + 1. The same fakes also carry a ``monotonic`` (the wall clock of M3, escalation E19): it is counted apart
+(``mono_reads``) and does not move the thread_time readings pinned below; it returns ``mono_start`` plus ``mono_step`` per reading (frozen by default).
+Made-up data only.
 """
 
 import asyncio
@@ -65,18 +67,25 @@ class SteppingClock:
     """``time.thread_time`` for a test: reading n (1, 2, 3, ...) returns n; ``where`` names the function that called the reader (the caller of
     ``textnorm._tick`` or ``textnorm._deadline_of``, or of ``injection._deadline`` / ``injection._left`` for the injection budget)."""
 
-    def __init__(self) -> None:
+    def __init__(self, mono_step: float = 0.0, cpu_frozen: float | None = None) -> None:
+        self.cpu_frozen = cpu_frozen
         self.reads = 0
         self.where: list[str] = []
+        self.mono_reads = 0
+        self.mono_step = mono_step
 
     def thread_time(self) -> float:
         self.reads += 1
         self.where.append(sys._getframe(2).f_code.co_name)
-        return float(self.reads)
+        return float(self.reads) if self.cpu_frozen is None else self.cpu_frozen
+
+    def monotonic(self) -> float:
+        self.mono_reads += 1
+        return self.mono_step * self.mono_reads
 
 
-def _clock(monkeypatch) -> SteppingClock:
-    clock = SteppingClock()
+def _clock(monkeypatch, mono_step: float = 0.0) -> SteppingClock:
+    clock = SteppingClock(mono_step)
     monkeypatch.setattr(textnorm, "time", clock)
     return clock
 
@@ -231,7 +240,9 @@ def test_the_error_is_not_a_size_refusal_and_ends_the_chunked_read_at_once(monke
 
     monkeypatch.setattr(textnorm, "scan_views_no_value", spy)
     try:
-        injection.RegexDetector(0.5)._score("ab " * 100_000, time.thread_time() - 1.0)
+        injection.RegexDetector(0.5)._score(
+            "ab " * 100_000, (time.thread_time() - 1.0, time.monotonic() + 1e9)
+        )
     except DeadlinePassed:
         pass
     else:
@@ -325,6 +336,10 @@ def test_a_budget_of_exactly_zero_on_a_frozen_clock_is_spent(monkeypatch):
         def thread_time() -> float:
             return 5.0
 
+        @staticmethod
+        def monotonic() -> float:
+            return 7.0
+
     monkeypatch.setattr(textnorm, "time", Frozen)
     for call in (
         lambda b: scan_holds(text=T, value=V, budget_s=b),
@@ -379,6 +394,10 @@ class ThreadClock:
         self.reads: dict[int, int] = {}
         self.lock = threading.Lock()
 
+    @staticmethod
+    def monotonic() -> float:
+        return 0.0
+
     def thread_time(self) -> float:
         ident = threading.get_ident()
         with self.lock:
@@ -420,3 +439,91 @@ def test_the_budget_is_counted_on_the_thread_that_runs_the_scan(monkeypatch):
         f"DEADLINE-THREAD: the check in a worker was not flagged ({verdict.reason_code})"
     )
     assert clock.reads.get(clock.home, 0) == 0, "DEADLINE-THREAD: the check read the test's clock"
+
+
+def test_a_wait_the_cpu_clock_does_not_count_raises_at_twice_the_budget(monkeypatch):
+    """M3 (lead review xr-textfold-lead-1; escalation E19). A thread that waits for the GIL, a lock or I/O does not advance ``time.thread_time()``:
+    with the CPU clock frozen, the wall clock (``time.monotonic()``, a stepping clock of one second per reading) still ends the call. The call reads
+    the wall clock once at its start (reading 1, so the deadline is 1 + 2.0 x budget) and once per reading point; a budget of 1.25 (wall deadline 3.5)
+    raises at wall reading 4, whatever the CPU clock says, for ``scan_holds`` and ``scan_views_no_value``; at 2.0 x the budget it is not yet
+    spent (a budget of 1.75, wall deadline 4.5, survives wall reading 4), so the factor is the 2.0 of ``defaults.INJECTION_WALL_FACTOR``."""
+    assert defaults.INJECTION_WALL_FACTOR == 2.0, "WALL-DEFAULT: the default wall factor changed"
+    for call in (
+        lambda b: scan_holds(text=T, value=V, budget_s=b),
+        lambda b: scan_views_no_value(T, budget_s=b),
+    ):
+        clock = SteppingClock(mono_step=1.0, cpu_frozen=5.0)
+        monkeypatch.setattr(textnorm, "time", clock)
+        try:
+            call(1.25)
+        except DeadlinePassed:
+            assert clock.mono_reads == 4, (
+                f"WALL-DEADLINE: raised at wall reading {clock.mono_reads}, not 4"
+            )
+        else:
+            raise AssertionError("WALL-DEADLINE: a wall clock past 2x the budget did not raise")
+        clock = SteppingClock(mono_step=1.0, cpu_frozen=5.0)
+        monkeypatch.setattr(textnorm, "time", clock)
+        try:
+            call(1.75)
+        except DeadlinePassed:
+            assert clock.mono_reads >= 5, (
+                f"WALL-FACTOR: a budget of 1.75 raised at wall reading {clock.mono_reads}: the wall allowance is under 2x the budget"
+            )
+        else:
+            raise AssertionError("WALL-FACTOR: the wall clock never ended the call")
+
+
+def test_the_wall_clock_is_not_read_without_a_budget(monkeypatch):
+    """M3. Without a budget no clock is read at all, the wall clock included (the default paths are as before)."""
+    clock = _clock(monkeypatch, mono_step=1.0)
+    assert scan_holds(text=T, value=V) is True
+    assert scan_views_no_value(T)
+    assert clock.reads == 0 and clock.mono_reads == 0, (
+        f"WALL-NONE: the clocks were read ({clock.reads}, {clock.mono_reads})"
+    )
+
+
+def test_the_injection_check_flags_a_wall_wait_and_hands_both_deadlines_to_the_fold(
+    monkeypatch, caplog
+):
+    """M3. The check reads both clocks once (``_deadline``) and hands the fold ONE relative budget that carries both: the CPU seconds left, or the
+    wall seconds left divided by the factor, the smaller. With the CPU clock frozen and the wall clock one second per reading, a budget of 1.0 (wall
+    deadline 1 + 2.0 = 3.0) leaves the fold (3.0 - 2.0) / 2.0 = 0.5 s at wall reading 2: ``_left`` returns exactly that, not the CPU 1.0; a wall clock that then runs on past 2x
+    ends a clean text's check: it is flagged ``guard_unavailable`` because of ``DeadlinePassed``."""
+    clock = SteppingClock(mono_step=1.0, cpu_frozen=5.0)
+    monkeypatch.setattr(injection, "time", clock)
+    monkeypatch.setattr(defaults, "INJECTION_BUDGET_S", 1.0)
+    deadline = injection._deadline()
+    assert deadline == (6.0, 3.0), f"WALL-INJECTION: the deadline is {deadline}, not (6.0, 3.0)"
+    left = injection._left(deadline)
+    assert left == 0.5, f"WALL-INJECTION: {left} s left, not 0.5 (the CPU seconds left are 1.0)"
+    stepping = SteppingClock(mono_step=1.0, cpu_frozen=5.0)
+    monkeypatch.setattr(textnorm, "time", stepping)
+    monkeypatch.setattr(injection, "time", stepping)
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.guard"):
+        verdict = injection.injection_check(injection.RegexDetector(0.5), "hello world", "t")
+    assert verdict.flagged and verdict.reason_code == "guard_unavailable", (
+        f"WALL-INJECTION: a wall wait was not flagged ({verdict.reason_code})"
+    )
+    assert "DeadlinePassed" in caplog.text, (
+        f"WALL-INJECTION: flagged for another reason: {caplog.text}"
+    )
+
+
+def test_the_wall_factor_setting_is_checked(monkeypatch):
+    """M3. ``defaults.INJECTION_WALL_FACTOR`` must be a finite number of at least 1 (a bool, a string, NaN, an infinity, 0.5 or a list is refused with
+    ``ValueError`` naming the setting) in the injection check's deadline and in the fold's own, and the run is flagged."""
+    for bad in (True, "2", 0.5, 0, float("nan"), float("inf"), [2.0]):
+        monkeypatch.setattr(defaults, "INJECTION_WALL_FACTOR", bad)
+        for call in (injection._deadline, lambda: textnorm._deadline_of(1.0)):
+            try:
+                call()
+            except ValueError as exc:
+                assert "INJECTION_WALL_FACTOR" in str(exc), f"WALL-FACTOR-UNCHECKED: {bad!r}: {exc}"
+            else:
+                raise AssertionError(f"WALL-FACTOR-UNCHECKED: {bad!r} was taken as a factor")
+        verdict = injection.injection_check(injection.RegexDetector(0.5), "hello world", "t")
+        assert verdict.reason_code == "guard_unavailable", (
+            f"WALL-FACTOR-UNCHECKED: {bad!r} not flagged"
+        )
