@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-20T05:32:19Z
+UPDATED_UTC: 2026-11-20T05:33:11Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
 BOOT_ID: 2ee8a4de
-ITEMS_TOTAL: 10
-ITEMS_OPEN: 6
-PERCENT: 45
+ITEMS_TOTAL: 11
+ITEMS_OPEN: 7
+PERCENT: 50
 AGENTS_RUNNING: 5
-CAPACITY: load 0.83 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, agents light 2 heavy 3
-DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 349M
+CAPACITY: load 1.16 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 2 heavy 3
+DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 367M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
-NEXT: ticket F-store by me; land B and C commits; test writers for B and C; one batch test run
-PUSHED_UTC: 2026-11-20T05:31:23Z (previous push; this board is pushed right after writing)
-IST: 11:02 IST
+NEXT: EGM review round on ticket F-store; land B and C commits; D-config; test writers for B and C
+PUSHED_UTC: 2026-11-20T05:32:20Z (previous push; this board is pushed right after writing)
+IST: 11:03 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -50,7 +50,8 @@ IST: 11:02 IST
 | Q3 to Q9 baselines | SKIPPED BY LEAD | 0 | none | 0 | lead runs them on the laptop |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
-| T2 tickets (A, B, C, F-store) | RUNNING | 40 | tickets/A-audit-drain.md done; B, C by agents; F-store by me next | 1 | lead draft for F-store announced |
+| T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
+| REQUEST 001 from core-a (config for step D) | READY | 10 | requests/001.answer.md (accepted) | 0 | built as 'code D-config:' after C lands: both edit config.py |
 | BUILD A audit drain | RUNNING | 60 | commit 5eb1e7e (source); tests being written | 1 | source done; new test file and mutants not done yet |
 | BUILD B stop state | RUNNING | 5 | none yet | 1 | |
 | BUILD C price constraint | RUNNING | 5 | none yet | 1 | |

@@ -31,7 +31,8 @@
 | Q3 to Q9 baselines | SKIPPED BY LEAD | 0 | none | 0 | lead runs them on the laptop |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
 | INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
-| T2 tickets (A, B, C, F-store) | RUNNING | 40 | tickets/A-audit-drain.md done; B, C by agents; F-store by me next | 1 | lead draft for F-store announced |
+| T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
+| REQUEST 001 from core-a (config for step D) | READY | 10 | requests/001.answer.md (accepted) | 0 | built as 'code D-config:' after C lands: both edit config.py |
 | BUILD A audit drain | RUNNING | 60 | commit 5eb1e7e (source); tests being written | 1 | source done; new test file and mutants not done yet |
 | BUILD B stop state | RUNNING | 5 | none yet | 1 | |
 | BUILD C price constraint | RUNNING | 5 | none yet | 1 | |
