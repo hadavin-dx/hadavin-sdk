@@ -144,7 +144,7 @@ class QuietRequestHandler(WSGIRequestHandler):
 
     def _bad_headers(self) -> bool:
         """True for header names and framing headers that are refused before the body is read."""
-        if any("_" in name for name in self.headers.keys()):
+        if any("_" in name for name in self.headers):
             return True
         if len(self.headers.get_all("Content-Length", [])) > 1:
             return True

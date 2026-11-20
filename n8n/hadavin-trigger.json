@@ -399,7 +399,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ ['NO_ACTION', 'SUCCEEDED', 'WAITING_FOR_APPROVAL'].includes(String($json.state ?? '')) }}",
+              "leftValue": "={{ ['NO_ACTION', 'WAITING_FOR_APPROVAL', 'SUCCEEDED'].includes(String($json.state ?? '')) }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",

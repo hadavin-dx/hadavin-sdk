@@ -22,11 +22,10 @@ import hmac
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
-
-from types import SimpleNamespace
 
 from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.backends import table
@@ -144,7 +143,9 @@ CHECKS_READ = "($('Stamp time').last().json.checks ?? 0)"
 GOING = frozenset(tick.STUCK)
 SUCCESS = frozenset({RunState.NO_ACTION, RunState.SUCCEEDED, RunState.WAITING_FOR_APPROVAL})
 ENDED_BADLY = frozenset(runs.FINAL) - SUCCESS
-EXAMPLE_STEPS = 12  # the README's worked example: an agent with max_steps 12 on the default model settings
+EXAMPLE_STEPS = (
+    12  # the README's worked example: an agent with max_steps 12 on the default model settings
+)
 
 
 def _load(name: str) -> dict[str, Any]:
@@ -1067,7 +1068,9 @@ def test_readme_has_the_answer_table_in_plain_words():
     assert "SAME key, a NEW timestamp and a NEW signature" in busy[2]
     assert "At most 30 rounds" in busy[2] and "then the error workflow" in busy[2]
     assert "refused, timed out or was reset" in table["no answer"][1]
-    assert table["202 or 200"][2].startswith('NOT the end. Goes on to the state check "Run still going?"')
+    assert table["202 or 200"][2].startswith(
+        'NOT the end. Goes on to the state check "Run still going?"'
+    )
     flat = " ".join(part.split())
     assert 'UNVERIFIED: the "no answer" row and the 502 and 504 part of the row above it.' in flat
     assert "is NOT known" in flat and "The lead runs one more n8n evidence step" in flat
@@ -1137,7 +1140,14 @@ def _check_nodes(flow: dict[str, Any]) -> SimpleNamespace:
         (rule,) = nodes[name]["parameters"]["conditions"]["conditions"]
         assert rule["operator"] == {"type": "boolean", "operation": "true", "singleValue": True}
     return SimpleNamespace(
-        http=http, check=check, left=left, verdict=verdict, again=again, too_long=too_long, done=done, bad=bad
+        http=http,
+        check=check,
+        left=left,
+        verdict=verdict,
+        again=again,
+        too_long=too_long,
+        done=done,
+        bad=bad,
     )
 
 
@@ -1212,7 +1222,9 @@ def test_the_workflow_sorts_the_states_exactly_as_the_code_names_them():
     flow = _load(MAIN)
     nodes, c = _nodes(flow), _check_nodes(flow)
     assert _rule(flow, c.check) == "={{ " + _list_text(GOING) + ".includes(" + STATE_READ + ") }}"
-    assert _rule(flow, c.verdict) == "={{ " + _list_text(SUCCESS) + ".includes(" + STATE_READ + ") }}"
+    assert (
+        _rule(flow, c.verdict) == "={{ " + _list_text(SUCCESS) + ".includes(" + STATE_READ + ") }}"
+    )
     assert _state_list(_rule(flow, c.check)) == {s.value for s in GOING}
     assert _state_list(_rule(flow, c.verdict)) == {s.value for s in SUCCESS}
     message = nodes[c.bad]["parameters"]["errorMessage"]
@@ -1224,7 +1236,9 @@ def test_the_workflow_sorts_the_states_exactly_as_the_code_names_them():
     # the message names the state, says that the answer holds no reason, and holds nothing of the request
     assert "'the run ended in state ' + " + STATE_READ in message
     assert "The answer holds no reason" in message and "NEW key" in message
-    assert "the answer held no state that this workflow knows" in message  # unknown state: fails too
+    assert (
+        "the answer held no state that this workflow knows" in message
+    )  # unknown state: fails too
     for word in ("$json.body", "$json.ts", "$json.hmac", "document", "$('Build request')"):
         assert word not in message, word
     for name in (c.check, c.verdict):
@@ -1270,7 +1284,7 @@ def test_a_way_round_the_state_check_is_caught(change):
     c = _check_nodes(flow)
     broken = copy.deepcopy(flow)
     links, nodes = broken["connections"], _nodes(broken)
-    to = lambda name: {"node": name, "type": "main", "index": 0}  # noqa: E731
+    to = lambda name: {"node": name, "type": "main", "index": 0}
     if change == "send straight to the good end":
         links[c.http]["main"][0] = [to(c.done)]
     elif change == "send to the good end beside the check":
@@ -1306,12 +1320,19 @@ def test_every_state_check_round_waits_and_signs_again_with_the_same_body():
         assert c.http not in _reach(flow, c.left, without=must_pass), must_pass
     assert edges[c.again] == [wait] and edges[wait] == [stamp] and edges[stamp] == [sign]
     assert sorted(s for s, targets in edges.items() if wait in targets) == sorted(
-        [c.again, flow["connections"][flow["connections"][c.http]["main"][1][0]["node"]]["main"][0][0]["node"]]
+        [
+            c.again,
+            flow["connections"][flow["connections"][c.http]["main"][1][0]["node"]]["main"][0][0][
+                "node"
+            ],
+        ]
     )
     # the node that prepares the next question: the same body, the round count kept, the check count plus one
     again = nodes[c.again]
     assert again["type"] == PREFIX + "set" and again["parameters"]["includeOtherFields"] is False
-    (builder,) = [n for n, node in nodes.items() if "JSON.stringify" in json.dumps(node["parameters"])]
+    (builder,) = [
+        n for n, node in nodes.items() if "JSON.stringify" in json.dumps(node["parameters"])
+    ]
     fields = {a["name"]: a["value"] for a in again["parameters"]["assignments"]["assignments"]}
     assert fields == {
         "body": f"={{{{ $('{builder}').first().json.body }}}}",
@@ -1323,7 +1344,9 @@ def test_every_state_check_round_waits_and_signs_again_with_the_same_body():
     for name in (c.check, c.left, c.again, wait):
         texts = json.dumps(nodes[name]["parameters"])
         assert "ts" not in re.findall(r"\.json\.(\w+)", texts), name
-        assert "hmac" not in texts and "Date.now" not in texts and "JSON.stringify" not in texts, name
+        assert "hmac" not in texts and "Date.now" not in texts and "JSON.stringify" not in texts, (
+            name
+        )
 
 
 def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap():
@@ -1336,7 +1359,9 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
     # the count goes up by one in every check round and is carried, never set back, over a busy round
     busy = flow["connections"][c.http]["main"][1][0]["node"]
     next_round = nodes[flow["connections"][busy]["main"][0][0]["node"]]
-    carried = {a["name"]: a["value"] for a in next_round["parameters"]["assignments"]["assignments"]}
+    carried = {
+        a["name"]: a["value"] for a in next_round["parameters"]["assignments"]["assignments"]
+    }
     assert carried["checks"] == "={{ " + CHECKS_READ[1:-1] + " }}"
     writers = [
         name
@@ -1377,8 +1402,10 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
         "`max_steps` times `call_timeout_s` times `max_attempts`, plus 60 seconds",
         f"the defaults {llm.call_timeout_s:g} seconds and {llm.max_attempts}",
         f"{tick.TICK_SLACK_S} seconds as the longest gap (`TICK_SLACK_S`",
-        f"`max_steps` {EXAMPLE_STEPS} on the defaults: {EXAMPLE_STEPS} x {llm.call_timeout_s:g} x "
-        f"{llm.max_attempts} + 60 = {stuck:g} seconds",
+        (
+            f"`max_steps` {EXAMPLE_STEPS} on the defaults: {EXAMPLE_STEPS} x {llm.call_timeout_s:g} x "
+            f"{llm.max_attempts} + 60 = {stuck:g} seconds"
+        ),
         f"{limit:g} seconds",
         f"a wait of {wait['amount']} seconds",
         f"{checks} checks",
@@ -1389,7 +1416,9 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
     # the three other examples of the README: the smallest whole number of checks that is NOT enough
     for steps, not_enough in re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part):
         need = int(steps) * llm.call_timeout_s * llm.max_attempts + 60 + tick.TICK_SLACK_S
-        assert int(not_enough) * wait["amount"] <= need < (int(not_enough) + 1) * wait["amount"], steps
+        assert int(not_enough) * wait["amount"] <= need < (int(not_enough) + 1) * wait["amount"], (
+            steps
+        )
     assert len(re.findall(r"`max_steps` (\d+) (?:needs )?more than (\d+)", part)) == 3
 
 
@@ -1435,11 +1464,13 @@ def test_readme_says_why_a_202_is_not_the_end_and_has_a_row_for_every_state():
     assert "There is no state named FAILED in the code" in flat
     assert "The answer holds no reason" in flat
     assert "fails closed" in flat
-    assert 'UNVERIFIED: all of this section\'s n8n side.' in flat
+    assert "UNVERIFIED: all of this section's n8n side." in flat
     # the nodes the section names exist
     names = set(_nodes(_load(MAIN)))
     for name in re.findall(r'"([^"]+)"', flat):
-        if name[0].isupper() and ("?" in name or name.startswith(("Stop:", "Done:", "Next ", "Wait "))):
+        if name[0].isupper() and (
+            "?" in name or name.startswith(("Stop:", "Done:", "Next ", "Wait "))
+        ):
             assert name in names, name
     # the caller's early answer is worded plainly
     whole = " ".join(raw.split())
@@ -1478,7 +1509,9 @@ def test_readme_states_the_three_limits_of_the_state_check():
         for phrase in phrases:
             assert phrase in item, phrase
     # the first two are in the list of stated limits too, the third is there as limit 11 (pinned above)
-    limits = " ".join(raw.partition("## Stated limits")[2].partition("## VERIFY ON A REAL n8n")[0].split())
+    limits = " ".join(
+        raw.partition("## Stated limits")[2].partition("## VERIFY ON A REAL n8n")[0].split()
+    )
     assert "A dead run looks alive until the tick has run." in limits
     assert "The worker tells no person about an interrupted run." in limits
     assert "a NEW key is needed to redo the work" in limits

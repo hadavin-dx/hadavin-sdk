@@ -668,11 +668,11 @@ def test_n11_a_process_variable_cannot_stand_in_for_a_missing_header(monkeypatch
     planted = wsgiref.handlers.read_environ()
     assert len([k for k in planted if k.startswith("HTTP_X_HADAVIN_")]) == 2
     monkeypatch.setattr(wsgiref.handlers.BaseHandler, "os_environ", planted)
-    seen_environ: dict[str, object] = {}
+    seen_environs: list[dict[str, object]] = []
     wsgi = make_wsgi(start)
 
     def spy(environ, start_response):
-        seen_environ.update(environ)
+        seen_environs.append(dict(environ))
         return wsgi(environ, start_response)
 
     with serving(spy) as server:
@@ -682,8 +682,10 @@ def test_n11_a_process_variable_cannot_stand_in_for_a_missing_header(monkeypatch
     assert unsigned.status == 401, unsigned
     assert no_length.status == 400, no_length
     assert control.status == 202 and len(start.calls) == 1
-    assert not set(seen_environ) & set(planted) - {"CONTENT_LENGTH", "CONTENT_TYPE"}
-    assert (
-        seen_environ["CONTENT_TYPE"] == "text/plain"
-    )  # the stdlib's own default, not the variable
+    # the refused requests never reach the application; the signed one is the control, and it
+    # must carry none of the planted values (only what the handler itself built from the request)
+    (seen_environ,) = seen_environs
+    leaked = {k for k, v in seen_environ.items() if k in planted and planted[k] == v}
+    assert not leaked - {"HTTP_X_HADAVIN_REQUEST_TIMESTAMP", "HTTP_X_HADAVIN_SIGNATURE"}, leaked
+    assert seen_environ["CONTENT_TYPE"] == "text/plain"  # the stdlib's own default, not the variable
     check_quiet(unsigned, capsys, caplog)
