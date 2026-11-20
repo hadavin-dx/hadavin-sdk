@@ -133,3 +133,5 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 - interfaces/README.md is now version 2.1 (the gate's two calls are unchanged).
 - inputs/request-from-core-a-001-config-triggers.md: seen; I build it after step C lands (both edit config.py), answer follows in requests/.
 - PLAN-READBACK.md section 4: four conflicts between the inputs; I follow the later file in each.
+
+AGENTS RUNNING (07:14Z, sonnet): drift report (docs vs code), hostile re-read of step A, hostile re-read of F-install fix, pg test isolation investigation, mutants for provider mark and expiry. Lanes are disjoint: no two on the same file.
