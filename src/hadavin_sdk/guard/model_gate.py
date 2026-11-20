@@ -164,6 +164,19 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
 - One writer per run map (m-new-7): two threads that write ONE map at the same time through `redact_text` can
   give one placeholder number to two values. The gate only reads the map; one run has one writer today.
   Not pinned by a test (a race).
+- The real `limits.Limits` is NOT a `Meter`: its `settle` needs the keyword `agent_id`, so `BoundGate._settle` (which
+  calls `settle(reservation, usd)`) would raise TypeError, be caught as `settle_failed`, and leave every paid call
+  booked at its worst case (finding F1 of the P3 end-to-end run). `LimitsMeter(limits, agent_id)` is the adapter:
+  `reserve` calls `limits.reserve(agent_id, worst, run_id=...)` and `settle` calls `limits.settle_for(agent_id,
+  reservation, usd)`, as `runtime/agent_loop.py` does. It is bound to ONE agent: a `reserve` for another agent id
+  is a TypeError (the gate shows it as `reserve_refused`; a fixed text, as the source guard requires), so the settle can never name a different agent than
+  the reserve. Limits is not changed.
+  T::test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent
+  T::test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent
+  T::test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case
+- The gate masks what it SENDS, not the reply: a planted secret in a model reply is returned as the client gave it
+  (finding F2, owner decision pending, ESCALATIONS E25). Pinned as a strict xfail.
+  T::test_f2_a_reply_with_a_planted_secret_is_returned_unmasked
 
 Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
 of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then asks for the
@@ -240,6 +253,25 @@ class Meter(Protocol):
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str: ...
 
     def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal: ...
+
+
+class LimitsMeter:
+    """Adapter from `limits.Limits` (or any object with `reserve` and `settle_for`) to `Meter`, for ONE agent.
+    `Limits.settle` needs the keyword `agent_id`; the gate calls `settle(reservation, usd)`. This adapter fills
+    the agent in and calls `settle_for`, the way runtime/agent_loop.py does. Errors pass unchanged."""
+
+    def __init__(self, limits: Any, agent_id: str) -> None:
+        if not isinstance(agent_id, str) or not agent_id:
+            raise TypeError("agent_id must be a non-empty str")
+        self._limits, self._agent_id = limits, agent_id
+
+    def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str:
+        if agent_id != self._agent_id:  # fail closed: settle names the bound agent only
+            raise TypeError("agent_id is not the agent this meter is bound to")
+        return self._limits.reserve(agent_id, worst_usd, run_id=run_id)
+
+    def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal:
+        return self._limits.settle_for(self._agent_id, reservation_id, actual_usd)
 
 
 _DEFAULT_ENFORCE = runmap.enforce_map  # the audit says `map_enforced` only for this function
