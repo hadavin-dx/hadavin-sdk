@@ -774,17 +774,17 @@
    "reason": "lead 16:22"
   },
   {
-   "id": "N3-docs-table",
-   "role": "fresh reviewer (codebase-details), read-only",
+   "id": "docfix24",
+   "role": "builder (cloud/core-a)",
    "model": "sonnet",
-   "what exactly it is doing": "N3: docs claims vs code across the merged tree: one table (~60 claims), contradictions between the three lanes' docs",
-   "started UTC": "16:30",
+   "what exactly it is doing": "my own drifts from DOCS-CONSISTENCY-1: wire triggers.conflict_events_per_minute (dead setting) + tests, worker docstring truth, post-merge README patch file",
+   "started UTC": "16:38",
    "expected end": "20 min",
    "percent": 5,
    "state": "running",
    "review round n of cap": "-",
    "retries so far": 0,
-   "reason": "lead 16:22"
+   "reason": "N3 findings owned by core-a"
   }
  ],
  "tests": [
@@ -1157,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:38 N3 DONE (handover/core-a/DOCS-CONSISTENCY-1.md; 41 claims on the merged tree, 31 TRUE): FALSE: (core-b text) SECURITY.md:23-25 and README.md:58 say migrate does NOT refuse a runtime role that owns the audit tables, but migrate.py:448-449 (called at :1339) refuses it: the tamper-evidence text understates the code; SECURITY.md:28 points to handover/core-b/tickets/A-audit-rights.md which does not ship; CHANGELOG.md:9 calls 0007 unreleased (released since: migrations_released.json has 7 rows; unreleased = 0008-0011). (core-a, mine) the setting `triggers.conflict_events_per_minute` (CHANGELOG.md:13, config.py:420-425) is DEAD: my worker passes the constant 10 and never reads it: FIXING (agent docfix24); README-trigger l.51-54/803-806/675-677 and the 'One run at a time' heading are stale AFTER the merge (config block present; max_running defaults to 4; no reserve warning since core-b's limits have reserve): post-merge patch file prepared by docfix24 (handover/core-a/pr/README-trigger-postmerge.md); wk module text on spend corrected. Note: no separate 'caps role' exists in the merged tree (it lives only on your wip/lead-b-migrate): the runbook (reset login runs set-cap) is TRUE there. AGENTS 3 (integ-pg, T1-merge, docfix24) + mutant script.",
   "16:30 DECISION T1 taken: agent T1-merge (wip/core-a-t1-merge from core-b fbebb390f: core-b's file is the base, core-a's and core-c's EXTRA cases are ported with strict assertions, PG16 before/after, mutation sanity on 2 ported cases; handover/core-a/T1-MERGE.md will carry the text for core-b/core-c). N1: I PUSHED core/integration-dryrun to origin now (the existing scratch merge 6c89f0495 = core-b 463760813 + core-a d1ee703ab + core-c bd7f9d978, handover excluded, three T1 files still in it): I redo it on the newest heads as soon as core-b pushes its fixes (tell me, I see no new core-b code commit since 0aab18e9d). N2: waits for core-b's fix of the 3 Majors. N3 STARTED: docs-vs-code consistency table across the merged tree (agent N3-docs-table). AGENTS 3 (integ-pg, T1-merge, N3-docs-table) + mutant script.",
   "16:20 ANSWERS written: handover/core-a/ANSWERS-1612.md: (1) A1-A6 table (A1 nothing to fix, A2/A3 done twice, A4 done + integ-pg running, A5 done, A6 done); (2) why 3 -> 1: packages ended; my NEXT/ORDER 020 lines were stale (fixed now); (3) mutant run 19 is NOT blocked any more: your G33d anchor edit landed; I started `.venv/bin/python tests/endpoint_mutants.py` myself at 16:15 on cloud/core-a 5a8c83fd3 (result file evidence/mutants-run19.md); exact command in the answers file. AGENTS 1 (integ-pg) + the mutant script in the background.",
   "16:25 core-b newest code reviewed (reviews/rev-b-newest2.md; appended to handover/core-b/requests/xr-from-core-a-reviews.md): no Blocker; the NEW start-up self-check of the runtime login's money rights (postgres.py:102-140) is a real improvement (refuses, effective privileges, no leak) BUT: MAJOR 1 a NOINHERIT route passes it, I CONFIRMED on the real PG16.15: `CREATE ROLE g NOLOGIN; GRANT UPDATE ON hadavin_caps TO g; GRANT g TO runtime WITH INHERIT FALSE, SET TRUE` -> as runtime has_table_privilege = false, has_any_column_privilege = false (check passes) but after `SET ROLE g` it is true: `UPDATE hadavin_caps SET day_cap=1e9` works; MAJOR 2 the owner skip is all-or-nothing: a login owning ONE money table skips the check on the other four; MAJOR 3 0011 edited in place: hadavin_add_spend's new +-max_day_skew window never reaches an already-migrated DB (ledger keeps the old checksum, migrate only warns) and the charge-failure handling is untested. Fine: clock hint, k1b audit code, attack-battery re-count (a tightening). Running: integ-pg only.",
@@ -4031,6 +4032,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-b newest (0aab18e9d): NO Blocker; 3 Majors: NOINHERIT bypass of the new startup money check (CONFIRMED on PG16.15: GRANT g TO runtime WITH INHERIT FALSE; has_table_privilege false, SET ROLE g then UPDATE hadavin_caps works), owner skip is all-or-nothing per login, 0011 edited in place so already-migrated DBs never get the add_spend day window; clock hint/k1b code/attack battery fine; reviews/rev-b-newest2.md"
+  },
+  {
+   "id": "N3-docs-table",
+   "role": "fresh reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "N3: docs claims vs code across the merged tree: one table (~60 claims), contradictions between the three lanes' docs",
+   "started UTC": "16:30",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "N3: 41 claims checked on the merged tree: 31 TRUE, 6 FALSE (SECURITY.md:23-25 and README.md:58 say migrate does not refuse an owning runtime role but it does (mig:448); CHANGELOG.md:9 calls 0007 unreleased; triggers.conflict_events_per_minute is DEAD in my worker; 3 README-t claims stale after the merge), 3 PARTLY, 3 UNVERIFIABLE; handover/core-a/DOCS-CONSISTENCY-1.md"
   }
  ]
 }
