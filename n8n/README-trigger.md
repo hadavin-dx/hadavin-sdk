@@ -589,6 +589,79 @@ badly fails again, every time: that is meant, the key is used up.
 
 SEEN IN n8n 2.47.7 (fourth record, once each, lines 47, 58, 112 to 118): "Run still going?" sent RECEIVED and WORKING to the loop and NO_ACTION out; "Checks left?" and "Next check" counted 0, 1, 2 in one execution; "Run ended well?" sent NO_ACTION to "Done: finished or waits for approval"; the wait node worked when entered from "Next check". UNVERIFIED: all of this section's n8n side for every other state (SUCCEEDED, WAITING_FOR_APPROVAL, the six failing states, an answer without a state), for the checks used up, and for "Stop: run did not end well" and "Stop: still running" (lines 114 and 117 to 120): the receiver of the run answered only NO_ACTION, RECEIVED and WORKING.
 
+## What the sender must do: poll the run state
+
+This is the default that stands until the owner decides otherwise (handover/core-a/ESCALATIONS.md, E-door-1, option A:
+"the sender polls"). The owner's decision is OPEN: option B would store the document with the run row and tell a person
+when a run ends in NEEDS_PERSON "interrupted"; that needs code in the store and the tick that does not exist, so
+nothing in this section may be read as if it did.
+
+### The contract
+
+1. A 2xx means "the run row exists", not "done". The answer is decided from the stored row alone: 202 while the row
+   is RECEIVED or WORKING, 200 for any later state (`_answer` and `IN_PROGRESS` in `src/hadavin_sdk/triggers/worker.py`).
+2. The body holds only `run_id` and `state` (`ANSWER_FIELDS` in `src/hadavin_sdk/triggers/endpoint.py`): no reason, no result.
+3. The states are exactly those of `RunState` (`src/hadavin_sdk/models.py`): RECEIVED, WORKING, NO_ACTION, PLAN_READY,
+   NEEDS_PERSON, DENIED, WAITING_FOR_APPROVAL, EXECUTING, REJECTED, EXPIRED, VERIFYING, SUCCEEDED, ROLLED_BACK, STOPPED.
+   There is no state named FAILED; a failed run ends in one of DENIED, REJECTED, EXPIRED, NEEDS_PERSON, ROLLED_BACK, STOPPED.
+4. Still open (a run can still move out of them, `OPEN_STATES` in `models.py`): RECEIVED, WORKING, PLAN_READY,
+   WAITING_FOR_APPROVAL, EXECUTING, VERIFYING. Ended, nothing more happens on its own: NO_ACTION, SUCCEEDED (good),
+   and NEEDS_PERSON, DENIED, REJECTED, EXPIRED, ROLLED_BACK, STOPPED (not good).
+5. WAITING_FOR_APPROVAL is open but waits for a person, not for time: the template stops watching there and counts it as
+   success (see "The states"); a sender that needs the final outcome must keep asking after the approval.
+
+### How a sender reads the state: there is no read address
+
+There is NO way for an external sender to read a run state other than the signed request itself. The endpoint answers
+`POST` on the trigger path and `GET` on the health path only (`METHOD` and `HEALTH_PATH` in `endpoint.py`; the health
+answer holds `status` and `store_failures` and nothing of any run). So the question "what is the state of this run?" is
+the same signed request with the same key and the same document, signed anew; the template's "Run still going?" loop
+does exactly that (`n8n/hadavin-trigger.json`, the nodes "Next check", "Stamp time", "Sign", "Send to Hadavin").
+For an operator the closest thing is the store: `get_run` and `list_runs` in `src/hadavin_sdk/store/protocol.py`. The command
+line (`hadavin`, `src/hadavin_sdk/cli.py`) has the commands gate, limits, tick, migrate, audit, replay and score and
+none that shows a run.
+
+### A polling recipe
+
+- Ask right after the 2xx, then every wait of the template (70 seconds, "Wait before next round"), until the state is an ended one.
+- Ask for as long as the client's longest run plus the stuck limit plus one tick gap: the template's placeholder is 45
+  checks of 70 seconds, 3150 seconds (about 52 minutes), against 2280 seconds for the example agent; the arithmetic and the
+  rule for each agent are in "The numbers" (`stuck_after_s` and `TICK_SLACK_S` in `src/hadavin_sdk/runtime/tick.py`).
+- Sign every check anew: a signature stops being valid 300 seconds after its timestamp (see "One run at a time").
+- On NO_ACTION or SUCCEEDED: done. On WAITING_FOR_APPROVAL: the run waits for a person; the template ends here as a success.
+- On NEEDS_PERSON, DENIED, REJECTED, EXPIRED, ROLLED_BACK or STOPPED: tell a person, with the run id. The answer holds no
+  reason; the operator reads it from the stored run (see "A 202 is not the end").
+- If the checks are used up with the run still open: tell a person; do not call it a success.
+- Redoing an event after NEEDS_PERSON needs a NEW key (see "The key rule" and "When a run shows NEEDS_PERSON after a restart or a crash").
+
+### If the sender does not poll
+
+Nobody is told. The tick moves a run that has been quiet for longer than its stuck limit to NEEDS_PERSON, with the
+reason "interrupted" for RECEIVED, WORKING and PLAN_READY, "outcome_unknown" for EXECUTING and "verify_interrupted" for
+VERIFYING (`STUCK` in `tick.py`); it writes an audit record and sends no message (`stuck` in `tick.py` calls `advance` and
+`app.audit.write_outcome` and nothing else). The same key then answers 200 NEEDS_PERSON forever. A run cut off before it finished is not started again,
+and its document was kept only in the worker's memory, so it is gone: the event must be sent again with a new key.
+This is the E-door-1 gap, open for the owner.
+
+### Sending again after a timeout is safe
+
+The run id is made from tenant, sender and key, and the stored row keeps the agent, the principal and the
+`trigger_ref` (sender, key and a hash of the document). A second request with the same key and the same document finds
+that row and is answered 202 or 200 from it; no second run starts. The same key with a different document, or for
+another agent or principal, is answered 409 with no body and no run is written (`_answer` in `worker.py`). So after
+a timeout, a 502, 503, 504 or no answer, send again with the SAME key. If the first request never wrote its row, the
+second one starts the run.
+
+### The honest limits
+
+- A dead run looks alive until the tick has run: the answer cannot tell (`stuck` in `tick.py`).
+- If the tick does not run, an interrupted run stays RECEIVED or WORKING for ever (nothing in the worker starts the tick; `worker.py` writes a warning at start only).
+- The answer never holds a reason or a result (`ANSWER_FIELDS`, `endpoint.py`).
+- There is no read address and no command that shows a run (`endpoint.py`, `cli.py`); a sender outside n8n must build the
+  signed re-send itself.
+- Nobody is told of a run that ends in NEEDS_PERSON "interrupted", except through a sender that polls (`tick.py`).
+- The document of a cut-off run is not stored; only a hash of it is kept (`trigger_ref`, `worker.py`).
+
 ## One run at a time: what the sender must do when it is not acknowledged
 
 In plain words: the worker handles as many runs at a time as `triggers.max_running` says.

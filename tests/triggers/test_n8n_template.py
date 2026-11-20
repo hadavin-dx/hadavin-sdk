@@ -2073,3 +2073,23 @@ def test_the_readme_states_that_a_receiver_that_recovers_is_silent_and_how_long_
     notify = _load(ERROR)["nodes"][-1]["notes"]
     assert "a short outage that recovers is silent here by design" in notify
     assert "did NOT run when the receiver was down" in notify
+
+
+def test_readme_has_the_sender_polls_section_and_its_true_claims():
+    readme = " ".join(_readme().split())
+    section = readme.partition("## What the sender must do: poll the run state")[2].partition(
+        "## One run at a time"
+    )[0]
+    assert section, "the section is missing"
+    for phrase in (
+        'A 2xx means "the run row exists", not "done"',
+        "There is NO way for an external sender to read a run state other than the signed request itself",
+        "none that shows a run",
+        "The owner's decision is OPEN",
+        "The same key with a different document, or for another agent or principal, is answered 409",
+    ):
+        assert phrase in section, phrase
+    for state in RunState:  # every state the code has is named in the contract
+        assert state.value in section, state.value
+    assert tick.STUCK[RunState.EXECUTING] == "outcome_unknown"
+    assert "FAILED" in section and "There is no state named FAILED" in section
