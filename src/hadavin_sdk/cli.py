@@ -627,7 +627,9 @@ def release_expired_cmd(cfg, agent: str, day: date, by: str) -> int:
     except StoreUnavailable:
         print("release NOT run: the store is unreachable. Nothing was changed.", file=sys.stderr)
         return 4
-    except ConfigError as exc:  # e.g. the start-up rights self-check: the release login holds stop-table rights
+    except (
+        ConfigError
+    ) as exc:  # e.g. the start-up rights self-check: the release login holds stop-table rights
         print(f"refused: {exc}. Nothing was changed.", file=sys.stderr)
         return 2
     release = getattr(store, "release_expired_spend", None)
