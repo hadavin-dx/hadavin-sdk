@@ -28,13 +28,13 @@ operator acts. Two ways:
 
 A NULL checksum on an unreleased file is trusted once (warning) and recorded.
 
-## What the lead does at the merge that releases 0008 to 0011
+## What the lead does at the merge that releases 0008 to 0012
 
-1. Add the four rows to BOTH `src/hadavin_sdk/store/migrations_released.json` and
+1. Add the five rows to BOTH `src/hadavin_sdk/store/migrations_released.json` and
    `tests/fixtures/migrations_released.json` (SHA-256 of the file bytes with CRLF read as LF), e.g. run for each file:
    `python -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read().replace(b'\r\n',b'\n')).hexdigest())" src/hadavin_sdk/store/migrations/0008_release_expired_spend.sql`
 2. Empty `UNRELEASED_MIGRATIONS` in `store/migrate.py`.
-3. In `tests/test_migration_numbers_guards.py` set `RELEASED_CUTOFF = 12`, the manifest length to 11, and delete
+3. In `tests/test_migration_numbers_guards.py` set `RELEASED_CUTOFF = 13`, the manifest length to 12, and delete
    `test_the_manifest_has_no_row_for_the_unreleased_files_yet`; in `tests/test_migrations_checksum.py` replace the
    unreleased tests.
 

@@ -5,8 +5,8 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
 
 ## Set up once (PostgreSQL)
 1. Create a login role for resets, for example `hadavin_reset`. Give it a password of its own. `migrate` never creates roles.
-2. Run `hadavin-sdk migrate --runtime-role <runtime> --portal-role <portal> --purge-role <purge> --reset-role <reset>`.
-   The four roles must be different and not members of each other. Without `--reset-role`, migrate warns that nobody
+2. Run `hadavin-sdk migrate --runtime-role <runtime> --portal-role <portal> --purge-role <purge> --reset-role <reset> --checkpoint-role <checkpoint>`.
+   The roles must be different and not members of each other. Without `--reset-role`, migrate warns that nobody
    but the database owner can reset. Name all the roles in ONE command. A `migrate` that names no role at all is
    refused ("no role is named"): it would apply the schema and never check who can clear a stop. `migrate --no-roles`
    is the explicit way to apply the schema only (the first install, before the roles exist); it grants and checks
@@ -310,3 +310,22 @@ UPDATE on `kill_switch`, which the runtime login no longer holds.
    `DROP TABLE kill_switch_stops;` then `DELETE FROM schema_migrations WHERE version = '0006_stop_state';` and
    `GRANT INSERT, UPDATE ON kill_switch TO <runtime>;`.
 4. Start the old code.
+
+## Audit checkpoints and the outbox: deploy order and the checkpoint login
+The runtime login no longer writes audit checkpoints and no longer deletes from `audit_outbox`.
+1. Create a login role for checkpoints (its own password), for example `hadavin_checkpoint`. It holds SELECT on the chain
+   and INSERT on `audit_checkpoints`, nothing else.
+2. As the owner: `hadavin-sdk migrate --runtime-role R ... --checkpoint-role C` (name ALL roles in ONE command). This
+   applies migration 0012 (the two outbox functions), takes DELETE on `audit_outbox` and INSERT on `audit_checkpoints`
+   from R, and refuses any named role that owns an audit table or is a member of the owner role.
+3. Store C's DSN as a secret and set `backends.store.checkpoint_dsn_secret_name` to its NAME. Unlike the reset, release
+   and caps logins this secret IS read by the runtime process (the tick `checkpoint` step signs with the signer key and
+   writes on C's connection), so it ends in `_secret_name` and the runtime's secrets policy lists it. It must be a
+   different secret, and a different database login, from the runtime, purge, release, reset and caps ones; the start
+   refuses otherwise. In pilot and prod it is required when the audit is `chain` and a signer is set.
+4. ORDER: run migrate FIRST, then deploy the new runtime. A new runtime started before migrate fails the `audit_drain`
+   tick step every tick (it has no EXECUTE on the outbox functions yet); an old runtime run after migrate cannot delete
+   parked events or write checkpoints. Nothing in the chain is affected either way: intent and outcome writes need only
+   SELECT and INSERT on `audit_entries`.
+5. Checkpoints are signed once per tick (not every `checkpoint_every` rows) when the checkpoint login is set; the memory
+   store and a deployment without the role keep the inline checkpoint.

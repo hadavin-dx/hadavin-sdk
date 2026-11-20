@@ -17,15 +17,24 @@ an outage are kept in memory, counted in a warning, and lost when the process ex
 refuses for such a reason is kept and fails the `audit_drain` step with a count. The eval and replay commands do not
 write to the chain.
 
-Tamper evidence of past rows is conditional. It holds only when the runtime login (1) does not own the audit tables
-and (2) has no UPDATE, DELETE or TRUNCATE on `audit_entries`. `migrate --runtime-role` enforces (2): it grants the
-runtime login SELECT and INSERT on `audit_entries` and `audit_checkpoints`, and the append-only triggers also refuse
-UPDATE, DELETE and TRUNCATE (a test proves the real attempts fail). It does not enforce (1): it does not refuse a
-runtime role that owns the audit tables (an owner can disable the triggers), so the operator must not make the runtime
-login the owner. Two runtime rights are wider than they need to be today: DELETE on `audit_outbox` (events parked
-there and not yet written can vanish; they are not yet in the chain, so nothing in the chain shows it) and INSERT on
-`audit_checkpoints` (a planted row at the head's seq makes verification raise a false alarm). Both are tracked in
-handover/core-b/tickets/A-audit-rights.md. Even then this is tamper evidence of past rows, not authenticity: a
+Tamper evidence of past rows is conditional. It holds only while the database roles are set up with `migrate` and the
+operator keeps them apart: the runtime login (1) does not own the audit tables, (2) has no UPDATE, DELETE or TRUNCATE
+on `audit_entries`, (3) cannot write a checkpoint, and (4) cannot delete a parked event that is not in the chain.
+`migrate --runtime-role` enforces all four. It refuses a runtime role (or any other named role) that owns an audit
+table or is a member of the owner role (an owner can disable the append-only triggers). It grants the runtime login
+SELECT and INSERT on `audit_entries`, SELECT only on `audit_checkpoints`, and SELECT and INSERT (no DELETE, no UPDATE)
+on `audit_outbox`; the append-only triggers also refuse UPDATE, DELETE and TRUNCATE on the chain (a test proves the
+real attempts fail). A parked event leaves the outbox only through two `SECURITY DEFINER` functions (migration 0012):
+`hadavin_audit_outbox_done` deletes it only when an `audit_entries` row with that event id exists, and
+`hadavin_audit_outbox_quarantine` renames it (nothing is lost). Signed checkpoints are written by their own role
+(`migrate --checkpoint-role`, its own login and `backends.store.checkpoint_dsn_secret_name`): the tick `checkpoint`
+step writes through it and the runtime login never attempts the INSERT. Honest limits that remain: a superuser or the
+table owner is outside all of this; a runtime process that holds the signer key can still sign a bad checkpoint by
+calling the tick `checkpoint` step (the gain is that a stray write path or an SQL injection in the runtime cannot);
+the runtime can still INSERT any row into the outbox and rename (quarantine) a parked row, which hides it from the
+drain but loses nothing; and a deployment migrated without `--checkpoint-role` (the memory store, demo, `--no-roles`)
+keeps the runtime login as the checkpoint writer. Checkpoints written by the tick are signed once per tick, not every
+`checkpoint_every` rows, so the unsigned tail is at most one tick long. Even then this is tamper evidence of past rows, not authenticity: a
 runtime process that is itself taken over can append new rows with valid hashes, and the chain cannot tell those from
 true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they do not remove it.
 
