@@ -18,7 +18,9 @@ from typing import Literal
 from psycopg import errors, sql
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.models import MAX_SPEND_DECIMALS, MAX_SPEND_EXPONENT, MAX_SPEND_USD
 from hadavin_sdk.store.postgres import connect, names_of
+from hadavin_sdk.store.protocol import MAX_EXPIRY_AGE_S, MAX_RESERVATION_ID_CHARS
 
 _LOG = logging.getLogger("hadavin_sdk.store")
 
@@ -46,6 +48,17 @@ class Grant:
     # Table-level privileges of the release role (0008): it releases expired spend holds through ONE function and
     # appends to the audit; it holds no right on any money table.
     release: str = ""
+
+
+@dataclass(frozen=True)
+class FunctionGrant:
+    """Which named roles may EXECUTE one function of ours. Everything not named here is revoked (and PUBLIC too)."""
+
+    runtime: bool = False
+    purge: bool = False
+    release: bool = False
+    reset: bool = False
+    portal: bool = False
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -84,6 +97,9 @@ GRANTS: dict[str, Grant] = {
         "table", _APPEND, purge="DELETE", purge_cols=("call_id", "run_id", "created_at")
     ),
     "redaction_maps": Grant("table", _RW, purge="DELETE", purge_cols=("run_id", "updated_at")),
+    # 0011: the limits the money functions read (written by `migrate` from the Python constants on every run). Only
+    # the owner touches it: the definer functions read it as owner.
+    "hadavin_limits": Grant("table", ""),
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
@@ -99,6 +115,34 @@ TRIPWIRE_FUNCTIONS = (
     "hadavin_audit_checkpoint_guard()",
     MONEY_GUARD_FUNCTION,
 )
+# 0011: the five SECURITY DEFINER money functions. Each is re-pinned on every migrate run (`_pin_money_functions`).
+MONEY_FUNCTIONS = (
+    "hadavin_reserve_spend(text, text, date, numeric, numeric, numeric, text)",
+    "hadavin_settle_spend(text, numeric, text)",
+    "hadavin_expire_spend_reservations(integer)",
+    "hadavin_purge_spend_reservations(timestamptz)",
+    "hadavin_add_spend(text, date, numeric)",
+)
+# Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
+# purges; the release role (0008) releases. The reset and portal roles run none. Every other role, PUBLIC included,
+# is refused.
+FUNCTION_GRANTS: dict[str, FunctionGrant] = {
+    MONEY_FUNCTIONS[0]: FunctionGrant(runtime=True),
+    MONEY_FUNCTIONS[1]: FunctionGrant(runtime=True),
+    MONEY_FUNCTIONS[2]: FunctionGrant(runtime=True),
+    MONEY_FUNCTIONS[3]: FunctionGrant(purge=True),
+    MONEY_FUNCTIONS[4]: FunctionGrant(runtime=True),
+    RELEASE_FUNCTION: FunctionGrant(release=True),
+}
+# Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.
+EXCLUDED_FUNCTIONS = (
+    *TRIPWIRE_FUNCTIONS,
+    "hadavin_audit_append_only()",
+    "hadavin_watermark_guard()",
+)
+# The relations the owner check compares with the function owner: a definer function that cannot write one of
+# them fails every call with insufficient_privilege.
+_OWNED_RELATIONS = ("spend", "spend_month", "spend_reservations", "runs", "hadavin_limits")
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
@@ -182,6 +226,31 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
     return found, unread
 
 
+_FUNCTION = re.compile(r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(hadavin_\w+)\s*\(", re.IGNORECASE)
+
+
+def _functions_created(paths: list[Path]) -> set[str]:
+    """Names of the hadavin_* functions the migrations create (comments left out)."""
+    found: set[str] = set()
+    for path in paths:
+        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.DOTALL)
+        text = re.sub(r"--[^\n]*", "", text)
+        found |= {m.group(1).lower() for m in _FUNCTION.finditer(text)}
+    return found
+
+
+def money_limits() -> dict[str, int]:
+    """The limits the money functions read from `hadavin_limits`, from the constants the Python validators use:
+    one source, so SQL and Python cannot drift. Read at call time."""
+    return {
+        "max_amount": MAX_SPEND_USD,
+        "max_decimals": MAX_SPEND_DECIMALS,
+        "max_exponent": MAX_SPEND_EXPONENT,
+        "max_id_chars": MAX_RESERVATION_ID_CHARS,
+        "max_expiry_age": MAX_EXPIRY_AGE_S,
+    }
+
+
 def check_grants(paths: list[Path]) -> list[str]:
     """Problems between the migrations and `GRANTS`: a relation they create with no entry (it would get no grant
     and fail at runtime), an entry for a relation no migration creates, or an entry of the wrong kind."""
@@ -198,6 +267,16 @@ def check_grants(paths: list[Path]) -> list[str]:
             problems.append(
                 f"GRANTS says {name} is a {grant.kind}; the migrations create a {created[name]}"
             )
+    mapped = {sig.split("(")[0] for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS)}
+    functions = _functions_created(paths)
+    problems += [
+        f"{n} (function) is created by a migration but is in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS"
+        for n in sorted(functions - mapped)
+    ]
+    problems += [
+        f"FUNCTION_GRANTS names {n}, which no migration creates"
+        for n in sorted({sig.split("(")[0] for sig in FUNCTION_GRANTS} - functions)
+    ]
     return problems
 
 
@@ -649,6 +728,129 @@ def _pin_money_guard(db) -> None:
             _pin_search_path(db, signature)
 
 
+def _pin_money_functions(db) -> None:
+    """The five money functions of 0011, pinned like the tripwire functions on EVERY run (also when 0011 is already
+    applied). A database from before 0011 has none, and nothing is done for it."""
+    for signature in MONEY_FUNCTIONS:
+        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
+            _pin_search_path(db, signature)
+
+
+def _owner_problems(db, named: list[str]) -> list[str]:
+    """One owner for every hadavin_* function and for the money relations. Names only, never a value."""
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    funcs = db.execute(
+        "SELECT p.oid::regprocedure::text, pg_get_userbyid(p.proowner) FROM pg_proc p "
+        "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' "
+        "ORDER BY 1",
+        (schema,),
+    ).fetchall()
+    if not funcs:
+        return []
+    fix = (
+        "run ALTER FUNCTION ... OWNER TO <the one owner> (ALTER TABLE ... OWNER TO for a table) as that owner or a "
+        "superuser, then run migrate again"
+    )
+    owners = sorted({o for _, o in funcs})
+    if len(owners) > 1:
+        listing = ", ".join(f"{f} owned by {o}" for f, o in funcs[:20])
+        text = (
+            f"the hadavin_* functions have more than one owner ({', '.join(owners)}): {listing}. The money guard "
+            "lets through only the owner of the release function, so a mixed-owner database would refuse every "
+            f"settle. {fix}"
+        )
+        return [text]
+    owner = owners[0]
+    problems = []
+    for role in named:
+        if role == owner:
+            problems.append(
+                f"{role} is the owner of the hadavin_* functions: a named role must not be"
+            )
+        elif db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, owner)).fetchone()[0]:
+            problems.append(
+                f"{role} is a member of {owner}, the owner of the hadavin_* functions: remove the membership"
+            )
+    if db.execute("SELECT rolsuper FROM pg_roles WHERE rolname = %s", (owner,)).fetchone()[0]:
+        return problems  # a superuser function owner can write every table
+    for rel, rel_owner in db.execute(
+        "SELECT c.relname, pg_get_userbyid(c.relowner) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = %s AND c.relname = ANY(%s) AND c.relkind IN ('r','p') ORDER BY 1",
+        (schema, list(_OWNED_RELATIONS)),
+    ).fetchall():
+        if rel_owner != owner:
+            problems.append(
+                f"the table {rel} is owned by {rel_owner}, the hadavin_* functions by {owner}: the functions "
+                f"could not write it. {fix}"
+            )
+    return problems
+
+
+def _unmapped_functions(db) -> list[str]:
+    """hadavin_* functions of the schema in neither map (a function nobody mapped gets no EXECUTE decision)."""
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    mapped = {sig.split("(")[0] for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS)}
+    return [
+        sig
+        for (sig, name) in db.execute(
+            "SELECT p.oid::regprocedure::text, p.proname FROM pg_proc p JOIN pg_namespace n "
+            "ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 1",
+            (schema,),
+        ).fetchall()
+        if name not in mapped
+    ]
+
+
+def _seed_limits(db) -> None:
+    """The rows the money functions read, from the Python constants, on every run (a changed default reaches the
+    functions at the next migrate). A database without 0011 has no table, and nothing is done."""
+    if db.execute("SELECT to_regclass('hadavin_limits')").fetchone()[0] is None:
+        return
+    for name, value in money_limits().items():
+        db.execute(
+            "INSERT INTO hadavin_limits (name, value) VALUES (%s, %s) "
+            "ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value",
+            (name, value),
+        )
+
+
+def _apply_money_functions(db, roles: dict[str, str | None]) -> None:
+    """EXECUTE on the money functions: pin first, then each named role gets what `FUNCTION_GRANTS` says and loses
+    the rest; a named role that can still run one (PUBLIC, a membership) is refused. `roles` maps the Grant field
+    name (runtime, purge, release, reset, portal) to the named role or None. The release function has its own
+    apply (`_apply_release_function`); it is checked here too."""
+    _pin_money_functions(db)
+    for signature, grant in FUNCTION_GRANTS.items():
+        if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is None:
+            continue
+        fn = sql.SQL(signature)
+        for kind, role in roles.items():
+            if not role:
+                continue
+            db.execute(
+                sql.SQL("REVOKE ALL ON FUNCTION {} FROM {}").format(fn, sql.Identifier(role))
+            )
+            if getattr(grant, kind):
+                db.execute(
+                    sql.SQL("GRANT EXECUTE ON FUNCTION {} TO {}").format(fn, sql.Identifier(role))
+                )
+        for kind, role in roles.items():
+            can = (
+                db.execute(
+                    "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
+                    (role, signature),
+                ).fetchone()[0]
+                if role
+                else False
+            )
+            if role and can != getattr(grant, kind):
+                raise ConfigError(
+                    f"{role} {'cannot run' if getattr(grant, kind) else 'can run'} {signature}: only "
+                    f"{', '.join(k for k in roles if getattr(grant, k)) or 'the owner'} may "
+                    "(a grant through PUBLIC or a role it is a member of cannot be revoked here)"
+                )
+
+
 def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
     """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
     role that can still run it (through PUBLIC or a role it is a member of) is refused."""
@@ -777,6 +979,29 @@ def migrate(
                     raise ConfigError(
                         "the runtime, portal, purge, reset and release roles must not be members of each other"
                     )
+        if unmapped := _unmapped_functions(db):
+            raise ConfigError(
+                "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
+                + ", ".join(unmapped[:20])
+            )
+        if problems := _owner_problems(db, named):
+            raise ConfigError("; ".join(problems))
+        if (
+            named
+            and db.execute(
+                "SELECT bool_or(r.rolsuper) FROM pg_proc p JOIN pg_roles r ON r.oid = p.proowner "
+                "WHERE p.pronamespace = to_regnamespace(current_schema()) AND p.proname = %s",
+                (RELEASE_FUNCTION.split("(")[0],),
+            ).fetchone()[0]
+        ):
+            owner_note = (
+                "the hadavin_* functions are owned by a superuser: allowed (test servers and some managed "
+                "services), but a superuser owner is a wider key than a plain owner role"
+            )
+            _LOG.warning("migrate: %s", owner_note)
+            if notes is not None:
+                notes.append(owner_note)
+        _seed_limits(db)
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
             if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
@@ -805,6 +1030,16 @@ def migrate(
                 )
         _pin_money_guard(db)
         _apply_release_function(db, release_role, [r for r in named if r != release_role])
+        _apply_money_functions(
+            db,
+            {
+                "runtime": runtime_role,
+                "purge": purge_role,
+                "release": release_role,
+                "reset": reset_role,
+                "portal": portal_role,
+            },
+        )
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):
