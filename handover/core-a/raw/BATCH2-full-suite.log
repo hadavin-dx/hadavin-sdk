@@ -1,0 +1,45 @@
+BATCH 2 (after the lead-review fixes, ORDER 012 round 1): whole suite once, tree at 801424c plus working tree, started 2026-11-20T05:54:57Z, no HADAVIN_TEST_PG_DSN, python 3.13.18
+All checks passed!
+340 files already formatted
+[bandit exit 0]
+........................s.s.s.sssssssssssss............................. [ 95%]
+........................................................................ [ 95%]
+.....sss................................................................ [ 96%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+..........................................................               [100%]
+=================================== FAILURES ===================================
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-a/raw/BATCH-rerun-own-files.log: 'Port.io'
+E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'", "handover/core-a/raw/BATCH-rerun-own-files.log: 'Port.io'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+1 failed, 10865 passed, 640 skipped in 100.41s (0:01:40)
+ended 2026-11-20T05:56:39Z

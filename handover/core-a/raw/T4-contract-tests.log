@@ -1,0 +1,8 @@
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:98: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_t1_reserve_cap.py:106: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:148: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:188: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:209: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:241: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:277: core-b step F not landed: Store.reserve_spend missing
+102 skipped in 0.27s

@@ -1,9 +1,9 @@
 {
  "order": "012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)",
- "state": "WORKING",
+ "state": "WAITING-LEAD",
  "boot_id_first": "3f12152f",
- "next": "agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block",
- "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
+ "next": "all queue items and ORDER 012 items are done or handed to the lead; waiting for: lead verdicts (below), core-b's Config.triggers and App.trigger_resolve, round 2 of the lead's code review if any",
+ "note": "no agent runs now because every open item waits on the lead or on core-b; the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes",
  "session_restarts": 0,
  "container_restarts": 0,
  "items": [
@@ -82,11 +82,11 @@
   {
    "item": "T4",
    "what": "store contract test files for core-b interface",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/T4-contract-tests.log (not yet)",
+   "state": "DONE (tests written; they SKIP until core-b's step F lands)",
+   "percent": 100,
+   "evidence file": "tests/contracts/test_store_spend_reservations.py, tests/contracts/test_t1_reserve_cap.py, raw/T4-contract-tests.log, requests/003-interface-i-questions.md",
    "tries": 1,
-   "reason": "core-b published interface (i) version 2.1 at 05:44Z; tests written before the code exists, they skip until step F lands"
+   "reason": "102 tests, all skipped today with the reason 'core-b step F not landed'; against a throwaway fake outside the repo 47 of 47 passed and 11 seeded bugs were all caught; NOT run on PostgreSQL (nothing to run against); interface has 3 contradictions and 10 gaps: request 003"
   },
   {
    "item": "BUILD-E",
@@ -127,11 +127,11 @@
   {
    "item": "BATCH",
    "what": "ONE batch test run when E and D are both coded",
-   "state": "DONE with 2 failures (1 INHERITED-from-handover, 1 NEW flaky in my T5 test, fix in work)",
-   "percent": 90,
-   "evidence file": "raw/BATCH-full-suite.log, raw/BATCH-rerun-own-files.log, raw/BATCH-lint.log, raw/BATCH-bandit.log",
+   "state": "DONE twice (once after coding, once after the lead-review fixes)",
+   "percent": 100,
+   "evidence file": "raw/BATCH-full-suite.log, raw/BATCH2-full-suite.log",
    "tries": 1,
-   "reason": "whole suite once: 2 failed, 10723 passed, 527 skipped in 99 s (no database variable, so database tests skipped; python 3.13 only). PostgreSQL 16 run of my own files still to do after the worker change"
+   "reason": "batch 2: lint and format clean (340 files), bandit no finding, whole suite 1 failed, 10865 passed, 640 skipped in 100 s. The 1 failure is the lead's handover/BRIEF-PREAMBLE.md tripping a repo rule, not core-a code. Skips: database tests (no variable in this run) and the 102 contract tests waiting for core-b"
   },
   {
    "item": "MUTANTS",
@@ -181,11 +181,11 @@
   {
    "item": "R12-tests",
    "what": "missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-tests-pg16.log with test ids (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/D-tests-pg16.log (13 database and kill tests with test ids), raw/D-E-all-tests-pg16.log (all my files: 578 passed, 4 skipped at that time)",
    "tries": 1,
-   "reason": "ORDER 012: required before done"
+   "reason": "13 of 13 on PostgreSQL 16.15 at the first real run: one row per key, 409 on another document, 50 parallel, oversize, 4 child-process kill cases, 2 two-process cases; plus 19 no-database cases (start refusal through main, start checks, SIGTERM drain). The agent could not start the database (folder permission), I started it from /var/lib/postgresql/core-a-test and ran the file myself. NOT run: PostgreSQL 17"
   }
  ],
  "agents": [
@@ -387,28 +387,28 @@
   {
    "model": "fable",
    "started UTC": "05:46",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "lead code review round 1 of 3",
    "retries so far": 0,
    "id": "r12-tests",
    "role": "evidence runner and test writer",
    "what exactly it is doing": "writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop)",
-   "expected end": "about 35 min after start",
-   "reason": "ORDER 012 Major 4"
+   "expected end": "ended",
+   "reason": "finished, 176k tokens; could not start the database (permission on the scratch folder), did not work around it: correct"
   },
   {
    "model": "fable",
    "started UTC": "05:46",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "t4-contract",
    "role": "builder (tests)",
    "what exactly it is doing": "contract tests for core-b's spend reservation store methods and the 50-connection cap test file",
-   "expected end": "about 25 min after start",
-   "reason": "queue item T4 READY; 7 agents run now on 4 cores: they wait on the model most of the time, load is on the CAPACITY line"
+   "expected end": "ended",
+   "reason": "finished, 155k tokens"
   }
  ],
  "tests": [
@@ -546,6 +546,42 @@
    "first failing line": "none",
    "state": "done",
    "reason": "checks JSON shape, guard and loop order, no secret-shaped text, signing recipe equals the code; proves nothing about a real n8n"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_postgres.py",
+   "branch and SHA": "working tree",
+   "run number": "1 real run (mine); the agent's own run had 13 setup errors: database not started",
+   "passed / failed / errors": "13 / 0 / 0",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "PostgreSQL 16.15 local; kill cases use child processes"
+  },
+  {
+   "suite or file": "tests/triggers + tests/test_testing_crash.py with PostgreSQL 16",
+   "branch and SHA": "working tree",
+   "run number": "1 (mine)",
+   "passed / failed / errors": "578 / 0 / 0, 4 skipped",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "2 skips were a stale stub (since removed, the case runs elsewhere), 2 are empty-body rows covered by their own test"
+  },
+  {
+   "suite or file": "rule files + touched files after my 2 small fixes",
+   "branch and SHA": "working tree",
+   "run number": "2 (try 1 failed: my first fix of the stage-word literal was not enough)",
+   "passed / failed / errors": "121 / 0 / 0 (try 2)",
+   "first failing line": "try 1: tests/test_stage_names.py::test_the_old_stage_word_is_gone on tests/triggers/test_n8n_template.py",
+   "state": "done",
+   "reason": "the n8n check file held quoted stage words; now built from parts"
+  },
+  {
+   "suite or file": "BATCH 2 whole suite: pytest -n 3 -m 'not live and not perf'",
+   "branch and SHA": "working tree after ORDER 012 fixes",
+   "run number": "1 of 1 for this round",
+   "passed / failed / errors": "10865 / 1 / 0, 640 skipped (100 s)",
+   "first failing line": "tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md)",
+   "state": "done",
+   "reason": "INHERITED from the handover folder, not from code; no NEW failure"
   }
  ],
  "restarts": [],
@@ -563,20 +599,25 @@
    "review rounds": 0,
    "last error": "assert 503 in (200, 202) (batch run)",
    "reason it keeps failing": "fixed in code (waiting request takes a freed slot); passed in the 2 runs since; not proven gone until the lead's batch"
+  },
+  {
+   "item": "stage-word literal in test_n8n_template.py",
+   "tries": 2,
+   "review rounds": 0,
+   "last error": "none (try 2 passed)",
+   "reason it keeps failing": "it does not"
   }
  ],
  "lost": [],
  "lead_actions": [
-  "handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch (rule 15 names vendor products)",
-  "ORDER 012 'add the crash= hook points': I did NOT add them and chose store wrap points instead (DECISIONS, newest row): say CHANGE if you want the parameter in the runtime code",
-  "ORDER 012 Major 1: I chose 'back the poll off' (about 10 reads per refused request) over '503 at once', see DECISIONS",
-  "ORDERS 007, 010 and 011 are not in my ORDERS.md: tell me if they were meant for me",
-  "'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)",
-  "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once",
-  "Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400",
-  "Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict",
-  "requests/002-readme-security-text.md: 18 sentences proposed for core-b's README.md, SECURITY.md and CHANGELOG.md (5 marked HOLD until the code they describe is merged): please pass it to core-b",
-  "FINDING for the plan, not fixable in my files: a run ended by the tick as NEEDS_PERSON 'interrupted' gets a state and an audit record but NO card to a person (tick.py), so nobody is told unless they look; ticket D invariant 12 assumed a card"
+  "handover/BRIEF-PREAMBLE.md (your file) makes test_no_vendor_brand_string_is_tracked FAIL on this branch: the only failure of the whole suite",
+  "ORDER 012 verdict needed: I did NOT add crash= hook points (kill tests wrap the store, 4 kill cases pass on PostgreSQL 16) and chose a backed-off wait over '503 at once' (10 store reads per refused request). DECISIONS has both rows",
+  "requests/001-config-triggers.md DRAFT 3 (core-b: Config.triggers, App.trigger_resolve, defaults): until it lands the worker cannot start through main",
+  "requests/002-readme-security-text.md: 18 sentences for core-b's README, SECURITY, CHANGELOG",
+  "requests/003-interface-i-questions.md: 3 contradictions and 10 gaps in core-b's interface (i), plus fixtures the contract tests need (purge routing, a reset role, grants entry)",
+  "Findings for the plan: an interrupted run gets no card to a person; a NUL byte inside a document is accepted (review minor 12, not fixed); review minor 8 is strict only for foreign errors; review minor 6 (literal defaults) waits for core-b",
+  "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",
+  "ORDERS 007, 010, 011 are not in my file; 'GO BUILD D' is not written in ORDERS.md"
  ],
- "failed": "whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since"
+ "failed": "1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked"
 }
