@@ -18,3 +18,12 @@ Status: fresh review of the E1 code (lead order); fixed by d-fix9 (e1-fix2). No 
 | E1b-3 | Nit | late runner.close(0) after a stop skips _close_app | PROPOSE FIX | close the app in the same branch |
 | E1b-4 | Nit | closing the PG connection while a timed-out ping thread may be in get_run on it | DECLINE | psycopg behaviour not verified; the ping thread catches the error; process exiting anyway |
 Fixes (e1-fix3) wait for mutant run 17 (it reads worker.py).
+
+## Round 3 (fresh, codebase-details): NO Blocker, 1 arguable Major, nits; CHURN
+| id | sev | finding | category | action |
+|---|---|---|---|---|
+| E1c-1 | Major (arguable) | `_is_store_down`/`main` inherit 'any OSError = connectivity': a typo'd secret/registry path (FileNotFoundError, PermissionError) is retried forever in degraded mode, never exit 3 | CHURN (see below) | resolved by deleting the fatal-after-5 machinery |
+| E1c-2 | Nit | with_traceback(None) leaves __context__ chains; _ping_error unlocked | resolved by the same deletion (no stored cause) | |
+| E1c-3 | Nit | a store down for hours shows only the /health counter | PROPOSE FIX | one WARNING (class name only) per 5 minutes while down |
+| E1c-4..6 | Nit | ping thread per hung re-check; owned_app not closed on normal shutdown; stop_server thread | DECLINE | bounded; process exits |
+Churn (EGM rule: a new finding is at the scope of an applied fix and reverting that fix would resolve it): rounds 2 and 3 both found problems INSIDE the 'fatal after 5 non-store failures -> exit 3' machinery that round 1 asked for (M4). The lead's verdict (E1b) asks only for '/health 503 plus a counter while the store is down; no exit 4'; the machinery is not in it (about 35 lines: DEGRADED_FATAL_AFTER, the `other` counter, _is_store_down, _Ping.cause, Runner._ping_error/ping_error, `raise cause` in _recover). DECISION (reversible, mine): delete it; `_watch` retries every error forever, logs the exception CLASS once per 5 minutes at WARNING, /health stays 503 + counter. Cost: a permanent schema/grant/path fault shows as /health 503 + the periodic WARNING, never as a process exit; the supervisor/operator reads /health. If the lead wants exit 3 back: say so, and the E1c-1 fix (not-store-down for FileNotFoundError/PermissionError/IsADirectoryError/NotADirectoryError, same helper in main) is the way.

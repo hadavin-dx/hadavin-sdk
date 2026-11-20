@@ -699,6 +699,15 @@
    "evidence file": "reviews/D-code-result-review-5.md (round 2 table)",
    "tries": 1,
    "reason": "mutant run in progress"
+  },
+  {
+   "item": "E1-fix4",
+   "what": "delete the fatal-after-5 machinery (churn), WARNING per 5 min with the class name while the store is down, tests and mutant G33d adjusted, ticket",
+   "state": "QUEUED after batch8 ends (it runs the whole suite on the current tree)",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-5.md round 3",
+   "tries": 0,
+   "reason": "batch8 running"
   }
  ],
  "agents": [
@@ -725,19 +734,6 @@
    "percent": 5,
    "state": "running",
    "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "after e1-fix3"
-  },
-  {
-   "id": "E1-rev3",
-   "role": "fresh reviewer (codebase-details)",
-   "model": "sonnet",
-   "what exactly it is doing": "E1 round 3: the round-2 fixes (is_connectivity_error classification, cause object, owned_app close) and simplicity",
-   "started UTC": "10:19",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "3, no cap (behaviour-changing)",
    "retries so far": 0,
    "reason": "after e1-fix3"
   }
@@ -1112,6 +1108,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "CHURN DECISION (reversible, mine) on E1: three review rounds in a row found problems inside the 'exit 3 after 5 non-store failures' machinery that was added after round 1; your verdict asks only for '/health 503 + counter, no exit 4'. I delete that machinery (about 35 lines); the degraded worker retries forever, logs the exception class once per 5 min at WARNING, /health is 503 + counter. If you want a process exit for permanent faults back, say so: the fix is known (file errors are not store-down). Details: reviews/D-code-result-review-5.md round 3.",
   "Answer 09:58: (1) FAILED and NEXT on the board rewritten to the real state. (2) Your list against the facts: step D code review round 1 incl. E1: DONE 09:52 (0 Blocker, 4 Major, fixes running in e1-fix2: the 'agents 2' you see is e1-fix2 + a stale evidence agent that keeps re-sending an old report); step E: 7 fresh rounds, round 7 found no Blocker/Major: ended; mutants for E1: written (G32a-j: audit event removed, result field leak, hash swap, /health extra key, no health callable, degraded start, recovery ping, ping bound, audit warning) + cap removed (G32a): hand-probed, the full run 17 waits for e1-fix2 because worker.py changes under it (a full run during edits broke the baseline twice); n8n template fixes from evidence-n8n-3: DONE and pushed (70 s waits); REQ-001..004: read from core-b's answer files and marked in ticket D (last section). Low load is because evidence runs and mutant runs need a quiet tree: they start the minute e1-fix2 ends (about 10:08), BATCH8 about 10:25: the 10:20 deadline: D review has the exact open Majors listed in reviews/D-code-result-review-5.md.",
   "09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.",
   "STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.",
@@ -2633,6 +2630,19 @@
    "review round n of cap": "fix after round 2 (no cap)",
    "retries so far": 0,
    "reason": "E1 round-2 Major (a refusing store counts toward the fatal counter, class logged at WARNING; connectivity errors retry forever) + nits fixed; flake test race fixed (wait for the approval request before the tick: not mutation-checked, probabilistic); 5 new tests with kill checks; tests/triggers+crash 1369 passed 5 skipped, crash matrices 429 passed, bandit no issues, ruff clean"
+  },
+  {
+   "id": "E1-rev3",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 round 3: the round-2 fixes (is_connectivity_error classification, cause object, owned_app close) and simplicity",
+   "started UTC": "10:19",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "3, no cap (behaviour-changing)",
+   "retries so far": 0,
+   "reason": "E1 round 3: NO Blocker; 1 arguable Major (OSError = connectivity: a typo'd file path is retried forever, never exit 3) + nits; CHURN: rounds 2 and 3 both hit the 'exit 3 after 5 non-store failures' machinery that round 1 asked for and the lead's verdict does not require (~35 lines)"
   }
  ]
 }

@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T10:20:20Z
+UPDATED_UTC: 2026-11-20T10:21:11Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 77
-ITEMS_OPEN: 21
-PERCENT: 82
-AGENTS_RUNNING: 3
-CAPACITY: load 1.74 of 4 cores (1-minute average), mem 1.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_TOTAL: 78
+ITEMS_OPEN: 22
+PERCENT: 81
+AGENTS_RUNNING: 2
+CAPACITY: load 2.49 of 4 cores (1-minute average), mem 1.8/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 17%; 579M /home/user/hadavin-sdk; 860M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 10:20 UTC: none in my files at the last builder run (tests/triggers+crash 1369 passed 5 skipped; crash matrices 429 passed). The earlier flake (test race) is fixed in the test. Independent BATCH8 (whole suite) running.
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T10:20:14Z (the push before this board)
+PUSHED_UTC: 2026-11-20T10:20:23Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -97,26 +97,27 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | DRIFT-n8n+tests | drift fixes in n8n/README-trigger.md (+ test pins) and the missing tests E5 (empty document) and E11 (escaped body over the cap) | DONE (n8n README, tickets, E5/E11 tests); mutants for E5/E11 guards still to add | 95 | DRIFT-REPORT.md | 1 | batch7 running |
 | MUT-RUN-17 | ONE full mutant run on the final tree (after e1 and E-nits2) incl. new G30a/b, G31 and mutants for E1 (conflict audit, rate cap, /health) | QUEUED after e1 ends | 0 | raw/endpoint-mutants-run-17.log | 0 | tree is changing |
 | E1-fix3 | E1 round-2 Major E1b-1 (non-connectivity ping failure counts toward the fatal counter, class logged at WARNING) + nits E1b-2/3 + flake test fix: in tests/triggers/test_t5_crash_matrix_paths.py `_memory_wait` (and the other path.final waits incl. the sqlite/pg twin) also wait for the approval request to be saved before the tick | DONE | 100 | reviews/D-code-result-review-5.md (round 2 table) | 1 | mutant run in progress |
+| E1-fix4 | delete the fatal-after-5 machinery (churn), WARNING per 5 min with the class name while the store is down, tests and mutant G33d adjusted, ticket | QUEUED after batch8 ends (it runs the whole suite on the current tree) | 0 | reviews/D-code-result-review-5.md round 3 | 0 | batch8 running |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
 | batch8 | evidence runner (never judges) | sonnet | independent WHOLE suite (REQUIRE_PG=1, -n 3), lint+bandit, combined tree with n8n/; evidence/BATCH8-* | 10:19 | 15 min | 5 | running | n/a | 0 | after e1-fix3 |
-| E1-rev3 | fresh reviewer (codebase-details) | sonnet | E1 round 3: the round-2 fixes (is_connectivity_error classification, cause object, owned_app close) and simplicity | 10:19 | 15 min | 5 | running | 3, no cap (behaviour-changing) | 0 | after e1-fix3 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 14751s ago | running | matched by name in ps |
-| 12771 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 12775 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 26s ago | running | matched by name in ps |
-| 12803 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 23s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 14802s ago | running | matched by name in ps |
+| 12771 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 -r | core-a session or its agent | 77s ago | running | matched by name in ps |
+| 12775 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 77s ago | running | matched by name in ps |
+| 12803 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 74s ago | running | matched by name in ps |
+| 19719 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +179,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- CHURN DECISION (reversible, mine) on E1: three review rounds in a row found problems inside the 'exit 3 after 5 non-store failures' machinery that was added after round 1; your verdict asks only for '/health 503 + counter, no exit 4'. I delete that machinery (about 35 lines); the degraded worker retries forever, logs the exception class once per 5 min at WARNING, /health is 503 + counter. If you want a process exit for permanent faults back, say so: the fix is known (file errors are not store-down). Details: reviews/D-code-result-review-5.md round 3.
 - Answer 09:58: (1) FAILED and NEXT on the board rewritten to the real state. (2) Your list against the facts: step D code review round 1 incl. E1: DONE 09:52 (0 Blocker, 4 Major, fixes running in e1-fix2: the 'agents 2' you see is e1-fix2 + a stale evidence agent that keeps re-sending an old report); step E: 7 fresh rounds, round 7 found no Blocker/Major: ended; mutants for E1: written (G32a-j: audit event removed, result field leak, hash swap, /health extra key, no health callable, degraded start, recovery ping, ping bound, audit warning) + cap removed (G32a): hand-probed, the full run 17 waits for e1-fix2 because worker.py changes under it (a full run during edits broke the baseline twice); n8n template fixes from evidence-n8n-3: DONE and pushed (70 s waits); REQ-001..004: read from core-b's answer files and marked in ticket D (last section). Low load is because evidence runs and mutant runs need a quiet tree: they start the minute e1-fix2 ends (about 10:08), BATCH8 about 10:25: the 10:20 deadline: D review has the exact open Majors listed in reviews/D-code-result-review-5.md.
 - 09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.
 - STEP E: 7 fresh review rounds; round 7 found NO Blocker/Major: rounds end by your rule. Nits fixed; the 'delete the unreadable-flag branch' simplicity nit is declined (35 lines, tested; deleting would restart the review loop): tell me if you want it deleted anyway. The mutant script header pins the sha256 of crash.py: updated in the final mutant run.
