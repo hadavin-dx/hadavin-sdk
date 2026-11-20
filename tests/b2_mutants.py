@@ -18,9 +18,7 @@ T = "tests/test_live_path_reserve_settle.py"
 
 RESERVE = "                rid = self.limits.reserve(run.agent_id, worst, run_id=run.run_id)\n"
 SETTLE = "            self.limits.settle_for(run.agent_id, rid, cost_usd)\n"
-ERR = (
-    '                self._note(run, "llm", "chat", result="failed", error_code=code)\n'
-)
+ERR = '                self._note(run, "llm", "chat", result="failed", error_code=code)\n'
 
 M = [
     # reserve removed: the model is called with no booking (and the settle has no id to settle)
@@ -47,13 +45,16 @@ M = [
         LOOP,
         ERR,
         ERR + "                self._settle_model_call(run, rid, 0)\n",
-        "assert",
+        "quota",  # the first E line is the chained provider error; the assertion on spy.settles follows
+        allow_crash=True,
+        crash_type="ProviderExhausted",
         test_file=T,
     ),
 ]
 
 if __name__ == "__main__":
-    res = run_mutants(ROOT, M, [T], extra_dirs=("tests", "tools"), timeout=300)
+    fl = {}
+    res = run_mutants(ROOT, M, [T], extra_dirs=("tests", "tools"), timeout=300, first_lines=fl)
     bad = [n for n, _, _, g in res if not g]
     for n, v, tid, g in res:
         print(f"{'ok ' if g else 'BAD'} {v}  {n}  [{tid.split('::')[-1][:90]}]")

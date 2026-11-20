@@ -565,7 +565,9 @@ class Runtime:
                 )
                 self._note(run, "llm", "chat", result="failed", error_code=code)
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
-            self._settle_model_call(run, rid, reply.cost_usd)  # the store books the run cost with the settle
+            self._settle_model_call(
+                run, rid, reply.cost_usd
+            )  # the store books the run cost with the settle
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",
