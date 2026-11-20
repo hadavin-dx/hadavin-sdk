@@ -761,19 +761,6 @@
    "reason": "lead 13:46: share work, one agent per item"
   },
   {
-   "id": "rev-dfix22",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review of d-fix22 (max_running single source of truth)",
-   "started UTC": "13:53",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
-  },
-  {
    "id": "rev-grants",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:06 MAJOR (money, core-b, found while reviewing d-fix22): with max_running one source = core-b default 4, NOTHING in the run loop calls limits.reserve (agent_loop.py:371/531 only charge AFTER the model call; grep finds no .reserve( caller): up to 4 parallel runs of one agent can each pass the budget check before any is booked. The worker's check_spend is silent because the method exists. The old worker default 1 hid this. Options in handover/core-a/requests/to-core-b.md: wire reserve/settle into the loop, or ship default 1 until it is wired, or make check_spend test the loop. Until then operators should set triggers.max_running: 1. d-fix22 itself reviewed: no Blocker. Running: c-e19, rev-grants.",
   "14:02 grant tests: wip/core-a-for-grant-tests pushed (file tests/test_grants_negative_roles.py = core-c's file re-pointed, deliverable is the file; core-c copies it after rebasing on core-b): 17 failed -> 88 passed with PG 16 (raw/grant-tests-before.log, -after.log); 48 passed + 40 skipped without a DSN; 17 not 8 because core-b added 0008-0011 since the trial. Fresh review rev-grants checks nothing was weakened. Running: c-e19, rev-dfix22, rev-grants.",
   "13:59 d-fix22 built on cloud/core-a: worker has NO max_running of its own (reads config.triggers.max_running; ConfigError if missing); worker default was 1, core-b's is 4: with 4 the worker's check_spend warning/refusal path now applies at the default: rev-dfix22 checks exactly what happens; running: c-e19, grant-tests, rev-dfix22.",
   "13:58 DECISION FOR LEAD (CI test cap round done): wip/core-a-for-ci (3ed2a8ca9) test_ci_python_matrix.py: 108 tests, ~900 lines, review round 3: NO Blocker/Major, no false positives on the real repo, regex correct. Reviewer's proportion verdict: over-built; trim to the real-file test + requires_floor + a pin collector + raw_below_floor + ~6 tests (CI floor below pyproject, pyproject floor above CI, extra newer job not main, unquoted 3.10, raw scan fires, raw scan clean on real .github). Known holes (documented): quoted versions in shell/Dockerfile text (ARG PYTHON_VERSION=\"3.11\"), newer-than-main only checked for YAML pins. Options: (A) take as is (works, ~10-20 s); (B) I trim to ~6 tests (one builder, ~15 min). DEFAULT if you say nothing: A. Also reviewed clean: wip/core-a-for-c-e14nits. Running: c-e19, grant-tests, max-running.",
@@ -3581,6 +3569,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "branch wip/core-a-for-grant-tests pushed: tests/test_grants_negative_roles.py re-pointed to core-b dcd189361: before 17 failed 64 passed, after 88 passed (PG 55433), without DSN 48 passed 40 skipped 0 errors; no product code touched; 3 new pins; no finding. (trial said 8: core-b moved on, 0008-0011 added)"
+  },
+  {
+   "id": "rev-dfix22",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of d-fix22 (max_running single source of truth)",
+   "started UTC": "13:53",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "d-fix22 review: no Blocker in the change; all 27 mentions accounted for, anchors intact, AST test bites; MAJOR for core-b: with default 4 nobody calls limits.reserve in the loop (only charge after the call): parallel runs can overspend; old default 1 hid it"
   }
  ]
 }
