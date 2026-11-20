@@ -1,4 +1,10 @@
 
+
+## E-door-1 (2026-11-20) door review B1: guarantee-class change = owner decision
+Item: an acknowledged request that is cut off. Truth today (docs now say so): acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state. Runtime.handle keeps only inputs_hash, the tick sends nothing (tick.py:11).
+Option A (default, plan default: approved writes by the client's tool): the sender polls; the n8n template has the state check ("Run still going?"). Cost: none in code; a sender that does not poll learns nothing; the document of a cut-off run is gone and must be sent again with a new key.
+Option B: store the document (or a redacted copy) with the run row before the 2xx and notify a person on NEEDS_PERSON "interrupted". Cost: code in a guarantee-class path (store schema, retention and erasure of the document, a notifier in the tick, new crash-matrix rows, re-review), plan step H.
+Needed from the owner: A (default) or B. Until then docs state A.
 ## E7 (08:22 UTC) step D code, round 3 of 3: Major left that is the lead's call
 R3-1: src/hadavin_sdk/triggers/server.py is 316 lines of wsgiref subclassing (connection cap, total read deadline, quiet handler, drain). The ticket promised a thin door of about 250 lines in two modules; the code is 352+672+316 lines in three. Options: (a) accept the stdlib server and its noise, correct the ticket's size sentence (my default); (b) vet a small server library (the ticket's rung 4, never tried, would add a dependency); (c) drop the connection cap and total deadline and leave both to the TLS proxy (about 150 lines less, matches my declined DC1-9, but the lead's review D-3 asked for both). Related nits left undone on purpose, all deletable once you choose: knobs only tests reach (make_server bounds, Runner poll_s/max_waiting checks), double checks (check_secrets and MAX_SENDERS in both make_app and make_wsgi), the list branch of sender_map, is_store_error module sniffing, check_spend for step F. Review: reviews/D-code-result-review-3.md.
 # ESCALATIONS of core-a (problems and unresolved review findings for the lead; newest on top)

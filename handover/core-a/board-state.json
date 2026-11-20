@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "nits16",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "G15d survivor: its guard (hasattr request_version in _refuse_stalled) is DEAD since d-fix16: remove the dead guard, delete mutant G15d (equivalent); the 4 d-fix16 review nits (431/unknown-code/close_connection test rows, docstring, long line); pure anchor check; matrix on 3.12.3 and 3.13.12; one run",
-   "started UTC": "12:22",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "fix after the d-fix16 review",
-   "retries so far": 0,
-   "reason": "lead run 5"
-  },
-  {
    "id": "door-docs",
    "role": "builder",
    "model": "sonnet",
@@ -772,6 +759,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead verdicts on review-door-1"
+  },
+  {
+   "id": "door-code",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "review-door-1 code fixes M1 header cap, M3 duplicate-secret start check, M4 memory store needs demo stage, M6 mutants, N1",
+   "started UTC": "12:32",
+   "expected end": "25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead verdicts"
   }
  ],
  "tests": [
@@ -1144,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:32 nits16 (d-fix17) done: head will be pushed now; G15d gone, G33d xfail unchanged. door-code builder started (M1/M3/M4/M6/N1); then a fresh review of the diff, then your mutant run.",
   "12:36 XREVIEW core-c G1 fold + G2 P1d-a DONE: reviews/xreview-g1g2.md + NEW FILE handover/core-c/requests/xr-g1g2.md (copy into cloud/core-c). No Blocker; 1 Major (error_reason crash on lone surrogate), accepted xfail leaks, test exemption too wide.",
   "12:29 Lead verdicts on review-door-1 received. Docs batch running (door-docs). Code fixes M1 (431 header cap), M3 start check, M4 memory-store refusal, M6 mutants queue behind nits16 (same files server.py/endpoint_mutants.py); then a fresh review of the diff.",
   "12:33 XREVIEWS DONE: core-b F-store (reviews/xreview-fstore.md + handover/core-b/requests/xr-fstore.md): no Blocker; 6 Majors (M1 release has no age floor: money lost on a settle after an operator release; M2 the runtime still has UPDATE on the spend tables: the H1/H2 bypass is LIVE; M3 reserve takes the caps from the CALLER; M4 purge role keeps table DELETE; M5 reserve not idempotent after a lost reply; M6 memory vs Postgres differ for add_spend and the day window). core-b D-config + provider mark (reviews/xreview-dconfig.md + handover/core-b/requests/xr-dconfig.md): no Blocker, no provable Major; a test gap (registry._trigger_problems unpinned), the mark has no reader in that tree. core-c G7 + gate (reviews/xreview-gate-g7.md + handover/core-c/requests/xr-gate-g7.md). The request files are NEW FILES IN MY BRANCH: copy them into cloud/core-b and cloud/core-c. xr-g1g2 (core-c G1 fold + G2 P1d-a) started 12:33.",
@@ -3046,6 +3047,19 @@
    "review round n of cap": "1 (cross review)",
    "retries so far": 0,
    "reason": "core-c G1 fold + G2 P1d-a: no Blocker; Major: error_reason encodes un-sanitised str(exc) (lone surrogate + secret -> UnicodeEncodeError); accepted xfail leaks listed; slice-before-redact tools.py:1011 is a false positive but the test exempts all of tools.py; reports reviews/xreview-g1g2.md + handover/core-c/requests/xr-g1g2.md"
+  },
+  {
+   "id": "nits16",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "G15d survivor: its guard (hasattr request_version in _refuse_stalled) is DEAD since d-fix16: remove the dead guard, delete mutant G15d (equivalent); the 4 d-fix16 review nits (431/unknown-code/close_connection test rows, docstring, long line); pure anchor check; matrix on 3.12.3 and 3.13.12; one run",
+   "started UTC": "12:22",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix after the d-fix16 review",
+   "retries so far": 0,
+   "reason": "d-fix17: dead guard + REFUSAL_TEXT 408/417 + G15d removed; S-2/S-3/S-4 done; anchors 195 passed 1 xfailed (G33d); 104 passed on 3.12.3 and 3.13.12; 1431 passed 5 skipped (raw/D-fix17-tests.log)"
   }
  ]
 }
