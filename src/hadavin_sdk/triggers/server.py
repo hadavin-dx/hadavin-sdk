@@ -105,7 +105,9 @@ class _DeadlineReader:
         self._end = time.monotonic() + deadline_s
         self._buf = bytearray()
         self.closed = False
-        self._head_left: int | None = None  # bytes of request line and headers still allowed; None = no count
+        self._head_left: int | None = (
+            None  # bytes of request line and headers still allowed; None = no count
+        )
 
     def count_head(self, used: int) -> None:
         """Start counting the lines that `readline` hands out (the request line, already read, used `used`)."""

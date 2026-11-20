@@ -98,9 +98,7 @@ def make_trigger_app(runtime, store, secrets: dict[str, str], **over):
     }
     by_name = {f"{sender}-secret": value for sender, value in secrets.items()}
     return SimpleNamespace(
-        config=SimpleNamespace(
-            triggers=SimpleNamespace(**{**base, **over}), environment="demo"
-        ),
+        config=SimpleNamespace(triggers=SimpleNamespace(**{**base, **over}), environment="demo"),
         registry=runtime.registry,
         runtime=runtime,
         store=store,

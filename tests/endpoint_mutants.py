@@ -152,12 +152,6 @@ QUIET_ERROR = (
     '    error_body = b""\n'
 )
 LOG_NOTHING = '        """Nothing: the arguments hold the request line, which is text chosen by the caller."""\n'
-EMPTY_REFUSAL = (
-    "        self.send_response_only(code)\n"
-    '        self.send_header("Content-Length", "0")\n'
-    '        self.send_header("Connection", "close")\n'
-    "        self.end_headers()\n"
-)
 LOG_409 = '_LOG.warning("trigger status=409 sender=%s run=%s", req.sender, req.run_id)'
 READ_THEN_CAP = (
     "        if length > max_body:\n"
@@ -198,11 +192,6 @@ STALL_1 = (
     "        except TimeoutError:\n"
 )
 STALL_2 = "            parsed = self.parse_request()\n        except TimeoutError:\n"
-NO_VERSION = (
-    "        if not isinstance(\n"
-    "            self.headers, Message\n"
-    "        ):  # a request line with no version has no header block\n"
-)
 OS_ENVIRON = (
     "    os_environ: ClassVar[\n"
     "        dict[str, str]\n"

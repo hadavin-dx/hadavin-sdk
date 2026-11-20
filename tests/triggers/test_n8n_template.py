@@ -1832,7 +1832,10 @@ def test_readme_says_why_a_202_is_not_the_end_and_has_a_row_for_every_state():
     whole = " ".join(raw.split())
     assert 'the caller\'s 202 means "taken by the workflow", not "done"' in whole
     assert "Queue mode required for no event loss" in whole
-    assert "acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state" in whole
+    assert (
+        "acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state"
+        in whole
+    )
     assert "a reverse proxy with per-peer connection limits is required" in whole
     assert "One secret per tenant and per stage" in whole
     assert "Check state (optional)" not in whole
