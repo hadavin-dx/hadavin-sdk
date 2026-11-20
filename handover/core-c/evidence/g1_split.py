@@ -159,7 +159,7 @@ def classify(chunk, p, needle, kind):
         i0, i1 = idx[st], idx[st + len(needle) - 1]
         seg = chunk[i0:i1 + 1]
         left = i0 > 0 and chunk[i0 - 1].isalnum(); right = i1 + 1 < len(chunk) and chunk[i1 + 1].isalnum()
-        if not all(c.isalnum() for c in seg): cls = "across spaces/punctuation" + (": a word is cut at an end" if (left or right or not seg[0].isalnum() and False) else ": clean at both ends")
+        if not all(c.isalnum() for c in seg): cls = "across spaces/punctuation" + (": a word is cut at an end" if (left or right) else ": clean at both ends")
         else:
             cls = "whole word" if not left and not right else ("inside word: prefix of a longer word" if not left else ("inside word: suffix of a longer word" if not right else "inside word: middle"))
         occ.append((cls, i0, i1)); st = s.find(needle, st + 1)
