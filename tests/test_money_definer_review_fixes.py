@@ -182,7 +182,10 @@ def test_m7_an_out_of_range_day_is_22023(w, day):
 
 
 @NEEDS_PG
-def test_m9_a_foreign_run_id_does_not_raise_the_run_cost(w):
+def test_m9_a_foreign_run_id_still_raises_the_run_cost_residual_parity_with_the_other_stores(w):
+    # Review m9 wanted settle to ignore a run of another agent. The contract tests (core-a) and the memory store add the
+    # run cost regardless of the run's agent (the model test books runs of one agent against holds of several): parity
+    # wins; a hostile runtime login can inflate any run's cost (stated residual).
     w.do(
         "INSERT INTO runs (run_id, schema_version, agent_id, principal_id, trigger_kind, trigger_ref, state, "
         "cost_usd, created_at, updated_at) VALUES ('run-b', 1, 'B', 'p', 'user', 't', 'WORKING', 0, now(), now()), "
@@ -195,7 +198,7 @@ def test_m9_a_foreign_run_id_does_not_raise_the_run_cost(w):
         db.execute(SETTLE, ("r9b", D("3"), "A"))
     assert w.run("SELECT run_id, cost_usd FROM runs ORDER BY 1") == [
         ("run-a", D("3")),
-        ("run-b", D("0")),
+        ("run-b", D("90")),
     ]
 
 

@@ -211,8 +211,8 @@ BEGIN
             RAISE EXCEPTION 'spend counter row missing or below its holds' USING ERRCODE = 'HD003';
         END IF;
     END IF;
-    IF rec.run_id IS NOT NULL THEN  -- the real actual amount; a missing run row, or a run of another agent, is ignored
-        UPDATE runs u SET cost_usd = u.cost_usd + p_actual WHERE u.run_id = rec.run_id AND u.agent_id = rec.agent_id;
+    IF rec.run_id IS NOT NULL THEN  -- the real actual amount; a missing run row is ignored (parity with the memory store and the old Postgres store; review m9: a run of ANOTHER agent is not excluded: residual)
+        UPDATE runs u SET cost_usd = u.cost_usd + p_actual WHERE u.run_id = rec.run_id;
     END IF;
     reservation_id := rec.reservation_id; agent_id := rec.agent_id; day := rec.day; run_id := rec.run_id;
     reserved_usd := rec.reserved_usd; settled_usd := rec.settled_usd; status := rec.status;
