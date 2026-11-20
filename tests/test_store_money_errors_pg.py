@@ -19,6 +19,7 @@ import psycopg
 from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import new_id
 from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState
+from tests.money_caps_seed import seed_caps
 from tests.test_spend_reservations_pg import AGENT, DAY, reservation_world  # noqa: F401  (the "w" fixture)
 
 pytestmark = pytest.mark.skipif(
@@ -27,6 +28,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 D = Decimal
+
+
+def _seed(w, agent, day_cap, month_cap):
+    """The function reads the caps from the table: write them as the owner (a raw call has no test hook)."""
+    seed_caps(w.scoped, w.schema, agent, D(day_cap), D(month_cap))
 
 
 def _reserve(store, usd="1.00", *, rid=None, day_cap="100", month_cap="100", agent=AGENT):
@@ -43,13 +49,15 @@ def _raw(store, query, params):
 
 def test_psycopg_surfaces_the_sqlstate_of_the_hd_class(w):
     rt = w.store(w.runtime)
-    args = (new_id("res"), AGENT, DAY, D("1.00"), D("0"), D("100"), None)
+    args = (new_id("res"), AGENT, DAY, D("1.00"), None)
+    _seed(w, AGENT, "0", "100")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(rt, rt._reserve_call(), args)
     assert caught.value.sqlstate == "HD001"
     assert caught.value.diag.message_primary == "day"
+    _seed(w, AGENT, "100", "0")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1.00"), D("100"), D("0"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1.00"), None))
     assert (caught.value.sqlstate, caught.value.diag.message_primary) == ("HD001", "month")
     with pytest.raises(psycopg.errors.DatabaseError) as caught:
         _raw(
@@ -141,8 +149,9 @@ def test_an_unmapped_hd_code_is_not_mistaken_for_a_lost_connection(w):
     assert isinstance(mapped, ConfigError) and "HD999" in str(mapped)
     assert not is_connectivity_error(mapped)
     rt = w.store(w.runtime)
+    _seed(w, AGENT, "0", "100")
     with pytest.raises(
         psycopg.OperationalError
     ) as caught:  # the premise: psycopg's class for the family
-        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1"), D("0"), D("100"), None))
+        _raw(rt, rt._reserve_call(), (new_id("res"), AGENT, DAY, D("1"), None))
     assert caught.value.sqlstate == "HD001"

@@ -40,6 +40,7 @@ from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.migrate import GRANTS
 from hadavin_sdk.store.protocol import NotFound
 from tests.contracts.test_store_spend import _older, _rows
+from tests.money_caps_seed import seed_caps
 from tests.test_limits_reserve import Sink, _registry
 from tests.test_stop_state_roles import World
 
@@ -159,6 +160,7 @@ class Child:
     """Another process that reserves once through its own store and then sleeps until it is killed."""
 
     def __init__(self, w, rid, usd):
+        seed_caps(w.scoped, w.schema, AGENT, BIG, BIG)  # the child's own store has no test hook
         self.proc = subprocess.Popen(  # noqa: S603 - this interpreter, a fixed script
             [sys.executable, "-c", CHILD, rid, AGENT, DAY.isoformat(), usd],
             stdout=subprocess.PIPE,

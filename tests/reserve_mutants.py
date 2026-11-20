@@ -260,8 +260,8 @@ class Hand:
     expect: str  # must be in the killer's output
 
 
-S_DAY = "WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < p_day_cap AND s.usd + p_usd <= p_day_cap;"
-S_MONTH = "WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < p_month_cap AND m.usd + p_usd <= p_month_cap;"
+S_DAY = "WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < v_day_cap AND s.usd + p_usd <= v_day_cap;"
+S_MONTH = "WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < v_month_cap AND m.usd + p_usd <= v_month_cap;"
 S_DAY_BLOCK = (
     f"    UPDATE spend s SET usd = s.usd + p_usd\n     {S_DAY}\n"  # noqa: S608
     "    IF NOT FOUND THEN\n        RAISE EXCEPTION 'day' USING ERRCODE = 'HD001';\n    END IF;\n"
@@ -285,13 +285,13 @@ HAND = [
         f"{T1}::{T1_CAP3}", "{'granted': 50}"),
     Hand("H2 the month cap clause is removed", SQL11, S_MONTH, "WHERE m.agent_id = p_agent AND m.month = v_month;",
         f"{T1}::{T1_MONTH}", "{'granted': 50}"),
-    Hand("H3 <= becomes < on the day cap", SQL11, S_DAY, S_DAY.replace("<= p_day_cap", "< p_day_cap"),
+    Hand("H3 <= becomes < on the day cap", SQL11, S_DAY, S_DAY.replace("<= v_day_cap", "< v_day_cap"),
         f"{CONTRACT}::{EXACT}{PGP}", "SpendCapExceeded: day cap reached"),
-    Hand("H3 <= becomes < on the month cap", SQL11, S_MONTH, S_MONTH.replace("<= p_month_cap", "< p_month_cap"),
+    Hand("H3 <= becomes < on the month cap", SQL11, S_MONTH, S_MONTH.replace("<= v_month_cap", "< v_month_cap"),
         f"{CONTRACT}::{MONTH}{PGP}", "SpendCapExceeded: month cap reached"),
-    Hand("H4 usd < cap is removed on the day", SQL11, S_DAY, S_DAY.replace("AND s.usd < p_day_cap ", ""),
+    Hand("H4 usd < cap is removed on the day", SQL11, S_DAY, S_DAY.replace("AND s.usd < v_day_cap ", ""),
         f"{CONTRACT}::{ZERO_BUDGET}{PGP}", NOT_RAISED),
-    Hand("H4 usd < cap is removed on the month", SQL11, S_MONTH, S_MONTH.replace("AND m.usd < p_month_cap ", ""),
+    Hand("H4 usd < cap is removed on the month", SQL11, S_MONTH, S_MONTH.replace("AND m.usd < v_month_cap ", ""),
         f"{CONTRACT}::{ZERO_BUDGET}{PGP}", NOT_RAISED),
     Hand("H5 the cap is checked by a SELECT, then an unconditional UPDATE books", SQL11, S_DAY_BLOCK, S_CHECK_THEN_BOOK,
         f"{T1}::{T1_CAP3}", "'granted': "),

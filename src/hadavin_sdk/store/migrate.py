@@ -119,7 +119,7 @@ TRIPWIRE_FUNCTIONS = (
 )
 # 0011: the SECURITY DEFINER money functions (five bookings, set_cap, cap_matches). Each is re-pinned on every migrate run (`_pin_money_functions`).
 MONEY_FUNCTIONS = (
-    "hadavin_reserve_spend(text, text, date, numeric, numeric, numeric, text)",
+    "hadavin_reserve_spend(text, text, date, numeric, text)",
     "hadavin_settle_spend(text, numeric, text)",
     "hadavin_expire_spend_reservations(integer)",
     "hadavin_purge_spend_reservations(timestamptz)",

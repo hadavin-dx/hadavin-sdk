@@ -50,7 +50,7 @@ LIMIT_NAMES = ("max_amount", "max_decimals", "max_id_chars", "max_expiry_age")
 
 def test_the_shared_function_list_is_exactly_the_seven_new_functions():
     assert mig.MONEY_FUNCTIONS == (
-        "hadavin_reserve_spend(text, text, date, numeric, numeric, numeric, text)",
+        "hadavin_reserve_spend(text, text, date, numeric, text)",
         "hadavin_settle_spend(text, numeric, text)",
         "hadavin_expire_spend_reservations(integer)",
         "hadavin_purge_spend_reservations(timestamptz)",
