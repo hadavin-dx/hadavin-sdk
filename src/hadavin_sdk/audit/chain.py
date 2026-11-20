@@ -286,6 +286,8 @@ class ChainAudit:
                 raise
             return done  # the database is still down: retried next time
         unreadable = not_writable = not_deleted = 0
+        # Events an earlier flush of this process moved aside (refused, never retried): counted in the error.
+        in_memory = len(self._unwritable)
         for event_id, body in queued:
             try:
                 event = AuditEvent.model_validate_json(body)
@@ -312,6 +314,7 @@ class ChainAudit:
                 (unreadable, f"{unreadable} unreadable rows kept"),
                 (not_writable, f"{not_writable} rows not writable"),
                 (not_deleted, f"{not_deleted} rows not deleted"),
+                (in_memory, f"{in_memory} events not writable in memory"),
             )
             if count
         ]
