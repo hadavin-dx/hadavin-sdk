@@ -196,13 +196,17 @@ _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]
 ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
 # The private suffixes of an internal host name (a company's own `.corp`, `.lan`, ...; `defaults.PRIVATE_SUFFIX_LABELS` is a different list
 # with a different job and is not used here). `_HOST_BARE` suffixes (`.internal`, `.local`) are code when a label or a call follows
-# (`jdk.internal.reflect`, `threading.local()`).
+# (`jdk.internal.reflect`, `threading.local()`). The start look-behinds name ASCII label characters, not `\w`: a name glued after a non-ASCII
+# word character (`例-_db-7.corp.internal_é`) must still start (G4c: with `\w` no start was left and the name stayed readable).
 _HOST_LABEL = r"[A-Za-z0-9_-]+"
 _HOST_DOT = r"(?:\.|\[\.\])"
 _HOST_BARE = "internal|local"
 _HOST_TAIL = "corp|lan|intranet|intra|localdomain|home" + _HOST_DOT + "arpa"
 HOSTNAME = (
-    r"(?i)(?<![\w-])(?<![\w-]\.)(?<![\w-]\[\.\])(?:" + _HOST_LABEL + _HOST_DOT + r")+(?:"
+    r"(?i)(?<![A-Za-z0-9_-])(?<![A-Za-z0-9_-]\.)(?<![A-Za-z0-9_-]\[\.\])(?:"
+    + _HOST_LABEL
+    + _HOST_DOT
+    + r")+(?:"
     r"(?:" + _HOST_BARE + r")(?:-[A-Za-z0-9_-]*+(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*"
     r"|(?![\w-])(?!" + _HOST_DOT + r"\w|\())"
     r"|(?:" + _HOST_TAIL + r")(?:-[A-Za-z0-9_-]*+)?(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*)"

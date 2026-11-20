@@ -119,6 +119,17 @@ def test_host_start_after_a_bracket_or_a_lone_dot():
     assert red("..db01.corp") == "..<HOSTNAME_1>", "TB-4.6 after two dots"
 
 
+def test_host_starts_after_a_non_ascii_word_character():
+    """TB-4.13. `\\w` holds CJK and accented letters, so a start look-behind on `\\w` left no start for `-_db-7...` glued after one."""
+    glued = "mail_9\u4f8b-_db-7.corp.internal_\u00e9\u4f8b"
+    out = red(glued)
+    assert "db-7" not in out and "corp" not in out, f"TB-4.13 after a CJK letter and `-_`: {out!r}"
+    assert "db-7" not in red("x \u4f8bdb01.corp.example y"), "TB-4.13 glued after a CJK letter"
+    assert "db01" not in red("\u00e9-_db01.corp.example"), (
+        "TB-4.13 after an accented letter and `-_`"
+    )
+
+
 def test_host_whole_names():
     rows = {
         "db01.corp.example": "<HOSTNAME_1>",
