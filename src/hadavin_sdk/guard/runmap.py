@@ -30,6 +30,7 @@ from hadavin_sdk.guard.redact import (
     kind_of,
     redact,
 )
+from hadavin_sdk.guard.textnorm import without_spacing_marks
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -430,7 +431,8 @@ def composed(text: str) -> str:
 
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC one character at a time, invisible characters removed), the same
-    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks).
+    with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks),
+    then the canonical and the composed view of the text without its spacing marks, modifier letters and modifier symbols.
     Only forms that differ from `text` are returned; a text with no combining sequence has the same composed and canonical view,
     so it costs nothing."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
@@ -440,6 +442,11 @@ def _views(text: str) -> list[str]:
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
     undone = fits_after_nfkc(undo(text))
+    # and the text without its spacing marks, modifier letters and modifier symbols (textnorm, "MARKS AND SCANS": NFKC reads a modifier
+    # letter as a letter and keeps a spacing vowel sign, so "AKIA" + U+093E + "IOSFODNN7EXAMPLE" is not the key in `canonical` alone), in
+    # the canonical view and in its composed twin (they differ when the text holds a letter and a combining accent, also when the
+    # removed mark stood between the two: `canonical` composes nothing)
+    unmarked = without_spacing_marks(text)
     for view in (
         canonical(text),
         canonical(unescaped),
@@ -447,6 +454,8 @@ def _views(text: str) -> list[str]:
         composed(text),
         composed(unescaped),
         composed(undone),
+        canonical(unmarked),
+        composed(unmarked),
     ):
         view = _clean(view)
         if view != text and view not in out:
@@ -463,15 +472,22 @@ _ENCODED_MARKS = ("%", chr(92), "&")
 MAX_DECODED_MASKS = 256
 
 
-def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
+def _decoded_masks(
+    current: dict[str, str], text: str, deadline: float | None = None
+) -> list[tuple[str, str]]:
     """(placeholder, decoded original) for the values pass one masked WHOLE whose decoded spelling would stop a value
     pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
     use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
-    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call.
+    `deadline` (a `time.thread_time()` value, shared with stage 1 and every view) is checked once per stored original, before
+    any skip; a spent deadline raises `InputTooLarge`.
+    """
     out = []
     for ph, original in current.items():
+        if deadline is not None and time.thread_time() > deadline:
+            raise InputTooLarge("InputTooLarge")  # one check per stored original, before any skip
         if original.startswith("\0seed") or not (
             any(c in original for c in _ENCODED_MARKS) or not original.isascii()
         ):
@@ -647,18 +663,20 @@ def _scan(
 ) -> tuple[str, dict[str, str]]:
     """The work of `redact_text` without its write: (redacted text, the map as it would be afterwards).
     `mapping` is only read. Callers check the input cap first (`_within_cap`)."""
-    started = time.monotonic()
+    started = time.thread_time()
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
             text = fits_after_nfkc(neutralise(text))
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
-        result = redact(text, mapping=mapping, _cache=cache)
+        result = redact(
+            text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+        )
         out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+        if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text) if views else []
+        pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
         if (
             neutralise is not None
         ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
@@ -669,13 +687,15 @@ def _scan(
             ]
         for view in views:
             if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
+                time.thread_time() - started > defaults.REDACT_BUDGET_S
             ):  # a hostile text: fail closed, nothing shown
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
             view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
+            again = redact(
+                view, mapping=current, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+            )
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping
