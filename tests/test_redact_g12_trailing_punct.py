@@ -138,18 +138,43 @@ NOT_VALUES = [
 
 @pytest.mark.parametrize("word", NOT_VALUES)
 @pytest.mark.parametrize("mark", ["!", "?", "}", ".", ",", "`", "**", "]"])
-def test_g12_a_word_that_says_there_is_no_value_is_exempt_with_its_punctuation_too(word, mark):
-    """M-1: `password=none` is exempt; `password=none!` stored whole, and its core `none` swept every `none` of the text."""
-    text = f"password={word}{mark} {word} un{word}"
+def test_g12_a_word_that_says_there_is_no_value_gets_no_core(word, mark):
+    """M-1: `password=none!` is masked whole as before, but its core `none` is not registered: it swept every `none` of the text."""
+    stored = f"{word}{mark}"
+    r = R.redact(f"password={stored} {word} un{word}")
+    assert PW not in r.text and word in r.text.split() and f"un{word}" in r.text, f"G12-13 {r.text}"
+    assert set(r.mapping.values()) <= {stored}, f"G12-13 {r.mapping}"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "password=password!",
+        "password=password=",
+        "password=none!",
+        "password=true-",
+        "password=null_",
+        "password=*none*",
+    ],
+)
+def test_g12_what_the_exemption_never_took_is_still_masked_whole(text):
+    """The exemption keeps its old strip set: a value masked before G12b is masked now (no leak by widening)."""
     r = R.redact(text)
-    assert r.text == text and r.mapping == {}, f"G12-13 {r.text} {r.mapping}"
+    assert r.text.endswith("<SECRET_1>") or "<SECRET_1>" in r.text, f"G12-13 {text} -> {r.text}"
 
 
-def test_g12_the_exemption_and_the_core_use_one_rule_on_both_ends():
-    for text in ("password=*none* none", "password=(null), null", "password=<b>true</b> true"):
-        r = R.redact(text)
-        assert r.text == text and r.mapping == {}, f"G12-13 {text} -> {r.text} {r.mapping}"
-    # a value that is not one of those words is still masked, with its core
+def test_g12_what_the_exemption_took_it_still_takes():
+    assert R.redact("password=(null),").text == "password=(null),", "G12-13 old exemption"
+
+
+def test_g12_the_second_none_is_neither_masked_nor_swept():
+    r = R.redact("password=none! none")
+    assert r.text == "password=<SECRET_1> none" and r.mapping == {"<SECRET_1>": "none!"}, (
+        f"G12-13 {r.text} {r.mapping}"
+    )
+    r = R.redact("password=*none*, none untrue")
+    assert r.text == "password=<SECRET_1> none untrue", f"G12-13 {r.text}"
+    # a value that is not one of those words keeps its core
     r = R.redact("password=none1! none1")
     assert r.text == "password=<SECRET_1> <SECRET_2>", f"G12-13 {r.text}"
 

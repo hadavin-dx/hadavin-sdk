@@ -928,9 +928,7 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # digit, a markup tag (`<b>`, `</b>`) or an escaped `\\n` `\\r` `\\t`. The key=value value class keeps a comma that begins no `key=`
 # pair and reads `.` `)` `!` and many more as value characters, so `password=hunter22, hunter22` stored `hunter22,` and the every-copy
 # sweep of that value left the clear copy `hunter22` readable (E18 G7-F4); the same with a wrapper (`(hunter22)`, a backtick, `**x**`,
-# `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own, and
-# `_decide` tests the "says no value" words (`none!`, `null?`) after the SAME strip, so a word that is exempt without punctuation is
-# exempt with it (else its core would sweep every `none` of the text).
+# `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own; it does not register a core that is one of the "says no value" words (`none!`: masked whole as before, never every `none`).
 _EDGE_OPEN = re.compile(r"<[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt]")
 _EDGE_CLOSE = re.compile(r"(?:</[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt])\Z")
 
@@ -1750,7 +1748,7 @@ class _Redactor:
         # The first group that took part: a pattern may offer the value in several written forms.
         original = next((g for g in m.groups() if g is not None), m.group(0))
         if label == "SECRET" and (
-            _bare(original).lower() in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
+            original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
         ):
             return None
         if label == "HOSTNAME" and _KEPT_HOST.search(
@@ -1816,6 +1814,10 @@ class _Redactor:
         # G12: the value without the non-alphanumeric characters at its ends, an entry of its own (as a piece), so its copies are swept as the
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
         core = _bare(full) if derived and label in SECRET_KINDS else full
+        if (
+            core.lower() in _NOT_A_VALUE
+        ):  # `none!`: masked whole, but its core would sweep every `none` of the text
+            core = full
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
             self.mapping[f"<{label}_{self.counters[label]}>"] = core
