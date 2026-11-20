@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:33:08Z
+UPDATED_UTC: 2026-11-20T06:36:34Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
-STATE: WORKING
+STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 46
 ITEMS_OPEN: 13
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 1.60 of 4 cores (1-minute average), mem 1.0/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 529M /home/user/hadavin-sdk; 341M /tmp/claude-0; 131M /root/.cache
-INTERRUPTED: none
-FAILED: open findings in my own code: fuzz (505 for an HTTP version 2.0 request line), design review Majors M2 (no cap on waiting threads) and M3; fixes queued behind the agent that edits those files. Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
+AGENTS_RUNNING: 0
+CAPACITY: load 0.47 of 4 cores (1-minute average), mem 0.8/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 529M /home/user/hadavin-sdk; 342M /tmp/claude-0; 131M /root/.cache
+INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
+FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:32:21Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:33:11Z (the push before this board)
 NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder
 
 ## QUEUE ITEMS
@@ -96,32 +96,27 @@ NOTE: PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, us
 | b4-fuzz | builder (tests) | fable | writes tests/triggers/test_t5_fuzz.py and runs it once | 06:16 | ended | 100 | done | n/a | 0 | finished |
 | b5-matrix | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix.py and CRASH-MATRIX.md, child processes killed on PostgreSQL | 06:16 | ended | 100 | done | n/a | 0 | finished |
 | b6-fstore | evidence runner (non-builder) | fable | runs the spend contract tests on a scratch copy of core-b's tree, corrects wrong shape assumptions, writes findings | 06:16 | ended | 100 | done | n/a | 0 | finished; the harness refused its findings file write, it returned the text and I saved a shortened copy |
-| b7-g7 | builder (tests, non-builder of the code) | fable | writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree | 06:16 | about 35 min after start | 5 | running | n/a | 0 | backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line |
+| b7-g7 | builder (tests, non-builder of the code) | fable | writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree | 06:16 | about 35 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
 | b9-design | reviewer | fable | egm:egm-design, hostile read of my 4 source files against the ticket invariants and the lead's earlier review | 06:20 | ended | 100 | done | 1 of 1 | 0 | finished, 135k tokens |
 | o17-n8n | builder (templates and text) | fable | busy statuses in the retry loop, README answer table and limits, template checks | 06:22 | ended | 100 | done | lead code review round 2 of 3 | 0 | finished |
 | o17-code | builder | fable | server.py, worker.py, endpoint.py minors; strict database switch in a new tests/triggers/conftest.py; runs the mutant script once | 06:22 | ended | 100 | done | lead code review round 2 of 3 | 0 | finished |
-| b5b-paths | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix_paths.py, kills child processes on PostgreSQL on the tool, proposal and approval paths | 06:25 | about 45 min after start | 5 | running | n/a | 0 | 8 agents run |
-| meter | builder (tests, non-builder of the code) and evidence runner | fable | writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite | 06:27 | about 40 min after start | 5 | running | n/a | 0 | ORDER 016 item 4c |
-| cfg-2 | builder (tests, non-builder) | fable | removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use | 06:27 | about 25 min after start | 5 | running | n/a | 0 | trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests) |
-| m1-n8n | builder (templates and text) | fable | adds the required state check loop to the template, the README section and checks | 06:28 | about 20 min after start | 5 | running | own design review, fix pass | 0 | 7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check) |
-| b4b-fuzz2 | builder (tests) | fable | writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs) | 06:29 | about 35 min after start | 5 | running | n/a | 0 | 7 agents run |
-| fix-srv | builder | fable | server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16 | 06:31 | about 35 min after start | 5 | running | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | design review + fuzz |
-| fix-wrk | builder | fable | worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree | 06:31 | about 45 min after start | 5 | running | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | design review + ORDER 014 item 3 + ORDER 017; 9 agents run (G7, matrix part 2, meter, config tests, template state check, concurrent fuzz, 2 fix builders)... 8 counted from the agent list |
+| b5b-paths | builder (tests) and evidence runner | fable | writes tests/triggers/test_t5_crash_matrix_paths.py, kills child processes on PostgreSQL on the tool, proposal and approval paths | 06:25 | about 45 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
+| meter | builder (tests, non-builder of the code) and evidence runner | fable | writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite | 06:27 | about 40 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
+| cfg-2 | builder (tests, non-builder) | fable | removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use | 06:27 | about 25 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
+| m1-n8n | builder (templates and text) | fable | adds the required state check loop to the template, the README section and checks | 06:28 | about 20 min after start | 5 | done (stopped on order, Fable limit) | own design review, fix pass | 0 | ended on the owner's order; see RESUME-NOTE |
+| b4b-fuzz2 | builder (tests) | fable | writes tests/triggers/test_t5_fuzz_concurrent.py and runs it (at most 3 runs) | 06:29 | about 35 min after start | 5 | done (stopped on order, Fable limit) | n/a | 0 | ended on the owner's order; see RESUME-NOTE |
+| fix-srv | builder | fable | server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16 | 06:31 | about 35 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
+| fix-wrk | builder | fable | worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree | 06:31 | about 45 min after start | 5 | done (stopped on order, Fable limit) | own design review fix pass (round 1 of 1) + lead review round 2 | 0 | ended on the owner's order; see RESUME-NOTE |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1118s ago | running | matched by name in ps |
-| 13560 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 13588 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rxs te | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 13593 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 13597 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 13625 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1324s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1324s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

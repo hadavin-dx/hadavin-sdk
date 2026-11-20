@@ -1,6 +1,6 @@
 {
  "order": "017 on top of the backlog (016 standing)",
- "state": "WORKING",
+ "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
  "next": "the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block",
  "note": "PostgreSQL: port 55432 stopped (trial ended); port 55433 running, mine, used by fuzz, matrix part 2, code minors and meter agents. Left on disk (safety check refuses folder deletes): 2 database folders, 1 probe folder, scratch copies and 6 trial worktrees (about 465 MB) under the session scratch folder",
@@ -765,14 +765,14 @@
    "model": "fable",
    "started UTC": "06:16",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "b7-g7",
    "role": "builder (tests, non-builder of the code)",
    "what exactly it is doing": "writes redaction idempotence property tests and runs them on a scratch copy of core-c's tree",
    "expected end": "about 35 min after start",
-   "reason": "backlog 7; 6 agents run (trial, n8n, fuzz, matrix, F-store, G7); memory is on the CAPACITY line"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "id": "b9-design",
@@ -821,36 +821,36 @@
    "started UTC": "06:25",
    "expected end": "about 45 min after start",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "8 agents run"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "model": "fable",
    "started UTC": "06:27",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "meter",
    "role": "builder (tests, non-builder of the code) and evidence runner",
    "what exactly it is doing": "writes tests/contracts/test_meter.py, runs it on a scratch copy of core-b's tree (memory and PostgreSQL 16), plants 5 bugs in the scratch copy to prove the tests bite",
    "expected end": "about 40 min after start",
-   "reason": "ORDER 016 item 4c"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "model": "fable",
    "started UTC": "06:27",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "cfg-2",
    "role": "builder (tests, non-builder)",
    "what exactly it is doing": "removes expected-failure markers for findings core-b fixed, adds bound-reader tests, reports the names the worker must use",
    "expected end": "about 25 min after start",
-   "reason": "trial integration result; 8 agents run (fuzz, G7, design review, n8n, code minors, matrix part 2, meter, config tests)"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "id": "m1-n8n",
@@ -860,10 +860,10 @@
    "started UTC": "06:28",
    "expected end": "about 20 min after start",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "own design review, fix pass",
    "retries so far": 0,
-   "reason": "7 agents run (fuzz, G7, code minors, matrix part 2, meter, config tests, template state check)"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "id": "b4b-fuzz2",
@@ -873,36 +873,36 @@
    "started UTC": "06:29",
    "expected end": "about 35 min after start",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "7 agents run"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "model": "fable",
    "started UTC": "06:31",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "own design review fix pass (round 1 of 1) + lead review round 2",
    "retries so far": 0,
    "id": "fix-srv",
    "role": "builder",
    "what exactly it is doing": "server.py, endpoint.py, crash.py: 4 fuzz findings (505, no-version request, underscore headers, two Content-Length) and review items N9 to N12, N15, N16",
    "expected end": "about 35 min after start",
-   "reason": "design review + fuzz"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   },
   {
    "model": "fable",
    "started UTC": "06:31",
    "percent": 5,
-   "state": "running",
+   "state": "done (stopped on order, Fable limit)",
    "review round n of cap": "own design review fix pass (round 1 of 1) + lead review round 2",
    "retries so far": 0,
    "id": "fix-wrk",
    "role": "builder",
    "what exactly it is doing": "worker.py: cap on waiting requests (M2), close log (M3), N1, N3, N5, N7, N15; switch to App.trigger_secret; start test through main on a combined scratch tree",
    "expected end": "about 45 min after start",
-   "reason": "design review + ORDER 014 item 3 + ORDER 017; 9 agents run (G7, matrix part 2, meter, config tests, template state check, concurrent fuzz, 2 fix builders)... 8 counted from the agent list"
+   "reason": "ended on the owner's order; see RESUME-NOTE"
   }
  ],
  "tests": [
@@ -1212,5 +1212,6 @@
   "ORDER 015 template: needs a new import on your n8n",
   "I cannot send you session messages; board, REPORT.md and DECISIONS.md are my only way to answer"
  ],
- "failed": "open findings in my own code: fuzz (505 for an HTTP version 2.0 request line), design review Majors M2 (no cap on waiting threads) and M3; fixes queued behind the agent that edits those files. Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md"
+ "failed": "TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md",
+ "interrupted": "Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md"
 }
