@@ -27,9 +27,13 @@ FUNCTION_NAMES = (
     "hadavin_purge_spend_reservations",
     "hadavin_add_spend",
 )
+# Added by the caps work (builder E1): not called by the money paths of the store, but the same static rules apply.
+CAP_FUNCTION_NAMES = ("hadavin_set_cap", "hadavin_cap_matches")
+ALL_FUNCTION_NAMES = FUNCTION_NAMES + CAP_FUNCTION_NAMES
 # The defaults the limits are seeded with: none of them may appear as a literal in a function (parity with the
-# defaults would hide a hard-coded limit from every behavioural test that leaves the limits alone).
-LIMIT_LITERALS = re.compile(r"(?<![\w.])(?:1e9|1E9|1000000000|10000000|200|12)(?![\w.])")
+# defaults would hide a hard-coded limit from every behavioural test that leaves the limits alone). A neighbouring
+# hyphen excludes the parts of a date literal such as DATE '9999-12-31' (the day window is not a limit).
+LIMIT_LITERALS = re.compile(r"(?<![\w.-])(?:1e9|1E9|1000000000|10000000|200|12)(?![\w.-])")
 UNQUALIFIED_BUILTINS = re.compile(
     r"(?<![\w.])(?:char_length|scale|isfinite|clock_timestamp|date_trunc|make_interval)\s*\("
 )
@@ -53,7 +57,7 @@ def static_problems(text: str) -> list[str]:
     code = strip_comments(text)
     problems: list[str] = []
     funcs = _functions(code)
-    if set(funcs) != set(FUNCTION_NAMES):
+    if set(funcs) != set(ALL_FUNCTION_NAMES):
         problems.append(f"the functions are {sorted(funcs)}")
     for name, body in funcs.items():
         header = body.split("$fn$", 1)[0]
@@ -151,7 +155,7 @@ def test_no_exception_block_no_dynamic_sql_no_limit_literal_in_any_function():
 def test_every_function_pins_the_search_path_with_the_temp_schema_last():
     code = strip_comments(SQL_FILE.read_text(encoding="utf-8"))
     pins = re.findall(r"SET search_path = ([^\n]*)\n", code)
-    assert len(pins) == 5 and set(pins) == {"pg_catalog, pg_temp"}
+    assert len(pins) == len(ALL_FUNCTION_NAMES) and set(pins) == {"pg_catalog, pg_temp"}
 
 
 # --- the store calls only the functions ------------------------------------------------------------------------------
@@ -166,18 +170,34 @@ def _store_sql_text() -> str:
     return POSTGRES_PY.read_text(encoding="utf-8")
 
 
-def test_postgres_py_calls_the_money_functions_schema_qualified_and_writes_no_money_table_itself():
-    text = _store_sql_text()
+def _no_money_writes_or_skip(text: str) -> None:
     if _WRITES_MONEY.search(text):
         pytest.skip(
             "store/postgres.py still holds its own INSERT/UPDATE/DELETE on spend, spend_month or "
             "spend_reservations (builder D's step 3 is not merged here); this test starts to run when it is"
         )
-    calls = list(re.finditer(r"(?<![\w])hadavin_[a-z_]+\s*\(", text))
-    names = {m.group(0).rstrip("( ") for m in calls}
+
+
+def test_postgres_py_calls_the_money_functions_schema_qualified_and_writes_no_money_table_itself():
+    text = _store_sql_text()
+    _no_money_writes_or_skip(text)
+    # The store builds the call in ONE helper, `_money_call(function, placeholders)`, from the quoted schema and the
+    # function name as two identifiers; the names are passed to it as string literals.
+    helper = re.search(r"def _money_call\(.*?(?=\n    def )", text, re.DOTALL)
+    assert helper, "no _money_call helper"
+    assert re.search(r'FROM \{\}\.\{\}\(\{\}\)"', helper.group(0)) and re.search(
+        r"sql\.Identifier\(self\._schema\),\s*sql\.Identifier\(function\)", helper.group(0)
+    ), "_money_call does not schema-qualify"
+    names = set(re.findall(r'"(hadavin_[a-z_]+)"', text))
+    direct = list(re.finditer(r"(?<![\w])hadavin_[a-z_]+\s*\(", text))
+    names |= {m.group(0).rstrip("( ") for m in direct}
     assert set(FUNCTION_NAMES) <= names, f"the store never calls {set(FUNCTION_NAMES) - names}"
-    for m in calls:
-        before = text[max(0, m.start() - 1) : m.start()]
-        assert before == ".", (
-            f"unqualified call {m.group(0)!r} near: {text[max(0, m.start() - 60) : m.end()]!r}"
-        )
+    for name in FUNCTION_NAMES:  # none of the new functions is ever written as an unqualified call
+        assert not re.search(rf"FROM\s+{name}\s*\(", text), f"unqualified call of {name}"
+
+
+def test_postgres_py_has_no_unqualified_call_of_any_hadavin_function():
+    text = _store_sql_text()
+    _no_money_writes_or_skip(text)
+    unqualified = [m.group(0) for m in re.finditer(r"(?<![\w.])hadavin_[a-z_]+\s*\(", text)]
+    assert not unqualified, f"unqualified calls: {unqualified}"

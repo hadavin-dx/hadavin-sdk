@@ -999,7 +999,7 @@ class PostgresStore:
         try:
             with self._lock, self._db.transaction():
                 row = self._exec(
-                    "SELECT * FROM hadavin_release_expired_spend(%s, %s)", (agent_id, day)
+                    self._money_call("hadavin_release_expired_spend", "%s, %s"), (agent_id, day)
                 ).fetchone()
         except Exception as exc:
             _write_outcome(audit, _release_event(actor, ref, "release_failed", type(exc).__name__))
