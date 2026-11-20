@@ -125,6 +125,13 @@ def check_spend_amount(usd: object) -> Decimal:
     return usd
 
 
+def clean_spend_amount(usd: object) -> Decimal:
+    """`check_spend_amount`, then `-0` becomes `0` (no arithmetic: the caller's Decimal context never touches
+    the amount). What a store writes into a counter or a reservation row."""
+    usd = check_spend_amount(usd)
+    return usd.copy_abs() if usd.is_zero() else usd
+
+
 def check_spend_cap(cap: object) -> Decimal:
     """The cap rule of `reserve_spend`, used by both stores before any lock or SQL: a Decimal (not a float, an
     int, a bool, a str or None), finite, 0 <= cap, with the exponent window of an amount (-12 to 9); no other

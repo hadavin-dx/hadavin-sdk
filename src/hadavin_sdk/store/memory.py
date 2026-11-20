@@ -31,10 +31,10 @@ from hadavin_sdk.store.protocol import (
     check_expiry_age,
     check_purge_bound,
     check_reservation_id,
-    check_spend_amount,
     check_spend_cap,
     check_spend_day,
     check_store_id,
+    clean_spend_amount,
 )
 
 
@@ -88,6 +88,7 @@ class MemoryStore:
             return run.model_copy(deep=True)
 
     def add_cost(self, run_id: str, usd: Decimal) -> None:
+        usd = clean_spend_amount(usd)
         with self._lock:
             run = self._runs.get(run_id)
             if run is None:
@@ -210,6 +211,7 @@ class MemoryStore:
             return [d.model_copy(deep=True) for d in self._dead.get(run_id, [])]
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+        usd = clean_spend_amount(usd)  # a bad amount is a ValueError; -0 becomes 0
         with self._lock:
             with localcontext(defaults.money_context()):
                 self._spend[(agent_id, day)] += usd
@@ -316,7 +318,7 @@ class MemoryStore:
             check_store_id(run_id, "run_id")
         check_spend_day(day)
         check_reservation_id(reservation_id)
-        check_spend_amount(usd)
+        usd = clean_spend_amount(usd)
         check_spend_cap(day_cap)
         check_spend_cap(month_cap)
         with self._lock:
@@ -349,7 +351,7 @@ class MemoryStore:
         self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
     ) -> tuple[SpendReservation, bool]:
         check_reservation_id(reservation_id)
-        check_spend_amount(actual_usd)
+        actual_usd = clean_spend_amount(actual_usd)
         if agent_id is not None:
             check_store_id(agent_id, "agent_id")
         with self._lock:
