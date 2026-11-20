@@ -787,19 +787,6 @@
    "reason": "lead 13:46: share work, one agent per item"
   },
   {
-   "id": "rev-ce14",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review of wip/core-a-for-c-e14nits",
-   "started UTC": "13:52",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
-  },
-  {
    "id": "rev-wipci3",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -1183,6 +1170,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:55 wip/core-a-for-c-e14nits reviewed fresh: NO Blocker/Major (README 'unwired' list true for all 14 names, comments match code, mutants E14-9/10 pin the exact boundary, T5 gate test faithful). Ready for core-c to cherry-pick (9dd034a39).",
   "13:52 pushed: wip/core-a-for-c-e14nits (core-c items 1+5) and wip/core-a-for-ci (round 2); fresh reviews rev-ce14 and rev-wipci3 (cap round) running; also running: c-e19, grant-tests, max-running. Trailer in board.py now Sonnet 5.5.",
   "13:50 FABLE TRAILER: the 'Co-Authored-By: Claude Fable 5.2' trailer on my WIP snapshot commits came from MY OWN script handover/core-a/tools/board.py (hard-coded string, written at 05:21 when the harness then asked for Fable), NOT from the harness today: the harness attribution reminder I get now says 'Claude Sonnet 5.5'. Fixed: board.py now writes 'Claude Sonnet 5.5'. 34 Fable vs 11 Sonnet trailers since 12:00Z in git log (all Fable ones are that script). Board cron changed from every minute to every 5 minutes (old cron deleted, new */5). The snapshots every ~15 s were stop-hook turns (the hook asks to commit when files change), not cron: with agents editing files constantly they recur; I answer each with ONE board run. I do no waiting turns; real work runs only through agents with explicit model sonnet. get_session at 13:46: last_served_model sonnet-5-5.",
   "13:46:55Z MODEL CHECK (get_session now): configured_model claude-fable-5-2 (creation-time value, I cannot change it); session_context.model claude-sonnet-5-5; external_metadata.model claude-sonnet-5-5; last_served_model claude-sonnet-5-5; user_switched_model claude-sonnet-5-5. NO FABLE SERVED on the latest turn; running agents all explicit sonnet: wipci-fix2, c-e14nits, c-e19, grant-tests, max-running. Cumulative cost counter 345.95 USD since 04:09 (includes the pre-switch hours). Full text at the top of REPORT.md.",
@@ -3551,6 +3539,19 @@
    "review round n of cap": "2 of 3",
    "retries so far": 0,
    "reason": "wip/core-a-for-ci pushed: raw-text safety net over .github, honest docstring, loud false positives removed, planted tests derive from real files; 108 tests, 257 passed with the 2 CI guards; red proof 17 tests when [A:raw-below] deleted"
+  },
+  {
+   "id": "rev-ce14",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of wip/core-a-for-c-e14nits",
+   "started UTC": "13:52",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "review of wip/core-a-for-c-e14nits: NO Blocker/Major; README claim true for all 14 names; comments match agent_loop.py; mutants E14-9/E14-10 sound, T6/T7 pin exact boundaries; T5 gate test faithful; one nit (fixture placement)"
   }
  ]
 }
