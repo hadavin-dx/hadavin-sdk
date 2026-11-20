@@ -654,6 +654,15 @@
    "evidence file": "reviews/D-code-result-review-3.md",
    "tries": 1,
    "reason": "batch5 running"
+  },
+  {
+   "item": "E-nits",
+   "what": "step E extra-pass nits (3.12 Windows exists(), 2 docstring lines, importorskip, 2 test names)",
+   "state": "QUEUED after batch6",
+   "percent": 0,
+   "evidence file": "reviews/E-result-review-4.md",
+   "tries": 0,
+   "reason": "batch6 hashes crash.py"
   }
  ],
  "agents": [
@@ -669,19 +678,6 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "minor 10 + new guards"
-  },
-  {
-   "id": "E-rev4",
-   "role": "fresh reviewer (codebase-details)",
-   "model": "sonnet",
-   "what exactly it is doing": "E5 granted: one more fresh read-only result pass on step E crash.py and its tests, then stop at that round",
-   "started UTC": "08:47",
-   "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "extra pass granted by the lead",
-   "retries so far": 0,
-   "reason": "lead verdict E5 = yes"
   },
   {
    "id": "batch6",
@@ -2220,6 +2216,19 @@
    "review round n of cap": "3 of 3 (fix)",
    "retries so far": 0,
    "reason": "8 of 9 done (R3-7 declined: anchor of G18f); tests/triggers 1182 passed 5 skipped (no REQUIRE_PG set); mutants 89 killed + 1 crash-accepted, 90 of 90 (run 14: first run wrote only its header and stopped, cause not found, re-run ok); strict mode fails at test time; ticket sizes true (352+704+316)"
+  },
+  {
+   "id": "E-rev4",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "E5 granted: one more fresh read-only result pass on step E crash.py and its tests, then stop at that round",
+   "started UTC": "08:47",
+   "expected end": "about 15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "extra pass granted by the lead",
+   "retries so far": 0,
+   "reason": "E5 extra pass: 0 Blocker, 0 Major, 7 Nits (reviews/E-result-review-4.md); nit fixes queued after batch6 (crash.py is in its hashed tree); stop at this round"
   }
  ]
 }
