@@ -1,5 +1,5 @@
 {
- "order": "008 (002 to 006 standing; no ORDER 007 in my file)",
+ "order": "009 (002 to 008 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
  "next": "batch suite ends: classify every failure as INHERITED or NEW in REPORT.md; then my own files once with PostgreSQL 16; mutant script and ticket fix land",
@@ -141,6 +141,15 @@
    "evidence file": "raw/endpoint-mutants-run.log (not yet)",
    "tries": 1,
    "reason": "ORDER 008: a guarantee with no mutant script counts as not done"
+  },
+  {
+   "item": "E2-SOCKET",
+   "what": "real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet)",
+   "tries": 1,
+   "reason": "lead decision: in scope, do it without asking"
   }
  ],
  "agents": [
@@ -299,6 +308,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "ORDER 008 item 1"
+  },
+  {
+   "id": "e2-socket",
+   "role": "builder",
+   "model": "fable",
+   "what exactly it is doing": "writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line",
+   "started UTC": "05:41",
+   "expected end": "about 25 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers)"
   }
  ],
  "tests": [
@@ -406,9 +428,9 @@
  "lost": [],
  "lead_actions": [
   "handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch: rule 15 names vendor products. It will fail in any full run of cloud/core-a. I do not edit your file: reword it or keep handover/ out of the code commits you pick",
-  "ESCALATIONS.md E1 to E4 need a lead word (audit event on 409 and exit after store errors; wsgiref on socket timeout; shared qualification helper in core-b's file; n8n template needs a real n8n)",
   "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one",
-  "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you"
+  "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you",
+  "ORDER 009 read: E1 and E3 and E4 closed as you decided, E2 being built. RISK I accept and state: the socket-test agent edits worker.py while the whole-suite run is going; if a triggers test fails in that run for this reason I re-run only tests/triggers once and say so"
  ],
  "failed": "1 rule test fails on the branch because of handover/BRIEF-PREAMBLE.md (lead's file): test_no_vendor_brand_string_is_tracked"
 }

@@ -1,5 +1,7 @@
 # ESCALATIONS of core-a (problems and unresolved review findings for the lead; newest on top)
 
+LEAD VERDICTS (ORDER 009, 05:39Z), noted 05:41 UTC: E1 CLOSED (no audit event on 409, one log line with status, sender id, run id: being added; no exit after store errors). E2 OPEN, in work (real-socket test; quiet handler if needed). E3 CLOSED (copy accepted, one line goes into ticket D). E4 CLOSED for core-a (outline stays, lead verifies on a real n8n).
+
 ## E4 (05:38 UTC) n8n template cannot be finished without a real n8n (review finding IR-M11)
 Item: n8n/hadavin-trigger.json, n8n/hadavin-trigger-error.json. Not decidable here: node versions, Crypto node or Code node for signing, where the signing secret may live in n8n, export format of the pinned n8n version, whether a retry re-runs the sign node. Tried: read of inputs/atlas-n8n.md only; no n8n exists in this container (CAPABILITY.md). What I did: outline files marked "not run in n8n", every unsure parameter marked UNVERIFIED, checks that run here (JSON parses, no secret-shaped text). Needed from the lead: one import and one test call on the laptop's n8n, or the word "leave as outline".
 
