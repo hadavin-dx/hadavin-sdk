@@ -423,6 +423,12 @@ def _tick() -> int:
     return run_tick(app)
 
 
+def _say(text: str) -> None:
+    """print for a name the terminal cannot encode: escaped, never an error (exit codes stay 0 or 2)."""
+    enc = getattr(sys.stdout, "encoding", None) or "ascii"
+    print(text.encode(enc, "backslashreplace").decode(enc))
+
+
 def _migrate(
     cfg,
     runtime_role: str | None,
@@ -475,7 +481,7 @@ def _migrate(
         )
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:
-            print(note)
+            _say(note)
     print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:
         print(
