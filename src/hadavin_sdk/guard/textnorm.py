@@ -254,11 +254,12 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   spent. The clock is read at fixed points BETWEEN whole passes, never inside one (NFKD and NFKC are single calls over the whole text, so a pass
   is never cut): after the size rule, after the value's needles, before each of the two prefix passes of each text of ``_readings``, per
   squeeze view, before each pass of each scan key, after the views of the text, before the insertion match and per script view of it, and
-  every 4,096 hits of the insertion match. A reading at or past the deadline raises ``DeadlinePassed`` (fail closed: never a False, never a
+  every 4,096 hits of the insertion match. A reading at or past the deadline raises ``DeadlinePassed`` (fail closed: never a False in place of the error, never a
   part of the views); a bundle is stored in ``scan_cache()`` only after a whole build, and a call that finds it cached still reads the clock.
   With a budget a call returns exactly what it returns without one, or raises; which of the two depends on the speed of the machine. The
-  overrun is the longest stretch between two readings (the size rule of a long text of distinct letters is the longest one); the work on the
-  VALUE (its needles and scan keys) has no reading inside it, only before and after. No other function takes a budget.
+  overrun of the text work is the longest stretch between two readings (the size rule of a long text of distinct letters is the longest one);
+  the work on the VALUE (its needles and scan keys) has no reading inside it, only before and after, and is longer (7.2 to 7.5 s measured for a
+  value of 236,879 distinct letters). No other function takes a budget.
 
 WHERE ``could_be_same_person`` IS USED. It is a library primitive for the deny and check-name path only. It is wired into NO approval check, and no
 approval compares people's names (``approvals/requests.py`` compares ids exactly). A use in an approval later is a new ticket with its own plan review

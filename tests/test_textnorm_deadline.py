@@ -29,6 +29,9 @@ CORPUS = Path(__file__).resolve().parent / "fixtures" / "textnorm_corpus.json"
 # T holds V with one extra Han letter inserted (the insertion match finds it); T2 holds the first half of V 5,000 times and never V.
 T = "the summary of " + "жизнь " * 200 + "密的码测试"
 T2 = "密码" * 5_000
+T3 = (
+    "测试" * 5_000
+)  # the second half of V 5,000 times, the first half never: the second loop of the insertion match reaches 4,096 hits
 V = "密码测试"
 # The function that reads the clock at each reading, in order (the start, read by ``_deadline_of``; P2 after the size rule, P2b after the value's needles, P3 two per text
 # in each ``_readings`` call, P4 per squeeze view, P5 per pass of each scan key, P6 after the views, P7 before the insertion match and per script
@@ -48,6 +51,7 @@ POINTS_T2 = (
     + ("scan_holds",) * 3
     + ("_holds_with_one_insertion",)
 )
+POINTS_T3 = POINTS_T2  # the same functions, the one reading at hit 4,096 is in the second loop
 POINTS_NO_VALUE = (
     ("scan_views_no_value",) * 2
     + ("_readings",) * 8
@@ -129,8 +133,8 @@ def test_a_spent_budget_raises_and_never_answers():
 
 def test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses(monkeypatch):
     """D-3. With a large budget the readings of ``scan_holds`` come from exactly the listed functions in the listed order; a budget of k - 0.5
-    (reading 1 is the start, so the deadline is k + 0.5) raises at reading k + 1 for every k; on T2 the last reading is inside the insertion
-    match."""
+    (reading 1 is the start, so the deadline is k + 0.5) raises at reading k + 1 for every k; on T2 and on T3 the last reading is inside the insertion
+    match (T2: the first loop, T3: the second)."""
     clock = _clock(monkeypatch)
     assert scan_holds(text=T, value=V, budget_s=1e9) is True, (
         "DEADLINE-POINTS: the probe text does not hold the value"
@@ -151,6 +155,11 @@ def test_every_reading_point_of_scan_holds_is_pinned_and_each_one_refuses(monkey
         "DEADLINE-POINTS: T2 holds the value"
     )
     assert tuple(clock.where) == POINTS_T2, f"DEADLINE-POINTS: the readings on T2 are {clock.where}"
+    clock = _clock(monkeypatch)
+    assert scan_holds(text=T3, value=V, budget_s=1e9) is False, (
+        "DEADLINE-POINTS: T3 holds the value"
+    )
+    assert tuple(clock.where) == POINTS_T3, f"DEADLINE-POINTS: the readings on T3 are {clock.where}"
 
 
 def test_every_reading_point_of_the_injection_views_is_pinned(monkeypatch):
@@ -305,6 +314,60 @@ def test_the_injection_budget_setting_is_checked(monkeypatch):
             raise AssertionError(f"BUDGET-UNCHECKED: {bad!r} was taken as a budget")
         verdict = injection.injection_check(injection.RegexDetector(0.5), "hello world", "t")
         assert verdict.reason_code == "guard_unavailable", f"BUDGET-UNCHECKED: {bad!r} not flagged"
+
+
+def test_a_budget_of_exactly_zero_on_a_frozen_clock_is_spent(monkeypatch):
+    """D-2b. The deadline is reached, not passed: with the CPU clock frozen, a budget of 0 raises at the first reading (``>=``), and a small
+    positive budget never does."""
+
+    class Frozen:
+        @staticmethod
+        def thread_time() -> float:
+            return 5.0
+
+    monkeypatch.setattr(textnorm, "time", Frozen)
+    for call in (
+        lambda b: scan_holds(text=T, value=V, budget_s=b),
+        lambda b: scan_views_no_value(T, budget_s=b),
+    ):
+        try:
+            call(0)
+        except DeadlinePassed:
+            pass
+        else:
+            raise AssertionError("DEADLINE-ZERO: a budget of exactly 0 did not raise")
+        call(0.5)  # a frozen clock never reaches start + 0.5
+
+
+class _Raises:
+    """A detector whose check raises ``DeadlinePassed`` (a custom or future detector that lets it through)."""
+
+    backend = "fake"
+
+    def check(self, text: str, source: str):
+        raise DeadlinePassed("the scan passed its deadline")
+
+
+def test_a_detector_that_raises_deadline_passed_is_flagged_at_every_wrapper(caplog):
+    """D-8b. ``injection_check`` is the one place that catches the error, and the six call sites of the runtime all go through it: a fake detector
+    raising ``DeadlinePassed`` is flagged ``guard_unavailable`` (never passed) alone, inside ``AnyOf`` (any position) and inside a nested
+    ``AnyOf``; an ``except`` added at one call site would let it through."""
+    ok = injection.RegexDetector(0.5)
+    detectors = {
+        "alone": _Raises(),
+        "anyof-first": injection.AnyOf([_Raises(), ok]),
+        "anyof-last": injection.AnyOf([ok, _Raises()]),
+        "nested": injection.AnyOf([ok, injection.AnyOf([_Raises()])]),
+        "combine": injection.combine([ok, _Raises()]),
+    }
+    for label, detector in detectors.items():
+        caplog.clear()
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.guard"):
+            verdict = injection.injection_check(detector, "hello world", "t")
+        assert verdict.flagged and verdict.reason_code == "guard_unavailable", (
+            f"DEADLINE-WRAPPER: {label}: DeadlinePassed was not flagged ({verdict.reason_code})"
+        )
+        assert "DeadlinePassed" in caplog.text, f"DEADLINE-WRAPPER: {label}: {caplog.text}"
 
 
 class ThreadClock:
