@@ -12,6 +12,8 @@ reason in ``expect``. Not collected by pytest. Run from the repo root:
     uv run --all-extras --group test python tests/redact_mutants.py N8         # only mutants whose name contains the text
 
 Good means KILLED, or CRASH with the declared exception class. Exit 1 if any mutant is not good, 2 if a filter selects none.
+N1 (the early U+2044 return of `_char_class`) and N14 (the slash replace of the alignment) are gone: both covered dead code, which was deleted after the
+exhaustive proof in tests/test_redact_g3_port.py (G1 Q9 review F3). tests/test_redact_mutants_meta.py pins the count and checks every killer.
 R2 ("the check after stage 1 is removed") is killed by BUDGET-1b (the spy counter is 1 instead of 0); it is not declared equivalent.
 """
 
@@ -83,7 +85,7 @@ M = [
       "test_benign_multilingual_corpus_has_a_zero_false_withhold_rate", "ssert"),
     m("8 a set compare hides a look-alike copy", RD, "if not any(self._dry_hits(f) - direct for f in folded):",
       "if all(set(self._dry_hits(f)) <= set(direct) for f in folded):", F1,
-      "test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit", "ssert"),
+      "test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_withheld_at_unit_level", "ssert"),
     m("9 the offset after a masked value is off by one", RD, "prev = stop\n", "prev = stop - 1\n", F1,
       "test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text", "ssert"),
     m("10 the text before a masked value restarts at zero", RD, "out += [body[prev:start], self._register_written(",
@@ -111,9 +113,6 @@ M = [
     m("21 the views get no shared deadline", GM, "_deadline=started + defaults.REDACT_BUDGET_S", "_deadline=None", FB,
       "test_one_deadline_covers_the_text_and_all_its_views", "ssert"),
     # ---- the 21 new mutants ----
-    m("N1 U+2044 is no longer mapped to a slash", RD,
-      '    if ch == "\\u2044":\n        return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)\n', "",
-      F1, "test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place", "ssert"),
     m("N4 find enters the scan for ASCII text", RD, "        if not _plain(out):\n", "        if True:\n", F1,
       "test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_scan", "ssert"),
     m("N5 _over_budget never raises", RD, "runmap imports this module\n\n            raise InputTooLarge(\"InputTooLarge\")",
@@ -135,9 +134,6 @@ M = [
     m("N12 the alignment comparison is always true", RD,
       'return (text, where, alike) if text == whole else None', "return (text, where, alike)", F1,
       "test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside", "ssert"),
-    m("N14 the slash replace is deleted from the alignment return", RD,
-      'whole = fold_view(body, marks_dropped=marks, iota=iota).replace("\\u2044", "/")', "whole = fold_view(body, marks_dropped=marks, iota=iota)", F1,
-      "test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place", "ssert"),
     m("N15 the alias build asks for no budget", RD, "            if deadline is not None:\n                self._over_budget(deadline)\n            for key in _alias_keys(original):\n",
       "            for key in _alias_keys(original):\n", FB,
       "test_budget_3_the_alias_build_is_budgeted", "N15-ALIAS-BUDGET"),
@@ -150,7 +146,7 @@ M = [
       "                False\n            ):  # a hostile text", FB, "test_budget_2_the_deadline_is_shared_by_every_view", "DID NOT RAISE"),
     m("DM-1 no check per stored original", GM,
       "        if deadline is not None and time.thread_time() > deadline:\n            raise InputTooLarge(\"InputTooLarge\")  # one check per stored original, before any skip\n", "",
-      FB, "test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check", "ssert"),
+      FB, "test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip", "DID NOT RAISE"),
     m("DM-1b the check sits after the skips", GM,
       "        if deadline is not None and time.thread_time() > deadline:\n            raise InputTooLarge(\"InputTooLarge\")  # one check per stored original, before any skip\n"
       "        if original.startswith(\"\\0seed\") or not (\n            any(c in original for c in _ENCODED_MARKS) or not original.isascii()\n        ):\n            continue\n",

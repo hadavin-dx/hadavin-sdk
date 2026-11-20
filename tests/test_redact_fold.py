@@ -149,6 +149,18 @@ def test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit():
     )  # FAIL-BEFORE: a set compare saw "nothing new"; the look-alike copy stayed in the text
 
 
+def test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_withheld_at_unit_level():
+    # Through `redact()` the later `settle` step hides the difference; the two calls below do not run it, so this is the killer of
+    # mutant 8 (a set compare that sees "nothing new" because the clear copy is already a direct hit)
+    ln = f"first {KEY} then second {chr(0x410)}{KEY[1:]}"
+    out = _Redactor(None)._folded_line(ln)
+    assert out.startswith(FOLD_NOTE), out
+    assert chr(0x410) not in out, out
+    out2 = redact(ln, _sweep_copies=False).text
+    assert out2.startswith(FOLD_NOTE), out2
+    assert chr(0x410) not in out2, out2
+
+
 @pytest.mark.parametrize(
     ("line", "expected", "value"),
     [

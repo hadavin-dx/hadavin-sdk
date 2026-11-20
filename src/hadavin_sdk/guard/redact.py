@@ -1000,8 +1000,6 @@ def _char_class(ch: str) -> tuple[str, int] | None:
     flag = 0
     # the fold (fold5, gap 4) writes the fraction slash as "/" itself, so a sign that holds one is known by its decomposition, not by its fold
     src = unicodedata.normalize("NFKD", ch)
-    if ch == "\u2044":
-        return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)
     if f == ch or f == "":
         pass
     elif ch.isspace():
@@ -1029,10 +1027,9 @@ def _char_class(ch: str) -> tuple[str, int] | None:
             flag = 1  # a look-alike letter of another script
         else:
             return None  # a full-width or compatibility letter: live ASCII after the fold
-    elif (g := f.replace("\u2044", "/")).isascii() and all(
-        c.isalnum() or c == "." or (c == "/" and "\u2044" in src) for c in g
-    ):
-        f = g  # a fraction slash (U+2044, as in a one-half sign) is a plain slash here; any other character that folds to "/" is refused
+    elif f.isascii() and all(c.isalnum() or c == "." or (c == "/" and "\u2044" in src) for c in f):
+        # a fraction slash (U+2044, itself or in a one-half sign) is a plain slash here (the fold already writes it as "/"); any other
+        # character that folds to "/" is refused
         flag = 1  # a sign that spells letters, digits or dots (an ellipsis, TM, a ligature, a superscript digit): masked around, never inside
     else:
         return None
@@ -1459,7 +1456,7 @@ class _Redactor:
                 return None
             f, flag = cls
             if not iota:  # the spelling that drops a subscript iota: a letter with one (U+1FB3) is its base letter alone, not base letter + "i"
-                own = fold_view(ch, marks_dropped=marks, iota=False).replace("\u2044", "/")
+                own = fold_view(ch, marks_dropped=marks, iota=False)
                 if own != f and own.isascii():
                     f = own
             if f:
@@ -1467,7 +1464,7 @@ class _Redactor:
                 where.extend([i] * len(f))
                 alike.extend([flag] * len(f))
         text = "".join(parts)
-        whole = fold_view(body, marks_dropped=marks, iota=iota).replace("\u2044", "/")
+        whole = fold_view(body, marks_dropped=marks, iota=iota)
         return (text, where, alike) if text == whole else None
 
     def _mask_in_place(

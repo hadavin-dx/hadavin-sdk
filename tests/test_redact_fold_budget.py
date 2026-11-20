@@ -204,7 +204,7 @@ def test_align_1_the_per_character_class_agrees_with_the_fold_for_every_code_poi
                 continue
             ch = chr(cp)
             cls = redact_mod._char_class(ch)
-            assert cls is None or cls[0] == textnorm.fold(ch).replace("⁄", "/"), hex(cp)
+            assert cls is None or cls[0] == textnorm.fold(ch), hex(cp)
     finally:
         redact_mod._char_class.cache_clear()
 
@@ -265,26 +265,30 @@ def test_budget_3_the_alias_build_is_budgeted(monkeypatch):
     monkeypatch.setattr(redact_mod.time, "thread_time", CountedClock(0.0, 1, 100.0))
     with pytest.raises(InputTooLarge):
         redact("plain ascii text", mapping=mapping, _deadline=6.0)
-    assert len(folded) <= 1, f"N15-ALIAS-BUDGET: the alias build folded {len(folded)} stored values past the deadline"  # with the check removed (mutant N15) all 300 are folded
+    assert len(folded) <= 1, (
+        f"N15-ALIAS-BUDGET: the alias build folded {len(folded)} stored values past the deadline"
+    )  # with the check removed (mutant N15) all 300 are folded
 
 
 def test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check(
     monkeypatch,
 ):
     originals = [f"ab{i:04d}%3Bzq9x" for i in range(300)]
-    mapping = runmap.RunMap({f"<NAME_{i + 1}>": o for i, o in enumerate(originals)})
+    mapping = {f"<NAME_{i + 1}>": o for i, o in enumerate(originals)}
     undone = []
     real_undo = runmap.undo
 
     def spy(t, *a, **k):
-        if t in originals:  # `_views` calls `undo` once on the whole text: not counted
+        if t in originals:
             undone.append(t)
         return real_undo(t, *a, **k)
 
     monkeypatch.setattr(runmap, "undo", spy)
-    monkeypatch.setattr(runmap.time, "thread_time", CountedClock(0.0, 2, 100.0))
+    # `_decoded_masks` is called directly: through `redact_text` the clock is read (and spent) by stage 1 and the views first, so the
+    # loop would never be reached and this test would pass with or without the per-original check
+    monkeypatch.setattr(runmap.time, "thread_time", CountedClock(0.0, 1, 100.0))
     with pytest.raises(InputTooLarge):
-        redact_text(" ".join(originals), mapping)
+        runmap._decoded_masks(mapping, " ".join(originals), 0.0)
     assert len(undone) <= 1, len(undone)  # without the per-original check (mutant DM-1): 256
 
 
