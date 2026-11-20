@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:59:44Z
+UPDATED_UTC: 2026-11-20T05:59:57Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 25
 ITEMS_OPEN: 6
 PERCENT: 81
 AGENTS_RUNNING: 3
-CAPACITY: load 0.15 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.18 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.8G 60G 15%; 350M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T05:58:38Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:59:46Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
