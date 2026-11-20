@@ -211,7 +211,7 @@ refused (409).
 
 | Answer | What it means | What the template does |
 |---|---|---|
-| 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else; this does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | Goes on to "Check state (optional)". No retry. |
+| 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | Goes on to "Check state (optional)". No retry. |
 | 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing or wrong. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
 | 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | STOP: no retry, straight to the error workflow. Check the secret and both clocks. |
 | 409 | The key was already used with a different document. Empty body. | STOP: no retry, straight to the error workflow. A person must look. |
