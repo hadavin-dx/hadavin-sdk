@@ -224,7 +224,8 @@ def _break(monkeypatch, store, text):
     real = store._exec
 
     def faulty(query, params=()):
-        if text in str(query):
+        shown = query.as_string(store._db) if isinstance(query, sql.Composable) else str(query)
+        if text in shown:
             raise RuntimeError("injected fault")
         return real(query, params)
 
@@ -238,7 +239,7 @@ def test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing(w, monkeypatc
     kept = _reserve(rt, "0.50")
     with monkeypatch.context() as m:
         if fault == "raised":
-            _break(m, rt, "UPDATE spend_month")
+            _break(m, rt, '."spend_month" SET')
             failure = RuntimeError
         else:
             w.grant("REVOKE UPDATE ON spend_month FROM {}", w.runtime)
@@ -259,7 +260,7 @@ def test_c3_a_fault_at_the_month_update_in_reserve_changes_nothing(w, monkeypatc
 @pg
 def test_c3_a_fault_at_the_day_update_in_reserve_leaves_no_row(w, monkeypatch):
     rt = w.store(w.runtime)
-    _break(monkeypatch, rt, "UPDATE spend SET")
+    _break(monkeypatch, rt, '."spend" SET')
     with pytest.raises(RuntimeError, match="injected fault"):
         _reserve(rt, "1.25")
     assert _table(w) == {} and _counters(w) == (None, None)
@@ -273,7 +274,7 @@ def test_c4_a_fault_at_the_month_update_in_settle_changes_nothing(w, monkeypatch
     rid = _reserve(rt, "1.00", run_id=run_id)
     with monkeypatch.context() as m:
         if fault == "raised":
-            _break(m, rt, "UPDATE spend_month")
+            _break(m, rt, '."spend_month" SET')
             failure, message = RuntimeError, "injected fault"
         elif fault == "revoked":
             w.grant("REVOKE UPDATE ON spend_month FROM {}", w.runtime)

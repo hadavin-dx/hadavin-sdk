@@ -214,6 +214,9 @@ def _row(model: BaseModel) -> dict[str, Any]:
     return out
 
 
+_SCHEMA_TABLES = ("spend", "spend_month", "spend_reservations")
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -447,14 +450,18 @@ class PostgresStore:
         month = day.replace(day=1)
         with self._lock, self._db.transaction():
             d = self._exec(
-                "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) "
-                "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd",
+                self._t(
+                    "INSERT INTO {spend} (agent_id, day, usd) VALUES (%s, %s, %s) "
+                    "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd"
+                ),
                 (agent_id, day, usd),
             ).fetchone()["usd"]
             m = self._exec(
-                "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, %s) "
-                "ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd "
-                "RETURNING usd",
+                self._t(
+                    "INSERT INTO {spend_month} (agent_id, month, usd) VALUES (%s, %s, %s) "
+                    "ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd "
+                    "RETURNING usd"
+                ),
                 (agent_id, month, usd),
             ).fetchone()["usd"]
         return Decimal(d), Decimal(m)
@@ -462,13 +469,21 @@ class PostgresStore:
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
             d = self._exec(
-                "SELECT usd FROM spend WHERE agent_id = %s AND day = %s", (agent_id, day)
+                self._t("SELECT usd FROM {spend} WHERE agent_id = %s AND day = %s"), (agent_id, day)
             ).fetchone()
             m = self._exec(
-                "SELECT usd FROM spend_month WHERE agent_id = %s AND month = %s",
+                self._t("SELECT usd FROM {spend_month} WHERE agent_id = %s AND month = %s"),
                 (agent_id, day.replace(day=1)),
             ).fetchone()
         return (Decimal(d["usd"]) if d else Decimal(0)), (Decimal(m["usd"]) if m else Decimal(0))
+
+    def _t(self, text: str) -> sql.Composed:
+        """A statement whose spend, spend_month and spend_reservations names carry the schema. An unqualified name
+        is looked up in the session's temporary schema first, so a temporary table of that name would shadow it."""
+        s = sql.Identifier(self._schema)
+        return sql.SQL(text).format(
+            **{t: sql.SQL("{}.{}").format(s, sql.Identifier(t)) for t in _SCHEMA_TABLES}
+        )
 
     def _stop_tables(self) -> dict[str, sql.Composed]:
         """The three stop-state relations with the schema named. An unqualified name is looked up in the session's
@@ -638,31 +653,41 @@ class PostgresStore:
         try:
             with self._lock, self._db.transaction():
                 self._exec(
-                    "INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd) "
-                    "VALUES (%s, %s, %s, %s, %s)",
+                    self._t(
+                        "INSERT INTO {spend_reservations} "
+                        "(reservation_id, agent_id, day, run_id, reserved_usd) VALUES (%s, %s, %s, %s, %s)"
+                    ),
                     (reservation_id, agent_id, day, run_id, usd),
                 )
                 self._exec(
-                    "INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING",
+                    self._t(
+                        "INSERT INTO {spend} (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING"
+                    ),
                     (agent_id, day),
                 )
                 # strictly day before month (the order of add_spend): seed and book the day, then the month;
                 # zero rows = refused, everything rolls back
                 booked = self._exec(
-                    "UPDATE spend SET usd = usd + %(amt)s WHERE agent_id = %(agent)s AND day = %(day)s "
-                    "AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd",
+                    self._t(
+                        "UPDATE {spend} SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
+                        "AND day = %(day)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"
+                    ),
                     {"amt": usd, "agent": agent_id, "day": day, "cap": day_cap},
                 ).fetchone()
                 if booked is None:
                     raise SpendCapExceeded("day")
                 self._exec(
-                    "INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, 0) "
-                    "ON CONFLICT DO NOTHING",
+                    self._t(
+                        "INSERT INTO {spend_month} (agent_id, month, usd) VALUES (%s, %s, 0) "
+                        "ON CONFLICT DO NOTHING"
+                    ),
                     (agent_id, month),
                 )
                 booked = self._exec(
-                    "UPDATE spend_month SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
-                    "AND month = %(month)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd",
+                    self._t(
+                        "UPDATE {spend_month} SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
+                        "AND month = %(month)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"
+                    ),
                     {"amt": usd, "agent": agent_id, "month": month, "cap": month_cap},
                 ).fetchone()
                 if booked is None:
@@ -675,9 +700,9 @@ class PostgresStore:
     # what stays booked on the counters: the actual amount, or for a row that was expired the larger of the
     # actual and the reserved amount (after expiry the booking never goes down).
     _CLAIM = (
-        "WITH old AS (SELECT status FROM spend_reservations WHERE reservation_id = %(id)s "
+        "WITH old AS (SELECT status FROM {spend_reservations} WHERE reservation_id = %(id)s "
         "AND (%(agent)s::text IS NULL OR agent_id = %(agent)s) AND status IN ('open', 'expired') FOR UPDATE) "
-        "UPDATE spend_reservations r SET status = 'settled', settled_usd = CASE WHEN old.status = 'expired' "
+        "UPDATE {spend_reservations} r SET status = 'settled', settled_usd = CASE WHEN old.status = 'expired' "
         "THEN GREATEST(%(a)s::numeric, r.reserved_usd) ELSE %(a)s::numeric END, "
         "closed_at = clock_timestamp() FROM old WHERE r.reservation_id = %(id)s "
         "RETURNING r.*, old.status AS was"
@@ -694,11 +719,12 @@ class PostgresStore:
             # The claim comes first. A second caller waits on the row lock, finds the row settled, claims
             # nothing and gets the stored row back unchanged.
             row = self._exec(
-                self._CLAIM, {"id": reservation_id, "a": actual_usd, "agent": agent_id}
+                self._t(self._CLAIM), {"id": reservation_id, "a": actual_usd, "agent": agent_id}
             ).fetchone()
             if row is None:
                 row = self._exec(
-                    "SELECT * FROM spend_reservations WHERE reservation_id = %s", (reservation_id,)
+                    self._t("SELECT * FROM {spend_reservations} WHERE reservation_id = %s"),
+                    (reservation_id,),
                 ).fetchone()
                 if row is None or (agent_id is not None and row["agent_id"] != agent_id):
                     raise NotFound(reservation_id)  # also another agent's id: nothing is revealed
@@ -712,15 +738,15 @@ class PostgresStore:
                 # the row's own day and its month, never today's; day first, then month
                 for query, key in (
                     (
-                        "UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s",
+                        "UPDATE {spend} SET usd = usd + %s WHERE agent_id = %s AND day = %s",
                         row["day"],
                     ),
                     (
-                        "UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s",
+                        "UPDATE {spend_month} SET usd = usd + %s WHERE agent_id = %s AND month = %s",
                         row["day"].replace(day=1),
                     ),
                 ):
-                    if self._exec(query, (delta, row["agent_id"], key)).rowcount == 0:
+                    if self._exec(self._t(query), (delta, row["agent_id"], key)).rowcount == 0:
                         raise RuntimeError("spend counter row missing")  # rolls the claim back
             if row["run_id"] is not None:  # the real actual amount; a missing run row is ignored
                 self._exec(
@@ -734,9 +760,11 @@ class PostgresStore:
         check_expiry_age(older_than_s)
         with self._lock:
             return self._exec(
-                "UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, "
-                "closed_at = clock_timestamp() WHERE status = 'open' "
-                "AND created_at <= clock_timestamp() - make_interval(secs => %s::double precision)",
+                self._t(
+                    "UPDATE {spend_reservations} SET status = 'expired', settled_usd = reserved_usd, "
+                    "closed_at = clock_timestamp() WHERE status = 'open' "
+                    "AND created_at <= clock_timestamp() - make_interval(secs => %s::double precision)"
+                ),
                 (older_than_s,),
             ).rowcount
 
@@ -745,7 +773,9 @@ class PostgresStore:
         check_purge_bound(before)
         with self._lock:
             return self._exec(
-                "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %s",
+                self._t(
+                    "DELETE FROM {spend_reservations} WHERE status <> 'open' AND closed_at < %s"
+                ),
                 (before,),
             ).rowcount
 
