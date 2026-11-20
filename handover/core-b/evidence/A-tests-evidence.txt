@@ -1,0 +1,32 @@
+== ruff check
+All checks passed!
+1 file already formatted
+
+== pytest WITH HADAVIN_TEST_PG_DSN (throwaway PostgreSQL 16 on 127.0.0.1:55439)
+..........................                                               [100%]
+26 passed in 8.98s
+
+== pytest WITHOUT HADAVIN_TEST_PG_DSN
+.....................ssss.                                               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_audit_drain.py:472: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:498: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:541: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_audit_drain.py:555: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+22 passed, 4 skipped in 5.41s
+
+== mutants (each applied alone to the worktree source, one targeted pytest -k run with the DSN set, then git checkout -- <file>)
+mutant | verdict | selection | failing tests | last pytest line
+M1 STEPS row removed | KILLED | -k 'test_n1' | test_n1_audit_drain_is_the_last_tick_step | 1 failed, 25 deselected in 0.24s
+M2 audit_drain body empty | KILLED | -k 'test_n2' | test_n2_one_tick_writes_a_parked_outcome_to_the_chain | 1 failed, 25 deselected in 0.82s
+M3a flush removed from write_intent | KILLED | -k 'test_n3' | test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent] | 1 failed, 1 passed, 24 deselected in 0.25s
+M3b flush removed from write_outcome | KILLED | -k 'test_n3' | test_n3_the_next_successful_write_flushes_what_this_process_parked[write_outcome] | 1 failed, 1 passed, 24 deselected in 0.24s
+M4 flush does not remove drained events | KILLED | -k 'test_n3' | test_n3_the_next_successful_write_flushes_what_this_process_parked[write_intent], test_n3_the_next_successful_write_flushes_what_this_process_parked[write_outcome] | 2 failed, 24 deselected in 0.26s
+M5 outbox row deleted when _drain False | KILLED | -k 'test_an_outbox_row_that_cannot_be_written_yet_is_kept' | test_an_outbox_row_that_cannot_be_written_yet_is_kept | 1 failed, 25 deselected in 0.83s
+M6a unreadable body raises at once | KILLED | -k 'test_h1' | test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them | 1 failed, 25 deselected in 0.79s
+M6b mismatched id raises at once | KILLED | -k 'test_h1' | test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them | 1 failed, 25 deselected in 0.74s
+M7a unreadable body deleted | KILLED | -k 'test_h1' | test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them | 1 failed, 25 deselected in 0.74s
+M7b mismatched-id row deleted | KILLED | -k 'test_h1' | test_h1_unreadable_rows_are_kept_and_never_block_the_rows_after_them | 1 failed, 25 deselected in 0.73s
+M8a flush after failed append (write_intent) | KILLED | -k 'test_e5' | test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_intent] | 1 failed, 1 passed, 24 deselected in 0.27s
+M8b flush after failed append (write_outcome) | KILLED | -k 'test_e5' | test_e5_a_failed_triggering_append_makes_no_flush_attempt[write_outcome] | 1 failed, 1 passed, 24 deselected in 0.25s
+M9 non-connectivity SELECT error swallowed | KILLED | -k 'test_an_outbox_that_answers_with_an_error or test_e7' | test_an_outbox_that_answers_with_an_error_fails_the_step, test_e7_a_runtime_role_that_cannot_read_the_outbox_fails_the_step | 2 failed, 24 deselected in 1.05s

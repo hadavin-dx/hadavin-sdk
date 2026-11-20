@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:35:56Z
+UPDATED_UTC: 2026-11-20T05:36:15Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 55
 AGENTS_RUNNING: 7
-CAPACITY: load 0.62 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 3 heavy 4
-DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 405M
+CAPACITY: load 0.52 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 3 heavy 4
+DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 414M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
 NEXT: resolve the F-store review; land test commits; EGM round on tickets B and C; then ONE batch full-suite run
-PUSHED_UTC: 2026-11-20T05:35:15Z (previous push; this board is pushed right after writing)
-IST: 11:05 IST
+PUSHED_UTC: 2026-11-20T05:35:56Z (previous push; this board is pushed right after writing)
+IST: 11:06 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
