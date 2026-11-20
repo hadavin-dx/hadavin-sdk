@@ -499,6 +499,9 @@ blocks are not decoded. 1c rows 2, 3, 6, 7, 10 and 11 become one ENCODED. A blob
     These are the decoded view's new values of kinds that are never stored (no secret kind is in `defaults.STORED_KINDS`, and
     config.py 280 rejects a stored kind outside it). Inner ENCODED entries of nested blobs are dropped, so ENCODED numbers do not
     skip. Every other entry of `scanned_map` is thrown away. `_pass_one` renumbers the kept entries (2.5 step 6).
+    CHANGED in v6 (review round 5): "never stored" is not only the secret kinds. The kinds of `_LABELS` that are neither in
+    `SECRET_KINDS` nor in `defaults.STORED_KINDS` are UUID, BANKCODE, BANKACCT, SSN, AADHAAR and PAN (read at bff88a7a1: the set
+    difference of the three; defaults.py 198 says why UUID is not stored). Their decoded finds are KEPT too (L8).
 
 Why the decoded view is not neutralised with the caller's hook (review round 4 codebase B2, MEASURED). On the card path the hook is
 `channel._neutralise` = `withhold_commands(sanitise_text(t, defang=False))`; `sanitise_text`'s line cleaning replaces a URL with
@@ -1362,7 +1365,7 @@ Dropped from v4's list, each with its reason (MEASURED or by reading):
 | L5 | restore of underscore host names | not restorable | add `_` to `_GRAMMAR["HOSTNAME"]` |
 | L6 | shortest run | 12 characters | 16 (row 83 a stated limit) |
 | L7 | where the constants live | defaults.py, a SPINE commit | module constants in runmap.py |
-| L8 | decoded finds | the ENCODED entries of the hit units, plus the decoded view's new entries of kinds NOT in `defaults.STORED_KINDS` (secret and regulated kinds; never stored, so nothing new is stored at rest); a bare plain copy of a decoded secret is masked (TB-3.6); inner ENCODED and identifier finds are thrown away | (a) only ENCODED entries kept; then "a bare plain copy elsewhere stays unmasked" is stated in SECURITY and TB-3.6 becomes a strict xfail; (b) every decoded entry kept (EMAIL/HOSTNAME/IPV4 then stored at rest) |
+| L8 | decoded finds | the ENCODED entries of the hit units, plus the decoded view's new entries of kinds NOT in `defaults.STORED_KINDS` (the secret kinds, and, CHANGED in v6, the kinds that are neither secret nor stored: UUID, BANKCODE, BANKACCT, SSN, AADHAAR, PAN; never stored, so nothing new is stored at rest); a bare plain copy of a decoded secret is masked (TB-3.6); inner ENCODED and identifier finds are thrown away | (a) only ENCODED entries kept; then "a bare plain copy elsewhere stays unmasked" is stated in SECURITY and TB-3.6 becomes a strict xfail; (b) every decoded entry kept (EMAIL/HOSTNAME/IPV4 then stored at rest) |
 | L9 | unit cap | `B64_MAX_UNITS` = `MAX_MAP_ENTRIES`, refusal past it | 4,096, refusal past it |
 | L10 | `_ASSIGNMENT_KINDS` | gains ENCODED (it matters for a tag-split blob of a stored-kind value, TB-3.26) | unchanged: a tag-split blob of an e-mail, host or address stays readable on a card |
 | L11 | host label class | ASCII | Unicode `\w` |
