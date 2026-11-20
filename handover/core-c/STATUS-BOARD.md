@@ -1,31 +1,31 @@
-UPDATED_UTC: 2026-11-20T05:32:54Z
+UPDATED_UTC: 2026-11-20T05:33:18Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 14
-ITEMS_OPEN: 8
-PERCENT: 59
-AGENTS_RUNNING: 5
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 2; 408K	/tmp/claude-0;351M	/root/.cache/uv;
+ITEMS_OPEN: 7
+PERCENT: 66
+AGENTS_RUNNING: 4
+CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 2; 424K	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:32:13+00:00
+PUSHED_UTC: 2026-11-20T05:32:54+00:00
 
-(11:02 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 05:55 | 5 | running | n/a | 0 | lead GO BUILD F and G by message 05:29 |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 2 | running | n/a | 0 | lead GO BUILD G; separate worktree so two builders never share a checkout; HEAVY (runs tests) |
-| (new) rd-G | reviewer | fable | EGM plan review of tickets/G-text-deltas.md, implementation readiness | 05:32 | 05:40 | 5 | running | 1 of 1 | 0 | review runs alongside the build (lead message 05:29) |
-| (new) cb-G | reviewer | fable | EGM plan review of ticket G, code facts on main and on the input heads through git objects only | 05:32 | 05:42 | 5 | running | 1 of 1 | 0 | review runs alongside the build |
-| a5098f29 | builder (tests only) | fable | writes NEW tests/test_grants_negative_roles.py and tickets/B-mutant-cases.md for step B; may try once to start PostgreSQL 16 as the postgres user under /tmp/core-c-pg | 05:28 | 05:45 | 5 | running | n/a | 0 | lead message 05:27 item 2; tests are written by a different agent than the builder |
+| a04f3d03 | reviewer | fable | EGM plan review of tickets/G-text-deltas.md, implementation readiness | 05:32 | 05:40 | 5 | running | 1 of 1 | 0 | review runs alongside the build (lead message 05:29) |
+| aceaf250 | reviewer | fable | EGM plan review of ticket G, code facts on main and on the input heads through git objects only | 05:32 | 05:42 | 5 | running | 1 of 1 | 0 | review runs alongside the build |
+| a5098f29 | builder (tests only) | fable | writes NEW tests/test_grants_negative_roles.py and tickets/B-mutant-cases.md for step B; may try once to start PostgreSQL 16 as the postgres user under /tmp/core-c-pg | 05:28 | 05:45 | 100 | done | n/a | 0 | finished: tests/test_grants_negative_roles.py (566 lines, 33 tests). No database: 19 passed, 13 skipped, 1 xfailed. Local PostgreSQL 16: 31 passed, 2 xfailed. Server stopped, data folder removed; one zombie postgres pid 4036 of its own remains |
 | a8830db0 | reviewer | fable | EGM plan review of tickets/F-gate-wrapper-body.md against the implementation-readiness standard (egm:egm-implementation-readiness) | 05:24 | 05:32 | 100 | done | 1 of 1 | 0 | finished: ticket F NOT READY, 6 Blockers, 6 Majors, 5 Nits; all opened line citations accurate |
 | a112f9c8 | reviewer | fable | EGM plan review of ticket F: checks every cited file:line and code reuse (egm:egm-codebase-details) | 05:24 | 05:34 | 100 | done | 1 of 1 | 0 | finished: ticket F NOT CLEAN, 2 Blockers, 9 Majors, 5 Nits; one is a real design conflict (E2) |
 | a0321052 | lookup | fable | Q2: reads repo docs and src/hadavin_sdk layout, writes LANE-MAP.md | 05:20 | 05:30 | 100 | done | n/a | 0 | finished 05:22, LANE-MAP.md written (48 lines, 16 modules); guard/textnorm* does not exist on main |
@@ -38,12 +38,13 @@ PUSHED_UTC: 2026-11-20T05:32:13+00:00
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| none | | | | | |
+| 4036 | postgres (defunct zombie) | agent a5098f29 | 05:30 | defunct | left by the stopped test server; holds no resources; not killed by pattern |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
 |---|---|---|---|---|---|---|
-| none | | | | | | |
+| tests/test_grants_negative_roles.py | cloud/core-c working tree on 51c9fc4 source | 1 (no database) | 19 passed / 0 failed / 13 skipped, 1 xfailed | none | done | pure-Python layer |
+| tests/test_grants_negative_roles.py | same, local PostgreSQL 16.15 as user postgres | 2 | 31 passed / 0 failed, 2 xfailed (strict, step B gap) | first PG run: 3 failures in the new tests themselves (unqualified table names), fixed | done | PostgreSQL 17 (CI version) NOT RUN |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -57,7 +58,7 @@ PUSHED_UTC: 2026-11-20T05:32:13+00:00
 | T2 ticket F gate wrapper body | DONE (draft) | 100 | tickets/F-gate-wrapper-body.md | 0 | written by the session itself while 3 agents run; 5 open questions inside; EGM round is next |
 | T3 EGM review of ticket G | RUNNING | 10 | tickets/G-review-1.md | 1 | two reviewers |
 | T3 EGM review of ticket F | DONE | 100 | tickets/F-review-1.md | 1 | NOT CLEAN after the one round: 6 Blockers, 9 Majors, 7 Nits merged; resolved or assumed in tickets/F-review-1.md; one escalated (E2) |
-| T4 step B grants negative tests + mutant cases | RUNNING | 5 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | one agent; will be a separate commit 'code B:' |
+| T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 5 | evidence/F-G0-1.md | 1 | one builder; tests/test_k5_producers.py will be red until SPINE applies requests/1-producers.patch |
 | BUILD G1 fold | RUNNING | 2 | evidence/G1-fold.md | 1 | one builder in a worktree |
 | BUILD G2 P1d-a, G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | they stack on the fold; G6 wording waits for the lead's OK of the text |
@@ -71,7 +72,7 @@ PUSHED_UTC: 2026-11-20T05:32:13+00:00
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
 |---|---|---|---|---|
-| none | | | | |
+| step B PG tests | 2 | 0 | UndefinedTable in the agent's own tests | fixed at try 2 by schema-qualifying |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
