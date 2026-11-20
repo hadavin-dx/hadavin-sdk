@@ -242,9 +242,9 @@ def test_restore_round_trips():
 
 def test_survives_a_value_embedded_in_a_larger_token():
     """Live-cluster regression: a Kubernetes event embeds the pod UID inside a longer token
-    (`..._default_<uid>_0`) where a trailing-`\\b` regex misses one of two occurrences. The final
-    literal sweep must catch the copy the pattern skipped. (Since ticket G8 the UUID pattern has no
-    word boundary and takes that copy itself; the sweep's own count is pinned in test_redact_g3_port.)"""
+    (`..._default_<uid>_0`) where a trailing-`\\b` regex misses one of two occurrences. Before ticket G8 the final
+    literal sweep caught the copy the pattern skipped; since G8 the UUID pattern has no word boundary and takes that
+    copy itself (the sweep's own count is pinned in test_redact_g3_port). Either way both copies are masked."""
     uid = "534e3098-a21e-415b-8010-24ae0fb955bb"
     text = f"reserve name checkout_default_{uid}_0 pod=({uid})"
     r = redact(text)

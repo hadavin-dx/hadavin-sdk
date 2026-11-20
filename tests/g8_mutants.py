@@ -54,6 +54,10 @@ OPQ = "test_an_iban_never_starts_inside_an_opaque_token"
 UNT = "test_untrusted_placeholder_literal_keeps_its_number"
 IS = '_IBAN_START\n            + r"(?:AD|AE'
 E7 = r'r"\d{10,16}(?![0-9A-Za-z.>›])"'
+# The names skip G8-P6 and G8-P7 on purpose: P6 (a 5-digit guard) was removed in v3 (ticket G8, L-D9 flipped), and P7 went when the
+# PHONE entries were renumbered (6, 7, 8) in v4; the numbers are not reused.
+# Mutant G8-S7 edits runmap.py (the gate's held-back sweep), the others redact.py.
+RM = "src/hadavin_sdk/guard/runmap.py"
 M = [
     m("G8-I1 IBAN end back to \\b", r'r"\d{2}[A-Za-z0-9]{11,30}" + _IBAN_END', r'r"\d{2}[A-Za-z0-9]{11,30}\b"', GR, "ROW 36 "),
     m("G8-I2 IBAN start back to \\b", IS, 'r"\\b(?:AD|AE', GR, "ROW 41 "),
@@ -89,6 +93,7 @@ M = [
     m("G8-S4 IPV4 given digits", J5, '_JOINS = {"PHONE": frozenset(string.digits), "IPV4": frozenset(string.digits)}', SW, "SWEEP ipv4"),
     m("G8-S5 TENANT given digits", J5, '_JOINS = {"PHONE": frozenset(string.digits), "TENANT": frozenset(string.digits)}', SW, "SWEEP tenant"),
     m("G8-S6 PHONE copy beside a digit replaced too", J5, '_JOINS = {"PHONE": frozenset()}', SW, "SWEEP phone digit"),
+    m("G8-S7 gate held-back sweep without joins", "segment, spelling, placeholder, _joins(placeholder)", "segment, spelling, placeholder", "test_gate_sweep_of_a_held_back_phone_value_uses_the_phone_joins", "SWEEP held", file=RM),
 ]  # fmt: skip
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ tests/test_text_parts_together.py does). A row is
 with `text`, `now`, `after` and `after_g4c` templates over `V` (`{IP1}` ...) that `case()` fills in:
     now       `redact(text).text` on the base commit (step 0, recorded on cloud/core-c a5247ac4a; `python -m tests.g8_cases`
               re-checks it and exits 1 on any difference)
-    after     `redact(text).text` with G8a + G8b, G4c NOT merged
+    after     `redact(text).text` with G8a (the patterns) + G8b (the sweep's joins), G4c NOT merged; "G8a" and "G8b" are the
+              ticket's two parts, kept as labels only here
     after_g4c the same once G4c (ticket G4 v4 / v5 sections 5.2 and 5.3: the same regex text) is merged; None = same as
               `after`
     cls       closed (leaks now, not after) | changed (no leak either way, the output changes) | unchanged | limit (still
@@ -237,6 +238,72 @@ def opaque(n: int) -> str:
     return J(ALNUM[(7 * i + 3) % 62] for i in range(n))
 
 
+# Review round 1 (design Major): a UUID or a phone number set off by `_` (or a letter) INSIDE a long opaque token. The base masked
+# such a token whole as one HIGHENTROPY (`_` is no \\b boundary); the UUID and PHONE patterns now cut the value out first and the
+# remainder is under HIGHENTROPY's 40-character minimum, so up to 32 characters of the token stay readable. Stated limit L15, pinned as
+# measured (`after`, test_a_value_inside_an_opaque_token_is_a_stated_limit); the ideal (no 8-character run of `tail` readable) is a
+# strict xfail. (id, shape, text, tail, base, after): `base` is the output before G8 (a git archive of the parent of the G8 commits).
+_T32, _T40, _T20 = opaque(32), opaque(40)[::-1], opaque(20)[::-1]
+OPAQUE_LIMITS = [
+    (
+        "OL1",
+        "uuid _ before, 32 after",
+        "tok_" + V["UUID"] + "_" + _T32,
+        _T32,
+        "<HIGHENTROPY_1>",
+        "tok_<UUID_1>_DKRYfmt07ELSZgnu18FMTahov29GNUbi",
+    ),
+    (
+        "OL2",
+        "uuid _ before, 40 after",
+        "tok_" + V["UUID"] + "_" + _T40,
+        _T40,
+        "<HIGHENTROPY_1>",
+        "tok_<UUID_1><HIGHENTROPY_1>",
+    ),
+    (
+        "OL3",
+        "uuid _ after, 20 before",
+        _T20 + "_" + V["UUID"],
+        _T20,
+        "<HIGHENTROPY_1><ACCOUNTID_1>",
+        "MF81ungZSLE70tmfYRKD_<UUID_1>",
+    ),
+    (
+        "OL4",
+        "uuid letter before, 30 after",
+        "a" + V["UUID"] + opaque(30)[::-1],
+        opaque(30)[::-1],
+        "<HIGHENTROPY_1>",
+        "a<UUID_1>UNG92vohaTMF81ungZSLE70tmfYRKD",
+    ),
+    (
+        "OL5",
+        "phone _ before and after",
+        "tok_" + V["PHONE10"] + "_" + _T32,
+        _T32,
+        "<HIGHENTROPY_1>",
+        "tok_<PHONE_1>_DKRYfmt07ELSZgnu18FMTahov29GNUbi",
+    ),
+    (
+        "OL6",
+        "phone _ both sides, 20 + 20",
+        "tok_" + _T20 + "_" + V["PHONE10"] + "_" + _T20[::-1],
+        _T20,
+        "<HIGHENTROPY_1>",
+        "tok_MF81ungZSLE70tmfYRKD_<PHONE_1>_DKRYfmt07ELSZgnu18FM",
+    ),
+    (
+        "OL7",
+        "11 digits, _ after",
+        "tok_" + V["PHONE10"] + "1_" + _T32,
+        _T32,
+        "<HIGHENTROPY_1>",
+        "tok_<PHONE_1>_DKRYfmt07ELSZgnu18FMTahov29GNUbi",
+    ),
+]
+
+
 # (id, text, now, after, verdict); None = the text itself. verdict: kept (nothing masked, before and after) | same (masked
 # today, G8 does not change it, or changes only what the note says) | over-mask L-Dn (accepted by that decision) | closed (a
 # real value newly masked). K1-K28 are v1's table; K29-K74 the reviewers' examples and the drafter's v2 traces; K75-K80 v3's
@@ -416,7 +483,7 @@ MUST_KEEP = [
     ),
 ]
 # Found on the way, NOT glued (stated limit L7): a phone number before a full stop is not masked, or only in part.
-# (id, text, now, after); None = the text itself. F1-F3: unchanged by G8. v5 (G8-review-4-design N2): F4, a spaced `+`
+# (id, text, now, after); None = the text itself. F1-F3, F5, F6: unchanged by G8 (F5, F6: review round 1, limit L7 for the entries 7 and 8). v5 (G8-review-4-design N2): F4, a spaced `+`
 # number glued to a letter before a full stop: the main entry masks its head on the base and `1234.` stays readable; G8's
 # entry 6 takes the `+` inside, the last group stays readable (as on the base).
 FULL_STOP = [
@@ -424,6 +491,9 @@ FULL_STOP = [
     ("F2", "call " + P10 + ".", None, None),
     ("F3", "call " + V["PHONE_P"] + ".", None, None),
     ("F4", "call x" + V["PHONEUK"] + ".", "call x+<PHONE_1> 1234.", "call x<PHONE_1> 1234."),
+    # review round 1 (design N4): the phone-word and `_` entries refuse a trailing `.` too; both stay readable, as on the base
+    ("F5", "call tel_" + P10 + ".", None, None),
+    ("F6", "call tel" + P10 + ".", None, None),
 ]
 # At rest (G8-review-2 F6): (id, text, now, after): each side is (text, sorted map items, sorted storable items) of
 # `redact(text)` and `runmap.storable(mapping)`. AT1-AT3: a piece of a secret with a stored kind's shape is registered under
