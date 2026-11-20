@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:33:16Z
+UPDATED_UTC: 2026-11-20T17:35:53Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: STOP received (owner order ~23:03 IST). Starting NOTHING new. Waiting for the running agents to finish: Q2 builder, Q3 builder, P7b builder (pushed 5a1be73c8), Q1 reviewer; my background whole-tree redact_mutants is finishing. Then: merge what is verified, push all branches, verify remote hash = local, write RESUME-NOTE-2026-11-20.md and ANSWERS file, final heartbeat. Load (/proc/loadavg) 4.21 3.33 2.58.
+STATE: FINAL HEARTBEAT after the owner STOP: all agents finished, none running; all branches pushed and verified (local = remote, clean worktrees): list in the latest handover/core-c/ANSWERS-*.md; resume instructions in handover/core-c/RESUME-NOTE-2026-11-20.md. Load (/proc/loadavg) 2.75 3.14 2.64. Two background mutant runs may still be alive (redact_mutants whole, gate_mutants in /tmp/core-c-p7b): re-run if lost. Stopping.
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 4.2 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+AGENTS_RUNNING: 0
+CAPACITY: load 2.8 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 0, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;310M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: finish running agents; no new starts; write RESUME-NOTE and ANSWERS; final heartbeat
-PUSHED_UTC: 2026-11-20T17:32:59+00:00
+NEXT: STOPPED by owner order; resume from RESUME-NOTE-2026-11-20.md
+PUSHED_UTC: 2026-11-20T17:35:50+00:00
 
-(23:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(23:05 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -59,11 +59,11 @@ PUSHED_UTC: 2026-11-20T17:32:59+00:00
 | p8 | reviewer | claude-sonnet-5-5 | P8: fresh egm-design end-to-end review of gate+guard+redact+runmap at a4c99a006 | 17:12 | 17:30 | 1 | done | 1 | 0 | EGM design |
 | p7-rev | reviewer | claude-sonnet-5-5 | FRESH review of the P7 LimitsMeter diff | 17:27 | 17:40 | 1 | done | 1 | 0 | EGM |
 | g14 | builder | claude-sonnet-5-5 | G14: per-message enforce cache keyed by map version + audit-drop counter (P8 items 4, 7); /tmp/core-c-g14 | 17:27 | 18:00 | 1 | done | 1 | 0 |  |
-| p7b | builder | claude-sonnet-5-5 | P7b: LimitsMeter review fixes (tests for overshoot/errors, constructor check, one-gate-per-agent, stale comments); /tmp/core-c-p7b | 17:30 | 17:55 | 1 | running | 1 | 0 |  |
+| p7b | builder | claude-sonnet-5-5 | P7b: LimitsMeter review fixes (tests for overshoot/errors, constructor check, one-gate-per-agent, stale comments); /tmp/core-c-p7b | 17:30 | 17:55 | 1 | done | 1 | 0 |  |
 | q1 | builder | claude-sonnet-5-5 | Q1: E25 (a) reply masking + put-back, flip F2 xfail; /tmp/core-c-q1 | 17:37 | 18:10 | 1 | done | 1 | 0 |  |
-| q2 | builder | claude-sonnet-5-5 | Q2: fail-closed spend gate side (P8 item 3); /tmp/core-c-q2 | 17:37 | 18:10 | 1 | running | 1 | 0 |  |
-| q3 | builder | claude-sonnet-5-5 | Q3: G15 independent final net; /tmp/core-c-q3 | 17:37 | 18:10 | 1 | running | 1 | 0 |  |
-| q1-rev | reviewer | claude-sonnet-5-5 | FRESH review of the Q1 reply-masking diff | 17:45 | 17:58 | 1 | running | 1 | 0 | EGM |
+| q2 | builder | claude-sonnet-5-5 | Q2: fail-closed spend gate side (P8 item 3); /tmp/core-c-q2 | 17:37 | 18:10 | 1 | done | 1 | 0 |  |
+| q3 | builder | claude-sonnet-5-5 | Q3: G15 independent final net; /tmp/core-c-q3 | 17:37 | 18:10 | 1 | done | 1 | 0 |  |
+| q1-rev | reviewer | claude-sonnet-5-5 | FRESH review of the Q1 reply-masking diff | 17:45 | 17:58 | 1 | done | 1 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
