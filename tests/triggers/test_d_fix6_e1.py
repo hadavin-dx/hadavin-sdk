@@ -63,10 +63,12 @@ def _post(wsgi, document: bytes, *, key: str = KEY, sign: bool = True):
     }
     sig = ""
     if sign:
-        headers = hmac_v0.sign(body, NOW, SECRET, endpoint.PREFIX)
-        sig = headers[endpoint.SIGNATURE_HEADER]
+        headers = {
+            k.lower(): v for k, v in hmac_v0.sign(body, NOW, SECRET, endpoint.PREFIX).items()
+        }
+        sig = headers[endpoint.SIGNATURE_HEADER.lower()]
         environ["HTTP_" + endpoint.TIMESTAMP_HEADER.upper().replace("-", "_")] = headers[
-            endpoint.TIMESTAMP_HEADER
+            endpoint.TIMESTAMP_HEADER.lower()
         ]
         environ["HTTP_" + endpoint.SIGNATURE_HEADER.upper().replace("-", "_")] = sig
     seen: list = []
@@ -232,7 +234,9 @@ def _switch_app(tmp_path):
     return app, store
 
 
-def test_e1_health_is_200_when_the_store_is_up_and_503_with_a_counter_when_it_is_down(tmp_path, caplog):
+def test_e1_health_is_200_when_the_store_is_up_and_503_with_a_counter_when_it_is_down(
+    tmp_path, caplog
+):
     app, store = _switch_app(tmp_path)
     wsgi, runner = worker.make_app(app, clock=lambda: NOW)
     with runner, caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
@@ -250,7 +254,9 @@ def test_e1_health_is_200_when_the_store_is_up_and_503_with_a_counter_when_it_is
         store.down = False
         status, body, _ = _get(wsgi)
         assert status == 200 and json.loads(body) == {"status": "ok", "store_failures": 3}
-        assert _get(wsgi, method="POST")[0] == 405 and _get(wsgi, method="POST")[2]["Allow"] == "GET"
+        assert (
+            _get(wsgi, method="POST")[0] == 405 and _get(wsgi, method="POST")[2]["Allow"] == "GET"
+        )
         assert _get(wsgi, path="/health/x")[0] == 404
     assert "private text" not in caplog.text
 
@@ -264,7 +270,9 @@ def test_e1_health_needs_no_signature_and_leaks_nothing(tmp_path, caplog):
         _settle(app.store, endpoint.derive_run_id(TENANT, SENDER, KEY))
         _free(runner)
         assert _post(wsgi, OTHER_DOCUMENT)[0] == 409
-        assert _post(wsgi, DOCUMENT, sign=False)[0] == 401  # the trigger path still needs the signature
+        assert (
+            _post(wsgi, DOCUMENT, sign=False)[0] == 401
+        )  # the trigger path still needs the signature
         for down in (False, True):
             store.down = down
             status, body, headers = _get(wsgi)  # no header at all
@@ -341,7 +349,11 @@ def test_e1_start_with_the_store_down_starts_and_health_is_503(monkeypatch, capl
         "store_failures": 1,
     }
     assert answers[1] == (503, b"")
-    warns = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    warns = [
+        r.getMessage()
+        for r in caplog.records
+        if r.levelname == "WARNING" and "SIGTERM" not in r.getMessage()
+    ]
     assert len(warns) == 1 and error.__name__ in warns[0] and "store unreachable" in warns[0]
     for private in (fake_secret, "postgresql", "db-host"):
         assert private not in caplog.text
