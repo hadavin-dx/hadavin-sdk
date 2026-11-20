@@ -24,3 +24,9 @@ Everything below was read from git and the files at the moment of the stop, not 
 
 ## Files to read first
 ORDERS.md (015, 016, 017), QUEUE/backlog in ORDER 016, ESCALATIONS.md, QUESTIONS.md, DECISIONS.md, CROSS-LANE.md, tickets/F-result-review-1.md, tickets/F-gate-wrapper-body.md (Amendment 1, As Built, Stated Limits), tickets/G7-context-after-sweep.md, evidence/*.md.
+
+## ADDENDUM 2026-11-20T06:38Z: the container was restarted (BOOT_ID 1e29cf8a) after the first restart
+All agents of the first restart (r-gate a5cffb69, r-int a4b11572, r-grants aebf0900, the two G7 reviewers ada32fe5 and aca5bee2) were stopped before they could report; their progress, if any, is only in the working files:
+- /home/user/hadavin-sdk working tree (cloud/core-c): uncommitted edits of the gate round 2 (src/hadavin_sdk/guard/model_gate.py, runmap.py, tests/test_model_gate.py, tests/test_runmap_enforce_map.py, tests/test_grants_negative_roles.py, three redact test files; tests/test_runmap_is_masked.py deleted): origin unknown (first agent or restart agent), NOT verified; snapshot of the first agent's state: branch wip/cloud-core-c/gate-r2-interrupted 9b5f458.
+- /tmp worktrees survived: /tmp/core-c-int (wip-int-g2g3 at 5316e14), /tmp/core-c-g2, /tmp/core-c-g3, /tmp/core-c-grants (core-b code), data folder /tmp/core-c-grants-pg (server stopped).
+- No G7 review output exists. The EGM plugin model lines were reverted in this container (see REPORT.md): reviewers now run on sonnet.

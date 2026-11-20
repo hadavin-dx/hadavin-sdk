@@ -1,5 +1,16 @@
 # REPORT from core-c (newest on top, UTC and IST)
 
+## EGM SETUP REVERTED AND PROVEN, 2026-11-20T06:38Z (owner order after the Fable limit; this container was restarted at about 06:37 UTC: BOOT_ID 1e29cf8a)
+Command: `grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c`
+Output:
+```
+      6 model: claude-opus-5-5
+     66 model: claude-sonnet-5-5
+```
+What was done: `sed -i 's/^model: claude-fable-5-2/.../'` on the 72 files that carried that line (cache copy and marketplace copy, skills, agents, `.claude-plugin/agents`, `.cursor-plugin/agents`): `claude-opus-5-5` ONLY in the skills egm-brainstorm, egm-draft, egm-resolve (6 files: both copies); `claude-sonnet-5-5` in the other 66. The issue template `.github/ISSUE_TEMPLATE/feature_proposal.md` carries no `model:` line (checked: no match), so nothing to change there. `grep -rli fable` over both egm plugin trees: 0 files. No patch script was used. Zero fable lines.
+Agents: every Agent call from now sets the model explicitly: sonnet for EGM reviewers, builders and agents, haiku for lookups; opus only for egm-brainstorm / draft / resolve; never fable.
+The restart agents I started on sonnet at 06:40 were stopped by the container restart: see RESUME-NOTE-2026-11-20.md (addendum).
+
 ## Build status after ORDERS 002 to 011. 2026-11-20T05:53Z (IST = UTC + 5:30)
 
 ### What failed or is open (first)
