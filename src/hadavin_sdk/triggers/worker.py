@@ -33,19 +33,16 @@ Several threads at once: what was read, and what was not
 - `handle` runs on a pool thread. If it raises, the class name is logged and nothing else; the process goes on and
   a run that was cut off is ended by the tick's stuck step, so the tick MUST run in the deployment.
 
-Start: `python -m hadavin_sdk.triggers.worker --config-dir <dir>`. The stdlib server is not hardened: by default
-it listens on 127.0.0.1 only (a host that is not loopback needs `allow_non_loopback` true, see `check_bind`),
-and TLS is the job of the proxy in front of it. Host and port come from the command line, else from
-`config.triggers`, else 127.0.0.1 and 8081.
+Start: `python -m hadavin_sdk.triggers.worker --config-dir <dir> [--host H] [--port P] [--allow-non-loopback]`.
+The stdlib server is not hardened: by default it listens on 127.0.0.1 only (a host that is not loopback needs
+`--allow-non-loopback`, see `check_bind`), and TLS is the job of the proxy in front of it.
 
-Which settings exist today (facts of handover/core-a/FINDINGS-core-b-trigger-config.md and TRIAL-INTEGRATION.md,
-core-b's trigger settings): `tenant`, `senders` (a mapping of sender id to sender, a sender has `secret_names`,
-`agent_id`, `principal_id`), `max_body_bytes`, `max_running` and `ack_wait_s` exist. `host`, `port`,
-`allow_non_loopback`, `poll_s` and `max_waiting` are NOT fields there: the worker reads each with `getattr`
-and uses its own default (127.0.0.1, 8081, false, 0.05, 128), so today `allow_non_loopback` cannot be set in
-a config and a host that is not loopback is refused. At start one WARNING names, by field name only, every
-setting that was read with a default because the field is missing. The secrets are read through
-`App.trigger_secret`; on a tree that lacks core-b's `Config.triggers` and that reader `main` exits 2.
+Settings: core-b's `config.triggers` (`TriggerSettings`) has `tenant`, `senders` (a mapping of sender id to
+sender; a sender has `secret_names`, `agent_id`, `principal_id`), `max_body_bytes`, `max_running` and
+`ack_wait_s`, and these are read by direct access: a config object without one is a start failure, not a
+default. `host`, `port` and `allow_non_loopback` are command-line options (127.0.0.1, 8081, off); `poll_s` and
+`max_waiting` are the constants `POLL_S` and `MAX_WAITING` (arguments of `make_app` for a test). The secrets are
+read through `App.trigger_secret`.
 """
 
 from __future__ import annotations
@@ -64,7 +61,6 @@ from pathlib import Path
 from typing import Any, Final, Self
 from wsgiref.simple_server import WSGIServer
 
-from hadavin_sdk import defaults as _defaults
 from hadavin_sdk.errors import ConfigError as AnyConfigError
 from hadavin_sdk.models import Run, RunState, now
 from hadavin_sdk.store.protocol import (
@@ -73,7 +69,7 @@ from hadavin_sdk.store.protocol import (
     StoreUnavailable,
     is_connectivity_error,
 )
-from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi
+from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi, sender_map
 from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
@@ -82,10 +78,11 @@ POLL_S_MIN: Final[float] = 0.01
 POLL_S_MAX: Final[float] = 1.0
 # NOT taken from `defaults.TRIGGER_MAX_RUNNING` (4 there): see the module text, parallel runs can pass a budget.
 MAX_RUNNING: Final[int] = 1
-# Taken from `hadavin_sdk.defaults` where the constant exists; the literal is for a tree that has none yet.
-MAX_RUNNING_CEILING: Final[int] = getattr(_defaults, "TRIGGER_MAX_RUNNING_CEILING", 64)
-ACK_WAIT_S: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S", 5.0)
-ACK_WAIT_S_CEILING: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S_CEILING", 30.0)
+# The values of `defaults.TRIGGER_MAX_RUNNING_CEILING`, `TRIGGER_ACK_WAIT_S` and `TRIGGER_ACK_WAIT_S_CEILING`
+# (core-b); a test compares them where `defaults` has them.
+MAX_RUNNING_CEILING: Final[int] = 64
+ACK_WAIT_S: Final[float] = 5.0
+ACK_WAIT_S_CEILING: Final[float] = 30.0
 # Requests inside `start` at one time (the first store read counts: a store that hangs blocks right there); one
 # more is answered 503 at once. Above 50 so that 50 parallel requests of one key all get their answer.
 MAX_WAITING: Final[int] = 128
@@ -292,22 +289,20 @@ def _answer(found: Run, req: Accepted) -> tuple[int, dict[str, str]]:
     return (202 if state in IN_PROGRESS else 200), {"run_id": found.run_id, "state": state.value}
 
 
-def trigger_settings(config: object) -> Any:
+def trigger_settings(config: Any) -> Any:
     """`config.triggers`, or a ConfigError when the block is missing."""
-    settings = getattr(config, "triggers", None)
+    settings = config.triggers
     if settings is None:
         raise ConfigError("triggers block not configured (config.yaml has no `triggers:`)")
     return settings
 
 
 def sender_list(settings: Any) -> list[tuple[str, Any]]:
-    """(sender id, sender) pairs from a list of senders with `id`, or from a mapping id -> sender."""
-    senders = settings.senders
-    if isinstance(senders, Mapping):
-        return list(senders.items())
-    if isinstance(senders, Iterable):
-        return [(s.id, s) for s in senders]
-    raise ConfigError("triggers.senders is neither a list nor a mapping")
+    """(sender id, sender) pairs of `settings.senders`, through the one helper of the endpoint."""
+    try:
+        return list(sender_map(settings.senders).items())
+    except ValueError as exc:  # a sender id listed twice: the text names the id
+        raise ConfigError(str(exc)) from None
 
 
 def check_senders(
@@ -325,7 +320,7 @@ def check_senders(
             raise ConfigError(
                 f"trigger sender {sender_id}: principal {sender.principal_id} is not in principals.yaml"
             )
-        if getattr(principal, "kind", None) != "service":
+        if principal.kind != "service":
             raise ConfigError(
                 f"trigger sender {sender_id}: principal {sender.principal_id} is not of kind service"
             )
@@ -366,7 +361,7 @@ def check_bind(host: str, allow_non_loopback: bool) -> None:
     loopback = address.is_loopback
     if not loopback and allow_non_loopback is not True:
         raise ConfigError(
-            f"--host {host} is not loopback: set triggers.allow_non_loopback: true to listen there"
+            f"--host {host} is not loopback: pass --allow-non-loopback to listen there"
         )
 
 
@@ -374,10 +369,7 @@ def secret_reader(app: Any) -> Callable[[str], str]:
     """The reader of sender secrets the App was built with: `App.trigger_secret`, a callable from a secret NAME
     to its value that refuses every name no sender lists (PermissionError). Without a reader the worker does
     not start."""
-    reader = getattr(app, "trigger_secret", None)
-    if callable(reader):
-        return reader
-    raise ConfigError("App.trigger_secret is not available: the trigger secrets cannot be read")
+    return app.trigger_secret  # type: ignore[no-any-return]
 
 
 def check_durable(store: Any) -> bool:
@@ -406,24 +398,13 @@ def check_spend(runtime: Any, max_running: int) -> bool:
     return False
 
 
-def _setting(settings: Any, name: str, default: Any, missing: list[str]) -> Any:
-    """`settings.<name>`, or `default` with the field name noted in `missing` when the field does not exist."""
-    if hasattr(settings, name):
-        return getattr(settings, name)
-    missing.append(name)
-    return default
-
-
-def _warn_defaults(missing: list[str]) -> None:
-    """One WARNING naming the settings read with a default because the field is missing (names only)."""
-    if missing:
-        _LOG.warning(
-            "trigger worker: settings with no field, the built-in default is used: %s",
-            ", ".join(missing),
-        )
-
-
-def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, Runner]:
+def make_app(
+    app: Any,
+    *,
+    clock: Callable[[], float] = time.time,
+    poll_s: float = POLL_S,
+    max_waiting: int = MAX_WAITING,
+) -> tuple[Any, Runner]:
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
     choice). The caller closes the Runner."""
     settings = trigger_settings(app.config)
@@ -431,12 +412,7 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    missing: list[str] = []
-    max_running = _setting(settings, "max_running", MAX_RUNNING, missing)
-    ack_wait_s = _setting(settings, "ack_wait_s", ACK_WAIT_S, missing)
-    poll_s = _setting(settings, "poll_s", POLL_S, missing)
-    max_waiting = _setting(settings, "max_waiting", MAX_WAITING, missing)
-    _warn_defaults(missing)
+    max_running, ack_wait_s = settings.max_running, settings.ack_wait_s
     try:
         check_secrets(secrets)
         runner = Runner(
@@ -470,8 +446,10 @@ def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSG
     return server
 
 
-def _qualified_agents(registry: Any) -> list[str]:
-    """Every qualified agent, the way the tick command builds its App."""
+def qualified_agents(registry: Any) -> list[str]:
+    """Every qualified agent, the way the tick command builds its App (the one copy inside `triggers`; the
+    same loop in `cli` and the strict one in `Runtime.__init__` are for core-b, see
+    handover/core-a/requests/004-shared-qualified-agents.md)."""
     from hadavin_sdk.runtime.agent_loop import Unqualified, assert_qualified
 
     agents = []
@@ -547,12 +525,10 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
 
     config = load_config(args.config_dir)
     settings = trigger_settings(config)  # before anything is built: no secret read, no connection
-    missing: list[str] = []
-    host = args.host or _setting(settings, "host", LOOPBACK, missing)
-    port = args.port if args.port is not None else _setting(settings, "port", PORT, missing)
-    check_bind(host, _setting(settings, "allow_non_loopback", False, missing))
-    _warn_defaults(missing)
-    app = build(args.config_dir, _qualified_agents(load_registry(config)))
+    host = args.host or LOOPBACK
+    port = args.port if args.port is not None else PORT
+    check_bind(host, args.allow_non_loopback)
+    app = build(args.config_dir, qualified_agents(load_registry(config)))
     wsgi, runner = make_app(app)
     check_tick(app.store)
     try:
@@ -563,14 +539,29 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
         raise
 
 
+def _log_to_stderr() -> None:
+    """INFO lines of the `hadavin_sdk` loggers on stderr. Only that logger is set: the root logger, and with
+    it the logging of every library in the process, stays as it is."""
+    top = logging.getLogger("hadavin_sdk")
+    top.setLevel(logging.INFO)
+    if not any(getattr(h, "_trigger_worker", False) for h in top.handlers):
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        handler._trigger_worker = True  # type: ignore[attr-defined]
+        top.addHandler(handler)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 4 store not reachable at start, 3 anything else."""
     parser = argparse.ArgumentParser(prog="python -m hadavin_sdk.triggers.worker")
     parser.add_argument("--config-dir", type=Path, default=None)
-    parser.add_argument("--host", default=None, help="default: triggers.host (loopback)")
-    parser.add_argument("--port", type=int, default=None, help="default: triggers.port")
+    parser.add_argument("--host", default=None, help=f"default: {LOOPBACK}")
+    parser.add_argument("--port", type=int, default=None, help=f"default: {PORT}")
+    parser.add_argument(
+        "--allow-non-loopback", action="store_true", help="listen on a host that is not loopback"
+    )
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
+    _log_to_stderr()
     try:
         server, runner = _prepare(args)
     except StoreUnavailable as exc:  # a config error subclass: must come first

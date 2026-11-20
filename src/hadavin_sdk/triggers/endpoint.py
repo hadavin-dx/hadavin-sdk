@@ -227,7 +227,7 @@ def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None:
                 raise ValueError(f"trigger senders {other!r} and {sender!r} share a secret")
 
 
-def _sender_map(senders: Any) -> dict[str, SenderSettings]:
+def sender_map(senders: Any) -> dict[str, SenderSettings]:
     """Sender id -> sender, from the config list (a mapping id -> sender is taken as it is)."""
     if isinstance(senders, Mapping):
         return dict(senders)
@@ -254,7 +254,7 @@ def make_wsgi(
 ) -> Callable[..., list[bytes]]:
     """The WSGI application for ``POST /v1/trigger``. Raises ValueError on a bad setup."""
     tenant = settings.tenant
-    senders = _sender_map(settings.senders)
+    senders = sender_map(settings.senders)
     max_body = settings.max_body_bytes
     if not isinstance(tenant, str) or ID_RE.fullmatch(tenant) is None:
         raise ValueError(f"triggers.tenant does not match {ID_RE.pattern}")
