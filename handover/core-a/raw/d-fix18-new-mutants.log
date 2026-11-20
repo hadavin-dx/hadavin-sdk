@@ -1,27 +1,7 @@
 # endpoint mutants run, python 3.13.18, platform linux
 # sha256 8ff23e60491745b59f2840d04d516179300edbc8eecca18d619812ce8a2131cf  src/hadavin_sdk/triggers/__init__.py
 # sha256 fdd9ae116d6add8229daefdae674975d80582fa9528bf693c3d65b86a804651f  src/hadavin_sdk/triggers/endpoint.py
-# sha256 20b0cfe1064ac1a9c0b463d4583f82d238aad628ba692c73c53526cf5efa0da3  src/hadavin_sdk/triggers/server.py
+# sha256 ae20188dd01c34c5a567e2a40a021a518ab8efef11cdbf01d7564959909fbddc  src/hadavin_sdk/triggers/server.py
 # sha256 915d60690d9f304eb3dac4295f6d58ee77fcb78d0d30b0646ba663c7276df6d0  src/hadavin_sdk/triggers/worker.py
 # sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
-# sha256 1917f2cb81f44457405ca5a0d474b31e66299756e9ce3af9427c62bc669fd4d4  tests/endpoint_mutants.py
-BAD SURVIVED     G36a the total header byte cap is never enforced  []
-      first line: 
-BAD WRONG_REASON G36b the memory store is accepted at every stage  [test_m4_make_app_refuses_a_memory_store_at_pilot]
-      first line: E       Failed: DID NOT RAISE ConfigError
-BAD WRONG_REASON G36c hmac_v0 compares the signature with == (not compare_digest)  [test_m6_the_signature_is_compared_with_compare_digest]
-      first line: E       assert (0 == 1)
-BAD WRONG_REASON G36d hmac_v0 has no age window  [test_m6_the_five_minute_window[1301-False]]
-      first line: E       AssertionError: 1301
-BAD WRONG_REASON G36e hmac_v0 window refuses at exactly 300 s  [test_m6_the_five_minute_window[1300-True]]
-      first line: E       AssertionError: 1300
-BAD WRONG_REASON G36f send_error writes its answer in two writes  [test_m6_send_error_is_exactly_one_write]
-      first line: E       AssertionError: [b'HTTP/1.0 4', b'31 Request Header Fields Too Large\r
-BAD WRONG_REASON G36g HTTP/0.9 alone no longer closes quietly (G16b first half)  [test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer]
-      first line: E       AttributeError: 'types.SimpleNamespace' object has no attribute 'base_environ'
-BAD WRONG_REASON G36h a header block that is not a Message no longer closes quietly (G16b second half)  [test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer]
-      first line: E       TypeError: 'object' object is not iterable
-0 killed, 0 crash-accepted (), 0 known survivors
-KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass
-  - (none: every mutant of the list has a killer test)
-0 of 8 run are as expected; problems: ['G36a the total header byte cap is never enforced', 'G36b the memory store is accepted at every stage', 'G36c hmac_v0 compares the signature with == (not compare_digest)', 'G36d hmac_v0 has no age window', 'G36e hmac_v0 window refuses at exactly 300 s', 'G36f send_error writes its answer in two writes', 'G36g HTTP/0.9 alone no longer closes quietly (G16b first half)', 'G36h a header block that is not a Message no longer closes quietly (G16b second half)']
+# sha256 796adad78495a3e6ce6d81122f0eebc9cb7f1a3d551595b31507d459468c7fdc  tests/endpoint_mutants.py
