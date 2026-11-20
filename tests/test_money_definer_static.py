@@ -210,5 +210,5 @@ def test_postgres_py_calls_the_money_functions_schema_qualified_and_writes_no_mo
 def test_postgres_py_has_no_unqualified_call_of_any_hadavin_function():
     text = _store_sql_text()
     _no_money_writes_or_skip(text)
-    unqualified = [m.group(0) for m in re.finditer(r"(?<![\w."])hadavin_[a-z_]+\s*\(", text)]
+    unqualified = [m.group(0) for m in re.finditer(r'(?<![\w."])hadavin_[a-z_]+\s*\(', text)]
     assert not unqualified, f"unqualified calls: {unqualified}"
