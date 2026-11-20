@@ -88,6 +88,13 @@ runtime and not the reset login):
    `applied_usd` (what the day counter really fell by); applied lower than requested is drift to look into.
    The function runs as the migration owner with its search path pinned to `pg_catalog, <schema>, pg_temp` by
    `migrate` (so a temp table of the release login cannot stand in for a money table). Consider
+   A hand-run `CREATE OR REPLACE` of the function (for example the 0008 file) resets the pin to the placeholder
+   `pg_catalog, pg_temp`: the function then cannot find the money tables and fails closed (it is not hijackable). Run
+   `migrate` afterwards; it re-pins on every run. `migrate` must run as the function's owner: any other login gets an
+   error naming the owner.
+   Exit 5 is decided from what the audit chain really did: the chain never raises, it parks a failed outcome
+   (the release login cannot write the outbox table, so in memory of the command) and the command then ends, so a
+   parked outcome counts as lost and exits 5.
    `REVOKE TEMP ON DATABASE <db> FROM PUBLIC`. The release secret name may not be read by the runtime: a tool,
    source, executor or restored-hash secret that folds to the same name stops the start.
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call

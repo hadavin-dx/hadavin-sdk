@@ -402,3 +402,11 @@ T1-T2-tests with edits:
 - Existing tests that must change (not edited here): tests/test_grants_negative_roles.py and any test that asserts the exact field list of `Grant` or that iterates every GRANTS row for roles (new `release` field: run it and adjust); tests/test_stop_state_roles.py `World` names four roles only, so its migrate calls do not name a release role (they still pass). tests/fixtures/migrations_released.json gets the 0008 hash only when the lead releases it.
 - New tests: tests/test_release_expired_spend_pg.py (PostgreSQL: what it lowers and never touches, audit order, below-zero stop, late settle, runtime/reset/portal/purge/PUBLIC cannot run it, release role holds nothing else, migrate refusals, the command end to end), tests/test_release_minors.py (m2, m3, m5, dispatch never reaches limits.reset).
 
+
+## Release command, fix round 2 (review 4)
+- m-2 (settle_for): nothing in src calls `Limits.settle` / `Budget.settle` today (`grep "\.settle(" src` is empty), so
+  there is no real caller to wire without changing the pinned two-argument `settle` signature. `settle_for(agent_id,
+  reservation_id, actual_usd)` is built and tested; core-c's gate must call `settle_for`, not `settle`, to get the
+  agent check of ORDER 020 m2.
+- M1: `_write_outcome` treats a None key from `write_outcome` (the chain parked the event) as not audited; exit 5 is
+  reachable with the real chain (tests in tests/test_release_expired_spend_pg.py).
