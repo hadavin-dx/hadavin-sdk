@@ -10,12 +10,14 @@ import pytest
 
 pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 
+from psycopg import errors as pg_errors
 from psycopg import sql
 
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from hadavin_sdk.config import ConfigError
+from hadavin_sdk.models import KillSwitch
 from hadavin_sdk.store.migrate import migrate
 from hadavin_sdk.store.postgres import tls_mode
 from tests.contracts.kinds.store_postgres import pg_schema
@@ -150,8 +152,17 @@ def test_append_only_tables_get_no_update(fresh_dsn):
             for table in ("approval_decisions", "dead_letters", "gate_decisions"):
                 assert can(table, "INSERT") and can(table, "SELECT")
                 assert not can(table, "UPDATE") and not can(table, "DELETE"), table
-            for table in ("runs", "approval_requests", "spend_month", "tick_state", "kill_switch"):
+            for table in ("runs", "approval_requests", "spend_month", "tick_state"):
                 assert can(table, "UPDATE") and not can(table, "DELETE"), table
+            # Stop state (0006): the runtime may add a stop and read; nothing it holds turns the switch off.
+            assert can("kill_switch_stops", "INSERT") and can("kill_switch_stops", "SELECT")
+            for table, privs in (
+                ("kill_switch", ("INSERT", "UPDATE", "DELETE", "TRUNCATE")),
+                ("kill_switch_stops", ("UPDATE", "DELETE", "TRUNCATE")),
+                ("kill_switch_clears", ("INSERT", "UPDATE", "DELETE", "TRUNCATE")),
+            ):
+                assert can(table, "SELECT"), table
+                assert not any(can(table, p) for p in privs), table
     finally:
         with psycopg.connect(fresh_dsn, autocommit=True) as db:
             db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
@@ -169,6 +180,57 @@ def test_missing_kill_switch_row_fails_closed(store, caplog):
     ks = store.get_kill_switch()
     assert ks.on is True and ks.by == "system:kill_switch_row_missing"
     assert "kill_switch row missing" in caplog.text
+
+
+def test_an_open_stop_reads_on_while_the_flag_is_off(store):
+    store.set_kill_switch(KillSwitch(on=True, by="ops"))
+    with store._lock:
+        flag = store._exec('SELECT "on" FROM kill_switch').fetchone()["on"]
+        stops = store._exec("SELECT count(*) AS n FROM kill_switch_stops").fetchone()["n"]
+    assert flag is False and stops == 1  # a stop is one appended row; the old flag is not touched
+    ks = store.get_kill_switch()
+    assert ks.on is True and ks.by == "ops"
+
+
+def test_a_reset_clears_the_stops_it_can_see_and_a_later_stop_reads_on_again(store):
+    store.set_kill_switch(KillSwitch(on=True, by="first"))
+    store.set_kill_switch(KillSwitch(on=True, by="second"))
+    assert store.get_kill_switch().by == "first"  # the oldest open stop is the one reported
+    store.set_kill_switch(KillSwitch(on=False, by="admin"))
+    assert store.get_kill_switch().on is False
+    with store._lock:
+        clears = store._exec('SELECT "by" FROM kill_switch_clears ORDER BY stop_id').fetchall()
+    assert [c["by"] for c in clears] == ["admin", "admin"]
+    store.set_kill_switch(KillSwitch(on=False, by="admin"))  # nothing open: a reset is still fine
+    store.set_kill_switch(KillSwitch(on=True, by="third"))
+    ks = store.get_kill_switch()
+    assert ks.on is True and ks.by == "third"
+
+
+def test_the_old_flag_still_reads_on_and_a_reset_turns_it_off(store):
+    with store._lock:
+        store._exec('UPDATE kill_switch SET "on" = TRUE, "by" = %s', ("before-0006",))
+    ks = store.get_kill_switch()
+    assert ks.on is True and ks.by == "before-0006"
+    store.set_kill_switch(KillSwitch(on=False, by="admin"))
+    ks = store.get_kill_switch()
+    assert ks.on is False and ks.by == "admin"
+
+
+def test_a_missing_flag_row_stays_on_after_a_reset(store):
+    with store._lock:
+        store._exec("DELETE FROM kill_switch")
+    store.set_kill_switch(KillSwitch(on=False, by="admin"))
+    assert store.get_kill_switch().by == "system:kill_switch_row_missing"
+
+
+def test_the_stop_tables_are_append_only_for_the_owner_too(store):
+    store.set_kill_switch(KillSwitch(on=True, by="ops"))
+    store.set_kill_switch(KillSwitch(on=False, by="admin"))
+    for table in ("kill_switch_stops", "kill_switch_clears"):
+        for statement in ('UPDATE {} SET "by" = NULL', "DELETE FROM {}", "TRUNCATE {} CASCADE"):
+            with pytest.raises(pg_errors.RaiseException, match="append-only"), store._lock:
+                store._exec(sql.SQL(statement).format(sql.Identifier(table)))
 
 
 def test_month_spend_is_exact_under_concurrent_writers(fresh_dsn):

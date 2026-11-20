@@ -118,6 +118,10 @@ class PostgresSettings(KindSettings):
     # A second DSN (another database role) for the evidence purge, the only identity that may DELETE
     # `tool_calls` and `redaction_maps` (`hadavin-sdk migrate --purge-role`). None: the runtime's own DSN.
     purge_dsn_secret_name: str | None = None
+    # The secret that holds the reset role's DSN (`hadavin-sdk migrate --reset-role`), read only by
+    # `hadavin-sdk limits reset`. Its name must not end in `_secret_name`: platform_secrets.py:19-20 resolves every
+    # `*_secret_name` at runtime start, and the runtime process must never hold the login that can clear a stop.
+    reset_credential_ref: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )

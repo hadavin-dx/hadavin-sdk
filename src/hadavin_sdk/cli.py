@@ -2,12 +2,16 @@
 
   hadavin-sdk [--config DIR] gate <agent> [--k K]        exit 0 when green, 1 when below the threshold;
                                                          --k K runs each item K times (pass^k), default 1
-  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2
+  hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2;
+                                                         reset logs in as the reset role (the secret named by
+                                                         backends.store.reset_credential_ref); pilot and prod
+                                                         without it: exit 2
   hadavin-sdk [--config DIR] tick                       one pass of approvals sweep, reconcile, stuck runs,
                                                          audit checkpoint, evidence purge, source re-probe,
                                                          audit drain; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
-  hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P]  apply the postgres schema; the migration role's DSN
+  hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P] [--purge-role U] [--reset-role X]
+                                                         apply the postgres schema; the migration role's DSN
                                                          comes from the HADAVIN_MIGRATE_DSN environment variable
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
   hadavin-sdk [--config DIR] replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]
@@ -44,6 +48,7 @@ from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
 
@@ -104,6 +109,10 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
     )
+    mig.add_argument(
+        "--reset-role",
+        help="grant this database role the kill switch reset (clear stops, write the reset to the audit) and nothing else",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -136,7 +145,7 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
+        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role, args.reset_role)
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -181,14 +190,36 @@ def _main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 2
+    reset_ref = None
+    if args.cmd == "limits" and args.action == "reset":
+        reset_ref = getattr(b.store, "reset_credential_ref", None)
+        if not reset_ref and is_live(cfg.environment):
+            # Before any connection or write: in pilot and prod the runtime login must not be the one that resets.
+            print(
+                f"refused: limits reset in {cfg.environment} needs the reset role's login. Create the reset role, "
+                "run hadavin-sdk migrate --reset-role <role>, then set backends.store.reset_credential_ref to the "
+                "name of the secret that holds its DSN. The kill switch was not changed.",
+                file=sys.stderr,
+            )
+            return 2
     try:
         secrets = make("secrets", b.secrets)
-        # Same start-up probe as app.build: a missing DSN is a clean ConfigError, not a KeyError mid-build.
-        platform_secrets.check(secrets, [b.signer, b.anchor, b.store, b.audit], set())
-        signer = make("signer", b.signer, secrets)
-        anchor = make("anchor", b.anchor, secrets)
-        store = make("store", b.store, secrets)
-        audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+        if reset_ref:
+            # The reset role's own login for the store and the audit row. It signs and anchors nothing (it may
+            # not write a checkpoint); the tick does that under the runtime login.
+            as_reset = b.store.model_copy(
+                update={"dsn_secret_name": reset_ref, "purge_dsn_secret_name": None}
+            )
+            platform_secrets.check(secrets, [as_reset, b.audit], set())
+            store = make("store", as_reset, secrets)
+            audit = make("audit", b.audit, secrets, store=store, signer=None, anchor=None)
+        else:
+            # Same start-up probe as app.build: a missing DSN is a clean ConfigError, not a KeyError mid-build.
+            platform_secrets.check(secrets, [b.signer, b.anchor, b.store, b.audit], set())
+            signer = make("signer", b.signer, secrets)
+            anchor = make("anchor", b.anchor, secrets)
+            store = make("store", b.store, secrets)
+            audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
     except StoreUnavailable:
         if args.cmd == "audit":
             print("could not verify: the store is unreachable", file=sys.stderr)
@@ -311,7 +342,11 @@ def _tick() -> int:
 
 
 def _migrate(
-    cfg, runtime_role: str | None, portal_role: str | None = None, purge_role: str | None = None
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    purge_role: str | None = None,
+    reset_role: str | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -333,6 +368,7 @@ def _migrate(
         runtime_role=runtime_role,
         portal_role=portal_role,
         purge_role=purge_role,
+        reset_role=reset_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,
@@ -375,7 +411,13 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
         return 4
     print(
         f"kill switch NOT {what}: the store answered with an error ({type(exc).__name__}); run "
-        "hadavin-sdk migrate and check the runtime role's grants. Nothing was changed.",
+        "hadavin-sdk migrate and check the runtime role's grants"
+        + (
+            " (a reset needs the reset role: migrate --reset-role and backends.store.reset_credential_ref)"
+            if what == "reset"
+            else ""
+        )
+        + ". Nothing was changed.",
         file=sys.stderr,
     )
     return 2
@@ -384,8 +426,9 @@ def _kill_switch_store_down(what: str, exc: BaseException) -> int:
 def kill_switch(limits: Limits, action: str, by: str) -> int:
     """Run stop/reset for a caller (the CLI once a shared store exists, or an in-process admin hook).
 
-    Exit codes: 0 done; 3 reset refused because the audit store is unavailable (the switch stays ON); 4 the
-    store is unreachable (the switch was NOT changed).
+    Exit codes: 0 done; 2 the store answered with an error (a reset by a login that is not the reset role lands
+    here, with a `reset_failed` audit outcome); 3 reset refused because the audit store is unavailable (the switch
+    stays ON); 4 the store is unreachable (the switch was NOT changed).
     """
     if action == "stop":
         try:

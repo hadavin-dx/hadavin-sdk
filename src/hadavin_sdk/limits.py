@@ -46,6 +46,11 @@ class Limits:
         self.audit.write_outcome(self._event(True, by, "stop"))
 
     def reset(self, by: str) -> None:
-        """Removing a safety control is audited first; if that fails, the switch stays on."""
+        """Removing a safety control is audited first; if that fails, the switch stays on. A clear the store
+        refuses (the runtime role may not reset) leaves a `reset_failed` outcome, and the error is raised again."""
         self.audit.write_intent(self._event(False, by, "reset"))
-        self.store.set_kill_switch(KillSwitch(on=False, by=by))
+        try:
+            self.store.set_kill_switch(KillSwitch(on=False, by=by))
+        except Exception:
+            self.audit.write_outcome(self._event(True, by, "reset_failed"))
+            raise

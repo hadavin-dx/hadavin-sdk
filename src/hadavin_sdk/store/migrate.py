@@ -35,6 +35,8 @@ class Grant:
     # Columns the purge role may SELECT (a DELETE's WHERE needs them) and nothing else: it cannot read a stored
     # original or a tool result.
     purge_cols: tuple[str, ...] = ()
+    # Table-level privileges of the reset role: the only identity that may clear a stop (`migrate --reset-role`).
+    reset: str = ""
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -52,10 +54,15 @@ GRANTS: dict[str, Grant] = {
     "dead_letters": Grant("table", _APPEND),
     "spend": Grant("table", _RW),
     "spend_month": Grant("table", _RW),
-    "kill_switch": Grant("table", _RW),
+    # Stop state (0006): the runtime may add a stop and read; it holds no right that turns the switch off. Only
+    # the reset role clears stops (and turns the old flag off), and it writes the reset into the audit chain.
+    "kill_switch": Grant("table", "SELECT", reset="SELECT, UPDATE"),
+    "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
+    "kill_switch_stops_id_seq": Grant("sequence", "USAGE"),
+    "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
     "tick_state": Grant("table", _RW),
-    "audit_entries": Grant("table", _APPEND, portal=True),
-    "audit_checkpoints": Grant("table", _APPEND, portal=True),
+    "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND),
+    "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT"),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
     # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
     # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
@@ -68,6 +75,8 @@ GRANTS: dict[str, Grant] = {
 }
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
+# Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
+_FORBIDDEN_ROLES = frozenset({"public", "none", "session_user", "current_user"})
 _FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
 _CREATE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)",
@@ -215,6 +224,10 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
         "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relkind IN ('r','p','v','m','S')",
         (schema,),
     ).fetchall()
+    for owner in sorted({o for _, _, _, o in rels if o != role}):
+        # Membership, not inherited rights: a NOINHERIT member holds no rights today and can still SET ROLE to the owner.
+        if db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (role, owner)).fetchone()[0]:
+            problems.append(f"{role}: is a member of {owner}, the owner of relations in {schema}")
     for oid, name, kind, owner in rels:
         if owner == role:
             problems.append(f"{role}: owns {name}")
@@ -286,6 +299,7 @@ def migrate(
     runtime_role: str | None = None,
     portal_role: str | None = None,
     purge_role: str | None = None,
+    reset_role: str | None = None,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
@@ -293,14 +307,16 @@ def migrate(
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
-    relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
+    relations marked `portal` and nothing else. With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+    old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    for role in (runtime_role, portal_role, purge_role):
-        if role is not None and not _ROLE.fullmatch(role):
+    roles = (runtime_role, portal_role, purge_role, reset_role)
+    for role in roles:
+        if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
             raise ConfigError(f"not a plain database role name: {role!r}")
-    named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
+    named = [r for r in roles if r is not None]
     if len(set(named)) != len(named):
-        raise ConfigError("the runtime, portal and purge roles must be different roles")
+        raise ConfigError("the runtime, portal, purge and reset roles must be different roles")
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -335,7 +351,7 @@ def migrate(
             for b in named:
                 if a != b and db.execute(q, (a, b)).fetchone()[0]:
                     raise ConfigError(
-                        "the runtime, portal and purge roles must not be members of each other"
+                        "the runtime, portal, purge and reset roles must not be members of each other"
                     )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
@@ -350,6 +366,12 @@ def migrate(
             ):
                 raise ConfigError(
                     "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                )
+        if reset_role:
+            _apply_grants(db, reset_role, lambda g: g.reset)
+            if bad := effective_problems(db, reset_role, lambda g: g.reset if g else ""):
+                raise ConfigError(
+                    "the reset role holds more than the grant map: " + "; ".join(bad[:20])
                 )
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")

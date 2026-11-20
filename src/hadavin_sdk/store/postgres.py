@@ -448,20 +448,39 @@ class PostgresStore:
                 "kill_switch row missing: treating the kill switch as ON; run hadavin-sdk migrate"
             )
             return KillSwitch(on=True, by="system:kill_switch_row_missing")
+        if found[0].on:
+            return found[0]
+        with (
+            self._lock
+        ):  # the flag is off: any stop with no clear still means ON (the oldest one is reported)
+            stop = self._exec(
+                'SELECT s."by", s.ts FROM kill_switch_stops s WHERE NOT EXISTS '
+                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) ORDER BY s.id LIMIT 1"
+            ).fetchone()
+        if stop is not None:
+            return KillSwitch(on=True, by=stop["by"], ts=stop["ts"])
         return found[0]
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
-        row = {"id": 1, **_row(ks)}
-        cols = [sql.Identifier(c) for c in row]
-        query = sql.SQL(
-            "INSERT INTO kill_switch ({}) VALUES ({}) ON CONFLICT (id) DO UPDATE SET {}"
-        ).format(
-            sql.SQL(", ").join(cols),
-            sql.SQL(", ").join(sql.Placeholder() * len(row)),
-            sql.SQL(", ").join(sql.SQL("{0} = EXCLUDED.{0}").format(c) for c in cols[1:]),
-        )
-        with self._lock:
-            self._exec(query, list(row.values()))
+        if ks.on:  # a stop is one INSERT: all the runtime role may do to the stop state
+            with self._lock:
+                self._exec(
+                    'INSERT INTO kill_switch_stops ("by", ts) VALUES (%s, %s)', (ks.by, ks.ts)
+                )
+            return
+        # A reset (the reset role only): the old flag off and one clear per stop this statement can see, in one
+        # transaction. A stop committed during or after it has no clear, so the switch stays ON.
+        with self._lock, self._db.transaction():
+            self._exec(
+                'UPDATE kill_switch SET "on" = FALSE, "by" = %s, ts = %s WHERE "on"', (ks.by, ks.ts)
+            )
+            self._exec(
+                'INSERT INTO kill_switch_clears (stop_id, "by", ts) SELECT s.id, %s, %s '
+                "FROM kill_switch_stops s WHERE NOT EXISTS "
+                "(SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id) "
+                "ON CONFLICT (stop_id) DO NOTHING",
+                (ks.by, ks.ts),
+            )
 
     def get_tick_state(self, step: str) -> TickState | None:
         found = self._select(TickState, "tick_state", "step = %s", (step,))
