@@ -30,7 +30,7 @@ TAIL = "        elif not text[end - 1].isalnum():\n"
 CLOSE = "        elif (m := _EDGE_CLOSE.search(text, max(start, end - 64), end)) is not None:\n"
 OPEN = "        if (m := _EDGE_OPEN.match(text, start, end)) is not None:\n"
 ESC = r'_EDGE_CLOSE = re.compile(r"(?:</[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt])\Z")' + "\n"
-EXEMPT = "            _bare(original).lower() in _NOT_A_VALUE or"
+NOVAL = "        if core.lower() in _NOT_A_VALUE:  # `none!`: masked whole, but its core would sweep every `none` of the text\n"
 J = '                self._journal.append(("map", f"<{label}_{self.counters[label]}>", core))\n'
 
 
@@ -65,7 +65,7 @@ M = [
     m("G12-M12 a closing tag is kept", CLOSE, "        elif False:\n", WRAP + "[2]", "G12-14 "),
     m("G12-M13 an opening tag is kept", OPEN, "        if False:\n", WRAP + "[3]", "G12-14 "),
     m("G12-M14 an escaped newline is kept", ESC, ESC.replace("|\\\\[nrt]", ""), WRAP + "[10]", "G12-14 "),
-    m("G12-M15 the exemption strips the old narrow set", EXEMPT, '            original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or', "test_g12_a_word_that_says_there_is_no_value_is_exempt_with_its_punctuation_too[!-none]", "G12-13 "),
+    m("G12-M15 a no-value core is registered", NOVAL, "        if False:\n", "test_g12_the_second_none_is_neither_masked_nor_swept", "G12-13 "),
     m("G12-M16 the core is cut from the written value", C, C.replace("_bare(full)", "_bare(original)"), "test_g12_the_core_of_a_value_holding_a_placeholder_is_cut_from_the_resolved_value", "G12-16 "),
     m("G12-M17 the core is registered twice over", I, "        if core != full and len(core) >= 3 and core not in self.reverse:\n            self.reverse[core + ' '] = full\n            self.mapping['<SECRET_x>'] = full\n", "test_g12_a_value_takes_at_most_two_entries", "G12-15 "),
 ]  # fmt: skip
