@@ -33,3 +33,6 @@
 |---|---|---|---|---|---|---|
 
 | 09:30Z | lead verdicts on open escalations | see ORDER 023 | CHOSE: best-first, security and money over simplicity | | yes, by lead | |
+| 13:50Z | Runtime.handle split (design point 3 of the trial integration) | (a) split now; (b) defer | CHOSE (b) DEFERRED by the lead's order 13:46: no split before the integration; revisit after B2 (agent_loop.py is core-b's next file) | | yes, by lead | |
+| 13:50Z | Interrupted run tells no person (design point 1) | (a) build store+notify; (b) keep E-door-1 | CHOSE (b): stays with E-door-1, owner decides (default: sender polls; the n8n template has the state check); no notify built | | yes, by lead | |
+| 13:50Z | Cooperative stop at SIGTERM in the agent loop (design point 2) | (a) build; (b) ticket only | CHOSE (b): tickets/G-cooperative-stop.md written, nothing built (agent_loop.py is core-b's B2 file) | | yes, by lead | |

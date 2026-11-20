@@ -26,8 +26,8 @@ Several threads at once: what was read, and what was not
 - The local audit sink writes under a lock (audit/local_dir.py:30, 82); the recorded model double too (llm/fake.py:27).
 - Spend is NOT safe in the money sense: the budget is read before a model call and the cost is added after it
   (limits.py:17-30), so N runs of one agent in parallel can pass a budget by up to N calls. This is why
-  `max_running` defaults to 1 here, and why a configured value above 1 is warned about at start as long as the
-  runtime's limits object has no `reserve` method.
+  `max_running` comes from the configuration only (no default here), and why a configured value above 1 is
+  warned about at start as long as the runtime's limits object has no `reserve` method.
 - NOT READ, so not shown safe: the real model clients, the detector, the read tools, the card channel, the
   PostgreSQL store and the chain audit under threads. With `max_running` 1 only one loop runs at a time, but the
   short `get_run` reads of request threads still run next to it.
@@ -98,8 +98,8 @@ POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it wait
 NO_SLOT_POLL_CAP_S: Final[float] = 1.0  # with no free slot the wait doubles from POLL_S up to this
 POLL_S_MIN: Final[float] = 0.01
 POLL_S_MAX: Final[float] = 1.0
-# NOT taken from `defaults.TRIGGER_MAX_RUNNING` (4 there): see the module text, parallel runs can pass a budget.
-MAX_RUNNING: Final[int] = 1
+# `max_running` has NO number here: it is read from `config.triggers.max_running` (core-b's `TriggerSettings`, filled
+# from `defaults.TRIGGER_MAX_RUNNING`), the one source (d-fix22). See the module text on spend and parallel runs.
 # The values of `defaults.TRIGGER_MAX_RUNNING_CEILING`, `TRIGGER_ACK_WAIT_S` and `TRIGGER_ACK_WAIT_S_CEILING`
 # (core-b); a test compares them where `defaults` has them.
 MAX_RUNNING_CEILING: Final[int] = 64
@@ -184,7 +184,7 @@ class Runner:
         self,
         runtime: Any,
         store: Any,
-        max_running: int = MAX_RUNNING,
+        max_running: int,
         ack_wait_s: float = ACK_WAIT_S,
         *,
         poll_s: float = POLL_S,
@@ -708,7 +708,9 @@ def make_app(
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    max_running = _field(settings, "max_running", "triggers.max_running")
+    if not hasattr(settings, "max_running"):
+        raise ConfigError("triggers.max_running missing: core-b TriggerSettings required")
+    max_running = settings.max_running
     ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
     try:
         check_secrets(secrets)

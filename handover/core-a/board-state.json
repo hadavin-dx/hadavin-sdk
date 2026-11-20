@@ -759,6 +759,58 @@
    "review round n of cap": "2 of 3",
    "retries so far": 0,
    "reason": "rev-wipci2 findings"
+  },
+  {
+   "id": "c-e14nits",
+   "role": "builder in /home/user/wt/c-e14 (wip/core-a-for-c-e14nits)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c items 1+5: E14 tidy nits N1-N7 (tests, comments, e14 mutant) + README unwired textnorm DENY list",
+   "started UTC": "13:49",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:46: share work, one agent per item"
+  },
+  {
+   "id": "c-e19",
+   "role": "builder in /home/user/wt/c-e19 (wip/core-a-for-c-e19)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c item 2: runmap _canonical_view U+0338 spoof test + docstring (+fix or strict xfail) + mutant",
+   "started UTC": "13:49",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:46: share work, one agent per item"
+  },
+  {
+   "id": "grant-tests",
+   "role": "builder in /home/user/wt/grant (wip/core-a-for-grant-tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "re-point core-c's 8 grant tests to core-b's current grant model (tests only), PG on 55433, before/after logs",
+   "started UTC": "13:49",
+   "expected end": "25 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:46: share work, one agent per item"
+  },
+  {
+   "id": "max-running",
+   "role": "builder in /home/user/hadavin-sdk (cloud/core-a)",
+   "model": "sonnet",
+   "what exactly it is doing": "worker reads max_running only from config (core-b defaults.py = one source), clear ConfigError if missing, tests + d-fix22 paragraph",
+   "started UTC": "13:49",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 13:46: share work, one agent per item"
   }
  ],
  "tests": [
@@ -1131,6 +1183,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:50 ORDER 13:46 taken: 5 agents (wipci-fix2, c-e14nits, c-e19, grant-tests, max-running); item 3 (stale contract tests) was already done earlier (maint-gate, 201 passed on core-c a60da3394); core-c item 4 (delete extract.py) left; written: tickets/G-cooperative-stop.md (ticket only), 3 rows in DECISIONS.md (Runtime.handle split deferred, no notify built, ticket only), and handover/core-a/requests/to-core-b.md with the FINDINGS-core-b-F-store.md path (my own file says F1 was FIXED at a later head: re-verify). Fresh review of each branch follows when each builder returns.",
   "13:44 wip/core-a-for-ci UPDATED and pushed: the agreement test now has a planted-mismatch test for every assertion (20 assertions, each red when deleted: shown in a scratch copy) and its parser sees env/UV_PYTHON, uv run/uvx --python, python-version-file, matrix include, container/service images, .python-version, composite actions and all workflow files; 212 passed with the two existing CI guards; review round 2 started (rev-wipci2).",
   "13:41 c-run-2 (perf) DONE at core-c 9072e701f (evidence/c-run-2.md, raw/c-run-2.log): 39 passed, 0 failed, 462 deselected, 209 s wall, load 0.60 start / 1.80 end / 1.95 max (quiet box). test_redact_fold_budget.py::test_hostile_1 PASSED but the whole test took 40.13 s (the top duration); core-c expected 'zwsp shape ~3 s' (a per-shape time I did not record: ask if you want it); T10 and T11 passed, both under 4.49 s (not in the top 15, exact figures unknown). Next slowest: test_k5_perf no_redaction_pattern_is_super_linear 28.8 s, settle_loop T4 13.6 s. All lead-build-3 runs 1-4 are now delivered (c-run-1..4).",
   "13:38 c-run-3 DONE (evidence/c-run-3.md, raw/c-run-3-*.log) at core-c 9072e701f. MATCH: redact_mutants '117 of 117 good; problems: []' (408 s), stage 37/37, textnorm 256/256 (592 s), g8 35/35, e14 8/8. DIFFER: (a) gate_mutants.py and b64_mutants.py ran NO mutant: RuntimeError 'the unmutated copy does not pass its tests' (mutation_runner.py:527): the unmutated tree fails its own mutant-test set: these two sets include the tests of the 3 known failures TB-2.8/TB-2.11/TB-3.4 (E20, c-run-1) but I have not verified that is the cause; so R15/R8 and the b64 count are NOT observed; (b) p1d_a_mutants.py: 51 mutants: 48 KILLED, 2 SURVIVED (A43, A15), 1 ERROR (A3d 'SNIPPET NOT FOUND'), no summary line (the brief said 'identical to base'). Run 2 (perf) started on the quiet box.",
