@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "rev-c-G13",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c G13 gate net (bc6e2acd0 + mutants E19a-l) + check that my combining-marker xfails are really fixed",
-   "started UTC": "14:10",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead GO 14:08: fresh reviewer on core-c G13 and E22 as they land"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:20 core-c G13 reviewed (reviews/rev-c-G13.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker, 4 Majors: (1) the combining-marker fix covers decomposed forms but NOT precomposed U+226E (and not Mc U+093E) and has no test for it; (2) _touching_piece refuses ordinary text beside a key when a secret shares a 4-gram prefix ('https://' vs 'http...'): a planted value poisons every later call; (3) LEAK: window overlap 10*longest+16 is too small for stacked encodings: chunk > 65,536 chars + secret 17+ chars spelled '%26%23<dec>%3B' per char straddles unredacted; (4) a secret of ~3,275+ chars makes every big non-ASCII chunk refuse (DoS, fail-closed). All 12 mutants E19a-l check out. Weakened pins d7, r2_m2. No agents running.",
   "14:15 core-c E22+G12b reviewed (reviews/rev-c-E22G12b.md + NEW FILE handover/core-c/requests/xr-from-core-a-reviews-2.md): E22 skip is safe (no Blocker/Major; no test pins _only_encoded; the extra-character case costs the E22 amount again, unmeasured). G12b MAJOR: redact.py:1826 _place drops the clear-core sweep for words in _NOT_A_VALUE and placeholder-like cores: `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these, deliberate trade-off not recorded as a limit/no pinning test). Vacuous tests G12-18/G12-13. G13 review still running.",
   "14:10 GO taken: (1) my 6 wip branches: all reviewed fresh already (c, ci x3 rounds, b, e14, grant); core-c has ALREADY merged my c/e14/e19 work into cloud/core-c (9170baa4f, 82fb4bdc7, 9cef3450e) so the e19 branch review is moot; (2) lead-build-3 runs 1-4 delivered (evidence/c-run-1..4.md); (3) core-c head now aeb9a205e: reviewers started on G13 (bc6e2acd0 + mutants) and E22 + G12b; (4) strict_switch: 22 passed (3.12, 3.13.12, 3.13.18) in my checkout, no failure. Board every 5 min.",
   "14:16 ALL FOUR core-b reviews DONE: reviews/rev-b-G.md, rev-b-H1.md, rev-b-H2.md, rev-b-F6I1.md; summary NEW FILE handover/core-b/requests/xr-from-core-a-reviews.md (copy into cloud/core-b). No Blocker; Majors: G writer check misses column grants/caps/limits/TRIGGER for unnamed roles; H1 earlier-0011-draft DBs silently keep the old functions + day window 3x cap; H2 _release_event unsanitised + all-429 mark not narrowed for routers; F6/I1 Limits.reserve never retries (M5 store-only); plus the nothing-calls-reserve finding. Docs SECURITY.md:23/README.md:41/DECISIONS.md:62 are stale (understate the code). No agents running.",
@@ -3668,6 +3655,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c E22: no Blocker/Major (skip safe); G12b: no Blocker, ONE Major: _place drops the core copy for NOT_A_VALUE words/placeholder-like cores so `password=Secret!`, `password=Token,`, `password=ABC_12!` leave a later bare copy readable (E18 reopened for these; unrecorded trade-off); vacuous test nits; reviews/rev-c-E22G12b.md"
+  },
+  {
+   "id": "rev-c-G13",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G13 gate net (bc6e2acd0 + mutants E19a-l) + check that my combining-marker xfails are really fixed",
+   "started UTC": "14:10",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c G13: NO Blocker; 4 Majors: precomposed U+226E marker spoof NOT neutralised (decomposed forms fixed), _touching_piece false refusal/poisoning, window overlap 10*longest+16 too small for stacked encodings (LEAK: %26%23<dec>%3B secret 17+ chars at VIEW_WINDOW-217), secret >=3,275 chars makes all big non-ASCII chunks refuse (DoS); all 12 mutants check out; 2 weakened pins; reviews/rev-c-G13.md"
   }
  ]
 }
