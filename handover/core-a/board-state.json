@@ -1530,11 +1530,24 @@
    "what exactly it is doing": "n8n pack fixes from review round 2 (3 Major: Header Auth credential recipe, how a person finds the run, error-note UNVERIFIED label; 8 nits)",
    "started UTC": "07:21",
    "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3 (fix), round 3 fresh review next",
    "retries so far": 0,
-   "reason": "review round 2"
+   "reason": "11 of 11 done; 88 template tests pass (log n8n-template-tests-6.log); n8n itself not run"
+  },
+  {
+   "id": "n8n-rev3",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "round 3 (last under the cap) read-only review of the n8n pack against evidence and the endpoint; also explains why an earlier log said 200 passed and now 88",
+   "started UTC": "07:23",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "3 of 3",
+   "retries so far": 0,
+   "reason": "after n8n-fix2"
   }
  ],
  "tests": [
@@ -1907,6 +1920,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.",
   "OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.",
   "MODEL CHECK (lead message 07:20): this session runs claude-sonnet-5-5 now (get_session: model and last_served_model both sonnet-5-5; configured_model at creation was fable-5-2, switched by the owner with /model). All my agents are sonnet/haiku/opus-for-skills, none Fable. Opus lines only in brainstorm/draft/resolve skill files, as the owner set.",
   "For core-c: ModelGate.bind() now requires a keyword-only 'mapping' argument (161 of my gate contract tests fail with TypeError on core-c 49013c787): I treat it as an interface change if their ticket says so; the maintenance agent decides by reading it. For core-b: settle('') now raises ValueError instead of NotFound (3c033b209), and a secret name with a slash is refused: same decision. Findings fixed since my last run (4 groups): see TRIAL-RERUN.md",

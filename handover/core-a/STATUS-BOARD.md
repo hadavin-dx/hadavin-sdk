@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:23:07Z
+UPDATED_UTC: 2026-11-20T07:23:35Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 70
 ITEMS_OPEN: 20
 PERCENT: 81
 AGENTS_RUNNING: 4
-CAPACITY: load 0.56 of 4 cores (1-minute average), mem 1.1/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.94 of 4 cores (1-minute average), mem 1.3/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 542M /home/user/hadavin-sdk; 453M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:22:39Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:23:09Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -162,20 +162,27 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | rerun-heads | evidence runner (records) | sonnet | re-runs six of my non-builder test files on the newest core-b and core-c heads | 07:15 | ended | 100 | done | n/a | 0 | finished |
 | maint1 | builder (tests, non-builder) | sonnet | adapts the six test files to the newest core-b and core-c heads without bending assertions | 07:17 | about 30 min | 5 | running | n/a | 0 | rerun result |
 | n8n-rev2 | fresh reviewer (comprehension) | sonnet | round 2 read-only review of the n8n pack | 07:19 | about 10 min | 100 | done | 2 of 3 | 0 | 0 Blocker, 3 Major, 8 Nit; arithmetic and line citations checked correct |
-| n8n-fix2 | builder | sonnet | n8n pack fixes from review round 2 (3 Major: Header Auth credential recipe, how a person finds the run, error-note UNVERIFIED label; 8 nits) | 07:21 | about 15 min | 5 | running | 2 of 3 (fix), round 3 fresh review next | 0 | review round 2 |
+| n8n-fix2 | builder | sonnet | n8n pack fixes from review round 2 (3 Major: Header Auth credential recipe, how a person finds the run, error-note UNVERIFIED label; 8 nits) | 07:21 | about 15 min | 100 | done | 2 of 3 (fix), round 3 fresh review next | 0 | 11 of 11 done; 88 template tests pass (log n8n-template-tests-6.log); n8n itself not run |
+| n8n-rev3 | fresh reviewer (codebase-details) | sonnet | round 3 (last under the cap) read-only review of the n8n pack against evidence and the endpoint; also explains why an earlier log said 200 passed and now 88 | 07:23 | about 10 min | 5 | running | 3 of 3 | 0 | after n8n-fix2 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4117s ago | running | matched by name in ps |
-| 20695 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 20696 | timeout 580 /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no | core-a session or its agent | 22s ago | running | matched by name in ps |
-| 20697 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 22s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4146s ago | running | matched by name in ps |
+| 21040 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 21041 | timeout 580 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 21044 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rs tes | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 21047 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 17s ago | running | matched by name in ps |
+| 21052 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 14s ago | running | matched by name in ps |
+| 21082 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 14s ago | running | matched by name in ps |
+| 21088 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 14s ago | running | matched by name in ps |
+| 21863 | postgres: postgres postgres 127.0.0.1(46940) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 21865 | postgres: postgres postgres 127.0.0.1(46950) SELECT waiting | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -237,6 +244,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.
 - OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.
 - MODEL CHECK (lead message 07:20): this session runs claude-sonnet-5-5 now (get_session: model and last_served_model both sonnet-5-5; configured_model at creation was fable-5-2, switched by the owner with /model). All my agents are sonnet/haiku/opus-for-skills, none Fable. Opus lines only in brainstorm/draft/resolve skill files, as the owner set.
 - For core-c: ModelGate.bind() now requires a keyword-only 'mapping' argument (161 of my gate contract tests fail with TypeError on core-c 49013c787): I treat it as an interface change if their ticket says so; the maintenance agent decides by reading it. For core-b: settle('') now raises ValueError instead of NotFound (3c033b209), and a secret name with a slash is refused: same decision. Findings fixed since my last run (4 groups): see TRIAL-RERUN.md

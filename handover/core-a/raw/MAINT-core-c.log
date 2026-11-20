@@ -1,4 +1,17 @@
 ........................................................................ [ 19%]
 .....................................................s.................. [ 39%]
 ........................................................................ [ 59%]
-x....................................xxx.
+x....................................xxx................xxxx............ [ 79%]
+........................................................................ [ 98%]
+....                                                                     [100%]
+=========================== short test summary info ============================
+XFAIL tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['. '] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P6_P1_generated_a_value_in_a_look_alike_spelling_and_again_plainly - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[password-then-comma] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[token-in-three-parts] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}. Thanks] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[phone={}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[rang {}.\nno answer] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:939: contract point 10: no worst-case formula on this branch (neither llm.common.worst_case_usd nor one in the gate); the tests above use the formula of the interface text, not shipped code
+355 passed, 1 skipped, 8 xfailed in 29.26s
