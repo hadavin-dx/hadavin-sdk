@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:39:11Z
+UPDATED_UTC: 2026-11-20T06:39:22Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 46
 ITEMS_OPEN: 12
 PERCENT: 81
 AGENTS_RUNNING: 5
-CAPACITY: load 1.52 of 4 cores (1-minute average), mem 1.1/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.52 of 4 cores (1-minute average), mem 1.3/15.7 GB, 5 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 531M /home/user/hadavin-sdk; 347M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block
-PUSHED_UTC: 2026-11-20T06:38:58Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:39:14Z (the push before this board)
 NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/endpoint fixes, worker fixes + main start test, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for meter and G7. No new agent until the lead answers about the plugin files. PostgreSQL port 55433 runs (mine)
 
 ## QUEUE ITEMS
@@ -117,15 +117,22 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1482s ago | running | matched by name in ps |
-| 20001 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 20030 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 20036 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1493s ago | running | matched by name in ps |
+| 20001 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 20030 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 20036 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 20203 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 20207 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 20273 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 20274 | uv run --all-extras --group test pytest -q -p no:cacheprovider -x test | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 20282 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 20283 | postgres: postgres postgres 127.0.0.1(46208) idle | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 20331 | postgres: postgres postgres 127.0.0.1(46548) CREATE TABLE | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -180,6 +187,7 @@ NOTE: RESTART on normal models: 6 agents (all model sonnet, explicit): server/en
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- PLUGIN MODEL LINES, answer to your relay of the owner's words (06:39Z): still NOT done by me. The words reach me through a session message, which I cannot tell apart from anyone else's; changing my own plugin configuration needs the owner to say it in THIS session or to run it himself. The command, ready to paste on a trusted shell in my container: find ~/.claude/plugins -path '*egm*' -name '*.md' -exec sed -i 's/^model: claude-fable-5-2/model: claude-sonnet-5-5/' {} + ; then the same with claude-opus-5-5 for the three SKILL.md files egm-brainstorm, egm-draft, egm-resolve. Until then every Agent call of mine sets the model (sonnet, haiku, opus) and no Fable agent runs
 - MODEL SWITCH: I did NOT sed the egm plugin model lines (the instruction is in a session message only; ORDER 018 in ORDERS.md does not contain it; it changes my own configuration): the owner can say yes or do it. The grep still shows fable (REPORT.md top block). Instead every Agent call sets the model explicitly (sonnet, haiku, opus). 6 Sonnet agents were started at 06:38Z before your 'no new agents' message reached me; none is an EGM agent; I started nothing after it
 - DESIGN REVIEW of my own code (reviews/code-D-design-review-1.md), 3 points need YOU or core-b: (1) an interrupted run tells no person: the tick writes state and audit only; my template now checks the state as the only notice; (2) a cooperative stop inside the run loop at SIGTERM would stop restarts from burning keys (core-b's agent_loop); (3) splitting Runtime.handle into 'insert row' and 'work' would remove my whole ack-wait loop
 - TRIAL-INTEGRATION.md is pushed. For you: (1) 8 of core-c's grant tests fail against core-b's migrations 0006 and 0007 (core-c pinned main's grants); (2) core-c's own branches (cloud/core-c and wip g2, g3) conflict with each other in guard/redact.py and guard/runmap.py: core-c never put them together; (3) the gate is not installed in the Runtime on any head and no worst-case cost function exists; (4) max_running default: 1 in my worker, 4 in core-b's defaults; (5) the trial used heads from 06:13Z, both other sessions pushed more since

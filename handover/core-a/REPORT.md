@@ -7,6 +7,7 @@
 $ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
      72 model: claude-fable-5-2
 ```
+**Update (a second relay quoted the owner's own words):** unchanged. The relay still arrives as a session message that I cannot tell from anyone else's, and the edit changes my own plugin configuration: the owner says it in this session or runs it himself. The ready command is on the board under LEAD ACTIONS.
 **What protects against fable instead:** every Agent call I make sets the model explicitly (the tool documents that this wins over the agent definition's own model line): builders and EGM reviewers 'sonnet', lookups 'haiku', brainstorm/draft/resolve work 'opus'. Not proven by me: that an egm:* agent type really obeys the explicit model on this harness (I have not started one since the switch). The EGM skills run inside my own session, which is now claude-sonnet-5-5; I cannot move my session to opus.
 **Timing, said plainly:** at 06:38 UTC, before the lead's message 'no new agents until the setup is reverted and proven' reached me, I had already started 6 agents, all general-purpose with model 'sonnet' (finish server fixes, finish worker fixes, n8n test fixes, crash matrix part 2, concurrent fuzz, findings for the meter and redaction tests). None is an EGM agent. I started nothing after that message. If the owner wants them stopped, say so.
 **State of the work:** RESUME-NOTE-2026-11-20.md has the stop point and next step per open item. The tree is half edited (section 0 of the note): the last tested state is about the 06:05 board commit.
