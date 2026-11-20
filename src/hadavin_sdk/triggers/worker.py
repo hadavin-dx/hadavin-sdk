@@ -715,7 +715,9 @@ def make_app(
         raise ConfigError("triggers.max_running missing: core-b TriggerSettings required")
     max_running = settings.max_running
     if not hasattr(settings, "conflict_events_per_minute"):
-        raise ConfigError("triggers.conflict_events_per_minute missing: core-b TriggerSettings required")
+        raise ConfigError(
+            "triggers.conflict_events_per_minute missing: core-b TriggerSettings required"
+        )
     conflict_events_per_minute = settings.conflict_events_per_minute  # the one source (d-fix24)
     ack_wait_s = _field(settings, "ack_wait_s", "triggers.ack_wait_s")
     try:
