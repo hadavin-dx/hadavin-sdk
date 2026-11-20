@@ -2,7 +2,7 @@
  "order": "006 (002 to 005 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "ticket D lands: update requests/001, run one EGM review round (2 reviewers); build E lands: check, commit as 'code E:', push",
+ "next": "ticket D lands: compare with what builders coded, update requests/001, start its one EGM review round; builds land: commit 'code E:' and 'code D:' separately, then ONE batch run",
  "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -105,6 +105,33 @@
    "evidence file": "tests/triggers/test_t5_cases.py, n8n/*.json, n8n/README-trigger.md (not yet)",
    "tries": 1,
    "reason": "lead message 05:27Z asks for it now; whole test module is skipped until the package exists"
+  },
+  {
+   "item": "BUILD-D-endpoint",
+   "what": "src/hadavin_sdk/triggers/endpoint.py + tests/triggers/test_endpoint.py",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-endpoint-tests.log, -guards.log, -mutants.log (not yet)",
+   "tries": 1,
+   "reason": "lead message GO BUILD D at 05:30Z; built from the lead draft while ticket D is still being checked"
+  },
+  {
+   "item": "BUILD-D-worker",
+   "what": "src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-worker-tests.log, -mutants.log (not yet)",
+   "tries": 1,
+   "reason": "same; codes against the fixed interface of endpoint.py; main() exits 2 today because core-b's Config.triggers does not exist yet"
+  },
+  {
+   "item": "BATCH",
+   "what": "ONE batch test run when E and D are both coded",
+   "state": "WAIT builds",
+   "percent": 0,
+   "evidence file": "",
+   "tries": 0,
+   "reason": "lead: tests in batches only"
   }
  ],
  "agents": [
@@ -137,7 +164,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 70,
+   "percent": 85,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -150,15 +177,15 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 95,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "ac060f95",
    "role": "builder (ticket writer, no code)",
    "what exactly it is doing": "T2-E: writes tickets/E-test-helpers.md (helpers, where they live, guard tests they could break)",
-   "expected end": "about 12 min after start",
-   "reason": "ticket file on disk and pushed; agent not yet reported back"
+   "expected end": "ended",
+   "reason": "finished, 220k tokens, ticket E written (nothing run for the ticket)"
   },
   {
    "id": "t5-skel",
@@ -185,6 +212,32 @@
    "review round n of cap": "n/a (E needs no ticket review)",
    "retries so far": 0,
    "reason": "ORDER 004 item 5: E may be built once its ticket is written; 4 agents now run"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:30",
+   "expected end": "about 30 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "review runs alongside (0 of 1 started)",
+   "retries so far": 0,
+   "id": "build-D-ep",
+   "role": "builder",
+   "what exactly it is doing": "endpoint.py: run id derivation, signature check with two secrets, WSGI app, unit tests in-process, 3 mutants",
+   "reason": "GO BUILD D"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:30",
+   "expected end": "about 30 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "review runs alongside (0 of 1 started)",
+   "retries so far": 0,
+   "id": "build-D-wk",
+   "role": "builder",
+   "what exactly it is doing": "worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants",
+   "reason": "GO BUILD D; 5 agents now run on 4 cores, they are mostly waiting on the model, load is on the board"
   }
  ],
  "tests": [],
@@ -192,6 +245,6 @@
  "loops": [],
  "lost": [],
  "lead_actions": [
-  "none: ORDER 006 answered questions 1 to 10; the answers were sent to both running ticket writers"
+  "Please write 'GO BUILD D' into ORDERS.md: ORDER 004 item 5 says the GO must be in that file; I acted on your message of 05:30Z (see DECISIONS)"
  ]
 }
