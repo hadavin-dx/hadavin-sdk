@@ -26,3 +26,18 @@ See handover/core-c/QUEUE.md. No new source code, no merge, no push to any branc
 
 ### C. MUST NOT
 No secrets, real keys, real client data, real mailboxes; no live model call; no spend; no merge; no force-push; no GitHub settings change; no `.gitleaksignore` change; no push to main or to another session's branch or to an existing PR branch (they are read-only inputs); no stage name other than demo, pilot, prod; no project words (lead, incident, refund, invoice, intake) in core types; no scanner finding dismissed or suppressed; no bare `git stash` in a shared worktree; a step that cannot run in your box is reported as NOT RUN with the reason, never faked.
+
+## ORDER 003 (lead, 2026-11-20 04:24 UTC; owner order 2026-11-20) BOARD EVERY ONE MINUTE, FULL TABLES, 3-TRY CAP. Changes ORDER 002 A.1 and A.2 until the lead writes "back to 5 minutes".
+1. EVERY ONE MINUTE (until the owner says otherwise): rewrite handover/core-c/STATUS-BOARD.md, commit ("board <UTC time>"), `git pull --rebase`, push. Change your session cron to `* * * * *` (delete the 5-minute one). No cron tool: update at the end of every tool batch and never let more than 1 minute pass without a board while anything runs. A board older than 3 minutes gets a lead reminder at once.
+2. The board keeps the KEY: value header of the template and then THESE TABLES, each row with a REASON column in plain words:
+   a. AGENTS: id | role (builder, reviewer, evidence runner, lookup) | model | what exactly it is doing | started UTC | expected end | percent | state (running, done, KILLED, INTERRUPTED, LOST-ON-RESTART) | review round n of cap | retries so far | reason (why it runs, or why it stopped).
+   b. SHELLS AND PROCESSES: pid | command in short | started by (agent id or you) | since | state | reason.
+   c. TESTS: suite or file | on which branch and SHA | run number | passed / failed / errors | first failing line | state | reason.
+   d. QUEUE ITEMS: Qn | state (READY, RUNNING, DONE, BLOCKED) | percent | evidence file | tries | reason.
+   e. RESTARTS: session restarts and container restarts (BOOT_ID changes) with time, what was running, what was lost, what you restarted, what is still missing. Count them in the header: SESSION_RESTARTS, CONTAINER_RESTARTS.
+   f. LOOPS: every item that was tried more than once: item | tries | review rounds | last error | reason it keeps failing.
+   g. CAPACITY and DISK lines as in ORDER 002.
+3. THREE-TRY CAP (hard): no item, test run, fix or review goes past 3 tries or 3 review rounds in your session. At the third failure STOP that item, write it in handover/core-c/ESCALATIONS.md (item, the three attempts in one line each, exact last error with the raw log path, the branch and SHA, what you think the cause is, what you did not try), set its queue row to BLOCKED-LEAD, and take the next queue item. The lead takes it over on the laptop and writes the fix or the decision back in ORDERS.md. Never loop on a failing thing; a second identical failure is already a signal to change the approach or ask.
+4. PROBLEMS GO TO THE LEAD AT ONCE: a failing baseline, a tool you cannot run, a permission denial, a container problem, a conflict: one ESCALATIONS.md entry with the raw log path, then continue with other items. Do not work around a denial.
+5. NO CONFLICTS: before every push `git pull --rebase`; write only in handover/core-c/ on cloud/core-c (and later only your own `wip/cloud-core-c/<item>` code branches); never edit a file another session owns; a change you need in someone else's file is a patch file in handover/core-c/requests/ with the reason.
+6. Tell the truth in every row: what failed and what was not run comes first; "done" needs its evidence file; a number you did not measure is marked UNVERIFIED.
