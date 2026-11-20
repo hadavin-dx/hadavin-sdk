@@ -297,6 +297,7 @@ class Reply(Shape):
     input_tokens: int = 0
     output_tokens: int = 0
     cost_usd: Decimal = Decimal(0)
+    cost_verified: bool = False  # set by the provider adapter only when cost_usd (even 0) is the provider's own figure
     model_id: str
     stop_reason: str = "end_turn"
     latency_ms: int = 0

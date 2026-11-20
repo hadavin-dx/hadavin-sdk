@@ -962,12 +962,42 @@ def test_d2_a_worst_case_that_is_not_a_finite_decimal_of_zero_or_more_is_refused
     assert sink.codes() == [("refused", "worst_case_invalid")]
 
 
-def test_d2_a_zero_worst_case_is_allowed():
+def test_d2_a_zero_worst_case_is_allowed_only_for_an_empty_input():
+    # Q2 re-pin (K25): it was allowed for any input; now only an empty one (no system, no content, no tools, no documents)
     free = Client()
-    free.reply = Reply(cost_usd=Decimal(0), model_id="fake-model")
+    free.reply = Reply(cost_usd=Decimal(0), cost_verified=True, model_id="fake-model")
     bound, _client, meter, sink = build(free, worst_case=lambda *args: Decimal(0))
-    bound.chat(CLEAN, system="s", route="main")
+    bound.chat([{"role": "user", "content": ""}], system="", route="main")
     assert meter.reserved["res_1"][1] == Decimal(0) and sink.codes() == [("ok", None)]
+
+
+def test_q2_a_zero_worst_case_for_a_non_empty_input_is_refused_as_bad_amount():
+    client = Client()
+    bound, _client, meter, sink = build(client, worst_case=lambda *args: Decimal(0))
+    with pytest.raises(model_gate.WorstCaseInvalid):
+        bound.chat(CLEAN, system="s", route="main")
+    assert client.sent == [] and meter.reserved == {}, (
+        "q2 zero worst case reserved for a non-empty input"
+    )
+    assert sink.codes() == [("refused", "bad_amount")]
+
+
+def test_q2_an_unknown_worst_case_reserves_the_usd_cap_and_without_a_cap_is_refused():
+    cap = Decimal(5)
+    client = Client()
+    meter, sink = Meter(), Sink()
+    bound = ModelGate(
+        client, meter=meter, audit=sink, worst_case=lambda *a: None, usd_cap=cap
+    ).bind("agent-1", "run-1", mapping=runmap.RunMap())
+    bound.chat(CLEAN, system="s", route="main")
+    assert meter.reserved["res_1"][1] == cap, "q2 unknown worst case did not reserve the cap"
+    client2, meter2, sink2 = Client(), Meter(), Sink()
+    bound2 = ModelGate(client2, meter=meter2, audit=sink2, worst_case=lambda *a: None).bind(
+        "agent-1", "run-1", mapping=runmap.RunMap()
+    )
+    with pytest.raises(model_gate.WorstCaseInvalid):
+        bound2.chat(CLEAN, system="s", route="main")
+    assert client2.sent == [] and sink2.codes() == [("refused", "worst_case_invalid")]
 
 
 class _ExhaustedSub(ProviderExhausted):
@@ -1129,14 +1159,97 @@ def test_m5_a_reply_object_without_a_cost_attribute_is_returned_and_not_settled(
     assert meter.settles == [] and sink.codes() == [("ok", "cost_unknown")]
 
 
-def test_m5_a_zero_cost_reply_is_settled_at_zero():
+def test_m5_a_verified_zero_cost_reply_is_settled_at_zero():
+    # Q2 re-pin (K21): was "a zero cost reply is settled at zero"; only a VERIFIED zero is a known cost now
     client = Client()
-    client.reply = Reply(
-        model_id="fake-model"
-    )  # cost_usd defaults to Decimal(0): a real, known cost
+    client.reply = Reply(model_id="fake-model", cost_verified=True)
     bound, _, meter, sink = build(client)
     bound.chat(CLEAN, system="s", route="main")
     assert meter.settles == [("res_1", Decimal(0))] and sink.codes() == [("ok", None)]
+
+
+def test_q2_a_hostile_adapter_returning_an_unverified_zero_cost_is_cost_unknown():
+    for reply in (
+        Reply(model_id="fake-model"),  # the default: cost 0, not verified
+        Reply(model_id="fake-model", cost_usd=Decimal(0), cost_verified=False),
+        SimpleNamespace(text="done", cost_usd=Decimal(0), cost_verified="yes"),  # truthy, not True
+        SimpleNamespace(text="done", cost_usd=Decimal(0)),
+    ):
+        client = Client()
+        client.reply = reply
+        bound, _, meter, sink = build(client)
+        assert bound.chat(CLEAN, system="s", route="main") is reply
+        assert meter.settles == [], "q2 an unverified zero cost was booked as free"
+        assert sink.codes() == [("ok", "cost_unknown")]
+
+
+def test_q2_a_nonzero_cost_needs_no_verification():
+    client = Client()
+    bound, _, meter, sink = build(client)
+    bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [("res_1", COST)] and sink.codes() == [("ok", None)]
+
+
+def _exhausted(**attrs):
+    exc = ProviderExhausted("out of retries")
+    for name, value in attrs.items():
+        setattr(exc, name, value)
+    return exc
+
+
+def test_q2_an_exhausted_call_with_three_attempts_and_no_costs_keeps_the_worst_case_booked():
+    client = Client(raises=_exhausted(attempts=3))
+    bound, _, meter, sink = build(client)
+    with pytest.raises(ProviderExhausted):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [] and sink.codes() == [("failed", "provider_exhausted")]
+
+
+def test_q2_an_exhausted_call_settles_the_sum_of_all_three_attempts_when_the_costs_are_complete():
+    costs = [Decimal("0.01"), Decimal("0.02"), Decimal("0.03")]
+    client = Client(raises=_exhausted(attempt_costs=costs, attempt_costs_complete=True))
+    bound, _, meter, _sink = build(client)
+    with pytest.raises(ProviderExhausted):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [("res_1", Decimal("0.06"))], "q2 not every attempt was settled"
+
+
+@pytest.mark.parametrize(
+    "attrs",
+    [
+        {"attempt_costs": [Decimal("0.01")]},  # not declared complete
+        {"attempt_costs": [Decimal("0.01")], "attempt_costs_complete": "yes"},
+        {"attempt_costs": [Decimal("0.01"), 0.02], "attempt_costs_complete": True},  # a float
+        {
+            "attempt_costs": [Decimal(0)] * 3,
+            "attempt_costs_complete": True,
+        },  # an unverified zero total
+        {"attempt_costs": [], "attempt_costs_complete": True},
+    ],
+)
+def test_q2_incomplete_or_unusable_attempt_costs_keep_the_worst_case_booked(attrs):
+    client = Client(raises=_exhausted(**attrs))
+    bound, _, meter, _sink = build(client)
+    with pytest.raises(ProviderExhausted):
+        bound.chat(CLEAN, system="s", route="main")
+    assert meter.settles == [], "q2 attempt costs not complete or not usable were settled"
+
+
+def test_q2_a_forged_refusal_mark_on_a_plain_exception_is_ignored():
+    for exc_type in (Exception, RuntimeError, ValueError):
+        exc = exc_type("boom")
+        exc.refused_before_response = True
+        assert model_gate.refused_before_response(exc) is False, (
+            "q2 a forged mark on a plain exception"
+        )
+        client = Client(raises=exc)
+        bound, _, meter, sink = build(client)
+        with pytest.raises(exc_type):
+            bound.chat(CLEAN, system="s", route="main")
+        assert meter.settles == [] and sink.codes() == [("failed", "call_failed")]
+    marked = ProviderError("refused")
+    marked.refused_before_response = True
+    assert model_gate.refused_before_response(marked) is True
 
 
 class Blocked(Client):
@@ -1576,9 +1689,15 @@ def test_t18_no_secret_in_any_audit_row_exception_or_log_record(caplog):
 GATE_SOURCE = Path(model_gate.__file__)
 # What an exception variable may be handed to, and nothing else: a type test, one attribute read by name, the
 # rule (b) predicate. Never str(), repr(), format, an f-string, `raise ... from`, an audit row or a constructor.
-EXC_MAY_GO_TO = {"isinstance", "getattr", "refused_before_response", "spend_reason"}
+EXC_MAY_GO_TO = {
+    "isinstance",
+    "getattr",
+    "refused_before_response",
+    "spend_reason",
+    "attempt_costs_total",
+}
 # `getattr` may read an exception only with these two constant names (m-new-6): `getattr(exc, "args")` is a leak
-GETATTR_ON_EXC = {"reason", "refused_before_response"}
+GETATTR_ON_EXC = {"reason", "refused_before_response", "attempt_costs", "attempt_costs_complete"}
 BANNED_NAMES = {"logging", "getLogger", "print", "warnings", "traceback", "repr", "format", "vars", "ContextVar", "__import__", "exec", "eval", "open", "sys", "io", "os", "pathlib"}  # fmt: skip
 BANNED_ATTRS = {"__cause__", "__context__", "__traceback__", "args", "with_traceback", "add_note", "__notes__", "__dict__", "local", "getLogger", "exception", "exc_info", "stderr", "stdout", "write", "format", "format_map", "open", "write_text", "print_exc"}  # fmt: skip
 # a module-level value of these kinds is state (I10): a container that a call could fill
@@ -2391,7 +2510,8 @@ def test_the_gate_in_front_of_script_llm_replaces_a_known_value_a_step_forgot_to
         IP not in llm.everything_sent()
         and "ERROR upstream <IPV4_1> refused" in llm.everything_sent()
     )
-    assert len(meter.settles) == 2
+    # Q2 re-pin (K21): ScriptLLM replies carry an unverified cost of 0: nothing is settled, the worst case stays booked
+    assert meter.settles == [] and len(meter.reserved) == 2
 
 
 def test_the_gate_in_front_of_fake_llm_keeps_the_worst_case_booked_when_the_recording_is_missing(

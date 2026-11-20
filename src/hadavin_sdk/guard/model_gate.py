@@ -403,6 +403,11 @@ AUDIT_CODES = (
 )
 
 
+# Q2 (P8 item 3, K25): fail closed on spend. The exception types whose `refused_before_response` mark is believed: the
+# types the adapter layer (llm/retry.py) raises. A mark on any other type is ignored.
+REFUSAL_MARK_TYPES: tuple[type[BaseException], ...] = (ProviderError, ProviderExhausted)
+
+
 def refused_before_response(exc: BaseException) -> bool:
     """Rule (b). True only for a ProviderError (a ProviderExhausted is one) that the adapter marked with the exact
     value `refused_before_response = True`. On a ProviderExhausted the mark means EVERY attempt the retry layer
@@ -421,7 +426,7 @@ def refused_before_response(exc: BaseException) -> bool:
         marked = getattr(exc, "refused_before_response", False) is True
     except Exception:  # noqa: BLE001  a property that raises is not a mark (the audit row must still be written)
         return False
-    return marked and isinstance(exc, ProviderError)
+    return marked and isinstance(exc, REFUSAL_MARK_TYPES)
 
 
 def spend_reason(error: BaseException) -> str | None:
@@ -457,12 +462,55 @@ def usable_amount(value: Any) -> bool:
 
 def usable_cost(reply: Any) -> Decimal | None:
     """Rule (a): the reply's cost when it is a usable amount, else None. A `cost_usd` that raises on read is no
-    cost (the call is paid: the row says `cost_unknown`, the reply is returned)."""
+    cost (the call is paid: the row says `cost_unknown`, the reply is returned). Q2 (K21): a cost of 0 is usable
+    only when the reply carries `cost_verified is True` (set by the provider adapter); an unverified 0 is
+    `cost_unknown` and the worst case stays booked."""
     try:
         cost = getattr(reply, "cost_usd", None)
     except Exception:  # noqa: BLE001 - a hostile property: no usable cost
         return None
+    if usable_amount(cost) and cost == 0 and not cost_verified(reply):
+        return None
     return cost if usable_amount(cost) else None
+
+
+def cost_verified(reply: Any) -> bool:
+    """Q2 (K21): True only for the exact value True of the reply's `cost_verified`; a raising property is False."""
+    try:
+        return getattr(reply, "cost_verified", False) is True
+    except Exception:  # noqa: BLE001 - a raising property is not a verification
+        return False
+
+
+def attempt_costs_total(exc: BaseException) -> Decimal | None:
+    """Q2 (K23): the summed cost of EVERY attempt of an exhausted call, or None. Only when the error carries
+    `attempt_costs` (a non-empty list or tuple of usable amounts, at least one above 0) AND
+    `attempt_costs_complete is True` (one entry per attempt made, none missing). Anything else (today's
+    llm/retry.py carries none) is None: the worst case, which covers all attempts, stays booked."""
+    try:
+        costs = getattr(exc, "attempt_costs", None)
+        if getattr(exc, "attempt_costs_complete", False) is not True:
+            return None
+        if (
+            not isinstance(costs, list | tuple)
+            or not costs
+            or not all(usable_amount(c) for c in costs)
+        ):
+            return None
+        total = sum(costs, Decimal(0))
+    except Exception:  # noqa: BLE001 - hostile attempt data: no per-attempt costs
+        return None
+    return total if usable_amount(total) and total > 0 else None
+
+
+def has_input(system: str, messages: list[dict[str, Any]], tools: Any, documents: Any) -> bool:
+    """Q2 (K25): True unless the whole input is empty (no system text, no message content, no tool, no document)."""
+    try:
+        if system or tools or documents:
+            return True
+        return any(bool(m.get("content")) for m in messages)
+    except Exception:  # noqa: BLE001 - cannot tell: treat as non-empty (fail closed)
+        return True
 
 
 # END OF INTERFACE (ii)
@@ -615,11 +663,14 @@ class ModelGate:
         audit: AuditSink | None,
         worst_case: WorstCase,
         enforce: Enforce = _DEFAULT_ENFORCE,
+        usd_cap: Decimal | None = None,
     ) -> None:
         if isinstance(llm, ModelGate | BoundGate):
             raise TypeError("the client is already a model gate")
         self._llm, self._meter, self._audit = llm, meter, audit
         self._worst_case, self._enforce = worst_case, enforce
+        # Q2: what an UNKNOWN worst case (the function returns None) reserves; None means such a call is refused.
+        self._usd_cap = usd_cap
         self.audit_dropped = (
             0  # audit rows lost by every gate bound from this one (see `BoundGate.audit_dropped`)
         )
@@ -667,6 +718,7 @@ class BoundGate:
     ) -> None:
         self._llm, self._meter, self._audit = gate._llm, gate._meter, gate._audit
         self._worst_case, self._enforce = gate._worst_case, gate._enforce
+        self._usd_cap = gate._usd_cap
         self._agent_id, self._run_id, self._mapping = agent_id, run_id, mapping
         self._principal, self._source = principal, source
         self._mode = MODE_NO_MAP if isinstance(mapping, _NoMap) else None
@@ -727,8 +779,12 @@ class BoundGate:
         ):  # KeyboardInterrupt: a row, then on as it is (nothing is reserved yet)
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, decision=mode)
             raise
+        if failure is None and reserved is None and usable_amount(self._usd_cap):
+            reserved = self._usd_cap  # Q2 (K25): an unknown worst case reserves the cap
         if failure is None and not usable_amount(reserved):
             failure = CODE_WORST_CASE_INVALID
+        elif failure is None and reserved == 0 and has_input(system, messages, tools, documents):
+            failure = "bad_amount"  # Q2 (K25): a worst case of 0 for a non-empty input is no bound
         if failure is None:
             try:
                 reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
@@ -751,7 +807,7 @@ class BoundGate:
             raise
         if failure is not None:  # no call; raised outside the handlers, so with no chain
             self._note(RESULT_REFUSED, failure, decision=mode)
-            if failure == CODE_WORST_CASE_INVALID:
+            if failure == CODE_WORST_CASE_INVALID or failure == "bad_amount":
                 raise WorstCaseInvalid
             if failure == CODE_RESERVATION_INVALID:
                 raise ReservationInvalid
@@ -771,7 +827,11 @@ class BoundGate:
             else:  # rule (c): the cost is unknown, the worst case stays booked
                 exhausted = isinstance(exc, ProviderExhausted)
                 code = CODE_PROVIDER_EXHAUSTED if exhausted else CODE_PROVIDER_ERROR
-                self._note(RESULT_FAILED, code, reservation, mode)
+                total = attempt_costs_total(exc) if exhausted else None
+                if total is not None:  # Q2 (K23): every attempt's own cost, summed
+                    self._settle(reservation, total, RESULT_FAILED, code, mode)
+                else:  # no per-attempt costs: the worst case stays booked for all attempts
+                    self._note(RESULT_FAILED, code, reservation, mode)
             raise
         except Exception:  # rule (c): may have been billed (a reply that fails to parse, a timeout)
             self._note(RESULT_FAILED, CODE_CALL_FAILED, reservation, mode)
