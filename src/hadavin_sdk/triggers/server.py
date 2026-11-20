@@ -19,6 +19,13 @@ Transfer-Encoding header. A request line with no version (the old `GET /path` fo
 the connection is closed. The application sees only what the request and the server set: no variable
 of the process environment can stand in for a header that was not sent. These refusals are logged at
 DEBUG: their number is chosen by whoever can reach the port.
+
+Two bounds on what a client can hold: at most `max_connections` connection threads at one time (a connection over
+the cap is closed at once, nothing is read or answered), and an absolute deadline, `read_deadline_s`, on the
+TOTAL time from the accept until the request line, the headers and the body have been read (a client that
+sends one byte every few seconds never trips the pause limit of a single read, but is cut at the deadline: the
+read raises TimeoutError, which is answered 400 like a stalled client). The deadline ends with the last read;
+the time the application then spends (waiting for its row) and the answer are not counted.
 """
 
 from __future__ import annotations
@@ -28,6 +35,8 @@ import os
 import socket
 import socketserver
 import sys
+import threading
+import time
 from email.message import Message
 from typing import Any, ClassVar, Final
 from wsgiref.simple_server import ServerHandler, WSGIRequestHandler, WSGIServer
@@ -37,6 +46,12 @@ from hadavin_sdk.triggers.endpoint import STATUS_TEXT
 MAX_REQUEST_LINE: Final[int] = 65536  # the cap the stdlib handler uses
 STALLED_STATUS: Final[int] = 400  # the client sent nothing more until the socket timeout
 LONG_LINE_STATUS: Final[int] = 414
+MAX_CONNECTIONS: Final[int] = (
+    256  # connection threads at one time; above `MAX_WAITING` of the worker
+)
+READ_DEADLINE_S: Final[float] = (
+    30.0  # total time to read the request line, the headers and the body
+)
 SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
@@ -59,6 +74,60 @@ class _NoStream:
 
     def flush(self) -> None:
         return None
+
+
+class _DeadlineReader:
+    """The read side of a connection with an absolute deadline. Each `recv` waits at most the lesser of the
+    pause limit of the handler and what is left of the deadline; when nothing is left it raises TimeoutError.
+    The socket's own timeout is put back after each `recv`, so the answer is written under the usual limit.
+    Only the calls that the HTTP parser and the endpoint make are here: `readline` and `read`."""
+
+    def __init__(self, sock: socket.socket, deadline_s: float, pause_s: float | None) -> None:
+        self._sock, self._pause_s = sock, pause_s
+        self._end = time.monotonic() + deadline_s
+        self._buf = bytearray()
+        self.closed = False
+
+    def _fill(self) -> bool:
+        """One `recv` into the buffer; False at the end of the stream."""
+        left = self._end - time.monotonic()
+        if left <= 0:
+            raise TimeoutError("request read deadline")
+        self._sock.settimeout(left if self._pause_s is None else min(left, self._pause_s))
+        try:
+            data = self._sock.recv(65536)
+        finally:
+            self._sock.settimeout(self._pause_s)
+        self._buf += data
+        return bool(data)
+
+    def _take(self, n: int) -> bytes:
+        out = bytes(self._buf[:n])
+        del self._buf[:n]
+        return out
+
+    def readline(self, size: int | None = -1) -> bytes:
+        limit = -1 if size is None else size
+        start = 0
+        while True:
+            end = self._buf.find(b"\n", start)
+            if end >= 0 and (limit < 0 or end < limit):
+                return self._take(end + 1)
+            if 0 <= limit <= len(self._buf):
+                return self._take(limit)
+            start = len(self._buf)
+            if not self._fill():
+                return self._take(len(self._buf))
+
+    def read(self, size: int | None = -1) -> bytes:
+        want = -1 if size is None else size
+        while want < 0 or len(self._buf) < want:
+            if not self._fill():
+                break
+        return self._take(len(self._buf) if want < 0 else want)
+
+    def close(self) -> None:
+        self.closed = True
 
 
 class QuietWSGIHandler(ServerHandler):
@@ -87,6 +156,12 @@ class QuietRequestHandler(WSGIRequestHandler):
     server_version = "trigger"  # the stdlib default names its own and the Python version
     sys_version = ""
     _answer_begun = False  # True once a refusal's status line was handed to the socket
+    read_deadline_s: float = READ_DEADLINE_S
+
+    def setup(self) -> None:
+        super().setup()
+        self.rfile.close()  # the buffered reader of the stdlib: reads here go through the deadline
+        self.rfile = _DeadlineReader(self.connection, self.read_deadline_s, self.timeout)  # type: ignore[assignment]
 
     def log_message(self, format: str, *args: Any) -> None:
         """Nothing: the arguments hold the request line, which is text chosen by the caller."""
@@ -183,6 +258,24 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
     daemon_threads = True
     allow_reuse_address = os.name != "nt"
 
+    def __init__(self, *args: Any, max_connections: int = MAX_CONNECTIONS, **kwargs: Any) -> None:
+        if max_connections < 1:
+            raise ValueError("max_connections must be at least 1")
+        self._slots = threading.BoundedSemaphore(max_connections)
+        super().__init__(*args, **kwargs)
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        """A thread per connection up to the cap; above it the connection is closed at once, unread."""
+        if not self._slots.acquire(blocking=False):
+            _LOG.debug("trigger server: connection cap reached, closed with no answer")
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._slots.release()
+            raise
+
     def server_bind(self) -> None:
         exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)  # only where the platform has it
         if exclusive is not None:
@@ -198,6 +291,7 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
             self.handle_error(request, client_address)
         finally:
             self.shutdown_request(request)
+            self._slots.release()
 
     def handle_error(self, request: Any, client_address: Any) -> None:
         """The stdlib prints the traceback and the client address here; this logs the class name."""

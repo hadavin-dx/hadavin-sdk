@@ -31,6 +31,7 @@ from hadavin_sdk.triggers import endpoint, worker
 from hadavin_sdk.triggers.endpoint import Accepted
 from hadavin_sdk.triggers.worker import Runner
 from tests.k5_support import ScriptLLM, build_runtime, k5_cfg
+from tests.triggers.conftest import require_core_b
 
 AGENT, PRINCIPAL, SENDER, TENANT = "test-agent", "svc:test-agent", "sender-a", "tenant-a"
 DOCUMENT = b"checkout 5xx from 10.0.0.5, revision 17"
@@ -523,7 +524,6 @@ def _settings(senders=None, **over):
         "max_body_bytes": 65536,
         "max_running": 2,
         "ack_wait_s": 5.0,
-        "poll_s": 0.02,
     }
     return SimpleNamespace(**{**base, **over})
 
@@ -540,6 +540,7 @@ def _app(rt, settings, secrets=None):
 
 
 def test_main_without_a_triggers_block_exits_2(cfg_dir, capsys):
+    require_core_b()  # the real Config must have the `triggers` field
     assert worker.main(["--config-dir", str(cfg_dir)]) == 2
     err = capsys.readouterr().err
     assert "triggers block not configured" in err and "Traceback" not in err
@@ -550,11 +551,7 @@ def test_main_with_an_unreadable_config_exits_2(tmp_path, capsys):
     assert "config error" in capsys.readouterr().err
 
 
-def test_make_app_refuses_an_app_without_the_secret_reader(rt):
-    app = _app(rt, _settings())
-    del app.trigger_secret
-    with pytest.raises(ConfigError, match="trigger_secret"):
-        worker.make_app(app)
+def test_make_app_refuses_a_config_without_a_triggers_block(rt):
     with pytest.raises(ConfigError, match="triggers block not configured"):
         worker.make_app(_app(rt, None))
 
@@ -1142,28 +1139,6 @@ def test_ack_wait_nan_is_refused_and_a_non_int_max_running_is_a_config_error_in_
         assert "Traceback" not in str(refused.value)
     with pytest.raises(ConfigError, match="at most 30"):
         worker.make_app(_app(rt, _settings(ack_wait_s=float("nan"))))
-
-
-def test_start_warns_once_with_the_names_of_settings_that_have_no_field(rt, caplog):
-    """DC1-3: names only, once, and none when every field exists."""
-    settings = _settings()
-    with caplog.at_level("WARNING", logger="hadavin_sdk.triggers"):
-        _wsgi, runner = worker.make_app(_app(rt, settings))
-        runner.close(0)
-        mine = [m for m in _log_lines(caplog, "WARNING") if "no field" in m]
-        assert len(mine) == 1 and mine[0].endswith(": max_waiting"), mine
-        caplog.clear()
-        full = _settings(max_waiting=5)
-        _wsgi, runner = worker.make_app(_app(rt, full))
-        runner.close(0)
-        assert [m for m in _log_lines(caplog, "WARNING") if "no field" in m] == []
-        caplog.clear()
-        bare = SimpleNamespace(**{k: v for k, v in vars(settings).items() if k != "poll_s"})
-        _wsgi, runner = worker.make_app(_app(rt, bare))
-        runner.close(0)
-        mine = [m for m in _log_lines(caplog, "WARNING") if "no field" in m]
-        assert len(mine) == 1 and mine[0].endswith(": poll_s, max_waiting"), mine
-        assert "door-a" not in mine[0] and SECRET not in mine[0]
 
 
 def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handlers_back(

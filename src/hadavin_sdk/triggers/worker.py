@@ -70,7 +70,12 @@ from hadavin_sdk.store.protocol import (
     is_connectivity_error,
 )
 from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi, sender_map
-from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
+from hadavin_sdk.triggers.server import (
+    MAX_CONNECTIONS,
+    READ_DEADLINE_S,
+    QuietRequestHandler,
+    QuietServer,
+)
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
 NO_SLOT_POLL_CAP_S: Final[float] = 1.0  # with no free slot the wait doubles from POLL_S up to this
@@ -432,14 +437,26 @@ def make_app(
         raise
 
 
-def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSGIServer:
+def make_server(
+    host: str,
+    port: int,
+    wsgi: Any,
+    socket_timeout_s: float,
+    *,
+    max_connections: int = MAX_CONNECTIONS,
+    read_deadline_s: float = READ_DEADLINE_S,
+) -> WSGIServer:
     """A bound stdlib server (not yet serving). The caller runs `serve_forever` and `server_close`. A port
     that is in use, or an address that cannot be bound, is a ConfigError (exit code 2 in `main`). The port
     is exclusive on every platform: on Windows because `QuietServer` turns the reuse option off and sets
     `SO_EXCLUSIVEADDRUSE`, elsewhere because the system refuses a second listener (see `QuietServer`)."""
-    handler = type("TriggerHandler", (QuietRequestHandler,), {"timeout": socket_timeout_s})
+    handler = type(
+        "TriggerHandler",
+        (QuietRequestHandler,),
+        {"timeout": socket_timeout_s, "read_deadline_s": read_deadline_s},
+    )
     try:
-        server = QuietServer((host, port), handler)
+        server = QuietServer((host, port), handler, max_connections=max_connections)
     except OSError as exc:  # port in use, or an address that cannot be bound: not the store
         raise ConfigError(f"cannot listen on {host}:{port} ({type(exc).__name__})") from None
     server.set_app(wsgi)

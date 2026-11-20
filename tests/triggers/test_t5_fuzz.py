@@ -616,7 +616,6 @@ def make_stack(tmp_path, store):
         max_body_bytes=MAX_BODY,
         max_running=4,
         ack_wait_s=20.0,
-        poll_s=0.01,
     )
     app = SimpleNamespace(
         config=SimpleNamespace(triggers=triggers),
@@ -625,7 +624,7 @@ def make_stack(tmp_path, store):
         store=store,
         trigger_secret=names.__getitem__,
     )
-    return worker.make_app(app, clock=lambda: CLOCK)
+    return worker.make_app(app, clock=lambda: CLOCK, poll_s=0.01)
 
 
 def memory_rows(store) -> list[tuple[str, str, str, str]]:

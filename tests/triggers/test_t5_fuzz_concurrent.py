@@ -271,8 +271,6 @@ def make_stack2(
         max_body_bytes=MAX_BODY,
         max_running=max_running,
         ack_wait_s=ack_wait_s,
-        poll_s=0.01,
-        max_waiting=max_waiting,
     )
     app = SimpleNamespace(
         config=SimpleNamespace(triggers=triggers),
@@ -281,7 +279,7 @@ def make_stack2(
         store=runner_store,
         trigger_secret=names.__getitem__,
     )
-    return worker.make_app(app, clock=clock)
+    return worker.make_app(app, clock=clock, poll_s=0.01, max_waiting=max_waiting)
 
 
 def mem_snapshot(store: MemoryStore) -> dict[str, tuple[str, str, str]]:

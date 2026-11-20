@@ -95,7 +95,6 @@ def make_trigger_app(runtime, store, secrets: dict[str, str], **over):
         "max_body_bytes": 65536,
         "max_running": 2,
         "ack_wait_s": 5.0,
-        "poll_s": 0.02,
     }
     by_name = {f"{sender}-secret": value for sender, value in secrets.items()}
     return SimpleNamespace(
@@ -239,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
         max_running=args.max_running,
         ack_wait_s=args.ack_wait_s,
     )
-    wsgi, runner = worker.make_app(app)
+    wsgi, runner = worker.make_app(app, poll_s=0.02)
     server = worker.make_server(HOST, 0, wsgi, args.ack_wait_s + worker.SOCKET_SLACK_S)
     print(f"port {server.server_port}", flush=True)
     code = worker.serve(server, runner)

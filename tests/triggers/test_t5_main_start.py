@@ -25,10 +25,9 @@ from typing import ClassVar
 
 import pytest
 
-import hadavin_sdk.config
+from tests.triggers.conftest import require_core_b
 
-if not hasattr(hadavin_sdk.config, "TriggerSettings"):
-    pytest.skip("core-b trigger config not on this branch yet", allow_module_level=True)
+require_core_b(allow_module_level=True)  # with HADAVIN_REQUIRE_PG=1 a missing config is a failure, not a skip
 
 from hadavin_sdk.config import load_config
 from hadavin_sdk.registry import load_registry
@@ -180,12 +179,12 @@ def test_2c_a_sender_whose_agent_is_not_qualified_is_refused(tmp_path):
     assert "not qualified" in line and "sender-a" in line
 
 
-def test_2d_a_host_that_is_not_loopback_needs_a_switch_that_does_not_exist(tmp_path):
-    # core-b's settings have no `allow_non_loopback`, so no config can allow it.
+def test_2d_a_host_that_is_not_loopback_needs_the_command_line_switch(tmp_path):
+    # core-b's settings have no `allow_non_loopback`: the switch is `--allow-non-loopback`.
     line = _refused(
         tmp_path, _config(tmp_path), {"DOOR_A": GOOD}, "--host", ANY_HOST, values=(GOOD,)
     )
-    assert "not loopback" in line
+    assert "not loopback" in line and "--allow-non-loopback" in line
 
 
 def test_2e_a_port_already_in_use_is_a_config_error(tmp_path):

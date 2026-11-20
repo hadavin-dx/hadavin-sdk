@@ -49,3 +49,24 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]):
         f"Set {DSN_VARIABLE} to a reachable server (with the psycopg driver installed), "
         f"or unset {STRICT_VARIABLE}. The skip reason was: {reason}"
     )
+
+
+def core_b_trigger_config() -> bool:
+    """True when this tree has core-b's trigger config (`hadavin_sdk.config.TriggerSettings` and `Config.triggers`)."""
+    import hadavin_sdk.config as config
+
+    return hasattr(config, "TriggerSettings") and "triggers" in config.Config.model_fields
+
+
+def require_core_b(*, allow_module_level: bool = False) -> None:
+    """Skip, or with HADAVIN_REQUIRE_PG=1 FAIL, when core-b's trigger config is not on this tree: a run handed in
+    as evidence cannot pass by skipping the tests that read a real config."""
+    if core_b_trigger_config():
+        return
+    reason = "core-b trigger config (TriggerSettings, Config.triggers) not on this tree"
+    if strict():
+        message = f"{STRICT_VARIABLE}=1: {reason}; the tests that need it must run, not skip."
+        if allow_module_level:
+            raise ImportError(message)  # a collection error: the run fails
+        pytest.fail(message, pytrace=False)
+    pytest.skip(reason, allow_module_level=allow_module_level)
