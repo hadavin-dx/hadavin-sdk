@@ -37,6 +37,9 @@ class Grant:
     purge_cols: tuple[str, ...] = ()
     # Table-level privileges of the reset role: the only identity that may clear a stop (`migrate --reset-role`).
     reset: str = ""
+    # Table-level privileges of the release role (0008): it releases expired spend holds through ONE function and
+    # appends to the audit; it holds no right on any money table.
+    release: str = ""
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -62,8 +65,8 @@ GRANTS: dict[str, Grant] = {
     "kill_switch_stops": Grant("table", _APPEND, reset="SELECT"),
     "kill_switch_clears": Grant("table", "SELECT", reset=_APPEND),
     "tick_state": Grant("table", _RW),
-    "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND),
-    "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT"),
+    "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND, release=_APPEND),
+    "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT", release="SELECT"),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
     # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
     # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
@@ -74,6 +77,9 @@ GRANTS: dict[str, Grant] = {
     "approval_decisions_seq_seq": Grant("sequence", "USAGE"),
     "dead_letters_seq_seq": Grant("sequence", "USAGE"),
 }
+# The function of 0008 that lowers expired holds; only the release role may run it (EXECUTE is revoked from PUBLIC
+# in the migration and from every other named role here).
+RELEASE_FUNCTION = "hadavin_release_expired_spend(text, date)"
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # Names PostgreSQL reads as a keyword in a GRANT (everyone, nobody, the caller), not as one role.
@@ -350,6 +356,26 @@ def _excess_privileges(db, role: str) -> list[str]:
     return extra
 
 
+def _apply_release_function(db, release_role: str | None, others: list[str]) -> None:
+    """EXECUTE on the release function: the release role gets it, every other named role loses it, and a named
+    role that can still run it (through PUBLIC or a role it is a member of) is refused."""
+    if db.execute("SELECT to_regprocedure(%s)", (RELEASE_FUNCTION,)).fetchone()[0] is None:
+        return
+    fn = sql.SQL(RELEASE_FUNCTION)
+    for role in others:
+        db.execute(sql.SQL("REVOKE ALL ON FUNCTION {} FROM {}").format(fn, sql.Identifier(role)))
+    if release_role:
+        db.execute(
+            sql.SQL("GRANT EXECUTE ON FUNCTION {} TO {}").format(fn, sql.Identifier(release_role))
+        )
+    for role in others:
+        if db.execute(
+            "SELECT has_function_privilege(%s, to_regprocedure(%s), 'EXECUTE')",
+            (role, RELEASE_FUNCTION),
+        ).fetchone()[0]:
+            raise ConfigError(f"{role} can run {RELEASE_FUNCTION}: only the release role may")
+
+
 def migrate(
     dsn: str,
     *,
@@ -357,6 +383,7 @@ def migrate(
     portal_role: str | None = None,
     purge_role: str | None = None,
     reset_role: str | None = None,
+    release_role: str | None = None,
     iam_auth: bool = False,
     region: str | None = None,
     sslmode: str | None = None,
@@ -364,16 +391,18 @@ def migrate(
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
-    relations marked `portal` and nothing else. With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+    relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
     old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    roles = (runtime_role, portal_role, purge_role, reset_role)
+    roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
             raise ConfigError(f"not a plain database role name: {role!r}")
     named = [r for r in roles if r is not None]
     if len(set(named)) != len(named):
-        raise ConfigError("the runtime, portal, purge and reset roles must be different roles")
+        raise ConfigError(
+            "the runtime, portal, purge, reset and release roles must be different roles"
+        )
     files = _migration_files()
     if problems := check_ledger(files) + check_grants(files):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
@@ -408,7 +437,7 @@ def migrate(
             for b in named:
                 if a != b and db.execute(q, (a, b)).fetchone()[0]:
                     raise ConfigError(
-                        "the runtime, portal, purge and reset roles must not be members of each other"
+                        "the runtime, portal, purge, reset and release roles must not be members of each other"
                     )
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)
@@ -430,6 +459,13 @@ def migrate(
                 raise ConfigError(
                     "the reset role holds more than the grant map: " + "; ".join(bad[:20])
                 )
+        if release_role:
+            _apply_grants(db, release_role, lambda g: g.release)
+            if bad := effective_problems(db, release_role, lambda g: g.release if g else ""):
+                raise ConfigError(
+                    "the release role holds more than the grant map: " + "; ".join(bad[:20])
+                )
+        _apply_release_function(db, release_role, [r for r in named if r != release_role])
         if portal_role:
             _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
             if extra := _excess_privileges(db, portal_role):

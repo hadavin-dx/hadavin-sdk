@@ -31,7 +31,7 @@ from hadavin_sdk import defaults
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
-from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
+from hadavin_sdk.store.protocol import MAX_EXPIRY_AGE_S, StaleState, is_connectivity_error
 
 if TYPE_CHECKING:
     from hadavin_sdk.app import App
@@ -264,7 +264,11 @@ def reservation_expire_s(app: App) -> int:
     """The age at which an open spend reservation expires: `defaults.RESERVATION_EXPIRE_S`, or the longest
     stuck-run age of any agent when that is larger, so no reservation expires while its run could still work."""
     longest = max((stuck_after_s(app, a) for a in app.registry.agents), default=0)
-    return max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest))
+    if (
+        not longest < MAX_EXPIRY_AGE_S
+    ):  # infinite, NaN or too large: clamp, or the store refuses it every tick
+        return MAX_EXPIRY_AGE_S
+    return min(MAX_EXPIRY_AGE_S, max(defaults.RESERVATION_EXPIRE_S, math.ceil(longest)))
 
 
 def expire_reservations(ctx: TickContext) -> None:

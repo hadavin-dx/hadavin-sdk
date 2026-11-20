@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Protocol
+from typing import Any, Protocol
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
@@ -160,6 +161,28 @@ def check_expiry_age(older_than_s: object) -> int:
     return older_than_s
 
 
+@dataclass(frozen=True)
+class SpendRelease:
+    """What `release_expired_spend` changed: the expired holds it lowered to 0, their summed reserved amount, and
+    the day and month counter after the release (None when the agent has no counter row for that day)."""
+
+    agent_id: str
+    day: date
+    reservations: int
+    released_usd: Decimal
+    day_usd: Decimal | None
+    month_usd: Decimal | None
+
+
+class SpendReleaser(Protocol):
+    """Optional, separate from `Store` so a custom store without it still starts. Only the Postgres store has it,
+    and only the release login may run it (migration 0008)."""
+
+    def release_expired_spend(
+        self, agent_id: str, day: date, actor: str, audit: Any
+    ) -> SpendRelease: ...
+
+
 class Store(Protocol):
     def create_run(self, run: Run) -> None: ...
     def get_run(self, run_id: str) -> Run: ...
@@ -288,9 +311,9 @@ class Store(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
     ) -> tuple[SpendReservation, bool]:
-        """The stored row and `applied` (true only for the call that changed it). The first call closes an open
+        """With `agent_id`, a reservation of another agent is NotFound (the same as an unknown id). The stored row and `applied` (true only for the call that changed it). The first call closes an open
         or an expired row: the counters of the row's own day and month move by actual minus reserved (after
         expiry only upward), `settled_usd` becomes what stays booked (the actual amount; for a row that was
         expired the larger of actual and reserved) and the real actual amount is added to the run's cost when

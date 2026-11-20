@@ -42,12 +42,32 @@ class StoreSpend(Protocol):
         ...
 
     def settle_spend(
-        self, reservation_id: str, actual_usd: Decimal
+        self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
     ) -> tuple[SpendReservation, bool]:
-        """The stored row and `applied` (true only for the call that changed it). NotFound for an unknown id;
+        """(ORDER 020 m2: with agent_id, another agent's reservation is NotFound.) The stored row and `applied` (true only for the call that changed it). NotFound for an unknown id;
         ValueError for a bad amount. Also adds the actual amount to the run's cost when the row has a run."""
         ...
 
     def expire_spend_reservations(self, older_than_s: int) -> int: ...
 
     def purge_spend_reservations(self, before: datetime) -> int: ...
+
+
+class SpendRelease(Protocol):  # frozen dataclass in store/protocol.py
+    agent_id: str
+    day: date
+    reservations: int  # expired rows lowered to settled at 0
+    released_usd: Decimal  # their summed reserved amount, taken off BOTH counters (never below zero)
+    day_usd: Decimal | None  # the counters after the release
+    month_usd: Decimal | None
+
+
+class SpendReleaser(Protocol):
+    """OPTIONAL (not in `Store`, so a custom store still starts). Postgres only; migration 0008; only the release
+    login may run it (EXECUTE on one SECURITY DEFINER function, nothing on the money tables)."""
+
+    def release_expired_spend(self, agent_id: str, day: date, actor: str, audit) -> SpendRelease:
+        """Order: audit.write_intent (raises: nothing changed), ONE transaction (expired rows of that agent and
+        day -> settled at 0, day and month counter lowered by the same sum, never below zero; live holds,
+        settled rows and other days are never touched), then audit.write_outcome (never raises)."""
+        ...

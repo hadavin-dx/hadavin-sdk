@@ -186,6 +186,7 @@ def build(
             *(platform_secrets.secret_names(s) for _, s in b.entries()),
             # The reset login is never read by this process; a sender must not carry its name all the same.
             {getattr(b.store, "reset_credential_ref", None)} - {None},
+            {getattr(b.store, "release_credential_ref", None)} - {None},
         ),
     )
     platform_secrets.check(secrets, [s for _, s in b.entries()], executor_names, extra_secret_names)

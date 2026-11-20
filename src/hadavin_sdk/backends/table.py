@@ -122,6 +122,10 @@ class PostgresSettings(KindSettings):
     # `hadavin-sdk limits reset`. Its name must not end in `_secret_name`: platform_secrets.py:19-20 resolves every
     # `*_secret_name` at runtime start, and the runtime process must never hold the login that can clear a stop.
     reset_credential_ref: str | None = None
+    # The secret that holds the release role's DSN (`hadavin-sdk migrate --release-role`), read only by
+    # `hadavin-sdk release-expired`. Same rule as the reset reference: its name must not end in `_secret_name`, and
+    # it is never the runtime's or the reset login's secret.
+    release_credential_ref: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
