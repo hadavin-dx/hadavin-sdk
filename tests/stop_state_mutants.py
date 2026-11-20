@@ -284,7 +284,7 @@ HAND = [
         "test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection", "accepted_admin_roles must be plain"),
     mutant("S2: the allow-list may name a role the command grants", MIG,
         "    if overlap := sorted(set(accepted) & set(named)):", "    if False:",
-        "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "unused.invalid"),
+        "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "Regex pattern did not match"),
     mutant("tests: migrate does not take the shared server gate", "tests/conftest.py",
         '            mp.setattr(mod, "migrate", patched)', "            pass",
         "test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively",
