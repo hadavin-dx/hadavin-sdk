@@ -1,0 +1,6 @@
+BATCH 4 (own files, PostgreSQL 16.15 port 55433), tree 936c10bd5 plus working tree, started 2026-11-20T07:05:06Z, python 3.13.18
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+351 files already formatted
+[bandit done]

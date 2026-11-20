@@ -425,10 +425,10 @@
    "item": "EGM-SEQ",
    "what": "owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report)",
    "state": "RUNNING",
-   "percent": 20,
+   "percent": 30,
    "evidence file": "EGM-LEDGER.md",
    "tries": 1,
-   "reason": "step E: round 1 of 3 done (2 fresh reviewers on sonnet, resolve through the skill): no Blocker, 5 Major, report reviews/E-result-review-1.md; fixes by a separate builder started now; then an evidence runner, then round 2. The same sequence for step D, the tests and the n8n template waits for the other builders to end"
+   "reason": "step E: round 2 resolved, fix pass done, evidence runner for round 3 running. n8n pack: round 1 started now. Step D code, tests, mutant script: waiting for the batch (BATCH-4) so that the reviewers see recorded evidence"
   },
   {
    "item": "FU-3",
@@ -483,6 +483,33 @@
    "evidence file": "raw/E-evidence-3-*.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence after the round 2 fix"
+  },
+  {
+   "item": "BATCH-4",
+   "what": "ONE batch of my own files on PostgreSQL 16: lint, format, bandit, tests/triggers + crash helper + trigger config + spend, gate, meter contract tests + redaction property + rule files, with the strict database switch HADAVIN_REQUIRE_PG=1",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "after the builders ended; raw/BATCH4-own-files-pg16.log",
+   "tries": 1,
+   "reason": "lead's reminder at 07:05Z and the EGM sequence"
+  },
+  {
+   "item": "MUT-3",
+   "what": "extend tests/endpoint_mutants.py to all guards added since (design review, fuzz, lead minor 10)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/endpoint-mutants-run-10.log",
+   "tries": 1,
+   "reason": "lead's reminder at 07:05Z and the EGM sequence"
+  },
+  {
+   "item": "EGM-n8n",
+   "what": "fresh EGM result review of the n8n pack: naive reader (egm:egm-comprehension) and hostile design (egm:egm-design)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/n8n-result-review-1.md",
+   "tries": 1,
+   "reason": "lead's reminder at 07:05Z and the EGM sequence"
   }
  ],
  "agents": [
@@ -1161,6 +1188,45 @@
    "what exactly it is doing": "runs everything on the simplified crash helper; mutants without -x so results are deterministic",
    "expected end": "about 25 min",
    "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:05",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "mut3",
+   "role": "builder (test tooling)",
+   "what exactly it is doing": "adds mutants for every guard added since the last script version",
+   "expected end": "about 30 min",
+   "reason": "minor 10 + new guards"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:05",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "id": "egm-n8n-comp",
+   "role": "reviewer (egm:egm-comprehension, fresh)",
+   "what exactly it is doing": "naive-reader review of n8n/README-trigger.md",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:05",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "id": "egm-n8n-design",
+   "role": "reviewer (egm:egm-design, fresh)",
+   "what exactly it is doing": "hostile design review of the workflow graph and the README",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
   }
  ],
  "tests": [
@@ -1524,6 +1590,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code",
   "CRASH MATRIX part 2 (CRASH-MATRIX.md): 171 kill points per store, no broken invariant, but 4 behaviours you should know for the plan: (1) kill after WAITING and before the approval request is saved: NEEDS_PERSON approval_missing and NO card, nobody is told; (2) kill between sending the card and recording the send: a duplicate approval card; (3) approved but killed before the executor runs: the action never runs, NEEDS_PERSON outcome_unknown; (4) PLAN_READY, EXECUTING and VERIFYING are answered 200 to a retry, so a sender cannot tell still-going from ended (my n8n template treats them as still going)",
   "STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history",
   "EGM-SEQUENCE: honest ledger in EGM-LEDGER.md: nothing I built has had the full sequence; missing for all code and tests: fresh result review, resolve, repeat, drift report; for ticket E also the plan review; no brainstorm or draft for anything (the lead's draft was the input). Running the result review of step E now, the rest after the three builders end",
