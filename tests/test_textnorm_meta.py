@@ -286,9 +286,15 @@ def test_the_changelog_marks_the_two_stale_notes_as_superseded_and_states_the_li
 # --- T6-5: the ban on the single readings is durable (no subprocess here: the two ruff runs are CI steps A and B) ------------------
 
 BAN_TABLE = "hadavin_sdk.guard.textnorm."
-BANNED = ("fold", "squeeze", "identity_key")
-# rows of code (not tests) that may keep a single reading: path of the file, with its reason. Empty in P1a; PR 77 adds its own row.
-EXEMPTIONS: dict[str, str] = {}
+BANNED = ("fold", "fold_view", "squeeze", "identity_key")
+# rows of code (not tests) that may keep a single reading: path of the file, with its reason. Empty in P1a; PR 77 (P2d-1, the fold scan
+# of the redactor, ported in ticket G part G3) adds its own row.
+EXEMPTIONS: dict[str, str] = {
+    "src/hadavin_sdk/guard/redact.py": (
+        "the fold scan masks a value in the text AS WRITTEN: it needs the position map of ONE named view at a time (fold, fold_view) "
+        "and runs every view of a line in turn (_view_specs); it is a scan built on the views, not a comparison by one reading"
+    ),
+}
 CI = ROOT / ".github" / "workflows" / "ci.yml"
 STEP_A = "ruff check --select TID251 --ignore-noqa src demos tools"
 STEP_B = (
