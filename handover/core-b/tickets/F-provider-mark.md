@@ -10,7 +10,7 @@ Open: core-c's gate ignores the mark on ProviderExhausted by type (requests/to-c
 M1. Rule (2) (the mark on ProviderExhausted) is INERT until core-c changes its gate: the gate ignores the mark on ProviderExhausted by type. The retry.py docstring says so (fix round 1).
 M2. For the openai_compat kind only HTTP 401, 403 and 404 count as refused before any response: a router or proxy behind its base_url can answer 400, 413 or 422 after the upstream model consumed tokens. The other kinds keep {400, 401, 403, 404, 413, 422}. The status list of a kind comes from the kind's own hook.
 N3. A cause chain longer than the walk limit (8) counts as NOT never-sent.
-N5. Parse failures are wrapped by with_retry into a new ProviderError and get the rule (unmarked unless never sent or status-refused); there is no pass-through path in the built adapters.
+N5 (corrected 07:30 UTC after the test writer's finding). `except ProviderError: raise` in with_retry is KEPT: a ProviderError that an adapter's own call raises passes through unchanged and unmarked (the safe direction); no built adapter raises one. Parse failures (KeyError, ValueError, JSON errors) are wrapped by with_retry into a new ProviderError and get the rule.
 N6. protocol.py docstring: "no response seen and no work known", not "nothing was billed".
 N7. New tests: 429 then 400 stays unmarked; a kind that does not retry a 429; a TLS error stays unmarked; one gate-level case once core-c's gate honours the mark.
 Code for M1, M2, N3, N5, N6, N7 is "provider mark fix round 1": QUEUED until the merge of cloud/core-b into the F-install integration tree is finished (llm/retry.py is being merged).
