@@ -132,6 +132,7 @@ MONEY_FUNCTIONS = (
     "hadavin_add_spend(text, date, numeric)",
     "hadavin_set_cap(text, numeric, numeric, text)",
     "hadavin_cap_matches(text, numeric, numeric)",
+    "hadavin_expired_holds(integer)",
 )
 # Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
 # purges; the release role (0008) releases; the reset role sets caps and compares them (step 6). The portal role runs none. Every other role, PUBLIC included,
@@ -145,6 +146,9 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     # Step 6: only the reset role sets a cap; the runtime (tick check) and the reset role compare one.
     MONEY_FUNCTIONS[5]: FunctionGrant(reset=True),
     MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, reset=True),
+    MONEY_FUNCTIONS[7]: FunctionGrant(
+        runtime=True
+    ),  # read-only: the tick alert on unreleased expired holds
     RELEASE_FUNCTION: FunctionGrant(release=True),
 }
 # Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.

@@ -183,6 +183,29 @@ class SpendReleaser(Protocol):
     ) -> SpendRelease: ...
 
 
+EXPIRED_HOLDS_MAX_ROWS = 1000  # groups (agent, day) one `expired_holds` call returns; the SQL function has the same bound
+
+
+@dataclass(frozen=True)
+class ExpiredHolds:
+    """The expired holds of one agent and one day that nobody has released or settled (`expired_holds`): how many
+    and their summed reserved amount, which is still booked. No hold id, no run id."""
+
+    agent_id: str
+    day: date
+    holds: int
+    usd: Decimal
+
+
+class ExpiredHoldsReader(Protocol):
+    """Optional, like `CapAdmin`: a read-only view of the expired holds still booked, for the tick alert
+    (`check_expired_holds`). The runtime login has no right on the table, so Postgres answers through the definer
+    function `hadavin_expired_holds` (migration 0011). Holds closed no longer than `older_than_s` seconds ago are
+    left out; at most `EXPIRED_HOLDS_MAX_ROWS` groups, ordered by agent and day. ValueError for a bad age."""
+
+    def expired_holds(self, older_than_s: int) -> list[ExpiredHolds]: ...
+
+
 class CapAdmin(Protocol):
     """Optional, like `SpendReleaser`: the per-agent spend caps live in a table the runtime login cannot write
     (migration 0011). Only the Postgres store has it. `set_cap` runs under the reset login only; `cap_matches`

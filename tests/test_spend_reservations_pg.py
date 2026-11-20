@@ -807,6 +807,7 @@ def test_the_step_is_the_last_one_and_comes_after_audit_drain():
         "audit_drain",
         "expire_reservations",
         "check_caps",
+        "check_expired_holds",
     ], names
     assert names.index("audit_drain") < names.index("expire_reservations")
     last = _EXPIRE_STEP
