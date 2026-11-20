@@ -29,11 +29,12 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| adc513b3 | builder (fix) | sonnet | D-config fix round 2: canonical secret names; worktree D3 | 07:03 | +15 min | UNVERIFIED | running | none | 1 | result review Major 1 |
+| adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
+| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: per-kind refused statuses (routers), truncated chain not never-sent, docstrings; worktree PM | 07:08 | +15 min | UNVERIFIED | running | none | 1 | result review Majors 1 and 2 |
 | a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
 | ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
 | a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
 | a99a298a | builder (fix) | sonnet | F-store fix round 3 from the hostile re-read (7 code items); worktree F5 | 06:58 | +25 min | UNVERIFIED | running | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
 | abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |

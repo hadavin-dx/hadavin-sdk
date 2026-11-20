@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:47:54Z
+UPDATED_UTC: 2026-11-20T06:48:31Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 6
-CAPACITY: load 3.15 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 3 heavy 4
+AGENTS_RUNNING: 4
+CAPACITY: load 2.77 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 3 heavy 4
 DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:47:00Z (previous push; this board is pushed right after writing)
-IST: 12:17 IST
+PUSHED_UTC: 2026-11-20T06:47:55Z (previous push; this board is pushed right after writing)
+IST: 12:18 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -48,11 +48,12 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| adc513b3 | builder (fix) | sonnet | D-config fix round 2: canonical secret names; worktree D3 | 07:03 | +15 min | UNVERIFIED | running | none | 1 | result review Major 1 |
+| adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
+| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: per-kind refused statuses (routers), truncated chain not never-sent, docstrings; worktree PM | 07:08 | +15 min | UNVERIFIED | running | none | 1 | result review Majors 1 and 2 |
 | a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
 | ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
-| a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a83fab17 | reviewer (egm-codebase-details) | sonnet | F-install round 3 second reviewer: 1 Blocker, 10 Majors, 4 Nits; both reviewers ran, round NOT clean, answered (Z) and Y4 escalated (E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
 | a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
 | a99a298a | builder (fix) | sonnet | F-store fix round 3 from the hostile re-read (7 code items); worktree F5 | 06:58 | +25 min | UNVERIFIED | running | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
 | abb69602 | builder (merge) | sonnet | merge of cloud/core-b into the F-install integration tree: DONE, merge commit 28abb73 and 0aa9e9e pushed to wip/cloud-core-b/F-install; 958 passed, 1 failed (core-c's known test) on its list | 06:58 | done | 100 | done | none | 0 | |
