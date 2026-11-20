@@ -1,26 +1,27 @@
-UPDATED_UTC: 2026-11-20T07:15:31Z
+UPDATED_UTC: 2026-11-20T07:17:35Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
-ITEMS_TOTAL: 35
-ITEMS_OPEN: 21
-PERCENT: 71
-AGENTS_RUNNING: 7
-CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 7, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 5; 70M	/tmp/claude-0;397M	/root/.cache/uv;
+ITEMS_TOTAL: 39
+ITEMS_OPEN: 25
+PERCENT: 64
+AGENTS_RUNNING: 8
+CAPACITY: load 1.5 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 8, heavy agents 0
+DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:14:40+00:00
+PUSHED_UTC: 2026-11-20T12:46:24+05:30
 
-(12:45 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:47 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) tw20 | builder (tests only) | claude-sonnet-5-5 | ORDER 020 test files: install test that parses src for model callers (strict xfail until core-b installs), micro-sign/Han/Hangul mixed-script pins, mutants pickup wrapper | 07:36 | 08:10 | 2 | running | n/a | 0 | lane: three NEW test files only |
 | (new) pick | builder | claude-sonnet-5-5 | picks the integration (16 commits) onto cloud/core-c in its own worktree /tmp/core-c-pick (branch wip-pick), resolves redact.py/runmap.py conflicts with the hardened own-output rule and the fold fix, one batch | 07:27 | 08:20 | 2 | running | n/a | 0 | lane: own worktree; the gate files in the main checkout are not touched; HEAVY at its end |
 | (new) g4R | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 (P1c) readiness (egm:egm-implementation-readiness) | 07:20 | 07:35 | 2 | running | 1 of 3 | 0 | EGM sequence: plan review before any build |
 | (new) g4C | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 against the real code (egm:egm-codebase-details) | 07:20 | 07:40 | 2 | running | 1 of 3 | 0 | EGM sequence |
@@ -137,6 +138,10 @@ PUSHED_UTC: 2026-11-20T07:14:40+00:00
 | SECURITY and README wording final | RUNNING | 2 | SECURITY-README-final.md | 1 | writer |
 | Pick of the integration onto cloud/core-c | RUNNING | 2 | evidence/PICK-int-onto-core-c.md | 1 | one builder in a worktree |
 | Glued-rest gap of IPv4, phone, IBAN, UUID, host name (from the integration probe) | READY (needs a ticket + plan review) | 0 | evidence/INT-g2-g3.md | 0 | ORDER 016c item 15 asked for a look at the other kinds: listed, not fixed |
+| ORDER 020 (lead review round 3): MJ-A, MJ-D, minors | RUNNING | 10 | tickets/F-result-review-2.md, evidence/F-G0-1.md | 1 | gate fix agent has them (MJ-A = dz2-B1) |
+| ORDER 020 MJ-B: redactor fixed-point loop with cap + RedactionError (G7 fix round 2) | READY (waits for the pick: same file redact.py) | 0 | none | 0 | designed; starts the minute the pick lands |
+| ORDER 020 MJ-C, m-4, mutants pickup: test files | RUNNING | 5 | evidence/TW-order020.md | 1 | test-writer |
+| ORDER 020 m-3: duplicate TEXTNORM_PINNED_PYTHON in defaults.py | READY (after the pick) | 0 | none | 0 | one-line change |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -168,4 +173,4 @@ PUSHED_UTC: 2026-11-20T07:14:40+00:00
 | (new) g7C | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-det | container restart 06:37 UTC | to be restarted on sonnet after the EGM proof |  |
 
 ## LEAD ACTIONS NEEDED
-Gate round 2 + ORDER 017 BUILT (66 of 66 mutants). For core-b: requests/3-bind-mapping-required.md (bind(mapping=) required, NO_MAP, GateRefused, Reply.cost_usd default 0 must change). To confirm: framing refusal applies only to calls that carry tool framing; held-back edge values leave a readable tail. Lead review round 3 can start at the next commit. G7 fail closed OK? requests/4, 5. EGM-LEDGER.md.
+ORDER 020 read: MJ-A/D/minors with the gate fix agent; MJ-B (capped fixed-point loop in the redactor) queued behind the pick; MJ-C/m-4/mutants pickup with a test-writer. CONTESTED in DECISIONS.md: m-2 (refuse an empty map): an empty live map is legitimate at a run start; we mark `map_enforced_empty` instead. 8 agents running; load measured 0.2-1 of 4 cores, memory 0 of 15 GB (idle).
