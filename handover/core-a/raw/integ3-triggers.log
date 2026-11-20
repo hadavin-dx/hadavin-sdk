@@ -21,4 +21,43 @@ bringing up nodes...
 ........................................................................ [ 88%]
 ........................................................................ [ 93%]
 ........................................................................ [ 98%]
-..........
+...............                                                          [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:934: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C2 seed=2026112044: sent=1362 valid=729 (54%) rows=60 overlapping_keys=41 samples=130 model_calls=60 statuses[200:326, 202:59, 400:346, 401:194, 404:37, 405:34, 409:285, 413:22, 503:59] retried_503=59 get_run_calls=1171 raised=57 slowed=319
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C3 seed=2026112045: sent=1508 valid=195 (13%) rows=51 overlapping_keys=25 samples=102 model_calls=51 statuses[200:89, 202:49, 400:152, 401:1059, 404:36, 405:35, 409:52, 413:31, 503:5] retried_503=5 clock_calls=1333 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=35 samples=49 model_calls=48 statuses[200:65, 202:114, 400:117, 401:78, 404:13, 405:13, 409:95, 413:8] retried_503=0
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:1122: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=95 no_answer=14 retried_503=0 statuses[0:14, 200:75, 202:159, 400:110, 401:45, 404:7, 405:13, 409:20, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=38 overlapping_keys=29 samples=171 model_calls=38 statuses[200:242, 202:21, 400:625, 401:382, 404:60, 405:68, 409:120, 413:44, 503:942] close_took=0.00s requests_after_close=1150 new_keys_after_close=934
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C1/1 seed=2026112041: sent=1504 valid=1018 (68%) rows=50 overlapping_keys=41 samples=28 model_calls=50 statuses[200:322, 202:6, 400:271, 401:135, 404:33, 405:29, 409:188, 413:18, 503:502] retried_503=502
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C1/2 seed=2026112042: sent=1513 valid=1043 (69%) rows=53 overlapping_keys=34 samples=49 model_calls=53 statuses[200:295, 202:17, 400:251, 401:148, 404:32, 405:21, 409:221, 413:18, 503:510] retried_503=510
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/wt/integ3/tests/triggers/test_t5_fuzz_concurrent.py:720: UserWarning: C1/4 seed=2026112043: sent=1010 valid=544 (54%) rows=57 overlapping_keys=38 samples=97 model_calls=57 statuses[200:196, 202:138, 400:245, 401:156, 404:26, 405:23, 409:205, 413:16, 503:5] retried_503=5
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1379 passed, 4 skipped, 9 warnings in 197.72s (0:03:17)

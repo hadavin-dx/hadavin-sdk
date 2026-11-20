@@ -1,0 +1,493 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+......................................................................F. [ 22%]
+F.F.FF....F...F......F.....F...F......F................................. [ 45%]
+........................................................................ [ 67%]
+........................................................................ [ 90%]
+...............................                                          [100%]
+=================================== FAILURES ===================================
+_______________ test_the_identities_are_the_four_this_file_knows _______________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+    def test_the_identities_are_the_four_this_file_knows():
+        """A new role keyword is a new identity: its denials on this table must be written here first."""
+>       assert _role_keywords() == set(HELD) - {"stranger"}
+E       AssertionError: assert {'portal', 'p...t', 'runtime'} == {'portal', 'p...t', 'runtime'}
+E         
+E         Extra items in the left set:
+E         'release'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:95: AssertionError
+_ test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more[purge] _
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+role = 'purge'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more(role):
+>       assert _map_gives(role) == HELD[role]
+E       AssertionError: assert set() == {'DELETE'}
+E         
+E         Extra items in the right set:
+E         'DELETE'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:100: AssertionError
+_ test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more[runtime] _
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+role = 'runtime'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more(role):
+>       assert _map_gives(role) == HELD[role]
+E       AssertionError: assert set() == {'INSERT', 'SELECT', 'UPDATE'}
+E         
+E         Extra items in the right set:
+E         'UPDATE'
+E         'SELECT'
+E         'INSERT'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:100: AssertionError
+___ test_the_grant_row_is_a_table_with_two_purge_columns_and_no_portal_read ____
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+    def test_the_grant_row_is_a_table_with_two_purge_columns_and_no_portal_read():
+        grant = mig.GRANTS[TABLE]
+        assert grant.kind == "table"
+        assert grant.portal is False
+>       assert set(grant.purge_cols) == PURGE_READS
+E       AssertionError: assert set() == {'closed_at', 'status'}
+E         
+E         Extra items in the right set:
+E         'closed_at'
+E         'status'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:107: AssertionError
+_________ test_nobody_may_truncate_and_only_the_purge_role_may_delete __________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+    def test_nobody_may_truncate_and_only_the_purge_role_may_delete():
+        assert {role for role in HELD if "TRUNCATE" in _map_gives(role)} == set()
+>       assert {role for role in HELD if "DELETE" in _map_gives(role)} == {"purge"}
+E       AssertionError: assert set() == {'purge'}
+E         
+E         Extra items in the right set:
+E         'purge'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:113: AssertionError
+__ test_pg_each_role_is_refused_every_privilege_the_map_does_not_give[purge] ___
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_4b5feecce8f4'", {'runtime': 'ru_727f4e2103', 'portal': 'po_caabff549d', 'purge': 'pu_6a6dbf1b22', 'reset': 're_d3cfa07b2a', ...})
+role = 'purge'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
+        """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
+        is refused at the schema and not by a search path that does not find the table."""
+        import psycopg
+    
+        dsn, names = identities
+        _seed(dsn)
+        before = _all_rows(dsn)
+        schema = _schema(dsn)
+        refused = []
+        with _as(dsn, names[role]) as db:
+            for privilege, statement in _statements(schema, TABLE, COLUMNS[0]).items():
+                if privilege in HELD[role]:
+                    try:
+>                       db.execute(statement)  # may stop later on a constraint: not our subject
+                        ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_0007.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f7c9c0f9220>
+query = Composed([SQL('DELETE FROM '), Identifier('t_4b5feecce8f4', 'spend_reservations')])
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+
+During handling of the above exception, another exception occurred:
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_4b5feecce8f4'", {'runtime': 'ru_727f4e2103', 'portal': 'po_caabff549d', 'purge': 'pu_6a6dbf1b22', 'reset': 're_d3cfa07b2a', ...})
+role = 'purge'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
+        """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
+        is refused at the schema and not by a search path that does not find the table."""
+        import psycopg
+    
+        dsn, names = identities
+        _seed(dsn)
+        before = _all_rows(dsn)
+        schema = _schema(dsn)
+        refused = []
+        with _as(dsn, names[role]) as db:
+            for privilege, statement in _statements(schema, TABLE, COLUMNS[0]).items():
+                if privilege in HELD[role]:
+                    try:
+                        db.execute(statement)  # may stop later on a constraint: not our subject
+                    except psycopg.errors.InsufficientPrivilege:
+>                       pytest.fail(f"{role} was refused {privilege}, which the map gives")
+E                       Failed: purge was refused DELETE, which the map gives
+
+tests/test_grants_negative_0007.py:213: Failed
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_pg_each_role_is_refused_every_privilege_the_map_does_not_give[runtime] __
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_de600d7ebacb'", {'runtime': 'ru_6e7be1825a', 'portal': 'po_e3018259fd', 'purge': 'pu_1f87946b57', 'reset': 're_b5a8202465', ...})
+role = 'runtime'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
+        """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
+        is refused at the schema and not by a search path that does not find the table."""
+        import psycopg
+    
+        dsn, names = identities
+        _seed(dsn)
+        before = _all_rows(dsn)
+        schema = _schema(dsn)
+        refused = []
+        with _as(dsn, names[role]) as db:
+            for privilege, statement in _statements(schema, TABLE, COLUMNS[0]).items():
+                if privilege in HELD[role]:
+                    try:
+>                       db.execute(statement)  # may stop later on a constraint: not our subject
+                        ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_0007.py:211: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f7c9c23bc50>
+query = Composed([SQL('SELECT * FROM '), Identifier('t_de600d7ebacb', 'spend_reservations')])
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+
+During handling of the above exception, another exception occurred:
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_de600d7ebacb'", {'runtime': 'ru_6e7be1825a', 'portal': 'po_e3018259fd', 'purge': 'pu_1f87946b57', 'reset': 're_b5a8202465', ...})
+role = 'runtime'
+
+    @pytest.mark.parametrize("role", sorted(HELD))
+    def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
+        """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
+        is refused at the schema and not by a search path that does not find the table."""
+        import psycopg
+    
+        dsn, names = identities
+        _seed(dsn)
+        before = _all_rows(dsn)
+        schema = _schema(dsn)
+        refused = []
+        with _as(dsn, names[role]) as db:
+            for privilege, statement in _statements(schema, TABLE, COLUMNS[0]).items():
+                if privilege in HELD[role]:
+                    try:
+                        db.execute(statement)  # may stop later on a constraint: not our subject
+                    except psycopg.errors.InsufficientPrivilege:
+>                       pytest.fail(f"{role} was refused {privilege}, which the map gives")
+E                       Failed: runtime was refused SELECT, which the map gives
+
+tests/test_grants_negative_0007.py:213: Failed
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_pg_column_rights_only_the_purge_role_reads_and_only_two_columns[purge] __
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_eac4a1801e66'", {'runtime': 'ru_8082e7273e', 'portal': 'po_b401128992', 'purge': 'pu_6d1705db35', 'reset': 're_29d847a05a', ...})
+role = 'purge'
+
+    @pytest.mark.parametrize("role", ["portal", "purge", "reset", "stranger"])
+    def test_pg_column_rights_only_the_purge_role_reads_and_only_two_columns(identities, role):
+        """Per column: SELECT, UPDATE and INSERT as the role. The purge role reads `status` and `closed_at` and
+        nothing else; nobody but the runtime role writes a single column."""
+        from psycopg import sql
+    
+        dsn, names = identities
+        _seed(dsn)
+        table = sql.Identifier(_schema(dsn), TABLE)
+        reads = PURGE_READS if role == "purge" else set()
+        with _as(dsn, names[role]) as db:
+            for column in COLUMNS:
+                c = sql.Identifier(column)
+                select = sql.SQL("SELECT {} FROM {}").format(c, table)
+                if column in reads:
+>                   assert len(db.execute(select).fetchall()) == 2
+                               ^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_0007.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f7c9c23ba70>
+query = Composed([SQL('SELECT '), Identifier('status'), SQL(' FROM '), Identifier('t_eac4a1801e66', 'spend_reservations')])
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+________ test_pg_the_catalog_agrees_for_every_role_privilege_and_column ________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_80b50b7e0ca1'", {'runtime': 'ru_e2b884abf6', 'portal': 'po_6a06d4346b', 'purge': 'pu_829210583b', 'reset': 're_e3383e99bd', ...})
+
+    def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
+        """`has_table_privilege` and `has_column_privilege` (direct, inherited and PUBLIC grants), including
+        REFERENCES and TRIGGER, which no statement above exercises."""
+        import psycopg
+    
+        dsn, names = identities
+        wrong = []
+        with psycopg.connect(dsn, autocommit=True) as db:
+            for role, name in names.items():
+                held = {
+                    p
+                    for p in (*PRIVILEGES, "REFERENCES", "TRIGGER")
+                    if db.execute(
+                        "SELECT has_table_privilege(%s, %s, %s)", (name, TABLE, p)
+                    ).fetchone()[0]
+                }
+                if held != HELD[role]:
+                    wrong.append(f"{role} on the table: {sorted(held)}")
+                for column in COLUMNS:
+                    cols = {
+                        p
+                        for p in ("SELECT", "INSERT", "UPDATE", "REFERENCES")
+                        if db.execute(
+                            "SELECT has_column_privilege(%s, %s, %s, %s)", (name, TABLE, column, p)
+                        ).fetchone()[0]
+                    }
+                    expected = HELD[role] & {"SELECT", "INSERT", "UPDATE"}
+                    if role == "purge" and column in PURGE_READS:
+                        expected = {"SELECT"}
+                    if cols != expected:
+                        wrong.append(f"{role} on column {column}: {sorted(cols)}")
+            owner = db.execute(
+                "SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = %s::regclass", (TABLE,)
+            ).fetchone()[0]
+            assert owner not in names.values()  # none of the identities owns the table
+>       assert wrong == []
+E       AssertionError: assert ['runtime on ...usd: []', ...] == []
+E         
+E         Left contains 13 more items, first extra item: 'runtime on the table: []'
+E         Use -v to get more diff
+
+tests/test_grants_negative_0007.py:290: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+__ test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else ___
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_7a9bc2855233'", {'runtime': 'ru_0c4342c927', 'portal': 'po_a939dba31f', 'purge': 'pu_14b453183d', 'reset': 're_d0f01c8f04', ...})
+
+    def test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else(identities):
+        """It cannot read an amount, an agent or a run, cannot return a deleted row, cannot change or add one. Its
+        own statement (status and closed_at only) works, so the refusals above are about rights, not the login."""
+        dsn, names = identities
+        open_id, closed_id = _seed(dsn)
+        before = _all_rows(dsn)
+        with _as(dsn, names["purge"]) as db:
+            for statement in (
+                f"DELETE FROM {TABLE} WHERE reserved_usd >= 0",  # noqa: S608 - a constant table name
+                f"DELETE FROM {TABLE} WHERE reservation_id = '{closed_id}'",  # noqa: S608 - an id built here
+                f"DELETE FROM {TABLE} WHERE agent_id = 'a'",  # noqa: S608 - a constant table name
+                f"DELETE FROM {TABLE} WHERE created_at < clock_timestamp()",  # noqa: S608 - a constant table name
+                f"DELETE FROM {TABLE} WHERE status <> 'open' RETURNING *",  # noqa: S608 - a constant table name
+                f"DELETE FROM {TABLE} WHERE status <> 'open' RETURNING reserved_usd",  # noqa: S608 - a constant table name
+                f"UPDATE {TABLE} SET status = 'settled', settled_usd = 0, closed_at = clock_timestamp()",  # noqa: S608 - a constant table name
+                f"UPDATE {TABLE} SET closed_at = NULL",  # noqa: S608 - a constant table name
+                (
+                    f"INSERT INTO {TABLE} (reservation_id, agent_id, day, reserved_usd) "  # noqa: S608 - a constant table name
+                    "VALUES ('res-x', 'a', '2026-03-10', 1)"
+                ),
+                f"TRUNCATE {TABLE}",
+                *(f"UPDATE {counter} SET usd = 0" for counter in COUNTERS),  # noqa: S608 - constant names
+                *(f"SELECT usd FROM {counter}" for counter in COUNTERS),  # noqa: S608 - constant names
+            ):
+                _refused(db, statement)
+            assert _all_rows(dsn) == before
+>           deleted = db.execute(
+                f"DELETE FROM {TABLE} WHERE status <> 'open' AND closed_at < clock_timestamp()"  # noqa: S608 - a constant table name
+            ).rowcount
+
+tests/test_grants_negative_0007.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f7c9c00e030>
+query = "DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < clock_timestamp()"
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+________ test_pg_the_store_methods_are_refused_under_the_wrong_identity ________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ3/.venv/bin/python
+
+identities = ("user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_36aeaaccc5f0'", {'runtime': 'ru_8c87d54242', 'portal': 'po_9ab8849691', 'purge': 'pu_cf249a0f03', 'reset': 're_1c30618bf8', ...})
+
+    def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
+        """The package's own calls, each under an identity that must not make them: the purge under the runtime
+        role; reserve, settle and the sweep under the purge, the portal and the reset role."""
+        import psycopg
+        from psycopg.conninfo import make_conninfo
+    
+        from hadavin_sdk.models import now
+        from hadavin_sdk.store.postgres import PostgresStore, connect
+    
+        dsn, names = identities
+        open_id, _ = _seed(dsn)
+        before = _all_rows(dsn)
+        cap = Decimal(1000)
+    
+        def store_as(role):
+            return PostgresStore(connect(make_conninfo(dsn, user=names[role])))
+    
+        runtime = store_as("runtime")
+        try:
+            with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                runtime.purge_spend_reservations(now())
+        finally:
+            runtime._db.close()
+        for role in ("purge", "portal", "reset"):
+            store = store_as(role)
+            try:
+                with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                    store.reserve_spend(
+                        "res-" + uuid.uuid4().hex, "a", DAY, Decimal(1), day_cap=cap, month_cap=cap
+                    )
+                with pytest.raises(psycopg.errors.InsufficientPrivilege):
+>                   store.settle_spend(open_id, Decimal(0))
+E                   TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/test_grants_negative_0007.py:412: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1339 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/test_grants_negative_0007.py::test_the_identities_are_the_four_this_file_knows
+FAILED tests/test_grants_negative_0007.py::test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more[purge]
+FAILED tests/test_grants_negative_0007.py::test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more[runtime]
+FAILED tests/test_grants_negative_0007.py::test_the_grant_row_is_a_table_with_two_purge_columns_and_no_portal_read
+FAILED tests/test_grants_negative_0007.py::test_nobody_may_truncate_and_only_the_purge_role_may_delete
+FAILED tests/test_grants_negative_0007.py::test_pg_each_role_is_refused_every_privilege_the_map_does_not_give[purge]
+FAILED tests/test_grants_negative_0007.py::test_pg_each_role_is_refused_every_privilege_the_map_does_not_give[runtime]
+FAILED tests/test_grants_negative_0007.py::test_pg_column_rights_only_the_purge_role_reads_and_only_two_columns[purge]
+FAILED tests/test_grants_negative_0007.py::test_pg_the_catalog_agrees_for_every_role_privilege_and_column
+FAILED tests/test_grants_negative_0007.py::test_pg_the_purge_role_deletes_by_status_and_date_and_can_do_nothing_else
+FAILED tests/test_grants_negative_0007.py::test_pg_the_store_methods_are_refused_under_the_wrong_identity
+11 failed, 308 passed in 36.53s
