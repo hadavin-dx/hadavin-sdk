@@ -1,0 +1,550 @@
+# integ-pg-run (facts only)
+- worktree /home/user/wt/integ, head 6c89f0495c372f55177c7ec1c50a5fbe17023762 (scratch/core-a-integration-dryrun-2)
+- PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) at 127.0.0.1:55433; env HADAVIN_REQUIRE_PG=1 HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:55433/postgres
+- load average at start (uptime 15:57:37 UTC): 0.31 0.45 0.45; load at set-2 start: load average: 1.31, 0.72, 0.54; load at end: load average: 4.11, 3.88, 2.06
+- common flags: uv run --all-extras --group test pytest -q -n 3 -rfE --no-header -p no:cacheprovider <targets>
+- logs: handover/core-a/raw/integ-{triggers,set2,set2b,test_t1_reserve_cap,test_t1_reserve_cap_core_a,test_t1_reserve_cap_core_c}.log
+- (1) tests/triggers: 144 failed, 1218 passed, 4 skipped in 861.98s. By file: test_t5_crash_matrix.py 22, test_t5_crash_matrix_paths.py 120, test_t5_postgres.py 2.
+- (2) literal command: "no tests ran in 6.91s" (wall 9s); tests/test_t5*.py glob matches no file under tests/ (t5 tests are in tests/triggers/). 2b = same targets minus that glob: 352 failed, 1461 passed, 3 skipped, 1 xfailed in 284.85s. By file: test_meter.py 152, test_store_spend_reservations.py 156, test_t1_reserve_cap_core_c.py 19, test_grants_negative_roles.py 17, test_t1_reserve_cap_core_a.py 6, test_model_gate_contract.py 2.
+- (3) T1 files separately: test_t1_reserve_cap.py 7 passed (10s); _core_a.py 6 failed 5 passed (7s); _core_c.py 19 failed 5 passed (14s).
+- migrate() without reset_role/no_roles: no "refuses" error observed in any T1 log (test_t1_reserve_cap.py calls world.migrate() and passed 7/7). Nearest error seen (test_grants_negative_roles case8, case12, in 2b): ConfigError "store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears)..." (src/hadavin_sdk/store/postgres.py:409).
+- Failing ids below: "id :: first E line from the pytest traceback"; "(no E line in log)" = no matching traceback section in the log (see raw log for the id).
+
+## (1) tests/triggers
+wall 863s; summary: ['144 failed, 1218 passed, 4 skipped, 9 warnings in 861.98s (0:14:21)']
+- tests/triggers/test_t5_crash_matrix.py::test_memory_raise_at_point[h14-store.add_spend-1-before] :: AssertionError: assert () == ('store.add_spend:before',)
+- tests/triggers/test_t5_crash_matrix.py::test_memory_raise_at_point[h14-store.add_spend-1-after] :: AssertionError: assert () == ('store.add_spend:after',)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[r1-store.get_run-1-before] :: AssertionError: assert ('run-e025186..._unavailable') == ('run-e025186...ACTION', None)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h01-store.create_run-1-before] :: AssertionError: assert ('run-e025186..._unavailable') == ('run-e025186...ACTION', None)
+- tests/triggers/test_t5_crash_matrix.py::test_memory_raise_at_point[h15-store.add_cost-1-before] :: AssertionError: assert () == ('store.add_cost:before',)
+- tests/triggers/test_t5_crash_matrix.py::test_memory_raise_at_point[h15-store.add_cost-1-after] :: AssertionError: assert () == ('store.add_cost:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_trace_of_a_path_without_a_crash_matches_its_table[read] :: AssertionError: assert ['store.creat...n:after', ...] == ['store.creat...n:after', ...]
+- tests/triggers/test_t5_crash_matrix_paths.py::test_trace_of_a_path_without_a_crash_matches_its_table[propose] :: AssertionError: assert ['store.creat...n:after', ...] == ['store.creat...n:after', ...]
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read13-llm.chat-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read01-store.create_run-1-before] :: AssertionError: run did not reach NO_ACTION/None: [('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab62
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read13-llm.chat-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read14-store.add_spend-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h13-llm.chat-1-before] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read14-store.add_spend-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose13-llm.chat-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h13-llm.chat-1-after] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read15-store.add_cost-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose13-llm.chat-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read15-store.add_cost-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read16-store.get_kill_switch-3-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 1, 0, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h14-store.add_spend-1-before] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose14-store.add_spend-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read17-store.spend_totals-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose14-store.add_spend-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h14-store.add_spend-1-after] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read18-tool.invoke-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose15-store.add_cost-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h15-store.add_cost-1-before] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read18-tool.invoke-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose15-store.add_cost-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose16-store.get_kill_switch-3-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 1, 0, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read19-store.put_redaction_map-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose17-store.spend_totals-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h15-store.add_cost-1-after] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h16-loop.get_run-2-before] :: AssertionError: (0, 0)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h16-loop.get_run-2-after] :: AssertionError: (0, 0)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h17-store.transition-2-before] :: AssertionError: (0, 0)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h17-store.transition-2-after] :: AssertionError: [('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab623ae8', 'NEEDS_PERSON', 'limits.lim
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h18-audit.write_outcome-3-before] :: AssertionError: [('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab623ae8', 'NEEDS_PERSON', 'limits.lim
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h18-audit.write_outcome-3-after] :: AssertionError: [('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b7ef9173ab623ae8', 'NEEDS_PERSON', 'limits.lim
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read19-store.put_redaction_map-3-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose18-tool.invoke-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read20-store.put_redaction_map-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose18-tool.invoke-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h19-audit.write_outcome-4-before] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read20-store.put_redaction_map-4-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose19-store.put_redaction_map-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h19-audit.write_outcome-4-after] :: AssertionError: the child did not end within 30.0 s
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[r2-store.get_run-2-before-slow-create] :: AssertionError: assert ('run-e025186..._unavailable') == ('run-e025186...ACTION', None)
+- tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[r3-store.get_run-4-before-slow-create] :: AssertionError: assert ('run-e025186..._unavailable') == ('run-e025186...ACTION', None)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read21-store.add_tool_call-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose19-store.put_redaction_map-3-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read21-store.add_tool_call-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read22-audit.write_outcome-3-before] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read22-audit.write_outcome-3-after] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose35-store.get_kill_switch-5-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose20-store.put_redaction_map-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read23-store.get_kill_switch-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose36-store.spend_totals-5-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose20-store.put_redaction_map-4-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read24-store.spend_totals-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose37-audit.write_intent-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose21-store.add_tool_call-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read25-store.touch-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose37-audit.write_intent-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose21-store.add_tool_call-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose22-audit.write_outcome-3-before] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose22-audit.write_outcome-3-after] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read25-store.touch-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose38-store.save_gate_decision-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose23-store.get_kill_switch-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read26-llm.chat-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose38-store.save_gate_decision-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose24-store.spend_totals-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read26-llm.chat-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose39-loop.get_run-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose25-store.touch-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read27-store.add_spend-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose40-store.transition-3-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose25-store.touch-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read27-store.add_spend-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose40-store.transition-3-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose26-llm.chat-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read28-store.add_cost-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose41-audit.write_outcome-6-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose26-llm.chat-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read28-store.add_cost-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose41-audit.write_outcome-6-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read29-loop.get_run-2-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 2, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read30-store.transition-2-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 2, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read30-store.transition-2-after] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('NO_ACTION',...1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose27-store.add_spend-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose42-store.save_approval_request-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose27-store.add_spend-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose42-store.save_approval_request-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose28-store.add_cost-2-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose43-chan.send-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read32-chan.post_card-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose28-store.add_cost-2-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose43-chan.send-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read32-chan.post_card-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose29-store.put_redaction_map-5-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose44-store.update_approval_request-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read33-audit.write_outcome-5-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose29-store.put_redaction_map-5-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose44-store.update_approval_request-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read33-audit.write_outcome-5-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose30-audit.write_outcome-4-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose01-store.create_run-1-before] :: AssertionError: run did not reach WAITING_FOR_APPROVAL/sent: [('run-e025186fe21b924e277169d0233df85e', 'test-agent', 'svc:test-agent', 'sender-a/key-1#fbe97adb2727915ff186a7d3d44505f00f7a7ccbfad9df84b
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose45-audit.write_outcome-7-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose30-audit.write_outcome-4-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose45-audit.write_outcome-7-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read15-store.add_cost-1-before] :: AssertionError: assert () == ('store.add_cost:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose31-store.save_plan-1-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read15-store.add_cost-1-after] :: AssertionError: assert () == ('store.add_cost:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read16-store.get_kill_switch-3-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 1, 0, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read23-store.get_kill_switch-4-before] :: AssertionError: assert ('WORKING', 1, 0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read27-store.add_spend-2-before] :: AssertionError: assert () == ('store.add_spend:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose31-store.save_plan-1-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose32-loop.get_run-2-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 2, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose33-store.transition-2-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 2, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose33-store.transition-2-after] :: AssertionError: assert ('NEEDS_PERSO...0, None, 0, 0) == ('PLAN_READY'...1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read27-store.add_spend-2-after] :: AssertionError: assert () == ('store.add_spend:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read28-store.add_cost-2-before] :: AssertionError: assert () == ('store.add_cost:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose34-audit.write_outcome-5-before] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read28-store.add_cost-2-after] :: AssertionError: assert () == ('store.add_cost:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read14-store.add_spend-1-before] :: AssertionError: assert () == ('store.add_spend:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose14-store.add_spend-1-before] :: AssertionError: assert () == ('store.add_spend:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[propose34-audit.write_outcome-5-after] :: AssertionError: the child did not end within 20.0 s
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose23-store.get_kill_switch-4-before] :: AssertionError: assert ('WORKING', 1, 0, None, 0, 0) == ('WORKING', 1, 1, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[read14-store.add_spend-1-after] :: AssertionError: assert () == ('store.add_spend:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose14-store.add_spend-1-after] :: AssertionError: assert () == ('store.add_spend:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose27-store.add_spend-2-before] :: AssertionError: assert () == ('store.add_spend:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose15-store.add_cost-1-before] :: AssertionError: assert () == ('store.add_cost:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose27-store.add_spend-2-after] :: AssertionError: assert () == ('store.add_spend:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose15-store.add_cost-1-after] :: AssertionError: assert () == ('store.add_cost:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose16-store.get_kill_switch-3-before] :: AssertionError: assert ('WORKING', 0, 0, None, 0, 0) == ('WORKING', 1, 0, None, 0, 0)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose28-store.add_cost-2-before] :: AssertionError: assert () == ('store.add_cost:before',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose28-store.add_cost-2-after] :: AssertionError: assert () == ('store.add_cost:after',)
+- tests/triggers/test_t5_crash_matrix_paths.py::test_memory_raise_at_point[propose35-store.get_kill_switch-5-before] :: AssertionError: assert ('WORKING', 1, 1, None, 0, 0) == ('PLAN_READY'...1, None, 0, 0)
+- tests/triggers/test_t5_postgres.py::test_c1_two_processes_and_one_request_give_one_row :: AssertionError: assert (0 + 0) == 3
+- tests/triggers/test_t5_postgres.py::test_c2_two_processes_and_two_documents_give_one_run_and_one_409 :: AssertionError: assert (0 + 0) == 3
+
+## (2) literal command (tests/test_t5*.py glob matches no file)
+wall 9s; summary: ['no tests ran in 6.91s']
+
+## (2b) same minus the unmatched glob
+wall 287s; summary: ['352 failed, 1461 passed, 3 skipped, 1 xfailed in 284.84s (0:04:44)']
+- tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[limits-memory] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[limits-postgres] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_twelve_decimal_places_are_booked_unrounded[budget] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that_day[limits-memory] :: (no E line in log)
+- tests/contracts/test_meter.py::test_the_day_is_fixed_at_reserve_time_and_a_settle_after_midnight_moves_that_day[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_threads_settling_one_reservation_on_the_memory_store_apply_it_once :: AssertionError: [TypeError("Limits.settle() missing 1 required keyword-only argument: 'agent_id'"), TypeError("Limits.settle() missing...rd-only argument: 'agent_id'"), TypeError("Limits.settle() miss
+- tests/contracts/test_meter.py::test_connections_settling_one_reservation_on_postgres_apply_it_once :: AssertionError: [TypeError("Limits.settle() missing 1 required keyword-only argument: 'agent_id'"), TypeError("Limits.settle() missing...rd-only argument: 'agent_id'"), TypeError("Limits.settle() miss
+- tests/contracts/test_meter.py::test_the_budget_does_not_read_the_stop_state :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-a-free-call-that-cost-something] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-an-overshoot-past-the-cap-refuses-the-next-call] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-an-unknown-id] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-bad-amounts-change-nothing] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-grant-then-settle-lower] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-overshoot-is-booked-in-full-and-counts-against-the-cap] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-refused-then-freed-by-a-settle-at-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-higher-then-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-lower-then-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-lower] :: (no E line in log)
+- tests/contracts/test_meter.py::test_both_implementers_have_the_meter_shape[limits] :: AssertionError: assert ['self', 'res...', 'agent_id'] == ['self', 'res... 'actual_usd']
+- tests/contracts/test_meter.py::test_both_implementers_have_the_meter_shape[budget] :: AssertionError: assert ['self', 'res...', 'agent_id'] == ['self', 'res... 'actual_usd']
+- tests/contracts/test_meter.py::test_reserve_returns_an_id_only_after_the_worst_case_is_booked[limits-memory] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-a-free-call-that-cost-something] :: (no E line in log)
+- tests/contracts/test_meter.py::test_reserve_returns_an_id_only_after_the_worst_case_is_booked[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_reserve_returns_an_id_only_after_the_worst_case_is_booked[budget] :: assert (Decimal('0.25') == Decimal('0.25') and TypeError("Budget.settle() missing 1 required keyword-only argument: 'agent_id'") == 0)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-overshoot-past-the-cap-refuses-the-next-call] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-unknown-id] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-bad-amounts-change-nothing] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-memory-0-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-memory-0.25-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-memory-0.60-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-memory-0.600000000001-0.000000000001] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-memory-0.85-0.25] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-grant-then-settle-lower] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-postgres-0-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_stop_set_between_the_read_and_the_booking_lets_one_call_through[limits-memory] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-overshoot-is-booked-in-full-and-counts-against-the-cap] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_stop_set_between_the_read_and_the_booking_lets_one_call_through[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-postgres-0.25-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-refused-then-freed-by-a-settle-at-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-postgres-0.60-0] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-higher-then-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-postgres-0.600000000001-0.000000000001] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-lower-then-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[limits-postgres-0.85-0.25] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[budget-0-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[budget-0.25-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[budget-0.60-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[budget-0.600000000001-0.000000000001] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_returns_the_overshoot_and_books_the_real_cost[budget-0.85-0.25] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-memory-0.25-0.90-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-memory-0.90-0.25-0.30] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-memory-0-0.60-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-memory-0.60-0-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-postgres-0.25-0.90-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-postgres-0.90-0.25-0.30] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-lower] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-postgres-0-0.60-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-a-free-call-that-cost-something] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-overshoot-past-the-cap-refuses-the-next-call] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-unknown-id] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-bad-amounts-change-nothing] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-grant-then-settle-lower] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-overshoot-is-booked-in-full-and-counts-against-the-cap] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-refused-then-freed-by-a-settle-at-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-higher-then-zero] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-lower-then-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-higher] :: (no E line in log)
+- tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-lower] :: (no E line in log)
+- tests/contracts/test_model_gate_contract.py::test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_unchanged[store-style-mark-on-used-up-retries] :: (no E line in log)
+- tests/contracts/test_model_gate_contract.py::test_point4_a_failed_or_timed_out_call_is_not_settled_and_its_error_passes_unchanged[memory-style-mark-on-used-up-retries] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[limits-postgres-0.60-0-0] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[budget-0.25-0.90-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[budget-0.90-0.25-0.30] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[budget-0-0.60-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_twice_the_first_call_wins[budget-0.60-0-0] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_zero_frees_the_whole_reservation[limits-memory] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_zero_frees_the_whole_reservation[limits-postgres] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_zero_frees_the_whole_reservation[budget] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_an_unknown_id_is_not_found_from_both_meters[limits-memory] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_with_an_unknown_id_is_not_found_from_both_meters[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_with_an_unknown_id_is_not_found_from_both_meters[budget] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_an_empty_id_is_refused_and_books_nothing[limits-memory] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_settle_with_an_empty_id_is_refused_and_books_nothing[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_settle_with_an_empty_id_is_refused_and_books_nothing[budget] :: TypeError: Budget.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-negative] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-signalling-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-minus-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-float] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-float-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-bool-true] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-bool-false] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-int] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-str] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-none] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-memory-ten-to-the-ninth-as-integer-decimal] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-negative] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-signalling-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-minus-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-float] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-float-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-bool-true] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-bool-false] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-int] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-str] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-none] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[limits-postgres-ten-to-the-ninth-as-integer-decimal] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-negative] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-signalling-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-minus-infinity] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-float] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-float-nan] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-bool-true] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-bool-false] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-int] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-str] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-none] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_hostile_amount_at_settle_is_a_value_error_and_the_worst_case_stays[budget-ten-to-the-ninth-as-integer-decimal] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.10-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.60-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-memory-0.85-0.25-0.85] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.10-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.60-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[limits-postgres-0.85-0.25-0.85] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.10-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.60-0-0.60] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_settle_after_the_sweep_can_only_raise_the_booked_amount[budget-0.85-0.25-0.85] :: (no E line in log)
+- tests/contracts/test_meter.py::test_the_tick_step_expires_by_age_and_leaves_the_counters_alone[limits-memory] :: (no E line in log)
+- tests/contracts/test_meter.py::test_the_tick_step_expires_by_age_and_leaves_the_counters_alone[limits-postgres] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-runtime-error] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-os-error] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-memory-timeout] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-runtime-error] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-os-error] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_store_that_is_down_at_settle_raises_and_the_worst_case_stays[limits-postgres-timeout] :: (no E line in log)
+- tests/contracts/test_meter.py::test_a_closed_database_connection_at_settle_raises_and_the_worst_case_stays :: (no E line in log)
+- tests/contracts/test_meter.py::test_the_settled_cost_is_added_to_the_run_exactly_once[limits-memory] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_meter.py::test_the_settled_cost_is_added_to_the_run_exactly_once[limits-postgres] :: TypeError: Limits.settle() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-negative] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-nan] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-signalling-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-infinity] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-minus-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-float-nan] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-true] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-bool-false] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-str] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-int] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-none] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[memory-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-negative] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-nan] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-signalling-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-infinity] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-minus-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-float-nan] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-true] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-bool-false] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-str] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-int] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-none] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_amount_and_books_nothing[postgres-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_zero_is_an_allowed_amount[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_zero_is_an_allowed_amount[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-bool-true] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_day_cap_is_refused_with_which_day_and_books_nothing[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-bool-false] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_past_the_month_cap_is_refused_with_which_month_and_the_day_stays_unbooked[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-str] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-int] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_first_settle_closes_the_row_and_returns_it[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_first_settle_closes_the_row_and_returns_it[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_lower_actual_frees_headroom[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-none] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_lower_actual_frees_headroom[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_higher_actual_books_the_overshoot_in_full_even_past_the_cap[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_a_higher_actual_books_the_overshoot_in_full_even_past_the_cap[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_moves_the_counters_of_the_rows_own_day_not_of_today[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_adds_the_actual_amount_to_the_runs_cost_once[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_moves_the_counters_of_the_rows_own_day_not_of_today[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_a_second_settle_returns_the_stored_row_with_false_and_changes_nothing[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_adds_the_actual_amount_to_the_runs_cost_once[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_two_threads_settling_one_row_exactly_one_applies[memory] :: assert not [TypeError("MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'")]
+- tests/contracts/test_store_spend_reservations.py::test_a_second_settle_returns_the_stored_row_with_false_and_changes_nothing[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_of_an_unknown_id_is_not_found[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_two_threads_settling_one_row_exactly_one_applies[postgres] :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_marks_old_open_rows_and_the_counters_do_not_move[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_of_an_unknown_id_is_not_found[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-negative] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-nan] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-signalling-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_marks_old_open_rows_and_the_counters_do_not_move[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-minus-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-float] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-float-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-bool-true] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-bool-false] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-str] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-int] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-none] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-thirteen-decimal-places] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[memory-ten-to-the-ninth] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-negative] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_takes_only_rows_older_than_the_bound[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-nan] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-signalling-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_takes_only_rows_older_than_the_bound[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-minus-infinity] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_higher_actual_books_the_difference[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-float] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_higher_actual_books_the_difference[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_settle_refuses_a_bad_amount_and_leaves_the_row_open[postgres-float-nan] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_purge_deletes_closed_rows_only_and_returns_the_count[memory] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-str-month_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_purge_deletes_closed_rows_only_and_returns_the_count[postgres] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-none-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-none-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-nan-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-nan-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-signalling-nan-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-signalling-nan-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-infinity-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-infinity-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-negative-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-negative-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-float-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-float-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-int-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-int-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-bool-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-bool-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-str-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-str-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-none-day_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[memory-none-month_cap] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-nan-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-nan-month_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_comparison[memory] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-signalling-nan-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_comparison[postgres] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-signalling-nan-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-negative] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-bool] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-float] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-str] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-none] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[memory-decimal] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-infinity-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-negative] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-infinity-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-bool] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-negative-day_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-float] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-negative-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-str] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-float-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-none] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-float-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_expire_refuses_a_bad_age_and_expires_nothing[postgres-decimal] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[memory-day] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[memory-month] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-int-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[postgres-day] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-int-month_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_fifty_threads_against_a_cap_of_three_exactly_three_succeed[postgres-month] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-20261120] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-bool-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-7] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-4242] :: TypeError: MemoryStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-bool-month_cap] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-20261120] :: (no E line in log)
+- tests/contracts/test_store_spend_reservations.py::test_reserve_refuses_a_bad_cap_and_books_nothing[postgres-str-day_cap] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-7] :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-4242] :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_settling_one_reservation_apply_it_once :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_the_runtime_role_may_not_delete_reservations :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_runtime_role_may_not_delete_reservations :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_fifty_first_connection_reads_the_granted_sum_before_any_settle :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap0-worst0-3] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap1-worst1-7] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap2-worst2-3] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap4-worst4-50] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap3-worst3-0] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/test_grants_negative_roles.py::test_only_the_reviewed_roles_hold_anything_on_the_stop_state :: AssertionError: assert {'kill_switch...ch_watermark'} == {'kill_switch...switch_stops'}
+- tests/test_grants_negative_roles.py::test_delete_is_held_only_on_the_outbox_and_the_purged_tables :: AssertionError: assert {('purge', 'r...udit_outbox')} == {('purge', 'r...udit_outbox')}
+- tests/test_grants_negative_roles.py::test_the_purge_role_holds_delete_only_and_no_whole_table_read :: AssertionError: assert {'runs': ('ru...'updated_at')} == {'runs': ('ru... 'closed_at')}
+- tests/test_grants_negative_roles.py::test_case10_the_released_manifest_names_every_migration_file :: AssertionError: assert {'0001_core':...aef76a7', ...} == {'0001_core':...aef76a7', ...}
+- tests/test_grants_negative_roles.py::test_case2_the_reset_identity_holds_exactly_the_reviewed_cells :: AssertionError: assert {'approval_de...letters', ...} == {'approval_de...letters', ...}
+- tests/test_grants_negative_roles.py::test_reset_writes_the_audit_intent_before_it_touches_the_switch :: AttributeError: '_Recorder' object has no attribute 'open_stops'
+- tests/test_grants_negative_roles.py::test_reset_leaves_the_switch_alone_when_the_audit_intent_fails :: AttributeError: '_Recorder' object has no attribute 'open_stops'
+- tests/test_grants_negative_roles.py::test_case8_a_reset_the_store_refuses_is_audited_as_reset_failed :: AttributeError: '_Recorder' object has no attribute 'open_stops'
+- tests/test_grants_negative_roles.py::test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_month_cap_is_reached_by_fifty_connections_spread_over_two_days :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_settle_one_reservation_and_the_first_wins :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_above_the_reserve_books_the_actual_amount_past_the_cap :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_settles_below_the_reserve_free_room_for_exactly_that_many_new_reservations :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_at_zero_gives_the_whole_reservation_back :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_expired_reservations_stay_booked_and_keep_the_cap_shut :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_sweeps_at_once_expire_each_reservation_once :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_after_expiry_never_lowers_the_counters :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/test_grants_negative_roles.py::test_the_identities_are_the_ones_this_file_knows :: AssertionError: assert {'portal_role...runtime_role'} == {'portal_role...runtime_role'}
+- tests/test_grants_negative_roles.py::test_every_write_privilege_is_on_the_reviewed_list :: AssertionError: assert {'runtime': {...PDATE'}, ...}} == {'runtime': {...: {'INSERT'}}}
+- tests/test_grants_negative_roles.py::test_pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells :: (no E line in log)
+- tests/test_grants_negative_roles.py::test_pg_case4_the_reset_role_switches_the_stop_off_and_the_runtime_role_can_stop_again :: (no E line in log)
+- tests/test_grants_negative_roles.py::test_pg_case5_the_reset_role_appends_its_audit_intent_and_can_change_no_audit_row :: (no E line in log)
+- tests/test_grants_negative_roles.py::test_pg_case8_reset_with_the_audit_intent_refused_leaves_the_stop_on :: hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can wri
+- tests/test_grants_negative_roles.py::test_pg_case11_migrate_again_takes_back_what_was_granted_by_hand_to_the_reset_role :: (no E line in log)
+- tests/test_grants_negative_roles.py::test_pg_case12_a_reset_cannot_turn_a_missing_stop_row_into_off :: hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can wri
+
+## (3a) test_t1_reserve_cap.py
+wall 10s; summary: ['7 passed in 8.04s']
+
+## (3b) test_t1_reserve_cap_core_a.py
+wall 7s; summary: ['6 failed, 5 passed in 5.60s']
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_settling_one_reservation_apply_it_once :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_the_runtime_role_may_not_delete_reservations :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_a.py::test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+
+## (3c) test_t1_reserve_cap_core_c.py
+wall 14s; summary: ['19 failed, 5 passed in 12.87s']
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_runtime_role_may_not_delete_reservations :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_the_fifty_first_connection_reads_the_granted_sum_before_any_settle :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap1-worst1-7] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap0-worst0-3] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap2-worst2-3] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap3-worst3-0] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap4-worst4-50] :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_month_cap_is_reached_by_fifty_connections_spread_over_two_days :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_settle_one_reservation_and_the_first_wins :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_above_the_reserve_books_the_actual_amount_past_the_cap :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_settles_below_the_reserve_free_room_for_exactly_that_many_new_reservations :: (no E line in log)
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_at_zero_gives_the_whole_reservation_back :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_expired_reservations_stay_booked_and_keep_the_cap_shut :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_sweeps_at_once_expire_each_reservation_once :: psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_after_expiry_never_lowers_the_counters :: TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+- tests/contracts/test_t1_reserve_cap_core_c.py::test_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results :: assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1
