@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:00:18Z
+UPDATED_UTC: 2026-11-20T06:01:08Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 25
 ITEMS_OPEN: 6
 PERCENT: 81
 AGENTS_RUNNING: 3
-CAPACITY: load 0.13 of 4 cores (1-minute average), mem 0.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.8G 60G 15%; 350M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.34 of 4 cores (1-minute average), mem 0.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.4G 60G 14%; 350M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:00:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:00:20Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -73,11 +73,10 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 3851 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 3855 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 3860 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 4081 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 4082 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 3851 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 57s ago | running | matched by name in ps |
+| 3855 | uv run --all-extras --group test python /tmp/claude-0/-home-user/ea49e | core-a session or its agent | 57s ago | running | matched by name in ps |
+| 4289 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 10s ago | running | matched by name in ps |
+| 4290 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 10s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
