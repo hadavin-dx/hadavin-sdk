@@ -1,12 +1,20 @@
 """The model gate: one wrapper around the model client (step F).
 
-Before any provider contact it checks that every message and document is already masked with the caller's run
-map, then reserves the worst-case cost. After the call it settles the real cost and writes one audit row. If the
-check or the reservation fails, no call is made. It holds no money logic and no redaction logic of its own:
-masking is `guard/runmap.py`, money is the meter, audit is the sink. It only orders the steps.
+Guarantee: values the run has identified as sensitive are replaced by their placeholders in everything sent to a model; detection of new values is done by the producers' pattern redactor.
 
-Not checked: `system` and `tools` (operator text). No logger, no module-level state, and no message text, no
-exception text and no exception chain in any audit row or in any exception raised here.
+Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
+of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then reserves the
+worst-case cost. The client gets the enforced copies. After the call the gate settles the real cost and writes
+one audit row. If the enforce step or the reservation fails, no call is made. The gate holds no money logic and
+no redaction logic of its own: it only orders the steps.
+
+Stated limits. The gate runs no pattern: a value that is in no map (also a clean key and a clean value that
+only match a pattern once composed, such as `"user_id": "abc123"`) passes as written. With no map
+(`mapping=None`: the eval and replay command lines, the judge with its own map) there is no enforce step.
+`system` and `tools` are operator text and are not touched.
+
+No logger, no module-level state, and no message text, no exception text and no exception chain in any audit
+row or in any exception raised here. The caller's messages, dicts and documents are never changed in place.
 """
 
 from __future__ import annotations
@@ -53,9 +61,8 @@ WorstCase = Callable[
     ],
     Decimal,
 ]
-MaskCheck = Callable[
-    [str, Mapping[str, str]], bool
-]  # True = already masked; any raise = not masked
+# (text, the run's map) -> the text with the map's values replaced; any raise means no call
+Enforce = Callable[[str, Mapping[str, str]], str]
 
 AUDIT_DOMAIN = "llm"
 AUDIT_OPERATION = "chat"
@@ -87,13 +94,14 @@ class GateRefused(RuntimeError):
 
 
 class UnmaskedInput(GateRefused):
-    """A message or document is not masked with the caller's run map, or the check itself failed."""
+    """The run map could not be enforced on what the caller passed (a content that is not `str`, a text over
+    the cap, a bad map, any failure of the enforce step). Never raised because a pattern matched."""
 
     code = CODE_MASK_REFUSED
 
 
 class ModelGate:
-    """Holds the client, the meter, the audit sink, the worst-case function and the mask check. It has NO
+    """Holds the client, the meter, the audit sink, the worst-case function and the enforce step. It has NO
     `chat`: a caller must `bind` it to an agent and a run first, so an unbound gate cannot call a model.
     A client that is already a gate is refused (TypeError): one call must never be reserved twice."""
 
@@ -104,12 +112,12 @@ class ModelGate:
         meter: Meter,
         audit: AuditSink | None,
         worst_case: WorstCase,
-        mask_check: MaskCheck = runmap.is_masked,
+        enforce: Enforce = runmap.enforce_map,
     ) -> None:
         if isinstance(llm, ModelGate | BoundGate):
             raise TypeError("the client is already a model gate")
         self._llm, self._meter, self._audit = llm, meter, audit
-        self._worst_case, self._mask_check = worst_case, mask_check
+        self._worst_case, self._enforce = worst_case, enforce
 
     def bind(
         self,
@@ -121,13 +129,13 @@ class ModelGate:
         source: str = DEFAULT_SOURCE,
     ) -> BoundGate:
         """A gate for one call site. `mapping` is the run's LIVE map, kept by reference (never copied, never
-        written): values the run masks later are known to the next call. None (a site with no run map) means
-        "check that no unmasked pattern is present". `principal` defaults to the agent id."""
+        written): a value the run masks later is replaced in earlier text on the next call. None (a site
+        with no run map) means no enforce step. `principal` defaults to the agent id."""
         return BoundGate(self, agent_id, run_id, mapping, principal or agent_id, source)
 
 
 class BoundGate:
-    """Satisfies `llm.protocol.LLM`. Order: mask check, reserve, provider call, settle, audit row."""
+    """Satisfies `llm.protocol.LLM`. Order: enforce the map, reserve, provider call, settle, audit row."""
 
     def __init__(
         self,
@@ -139,7 +147,7 @@ class BoundGate:
         source: str,
     ) -> None:
         self._llm, self._meter, self._audit = gate._llm, gate._meter, gate._audit
-        self._worst_case, self._mask_check = gate._worst_case, gate._mask_check
+        self._worst_case, self._enforce = gate._worst_case, gate._enforce
         self._agent_id, self._run_id, self._mapping = agent_id, run_id, mapping
         self._principal, self._source = principal, source
 
@@ -153,9 +161,11 @@ class BoundGate:
         documents: list[bytes] | None = None,
         output_schema: dict[str, Any] | None = None,
     ) -> Reply:
-        if not self._all_masked(messages, documents):
+        enforced = self._enforced(messages, documents)
+        if enforced is None:
             self._note(RESULT_REFUSED, CODE_MASK_REFUSED)
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
+        messages, documents = enforced  # from here on only the enforced copies are used
         try:
             reserved = self._worst_case(route, system, messages, tools, documents, output_schema)
             reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
@@ -182,9 +192,7 @@ class BoundGate:
         except Exception:  # may have been billed (a reply that fails to parse): hold the worst case
             self._failed(reservation, reserved, CODE_CALL_FAILED)
             raise
-        except (
-            BaseException
-        ):  # the process is going down: cost unknown, the sweep closes the reservation
+        except BaseException:  # going down, cost unknown: not settled, the store's sweep closes it
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED)
             raise
         try:
@@ -203,22 +211,45 @@ class BoundGate:
             code = CODE_SETTLE_FAILED
         self._note(RESULT_FAILED, code)
 
-    def _all_masked(self, messages: list[dict[str, Any]], documents: list[bytes] | None) -> bool:
-        """True only when every message content and every document, as it will be sent, is masked. Anything
-        the check cannot read (a content that is not `str`, a failing redactor, a text over the cap) is NOT
-        masked. Documents are decoded as the adapters decode them (`llm/common.py` `turns`)."""
-        mapping = {} if self._mapping is None else self._mapping
+    def _enforced(
+        self, messages: list[dict[str, Any]], documents: list[bytes] | None
+    ) -> tuple[list[dict[str, Any]], list[bytes] | None] | None:
+        """New lists holding what will be sent, or None when the step failed (then nothing is sent). A message
+        or document in which nothing is replaced is passed on as the same object, so the bytes are the
+        caller's; one with a replaced value is a new dict or new bytes. A content that is not `str` is refused
+        with or without a map. Documents are read as the adapters read them (`llm/common.py` `turns`: UTF-8,
+        bad bytes replaced)."""
+        mapping = self._mapping
         try:
+            sent: list[dict[str, Any]] = []
             for message in messages:
-                content = message["content"]
-                if not isinstance(content, str) or not self._mask_check(content, mapping):
-                    return False
-            for document in documents or []:
-                if not self._mask_check(document.decode("utf-8", "replace"), mapping):
-                    return False
-        except Exception:  # noqa: BLE001 - fail closed: a check that cannot finish is a refusal
-            return False
-        return True
+                content = message["content"] if isinstance(message, dict) else None
+                if not isinstance(content, str):
+                    return None
+                if mapping is not None:
+                    fixed = self._enforce(content, mapping)
+                    if not isinstance(fixed, str):
+                        return None
+                    if fixed != content:
+                        message = {**message, "content": fixed}
+                sent.append(message)
+            if documents is None:
+                return sent, None
+            docs: list[bytes] = []
+            for document in documents:
+                if not isinstance(document, bytes):
+                    return None
+                if mapping is not None:
+                    text = document.decode("utf-8", "replace")
+                    fixed = self._enforce(text, mapping)
+                    if not isinstance(fixed, str):
+                        return None
+                    if fixed != text:
+                        document = fixed.encode("utf-8")
+                docs.append(document)
+        except Exception:  # noqa: BLE001 - fail closed: a step that cannot finish means no call
+            return None
+        return sent, docs
 
     def _note(self, result: str, error_code: str | None) -> None:
         """One audit row: codes only. A missing, parking (None) or raising sink never changes the outcome."""
