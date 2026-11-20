@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:34:03Z
+UPDATED_UTC: 2026-11-20T15:38:33Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:37Z BLOCKS: nothing; I was running tests (my last push was slow). load 0.8, agents alive 0. cloud/core-c head 3510ba666 = G9b (E23 M1-M3, redact_mutants 130/130 by builder) + REC PU1 re-pin (p1d_a rows 99 passed) + G4c + G13c + G12c + gate mutant fixes. g2/g3: 4 leftover commits checked, all SUPERSEDED in head (REC-notes.md), so ONE head = cloud/core-c. 8 grant tests: re-pinned against core-b head 133803834 (28 failed, not 8: head is past 0007, to 0011), 117 passed on real Postgres 16; branch wip/cloud-core-c/grants b55d21865 (needs core-b head; lead/core-b to merge). Open finding: redaction_maps is read-write incl. UPDATE while comment says no UPDATE. F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead.
+STATE: 15:44Z full non-perf suite at idle running (-n 3, 89%+ done at 15:38, no failures printed so far). Agents 1: core-a review. Items (1)-(4) of lead 15:36 DONE: one head = cloud/core-c (g2/g3 superseded, REC-notes.md); grant tests re-pinned vs core-b head (wip/cloud-core-c/grants b55d21865); F-install blockers NO_MAP r3/usd_cap/mark merged, K5 Q17 lead; cfull fixes fdfa/py3.12/E22 done, perf re-run idle after suite. Old 06:37Z restart rows removed.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 0
-CAPACITY: load 0.8 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
+AGENTS_RUNNING: 1
+CAPACITY: load 3.0 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 1, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
-CONTAINER_RESTARTS: 1
-INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
+CONTAINER_RESTARTS: 0
+INTERRUPTED: 
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Idle full-suite run on head; docs root pass (SECURITY/CHANGELOG/README from v7 drafts); G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:30:44+00:00
+PUSHED_UTC: 2026-11-20T15:34:04+00:00
 
-(21:04 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:08 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -31,6 +31,7 @@ PUSHED_UTC: 2026-11-20T15:30:44+00:00
 | aadbf6c1 | builder | claude-sonnet-5-5 | FIXES gate mutants G13d/G13e/E19g/E19i; /tmp/core-c-gm | 15:01 | 15:20 | 1 | done | 1 | 0 |  |
 | rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | done | 1 | 0 |  |
 | grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | done | 1 | 0 | light, 1 pytest |
+| core-a-rev | reviewer | claude-sonnet-5-5 | FRESH read-only result review of core-a newest src/tests commits (last 3 h) and wip/core-a-for-ci, for-c-e19 | 15:43 | 15:55 | 1 | running | 1 | 0 | EGM codebase |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
@@ -109,7 +110,7 @@ PUSHED_UTC: 2026-11-20T15:30:44+00:00
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
 |---|---|---|---|---|
-| 09:35Z | container restart (boot id 8493e966): all 9 agents stopped; files survived | 7 agents re-started; G7 round 6 (9d8bc580a) already pushed; merged batch 5 killed and re-run |
+| none | | | | |
 
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
