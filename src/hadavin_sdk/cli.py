@@ -410,7 +410,10 @@ def _migrate(
         )
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:
-            _say(note)
+            try:
+                _say(note)
+            except OSError:  # closed stdout, broken pipe: never replaces the refusal in flight
+                pass
     print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:
         print(
