@@ -1318,7 +1318,9 @@ def _missing(name, base):
 @pytest.mark.parametrize("field", ["max_running", "ack_wait_s"])
 def test_d3_a_settings_object_without_a_field_is_a_config_error_naming_it(rt, field):
     words = (
-        "triggers.max_running missing" if field == "max_running" else f"triggers.{field} missing: core-b TriggerSettings required"
+        "triggers.max_running missing"
+        if field == "max_running"
+        else f"triggers.{field} missing: core-b TriggerSettings required"
     )
     with pytest.raises(ConfigError, match=words) as refused:
         worker.make_app(_app(rt, _missing(field, _settings())))
@@ -1594,8 +1596,11 @@ def _patched_main(monkeypatch, seen):
     )
     monkeypatch.setattr(hadavin_sdk.app, "build", built)
     real_registry = __import__("hadavin_sdk.registry", fromlist=["load_registry"])
-    monkeypatch.setattr(real_registry, "load_registry", lambda config: [])
-    monkeypatch.setattr(worker, "qualified_agents", lambda registry: [])
+    good = SimpleNamespace(
+        principals={PRINCIPAL: SimpleNamespace(kind="service")}
+    )  # d-fix26: checked before build
+    monkeypatch.setattr(real_registry, "load_registry", lambda config: good)
+    monkeypatch.setattr(worker, "qualified_agents", lambda registry: [AGENT])
 
 
 def test_d5_a_host_that_is_not_loopback_is_refused_with_exit_2_before_anything_is_built(

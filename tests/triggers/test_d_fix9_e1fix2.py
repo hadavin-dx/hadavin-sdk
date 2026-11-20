@@ -88,9 +88,11 @@ def _patch_build(monkeypatch, app):
 
     monkeypatch.setattr(app_module, "build", lambda *a, **kw: app)
     monkeypatch.setattr(config_module, "load_config", lambda d: SimpleNamespace())
-    monkeypatch.setattr(registry_module, "load_registry", lambda c: None)
+    monkeypatch.setattr(
+        registry_module, "load_registry", lambda c: app.registry
+    )  # d-fix26: senders are checked before build
     monkeypatch.setattr(worker, "trigger_settings", lambda c: app.config.triggers)
-    monkeypatch.setattr(worker, "qualified_agents", lambda r: [])
+    monkeypatch.setattr(worker, "qualified_agents", lambda r: list(app.runtime.agents))
 
 
 @pytest.mark.parametrize("where", ["make_app", "check_tick"])

@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from hadavin_sdk.triggers import worker
-from tests.triggers.test_worker import _settings
+from tests.triggers.test_worker import AGENT, PRINCIPAL, _settings
 
 WORKER_SRC = Path(worker.__file__)
 
@@ -35,8 +35,11 @@ def _start_with_store_down(monkeypatch, settings, capsys):
         "load_config",
         lambda _d=None: SimpleNamespace(triggers=settings, environment="demo"),
     )
-    monkeypatch.setattr(hadavin_sdk.registry, "load_registry", lambda _c: {})
-    monkeypatch.setattr(worker, "qualified_agents", lambda _r: [])
+    good = SimpleNamespace(
+        principals={PRINCIPAL: SimpleNamespace(kind="service")}
+    )  # d-fix26: checked before build
+    monkeypatch.setattr(hadavin_sdk.registry, "load_registry", lambda _c: good)
+    monkeypatch.setattr(worker, "qualified_agents", lambda _r: [AGENT])
     monkeypatch.setattr(worker, "_serve_degraded", lambda *_a: degraded.append(1) or 99)
     code = worker.main(["--port", "0"])
     return code, capsys.readouterr().err, len(builds), bool(degraded)

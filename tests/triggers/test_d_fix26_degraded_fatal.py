@@ -65,7 +65,9 @@ def _patch_start(monkeypatch, settings, build, registry=None, agents=None):
         "load_registry",
         lambda _c: registry if registry is not None else _good_registry(),
     )
-    monkeypatch.setattr(worker, "qualified_agents", lambda _r: [AGENT] if agents is None else agents)
+    monkeypatch.setattr(
+        worker, "qualified_agents", lambda _r: [AGENT] if agents is None else agents
+    )
 
 
 def _down_at_start(monkeypatch, settings, capsys, **kw):
@@ -133,9 +135,7 @@ BAD_ACK = [None, True, "5", math.nan, math.inf, 0, -1, worker.ACK_WAIT_S_CEILING
 def test_a_bad_value_exits_2_naming_the_field_while_the_store_is_down(
     monkeypatch, capsys, field, value
 ):
-    code, err, builds, degraded = _down_at_start(
-        monkeypatch, _settings(**{field: value}), capsys
-    )
+    code, err, builds, degraded = _down_at_start(monkeypatch, _settings(**{field: value}), capsys)
     assert (code, degraded, builds) == (2, False, 0)
     assert "config error" in err and field in err
 
@@ -221,7 +221,9 @@ def _fast_recheck(monkeypatch):
 
 
 def test_a_secret_read_failure_found_when_the_store_returns_ends_with_exit_2(
-    monkeypatch, capsys, rt  # noqa: F811
+    monkeypatch,
+    capsys,
+    rt,  # noqa: F811
 ):
     _fast_recheck(monkeypatch)
     settings = _settings()

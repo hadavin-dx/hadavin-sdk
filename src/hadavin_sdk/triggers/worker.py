@@ -187,11 +187,11 @@ def check_run_values(
     """The one set of rules for the Runner's numbers: a ValueError that names the field (never the value). Called by
     `Runner.__init__` and, before the store is built, by `check_fields`, so the two cannot differ."""
     if isinstance(max_running, bool) or not isinstance(max_running, int):
-        raise ValueError("max_running must be a whole number")
+        raise ValueError("max_running must be a whole number")  # noqa: TRY004 - callers turn it into a config error
     if isinstance(ack_wait_s, bool) or not isinstance(ack_wait_s, int | float):
-        raise ValueError("ack_wait_s must be a number")
+        raise ValueError("ack_wait_s must be a number")  # noqa: TRY004 - callers turn it into a config error
     if isinstance(poll_s, bool) or not isinstance(poll_s, int | float):
-        raise ValueError("poll_s must be a number")
+        raise ValueError("poll_s must be a number")  # noqa: TRY004 - callers turn it into a config error
     if max_running < 1 or poll_s <= 0:
         raise ValueError("max_running and poll_s must be above zero")
     if max_running > MAX_RUNNING_CEILING:
@@ -944,7 +944,9 @@ def _build_app(args: argparse.Namespace) -> tuple[Any, Runner, Any]:
     check_bind(host, args.allow_non_loopback)
     registry = load_registry(config)
     qualified = qualified_agents(registry)
-    check_senders(sender_list(settings), qualified, registry.principals)  # agent and principal: no store needed
+    check_senders(
+        sender_list(settings), qualified, registry.principals
+    )  # agent and principal: no store needed
     app = build(args.config_dir, qualified)
     runner = None
     try:
@@ -1032,8 +1034,12 @@ class _Degraded:
         self._app: Callable[..., Any] = health_only_app(self.health)
         self._runner: Runner | None = None
         self._stopped = threading.Event()
-        self.fatal: BaseException | None = None  # a configuration error found by a re-check: the worker must exit 2
-        self.on_fatal: Callable[[], None] | None = None  # set by `_serve_degraded`: stops its server
+        self.fatal: BaseException | None = (
+            None  # a configuration error found by a re-check: the worker must exit 2
+        )
+        self.on_fatal: Callable[[], None] | None = (
+            None  # set by `_serve_degraded`: stops its server
+        )
         self._thread = threading.Thread(target=self._watch, name="trigger-recover", daemon=True)
 
     def start(self) -> None:
@@ -1241,9 +1247,13 @@ def main(argv: list[str] | None = None) -> int:
     _log_to_stderr()
     try:
         server, runner = _prepare(args)
-    except StoreUnavailable as exc:  # subclass of the SDK ConfigError (errors.py), not of this file's: first
+    except (
+        StoreUnavailable
+    ) as exc:  # subclass of the SDK ConfigError (errors.py), not of this file's: first
         return _serve_degraded(args, exc)
-    except AnyConfigError as exc:  # this file's own (ids and bounds) in full, any other by class name and fields
+    except (
+        AnyConfigError
+    ) as exc:  # this file's own (ids and bounds) in full, any other by class name and fields
         _print_config_error(exc)
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value

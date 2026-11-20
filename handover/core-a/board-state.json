@@ -802,15 +802,15 @@
    "reason": "EGM"
   },
   {
-   "id": "rev-grantfix2-r4",
+   "id": "rev-grantfix2-r5",
    "role": "reviewer",
    "model": "sonnet",
-   "what exactly it is doing": "fresh result review round 4 of grant-test fix bdf8a9f8d",
-   "started UTC": "17:36",
+   "what exactly it is doing": "round 5 (cap) fresh review of grant-test fix bdf8a9f8d",
+   "started UTC": "17:39",
    "expected end": "10 min",
    "percent": 10,
    "state": "running",
-   "review round n of cap": "4 of 5",
+   "review round n of cap": "5 of 5",
    "retries so far": 0,
    "reason": "EGM"
   }
@@ -1610,6 +1610,19 @@
    "review round n of cap": "fix of round 3",
    "retries so far": 0,
    "reason": "fix round 3 done: wip/core-a-grant-fix2 bdf8a9f8d, 45 passed PG16 (strict and not), 3 mutants killed; finding: 4 trigger functions keep PUBLIC EXECUTE (core-b nit)"
+  },
+  {
+   "id": "rev-grantfix2-r4",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh result review round 4 of grant-test fix bdf8a9f8d",
+   "started UTC": "17:36",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "4 of 5",
+   "retries so far": 0,
+   "reason": "round 4 CLEAN (6 nits); reviews/rev-grantfix2-r4.md; round 5 (cap) started"
   }
  ]
 }
