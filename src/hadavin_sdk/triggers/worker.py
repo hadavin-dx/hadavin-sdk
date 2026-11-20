@@ -1166,7 +1166,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"trigger worker: start failed: {type(exc).__name__}", file=sys.stderr)
         return EXIT_FAILED
     _LOG.info(
-        "trigger worker: listening on http://%s:%d%s; the tick must run too, or a cut-off run never reaches a person",
+        "trigger worker: listening on http://%s:%d%s; the tick must run too, or a cut-off run stays RECEIVED or WORKING",
         server.server_address[0],
         server.server_port,
         PATH,
