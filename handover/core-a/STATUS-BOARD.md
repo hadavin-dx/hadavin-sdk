@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:31:16Z
+UPDATED_UTC: 2026-11-20T11:31:52Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 81
 ITEMS_OPEN: 23
 PERCENT: 81
-AGENTS_RUNNING: 2
-CAPACITY: load 2.99 of 4 cores (1-minute average), mem 1.5/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 1
+CAPACITY: load 1.92 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 57G 18%; 593M /home/user/hadavin-sdk; 959M /tmp/claude-0; 182M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: e1-fix2 (4 Majors of the E1 review + tests) -> mutant run 17 (G30-G32 incl. E1 mutants) -> fresh E1 review round 2 -> ONE independent batch BATCH8 (whole suite, combined tree, mutants) -> REPORT.md final block. Step E: 7 fresh rounds, round 7 clean (ended). n8n template: done, lead runs it in real n8n. REQ-001..004: answered by core-b, ticket D marked.
-PUSHED_UTC: 2026-11-20T11:31:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T11:31:20Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,20 +106,16 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | mut3 | builder (test tooling) | sonnet | adds mutants for every guard added since the last script version | 07:05 | about 30 min | 5 | running | n/a | 0 | minor 10 + new guards |
-| batch10 | evidence runner (never judges) | sonnet | FINAL independent batch after the one-write fix: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/ | 11:22 | 15 min | 5 | running | n/a | 0 | after the one-write fix and its review |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 6104 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 187s ago | running | matched by name in ps |
-| 6130 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 186s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 19008s ago | running | matched by name in ps |
-| 13856 | /home/user/hadavin-sdk/.venv/bin/python /tmp/pytest-of-root/pytest-974 | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 19044s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 19044s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 19044s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 19044s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 19044s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 19044s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -181,6 +177,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 11:33 COMMIT RANGE for D and E (clean by all fresh reviews: D code rounds 1-3 + E1 rounds 1-4 + one-write review; E rounds 1-7): tested-state commits, oldest first: d7bebe2cd code D+E: WIP snapshot 2026-11-20T11:02:05Z (builders running, not the tested state) | 151036674 code D+E: WIP snapshot 2026-11-20T11:05:19Z (builders running, not the tested state) | 76944c1dc code D+E: WIP snapshot 2026-11-20T11:09:37Z (builders running, not the tested state) | 3199a8f90 code D+E: WIP snapshot 2026-11-20T11:10:07Z (builders running, not the tested state) | 91b4c5895 code D+E: WIP snapshot 2026-11-20T11:11:07Z (builders running, not the tested state) | 15f9dea06 code D+E: WIP snapshot 2026-11-20T11:18:07Z (builders running, not the tested state) | c374282a2 code D+E: WIP snapshot 2026-11-20T11:19:07Z (builders running, not the tested state) | 7f24c8c99 steps D and E: tested state after the one-write fix (whole suite 12366 passed, 12 known failures; combined tree 1437 passed, 0 failed) ; the code at HEAD is the tested one (code files are in the board's 'code D+E: WIP snapshot' commits: the tree at HEAD is what BATCH10 ran: head 6e61005db, no code change since). BATCH10: combined tree 1437 passed 0 failed; whole suite the same 12 known failures. pg-kill closed (cause, fix, 20/20, FINDINGS-flake-pg-kill.md). Open: mutant script run blocked on the owner (G33d anchor line 1251 + a re-run); G34 and the d-fix14 mutant are not in a full run yet.
 - 11:28 BATCH10 (independent, after the one-write fix): whole suite 12 failed / 12366 passed: the SAME 12 as BATCH7/8 (10 strict-mode by design, dblink env, brand string in YOUR BRIEF-PREAMBLE.md): the pg-kill test passed in the suite; combined tree result follows from the same agent. Review of the one-write change: no Blocker (nits fixed). Remaining open: the blocked mutant run 19 (owner go-ahead).
 - 11:16 pg-kill empty-body 2xx CLOSED on my side, 3 numbers: CAUSE (by reading, not reproduced in 60 serial runs): 4 separate writes per answer + a kill between them; FIX d-fix13: one write per answer; 20-RUN COUNT AFTER THE FIX: 20 PASS 0 FAIL (raw/REPRO-pgkill-after-fix-20.log); MUTANT: G34 (buffering removed) killed by test_every_answer_is_one_write[202], run alone (the full mutant script still cannot start: the blocked G33d anchor). The new tests also fail on the old code (29 of 49) and the golden-byte tests pass on both (wire equality). A fresh read-only review of the change runs now (rev-1write), BATCH10 (independent whole suite) after it. D is not tagged green by me until the review is clean.
 - 11:10 REPRO COUNTS (A-repro): the pg-kill id: 20 runs 20 PASS 0 FAIL (log raw/REPRO-pgkill-20.log); 40-run harness with the OLD client behaviour (truncated 2xx returned as 2xx + partial body): 40 complete answers, 0 truncated, 0 no answer (raw/REPRO-pgkill-incomplete.log). So the failure is NOT reproducible serially (60 runs), only seen once under -n 3 load in BATCH9; the mechanism (4 separate writes, a kill between them) is shown by reading the stdlib and our server, not by a run. C-single-write removes the mechanism anyway; I will then run the 40-run harness UNDER CPU LOAD before and after (the load case A did not try) and post both counts.

@@ -750,19 +750,6 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "minor 10 + new guards"
-  },
-  {
-   "id": "batch10",
-   "role": "evidence runner (never judges)",
-   "model": "sonnet",
-   "what exactly it is doing": "FINAL independent batch after the one-write fix: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/",
-   "started UTC": "11:22",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "after the one-write fix and its review"
   }
  ],
  "tests": [
@@ -1135,6 +1122,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "11:33 COMMIT RANGE for D and E (clean by all fresh reviews: D code rounds 1-3 + E1 rounds 1-4 + one-write review; E rounds 1-7): tested-state commits, oldest first: d7bebe2cd code D+E: WIP snapshot 2026-11-20T11:02:05Z (builders running, not the tested state) | 151036674 code D+E: WIP snapshot 2026-11-20T11:05:19Z (builders running, not the tested state) | 76944c1dc code D+E: WIP snapshot 2026-11-20T11:09:37Z (builders running, not the tested state) | 3199a8f90 code D+E: WIP snapshot 2026-11-20T11:10:07Z (builders running, not the tested state) | 91b4c5895 code D+E: WIP snapshot 2026-11-20T11:11:07Z (builders running, not the tested state) | 15f9dea06 code D+E: WIP snapshot 2026-11-20T11:18:07Z (builders running, not the tested state) | c374282a2 code D+E: WIP snapshot 2026-11-20T11:19:07Z (builders running, not the tested state) | 7f24c8c99 steps D and E: tested state after the one-write fix (whole suite 12366 passed, 12 known failures; combined tree 1437 passed, 0 failed) ; the code at HEAD is the tested one (code files are in the board's 'code D+E: WIP snapshot' commits: the tree at HEAD is what BATCH10 ran: head 6e61005db, no code change since). BATCH10: combined tree 1437 passed 0 failed; whole suite the same 12 known failures. pg-kill closed (cause, fix, 20/20, FINDINGS-flake-pg-kill.md). Open: mutant script run blocked on the owner (G33d anchor line 1251 + a re-run); G34 and the d-fix14 mutant are not in a full run yet.",
   "11:28 BATCH10 (independent, after the one-write fix): whole suite 12 failed / 12366 passed: the SAME 12 as BATCH7/8 (10 strict-mode by design, dblink env, brand string in YOUR BRIEF-PREAMBLE.md): the pg-kill test passed in the suite; combined tree result follows from the same agent. Review of the one-write change: no Blocker (nits fixed). Remaining open: the blocked mutant run 19 (owner go-ahead).",
   "11:16 pg-kill empty-body 2xx CLOSED on my side, 3 numbers: CAUSE (by reading, not reproduced in 60 serial runs): 4 separate writes per answer + a kill between them; FIX d-fix13: one write per answer; 20-RUN COUNT AFTER THE FIX: 20 PASS 0 FAIL (raw/REPRO-pgkill-after-fix-20.log); MUTANT: G34 (buffering removed) killed by test_every_answer_is_one_write[202], run alone (the full mutant script still cannot start: the blocked G33d anchor). The new tests also fail on the old code (29 of 49) and the golden-byte tests pass on both (wire equality). A fresh read-only review of the change runs now (rev-1write), BATCH10 (independent whole suite) after it. D is not tagged green by me until the review is clean.",
   "11:10 REPRO COUNTS (A-repro): the pg-kill id: 20 runs 20 PASS 0 FAIL (log raw/REPRO-pgkill-20.log); 40-run harness with the OLD client behaviour (truncated 2xx returned as 2xx + partial body): 40 complete answers, 0 truncated, 0 no answer (raw/REPRO-pgkill-incomplete.log). So the failure is NOT reproducible serially (60 runs), only seen once under -n 3 load in BATCH9; the mechanism (4 separate writes, a kill between them) is shown by reading the stdlib and our server, not by a run. C-single-write removes the mechanism anyway; I will then run the 40-run harness UNDER CPU LOAD before and after (the load case A did not try) and post both counts.",
@@ -2863,6 +2851,19 @@
    "review round n of cap": "fix after round 1",
    "retries so far": 0,
    "reason": "one-write review nits fixed: headers_sent=True when the final send raises OSError (no misleading TypeError; BrokenPipe/ConnectionReset/Aborted stay silent), docstring sentence, 8 new test cases (HEAD, 1 MiB body one write, TimeoutError once by class, gone client silent) with kill checks; tests/triggers+crash 1430 passed 5 skipped (own run); bandit 0 issues; mutant suggestion (not added: blocked file): `headers_sent = True` -> pass, killer test_a_timeout_on_the_final_send..."
+  },
+  {
+   "id": "batch10",
+   "role": "evidence runner (never judges)",
+   "model": "sonnet",
+   "what exactly it is doing": "FINAL independent batch after the one-write fix: lint/bandit, WHOLE suite REQUIRE_PG=1 -n 3, combined tree with n8n/",
+   "started UTC": "11:22",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "BATCH10 final: whole suite 12 failed (the same known 12) / 12366 passed; combined tree 1437 passed 0 failed; lint clean"
   }
  ]
 }
