@@ -24,6 +24,8 @@ DEBUG: their number is chosen by whoever can reach the port.
 from __future__ import annotations
 
 import logging
+import os
+import socket
 import socketserver
 import sys
 from email.message import Message
@@ -38,6 +40,12 @@ LONG_LINE_STATUS: Final[int] = 414
 SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
+
+
+def _level(exc: BaseException | None) -> int:
+    """DEBUG for a connection that was reset, dropped or timed out (a port probe, a client that left: the
+    number is chosen by whoever can reach the port); WARNING for anything else, which is a fault here."""
+    return logging.DEBUG if isinstance(exc, OSError) else logging.WARNING
 
 
 class _NoStream:
@@ -103,7 +111,7 @@ class QuietRequestHandler(WSGIRequestHandler):
         try:
             self._serve()
         except Exception as exc:  # noqa: BLE001 - one broken connection never prints or stops the server
-            _LOG.warning("trigger server: connection ended: %s", type(exc).__name__)
+            _LOG.log(_level(exc), "trigger server: connection ended: %s", type(exc).__name__)
 
     def _serve(self) -> None:
         """The steps of the stdlib `handle`, with the quiet application handler. A socket timeout counts as
@@ -165,11 +173,33 @@ class QuietRequestHandler(WSGIRequestHandler):
 
 
 class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
-    """One thread per connection, so a request that waits for its row does not hold up the next one."""
+    """One thread per connection, so a request that waits for its row does not hold up the next one.
+
+    Port exclusivity: on Windows the reuse option of the stdlib lets a second process bind a port that is
+    already in use, so it is off there and `SO_EXCLUSIVEADDRUSE` is set before the bind instead (a bind to a
+    port in use then fails). Elsewhere the reuse option stays on (a restart is not held up by sockets in
+    TIME_WAIT) and a bind to a port in use fails as it should."""
 
     daemon_threads = True
+    allow_reuse_address = os.name != "nt"
+
+    def server_bind(self) -> None:
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)  # only where the platform has it
+        if exclusive is not None:
+            self.socket.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        super().server_bind()
+
+    def process_request_thread(self, request: Any, client_address: Any) -> None:
+        """The stdlib steps, but a BaseException also goes to `handle_error`: left alone it would reach the
+        thread hook of the process, which prints a traceback."""
+        try:
+            self.finish_request(request, client_address)
+        except BaseException:  # noqa: BLE001 - one connection never prints or stops the server
+            self.handle_error(request, client_address)
+        finally:
+            self.shutdown_request(request)
 
     def handle_error(self, request: Any, client_address: Any) -> None:
         """The stdlib prints the traceback and the client address here; this logs the class name."""
         exc = sys.exception()
-        _LOG.warning("trigger server: connection error: %s", type(exc).__name__)
+        _LOG.log(_level(exc), "trigger server: connection error: %s", type(exc).__name__)

@@ -6,8 +6,9 @@ answer is always decided from the ROW, never from which exception the loop raise
 WORKING, 200 = any later state, 409 = a row exists for the same key but another document (nothing is written),
 503 = store not reachable, or no row within `ack_wait_s` (not acknowledged; send again with the same key; it
 may already be running). A request that finds no free slot is not refused at once: it waits for the row like any other, because another
-request for the same key may be writing it right now. While it waits it takes a slot as soon as one is free, and
-it looks at the store less and less often (the pause doubles up to one second, about ten reads in five seconds);
+request for the same key may be writing it right now. While it waits it looks for a free slot and for the row
+at each look, and takes a free slot at its next look; the looks come less and less often (the pause doubles up to
+one second, about ten reads in five seconds);
 with neither a slot nor a row by the end of `ack_wait_s` it gets 503. At most
 one run per key rests on the primary key of the runs table, and every answer on the stored row: nothing in this
 process remembers keys. At most `max_waiting` requests are inside `start` at one time; one more is answered
@@ -32,9 +33,19 @@ Several threads at once: what was read, and what was not
 - `handle` runs on a pool thread. If it raises, the class name is logged and nothing else; the process goes on and
   a run that was cut off is ended by the tick's stuck step, so the tick MUST run in the deployment.
 
-Start: `python -m hadavin_sdk.triggers.worker --config-dir <dir>`; host and port come from `config.triggers`
-unless given. The stdlib server is not hardened: it listens on loopback unless `triggers.allow_non_loopback` is
-true, and TLS is the job of the proxy in front of it.
+Start: `python -m hadavin_sdk.triggers.worker --config-dir <dir>`. The stdlib server is not hardened: by default
+it listens on 127.0.0.1 only (a host that is not loopback needs `allow_non_loopback` true, see `check_bind`),
+and TLS is the job of the proxy in front of it. Host and port come from the command line, else from
+`config.triggers`, else 127.0.0.1 and 8081.
+
+Which settings exist today (facts of handover/core-a/FINDINGS-core-b-trigger-config.md and TRIAL-INTEGRATION.md,
+core-b's trigger settings): `tenant`, `senders` (a mapping of sender id to sender, a sender has `secret_names`,
+`agent_id`, `principal_id`), `max_body_bytes`, `max_running` and `ack_wait_s` exist. `host`, `port`,
+`allow_non_loopback`, `poll_s` and `max_waiting` are NOT fields there: the worker reads each with `getattr`
+and uses its own default (127.0.0.1, 8081, false, 0.05, 128), so today `allow_non_loopback` cannot be set in
+a config and a host that is not loopback is refused. At start one WARNING names, by field name only, every
+setting that was read with a default because the field is missing. The secrets are read through
+`App.trigger_secret`; on a tree that lacks core-b's `Config.triggers` and that reader `main` exits 2.
 """
 
 from __future__ import annotations
@@ -124,11 +135,15 @@ class Runner:
         poll_s: float = POLL_S,
         max_waiting: int = MAX_WAITING,
     ) -> None:
+        if isinstance(max_running, bool) or not isinstance(max_running, int):
+            raise ValueError("max_running must be a whole number")
+        if isinstance(ack_wait_s, bool) or not isinstance(ack_wait_s, int | float):
+            raise ValueError("ack_wait_s must be a number")
         if max_running < 1 or ack_wait_s <= 0 or poll_s <= 0:
             raise ValueError("max_running, ack_wait_s and poll_s must be above zero")
         if max_running > MAX_RUNNING_CEILING:
             raise ValueError(f"max_running must be at most {MAX_RUNNING_CEILING}")
-        if ack_wait_s > ACK_WAIT_S_CEILING:
+        if not (0 < ack_wait_s <= ACK_WAIT_S_CEILING):  # written so that NaN is refused too
             raise ValueError(f"ack_wait_s must be at most {ACK_WAIT_S_CEILING:g}")
         if not POLL_S_MIN <= poll_s <= POLL_S_MAX:
             raise ValueError(f"poll_s must be between {POLL_S_MIN:g} and {POLL_S_MAX:g}")
@@ -391,6 +406,23 @@ def check_spend(runtime: Any, max_running: int) -> bool:
     return False
 
 
+def _setting(settings: Any, name: str, default: Any, missing: list[str]) -> Any:
+    """`settings.<name>`, or `default` with the field name noted in `missing` when the field does not exist."""
+    if hasattr(settings, name):
+        return getattr(settings, name)
+    missing.append(name)
+    return default
+
+
+def _warn_defaults(missing: list[str]) -> None:
+    """One WARNING naming the settings read with a default because the field is missing (names only)."""
+    if missing:
+        _LOG.warning(
+            "trigger worker: settings with no field, the built-in default is used: %s",
+            ", ".join(missing),
+        )
+
+
 def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, Runner]:
     """The WSGI callable and its Runner from a built App (for `main`, or for a WSGI server of the client's
     choice). The caller closes the Runner."""
@@ -399,16 +431,16 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
     senders = sender_list(settings)
     check_senders(senders, app.runtime.agents, app.registry.principals)
     secrets = read_secrets(senders, resolve)
-    max_running = getattr(settings, "max_running", MAX_RUNNING)
+    missing: list[str] = []
+    max_running = _setting(settings, "max_running", MAX_RUNNING, missing)
+    ack_wait_s = _setting(settings, "ack_wait_s", ACK_WAIT_S, missing)
+    poll_s = _setting(settings, "poll_s", POLL_S, missing)
+    max_waiting = _setting(settings, "max_waiting", MAX_WAITING, missing)
+    _warn_defaults(missing)
     try:
         check_secrets(secrets)
         runner = Runner(
-            app.runtime,
-            app.store,
-            max_running,
-            getattr(settings, "ack_wait_s", ACK_WAIT_S),
-            poll_s=getattr(settings, "poll_s", POLL_S),
-            max_waiting=getattr(settings, "max_waiting", MAX_WAITING),
+            app.runtime, app.store, max_running, ack_wait_s, poll_s=poll_s, max_waiting=max_waiting
         )
     except ValueError as exc:  # these messages name senders and bounds, never a value
         raise ConfigError(str(exc)) from None
@@ -426,7 +458,9 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
 
 def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSGIServer:
     """A bound stdlib server (not yet serving). The caller runs `serve_forever` and `server_close`. A port
-    that is in use, or an address that cannot be bound, is a ConfigError (exit code 2 in `main`)."""
+    that is in use, or an address that cannot be bound, is a ConfigError (exit code 2 in `main`). The port
+    is exclusive on every platform: on Windows because `QuietServer` turns the reuse option off and sets
+    `SO_EXCLUSIVEADDRUSE`, elsewhere because the system refuses a second listener (see `QuietServer`)."""
     handler = type("TriggerHandler", (QuietRequestHandler,), {"timeout": socket_timeout_s})
     try:
         server = QuietServer((host, port), handler)
@@ -472,16 +506,25 @@ def check_tick(store: Any) -> bool:
 
 def serve(server: WSGIServer, runner: Any) -> int:
     """Serve until Ctrl-C or SIGTERM, then close the socket and wait for the running loops (`Runner.close`).
+    Windows has Ctrl-C and Ctrl-Break only (SIGBREAK is handled like SIGTERM; SIGTERM is never delivered there).
 
     The signal handler only starts a thread that calls `server.shutdown()`: called in the thread that serves,
-    `shutdown` would wait for itself. Not in the main thread no handler can be set; that is logged."""
+    `shutdown` would wait for itself. Not in the main thread no handler can be set; that is logged.
+
+    Limits: a request thread that is in the middle of a request when the server stops is NOT waited for (it is
+    a daemon thread; the process may end under it, the sender gets no answer and retries with the same key).
+    Only the running loops are waited for, up to `Runner.close`'s wait. A second SIGTERM while `close` waits
+    does nothing: the first one has already stopped the server, and only a kill ends the wait early."""
 
     def on_term(signum: int, frame: object) -> None:
         threading.Thread(target=server.shutdown, name="trigger-stop", daemon=True).start()
 
-    previous: Any = None
+    names = [n for n in ("SIGTERM", "SIGBREAK") if hasattr(signal, n)]  # SIGBREAK: Windows only
+    previous: dict[int, Any] = {}
     try:
-        previous = signal.signal(signal.SIGTERM, on_term)
+        for name in names:
+            number = getattr(signal, name)
+            previous[number] = signal.signal(number, on_term)
     except ValueError:
         _LOG.warning("trigger worker: not the main thread, SIGTERM is not handled")
     try:
@@ -491,8 +534,8 @@ def serve(server: WSGIServer, runner: Any) -> int:
     finally:
         server.server_close()
         runner.close()
-        if previous is not None:
-            signal.signal(signal.SIGTERM, previous)
+        for number, handler in previous.items():
+            signal.signal(number, handler)
     return EXIT_OK
 
 
@@ -503,14 +546,16 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
 
     config = load_config(args.config_dir)
     settings = trigger_settings(config)  # before anything is built: no secret read, no connection
-    host = args.host or getattr(settings, "host", LOOPBACK)
-    port = args.port if args.port is not None else getattr(settings, "port", PORT)
-    check_bind(host, getattr(settings, "allow_non_loopback", False))
+    missing: list[str] = []
+    host = args.host or _setting(settings, "host", LOOPBACK, missing)
+    port = args.port if args.port is not None else _setting(settings, "port", PORT, missing)
+    check_bind(host, _setting(settings, "allow_non_loopback", False, missing))
+    _warn_defaults(missing)
     app = build(args.config_dir, _qualified_agents(load_registry(config)))
     wsgi, runner = make_app(app)
     check_tick(app.store)
     try:
-        timeout = getattr(settings, "ack_wait_s", ACK_WAIT_S) + SOCKET_SLACK_S
+        timeout = runner._ack_wait_s + SOCKET_SLACK_S  # the value `make_app` read, default or not
         return make_server(host, port, wsgi, timeout), runner
     except BaseException:
         runner.close(0)
