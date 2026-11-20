@@ -343,7 +343,7 @@ M += [
        "test_g9_the_unions_of_one_call_are_limited_in_characters_and_the_call_is_refused", "DID NOT RAISE"),
     g9("G9-19 a union rebuilds the finders", "                    self._built_for = len(self.mapping)\n            else:",
        "                    pass\n            else:", "test_g9_a_union_does_not_rebuild_the_finders", "builds [1"),
-    g9("G9-20 the anchor searched again at every edge", "found[(anchor, w)] = at", "pass",
+    g9("G9-20 the anchor searched again at every edge", "if (anchor, w) not in searched:", "if True:",
        "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[63079]"),
     g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
        "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
