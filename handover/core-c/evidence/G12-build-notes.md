@@ -39,3 +39,11 @@ Interplay: only `_place` and `_TRAIL` (after `_PIECE`) touched in redact.py; E14
   dot-wrapped copy now share one core; 3 perf units). Floor re-measured: 3 vs 4 differs in 2 fuzz rows only by a placeholder number (`k.8`); 3 stays.
 - Not on the corpora: the over-mask of the both-ends rule is nil. Notes of G12 L-G12a (leading bracket) is CLOSED: `password=(hunter22), hunter22` masks both.
 - Widening to know: the exemption now also reads `*none*`, `(null),`, `<b>true</b>`, `none\n` as "no value" (same rule as the core).
+
+### G12b correction (core-c review; supersedes the "Design"/"Widening" lines above)
+- `_decide`'s exemption is UNCHANGED (old strip set): widening it unmasked `password=password=` (k5 perf units) and `none!`/`true-`/`null_`: a leak. Pins: those stay masked whole.
+- M-1 is fixed in `_place`: no core when `_bare(full).lower()` is in `_NOT_A_VALUE`. Also no core when it is placeholder-like (`EMAIL_1`, `EMA`, from
+  `password=<EMA`, `‹EMAIL_1›`): found by tests/test_redact_context_after_sweep.py e9 (4 red), pinned G12-18, mutant M18.
+- Re-measured on the same 2,185 rows (scratch copies): rows with FEWER masks after than before: none; text differences beyond placeholder numbering: none (17 raw
+  diffs, all renumbering); k5 perf units identical. Entries 2,055 -> 2,145 (+90, +4.4%, 94 rows changed, at most +1 per row; 2 fuzz rows -1).
+- Tests: g12 file + property + g3_port + glued_rest + context_after_sweep: 2,760 passed, 41 xfailed (-n 2). One earlier run had glued_rest `underscore digits` linear (timing) red under load; green on the rerun. Mutants: 18 of 18 killed. ruff clean; bandit clean. k5_perf NOT RUN.
