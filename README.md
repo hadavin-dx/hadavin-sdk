@@ -18,7 +18,7 @@ Rules:
 
 The text fold in `guard/textnorm.py` depends on the interpreter's Unicode data. Its look-alike table is the Unicode 15.1.0 table. On another Python the fold still runs, but every check name starts with a tag and never equals one made on 3.13.
 
-`app.build` calls `textnorm.require_pinned_unidata()` when the stage is pilot or prod. On any other Unicode data (Python 3.12.3 carries 15.0.0) it raises `UnidataMismatch` and nothing runs. The check is not loosened. A demo may still run on 3.12.
+UNVERIFIED (read in the code): `app.build` calls `textnorm.require_pinned_unidata()` when the stage is pilot or prod. On any other Unicode data (Python 3.12.3 carries 15.0.0) it raises `UnidataMismatch` and nothing runs. The check is not loosened. A demo may still run on 3.12.
 
 Moving the pin to a later Python (for example 3.14) is a data migration, not a version bump. The CHANGELOG entry that starts "Pin", in the section on text folding, lists what changes together.
 
@@ -33,11 +33,11 @@ The labels TESTED, MEASURED, UNVERIFIED and NOT RUN are defined once, in [SECURI
 - UNVERIFIED (read from the project file): the project file allows installing on 3.12 (`requires-python = ">=3.12"`). So the install succeeds, and the failure shows only when the program starts.
 - Demo on Python 3.12: by design, the program starts. Each folded name carries a tag with the Unicode edition, so names folded on 3.12 and on 3.13 do not match. Do not compare results from the two versions. UNVERIFIED (read in the code): the tag rule.
 - Python 3.11 or older: UNVERIFIED (read from the project file): the install is refused, because the project file asks for 3.12 or later.
-- Python 3.14 or later: UNVERIFIED (read from the code): pilot and prod refuse to start on any Python whose Unicode edition is not 15.1.0. Do not run pilot or prod on 3.14 or later until the release notes say the character tables were rebuilt for it.
+- Python 3.14 or later: UNVERIFIED (read from the code): the refusal above applies. Do not run pilot or prod on it until the release notes say the character tables were rebuilt for it.
 
 ## Text-fold functions that nothing calls yet
 
-UNVERIFIED (read in the code; a search of `src/` found no caller): the protected-value (DENY) side of the text fold in `guard/textnorm.py` is present and tested, but the redaction path does not call it. The functions are:
+UNVERIFIED (read in the code; a search of `src/` found no caller): the protected-value (DENY) side of the text fold in `guard/textnorm.py` is present and tested. The redaction path does not call it. The functions are:
 
 - `scan_holds`, `register_value`, `Coverage`, `scan_cache`, `scan_needles` and `scan_views`;
 - `identity_key`, `identity_keys`, `could_be_same_person`, `allow_equal` and `names_equal`;
@@ -53,7 +53,7 @@ results into `OUT/score/score-report.md`. Neither gives a verdict, and a replay 
 `replay` refuses a non-empty `OUT`. If a replay dies half-way it leaves `FAILED.txt` in `OUT`: delete the folder to
 re-run. `score` refuses an `OUT` holding `FAILED.txt`, and a non-empty `OUT/score/`. A `score_run` audit event does not prove a report file exists (events are written first).
 
-## Limits and trust (read tools)
+## Limits and trust (read tools, redaction, database roles, caps)
 
 What this release does and does not promise, in one place. The labels are defined in [SECURITY.md](SECURITY.md#words-used-here). A statement with no label describes how the code is built, as read in the code: UNVERIFIED unless a label says otherwise.
 
@@ -77,8 +77,9 @@ What this release does and does not promise, in one place. The labels are define
   - Loopback names (127.0.0.1, localhost, ::1) skip the address check. That is for tests and local development. Tools cannot name one. The LLM clients and the executor share the connection, so a pilot or prod deployment must not point their endpoints at one.
   - **A network policy is a hard prerequisite before any pilot.** Nothing here replaces it, and a tool body can open its own socket.
 - **Redaction is pattern-based and bounded.**
-  - It finds the kinds it knows: addresses, ARNs, keys, tokens, e-mail, URL credentials, command-line credential flags, host names under a private suffix such as `.corp` or `.lan`, and a name after the word `host`.
-  - It looks in the original, the canonical text (NFKC, invisible characters removed) and the JSON-unescaped text.
+  - It finds the kinds it knows. These are addresses, cloud resource names (ARNs), keys, tokens and e-mail. They also include URL credentials, command-line credential flags, host names under a private suffix such as `.corp` or `.lan`, and a name after the word `host`.
+  - A bare `redact()` call looks in the original, the canonical text (NFKC, invisible characters removed) and the JSON-unescaped text.
+  - `guard.runmap.redact_text`, which every producer of model-facing text calls, also redacts a decoded view (the next group says what is decoded). UNVERIFIED (read in the code): the generic patterns run on that view too.
   - A secret in a shape it does not know passes. A bare, unlabelled 40- or 32-hex string in prose is not claimed, because it looks like a git SHA or a build id. After a label (`api_key=`, `token:`) or with a known prefix it is masked.
   - Every scanning bound has a fallback that masks instead of passing text through:
     - a command-line credential more than 1024 characters after its command word masks the rest of the line;
@@ -97,15 +98,17 @@ What this release does and does not promise, in one place. The labels are define
   - **Base64 is decoded and read.** A run of 12 or more base64 characters whose decoded text holds a value the redactor finds is masked whole as `<ENCODED_n>`. The depth is 3 levels (`defaults.B64_MAX_DEPTH`). TESTED (see SECURITY.md, the finding on base64 text).
     - Not covered: a direct `redact()` call, a blob glued to other base64 characters, a blob split across fields, or one wrapped with a log prefix on each line.
     - Hex, base32, base85, compressed data and quoted-printable are not decoded.
-  - **Not decoded for the generic patterns:** URL-encoded client PII, HTML-entity, octal or hex escapes, a secret split across two results, and combining marks.
-    - Only secrets the box handed to a tool are also scrubbed through percent, HTML-entity, `\u`, base64, base32 and invisible-character layers, to a depth of three levels.
+  - **What `redact_text` decodes, and what it does not.** UNVERIFIED (read in `guard/runmap.py`; no test was run for this README line): it undoes percent codes, HTML entities, `\u` and `\u{..}` and `%u` escapes, `\x` and `\U` escapes, three-digit octal escapes and NFKC, to a fixed point, to a depth of 8 layers. A deeper text is refused.
+    - Not decoded: one- and two-digit octal escapes, named escapes, a secret split across two results, and hex, base32 or ROT13 text.
+    - A bare `redact()` call decodes only the JSON `\u` layer.
+    - Only a secret that was handed out to a tool is also found in base32 and hex, and in base64 up to three layers. That scrub is separate from the redactor.
   - A fetch that is cut mid-token leaves the prefix of a secret that straddles the cut unrecognised. The cut prefers whitespace within the last 256 bytes and otherwise falls 256 bytes earlier.
 - **At rest.** `redaction_maps` holds the ORIGINALS of identifier kinds (e-mail, name, phone, address, IP addresses, ARNs) as plaintext JSON for 30 days (400 under a hold). `tool_calls` holds redacted tool output. Encryption at rest, backups and database access control are the deployment's job. The purge role can read neither the mapping nor the output (column grants).
 - **Database roles.**
   - The runtime role appends and reads evidence and has no DELETE. Only the purge role deletes it (`migrate --purge-role`, `backends.store.purge_dsn_secret_name`, required in pilot and prod on Postgres). Its SELECT is limited to the columns its DELETE needs.
   - `migrate` asserts the roles' EFFECTIVE privileges (inherited, PUBLIC, default privileges, relations outside the grant map, ownership, CREATE on the schema, superuser). It rolls the grants back on any excess.
   - The runtime process holds both DSNs and tool bodies run in-process. So the split defends against bugs and mistakes, not a compromised process. Run `purge_evidence` as its own job holding only the purge secret if that matters.
-  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work, and the owner must accept the waiver (OPEN).
+  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work. OPEN: the owner decides whether to tighten these rights (SECURITY.md, the findings on the spend counters and the stop switch). If no answer arrives by 2026-11-23 12:00 UTC, the default there is that they are tightened. Until then this is a waiver whose acceptance is not on file.
 - **Caps are per process, not per run.** `max_concurrent_tool_calls` and `max_tool_calls_per_minute` (and the abandoned-body ceiling) protect the client's systems from the agent.
   - One run making many slow calls, or eight stuck bodies, can refuse tools to every run in the process until they end.
   - A body that never returns holds its slot until restart.
