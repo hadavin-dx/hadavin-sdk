@@ -23,7 +23,7 @@ ALL_HOOK_POINTS: Final = (*HOOK_POINTS, *MORE_HOOK_POINTS)
 class Hooks:
     def crash_point(self, name: str, conn: sqlite3.Connection | None) -> None:
         """No-op. Subclasses override it; names are ALL_HOOK_POINTS."""
-        return None
+        return
 
 
 class FlagFileHooks(Hooks):

@@ -14,7 +14,9 @@ class SpendCapExceeded(RuntimeError):
         self.which = which
 
 
-class SpendReservation(Protocol):  # a frozen pydantic BaseModel (not a Shape): the nine table columns
+class SpendReservation(
+    Protocol
+):  # a frozen pydantic BaseModel (not a Shape): the nine table columns
     reservation_id: str  # "res-" + uuid4 hex, always fresh
     agent_id: str
     day: date  # UTC date at reserve time

@@ -20,9 +20,9 @@ Table: spend_reservations (migration 0007). Grants: runtime SELECT, INSERT, UPDA
 
 ## 2. Interface (ii): the Meter the gate calls
 ```python
-rid = meter.reserve(agent_id, worst_usd, run_id=run_id)   # raises: do NOT call the model
+rid = meter.reserve(agent_id, worst_usd, run_id=run_id)  # raises: do NOT call the model
 reply = inner.chat(...)
-meter.settle(rid, reply.cost_usd)                          # returns the overshoot, 0 when none
+meter.settle(rid, reply.cost_usd)  # returns the overshoot, 0 when none
 ```
 Contract (the gate must follow all ten):
 1. reserve returns a reservation id only after the worst case is booked. ANY exception from reserve means no model call. SpendRefused.reason is the audit error code: kill_switch, daily_budget, monthly_budget, limits_unavailable or bad_amount. An unknown agent is a KeyError (still no call).
