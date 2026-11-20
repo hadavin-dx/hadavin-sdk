@@ -707,20 +707,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "mut-e1",
-   "role": "builder (mutants)",
-   "model": "sonnet",
-   "what exactly it is doing": "mutants for E1 (conflict audit, cap, /health, recovery, ping bound, audit warning) + E5/E11 mutants run; ONE full mutant run (run 17)",
-   "started UTC": "09:50",
-   "expected end": "25 min",
-   "percent": 60,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "E1 built",
-   "what_exactly_it_is_doing": "told to stop the full mutant run (tree changes under e1-fix2); keeps its mutant edits; full run redone after the fixes"
-  },
-  {
    "id": "e1-fix2",
    "role": "builder",
    "model": "sonnet",
@@ -2545,6 +2531,20 @@
    "review round n of cap": "1 of n (behaviour-changing code: no cap)",
    "retries so far": 0,
    "reason": "E1 review: 0 Blocker, 4 Major (App leak on each failed recovery try; ping wedge if Thread.start raises; sync unbounded audit write; persistent non-store error loops forever), 2 test gaps (unsigned writes no event; per-sender cap vacuous), nits; answers: no payload/signature/secret leak, 409 unaffected by audit failure, no 2xx before the real Runner, one run per key holds"
+  },
+  {
+   "id": "mut-e1",
+   "role": "builder (mutants)",
+   "model": "sonnet",
+   "what exactly it is doing": "mutants for E1 (conflict audit, cap, /health, recovery, ping bound, audit warning) + E5/E11 mutants run; ONE full mutant run (run 17)",
+   "started UTC": "09:50",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "mutants G32a-j (E1) written and hand-probed (all fail their killer on a temp copy); G30a/b, G31 not run; the full run (run 17) is redone after e1-fix2",
+   "what_exactly_it_is_doing": "told to stop the full mutant run (tree changes under e1-fix2); keeps its mutant edits; full run redone after the fixes"
   }
  ]
 }
