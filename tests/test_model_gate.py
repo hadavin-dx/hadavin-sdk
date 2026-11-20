@@ -180,7 +180,7 @@ def test_t3_one_reservation_for_the_worst_case_settled_once_with_the_real_cost()
     assert sink.codes() == [("ok", None)]
 
 
-@pytest.mark.parametrize("mapping", [None, {}, {"<IPV4_1>": IP}], ids=["no-map", "empty", "map"])
+@pytest.mark.parametrize("mapping", [NO_MAP, {}, {"<IPV4_1>": IP}], ids=["no-map", "empty", "map"])
 def test_when_nothing_in_the_map_occurs_raw_the_client_gets_the_callers_own_objects(mapping):
     """Byte-identical: the same message dicts and the same document bytes, in new lists."""
     bound, client, _, _ = build(mapping=mapping)
@@ -418,7 +418,7 @@ def test_t9_bytes_that_are_not_utf8_are_read_as_the_adapters_read_them():
 
 
 def test_t10_placeholders_already_present_are_untouched_also_ones_the_map_does_not_hold():
-    for mapping in (None, {}, known()):
+    for mapping in (NO_MAP, {}, known()):
         bound, client, meter, _ = build(mapping=mapping)
         message = {"role": "user", "content": "host <IPV4_7>, <IPV4_1> and <SECRET_2> were named"}
         doc = b"<EMAIL_4> wrote in about <SECRET_1>"
@@ -427,7 +427,7 @@ def test_t10_placeholders_already_present_are_untouched_also_ones_the_map_does_n
         assert len(meter.settles) == 1
 
 
-@pytest.mark.parametrize("mapping", [None, {}], ids=["no-map", "map"])
+@pytest.mark.parametrize("mapping", [NO_MAP, {}], ids=["no-map", "map"])
 @pytest.mark.parametrize(
     "content",
     [7, None, b"bytes", ["a list"], [{"type": "text", "text": "a block"}], {"text": "a dict"}],
@@ -437,7 +437,7 @@ def test_t11_content_that_is_not_a_str_is_refused_not_skipped(content, mapping):
     refused(*build(mapping=mapping), messages=[*CLEAN, {"role": "user", "content": content}])
 
 
-@pytest.mark.parametrize("mapping", [None, {}], ids=["no-map", "map"])
+@pytest.mark.parametrize("mapping", [NO_MAP, {}], ids=["no-map", "map"])
 @pytest.mark.parametrize(
     "messages",
     [[{"role": "user"}], ["not a dict"], [None], 5],
@@ -447,7 +447,7 @@ def test_a_message_the_gate_cannot_read_is_refused(messages, mapping):
     refused(*build(mapping=mapping), messages=messages)
 
 
-@pytest.mark.parametrize("mapping", [None, {}], ids=["no-map", "map"])
+@pytest.mark.parametrize("mapping", [NO_MAP, {}], ids=["no-map", "map"])
 def test_a_document_that_is_not_bytes_is_refused(mapping):
     refused(*build(mapping=mapping), documents=["a str, not bytes"])
     refused(*build(mapping=mapping), documents=[None])
@@ -612,7 +612,7 @@ def test_no_map_means_no_enforce_step_at_all():
     bound = gate.bind("agent-1", "run-1", mapping=NO_MAP)
     message = {"role": "user", "content": f"host {IP} key {KEY}"}
     bound.chat([message], system="s", route="main", documents=[TOKEN.encode()])
-    assert calls == [] and bound._mapping is None
+    assert calls == [] and bound._mapping is NO_MAP
     assert client.sent[0]["messages"][0] is message
 
 
@@ -1090,7 +1090,7 @@ def test_pin_a_failing_enforce_step_means_no_call():
 
 
 def test_pin_a_content_that_is_not_a_str_means_no_call():
-    for mapping in (None, {}):
+    for mapping in (NO_MAP, {}):
         bound, client, _, _ = build(mapping=mapping)
         with contextlib.suppress(Exception):
             bound.chat([{"role": "user", "content": 7}], system="s", route="main")
@@ -1146,7 +1146,7 @@ def test_pin_a_known_value_in_a_message_is_replaced():
 
 def test_pin_a_document_that_is_not_bytes_means_no_call():
     for document in ("a str", None, 7, bytearray(b"x"), ["x"]):
-        for mapping in (None, {}):
+        for mapping in (NO_MAP, {}):
             bound, client, meter, _ = build(mapping=mapping)
             with contextlib.suppress(Exception):
                 bound.chat(CLEAN, system="s", route="main", documents=[document])
