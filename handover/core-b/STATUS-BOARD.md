@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:33:42Z
+UPDATED_UTC: 2026-11-20T05:33:57Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
@@ -6,15 +6,15 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 50
-AGENTS_RUNNING: 7
-CAPACITY: load 1.12 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 4 heavy 3
-DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 387M
+AGENTS_RUNNING: 6
+CAPACITY: load 1.65 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 3 heavy 3
+DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 388M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
 NEXT: EGM review round on ticket F-store; land B and C commits; D-config; test writers for B and C
-PUSHED_UTC: 2026-11-20T05:33:11Z (previous push; this board is pushed right after writing)
+PUSHED_UTC: 2026-11-20T05:33:42Z (previous push; this board is pushed right after writing)
 IST: 11:03 IST
 
 ## AGENTS
@@ -26,7 +26,7 @@ IST: 11:03 IST
 | a5de8cd7 | reviewer (egm-implementation-readiness) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +8 min | UNVERIFIED | running | 1 of 1 | 0 | ORDER 004 item 3; started through the Skill tool |
 | adaa7521 | reviewer (egm-codebase-details) | fable | EGM round 1 of 1 on tickets/F-store.md | 05:35 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | same stage, runs beside the other reviewer |
 | af8c3d3b | lookup | fable | checks lead draft B against the code, writes tickets/B-stop-state.md | 05:27 | +5 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
-| a2c397e1 | lookup | fable | tickets/C-price-constraint.md written (188 lines); its report not yet received | 05:27 | +1 min | 95 | running | 0 of 1 | 0 | ORDER 004 item 3 |
+| a2c397e1 | lookup | fable | tickets/C-price-constraint.md (188 lines) | 05:27 | done | 100 | done | 0 of 1 | 0 | ORDER 004 item 3 |
 | a64fad56 | builder | fable | step A source: commit 5eb1e7e on cloud/core-b (63 lines added, 14 removed) | 05:27 | done | 100 | done | none | 0 | 127 passed, 5 skipped on 4 existing test files; full suite NOT run |
 | ae122278 | lookup | fable | notes/heads-money.md | 05:22 | done | 100 | done | n/a | 0 | reserve/settle already exists on P4d-a2 (store) and P4b1 (caller) |
 | a367057d | lookup | fable | notes/heads-stop-audit-price.md | 05:22 | done | 100 | done | n/a | 0 | |
