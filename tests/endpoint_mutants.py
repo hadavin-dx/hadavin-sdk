@@ -1,8 +1,9 @@
-"""Mutants of the signed trigger endpoint (`triggers/endpoint.py`), its worker half (`triggers/worker.py`) and the crash
-helper of step E (`testing/crash.py`), run by the P1m runner (`tools/mutation_runner.py`). Not collected by pytest.
+"""Mutants of the signed trigger endpoint (`triggers/endpoint.py`), its worker half (`triggers/worker.py`), the quiet
+server classes (`triggers/server.py`) and the crash helper of step E (`testing/crash.py`), run by the P1m runner
+(`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Seven groups, one per guarantee:
+first failing line that holds `expect`. Twelve groups, one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -11,6 +12,11 @@ first failing line that holds `expect`. Seven groups, one per guarantee:
     G5  the signature is verified before the body is parsed
     G6  the secrets are checked at start: minimum length, and distinct across senders
     G7  the crash helper: disarm before the crash, a `BaseException`, the pytest-only gate, before and after not swapped
+    G8  the quiet server: an empty 503 body, nothing on stderr, an empty refusal, no Server header with the Python version
+    G9  the secrets at start, two later rules: at most two per sender, no whitespace around a value
+    G10 the timestamp boundary: the clock is cut to whole seconds before the window is checked
+    G11 the wait with no free slot: the pause doubles, and a waiting request takes a slot that frees
+    G12 bind and shutdown: loopback unless the switch is set, no IPv6, no trigger_ref in the 409 line, SIGTERM stops
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
@@ -23,6 +29,16 @@ config folder without the conftest fixture, delete `NEEDS_CONFTEST` and the two 
 
 G1 has no mutant for the guard `"\\0" in value` of `derive_run_id`: dropping it changes nothing (the two field patterns
 already refuse a NUL, so every bad triple is still a ValueError and the mutant SURVIVES). The separator mutant is G1c.
+
+G8 to G12 have no mutant left out: each of their thirteen is killed. G8a takes away the two class lines `error_headers`
+and `error_body` together (one piece of text). G8c is pinned to the stalled-client case: there the status line stays
+`400 Bad Request` and the first failing line is the HTML body (with a broken request line the status line fails first).
+
+Two test files run a child process: `tests/triggers/test_t5_process.py` (G12d, case D3) and one test of `test_worker.py`.
+`test_t5_process.py` imports `make_cfg` from `tests/conftest.py` as a plain module and takes no fixture from it, so it
+runs under `--noconftest` as it is (the whole `tests` folder is in the copy). G12d waits out the 15 seconds of D3.
+The `expect` of G11a is weak: the assertion message is the number of store reads, about 100 and not the same in every
+run, so only `AssertionError: ` is matched and the kill is tied to its test by `pinned` alone.
 
 Most killer assertions are bare (no message text), so `expect` is then a fragment of the compared VALUES in the first failing
 line (`400 == 401`, `== (409, {})`), and the kill is tied to its test by `pinned`. Run from the repo root (no database, no
@@ -290,7 +306,7 @@ M = [
         EMPTY_REFUSAL,
         "        super().send_error(code, message, explain)\n",
         TS,
-        "test_garbage_instead_of_a_request_line_is_400_empty",
+        "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]",
         "<!DOCTYPE HTML",
     ),
     mutant(
@@ -339,6 +355,7 @@ M = [
         "pause\n",
         TW,
         "test_a_refused_request_reads_the_store_a_few_times_not_a_hundred",
+        # the message is the number of reads (about 100, not the same in every run): WEAK, the kill rests on `pinned`
         "AssertionError: ",
     ),
     mutant(
@@ -376,7 +393,8 @@ M = [
         LOG_409[:-1].replace('run=%s"', 'run=%s ref=%s"') + ", req.trigger_ref)",
         TW,
         "test_409_writes_one_log_line_with_status_sender_and_run_id_only",
-        "sender-a/key-1#",
+        # pytest shortens both texts; the tail is the end of the hash of the second document
+        "assert 'sender-a/ke...676eb87eecc2' not in 'WARNING",
     ),
     mutant(
         "G12d the SIGTERM handler does not stop the server",
