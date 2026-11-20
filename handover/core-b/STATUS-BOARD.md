@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:02:49Z
+UPDATED_UTC: 2026-11-20T06:04:11Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 80
 AGENTS_RUNNING: 5
-CAPACITY: load 3.44 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 3
+CAPACITY: load 2.05 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 2 heavy 3
 DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 753M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
-FAILED: F-store ticket review round 2 NOT clean (3 Blockers, 12 Majors): answered and sent to the builder; step B used its 3 fix rounds, tests for round 3 running; batch run 1: 3 failed (1 mine, fixed); E1 cron refused
+FAILED: batch run 2: 13 failed, 1 error (11 mine in one test file, fixed and re-run; 1 error passes alone, cause not established; 2 not from my code); F-store review round 2 NOT clean, answered; step B used 3 fix rounds; E1 cron refused
 NEXT: land the test commits; resolve ticket C review; F-install review round; wait for core-c gate module before building F-install
-PUSHED_UTC: 2026-11-20T06:02:13Z (previous push; this board is pushed right after writing)
-IST: 11:32 IST
+PUSHED_UTC: 2026-11-20T06:02:49Z (previous push; this board is pushed right after writing)
+IST: 11:34 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -35,7 +35,7 @@ IST: 11:32 IST
 | pid | command | started by | since | state | reason |
 |---|---|---|---|---|---|
 | background shell brworijga | batch run 1: full test suite, 3 workers, worktree /tmp/core-b-wt/batch at 737c93c | me | 05:41 to 05:44 | ended, exit 1 (3 failed) | the ONE batch run after A, B and C are coded (lead order); step B role tests are not in it yet |
-| background shell bqt7v34iq | batch run 2: full suite, 3 workers, worktree /tmp/core-b-wt/batch at 21c869b, log /tmp/core-b-wt/batch-run-2.log | me | 06:01 | running | lead: one batch run when A, B, C and F-store are coded; F-store tests and B fix 3 tests are not in it yet |
+| background shell bqt7v34iq | batch run 2: full suite, 3 workers, worktree /tmp/core-b-wt/batch at 21c869b | me | 06:00 to 06:03 | ended, exit 1 | lead: one batch run when A, B, C and F-store are coded; F-store tests and B fix 3 tests are not in it yet |
 | 4886 | PostgreSQL 16.15 server, 127.0.0.1 port 55439, data in /tmp/core-b-pg, trust login, test data only | me | 05:31 | running | per-file tests of the builders (ORDER 005 item 4); I stop it when the builds end |
 
 ## TESTS
@@ -55,7 +55,7 @@ IST: 11:32 IST
 | F-store builder's list (14 files) | local/code-F 9473bb2 (8db9c29) | 1 | 673 passed / 0 / 0 | none | done | PostgreSQL 16 |
 | tests/audit_drain_mutants.py on the fixed code | 0b0b150 | 1 | 11 of 13 good | M4, M5: SNIPPET NOT FOUND | being re-anchored | the source fix changed the lines |
 | tests/price_mutants.py | cad5069 | 1 | 20 of 20 good, 1 hole listed | routes-not-sorted mutant survives | being closed | |
-| full suite, batch run 2 | 21c869b | 1 | running | | RUNNING | |
+| full suite, batch run 2 | 21c869b | 1 | 11249 passed / 13 failed / 1 error, 1 skipped, 193 s | tests/test_audit_drain.py f2: assert 0 == 1 | done | evidence/batch-run-2.log (last 120 lines). NEW, mine: 11 failures in tests/test_audit_drain.py (the fix-round tests picked the LAST tick step, and F-store added a step after audit_drain): fixed by selecting the step by name, re-run 150 of 150. 1 ERROR in tests/test_stop_state_roles.py::test_h2: passes when run alone; cause NOT established (the shared test database had two other agents creating roles at the same time). Not from my code: demo dblink test (needs a server on the default socket), vendor-name guard on handover/BRIEF-PREAMBLE.md |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
 ## QUEUE ITEMS
@@ -83,6 +83,7 @@ IST: 11:32 IST
 ## LOOPS
 | item | tries | review rounds | last error | reason |
 |---|---|---|---|---|
+| tests/test_audit_drain.py fix-round tests | 2 | 0 | picked the last tick step by position | two agents changed the step list and its tests in parallel; my instruction to the test writer did not warn about it |
 | tests/test_price_constraint.py | 2 | 0 | stage-word guard flagged a parameter name | the test writer did not run the guard test; fixed by a rename |
 | step B source | 2 | 0 | serial stop id lets the runtime login block a later stop; test pin test_k5_fixes2 missed; limits-unavailable hunk skipped | built from the lead draft before the ticket check finished (lead order: build at once) |
 | interfaces | 2 | 0 | none | version 1 published before the lead's draft arrived, then replaced by the lead's shape |
