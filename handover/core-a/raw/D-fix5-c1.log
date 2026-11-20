@@ -9,3 +9,18 @@ tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_an
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 1 passed, 1 warning in 20.19s
 ## attempt 2: -n 3, with test_t5_fuzz_concurrent (all) and test_t5_crash_matrix as load
+bringing up nodes...
+........................................................................ [ 78%]
+....................                                                     [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+92 passed, 9 warnings in 36.48s
