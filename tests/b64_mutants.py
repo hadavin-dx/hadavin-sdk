@@ -6,6 +6,9 @@ Each mutant edits ONE guard in a temp copy of the package; the test in ``killer`
     python tests/b64_mutants.py              # all mutants; exit 1 if any is not good
     python tests/b64_mutants.py b64          # the base64 half (names start with `b64 `)
     python tests/b64_mutants.py host         # the host-name half (names start with `host `)
+
+`host` selects NOTHING before Phase 4 (no mutant of that name exists, `tests/test_host_names.py` is absent): the runner then has no result and
+the command exits 1. That is expected on this tree, not a failure of a mutant.
 """
 
 import sys
@@ -383,6 +386,51 @@ M = [
         B,
         "test_tie_break_keeps_the_order_of_different_originals",
         "TB-2.8 ",
+    ),
+    m(
+        "b64 no E22 shortcut",
+        RM,
+        "    if _only_encoded(t2, base):",
+        "    if False:",
+        B,
+        "test_only_encoded_shortcut_is_taken_and_exact",
+        "TB-3.44 ",
+    ),
+    m(
+        "b64 E22 shortcut without the isascii guard",
+        RM,
+        "    return all(v.isascii() and v not in t2 for v in base.values())",
+        "    return all(v not in t2 for v in base.values())",
+        B,
+        "test_only_encoded_shortcut_guards",
+        "TB-3.45 ",
+    ),
+    m(
+        "b64 E22 shortcut without the value-in-t2 guard",
+        RM,
+        "    return all(v.isascii() and v not in t2 for v in base.values())",
+        "    return all(v.isascii() for v in base.values())",
+        B,
+        "test_only_encoded_shortcut_guards",
+        "TB-3.45 ",
+    ),
+    m(
+        "b64 no unit character cap (masked unread)",
+        RM,
+        "        if len(u.joined) > defaults.B64_MAX_UNIT_CHARS:",
+        "        if False:",
+        B,
+        "test_unit_over_the_char_cap_is_masked_unread",
+        "TB-3.46 ",
+    ),
+    m(
+        "b64 step 9 error swallowed (I21)",
+        RM,
+        "    return redact(t2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)",
+        "    try:\n        return redact(\n            t2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S\n        )\n    except RedactionError:\n        return RedactionResult(text=t2, mapping=base, actions=0)",
+        B,
+        "test_errors_of_step_nine_propagate",
+        "TB-3.47 ",
     ),
     m(
         "b64 ENCODED not in _ASSIGNMENT_KINDS",

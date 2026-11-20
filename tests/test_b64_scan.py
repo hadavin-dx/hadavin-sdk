@@ -134,12 +134,14 @@ def test_tie_break_keeps_the_order_of_different_originals():
     assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, the redactor's own sweep"
     got = _outcome(lambda: runmap.enforce_map(text, dict(fifth)))
     assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, enforce_map"
-    # sixth map (MIX builder, E20): two originals of the SAME length, one of a secret kind and one of an identifier kind, written
-    # glued together. The identifier kind is swept only at a boundary, so the order of the two decides whether `abcd` is replaced: the secret
-    # rule goes first (the `_build` tie-break), `efgh` becomes `<SECRET_1>`, and `abcd` stays (no SECRET value is readable; the identifier
-    # `abcd` is left by its own boundary rule). With the secret rule NOT first on a tie (gate mutant "b64 tie-break as v3's sort key") the
-    # bare sweep gives `<EMAIL_1><SECRET_1>`. G9's read-back masks the shared overlaps of TB-2.8's maps 1-5 whatever the order, so
-    # only this map, which the read-back does not touch, still tells the two orders apart.
+    # sixth map (MIX builder, E20): two DIFFERENT originals of the SAME length, one of an identifier kind (EMAIL) and one of a secret kind
+    # (SECRET), written glued together. The tie-break of `_build` is per ORIGINAL (`_rules[original]`: the secret kind's rule wins when two
+    # placeholders share one original); it does not order two different originals. Their order is the stable sort of `-len(original)`, so
+    # the map's order stands and EMAIL (first) comes first: its rule, an identifier swept only at a boundary, does not fire on `abcd`
+    # glued to `efgh`, the SECRET rule masks `efgh`, and the output is `abcd<SECRET_1>`. With a sort key that puts the secret kind first
+    # (gate mutant "b64 tie-break as v3's sort key") the order flips and the bare sweep gives `<EMAIL_1><SECRET_1>`. G9's read-back masks
+    # the shared overlaps of TB-2.8's maps 1-5 whatever the order, so only this map, which the read-back does not touch, tells the two
+    # orders apart.
     sixth = {"<EMAIL_1>": "abcd", "<SECRET_1>": "efgh"}
     got = _outcome(lambda: runmap._Redactor(dict(sixth), None).sweep("abcdefgh"))
     assert got == "abcd<SECRET_1>", "TB-2.8 sixth map, the redactor's own sweep"
@@ -343,19 +345,21 @@ def test_no_run_no_extra_work(monkeypatch):
         _step_off(mp)
         off = run()
     assert on == off, "TB-3.4 the step does extra work on a text with no run"
-    # the counts MEASURED on this tree (see NO_RUN_WORK): (calls of `redact`, reads of `time.thread_time`) per text and function
-    assert on[0] == NO_RUN_WORK, "TB-3.4 the work of a text with no run is not the base commit's"
 
+    # The real check: the work of a text with no run is that of the base commit's pass one, which is `redact` alone. No literal count
+    # (the clock reads of the pattern table change with every pattern edit: 154, 156, 160 in turn): the reference replaces `_pass_one`
+    # by that one call, so a clock read or a `redact` call the step adds BEFORE its gate (the mutant "b64 clock read before the gate")
+    # is a difference whatever the table holds. `_step_off` alone cannot see it: the read stays in the off build too.
+    def base_pass_one(text, mapping, cache, budget, depth):
+        return runmap.redact(
+            text, mapping=mapping, _cache=cache, _deadline=budget.started + defaults.REDACT_BUDGET_S
+        )
 
-# measured with the same wrappers (the text `prose` and `blob48` read the clock per 1,024 characters or per segment).
-# Re-measured on the merged G4 + G8 + G9 + E14 + G10 tree (E20): the two `redact_untrusted` rows of the marker texts
-# (`<HIGHENTROPY_7>`, `<CREDITCARD_12>`) read the clock 160 times, not 154 (the G4 base): the six extra reads come from G8's glued-rest
-# commit 6a852c7d3 (its look-behind IPV4 / CREDITCARD pattern edits; measured at the commit before it: 154, at it: 160, unchanged by G9,
-# E14 and G10). The on == off check above is unchanged: the base64 step adds no read.
-NO_RUN_WORK = [
-    (2, 3), (2, 3), (2, 3), (2, 3), (1, 1), (1, 1), (1, 3),
-    (1, 3), (1, 1), (1, 160), (1, 1), (1, 160), (1, 1), (1, 1),
-]  # fmt: skip
+    with monkeypatch.context() as mp:
+        mp.setattr(runmap, "_pass_one", base_pass_one)
+        base = run()
+    assert on == base, "TB-3.4 the work of a text with no run is not the base commit's"
+    assert any(n > 1 for _, n in on[0]), "TB-3.4 the counts are vacuous (no clock read at all)"
 
 
 def test_short_blob_alone_is_encoded():
@@ -586,6 +590,116 @@ def test_errors_of_the_second_pass_propagate(monkeypatch):
         assert dict(m) == {}, "TB-3.22 the map was written"
 
 
+def _count_redact(mp, only_encoded=None):
+    """Patch `runmap.redact` with a call counter (and `_only_encoded` when given); returns the counter."""
+    calls = {"n": 0}
+    real = runmap.redact
+
+    def counted(*a, **k):
+        calls["n"] += 1
+        return real(*a, **k)
+
+    mp.setattr(runmap, "redact", counted)
+    if only_encoded is not None:
+        mp.setattr(runmap, "_only_encoded", lambda t2, base: only_encoded)
+    return calls
+
+
+def test_only_encoded_shortcut_is_taken_and_exact(monkeypatch):
+    """E22: a t2 that is only `<ENCODED_n>` over an all-ASCII map skips step 9's `redact`; the result is the one `redact` gives."""
+    for text in (SB, W):
+        with monkeypatch.context() as mp:
+            calls = _count_redact(mp)
+            on = _outcome(lambda text=text: _both(text))
+            n_on = calls["n"]
+        with monkeypatch.context() as mp:
+            calls = _count_redact(mp, only_encoded=False)
+            off = _outcome(lambda text=text: _both(text))
+            n_off = calls["n"]
+        assert on == off, "TB-3.44 the shortcut's output or map differs from step 9's"
+        assert n_off > n_on, "TB-3.44 the shortcut did not skip step 9's redact"
+    with monkeypatch.context() as mp:
+        calls = _count_redact(mp)
+        runmap.redact_text(SB, {})
+        assert calls["n"] == 2, "TB-3.44 expected pass one and the decoded view's pass one only"
+
+
+def test_only_encoded_shortcut_guards(monkeypatch):
+    """A non-ASCII stored value, or a stored value that occurs in t2, must NOT take the shortcut: step 9's `redact` runs."""
+    for name, held in (
+        ("non-ASCII value", {"<TENANT_1>": "caf\u00e9-unique-tenant"}),
+        ("value inside t2", {"<TENANT_1>": "ENCODED_1"}),
+    ):
+        with monkeypatch.context() as mp:
+            calls = _count_redact(mp)
+            runmap.redact_text(SB, dict(held))
+            n_on = calls["n"]
+        with monkeypatch.context() as mp:
+            calls = _count_redact(mp, only_encoded=False)
+            runmap.redact_text(SB, dict(held))
+            n_off = calls["n"]
+        assert n_on == n_off, f"TB-3.45 {name}: step 9's redact was skipped"
+    direct = [
+        ("<ENCODED_1>", {"<ENCODED_1>": SB}, True),
+        ("<ENCODED_1>", {"<ENCODED_1>": SB, "<TENANT_1>": "caf\u00e9"}, False),
+        ("<ENCODED_1>", {"<ENCODED_1>": SB, "<TENANT_1>": "ENCODED_1"}, False),
+        ("<ENCODED_1>", {"<ENCODED_1>": SB, "<TENANT_1>": "<ENCODED_1>"}, False),
+        ("x <ENCODED_1>", {"<ENCODED_1>": SB}, False),
+    ]
+    for t2, base, want in direct:
+        assert runmap._only_encoded(t2, base) is want, (
+            f"TB-3.45 _only_encoded({t2!r}, {sorted(base)})"
+        )
+
+
+def test_unit_over_the_char_cap_is_masked_unread(monkeypatch):
+    """`B64_MAX_UNIT_CHARS`: a longer unit that pass one did not hold is masked unread (no decode); one at the cap is decoded."""
+    with monkeypatch.context() as mp:
+        mp.setattr(defaults, "B64_MAX_UNIT_CHARS", len(SB) - 1)
+        spy = _Spy(mp)
+        m: dict[str, str] = {}
+        out = runmap.redact_text(SB, m)
+        assert out == "<ENCODED_1>" and m == {"<ENCODED_1>": SB}, (
+            "TB-3.46 over the cap: output or map"
+        )
+        assert spy.n == 0, "TB-3.46 a unit over the cap was decoded"
+        spy = _Spy(mp)
+        mp.setattr(defaults, "B64_MAX_UNIT_CHARS", len(B2) - 1)
+        assert runmap.redact_text(B2, {}) == "<ENCODED_1>", (
+            "TB-3.46 a benign unit over the cap is masked too"
+        )
+        assert spy.n == 0, "TB-3.46 a benign unit over the cap was decoded"
+    with monkeypatch.context() as mp:
+        mp.setattr(defaults, "B64_MAX_UNIT_CHARS", len(SB))
+        spy = _Spy(mp)
+        m = {}
+        out = runmap.redact_text(SB, m)
+        assert out == "<ENCODED_1>" and m == {"<SECRET_1>": S12, "<ENCODED_1>": SB}, (
+            "TB-3.46 at the cap: output or map"
+        )
+        assert spy.n >= 1, "TB-3.46 a unit at the cap was not decoded"
+
+
+def test_errors_of_step_nine_propagate(monkeypatch):
+    """I21 (ticket 2.5 step 9): an error raised by the final `redact` over T2 propagates; the text is not shown unscanned."""
+    t = "x " + SB
+    assert runmap.redact_text(t, {}) == "x <ENCODED_1>", "TB-3.47 control"
+    for exc in (runmap.RedactionError("NotSettled"), runmap.InputTooLarge("InputTooLarge")):
+        real = runmap.redact
+
+        def broken(text, *a, exc=exc, real=real, **k):
+            if text == "x <ENCODED_1>":  # T2: the only call whose text is the placeholder text
+                raise exc
+            return real(text, *a, **k)
+
+        m = runmap.RunMap()
+        with monkeypatch.context() as mp:
+            mp.setattr(runmap, "redact", broken)
+            got = _outcome(lambda m=m: runmap.redact_text(t, m))
+        assert got == f"{type(exc).__name__}({exc})", "TB-3.47 the step 9 error is kept as raised"
+        assert dict(m) == {}, "TB-3.47 the map was written"
+
+
 def test_views_are_of_the_input():
     out = runmap.redact_untrusted(SB + " password%3D" + S12, {})
     assert "<ENCODED_1>" in out and "<SECRET_" in out and "\u2039ENCODED" not in out, (
@@ -600,10 +714,10 @@ def test_card_two_benign_runs_and_one_secret():
 
 def test_card_cap_refusal_is_a_raise(monkeypatch):
     monkeypatch.setattr(defaults, "B64_MAX_UNITS", 1)
-    with pytest.raises(runmap.InputTooLarge):
-        channel.clean(f"a {B1} b {B2}")
-    with pytest.raises(runmap.InputTooLarge):
-        cards.render_abstain("r", "x", [f"{B1} {B2}"])
+    refused = "InputTooLarge(InputTooLarge)"
+    assert _outcome(lambda: channel.clean(f"a {B1} b {B2}")) == refused, "TB-3.25 channel.clean"
+    got = _outcome(lambda: cards.render_abstain("r", "x", [f"{B1} {B2}"]))
+    assert got == refused, "TB-3.25 cards.render_abstain"
 
 
 def test_card_tag_split_blob():
@@ -887,6 +1001,21 @@ def test_limit_base32_hex():
     h = ("password=" + S12).encode().hex()
     out = runmap.redact_text(b + " " + h, {})
     assert b not in out and h not in out, "TB-3.L-B2 base32 and hex"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="L-B8: a decoded text with 10 % or more non-printable characters is not read",
+)
+def test_limit_padded_blob():
+    """L-B8 (design result review 1, M2): `_printable_text` returns None for a decoded text where fewer than `B64_PRINTABLE_SHARE`
+    of the characters are printable (`str.isprintable()` is False for NBSP and U+3000 too, and a binary container is such a text),
+    so the unit is not decoded and stays readable beside pass one's misses. Three NBSP after `password=` + 12 characters are 3 of 24.
+    A control (two NBSP, under the share) is read and masked. No fallback is built (a lead decision)."""
+    pad = "\u00a0" * 3
+    assert runmap._b64_text(b64("password=" + S12 + pad[:2])) is not None, "TB-3.L-B8 control"
+    out = runmap.redact_text(b64("password=" + S12 + pad), {})
+    assert pc.leak_of(S12, out)[0] == "no", "TB-3.L-B8 padded blob"
 
 
 def test_jwt_segment_copy_is_masked_by_pass_one():
