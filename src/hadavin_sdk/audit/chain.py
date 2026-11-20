@@ -250,6 +250,7 @@ class ChainAudit:
         checkpoint_every: int = 100,
         drain_batch: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self._db, self.signer, self.anchor = db, signer, anchor
         # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
@@ -262,9 +263,7 @@ class ChainAudit:
         self.checkpoint_every = checkpoint_every
         self.drain_batch = drain_batch if drain_batch is not None else defaults.AUDIT_DRAIN_BATCH
         self._sleep = sleep
-        # Consecutive ticks an outbox row was refused for a permanent reason, by row id. In memory, per process: a
-        # process that lives for one tick never reaches AUDIT_QUARANTINE_AFTER_TICKS (the row stays, counted).
-        self._fail_ticks: dict[str, int] = {}
+        self._clock = clock
         # Last resort when even the outbox table cannot be written (the database is down): drained by the next
         # successful write of this process and by reconcile. In-process only: lost if the process exits first.
         self._pending: list[AuditEvent] = []
@@ -536,7 +535,6 @@ class ChainAudit:
             if row_id is None:
                 self._pending.remove(event)
             else:
-                self._fail_ticks.pop(row_id, None)
                 try:
                     self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (row_id,))
                 except Exception:  # noqa: BLE001 - in the chain; the next drain dedupes and deletes
@@ -552,10 +550,10 @@ class ChainAudit:
                 r.not_writable += 1
                 # A missing grant (42501) is mended by the operator and then every row drains: no quarantine.
                 if getattr(failed, "sqlstate", None) != "42501" and tick:
-                    n = self._fail_ticks[row_id] = self._fail_ticks.get(row_id, 0) + 1
-                    if n >= defaults.AUDIT_QUARANTINE_AFTER_TICKS:
+                    # Age from the row's own ts (stable across processes: a tick is one process); naive = UTC.
+                    age = (self._clock() - _sort_ts(event)).total_seconds()
+                    if age >= defaults.AUDIT_QUARANTINE_AFTER_S:
                         r.marked += self._quarantine(event, row_id)
-                        self._fail_ticks.pop(row_id, None)
             return False
         if row_id is None:
             self._transient_stuck = not _is_outage(failed)

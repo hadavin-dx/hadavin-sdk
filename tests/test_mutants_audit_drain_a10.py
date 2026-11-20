@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from hadavin_sdk import defaults
-from tests.test_audit_drain import _append_fails_for, _event, _ids, _park, _park_in_memory, _refuse
-from tests.test_audit_drain_a10 import _ids_in_outbox, _log, _psql
+from tests.test_audit_drain import _append_fails_for, _event, _ids, _park, _park_in_memory
+from tests.test_audit_drain_a10 import _log, _psql
 
 
 def test_m1_classifier_flipped_a_data_error_is_permanent_and_a_timeout_is_not():
@@ -23,15 +21,12 @@ def test_m2_limit_dropped_one_tick_drains_at_most_the_batch():
     assert log.reconcile() == 3 and len(_ids(log)) == 3
 
 
-def test_m3_quarantine_dropped_the_row_is_renamed_after_n_ticks_and_kept():
-    log, _ = _log()
-    bad = _event(0, event_id="evt-bad")
-    _park(log, bad)
-    _refuse(log, bad)
-    for _ in range(defaults.AUDIT_QUARANTINE_AFTER_TICKS):
-        with pytest.raises(RuntimeError):
-            log.reconcile()
-    assert _ids_in_outbox(log) == ["poison:evt-bad"]
+def test_m3_quarantine_dropped_a_fresh_instance_per_tick_renames_the_old_row_and_keeps_it():
+    from tests.test_audit_drain_a11 import (
+        test_fresh_instance_per_tick_quarantines_an_old_poison_row_and_drains_past_it as t,
+    )
+
+    t()
 
 
 def test_m4_backoff_cap_dropped_no_sleep_exceeds_the_cap(monkeypatch):

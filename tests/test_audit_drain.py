@@ -1208,5 +1208,5 @@ def test_f9_a_sqlite_error_is_not_an_outage():
 
 @pytest.fixture(autouse=True)
 def _quarantine_at_once(monkeypatch):
-    """The cases of this file pin the quarantine mechanics at N = 1 tick; the N-tick rule is tests/test_audit_drain_a10.py."""
-    monkeypatch.setattr(defaults, "AUDIT_QUARANTINE_AFTER_TICKS", 1)
+    """The cases of this file pin the quarantine mechanics with the age set to 0; the age rule is tests/test_audit_drain_a11.py."""
+    monkeypatch.setattr(defaults, "AUDIT_QUARANTINE_AFTER_S", 0)
