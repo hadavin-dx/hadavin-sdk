@@ -1,27 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:36:22Z
+UPDATED_UTC: 2026-11-20T05:39:44Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 7
-PERCENT: 70
-AGENTS_RUNNING: 4
-CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
+PERCENT: 71
+AGENTS_RUNNING: 3
+CAPACITY: load 3.3 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 2; 2.3M	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:34:46+00:00
+PUSHED_UTC: 2026-11-20T05:36:22+00:00
 
-(11:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:09 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 5 | running | n/a | 0 | ORDER 006 item 1: only gaps proven by a failing input get built |
+| a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 05:55 | 5 | running | n/a | 0 | lead GO BUILD; received 2 correction messages (INTERFACE (ii) + ORDER 006; is_masked rule changed to a multiset comparison) |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 2 | running | n/a | 0 | lead GO BUILD G; separate worktree so two builders never share a checkout; HEAVY (runs tests) |
 | a04f3d03 | reviewer | fable | EGM plan review of tickets/G-text-deltas.md, implementation readiness | 05:32 | 05:40 | 100 | done | 1 of 1 | 0 | finished: ticket G NOT READY: 3 Blockers, 14 Majors, 6 Nits. Blocker 1 is a fail-open in the planned is_masked rule (count of placeholders misses a swap): sent to the builder at once |
@@ -46,6 +46,7 @@ PUSHED_UTC: 2026-11-20T05:34:46+00:00
 |---|---|---|---|---|---|---|
 | tests/test_grants_negative_roles.py | cloud/core-c working tree on 51c9fc4 source | 1 (no database) | 19 passed / 0 failed / 13 skipped, 1 xfailed | none | done | pure-Python layer |
 | tests/test_grants_negative_roles.py | same, local PostgreSQL 16.15 as user postgres | 2 | 31 passed / 0 failed, 2 xfailed (strict, step B gap) | first PG run: 3 failures in the new tests themselves (unqualified table names), fixed | done | PostgreSQL 17 (CI version) NOT RUN |
+| evidence/p1c_probe.py (probe, not a test suite) | clean export of main 51c9fc4 | 2 (identical) | 229 cases: 80 leak a protected value, 24 bare numbers unmasked by decision | base64 of a short secret line passes unchanged | done | evidence for ticket G4 |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -63,7 +64,7 @@ PUSHED_UTC: 2026-11-20T05:34:46+00:00
 | BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 5 | evidence/F-G0-1.md | 1 | one builder; tests/test_k5_producers.py will be red until SPINE applies requests/1-producers.patch |
 | BUILD G1 fold | RUNNING | 2 | evidence/G1-fold.md | 1 | one builder in a worktree |
 | BUILD G2 P1d-a, G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | they stack on the fold; G6 wording waits for the lead's OK of the text |
-| BUILD G4 P1c | RUNNING (probe) | 10 | evidence/P1c-probe.md | 1 | ORDER 006: P1c is written new, only for gaps a failing input proves; the probe runs now |
+| BUILD G4 P1c (base64 scan, whole host names) | WAIT G0 commit | 30 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | probe done, ticket written by the session; build starts when the G0 builder leaves guard/runmap.py (same file); corpus test cut (corpus not in the repository) |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
