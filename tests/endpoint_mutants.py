@@ -116,7 +116,6 @@ TW = "tests/triggers/test_worker.py"
 TC = "tests/test_testing_crash.py"
 TS = "tests/triggers/test_t5_wsgiref.py"
 TP = "tests/triggers/test_t5_process.py"
-TT = "tests/triggers/test_t5_cases.py"
 ENDPOINT = "src/hadavin_sdk/triggers/endpoint.py"
 WORKER = "src/hadavin_sdk/triggers/worker.py"
 CRASH = "src/hadavin_sdk/testing/crash.py"
@@ -202,7 +201,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW, TT]
+TESTS = [TE, TC, TS, TP, TW]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1066,18 +1065,18 @@ M = [
         CAP_GUARD + READ_AND_PARSE,
         READ_AND_PARSE
         + "        if len(document) > max_body:\n            return 413, sender, None\n",
-        TT,
-        "test_e11_escaped_body_over_the_cap_is_413_though_the_document_is_under_it",
-        "assert False",
+        TE,
+        "test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document[controls]",
+        "assert 202 == 413",
     ),
     mutant(
         "G31 parse_body refuses an empty document",
         ENDPOINT,
         '    try:\n        return key, document.encode("utf-8")\n',
         '    if not document:\n        raise BadRequest("empty document")\n    try:\n        return key, document.encode("utf-8")\n',
-        TT,
-        "test_e5_empty_document_creates_one_run_and_logs_no_document",
-        "assert 400 in (200, 202)",
+        TE,
+        "test_parse_body_round_trip",
+        "BadRequest",
     ),
     # --- G28 the bind switch
     mutant(
