@@ -1,8 +1,8 @@
-# Model routing for the cloud sessions (TEMPORARY all-Fable order)
+# Model routing for the cloud sessions (all-Fable order REVERTED 2026-11-20 by the owner)
 
-**Owner order 2026-11-19, until he says revert: every model is Fable 5.2 (`claude-fable-5-2`).** This covers normal work and EGM: EGM skills, EGM reviewer agents, builders, evidence runners, general-purpose agents, lookups.
+**Owner order 2026-11-20 (chat): no Fable anywhere, here and on every cloud session.** The Fable limit is reached until 2026-11-24 08:30 IST.
 
-- Set the Agent `model` to `fable` on EVERY Agent call (never inherit, never `sonnet`, `opus` or `haiku`).
-- The environment setup script (`tools/egm_setup.sh` on the laptop, pasted by the owner into the cloud environment) sets every EGM skill and agent to `claude-fable-5-2`. Prove it in your first REPORT block: `grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c` must show only `claude-fable-5-2` lines (no opus, no sonnet). If the session model itself is not Fable 5.2, say so in the report; do not change settings.
-- Call EGM only through the Skill tool, one stage at a time (sequence: brainstorm, draft, plan review, resolve, build, evidence runner, result review, resolve, drift report). Reviewers of one stage run in parallel only inside that stage; stages never overlap.
-- The old tiers (Opus 5.5 planning skills, Sonnet 5.5 for everything else, Haiku 5.5 lookups) return only when the owner says revert; the lead then updates this file.
+- Set the Agent `model` on EVERY Agent call: `opus` for egm-brainstorm / egm-draft / egm-resolve, `sonnet` for every other EGM reviewer, builder and agent, `haiku` for lookups. Never `fable`, never inherit.
+- EGM plugin model lines in your container: `claude-opus-5-5` on the three planning skills (all copies) and the feature_proposal template, `claude-sonnet-5-5` on every other line. Prove with: grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c (zero fable). Do not run any fable patch script.
+- Commit trailer: Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>.
+- Old text of this file (all-Fable order of 2026-11-19) is history and no longer valid.
