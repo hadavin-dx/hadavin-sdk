@@ -10,6 +10,7 @@ role exists. A migrate never waits for the gate while holding another lock: the 
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 
 GATE = 7311
@@ -45,10 +46,9 @@ def exclusive():
 
 
 def gated(fn):
+    @functools.wraps(fn)
     def run(*args, **kwargs):
         with shared():
             return fn(*args, **kwargs)
 
-    run.__wrapped__ = fn
-    run.__name__ = fn.__name__
     return run
