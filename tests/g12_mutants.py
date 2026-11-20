@@ -30,7 +30,8 @@ TAIL = "        elif not text[end - 1].isalnum():\n"
 CLOSE = "        elif (m := _EDGE_CLOSE.search(text, max(start, end - 64), end)) is not None:\n"
 OPEN = "        if (m := _EDGE_OPEN.match(text, start, end)) is not None:\n"
 ESC = r'_EDGE_CLOSE = re.compile(r"(?:</[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt])\Z")' + "\n"
-NOVAL = "        if core.lower() in _NOT_A_VALUE:  # `none!`: masked whole, but its core would sweep every `none` of the text\n"
+NOVAL = "        if core.lower() in _NOT_A_VALUE or _placeholder_like(core):\n"
+PHLIKE = "        if core.lower() in _NOT_A_VALUE or _placeholder_like(core):\n"
 J = '                self._journal.append(("map", f"<{label}_{self.counters[label]}>", core))\n'
 
 
@@ -58,14 +59,15 @@ M = [
     m("G12-M6 identifier kinds get a core", C, "        core = _bare(full) if derived else full\n", "test_g12_identifier_kinds_are_unchanged", "G12-11 "),
     m("G12-M7 a G9 union gets a core", C, C.replace("derived and ", ""), "test_g12_a_g9_union_registers_its_value_only_and_no_core", "G12-12 "),
     # G12b: the one edge rule (`_bare`), its halves, and the words the exemption shares it with
-    m("G12-M8 the leading half is off", HEAD, "        elif False:\n", WRAP + "[11]", "G12-14 "),
+    m("G12-M8 the leading half is off", HEAD, "        elif False:\n", WRAP + "[9]", "G12-14 "),
     m("G12-M9 the trailing half is off", TAIL, "        elif False:\n", MARK + "[,]", "G12-1 "),
     m("G12-M10 the trailing half is ASCII only", TAIL, "        elif text[end - 1].isascii() and not text[end - 1].isalnum():\n", WRAP + "[6]", "G12-14 "),
     m("G12-M11 the leading half is ASCII only", HEAD, "        elif text[start].isascii() and not text[start].isalnum():\n", WRAP + "[9]", "G12-14 "),
     m("G12-M12 a closing tag is kept", CLOSE, "        elif False:\n", WRAP + "[2]", "G12-14 "),
     m("G12-M13 an opening tag is kept", OPEN, "        if False:\n", WRAP + "[3]", "G12-14 "),
     m("G12-M14 an escaped newline is kept", ESC, ESC.replace("|\\\\[nrt]", ""), WRAP + "[10]", "G12-14 "),
-    m("G12-M15 a no-value core is registered", NOVAL, "        if False:\n", "test_g12_the_second_none_is_neither_masked_nor_swept", "G12-13 "),
+    m("G12-M15 a no-value core is registered", NOVAL, "        if _placeholder_like(core):\n", "test_g12_the_second_none_is_neither_masked_nor_swept", "G12-13 "),
+    m("G12-M18 a placeholder-like core is registered", PHLIKE, "        if core.lower() in _NOT_A_VALUE:\n", "test_g12_a_core_that_is_a_placeholders_own_text_is_not_registered[\\u2039EMAIL_1\\u203a]", "G12-18 "),
     m("G12-M16 the core is cut from the written value", C, C.replace("_bare(full)", "_bare(original)"), "test_g12_the_core_of_a_value_holding_a_placeholder_is_cut_from_the_resolved_value", "G12-16 "),
     m("G12-M17 the core is registered twice over", I, "        if core != full and len(core) >= 3 and core not in self.reverse:\n            self.reverse[core + ' '] = full\n            self.mapping['<SECRET_x>'] = full\n", "test_g12_a_value_takes_at_most_two_entries", "G12-15 "),
 ]  # fmt: skip
