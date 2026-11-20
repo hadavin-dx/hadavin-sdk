@@ -303,16 +303,18 @@ WITH RECURSIVE want(relname, priv) AS (
     WHERE att.attnum > 0 AND NOT att.attisdropped AND a.privilege_type = rel.priv
 ), outside AS (
     SELECT relowner AS oid FROM rel UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper
+), vouched AS (
+    SELECT r.oid FROM pg_catalog.pg_roles r WHERE {vouched} AND r.oid NOT IN (SELECT oid FROM outside)
 ), can(oid, listed) AS (
     SELECT s.oid, TRUE FROM (SELECT grantee AS oid FROM acl
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s
                        UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE {creators}) s
     WHERE s.oid NOT IN (SELECT oid FROM outside)
     UNION
-    SELECT r.oid, FALSE FROM pg_catalog.pg_roles r
-    WHERE {vouched} AND r.oid NOT IN (SELECT oid FROM outside)
+    SELECT oid, FALSE FROM vouched
     UNION
-    SELECT m.member, TRUE FROM pg_catalog.pg_auth_members m JOIN can ON m.roleid = can.oid
+    SELECT m.member, can.listed OR m.member NOT IN (SELECT oid FROM vouched)
+    FROM pg_catalog.pg_auth_members m JOIN can ON m.roleid = can.oid
     WHERE m.member NOT IN (SELECT oid FROM outside) AND {usable}
 )
 SELECT name FROM (
@@ -328,19 +330,30 @@ SELECT name FROM (
 _CREATORS = "(r.rolcreaterole AND r.rolname::text <> ALL(%(accepted)s::text[]))"
 # The accepted CREATEROLE roles themselves are not listed, but they SEED the membership walk: a member can SET ROLE to
 # one and use its CREATEROLE, so vouching covers the role, not its members (`listed` is FALSE for the seed row).
-_VOUCHED = "(r.rolcreaterole AND NOT r.rolsuper AND r.rolname::text = ANY(%(accepted)s::text[]))"
+_VOUCHED = "(r.rolcreaterole AND r.rolname::text = ANY(%(accepted)s::text[]))"
+# A vouched role that is a member of another vouched role is not listed for that (`listed` stays FALSE); a member that is
+# not vouched is. Superusers and the owner are `outside` and never seeds.
+_REFUSED_CATEGORIES = frozenset(
+    {"Cc", "Cf", "Zl", "Zp"}
+)  # control, format (zero-width, bidi), line and paragraph separator
 _WILDCARDS = frozenset({"*", "%"})
 
 
 def _accepted_name_ok(name) -> bool:
     """Format of a name in `accepted_admin_roles`: managed administrator logins are often named `Admin`, `my-admin` or
-    `user@server`, so any text of 1 to 63 bytes (PostgreSQL's limit) with no control character and no space at either
-    end. The name is only ever bound as a query parameter and compared as exact text, never built into SQL."""
+    `user@server`, so any text of 1 to 63 bytes (PostgreSQL's limit) with no control, format (zero-width, bidi) or line
+    separator character and no space at either end. The name is only ever bound as a query parameter and compared as
+    exact text, never built into SQL."""
+    if not isinstance(name, str):
+        return False
+    try:
+        size = len(name.encode("utf-8"))
+    except UnicodeEncodeError:  # a lone surrogate (from a command-line argument)
+        return False
     return (
-        isinstance(name, str)
-        and 0 < len(name.encode("utf-8")) <= 63
+        0 < size <= 63
         and name == name.strip()
-        and not any(unicodedata.category(c) == "Cc" for c in name)
+        and not any(unicodedata.category(c) in _REFUSED_CATEGORIES for c in name)
     )
 
 
@@ -476,8 +489,9 @@ def migrate(
     if len(set(named)) != len(named):
         raise ConfigError("the runtime, portal, purge and reset roles must be different roles")
     bad_accepted = (
-        "accepted_admin_roles must be database role names (1 to 63 bytes, no control character, no space at "
-        f"either end; not PUBLIC, session_user, current_user, * or %): {accepted_admin_roles!r}"
+        "accepted_admin_roles must be database role names (1 to 63 bytes, no control, format or line separator "
+        "character, no space at either end; not PUBLIC, none, session_user, current_user, * or %): "
+        f"{accepted_admin_roles!r}"
     )
     if isinstance(accepted_admin_roles, str):
         raise ConfigError(bad_accepted)

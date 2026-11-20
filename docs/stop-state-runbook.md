@@ -74,9 +74,9 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   looks at the whole server, not this schema. If a listed role is not a person or process that can use CREATEROLE to
   grant the reset role to itself (for example a managed service's own administrator login), you may name it with
   `--accept-admin-role <role>` (repeat the flag for several; in code `accepted_admin_roles`). Rules: you vouch for it;
-  a name is any text of 1 to 63 bytes with no control character and no space at either end (`Admin`, `my-admin`,
-  `user@server` are fine), compared as exact text, never `PUBLIC`, `session_user`, `current_user`, `*` or `%`, and
-  not one of the roles migrate grants; it is left out of the CREATEROLE listing only, and is still listed when it
+  a name is any text of 1 to 63 bytes with no control, format (zero-width, bidirectional) or line-separator
+  character and no space at either end (`Admin`, `my-admin`, `user@server` are fine), compared as exact text, never
+  `PUBLIC`, `none`, `session_user`, `current_user`, `*` or `%` (in any letter case), and not one of the roles migrate grants; it is left out of the CREATEROLE listing only, and is still listed when it
   holds a grant on the stop tables. Its MEMBERS are still listed (a member can `SET ROLE` to it and use its
   CREATEROLE): vouching covers the role itself, not who may become it. Below PostgreSQL 16 the command prints the
   accepted names (also when it refuses) and logs them at warning level: the record of who vouched is the CI log of

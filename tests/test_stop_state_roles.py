@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import contextlib
 import inspect
+import io
 import logging
 import os
+import sys
 import threading
 import time
 import uuid
@@ -1446,37 +1448,110 @@ def test_s2_an_accepted_role_that_holds_a_grant_or_a_membership_here_is_still_li
 
 
 _BAD_ACCEPTED = "accepted_admin_roles must be database role names"
-FORMAT_BAD = [
-    "a" * 64,
-    "admin ",
-    " admin",
-    "",
-    "ad" + chr(7) + "min",
-    "ad" + chr(10) + "min",
-    "ad" + chr(127) + "min",
-]
-FORBIDDEN = ["public", "PUBLIC", "Public", "session_user", "SESSION_USER", "Current_User", "*", "%"]
+FORMAT_BAD = {  # id: name (the id is what a mutant pins)
+    "length64": "a" * 64,
+    "trailing_space": "admin ",
+    "leading_space": " admin",
+    "empty": "",
+    "bel": "ad" + chr(7) + "min",
+    "newline": "ad" + chr(10) + "min",
+    "del": "ad" + chr(127) + "min",
+    "lone_surrogate": chr(0xD800),
+    "nel": "ad" + chr(0x85) + "min",
+    "line_separator": "ad" + chr(0x2028) + "min",
+    "paragraph_separator": "ad" + chr(0x2029) + "min",
+    "zero_width_space": "ad" + chr(0x200B) + "min",
+    "bidi_override": "ad" + chr(0x202E) + "min",
+    "bidi_isolate": "ad" + chr(0x2066) + "min",
+}
+FORBIDDEN = {
+    "public_lower": "public",
+    "public_upper": "PUBLIC",
+    "public_title": "Public",
+    "none_lower": "none",
+    "none_upper": "NONE",
+    "session_user_lower": "session_user",
+    "session_user_upper": "SESSION_USER",
+    "current_user_mixed": "Current_User",
+    "star": "*",
+    "percent": "%",
+}
 
 
-@pytest.mark.parametrize("bad", FORMAT_BAD)
+@pytest.mark.parametrize("bad", list(FORMAT_BAD.values()), ids=list(FORMAT_BAD))
 def test_s2_an_accepted_role_name_of_the_wrong_format_is_refused_before_any_connection(bad):
     with pytest.raises(ConfigError, match=_BAD_ACCEPTED):
         migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=(bad,))
 
 
-@pytest.mark.parametrize("bad", FORBIDDEN)
+@pytest.mark.parametrize("bad", list(FORBIDDEN.values()), ids=list(FORBIDDEN))
 def test_s2_a_forbidden_accepted_role_name_is_refused_before_any_connection(bad):
     with pytest.raises(ConfigError, match=_BAD_ACCEPTED):
         migrate("postgresql://unused.invalid/none", reset_role="sb_x", accepted_admin_roles=(bad,))
 
 
 @pytest.mark.parametrize(
-    "name", ["Admin", "my-admin", "user@server", "a" * 63, "a b", "x'; DROP TABLE kill_switch; --"]
+    "name",
+    [
+        "Admin",
+        "my-admin",
+        "user@server",
+        "a" * 63,
+        "a b",
+        "x'; DROP TABLE kill_switch; --",
+        "caf" + chr(0xE9),
+        chr(0x4E2D) + chr(0x6587),
+    ],
 )
 def test_s2_an_accepted_role_name_of_a_managed_service_is_taken_as_exact_text(w, name):
     assert w.migrate(accepted_admin_roles=(name,)) == []
     assert w.exists("kill_switch")  # the name is a bound parameter, never SQL
     assert _who(w.scoped, w.reset, (name,)) == []
+
+
+def test_s2_below_16_a_non_ascii_accepted_name_is_matched_as_exact_text_against_a_real_role(w):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the CREATEROLE listing does not exist")
+    with pg_gate.exclusive():
+        name = f"sb_{chr(0xE9)}{chr(0x4E2D)}_{w.sfx}"
+        w.new_role(f"{chr(0xE9)}{chr(0x4E2D)}", "LOGIN CREATEROLE")
+        try:
+            assert _who(w.scoped, w.reset) == [name]
+            assert _who(w.scoped, w.reset, (name,)) == []
+            assert _who(w.scoped, w.reset, (name + "x",)) == [name]
+            assert w.migrate(accepted_admin_roles=(name,)) == []
+        finally:
+            w.grant("ALTER ROLE {} NOCREATEROLE", name)
+
+
+def test_s2_below_16_the_refusal_names_the_accepted_roles(w):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only")
+    with _server_wide_createrole(w, 2) as (vouched, other):
+        with pytest.raises(ConfigError, match="could clear a stop") as e:
+            w.migrate(accepted_admin_roles=(vouched,))
+        tail = str(e.value).split("see docs/stop-state-runbook.md)", 1)[1]
+        assert tail.startswith(". accepted administrator roles") and vouched in tail
+        assert other in str(e.value)
+
+
+def test_s2_below_16_a_vouched_role_is_not_listed_for_being_a_member_of_another_vouched_role(w):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
+    with _server_wide_createrole(w, 2) as (a, b):
+        w.grant("GRANT {} TO {}", a, b)
+        assert _who(w.scoped, w.reset, (a, b)) == []
+        c = w.new_role("mc", "LOGIN")
+        w.grant("GRANT {} TO {}", b, c)
+        assert _who(w.scoped, w.reset, (a, b)) == [c]
+
+
+def test_s2_below_16_a_member_of_an_accepted_superuser_is_not_listed(w):
+    if not _below_16(w):
+        pytest.skip("below PostgreSQL 16 only: from 16 the accepted list has no effect")
+    su, member = w.new_role("sv", "LOGIN SUPERUSER"), w.new_role("sm", "LOGIN")
+    w.grant("GRANT {} TO {}", su, member)
+    assert _who(w.scoped, w.reset, (su,)) == []
 
 
 def test_s2_accepted_roles_given_as_one_string_are_refused():
@@ -1522,6 +1597,46 @@ def test_cli_migrate_prints_and_logs_every_accepted_admin_role(
     line = [x for x in capsys.readouterr().out.splitlines() if x.startswith(start)]
     assert len(line) == 1 and one in line[0] and two in line[0]
     assert one in caplog.text and two in caplog.text
+
+
+def test_cli_migrate_notes_never_fail_on_a_stdout_that_cannot_encode_the_name(
+    w, cfg_dir, monkeypatch
+):
+    fresh = w.new_schema("en")
+    _demo(cfg_dir)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", fresh)
+    raw = io.BytesIO()
+    out = io.TextIOWrapper(raw, encoding="cp1252", errors="strict", write_through=True)
+    monkeypatch.setattr(sys, "stdout", out)
+    cjk = chr(0x4E2D) + chr(0x6587)
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        w.runtime,
+        "--reset-role",
+        w.reset,
+    ]
+    assert cli.main([*argv, "--accept-admin-role", cjk]) == 0
+    assert chr(92) + "u4e2d" in raw.getvalue().decode("cp1252")
+
+
+def test_cli_migrate_refuses_a_lone_surrogate_in_an_accepted_role_with_exit_2(
+    w, cfg_dir, monkeypatch
+):
+    _demo(cfg_dir)
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
+    argv = [
+        "--config",
+        str(cfg_dir),
+        "migrate",
+        "--runtime-role",
+        w.runtime,
+        "--reset-role",
+        w.reset,
+    ]
+    assert cli.main([*argv, "--accept-admin-role", chr(0xD800)]) == 2
 
 
 def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
