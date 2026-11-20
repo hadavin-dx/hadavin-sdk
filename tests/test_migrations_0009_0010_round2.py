@@ -2,10 +2,10 @@
 
 Fixed in place (0009/0010 are unreleased): H3 the seq guard cannot be fooled by a temp table, M1 the stop-year
 CHECKs are NOT VALID so an upgrade never fails on a planted row, M2 audit_checkpoints has a seq guard, M3 the
-(agent_id, day) index of the money guard. The honest limits of the money guard (H1, H2, L2: it is a tripwire, not a
-wall) are PINNED as xfail(strict): each test says what the guard SHOULD refuse once the planned redesign lands
-(runtime without UPDATE/INSERT on the money tables, definer functions); today the bypass works, so the day the
-redesign lands the strict xfail flips and must be turned into a plain test. Needs HADAVIN_TEST_PG_DSN."""
+(agent_id, day) index of the money guard. The
+former bypass pins (H1, H2 twice, L2) were xfail(strict) while the money guard was a tripwire; since F-money-definer
+step 4 the runtime login holds no write right on the money tables, so each is a plain test: the attack is refused
+with insufficient_privilege and nothing changes. Needs HADAVIN_TEST_PG_DSN."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 import psycopg
 
 from hadavin_sdk.store import migrate as migrate_mod
-from hadavin_sdk.store.migrate import GRANTS
+from hadavin_sdk.store.migrate import FUNCTION_GRANTS, GRANTS
 from tests.test_step_b_e7_migration_0009 import NEW_TABLES, ROW, drop_world, make_world
 
 pytestmark = pytest.mark.skipif(
@@ -133,6 +133,12 @@ def test_upgrade_from_0008_with_a_planted_ts_succeeds_and_new_plants_are_refused
             m.setattr(
                 migrate_mod, "GRANTS", {k: v for k, v in grants.items() if k not in NEW_TABLES}
             )
+            m.setattr(  # the money functions of 0011 do not exist yet in this old schema
+                migrate_mod,
+                "FUNCTION_GRANTS",
+                {migrate_mod.RELEASE_FUNCTION: FUNCTION_GRANTS[migrate_mod.RELEASE_FUNCTION]},
+            )
+            m.setattr(migrate_mod, "MONEY_FUNCTIONS", ())
             up.migrate()
         # the owner plants a year the 0006 isfinite check lets through (append-only: no one can delete it later)
         sid = uuid.uuid4()
@@ -204,9 +210,7 @@ def test_runbook_and_tickets_state_the_limits_and_the_emergency_disable():
     assert "definer" in _read(HANDOVER / "tickets/F-store.md").lower()
 
 
-# --- the honest limits, pinned (xfail strict: they flip when the redesign lands) -----------------------------------
-
-REDESIGN = "money guard is a tripwire (E13 option A); fixed by the redesign (runtime without UPDATE/INSERT, definer functions)"
+# --- the former bypasses, now refused (F-money-definer step 4: the runtime login holds no write right) --------------
 
 
 def _seed_money(w):
@@ -225,15 +229,11 @@ def _counter(w):
     return w.run("SELECT usd FROM spend WHERE agent_id = 'ag'")[0][0]
 
 
-def _run_all(db, statements):
-    """Run the statements in ONE transaction; True when every one of them went through."""
-    try:
-        with db.transaction():
-            for stmt in statements:
-                db.execute(stmt)
-    except psycopg.Error:
-        return False
-    return True
+def _refused_each(db, statements):
+    """Run each statement in a transaction of its own; every one must be refused with insufficient_privilege."""
+    for stmt in statements:
+        with pytest.raises(psycopg.errors.InsufficientPrivilege), db.transaction():
+            db.execute(stmt)
 
 
 SETTLE = (
@@ -250,15 +250,13 @@ def test_a_plain_lowering_update_is_refused(w):
     assert _counter(w) == 100
 
 
-@pytest.mark.xfail(strict=True, reason="H1: the allowed fall is not consumed. " + REDESIGN)
 def test_H1_one_settle_then_repeated_lowering_is_refused(w):
     _seed_money(w)
     with w.as_(w.runtime) as db:
-        _run_all(db, [SETTLE, LOWER10, LOWER10, LOWER10])
-    assert _counter(w) == 100  # today 70: the charge of the other 90 is erased
+        _refused_each(db, [SETTLE, LOWER10, LOWER10, LOWER10])
+    assert _counter(w) == 100  # the charge of the other 90 stays
 
 
-@pytest.mark.xfail(strict=True, reason="H2: a settled hold can be forged by INSERT. " + REDESIGN)
 def test_H2_forged_settled_hold_by_insert_is_refused(w):
     _seed_money(w)
     fake = (
@@ -266,27 +264,30 @@ def test_H2_forged_settled_hold_by_insert_is_refused(w):
         "closed_at) VALUES ('fake', 'ag', '2026-11-10', 90, 0, 'settled', now())"
     )
     with w.as_(w.runtime) as db:
-        _run_all(db, [fake, "UPDATE spend SET usd = 10 WHERE agent_id = 'ag'"])
-    assert _counter(w) == 100  # today 10
+        _refused_each(db, [fake, "UPDATE spend SET usd = 10 WHERE agent_id = 'ag'"])
+    assert _counter(w) == 100
+    assert w.run("SELECT count(*) FROM spend_reservations WHERE reservation_id = 'fake'") == [(0,)]
 
 
-@pytest.mark.xfail(
-    strict=True, reason="H2: reserved_usd of a settled row can be raised. " + REDESIGN
-)
 def test_H2_inflating_reserved_usd_after_a_settle_is_refused(w):
     _seed_money(w)
     inflate = "UPDATE spend_reservations SET reserved_usd = 1000 WHERE reservation_id = 'h1'"
     with w.as_(w.runtime) as db:
-        _run_all(db, [SETTLE, inflate, "UPDATE spend SET usd = 0 WHERE agent_id = 'ag'"])
-    assert _counter(w) == 100  # today 0
+        _refused_each(db, [SETTLE, inflate, "UPDATE spend SET usd = 0 WHERE agent_id = 'ag'"])
+    assert _counter(w) == 100
+    assert w.run(
+        "SELECT reserved_usd, status FROM spend_reservations WHERE reservation_id = 'h1'"
+    ) == [(10, "open")]
 
 
-@pytest.mark.xfail(strict=True, reason="L2: a login that is the function owner passes. " + REDESIGN)
-def test_L2_a_login_shared_with_the_migration_owner_is_refused(w):
+def test_L2_the_runtime_login_is_not_the_function_owner_and_is_refused(w):
+    """The old pin was a login shared with the migration owner. The runtime login now has no write right at all
+    (the owner of the functions is a different login), so the lowering UPDATE is refused by the missing GRANT."""
     _seed_money(w)
-    with w.admin() as db:  # the migrate login owns the release function: current_user is its owner
-        try:
-            db.execute("UPDATE spend SET usd = usd - 1 WHERE agent_id = 'ag'")
-        except psycopg.Error:
-            pass
-    assert _counter(w) == 100  # today 99
+    owner = w.run(
+        "SELECT proowner::regrole::text FROM pg_proc WHERE proname = 'hadavin_settle_spend'"
+    )[0][0]
+    assert owner.strip('"') != w.runtime
+    with w.as_(w.runtime) as db:
+        _refused_each(db, ["UPDATE spend SET usd = usd - 1 WHERE agent_id = 'ag'"])
+    assert _counter(w) == 100

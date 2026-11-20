@@ -17,6 +17,18 @@ an outage are kept in memory, counted in a warning, and lost when the process ex
 refuses for such a reason is kept and fails the `audit_drain` step with a count. The eval and replay commands do not
 write to the chain.
 
+Tamper evidence of past rows is conditional. It holds only when the runtime login (1) does not own the audit tables
+and (2) has no UPDATE, DELETE or TRUNCATE on `audit_entries`. `migrate --runtime-role` enforces (2): it grants the
+runtime login SELECT and INSERT on `audit_entries` and `audit_checkpoints`, and the append-only triggers also refuse
+UPDATE, DELETE and TRUNCATE (a test proves the real attempts fail). It does not enforce (1): it does not refuse a
+runtime role that owns the audit tables (an owner can disable the triggers), so the operator must not make the runtime
+login the owner. Two runtime rights are wider than they need to be today: DELETE on `audit_outbox` (events parked
+there and not yet written can vanish; they are not yet in the chain, so nothing in the chain shows it) and INSERT on
+`audit_checkpoints` (a planted row at the head's seq makes verification raise a false alarm). Both are tracked in
+handover/core-b/tickets/A-audit-rights.md. Even then this is tamper evidence of past rows, not authenticity: a
+runtime process that is itself taken over can append new rows with valid hashes, and the chain cannot tell those from
+true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they do not remove it.
+
 **Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
 runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to

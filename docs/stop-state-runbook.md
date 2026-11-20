@@ -239,7 +239,11 @@ The runtime login has no right on that table and cannot run `hadavin_set_cap`; o
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
-The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend).
+The runtime login can neither lower a booked amount nor change a cap (it can still read a cap, settle a hold it can name, add spend). 
+This is true from step 4 of the money-definer change (migration 0011 plus the grant flip in `migrate`): the runtime
+login holds no INSERT, UPDATE or DELETE on `spend`, `spend_month` or `spend_reservations`, SELECT on the two
+counters only, and nothing on the reservations; every booking is a SECURITY DEFINER function it may EXECUTE. The
+purge login holds no table right either and may only EXECUTE the purge function.
 
 Deploy, in this order (there is no rolling upgrade):
 1. Stop the tick scheduler and every runtime-side process.

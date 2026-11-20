@@ -20,7 +20,11 @@ from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
 from hadavin_sdk.models import new_id
-from tests.test_spend_reservations_pg import AGENT, DAY, reservation_world  # noqa: F401  (the "w" fixture)
+from tests.test_spend_reservations_pg import (  # noqa: F401  (the "w" fixture)
+    AGENT,
+    DAY,
+    reservation_world,
+)
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("HADAVIN_TEST_PG_DSN"),

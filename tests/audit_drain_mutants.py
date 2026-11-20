@@ -58,7 +58,7 @@ if (
 
     pytest_plugins = ("tests.conftest",)
     globals().update(
-        {n: getattr(_killers, n) for n in dir(_killers) if n.startswith("test_") or n in ("app", "pg")}
+        {n: getattr(_killers, n) for n in dir(_killers) if n.startswith("test_") or n in ("app", "pg", "_quarantine_at_once")}
     )  # fmt: skip
 
 N1 = "test_n1_audit_drain_is_the_last_tick_step"
@@ -80,18 +80,16 @@ F6_PG = "test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_t
 
 FLUSH = "            self._flush_pending()\n        return key\n\n    def "
 NO_FLUSH = "            pass\n        return key\n\n    def "
-DELETE = (
-    '                self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n'
-)
-BAD_BODY = "            except ValueError:\n                unreadable += 1\n"
-BAD_ID = "            if event.event_id != event_id:\n                unreadable += 1\n"
-SELECT_GUARD = "            if not is_connectivity_error(exc):\n"
+DELETE = '                        self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n'
+BAD_BODY = "                    except ValueError:\n                        r.unreadable += 1\n"
+BAD_ID = "                    if event.event_id != event_id:\n                        r.unreadable += 1\n"
+SELECT_GUARD = "            if _is_outage(r.select_error):\n"
 STEP_ROW = '    TickStep("audit_drain", 0, audit_drain),\n'
 STEP_BODY = '        _LOG.info("audit_drain drained=%s", fn())\n'
-FLUSH_STOP = "                    if failed is not None and is_connectivity_error(failed):\n"
-ROW_FAILED = "            if failed is not None:\n"
-COUNT = "                not_writable += not is_connectivity_error(failed)\n"
-NOT_DELETED = "                not_deleted += 1\n                continue\n"
+FLUSH_STOP = "                    if failed is not None and not _is_permanent(failed):\n"
+ROW_FAILED = "        if failed is None:\n            if row_id is None:\n"
+COUNT = "                r.not_writable += 1\n"
+NOT_DELETED = "                    r.not_deleted += 1\n                    return False\n"
 IN_MEMORY = '                (in_memory, f"{in_memory} events not writable in memory"),\n'
 RAISE = '            raise RuntimeError("audit outbox: " + ", ".join(problems))\n'
 
@@ -121,16 +119,16 @@ M = [
     mutant("M3a the flush call is removed from write_intent", CHAIN,
         FLUSH + "write_outcome", NO_FLUSH + "write_outcome", N3 + "[write_intent]", "rows=None)] == []"),
     mutant("M3b the flush call is removed from write_outcome", CHAIN,
-        FLUSH + "_flush_pending", NO_FLUSH + "_flush_pending", N3 + "[write_outcome]", "rows=None)] == []"),
+        FLUSH + "_drain_older_first", NO_FLUSH + "_drain_older_first", N3 + "[write_outcome]", "rows=None)] == []"),
     mutant("M4 the flush does not remove a drained event", CHAIN, FLUSH_STOP,
-        "                    if failed is None or is_connectivity_error(failed):\n", N3 + "[write_intent]",
+        "                    if failed is None or not _is_permanent(failed):\n", N3 + "[write_intent]",
         "rows=None)] == []"),
     mutant("M5 the outbox row is deleted when its append failed", CHAIN, ROW_FAILED,
-        "            if failed is not None and not is_connectivity_error(failed):\n", KEPT, "assert [] == ['evt-"),
-    mutant("M6a an unreadable body raises at once", CHAIN, BAD_BODY, "            except ValueError:\n                raise\n",
+        "        if failed is None or _is_outage(failed):\n            if row_id is None:\n", KEPT, "assert [] == ['evt-"),
+    mutant("M6a an unreadable body raises at once", CHAIN, BAD_BODY, "                    except ValueError:\n                        raise\n",
         H1, "evt-e"),
     mutant("M6b a body under another row's id raises at once", CHAIN, BAD_ID,
-        BAD_ID + '                raise RuntimeError("audit outbox: 1 unreadable rows kept")\n', H1, "evt-e"),
+        BAD_ID + '                        raise RuntimeError("audit outbox: 1 unreadable rows kept")\n', H1, "evt-e"),
     mutant("M7a an unreadable body is deleted", CHAIN, BAD_BODY, BAD_BODY + DELETE, H1, "assert [('evt-d'"),
     mutant("M7b a body under another row's id is deleted", CHAIN, BAD_ID, BAD_ID + DELETE, H1, "-not-leak\"}')] == ["),
     mutant("M8a the flush runs after a failed append (write_intent)", CHAIN,
@@ -141,13 +139,15 @@ M = [
         "                self._pending.append(event)\n            return None\n",
         "                self._pending.append(event)\n            self._flush_pending()\n            return None\n",
         E5 + "[write_outcome]", "assert (['evt-"),
-    mutant("M9 a SELECT error that is not an outage is swallowed", CHAIN, SELECT_GUARD, "            if False:\n",
+    mutant("M9 a SELECT error that is not an outage is swallowed", CHAIN, SELECT_GUARD, "            if True:\n",
         ERROR, "assert 0 == 1"),
     mutant("F1 an append failure that is not an outage is treated as an outage", CHAIN, COUNT,
-        "                not_writable += 0\n", F1, "assert 0 == 1"),
-    mutant("F2 a row that is not writable is deleted", CHAIN, COUNT + "                continue\n",
-        COUNT + "                if is_connectivity_error(failed):\n                    continue\n", F1, "assert [] == [('evt-b'"),
-    mutant("F3 a DELETE failure ends the loop", CHAIN, NOT_DELETED, "                not_deleted += 1\n                break\n",
+        "                r.not_writable += 0\n", F1, "assert 0 == 1"),
+    mutant("F2 a row that is not writable is deleted (the quarantine copy is dropped)", CHAIN,
+        '                "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) ON CONFLICT (event_id) DO NOTHING",\n'
+        "                (defaults.AUDIT_QUARANTINE_PREFIX + row_id, event.model_dump_json()),\n",
+        '                "SELECT 1",\n                (),\n', F1, "assert [] == [('evt-b'"),
+    mutant("F3 a DELETE failure ends the loop", CHAIN, NOT_DELETED, "                    r.not_deleted += 1\n                    return True\n",
         F3 + "[refused]", "assert ['evt-a'] == ['evt-a', 'evt-b', 'evt-c']"),
     mutant("F4 the counts are dropped from the RuntimeError", CHAIN, RAISE,
         '            raise RuntimeError("audit outbox: rows kept")\n', F1_TEXT, "assert 'audit outbox: rows kept' == "),
@@ -161,12 +161,12 @@ M = [
 
 HAND = [
     by_hand("M9 a SELECT error that is not an outage is swallowed (a missing grant)", CHAIN,
-        SELECT_GUARD, "            if False:\n", E7, "assert 0 == 1"),
+        SELECT_GUARD, "            if True:\n", E7, "assert 0 == 1"),
     by_hand("M2 the audit_drain body is empty (two processes)", TICK, STEP_BODY, "        pass\n",
         CROSS, "audit_drain drained=1"),
     by_hand("M1 the STEPS row is removed (two processes)", TICK, STEP_ROW, "", CROSS, "audit_drain drained=1"),
     by_hand("F1 an append failure that is not an outage is treated as an outage (a missing INSERT grant)", CHAIN,
-        COUNT, "                not_writable += 0\n", F6_PG, "assert 0 == 1"),
+        COUNT, "                r.not_writable += 0\n", F6_PG, "assert 0 == 1"),
 ]  # fmt: skip
 
 

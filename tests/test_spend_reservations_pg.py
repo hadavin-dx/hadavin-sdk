@@ -419,10 +419,14 @@ def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
     """Many rounds, either may win. If the expiry won, the worst case stays (a lower settle changes no counter); if
     the settle won, the row was open and the actual amount is booked. Never anything else."""
     a, b = w.store(w.runtime), w.store(w.runtime)
-    run_id = _new_run(a)
+    runs = []
     orders = set()
     for n in range(40):
         agent = f"race-{n}"
+        run = Run(agent_id=agent, principal_id="p", trigger_kind="event", trigger_ref="t")
+        a.create_run(run)  # the run belongs to the hold's agent: the settle adds the cost only then
+        runs.append(run.run_id)
+        run_id = run.run_id
         rid = _reserve(a, "1.00", agent=agent, run_id=run_id)
         settled, expired = _together(
             [lambda r=rid: a.settle_spend(r, D(actual)), lambda: b.expire_spend_reservations(0)]
@@ -435,7 +439,9 @@ def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
         assert (row.status, row.settled_usd) == ("settled", booked), f"round {n} expired={expired}"
         assert _table(w)[rid] == ("settled", D("1.00"), booked)
         assert _counters(w, agent) == (booked, booked), f"round {n} expired={expired}"
-    assert a.get_run(run_id).cost_usd == 40 * D(actual)  # the run always gets the real amount, once
+    assert sum(a.get_run(r).cost_usd for r in runs) == 40 * D(
+        actual
+    )  # each run gets the real amount, once
     assert orders <= {0, 1}
 
 
@@ -510,10 +516,10 @@ def _column_rights(w, role):
 @pg
 def test_the_four_roles_hold_exactly_the_rights_of_the_ticket_on_the_table(w):
     assert GRANTS[TABLE].kind == "table"
-    assert w.rights(w.runtime)[TABLE] == {"SELECT", "INSERT", "UPDATE"}
-    assert w.rights(w.purge)[TABLE] == {"DELETE"}
-    assert _column_rights(w, w.purge) == {("status", "SELECT"), ("closed_at", "SELECT")}
-    for role in (w.portal, w.reset):
+    # F-money-definer step 4: no login holds any right on the table (every booking is a definer function)
+    assert w.rights(w.runtime)["spend"] == {"SELECT"}
+    assert w.rights(w.runtime)["spend_month"] == {"SELECT"}
+    for role in (w.runtime, w.purge, w.portal, w.reset):
         assert TABLE not in w.rights(role), role
         assert _column_rights(w, role) == set(), role
     for role in (w.purge, w.portal, w.reset):
@@ -582,15 +588,9 @@ def test_the_purge_login_can_run_the_purge_delete_and_removes_settled_rows_only(
     rt.settle_spend(closed, D("0.40"))
     _age(w, expired, 4000)
     assert rt.expire_spend_reservations(3600) == 1
-    with w.as_(w.purge) as db:  # the statement itself, as the purge login
-        assert db.execute(
-            "SELECT status FROM spend_reservations WHERE closed_at IS NULL"
-        ).fetchall()
-        gone = db.execute(
-            "DELETE FROM spend_reservations WHERE status = 'settled' AND closed_at < %s",
-            (now() - timedelta(days=1),),
-        ).rowcount
-        assert gone == 0  # closed a moment ago: kept
+    # the purge login holds no table right: the direct statements are refused, the function is the only way
+    _denied(w, w.purge, "SELECT status FROM spend_reservations WHERE closed_at IS NULL", TABLE)
+    _denied(w, w.purge, "DELETE FROM spend_reservations WHERE status = 'settled'", TABLE)
     purge = w.store(w.purge)
     assert (
         purge.purge_spend_reservations(now() + timedelta(days=1)) == 1
@@ -669,9 +669,9 @@ def test_the_portal_and_the_reset_login_cannot_use_any_of_the_four_methods(w, wh
 def test_a_hand_grant_of_delete_to_the_runtime_role_is_removed_by_migrate(w):
     w.grant("GRANT DELETE ON spend_reservations TO {}", w.runtime)
     w.grant("GRANT TRUNCATE ON spend_reservations TO {}", w.runtime)
-    assert {"DELETE", "TRUNCATE"} <= w.rights(w.runtime)[TABLE]
+    assert {"DELETE", "TRUNCATE"} <= w.rights(w.runtime)[TABLE]  # hand-granted
     assert w.migrate() == []  # nothing to apply and no problem reported
-    assert w.rights(w.runtime)[TABLE] == {"SELECT", "INSERT", "UPDATE"}
+    assert TABLE not in w.rights(w.runtime)
     _denied(w, w.runtime, "DELETE FROM spend_reservations", TABLE)
 
 
@@ -679,7 +679,7 @@ def test_a_hand_grant_of_delete_to_the_runtime_role_is_removed_by_migrate(w):
 def test_a_hand_grant_to_the_purge_role_is_removed_by_migrate(w):
     w.grant("GRANT SELECT, UPDATE ON spend_reservations TO {}", w.purge)
     assert w.migrate() == []
-    assert w.rights(w.purge)[TABLE] == {"DELETE"}
+    assert TABLE not in w.rights(w.purge)
     _denied(w, w.purge, "SELECT reserved_usd FROM spend_reservations", TABLE)
 
 
@@ -719,7 +719,7 @@ def test_the_table_checks_refuse_what_the_store_never_writes(w):
         (D(1), D("0.5"), "expired", at),
         (D(1), D(1), "released", at),
     ]
-    with w.as_(w.runtime) as db:
+    with w.admin() as db:  # the owner: the runtime login holds no INSERT any more
         for n, row in enumerate(bad):
             with pytest.raises(errors.CheckViolation):
                 db.execute(insert, (f"bad-{n}", *row))
@@ -753,12 +753,27 @@ def _longest_quiet_s(max_steps, call_timeout_s, max_attempts):
     return max_steps * call_timeout_s * max_attempts + 60
 
 
+# By name, never by position. A list filter, not `next`: with the step removed, the order test below still
+# fails with the real list instead of the whole module failing on import.
+_EXPIRE_STEP = ([s for s in tick.STEPS if s.name == "expire_reservations"] or [None])[0]
+
+
 def test_the_step_is_the_last_one_and_comes_after_audit_drain():
+    """Kept name: the step is now second to last; check_caps follows it. The whole order, in one place."""
     names = [s.name for s in tick.STEPS]
-    assert names[-1] == "expire_reservations", names
-    assert names.count("expire_reservations") == 1
+    assert names == [
+        "sweep",
+        "reconcile",
+        "stuck",
+        "checkpoint",
+        "purge_evidence",
+        "reprobe_sources",
+        "audit_drain",
+        "expire_reservations",
+        "check_caps",
+    ], names
     assert names.index("audit_drain") < names.index("expire_reservations")
-    last = tick.STEPS[-1]
+    last = _EXPIRE_STEP
     assert last.fn is tick.expire_reservations and last.every_s == 0 and last.interval is None
 
 
@@ -769,7 +784,7 @@ def test_the_step_expires_old_reservations_and_keeps_young_ones_and_the_totals()
     old, young = _reserve(store, "1.00"), _reserve(store, "0.25")
     _older(store, old, age + 5)
     _older(store, young, age - 600)
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     rows = _rows(store)
     assert (rows[old].status, rows[old].settled_usd) == ("expired", D("1.00"))
     assert rows[young].status == "open"
@@ -786,10 +801,10 @@ def test_the_step_uses_the_longer_age_while_a_run_could_still_be_working():
     _older(
         store, rid, defaults.RESERVATION_EXPIRE_S + 600
     )  # past the default, inside the run's quiet time
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _rows(store)[rid].status == "open"
     _older(store, rid, _longest_quiet_s(200, 60, 2))
-    assert run_tick(app, now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(app, now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _rows(store)[rid].status == "expired"
 
 
@@ -803,7 +818,7 @@ def test_a_failing_store_marks_the_step_failed_and_the_other_steps_still_run(cap
     store.expire_spend_reservations = down
     steps = [
         TickStep("before", 0, lambda ctx: ran.append("before")),
-        tick.STEPS[-1],
+        _EXPIRE_STEP,
         TickStep("after", 0, lambda ctx: ran.append("after")),
     ]
     with caplog.at_level("INFO", logger="hadavin_sdk.tick"):
@@ -883,7 +898,7 @@ def test_the_step_runs_as_the_runtime_login_and_expires_only_old_rows(w):
     old, young = _reserve(rt, "1.00"), _reserve(rt, "0.25")
     _age(w, old, defaults.RESERVATION_EXPIRE_S + 5)
     _age(w, young, defaults.RESERVATION_EXPIRE_S - 600)
-    assert run_tick(_app(rt), now=now(), steps=[tick.STEPS[-1]]) == 0
+    assert run_tick(_app(rt), now=now(), steps=[_EXPIRE_STEP]) == 0
     assert _table(w) == {old: ("expired", D("1.00"), D("1.00")), young: ("open", D("0.25"), None)}
     assert _counters(w) == (D("1.25"), D("1.25"))
     assert rt.get_tick_state("expire_reservations").last_error is None
@@ -902,7 +917,7 @@ def test_the_step_fails_and_the_next_step_runs_when_the_runtime_login_lost_its_e
         w.runtime,
     )
     ran = []
-    steps = [tick.STEPS[-1], TickStep("after", 0, lambda ctx: ran.append("after"))]
+    steps = [_EXPIRE_STEP, TickStep("after", 0, lambda ctx: ran.append("after"))]
     assert run_tick(_app(rt), now=now(), steps=steps) == 1
     assert ran == ["after"]
     assert rt.get_tick_state("expire_reservations").last_error.startswith("InsufficientPrivilege")

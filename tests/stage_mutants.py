@@ -88,7 +88,7 @@ M = [
     mutant("M4n COMPLIANCE is refused in prod too", CFG, "environment in STAGES and is_prod(environment)", "False",
         "test_a_value_that_is_not_a_stage_gets_the_prod_only_rules", "prod refused COMPLIANCE"),
     mutant("M4d the demo-only refusal is switched off", CFG, "        if live:\n            refused = [", "        if False:\n            refused = [",
-        "test_pilot_and_prod_refuse_every_relaxed_kind", "DID NOT RAISE"),
+        "test_pilot_and_prod_refuse_every_relaxed_kind", "pilot did not refuse llm: fake"),
     mutant("M4e the loopback switch is allowed in pilot and prod", CFG,
         'refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []',
         "refused += []", "test_pilot_and_prod_refuse_every_relaxed_kind", "did not refuse allow_insecure_loopback"),

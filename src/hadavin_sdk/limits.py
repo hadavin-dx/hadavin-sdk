@@ -10,7 +10,7 @@ from typing import Protocol
 
 from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
-from hadavin_sdk.models import AuditEvent, KillSwitch, OpenStop, new_id, now
+from hadavin_sdk.models import AuditEvent, KillSwitch, OpenStop, audit_code, new_id, now
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import (
     NotFound,
@@ -233,7 +233,7 @@ class Limits:
                         run_id=row.run_id or "-",
                         domain="limits",
                         operation="overshoot",
-                        principal=row.agent_id,
+                        principal=audit_code(row.agent_id),
                         source="meter",
                         result="booked",
                     )
@@ -248,7 +248,7 @@ class Limits:
             run_id="-",
             domain="limits",
             operation=operation,
-            principal=by,
+            principal=audit_code(by),
             source="cli",
             result="on" if on else "off",
         )

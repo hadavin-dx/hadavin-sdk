@@ -2,11 +2,9 @@
 F-money-definer, step 5, test writer C). Real PostgreSQL 16, a throwaway schema and logins with unique names, dropped
 after. Needs HADAVIN_TEST_PG_DSN.
 
-THE RUNTIME LOGIN HERE IS THE FINAL DESIGN'S. `migrate` still gives the runtime SELECT, INSERT and UPDATE on the three
-money tables today (step 4 removes that); `build_world` therefore takes INSERT, UPDATE, DELETE, TRUNCATE (and the
-rest) away from the runtime on `spend`, `spend_month` and `spend_reservations` and leaves it SELECT on the two
-counters and nothing on the reservations, exactly the grant map of step 4. After that the runtime holds EXECUTE on the
-four runtime functions and nothing else on the money tables.
+THE RUNTIME LOGIN HERE IS WHAT `migrate` MAKES (step 4 shipped): SELECT on `spend` and `spend_month`, nothing on
+`spend_reservations`, nothing else on the money tables, EXECUTE on the four runtime functions. The world no longer
+strips any right by hand: the tests prove what migrate produces.
 
 The attacks H1, H2 (insert), H2 (inflate) of tickets/migrations-0009-0010-review-1.md, and the shared-owner login of
 L2, are run against that login below (`test_attack_*`, `test_L2_*`) and are REFUSED. They REPLACE the four
@@ -50,8 +48,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 MONEY_TABLES = ("spend", "spend_month", "spend_reservations")
-# the five money functions of the runtime/purge map; the two cap functions (set_cap, cap_matches) follow them
-RESERVE, SETTLE, EXPIRE, PURGE, ADD = mig.MONEY_FUNCTIONS[:5]
+RESERVE, SETTLE, EXPIRE, PURGE, ADD = mig.MONEY_FUNCTIONS[:5]  # the five booking functions
 NAMES = {
     "reserve": "hadavin_reserve_spend",
     "settle": "hadavin_settle_spend",
@@ -93,15 +90,6 @@ def build_world() -> World:
     return w
 
 
-def apply_final_grants(w: World) -> None:
-    rt = sql.Identifier(w.runtime)
-    with w.admin() as db:
-        for t in MONEY_TABLES:
-            db.execute(sql.SQL("REVOKE ALL ON {} FROM {}").format(sql.Identifier(t), rt))
-        for t in ("spend", "spend_month"):
-            db.execute(sql.SQL("GRANT SELECT ON {} TO {}").format(sql.Identifier(t), rt))
-
-
 def teardown_world(w: World) -> None:
     for s in w.stores:
         s._db.close()
@@ -118,7 +106,6 @@ def world():
     w = build_world()
     try:
         w.migrate(release_role=w.release)
-        apply_final_grants(w)
         yield w
     finally:
         teardown_world(w)

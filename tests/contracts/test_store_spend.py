@@ -49,13 +49,27 @@ def _is_memory(store):
     return hasattr(store, "_reservations")
 
 
+def _owner_rows(store):
+    """Every row of spend_reservations, read as the table owner: since F-money-definer step 4 the runtime login (the
+    store's own connection) holds no right on the table."""
+    import os
+
+    from psycopg import connect
+    from psycopg.conninfo import conninfo_to_dict, make_conninfo
+    from psycopg.rows import dict_row
+
+    options = conninfo_to_dict(store._db.info.dsn).get("options")
+    owner = make_conninfo(os.environ["HADAVIN_TEST_PG_DSN"], options=options)
+    with store._lock, connect(owner, autocommit=True, row_factory=dict_row) as db:
+        return db.execute("SELECT * FROM spend_reservations").fetchall()
+
+
 def _rows(store) -> dict[str, SpendReservation]:
     """Every reservation row, by id (not part of the Protocol)."""
     if _is_memory(store):
         with store._lock:
             return dict(store._reservations)
-    with store._lock:
-        found = store._exec("SELECT * FROM spend_reservations").fetchall()
+    found = _owner_rows(store)
     return {r["reservation_id"]: SpendReservation.model_validate(r) for r in found}
 
 
