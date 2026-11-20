@@ -614,12 +614,12 @@ def test_h1_with_the_refused_before_response_mark_the_hold_settles_at_zero(cfg_d
     assert [e.error_code for e in llm_rows(rt, run)] == ["provider_refused"]
 
 
-def test_h1_a_fault_that_is_not_a_provider_error_propagates_and_keeps_the_hold(cfg_dir):
+def test_h1_a_fault_that_is_not_a_provider_error_ends_the_run_and_keeps_the_hold(cfg_dir):
     rt, cfg = build_rt(cfg_dir)
     rt.llm = Client(raises=ValueError("bug in the client"))
     rt.limits = spy = Spy(rt.limits)
-    with pytest.raises(ValueError, match="bug in the client"):
-        rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"))
+    run = rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"))
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "model_error")
     assert spy.settles == [] and len(spy.reserved) == 1
     assert rt.store.spend_totals(AGENT, now().date())[0] == spy.reserved[0][2]
 
