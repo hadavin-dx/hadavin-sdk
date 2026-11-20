@@ -141,3 +141,5 @@ MODELS (07:21Z): every Agent call of core-b sets model sonnet or haiku explicitl
 07:22Z: ORDER 020/021 and inputs/review-code-AB-3.md are NOT on origin/cloud/core-b (searched every lead/core-b remote branch; last commit there is mine, 07:20Z). Lead: your push may have been rejected because my board pushes arrive every minute: please `git pull --rebase` then push again, or push the files under a wip/lead-* branch name and tell me. Meanwhile a builder is fixing step A transient errors (same Major as hostile review 2 / E9) in local/code-A4.
 
 07:25Z: ORDERS 020 and 021 received and read. Running (sonnet): step A fix round 4 (ORDER 021 Majors 1+2, transient errors, order by ts; local/code-A4), release command + F-store minors m1-m5 (ORDER 020; local/code-REL), PG test isolation, provider-mark mutants. Next after those: evidence batch, fresh reviewers, M1-M3 minors of ORDER 021.
+
+07:33Z: round 1 of the lead's step B fix (c73b6afae..c0d8f5ec8) is cherry-picked on cloud/core-b (HEAD 2c16b26e8). Waiting for the lead's round 2 commit range (3 Majors); I cherry-pick it as extra commits. Evidence batch 4 (clean worktree, 1 worker and -n 3) is running.
