@@ -1,39 +1,40 @@
-UPDATED_UTC: 2026-11-20T07:14:40Z
+UPDATED_UTC: 2026-11-20T07:15:31Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
-ITEMS_TOTAL: 33
-ITEMS_OPEN: 20
-PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: load 0.4 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 8, heavy agents 0
+ITEMS_TOTAL: 35
+ITEMS_OPEN: 21
+PERCENT: 71
+AGENTS_RUNNING: 7
+CAPACITY: load 0.2 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 7, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 5; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:10:23+00:00
+PUSHED_UTC: 2026-11-20T07:14:40+00:00
 
-(12:44 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:45 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) pick | builder | claude-sonnet-5-5 | picks the integration (16 commits) onto cloud/core-c in its own worktree /tmp/core-c-pick (branch wip-pick), resolves redact.py/runmap.py conflicts with the hardened own-output rule and the fold fix, one batch | 07:27 | 08:20 | 2 | running | n/a | 0 | lane: own worktree; the gate files in the main checkout are not touched; HEAVY at its end |
 | (new) g4R | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 (P1c) readiness (egm:egm-implementation-readiness) | 07:20 | 07:35 | 2 | running | 1 of 3 | 0 | EGM sequence: plan review before any build |
 | (new) g4C | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 against the real code (egm:egm-codebase-details) | 07:20 | 07:40 | 2 | running | 1 of 3 | 0 | EGM sequence |
 | (new) gfix2 | builder | claude-sonnet-5-5 | gate fix round for the EGM result review round 2: forged framing token leak (Blocker), edge-value leak, framing DoS, audit marker, interrupts, bounds; reproduce first, mutants | 07:20 | 08:10 | 2 | running | 2 of 3 then lead round 3 | 0 | lane: model_gate.py + enforce functions of runmap.py only |
 | (new) evrun | evidence runner | claude-sonnet-5-5 | measures the fold's false-hit rate on ordinary text and its time cost (review findings M4, M5 of the fold); clean export in /tmp/core-c-ev; writes evidence only | 07:20 | 08:00 | 2 | running | n/a | 0 | lane: evidence file only; 1 CPU-heavy process at a time |
 | (new) wsec | writer | claude-sonnet-5-5 | SECURITY and README wording final draft from all tickets and evidence (backlog item 9) | 07:20 | 07:45 | 2 | running | n/a | 0 | lane: one new handover file |
 | a7518043 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate (egm:egm-design): required mapping/NO_MAP, GateRefused, framing rule, enforce caps, settle rule | 07:10 | 07:25 | 100 | done | 2 of 3 (lead rounds separate) | 0 | finished: gate round 2 design review: 1 Blocker (forged framing token leaves a known secret unreplaced), 6 Majors, 2 Nits; nothing executed |
-| a2032c0c | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate and its tests (egm:egm-codebase-details): stated limits vs the real sweep, call-site handling, tests that cannot fail, mutant plausibility | 07:10 | 07:30 | 2 | running | 2 of 3 | 0 | EGM sequence |
+| a2032c0c | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the gate and its tests (egm:egm-codebase-details): stated limits vs the real sweep, call-site handling, tests that cannot fail, mutant plausibility | 07:10 | 07:30 | 100 | done | 2 of 3 | 0 | finished: gate round 2 code review: 0 Blockers, 4 Majors (framing refusal ignores the sweep rules; assistant tool line corrupted by planted words; stale docstring; thread test cannot prove snapshot consistency), 8 Nits; findings sent to the fix agent |
 | a2589393 | builder | claude-sonnet-5-5 | G1 fix round 1: undo composes again (a regression found by review and REPRODUCED: decomposed secrets no longer scrubbed in tool output), injection chunk-boundary bypass, Unicode check order in app.build; failing tests first | 07:01 | 07:30 | 100 | done | 1 of 3 (result review) | 0 | finished: B1 fixed (nfkc = main behaviour; 9 of 10 tests failed before), B2 fixed (6 cases failed before), M8 fixed; non-Latin text over the cap is flagged guard_unavailable (measured: Chinese and Japanese 300,000 characters; already true before). 7707 passed, perf 19 passed. Committed |
 | (new) g7fix | builder | claude-sonnet-5-5 | G7 fix round 1: hardens the own-output rule in guard/redact.py (real label only, ASCII digits, SECRET only, anchored shape, partial placeholder) + tests with fail-before | 06:54 | 07:20 | 2 | running | 1 of 3 (result review) | 0 | reproduced security hole; edits only guard/redact.py and new tests; other agents hold the gate and integration files |
 | a6531435 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the text fold G1 (egm:egm-codebase-details): false negatives in the fold, canonical/composed callers, Python 3.12 vs 3.13, chunked injection read, tests | 06:50 | 07:10 | 100 | done | 1 of 3 | 0 | finished: fold has 2 Blockers (undo no longer composes: REPRODUCED; chunk-boundary bypass of the injection check), 8 Majors, 4 Nits; fixes started |
 | a5fcd092 | reviewer | claude-sonnet-5-5 | EGM RESULT review of P1d-a G2 (egm:egm-design): redact-before-defang on every approval path, defang completeness, glued e-mail, clean() re-read | 06:50 | 07:10 | 100 | done | 1 of 3 | 0 | finished: P1d-a no Blocker, 7 Majors, 8 Minors/Nits; the order claim (redact first, defang last) holds on every free-text path; but an address glued to _ or a digit is still shown whole, _sub_glued is quadratic, _settled shows unsettled text after its bound. Nothing executed |
 | ad4f8f0a | builder | claude-sonnet-5-5 | restart 2: gate round 2 findings then ORDER 017 (mapping required + NO_MAP, one pre-call exception type, framing protection); progress note after phase 1 | 06:40 | 07:30 | 100 | done | 3 of 3 not used | 0 | finished: gate round 2 + ORDER 017 built. Mutants "66 of 66 good; problems: []"; pytest 8596 passed, 1 skipped, 2 xfailed; only red: producers registry (SPINE). Decisions to confirm: framing refusal only for calls that carry tool framing; held-back edge values leave a readable tail (documented); GateRefused is the one pre-call type; bind(mapping=None) is a TypeError |
-| a5fdac4f | builder | claude-sonnet-5-5 | restart 2: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then follow-ups, one batch | 06:40 | 07:45 | 2 | running | n/a | 0 | integration + follow-ups + the P1d-a result review items (M1, M2, M4, M5, M7, N2-N4) sent at 06:58 |
+| a5fdac4f | builder | claude-sonnet-5-5 | restart 2: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then follow-ups, one batch | 06:40 | 07:45 | 100 | done | n/a | 0 | finished: integration of G2 + G3 + G7 in /tmp/core-c-int, HEAD 8f55f20: 11,542 passed, 1 failed (producers registry), mutants gate 27/27, p1d-a A43/A11/A3 killed (A15 inherited), clean() 1.3 -> 3.6 ms; glued-rest probe: IPv4, phone, IBAN, UUID, host name still have the gap (needs a ticket). Not picked onto cloud/core-c yet |
 | aaf9fc30 | builder (tests only) | claude-sonnet-5-5 | restart 2: grants negative tests for core-b step B map, local PostgreSQL 16 | 06:40 | 07:15 | 100 | done | n/a | 0 | finished: grants test green on both trees (core-b code with PostgreSQL 16: 106 passed; main: 37 passed, 2 xfailed); 4 mutants killed; findings about core-b grants (E7). Committed. Not run: PostgreSQL 17, Python 3.12 |
 | a589c1df | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:41 | 06:56 | 100 | done | 1 of 3 | 0 | finished: no unmask or corruption path found, no Blocker; 6 Majors (two-pass rule does not fail closed; tail leak wider than stated (up to 7 characters); no time budget inside the second pass; property test mostly insensitive to this class; known-red test shipped; error path registers nothing) + 2 Nits. Nothing executed |
 | a20c17f9 | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:41 | 07:00 | 100 | done | 1 of 3 | 0 | finished: no Blocker, 4 Majors, 4 Nits; one finding REPRODUCED with the real code: a secret wrapped as ‹secret_1› after password= is left in clear (own-output rule too loose); fix agent started |
@@ -113,8 +114,8 @@ PUSHED_UTC: 2026-11-20T07:10:23+00:00
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | DONE | 100 | evidence/F-G0-1.md | 1 | committed and pushed as "code G: G0" and "code F:"; as-built differences listed at the end of ticket F |
 | BUILD G1 fold | DONE (fix round 1 verified) | 100 | evidence/G1-fold.md | 1 | B1, B2, M8 fixed and committed; open: M3-M7, M9-M10 of the fold review (time bound, over-matching, grounding widening for the lead, mutants not run) |
-| BUILD G2 P1d-a | DONE on its branch; integration running | 90 | evidence/G2-p1d-a.md | 1 | both failures fixed with regression tests; wip/cloud-core-c/g2-p1d-a tip a3bae9b |
-| BUILD G3 P2d-1 port | DONE on its branch; integration running | 90 | evidence/G3-p2d-port.md | 1 | wip/cloud-core-c/g3-p2d-port tip ef09bf5 |
+| BUILD G2 P1d-a | DONE (integrated); pick onto cloud/core-c running | 90 | evidence/G2-p1d-a.md | 1 | both failures fixed with regression tests; wip/cloud-core-c/g2-p1d-a tip a3bae9b |
+| BUILD G3 P2d-1 port | DONE (integrated); pick onto cloud/core-c running | 90 | evidence/G3-p2d-port.md | 1 | wip/cloud-core-c/g3-p2d-port tip ef09bf5 |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT integration | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | P1c edits the same two files; it is built on the integrated tree |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
 | Gate: lead code review round 2 fixes (ORDER 015) | DONE (built) | 100 | evidence/F-G0-1.md | 2 | committed in the WIP snapshots (verified by the builder: 66 of 66 mutants, 8596 passed); EGM result review round 2 running; lead review round 3 can start |
@@ -123,17 +124,19 @@ PUSHED_UTC: 2026-11-20T07:10:23+00:00
 | Backlog 4c: cross-lane read | DONE | 100 | CROSS-LANE.md | 1 | CROSS-LANE.md written; 5 mismatches listed for the lead |
 | Backlog 9: SECURITY and README wording | RUNNING (session) | 50 | SECURITY-WORDING-draft.md | 1 | draft pushed; final list after the gate and G7 agents report their stated limits |
 | Backlog 10: ONE whole-suite batch | WAIT items 1-6 | 0 | none | 0 | runs once when F, G0-G7 are coded and on one tree |
-| Integration of G2 + G3 onto cloud/core-c | RUNNING | 2 | evidence/INT-g2-g3.md | 1 | one builder in a worktree |
+| Integration of G2 + G3 onto cloud/core-c | DONE | 100 | evidence/INT-g2-g3.md | 1 | verified in the worktree (11,542 passed); pick onto cloud/core-c running |
 | EGM result review of the gate code (round 1) | DONE | 100 | tickets/F-result-review-1.md | 1 | NOT CLEAN: 1 Blocker, 14 Majors, 14 Nits merged; tickets/F-result-review-1.md; in-file findings with the builder, 6 escalated (E6), per-site install list for core-b written |
 | Rework tests/test_grants_negative_roles.py against core-b's step B grant map | DONE | 100 | evidence/B-grants-rework.md | 1 | committed "code B:"; evidence/B-grants-rework.md; 6 findings about core-b grants in E7 |
 | EGM result review of the G7 redactor change (round 1) | DONE (round 1) | 100 | tickets/G7-result-review-1.md | 2 | design + code reviewers: no Blocker, 10 Majors merged; one leak reproduced and being fixed; the rest after the integration |
 | EGM sequence (owner order 12:15 IST): items built without a review step | RUNNING | 20 | EGM-LEDGER.md | 1 | ledger written; missing steps: result review of the fold (G1) and P1d-a (G2) started now; G7 plan review after its result review; drift reports for everything; result review of the test files (B, T1) |
 | EGM result reviews of the fold (G1) and P1d-a (G2) | DONE (round 1) | 100 | tickets/G1-result-review-1.md, G2-result-review-1.md | 1 | fold: 2 Blockers, 8 Majors; P1d-a: 7 Majors; records tickets/G1-result-review-1.md, G2-result-review-1.md; fix rounds running |
-| EGM result review round 2 of the gate | RUNNING | 5 | tickets/F-result-review-2.md | 1 | two fresh reviewers |
+| EGM result review round 2 of the gate | DONE (round 2) | 100 | tickets/F-result-review-2.md | 1 | NOT CLEAN: 1 Blocker + 10 Majors; fix agent running |
 | Gate fix round for review round 2 | RUNNING | 2 | evidence/F-G0-1.md | 1 | builder in the main checkout; the code reviewer's findings go to it by message |
 | EGM plan review of ticket G4 (P1c) | RUNNING | 5 | tickets/G4-review-1.md | 1 | two reviewers |
 | Fold false-hit and cost measurement | RUNNING | 2 | evidence/G1-false-hits-and-cost.md | 1 | evidence runner, no code |
 | SECURITY and README wording final | RUNNING | 2 | SECURITY-README-final.md | 1 | writer |
+| Pick of the integration onto cloud/core-c | RUNNING | 2 | evidence/PICK-int-onto-core-c.md | 1 | one builder in a worktree |
+| Glued-rest gap of IPv4, phone, IBAN, UUID, host name (from the integration probe) | READY (needs a ticket + plan review) | 0 | evidence/INT-g2-g3.md | 0 | ORDER 016c item 15 asked for a look at the other kinds: listed, not fixed |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
