@@ -13,7 +13,7 @@ from tests import redact_mutants as rm
 
 ROOT = Path(__file__).resolve().parents[1]
 SECTION6 = ROOT / "handover" / "core-c" / "evidence" / "G3-p2d-port.md"
-EXPECTED_COUNT = 117  # 63 older + 3 E9 + 30 Q9 = 96, minus N1 and N14 (deleted with the dead U+2044 code, G1 Q9 review F3); + 23 G9 (22 + G9-24, the G8 joins)
+EXPECTED_COUNT = 123  # 63 older + 3 E9 + 30 Q9 = 96, minus N1 and N14 (deleted with the dead U+2044 code, G1 Q9 review F3); + 29 G9 (22 + G9-24, the G8 joins, + G9-25 .. G9-30 the E17 feasibility window)
 OCCURS_TWICE = {
     "21 the views get no shared deadline"
 }  # its docstring says why: both ``_deadline=`` arguments

@@ -41,8 +41,9 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   by the EXISTING placeholder of a value that covers it, a secret's where one does, else the identifier's
   (`<SECRET_1><SECRET_2>`, `<TENANT_1><TENANT_2>`; the map is not written; restored, the shared part of two
   identifiers appears twice). Two identifiers that touch each other there are both left. A value that is a piece
-  of one of the map's placeholders is not in the main sweep: its rest stays and the net (`held_value_left`)
-  refuses the call.
+  of one of the map's placeholders is not in the main sweep: its rest stays. The net (`held_value_left`)
+  checks values of SECRET kinds only: the rest of a held-back secret refuses the call, the rest of a held-back identifier passes
+  silently (a stated limit).
   E::test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders
   E::test_trap3_an_overlap_of_two_identifiers_is_masked_with_their_placeholders
 - A known value that begins with the tail of a placeholder (`>abc`) or ends with the head of one (`xyz<`) is

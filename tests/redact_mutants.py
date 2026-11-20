@@ -344,7 +344,7 @@ M += [
     g9("G9-19 a union rebuilds the finders", "                    self._built_for = len(self.mapping)\n            else:",
        "                    pass\n            else:", "test_g9_a_union_does_not_rebuild_the_finders", "builds [1"),
     g9("G9-20 the anchor searched again at every edge", "if (anchor, w) not in searched:", "if True:",
-       "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[63079]"),
+       "test_g9_a_long_value_beside_readable_text_is_read_back_only_the_reach_deep", "[104104]"),
     g9("G9-21 the anchored check removed", "hits += self._deep_hits(out, toks, deep, deadline, work)", "hits += []",
        "test_g9_an_overlap_deeper_than_the_reach_is_found_by_the_anchored_check", "1100"),
     g9("G9-22 the anchored comparisons not counted", "self._spend(work, 2 * len(w) + 2, deadline)", "self._spend(work, 0, deadline)",
@@ -356,6 +356,18 @@ M += [
        "            joins = _joins(rule[1])  # G8: the literal sweep's rule; a digit only, for a PHONE value\n",
        "            joins = _ALNUM\n",
        "test_g9_the_read_back_judges_a_phone_copy_by_the_sweeps_joins", "<PHONE_1>"),
+    g9("G9-25 the infeasible window not skipped", "                if hi - lo < len(anchor):\n                    continue\n", "                if False:\n                    continue\n",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(b) "),
+    g9("G9-26 the window starts one place early", "lo = max(0, len(w) - can_right - shift)", "lo = max(0, len(w) - can_right - shift - 1)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(c) "),
+    g9("G9-27 the window starts one place late", "lo = max(0, len(w) - can_right - shift)", "lo = max(0, len(w) - can_right - shift + 1)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(c) "),
+    g9("G9-28 the window ends one place early", "hi = min(len(w), can_left - shift + len(anchor))", "hi = min(len(w), can_left - shift + len(anchor) - 1)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
+    g9("G9-29 the window ends one place late", "hi = min(len(w), can_left - shift + len(anchor))", "hi = min(len(w), can_left - shift + len(anchor) + 1)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
+    g9("G9-30 the scan of the window not counted", "self._spend(work, hi - lo, deadline)", "self._spend(work, 0, deadline)",
+       "test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_it", "(a) "),
 ]  # fmt: skip
 
 
