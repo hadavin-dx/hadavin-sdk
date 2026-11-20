@@ -2295,17 +2295,20 @@ def test_g9_the_anchored_check_searches_only_the_feasibility_window_and_counts_i
     r = R._Redactor({"<SECRET_2>": word})
     r.sweep("")
     work = [0]
-    assert r._overlaps("x<SECRET_2>", None, work) == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")]
+    hits = r._overlaps("x<SECRET_2>", None, work)
+    assert hits == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")], f"(a) hit {hits}"
     assert work == [6_169], f"(a) {work}"
     r = R._Redactor({"<SECRET_1>": "x" * 1_100, "<SECRET_2>": word})
     r.sweep("")
     work = [0]
-    assert r._overlaps("x<SECRET_2>", None, work) == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")]
+    hits = r._overlaps("x<SECRET_2>", None, work)
+    assert hits == [(0, 11, "SECRET", "<SECRET_2><SECRET_2>")], f"(b) hit {hits}"
     assert work == [7_270], f"(b) {work}"
     r = R._Redactor({"<SECRET_1>": "x" * 1_100})
     r.sweep("")
     work = [0]
-    assert r._overlaps("<SECRET_1>x", None, work) == [(0, 11, "SECRET", "<SECRET_1>")]
+    hits = r._overlaps("<SECRET_1>x", None, work)
+    assert hits == [(0, 11, "SECRET", "<SECRET_1>")], f"(c) hit {hits}"
     assert work == [6_379], f"(c) {work}"
 
 
