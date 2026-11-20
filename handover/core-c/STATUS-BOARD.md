@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:45:10Z
+UPDATED_UTC: 2026-11-20T16:49:57Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:05Z agents 2 (G9c, DOCS5 builders), load 2.2. Root docs style rounds so far: r1 4B/7M, r2 2B/7M, r3 0B/8M, r4 3B/5M (each fresh reviewer finds new classes of issue; not converging by itself). DOCS5 = fix pass for r4; round 5 is the cap: after it I list what is open and ask the owner whether to accept or continue. 17:00Z agents 2 (G9c builder, docs style reviewer round 4), load 2.8. DOCS4 MERGED (9 Majors of round 3); DOCS3 notes scrubbed of vendor strings: vendor-brand test now red ONLY on the lead's handover/BRIEF-PREAMBLE.md (tracked scope). 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (lab
+STATE: 1649Z agents 2 (G9c builder, DOCS5 builder: root docs r4 fixes), load 1.2. Docs split sent: handover/core-c/requests/to-core-a-docs-split-1649Z.md: core-c keeps SECURITY.md, CHANGELOG.md, README.md; core-a does not edit them (sends paragraphs instead). Not starting 4 parallel docs builders on the same 3 files: one builder per file group would conflict; DOCS5 already covers all r4 findings. 17:05Z agents 2 (G9c, DOCS5 builders), load 2.2. Root docs style rounds so far: r1 4B/7M, r2 2B/7M, r3 0B/8M, r4 3B/5M (each fresh reviewer finds new classes of issue; not converging by itself). DOCS5 = fix pass for r4; round 5 is the cap: after it I list what is open and ask the owner whether to ac
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 2
-CAPACITY: load 2.2 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+CAPACITY: load 1.2 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 59; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:45:04+00:00
+PUSHED_UTC: 2026-11-20T16:49:55+00:00
 
-(22:15 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:19 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
