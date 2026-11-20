@@ -94,8 +94,9 @@ runtime and not the reset login):
    error naming the owner.
    Exit 5 is decided from what the audit chain really did: the chain never raises, it parks a failed outcome
    (the release login cannot write the outbox table, so in memory of the command) and the command then ends, so a
-   parked outcome counts as lost and exits 5.
-   `REVOKE TEMP ON DATABASE <db> FROM PUBLIC`. The release secret name may not be read by the runtime: a tool,
+   parked outcome counts as lost and exits 5. Exit 5 means the outcome row MAY be missing: check the audit chain for the
+   intent id first (a lost commit reply is also reported this way) before recording anything by hand.
+   The release secret name may not be read by the runtime: a tool,
    source, executor or restored-hash secret that folds to the same name stops the start.
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.

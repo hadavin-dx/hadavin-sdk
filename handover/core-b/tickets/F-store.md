@@ -410,3 +410,8 @@ T1-T2-tests with edits:
   agent check of ORDER 020 m2.
 - M1: `_write_outcome` treats a None key from `write_outcome` (the chain parked the event) as not audited; exit 5 is
   reachable with the real chain (tests in tests/test_release_expired_spend_pg.py).
+
+### Review 5 of the release command: CLEAN (0 Major). Stated limits
+- A `local_dir` audit with a PostgreSQL store (unusual pairing): None means the event sits in its outbox and the tick writes it later, so exit 5 can precede a row that does arrive; the runbook now says to check the chain first.
+- A lost `release_failed` outcome row is only logged; the money tables are untouched in that case.
+- The m-2 behavioural test covers the restored-hash secret source only; the refs are not checked against the runtime's backend secret names.
