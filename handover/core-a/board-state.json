@@ -789,17 +789,17 @@
    "reason": "EGM"
   },
   {
-   "id": "mutant-run-21",
-   "role": "evidence runner",
-   "model": "script",
-   "what exactly it is doing": "full endpoint_mutants.py on the d-fix27 tree (/tmp/mut-run21.log)",
-   "started UTC": "17:52",
-   "expected end": "35 min",
+   "id": "d-fix28",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "kill mutant G20j with a test that reaches make_app's ValueError handler; round-4 nits (symlink compare, BaseException in _watch, weak assertions)",
+   "started UTC": "17:30",
+   "expected end": "20 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "fix of round 4",
    "retries so far": 0,
-   "reason": "worker.py changed"
+   "reason": "run 21 survivor"
   }
  ],
  "tests": [
@@ -1688,6 +1688,19 @@
    "review round n of cap": "after cap",
    "retries so far": 0,
    "reason": "after-cap fix 741b7b4a3: strict 49 passed; no DSN 23+26 skipped; 6 mutants killed; ESCALATIONS E-grant-1 (cap reached, not re-reviewed); a recursion incident in the meta-test draft (killed, 0 stray) added ~2 min load: run 21 timing results must be checked for INVALID-LOAD"
+  },
+  {
+   "id": "mutant-run-21",
+   "role": "evidence runner",
+   "model": "script",
+   "what exactly it is doing": "full endpoint_mutants.py on the d-fix27 tree (/tmp/mut-run21.log)",
+   "started UTC": "17:52",
+   "expected end": "35 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "119 of 120; BAD SURVIVED G20j (make_app except ValueError no longer reached after d-fix26); evidence/mutants-run21.md; d-fix28 started"
   }
  ]
 }
