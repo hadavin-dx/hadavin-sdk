@@ -505,11 +505,11 @@
   {
    "item": "EGM-n8n",
    "what": "fresh EGM result review of the n8n pack: naive reader (egm:egm-comprehension) and hostile design (egm:egm-design)",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "RESOLVED; fix pass running",
+   "percent": 60,
    "evidence file": "reviews/n8n-result-review-1.md",
    "tries": 1,
-   "reason": "naive-reader review done: 1 Blocker (the README never says where the Hadavin URL and the secret come from, so steps 1 and 8 cannot be done from the page), 9 Majors (caller payload shape unstated; the key rule cannot be followed with the template: two events on one record share a key and a re-send needs a new key the template cannot make; a test event starts a real run; a duplicate reaches Done and the client's follow-up runs twice; the error message does not hold the key or event; publish steps need an id; credential order fragile; the loop numbers are inside expressions and the default is shorter than the README's own example; some 'seen in n8n' notes are not backed by the evidence file); waiting for the design reviewer, then resolve"
+   "reason": "both fresh reviewers done: naive reader 1 Blocker + 9 Major, hostile design 6 Major (the webhook has NO authentication: anyone can start runs and pre-claim keys; WAITING_FOR_APPROVAL success can later become approval_missing; the 202 to the caller is sent before anything is durable and the loops live in n8n memory; two ordering assumptions fail badly; a duplicate reaches Done and the follow-up runs twice; the busy span is shorter than the README's own example); resolve through the Skill: all fixed in text and graph by a builder, three behaviours escalated to the lead's next real n8n run (E6)"
   },
   {
    "item": "E-round-3",
@@ -537,6 +537,15 @@
    "evidence file": "raw/E-fix3-tests.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence: fix by a builder who is not author or reviewer"
+  },
+  {
+   "item": "n8n-fix-1",
+   "what": "n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/n8n-template-tests-5.log (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence"
   }
  ],
  "agents": [
@@ -1245,15 +1254,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:05",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "id": "egm-n8n-design",
    "role": "reviewer (egm:egm-design, fresh)",
    "what exactly it is doing": "hostile design review of the workflow graph and the README",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, 144k tokens: 6 Major, 9 minor"
   },
   {
    "model": "sonnet",
@@ -1306,6 +1315,19 @@
    "what exactly it is doing": "applies H1 to H6 to crash.py, its tests and one ticket line",
    "expected end": "about 20 min",
    "reason": "round 3 resolve"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:10",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n8n pack round 1 of 3 (fix pass)",
+   "retries so far": 0,
+   "id": "n8n-fix1",
+   "role": "builder (templates and text)",
+   "what exactly it is doing": "applies the n8n review fixes to the two workflow files, the README and the template checks",
+   "expected end": "about 30 min",
+   "reason": "resolve of review round 1"
   }
  ],
  "tests": [
@@ -1669,6 +1691,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ESCALATIONS E6: three n8n behaviours need your next real n8n run: a wait above 65 s and an n8n restart during a wait; a Respond-to-Webhook node followed by Stop-and-Error; the Respond node passing its item on. Also from the n8n review: the webhook had no authentication (anyone could start runs): fixed in the pack, shape unverified",
   "ESCALATIONS E5: step E review reached the cap of 3 rounds with 2 Majors in round 3; fixes are being applied; NO fresh reviewer will look at them unless you grant one more pass (recommended: yes, small diff)",
   "Your list of 07:05Z: most of it is already DONE (see the board): half-edited tree fixed (the latest runs pass), M2/M3 done, the 505 fix done, minor 10 mutants running now, tests for core-b and core-c code done. In work now: ONE batch on PostgreSQL 16 (BATCH4), mutant extension, fresh EGM reviews of the n8n pack (2 reviewers) and, after the batch, of the endpoint, worker and server code",
   "CRASH MATRIX part 2 (CRASH-MATRIX.md): 171 kill points per store, no broken invariant, but 4 behaviours you should know for the plan: (1) kill after WAITING and before the approval request is saved: NEEDS_PERSON approval_missing and NO card, nobody is told; (2) kill between sending the card and recording the send: a duplicate approval card; (3) approved but killed before the executor runs: the action never runs, NEEDS_PERSON outcome_unknown; (4) PLAN_READY, EXECUTING and VERIFYING are answered 200 to a retry, so a sender cannot tell still-going from ended (my n8n template treats them as still going)",

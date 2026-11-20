@@ -42,7 +42,7 @@ RUNG TABLE (CODE-LAST v1)
 4. Nothing fires unless a test armed that exact point. Unarmed, a wrapped object behaves as the target: same results, same exceptions, a missing attribute raises `AttributeError` (so the `getattr(..., None)` guard of S/runtime/tick.py:179 still works).
 5. One arm, one crash: the point is disarmed (memory) or its flag file deleted BEFORE the crash; if the delete fails, no crash (another thread took it; demo-hooks.py:45-48).
 6. `SimulatedCrash` derives from `BaseException`, never from `Exception`.
-7. Kill mode ends the process with `os._exit(CRASH_EXIT_CODE)` after printing `CRASH_MARKER` with flush: no `finally`, no `atexit`, no buffered write runs.
+7. Kill mode ends the process with `os._exit(CRASH_EXIT_CODE)` after writing `CRASH_MARKER` with `os.write` on descriptor 1 in a `try`/`finally` followed by `os._exit`: no `finally`, no `atexit`, no buffered write runs.
 8. A point left armed at the end of the `with` block is an error (`RuntimeError` naming the point) and is disarmed all the same, so one test cannot crash the next.
 9. Point names are generic: `<name>.<method>:before` or `:after`, where name and method match `[a-z_][a-z0-9_]*`. No project word, no stage name. The helper has no stage parameter.
 10. No new dependency, no pytest import in S, absolute imports only, no dynamic import, no secret and no credential of any kind, no host name or URL even in a docstring (the scans of section 4 read docstrings).
