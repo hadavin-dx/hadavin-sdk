@@ -43,7 +43,7 @@ What this release does and does not promise, in one place.
 
 ## Spend limits: what is in force today
 Status, in one sentence: exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install).
-- In force: money is exact decimal (no floats); on PostgreSQL after migration 0011 the runtime login cannot lower a booked amount or change a cap; the caps live in the table `hadavin_caps`, written only under the reset login; `Limits.reserve` and `Limits.settle` exist and are tested.
+- In force: money is exact decimal (no floats); on PostgreSQL after migration 0011 the runtime login cannot lower a booked amount or change a cap; the caps live in the table `hadavin_caps`, written only under the caps login (`migrate --caps-role`; `limits sync-caps` and `set-cap` use `backends.store.caps_credential_ref`); `Limits.reserve` and `Limits.settle` exist and are tested.
 - The live loop's main model call reserves the worst case before the call and settles after, so concurrent runs cannot overshoot the cap for that call. NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired.
 
 ## Running the tests

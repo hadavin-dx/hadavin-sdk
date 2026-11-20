@@ -148,7 +148,7 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   naming the right and the table, for example `INSERT on kill_switch_clears`, never a value) when it holds any right the
   grant map does not give the runtime: UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES, INSERT on the clears table, and
   so on, directly, by column grant, through a role it is a member of, or through PUBLIC. A `GRANT ALL ON ALL TABLES` run
-  after migrate is caught at the next start. The reset login (marked by the `limits reset` command, not by any config
+  after migrate is caught at the next start. The reset and caps logins (marked by the `limits` commands, not by any config
   setting) and a superuser or a member of the tables' owner (outside the guarantee) are not held to this. Only the
   runtime login is checked; the other roles still drift until the next `migrate`, so schedule `migrate` (it names all
   roles) after any provisioning step.
@@ -235,7 +235,7 @@ that really was billed is then missing from the counters.
 
 ## Caps live in a table the runtime cannot write
 The day and month spend cap of every agent is read by the database from the table `hadavin_caps` (migration 0011).
-The runtime login has no right on that table and cannot run `hadavin_set_cap`; only the reset login can write a cap.
+The runtime login has no right on that table and cannot run `hadavin_set_cap`; only the caps login (its own database role, `migrate --caps-role`; not the reset role) can write a cap.
 The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
 Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
 
@@ -248,18 +248,18 @@ purge login holds no table right either and may only EXECUTE the purge function.
 
 Deploy, in this order (there is no rolling upgrade):
 1. Stop the tick scheduler and every runtime-side process.
-2. Provision a reset login (every PostgreSQL deployment needs one now, dev and CI too) and run `hadavin-sdk migrate`
-   naming ALL roles, including `--reset-role <role>`. Migrate creates the table EMPTY and never guesses or overwrites a cap.
-3. Store the reset login's DSN as a secret and set `backends.store.reset_credential_ref` to its NAME (not the runtime,
-   purge or release secret; not the same login under another name).
-4. `hadavin-sdk limits sync-caps --by WHO --yes`.
+2. Provision a reset login and a caps login (every PostgreSQL deployment needs both now, dev and CI too; two different
+   roles) and run `hadavin-sdk migrate` naming ALL roles, including `--reset-role <role>` and `--caps-role <role>`. Migrate creates the table EMPTY and never guesses or overwrites a cap.
+3. Store the caps login's DSN as a secret and set `backends.store.caps_credential_ref` to its NAME (not the runtime,
+   purge, release or reset secret; not the same login under another name). The reset login keeps `reset_credential_ref` for `limits reset`.
+4. `hadavin-sdk limits sync-caps --by WHO --yes` (runs under the CAPS login).
 5. Start, then run one smoke `tick`.
 EVERY RUN IS REFUSED (`limits_unavailable`, for every agent) UNTIL `sync-caps` HAS COMPLETED: every agent needs a cap
 row, or `hadavin_reserve_spend` (5 arguments: p_id, p_agent, p_day, p_usd, p_run_id) raises HD005 ("run limits
 sync-caps"), fail closed. Afterwards `limits check-caps` (exit 1 on drift or a missing row) and the tick step
 `check_caps` report any difference between registry and table. A new agent is refused the same way until its caps are synced.
 
-Commands (all under the reset login; they refuse BEFORE any connection when `reset_credential_ref` is missing or
+Commands (all under the caps login; they refuse BEFORE any connection when `caps_credential_ref` is missing or
 collides with a runtime secret, in every environment; the memory store is refused: "this store has no cap table"):
 - `hadavin-sdk limits set-cap AGENT --day USD --month USD --by WHO [--yes]`: one agent. The audit intent row is
   written first, then the cap, then the outcome row (`set_cap_failed` when the write failed). The agent must be live or
@@ -281,8 +281,8 @@ ERROR line `step=check_caps` naming agent ids and `differs` or `missing`, never 
 differs. A cap LOWERED in the registry and not synced would otherwise stay high in the table; a cap RAISED and not
 synced is the safe direction (the agent is refused at the lower table value) but is reported the same way. The fix is
 `limits sync-caps`.
-Residual: the audit line is written by the CLI, not by the function, so a stolen reset login can call `hadavin_set_cap`
-directly with no audit line (the same is true of `release-expired`). Keep the reset login off the runtime machines.
+Residual: the audit line is written by the CLI, not by the function, so a stolen caps login can call `hadavin_set_cap`
+directly with no audit line (the same is true of `release-expired`). Keep the caps login off the runtime machines.
 
 ## After the upgrade to 0009: validate the stop-year constraints
 0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` as NOT VALID: every new row is checked, rows
