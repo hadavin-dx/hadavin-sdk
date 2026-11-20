@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:20:56Z
+UPDATED_UTC: 2026-11-20T06:21:11Z
 SESSION: core-a
 ORDER: 016 standing (backlog), 014 and 015 in work
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 36
 ITEMS_OPEN: 10
 PERCENT: 79
 AGENTS_RUNNING: 6
-CAPACITY: load 2.25 of 4 cores (1-minute average), mem 1.1/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 525M /home/user/hadavin-sdk; 258M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 2.56 of 4 cores (1-minute average), mem 1.2/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 525M /home/user/hadavin-sdk; 295M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile
-PUSHED_UTC: 2026-11-20T06:20:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:21:00Z (the push before this board)
 NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)
 
 ## QUEUE ITEMS
@@ -92,26 +92,26 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 386s ago | running | matched by name in ps |
-| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 12568 | postgres: checkpointer  | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 12569 | postgres: background writer  | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 12571 | postgres: walwriter  | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 12573 | postgres: logical replication launcher  | core-a session or its agent | 345s ago | running | matched by name in ps |
-| 26232 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 26260 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 26266 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 15s ago | running | matched by name in ps |
-| 26368 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 26550 | timeout 600 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26558 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rfEsxX | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26565 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 26583 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 401s ago | running | matched by name in ps |
+| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 12568 | postgres: checkpointer  | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 12569 | postgres: background writer  | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 12571 | postgres: walwriter  | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 12573 | postgres: logical replication launcher  | core-a session or its agent | 360s ago | running | matched by name in ps |
+| 26232 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 30s ago | running | matched by name in ps |
+| 26260 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 30s ago | running | matched by name in ps |
+| 26266 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 30s ago | running | matched by name in ps |
+| 26368 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 21s ago | running | matched by name in ps |
+| 26861 | timeout 600 uv run --all-extras --group test pytest -q -p no:cacheprov | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 26869 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rfEsxX | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 26873 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 5s ago | running | matched by name in ps |
+| 27024 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
