@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:10:12Z
+UPDATED_UTC: 2026-11-20T06:12:06Z
 SESSION: core-b
 ORDER: 013
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 80
-AGENTS_RUNNING: 6
-CAPACITY: load 2.05 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 1 heavy 5
-DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 779M
+AGENTS_RUNNING: 5
+CAPACITY: load 1.19 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, agents light 0 heavy 5
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 794M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: batch run 2: 13 failed, 1 error (11 mine in one test file, fixed and re-run; 1 error passes alone, cause not established; 2 not from my code); F-store review round 2 NOT clean, answered; step B used 3 fix rounds; E1 cron refused
 NEXT: land the test commits; resolve ticket C review; F-install review round; wait for core-c gate module before building F-install
-PUSHED_UTC: 2026-11-20T06:09:52Z (previous push; this board is pushed right after writing)
-IST: 11:40 IST
+PUSHED_UTC: 2026-11-20T06:10:13Z (previous push; this board is pushed right after writing)
+IST: 11:42 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -25,8 +25,7 @@ IST: 11:40 IST
 | a7034d35 | builder (tests) | fable | re-anchors 2 audit mutants after the fix, adds 6, closes one hole in the price tests; worktree M | 06:02 | +12 min | UNVERIFIED | running | none | 1 | audit_drain_mutants.py gave 11 of 13 good on the fixed code |
 | af123633 | builder (fix) | fable | F-store fix round 1 (caps and expiry age validated: a NaN cap meant no cap) and the refused-before-response mark in llm/ (lead ORDER 013); worktree F | 06:15 | +15 min | UNVERIFIED | running | none | 0 | core-a request 003 gap G5; ORDER 013 |
 | a7f2909e | builder (fix) | fable | D-config fix round 1: sender-only secret reader, overlap refusal, strict types, charset (lead ORDER 012); worktree D | 06:15 | +15 min | UNVERIFIED | running | none | 0 | lead review: 3 Majors |
-| afa273dd | reviewer (egm-codebase-details) | fable | ticket F-install round 1 of 1 | 06:09 | +3 min | UNVERIFIED | running | 1 of 1 | 0 | |
-| a6d00510 | reviewer (egm-implementation-readiness) | fable | ticket F-install round 1 of 1: NOT ready, 2 Blockers, 7 Majors, 9 Nits | 06:09 | done | 100 | done | 1 of 1 | 0 | the worst-case callable and the in-memory meter's refusal are not specified |
+| a6d00510, afa273dd | reviewers (egm) | fable | ticket F-install round 1 of 1: NOT ready, 4 Blockers, 19 Majors; report tickets/F-install-review-1.md; answered in the ticket (V1 to V12) | 06:09 | done | 100 | done | 1 of 1 | 0 | five answers wait for the lead: ESCALATIONS.md E3 |
 | a9b3b5a5, aac315f5 | reviewers (egm) | fable | ticket C round 1 of 1: 0 Blockers, 11 Majors, 15 Nits; built code equals the ticket; report tickets/C-review-1.md | 05:59 | done | 100 | done | 1 of 1 | 0 | answered in the ticket (P1 to P8); no source change |
 | abc08a01 | builder | fable | F-store: commit 8db9c29 on cloud/core-b (540 added, 24 removed in 18 files), with the round 2 corrections | 05:50 | done | 100 | done | 2 of 3 | 0 | 673 passed on 14 test files, PostgreSQL 16; its own test files not written yet |
 | adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py (13) and tests/price_mutants.py (20): landed | 05:50 | done | 100 | done | none | 0 | found a hole: one price mutant survives because the test configs are written with sorted keys |
@@ -78,7 +77,7 @@ IST: 11:40 IST
 | BUILD F-store | RUNNING | 70 | commit 8db9c29 (source, pins, changelog) | 1 | lead GO BUILD F-store |
 | BUILD B stop state | RUNNING (3 of 3 fix rounds used) | 85 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except batch run 2 | 97 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
-| T3 EGM review rounds | RUNNING | 80 | tickets/C-review-1.md (0 Blockers, answered); F-install round running; | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
+| T3 EGM review rounds | DONE (all ordered rounds run; none clean; all answered in text) | 100 | tickets/F-install-review-1.md; | tickets/C-review-1.md (0 Blockers, answered); F-install round running; | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
 ## RESTARTS
@@ -104,6 +103,7 @@ IST: 11:40 IST
 - QUESTIONS.md 1 to 4 (cron fallback, which baseline test fails, step A build without extra GO, local PostgreSQL 16 for my lane run).
 - core-c ESCALATION E2 (strict mask check would refuse normal runs): needs the lead's ruling before ticket F-install can be final.
 - Lead: handover/BRIEF-PREAMBLE.md contains a vendor name that tests/test_no_reference_material.py refuses (rule 15 text). It fails the suite on every cloud branch that carries the handover folder; it is your file, I did not touch it.
+- ESCALATIONS.md E3: ticket F-install review not clean; five design answers need the lead's OK before GO BUILD F-install; one behaviour change for the owner (failed provider calls keep a worst case booked for an hour).
 - My slip: I missed ORDER 012, ORDER 013 and core-a requests 002 and 003 for about 12 minutes (I searched the orders file for the wrong heading). 003 is answered (requests/003.answer.md, interface README 2.3); 012 and 013 are being built; 002 is next.
 - Duplicate work: core-a wrote 102 contract tests and a T1 file for interface (i) while my own test writer does the same. Lead: say which T1 file is kept.
 - ESCALATIONS.md E2: F-store ticket review was not clean; three of my answers change the lead's draft design (settle returns row and applied; expired rows are always claimed by the first settle; expiry age from the stuck-run age). Lead: OK or CHANGE before GO BUILD F.

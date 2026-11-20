@@ -1,5 +1,12 @@
 # ESCALATIONS of core-b (newest on top)
 
+## E3 (2026-11-20 06:22 UTC) Ticket F-install: review round 1 NOT clean (4 Blockers, 19 Majors); five answers need the lead before GO BUILD F-install
+- Item: T3, ticket F-install (tickets/F-install.md section RESOLUTION V1 to V12; report tickets/F-install-review-1.md). One round allowed and used; the answers are not re-reviewed.
+- LEAD, OK or CHANGE on each: (1) a route name the registry does not hold is priced at the largest worst case over all configured routes instead of refused (keeps the judge test doubles working; production configs cannot have such a name); (2) the in-memory Budget meter refuses with a SIXTH reason "usd_cap" (interface (ii) lists five); (3) evals without --max-usd: in demo the cap is the agent's daily budget, in pilot and prod it is refused; (4) the gate gets audit=None on the eval AND replay command lines (the lead draft sent replay's gate rows to the replay audit sink, which breaks pinned tests and the sink's intent-only rule); (5) injection_check re-raises a meter or gate refusal instead of turning it into an injection flag.
+- Behaviour change the owner should know (V5): after the install, a provider error that is not marked as refused before any response keeps the call's worst case booked for at least an hour. A wrong API key or throttling can use up a small daily budget without real spend. ORDER 013's mark removes the certain cases only.
+- Dependency: core-c's gate and runmap.enforce_map are marked work in progress on its branch; the lead names the commit in the GO.
+- Not tried: a second review round (not ordered).
+
 ## E2 (2026-11-20 05:44 UTC) Ticket F-store: review round 1 was NOT clean; resolved in text; no round 2 by order
 - Item: T3, ticket F-store (tickets/F-store.md, review tickets/F-store-review-1.md). Tries: 1 review round of 1 allowed.
 - Result: 2 Blockers, 19 Majors, 19 Nits from two reviewers. Every Blocker and Major has a text answer in the ticket (section RESOLUTION, R1 to R14). No fresh reviewer has read those answers.
