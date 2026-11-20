@@ -294,12 +294,16 @@ kill_switch_stops WHERE ts NOT BETWEEN '2000-01-01' AND '2100-01-01'`, the same 
 them, then validate: the next `migrate` does it by itself, or run as the owner `hadavin-sdk migrate
 --validate-constraints` (only validates; it cannot be combined with a role flag, `--no-roles`, `--accept-admin-role`,
 `--accept-changed-draft` or `--reset-draft`; it needs the stop tables in the schema of HADAVIN_MIGRATE_DSN).
-Exit codes of that command: 0 done, 2 refused (a bad row, not the table owner, tables not found), 75 retry later
-(another transaction holds the table; it waits at most 5 seconds for the lock and at most 60 seconds for the scan, and
-changes nothing when it gives up). The 60-second limit assumes small stop tables (they hold one row per stop and per
-clear; not measured for millions of rows); on a far larger table raise
-`VALIDATE_STATEMENT_TIMEOUT` in `store/migrate.py` and say so in the change record. The migration takes a short
-ACCESS EXCLUSIVE lock on the stop tables for the ADD CONSTRAINT and the index build.
+Timeouts and exit codes. The 5-second lock wait and 60-second statement limit apply to the validation step ONLY, in
+both places it runs: `migrate --validate-constraints`, and the settle step at the end of the file loop of every
+plain `migrate` (a `SET LOCAL` for that step, put back before the grant and function steps; the rest of `migrate`
+has no such limit). In both, a lock wait, a timeout or a lost database connection is "retry later", not a refusal:
+exit code 75, and a plain `migrate` rolls back as a whole (nothing is applied, run it again). Exit code 2 is a
+refusal: a bad row, a login that is not the table owner, stop tables not found in the schema, or a flag
+combination that is not allowed. 0 is done. The 60-second limit assumes small stop tables (they hold one row per stop
+and per clear; not measured for millions of rows); on a far larger table raise `VALIDATE_STATEMENT_TIMEOUT` in
+`store/migrate.py` and say so in the change record. The migration takes a short ACCESS EXCLUSIVE lock on the stop
+tables for the ADD CONSTRAINT and the index build.
 
 0009 has no watermark table (nothing read it). A database that ran an EARLIER, unreleased 0009 still has
 `kill_switch_watermark` and `hadavin_watermark_guard()`: `migrate` refuses it with a message saying so. Steps:
