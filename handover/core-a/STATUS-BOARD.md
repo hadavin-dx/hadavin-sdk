@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:06:41Z
+UPDATED_UTC: 2026-11-20T15:09:05Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.70 of 4 cores (1-minute average), mem 1.1/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 1
+CAPACITY: load 0.07 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 641M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:05:31Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:06:46Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| rev-lead-migrate-2 | fresh independent reviewer (codebase-details), read-only | sonnet | lead wip/lead-b-migrate: deploy order, merge risk vs core-b head, keyword-argument risks (the three classes you named) | 15:12 | 15 min | 5 | running | 2 (targeted) | 0 | lead 15:08 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 31933s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 31933s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 31933s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 31933s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 31933s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 31933s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 32080s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 32080s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 32080s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 32080s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 32080s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 32080s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:12 AGENTS 1: rev-lead-migrate-2 (targeted review of wip/lead-b-migrate for DEPLOY ORDER, MERGE risk vs core-b's current head, KEYWORD-ARGUMENT risks: the three classes you named; the general review is already in reviews/rev-lead-migrate.md). Your other 15:08 items: (1b) ts-watermark reviewed (reviews/rev-lead-tswm.md); (2) merge-c DONE (nothing to merge: all 4 commits superseded; delete g2/g3 branches); (3) CRASH-MATRIX part 2 ALREADY DONE (171 kill points PG16 + memory); (4) README E-door-1 DONE and reviewed. I will not invent work to hold 3 agents: QUEUE.md has no open READY item for core-a; tell me what to build.
 - 15:20 MERGE PLAN (your item 4) DONE: nothing to merge: all 4 commits of wip/cloud-core-c/g2-p1d-a and g3-p2d-port that are not patch-equivalent are SUPERSEDED at core-c head (symbols and line cites in handover/core-c/requests/from-core-a-merge.md); applying the g3 'textnorm hash re-pin' would be WRONG (stale hash; head's manifest and CHANGELOG already carry the current one); merging either branch would regress core-c (pre-G4..G13 redact.py/runmap.py). Conclusion for core-c: delete wip/cloud-core-c/g2-p1d-a and g3-p2d-port. Branch wip/core-a-merge-c equals cloud/core-c (no diff, nothing pushed). A reduced guard run at head: 682 passed, 46 xfailed, 2 failed (test_p1d_a_rows::test_row_PU1_card and ::PU1_model: core-c's own, also seen at baseline in an earlier run). No agents running; every item on your 15:02 list is done or answered.
 - 15:15 YOUR wip/lead-b-migrate reviewed fresh (reviews/rev-lead-migrate.md): NO Blocker; EXECUTE grants/PUBLIC revokes/validation/least privilege are correct (REVOKE ALL then GRANT then read-back; set_cap to caps only). TWO Majors left open (not regressions): (1) the writer check `_money_table_writers` (migrate.py:995-1018) is unchanged: GRANT INSERT, UPDATE ON hadavin_caps (or hadavin_limits, or TRIGGER on a money table, or a column grant) to an UNNAMED role passes migrate and that role can raise any cap with `UPDATE hadavin_caps SET day_cap=1e9`: 'only the caps role can raise a cap' is not enforced for unnamed roles; (2) hadavin_set_cap (0011:423-463) records only the caller-supplied p_by and writes NO audit row: the caps role (which also has INSERT on audit_entries) can call it with no audit row and can forge audit rows: M4 is a role split, not an audit guarantee; cli.py:185 help 'write the change to the audit' overstates. Nits: stale 'reset login' text (0011:421, cli.py:133/144, postgres.py:1040/1059, protocol.py:180); the audit-owner test's match string also matches the older _owner_problems message; breaking operator step: migrate --caps-role + caps_credential_ref. Running: merge-c only.
 - 15:12 YOUR wip/lead-b-ts-watermark reviewed fresh (handover/core-a/reviews/rev-lead-tswm.md): NO Blocker/Major provable; the stop-year CHECK (2000..2100, NOT VALID then validate only if clean) is race-free; a planted far-future/far-past stop CANNOT defeat the switch (the gate read counts stops vs clears and ignores ts); the watermark removal is clean; DBs with the earlier 0009 are refused with a DROP hint. NOT a full clearance: the reviewer could not read the base migrate.py: PLEASE CONFIRM 0009 is absent from the released manifest on base 8996c3d6d. Nits: test_the_validate_step_gives_up_on_a_locked_table match='locked' is vacuous (use LockNotAvailable); validate_constraints swallows every OperationalError as 'locked'; --validate-constraints silently ignores --reset-draft/--accept-changed-draft; exit 0 'nothing' even when 0009 was never applied; the 'run migrate again' hint may need --reset-draft. Running: merge-c, rev-lead-migrate.
