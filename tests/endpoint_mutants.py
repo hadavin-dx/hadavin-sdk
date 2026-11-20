@@ -52,7 +52,7 @@ prints `NOT RUN HERE (win32, ...)` for each, lists them at the end and exits 3 (
 G7a: line 178 of `test_n2_before_crashes_and_nothing_was_written` is `assert fired == (..) and armed() is None`; only the
 second conjunct fails under the mutant, so the first E line is `assert (('...',) == ('...',)` with both sides equal, which
 no other fault gives (the `expect` carries the `AssertionError: assert ((` prefix).
-G29b is crash-accepted: without the unknown-principal refusal the next line, `principal.kind`, raises AttributeError on None.
+G29b (d-fix3): without the unknown-principal refusal the next line, `_field(principal, "kind", ..)`, raises a ConfigError with another text, so the kill is the failed `match=` (a message guard).
 
 One test of `tests/triggers/test_worker.py`, `test_main_without_a_triggers_block_exits_2`, takes the fixture `cfg_dir` from
 `tests/conftest.py`. The runner runs pytest with `--noconftest` on purpose, so under it that test errors at setup and the
@@ -1051,9 +1051,7 @@ M = [
         "        if False:\n",
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-principal]",
-        "'NoneType' object has no attribute 'kind'",
-        allow_crash=True,  # the next line, `principal.kind`, then fails on None: the refusal is gone, a crash shows it
-        crash_type="AttributeError",
+        "AssertionError: Regex pattern did not match.",  # d-fix3: None now gives the ConfigError of `_field`, other text
     ),
     mutant(
         "G29c check_senders does not refuse a principal that is not of kind service",
