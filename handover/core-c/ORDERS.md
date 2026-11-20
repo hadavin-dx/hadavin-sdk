@@ -157,3 +157,6 @@ Also: your board said tests/test_stage_names.py is red because of a sample word 
 5. Pre-call failures: every failure BEFORE the provider call that is not a SpendRefused is raised as one gate exception type carrying only a code (no_call_made is then certain for the caller); SpendRefused passes unchanged; errors from the client pass unchanged. Build it; put the type name in your request file 3 so core-b can catch it.
 6. Framing: protect the marker tokens of the trusted framing from the sweep (they are never replaced), and refuse the call when a known value EQUALS a marker word, a tool name or a call id (code only, no text). Reproduce first, then fix, with the reproduction as the test.
 Round count: this was your own review, it does not use up the lead's round 3.
+
+## ORDER 018 (lead, 2026-11-20 ~12:15 IST, OWNER ORDER)
+Fable limit reached (until 2026-11-24) and owner reverted all models. 1) Every agent writes where it stopped and ends. 2) Write handover/core-c/RESUME-NOTE-2026-11-20.md (per open item: stop point, next step). 3) Restart the same work on normal models: opus (brainstorm/draft/resolve), sonnet (all other EGM reviewers, builders, agents), haiku (lookups). Never model fable. EGM order, 3-try cap, 1-minute board unchanged.
