@@ -587,7 +587,7 @@ def test_tick_logs_the_drain_count_on_the_tick_logger(app, caplog):
 # psycopg's OperationalError/InterfaceError.
 # =========================================================================================================
 
-LAST = [tick.STEPS[-1]]
+LAST = [next(s for s in tick.STEPS if s.name == STEP)]
 # Stands for row text inside the database's own error message.
 REFUSAL = "REFUSALTEXT-must-not-leak"
 
