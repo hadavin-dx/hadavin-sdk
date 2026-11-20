@@ -29,6 +29,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick
 from hadavin_sdk.runtime.tick import run_tick
 from tests.conftest import qualify
+from tests.money_caps_seed import seed_registry_caps
 
 REPO = Path(__file__).resolve().parents[1]
 STEP = "audit_drain"
@@ -474,8 +475,13 @@ def pg(cfg_dir):
                 "purge_dsn_secret_name": "pg-purge",
             },
         )
-        qualify(load_registry(load_config(cfg_dir)))
-        yield _Pg(cfg_dir, runtime_dsn, PURGE_DSN[runtime_dsn])
+        registry = load_registry(load_config(cfg_dir))
+        qualify(registry)
+        out = _Pg(cfg_dir, runtime_dsn, PURGE_DSN[runtime_dsn])
+        seed_registry_caps(
+            out.admin_dsn, None, registry
+        )  # the owner seeds the caps: check_caps finds no drift
+        yield out
 
 
 def _close(*apps):
