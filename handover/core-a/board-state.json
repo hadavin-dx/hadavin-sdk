@@ -774,17 +774,17 @@
    "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
   },
   {
-   "id": "rev-wipc",
-   "role": "fresh independent reviewer (codebase-details), read-only",
+   "id": "wipc-nits",
+   "role": "builder in /home/user/wt/for-c",
    "model": "sonnet",
-   "what exactly it is doing": "review of the wip/core-a-for-c diff (tools.py error_reason, k5 exemption, tests, mutant)",
-   "started UTC": "13:12",
+   "what exactly it is doing": "review nits: non-vacuous straddle test, secrets=None surrogate test, docstring sentence, raising __str__ test",
+   "started UTC": "13:15",
    "expected end": "12 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1",
+   "review round n of cap": "-",
    "retries so far": 0,
-   "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
+   "reason": "rev-wipc nits"
   }
  ],
  "tests": [
@@ -3342,6 +3342,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "branch wip/core-a-for-c pushed (b1f502fe4): tools.py error_reason _sanitise(str(exc)) + docstring order; 4 surrogate tests (3 red before); mutant ER1 killed (CRASH); test_k5_producers exemption narrowed to error_reason + 4 tests incl. planted slice flagged; 7098 passed 1 skipped on the tools-importing tests"
+  },
+  {
+   "id": "rev-wipc",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of the wip/core-a-for-c diff (tools.py error_reason, k5 exemption, tests, mutant)",
+   "started UTC": "13:12",
+   "expected end": "12 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "review of wip/core-a-for-c: NO Blocker/Major; nits: one vacuous test (straddle case passes without _strip_fragment), no test for secrets=None path (agent_loop.py:314), docstring omits that the bound via _cut applies only with secrets, checker false negatives (walrus/AugAssign/tuple unpacking); fixes -> wipc-nits"
   }
  ]
 }
