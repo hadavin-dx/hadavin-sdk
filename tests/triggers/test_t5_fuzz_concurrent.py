@@ -101,7 +101,7 @@ EDGES = (-300, -299, -1, 0, 1, 299, 300)
 ACK_OR_REFUSAL = OK | {409, 503}  # what a request that reaches `start` may get
 DRIVE_TIMEOUT_S = 60.0
 THREAD_NAME = "fz-client"
-TS_PLAIN = re.compile(r"ts[+-]\d+|ts-zero-padded-12")
+TS_PLAIN = re.compile(r"ts[+-](0|1|299|300)|ts-zero-padded-12")
 REPORT: list[str] = []
 
 
@@ -137,14 +137,15 @@ def delays_short(rng: random.Random) -> float:
     return 0.0 if rng.random() < 0.6 else rng.uniform(0.002, 0.015)
 
 
-REVISION = re.compile(rb"revision\s+(\d+)")
+POOL_TEXT = re.compile(rb"checkout 5xx " + TOKEN.encode() + rb" from \S+, revision ([567])")
 
 
 def revision_of(document: bytes) -> str:
-    """The model is handed the document after the runtime's redaction (an address is replaced), so
-    its sha256 is not the row's. The revision number in the text is not changed: it is the bucket."""
-    found = REVISION.search(document)
-    return found.group(1).decode() if found else "none"
+    """The bucket of a document: the revision number of a pool document, else "other". The model is
+    handed the document after the runtime's redaction (an address and long tokens are replaced), so
+    its sha256 is not the row's; the revision of a pool document is not changed."""
+    found = POOL_TEXT.fullmatch(document)
+    return found.group(1).decode() if found else "other"
 
 
 class RecLLM(CountingLLM):
@@ -288,6 +289,7 @@ def make_stack2(
         registry=runtime.registry,
         runtime=runtime,
         store=runner_store,
+        trigger_secret=names.__getitem__,
         trigger_resolve=names.__getitem__,
     )
     return worker.make_app(app, clock=clock)
@@ -566,6 +568,17 @@ def sampling(ctx: Ctx, allowed: dict[str, tuple[str, str]], interval_s: float = 
             ctx.problem(None, "the sampler thread did not end")
 
 
+def threads_gone(baseline: set, timeout_s: float = 10.0) -> list[str]:
+    """Names of the threads started since `baseline` that are still alive after `timeout_s` (the pool
+    threads of a closed Runner end a moment after close returns)."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        left = [t.name for t in threading.enumerate() if t.ident not in baseline and t.is_alive()]
+        if not left or time.monotonic() > deadline:
+            return left
+        time.sleep(0.02)
+
+
 def settle(ctx: Ctx, timeout_s: float = 30.0) -> None:
     """Wait until no loop is running; then every slot must be free."""
     runner = ctx.runner
@@ -686,12 +699,7 @@ def finish(ctx: Ctx, baseline: set, run_one, lines: list[str], signatures: set[s
             ctx.problem(fresh, f"I7 a fresh valid request got {got.status} on a free pool")
     settle(ctx)
     ctx.runner.close()
-    deadline = time.monotonic() + 10
-    while time.monotonic() < deadline:
-        left = [t.name for t in threading.enumerate() if t.ident not in baseline and t.is_alive()]
-        if not left:
-            break
-        time.sleep(0.02)
+    left = threads_gone(baseline)
     assert not left, f"[{ctx.name} seed={ctx.seed}] I7 threads left: {left}"
     return {"retried": retried}
 
@@ -912,7 +920,7 @@ def test_c1b_the_two_503_paths_held_open_by_hand(tmp_path):
     finally:
         gate.set()
         runner.close()
-    left = [t.name for t in threading.enumerate() if t.ident not in baseline and t.is_alive()]
+    left = threads_gone(baseline)
     assert not left, f"threads left: {left}"
     say(
         "C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, "
@@ -1086,7 +1094,7 @@ def test_c4_raw_sockets_8_threads_against_the_quiet_server(tmp_path, capsys):
                             ctx.problem(rec.case, f"I8 the retry of a 503 got {again.status}")
                 settle(ctx)
             runner.close()
-            left = [t.name for t in threading.enumerate() if t.ident not in baseline]
+            left = threads_gone(baseline)
             assert not left, f"I7 threads left: {left}"
             assert all(s in OK for s in fresh_status), f"I7 afterwards: {fresh_status}"
             fail_on_problems(ctx)
@@ -1118,7 +1126,7 @@ def test_c4_raw_sockets_8_threads_against_the_quiet_server(tmp_path, capsys):
 def test_c6_runner_close_under_load(tmp_path, capsys):
     seed = SEEDS["c6"]
     baseline = {t.ident for t in threading.enumerate()}
-    jobs = build_jobs(seed, 2500, phase=25)
+    jobs = build_jobs(seed, 2500, phase=250)
     raw = MemoryStore()
     llm, clock = RecLLM(seed, delays_mixed), Clock()
     ctx = Ctx("C6", seed, llm=llm, clock=clock, max_running=2, ack_wait_s=2.0)
@@ -1143,9 +1151,13 @@ def test_c6_runner_close_under_load(tmp_path, capsys):
             with sampling(ctx, valid, 0.01):
                 problems: list[BaseException] = []
 
+                def paced(case: Case) -> None:
+                    time.sleep(0.002)  # the load goes on for a while after close
+                    op_inproc(ctx, case)
+
                 def guarded() -> None:
                     try:
-                        drive(ctx, jobs, lambda case: op_inproc(ctx, case), 8)
+                        drive(ctx, jobs, paced, 8)
                     except BaseException as exc:  # noqa: BLE001
                         problems.append(exc)
 
@@ -1194,12 +1206,7 @@ def test_c6_runner_close_under_load(tmp_path, capsys):
     finally:
         with contextlib.suppress(Exception):
             ctx.runner.close(0)
-    deadline = time.monotonic() + 10
-    while time.monotonic() < deadline:
-        left = [t.name for t in threading.enumerate() if t.ident not in baseline and t.is_alive()]
-        if not left:
-            break
-        time.sleep(0.02)
+    left = threads_gone(baseline)
     assert not left, f"I7 threads left: {left}"
     captured = capsys.readouterr()
     assert captured.err == "", f"[C6 seed={seed}] I7 stderr: {captured.err[:400]!r}"

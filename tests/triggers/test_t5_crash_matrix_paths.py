@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -53,14 +54,15 @@ import pytest
 from hadavin_sdk.approvals import FakeChannel
 from hadavin_sdk.approvals.cards import Delivery
 from hadavin_sdk.config import load_config
-from hadavin_sdk.models import ApprovalDecision, RunResult, RunState, now
+from hadavin_sdk.models import ApprovalDecision, Reply, RunResult, RunState, ToolCall, now
+from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick
 from hadavin_sdk.store import MemoryStore
 from hadavin_sdk.testing.crash import CrashPoints, SimulatedCrash
 from hadavin_sdk.triggers import worker
 from tests.contracts.kinds.store_postgres import pg_schema
 from tests.fixtures import k5_tools
-from tests.k5_support import ScriptLLM, build_runtime, k5_cfg
+from tests.k5_support import build_runtime, edit_config, k5_cfg
 from tests.triggers.crash_launcher import (
     AGENT,
     DSN_ENV,
@@ -214,9 +216,9 @@ APPROVE_ROWS: tuple[Row, ...] = (
     ("store.transition", "331 VERIFYING to SUCCEEDED (final)", _OK, 2, 1, _Q, 1, 1),
     ("audit.write_outcome", "332 state SUCCEEDED", _OK, 2, 1, _Q, 1, 1),
 )
-LEVEL_SUGGEST = {"rollout_undo": "suggest"}
 READ_SCRIPT = ({"tool": "app"}, {"noaction": True})
-PROPOSE_SCRIPT = ({"tool": "app"}, {"propose": {"host": "<IPV4_1>", "revision": "17"}})
+PROPOSE_SCRIPT = ({"tool": "app"}, {"propose": {"title": "Draft one", "amount": "12.50"}})
+ACTION = "create_draft_record"  # an http contract, reversible with a rollback: needs approval
 
 
 @dataclass(frozen=True)
@@ -224,7 +226,7 @@ class Path_:
     """One path: its config level, the model's script, its table and where a fresh run ends."""
 
     name: str
-    levels: dict | None
+    suggest: bool  # the action runs at level "suggest" (else "shadow")
     script: tuple[dict, ...]
     rows: tuple[Row, ...]
     start: tuple  # the state before the first row
@@ -234,9 +236,9 @@ class Path_:
 
 
 PATHS: dict[str, Path_] = {
-    "read": Path_("read", None, READ_SCRIPT, READ_ROWS, (None, 0, 0, None, 0, 0), "NO_ACTION", 1, "worker"),
-    "propose": Path_("propose", LEVEL_SUGGEST, PROPOSE_SCRIPT, PROPOSE_ROWS, (None, 0, 0, None, 0, 0), _WA, 1, "worker"),
-    "approve": Path_("approve", LEVEL_SUGGEST, PROPOSE_SCRIPT, APPROVE_ROWS, APPROVE_START, _OK, 1, "tick"),
+    "read": Path_("read", False, READ_SCRIPT, READ_ROWS, (None, 0, 0, None, 0, 0), "NO_ACTION", 1, "worker"),
+    "propose": Path_("propose", True, PROPOSE_SCRIPT, PROPOSE_ROWS, (None, 0, 0, None, 0, 0), _WA, 1, "worker"),
+    "approve": Path_("approve", True, PROPOSE_SCRIPT, APPROVE_ROWS, APPROVE_START, _OK, 1, "tick"),
 }  # fmt: skip
 
 
@@ -349,26 +351,27 @@ def _append(path: Path, line: str) -> None:
         out.write((line + "\n").encode("utf-8"))
 
 
-class PathLLM(ScriptLLM):
-    """A scripted model: the step follows from the messages, so a fresh run starts at step 1."""
+class PathLLM:
+    """A scripted model: the step follows from the messages, so a fresh run starts at step 1. A step
+    is a read-tool call, a proposal (`create_draft_record`, citing the last tool result) or nothing."""
 
     def __init__(self, script: tuple[dict, ...], files: Files) -> None:
-        super().__init__([])
         self._steps, self._files, self._lock = script, files, threading.Lock()
 
     def chat(self, messages, *, system, route, tools=None, documents=None, output_schema=None):
         with self._lock:
             _append(self._files.calls, "chat")
-            step = (len(messages) - 1) // 2
-            self.script = [self._steps[step] if step < len(self._steps) else {"noaction": True}]
-            return super().chat(
-                messages,
-                system=system,
-                route=route,
-                tools=tools,
-                documents=documents,
-                output_schema=output_schema,
-            )
+        index = (len(messages) - 1) // 2
+        step = self._steps[index] if index < len(self._steps) else {"noaction": True}
+        if "tool" in step:
+            call = ToolCall(name="read_logs", input={"name": step["tool"]})
+            return Reply(text="reading", tool_calls=[call], model_id="fake-model")
+        if "propose" in step:
+            ids = re.findall(r"call_id=(\S+?)[ >]", json.dumps(messages))
+            inputs = {**step["propose"], "evidence": ids[-1:]}
+            call = ToolCall(name=ACTION, input=inputs)
+            return Reply(text="A draft is needed.", tool_calls=[call], model_id="fake-model")
+        return Reply(text="Nothing to do.", model_id="fake-model")
 
 
 class CountingBox:
@@ -542,8 +545,30 @@ def _expected_log(path: Path_) -> list[str]:
     return [f"{row[0]}:{edge}" for row in path.rows for edge in ("before", "after")]
 
 
-def _config(tmp_path: Path, path: Path_) -> Path:
-    return k5_cfg(tmp_path / "w", levels=path.levels)
+def make_config(home: Path, path: Path_) -> Path:
+    """The tooled test agent of k5_support. A path at "suggest" needs the contract of an executor
+    that is not `none` and, for a tooled agent, a green replay record: the record is written for the
+    config as it is at "shadow" (the config hash does not cover levels), then the level is raised."""
+    cfg = k5_cfg(home, levels={ACTION: "shadow"} if path.suggest else None)
+    if path.suggest:
+        reg = load_registry(load_config(cfg))
+        agent = reg.agents[AGENT]
+        record = {
+            "agent_id": AGENT,
+            "config_hash": reg.config_hash(AGENT),
+            "model_id": reg.config.routes[agent.model_route].model_id,
+            "prompt_sha256": reg.prompt_sha256(AGENT),
+            "bundle_sha256": "b" * 64,
+            "k": 3,
+            "pass_k": 1.0,
+            "pass_rate": 1.0,
+            "threshold": 1.0,
+            "green": True,
+            "ts": "2026-11-01T00:00:00+00:00",
+        }
+        (cfg / "replay-records.jsonl").write_text(json.dumps(record) + "\n", encoding="utf-8")
+        edit_config(cfg, lambda d: d[0]["levels"].update({ACTION: "suggest"}), "agents.yaml")
+    return cfg
 
 
 @pytest.mark.parametrize("name", list(PATHS))
@@ -551,7 +576,11 @@ def test_trace_of_a_path_without_a_crash_matches_its_table(name, tmp_path):
     """Replays the path in this process with a recorder in every wrap point: the sequence of wrapped
     calls equals the table, and the counters at the end equal the last row."""
     path = PATHS[name]
-    config_dir, store, files = _config(tmp_path, path), MemoryStore(), Files(tmp_path / "state")
+    config_dir, store, files = (
+        make_config(tmp_path / "w", path),
+        MemoryStore(),
+        Files(tmp_path / "state"),
+    )
     run_id = _run_id(SENDER, KEY)
     if path.via == "tick":
         start_waiting_run(build_stack(config_dir, store, files, path), store, run_id)
@@ -753,7 +782,7 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
     body, run_id = wire_body(KEY, DOCUMENT), _run_id(SENDER, KEY)
     identity = (run_id, AGENT, PRINCIPAL, _ref(SENDER, KEY, DOCUMENT))
     home = tmp_path / "w"
-    config_dir, files = k5_cfg(home, levels=path.levels), Files(home / "state")
+    config_dir, files = make_config(home, path), Files(home / "state")
     ack_status, ack_data = None, b""
     if path.via == "tick":  # the setup: a run that waits, and the person's approval
         conn, store = _pg_store(dsn)
@@ -866,7 +895,11 @@ def test_memory_raise_at_point(point: Point, tmp_path):
     path = PATHS[point.path]
     body, run_id = wire_body(KEY, DOCUMENT), _run_id(SENDER, KEY)
     identity = (run_id, AGENT, PRINCIPAL, _ref(SENDER, KEY, DOCUMENT))
-    config_dir, files, store = _config(tmp_path, path), Files(tmp_path / "state"), MemoryStore()
+    config_dir, files, store = (
+        make_config(tmp_path / "w", path),
+        Files(tmp_path / "state"),
+        MemoryStore(),
+    )
     ack_status, ack_data = None, b""
     if path.via == "tick":
         start_waiting_run(build_stack(config_dir, store, files, path), store, run_id)
