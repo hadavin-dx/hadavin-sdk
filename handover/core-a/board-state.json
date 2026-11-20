@@ -1,5 +1,5 @@
 {
- "order": "014 (002 to 013 standing)",
+ "order": "015 (002 to 014 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
  "next": "trial lands: record findings; at every board: look for core-b's requests/001.answer.md",
@@ -267,6 +267,15 @@
    "evidence file": "",
    "tries": 0,
    "reason": "CORRECTION of my last board: core-b's requests/001.answer.md DOES exist (written 05:33Z, built 05:38Z) but it answers DRAFT 1: the worker would read app.secrets.get(name), the whole secret store. The bound reader that ORDER 014 names is not in it yet. I wait for that version and check at every board"
+  },
+  {
+   "item": "O15",
+   "what": "fix the n8n template from the lead's run in a real n8n 2.47.7 (8 fixes: Set node version, webhook id, secret only through a crypto credential, status field, retry numbers, guard answers the caller, publish step, guard before hash)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "inputs/lead-evidence-n8n-1.md (lead), raw/n8n-template-tests-2.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 015. My outline was WRONG in 4 places a real n8n showed: Set nodes built nothing, the webhook URL answered 404, the secret way did not work on default settings, the status field name was wrong"
   }
  ],
  "agents": [
@@ -555,6 +564,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "ORDER 014 item 1; only 1 agent runs: item 2 needs no work (scripts exist), item 3 waits for core-b, and the trial is one indivisible job on one database and one worktree"
+  },
+  {
+   "id": "o15-n8n",
+   "role": "builder (templates and text)",
+   "model": "fable",
+   "what exactly it is doing": "applies the 8 observed fixes to the two workflow files, the README and the template checks",
+   "started UTC": "06:13",
+   "expected end": "about 20 min after start",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "ORDER 015; 2 agents run (trial integration, n8n fix)"
   }
  ],
  "tests": [
@@ -801,6 +823,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "ORDER 015 read at 06:13Z: fixing the template now. Note: the edited files will follow your evidence but nobody will have re-imported THAT version; a second import on your n8n is needed before a client sees it",
   "ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so",
   "Item 3: core-b's answer file exists but is the DRAFT 1 answer (App.secrets = the whole store, max_running default 4, body cap 262144). I do not switch the worker to the whole store (finding F3); I wait for the bound-reader version",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",

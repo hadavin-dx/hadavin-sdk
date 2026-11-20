@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:13:06Z
+UPDATED_UTC: 2026-11-20T06:13:42Z
 SESSION: core-a
-ORDER: 014 (002 to 013 standing)
+ORDER: 015 (002 to 014 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 29
-ITEMS_OPEN: 4
-PERCENT: 93
-AGENTS_RUNNING: 1
-CAPACITY: load 0.30 of 4 cores (1-minute average), mem 0.7/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.7G 60G 15%; 522M /home/user/hadavin-sdk; 74M /tmp/claude-0; 131M /root/.cache
+ITEMS_TOTAL: 30
+ITEMS_OPEN: 5
+PERCENT: 90
+AGENTS_RUNNING: 2
+CAPACITY: load 0.24 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.7G 60G 15%; 522M /home/user/hadavin-sdk; 76M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: trial lands: record findings; at every board: look for core-b's requests/001.answer.md
-PUSHED_UTC: 2026-11-20T06:12:54Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:13:10Z (the push before this board)
 NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before
 
 ## QUEUE ITEMS
@@ -49,6 +49,7 @@ NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scr
 | O14-1 | TRIAL INTEGRATION: combined tree of core-b, core-c and core-a code paths in a scratch worktree from main; conflicts, name mismatches, ONE whole-suite run on PostgreSQL 16; findings only, nothing pushed | RUNNING | 5 | TRIAL-INTEGRATION.md, raw/TRIAL-*.log (not yet) | 1 | ORDER 014 item 1 (most valuable) |
 | O14-2 | missing mutant scripts for core-b's steps (audit drain, price) | SKIPPED (they exist) | 100 | git ls-tree origin/cloud/core-b: tests/audit_drain_mutants.py and tests/price_mutants.py are there (also stop_state_mutants.py) | 0 | ORDER 014 item 2 says: check first, skip any that exist. Both exist on core-b's branch at 06:12Z, so nothing to write. NOT done: I did not run or review core-b's scripts |
 | O14-3 | switch the worker to core-b's bound reader and run the worker start test for real | WAIT core-b | 0 |  | 0 | CORRECTION of my last board: core-b's requests/001.answer.md DOES exist (written 05:33Z, built 05:38Z) but it answers DRAFT 1: the worker would read app.secrets.get(name), the whole secret store. The bound reader that ORDER 014 names is not in it yet. I wait for that version and check at every board |
+| O15 | fix the n8n template from the lead's run in a real n8n 2.47.7 (8 fixes: Set node version, webhook id, secret only through a crypto credential, status field, retry numbers, guard answers the caller, publish step, guard before hash) | RUNNING | 5 | inputs/lead-evidence-n8n-1.md (lead), raw/n8n-template-tests-2.log (not yet) | 1 | ORDER 015. My outline was WRONG in 4 places a real n8n showed: Set nodes built nothing, the webhook URL answered 404, the secret way did not work on default settings, the status field name was wrong |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -75,6 +76,7 @@ NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scr
 | o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | ended | 100 | done | n/a | 0 | finished; ran its own file 6 times in total although told once |
 | o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | ended | 100 | done | n/a | 0 | finished |
 | o14-trial | evidence runner (integration trial, fixes nothing) | fable | builds the combined tree in a scratch worktree, lists conflicts and mismatches, runs the whole suite once on PostgreSQL 16, classifies failures; owns the local PostgreSQL start and stop | 06:12 | about 60 min after start | 5 | running | n/a | 0 | ORDER 014 item 1; only 1 agent runs: item 2 needs no work (scripts exist), item 3 waits for core-b, and the trial is one indivisible job on one database and one worktree |
+| o15-n8n | builder (templates and text) | fable | applies the 8 observed fixes to the two workflow files, the README and the template checks | 06:13 | about 20 min after start | 5 | running | n/a | 0 | ORDER 015; 2 agents run (trial integration, n8n fix) |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
@@ -127,6 +129,7 @@ NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scr
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- ORDER 015 read at 06:13Z: fixing the template now. Note: the edited files will follow your evidence but nobody will have re-imported THAT version; a second import on your n8n is needed before a client sees it
 - ORDER 014 read at 06:12Z. Item 2: NOTHING written, because core-b already has tests/audit_drain_mutants.py and tests/price_mutants.py. If you wanted an independent second script or a review of core-b's, say so
 - Item 3: core-b's answer file exists but is the DRAFT 1 answer (App.secrets = the whole store, max_running default 4, body cap 262144). I do not switch the worker to the whole store (finding F3); I wait for the bound-reader version
 - Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here
