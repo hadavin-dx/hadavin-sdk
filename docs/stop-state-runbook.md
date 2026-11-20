@@ -233,6 +233,52 @@ runtime and not the reset login):
 Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
 that really was billed is then missing from the counters.
 
+## Caps live in a table the runtime cannot write
+The day and month spend cap of every agent is read by the database from the table `hadavin_caps` (migration 0011).
+The runtime login has no right on that table and cannot run `hadavin_set_cap`; only the reset login can write a cap.
+The registry (`budget_usd`) stays the source you edit; an operator copies it into the table with `limits sync-caps`.
+Where the two differ, the TABLE wins on PostgreSQL (the memory store has no table and compares the caps a caller passes).
+
+- TODO-E2 (flip when the reserve function reads the table and the 7-argument form is gone): replace the next line with
+  "the runtime login can neither lower a booked amount nor choose or raise a cap".
+- UNTIL THEN, verbatim: "a compromised runtime login can bypass the cap but cannot lower a booked amount".
+
+Deploy, in this order (there is no rolling upgrade):
+1. Stop the tick scheduler and every runtime-side process.
+2. Provision a reset login (every PostgreSQL deployment needs one now, dev and CI too) and run `hadavin-sdk migrate`
+   naming ALL roles, including `--reset-role <role>`. Migrate creates the table EMPTY and never guesses or overwrites a cap.
+3. Store the reset login's DSN as a secret and set `backends.store.reset_credential_ref` to its NAME (not the runtime,
+   purge or release secret; not the same login under another name).
+4. `hadavin-sdk limits sync-caps --by WHO --yes`.
+5. Start, then run one smoke `tick`.
+EVERY RUN IS REFUSED (`limits_unavailable`, for every agent) UNTIL `sync-caps` HAS COMPLETED: an agent with no row is
+refused, fail closed. A new agent is refused the same way until its caps are synced.
+
+Commands (all under the reset login; they refuse BEFORE any connection when `reset_credential_ref` is missing or
+collides with a runtime secret, in every environment; the memory store is refused: "this store has no cap table"):
+- `hadavin-sdk limits set-cap AGENT --day USD --month USD --by WHO [--yes]`: one agent. The audit intent row is
+  written first, then the cap, then the outcome row (`set_cap_failed` when the write failed). The agent must be live or
+  draft in the registry. If the values differ from the registry it says so: the tick then alerts until they agree.
+- `hadavin-sdk limits sync-caps --by WHO [--yes]`: prints the state of every live and draft agent (`same`,
+  `differs`, `missing`), then writes the ones that are not `same`: ONE intent and ONE outcome per agent, STOPPING at the
+  first failure. A re-run skips what is already equal, so after a failure fix the cause and run the same command again.
+  Retired agents are not synced and not deleted (their row stays, harmless) and are not reported.
+- `hadavin-sdk limits check-caps`: read-only, writes no audit line. Exit 0 only when every live and draft agent matches;
+  exit 1 on any difference or missing row. Run it in CI after a registry change.
+Without `--yes` a run that is not interactive is refused (exit 2).
+Exit codes: 0 done; 1 (`check-caps` only) a difference or a missing row; 2 refused (config, missing or colliding reset
+ref, bad argument, unknown or retired agent, no `--yes`, or the login lacks the right); 3 the audit store is unavailable
+(nothing changed); 4 the store is unreachable; 5 the cap IS written but its outcome row could not be audited (the audit
+holds the intent row alone: record it by hand, do not repeat the write).
+
+Drift is loud: the tick step `check_caps` (runtime login, read-only `hadavin_cap_matches`) fails the tick (exit 1, an
+ERROR line `step=check_caps` naming agent ids and `differs` or `missing`, never a value) while any live or draft agent
+differs. A cap LOWERED in the registry and not synced would otherwise stay high in the table; a cap RAISED and not
+synced is the safe direction (the agent is refused at the lower table value) but is reported the same way. The fix is
+`limits sync-caps`.
+Residual: the audit line is written by the CLI, not by the function, so a stolen reset login can call `hadavin_set_cap`
+directly with no audit line (the same is true of `release-expired`). Keep the reset login off the runtime machines.
+
 ## After the upgrade to 0009: validate the stop-year constraints
 0009 adds `kill_switch_stops_ts_range` and `kill_switch_clears_ts_range` as NOT VALID: every new row is checked, rows
 already there are not, so the upgrade cannot fail on a database holding a planted `ts` (the stop tables are

@@ -3,9 +3,19 @@
 ## Unreleased
 
 ### Added
+- `limits set-cap AGENT --day --month --by`, `limits sync-caps --by` and `limits check-caps` (F-money-definer step 6): the spend caps live in the table `hadavin_caps`, written only under the reset login (intent audited first, one intent and one outcome per agent, stop at the first failure, idempotent re-run). `check-caps` exits 1 on any difference or missing row. New tick step `check_caps` (runtime login, read-only) fails the tick while a live or draft agent's registry caps differ from the table. `limits stop` and `limits reset` are unchanged.
 - `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
 
 ### Upgrade steps
+- **Every Postgres deployment now needs a reset login, and every run is refused until the caps are synced (F-money-definer step 6, migration 0011).**
+  - Deploy order: stop the tick and every runtime-side process; `migrate` naming ALL roles including `--reset-role`;
+    set `backends.store.reset_credential_ref`; `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke tick.
+    Migrate creates the caps table empty and never seeds it, so until `sync-caps` completes every agent is refused
+    (`limits_unavailable`). There is no rolling upgrade. See "Caps live in a table the runtime cannot write" in
+    `docs/stop-state-runbook.md`.
+  - TODO-E2: the sentence "the runtime login can neither lower a booked amount nor choose or raise a cap" becomes true
+    when the reserve function reads the table; until then "a compromised runtime login can bypass the cap but cannot
+    lower a booked amount" stands.
 - **`migrate` now refuses a database whose `hadavin_*` functions or money tables have more than one owner (F-money-definer, migration 0011).**
   - **What changed.** Every `hadavin_*` function must have the same owner, that owner must not be a named role (or
     a role a named role is a member of), and `spend`, `spend_month`, `spend_reservations`, `runs` and the new
