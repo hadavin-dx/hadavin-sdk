@@ -22,12 +22,37 @@
     state back and reports the real state: it exits 2 and says "still ON" when a stop is still open, and a reset
     that finds no `kill_switch` row fails (exit 2, `limits.reset_failed`).
   - **`migrate` with any role named** refuses when another role (not a superuser, the owner or the named reset role)
-    could clear a stop; a plain `migrate` with no role leaves old grants in place.
+    could clear a stop. A plain `migrate` that names no role is now refused (exit 2) unless `--no-roles` is given (see
+    the next entry).
   - **New behaviour in a run.** When the stop state or the budgets cannot be read, the run ends with a person
     (`NEEDS_PERSON`, reason `limits_unavailable`, or `recheck.limits_unavailable` just before an approved action); no
     model call is made.
   - **New audit operation** `limits.reset_failed` (result `on`): a reset the database refused.
   - **Stated limits** are in `SECURITY.md` (Stop). Steps: `docs/stop-state-runbook.md`.
+- **Breaking: search_path, role names and `--no-roles` (E5; hostile reviews 1 to 6).** Upgrade steps, in this order:
+  (0) stop every runtime process. (1) For EVERY login (runtime, portal, purge, reset, release) check `SHOW search_path;`
+  as that login. A process now **refuses to start** when the effective `search_path` of its login is not exactly the
+  configured schema, and for the runtime, purge, reset and release logins alike. The stock unpinned login on
+  `"$user", public` with the tables in `public` starts unchanged. A login that has a schema of its own name, a database
+  or role default other than `public` (for example `ALTER DATABASE x SET search_path = app`, which the old runbook told
+  you to set), or a default such as `app, public` is refused at start. (2) Pin the schema in the DSN of each login,
+  `options=-c search_path=<schema>` (a value with a space needs the libpq escape `app,\ public`), or make the role
+  default equal to the schema. (3) Set the new setting `backends.store.db_schema` to the same schema. It is the
+  EXPECTED schema (the check); it does not choose the schema of the login, and a login that is not pinned still
+  refuses. (4) Run `hadavin-sdk migrate` naming ALL roles in ONE command. (5) Deploy.
+  - **`migrate` and role defaults.** For a named role whose default `search_path` is not the migrated schema, migrate no
+    longer erases it (a role default reaches every database of the server). A default set for this database only is
+    reset. A role-wide default is kept and `ALTER ROLE r IN DATABASE <this database> SET search_path = <schema>` is
+    written, so only this database is pinned. Every change is printed on stderr (`changed: role, database, old value,
+    new value`) and logged by `hadavin_sdk.migrate`. Roles that are not named are never touched. A database-wide or
+    server-wide default is refused. `ALTER ROLE` needs a migrate login with CREATEROLE and the ADMIN OPTION on the role
+    (PostgreSQL 16 and later), otherwise migrate refuses (exit 2) and names the role.
+  - **`migrate` with no role named exits 2** unless `--no-roles`. Every script that ran a plain `migrate` after an
+    upgrade now fails until it names the roles. `--no-roles` is for the first install (before the roles exist): it grants
+    and checks nothing, so do not use it on an existing deployment, where old grants stay in place.
+  - **PostgreSQL 17 `MAINTAIN`.** From 17 migrate revokes MAINTAIN (it allows `LOCK TABLE`) on `kill_switch`,
+    `kill_switch_stops` and `kill_switch_clears` from PUBLIC and every role but the owner, and refuses a named role that
+    still holds it through `pg_maintain`. The store connection sets `lock_timeout`.
 - **Breaking: the worst-case cost of a model call can be booked before the call (migration `0007_spend_reservations.sql`).**
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction

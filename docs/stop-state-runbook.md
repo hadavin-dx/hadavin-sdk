@@ -10,7 +10,8 @@ Clearing a stop (a reset) needs a separate database login, so that the agent's o
    but the database owner can reset. Name all the roles in ONE command. A `migrate` that names no role at all is
    refused ("no role is named"): it would apply the schema and never check who can clear a stop. `migrate --no-roles`
    is the explicit way to apply the schema only (the first install, before the roles exist); it grants and checks
-   nothing, so run the full command right after. A migrate without `--runtime-role` applies no grants, so an old runtime login keeps UPDATE on `kill_switch` and gets nothing on the new tables (its
+   nothing, so run the full command right after; do not use it on an existing deployment (old grants stay, nothing is
+   checked). A migrate without `--runtime-role` applies no grants, so an old runtime login keeps UPDATE on `kill_switch` and gets nothing on the new tables (its
    stop then fails with exit 2). Whenever a role is named, migrate reads the grants on THIS schema's `kill_switch`
    (UPDATE) and `kill_switch_clears` (INSERT) and refuses if anyone but the named reset role could clear a stop:
    a role those tables grant the right to (a column grant counts; a grant to everyone is named `PUBLIC`), or a
@@ -73,18 +74,25 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
   Before this change (2026-11-20) the ADMIN-only creator and the CREATEROLE login below 16 were not listed.
 - migrate refuses (ConfigError that names the schema and the search_path) when the three stop tables are not all
   found in the schema the store uses (an empty search_path, a schema without the tables, a missing table, or a
-  temporary table with a stop table's name): a check that finds nothing never passes. Set the same search_path for
-  the migrate and the runtime login.
+  temporary table with a stop table's name): a check that finds nothing never passes. Pin the same schema for the
+  migrate and the runtime login with `options=-c search_path=<schema>` in each DSN.
 - The search path (E5, 2026-11-20). A login may change its OWN default (`ALTER ROLE <runtime> SET search_path = x`),
   and a decoy schema it owns could then hold a stop table that says OFF. Two defences: (1) the store checks at
   start-up that the effective search_path of its connection is exactly the configured schema (`backends.store.db_schema`,
   else the schema the DSN pins with `options=-c search_path=<schema>`, else `public`) and that `kill_switch` is found
   in `current_schema()`; otherwise it refuses to start and the message names the schema it found. Pin the path in the
-  DSN (it overrides any role default) or set the role default to the schema. (2) migrate, for every role it is
-  given, resets a role-level or role-in-database `search_path` default that is not the migrated schema, and refuses
-  a database-wide or server-wide default that is not the schema (reset it as a role that may: `ALTER DATABASE x RESET
-  search_path`). Not covered: a role default set AFTER start-up changes only new connections, which the start-up
-  check refuses; `PGOPTIONS` in the environment overrides a DSN-less path and is refused the same way.
+  DSN (it overrides any role default; a value with a space needs the libpq escape, `app,\ public`) or make the role
+  default equal to the schema. `backends.store.db_schema` is only the EXPECTED schema: it does not choose the schema
+  of the login, so set it to the same schema that you pinned. A role default or database default such as `app, public`
+  or `app` is refused unless it is exactly the configured schema. (2) migrate, for every role it is given, never
+  erases a role default (it reaches every database of the server): a default for this database only is reset, and a
+  role-wide default that is not the schema is kept and overridden by `ALTER ROLE r IN DATABASE <this database> SET
+  search_path = <schema>`. Each change is printed on stderr (`changed: ...`: role, database, old value, new value) and
+  logged; roles not named are never touched. It needs a migrate login with CREATEROLE and the ADMIN OPTION on the role
+  (PostgreSQL 16 and later), otherwise it refuses and names the role. A database-wide or server-wide default that is
+  not the schema is refused (reset it as a role that may: `ALTER DATABASE x RESET search_path`). Not covered: a role
+  default set AFTER start-up changes only new connections, which the start-up check refuses; `PGOPTIONS` in the
+  environment overrides a DSN-less path and is refused the same way.
 - PostgreSQL 17 MAINTAIN (E5). The MAINTAIN right lets its holder LOCK a table in any mode, so a runtime login that
   held it could block every read of the stop. From 17, migrate revokes MAINTAIN on the three stop tables from every
   role but the owner (and from PUBLIC) and refuses when a named role still holds it (membership in `pg_maintain`:

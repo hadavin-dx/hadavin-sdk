@@ -34,8 +34,8 @@ in a role that holds one (or in the reset role), through UPDATE, DELETE or TRUNC
 `kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE,
 from 16 every holder of the ADMIN option on such a role or on the reset role (so the login that created the reset role
 is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
-uses. A plain `migrate` that names no role applies and checks no grants and leaves old ones in place, so name all roles
-in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the
+uses. A `migrate` that names no role is refused (exit 2) unless `--no-roles` is given, which applies the schema and checks
+and grants nothing (first install only), so name all roles in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the
 runtime login must not own the schema), superusers and managed-database admin roles that are not superusers
 (`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`), SECURITY DEFINER functions or views of a privileged role
 (review them), and a role whose only path is membership in the owner role, in a superuser or in a PostgreSQL predefined
