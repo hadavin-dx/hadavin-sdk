@@ -27,3 +27,47 @@ bringing up nodes...
 ........................................................................ [ 94%]
 ........................................................................ [ 99%]
 ..                                                                       [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C1/1 seed=2026112041: sent=1503 valid=1017 (68%) rows=50 overlapping_keys=39 samples=35 model_calls=50 statuses[200:302, 202:6, 400:271, 401:135, 404:33, 405:29, 409:208, 413:18, 503:501] retried_503=501
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C1/2 seed=2026112042: sent=1515 valid=1045 (69%) rows=53 overlapping_keys=34 samples=48 model_calls=53 statuses[200:274, 202:10, 400:251, 401:148, 404:32, 405:21, 409:249, 413:18, 503:512] retried_503=512
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C1/4 seed=2026112043: sent=1010 valid=544 (54%) rows=57 overlapping_keys=39 samples=86 model_calls=57 statuses[200:211, 202:87, 400:245, 401:156, 404:26, 405:23, 409:241, 413:16, 503:5] retried_503=5
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:914: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C2 seed=2026112044: sent=1366 valid=733 (54%) rows=60 overlapping_keys=42 samples=150 model_calls=60 statuses[200:295, 202:68, 400:346, 401:194, 404:37, 405:34, 409:307, 413:22, 503:63] retried_503=63 get_run_calls=1136 raised=57 slowed=307
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C3 seed=2026112045: sent=1509 valid=196 (13%) rows=51 overlapping_keys=22 samples=121 model_calls=51 statuses[200:84, 202:49, 400:152, 401:1059, 404:36, 405:35, 409:57, 413:31, 503:6] retried_503=6 clock_calls=1334 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=34 samples=26 model_calls=48 statuses[200:59, 202:109, 400:117, 401:78, 404:13, 405:13, 409:106, 413:8] retried_503=0
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:1102: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=103 no_answer=14 retried_503=0 statuses[0:14, 200:62, 202:172, 400:110, 401:45, 404:7, 405:13, 409:20, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/ev6-b/tests/triggers/test_t5_fuzz_concurrent.py:700: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=38 overlapping_keys=33 samples=212 model_calls=38 statuses[200:258, 202:39, 400:625, 401:382, 404:60, 405:68, 409:126, 413:44, 503:902] close_took=0.05s requests_after_close=1115 new_keys_after_close=894
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/triggers/test_endpoint.py:826: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_endpoint.py:809: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_t5_strict_mode.py:45: this tree has core-b's trigger config: the module runs for real
+SKIPPED [1] tests/triggers/test_t5_strict_mode.py:54: this tree has core-b's trigger config: the module runs for real
+1294 passed, 4 skipped, 9 warnings in 182.20s (0:03:02)
