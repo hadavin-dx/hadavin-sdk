@@ -180,4 +180,351 @@ ss.sssss.ssssss.ssss.sss.sss.sss.ssss.ssss.ssss.sss.s.ssssssss.......... [  8%]
 ........................................................................ [ 98%]
 ........................................................................ [ 99%]
 ........................................................................ [ 99%]
-.............................
+.................................                                        [100%]
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
+[gw1] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
+shared = 'user=postgres dbname=askdata_h_c813db94 host=127.0.0.1 port=55433'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f237982a8a0>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+[gw1] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'
+E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+__________ test_pg_kill_at_point[read31-audit.write_outcome-4-after] ___________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+point = Point(id='read31-audit.write_outcome-4-after', path='read', point='audit.write_outcome:after', nth=4, where='332 state NO_ACTION', row='NO_ACTION', llm=2, tool=1, req=None, cards=0, acts=0)
+dsn = "user=postgres dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_53b1dfde4e7e'"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-882/popen-gw2/test_pg_kill_at_point_read31_a1')
+
+    @pytest.mark.parametrize("point", _all(XFAIL_PG))
+    def test_pg_kill_at_point(point: Point, dsn, tmp_path):
+        """Kill the process at `point` on PostgreSQL; restart; (a) the same request again before any
+        tick; (b) the tick steps a later clock; (c) the request again. Checks the invariants."""
+        path = PATHS[point.path]
+        body, run_id = wire_body(KEY, DOCUMENT), _run_id(SENDER, KEY)
+        identity = (run_id, AGENT, PRINCIPAL, _ref(SENDER, KEY, DOCUMENT))
+        home = tmp_path / "w"
+        config_dir, files = make_config(home, path), Files(home / "state")
+        ack_status, ack_data = None, b""
+        if path.via == "tick":  # the setup: a run that waits, and the person's approval
+            conn, store = _pg_store(dsn)
+            try:
+                start_waiting_run(build_stack(config_dir, store, files, path), store, run_id)
+            finally:
+                conn.close()
+        flag = _arm(tmp_path, "w", point.point, point.nth)
+        if path.via == "worker":
+            with _child(tmp_path, dsn, "serve", path) as child:
+                ack_status, ack_data = signed_post(child.port, body, SECRET)
+                _killed(child)
+        else:
+            with _child(tmp_path, dsn, "tick", path) as child:
+                _killed(child)
+        assert not flag.exists()
+        _backends_gone(dsn, _tag(tmp_path))
+    
+        rows = _rows(dsn)
+        assert len(rows) <= 1 and all(found[:4] == identity for found in rows)
+        row = rows[0][4] if rows else None
+        req = req_state(_pg_requests(dsn))
+        calls_at_kill = files.model_calls()
+        at_kill = (
+            row,
+            calls_at_kill,
+            len(files.tool_calls()),
+            req,
+            files.cards(),
+            len(files.executed()),
+        )
+        assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
+        assert ack_status in ((None,) if row is None else (None, 202, 200)), (ack_status, ack_data)
+        if ack_status in OK:
+>           assert rows and json.loads(ack_data)["run_id"] == run_id
+                            ^^^^^^^^^^^^^^^^^^^^
+
+tests/triggers/test_t5_crash_matrix_paths.py:822: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/json/__init__.py:352: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/json/decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x7f3c81d9c830>, s = '', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.13/json/decoder.py:363: JSONDecodeError
+___ test_1_starts_answers_a_signed_request_and_stops_on_sigterm_with_exit_0 ____
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+____________ test_2a_a_secret_shorter_than_32_characters_is_refused ____________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+____________ test_2b_two_senders_with_one_secret_value_are_refused _____________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+___________ test_2c_a_sender_whose_agent_is_not_qualified_is_refused ___________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+______ test_2d_a_host_that_is_not_loopback_needs_the_command_line_switch _______
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+_______________ test_2e_a_port_already_in_use_is_a_config_error ________________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+__________ test_3_the_worker_asks_only_for_the_names_the_senders_list __________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+__________________ test_main_without_a_triggers_block_exits_2 __________________
+[gw1] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+____________ test_d1_main_refuses_to_start_without_a_triggers_block ____________
+[gw2] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+____ test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker ____
+[gw1] linux -- Python 3.13.18 /home/user/hadavin-sdk/.venv/bin/python
+
+    def test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker():
+        from hadavin_sdk import defaults
+    
+        for ours, theirs in (
+            (worker.MAX_RUNNING_CEILING, "TRIGGER_MAX_RUNNING_CEILING"),
+            (worker.ACK_WAIT_S, "TRIGGER_ACK_WAIT_S"),
+            (worker.ACK_WAIT_S_CEILING, "TRIGGER_ACK_WAIT_S_CEILING"),
+        ):
+            if hasattr(defaults, theirs):  # only on a tree that has core-b's defaults
+                assert ours == getattr(defaults, theirs), theirs
+            elif strict():
+>               pytest.fail(f"the strict switch is on: defaults.{theirs} is not on this tree")
+E               Failed: the strict switch is on: defaults.TRIGGER_MAX_RUNNING_CEILING is not on this tree
+
+tests/triggers/test_worker.py:1285: Failed
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:1121: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=99 no_answer=14 retried_503=0 statuses[0:14, 200:89, 202:145, 400:110, 401:45, 404:7, 405:13, 409:20, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=37 overlapping_keys=14 samples=155 model_calls=37 statuses[200:232, 202:44, 400:625, 401:382, 404:60, 405:68, 409:146, 413:44, 503:903] close_took=0.00s requests_after_close=1146 new_keys_after_close=894
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/1 seed=2026112041: sent=1494 valid=1008 (67%) rows=50 overlapping_keys=42 samples=63 model_calls=50 statuses[200:310, 202:11, 400:271, 401:135, 404:33, 405:29, 409:195, 413:18, 503:492] retried_503=492
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/2 seed=2026112042: sent=1507 valid=1037 (69%) rows=53 overlapping_keys=41 samples=60 model_calls=53 statuses[200:291, 202:25, 400:251, 401:148, 404:32, 405:21, 409:217, 413:18, 503:504] retried_503=504
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/4 seed=2026112043: sent=1007 valid=541 (54%) rows=57 overlapping_keys=42 samples=79 model_calls=57 statuses[200:212, 202:118, 400:245, 401:156, 404:26, 405:23, 409:209, 413:16, 503:2] retried_503=2
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:933: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C2 seed=2026112044: sent=1363 valid=730 (54%) rows=60 overlapping_keys=40 samples=130 model_calls=60 statuses[200:320, 202:76, 400:346, 401:194, 404:37, 405:34, 409:274, 413:22, 503:60] retried_503=60 get_run_calls=1162 raised=57 slowed=313
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C3 seed=2026112045: sent=1507 valid=194 (13%) rows=51 overlapping_keys=27 samples=105 model_calls=51 statuses[200:80, 202:46, 400:152, 401:1059, 404:36, 405:35, 409:64, 413:31, 503:4] retried_503=4 clock_calls=1332 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=34 samples=28 model_calls=48 statuses[200:69, 202:114, 400:117, 401:78, 404:13, 405:13, 409:91, 413:8] retried_503=0
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read31-audit.write_outcome-4-after]
+FAILED tests/triggers/test_t5_main_start.py::test_1_starts_answers_a_signed_request_and_stops_on_sigterm_with_exit_0
+FAILED tests/triggers/test_t5_main_start.py::test_2a_a_secret_shorter_than_32_characters_is_refused
+FAILED tests/triggers/test_t5_main_start.py::test_2b_two_senders_with_one_secret_value_are_refused
+FAILED tests/triggers/test_t5_main_start.py::test_2c_a_sender_whose_agent_is_not_qualified_is_refused
+FAILED tests/triggers/test_t5_main_start.py::test_2d_a_host_that_is_not_loopback_needs_the_command_line_switch
+FAILED tests/triggers/test_t5_main_start.py::test_2e_a_port_already_in_use_is_a_config_error
+FAILED tests/triggers/test_t5_main_start.py::test_3_the_worker_asks_only_for_the_names_the_senders_list
+FAILED tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2
+FAILED tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block
+FAILED tests/triggers/test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
+SKIPPED [1] tests/test_trigger_config.py:37: core-b trigger config not on this branch yet
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [1] tests/contracts/test_meter.py:319: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:319: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [3] tests/contracts/test_meter.py:350: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:365: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:382: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:393: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:400: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:412: core-b meter not on this branch yet
+SKIPPED [24] tests/contracts/test_meter.py:436: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:450: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:464: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:476: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:490: core-b meter not on this branch yet
+SKIPPED [15] tests/contracts/test_meter.py:509: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:529: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:544: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:559: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:571: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:584: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:601: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:617: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:636: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:664: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:681: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:702: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:726: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:737: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:748: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:760: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:773: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:788: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:825: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:836: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:857: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:884: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:897: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:914: core-b meter not on this branch yet
+SKIPPED [39] tests/contracts/test_meter.py:1034: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:115: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:127: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:145: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:163: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:172: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:182: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:196: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:209: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:222: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:243: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:259: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:271: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:283: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:300: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:315: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [28] tests/contracts/test_store_spend_reservations.py:323: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:358: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:389: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:406: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:420: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:440: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:456: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:470: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:492: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:510: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [36] tests/contracts/test_store_spend_reservations.py:539: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:552: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:566: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:599: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:615: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_store_spend_reservations.py:632: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [12] tests/contracts/test_store_spend_reservations.py:639: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [4] tests/contracts/test_store_spend_reservations.py:665: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [6] tests/contracts/test_store_spend_reservations.py:707: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:99: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [2] tests/contracts/test_t1_reserve_cap.py:107: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:153: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:188: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:227: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:258: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:316: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:337: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:369: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:405: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/test_redact_idempotence_property.py:204: tests/fixtures/textnorm_corpus.json is not on this branch: that corpus is not run here
+SKIPPED [1] tests/triggers/test_endpoint.py:847: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_endpoint.py:864: an empty body is refused at Content-Length (own test)
+13 failed, 12305 passed, 458 skipped, 75 xfailed, 9 warnings in 346.22s (0:05:46)
