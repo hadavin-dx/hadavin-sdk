@@ -46,7 +46,7 @@
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
-| BUILD B stop state | RUNNING | 65 | commits 80a07ce and 6662afe (fix round 2) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
+| BUILD B stop state | RUNNING | 75 | commits 80a07ce, 6662afe (fix round 2), 8bb386f (docs, runbook) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
 | BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
 | T3 one EGM review round per ticket | RUNNING | 30 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |

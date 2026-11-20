@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:41:37Z
+UPDATED_UTC: 2026-11-20T05:42:42Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 70
 AGENTS_RUNNING: 3
-CAPACITY: load 1.95 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, agents light 2 heavy 2
-DISK: / 60G free, 15% used; worktrees /tmp/core-b-wt 589M
+CAPACITY: load 3.49 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 2
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 590M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: F-store ticket review NOT clean (2 Blockers, 19 Majors), answered in text, not re-reviewed (ESCALATIONS E2); step B needed a fix round (done); E1 cron refused (accepted by lead)
 NEXT: EGM round on ticket B now; then C; land B and C test commits; ONE batch full-suite run
-PUSHED_UTC: 2026-11-20T05:40:59Z (previous push; this board is pushed right after writing)
-IST: 11:11 IST
+PUSHED_UTC: 2026-11-20T05:42:27Z (previous push; this board is pushed right after writing)
+IST: 11:12 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -65,7 +65,7 @@ IST: 11:11 IST
 | T2 tickets (A, B, C, F-store, F-install) | RUNNING | 70 | tickets/A-audit-drain.md, F-store.md, F-install.md done; B, C by agents | 1 | F tickets = lead drafts plus my checks and decisions |
 | REQUEST 001 from core-a (config for step D) | DONE except tests | 80 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except the batch run | 90 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
-| BUILD B stop state | RUNNING | 65 | commits 80a07ce and 6662afe (fix round 2) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
+| BUILD B stop state | RUNNING | 75 | commits 80a07ce, 6662afe (fix round 2), 8bb386f (docs, runbook) | 2 | nothing proven yet under a real reset or runtime login: role tests running; docs and the review round not done |
 | BUILD C price constraint | DONE except review and batch run | 90 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
 | T3 one EGM review round per ticket | RUNNING | 30 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
