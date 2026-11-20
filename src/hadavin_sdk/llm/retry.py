@@ -21,7 +21,7 @@ attempt of the call got any other answer, timed out, was cut off or failed to pa
 Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
 retried (a 400 after a 429 stays unmarked), and a 429 that a kind chose not to retry. A ``ProviderError`` raised
 by the call itself passes through as it is (unmarked unless its raiser marked it).
-Stated limit (UNVERIFIED for anthropic, bedrock, openai_compat, gemini): the list follows the HTTP meaning of
+Stated limit (UNVERIFIED for every provider kind): the list follows the HTTP meaning of
 the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
 429 was not verified against its billing rules. A provider that bills one of them is under-counted by that call.
 """
