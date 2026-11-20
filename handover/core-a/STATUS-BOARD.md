@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:13:42Z
+UPDATED_UTC: 2026-11-20T06:14:08Z
 SESSION: core-a
 ORDER: 015 (002 to 014 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 30
 ITEMS_OPEN: 5
 PERCENT: 90
 AGENTS_RUNNING: 2
-CAPACITY: load 0.24 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.7G 60G 15%; 522M /home/user/hadavin-sdk; 76M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 0.14 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.7G 60G 15%; 523M /home/user/hadavin-sdk; 76M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: trial lands: record findings; at every board: look for core-b's requests/001.answer.md
-PUSHED_UTC: 2026-11-20T06:13:10Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:13:45Z (the push before this board)
 NOTE: PostgreSQL is owned by the trial agent until it ends; data folders and scratch copies left on disk as before
 
 ## QUEUE ITEMS
