@@ -1,26 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:42:02Z
+UPDATED_UTC: 2026-11-20T05:42:48Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
-ITEMS_TOTAL: 14
-ITEMS_OPEN: 6
-PERCENT: 77
-AGENTS_RUNNING: 2
-CAPACITY: load 2.0 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 2, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 2; 2.3M	/tmp/claude-0;397M	/root/.cache/uv;
+ITEMS_TOTAL: 15
+ITEMS_OPEN: 7
+PERCENT: 72
+AGENTS_RUNNING: 3
+CAPACITY: load 1.5 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 3; 2.3M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:40:59+00:00
+PUSHED_UTC: 2026-11-20T05:42:02+00:00
 
 (11:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:10 | 5 | running | n/a | 0 | G2 does not touch guard/runmap.py and the fold does not touch guard/redact.py, so it can run beside the two other builders |
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 06:05 | 50 | running | n/a | 0 | 3 correction messages so far; ORDER 007 changes the mask step from a refusing check to map enforcement by replacement, so the gate part is being reworked; adds tests/gate_mutants.py (ORDER 008) |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 2 | running | n/a | 0 | lead GO BUILD G; separate worktree so two builders never share a checkout; HEAVY (runs tests) |
@@ -63,7 +64,8 @@ PUSHED_UTC: 2026-11-20T05:40:59+00:00
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 50 | evidence/F-G0-1.md | 1 | work-in-progress snapshots committed and pushed (code G: G0, code F:); rework to ORDER 007 under way; not verified yet |
 | BUILD G1 fold | RUNNING | 2 | evidence/G1-fold.md | 1 | one builder in a worktree |
-| BUILD G2 P1d-a, G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | G3 is held until G1 is in and its port table is written (review Blocker); G6 text revision 2 waits for the lead OK |
+| BUILD G2 P1d-a | RUNNING | 5 | evidence/G2-p1d-a.md | 1 | one builder in a worktree |
+| BUILD G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | G3 is held until G1 is in and its port table is written (review Blocker); G6 text revision 2 waits for the lead OK |
 | BUILD G4 P1c (base64 scan, whole host names) | WAIT G0 commit | 30 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | probe done, ticket written by the session; build starts when the G0 builder leaves guard/runmap.py (same file); corpus test cut (corpus not in the repository) |
 
 ## RESTARTS
@@ -83,4 +85,4 @@ PUSHED_UTC: 2026-11-20T05:40:59+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-tickets/G-review-1.md "Open after this round": 5 points (Python 3.12 vs Unicode 15.1.0 start-up check; may grounding widen; G1 port table; G6 text rev 2; possible one-pass redactor gap, being run). Ticket G4 (P1c): 3 small decisions. Gate takes worst_case= callable, not routes= (confirm). E1 cron denied. Only 2 agents run: G2, G3, G4 all edit guard/runmap.py or guard/redact.py, held by the two builders.
+tickets/G-review-1.md "Open after this round": 5 points (Python 3.12 vs Unicode 15.1.0 start-up check; may grounding widen; G1 port table; G6 text rev 2; possible one-pass redactor gap, being run). Ticket G4 (P1c): 3 small decisions. Gate takes worst_case= callable, not routes= (confirm). E1 cron denied. 3 builders run (gate + G0, fold G1, P1d-a G2). G3 and G4 wait: they edit guard/runmap.py, held by the gate builder.
