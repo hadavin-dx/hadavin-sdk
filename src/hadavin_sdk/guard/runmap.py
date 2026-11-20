@@ -816,6 +816,17 @@ def _b64_place(stripped: str, units: list[_B64Unit], placeholders: dict[str, str
     return "".join(out)
 
 
+_ONLY_PLACEHOLDERS = re.compile(r"(?:<ENCODED_[1-9][0-9]{0,5}>)+")
+
+
+def _only_encoded(t2: str, base: dict[str, str]) -> bool:
+    """True when `t2` is nothing but `<ENCODED_n>` placeholders and no stored original (ASCII, so with no folded spelling) occurs
+    inside it: a second `redact` over such a text reads nothing and writes nothing."""
+    if not _ONLY_PLACEHOLDERS.fullmatch(t2):
+        return False
+    return all(v.isascii() and v not in t2 for v in base.values())
+
+
 def _pass_one(
     text: str, mapping: dict[str, str], cache, budget: _ScanBudget, depth: int
 ) -> RedactionResult:
@@ -879,6 +890,10 @@ def _pass_one(
     runs = list(dict.fromkeys(u.written for u in chosen))
     placeholders = dict(zip(runs, place_encoded(base, runs), strict=True))
     t2 = _b64_place(stripped, chosen, placeholders)
+    if _only_encoded(t2, base):
+        # E22: the whole text is one run (or runs) now held as `<ENCODED_n>`: `redact` would rebuild its finder around the run's
+        # original (the full length of the text) to read back 11 characters, and returns them as they are
+        return RedactionResult(text=t2, mapping=base, actions=0)
     return redact(t2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)
 
 
