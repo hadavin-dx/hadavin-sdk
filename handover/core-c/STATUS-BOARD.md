@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:39:44Z
+UPDATED_UTC: 2026-11-20T05:39:59Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 14
 ITEMS_OPEN: 7
 PERCENT: 71
 AGENTS_RUNNING: 3
-CAPACITY: load 3.3 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
+CAPACITY: load 3.5 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 3, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 2; 2.3M	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:36:22+00:00
+PUSHED_UTC: 2026-11-20T05:39:45+00:00
 
 (11:09 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
