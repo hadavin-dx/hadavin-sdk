@@ -38,7 +38,6 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import logging
-import socketserver
 import sys
 import threading
 import time
@@ -47,12 +46,13 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import wait as wait_all
 from pathlib import Path
 from typing import Any, Final, Self
-from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
+from wsgiref.simple_server import WSGIServer
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Run, RunState
 from hadavin_sdk.store.protocol import NotFound, StoreUnavailable, is_connectivity_error
 from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi
+from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
 
 POLL_S: Final[float] = 0.05  # how often `start` looks for the row while it waits
 MAX_RUNNING: Final[int] = 1  # see the module text: parallel runs can pass a budget
@@ -130,6 +130,8 @@ class Runner:
                 left = deadline - time.monotonic()
                 if ended or left <= 0:
                     return NO_ACK  # the loop ended with no row, or the wait is over: no ack
+                if job is None:  # no slot so far: take one as soon as it is free, then as above
+                    job = self._submit(req)[0]
                 time.sleep(min(self._poll_s, left))
         except Exception as exc:  # noqa: BLE001 - the store failed: no ack, the sender retries
             what = "store unreachable" if is_connectivity_error(exc) else "store error"
@@ -186,6 +188,7 @@ def _answer(found: Run, req: Accepted) -> tuple[int, dict[str, str]]:
         or found.principal_id != req.principal_id
         or found.trigger_ref != req.trigger_ref
     ):
+        _LOG.warning("trigger status=409 sender=%s run=%s", req.sender, req.run_id)
         return CONFLICT
     state = RunState(found.state)
     return (202 if state in IN_PROGRESS else 200), {"run_id": found.run_id, "state": state.value}
@@ -298,21 +301,10 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
         raise
 
 
-class _Server(socketserver.ThreadingMixIn, WSGIServer):
-    """One thread per connection, so a request that waits for its row does not hold up the next one."""
-
-    daemon_threads = True
-
-
-class _QuietHandler(WSGIRequestHandler):
-    def log_message(self, format: str, *args: Any) -> None:
-        """Nothing: the request line can hold text chosen by the caller; the endpoint logs its own line."""
-
-
 def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSGIServer:
     """A bound stdlib server (not yet serving). The caller runs `serve_forever` and `server_close`."""
-    handler = type("TriggerHandler", (_QuietHandler,), {"timeout": socket_timeout_s})
-    server = _Server((host, port), handler)
+    handler = type("TriggerHandler", (QuietRequestHandler,), {"timeout": socket_timeout_s})
+    server = QuietServer((host, port), handler)
     server.set_app(wsgi)
     return server
 

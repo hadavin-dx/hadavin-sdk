@@ -91,7 +91,7 @@ M = [
         'joined = f"{sender}\\0{key}".encode()',
         TE,
         "test_tenant_is_part_of_the_run_id_at_the_endpoint",
-        # both tenants give the id of sha256(b"sender-a\\0order-1")
+        # both tenants give the id of sha256(b"sender-a\0order-1")
         "'run-3896ff0f114a33cd96d0f2f9807ef7c1' != 'run-3896ff0f114a33cd96d0f2f9807ef7c1'",
     ),
     mutant(
@@ -101,7 +101,7 @@ M = [
         'joined = f"{tenant}\\0{key}".encode()',
         TE,
         "test_two_senders_same_key_give_two_run_ids_and_their_own_identity",
-        # both senders give the id of sha256(b"tenant-one\\0order-1")
+        # both senders give the id of sha256(b"tenant-one\0order-1")
         "'run-b8214310dd20928c17270600a192fdb2' != 'run-b8214310dd20928c17270600a192fdb2'",
     ),
     mutant(

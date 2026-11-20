@@ -8,7 +8,8 @@ secret verified; agent and principal come from configuration, never from the req
 ``start`` decides the answer; this module does not import the runtime, the store or the app.
 
 Every refusal has an empty body. Log lines hold the status and, once verified, the sender id; never
-the body, the key, a header value or a secret.
+the body, the key, a header value or a secret. A 409 is logged by the caller's ``start``, which adds
+the run id; this module writes no second line for it.
 """
 
 from __future__ import annotations
@@ -35,6 +36,7 @@ ID_RE: Final = re.compile(r"[a-z0-9-]{1,40}")  # tenant and sender ids
 RUN_ID_HEX: Final = 32  # "run-" + this many hex digits, the shape of models.RUN_ID_PATTERN
 MIN_SECRET_CHARS: Final = 32
 MAX_SENDERS: Final = 8
+MAX_SECRETS_PER_SENDER: Final = 2  # the old and the new one while a secret is being replaced
 MAX_LENGTH_DIGITS: Final = 12  # a longer Content-Length is over any cap; also keeps int() cheap
 BODY_FIELDS: Final = frozenset({"key", "document"})
 ANSWER_FIELDS: Final = ("run_id", "state")
@@ -155,11 +157,15 @@ def verify_any(
     or malformed timestamp or signature header, or a timestamp outside the window, returns early
     inside ``hmac_v0.verify`` (the same for every secret, so it tells nothing about a secret), and
     the total time grows with the number of configured secrets and the body length.
+
+    The clock is cut to whole seconds, so a timestamp exactly ``hmac_v0.MAX_AGE_S`` seconds old or
+    ahead is inside the window and one second more is outside, whatever the clock's fraction.
     """
+    now = int(now_ts)
     matched: set[str] = set()
     for sender, values in secrets.items():
         for value in values:
-            if hmac_v0.verify(headers, body, now_ts, value, PREFIX):
+            if hmac_v0.verify(headers, body, now, value, PREFIX):
                 matched.add(sender)
     # Values are distinct across senders (check_secrets), so two matches mean a broken setup.
     return next(iter(matched)) if len(matched) == 1 else None
@@ -175,9 +181,17 @@ def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None:
     for sender, values in secrets.items():
         if isinstance(values, str) or not values:
             raise ValueError(f"trigger sender {sender!r}: no secret, or not a tuple of secrets")
+        if len(values) > MAX_SECRETS_PER_SENDER:
+            raise ValueError(
+                f"trigger sender {sender!r}: more than {MAX_SECRETS_PER_SENDER} secrets"
+            )
         for value in values:
             if not isinstance(value, str) or not value:
                 raise ValueError(f"trigger sender {sender!r}: an empty secret")
+            if value != value.strip():
+                raise ValueError(
+                    f"trigger sender {sender!r}: a secret with leading or trailing whitespace"
+                )
             if len(value) < MIN_SECRET_CHARS:
                 raise ValueError(
                     f"trigger sender {sender!r}: a secret under {MIN_SECRET_CHARS} characters"
@@ -293,7 +307,8 @@ def make_wsgi(
             response_headers.append(("Content-Type", JSON_TYPE))
         if status == 405:
             response_headers.append(("Allow", METHOD))
-        _LOG.info("trigger status=%d sender=%s", status, sender or "-")
+        if status != 409:  # ``start`` wrote the 409 line, with the run id: one line per request
+            _LOG.info("trigger status=%d sender=%s", status, sender or "-")
         start_response(STATUS_TEXT[status], response_headers)
         return [out]
 

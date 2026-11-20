@@ -117,10 +117,6 @@ def body_bytes() -> bytes:
     return json.dumps({"key": KEY, "document": f"alert {DOC_MARK} from the checkout"}).encode()
 
 
-def signature(body: bytes) -> str:
-    return hmac_v0.sign(body, int(time.time()), SECRET, endpoint.PREFIX)[endpoint.SIGNATURE_HEADER]
-
-
 def request(body: bytes, *, declared: int | None, complete: bool = True) -> bytes:
     """A signed POST. `declared` is the Content-Length (None = no such header); `complete` False leaves the
     header block open (no empty line, no body)."""
@@ -186,7 +182,9 @@ def drive_garbage(port: int) -> Seen:
 
 def drive_long_request_line(port: int) -> Seen:
     line = b"POST /" + LINE_MARK.encode()
-    return exchange(port, line + b"a" * (MAX_LINE + 1 - len(line)))  # one byte over the cap, no more
+    return exchange(
+        port, line + b"a" * (MAX_LINE + 1 - len(line))
+    )  # one byte over the cap, no more
 
 
 def drive_no_content_length(port: int) -> Seen:
@@ -219,7 +217,7 @@ def broken_app(environ, start_response):
 
 def needles() -> list[str]:
     body = body_bytes()
-    return [DOC_MARK, KEY, LINE_MARK, BOOM_MARK, SECRET, body.decode(), "Traceback", "File \""]
+    return [DOC_MARK, KEY, LINE_MARK, BOOM_MARK, SECRET, body.decode(), "Traceback", 'File "']
 
 
 def check_quiet(seen: Seen, capsys, caplog) -> None:
@@ -239,7 +237,7 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
     ):
         for needle in needles():
             assert needle not in text, f"{needle!r} in the {name}: {text[:300]!r}"
-        assert not [s for s in _signatures if s in text], f"a signature in the {name}"
+        assert _signatures and not [s for s in _signatures if s in text], f"signature: {name}"
     assert captured.err == "", captured.err[:300]
 
 
@@ -254,7 +252,8 @@ def _watch(monkeypatch, caplog):
 
     def sign(*args, **kwargs):
         headers = real(*args, **kwargs)
-        made.append(headers[endpoint.SIGNATURE_HEADER])
+        wanted = endpoint.SIGNATURE_HEADER.lower()
+        made.extend(v.rpartition("=")[2] for k, v in headers.items() if k.lower() == wanted)
         return headers
 
     monkeypatch.setattr(hmac_v0, "sign", sign)
@@ -292,7 +291,9 @@ def test_fewer_bytes_than_content_length_then_stall_is_400_empty_at_the_timeout(
     with serving(make_wsgi(start)) as server:
         seen = drive_short_then_stall(server.server_port)
     assert seen.status_line.endswith(b" 400 Bad Request") and seen.end == "closed", seen
-    assert SOCKET_TIMEOUT_S * 0.8 <= seen.seconds < SOCKET_TIMEOUT_S + 3.0  # the thread is held this long
+    assert (
+        SOCKET_TIMEOUT_S * 0.8 <= seen.seconds < SOCKET_TIMEOUT_S + 3.0
+    )  # the thread is held this long
     assert start.calls == []
     check_quiet(seen, capsys, caplog)
 

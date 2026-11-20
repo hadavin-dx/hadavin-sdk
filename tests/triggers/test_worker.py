@@ -632,3 +632,76 @@ def test_served_over_loopback_a_signed_request_is_acked(rt):
         runner.close()
     assert thread is not None and not thread.is_alive()
     assert len(rt.store._runs) == 1 and rt.llm.calls == 1
+
+
+# --- ORDER 009: the 409 log line, and a waiting request takes a slot that frees ---------------------------
+
+
+def test_409_writes_one_log_line_with_status_sender_and_run_id_only(rt, caplog):
+    first, other = _req(), _req(document=OTHER_DOCUMENT)
+    with Runner(rt, rt.store) as runner:
+        assert runner.start(first)[0] in OK
+        _settle(rt.store, first.run_id)
+        _free(runner)
+        with caplog.at_level("DEBUG", logger="hadavin_sdk.triggers"):
+            assert runner.start(other) == (409, {})
+    lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+    assert len(lines) == 1, lines
+    assert "409" in lines[0] and SENDER in lines[0] and other.run_id in lines[0]
+    for private in (
+        DOCUMENT.decode(),
+        OTHER_DOCUMENT.decode(),
+        first.trigger_ref,
+        other.trigger_ref,
+        "key-1",
+        other.trigger_ref.rpartition("#")[2],
+    ):
+        assert private not in caplog.text
+
+
+def test_a_waiting_request_takes_the_slot_as_soon_as_it_is_free(rt):
+    """One slot, held by a run of another key and given back after 0.3 s: the second key is acked then, well
+    before `ack_wait_s`, and not refused."""
+    first, second = _req(1), _req(2)
+    rt.llm.gate.clear()
+    release = threading.Timer(0.3, rt.llm.gate.set)
+    try:
+        with Runner(rt, rt.store, max_running=1, ack_wait_s=2.0, poll_s=0.02) as runner:
+            assert runner.start(first)[0] in OK
+            assert not runner._slots.acquire(blocking=False)  # the one slot is taken
+            release.start()
+            began = time.monotonic()
+            status, body = runner.start(second)
+            waited = time.monotonic() - began
+            assert status in OK and body["run_id"] == second.run_id, (status, body)
+            assert 0.25 <= waited < 1.5, waited
+            assert rt.store.get_run(second.run_id).trigger_ref == second.trigger_ref
+            _settle(rt.store, first.run_id)
+            _settle(rt.store, second.run_id)
+            _free(runner)
+    finally:
+        release.cancel()
+        rt.llm.gate.set()
+        release.join(30)
+    assert len(rt.store._runs) == 2 and rt.llm.calls == 2
+
+
+def test_a_waiting_request_is_503_when_the_slot_stays_taken_past_ack_wait(rt):
+    first, second = _req(1), _req(2)
+    rt.llm.gate.clear()
+    try:
+        with Runner(rt, rt.store, max_running=1, ack_wait_s=0.5, poll_s=0.02) as runner:
+            try:
+                assert runner.start(first)[0] in OK
+                began = time.monotonic()
+                assert runner.start(second) == (503, {})
+                assert 0.5 <= time.monotonic() - began < 2.0
+                with pytest.raises(NotFound):
+                    rt.store.get_run(second.run_id)
+            finally:
+                rt.llm.gate.set()
+            _settle(rt.store, first.run_id)
+            _free(runner)
+    finally:
+        rt.llm.gate.set()
+    assert len(rt.store._runs) == 1 and rt.llm.calls == 1
