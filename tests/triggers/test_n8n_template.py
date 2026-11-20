@@ -92,20 +92,41 @@ NOT_RUN = (
 # The busy condition, as the node must hold it: where the status is read, the statuses that mean "try again",
 # and the test that counts a missing status (no HTTP answer at all) as "try again" too.
 STATUS_READ = "String($json.error?.status ?? '')"
-BUSY = ("502", "503", "504", "520", "521", "522", "523", "524")  # 520 to 524: not run, see the notes
+BUSY = (
+    "502",
+    "503",
+    "504",
+    "520",
+    "521",
+    "522",
+    "523",
+    "524",
+)  # 520 to 524: not run, see the notes
 STOPS = ("400", "401", "409", "413")  # never tried again
 BUSY_LIST = "['', " + ", ".join(f"'{s}'" for s in BUSY) + "]"  # the empty text = no status at all
 BUSY_EXPRESSION = (
-    "={{ " + BUSY_LIST + ".includes(" + STATUS_READ + ") && $('Stamp time').last().json.round < 45 }}"
+    "={{ "
+    + BUSY_LIST
+    + ".includes("
+    + STATUS_READ
+    + ") && $('Stamp time').last().json.round < 45 }}"
 )
 EVIDENCE_2 = "handover/core-a/inputs/evidence-n8n-2.md"
 # What n8n 2.47.7 put in the field `error` of the failed item (evidence-n8n-2.md, lines 117 to 208).
 ERROR_ITEMS = {
-    "refused connection": {"message": "connect ECONNREFUSED", "name": "Error", "code": "ECONNREFUSED"},
+    "refused connection": {
+        "message": "connect ECONNREFUSED",
+        "name": "Error",
+        "code": "ECONNREFUSED",
+    },
     "name not found": {"message": "getaddrinfo ENOTFOUND", "name": "Error", "code": "ENOTFOUND"},
     "reset": {"message": "read ECONNRESET", "name": "Error", "code": "ECONNRESET"},
     "hang-up": {"message": "socket hang up", "name": "Error", "code": "ECONNRESET"},
-    "timeout": {"message": "timeout of 3000ms exceeded", "name": "AxiosError", "code": "ECONNABORTED"},
+    "timeout": {
+        "message": "timeout of 3000ms exceeded",
+        "name": "AxiosError",
+        "code": "ECONNABORTED",
+    },
     "plain text": "aborted",  # no message, name, code or status (line 186)
 }
 STATUS_ERRORS = {
@@ -353,7 +374,9 @@ def _busy_parts(expression: str) -> tuple[set[str], int]:
     )
     assert form, "the busy condition changed its form: update this test with it"
     listed = set(re.findall(r"'(\d*)'", form["listed"]))
-    assert form["listed"] == ", ".join(f"'{s}'" for s in sorted(listed))  # nothing but quoted numbers
+    assert form["listed"] == ", ".join(
+        f"'{s}'" for s in sorted(listed)
+    )  # nothing but quoted numbers
     return listed, int(form["rounds"])
 
 
@@ -365,7 +388,9 @@ def _is_busy(expression: str, status: object) -> bool:
 
 def _is_busy_error(expression: str, error: object) -> bool:
     """The same for the whole field `error`: a text such as "aborted" has no .status, like a missing field."""
-    status = error.get("status") if isinstance(error, dict) else None  # JS: "aborted"?.status is undefined
+    status = (
+        error.get("status") if isinstance(error, dict) else None
+    )  # JS: "aborted"?.status is undefined
     return _is_busy(expression, status)
 
 
@@ -633,7 +658,9 @@ def test_guard_comes_before_hashing_and_signing():
     assert into_hash == [taken], into_hash
     assert edges[taken] == [hashing]  # in series, not beside the hash node
     assert sign in _reach(flow, hashing) and hashing not in _reach(flow, sign)
-    assert "String(" in nodes[hashing]["parameters"]["value"]  # which is why the guard must come first
+    assert (
+        "String(" in nodes[hashing]["parameters"]["value"]
+    )  # which is why the guard must come first
     assert "REQUIRED" in nodes[guard]["notes"]
     condition = json.dumps(nodes[guard]["parameters"])
     for field in ("$json.body.record_id", "$json.body.text"):
@@ -642,11 +669,16 @@ def test_guard_comes_before_hashing_and_signing():
     # a number id has to be a whole number n8n can hold exactly; an event, if present, a non-empty text
     assert "Number.isSafeInteger($json.body.record_id)" in condition
     assert "Number.isFinite" not in condition
-    assert "$json.body.event === undefined" in condition and "$json.body.event.trim() !== ''" in condition
+    assert (
+        "$json.body.event === undefined" in condition
+        and "$json.body.event.trim() !== ''" in condition
+    )
     # the false branch (second output) goes straight to the stop node: it always fails the execution
     (stop,) = [link["node"] for link in false_branch]
     assert nodes[stop]["type"] == PREFIX + "stopAndError" and edges.get(stop, []) == []
-    assert not [n for n in nodes if "refused" in n and n.startswith("Answer")]  # the node was removed
+    assert not [
+        n for n in nodes if "refused" in n and n.startswith("Answer")
+    ]  # the node was removed
     assert not {sign, hashing} & _reach(flow, stop)
 
 
@@ -666,7 +698,7 @@ def test_the_caller_is_answered_and_the_readme_says_this_was_not_run():
     assert "This branch was NOT run in n8n." in readme
     assert "the caller got HTTP 200 from n8n although the guard had stopped the event" in readme
     assert "It does NOT mean that Hadavin accepted it" in readme
-    assert 'IN SERIES on the guard\'s first output' in readme
+    assert "IN SERIES on the guard's first output" in readme
     assert "has NO answer node" in readme and "n8n's own error answer" in readme
     assert "UNVERIFIED: its status and body" in readme
 
@@ -680,7 +712,9 @@ def test_the_webhook_has_authentication_and_the_readme_makes_it_a_required_step(
     assert "AUTHENTICATION IS A REQUIRED SET-UP STEP" in webhook["notes"]
     assert webhook["notes"].startswith(OPEN)  # the shape was written from memory
     readme = " ".join(_readme().split())
-    section = readme.partition("## Webhook authentication")[2].partition("## Where the secret lives")[0]
+    section = readme.partition("## Webhook authentication")[2].partition(
+        "## Where the secret lives"
+    )[0]
     assert section
     for phrase in (
         "REQUIRED set-up step",
@@ -692,7 +726,10 @@ def test_the_webhook_has_authentication_and_the_readme_makes_it_a_required_step(
         "never the trigger secret",
     ):
         assert phrase in section, phrase
-    assert "8. Set up the webhook authentication" in readme and "REQUIRED" in readme.partition("8. Set up")[2][:200]
+    assert (
+        "8. Set up the webhook authentication" in readme
+        and "REQUIRED" in readme.partition("8. Set up")[2][:200]
+    )
     assert "`path` with a long random value" in readme
 
 
@@ -708,16 +745,22 @@ def test_the_key_text_holds_the_id_the_event_name_and_an_optional_rerun_value():
     assert node["parameters"]["value"] == _HASH
     assert node["parameters"]["dataPropertyName"] == "key"
     assert node["notes"].startswith(OPEN)  # the expression changed after the run
+
     # the same text built in Python, to show what the expression gives for the cases the README names
     def text(record_id, event=None, rerun=None):
         base = f"{str(record_id).strip()}:{(event if event is not None else 'default').strip()}"
         return base + (f":{str(rerun).strip()}" if rerun else "")
+
     assert text(" rec-1 ") == text("rec-1") == "rec-1:default"
     assert text("rec-1", "created") != text("rec-1", "updated")
-    assert text("rec-1", "updated", "rerun-1") == "rec-1:updated:rerun-1" != text("rec-1", "updated")
+    assert (
+        text("rec-1", "updated", "rerun-1") == "rec-1:updated:rerun-1" != text("rec-1", "updated")
+    )
     assert text(12345) == text("12345")
     readme = " ".join(_readme().split())
-    part = readme.partition("## The key rule")[2].partition("## What the template does on each answer")[0]
+    part = readme.partition("## The key rule")[2].partition(
+        "## What the template does on each answer"
+    )[0]
     for phrase in (
         "the business id (trimmed), a colon, the event name",
         "only when the caller sends a `rerun` value",
@@ -747,7 +790,9 @@ def test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_cur
         "is NOT in the configuration code",
     ):
         assert phrase.lower() in operator.lower(), phrase
-    curl = raw.partition("## What the caller sends to the webhook")[2].partition("## The key rule")[0]
+    curl = raw.partition("## What the caller sends to the webhook")[2].partition("## The key rule")[
+        0
+    ]
     assert "curl -i -X POST" in curl and '"record_id"' in curl and '"text"' in curl
     assert "HTTP 202 with an empty body" in " ".join(curl.split())
     steps = readme.partition("## Set-up")[2].partition("## The webhook address")[0]
@@ -756,13 +801,13 @@ def test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_cur
         "starts a REAL run",
         "EMPTY text",
         "tolerate running TWICE for one key",
-        'does NOT mean that the action happened',
+        "does NOT mean that the action happened",
         "n8n list:workflow",
         "n8n publish:workflow",
         "(UNVERIFIED)",
     ):
         assert phrase in steps, phrase
-    assert "write its id and name into the node \"Sign\"" in steps and "shows the credential" in steps
+    assert 'write its id and name into the node "Sign"' in steps and "shows the credential" in steps
 
 
 def test_the_error_message_names_no_event_and_the_readme_says_the_person_opens_the_execution():
@@ -917,12 +962,27 @@ def test_the_busy_condition_names_502_to_504_and_520_to_524_and_counts_a_missing
     # text "aborted" and an error object without a status included
     for kind, error in ERROR_ITEMS.items():
         assert _is_busy_error(expression, error), kind
-    assert _is_busy_error(expression, {}) and _is_busy(expression, None) and _is_busy(expression, "")
+    assert (
+        _is_busy_error(expression, {}) and _is_busy(expression, None) and _is_busy(expression, "")
+    )
     # the statuses the evidence saw: 502, 503, 504 busy; 400, 401, 409, 413 never tried again
     for status, error in STATUS_ERRORS.items():
         assert _is_busy_error(expression, error) == (status in BUSY), status
     # refusals are never tried again: the four named ones, every other 4xx, 500 and the other 5xx, and 3xx
-    for status in (*STOPS, "404", "405", "414", "431", "422", "429", "500", "501", "505", "200", "301"):
+    for status in (
+        *STOPS,
+        "404",
+        "405",
+        "414",
+        "431",
+        "422",
+        "429",
+        "500",
+        "501",
+        "505",
+        "200",
+        "301",
+    ):
         assert not _is_busy(expression, int(status)), status
         assert status not in listed
         assert f"'{status}'" not in expression
@@ -954,7 +1014,9 @@ def test_the_busy_condition_names_502_to_504_and_520_to_524_and_counts_a_missing
     message = stop["parameters"]["errorMessage"]
     assert MEANING_OF_503 in message and "NOT accepted" not in message
     # the stop message is right in the check phase too: a run that was already acknowledged is not "not acknowledged"
-    assert "FIRST send" in message and "ALREADY acknowledged" in message and "state check" in message
+    assert (
+        "FIRST send" in message and "ALREADY acknowledged" in message and "state check" in message
+    )
     assert "520 to 524" in message
 
 
@@ -963,10 +1025,14 @@ def test_the_busy_condition_names_502_to_504_and_520_to_524_and_counts_a_missing
     [
         BUSY_EXPRESSION.replace(", '520', '521', '522', '523', '524'", ""),  # 520 to 524 left out
         BUSY_EXPRESSION.replace(BUSY_LIST, "['', '503']"),  # the state before: 503 only
-        BUSY_EXPRESSION.replace("'', ", ""),  # a missing status (no answer, "aborted") would be a stop
+        BUSY_EXPRESSION.replace(
+            "'', ", ""
+        ),  # a missing status (no answer, "aborted") would be a stop
         BUSY_EXPRESSION.replace("['', ", "['', '401', "),
         BUSY_EXPRESSION.replace("['', ", "['', '413', "),
-        BUSY_EXPRESSION.replace("['', ", "['', '500', "),  # the worker never sends 500: a fault, a stop
+        BUSY_EXPRESSION.replace(
+            "['', ", "['', '500', "
+        ),  # the worker never sends 500: a fault, a stop
     ],
 )
 def test_the_busy_check_would_catch_a_wrong_condition(broken):
@@ -1019,7 +1085,9 @@ def test_the_busy_rounds_outlast_the_stuck_limit_plus_one_tick_gap():
     flow = _load(MAIN)
     nodes = _nodes(flow)
     decide = flow["connections"][_one(flow, "httpRequest")]["main"][1][0]["node"]
-    _listed, rounds = _busy_parts(nodes[decide]["parameters"]["conditions"]["conditions"][0]["leftValue"])
+    _listed, rounds = _busy_parts(
+        nodes[decide]["parameters"]["conditions"]["conditions"][0]["leftValue"]
+    )
     wait = nodes[_one(flow, "wait")]["parameters"]
     llm, stuck = _example_stuck()
     assert stuck == EXAMPLE_STEPS * llm.call_timeout_s * llm.max_attempts + 60
@@ -1289,7 +1357,7 @@ def test_readme_has_the_answer_table_in_plain_words():
         'the plain text "aborted" with no message, name, code or status (lines 179 to 189)',
         "`error.httpCode` is undefined in every case (lines 110 to 111, 217)",
         "['', '502', '503', '504'].includes(String($json.error?.status ?? ''))",
-        "The empty text in the list is what counts \"no status\" as busy",
+        'The empty text in the list is what counts "no status" as busy',
         "Still UNVERIFIED: 520 to 524",
         "Retry On Fail switched on",
         "A 500 is a STOP too",
@@ -1595,7 +1663,7 @@ def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one
     ]
     assert sorted(writers) == sorted([c.again, next_round["name"]])
     # the busy rounds are bounded too, and a check round does not hand out new ones
-    _listed, _pattern, rounds = _busy_parts(_rule(flow, busy))
+    _listed, rounds = _busy_parts(_rule(flow, busy))
     assert 1 <= rounds <= 1000
     # the span of the checks against the code's own numbers, for the README's example agent
     wait = nodes[_one(flow, "wait")]["parameters"]
