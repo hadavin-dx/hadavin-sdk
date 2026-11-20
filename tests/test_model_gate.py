@@ -2946,3 +2946,16 @@ def test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call():
     assert code == "held_value_left" and client.sent == [], (
         "G13-13 the prefix beside a key was sent"
     )
+
+
+def test_r15_the_sweep_is_given_the_calls_deadline_so_a_deadline_that_passes_after_the_snapshot_stops_it(
+    monkeypatch,
+):
+    """R15 (design M2): the snapshot builds its patterns under the budget; the call's CPU deadline then passes (set in the past
+    on the snapshot's budget) and ONLY the sweep itself can refuse, because `EnforceBudget.check` is off: `enforce_map` must give
+    the sweep `budget.cpu_deadline`, so the text that holds a known value is refused with `InputTooLarge` and nothing is returned."""
+    monkeypatch.setattr(runmap.EnforceBudget, "check", lambda self: None)
+    snap = runmap.snapshot(runmap.RunMap({"<IPV4_1>": IP}))
+    snap.budget.cpu_deadline = -1.0  # any thread_time() value is later than this
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.enforce_map(f"host {IP} and more text", snap)

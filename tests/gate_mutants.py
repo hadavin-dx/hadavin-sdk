@@ -359,8 +359,8 @@ M = [
     # --- review round 3 (round 4 fixes): deadline, caps, steps, net, slots, cost, interrupts, bind ---
     mutant("R15 the sweep is not given the call's deadline (design M2)",
         "            out = first.sweep(out, deadline)\n", "            out = first.sweep(out)\n",
-        "test_r3_m2_a_deadline_already_past_stops_the_sweep_itself", "DID NOT RAISE",
-        file=RUNMAP, test=MAP_TEST),
+        "test_r15_the_sweep_is_given_the_calls_deadline_so_a_deadline_that_passes_after_the_snapshot_stops_it", "DID NOT RAISE",
+        file=RUNMAP),
     mutant("R16 no cap on the entries of the map (design M2)",
         "        if len(known) > ENFORCE_MAX_ENTRIES:\n", "        if False:\n",
         "test_r3_m2_the_map_is_capped_at_snapshot_with_a_code_not_a_hang", "DID NOT RAISE",
