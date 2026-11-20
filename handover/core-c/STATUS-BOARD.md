@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:08:09Z
+UPDATED_UTC: 2026-11-20T10:11:56Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 8
-CAPACITY: load 2.5 of 4 cores, mem 5/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
-DISK: / 57G free, 18% used; git worktrees 22; 1.4G	/tmp/claude-0;304M	/root/.cache/uv;
+AGENTS_RUNNING: 7
+CAPACITY: load 1.6 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 7, heavy agents 0
+DISK: / 57G free, 18% used; git worktrees 22; 1.5G	/tmp/claude-0;304M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only. E10 plan review round 1 STARTED 09:59Z (G9 ticket: the lead's loop as stated does not close E10: it must read the text with placeholders put back; design + measurements in the ticket). E12 SUMMARY: redact_mutants.py on merged HEAD 92 of 96 good, 4 survivors (E13) under review. Heavy batches running: 0.
-PUSHED_UTC: 2026-11-20T10:08:07+00:00
+PUSHED_UTC: 2026-11-20T10:11:53+00:00
 
-(15:38 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:41 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -27,7 +27,6 @@ PUSHED_UTC: 2026-11-20T10:08:07+00:00
 | a6219c90 | drafter | claude-opus-5-5 | G9 v2 ticket (plan review round 1: read-back = exact map keys, no pieces for unions, union kind, gate masks the span, hostile 3/5-pass) | plan review round 2 next | 10:07 | 10:40 | 1 | running | 2 | 0 | EGM draft step (max 3 rounds) |
 | abbbf74a | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (readiness) | 10:08 | 10:25 | 2 | running | 5 | 0 | build P1c only after a clean plan review |
 | a08a6b6b | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (codebase) | 10:08 | 10:25 | 2 | running | 5 | 0 | same |
-| a8b58cf7 | reviewer | claude-sonnet-5-5 | G8 v3 PLAN review round 3 (readiness) | 10:12 | 10:28 | 2 | running | 3 | 0 | build G8 only after a clean plan review |
 | a5a3a5fe | reviewer | claude-sonnet-5-5 | G8 v3 PLAN review round 3 (codebase) | 10:12 | 10:28 | 2 | running | 3 | 0 | same |
 
 ## SHELLS AND PROCESSES
