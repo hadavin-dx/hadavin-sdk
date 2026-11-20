@@ -774,17 +774,17 @@
    "reason": "lead 13:46: share work, one agent per item"
   },
   {
-   "id": "max-running",
-   "role": "builder in /home/user/hadavin-sdk (cloud/core-a)",
+   "id": "rev-dfix22",
+   "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "worker reads max_running only from config (core-b defaults.py = one source), clear ConfigError if missing, tests + d-fix22 paragraph",
-   "started UTC": "13:49",
-   "expected end": "20 min",
+   "what exactly it is doing": "review of d-fix22 (max_running single source of truth)",
+   "started UTC": "13:53",
+   "expected end": "10 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "1",
    "retries so far": 0,
-   "reason": "lead 13:46: share work, one agent per item"
+   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1157,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:59 d-fix22 built on cloud/core-a: worker has NO max_running of its own (reads config.triggers.max_running; ConfigError if missing); worker default was 1, core-b's is 4: with 4 the worker's check_spend warning/refusal path now applies at the default: rev-dfix22 checks exactly what happens; running: c-e19, grant-tests, rev-dfix22.",
   "13:58 DECISION FOR LEAD (CI test cap round done): wip/core-a-for-ci (3ed2a8ca9) test_ci_python_matrix.py: 108 tests, ~900 lines, review round 3: NO Blocker/Major, no false positives on the real repo, regex correct. Reviewer's proportion verdict: over-built; trim to the real-file test + requires_floor + a pin collector + raw_below_floor + ~6 tests (CI floor below pyproject, pyproject floor above CI, extra newer job not main, unquoted 3.10, raw scan fires, raw scan clean on real .github). Known holes (documented): quoted versions in shell/Dockerfile text (ARG PYTHON_VERSION=\"3.11\"), newer-than-main only checked for YAML pins. Options: (A) take as is (works, ~10-20 s); (B) I trim to ~6 tests (one builder, ~15 min). DEFAULT if you say nothing: A. Also reviewed clean: wip/core-a-for-c-e14nits. Running: c-e19, grant-tests, max-running.",
   "13:55 wip/core-a-for-c-e14nits reviewed fresh: NO Blocker/Major (README 'unwired' list true for all 14 names, comments match code, mutants E14-9/10 pin the exact boundary, T5 gate test faithful). Ready for core-c to cherry-pick (9dd034a39).",
   "13:52 pushed: wip/core-a-for-c-e14nits (core-c items 1+5) and wip/core-a-for-ci (round 2); fresh reviews rev-ce14 and rev-wipci3 (cap round) running; also running: c-e19, grant-tests, max-running. Trailer in board.py now Sonnet 5.5.",
@@ -3553,6 +3554,19 @@
    "review round n of cap": "3 of 3",
    "retries so far": 0,
    "reason": "CI test review round 3 (cap): NO Blocker/Major; no false positives on the real repo; regex correct; holes only below-floor misses in quoted shell/Dockerfile text and newer versions in run text (documented); 1 vacuous test (scan of empty tmp_path), 4 near-duplicates; PROPORTION: reviewer says trim to ~6 tests"
+  },
+  {
+   "id": "max-running",
+   "role": "builder in /home/user/hadavin-sdk (cloud/core-a)",
+   "model": "sonnet",
+   "what exactly it is doing": "worker reads max_running only from config (core-b defaults.py = one source), clear ConfigError if missing, tests + d-fix22 paragraph",
+   "started UTC": "13:49",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "d-fix22 on cloud/core-a: MAX_RUNNING=1 constant removed, Runner max_running has no default, make_app reads settings.max_running only (ConfigError if missing); 8 new tests, 4 red when the worker hardcodes 4; tests/triggers+anchors 1253 passed 312 skipped 0 failed; n8n README/test reworded; NOT verified with real core-b TriggerSettings"
   }
  ]
 }

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T13:49:56Z
+UPDATED_UTC: 2026-11-20T13:51:03Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 3
-CAPACITY: load 4.59 of 4 cores (1-minute average), mem 1.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 13G 57G 19%; 629M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
+CAPACITY: load 4.96 of 4 cores (1-minute average), mem 1.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 13G 57G 18%; 629M /home/user/hadavin-sdk; 1.2G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T13:49:49Z (the push before this board)
+PUSHED_UTC: 2026-11-20T13:50:01Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -108,27 +108,20 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 |---|---|---|---|---|---|---|---|---|---|---|
 | c-e19 | builder in /home/user/wt/c-e19 (wip/core-a-for-c-e19) | sonnet | core-c item 2: runmap _canonical_view U+0338 spoof test + docstring (+fix or strict xfail) + mutant | 13:49 | 20 min | 5 | running | - | 0 | lead 13:46: share work, one agent per item |
 | grant-tests | builder in /home/user/wt/grant (wip/core-a-for-grant-tests) | sonnet | re-point core-c's 8 grant tests to core-b's current grant model (tests only), PG on 55433, before/after logs | 13:49 | 25 min | 5 | running | - | 0 | lead 13:46: share work, one agent per item |
-| max-running | builder in /home/user/hadavin-sdk (cloud/core-a) | sonnet | worker reads max_running only from config (core-b defaults.py = one source), clear ConfigError if missing, tests + d-fix22 paragraph | 13:49 | 20 min | 5 | running | - | 0 | lead 13:46: share work, one agent per item |
+| rev-dfix22 | fresh independent reviewer (codebase-details), read-only | sonnet | review of d-fix22 (max_running single source of truth) | 13:53 | 10 min | 5 | running | 1 | 0 | fresh review of each diff |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 1355 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 211s ago | running | matched by name in ps |
-| 1385 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 -m | core-a session or its agent | 210s ago | running | matched by name in ps |
-| 1393 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 210s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27329s ago | running | matched by name in ps |
-| 15038 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 65s ago | running | matched by name in ps |
-| 15057 | .venv/bin/python -m pytest tests/triggers tests/test_mutants_anchors.p | core-a session or its agent | 65s ago | running | matched by name in ps |
-| 18776 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 7s ago | running | matched by name in ps |
-| 18807 | /home/user/hadavin-sdk/.venv/bin/python -m pytest tests/test_grants_ne | core-a session or its agent | 6s ago | running | matched by name in ps |
-| 19304 | postgres: postgres postgres 127.0.0.1(60100) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 19305 | postgres: postgres postgres 127.0.0.1(60110) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 19327 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 1355 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 277s ago | running | matched by name in ps |
+| 1385 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 2 -m | core-a session or its agent | 277s ago | running | matched by name in ps |
+| 1393 | /home/user/wt/c-e19/.venv/bin/python /home/user/wt/c-e19/.venv/bin/pyt | core-a session or its agent | 277s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 27395s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 27395s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 27395s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 27395s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 27395s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 27395s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -190,6 +183,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 13:59 d-fix22 built on cloud/core-a: worker has NO max_running of its own (reads config.triggers.max_running; ConfigError if missing); worker default was 1, core-b's is 4: with 4 the worker's check_spend warning/refusal path now applies at the default: rev-dfix22 checks exactly what happens; running: c-e19, grant-tests, rev-dfix22.
 - 13:58 DECISION FOR LEAD (CI test cap round done): wip/core-a-for-ci (3ed2a8ca9) test_ci_python_matrix.py: 108 tests, ~900 lines, review round 3: NO Blocker/Major, no false positives on the real repo, regex correct. Reviewer's proportion verdict: over-built; trim to the real-file test + requires_floor + a pin collector + raw_below_floor + ~6 tests (CI floor below pyproject, pyproject floor above CI, extra newer job not main, unquoted 3.10, raw scan fires, raw scan clean on real .github). Known holes (documented): quoted versions in shell/Dockerfile text (ARG PYTHON_VERSION="3.11"), newer-than-main only checked for YAML pins. Options: (A) take as is (works, ~10-20 s); (B) I trim to ~6 tests (one builder, ~15 min). DEFAULT if you say nothing: A. Also reviewed clean: wip/core-a-for-c-e14nits. Running: c-e19, grant-tests, max-running.
 - 13:55 wip/core-a-for-c-e14nits reviewed fresh: NO Blocker/Major (README 'unwired' list true for all 14 names, comments match code, mutants E14-9/10 pin the exact boundary, T5 gate test faithful). Ready for core-c to cherry-pick (9dd034a39).
 - 13:52 pushed: wip/core-a-for-c-e14nits (core-c items 1+5) and wip/core-a-for-ci (round 2); fresh reviews rev-ce14 and rev-wipci3 (cap round) running; also running: c-e19, grant-tests, max-running. Trailer in board.py now Sonnet 5.5.
