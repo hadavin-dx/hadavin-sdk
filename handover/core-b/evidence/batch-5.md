@@ -25,7 +25,7 @@ Evidence run only. No code changed, nothing committed or pushed.
    First error: `AssertionError: assert ['0004_audit_...xpired_spend'] == ['0004_audit_...reservations']`. Migration `0008_release_expired_spend` is present, but the expected list ends at `0007_spend_reservations`.
 
 4. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`
-   First error: `vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'`.
+   First error: `vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: '<vendor-name>'`.
 
 5. `tests/test_stop_state_roles.py::test_e7_a_flag_on_before_0006_stays_on_after_the_upgrade`
    First error: `AssertionError: assert ['0006_stop_s...xpired_spend'] == ['0006_stop_s...reservations']`. Migration `0008_release_expired_spend` is present, but the expected list ends at `0007_spend_reservations`. Same cause as item 3.

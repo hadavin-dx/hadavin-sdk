@@ -26,8 +26,8 @@ Wall time: 336.09s.
    - Note: the DSN passed in the environment points at `127.0.0.1:55439`, but this error reports a default Unix socket on port 5432. The connection in this test path does not appear to use the DSN.
 
 2. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`
-   - First error line: `AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'; handover/core-b/evidence/batch-5.md: 'Port.io'`
-   - Two tracked handover files contain the string `Port.io`.
+   - First error line: `AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: '<vendor-name>'; handover/core-b/evidence/batch-5.md: '<vendor-name>'`
+   - Two tracked handover files contain the string `<vendor-name>`.
 
 ### Skipped tests (4 total)
 
