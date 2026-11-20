@@ -418,6 +418,24 @@ def test_settle_from_8_connections_with_different_amounts_books_exactly_one(w):
 
 
 @pg
+def test_two_connections_reserving_the_same_id_and_arguments_both_succeed_and_book_once(w):
+    """Review M1 / core-a M5: the second insert waits on the first and then finds its own row (ON CONFLICT)."""
+    stores = [w.store(w.runtime) for _ in range(2)]
+    for n in range(10):
+        rid = new_id("res")
+        results = _together(
+            [
+                lambda s=s, r=rid: s.reserve_spend(
+                    r, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG
+                )
+                for s in stores
+            ]
+        )
+        assert results == [None, None], results
+        assert _counters(w)[0] == D(n + 1)  # booked once per id
+
+
+@pg
 @pytest.mark.parametrize("actual", ["0.25", "1.75"])
 def test_settle_racing_the_expire_step_never_lowers_a_booking(w, actual):
     """Many rounds, either may win. If the expiry won, the worst case stays (a lower settle changes no counter); if
