@@ -8,6 +8,7 @@
   `EnforceBudget.check` switched off, `snap.budget.cpu_deadline = -1.0`, `enforce_map(text with a known value, snap)` must raise
   `InputTooLarge`. The R15 row now names it (and runs in tests/test_model_gate.py, `file=RUNMAP`).
 - MEASURED: `python tests/gate_mutants.py R15` -> `1 of 1 good` (KILLED). Whole-file run NOT RUN (load).
+- MEASURED p1d_a_mutants (whole file, load 0): before at this head: runner REFUSED to start (baseline red: PU1); laptop 48 of 51 (pre-G4). After: 50 of 51 killed, only A15 (known equivalent) survives; A3d and A43 KILLED.
 
 ## p1d_a_mutants.py
 - A3d: stale anchor. The code is now `return _outside_code(text, _undefang_prose, certain=True)` (added by the G2 fix, 34e14bbe0
