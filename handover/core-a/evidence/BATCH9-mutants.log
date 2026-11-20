@@ -104,3 +104,4 @@ ok  KILLED       G32b the conflict event result carries the payload text  [test_
 ok  KILLED       G32c the stored hash of the conflict event is taken from the new request  [test_e1_a_409_writes_one_audit_event_with_exactly_ids_and_both_hashes]
 ok  KILLED       G32d the /health body gets an extra key  [test_e1_start_with_the_store_down_starts_and_health_is_503[StoreUnavai]
 ok  CRASH        G32e /health is answered with no health callable (the path is not an ordinary 404)  [test_e1_without_a_health_callable_the_path_is_an_ordinary_404]
+rc=0
