@@ -35,6 +35,14 @@ def m(name, file, old, new, killer, expect):
 DOC_OLD = "            len(rmap) > self._evidence.max_map_entries  # too many distinct values to redact cheaply\n            or _map_chars(rmap) > self._evidence.max_map_chars\n"
 DOC_NEW = "            len(rmap) > self._evidence.max_map_entries  # too many distinct values to redact cheaply\n"
 TOOL_OLD = "                    or _map_chars(rmap) > self._evidence.max_map_chars  # tool result\n"
+DOC_GE = (
+    "or _map_chars(rmap) > self._evidence.max_map_chars\n",
+    "or _map_chars(rmap) >= self._evidence.max_map_chars\n",
+)
+TOOL_GE = (
+    "or _map_chars(rmap) > self._evidence.max_map_chars  # tool result\n",
+    "or _map_chars(rmap) >= self._evidence.max_map_chars  # tool result\n",
+)
 
 M = [
     m("E14-1 the first trie has no limit", RD, "_trie(self._rules, limit=defaults.MAX_FINDER_CHARS)", "_trie(self._rules)", "test_t1_a_build_over_the_cap_is_refused", "E14-T1 "),
@@ -44,6 +52,8 @@ M = [
     m("E14-5 the tool check reads entries only", AL, TOOL_OLD, "", "test_t7_tool_path_boundary", "E14-T7 "),
     m("E14-6 the map is counted in entries", AL, "return sum(map(len, set(rmap.values())))", "return len(rmap)", "test_t6_document_path_boundary", "E14-T6 "),
     m("E14-7 the config has no upper bound", CF, "gt=0, le=defaults.MAX_FINDER_CHARS)", "gt=0)", "test_t8_config", "E14-T8 "),
+    m("E14-9 the document check refuses at equality", AL, *DOC_GE, "test_t6_document_path_boundary", "E14-T6 "),
+    m("E14-10 the tool check refuses at equality", AL, *TOOL_GE, "test_t7_tool_path_boundary", "E14-T7 "),
     m("E14-8 the defaults drift", DF, "MAX_MAP_CHARS = 2 * MAX_REDACT_CHARS", "MAX_MAP_CHARS = 4 * MAX_REDACT_CHARS", "test_t9_derivation_pin", "E14-T9 "),
 ]  # fmt: skip
 
