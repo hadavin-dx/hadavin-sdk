@@ -254,7 +254,8 @@ def make_wsgi(
 ) -> Callable[..., list[bytes]]:
     """The WSGI application for ``POST /v1/trigger``. Raises ValueError on a bad setup.
 
-    Invariant 7 (a row exists before the ack, a hit is told apart by its payload hash) holds for ``Runner.start``;
+    The rule that a run row exists before the answer is sent, and that a repeat of the same key is told apart from a
+    different document by the stored payload hash, holds for ``Runner.start``;
     a custom ``start`` is trusted and is not checked here."""
     tenant = settings.tenant
     senders = sender_map(settings.senders)

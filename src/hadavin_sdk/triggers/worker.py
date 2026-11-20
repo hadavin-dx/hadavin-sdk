@@ -69,7 +69,7 @@ from hadavin_sdk.store.protocol import (
     StoreUnavailable,
     is_connectivity_error,
 )
-from hadavin_sdk.triggers.endpoint import Accepted, check_secrets, make_wsgi, sender_map
+from hadavin_sdk.triggers.endpoint import PATH, Accepted, check_secrets, make_wsgi, sender_map
 from hadavin_sdk.triggers.server import (
     MAX_CONNECTIONS,
     READ_DEADLINE_S,
@@ -168,6 +168,12 @@ class Runner:
     def ack_wait_s(self) -> float:
         """The wait for a row, in seconds, as checked and stored at construction (read-only)."""
         return self._ack_wait_s
+
+    @property
+    def running(self) -> int:
+        """How many agent loops have not ended (the ones `close` would wait for)."""
+        with self._lock:
+            return len(self._jobs)
 
     def __enter__(self) -> Self:
         return self
@@ -372,7 +378,8 @@ def read_secrets(
 
 
 def check_bind(host: str, allow_non_loopback: bool) -> None:
-    """Refuse a host that is not loopback unless the config says so in plain words. A host must be an IPv4
+    """Refuse a host that is not loopback unless the command-line flag `--allow-non-loopback` was given
+    (`allow_non_loopback` is that flag, not a config setting). A host must be an IPv4
     address or the name localhost: any other text (an empty one would mean every interface) is refused, and
     so is every IPv6 address, the loopback one too, because the server opens an IPv4 socket only."""
     if host == "localhost":
@@ -578,6 +585,7 @@ def serve(server: WSGIServer, runner: Any) -> int:
     except KeyboardInterrupt:
         pass
     finally:
+        _LOG.info("trigger worker: stopping, waiting for %d runs", getattr(runner, "running", 0))
         server.server_close()
         runner.close()
         for number, handler in previous.items():
@@ -593,7 +601,7 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
 
     config = load_config(args.config_dir)
     trigger_settings(config)  # before anything is built: no secret read, no connection
-    host = args.host or LOOPBACK
+    host = args.host  # an empty --host is refused by `check_bind`, never turned into loopback
     port = args.port if args.port is not None else PORT
     check_port(port)
     check_bind(host, args.allow_non_loopback)
@@ -618,7 +626,7 @@ def _log_to_stderr() -> logging.Handler:
         if getattr(held, "_trigger_worker", False):
             return held
     handler = logging.StreamHandler(sys.stderr)
-    handler.setFormatter(logging.Formatter("%(message)s"))
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     handler._trigger_worker = True  # type: ignore[attr-defined]
     top.addHandler(handler)
     return handler
@@ -632,11 +640,33 @@ def _unlog_stderr() -> None:
     top.setLevel(logging.NOTSET)
 
 
+def _fields(exc: BaseException, limit: int = 10) -> str:
+    """` (fields: a.b (missing), c (extra_forbidden))` from the pydantic error that `load_config` chained to a config
+    error, else an empty string. Only the location and the error type are taken, never the message or the input:
+    pydantic's text repeats the value that was given, and a config error of the SDK can hold one (a bad backend
+    setting, a YAML error). A config error with no such cause stays class-name-only."""
+    cause = exc.__cause__
+    errors = getattr(cause, "errors", None)
+    if not callable(errors):
+        return ""
+    try:
+        found = errors(include_input=False, include_url=False, include_context=False)
+        shown = [
+            f"{'.'.join(str(p) for p in e['loc'])[:80]} ({str(e['type'])[:40]})" for e in found[:limit]
+        ]
+    except Exception:  # noqa: BLE001 - not a pydantic error after all: class name only
+        return ""
+    if not shown:
+        return ""
+    more = f", and {len(found) - limit} more" if len(found) > limit else ""
+    return f" (fields: {', '.join(shown)}{more})"
+
+
 def main(argv: list[str] | None = None) -> int:
     """Exit codes: 0 stopped cleanly (Ctrl-C or SIGTERM), 2 config error, 4 store not reachable at start, 3 anything else."""
     parser = argparse.ArgumentParser(prog="python -m hadavin_sdk.triggers.worker")
     parser.add_argument("--config-dir", type=Path, default=None)
-    parser.add_argument("--host", default=None, help=f"default: {LOOPBACK}")
+    parser.add_argument("--host", default=LOOPBACK, help=f"default: {LOOPBACK}")
     parser.add_argument("--port", type=int, default=None, help=f"default: {PORT}")
     parser.add_argument(
         "--allow-non-loopback", action="store_true", help="listen on a host that is not loopback"
@@ -651,8 +681,8 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as exc:  # written in this file: ids and bounds only
         print(f"trigger worker: config error: {exc}", file=sys.stderr)
         return EXIT_CONFIG
-    except AnyConfigError as exc:  # class name only: the text could hold a value
-        print(f"trigger worker: config error: {type(exc).__name__}", file=sys.stderr)
+    except AnyConfigError as exc:  # class name and field paths only: the text could hold a value
+        print(f"trigger worker: config error: {type(exc).__name__}{_fields(exc)}", file=sys.stderr)
         return EXIT_CONFIG
     except Exception as exc:  # noqa: BLE001 - class name only: the text could hold a value
         if is_connectivity_error(exc):
@@ -661,8 +691,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"trigger worker: start failed: {type(exc).__name__}", file=sys.stderr)
         return EXIT_FAILED
     _LOG.info(
-        "trigger worker: serving on port %d; the tick must run too, or a cut-off run never reaches a person",
+        "trigger worker: listening on http://%s:%d%s; the tick must run too, or a cut-off run never reaches a person",
+        server.server_address[0],
         server.server_port,
+        PATH,
     )
     return serve(server, runner)
 

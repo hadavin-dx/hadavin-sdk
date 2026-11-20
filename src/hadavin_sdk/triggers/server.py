@@ -8,11 +8,12 @@ request line, a header or the body.
 
 Answers written here, before the endpoint is reached: 400 for a request line or header block that is
 not HTTP, and for a client that sends nothing more until the socket timeout; 414 for a request line
-over the stdlib cap; 431 for too many or too long headers; 503 when the application raised. A client
+over the stdlib cap; 431 for too many or too long headers. A 503 is also written here when the application
+raised: that is a failure, not a refusal of the request. A client
 that is gone gets nothing; its connection is closed.
 
 Also refused here with 400, before the body is read: an HTTP version of 2.0 or higher (the stdlib
-parser says 505; no refusal made here is a 5xx); a header whose name holds an underscore (the
+parser says 505; no refusal made here is a 5xx; only the failure above is); a header whose name holds an underscore (the
 application sees `X_Name` and `X-Name` as one name, and a proxy in front may not, so a caller could
 pass a header the proxy never checked); more than one Content-Length header, equal or not; any
 Transfer-Encoding header. A request line with no version (the old `GET /path` form) gets no answer:
