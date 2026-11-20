@@ -70,6 +70,14 @@ def _req(n: int = 1, document: bytes = DOCUMENT) -> Accepted:
     )
 
 
+@pytest.fixture(autouse=True)
+def _no_worker_log_handler():
+    """`main` and `_log_to_stderr` put a handler on the `hadavin_sdk.triggers` logger, bound to the stream of
+    that moment (a captured one, closed when the test ends). It is removed after every test of this file."""
+    yield
+    worker._unlog_stderr()
+
+
 @pytest.fixture
 def rt(tmp_path):
     runtime, _cards = build_runtime(k5_cfg(tmp_path), GateLLM())
@@ -1273,17 +1281,164 @@ def test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker():
             pytest.fail(f"HADAVIN_REQUIRE_PG=1: defaults.{theirs} is not on this tree")
 
 
-def test_the_logging_of_the_worker_is_set_on_the_sdk_logger_only():
+def test_the_logging_of_the_worker_is_set_on_the_triggers_logger_only():
     import logging
 
     root, sdk = logging.getLogger(), logging.getLogger("hadavin_sdk")
+    top = logging.getLogger("hadavin_sdk.triggers")
     before = (root.level, list(root.handlers), sdk.level, list(sdk.handlers))
+    first = worker._log_to_stderr()
+    assert worker._log_to_stderr() is first  # twice: the same one handler
+    assert (root.level, root.handlers) == (before[0], before[1])
+    assert (sdk.level, sdk.handlers) == (before[2], before[3])  # the parent logger is untouched
+    assert top.level == logging.INFO
+    assert [h for h in top.handlers if getattr(h, "_trigger_worker", False)] == [first]
+    worker._unlog_stderr()
+    assert not [h for h in top.handlers if getattr(h, "_trigger_worker", False)]
+    assert top.level == logging.NOTSET
+
+
+def _missing(name, base):
+    """`base` without the attribute `name`."""
+    return SimpleNamespace(**{k: v for k, v in vars(base).items() if k != name})
+
+
+@pytest.mark.parametrize("field", ["max_running", "ack_wait_s"])
+def test_d3_a_settings_object_without_a_field_is_a_config_error_naming_it(rt, field):
+    with pytest.raises(ConfigError, match=f"triggers.{field} is missing") as refused:
+        worker.make_app(_app(rt, _missing(field, _settings())))
+    assert not isinstance(refused.value, AttributeError)
+
+
+def test_d3_a_config_without_triggers_or_an_app_without_a_secret_reader_is_a_config_error(rt):
+    app = _app(rt, _settings())
+    with pytest.raises(ConfigError, match=r"config\.triggers is missing"):
+        worker.make_app(SimpleNamespace(**{**vars(app), "config": SimpleNamespace()}))
+    with pytest.raises(ConfigError, match=r"App\.trigger_secret is missing"):
+        worker.make_app(_missing("trigger_secret", app))
+
+
+def test_d3_a_principal_without_a_kind_is_a_config_error_naming_the_field(rt):
+    app = _app(rt, _settings())
+    bare = SimpleNamespace()  # a stand-in principal with no `kind`
+    registry = SimpleNamespace(principals={PRINCIPAL: bare})
+    with pytest.raises(ConfigError, match="kind is missing"):
+        worker.make_app(SimpleNamespace(**{**vars(app), "registry": registry}))
+
+
+def test_d3_main_exits_2_for_a_missing_core_b_field(monkeypatch, capsys):
+    def missing(args):
+        raise worker.ConfigError("triggers.max_running is missing: x")
+
+    monkeypatch.setattr(worker, "_prepare", missing)
+    assert worker.main([]) == 2
+    assert "triggers.max_running is missing" in capsys.readouterr().err
+
+
+def test_d3_runner_has_a_read_only_ack_wait(rt):
+    with Runner(rt, rt.store, ack_wait_s=7) as runner:
+        assert runner.ack_wait_s == 7.0
+        with pytest.raises(AttributeError):
+            runner.ack_wait_s = 1.0  # type: ignore[misc]
+
+
+@pytest.mark.parametrize("port", [-1, 65536, True, "80", 1.5, None])
+def test_d3_a_bad_port_is_a_config_error_in_make_server(port):
+    with pytest.raises(ConfigError, match="--port"):
+        worker.make_server(worker.LOOPBACK, port, lambda e, s: [], 5.0)
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"read_deadline_s": 0},
+        {"read_deadline_s": -1.0},
+        {"read_deadline_s": float("nan")},
+        {"read_deadline_s": float("inf")},
+        {"read_deadline_s": 301},
+        {"read_deadline_s": True},
+        {"read_deadline_s": "5"},
+        {"max_connections": 0},
+        {"max_connections": 4097},
+        {"max_connections": True},
+        {"max_connections": 2.0},
+    ],
+)
+def test_d3_server_bounds_are_config_errors(kw):
+    with pytest.raises(ConfigError, match="read_deadline_s|max_connections"):
+        worker.make_server(worker.LOOPBACK, 0, lambda e, s: [], 5.0, **kw)
+
+
+def test_d3_the_edges_of_the_bounds_are_accepted():
+    server = worker.make_server(
+        worker.LOOPBACK, 0, lambda e, s: [], 5.0, max_connections=4096, read_deadline_s=300
+    )
+    server.server_close()
+
+
+def test_d3_main_with_a_bad_port_exits_2_before_anything_is_built(cfg_dir, capsys):
+    require_core_b()
+    assert worker.main(["--config-dir", str(cfg_dir), "--port", "70000"]) == 2
+    assert "--port must be" in capsys.readouterr().err
+
+
+def _quiet_server(max_connections):
+    from hadavin_sdk.triggers.server import QuietRequestHandler, QuietServer
+
+    class Handler(QuietRequestHandler):
+        def __init__(self, *args, **kwargs) -> None:  # no request is handled
+            pass
+
+    return QuietServer((worker.LOOPBACK, 0), Handler, max_connections=max_connections)
+
+
+class _Req:
+    def __init__(self, raises=False) -> None:
+        self.raises, self.closed = raises, False
+
+    def shutdown(self, how):
+        if self.raises:
+            raise RuntimeError("shutdown")
+
+    def close(self):
+        self.closed = True
+
+
+def test_d3_a_shutdown_that_raises_does_not_leak_the_connection_slot():
+    server = _quiet_server(1)
     try:
-        worker._log_to_stderr()
-        worker._log_to_stderr()  # twice: one handler
-        assert (root.level, root.handlers) == (before[0], before[1])
-        assert sdk.level == logging.INFO
-        assert len([h for h in sdk.handlers if getattr(h, "_trigger_worker", False)]) == 1
+        assert server._slots.acquire(blocking=False)  # what `process_request` does
+        with pytest.raises(RuntimeError, match="shutdown"):
+            server.process_request_thread(_Req(raises=True), ("127.0.0.1", 1))
+        assert server._slots.acquire(blocking=False)  # the cap is free again
     finally:
-        sdk.setLevel(before[2])
-        sdk.handlers[:] = before[3]
+        server.server_close()
+
+
+def test_d3_the_connection_cap_is_a_warning_at_most_once_a_minute_with_no_client_data(
+    monkeypatch, caplog
+):
+    import logging
+
+    from hadavin_sdk.triggers import server as quiet
+
+    clock = [1000.0]
+    monkeypatch.setattr(quiet, "_monotonic", lambda: clock[0])
+    server = _quiet_server(1)
+    try:
+        assert server._slots.acquire(
+            blocking=False
+        )  # the one slot is taken: every connection is over the cap
+        with caplog.at_level(logging.DEBUG, logger="hadavin_sdk.triggers"):
+            for at in (1000.0, 1010.0, 1059.9, 1060.0, 1061.0, 1120.1):
+                clock[0] = at
+                req = _Req()
+                server.process_request(req, ("203.0.113.9", 4444))
+                assert req.closed
+        warned = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert len(warned) == 3  # at 1000.0, 1060.0 and 1120.1
+        text = " ".join(r.getMessage() for r in caplog.records)
+        assert "203.0.113.9" not in text and "4444" not in text
+        assert all("cap" in r.getMessage() for r in warned)
+    finally:
+        server.server_close()

@@ -286,7 +286,9 @@ class QuietServer(socketserver.ThreadingMixIn, WSGIServer):
         at = _monotonic()
         if self._cap_warned_at is None or at - self._cap_warned_at >= CAP_WARN_EVERY_S:
             self._cap_warned_at = at
-            _LOG.warning("trigger server: connection cap reached, connections closed with no answer")
+            _LOG.warning(
+                "trigger server: connection cap reached, connections closed with no answer"
+            )
 
     def server_bind(self) -> None:
         exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)  # only where the platform has it

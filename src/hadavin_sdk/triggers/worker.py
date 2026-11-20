@@ -309,7 +309,9 @@ def _field(obj: Any, name: str, where: str) -> Any:
     try:
         return getattr(obj, name)
     except AttributeError:
-        raise ConfigError(f"{where} is missing: the config or App of core-b has no `{name}`") from None
+        raise ConfigError(
+            f"{where} is missing: the config or App of core-b has no `{name}`"
+        ) from None
 
 
 def trigger_settings(config: Any) -> Any:
@@ -469,11 +471,15 @@ def check_server_bounds(max_connections: object, read_deadline_s: object) -> Non
         or not isinstance(max_connections, int)
         or not 1 <= max_connections <= MAX_CONNECTIONS_CEILING
     ):
-        raise ConfigError(f"max_connections must be a whole number from 1 to {MAX_CONNECTIONS_CEILING}")
+        raise ConfigError(
+            f"max_connections must be a whole number from 1 to {MAX_CONNECTIONS_CEILING}"
+        )
     if (
         isinstance(read_deadline_s, bool)
         or not isinstance(read_deadline_s, int | float)
-        or not (0 < read_deadline_s <= READ_DEADLINE_S_CEILING)  # written so that NaN is refused too
+        or not (
+            0 < read_deadline_s <= READ_DEADLINE_S_CEILING
+        )  # written so that NaN is refused too
     ):
         raise ConfigError(
             f"read_deadline_s must be above zero and at most {READ_DEADLINE_S_CEILING:g}"
