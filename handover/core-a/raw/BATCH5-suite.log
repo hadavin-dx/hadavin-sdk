@@ -1,0 +1,21 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+
+==================================== ERRORS ====================================
+____________ ERROR collecting tests/triggers/test_t5_main_start.py _____________
+ImportError while importing test module '/home/user/hadavin-sdk/tests/triggers/test_t5_main_start.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/triggers/test_t5_main_start.py:30: in <module>
+    require_core_b(
+tests/triggers/conftest.py:70: in require_core_b
+    raise ImportError(message)  # a collection error: the run fails
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: HADAVIN_REQUIRE_PG=1: core-b trigger config (TriggerSettings, Config.triggers) not on this tree; the tests that need it must run, not skip.
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
+SKIPPED [1] tests/test_trigger_config.py:37: core-b trigger config not on this branch yet
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+2 skipped, 1 error in 2.56s
