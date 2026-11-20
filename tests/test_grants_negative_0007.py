@@ -59,7 +59,8 @@ COLUMNS = (
     "created_at",
     "closed_at",
 )
-# The reviewed second copy, written by hand from the interface README (version 2.1, section 1, "Grants").
+# The reviewed second copy of the table rights: written by hand from migration 0011 (step 4: no identity holds a
+# table right on `spend_reservations`) and from migrate.py `GRANTS`.
 HELD: dict[str, set[str]] = {
     "runtime": set(),  # was SELECT, INSERT, UPDATE before step 4: it books through the functions now
     "portal": set(),
@@ -68,15 +69,20 @@ HELD: dict[str, set[str]] = {
     "release": set(),  # 0008: it runs the release function and appends to the audit, no money table
     "stranger": set(),
 }
-# Table-level rights on `spend_reservations` AND columns nobody reads or writes any more.
+# Columns of the table the purge login may read: none since step 4 (it only runs the purge function).
 PURGE_READS: set[str] = set()
-# The second copy of `FUNCTION_GRANTS` for the five functions that touch this table: who may EXECUTE what.
+# The second copy of ALL of `FUNCTION_GRANTS` (signature -> the roles that may EXECUTE it; every other identity,
+# PUBLIC included, may not). The five functions that touch `spend_reservations` come first; the last three are
+# the counter and cap functions of 0011, also checked in tests/test_grants_negative_roles.py (FUNCTION_HOLDERS).
 EXECUTE_HELD: dict[str, set[str]] = {
-    "hadavin_reserve_spend": {"runtime"},
-    "hadavin_settle_spend": {"runtime"},
-    "hadavin_expire_spend_reservations": {"runtime"},
-    "hadavin_purge_spend_reservations": {"purge"},
-    "hadavin_release_expired_spend": {"release"},
+    "hadavin_reserve_spend(text, text, date, numeric, text)": {"runtime"},
+    "hadavin_settle_spend(text, numeric, text)": {"runtime"},
+    "hadavin_expire_spend_reservations(integer)": {"runtime"},
+    "hadavin_purge_spend_reservations(timestamptz)": {"purge"},
+    "hadavin_release_expired_spend(text, date)": {"release"},
+    "hadavin_add_spend(text, date, numeric)": {"runtime"},
+    "hadavin_set_cap(text, numeric, numeric, text)": {"reset"},
+    "hadavin_cap_matches(text, numeric, numeric)": {"runtime", "reset"},
 }
 COUNTERS = ("spend", "spend_month")  # what a reservation is booked on
 DAY = date(2026, 3, 10)
@@ -117,9 +123,8 @@ def test_the_grant_row_is_a_table_with_no_purge_column_and_no_portal_read():
     grant = mig.GRANTS[TABLE]
     assert grant.kind == "table"
     assert grant.portal is False
-    assert set(grant.purge_cols) == PURGE_READS
+    assert set(grant.purge_cols) == set()  # the purge login reads no column
     assert grant.release == ""
-    assert PURGE_READS < set(COLUMNS)
 
 
 def test_nobody_may_truncate_delete_insert_or_update_the_table_directly():
@@ -128,18 +133,26 @@ def test_nobody_may_truncate_delete_insert_or_update_the_table_directly():
     assert {role for role in HELD if _map_gives(role) & {"INSERT", "UPDATE", "SELECT"}} == set()
 
 
-def test_function_grants_say_who_may_execute_each_function_that_touches_the_table():
-    """Only the purge role purges, only the runtime books, settles and expires, only the release role releases."""
-    got: dict[str, set[str]] = {}
-    for signature, grant in mig.FUNCTION_GRANTS.items():
-        name = signature.split("(")[0]
-        if name in EXECUTE_HELD:
-            got[name] = {
-                role
-                for role in ("runtime", "portal", "purge", "reset", "release")
-                if getattr(grant, role)
-            }
-    assert got == EXECUTE_HELD
+def _execute_got() -> dict[str, set[str]]:
+    return {
+        signature: {
+            role
+            for role in ("runtime", "portal", "purge", "reset", "release")
+            if getattr(grant, role)
+        }
+        for signature, grant in mig.FUNCTION_GRANTS.items()
+    }
+
+
+def test_function_grants_key_set_is_the_one_this_file_knows():
+    """A new function in `FUNCTION_GRANTS` (or one dropped) needs its holders written in `EXECUTE_HELD` first."""
+    assert set(EXECUTE_HELD) == set(mig.FUNCTION_GRANTS)
+
+
+def test_function_grants_say_who_may_execute_each_function():
+    """Only the purge role purges, only the runtime books, settles, expires and adds, only the release role
+    releases, the reset role sets caps and compares them (with the runtime)."""
+    assert _execute_got() == EXECUTE_HELD
 
 
 def test_migration_0007_creates_this_one_table_and_no_sequence():
@@ -260,21 +273,15 @@ def test_pg_column_rights_nobody_reads_or_writes_a_single_column(identities, rol
     dsn, names = identities
     _seed(dsn)
     table = sql.Identifier(_schema(dsn), TABLE)
-    reads = PURGE_READS
     with _as(dsn, names[role]) as db:
         for column in COLUMNS:
             c = sql.Identifier(column)
             select = sql.SQL("SELECT {} FROM {}").format(c, table)
-            if column in reads:
-                assert len(db.execute(select).fetchall()) == 2
-                db.rollback()
-            else:
-                _refused(db, select)
+            _refused(db, select)
             _refused(db, sql.SQL("UPDATE {} SET {} = DEFAULT").format(table, c))
             _refused(db, sql.SQL("INSERT INTO {} ({}) VALUES (DEFAULT)").format(table, c))
         _refused(db, sql.SQL("SELECT * FROM {}").format(table))
         _refused(db, sql.SQL("SELECT status FROM {} FOR UPDATE").format(table))
-        assert not reads
         _refused(db, sql.SQL("SELECT count(*) FROM {}").format(table))
         # no role holds DELETE any more, so the lock is refused to every identity, the purge role included
         _refused(db, sql.SQL("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE").format(table))
@@ -307,8 +314,6 @@ def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
                     ).fetchone()[0]
                 }
                 expected = HELD[role] & {"SELECT", "INSERT", "UPDATE"}
-                if role == "purge" and column in PURGE_READS:
-                    expected = {"SELECT"}
                 if cols != expected:
                     wrong.append(f"{role} on column {column}: {sorted(cols)}")
         owner = db.execute(
@@ -416,7 +421,7 @@ def test_pg_roles_with_no_grant_cannot_touch_a_reservation_or_its_counters(ident
 
 def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
     """The package's own calls, each under an identity that must not make them: the purge under the runtime
-    role; reserve, settle and the sweep under the purge, the portal, the reset and the release role."""
+    role; reserve, settle and the sweep under the purge, the portal, the reset and the release role (a stranger cannot even open the store: the schema is closed to it)."""
     import psycopg
     from psycopg.conninfo import make_conninfo
 
@@ -454,3 +459,71 @@ def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
         finally:
             store._db.close()
     assert _all_rows(dsn) == before
+
+
+def _function_oid(db, schema: str, signature: str) -> int:
+    row = db.execute("SELECT to_regprocedure(%s)::oid", (f"{schema}.{signature}",)).fetchone()
+    assert row[0] is not None, f"{signature} does not exist in {schema}"
+    return row[0]
+
+
+def test_pg_execute_on_every_function_is_exactly_the_expected_set_for_every_identity(identities):
+    """has_function_privilege (direct, inherited and PUBLIC grants) for every function of `FUNCTION_GRANTS` and
+    every identity, the stranger and PUBLIC included, against the second copy `EXECUTE_HELD` AND the map."""
+    import psycopg
+
+    dsn, names = identities
+    schema = _schema(dsn)
+    askers = {**names, "PUBLIC": "public"}
+    wrong = []
+    with psycopg.connect(dsn, autocommit=True) as db:
+        for signature, holders in EXECUTE_HELD.items():
+            oid = _function_oid(db, schema, signature)
+            can = {
+                who
+                for who, name in askers.items()
+                if db.execute(
+                    "SELECT has_function_privilege(%s, %s, 'EXECUTE')", (name, oid)
+                ).fetchone()[0]
+            }
+            if can != holders:
+                wrong.append(f"{signature}: can execute {sorted(can)}, expected {sorted(holders)}")
+            if can != {
+                r
+                for r in ("runtime", "portal", "purge", "reset", "release")
+                if getattr(mig.FUNCTION_GRANTS[signature], r)
+            }:
+                wrong.append(f"{signature}: differs from migrate.FUNCTION_GRANTS")
+    assert wrong == []
+
+
+def test_pg_the_release_function_runs_under_the_release_role_and_is_refused_to_a_stranger(
+    identities,
+):
+    """Positive: the release role releases one hold expired a day ago (0011 releases only holds older than the
+    min_expiry_age limit) and the counters fall. Negative: a stranger (and the
+    runtime) is refused the same call."""
+    import psycopg
+
+    dsn, names = identities
+    schema = _schema(dsn)
+    rid = "res-" + uuid.uuid4().hex
+    month = DAY.replace(day=1)
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('a', %s, 1)", (DAY,))
+        db.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('a', %s, 1)", (month,))
+        db.execute(
+            f"INSERT INTO {TABLE} (reservation_id, agent_id, day, reserved_usd, settled_usd, status, "  # noqa: S608 - a constant table name
+            "closed_at) VALUES (%s, 'a', %s, 1, 1, 'expired', clock_timestamp() - interval '1 day')",
+            (rid, DAY),
+        )
+    call = f"SELECT reservations, released_usd, day_usd, month_usd FROM {schema}.hadavin_release_expired_spend('a', %s)"  # noqa: S608 - names built here
+    for who in ("stranger", "runtime"):
+        with _as(dsn, names[who]) as db:
+            _refused(db, call, (DAY,))
+    assert _all_rows(dsn) == [(rid, Decimal(1), Decimal(1), "expired")]
+    with _as(dsn, names["release"]) as db:
+        row = db.execute(call, (DAY,)).fetchone()
+        db.commit()
+    assert row == (1, Decimal(1), Decimal(0), Decimal(0))
+    assert _all_rows(dsn) == [(rid, Decimal(1), Decimal(0), "settled")]
