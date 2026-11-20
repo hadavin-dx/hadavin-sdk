@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from decimal import Decimal
-from typing import Protocol
+from typing import Any, Protocol
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import textnorm
@@ -192,6 +192,9 @@ class AnyOf:
     def __init__(self, detectors: list[Detector]) -> None:
         self.detectors = detectors
 
+    def bind(self, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> AnyOf:
+        return AnyOf([bind(d, wrap, agent_id, run_id) for d in self.detectors])
+
     def check(self, text: str, source: str) -> Verdict:
         verdicts = [injection_check(d, text, source) for d in self.detectors]
         flagged = [v for v in verdicts if v.flagged]
@@ -208,11 +211,30 @@ def combine(detectors: list[Detector]) -> Detector:
     return detectors[0] if len(detectors) == 1 else AnyOf(detectors)
 
 
+def bind(detector: Detector, wrap: Callable[[Any], Any], agent_id: str, run_id: str) -> Detector:
+    """The detector for one payer: a detector that calls a model (it has a ``bind`` method: ``JudgeDetector``,
+    ``AnyOf``) is given back with its model client wrapped by `wrap` (client -> model gate) and bound to the agent
+    and the run, so its calls are reserved, settled and audited for that run. Any other detector is returned as
+    it is. The Detector protocol does not change: a ``check`` called on an unbound model detector runs on its
+    raw client, outside every meter."""
+    fn = getattr(detector, "bind", None)
+    return fn(wrap, agent_id, run_id) if callable(fn) else detector
+
+
 def injection_check(detector: Detector, text: str, source: str) -> Verdict:
-    """Any detector error is a flag (guard_unavailable), never a pass."""
+    """Any detector error is a flag (guard_unavailable), never a pass. Two things are not detector errors and are
+    raised again: a meter that refused to book the detector's model call (``limits.SpendRefused``) and a model
+    gate that made no call (``model_gate.GateRefused``). A refusal to spend says nothing about the text, so the
+    caller must stop for that reason instead of reading a flag."""
     try:
         return detector.check(text, source)
-    except Exception as exc:  # noqa: BLE001 - fail closed on anything
+    except Exception as exc:  # fail closed on anything but a refusal to call
+        # imported here, not at the top: limits imports the registry, whose backends import this module
+        from hadavin_sdk.guard.model_gate import GateRefused
+        from hadavin_sdk.limits import SpendRefused
+
+        if isinstance(exc, SpendRefused | GateRefused):
+            raise
         # The cause is logged (class and message, never the text checked) so a broken detector is
         # diagnosable, e.g. a custom detector returning a score outside 0..1.
         _LOG.warning(

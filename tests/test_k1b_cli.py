@@ -84,7 +84,9 @@ def test_replay_into_a_non_empty_folder_is_refused(cfg_dir, export):
 def test_usd_cap_exits_1_and_report_shows_capped_cases(cfg_dir, export):
     assert _replay(cfg_dir, export, usd="0.01") == 1
     text = (export["out"] / "replay-report.md").read_text(encoding="utf-8")
-    assert "**Capped cases: 5.**" in text and "0.1.0" in text
+    # all 6: the worst case of the first call is above the cap, so no call is made (before the gate the first
+    # case ran and overshot, and 5 were capped)
+    assert "**Capped cases: 6.**" in text and "0.1.0" in text
     assert _score(cfg_dir, export) == 0  # capped incidents are Misses; the report still comes out
 
 

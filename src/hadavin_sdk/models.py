@@ -307,9 +307,9 @@ class Verdict(Shape):
     score: float = Field(ge=0.0, le=1.0)
     backend: str
     reason_code: str | None = None
-    cost_usd: Decimal = Decimal(
-        0
-    )  # a model-backed detector's call (llm_judge), charged by the caller
+    # What a model-backed detector's call (llm_judge) cost. Information only: the model gate client the detector
+    # is bound to has already booked it, and nobody charges this field.
+    cost_usd: Decimal = Decimal(0)
 
 
 class RunResult(Shape):

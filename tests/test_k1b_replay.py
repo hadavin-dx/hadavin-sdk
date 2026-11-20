@@ -281,9 +281,11 @@ def test_usd_cap_stops_and_stubs_the_rest(env):
     res = env.run(llm, max_usd="0.01")
     assert (res.exit_code, res.result) == (1, "capped")
     assert env.case()["status"] == "capped" and env.case("case-002")["status"] == "capped"
-    assert len(llm.calls) == 1  # the cap is checked before every call
+    # the worst case of the first call (over 0.015: the route's full output alone) is above the cap, so the
+    # reservation is refused and no call is made
+    assert len(llm.calls) == 0
     run = json.loads((env.out / "run1" / "run.json").read_text(encoding="utf-8"))
-    assert run["usd"] == "0.02" and run["counts"]["capped"] == 2  # one reply may overshoot
+    assert run["usd"] == "0" and run["counts"]["capped"] == 2
 
 
 def test_cap_is_a_total_across_runs(tmp_path, cfg_dir):
@@ -318,19 +320,27 @@ def test_injection_in_tool_result_is_replaced_and_citation_fails(env):
     assert run["counts"]["injection_flagged"] == 1 and run["counts"]["hard_check_a"] == 0
 
 
-def test_detector_cost_counts_toward_cap(env):
-    from hadavin_sdk.models import Verdict
+def test_judge_cost_counts_toward_cap(env):
+    """A model-backed detector's call is booked on the same cap (a cost a detector only reports on its verdict is
+    charged by nobody)."""
+    from hadavin_sdk.guard.judge import JudgeDetector
+    from hadavin_sdk.models import Reply
 
-    class Costly:
-        backend = "costly"
-
-        def check(self, text, source):
-            return Verdict(flagged=False, score=0.0, backend="costly", cost_usd=Decimal("0.05"))
-
-    res = env.run(
-        ScriptedLLM([tool_reply("list_data"), submit_not_sure()]), detector=Costly(), max_usd="0.05"
+    verdict = Reply(
+        text='{"injection": false, "confidence": 0.9}',
+        cost_usd=Decimal("0.19"),
+        model_id="fake-model",
     )
+    judge_llm = ScriptedLLM([verdict])
+    route = env.reg.agents["test-agent"].model_route
+    llm = ScriptedLLM([tool_reply("list_data"), submit_not_sure()])
+    res = env.run(llm, detector=JudgeDetector(judge_llm, route, 0.5), max_usd="0.20")
     assert res.result == "capped"
+    assert (
+        len(judge_llm.calls) == 1 and len(llm.calls) == 1
+    )  # the judge's 0.19 left no room for a second call
+    run = json.loads((env.out / "run1" / "run.json").read_text(encoding="utf-8"))
+    assert run["usd"] == "0.19"
 
 
 # ---------------------------------------------------------------- refusals

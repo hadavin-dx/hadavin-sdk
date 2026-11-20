@@ -64,10 +64,6 @@ class Budget:
     def exhausted(self) -> bool:
         return self.spent >= self.limit
 
-    def charge(self, usd: Decimal) -> None:
-        with self._lock:
-            self._rows[new_id("res")] = [usd, usd, "settled", Decimal(0), None]
-
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str:
         """Book the worst case of one model call and return the reservation id. SpendRefused("bad_amount") for an
         amount the store's rule refuses; SpendRefused("usd_cap") when the booking would pass the cap, or when
@@ -117,9 +113,6 @@ _CAP_REASON = {"day": "daily_budget", "month": "monthly_budget"}
 class Limits:
     def __init__(self, store: Store, audit: AuditSink, registry: Registry) -> None:
         self.store, self.audit, self.registry = store, audit, registry
-
-    def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]:
-        return self.store.add_spend(agent_id, now().date(), usd)
 
     def blocked(self, agent_id: str) -> list[str]:
         reasons = []

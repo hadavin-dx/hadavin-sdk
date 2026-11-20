@@ -1,7 +1,11 @@
 """hadavin-sdk CLI.
 
-  hadavin-sdk [--config DIR] gate <agent> [--k K]        exit 0 when green, 1 when below the threshold;
-                                                         --k K runs each item K times (pass^k), default 1
+  hadavin-sdk [--config DIR] gate <agent> [--k K] [--max-usd X]
+                                                         exit 0 when green, 1 when below the threshold;
+                                                         --k K runs each item K times (pass^k), default 1;
+                                                         --max-usd X caps the cost of this invocation (needed in
+                                                         pilot and prod; demo: the agent's daily budget);
+                                                         cap reached or call refused: exit 2
   hadavin-sdk [--config DIR] limits stop|reset --by WHO  needs a shared store (postgres); memory: exit 2;
                                                          reset logs in as the reset role (the secret named by
                                                          backends.store.reset_credential_ref); pilot and prod
@@ -45,7 +49,8 @@ from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import load_config
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import combine
-from hadavin_sdk.limits import Limits
+from hadavin_sdk.guard.model_gate import GateRefused
+from hadavin_sdk.limits import Limits, SpendRefused
 from hadavin_sdk.models import new_id
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.stages import is_live
@@ -96,6 +101,12 @@ def _main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("gate", help="run an agent's golden set")
     g.add_argument("agent")
     g.add_argument("--k", type=_positive, default=1, help="runs per golden item (pass^k)")
+    g.add_argument(
+        "--max-usd",
+        type=_money,
+        default=None,
+        help="total cost cap for this invocation (needed in pilot and prod)",
+    )
     lim = sub.add_parser("limits", help="kill switch")
     lim.add_argument("action", choices=["stop", "reset"])
     lim.add_argument("--by", required=True)
@@ -155,12 +166,22 @@ def _main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "gate":
         b = cfg.backends
-        run = evals.gate(
-            reg,
-            make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
-            args.agent,
-            k=args.k,
-        )
+        try:
+            run = evals.gate(
+                reg,
+                make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+                args.agent,
+                k=args.k,
+                max_usd=args.max_usd,
+            )
+        except (
+            SpendRefused
+        ) as exc:  # the cap (usd_cap) or an amount no meter books: no call was made
+            print(f"gate stopped: {exc.reason}", file=sys.stderr)
+            return 2
+        except GateRefused as exc:
+            print(f"gate stopped: {exc.code}", file=sys.stderr)
+            return 2
         # k == 1: today's "passed/n" line. k > 1: the fraction behind pass@1, (item, run) pairs passed / n*k;
         # the item count passing all k runs is pass^k below.
         pairs = run.n * run.k

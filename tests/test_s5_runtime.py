@@ -104,16 +104,19 @@ def test_tool_not_in_tools_allowed_is_unknown(cfg_dir):
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "unknown_action")
 
 
-def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+def test_budget_this_call_could_cross_is_refused_before_the_model(cfg_dir):
     rt, cfg = build(cfg_dir)
-    rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.00
+    # 0.999 of the 1.00 day budget is booked: the worst case of the call does not fit, so the meter refuses the
+    # reservation and no model call is made (before the gate the call was made and the plan was then denied).
+    rt.store.add_spend("test-agent", now().date(), Decimal("0.999"))
     run = rt.handle("test-agent", "svc:test-agent", _doc(cfg, "create.txt"))
-    assert (run.state, run.reason_code) == (S.DENIED, "limits.daily_budget")
+    assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.daily_budget")
+    assert rt.llm.calls == []
 
 
 def test_budget_already_spent_stops_before_the_model(cfg_dir):
     rt, cfg = build(cfg_dir)
-    rt.limits.charge("test-agent", Decimal("1.00"))
+    rt.store.add_spend("test-agent", now().date(), Decimal("1.00"))
     run = rt.handle("test-agent", "svc:test-agent", _doc(cfg, "create.txt"))
     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "limits.daily_budget")
     assert rt.llm.calls == []
