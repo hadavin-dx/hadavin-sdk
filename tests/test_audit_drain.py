@@ -1080,3 +1080,53 @@ def test_f8_an_event_moved_aside_in_memory_fails_the_step_with_its_count(app, ca
     for text in (MARK, REFUSAL, a.event_id):
         assert text not in caplog.text and text not in state.last_error
     assert log.verify().ok
+
+
+# --- fix round 3: only connection-level errors count as an outage (chain._is_outage) --------------------------------
+# Stand-ins named like psycopg's classes in a module that starts with "psycopg": the helper recognises driver errors
+# by class name along the MRO (no driver import), exactly as store.protocol.is_connectivity_error does.
+
+
+def _driver_error(name, sqlstate="__none__"):
+    base = type("Error", (Exception,), {"__module__": "psycopg.errors"})
+    cls = type(name, (base,), {"__module__": "psycopg.errors"})
+    exc = cls("driver text that must not matter")
+    if sqlstate != "__none__":
+        exc.sqlstate = sqlstate
+    return exc
+
+
+@pytest.mark.parametrize(
+    ("exc", "outage"),
+    [
+        (OSError("refused"), True),
+        (_driver_error("InterfaceError"), True),
+        (_driver_error("OperationalError"), True),  # no SQLSTATE: unknown, treated as an outage
+        (_driver_error("OperationalError", None), True),
+        (_driver_error("OperationalError", "08006"), True),  # connection failure
+        (_driver_error("OperationalError", "08001"), True),
+        (_driver_error("OperationalError", "57P01"), True),  # administrator shutdown
+        (_driver_error("OperationalError", "57P03"), True),  # cannot connect now
+        (_driver_error("OperationalError", "54000"), False),  # row too large for an index
+        (_driver_error("OperationalError", "57014"), False),  # query cancelled (statement timeout)
+        (_driver_error("OperationalError", "53100"), False),  # disk full
+        (_driver_error("OperationalError", "25006"), False),  # read-only transaction
+        (_driver_error("ProgrammingError", "42501"), False),  # missing grant
+        (RuntimeError("something else"), False),
+        (ValueError("bad row"), False),
+    ],
+)
+def test_f9_only_connection_level_errors_are_an_outage(exc, outage):
+    assert audit._is_outage(exc) is outage
+
+
+def test_f9_a_store_unavailable_is_an_outage():
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    assert audit._is_outage(StoreUnavailable("down")) is True
+
+
+def test_f9_a_sqlite_error_is_not_an_outage():
+    import sqlite3
+
+    assert audit._is_outage(sqlite3.IntegrityError("trigger refused")) is False
