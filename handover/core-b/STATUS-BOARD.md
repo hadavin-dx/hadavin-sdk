@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:24:54Z
+UPDATED_UTC: 2026-11-20T12:26:17Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.30 of 4 cores, mem 1/15 GB, disk 47G free, 34% used, agents light 4 heavy 2
+CAPACITY: load 1.28 of 4 cores, mem 1/15 GB, disk 47G free, 34% used, agents light 4 heavy 2
 DISK: / 47G free, 34% used; worktrees /tmp/core-b-wt 3.7G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T12:24:13Z (previous push; this board is pushed right after writing)
-IST: 17:54 IST
+PUSHED_UTC: 2026-11-20T12:25:24Z (previous push; this board is pushed right after writing)
+IST: 17:56 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -247,3 +247,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 12:11Z VERIFICATION of step 3 + E1 on the merged tree (16 files, 26 min): 1081 passed, 41 failed: ALL one cause: E1's review fix m9 (settle raises the run cost only when runs.agent_id matches the hold's agent) broke parity with the memory store and the core-a contract tests (the model test books runs of one agent against holds of several): the 41 are 39 in test_store_spend_model.py + 2 racing-expire tests. FIXED at 12:12Z: the run-agent condition is removed from 0011 settle (parity wins; m9 is a stated residual: a compromised runtime login can inflate any run's cost); the m9 test inverted; the racing tests pass. Contract model test RERUN started (about 8 min). Lesson: fix rounds must run the contract tests (E1 did not). RUNNING: G (step 4), E2 (reserve reads the caps table).
 
 12:14Z CONTRACT MODEL TEST RERUN: 106 passed (both stores): the m9 revert fixed all 41. Steps 1-3 + step 6 operator side + E1 are green on the merged head (verification: 1081 + 41 now passing). RUNNING: G (step 4), E2 (step 6 reserve).
+
+12:26Z AGENTS RUNNING (all sonnet, started ~11:49Z, disjoint files): G = step 4, flip runtime/purge grants on the three money tables in migrate.py GRANTS, re-point the broken tests, flip 4 xfail bypass pins (worktree /tmp/core-b-wt/MG; owns store/migrate.py GRANTS rows, tests/test_money_step4_grants.py, tests/test_migrations_0009_0010_round2.py and the listed re-pointed tests) | E2 = step 6 second half, reserve reads hadavin_caps, 5-arg reserve (worktree /tmp/core-b-wt/ME2; owns 0011 reserve function, postgres.py _reserve_call/reserve_spend, seed_caps helper + PG contract kind, tests/test_money_caps_mutants.py, test_store_money_errors_pg.py). Conflict expected: E2 and my settle edit in 0011. NEXT when they report: merge, fresh reviewers for step 4 and step 6, ONE evidence batch (cap 2). MIGRATIONS.md pushed (0006-0011 owned, next free 0012, 0008-0011 unreleased). Waiting for core-a xreviews (none landed yet).
