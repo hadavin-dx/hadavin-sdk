@@ -1,0 +1,988 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+FF.F...FFFFFFF.FFFFFFFFF                                                 [100%]
+=================================== FAILURES ===================================
+______________ test_the_runtime_role_may_not_delete_reservations _______________
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+runtime_dsn = "user=rt_be78c754fee8 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_a18b27bc7ab7'"
+
+    def test_the_runtime_role_may_not_delete_reservations(runtime_dsn):
+        """Grants: runtime SELECT, INSERT, UPDATE. No DELETE, no TRUNCATE; the purge method fails for it too."""
+        import psycopg
+    
+        store = PostgresStore(connect(runtime_dsn))
+        try:
+            rid = _rid()
+            store.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+>           store.settle_spend(rid, WORST)
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:220: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+___ test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] ___
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491d74590>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f44968db950>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f44968e6690>, ...]
+runtime_dsn = "user=rt_7966b612f2c7 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_25312e6e0fe4'"
+which = 'month'
+
+    @pytest.mark.parametrize("which", ["day", "month"])
+    def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, runtime_dsn, which):
+        """Cap 3.00, worst case 1.00, 50 connections at once: exactly 3 granted, 47 SpendCapExceeded, counters at 3.00."""
+        cap_error = _cap_error()
+        caps = (
+            {"day_cap": CAP, "month_cap": WIDE}
+            if which == "day"
+            else {"day_cap": WIDE, "month_cap": CAP}
+        )
+        ids = {id(s): _rid() for s in stores}
+    
+        def reserve(store):
+            store.reserve_spend(ids[id(store)], "a", DAY, WORST, **caps)
+            return ids[id(store)]
+    
+        results, errors, pids = _in_threads(stores, reserve)
+        granted = [r for r in results if r is not None]
+        refused = [e for e in errors if isinstance(e, cap_error)]
+        unexpected = [e for e in errors if e is not None and not isinstance(e, cap_error)]
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (3, THREADS - 3)
+        assert {e.which for e in refused} == {which}
+        reader = PostgresStore(connect(runtime_dsn))  # a 51st connection reads what was committed
+        try:
+            assert reader.spend_totals("a", DAY) == (CAP, CAP)
+>           rows = reader._db.execute(
+                "SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1"
+            ).fetchall()
+
+tests/contracts/test_t1_reserve_cap_core_c.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f4491e17890>
+query = 'SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at __
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+runtime_dsn = "user=rt_f5391afc9765 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_db4bae204351'"
+
+    def test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at(runtime_dsn):
+        """Grants: purge DELETE plus SELECT on status and closed_at; nothing else on the table."""
+        import psycopg
+    
+        from tests.contracts.kinds.store_postgres import PURGE_DSN
+    
+        purge_dsn = PURGE_DSN[runtime_dsn]
+        runtime = PostgresStore(connect(runtime_dsn))
+        purge = PostgresStore(connect(purge_dsn))
+        try:
+            closed, kept = _rid(), _rid()
+            for rid in (closed, kept):
+                runtime.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+>           runtime.settle_spend(closed, WORST)
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:246: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] ____
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a53655b0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a53653d0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a5366db0>, ...]
+runtime_dsn = "user=rt_0571ca82b3ff dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_5c6c1fc24018'"
+which = 'day'
+
+    @pytest.mark.parametrize("which", ["day", "month"])
+    def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, runtime_dsn, which):
+        """Cap 3.00, worst case 1.00, 50 connections at once: exactly 3 granted, 47 SpendCapExceeded, counters at 3.00."""
+        cap_error = _cap_error()
+        caps = (
+            {"day_cap": CAP, "month_cap": WIDE}
+            if which == "day"
+            else {"day_cap": WIDE, "month_cap": CAP}
+        )
+        ids = {id(s): _rid() for s in stores}
+    
+        def reserve(store):
+            store.reserve_spend(ids[id(store)], "a", DAY, WORST, **caps)
+            return ids[id(store)]
+    
+        results, errors, pids = _in_threads(stores, reserve)
+        granted = [r for r in results if r is not None]
+        refused = [e for e in errors if isinstance(e, cap_error)]
+        unexpected = [e for e in errors if e is not None and not isinstance(e, cap_error)]
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (3, THREADS - 3)
+        assert {e.which for e in refused} == {which}
+        reader = PostgresStore(connect(runtime_dsn))  # a 51st connection reads what was committed
+        try:
+            assert reader.spend_totals("a", DAY) == (CAP, CAP)
+>           rows = reader._db.execute(
+                "SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1"
+            ).fetchall()
+
+tests/contracts/test_t1_reserve_cap_core_c.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fa3a542c7d0>
+query = 'SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+___ test_the_fifty_first_connection_reads_the_granted_sum_before_any_settle ____
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491f2bef0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f4491f29a90>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491f2b170>, ...]
+runtime_dsn = "user=rt_df2a42e87edc dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_569d4a5c2e43'"
+
+    def test_the_fifty_first_connection_reads_the_granted_sum_before_any_settle(stores, runtime_dsn):
+        """50 reserve at once; BEFORE any settle a connection that took no part reads the committed state: the day and
+        the month counter are the sum of the granted reservations (3.00, not 50.00 and not 0), there is one open row per
+        granted id and none for a refused one, and the reader's backend is a 51st pid."""
+        cap_error = _cap_error()
+        granted, errors, pids = _reserve_all(stores)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert (len(granted), len(refused)) == (3, 47)
+        with _Reader(runtime_dsn) as reader:
+            reader_pid = reader._db.execute("SELECT pg_backend_pid()").fetchone()[0]
+            assert reader_pid not in pids and len({*pids, reader_pid}) == THREADS + 1
+>           rows = _rows(reader)
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:419: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f4491eecb90>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_exactly_floor_of_cap_over_worst_are_granted[cap1-worst1-7] ________
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f4fec050>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f07fd8da8b0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f4e30850>, ...]
+runtime_dsn = "user=rt_afda18823794 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_c2194a01fab4'"
+cap = Decimal('0.07'), worst = Decimal('0.01'), expected = 7
+
+    @pytest.mark.parametrize(
+        ("cap", "worst", "expected"),
+        [
+            (Decimal("3.50"), Decimal("1.00"), 3),  # floor: the last 0.50 is not enough for a fourth
+            (
+                Decimal("0.07"),
+                Decimal("0.01"),
+                7,
+            ),  # cents: nothing is rounded, the cap is reached exactly
+            (Decimal("1.00"), Decimal("0.30"), 3),  # 0.90 booked, 0.10 left
+            (Decimal("0.99"), Decimal("1.00"), 0),  # the cap is below one call: nobody is granted
+            (Decimal("50.00"), Decimal("1.00"), 50),  # the cap fits all 50: nobody is refused
+        ],
+    )
+    def test_exactly_floor_of_cap_over_worst_are_granted(stores, runtime_dsn, cap, worst, expected):
+        """README invariant: "exactly floor(cap / amount) succeed", for caps that are not a multiple of the amount."""
+        cap_error = _cap_error()
+        assert expected == int(cap // worst)
+        granted, errors, pids = _reserve_all(stores, usd=worst, day_cap=cap, month_cap=cap)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (expected, THREADS - expected)
+        assert {e.which for e in refused} <= {"day"}  # both caps are equal: the day is checked first
+        with _Reader(runtime_dsn) as reader:
+            total = worst * expected
+            assert reader.spend_totals("a", DAY) == (total, total)
+            assert total <= cap
+>           assert _rows(reader) == {rid: (worst, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f07f5045400>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_exactly_floor_of_cap_over_worst_are_granted[cap0-worst0-3] ________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a544e6f0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a55466f0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a5547ad0>, ...]
+runtime_dsn = "user=rt_0b4b4d0736ed dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_21f9f64199cc'"
+cap = Decimal('3.50'), worst = Decimal('1.00'), expected = 3
+
+    @pytest.mark.parametrize(
+        ("cap", "worst", "expected"),
+        [
+            (Decimal("3.50"), Decimal("1.00"), 3),  # floor: the last 0.50 is not enough for a fourth
+            (
+                Decimal("0.07"),
+                Decimal("0.01"),
+                7,
+            ),  # cents: nothing is rounded, the cap is reached exactly
+            (Decimal("1.00"), Decimal("0.30"), 3),  # 0.90 booked, 0.10 left
+            (Decimal("0.99"), Decimal("1.00"), 0),  # the cap is below one call: nobody is granted
+            (Decimal("50.00"), Decimal("1.00"), 50),  # the cap fits all 50: nobody is refused
+        ],
+    )
+    def test_exactly_floor_of_cap_over_worst_are_granted(stores, runtime_dsn, cap, worst, expected):
+        """README invariant: "exactly floor(cap / amount) succeed", for caps that are not a multiple of the amount."""
+        cap_error = _cap_error()
+        assert expected == int(cap // worst)
+        granted, errors, pids = _reserve_all(stores, usd=worst, day_cap=cap, month_cap=cap)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (expected, THREADS - expected)
+        assert {e.which for e in refused} <= {"day"}  # both caps are equal: the day is checked first
+        with _Reader(runtime_dsn) as reader:
+            total = worst * expected
+            assert reader.spend_totals("a", DAY) == (total, total)
+            assert total <= cap
+>           assert _rows(reader) == {rid: (worst, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fa3a542f200>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_exactly_floor_of_cap_over_worst_are_granted[cap2-worst2-3] ________
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491ef4c50>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f4491ef4350>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491ef69f0>, ...]
+runtime_dsn = "user=rt_045adddbb536 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_49345b5e9fa2'"
+cap = Decimal('1.00'), worst = Decimal('0.30'), expected = 3
+
+    @pytest.mark.parametrize(
+        ("cap", "worst", "expected"),
+        [
+            (Decimal("3.50"), Decimal("1.00"), 3),  # floor: the last 0.50 is not enough for a fourth
+            (
+                Decimal("0.07"),
+                Decimal("0.01"),
+                7,
+            ),  # cents: nothing is rounded, the cap is reached exactly
+            (Decimal("1.00"), Decimal("0.30"), 3),  # 0.90 booked, 0.10 left
+            (Decimal("0.99"), Decimal("1.00"), 0),  # the cap is below one call: nobody is granted
+            (Decimal("50.00"), Decimal("1.00"), 50),  # the cap fits all 50: nobody is refused
+        ],
+    )
+    def test_exactly_floor_of_cap_over_worst_are_granted(stores, runtime_dsn, cap, worst, expected):
+        """README invariant: "exactly floor(cap / amount) succeed", for caps that are not a multiple of the amount."""
+        cap_error = _cap_error()
+        assert expected == int(cap // worst)
+        granted, errors, pids = _reserve_all(stores, usd=worst, day_cap=cap, month_cap=cap)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (expected, THREADS - expected)
+        assert {e.which for e in refused} <= {"day"}  # both caps are equal: the day is checked first
+        with _Reader(runtime_dsn) as reader:
+            total = worst * expected
+            assert reader.spend_totals("a", DAY) == (total, total)
+            assert total <= cap
+>           assert _rows(reader) == {rid: (worst, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f4491eef7a0>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_exactly_floor_of_cap_over_worst_are_granted[cap3-worst3-0] ________
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f500e210>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f07f500dd30>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f500f1d0>, ...]
+runtime_dsn = "user=rt_d9e4c9138924 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_f7599acf5847'"
+cap = Decimal('0.99'), worst = Decimal('1.00'), expected = 0
+
+    @pytest.mark.parametrize(
+        ("cap", "worst", "expected"),
+        [
+            (Decimal("3.50"), Decimal("1.00"), 3),  # floor: the last 0.50 is not enough for a fourth
+            (
+                Decimal("0.07"),
+                Decimal("0.01"),
+                7,
+            ),  # cents: nothing is rounded, the cap is reached exactly
+            (Decimal("1.00"), Decimal("0.30"), 3),  # 0.90 booked, 0.10 left
+            (Decimal("0.99"), Decimal("1.00"), 0),  # the cap is below one call: nobody is granted
+            (Decimal("50.00"), Decimal("1.00"), 50),  # the cap fits all 50: nobody is refused
+        ],
+    )
+    def test_exactly_floor_of_cap_over_worst_are_granted(stores, runtime_dsn, cap, worst, expected):
+        """README invariant: "exactly floor(cap / amount) succeed", for caps that are not a multiple of the amount."""
+        cap_error = _cap_error()
+        assert expected == int(cap // worst)
+        granted, errors, pids = _reserve_all(stores, usd=worst, day_cap=cap, month_cap=cap)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (expected, THREADS - expected)
+        assert {e.which for e in refused} <= {"day"}  # both caps are equal: the day is checked first
+        with _Reader(runtime_dsn) as reader:
+            total = worst * expected
+            assert reader.spend_totals("a", DAY) == (total, total)
+            assert total <= cap
+>           assert _rows(reader) == {rid: (worst, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f07f4f7fa70>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_exactly_floor_of_cap_over_worst_are_granted[cap4-worst4-50] _______
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a54fa330>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a5504110>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a5505490>, ...]
+runtime_dsn = "user=rt_f3e5e360b712 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_d7b3e4ad979f'"
+cap = Decimal('50.00'), worst = Decimal('1.00'), expected = 50
+
+    @pytest.mark.parametrize(
+        ("cap", "worst", "expected"),
+        [
+            (Decimal("3.50"), Decimal("1.00"), 3),  # floor: the last 0.50 is not enough for a fourth
+            (
+                Decimal("0.07"),
+                Decimal("0.01"),
+                7,
+            ),  # cents: nothing is rounded, the cap is reached exactly
+            (Decimal("1.00"), Decimal("0.30"), 3),  # 0.90 booked, 0.10 left
+            (Decimal("0.99"), Decimal("1.00"), 0),  # the cap is below one call: nobody is granted
+            (Decimal("50.00"), Decimal("1.00"), 50),  # the cap fits all 50: nobody is refused
+        ],
+    )
+    def test_exactly_floor_of_cap_over_worst_are_granted(stores, runtime_dsn, cap, worst, expected):
+        """README invariant: "exactly floor(cap / amount) succeed", for caps that are not a multiple of the amount."""
+        cap_error = _cap_error()
+        assert expected == int(cap // worst)
+        granted, errors, pids = _reserve_all(stores, usd=worst, day_cap=cap, month_cap=cap)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (expected, THREADS - expected)
+        assert {e.which for e in refused} <= {"day"}  # both caps are equal: the day is checked first
+        with _Reader(runtime_dsn) as reader:
+            total = worst * expected
+            assert reader.spend_totals("a", DAY) == (total, total)
+            assert total <= cap
+>           assert _rows(reader) == {rid: (worst, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fa3a542ff20>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_a_month_cap_is_reached_by_fifty_connections_spread_over_two_days _____
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f4f5b830>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f07f4f58f50>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f4f9a810>, ...]
+runtime_dsn = "user=rt_cd41f1ee8b02 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_61c0d5910af3'"
+
+    def test_a_month_cap_is_reached_by_fifty_connections_spread_over_two_days(stores, runtime_dsn):
+        """Two day rows, one month row: 25 connections book day one and 25 day two of the same month. The month cap of
+        3.00 grants exactly 3 in total, and a refused day booking is rolled back with its reservation row."""
+        cap_error = _cap_error()
+        other_day = date(2026, 3, 11)
+        day_of = {id(s): (DAY if i % 2 == 0 else other_day) for i, s in enumerate(stores)}
+        ids = {id(s): _rid() for s in stores}
+    
+        def reserve(store):
+            store.reserve_spend(
+                ids[id(store)], "a", day_of[id(store)], WORST, day_cap=WIDE, month_cap=CAP
+            )
+            return day_of[id(store)]
+    
+        results, errors, pids = _in_threads(stores, reserve)
+        refused, unexpected = _split(errors, cap_error)
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        days = [r for r in results if r is not None]
+        assert (len(days), len(refused)) == (3, THREADS - 3)
+        assert {e.which for e in refused} == {"month"}
+        with _Reader(runtime_dsn) as reader:
+            first, month = reader.spend_totals("a", DAY)
+            second, month_again = reader.spend_totals("a", other_day)
+            assert month == month_again == CAP
+            assert first == WORST * days.count(DAY) and second == WORST * days.count(other_day)
+            assert first + second == CAP  # no day counter kept a booking the month cap refused
+>           assert len(_rows(reader)) == 3
+                       ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f07f51b8f50>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_______ test_fifty_connections_settle_one_reservation_and_the_first_wins _______
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a5505b50>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a5671a90>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a5671490>, ...]
+runtime_dsn = "user=rt_c8e4d196e807 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_3f312925f013'"
+
+    def test_fifty_connections_settle_one_reservation_and_the_first_wins(stores, runtime_dsn):
+        """README: "first call closes the row ... later calls return the stored row with False and change nothing".
+        50 connections settle the SAME reservation at once, each with its own amount: one is applied, all 50 get the
+        same stored row, and the counters moved once, by the winner's amount."""
+        with _Reader(runtime_dsn) as reader:
+            rid = _rid()
+            reader.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+            assert reader.spend_totals("a", DAY) == (WORST, WORST)
+        amount_of = {
+            id(s): Decimal(i + 1) / 100 for i, s in enumerate(stores)
+        }  # 0.01 ... 0.50, all distinct
+    
+        def settle(store):
+            row, applied = store.settle_spend(rid, amount_of[id(store)])
+            return row, applied, amount_of[id(store)]
+    
+        results, errors, pids = _in_threads(stores, settle)
+>       assert not [e for e in errors if e is not None]
+E       assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), ...]
+
+tests/contracts/test_t1_reserve_cap_core_c.py:535: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_____ test_a_settle_above_the_reserve_books_the_actual_amount_past_the_cap _____
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491ee41d0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f4491ef56d0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491ef5af0>, ...]
+runtime_dsn = "user=rt_ad4b612487ac dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_02c5d557a34d'"
+
+    def test_a_settle_above_the_reserve_books_the_actual_amount_past_the_cap(stores, runtime_dsn):
+        """README: "overshoot booked in full". The cap is full with three open reservations; one of them settles at
+        2.50: the counters read 4.50 (above the cap of 3.00), nothing is clipped, and the cap stays shut for all 50."""
+        cap_error = _cap_error()
+        granted = _three_open(stores, runtime_dsn)
+        with _Reader(runtime_dsn) as reader:
+>           row, applied = reader.settle_spend(granted[0], Decimal("2.50"))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:560: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_settles_below_the_reserve_free_room_for_exactly_that_many_new_reservations _
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f51b01d0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f07f51b3230>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f51b26f0>, ...]
+runtime_dsn = "user=rt_9d0340b7787a dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_57cc424a6370'"
+
+    def test_settles_below_the_reserve_free_room_for_exactly_that_many_new_reservations(
+        stores, runtime_dsn
+    ):
+        """Three reservations of 1.00 settle at 0.25, 0.25 and 0.50: 1.00 is booked, 2.00 is free. 50 connections
+        reserve again at once: exactly 2 are granted, and the counters end at the cap."""
+        cap_error = _cap_error()
+        granted = _three_open(stores, runtime_dsn)
+        with _Reader(runtime_dsn) as reader:
+            for rid, actual in zip(granted, ("0.25", "0.25", "0.50"), strict=True):
+>               row, applied = reader.settle_spend(rid, Decimal(actual))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:582: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____________ test_a_settle_at_zero_gives_the_whole_reservation_back ____________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a54f90d0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a54fb530>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a54fabd0>, ...]
+runtime_dsn = "user=rt_96c708ea5977 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_2e766f3a58e7'"
+
+    def test_a_settle_at_zero_gives_the_whole_reservation_back(stores, runtime_dsn):
+        """Contract point 3 of the meter: a call that cost nothing settles at 0. All three settle at 0: the counters
+        read 0 and the next 50 get exactly 3 again."""
+        cap_error = _cap_error()
+        granted = _three_open(stores, runtime_dsn)
+        with _Reader(runtime_dsn) as reader:
+            for rid in granted:
+>               assert reader.settle_spend(rid, Decimal(0))[1] is True
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:604: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_________ test_expired_reservations_stay_booked_and_keep_the_cap_shut __________
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491ef43b0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f44920b5df0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f44920b74d0>, ...]
+runtime_dsn = "user=rt_361a6a30e1e8 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_efd6861861a8'"
+
+    def test_expired_reservations_stay_booked_and_keep_the_cap_shut(stores, runtime_dsn):
+        """README: "A reservation nobody closed ... is marked expired by a sweep and stays booked at the full amount"
+        and "open rows older than that (database clock) become expired; counters do not move"."""
+        cap_error = _cap_error()
+        granted = _three_open(stores, runtime_dsn)
+        with _Reader(runtime_dsn) as reader:
+            assert reader.expire_spend_reservations(3600) == 0  # younger than an hour: not touched
+>           assert _rows(reader) == {rid: (WORST, None, "open", False) for rid in granted}
+                   ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:624: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f4491fc1040>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____________ test_fifty_sweeps_at_once_expire_each_reservation_once ____________
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f51b00b0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f07f4f5adb0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f07f4f59f10>, ...]
+runtime_dsn = "user=rt_72369fd38bc7 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_6761458b7d56'"
+
+    def test_fifty_sweeps_at_once_expire_each_reservation_once(stores, runtime_dsn):
+        """50 connections run the sweep at the same moment over three open rows: the counts they return add up to 3."""
+        granted = _three_open(stores, runtime_dsn)
+        results, errors, pids = _in_threads(stores, lambda store: store.expire_spend_reservations(0))
+        assert not [e for e in errors if e is not None]
+        assert len(set(pids)) == THREADS
+        assert sum(results) == 3
+        with _Reader(runtime_dsn) as reader:
+            assert reader.spend_totals("a", DAY) == (CAP, CAP)
+>           assert {row[2] for row in _rows(reader).values()} == {"expired"}
+                                      ^^^^^^^^^^^^^
+
+tests/contracts/test_t1_reserve_cap_core_c.py:651: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_t1_reserve_cap_core_c.py:373: in _rows
+    found = store._db.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f07f515d5e0>
+query = 'SELECT reservation_id, reserved_usd, settled_usd, status, closed_at FROM spend_reservations'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_____________ test_a_settle_after_expiry_never_lowers_the_counters _____________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a54fb650>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fa3a5697770>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fa3a56954f0>, ...]
+runtime_dsn = "user=rt_13374f1bd91a dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_1f135d2c0b8c'"
+
+    def test_a_settle_after_expiry_never_lowers_the_counters(stores, runtime_dsn):
+        """README: "an expired row is always claimed by its first settle and its counters only move upward".
+        Of three expired reservations of 1.00: one settles at 0.25 (claimed, the counters stay), one at 1.75 (claimed,
+        the counters rise by 0.75), one is left alone. A second settle of either changes nothing."""
+        cap_error = _cap_error()
+        low, high, untouched = _three_open(stores, runtime_dsn)
+        with _Reader(runtime_dsn) as reader:
+            assert reader.expire_spend_reservations(0) == 3
+>           row, applied = reader.settle_spend(low, Decimal("0.25"))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_c.py:663: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+______ test_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results ______
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491faa9f0>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f4491fa8530>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f4491fabcb0>, ...]
+runtime_dsn = "user=rt_b8cc21e88036 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_cb386d6430fc'"
+
+    def test_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results(stores, runtime_dsn):
+        """25 connections settle one open reservation at 0.25 while 25 run the sweep, all at once. Whatever the order,
+        one settle is applied and the counters equal what the row says is booked: 0.25 when the settle came first,
+        the full 1.00 when the sweep came first (an expired row never goes down)."""
+        with _Reader(runtime_dsn) as reader:
+            rid = _rid()
+            reader.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+        sweeps = {id(s) for s in stores[1::2]}
+        actual = Decimal("0.25")
+    
+        def work(store):
+            if id(store) in sweeps:
+                return ("sweep", store.expire_spend_reservations(0))
+            row, applied = store.settle_spend(rid, actual)
+            return ("settle", (row, applied))
+    
+        results, errors, pids = _in_threads(stores, work)
+>       assert not [e for e in errors if e is not None]
+E       assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), ...]
+
+tests/contracts/test_t1_reserve_cap_core_c.py:702: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_the_runtime_role_may_not_delete_reservations
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_the_fifty_first_connection_reads_the_granted_sum_before_any_settle
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap1-worst1-7]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap0-worst0-3]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap2-worst2-3]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap3-worst3-0]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_exactly_floor_of_cap_over_worst_are_granted[cap4-worst4-50]
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_a_month_cap_is_reached_by_fifty_connections_spread_over_two_days
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_connections_settle_one_reservation_and_the_first_wins
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_above_the_reserve_books_the_actual_amount_past_the_cap
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_settles_below_the_reserve_free_room_for_exactly_that_many_new_reservations
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_at_zero_gives_the_whole_reservation_back
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_expired_reservations_stay_booked_and_keep_the_cap_shut
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_fifty_sweeps_at_once_expire_each_reservation_once
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_a_settle_after_expiry_never_lowers_the_counters
+FAILED tests/contracts/test_t1_reserve_cap_core_c.py::test_settle_racing_the_sweep_ends_in_one_of_the_two_stated_results
+19 failed, 5 passed in 12.87s

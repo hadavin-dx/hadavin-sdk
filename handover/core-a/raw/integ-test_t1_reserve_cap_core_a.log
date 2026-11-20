@@ -1,0 +1,278 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+bringing up nodes...
+bringing up nodes...
+
+..FFF.FF.F.                                                              [100%]
+=================================== FAILURES ===================================
+___ test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] ___
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f43bf080050>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f43c3bff820>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f43bf0fac30>, ...]
+runtime_dsn = "user=rt_afa27eb68bb6 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_8e4a8132d8a0'"
+which = 'month'
+
+    @pytest.mark.parametrize("which", ["day", "month"])
+    def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, runtime_dsn, which):
+        """Cap 3.00, worst case 1.00, 50 connections at once: exactly 3 granted, 47 SpendCapExceeded, counters at 3.00."""
+        cap_error = _cap_error()
+        caps = (
+            {"day_cap": CAP, "month_cap": WIDE}
+            if which == "day"
+            else {"day_cap": WIDE, "month_cap": CAP}
+        )
+        ids = {id(s): _rid() for s in stores}
+    
+        def reserve(store):
+            store.reserve_spend(ids[id(store)], "a", DAY, WORST, **caps)
+            return ids[id(store)]
+    
+        results, errors, pids = _in_threads(stores, reserve)
+        granted = [r for r in results if r is not None]
+        refused = [e for e in errors if isinstance(e, cap_error)]
+        unexpected = [e for e in errors if e is not None and not isinstance(e, cap_error)]
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        print(  # shown with -s: the numbers the evidence log quotes
+            f"T1 {which} cap: granted={len(granted)} refused={len(refused)} other={len(unexpected)} "
+            f"distinct_backend_pids={len(set(pids))}"
+        )
+        assert (len(granted), len(refused)) == (3, THREADS - 3)
+        assert {e.which for e in refused} == {which}
+        reader = PostgresStore(connect(runtime_dsn))  # a 51st connection reads what was committed
+        try:
+            assert reader.spend_totals("a", DAY) == (CAP, CAP)
+>           rows = reader._db.execute(
+                "SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1"
+            ).fetchall()
+
+tests/contracts/test_t1_reserve_cap_core_a.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f43bf0cf5c0>
+query = 'SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+----------------------------- Captured stdout call -----------------------------
+T1 month cap: granted=3 refused=47 other=0 distinct_backend_pids=50
+________ test_fifty_connections_settling_one_reservation_apply_it_once _________
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f7687f8bc50>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f768800a450>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f768800a0f0>, ...]
+runtime_dsn = "user=rt_a2fe34e07665 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_42993ec3a1e5'"
+
+    def test_fifty_connections_settling_one_reservation_apply_it_once(stores, runtime_dsn):
+        """Invariant 3 "idempotent settle" from separate connections: 50 connections settle ONE reservation with 50
+        different amounts at once. Exactly one call applies; all 50 get the same stored row; the counters and the
+        run's cost hold the winner's amount once."""
+        from hadavin_sdk.models import Run
+    
+        run = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t")
+        stores[0].create_run(run)
+        rid = _rid()
+        stores[0].reserve_spend(rid, "a", DAY, WORST, day_cap=WIDE, month_cap=WIDE, run_id=run.run_id)
+        amounts = {id(s): Decimal(i + 1) / 100 for i, s in enumerate(stores)}  # 0.01 .. 0.50
+    
+        results, errors, pids = _in_threads(
+            stores, lambda store: store.settle_spend(rid, amounts[id(store)])
+        )
+>       assert not [e for e in errors if e is not None]
+E       assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), ...]
+
+tests/contracts/test_t1_reserve_cap_core_a.py:242: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] ____
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7fc074e89f10>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7fc074e88b30>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7fc074e8a870>, ...]
+runtime_dsn = "user=rt_384eaf25937b dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_9111a8b44028'"
+which = 'day'
+
+    @pytest.mark.parametrize("which", ["day", "month"])
+    def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, runtime_dsn, which):
+        """Cap 3.00, worst case 1.00, 50 connections at once: exactly 3 granted, 47 SpendCapExceeded, counters at 3.00."""
+        cap_error = _cap_error()
+        caps = (
+            {"day_cap": CAP, "month_cap": WIDE}
+            if which == "day"
+            else {"day_cap": WIDE, "month_cap": CAP}
+        )
+        ids = {id(s): _rid() for s in stores}
+    
+        def reserve(store):
+            store.reserve_spend(ids[id(store)], "a", DAY, WORST, **caps)
+            return ids[id(store)]
+    
+        results, errors, pids = _in_threads(stores, reserve)
+        granted = [r for r in results if r is not None]
+        refused = [e for e in errors if isinstance(e, cap_error)]
+        unexpected = [e for e in errors if e is not None and not isinstance(e, cap_error)]
+        assert not unexpected
+        assert len(set(pids)) == THREADS
+        print(  # shown with -s: the numbers the evidence log quotes
+            f"T1 {which} cap: granted={len(granted)} refused={len(refused)} other={len(unexpected)} "
+            f"distinct_backend_pids={len(set(pids))}"
+        )
+        assert (len(granted), len(refused)) == (3, THREADS - 3)
+        assert {e.which for e in refused} == {which}
+        reader = PostgresStore(connect(runtime_dsn))  # a 51st connection reads what was committed
+        try:
+            assert reader.spend_totals("a", DAY) == (CAP, CAP)
+>           rows = reader._db.execute(
+                "SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1"
+            ).fetchall()
+
+tests/contracts/test_t1_reserve_cap_core_a.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7fc074f18d70>
+query = 'SELECT reservation_id, reserved_usd, status FROM spend_reservations ORDER BY 1'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table spend_reservations
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+----------------------------- Captured stdout call -----------------------------
+T1 day cap: granted=3 refused=47 other=0 distinct_backend_pids=50
+______________ test_the_runtime_role_may_not_delete_reservations _______________
+[gw0] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+runtime_dsn = "user=rt_3c2728953b55 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_ef10c2ee0618'"
+
+    def test_the_runtime_role_may_not_delete_reservations(runtime_dsn):
+        """Grants: runtime SELECT, INSERT, UPDATE. No DELETE, no TRUNCATE; the purge method fails for it too."""
+        import psycopg
+    
+        store = PostgresStore(connect(runtime_dsn))
+        try:
+            rid = _rid()
+            store.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+>           store.settle_spend(rid, WORST)
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_a.py:324: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at __
+[gw2] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+runtime_dsn = "user=rt_367acb0be0d3 dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_95fb685dde8c'"
+
+    def test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at(runtime_dsn):
+        """Grants: purge DELETE plus SELECT on status and closed_at; nothing else on the table."""
+        import psycopg
+    
+        from tests.contracts.kinds.store_postgres import PURGE_DSN
+    
+        purge_dsn = PURGE_DSN[runtime_dsn]
+        runtime = PostgresStore(connect(runtime_dsn))
+        purge = PostgresStore(connect(purge_dsn))
+        try:
+            closed, kept = _rid(), _rid()
+            for rid in (closed, kept):
+                runtime.reserve_spend(rid, "a", DAY, WORST, day_cap=CAP, month_cap=CAP)
+>           runtime.settle_spend(closed, WORST)
+E           TypeError: PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'
+
+tests/contracts/test_t1_reserve_cap_core_a.py:350: TypeError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+____ test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows _____
+[gw1] linux -- Python 3.13.12 /home/user/wt/integ/.venv/bin/python
+
+stores = [<hadavin_sdk.store.postgres.PostgresStore object at 0x7f768812b050>, <hadavin_sdk.store.postgres.PostgresStore object...gres.PostgresStore object at 0x7f768812acf0>, <hadavin_sdk.store.postgres.PostgresStore object at 0x7f768812bad0>, ...]
+runtime_dsn = "user=rt_011a4704548b dbname=postgres host=127.0.0.1 port=55433 options='-c search_path=t_1d1c16ae1da2'"
+
+    def test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows(stores, runtime_dsn):
+        """Invariants 3 and 4 with ticket resolution Q9 ("the counters can be reconciled from the table"): 40
+        connections each settle their own open reservation of 1.00 at 0.25 while 10 connections run the expiry sweep
+        with age 0. Whichever comes first for a row, afterwards every row is settled, each says 0.25 (settled while
+        open) or 1.00 (expired first: never down), and the day counter equals the sum over the rows; the run's cost
+        is 40 times the real 0.25."""
+        from hadavin_sdk.models import Run
+    
+        low = Decimal("0.25")
+        run = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t")
+        stores[0].create_run(run)
+        settlers = stores[:40]
+        ids = {id(s): _rid() for s in settlers}
+        for s in settlers:
+            s.reserve_spend(
+                ids[id(s)], "a", DAY, WORST, day_cap=WIDE, month_cap=WIDE, run_id=run.run_id
+            )
+    
+        def work(store):
+            if id(store) in ids:
+                return store.settle_spend(ids[id(store)], low)
+            return store.expire_spend_reservations(0)
+    
+        results, errors, _ = _in_threads(stores, work)
+>       assert not [e for e in errors if e is not None]
+E       assert not [TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), TypeError("PostgresSt...ent: 'agent_id'"), TypeError("PostgresStore.settle_spend() missing 1 required keyword-only argument: 'agent_id'"), ...]
+
+tests/contracts/test_t1_reserve_cap_core_a.py:282: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month]
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_settling_one_reservation_apply_it_once
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day]
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_the_runtime_role_may_not_delete_reservations
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at
+FAILED tests/contracts/test_t1_reserve_cap_core_a.py::test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows
+6 failed, 5 passed in 5.60s

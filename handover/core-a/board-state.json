@@ -761,19 +761,6 @@
    "reason": "the dry-run agent looked at the wrong socket"
   },
   {
-   "id": "T1-merge",
-   "role": "builder in /home/user/wt/t1 (wip/core-a-t1-merge on core-b fbebb390f)",
-   "model": "sonnet",
-   "what exactly it is doing": "DECISION T1: merge core-a's and core-c's EXTRA T1 cases into core-b's tests/contracts/test_t1_reserve_cap.py, PG16 before/after -> handover/core-a/T1-MERGE.md",
-   "started UTC": "16:30",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 16:22"
-  },
-  {
    "id": "docfix24",
    "role": "builder (cloud/core-a)",
    "model": "sonnet",
@@ -785,6 +772,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "N3 findings owned by core-a"
+  },
+  {
+   "id": "rev-t1",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review that the merged T1 file is not weaker than the originals (ported cases, duplicates, concurrency barriers, direct-statement refusals)",
+   "started UTC": "16:48",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1157,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:48 DECISION T1 DONE: branch wip/core-a-t1-merge pushed (on core-b fbebb390f; only tests/contracts/test_t1_reserve_cap.py changed): core-b's file is the base, 13 functions / 18 cases of core-a's and core-c's T1 ported (marked 'from core-a T1'/'from core-c T1'), 7 duplicates skipped, 7 -> 25 passed on PG16 (25 skipped without a DSN), ruff clean, mutation sanity on 3 cases (sweep no-op, settle always applied); two stale core-a role cases replaced by the stronger fact (no login has any right on spend_reservations after 0011; purge only via purge_spend_reservations). Text for core-b/core-c appended to handover/core-b/requests/xr-from-core-a-reviews.md and in handover/core-a/T1-MERGE.md: copy the file, delete the _core_a/_core_c copies in the integration. Fresh review rev-t1 running (weakening check).",
   "16:46 MUTANT RUN 19 DONE: `120 of 120 run are as expected; problems: []`, EXIT 0 on cloud/core-a head 5a8c83fd3 (evidence/mutants-run19.md, raw/mutants-run19.log). Run on my own box (no edit needed: your G33d anchor fix is in). Load overlapped (peak 8.6): the verdicts are assertion-based, not timing-based; re-run when load < 4 only if you want a timing-clean figure.",
   "16:42 LOAD NOTE (your 16:16): heavy at once = 2 (full mutant script run 19 + integ-pg -n 3 strict-PG run); the other 2 agents (T1-merge, docfix24) run small pytest sets (-n 2 / -n 0). Any timing-sensitive result recorded while load > 4 is marked INVALID-LOAD in its evidence file (integ-pg and the mutant log record uptime start/end; I will list those that start above 4). I start NO new heavy run until load < 4.",
   "16:38 N3 DONE (handover/core-a/DOCS-CONSISTENCY-1.md; 41 claims on the merged tree, 31 TRUE): FALSE: (core-b text) SECURITY.md:23-25 and README.md:58 say migrate does NOT refuse a runtime role that owns the audit tables, but migrate.py:448-449 (called at :1339) refuses it: the tamper-evidence text understates the code; SECURITY.md:28 points to handover/core-b/tickets/A-audit-rights.md which does not ship; CHANGELOG.md:9 calls 0007 unreleased (released since: migrations_released.json has 7 rows; unreleased = 0008-0011). (core-a, mine) the setting `triggers.conflict_events_per_minute` (CHANGELOG.md:13, config.py:420-425) is DEAD: my worker passes the constant 10 and never reads it: FIXING (agent docfix24); README-trigger l.51-54/803-806/675-677 and the 'One run at a time' heading are stale AFTER the merge (config block present; max_running defaults to 4; no reserve warning since core-b's limits have reserve): post-merge patch file prepared by docfix24 (handover/core-a/pr/README-trigger-postmerge.md); wk module text on spend corrected. Note: no separate 'caps role' exists in the merged tree (it lives only on your wip/lead-b-migrate): the runbook (reset login runs set-cap) is TRUE there. AGENTS 3 (integ-pg, T1-merge, docfix24) + mutant script.",
@@ -4047,6 +4048,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "N3: 41 claims checked on the merged tree: 31 TRUE, 6 FALSE (SECURITY.md:23-25 and README.md:58 say migrate does not refuse an owning runtime role but it does (mig:448); CHANGELOG.md:9 calls 0007 unreleased; triggers.conflict_events_per_minute is DEAD in my worker; 3 README-t claims stale after the merge), 3 PARTLY, 3 UNVERIFIABLE; handover/core-a/DOCS-CONSISTENCY-1.md"
+  },
+  {
+   "id": "T1-merge",
+   "role": "builder in /home/user/wt/t1 (wip/core-a-t1-merge on core-b fbebb390f)",
+   "model": "sonnet",
+   "what exactly it is doing": "DECISION T1: merge core-a's and core-c's EXTRA T1 cases into core-b's tests/contracts/test_t1_reserve_cap.py, PG16 before/after -> handover/core-a/T1-MERGE.md",
+   "started UTC": "16:30",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "wip/core-a-t1-merge pushed: core-b's T1 file + core-a/core-c extra cases: 7 -> 25 passed on PG16 (25 skipped without DSN), 13 functions/18 cases ported, duplicates skipped, 2 stale role cases replaced by the stronger 'every direct statement refused; purge only via function'; mutation sanity on 3 cases; T1-MERGE.md"
   }
  ]
 }
