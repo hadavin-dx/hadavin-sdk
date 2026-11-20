@@ -180,3 +180,8 @@ PASS: 0995617c0 (G8 tip), 222b08d1f/608be6874 (E14), 9652b20aa and e75871df3 (G9
 
 
 ## E23 (G9 round 2 review): M1 `_overlaps` collect-before-charge (resource hole), M2 SECRET union downgraded by `_place_union` reverse hit, M3 weight calibration. Record: tickets/G9-result-review-2-design.md. Status: OPEN, fix to be built (G9b).
+
+
+## E24 (G13d builder, 2026-11-20): minimum run length for separator-only secret values (G13c result review 1, Major 2): LEAD DECISION
+Current behaviour (PINNED, stated limit, not changed): a SECRET value made only of separator characters (whitespace, `********`, `--------`; `runmap._SEPARATORS`) makes every run of 4 or more of its characters directly before or after a key of the map a piece: indentation beside a placeholder, `****<HOST_1>`, a rule line next to a key become a permanent `held_value_left` refusal (the message stays in the history). Pinned by E::test_g13d_1_values_of_only_separators_refuse_a_run_of_four_beside_a_key_a_stated_limit; written as a stated limit in `runmap._touching_piece` and the SECURITY block of `model_gate.py`. Not verified: whether any producer can register such a value (core-b request).
+Open: (a) keep as is (fail closed, the value is a secret, a run of it beside a key is a piece); (b) require a minimum run for separator-only values (e.g. more than 4, or half the value), a loosening that lets short runs of a planted separator value through; (c) refuse to register a separator-only value as a secret kind at the producer (core-b). Builder did not choose. Status: OPEN.
