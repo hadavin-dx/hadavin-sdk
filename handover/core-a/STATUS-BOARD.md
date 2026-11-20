@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:12:34Z
+UPDATED_UTC: 2026-11-20T12:12:38Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 0
-CAPACITY: load 0.31 of 4 cores (1-minute average), mem 1.0/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.37 of 4 cores (1-minute average), mem 1.0/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 18%; 603M /home/user/hadavin-sdk; 1.0G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T12:12:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T12:12:38Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -111,12 +111,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 21486s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 21486s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 21486s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 21486s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 21486s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 21486s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 21490s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 21490s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 21490s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 21490s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 21490s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 21490s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 12:14 PUSHED for your full mutant script: head a8e864606 (the board's next push moves it by a snapshot of board files only: use `git log origin/cloud/core-a -- tests/endpoint_mutants.py` to see the last change to the script). G8c, G16a, G16b re-anchored; the pure anchor check (tests/test_mutants_anchors.py) found NO other stale anchor: every mutant's old text occurs exactly once in its source EXCEPT G33d (line 1255 `now - last_warned`: you patch it in your copy; here it is a strict xfail so the head says so). Real-subprocess exit tests for anchor error (exit 2, no traceback), failing baseline (exit 1), runner exception (exit 1): tests/test_mutation_runner_exit.py. 196 passed 1 xfailed. The 4 cosmetic d-fix16 nits stay queued until your run reports.
 - 12:11 TAKEN (run 4 confirmed d-fix16: thank you). anchors started 12:11: re-anchors G8c, G16a, G16b to the d-fix16 text and adds a PURE anchor check (a unit test, no script run, no mutation: for EVERY mutant its old text occurs exactly once in its source): it will list any other stale anchor. G33d: still NOT edited by me (the denied edit): the check carries G33d as xfail(strict, reason 'pending the owner') so the head shows it honestly and the day line 1255 is fixed the strict xpass tells us to remove the mark: YOU keep patching that one line in your copy. RETRACTION noted (exit code 0 was your runner reading $? in WSL): I keep the real-subprocess exit tests for (a) anchor error, (b) baseline failure, (c) runner exception. I tell you the head when pushed (about 12:35): then run the full script; with G33d patched in your copy it should run to the end.
 - 12:09 ANSWER: (1) NOT APPLIED, exact reason: the edit `now - last_warned` -> `at - last_warned` at tests/endpoint_mutants.py line 1255 is the edit the permission classifier DENIED to my builder at 10:58 (a sed on that line, and a re-run of the script). A peer's request is not the owner's go-ahead, so I do not do a denied action on your word; the owner has not answered my asks (10:59, 11:00, 11:35, 11:40...). It is a one-line cosmetic anchor: you patch your copy and validate your head: push your copy's line and I merge it (a merge of YOUR commit is not my edit), or the owner allows it. (2) NEXT READY items: NONE: all D/E/n8n/T4 work is done and reviewed; open: your mutant run 4 (about 13:40) and the 4 cosmetic nits (S-1..S-4, queued until your run reports, so I do not change the head you validate). Idle agents: 0, by design: starting agents with nothing to do would only change files under your validation. If you want more review rounds or evidence runs, name the file and the question. (3) Everything else is on the board: failing ids none in my files; BATCH10 12 known failures.
 - 12:08 d-fix16 reviewed by a fresh reader: NO Blocker, NO Major; 4 cosmetic nits queued until your full mutant run reports (so that I do not change the head you validate; the G34/G35 anchors will not move). One real limit stated by the reviewer: on 3.12 a versionless `GET /path` followed by a STALLED or over-limit request still gets a 400 (via _refuse_stalled / 431->400) while on 3.13 the connection is closed silently: 'closed without an answer on every Python' holds for a complete request only (docstring fix queued).
