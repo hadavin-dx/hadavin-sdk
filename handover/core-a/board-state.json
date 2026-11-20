@@ -658,19 +658,19 @@
   {
    "item": "E-nits",
    "what": "step E extra-pass nits (3.12 Windows exists(), 2 docstring lines, importorskip, 2 test names)",
-   "state": "QUEUED after batch6",
-   "percent": 0,
+   "state": "RUNNING in d-fix5",
+   "percent": 5,
    "evidence file": "reviews/E-result-review-4.md",
-   "tries": 0,
+   "tries": 1,
    "reason": "batch6 hashes crash.py"
   },
   {
    "item": "D-fix5",
    "what": "D-rev4 Majors R4-1..5 + nits + E-nits (one builder, tests + small code + crash.py nits + ticket)",
-   "state": "QUEUED after batch6 ends",
-   "percent": 0,
+   "state": "RUNNING in d-fix5",
+   "percent": 5,
    "evidence file": "reviews/D-code-result-review-4.md",
-   "tries": 0,
+   "tries": 1,
    "reason": "batch6 hashes the tree"
   }
  ],
@@ -700,6 +700,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "lead: full suite, failing ids"
+  },
+  {
+   "id": "d-fix5",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "whole-suite failures C (slice in worker._fields) and E (fuzz C1 retry-503 under load), D-rev4 Majors R4-1..5 + nits, E-nits, mutant re-anchor, one run + mutants",
+   "started UTC": "08:56",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "fixes after the extra passes",
+   "retries so far": 0,
+   "reason": "batch6 failures"
   }
  ],
  "tests": [
