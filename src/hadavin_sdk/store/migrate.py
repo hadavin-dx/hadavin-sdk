@@ -940,9 +940,9 @@ def _owner_problems(db, named: list[str]) -> list[str]:
     return problems
 
 
-def _unmapped_functions(db) -> list[str]:
-    """hadavin_* functions of the schema in neither map, by FULL signature (an overload of a mapped name is
-    unmapped: it would be unpinned and open to PUBLIC)."""
+def _unmapped_rows(db) -> list[tuple[int, str, str, str]]:
+    """hadavin_* functions of the schema in neither map: (oid, schema, name, argument types), by FULL signature (an
+    overload of a mapped name is unmapped: it would be unpinned and open to PUBLIC)."""
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     known = set()
     for sig in (*FUNCTION_GRANTS, *EXCLUDED_FUNCTIONS):
@@ -950,14 +950,58 @@ def _unmapped_functions(db) -> list[str]:
         if row is not None:
             known.add(row)
     return [
-        sig
-        for (oid, sig) in db.execute(
-            "SELECT p.oid, p.oid::regprocedure::text FROM pg_proc p JOIN pg_namespace n "
-            "ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 2",
+        (oid, schema, name, types)
+        for (oid, name, types) in db.execute(
+            "SELECT p.oid, p.proname, pg_catalog.oidvectortypes(p.proargtypes) FROM pg_proc p "
+            "JOIN pg_namespace n ON n.oid = p.pronamespace "
+            "WHERE n.nspname = %s AND p.proname LIKE 'hadavin\\_%%' ORDER BY 2, 3",
             (schema,),
         ).fetchall()
         if oid not in known
     ]
+
+
+def _unmapped_functions(db) -> list[str]:
+    """The unmapped functions as `name(types)` (see `_unmapped_rows`)."""
+    return [f"{name}({types})" for (_oid, _schema, name, types) in _unmapped_rows(db)]
+
+
+def _unmapped_message(db) -> str:
+    rows = _unmapped_rows(db)
+    shown = "; ".join(f"{sch}.{name}({types})" for (_o, sch, name, types) in rows[:20])
+    drops = "; ".join(
+        f'DROP FUNCTION "{sch}"."{name}"({types})' for (_o, sch, name, types) in rows[:20]
+    )
+    return (
+        "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS "
+        f"(an older draft of a migration left them; a role may still be able to run them): {shown}. "
+        "Drop it (DROP FUNCTION <schema>.<name>(<types>)) or run migrate --reset-draft <version>. "
+        f"Exactly: {drops}"
+    )
+
+
+def _drop_unmapped_functions(db) -> list[str]:
+    """For --reset-draft: drop the unmapped hadavin_* functions of the schema that the migration owner (the current
+    login) owns, so the re-applied files do not leave an older overload behind. Never another owner's function,
+    never a name outside hadavin_*, never another schema."""
+    dropped = []
+    for oid, sch, name, types in _unmapped_rows(db):
+        owned = db.execute(
+            "SELECT proowner = (SELECT oid FROM pg_roles WHERE rolname = current_user) "
+            "FROM pg_proc WHERE oid = %s",
+            (oid,),
+        ).fetchone()[0]
+        if not owned:
+            continue
+        db.execute(
+            sql.SQL("DROP FUNCTION {}.{}({})").format(
+                sql.Identifier(sch), sql.Identifier(name), sql.SQL(types)
+            )
+        )
+        dropped.append(f"{sch}.{name}({types})")
+    if dropped:
+        _log.warning("migrate: reset-draft dropped unmapped functions: %s", ", ".join(dropped))
+    return dropped
 
 
 def _unnamed_money_executors(db, named: list[str]) -> list[str]:
@@ -1115,6 +1159,8 @@ UNRELEASED_MIGRATIONS = frozenset(
         "0011_money_definer",
     }
 )
+# The money wall: a stale body of these runs money code, so with roles named a changed file is refused.
+MONEY_WALL_DRAFTS = frozenset({"0010_money_guard", "0011_money_definer"})
 RELEASED_MANIFEST = Path(__file__).parent / "migrations_released.json"
 
 
@@ -1186,13 +1232,16 @@ def _reset_draft(db, version: str, files: list[Path]) -> None:
     )
 
 
-def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None:
+def _verify_applied(
+    db, files: dict[Path, str], accept: tuple[str, ...], strict: bool = False
+) -> None:
     """Compare every applied file with the checksum recorded when it was applied (`files` maps path to its current
     checksum). A released file must also match the shipped manifest (a NULL checksum, from before checksums existed,
     is filled only from a file that does). A changed file that is not in UNRELEASED_MIGRATIONS is refused. For an
     unreleased file the ledger KEEPS the checksum of what was applied and migrate warns on every run while the file
     differs; nothing of the changed file reaches the database. A NULL checksum on an unreleased file is trusted on
-    first use (logged). `accept` names unreleased versions whose recorded checksum is set to the file's now."""
+    first use (logged). `strict` (roles are named: the production path): a changed 0010 or 0011 (the money wall) is
+    a ConfigError, not a warning; 0008 and 0009 keep the warning. `accept` names unreleased versions whose recorded checksum is set to the file's now."""
     rows = dict(db.execute("SELECT version, checksum FROM schema_migrations").fetchall())
     for bad in sorted(set(accept) - _draft_versions()):
         raise ConfigError(
@@ -1217,6 +1266,17 @@ def _verify_applied(db, files: dict[Path, str], accept: tuple[str, ...]) -> None
                 )
             db.execute(
                 "UPDATE schema_migrations SET checksum = %s WHERE version = %s", (new, path.stem)
+            )
+        elif strict and path.stem in MONEY_WALL_DRAFTS:
+            raise ConfigError(
+                f"{path.name}: this database holds an older draft of an unreleased migration (applied checksum "
+                f"{old[:12]}, file now {new[:12]}). Nothing of the changed file reaches it: the old function bodies "
+                "keep running (a draft's reserve may let the caller pick its own caps) and the named roles keep "
+                "whatever the draft granted. Fix: drop what the draft made (the money functions, the hadavin_caps "
+                "and hadavin_limits tables, the guard triggers of the draft: see docs/migration-checksums.md) and run "
+                f"migrate with --reset-draft {path.stem}; or, when the objects in this database already match the "
+                f"file, run migrate with --accept-changed-draft {path.stem}. (Without roles, --no-roles, this is "
+                "only a warning.)"
             )
         elif path.stem in UNRELEASED_MIGRATIONS:
             _log.warning(
@@ -1342,8 +1402,14 @@ def migrate(
         _check_released({p: t[1] for p, t in texts.items()})
         if reset_draft is not None:
             _reset_draft(db, reset_draft, files)
+            _drop_unmapped_functions(db)
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-        _verify_applied(db, {p: t[1] for p, t in texts.items()}, tuple(accept_changed_draft))
+        _verify_applied(
+            db,
+            {p: t[1] for p, t in texts.items()},
+            tuple(accept_changed_draft),
+            strict=bool(named),
+        )
         for path in files:
             if path.stem in done:
                 continue
@@ -1361,11 +1427,8 @@ def migrate(
                     raise ConfigError(
                         "the runtime, portal, purge, reset, release and caps roles must not be members of each other"
                     )
-        if unmapped := _unmapped_functions(db):
-            raise ConfigError(
-                "the schema has hadavin_* functions that are in neither FUNCTION_GRANTS nor EXCLUDED_FUNCTIONS: "
-                + ", ".join(unmapped[:20])
-            )
+        if _unmapped_functions(db):
+            raise ConfigError(_unmapped_message(db))
         if problems := _owner_problems(db, named):
             raise ConfigError("; ".join(problems))
         if (
