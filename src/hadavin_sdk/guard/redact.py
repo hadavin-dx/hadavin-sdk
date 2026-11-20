@@ -2035,7 +2035,9 @@ class _Redactor:
         # until every group is shallow enough for a finder of its own: checking them one by one against every
         # segment was quadratic - a comb of 8,008 values within the log caps took 126-144 s a pass (fifth
         # review, 2026-10-01). Only if no split works are they checked one by one.
-        trie = _trie(self._rules)
+        # MEMORY (ticket E14): this first trie is capped at `defaults.MAX_FINDER_CHARS` nodes (InputTooLarge("FinderMemoryTooMuch")), before the group
+        # tries, the regex, the compile and any write of `_built_for`, `_finders` or the cache: a refused build leaves the redactor unbuilt.
+        trie = _trie(self._rules, limit=defaults.MAX_FINDER_CHARS)
         deep = {w for w in self._rules if _nesting(trie, w) > _MAX_NESTING}
         fast = [w for w in self._rules if w not in deep]
         split = _split(sorted(deep)) if deep else []
@@ -2172,10 +2174,17 @@ def _compile_uncached(pattern: str) -> re.Pattern[str]:
         return compiled
 
 
-def _trie(words) -> dict[str, dict]:
+def _trie(words, limit: int | None = None) -> dict[str, dict]:
     root: dict[str, dict] = {}
+    held = 0
     for w in words:
         node = root
+        if limit is not None:
+            held += _new_nodes(root, w)
+            if held > limit:
+                from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+                raise InputTooLarge("FinderMemoryTooMuch")  # the refused word is not inserted
         for ch in w:
             node = node.setdefault(ch, {})
         node[""] = {}
