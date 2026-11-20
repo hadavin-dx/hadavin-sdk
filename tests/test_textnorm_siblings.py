@@ -130,7 +130,12 @@ def test_decision_the_evidence_grounding_key_reads_no_look_alike_because_it_is_a
     side). The marks and look-alikes the fold reads are therefore NOT read here."""
     norm = evidence.normalise
     assert norm("Alice ") == "alice"
-    assert norm("Al\u00edce") != norm("Alice"), "a combining mark makes a different grounding key"
+    assert norm("Al\u00edce") != norm("Alice"), "an accented letter makes a different grounding key"
+    # the REAL combining mark (U+0301 after the base letter): a different key from the plain name, and the SAME key as the precomposed letter (round 1 M1/M15)
+    assert norm("Ali\u0301ce") != norm("Alice"), "a combining mark makes a different grounding key"
+    assert norm("Ali\u0301ce") == norm("Al\u00edce"), (
+        "the composed and the decomposed spelling of one letter are two grounding keys"
+    )
     assert norm("\u0410lice") != norm("Alice"), "a Cyrillic capital A is a different grounding key"
     assert identity_key("Al\u00edce") == identity_key("Alice") == identity_key("\u0410lice")
     assert allow_equal("Alice", "\u0410lice") is AllowVerdict.LOOKALIKE
@@ -156,10 +161,10 @@ def test_the_injection_detector_reads_the_scan_views_so_a_cyrillic_o_or_a_hidden
     assert detector.check("a harmless sentence about invoices", "t").flagged is False
     assert (
         injection.injection_check(
-            detector, "a" * (defaults.TEXTNORM_MAX_CHARS + 1), "t"
+            detector, "a" * (defaults.TEXTNORM_INJECTION_MAX_CHARS + 1), "t"
         ).reason_code
         == "guard_unavailable"
-    ), "a text over the size rule is flagged (fail closed), not cleared"
+    ), "a text over the injection ceiling is flagged (fail closed), not cleared"
 
 
 def test_egress_is_not_a_consumer_and_refuses_a_look_alike_host():
@@ -185,7 +190,9 @@ def test_policy_a_character_unassigned_on_the_pinned_interpreter_is_dropped_and_
         pytest.skip(
             "U+10D40 is assigned on this interpreter: pick another unassigned code point when the pin moves"
         )
-    assert cn not in _confusables.TABLE or ord(cn) in _confusables.TABLE
+    assert ord(cn) not in _confusables.TABLE, (
+        "the unassigned code point is a table source: the test would not show the drop"
+    )
     assert identity_key("ad" + cn + "min") == identity_key("admin"), (
         "inserted: dropped, so the match stands"
     )
@@ -211,14 +218,14 @@ def test_every_scan_path_of_textnorm_finds_a_secret_hidden_with_any_mc_lm_or_sk_
     modifier letter that reads as a letter is gone too). Since fix5 each of ``fold_views`` and ``squeeze_views`` finds it ALONE."""
     fold_alone = squeeze_alone = 0
     for ch, text in _hidden_in_password(category):
-        assert textnorm.scan_holds(text, "password"), (
+        assert textnorm.scan_holds(text=text, value="password"), (
             f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
         )
         assert any("password" in v.casefold() for v in textnorm.scan_views(text, "password")), (
             f"scan_views misses a secret hidden with U+{ord(ch):04X} ({category})"
         )
-        assert textnorm.scan_holds(text, "PassWord") and textnorm.scan_holds(
-            "x " + text + " y", "password"
+        assert textnorm.scan_holds(text=text, value="PassWord") and textnorm.scan_holds(
+            text="x " + text + " y", value="password"
         )
         fold_alone += any(
             "password" in v for v in textnorm.fold_views(text, casefold=True, scripts=frozenset())
@@ -233,7 +240,7 @@ def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point():
     """The same contract as the three parametrized cases, in one test (the mutation runner pins one test name)."""
     for category in ("Mc", "Lm", "Sk"):
         for ch, text in _hidden_in_password(category):
-            assert textnorm.scan_holds(text, "password"), (
+            assert textnorm.scan_holds(text=text, value="password"), (
                 f"scan_holds misses a secret hidden with U+{ord(ch):04X} ({category})"
             )
 
@@ -242,7 +249,7 @@ def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point():
 def test_a_protected_value_that_holds_the_hidden_code_point_is_found_in_the_plain_text(category):
     """The other direction (the value, not the text, carries the character): ANY view of the text holds ANY view of the value."""
     for ch, value in _hidden_in_password(category):
-        assert textnorm.scan_holds("the password is here", value), (
+        assert textnorm.scan_holds(text="the password is here", value=value), (
             f"scan_holds does not find a protected value written with U+{ord(ch):04X} ({category}) in the plain text"
         )
 

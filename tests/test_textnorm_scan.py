@@ -94,7 +94,7 @@ def test_sk1_scan_keyset_has_exactly_one_parameter_named_raw():
     )
 
 
-def test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_hold():
+def test_sk2_at_most_eight_keys_without_a_spacing_mark_or_modifier_symbol_sixteen_with_one_none_longer_than_the_weight_and_the_input_rules_hold():
     hostile = [
         "\u0397" * 40,
         ZE * 40,
@@ -104,6 +104,10 @@ def test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_
         "\u0130\u03f4\ufdfa\u1e9e",
         "",
         "!!",
+        # a spacing mark (Mc) or modifier symbol (Sk) together with a tag text and the letters that split a key: the widest texts (13 keys)
+        "\u0397" + tag("xy") + "\u0c02\u0397q",
+        "pass\u0903word" + tag("bank 12345") + "\u0397\u03b7",
+        "\u02c2" + tag("x") + "\u0397\u0903",
     ]
     gen = high_bits(7)
     for _ in range(600):
@@ -111,7 +115,11 @@ def test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_
     assert len(hostile) >= 500
     for text in hostile:
         keys = scan_keyset(text)
-        assert len(keys) <= 8, f"scan_keyset made {len(keys)} keys for {text!r}"
+        has_mc_or_sk = any(unicodedata.category(ch) in ("Mc", "Sk") for ch in text)
+        bound = (
+            16 if has_mc_or_sk else 8
+        )  # 16 by construction; 13 is the most a text reaches (the next test)
+        assert len(keys) <= bound, f"scan_keyset made {len(keys)} keys for {text!r}"
         weight = textnorm._weight(text)
         assert all(len(k) <= weight for k in keys), f"a key is longer than the weight of {text!r}"
     over = "a" * (CAP + 1)
@@ -124,6 +132,10 @@ def test_sk2_at_most_eight_keys_none_longer_than_the_weight_and_the_input_rules_
         pass
 
     refused(NotText, "scan_keyset accepted a str subclass", scan_keyset, Member("x"))
+    widest = "\u0397" + tag("xy") + "\u0c02\u0397q"
+    assert 8 < len(scan_keyset(widest)) <= 13, (
+        "a text with a spacing mark and a tag text makes more than 8 keys and at most 13"
+    )
 
 
 def test_sk2_the_key_count_over_every_code_point_is_at_most_eight():
@@ -314,7 +326,8 @@ def test_fuzz_the_readings_converge_and_the_maximum_of_changing_passes_is_record
 
     samples = [chr(cp) for cp in range(0x110000) if not 0xD800 <= cp <= 0xDFFF]
     gen = high_bits(11)
-    alphabet = [c for c in samples if ord(c) < 0x3000 or ord(c) >= 0x1D400]
+    # the whole range, Hangul and jamo, CJK, Arabic presentation forms and the rest of U+3000 to U+1D3FF included (round 1 M18 / C14: the range was skipped)
+    alphabet = list(samples)
     for _ in range(20000):
         samples.append("".join(alphabet[draw(gen, len(alphabet))] for _ in range(1 + draw(gen, 6))))
     for text in samples:
@@ -829,23 +842,27 @@ def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
     """ANY view of the text holds ANY view of the value, on both sides: the text may carry the spacing mark, or the value may. (Since P1a
     fix5 ``fold_views`` alone also finds a mark, so this test no longer proves the squeeze half by itself: the class-map case below does.)"""
     mark = "\u093e"
-    assert scan_holds("my pass" + mark + "word is x", "password"), (
+    assert scan_holds(text="my pass" + mark + "word is x", value="password"), (
         "the text side misses the squeeze view"
     )
-    assert scan_holds("my password is x", "pass" + mark + "word"), (
+    assert scan_holds(text="my password is x", value="pass" + mark + "word"), (
         "the value side misses the squeeze view"
     )
-    assert scan_holds("my pass" + mark + "word", "pass" + mark + "word")
-    assert scan_holds("MY PASSWORD", "password") and scan_holds("my p a s s w o r d", "password")
-    assert scan_holds("ltq-v" + chr(0x430) + "ult-8812", "LTQ-Vault-8812"), (
+    assert scan_holds(text="my pass" + mark + "word", value="pass" + mark + "word")
+    assert scan_holds(text="MY PASSWORD", value="password") and scan_holds(
+        text="my p a s s w o r d", value="password"
+    )
+    assert scan_holds(text="ltq-v" + chr(0x430) + "ult-8812", value="LTQ-Vault-8812"), (
         "a look-alike hides the value"
     )
-    assert scan_holds("my pass-word is x", "password") and scan_holds(
-        "my password is x", "pass-word"
+    assert scan_holds(text="my pass-word is x", value="password") and scan_holds(
+        text="my password is x", value="pass-word"
     ), (
         "punctuation hides the word from fold_views: only the squeeze half finds it, on the text side and on the value side"
     )
-    assert not scan_holds("my passport", "password") and not scan_holds("", "password")
+    assert not scan_holds(text="my passport", value="password") and not scan_holds(
+        text="", value="password"
+    )
 
 
 def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one():
@@ -858,25 +875,29 @@ def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one()
             EmptyView,
             f"scan_holds accepted the value {value!r}",
             scan_holds,
-            "any text at all",
-            value,
+            text="any text at all",
+            value=value,
         )
         refused(
             EmptyView,
             f"scan_holds accepted the value {value!r} for an empty text",
             scan_holds,
-            "",
-            value,
+            text="",
+            value=value,
         )
     assert issubclass(EmptyView, textnorm.TextnormError)
     # a TEXT with an empty view is fine: it holds nothing
-    assert scan_holds("\u4e2d\u6587", "password") is False
-    assert scan_holds("!!", "password") is False
+    assert scan_holds(text="\u4e2d\u6587", value="password") is False
+    assert scan_holds(text="!!", value="password") is False
     # the size and type rules come first
-    refused(NotText, "scan_holds accepted bytes as the value", scan_holds, "x", b"x")
-    refused(NotText, "scan_holds accepted bytes as the text", scan_holds, b"x", "x")
-    refused(TextTooLong, "scan_holds accepted a long text", scan_holds, "a" * (CAP + 1), "x")
-    refused(TextTooLong, "scan_holds accepted a long value", scan_holds, "x", "a" * (CAP + 1))
+    refused(NotText, "scan_holds accepted bytes as the value", scan_holds, text="x", value=b"x")
+    refused(NotText, "scan_holds accepted bytes as the text", scan_holds, text=b"x", value="x")
+    refused(
+        TextTooLong, "scan_holds accepted a long text", scan_holds, text="a" * (CAP + 1), value="x"
+    )
+    refused(
+        TextTooLong, "scan_holds accepted a long value", scan_holds, text="x", value="a" * (CAP + 1)
+    )
 
 
 # ---- has_mixed_script: every script of the data, except Common, Inherited and the East Asian ones ------------------------------------------
@@ -954,12 +975,14 @@ def test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false
                 ViewTooShort,
                 f"scan_holds answered for the value {value!r} that is too short to scan",
                 scan_holds,
-                text,
-                value,
+                text=text,
+                value=value,
             )
     assert issubclass(ViewTooShort, textnorm.TextnormError)
-    assert scan_holds("my name is J a-n e", "Jane") is True, "a value of four letters is scanned"
-    assert scan_holds("my name is Joan", "Jane") is False
+    assert scan_holds(text="my name is J a-n e", value="Jane") is True, (
+        "a value of four letters is scanned"
+    )
+    assert scan_holds(text="my name is Joan", value="Jane") is False
 
 
 def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_letter_does_not_hide_it():
@@ -970,29 +993,33 @@ def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_le
         text = (
             "pw\u5bc6\u7801" + ch + ch + "\u4fdd\u62a4"
         )  # two, so the one-inserted-letter match cannot find it
-        assert scan_holds("token: " + text + " end", MIXED), (
+        assert scan_holds(text="token: " + text + " end", value=MIXED), (
             f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
         )
     # a needle under the insertion minimum has no one-inserted-letter match to fall back on: only the script view of the text finds it
     for ch in ("\u0436", "\u03b4", "q", "-"):
-        assert scan_holds("a \u5bc6" + ch + ch + "\u7801 b", "\u5bc6\u7801"), (
+        assert scan_holds(text="a \u5bc6" + ch + ch + "\u7801 b", value="\u5bc6\u7801"), (
             f"scan_holds misses the value with {ch!r} inserted: the script view of the text keeps a letter of another script"
         )
     # ONE letter of the SAME script is found since the fix batch (the "one inserted letter" match, see test_textnorm_fixbatch.py); two are not,
     # and another value is not found
-    assert scan_holds("pw\u5bc6\u7801\u5929\u4fdd\u62a4", MIXED)
-    assert not scan_holds("pw\u5bc6\u7801\u5929\u5929\u4fdd\u62a4", MIXED)
-    assert not scan_holds("\u5bc6\u7801\u4fdd\u62a5", MIXED)
+    assert scan_holds(text="pw\u5bc6\u7801\u5929\u4fdd\u62a4", value=MIXED)
+    assert not scan_holds(text="pw\u5bc6\u7801\u5929\u5929\u4fdd\u62a4", value=MIXED)
+    assert not scan_holds(text="\u5bc6\u7801\u4fdd\u62a5", value=MIXED)
     # a mixed value over-matches on its script part alone (the safe side, pinned)
-    assert scan_holds("\u5bc6\u7801\u4fdd\u62a4", MIXED)
+    assert scan_holds(text="\u5bc6\u7801\u4fdd\u62a4", value=MIXED)
 
 
 def test_scan_holds_reads_the_scan_keys_of_the_value():
     """The scan keys of the VALUE (the class map z to 3) are needles too, not only its fold and squeeze views: 'Pazzword99' is found in a text
     that writes it 'Pa33word99', which no fold or squeeze view of the value equals."""
-    assert scan_holds("my Pa33word99 is x", "Pazzword99"), "the value side misses the scan key"
-    assert scan_holds("my Pazzword99 is x", "Pa33word99"), "the text side misses the scan key"
-    assert not scan_holds("my Pa44word99 is x", "Pazzword99")
+    assert scan_holds(text="my Pa33word99 is x", value="Pazzword99"), (
+        "the value side misses the scan key"
+    )
+    assert scan_holds(text="my Pazzword99 is x", value="Pa33word99"), (
+        "the text side misses the scan key"
+    )
+    assert not scan_holds(text="my Pa44word99 is x", value="Pazzword99")
 
 
 def test_scan_views_takes_the_scripts_of_the_value_and_has_a_script_view_only_with_them():
