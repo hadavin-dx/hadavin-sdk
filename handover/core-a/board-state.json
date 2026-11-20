@@ -379,11 +379,11 @@
   {
    "item": "B5b-matrix-paths",
    "what": "crash matrix part 2: kills on the paths with a read-tool call, a proposal waiting for approval, and (if buildable) execute and verify; retry before and after the tick",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/D-crash-matrix-paths-pg16.log (not yet)",
+   "state": "DONE; 4 GAPS for the plan, no broken invariant; 1 unexplained failure",
+   "percent": 100,
+   "evidence file": "tests/triggers/test_t5_crash_matrix_paths.py, CRASH-MATRIX.md part 2, raw/D-crash-matrix-paths-pg16.log",
    "tries": 1,
-   "reason": "ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in"
+   "reason": "346 passed in 228 s: 171 kill points per store (read-tool 59, proposal 80, approval 32) on PostgreSQL 16 (child killed) and memory. Held at every point: at most one run row and one approval request; no model call after a kill when a row exists; no read tool or action run twice; no action without an approve decision; nothing left open after the tick; retries got 200 or 202. GAPS (not broken invariants): (1) a kill after WAITING but before the approval request is saved ends NEEDS_PERSON 'approval_missing' with 0 cards: nobody is told (4 points); (2) a kill between sending the card and recording the send gives a DUPLICATE approval card (the tick resends; 2 points); (3) approved, then killed after EXECUTING and before the executor runs: the action never runs and the run ends NEEDS_PERSON 'outcome_unknown' (4 points); (4) the retry answer is 200, not 202, for PLAN_READY, EXECUTING and VERIFYING: a sender cannot tell 'still going' from 'ended'. UNEXPLAINED: in an earlier run one PostgreSQL case (approve18-audit.write_outcome-4-before) was marked FAILED, text not kept; it passed alone and in the final run: treated as not a finding, but NOT understood. NOT checked: the approval is recorded by the test, not by a real receiver or chat; the real HTTP executor and the rollback path were not killed; the tick ran sweep, reconcile and stuck one hour later only"
   },
   {
    "item": "CFG-2",
@@ -1009,15 +1009,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:38",
-   "percent": 3,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": "0 (restart after the Fable limit)",
    "id": "sn-matrix",
    "role": "builder and evidence runner",
    "what exactly it is doing": "crash matrix part 2 (RESUME-NOTE 4)",
-   "expected end": "about 40 min after start",
-   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+   "expected end": "ended",
+   "reason": "finished, 268k tokens, 25 min"
   },
   {
    "model": "sonnet",
@@ -1487,6 +1487,15 @@
    "first failing line": "run 1: a key tag with '/' and a retry delay race, both test bugs",
    "state": "done",
    "reason": "PostgreSQL 16.15 on port 55433"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_crash_matrix_paths.py",
+   "branch and SHA": "working tree",
+   "run number": "final (agent; one earlier PostgreSQL case failed once with no text kept)",
+   "passed / failed / errors": "346 / 0 / 0 (228 s)",
+   "first failing line": "none in the final run",
+   "state": "done",
+   "reason": "PostgreSQL 16.15 on port 55433; heavy: 4 minutes of the batch"
   }
  ],
  "restarts": [],
@@ -1515,6 +1524,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "CRASH MATRIX part 2 (CRASH-MATRIX.md): 171 kill points per store, no broken invariant, but 4 behaviours you should know for the plan: (1) kill after WAITING and before the approval request is saved: NEEDS_PERSON approval_missing and NO card, nobody is told; (2) kill between sending the card and recording the send: a duplicate approval card; (3) approved but killed before the executor runs: the action never runs, NEEDS_PERSON outcome_unknown; (4) PLAN_READY, EXECUTING and VERIFYING are answered 200 to a retry, so a sender cannot tell still-going from ended (my n8n template treats them as still going)",
   "STEP E, CHURN QUESTION for the owner (not blocking, reversible): after two review rounds the crash helper grew from 212 to 298 lines and its tests from 738 to 1065; round 2 says four additions from round 1 (latch, claim check, flag_taken) have no caller. I am deleting them and trimming the tests (to about 600 lines). If you want them kept, say so and I restore them from git history",
   "EGM-SEQUENCE: honest ledger in EGM-LEDGER.md: nothing I built has had the full sequence; missing for all code and tests: fresh result review, resolve, repeat, drift report; for ticket E also the plan review; no brainstorm or draft for anything (the lead's draft was the input). Running the result review of step E now, the rest after the three builders end",
   "MODELS REVERTED 06:41Z on the owner's own words in this session: egm plugin lines 6 opus + 66 sonnet + 0 fable (REPORT.md top block has the grep). Every Agent call sets sonnet, haiku or opus explicitly. No fable agent runs",
