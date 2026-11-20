@@ -2055,7 +2055,7 @@ def test_f2_a_reply_with_a_planted_secret_is_returned_unmasked():
 
 def test_d8_every_test_the_module_docstring_names_exists():
     """D8: the docstring says each stated limit is pinned by the test it names (T:: = this file, E:: =
-    tests/test_runmap_enforce_map.py). A name that does not exist, or a limit with no name that is not marked
+    tests/test_runmap_enforce_map.py, F:: = tests/test_finalnet.py). A name that does not exist, or a limit with no name that is not marked
     'Not pinned', is a claim the code does not back."""
     import re
 
@@ -2063,15 +2063,16 @@ def test_d8_every_test_the_module_docstring_names_exists():
     files = {
         "T": Path(__file__).read_text(encoding="utf-8"),
         "E": (Path(__file__).parent / "test_runmap_enforce_map.py").read_text(encoding="utf-8"),
+        "F": (Path(__file__).parent / "test_finalnet.py").read_text(encoding="utf-8"),
     }
-    named = re.findall(r"\b([TE])::(test_\w+)", doc)
+    named = re.findall(r"\b([TEF])::(test_\w+)", doc)
     assert len(named) >= 12
     missing = [f"{f}::{n}" for f, n in named if f"def {n}(" not in files[f]]
     assert missing == [], f"tests named in the docstring that do not exist: {missing}"
     for block in re.split(
         r"\n(?=- )", doc.split("Stated limits")[1].split("Before any provider")[0]
     )[1:]:
-        assert re.search(r"\b[TE]::test_", block) or "Not pinned" in block, block[:60]
+        assert re.search(r"\b[TEF]::test_", block) or "Not pinned" in block, block[:60]
 
 
 # --- ORDER 017 item 6: the trusted framing of a tool result -------------------------------------------------------
@@ -3109,14 +3110,17 @@ def test_g13b_3_a_long_secret_does_not_refuse_a_long_non_ascii_chunk():
 
 
 def test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_sent():
-    """G13b-5 (N3): a base64 copy of a secret is not read by the gate (the producers' G4 step reads it); a copy of an
-    identifier split by NUL passes as written. Both are the claims of the module docstring."""
+    """G13b-5 (N3): a base64 copy of a secret was not read by the gate's net (since G15 the final net refuses it, code
+    `final_net_refused`); a copy of an identifier split by NUL passes as written (the stated limit that remains)."""
     import base64
 
     mapping = runmap.RunMap({"<SECRET_1>": TOKEN, "<HOST_1>": "db1.corp.example.org"})
     bound, *_ = build(mapping=mapping)
     doc = b"blob " + base64.b64encode(TOKEN.encode())
-    assert _g13_outcome(bound, documents=[doc]) == "sent", "G13b-5 a base64 copy was refused"
+    # G15: the final net reads a base64 run that decodes to text, so a base64 copy of a secret is no longer sent
+    assert _g13_outcome(bound, documents=[doc]) == "final_net_refused", (
+        "G13b-5 a base64 copy was sent past the final net"
+    )
     split = chr(0).join("db1.corp.example.org")
     assert _g13_outcome(bound, [{"role": "user", "content": f"a {split} b"}]) == "sent", (
         "G13b-5 a NUL-split identifier was refused"

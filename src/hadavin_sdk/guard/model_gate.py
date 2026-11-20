@@ -82,7 +82,7 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   windows; a value of more than 1,636 characters gets an overlap of `runmap.WINDOW_OVERLAP_MAX` only (its raw copy is
   found on the whole text). NOT read: a piece from the middle of a value between two keys, a piece one character
   away from a key, a piece shorter than 4, another letter case of a value (only the public auth words match in any case), an ANSI-split copy, a base64-encoded copy (the
-  producers' G4 step), a copy in several stacked escape layers (`%26%23...`) that crosses a window edge of a text over
+  producers' G4 step; the final net below reads it), a copy in several stacked escape layers (`%26%23...`) that crosses a window edge of a text over
   `VIEW_WINDOW` characters and is longer than the overlap, and the forms the decoder does not undo: UTF-7,
   quoted-printable, hex or ROT13 dumps, reversed text, homoglyphs NFKC leaves alone, a secret wrapped across lines.
   T::test_g13_10_a_secret_in_a_decoded_form_refuses_the_call
@@ -101,6 +101,28 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   T::test_r3_m3_a_secret_hidden_in_a_placeholder_shaped_token_that_is_not_a_key_refuses_the_call
   T::test_r3_m3_the_net_covers_every_secret_value_not_only_the_held_back_ones
   T::test_r3_n2_stated_limit_a_value_spanning_a_fixed_framing_word_is_not_replaced
+- The final net (G15, `finalnet.FinalNet`, code `final_net_refused`, `FinalNetRefused`): the LAST check of the enforce step, on
+  the final text of every message and document about to be sent. It shares no matching code with the redactor (no `_Redactor`,
+  trie or runmap checker): a plain-substring Aho-Corasick over every registered SECRET value of 4 or more characters
+  (`MapSnapshot.secret_values`, the set the net above uses), read in the text as written, without NUL and lone surrogates,
+  in every `runmap._views` form (those functions only produce the views), in the text of a base64 run that decodes to text,
+  and with each value also in its folded and composed spellings. A key of the map and the fixed words of the trusted
+  framing are barriers (a value inside `ESULT` of `<<TOOL RESULT` is as before the stated limit of the net above); a forged
+  placeholder-shaped token is plain text. Linear in text plus matches; the automaton is capped at `finalnet.MAX_STATES`
+  states (524,288, the run map's character cap), past it the call is refused with the same code and a fixed text. A text found
+  clean is remembered by hash for the life of the bound gate's automaton. Limits it has: it reads the views `runmap._views`
+  makes and ONE base64 level, so a spelling those do not undo (ROT13, hex, reversed, words) is not found; a value spanning two
+  enforced chunks is not seen; the views are made twice per text (once by the net above, once here), a cost not removed.
+  G13b-5's old limit (a base64 copy is sent) no longer holds: the final net refuses it. Not endorsed by the lead; a default.
+  F::test_g15_a_secret_that_the_sweep_and_the_net_miss_is_still_caught_by_the_final_net
+  F::test_g15_a_document_with_a_missed_secret_is_refused
+  F::test_g15_a_secret_split_by_a_zero_width_character_is_caught_in_the_folded_view
+  F::test_g15_a_base64_copy_that_decodes_to_the_secret_is_caught
+  F::test_g15_overlapping_secrets_and_a_value_inside_another_are_all_found
+  F::test_g15_a_megabyte_with_two_thousand_values_is_read_in_bounded_work
+  F::test_g15_periodic_text_and_repeated_prefixes_stay_linear
+  F::test_g15_text_with_no_secret_passes_byte_identical
+  F::test_g15_a_set_of_values_past_the_state_cap_is_refused_with_a_fixed_text
 - Budgets (design review round 3, M1 M2 N5): one budget per chat call (characters, steps, time). A step is one per
   text and one per held-back value that occurs in it; the time is a CPU deadline given to the redactor's sweep. At most
   `runmap.ENFORCE_MAX_ENTRIES` entries and `runmap.ENFORCE_MAX_HELD` held-back values; past a budget the call is
@@ -238,7 +260,7 @@ from typing import Any, Protocol, Self
 
 from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
-from hadavin_sdk.guard import runmap
+from hadavin_sdk.guard import finalnet, runmap
 from hadavin_sdk.llm.protocol import LLM, ProviderError, ProviderExhausted
 from hadavin_sdk.models import AuditEvent, Reply
 from hadavin_sdk.tools import END_MARKER, START_MARKER
@@ -340,6 +362,7 @@ CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the clien
 CODE_CALL_INTERRUPTED = "call_interrupted"  # rule (c): KeyboardInterrupt, SystemExit, NOT settled
 CODE_RESERVE_INTERRUPTED = "reserve_interrupted"  # a BaseException in `reserve`: it may have booked
 CODE_HELD_LEFT = "held_value_left"  # a held-back secret value still raw after the sweeps: no call
+CODE_FINAL_NET = "final_net_refused"  # G15: the independent final net found a registered secret in the final bytes: no call
 CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
 CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
 CODE_OVERSHOOT = "overshoot"  # a paid call (result ok) whose real cost was above its reservation
@@ -396,6 +419,7 @@ AUDIT_CODES = (
         CODE_CALL_INTERRUPTED,
         CODE_RESERVE_INTERRUPTED,
         CODE_HELD_LEFT,
+        CODE_FINAL_NET,
         CODE_COST_UNKNOWN,
         CODE_SETTLE_FAILED,
         CODE_OVERSHOOT,
@@ -480,6 +504,25 @@ def framing_tokens(content: str) -> list[re.Match[str]]:
     return list(itertools.islice(FRAMING.finditer(content), MAX_FRAMING_TOKENS))
 
 
+def _fixed_spans(content: str, role: Any) -> tuple[tuple[int, int], ...]:
+    """(start, end) of the fixed words of the trusted framing in one message content (the ones `_enforce_text` keeps
+    exactly), for the final net: the head, ` tool=`, `>>` of a token, the end token, and the `tool ` of an assistant line."""
+    spans: list[tuple[int, int]] = []
+    call = _ASSISTANT_CALL.match(content) if role == "assistant" else None
+    end = 0
+    if call is not None:
+        spans.append((0, 5))
+        end = call.end(1)
+    for token in framing_tokens(content):
+        if token.start() < end:
+            continue
+        for group in ("head", "mid", "tail", "end"):
+            if token.group(group):
+                spans.append(token.span(group))
+        end = token.end()
+    return tuple(spans)
+
+
 def framing_free(
     messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, snap: runmap.MapSnapshot
 ) -> bool:
@@ -554,6 +597,13 @@ class HeldValueLeft(UnmaskedInput):
     word, hides in a forged placeholder-shaped token, or a bug)."""
 
     code = CODE_HELD_LEFT
+
+
+class FinalNetRefused(UnmaskedInput):
+    """G15: the independent final net (`finalnet`, plain substring, no redactor code) found a registered secret value
+    in the final text of a message or document, or could not finish (too many value characters). Nothing is sent."""
+
+    code = CODE_FINAL_NET
 
 
 class WorstCaseInvalid(GateRefused):
@@ -675,6 +725,9 @@ class BoundGate:
             str, Any
         ] = {}  # built patterns kept between calls (`runmap.snapshot(cache=...)`)
         self._gate = gate
+        self._final: finalnet.FinalNet | None = (
+            None  # G15: the final net, kept while the secret values are the same
+        )
         # G14 (design review P8 item 4): the per-message result cache. Valid for ONE map content: `_cache_map` is the
         # exact entries the cached results were made against; any difference (growth or a changed value) bumps
         # `map_version` and empties the cache, so a value registered later is looked for again in every earlier message.
@@ -714,6 +767,8 @@ class BoundGate:
                 raise HeldValueLeft
             if enforced == CODE_MASK_BUDGET:
                 raise MaskBudgetExceeded
+            if enforced == CODE_FINAL_NET:
+                raise FinalNetRefused
             raise UnmaskedInput  # raised outside any `except`: no cause and no context to leak
         messages, documents, mode = enforced  # from here on only the enforced copies are used
         failure: str | None = None
@@ -857,6 +912,10 @@ class BoundGate:
                         if fixed != text:
                             document = fixed.encode("utf-8")
                     docs.append(document)
+            if mapping is not None and self._final_net_finds(sent, docs, mapping):
+                return CODE_FINAL_NET  # G15: the LAST check, on the final bytes about to be sent
+        except finalnet.FinalNetTooLarge:
+            return CODE_FINAL_NET
         except runmap.InputTooLarge:  # size, step or time budget: this call only
             return CODE_MASK_BUDGET
         except Exception:  # noqa: BLE001 - fail closed: a step that cannot finish means no call
@@ -868,6 +927,32 @@ class BoundGate:
         else:
             mode = MODE_ENFORCED if len(mapping) else MODE_EMPTY
         return sent, docs, mode
+
+    def _final_net_finds(
+        self,
+        sent: list[dict[str, Any]],
+        docs: list[bytes] | None,
+        mapping: runmap.MapSnapshot,
+    ) -> bool:
+        """G15: True when `finalnet` finds a registered secret value (as written or in a decoded form) in the text of a
+        final message or document. No redactor code is used for the matching; a key of the run's map is a barrier, so
+        a placeholder never matches. The net is kept while the secret values stay the same."""
+        values = mapping.secret_values
+        if not values:
+            return False
+        net = self._final
+        if net is None or net.source != values:
+            net = self._final = finalnet.FinalNet(values)
+            net.source = values
+        keys = mapping.__contains__
+        for message in sent:
+            content = message["content"]
+            if net.check(content, keys, _fixed_spans(content, message.get("role"))):
+                return True
+        for document in docs or ():
+            if net.check(document.decode("utf-8", "replace"), keys):
+                return True
+        return False
 
     def _sync_cache(self, mapping: Mapping[str, str]) -> None:
         """Empty the message cache and bump `map_version` when the map's entries differ from the ones the cache
