@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:41:30Z
+UPDATED_UTC: 2026-11-20T16:42:59Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:52Z agents 3 (G12d, G9c, DOCS4 builders), load 3.8. G4d MERGED (trailing glue and HOSTKEY now ASCII-set; db01.corp例 etc. masked; TB-4.14 strict xfail for a CJK letter inside a label; b64 mutants 62/62, g8 43/43, p1d_a 50/51 A15; host tests 812 passed). Note for worktree builders: run pytest with PYTHONPATH=src or the editable install resolves to /home/user/hadavin-sdk. 16:47Z agents 4 (G12d, G9c, G4d, DOCS4 builders), load 4.4. Root docs style round 3: 0 Blocker, 8 Major (recorded tickets/DOCS-style-review-3.md) -> DOCS4; round 4 next (cap 5, need two clean rounds). 16:41Z agents 4 (G12d, G9c, G4d builders; docs style reviewer round 3), load 4.7. Lead 16:38: C4 (K5) CLOSED, nothing owed; C6 base = wip/cloud-core-c/grants b55d21865. DOCS3 merged (docs tests 71 pa
+STATE: 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (label-core decline only when issued/within counter; budget-based large-value rule 262,144; look-alike bracket cores registered; sweep leaves escaped look-alikes; _bare 0.90 s -> 0.10 s on 500k '!'; g12 mutants 41/41; redact_mutants 130/130 per builder; own-output/context/host tests 162 passed). Next: whole-tree redact_mutants + full idle suite after G9c lands, then fresh reviews of the G13d/G12d/G9c/G4d fix diffs. 16:52Z agents 3 (G12d, G9c, DOCS4 builders), load 3.8. G4d MERGED (trailing glue and HOSTKEY now ASCII-set; db01.corp例 etc. masked; TB-4.14 strict xfail for a CJK letter inside a label; b64 mutants 62/62, g8 43/43, p1d_a 50/51 A15; host tests 812 passed). Note for worktree builders: run pytest with 
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 3
-CAPACITY: load 3.8 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 3, heavy agents 0
-DISK: / 54G free, 23% used; git worktrees 58; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+AGENTS_RUNNING: 2
+CAPACITY: load 3.5 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 58; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:41:17+00:00
+PUSHED_UTC: 2026-11-20T16:41:43+00:00
 
-(22:11 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -36,7 +36,7 @@ PUSHED_UTC: 2026-11-20T16:41:17+00:00
 | a60a4532 | reviewer | claude-sonnet-5-5 | FRESH egm result review of G13c merged diff (5d8c8ca04) on plain-file snapshot | 16:21 | 16:35 | 1 | done | 1 | 0 | EGM |
 | g12c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G12c (f67fac5ae) on snapshot | 16:25 | 16:40 | 1 | done | 1 | 0 | EGM |
 | g13d | builder | claude-sonnet-5-5 | BUILDS G13d: G13c review fixes (charge every head hit, separator-only limit pinned, mutants, docstrings); /tmp/core-c-g13d | 16:25 | 16:55 | 1 | done | 1 | 0 |  |
-| afce289e | builder | claude-sonnet-5-5 | BUILDS G12d: G12c review fixes (label-core decline, budget-based large-value rule, look-alike bracket cores, sweep skips escaped look-alikes, _bare perf); /tmp/core-c-g12d | 16:28 | 17:00 | 1 | running | 1 | 0 |  |
+| afce289e | builder | claude-sonnet-5-5 | BUILDS G12d: G12c review fixes (label-core decline, budget-based large-value rule, look-alike bracket cores, sweep skips escaped look-alikes, _bare perf); /tmp/core-c-g12d | 16:28 | 17:00 | 1 | done | 1 | 0 |  |
 | g9b-rev | reviewer | claude-sonnet-5-5 | FRESH egm design result review of G9b (24f1983fc) on snapshot | 16:29 | 16:42 | 1 | done | 1 | 0 | EGM |
 | a7823001 | builder | claude-sonnet-5-5 | BUILDS G9c: G9b review fixes (charge accepted+rejected occurrences, per-edge/_expand calibration measured, kind rule at reverse[full], exact-work test); /tmp/core-c-g9c | 16:33 | 17:05 | 1 | running | 1 | 0 |  |
 | g4c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G4c (ab8ee0440) | 16:34 | 16:48 | 1 | done | 1 | 0 | EGM |
