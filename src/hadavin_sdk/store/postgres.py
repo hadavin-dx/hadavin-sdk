@@ -49,7 +49,9 @@ from hadavin_sdk.store.protocol import (
     SpendCapExceeded,
     StaleState,
     StoreUnavailable,
+    check_expiry_age,
     check_spend_amount,
+    check_spend_cap,
 )
 
 _LOG = logging.getLogger("hadavin_sdk.store")
@@ -612,6 +614,8 @@ class PostgresStore:
         run_id: str | None = None,
     ) -> None:
         check_spend_amount(usd)
+        check_spend_cap(day_cap)  # before any SQL: a NaN cap would compare as no cap
+        check_spend_cap(month_cap)
         month = day.replace(day=1)
         try:
             with self._lock, self._db.transaction():
@@ -704,6 +708,7 @@ class PostgresStore:
 
     def expire_spend_reservations(self, older_than_s: int) -> int:
         """The age is measured on the database clock; the counters do not move."""
+        check_expiry_age(older_than_s)
         with self._lock:
             return self._exec(
                 "UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, "

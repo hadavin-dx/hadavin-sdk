@@ -80,6 +80,24 @@ def check_spend_amount(usd: object) -> Decimal:
     return usd
 
 
+def check_spend_cap(cap: object) -> Decimal:
+    """The cap rule of `reserve_spend`, used by both stores before any lock or SQL: a Decimal (not a float, an
+    int, a bool, a str or None), finite, 0 <= cap; no upper bound. Anything else is a ValueError and nothing is
+    booked. A NaN cap must never reach the comparison: PostgreSQL sorts NaN above every number, so it would be
+    no cap at all."""
+    if type(cap) is not Decimal or not cap.is_finite() or cap < 0:
+        raise ValueError("spend cap must be a finite Decimal with 0 <= cap")
+    return cap
+
+
+def check_expiry_age(older_than_s: object) -> int:
+    """The age rule of `expire_spend_reservations`, used by both stores: an int (not a bool) that is not
+    negative. Anything else is a ValueError and nothing expires."""
+    if type(older_than_s) is not int or older_than_s < 0:
+        raise ValueError("older_than_s must be an int with 0 <= older_than_s")
+    return older_than_s
+
+
 class Store(Protocol):
     def create_run(self, run: Run) -> None: ...
     def get_run(self, run_id: str) -> Run: ...
@@ -202,7 +220,9 @@ class Store(Protocol):
     ) -> None:
         """Book `usd` on the day and the month counter, or book nothing. A counter that is already at its cap,
         or that would pass it, refuses: SpendCapExceeded (`which` "day" or "month", the day is checked first).
-        StaleState when the id exists; ValueError for an amount that is not a finite Decimal in [0, 10**9)."""
+        StaleState when the id exists; ValueError for an amount that is not a finite Decimal in [0, 10**9) or
+        a cap that is not a finite Decimal >= 0 (`check_spend_cap`). Checked in this order: the amount, the caps
+        (ValueError), the id (StaleState), the caps comparison (SpendCapExceeded)."""
         ...
 
     def settle_spend(
@@ -218,7 +238,8 @@ class Store(Protocol):
 
     def expire_spend_reservations(self, older_than_s: int) -> int:
         """Open rows older than `older_than_s` seconds become expired; the counters do not move, so the worst
-        case stays booked. Returns the count."""
+        case stays booked. Returns the count. ValueError when `older_than_s` is not an int (a bool is not one)
+        or is negative."""
         ...
 
     def purge_spend_reservations(self, before: datetime) -> int:

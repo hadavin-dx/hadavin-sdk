@@ -23,7 +23,14 @@ from hadavin_sdk.models import (
     ToolCallRecord,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, SpendCapExceeded, StaleState, check_spend_amount
+from hadavin_sdk.store.protocol import (
+    NotFound,
+    SpendCapExceeded,
+    StaleState,
+    check_expiry_age,
+    check_spend_amount,
+    check_spend_cap,
+)
 
 
 class MemoryStore:
@@ -307,6 +314,8 @@ class MemoryStore:
         run_id: str | None = None,
     ) -> None:
         check_spend_amount(usd)
+        check_spend_cap(day_cap)
+        check_spend_cap(month_cap)
         with self._lock:
             if reservation_id in self._reservations:
                 raise StaleState(f"spend reservation exists: {reservation_id}")
@@ -351,6 +360,7 @@ class MemoryStore:
             return row, True
 
     def expire_spend_reservations(self, older_than_s: int) -> int:
+        check_expiry_age(older_than_s)
         with self._lock:
             at = now()
             cutoff = at - timedelta(seconds=older_than_s)
