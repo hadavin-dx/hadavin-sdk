@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:37:07Z
+UPDATED_UTC: 2026-11-20T16:39:41Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 1
-CAPACITY: load 0.14 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 4
+CAPACITY: load 2.43 of 4 cores (1-minute average), mem 1.5/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 55G 21%; 657M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-NEXT: 16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes
-PUSHED_UTC: 2026-11-20T16:35:33Z (the push before this board)
+NEXT: 17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review
+PUSHED_UTC: 2026-11-20T16:37:12Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,16 +107,26 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | door-money | builder in /home/user/wt/doorm | sonnet | rev-door Majors: static per-point money end state (reservation rows, status, totals, no double booking on the retry) for RESERVES mode + RESERVES guard + documented widening limit; red proofs; second patch | 17:35 | 30 min | 5 | running | - | 0 | rev-door Majors |
+| rev-b-9b76 | fresh independent reviewer (codebase-details), read-only | sonnet | core-b f66eb784d (9b7610007): start check walks the role closure, owners judged per table, one query: are my Majors 1+2 fixed? + B2 review 2 settle helper + T1 port | 17:45 | 15 min | 5 | running | 1 | 0 | lead 16:38 |
+| docs-for-c | builder in /home/user/wt/cdocs (wip/core-a-for-c-docs) | sonnet | core-c root-docs review round 2: 2 Blockers + 7 Majors: verify against code, fix docs only -> handover/core-a/DOCS-FOR-C.md | 17:45 | 30 min | 5 | running | - | 0 | lead 16:38 |
+| integ3 | builder (scratch worktree /home/user/wt/integ3, never pushed) | sonnet | INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current | 17:45 | 50 min | 5 | running | - | 0 | lead 16:38 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 37360s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 37360s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 37360s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 37360s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 37360s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 37360s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 37514s ago | running | matched by name in ps |
+| 13749 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 97s ago | running | matched by name in ps |
+| 13750 | timeout 1500 uv run --no-sync pytest tests/triggers/test_t5_crash_matr | core-a session or its agent | 97s ago | running | matched by name in ps |
+| 13752 | uv run --no-sync pytest tests/triggers/test_t5_crash_matrix.py tests/t | core-a session or its agent | 97s ago | running | matched by name in ps |
+| 13755 | /home/user/wt/doorm/.venv/bin/python /home/user/wt/doorm/.venv/bin/pyt | core-a session or its agent | 96s ago | running | matched by name in ps |
+| 18311 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 18321 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 18322 | /home/user/wt/doorm/.venv/bin/python -m tests.triggers.test_t5_crash_m | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +188,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 17:45 LEAD 16:38 taken, 4 agents: (1) docs-for-c (wip/core-a-for-c-docs on core-c d53d6e7d1: finds core-c's root-docs round-2 findings (2 Blockers + 7 Majors) in handover/core-c, verifies each against the CODE, fixes docs only, table in handover/core-a/DOCS-FOR-C.md; I tell core-c to merge when pushed); (2) rev-b-9b76: core-b f66eb784d (role closure, per-table owners: the answer to my rev-b-newest2 Majors 1+2) + d7d37db36 + 943a9161b; NOTE ec67808ec is DOCS ONLY (no src/tests diff): nothing to review there; core-b ALSO ported core-a's extra T1 cases itself (943a9161b): my wip/core-a-t1-merge may now duplicate it: integ3 compares; findings will go to handover/core-b/requests/xr-from-core-a-3.md; (3) integ3: dry-run 3 on core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (the heads moved from the ones you named: ec67808ec/0e33c0641 are older), plus my fix branches (contract-fix, door-merged, grants), PG16 counts, INTEGRATION-DRYRUN-2.md kept current; (4) door-money (the crash matrix money-state assertions). Load 0.1 -> expect ~4 with integ3's triggers run: heavy = 2 (integ3 triggers + door-money).
 - 17:35 rev-door (review of the crash-matrix support patch): NO Blocker; with RESERVES False the matrix is EXACTLY the old one (every removed line returns verbatim, counts kept). TWO MAJORS with core-b's reserve/settle: the crash tests assert the run row, model-call count and retry answer but NOTHING about the MONEY state (no read of spend_reservations/totals): a leaked or stuck-open hold or a double booking on the retry would pass; and the child's seeding widens max_day_skew to 100000 and min_expiry_age to 0, so the matrix proves nothing about the real day window/expiry floor (acceptable only for the one-row/one-approval/one-hold claims: to be stated). door-money builds static per-point money end states (before reserve: no row; between reserve and settle: one OPEN row, reserved=worst case; after settle: one settled row; after the retry: at most one row) with red proofs, a RESERVES guard and the documented limit. NOTE: the first patch is already applied to cloud/core-a (83 passed); the second goes in once reviewed. AGENTS 1.
 - 17:25 DOOR ON THE MERGED TREE FIXED (agent doorm; branch wip/core-a-door-merged 435ca8500; patch handover/core-a/pr/door-merged-support.patch; write-up handover/core-a/INTEGRATION-DOOR-FIX.md): tests/triggers on the merged tree: 144 failed -> 1374 passed, 4 skipped, 0 failed (PG16, HADAVIN_REQUIRE_PG=1): TEST SUPPORT ONLY, no src change: (1) the crash-matrix children never got core-b's hadavin_caps seeding (it is a conftest monkeypatch): with no cap row core-b's reserve-before-call sends the run to NEEDS_PERSON `limits.limits_unavailable`; (2) the crash tables were stale: the merged loop calls reserve_spend before llm.chat and settle_spend after it, never add_spend/add_cost, so the `store.add_spend:*` points were never reached and the child never ended (the '20 s/30 s' errors). Fix: tests/triggers/crash_launcher.py (RESERVES = hasattr(Limits, 'reserve'); install_pg_test_seeding() installs core-b's seed wrappers inside a child, nothing if tests/money_caps_seed.py is absent) + the two crash-matrix files switch their wrapped-method lists/point counts on RESERVES. I APPLIED the same patch to cloud/core-a (it degrades to the old tables there): crash matrix 83 passed on core-a alone. Product bugs found: NONE. rev-door reviews the patch (not weakened?). Remaining on the merged tree: the stale test_meter/test_store_spend_reservations (fixed by wip/core-a-contract-fix), the T1 copies (delete) and test_grants_negative_roles (take mine). AGENTS 1.
 - 16:30 wip/core-a-contract-fix (c545aaef1) reviewed fresh: NO Blocker, NO Major: every added agent_id matches the reservation's agent; the replaced reserve tests pin the check order amount/caps -> id -> cap well; the purge test proves expired and open holds are kept on both stores; test function counts unchanged (store 35, meter 37), nothing loosened, no new skips. Nits (gaps in what this file proves, not loosening): no foreign-agent settle test here (core-b has them: test_store_spend.py:786, test_money_definer_pg.py:850/867), test_both_implementers_have_the_meter_shape does not pin agent_id as keyword-only AND required, a duplicate id with a different run_id or day and an identical call on an EXPIRED hold are untested. Ready to cherry-pick. Running: doorm only.

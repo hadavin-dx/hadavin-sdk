@@ -2,7 +2,7 @@
  "order": "ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
- "next": "16:55 cfix (my stale contract tests) + doorm (144 door failures on the merged tree) + docfix24 + rev-t1 running; then fresh reviews of cfix/doorm diffs; N1 repeat the dry-run + N2 review when core-b pushes the 3-Major fixes",
+ "next": "17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review",
  "note": "models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -759,6 +759,45 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "rev-door Majors"
+  },
+  {
+   "id": "rev-b-9b76",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b f66eb784d (9b7610007): start check walks the role closure, owners judged per table, one query: are my Majors 1+2 fixed? + B2 review 2 settle helper + T1 port",
+   "started UTC": "17:45",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 16:38"
+  },
+  {
+   "id": "docs-for-c",
+   "role": "builder in /home/user/wt/cdocs (wip/core-a-for-c-docs)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c root-docs review round 2: 2 Blockers + 7 Majors: verify against code, fix docs only -> handover/core-a/DOCS-FOR-C.md",
+   "started UTC": "17:45",
+   "expected end": "30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 16:38"
+  },
+  {
+   "id": "integ3",
+   "role": "builder (scratch worktree /home/user/wt/integ3, never pushed)",
+   "model": "sonnet",
+   "what exactly it is doing": "INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current",
+   "started UTC": "17:45",
+   "expected end": "50 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "lead 16:38"
   }
  ],
  "tests": [
@@ -1131,6 +1170,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "17:45 LEAD 16:38 taken, 4 agents: (1) docs-for-c (wip/core-a-for-c-docs on core-c d53d6e7d1: finds core-c's root-docs round-2 findings (2 Blockers + 7 Majors) in handover/core-c, verifies each against the CODE, fixes docs only, table in handover/core-a/DOCS-FOR-C.md; I tell core-c to merge when pushed); (2) rev-b-9b76: core-b f66eb784d (role closure, per-table owners: the answer to my rev-b-newest2 Majors 1+2) + d7d37db36 + 943a9161b; NOTE ec67808ec is DOCS ONLY (no src/tests diff): nothing to review there; core-b ALSO ported core-a's extra T1 cases itself (943a9161b): my wip/core-a-t1-merge may now duplicate it: integ3 compares; findings will go to handover/core-b/requests/xr-from-core-a-3.md; (3) integ3: dry-run 3 on core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (the heads moved from the ones you named: ec67808ec/0e33c0641 are older), plus my fix branches (contract-fix, door-merged, grants), PG16 counts, INTEGRATION-DRYRUN-2.md kept current; (4) door-money (the crash matrix money-state assertions). Load 0.1 -> expect ~4 with integ3's triggers run: heavy = 2 (integ3 triggers + door-money).",
   "17:35 rev-door (review of the crash-matrix support patch): NO Blocker; with RESERVES False the matrix is EXACTLY the old one (every removed line returns verbatim, counts kept). TWO MAJORS with core-b's reserve/settle: the crash tests assert the run row, model-call count and retry answer but NOTHING about the MONEY state (no read of spend_reservations/totals): a leaked or stuck-open hold or a double booking on the retry would pass; and the child's seeding widens max_day_skew to 100000 and min_expiry_age to 0, so the matrix proves nothing about the real day window/expiry floor (acceptable only for the one-row/one-approval/one-hold claims: to be stated). door-money builds static per-point money end states (before reserve: no row; between reserve and settle: one OPEN row, reserved=worst case; after settle: one settled row; after the retry: at most one row) with red proofs, a RESERVES guard and the documented limit. NOTE: the first patch is already applied to cloud/core-a (83 passed); the second goes in once reviewed. AGENTS 1.",
   "17:25 DOOR ON THE MERGED TREE FIXED (agent doorm; branch wip/core-a-door-merged 435ca8500; patch handover/core-a/pr/door-merged-support.patch; write-up handover/core-a/INTEGRATION-DOOR-FIX.md): tests/triggers on the merged tree: 144 failed -> 1374 passed, 4 skipped, 0 failed (PG16, HADAVIN_REQUIRE_PG=1): TEST SUPPORT ONLY, no src change: (1) the crash-matrix children never got core-b's hadavin_caps seeding (it is a conftest monkeypatch): with no cap row core-b's reserve-before-call sends the run to NEEDS_PERSON `limits.limits_unavailable`; (2) the crash tables were stale: the merged loop calls reserve_spend before llm.chat and settle_spend after it, never add_spend/add_cost, so the `store.add_spend:*` points were never reached and the child never ended (the '20 s/30 s' errors). Fix: tests/triggers/crash_launcher.py (RESERVES = hasattr(Limits, 'reserve'); install_pg_test_seeding() installs core-b's seed wrappers inside a child, nothing if tests/money_caps_seed.py is absent) + the two crash-matrix files switch their wrapped-method lists/point counts on RESERVES. I APPLIED the same patch to cloud/core-a (it degrades to the old tables there): crash matrix 83 passed on core-a alone. Product bugs found: NONE. rev-door reviews the patch (not weakened?). Remaining on the merged tree: the stale test_meter/test_store_spend_reservations (fixed by wip/core-a-contract-fix), the T1 copies (delete) and test_grants_negative_roles (take mine). AGENTS 1.",
   "16:30 wip/core-a-contract-fix (c545aaef1) reviewed fresh: NO Blocker, NO Major: every added agent_id matches the reservation's agent; the replaced reserve tests pin the check order amount/caps -> id -> cap well; the purge test proves expired and open holds are kept on both stores; test function counts unchanged (store 35, meter 37), nothing loosened, no new skips. Nits (gaps in what this file proves, not loosening): no foreign-agent settle test here (core-b has them: test_store_spend.py:786, test_money_definer_pg.py:850/867), test_both_implementers_have_the_meter_shape does not pin agent_id as keyword-only AND required, a duplicate id with a different run_id or day and an identical call on an EXPIRED hold are untested. Ready to cherry-pick. Running: doorm only.",
