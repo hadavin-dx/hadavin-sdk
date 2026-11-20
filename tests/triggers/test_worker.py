@@ -824,7 +824,7 @@ def test_serve_gives_the_previous_sigterm_handler_back():
 
 @pytest.mark.parametrize(
     ("error", "code"),
-    [(ConfigError, 2), (StoreUnavailable, 4), (RuntimeError, 3), (ConnectionRefusedError, 4)],
+    [(ConfigError, 2), (RuntimeError, 3)],
 )
 def test_main_prints_a_foreign_start_error_by_class_name_only(monkeypatch, capsys, error, code):
     fake_secret = "pg" + "-pass-" + "Zq7" * 6
@@ -842,7 +842,7 @@ def test_main_prints_a_foreign_start_error_by_class_name_only(monkeypatch, capsy
 
 def test_a_port_in_use_is_a_listen_error_exit_2_not_store_unreachable(monkeypatch, capsys):
     """Review 2, Minor 6: the bind failure is an OSError, which `main` would report as "store unreachable"
-    (exit 4). The port is taken first by a listening socket of this test."""
+    (a start with /health 503 since d-fix6). The port is taken first by a listening socket of this test."""
     taken = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         # A plain occupier, no exclusive flag: the server itself must refuse a second bind (code review 1, DC1-1).
