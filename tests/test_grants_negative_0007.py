@@ -15,10 +15,13 @@ tests/test_grants_negative_roles.py (imported, not copied). Two layers:
     `stranger` that was never granted anything. Each role connects as itself and runs one statement per
     privilege: a cell `HELD` does not give must raise `psycopg.errors.InsufficientPrivilege`, a cell it gives
     must get past the privilege check. Then the column rights, the catalog, and statements on real rows.
-    Needs HADAVIN_TEST_PG_DSN and is skipped without it, like the other database tests (`pg_schema`).
+    Needs HADAVIN_TEST_PG_DSN and is skipped without it, like the other database tests (`pg_schema`), UNLESS
+    HADAVIN_REQUIRE_PG is 1, true or yes (parsed by the one reader, tests/triggers/conftest.py `strict`): then a
+    missing DSN or driver is a FAILURE of every database test of this file.
 
-Skipped as a whole, with the reason, in a tree where migration 0007 does not exist yet. Where it exists and the
-helper module is missing, the tests FAIL (they do not skip and the file still collects).
+Nothing in this file is skipped for a missing `spend_reservations` row of `GRANTS`: that is a FAILURE of every test
+(pure and database). Where the helper module is missing, the database tests FAIL too (the file still collects).
+Positive controls (`test_pg_control_*`) grant a right to a scratch role and prove the checking helpers SEE it.
 """
 
 from __future__ import annotations
@@ -26,6 +29,8 @@ from __future__ import annotations
 import inspect
 import os
 import re
+import subprocess
+import sys
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -34,6 +39,7 @@ import pytest
 
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.triggers.conftest import strict  # the one reader of HADAVIN_REQUIRE_PG
 
 try:  # the helpers of the per-role file: a connection AS a role, the schema name, one statement per privilege
     from tests.test_grants_negative_roles import PRIVILEGES, _as, _schema, _statements
@@ -43,10 +49,15 @@ except ImportError:  # reported by `_needs_the_helpers`, so this file still coll
 
 TABLE = "spend_reservations"
 MIGRATION = "0007_spend_reservations.sql"
-pytestmark = pytest.mark.skipif(
-    TABLE not in mig.GRANTS,
-    reason=f"migration 0007 not in this tree: no {TABLE} row in migrate.GRANTS",
-)
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@pytest.fixture(autouse=True)
+def _the_grants_row_exists():
+    """No skip: a deleted `spend_reservations` row of `GRANTS` fails every test of the file, pure ones included."""
+    if TABLE not in mig.GRANTS:
+        pytest.fail(f"no {TABLE} row in migrate.GRANTS: nothing of this file can be checked")
+
 
 COLUMNS = (
     "reservation_id",
@@ -69,8 +80,6 @@ HELD: dict[str, set[str]] = {
     "release": set(),  # 0008: it runs the release function and appends to the audit, no money table
     "stranger": set(),
 }
-# Columns of the table the purge login may read: none since step 4 (it only runs the purge function).
-PURGE_READS: set[str] = set()
 # The second copy of ALL of `FUNCTION_GRANTS` (signature -> the roles that may EXECUTE it; every other identity,
 # PUBLIC included, may not). The five functions that touch `spend_reservations` come first; the last three are
 # the counter and cap functions of 0011, also checked in tests/test_grants_negative_roles.py (FUNCTION_HOLDERS).
@@ -83,6 +92,15 @@ EXECUTE_HELD: dict[str, set[str]] = {
     "hadavin_add_spend(text, date, numeric)": {"runtime"},
     "hadavin_set_cap(text, numeric, numeric, text)": {"reset"},
     "hadavin_cap_matches(text, numeric, numeric)": {"runtime", "reset"},
+}
+# The trigger functions (`EXCLUDED_FUNCTIONS`) that keep the default PUBLIC EXECUTE: 0010 revokes it from
+# `hadavin_money_guard()` only, so every other one is open to everyone and the money guard to nobody (the owner
+# is not an asker). A new trigger function needs its row here first.
+TRIGGER_FUNCTIONS_OPEN_TO_PUBLIC = {
+    "hadavin_audit_seq_guard()",
+    "hadavin_audit_checkpoint_guard()",
+    "hadavin_audit_append_only()",
+    "hadavin_watermark_guard()",
 }
 COUNTERS = ("spend", "spend_month")  # what a reservation is booked on
 DAY = date(2026, 3, 10)
@@ -115,7 +133,7 @@ def test_the_identities_are_the_five_this_file_knows():
 
 
 @pytest.mark.parametrize("role", sorted(HELD))
-def test_the_grant_row_gives_each_role_what_the_interface_states_and_no_more(role):
+def test_the_grant_row_gives_each_role_the_held_set_and_no_more(role):
     assert _map_gives(role) == HELD[role]
 
 
@@ -149,6 +167,13 @@ def test_function_grants_key_set_is_the_one_this_file_knows():
     assert set(EXECUTE_HELD) == set(mig.FUNCTION_GRANTS)
 
 
+def test_trigger_function_set_is_the_one_this_file_knows():
+    """A new trigger function in `EXCLUDED_FUNCTIONS` needs its EXECUTE expectation written here first."""
+    assert set(mig.EXCLUDED_FUNCTIONS) == TRIGGER_FUNCTIONS_OPEN_TO_PUBLIC | {
+        mig.MONEY_GUARD_FUNCTION
+    }
+
+
 def test_function_grants_say_who_may_execute_each_function():
     """Only the purge role purges, only the runtime books, settles, expires and adds, only the release role
     releases, the reset role sets caps and compares them (with the runtime)."""
@@ -165,12 +190,32 @@ def test_migration_0007_creates_this_one_table_and_no_sequence():
     assert mig.check_grants(mig._migration_files()) == []
 
 
+def test_the_grants_row_of_the_table_is_there():
+    assert TABLE in mig.GRANTS
+
+
 # --- (b) PostgreSQL ----------------------------------------------------------------------------------
+
+
+def _pg_schema():
+    """`pg_schema`, but with HADAVIN_REQUIRE_PG a missing DSN or driver FAILS instead of skipping."""
+    if strict():
+        if not os.environ.get("HADAVIN_TEST_PG_DSN"):
+            pytest.fail(
+                "HADAVIN_REQUIRE_PG is set but HADAVIN_TEST_PG_DSN is not: no PostgreSQL test ran"
+            )
+        try:
+            import psycopg  # noqa: F401
+        except ImportError:
+            pytest.fail(
+                "HADAVIN_REQUIRE_PG is set but psycopg is not installed: no PostgreSQL test ran"
+            )
+    yield from pg_schema()
 
 
 @pytest.fixture
 def _needs_the_helpers():
-    if os.environ.get("HADAVIN_TEST_PG_DSN") and _as is None:
+    if (os.environ.get("HADAVIN_TEST_PG_DSN") or strict()) and _as is None:
         pytest.fail(
             "tests/test_grants_negative_roles.py (the helpers) is missing: nothing was tested"
         )
@@ -183,7 +228,7 @@ def identities(_needs_the_helpers):
     import psycopg
     from psycopg import sql
 
-    for dsn in pg_schema():
+    for dsn in _pg_schema():
         names = {role: f"{role[:2]}_{uuid.uuid4().hex[:10]}" for role in HELD}
         with psycopg.connect(dsn, autocommit=True) as db:
             for name in names.values():
@@ -234,24 +279,20 @@ def _refused(db, statement, params=None) -> None:
     db.rollback()
 
 
-@pytest.mark.parametrize("role", sorted(HELD))
-def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
-    """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
-    is refused at the schema and not by a search path that does not find the table."""
+def _probe_privileges(dsn: str, name: str, held: set[str], label: str) -> list[str]:
+    """Connect AS `name`, one statement per privilege: a privilege in `held` must get past the privilege check
+    (it may stop later on a constraint), every other one must be refused. Returns the refused privileges."""
     import psycopg
 
-    dsn, names = identities
-    _seed(dsn)
-    before = _all_rows(dsn)
     schema = _schema(dsn)
     refused = []
-    with _as(dsn, names[role]) as db:
+    with _as(dsn, name) as db:
         for privilege, statement in _statements(schema, TABLE, COLUMNS[0]).items():
-            if privilege in HELD[role]:
+            if privilege in held:
                 try:
                     db.execute(statement)  # may stop later on a constraint: not our subject
                 except psycopg.errors.InsufficientPrivilege:
-                    pytest.fail(f"{role} was refused {privilege}, which the map gives")
+                    pytest.fail(f"{label} was refused {privilege}, which the map gives")
                 except psycopg.Error:
                     pass
                 finally:
@@ -259,6 +300,17 @@ def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identitie
             else:
                 _refused(db, statement)
                 refused.append(privilege)
+    return refused
+
+
+@pytest.mark.parametrize("role", sorted(HELD))
+def test_pg_each_role_is_refused_every_privilege_the_map_does_not_give(identities, role):
+    """One real statement per privilege, connected AS the role, rolled back. Schema-qualified, so the stranger
+    is refused at the schema and not by a search path that does not find the table."""
+    dsn, names = identities
+    _seed(dsn)
+    before = _all_rows(dsn)
+    refused = _probe_privileges(dsn, names[role], HELD[role], role)
     assert sorted(refused) == sorted(set(PRIVILEGES) - HELD[role])
     assert "TRUNCATE" in refused
     assert _all_rows(dsn) == before and len(before) == 2
@@ -287,6 +339,30 @@ def test_pg_column_rights_nobody_reads_or_writes_a_single_column(identities, rol
         _refused(db, sql.SQL("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE").format(table))
 
 
+def _catalog_wrong(db, name: str, held: set[str], label: str) -> list[str]:
+    """The catalog view of one role against the `held` set: has_table_privilege for every table right (REFERENCES
+    and TRIGGER too) and has_column_privilege per column. Returns the differences (empty when they agree)."""
+    wrong = []
+    rights = {
+        p
+        for p in (*PRIVILEGES, "REFERENCES", "TRIGGER")
+        if db.execute("SELECT has_table_privilege(%s, %s, %s)", (name, TABLE, p)).fetchone()[0]
+    }
+    if rights != held:
+        wrong.append(f"{label} on the table: {sorted(rights)}")
+    for column in COLUMNS:
+        cols = {
+            p
+            for p in ("SELECT", "INSERT", "UPDATE", "REFERENCES")
+            if db.execute(
+                "SELECT has_column_privilege(%s, %s, %s, %s)", (name, TABLE, column, p)
+            ).fetchone()[0]
+        }
+        if cols != held & {"SELECT", "INSERT", "UPDATE"}:
+            wrong.append(f"{label} on column {column}: {sorted(cols)}")
+    return wrong
+
+
 def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
     """`has_table_privilege` and `has_column_privilege` (direct, inherited and PUBLIC grants), including
     REFERENCES and TRIGGER, which no statement above exercises."""
@@ -296,26 +372,7 @@ def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
     wrong = []
     with psycopg.connect(dsn, autocommit=True) as db:
         for role, name in names.items():
-            held = {
-                p
-                for p in (*PRIVILEGES, "REFERENCES", "TRIGGER")
-                if db.execute(
-                    "SELECT has_table_privilege(%s, %s, %s)", (name, TABLE, p)
-                ).fetchone()[0]
-            }
-            if held != HELD[role]:
-                wrong.append(f"{role} on the table: {sorted(held)}")
-            for column in COLUMNS:
-                cols = {
-                    p
-                    for p in ("SELECT", "INSERT", "UPDATE", "REFERENCES")
-                    if db.execute(
-                        "SELECT has_column_privilege(%s, %s, %s, %s)", (name, TABLE, column, p)
-                    ).fetchone()[0]
-                }
-                expected = HELD[role] & {"SELECT", "INSERT", "UPDATE"}
-                if cols != expected:
-                    wrong.append(f"{role} on column {column}: {sorted(cols)}")
+            wrong += _catalog_wrong(db, name, HELD[role], role)
         owner = db.execute(
             "SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = %s::regclass", (TABLE,)
         ).fetchone()[0]
@@ -467,6 +524,16 @@ def _function_oid(db, schema: str, signature: str) -> int:
     return row[0]
 
 
+def _execute_holders(db, schema: str, signature: str, askers: dict[str, str]) -> set[str]:
+    """The askers (label -> role name or 'public') for whom has_function_privilege says EXECUTE."""
+    oid = _function_oid(db, schema, signature)
+    return {
+        who
+        for who, name in askers.items()
+        if db.execute("SELECT has_function_privilege(%s, %s, 'EXECUTE')", (name, oid)).fetchone()[0]
+    }
+
+
 def test_pg_execute_on_every_function_is_exactly_the_expected_set_for_every_identity(identities):
     """has_function_privilege (direct, inherited and PUBLIC grants) for every function of `FUNCTION_GRANTS` and
     every identity, the stranger and PUBLIC included, against the second copy `EXECUTE_HELD` AND the map."""
@@ -478,14 +545,7 @@ def test_pg_execute_on_every_function_is_exactly_the_expected_set_for_every_iden
     wrong = []
     with psycopg.connect(dsn, autocommit=True) as db:
         for signature, holders in EXECUTE_HELD.items():
-            oid = _function_oid(db, schema, signature)
-            can = {
-                who
-                for who, name in askers.items()
-                if db.execute(
-                    "SELECT has_function_privilege(%s, %s, 'EXECUTE')", (name, oid)
-                ).fetchone()[0]
-            }
+            can = _execute_holders(db, schema, signature, askers)
             if can != holders:
                 wrong.append(f"{signature}: can execute {sorted(can)}, expected {sorted(holders)}")
             if can != {
@@ -494,6 +554,16 @@ def test_pg_execute_on_every_function_is_exactly_the_expected_set_for_every_iden
                 if getattr(mig.FUNCTION_GRANTS[signature], r)
             }:
                 wrong.append(f"{signature}: differs from migrate.FUNCTION_GRANTS")
+        for signature in mig.EXCLUDED_FUNCTIONS:
+            # trigger functions: the trigger runs them. Only the money guard is closed to everyone (0010 REVOKEs it
+            # from PUBLIC); the older guards keep the default PUBLIC EXECUTE (a trigger function cannot be called
+            # directly), so each of those must show exactly PUBLIC plus every role: any other result is a change.
+            can = _execute_holders(db, schema, signature, askers)
+            expected = set(askers) if signature in TRIGGER_FUNCTIONS_OPEN_TO_PUBLIC else set()
+            if can != expected:
+                wrong.append(
+                    f"{signature} (trigger function): can execute {sorted(can)}, expected {sorted(expected)}"
+                )
     assert wrong == []
 
 
@@ -527,3 +597,185 @@ def test_pg_the_release_function_runs_under_the_release_role_and_is_refused_to_a
         db.commit()
     assert row == (1, Decimal(1), Decimal(0), Decimal(0))
     assert _all_rows(dsn) == [(rid, Decimal(1), Decimal(0), "settled")]
+
+
+# --- positive controls: the harness must SEE a grant that is there ---------------------------------------
+
+
+def _scratch_role(dsn: str):
+    """A fresh login role with USAGE on the schema, dropped (with everything granted to it) by the caller."""
+    import psycopg
+    from psycopg import sql
+
+    name = f"sc_{uuid.uuid4().hex[:10]}"
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(name)))
+        db.execute(
+            sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                sql.Identifier(_schema(dsn)), sql.Identifier(name)
+            )
+        )
+    return name
+
+
+def _drop_role(dsn: str, name: str) -> None:
+    import psycopg
+    from psycopg import sql
+
+    with psycopg.connect(dsn, autocommit=True) as db:
+        db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(name)))
+        db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
+
+
+def test_pg_control_a_table_right_that_is_present_is_seen_by_every_checking_path(identities):
+    """HELD is empty by design, so the 'role holds it' branches never run on the real roles. Here a scratch role is
+    GRANTed SELECT on the table: the catalog helper, the column rights and the statement probe (the same functions
+    the real tests call) must all report it as held, INSERT as still refused; after REVOKE they report none."""
+    import psycopg
+    from psycopg import sql
+
+    dsn, _ = identities
+    _seed(dsn)
+    table = sql.Identifier(_schema(dsn), TABLE)
+    name = _scratch_role(dsn)
+    try:
+        with psycopg.connect(dsn, autocommit=True) as db:
+            assert _catalog_wrong(db, name, set(), "scratch") == []  # nothing yet
+            db.execute(sql.SQL("GRANT SELECT ON {} TO {}").format(table, sql.Identifier(name)))
+            assert _catalog_wrong(db, name, {"SELECT"}, "scratch") == []  # seen as held
+            assert (
+                _catalog_wrong(db, name, set(), "scratch") != []
+            )  # and the empty expectation now fails
+            # the statement path: SELECT gets past the check, the other four are refused
+            refused = _probe_privileges(dsn, name, {"SELECT"}, "scratch")
+            assert sorted(refused) == sorted(set(PRIVILEGES) - {"SELECT"})
+            db.execute(sql.SQL("REVOKE SELECT ON {} FROM {}").format(table, sql.Identifier(name)))
+            assert _catalog_wrong(db, name, set(), "scratch") == []
+            assert sorted(_probe_privileges(dsn, name, set(), "scratch")) == sorted(PRIVILEGES)
+            # a single column grant is seen per column, and only there
+            db.execute(
+                sql.SQL("GRANT SELECT ({}) ON {} TO {}").format(
+                    sql.Identifier("status"), table, sql.Identifier(name)
+                )
+            )
+            got = db.execute(
+                "SELECT has_column_privilege(%s, %s, 'status', 'SELECT'), "
+                "has_column_privilege(%s, %s, 'agent_id', 'SELECT')",
+                (name, TABLE, name, TABLE),
+            ).fetchone()
+            assert got == (True, False)
+            assert _catalog_wrong(db, name, set(), "scratch") != []
+    finally:
+        _drop_role(dsn, name)
+
+
+def test_pg_control_an_execute_grant_that_is_present_is_seen(identities):
+    """The EXECUTE helper reports a scratch role granted the reserve function, and PUBLIC when it is granted to
+    PUBLIC; after REVOKE it reports none."""
+    import psycopg
+    from psycopg import sql
+
+    dsn, _ = identities
+    schema = _schema(dsn)
+    name = _scratch_role(dsn)
+    signature = "hadavin_reserve_spend(text, text, date, numeric, text)"
+    target = sql.SQL("{}.{}").format(sql.Identifier(schema), sql.SQL(signature))
+    asker = {"scratch": name, "PUBLIC": "public"}
+    try:
+        with psycopg.connect(dsn, autocommit=True) as db:
+            assert _execute_holders(db, schema, signature, asker) == set()
+            db.execute(
+                sql.SQL("GRANT EXECUTE ON FUNCTION {} TO {}").format(target, sql.Identifier(name))
+            )
+            assert _execute_holders(db, schema, signature, asker) == {"scratch"}
+            db.execute(
+                sql.SQL("REVOKE EXECUTE ON FUNCTION {} FROM {}").format(
+                    target, sql.Identifier(name)
+                )
+            )
+            assert _execute_holders(db, schema, signature, asker) == set()
+            db.execute(sql.SQL("GRANT EXECUTE ON FUNCTION {} TO PUBLIC").format(target))
+            assert _execute_holders(db, schema, signature, asker) == {"scratch", "PUBLIC"}
+            db.execute(sql.SQL("REVOKE EXECUTE ON FUNCTION {} FROM PUBLIC").format(target))
+            assert _execute_holders(db, schema, signature, asker) == set()
+    finally:
+        _drop_role(dsn, name)
+
+
+def test_pg_the_runtime_role_is_allowed_to_reserve_settle_and_expire_and_a_stranger_is_refused(
+    identities,
+):
+    """Positive: the runtime role really calls the three booking functions (through the package's own store
+    methods) and the rows move. Negative: a stranger is refused each of the same three calls."""
+    from psycopg.conninfo import make_conninfo
+
+    from hadavin_sdk.store.postgres import PostgresStore, connect
+
+    dsn, names = identities
+    schema = _schema(dsn)
+    cap = Decimal(1000)
+    rid = "res-" + uuid.uuid4().hex
+    store = PostgresStore(connect(make_conninfo(dsn, user=names["runtime"])))
+    try:
+        store.reserve_spend(rid, "a", DAY, Decimal(1), day_cap=cap, month_cap=cap)
+        assert [row[:2] for row in _all_rows(dsn)] == [(rid, Decimal(1))]
+        store.settle_spend(rid, Decimal("0.5"), agent_id="a")
+        assert [row[3] for row in _all_rows(dsn)] == ["settled"]
+        assert store.expire_spend_reservations(0) == 0  # allowed to call; nothing is open to expire
+    finally:
+        store._db.close()
+    before = _all_rows(dsn)
+    calls = (
+        f"SELECT * FROM {schema}.hadavin_reserve_spend('res-x', 'a', %s::date, 1::numeric, 'k')",  # noqa: S608 - names built here
+        f"SELECT * FROM {schema}.hadavin_settle_spend(%s, 0::numeric, 'a')",  # noqa: S608 - names built here
+        f"SELECT {schema}.hadavin_expire_spend_reservations(0)",
+    )
+    with _as(dsn, names["stranger"]) as db:
+        _refused(db, calls[0], (DAY,))
+        _refused(db, calls[1], (rid,))
+        _refused(db, calls[2])
+    assert _all_rows(dsn) == before
+
+
+# --- HADAVIN_REQUIRE_PG: a missing database fails the PostgreSQL tests, and without the flag they skip -----
+
+
+def _run_pg_tests_without_a_dsn(require: str | None) -> tuple[int, str]:
+    """This file's PostgreSQL tests in a child pytest with no DSN (and HADAVIN_REQUIRE_PG as given)."""
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in ("HADAVIN_TEST_PG_DSN", "HADAVIN_REQUIRE_PG")
+    }
+    if require is not None:
+        env["HADAVIN_REQUIRE_PG"] = require
+    done = subprocess.run(  # noqa: S603 - our own interpreter, constant arguments
+        [
+            sys.executable, "-m", "pytest", os.path.abspath(__file__), "-k", "test_pg_",
+            "-q", "-p", "no:cacheprovider", "-p", "no:randomly", "--no-header", "-rN",
+        ],
+        cwd=REPO, env=env, capture_output=True, text=True, timeout=300, check=False,
+    )  # fmt: skip
+    return done.returncode, done.stdout + done.stderr
+
+
+@pytest.mark.parametrize("word", ["1", "true", "YES"])
+def test_with_require_pg_and_no_dsn_every_pg_test_fails_and_none_skips(word):
+    code, out = _run_pg_tests_without_a_dsn(word)
+    summary = out.strip().splitlines()[-1]
+    assert code != 0, out
+    # a failing fixture is counted as an error, a failing test body as a failure: either is not a skip
+    assert (
+        (" failed" in summary or " error" in summary)
+        and "skipped" not in summary
+        and "passed" not in summary
+    ), out
+    assert "HADAVIN_REQUIRE_PG is set but HADAVIN_TEST_PG_DSN is not" in out
+
+
+@pytest.mark.parametrize("word", [None, "0", "no"])
+def test_without_require_pg_and_no_dsn_every_pg_test_skips(word):
+    code, out = _run_pg_tests_without_a_dsn(word)
+    summary = out.strip().splitlines()[-1]
+    assert code == 0, out
+    assert " skipped" in summary and "failed" not in summary and "passed" not in summary, out
