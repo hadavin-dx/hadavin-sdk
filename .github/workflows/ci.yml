@@ -78,6 +78,12 @@ jobs:
         run: uv sync --locked --no-build --all-extras --group test
       - name: Lint
         run: ruff check src tests demos tools
+      - name: Banned identity_key call forms, step A (no noqa honoured outside the test fixtures)
+        run: ruff check --select TID251 --ignore-noqa src demos tools
+      - name: Banned identity_key call forms, step B (the six fixture forms are each still reported)
+        run: |
+          out=$(ruff check --select TID251 --ignore-noqa --config 'lint.per-file-ignores = {}' --output-format concise tests/fixtures/tid251_forms || true)
+          test "$(printf '%s\n' "$out" | grep -c ' TID251 ')" -eq 6
       - name: Format
         run: ruff format --check src tests demos tools
       - name: Secrets and banned names in the tracked files (the repo is public)
