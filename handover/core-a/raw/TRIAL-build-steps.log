@@ -142,3 +142,30 @@ CHECKOUT core-a tests/triggers/test_t5_postgres.py
 CHECKOUT core-a tests/triggers/test_t5_process.py
 CHECKOUT core-a tests/triggers/test_t5_wsgiref.py
 CHECKOUT core-a tests/triggers/test_worker.py
+
+##### NOTE: the lines above are the FIRST pass (conflict markers were committed; kept as tag trial-raw-with-markers = d19a2ed48 in the scratch worktree). The tree that was tested is the SECOND pass: same commands, same per-file actions, but each conflict was resolved and committed before the next branch was brought in (commits 9967b2b34, ac3bdd4ec, 2aeac8d77). Step 4 (files outside the code paths) follows.
+##### 4 outside paths (.gitattributes .github CHANGELOG.md README.md SECURITY.md THIRD-PARTY-NOTICES.md docs), same order and bases as steps 1-3, a commit after each branch
+CHECKOUT core-b CHANGELOG.md
+CHECKOUT core-b README.md
+CHECKOUT core-b SECURITY.md
+CHECKOUT core-b docs/stop-state-runbook.md
+CHECKOUT core-c .gitattributes
+CHECKOUT core-c .github/workflows/ci.yml
+MERGED-CLEAN core-c CHANGELOG.md
+MERGED-CLEAN core-c README.md
+CHECKOUT core-c THIRD-PARTY-NOTICES.md
+MERGED-CONFLICT(1 hunks) core-c-g3 CHANGELOG.md
+MERGED-CONFLICT(2 hunks) core-c-g2 CHANGELOG.md
+
+##### git log of trial/combined
+96768f66d trial: 4-res CHANGELOG.md: every session adds at the top of the same list; kept all entries (union)
+787412d8b trial: 4 outside paths from core-c-g2 (may hold conflict markers)
+ffb2409e7 trial: 4 outside paths from core-c-g3 (may hold conflict markers)
+68289e959 trial: 4 outside paths from core-c (may hold conflict markers)
+d19233c8e trial: 4 outside paths from core-b (may hold conflict markers)
+1d1272a04 trial: 3 core-a code paths (E crash helper, D triggers, contract tests, n8n)
+2aeac8d77 trial: 2c core-c wip g2-p1d-a, 2 conflicts in redact.py resolved by keeping both sides
+ac3bdd4ec trial: 2b core-c wip g3-p2d-port against g1-fold, conflicts in redact.py (2) and runmap.py (3) resolved by the integrator (see report)
+9967b2b34 trial: 2a-res defaults.py conflict resolved by keeping both appended blocks (core-b first, then core-c)
+2c692af35 trial: 2a core-c cloud/core-c code paths
+fece5fb44 trial: 1 core-b code paths
