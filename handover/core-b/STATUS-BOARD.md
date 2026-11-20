@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:48:53Z
+UPDATED_UTC: 2026-11-20T06:49:54Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.84 of 4 cores, mem 1/15 GB, disk 58G free, 16% used, agents light 3 heavy 4
+CAPACITY: load 3.36 of 4 cores, mem 1/15 GB, disk 58G free, 16% used, agents light 3 heavy 4
 DISK: / 58G free, 16% used; worktrees /tmp/core-b-wt 1.3G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:48:32Z (previous push; this board is pushed right after writing)
-IST: 12:18 IST
+PUSHED_UTC: 2026-11-20T06:48:54Z (previous push; this board is pushed right after writing)
+IST: 12:19 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -49,7 +49,8 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | adc513b3 | builder (fix) | sonnet | D-config fix round 2: commit cf1e33d landed; canonical secret names in a new secret_name.py; "/" dropped from the charset; 1184 passed, 26 skipped | 07:03 | done | 100 | done | none | 1 | result review Major 1 |
-| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: per-kind refused statuses (routers), truncated chain not never-sent, docstrings; worktree PM | 07:08 | +15 min | UNVERIFIED | running | none | 1 | result review Majors 1 and 2 |
+| adab2bba | builder (tests) | sonnet | tests for the provider mark fix and the canonical sender secret names, 4 mutants; worktree PMT | 07:12 | +20 min | UNVERIFIED | running | none | 0 | the fix builders write no tests |
+| a8bdc35b | builder (fix) | sonnet | provider mark fix round 1: commit 37c8e93 landed (per-kind refused statuses for routers, truncated chain, docstrings); 334 passed, 1 skipped | 07:08 | done | 100 | done | none | 1 | result review Majors 1 and 2 |
 | a879d0f3, ac7e13a5 | reviewers (egm) | sonnet | RESULT reviews: provider mark (0 Blockers, 2 Majors) and trigger config (0 Blockers, 3 Majors); reports tickets/F-provider-mark-review-1.md, D-config-review-1.md | 07:00 | done | 100 | done | 1 of 1 | 0 | answered; code in fix rounds (D-config 2 running, provider mark 1 queued behind the merge) |
 | ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: NOT ready (3 Blockers, 7 Majors); Y4 on hold (ESCALATIONS E6) | 06:56 | done | 100 | done | 3 of 3 | 0 | |
