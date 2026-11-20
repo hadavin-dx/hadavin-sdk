@@ -199,11 +199,11 @@
   {
    "item": "O13-2",
    "what": "tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/trigger-config-tests-on-core-b.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md",
    "tries": 1,
-   "reason": "ORDER 013 item 2; failing tests become strict expected-failures = findings"
+   "reason": "on core-b's code (commit 2b086c2): 93 passed, 16 strict expected-failures = 7 findings, 20 skipped (fields core-b has not built). On my branch the file skips. NOT checked: pilot and prod configs, the database"
   },
   {
    "item": "O13-NUL",
@@ -221,7 +221,7 @@
    "percent": 5,
    "evidence file": "",
    "tries": 1,
-   "reason": "WAIT: only when core-b's answer to requests/001 changes (a reader bound to the sender names is coming); item O13-2 reports the differences"
+   "reason": "WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001"
   },
   {
    "item": "O13-gate",
@@ -471,15 +471,15 @@
   {
    "model": "fable",
    "started UTC": "05:59",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "id": "o13-config",
    "role": "builder (tests, non-builder of the code under test)",
    "what exactly it is doing": "reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder",
-   "expected end": "about 25 min after start",
-   "reason": "ORDER 013 item 2"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "fable",
@@ -688,6 +688,15 @@
    "first failing line": "none",
    "state": "done",
    "reason": "covers the lead-review code now; database tests are skipped inside mutant runs"
+  },
+  {
+   "suite or file": "tests/test_trigger_config.py on core-b's tree (scratch copy)",
+   "branch and SHA": "origin/cloud/core-b 2b086c2",
+   "run number": "1 (agent)",
+   "passed / failed / errors": "93 passed, 16 xfailed (strict), 20 skipped",
+   "first failing line": "none unexpected; the 16 are findings F2, F3, F4a, F4b, F5, F7, F8",
+   "state": "done",
+   "reason": "non-builder test of core-b's config"
   }
  ],
  "restarts": [],
@@ -716,6 +725,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "FINDINGS-core-b-trigger-config.md: 7 findings on core-b's trigger config (whole secret store handed to the worker; a secret value typed as a name is echoed; booleans load as numbers; blank names load; body cap equals the document cap; shared platform secret name not refused) and 6 differences from request 001 DRAFT 3: please pass to core-b",
   "ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started",
   "requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)",
   "Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here",

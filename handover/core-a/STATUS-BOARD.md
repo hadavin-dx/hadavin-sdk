@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:03:45Z
+UPDATED_UTC: 2026-11-20T06:04:16Z
 SESSION: core-a
 ORDER: 013 (002 to 012 standing)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 25
-ITEMS_OPEN: 5
-PERCENT: 85
-AGENTS_RUNNING: 3
-CAPACITY: load 0.84 of 4 cores (1-minute average), mem 0.8/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.5G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
+ITEMS_OPEN: 4
+PERCENT: 89
+AGENTS_RUNNING: 2
+CAPACITY: load 0.64 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.4G 60G 14%; 351M /home/user/hadavin-sdk; 57M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: the three agents land: ONE batch of my own files, board, report; then the contract test file for core-c's gate module
-PUSHED_UTC: 2026-11-20T06:03:21Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:03:47Z (the push before this board)
 NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data folders are left on disk (/tmp/claude-0/pgprobe1 39M, /var/lib/postgresql/core-a-test) because the session's safety check refuses folder deletes
 
 ## QUEUE ITEMS
@@ -41,9 +41,9 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | DONE as an OUTLINE (NOT run in n8n; the lead verifies on a real n8n) | 100 | n8n/ (3 files), tests/triggers/test_n8n_template.py, requests/002-readme-security-text.md | 1 | empty-field guard before hashing, outer loop for 503 with re-sign (60 s x 30 rounds as placeholders), README limits; 24 checks pass that need no n8n (re-run by me on the final code); 19 node parameters are guesses marked UNVERIFIED; stated in the README: the answer carries no reason, so a client cannot tell 'interrupted' from other NEEDS_PERSON cases, and the tick posts no card for an interrupted run |
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | DONE | 100 | raw/D-tests-pg16.log (13 database and kill tests with test ids), raw/D-E-all-tests-pg16.log (all my files: 578 passed, 4 skipped at that time) | 1 | 13 of 13 on PostgreSQL 16.15 at the first real run: one row per key, 409 on another document, 50 parallel, oversize, 4 child-process kill cases, 2 two-process cases; plus 19 no-database cases (start refusal through main, start checks, SIGTERM drain). The agent could not start the database (folder permission), I started it from /var/lib/postgresql/core-a-test and ran the file myself. NOT run: PostgreSQL 17 |
 | MUTANTS-2 | extend tests/endpoint_mutants.py to the code added by the lead review (quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM) | DONE | 100 | tests/endpoint_mutants.py, raw/endpoint-mutants-run-3.log | 1 | 30 of 30 good; problems: [] (13 new mutants in groups G8 to G12: quiet server, secret count and whitespace, clock boundary, back-off and slot take-over, bind check, 409 log line, SIGTERM). Weak points: G11a and G12c rest on the pinned test more than on the message text; run by the agent, not re-run by me |
-| O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | RUNNING | 5 | raw/trigger-config-tests-on-core-b.log (not yet) | 1 | ORDER 013 item 2; failing tests become strict expected-failures = findings |
+| O13-2 | tests/test_trigger_config.py for core-b's trigger config (I am the non-builder); run against core-b's code unpacked in a scratch folder | DONE | 100 | tests/test_trigger_config.py, raw/trigger-config-tests-on-core-b.log, FINDINGS-core-b-trigger-config.md | 1 | on core-b's code (commit 2b086c2): 93 passed, 16 strict expected-failures = 7 findings, 20 skipped (fields core-b has not built). On my branch the file skips. NOT checked: pilot and prod configs, the database |
 | O13-NUL | test that pins what a NUL character inside a document does end to end (endpoint, memory store, PostgreSQL 16) + 2 lines in ticket D | RUNNING | 5 | raw/D-nul-document-pg16.log (not yet) | 1 | ORDER 013 verdict on review minor 12 |
-| O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: only when core-b's answer to requests/001 changes (a reader bound to the sender names is coming); item O13-2 reports the differences |
+| O13-3 | switch the worker to core-b's final names | RUNNING | 5 |  | 1 | WAIT: against core-b's code as it is my worker refuses to start (no trigger_resolve); I do not switch to the whole secret store (finding F3); waiting for core-b's answer to request 001 |
 | O13-gate | contract test file for core-c's gate module (non-builder) | RUNNING | 5 | raw/gate-contract-tests-on-core-c.log (not yet) | 1 | started early, see DECISIONS: it is a new file that depends on nothing of mine |
 
 ## AGENTS
@@ -67,23 +67,14 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | r12-tests | evidence runner and test writer | fable | writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop) | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 176k tokens; could not start the database (permission on the scratch folder), did not work around it: correct |
 | t4-contract | builder (tests) | fable | contract tests for core-b's spend reservation store methods and the 50-connection cap test file | 05:46 | ended | 100 | done | n/a | 0 | finished, 155k tokens |
 | mutants-2 | builder (test tooling) | fable | adds mutant groups G8 to G12 to the script and runs it once | 05:58 | ended | 100 | done | n/a | 0 | finished |
-| o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | about 25 min after start | 5 | running | n/a | 0 | ORDER 013 item 2 |
+| o13-config | builder (tests, non-builder of the code under test) | fable | reads core-b's config code with git show, writes tests/test_trigger_config.py, runs it against core-b's tree in a scratch folder | 05:59 | ended | 100 | done | n/a | 0 | finished |
 | o13-nul | builder (tests) and evidence runner | fable | follows a document with a NUL character through endpoint, runtime and both stores; owns the local PostgreSQL start and stop | 05:59 | about 20 min after start | 5 | running | n/a | 0 | ORDER 013; 3 agents run |
 | o13-gate | builder (tests, non-builder of the code under test) | fable | reads core-c's gate module, ticket and lead review with git show; writes tests/contracts/test_model_gate_contract.py; runs it against core-c's tree in a scratch folder | 06:01 | about 30 min after start | 5 | running | n/a | 0 | ORDER 013 last paragraph; 4 agents run |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 5833 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5840 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5841 | postgres: checkpointer  | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5842 | postgres: background writer  | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5844 | postgres: walwriter  | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5845 | postgres: autovacuum launcher  | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 5846 | postgres: logical replication launcher  | core-a session or its agent | 19s ago | running | matched by name in ps |
-| 6406 | uv run --all-extras --group test pytest -q -p no:cacheprovider tests/t | core-a session or its agent | 3s ago | running | matched by name in ps |
-| 6410 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 3s ago | running | matched by name in ps |
-| 6530 | postgres: postgres postgres 127.0.0.1(34246) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -108,6 +99,7 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | rule files + touched files after my 2 small fixes | working tree | 2 (try 1 failed: my first fix of the stage-word literal was not enough) | 121 / 0 / 0 (try 2) | try 1: tests/test_stage_names.py::test_the_old_stage_word_is_gone on tests/triggers/test_n8n_template.py | done | the n8n check file held quoted stage words; now built from parts |
 | BATCH 2 whole suite: pytest -n 3 -m 'not live and not perf' | working tree after ORDER 012 fixes | 1 of 1 for this round | 10865 / 1 / 0, 640 skipped (100 s) | tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (handover/BRIEF-PREAMBLE.md) | done | INHERITED from the handover folder, not from code; no NEW failure |
 | tests/endpoint_mutants.py (30 mutants) | working tree | 4 (agent, after the extension) | 30 of 30 good; problems: [] | none | done | covers the lead-review code now; database tests are skipped inside mutant runs |
+| tests/test_trigger_config.py on core-b's tree (scratch copy) | origin/cloud/core-b 2b086c2 | 1 (agent) | 93 passed, 16 xfailed (strict), 20 skipped | none unexpected; the 16 are findings F2, F3, F4a, F4b, F5, F7, F8 | done | non-builder test of core-b's config |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -127,6 +119,7 @@ NOTE: the board cron keeps pushing; PostgreSQL is stopped; two database data fol
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- FINDINGS-core-b-trigger-config.md: 7 findings on core-b's trigger config (whole secret store handed to the worker; a secret value typed as a name is echoed; booleans load as numbers; blank names load; body cap equals the document cap; shared platform secret name not refused) and 6 differences from request 001 DRAFT 3: please pass to core-b
 - ORDER 013 read at 05:59Z: verdicts noted (back-off OK, store-wrap kill tests OK with one ticket line, NUL test ordered, inherited failure not mine, data folders stay). All three work items started
 - requests/001-config-triggers.md DRAFT 3: the worker cannot start through main until core-b's branch is merged with mine; I switch names when core-b's answer changes (ORDER 013 item 3)
 - Your evidence run: PostgreSQL 17, python 3.12, a real n8n are NOT run here
