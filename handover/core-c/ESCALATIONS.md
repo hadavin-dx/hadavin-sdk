@@ -99,3 +99,7 @@ Consequence for the lead: the fold's false-hit rate is above the documented rate
 
 ## E12 (09:12Z) redact_mutants.py: mutant "N15 the alias build asks for no budget" has an `old` text that occurs 0 times at HEAD (found by the G4 v4 drafter)
 The base already reports SNIPPET NOT FOUND for N15: a G7 round 3/4 leftover in tests/redact_mutants.py (hand-run script, not collected by pytest). It must be re-pointed at the alias build code after G7 round 5, and the whole redact_mutants.py run on HEAD must be recorded (the G7 rounds never ran it). Owner: core-c (G7 lane). Queued after the G7 round 5 reviews. NOT fixed yet.
+
+
+## E13 (Q9 builder) redact_mutants.py: 4 other mutants SURVIVE on the worktree (G1 Round 2, R2.2)
+`8 a set compare hides a look-alike copy`, `N1 U+2044 is no longer mapped to a slash`, `N14 the slash replace is deleted from the alignment return`, `DM-1 no check per stored original` SURVIVED (no test fails) in the full run of tests/redact_mutants.py. They are G7-era leftovers outside ORDER 022 Q9 / 023 E12 (N15 was the only one in scope). Not investigated further: each needs a killer or an EQUIVALENT proof (N1 and N14: the fraction slash U+2044 may be read as a slash by another path; see the slash note in R2.3). No src change implied yet.

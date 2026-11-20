@@ -110,7 +110,9 @@ def test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed():
     assert verdict.flagged is True, (
         "HOSTILE-LONG-PAD: a phrase padded with 15000 invisible characters passed"
     )
-    assert verdict.reason_code == "guard_unavailable", verdict.reason_code
+    assert verdict.reason_code == "guard_unavailable", (
+        f"HOSTILE-LONG-PAD: the text was read to the end ({verdict.reason_code}), not refused as guard_unavailable"
+    )
 
 
 def test_the_clean_text_costs_no_false_flag_in_prose_logs_and_a_foreign_script():
@@ -213,10 +215,18 @@ def test_the_settings_of_the_chunked_read_are_checked(monkeypatch):
     for name, value in bad:
         with monkeypatch.context() as m:
             m.setattr(defaults, name, value)
-            with pytest.raises(ValueError) as caught:
+            try:
                 list(injection.RegexDetector._read(over))
-            assert "must be" in str(caught.value) or "injection overlap" in str(caught.value), (
-                f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({caught.value})"
+            except ValueError as caught:
+                message = str(caught)
+            except Exception as caught:  # the read ran on a bad setting and failed somewhere else
+                raise AssertionError(
+                    f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({type(caught).__name__}: {caught})"
+                ) from None
+            else:
+                raise AssertionError(f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused")
+            assert "must be" in message or "injection overlap" in message, (
+                f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({message})"
             )
             assert _check(over).reason_code == "guard_unavailable"
 

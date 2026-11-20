@@ -33,19 +33,21 @@ SC = "tests/test_textnorm_scan.py"  # the killers of the DENY keys (P1b)
 SB = "tests/test_textnorm_siblings.py"  # the Mc, Lm and Sk code points on every scan path (P1b)
 FB = "tests/test_textnorm_fixbatch.py"  # the killers of the fix batch: the composed view, the Mc and Sk keys, the minimums, the cache, the choke point, the insertion match
 O = "tests/test_textnorm_order137.py"  # the killers of order 137: the strict scan_views, the registration check, the cache scope, the cap, the Japanese minimum, the Russian word
+Q9 = "tests/test_textnorm_q9.py"  # the killers of round 2 of the Q9 list: the composed view after an unescape or an undo, the padded overlap, the halving point (look-alike phrases)
 R2 = "tests/test_textnorm_round2.py"  # the killers of the round 2 fix: the padded boundary, the settings check, the composed-form equivalence
 RO = "tests/test_textnorm_round1.py"  # the killers of the round 1 fix batch: the composed evidence view, the strict register, the chunked tripwire, the cache lock
 D = "tests/test_textnorm_differential.py"  # the differential rows and the golden test: they have no mutant, they run in the baseline
-TESTS = [T, G, SC, SB, FB, O, RO, R2, D]  # killer files first; golden, differential last
+TESTS = [T, G, SC, SB, FB, O, RO, R2, Q9, D]  # killer files first; golden, differential last
 S = "src/hadavin_sdk/guard/"
 TN, CF, GEN = S + "textnorm.py", S + "_confusables.py", "tools/gen_confusables.py"
 RM, INJ = S + "runmap.py", S + "injection.py"
 DEF = "src/hadavin_sdk/defaults.py"
 
 
-def mutant(name, file, old, new, killer, expect, *, test_file=T, **kw):
-    """One mutant: ``killer`` (a test of ``test_file``) must fail first, with a line that holds ``expect``."""
-    pin = test_file.removesuffix(".py") + "::" + killer
+def mutant(name, file, old, new, killer, expect, *, test_file=T, param="", **kw):
+    """One mutant: ``killer`` (a test of ``test_file``) must fail first, with a line that holds ``expect``. ``param`` (``[300]``) is the id suffix of
+    the parameter of a parametrized killer that must be the failing one."""
+    pin = test_file.removesuffix(".py") + "::" + killer + param
     return Mutant(
         name, file, old, new, expect, test_file=test_file, only_test=killer, pinned=pin, **kw
     )
@@ -611,7 +613,7 @@ M = [
     mutant("mixed: a mark of the word's own script flags", TN,
         '    return any(group != "LATIN" and group not in own for group in map(_script_of, marks))\n',
         '    return any(group != "LATIN" for group in map(_script_of, marks))\n',
-        MIXED2, "is flagged"),
+        MIXED2, "own script group flags"),
     mutant("mixed: a spacing mark splits the word", TN,
         '        if ch.isalnum() or ch == "_" or unicodedata.category(ch) == "Mc":\n',
         '        if ch.isalnum() or ch == "_":\n', MIXED2, "is not flagged"),
@@ -630,7 +632,7 @@ M = [
         DOCS, "says NFKC again"),
     mutant("runmap: the composed view is not listed", RM,
         "        composed(text),\n        composed(unescaped),\n        composed(undone),\n", "",
-        "test_redact_text_masks_a_decomposed_copy_of_a_known_name", "a decomposed copy of a known name is not masked", test_file=FB),
+        "test_q9_a_decomposed_name_behind_a_json_escape_is_masked_by_the_composed_view_of_the_unescaped_text", "COMPOSED-VIEW-", test_file=Q9, param="[entity]"),
     mutant("runmap: the composed view keeps the invisible characters", RM,
         '    kept = "".join(c for c in text if unicodedata.category(c) != "Cf")\n', "    kept = text\n",
         "test_redact_text_masks_a_decomposed_secret_after_an_invisible_character", "keeps the letter and its accent apart", test_file=FB),
@@ -846,13 +848,13 @@ M = [
         "test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default", "ordinary secrets were refused", test_file=RO),
     mutant("injection: the pieces do not overlap", INJ,
         "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= 1:\n",
-        "test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found", "boundary", test_file=RO),
+        "test_q9_a_padded_window_before_a_boundary_moves_the_start_of_the_next_piece_back", "OVERLAP-PADDED", test_file=Q9),
     mutant("injection: a text over the size rule is flagged whole again", INJ,
         "        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n", "        raise textnorm.TextTooLong(\"over\")\n        size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS\n",
         "test_m4_a_clean_text_over_the_size_rule_is_not_flagged", "OVERCAP-CLEAN", test_file=RO),
     mutant("injection: the new piece ignores the letters it holds", INJ,
         "        if back >= low and _holds(text[end - back : end], need_kept, need_letters):\n", "        if back >= low:\n",
-        "test_a_phrase_padded_across_a_piece_boundary_is_found_whatever_the_padding", "HOSTILE-PAD", test_file=R2),
+        "test_q9_a_look_alike_phrase_padded_across_a_piece_boundary_is_found_only_by_the_moved_back_start", "HOSTILE-LOOKALIKE-PAD", test_file=Q9, param="[300]"),
     mutant("injection: a boundary with too few letters passes", INJ,
         "    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary", "    return end - low\n    raise textnorm.TextTooLong(\n        f\"the {back} characters before a piece boundary",
         "test_a_pad_longer_than_the_largest_overlap_is_flagged_never_passed", "HOSTILE-LONG-PAD", test_file=R2),
@@ -861,7 +863,7 @@ M = [
         "test_the_settings_of_the_chunked_read_are_checked", "GEOMETRY-UNCHECKED", test_file=R2),
     mutant("injection: the second half of a halved piece starts at the halfway point", INJ,
         "            yield from RegexDetector._fit(piece[second:])\n", "            yield from RegexDetector._fit(piece[cut:])\n",
-        "test_a_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found", "HOSTILE-HALVING", test_file=R2),
+        "test_q9_a_look_alike_phrase_padded_across_the_halving_point_of_a_heavy_piece_is_found_by_value", "HOSTILE-HALVING-VALUE", test_file=Q9),
     mutant("tables: the lazy tables are never kept", TN,
         "                _LAZY_TABLES = tables\n", "                pass\n",
         "test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names", "the lazy tables are never kept", test_file=RO),

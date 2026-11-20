@@ -265,7 +265,7 @@ def test_budget_3_the_alias_build_is_budgeted(monkeypatch):
     monkeypatch.setattr(redact_mod.time, "thread_time", CountedClock(0.0, 1, 100.0))
     with pytest.raises(InputTooLarge):
         redact("plain ascii text", mapping=mapping, _deadline=6.0)
-    assert len(folded) <= 1, len(folded)  # with the check removed (mutant N15) all 300 are folded
+    assert len(folded) <= 1, f"N15-ALIAS-BUDGET: the alias build folded {len(folded)} stored values past the deadline"  # with the check removed (mutant N15) all 300 are folded
 
 
 def test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check(
