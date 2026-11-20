@@ -418,7 +418,7 @@ ROWS: list[Row] = [
         "card,model",
         "password=ab&amp; x",
         "password=<SECRET_1>&amp; x",
-        "password=<SECRET_2> x",
+        "password=<SECRET_3> x",
     ),
     R(
         "Q4",
