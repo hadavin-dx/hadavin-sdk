@@ -250,7 +250,7 @@ class MemoryStore:
         with self._lock:
             return [s.model_copy() for s in sorted(self._stops, key=lambda s: s.ts)]
 
-    def clear_stops(self, by: str, stop_ids: Sequence[str]) -> None:
+    def clear_stops(self, by: str, stop_ids: Sequence[str], audit_seq: int | None = None) -> None:
         with self._lock:
             wanted = set(stop_ids)
             self._stops = [s for s in self._stops if s.id not in wanted]
