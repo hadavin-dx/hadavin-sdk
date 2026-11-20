@@ -12,3 +12,4 @@ Mutants: 3 added (P7b-a drop return, P7b-b callable check, P7b-c bind agent chec
 
 TESTED: ruff check and format clean; pytest tests/test_model_gate.py test_runmap_enforce_map.py test_gate_mutants_picked_up.py test_gate_install_callers.py: 372 passed, 1 skipped, 7 xfailed.
 gate_mutants.py whole run: see final line appended below (NOT RUN if absent).
+gate_mutants.py whole run: NOT RUN (other mutant runs were active on the box throughout, load over the cap; per the coordinator's instruction no run was started). Run it once when pgrep -f mutants.py is empty. The 3 new mutants' search texts were checked by test_gate_mutants_picked_up (each text occurs once); their kill was NOT RUN.
