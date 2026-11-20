@@ -186,7 +186,7 @@ HAND = [
     # test_s1_the_runtime_login_cannot_reset_through_its_temporary_tables does not see that mutant; the read test
     # above does.
     mutant("S2: who_else_can_clear is not called", MIG,
-        "        if named and (others := who_else_can_clear(db, reset_role)):",
+        "        if named and (others := who_else_can_clear(db, reset_role, accepted)):",
         "        if named and (others := []):",
         S2, "DID NOT RAISE"),
     mutant("S2: a column-level privilege is not counted", MIG,
@@ -284,7 +284,7 @@ HAND = [
         "test_s2_an_accepted_role_name_that_is_not_one_plain_role_is_refused_before_any_connection", "accepted_admin_roles must be plain"),
     mutant("S2: the allow-list may name a role the command grants", MIG,
         "    if overlap := sorted(set(accepted) & set(named)):", "    if False:",
-        "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "DID NOT RAISE"),
+        "test_s2_an_accepted_role_that_is_also_a_named_role_is_refused", "unused.invalid"),
     mutant("tests: migrate does not take the shared server gate", "tests/conftest.py",
         '            mp.setattr(mod, "migrate", patched)', "            pass",
         "test_the_server_gate_holds_every_migrate_while_another_session_holds_it_exclusively",
@@ -299,8 +299,8 @@ HAND = [
         "(schema {schema!r}, search_path {path!r}, missing", "(missing",
         "test_s2_a_search_path_whose_first_schema_has_no_stop_tables_is_refused_not_passed", "is not named in"),
     mutant("S2: the check runs only when a reset role is named", MIG,
-        "        if named and (others := who_else_can_clear(db, reset_role)):",
-        "        if reset_role and (others := who_else_can_clear(db, reset_role)):",
+        "        if named and (others := who_else_can_clear(db, reset_role, accepted)):",
+        "        if reset_role and (others := who_else_can_clear(db, reset_role, accepted)):",
         "test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call",
         "DID NOT RAISE"),
     mutant("S7: the missing-row raise is removed", PG,
