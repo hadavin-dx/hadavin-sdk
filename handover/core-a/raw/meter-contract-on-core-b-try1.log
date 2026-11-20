@@ -239,4 +239,58 @@ tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-refused-then-freed-by-a-settle-at-zero] PASSED [ 87%]
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-higher-then-zero] PASSED [ 88%]
 tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-settle-twice-lower-then-higher] PASSED [ 88%]
-tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-money-still-counts-against-the-cap] 
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-money-still-counts-against-the-cap] PASSED [ 89%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-higher] PASSED [ 89%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-swept-then-settled-lower] PASSED [ 89%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-memory-the-cap-reached-exactly] PASSED [ 90%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-a-free-call-that-cost-something] PASSED [ 90%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-overshoot-past-the-cap-refuses-the-next-call] PASSED [ 90%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-an-unknown-id] PASSED [ 91%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-bad-amounts-change-nothing] PASSED [ 91%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-grant-then-settle-lower] PASSED [ 92%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-overshoot-is-booked-in-full-and-counts-against-the-cap] PASSED [ 92%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-refused-then-freed-by-a-settle-at-zero] PASSED [ 92%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-higher-then-zero] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-settle-twice-lower-then-higher] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-money-still-counts-against-the-cap] PASSED [ 93%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-higher] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-swept-then-settled-lower] PASSED [ 94%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[limits-postgres-the-cap-reached-exactly] PASSED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-a-free-call-that-cost-something] SKIPPED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-overshoot-past-the-cap-refuses-the-next-call] SKIPPED [ 95%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-an-unknown-id] SKIPPED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-bad-amounts-change-nothing] SKIPPED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-grant-then-settle-lower] SKIPPED [ 96%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-overshoot-is-booked-in-full-and-counts-against-the-cap] SKIPPED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-refused-then-freed-by-a-settle-at-zero] SKIPPED [ 97%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-higher-then-zero] SKIPPED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-lower-then-higher] SKIPPED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-money-still-counts-against-the-cap] SKIPPED [ 98%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-higher] SKIPPED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-lower] SKIPPED [ 99%]
+tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-the-cap-reached-exactly] SKIPPED [100%]
+
+=================================== FAILURES ===================================
+_ test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-bytes] _
+[XPASS(strict)] FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+=========================== short test summary info ============================
+XFAIL tests/contracts/test_meter.py::test_both_implementers_have_the_meter_shape[budget] - NOT BUILT N1 (no finding): k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-int] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-float] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+XFAIL tests/contracts/test_meter.py::test_a_reserve_that_is_refused_for_any_reason_books_nothing[limits-memory-tuple] - FINDING M1: Limits on the memory store refuses a reserve whose run_id is not text with limits_unavailable, but the worst case stays on the day and month counters with no reservation to settle or expire (MemoryStore.reserve_spend books before it builds the row; our F1 of the store run, still there at 7f8481795, now reachable through the meter)
+SKIPPED [1] tests/contracts/test_meter.py:347: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:362: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [15] tests/contracts/test_meter.py:459: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [5] tests/contracts/test_meter.py:512: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [4] tests/contracts/test_meter.py:526: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:541: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:556: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [15] tests/contracts/test_meter.py:568: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:585: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [4] tests/contracts/test_meter.py:601: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:708: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:719: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:843: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [1] tests/contracts/test_meter.py:896: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [13] tests/contracts/test_meter.py:1012: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+============ 1 failed, 194 passed, 65 skipped, 4 xfailed in 23.81s =============

@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/coreb-meter
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 262 items
+
+tests/contracts/test_meter.py::test_both_implementers_have_the_meter_shape[limits] PASSED [  0%]
+tests/contracts/test_meter.py::test_both_implementers_have_the_meter_shape[budget] XFAIL [  0%]
+tests/contracts/test_meter.py::test_reserve_returns_an_id_only_after_the_worst_case_is_booked[limits-memory] PASSED [  1%]
+tests/contracts/test_meter.py::test_reserve_returns_an_id_only_after_the_worst_case_is_booked[limits-postgres] 
