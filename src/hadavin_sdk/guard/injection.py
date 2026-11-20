@@ -38,6 +38,72 @@ _SQUASH = re.compile(r"[^a-z]")
 _SQUASHED = ("ignorepreviousinstructions", "ignoreallpreviousinstructions", "disregardtheabove")
 
 
+def _check_geometry() -> None:
+    """The settings of the chunked read, checked before use (a bad value raises, which ``injection_check`` turns into a flag): whole positive
+    numbers, an overlap smaller than the piece, a largest overlap that still leaves a piece twice as long as it."""
+    names = (
+        "TEXTNORM_INJECTION_CHUNK_CHARS",
+        "TEXTNORM_INJECTION_OVERLAP_CHARS",
+        "TEXTNORM_INJECTION_OVERLAP_MAX_CHARS",
+        "TEXTNORM_INJECTION_PHRASE_CHARS",
+    )
+    for name in names:
+        value = getattr(defaults, name)
+        if type(value) is not int or value < 1:
+            raise ValueError(f"defaults.{name} must be a whole number of at least 1")
+    size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
+    low = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+    high = defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS
+    if not (low <= high and 2 * high <= size):
+        raise ValueError(
+            "the injection overlap must be smaller than the largest overlap, and twice the largest must fit in one piece "
+            f"(overlap {low}, largest {high}, piece {size})"
+        )
+
+
+def _holds(window: str, need_kept: int, need_letters: int) -> bool:
+    """True when EVERY view of ``window`` (``textnorm.scan_views_no_value``, the views the scan reads) keeps at least ``need_kept`` characters and holds at
+    least ``need_letters`` a-z letters. A phrase is read in one of the views, so a count that holds in all of them holds in the one that matters. A view
+    drops what the fold drops (invisible characters, spaces) and turns a look-alike into its letter (a Cyrillic o gives one), so padding is not counted
+    and a tag character (which reads as a letter in one view only) cannot lend letters to the others. No view at all (nothing but invisible
+    characters) holds nothing."""
+    # A mark on both sides: a view that drops everything of ``window`` (the tag characters, which read as letters in one view only) is then still a
+    # view (of the marks, with no letter), not a view that is left out because it is empty, so it counts as zero.
+    views = textnorm.scan_views_no_value("|" + window + "|")
+    if not views:
+        return False
+    return (
+        min(len(v) for v in views)
+        >= need_kept + 2  # +2: the marks (some views drop them; that only asks for a little more)
+        and min(len(_SQUASH.sub("", v.lower())) for v in views) >= need_letters
+    )
+
+
+def _start_of_next(text: str, start: int, end: int) -> int:
+    """Where the piece after ``text[start:end]`` starts. Going back from ``end``, the new piece must hold at least
+    ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` characters of the old one, AND in every view of it at least ``defaults.TEXTNORM_INJECTION_PHRASE_CHARS`` + 1
+    characters the fold keeps, AND more letters than the longest squeezed phrase (``_holds``). Then a phrase cut by the boundary would have to hold all
+    of those and its own first and last letter: more than it can. Invisible characters, spaces, digits and punctuation between its letters do not
+    help the writer: they are not counted, the start just moves back (in steps of a quarter of the overlap so far, so the work stays small) until
+    enough real ones are in. If that takes more than ``defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS`` characters, or the piece itself begins first
+    (a piece with almost no letters before the boundary), the text is refused (``TextTooLong``, fail closed)."""
+    need_kept = defaults.TEXTNORM_INJECTION_PHRASE_CHARS + 1
+    need_letters = max(len(s) for s in _SQUASHED) + 1
+    low = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
+    high = defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS
+    cap = min(high, end - start - 2)
+    back = min(low, cap)
+    while back >= 1:
+        if back >= low and _holds(text[end - back : end], need_kept, need_letters):
+            return end - back
+        if back >= cap:
+            break
+        back = min(cap, back + max(16, back // 4))
+    raise textnorm.TextTooLong(
+        f"the {back} characters before a piece boundary (the most allowed: {high}) hold too few letters to read a steering phrase across it"
+    )
+
+
 class RegexDetector:
     backend = "regex"
 
@@ -46,11 +112,13 @@ class RegexDetector:
 
     @staticmethod
     def _read(text: str) -> Iterator[tuple[str, tuple[str, ...]]]:
-        """``(piece, its scan views)``: the text whole when the fold takes it; otherwise (over the size rule) overlapping pieces of
-        ``defaults.TEXTNORM_INJECTION_CHUNK_CHARS`` characters that share ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS``, each halved until the fold
-        takes it, so a long document is READ, not flagged. CEILING: a text longer than ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises
-        ``TextTooLong`` (flagged as guard_unavailable), and a phrase whose letters are spread over more than the overlap across a piece boundary is
-        not seen (a tripwire, not a gate)."""
+        """``(piece, its scan views)``: the text whole when the fold takes it; otherwise (over the size rule) overlapping pieces of about
+        ``defaults.TEXTNORM_INJECTION_CHUNK_CHARS`` characters, each halved until the fold takes it, so a long document is READ, not flagged.
+        A piece starts where ``_start_of_next`` says (at least ``defaults.TEXTNORM_INJECTION_OVERLAP_CHARS`` before the end of the one before,
+        and far enough back to hold enough letters that no steering phrase can be cut in two, however many invisible or other non-letter
+        characters its writer puts between its letters). CEILING: a text longer than ``defaults.TEXTNORM_INJECTION_MAX_CHARS`` raises
+        ``TextTooLong`` (flagged as guard_unavailable), and so does a boundary that has too few letters before it within
+        ``defaults.TEXTNORM_INJECTION_OVERLAP_MAX_CHARS`` characters (fail closed, never a pass)."""
         if len(text) > defaults.TEXTNORM_INJECTION_MAX_CHARS:
             raise textnorm.TextTooLong(
                 f"a text of {len(text)} characters is over the injection check's limit of {defaults.TEXTNORM_INJECTION_MAX_CHARS}"
@@ -60,12 +128,15 @@ class RegexDetector:
             return
         except textnorm.TextTooLong:
             pass
+        _check_geometry()
         size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
-        step = size - defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
-        for start in range(0, len(text), step):
-            yield from RegexDetector._fit(text[start : start + size])
-            if start + size >= len(text):
+        start = 0
+        while True:
+            end = min(start + size, len(text))
+            yield from RegexDetector._fit(text[start:end])
+            if end >= len(text):
                 break
+            start = _start_of_next(text, start, end)
 
     @staticmethod
     def _fit(piece: str) -> Iterator[tuple[str, tuple[str, ...]]]:
@@ -75,9 +146,18 @@ class RegexDetector:
             half = len(piece) // 2
             if half == 0:
                 raise
-            overlap = defaults.TEXTNORM_INJECTION_OVERLAP_CHARS
-            yield from RegexDetector._fit(piece[: half + overlap])
-            yield from RegexDetector._fit(piece[half:])
+            # The second part starts where ``_start_of_next`` says. If the first half is too short or too bare to look back over, the cut moves
+            # later (the first part grows, the second shrinks), so both parts are smaller than the piece and the recursion ends.
+            cut, second = half, None
+            while second is None:
+                try:
+                    second = _start_of_next(piece, 0, cut)
+                except textnorm.TextTooLong:
+                    cut += max(1, half // 2)
+                    if cut >= len(piece):
+                        raise
+            yield from RegexDetector._fit(piece[:cut])
+            yield from RegexDetector._fit(piece[second:])
 
     def _score(self, text: str) -> float:
         """1.0 when the raw text OR any view of it (``textnorm.scan_views_no_value``: the look-alike fold, the squeeze, the scan keys; there is no protected value here) holds a

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import functools
 import re
-import unicodedata
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -54,17 +53,17 @@ class Checked:
 Validator = Callable[[Run, AgentRecord, ActionContract, ToolCall, str, dict[str, str]], Checked]
 
 
-def _composed(text: str) -> str:
-    """``runmap.canonical`` (NFKC one character at a time, so match positions stay exact for the redactor) followed by NFC over the whole text. The
-    redactor needs the per-character form; a comparison does not, and it must treat ``e`` + U+0301 and the precomposed U+00E9 as the same letter
-    (whole-text NFKC did before P1b, so a decomposed text no longer found a precomposed identifier). NFC joins a base letter and its combining
-    mark and nothing else, so the comparison stays EXACT: no look-alike and no dropped mark is read (see ``normalise``). ASCII is its own form."""
-    canon = runmap.canonical(text)
-    return canon if canon.isascii() else unicodedata.normalize("NFC", canon)
+# Plain words first. The same letter can be written two ways: "e" followed by a separate accent mark (decomposed, "NFD": what macOS file names and
+# many PDF tools give) or as one character (precomposed, "NFC"). To compare two texts we write both the same way first. NFKC also turns a compatibility
+# form (a full-width letter, a ligature) into its plain letter. ``runmap.composed`` does both over the whole text, after removing the invisible format
+# characters, and it is the one place that does (rule: reuse before writing). DECISION (round 2 of the P1b fix, finding N5 and the sibling list): this
+# module first held its own ``_composed`` (``runmap.canonical``, NFKC one character at a time, then NFC); a one-off run found the
+# two equal on 200,000 random mixtures, and a seeded test (the round 2 test file of the fold) checks the same on 20,000 ones plus hostile ones, so the copy was removed. The
+# comparison stays exact: nothing is dropped except invisible format characters, and a different letter or a different accent is still different.
 
 
 def normalise(text: str) -> str:
-    return _composed(text).casefold().strip()
+    return runmap.composed(text).casefold().strip()
 
 
 # The value being looked for is NEVER put into a regular expression: `re` keeps every pattern it compiles in a
@@ -94,8 +93,8 @@ def contains(text: str, value: str, *, casefold: bool = False, suffix: str | Non
     ignore case. A name followed by `suffix` (a restricted pattern the tool's manifest declares for a generated
     suffix, such as a pod's `-7f9d8c6b4-xk2lp`) also counts; without one a name never matches the front of a
     longer one."""
-    want = _composed(value).strip()
-    hay = _composed(text)
+    want = runmap.composed(value).strip()
+    hay = runmap.composed(text)
     if not want:
         return False
     if m := _NUMERIC.fullmatch(want.casefold()):
@@ -158,7 +157,7 @@ def grounded(
         if not isinstance(value, str):
             return False  # an identifier that is not a string cannot be grounded
         if (
-            _composed(value) != value
+            runmap.composed(value) != value
         ):  # the value the executor gets is the one that is compared (a decomposed identifier is refused, as before P1b)
             return False
         redacted = runmap.redact_text(
