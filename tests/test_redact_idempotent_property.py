@@ -17,7 +17,7 @@ The corpora (nothing is dropped from any of them; `test_the_corpus_is_what_this_
   own-shapes     tests/warden_port/test_redaction.py              OWN_SHAPES
   spellings      tests/test_k5_round8.py                          SPELLINGS (the layered spellings round 8 and 9 drive)
   round12-fuzz   tests/test_k5_round12_fuzz.py                    `_case`, its seed, its 1,200 cases
-  round-trip     tests/test_runmap_is_masked.py                   `_random_text`, its seed, 300 texts; LOOKALIKES
+  round-trip     tests/test_runmap_map_write.py                   `_random_text`, its seed, 300 texts; LOOKALIKES
   p1c            handover/core-c/evidence/p1c_probe.py            gap1_values (short and long), gap2_cases, gap3_cases
   g7             tests/test_redact_context_after_sweep.py         SHAPES, MUST_KEEP, E5 (the shapes G7 was built on)
   constructed    this file                                        CONSTRUCTED: built to find what one extra pass misses
@@ -45,7 +45,7 @@ from hadavin_sdk.guard import runmap
 from tests import test_k5_round8 as round8
 from tests import test_k5_round12_fuzz as round12
 from tests import test_redact_context_after_sweep as g7
-from tests import test_runmap_is_masked as round_trip
+from tests import test_runmap_map_write as round_trip
 from tests.warden_port import privacy_corpus
 from tests.warden_port import test_redaction as port
 from tests.warden_port import test_redaction_bank as bank
@@ -96,7 +96,7 @@ def _build() -> list[tuple[str, str]]:
     add("spellings", list(round8.SPELLINGS.values()))
     rng = random.Random(round12.SEED)  # noqa: S311 - a test fixture generator, not a secret
     add("round12-fuzz", [round12._case(rng)[0] for _ in range(round12.CASES)])
-    rng = random.Random(20261120)  # noqa: S311 - the seed tests/test_runmap_is_masked.py uses
+    rng = random.Random(20261120)  # noqa: S311 - the seed the round-trip corpus was built with
     add("round-trip", [round_trip._random_text(rng) for _ in range(300)])
     add("lookalikes", round_trip.LOOKALIKES)
     if _P1C.exists():

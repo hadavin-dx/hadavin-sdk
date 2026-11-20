@@ -6,7 +6,7 @@ from __future__ import annotations
 import copy
 import sys
 import threading
-from types import MappingProxyType
+from types import MappingProxyType, SimpleNamespace
 
 import pytest
 
@@ -33,7 +33,9 @@ def _run_map() -> runmap.RunMap:
 
 
 def _enforce(text: str, mapping) -> str:
-    """enforce_map with its promises asserted on every call: map and cache untouched, a str, idempotent."""
+    """enforce_map with its promises asserted on every call: map and cache untouched, a str, idempotent
+    (`enforce_map(enforce_map(x)) == enforce_map(x)`). Every test of this file that gets a text back goes
+    through here; the only direct calls are the ones that must raise and the reader threads of the smoke test."""
     before = dict(mapping)
     cache = copy.copy(getattr(mapping, "redact_cache", None))
     out = runmap.enforce_map(text, mapping)
@@ -107,7 +109,7 @@ def test_it_never_writes_the_map_or_the_cache_and_takes_a_read_only_mapping():
     assert mapping.redact_cache
     _enforce(f"host {IP}", mapping)
     frozen = MappingProxyType({"<IPV4_1>": IP})
-    assert runmap.enforce_map(f"host {IP}", frozen) == "host <IPV4_1>"
+    assert _enforce(f"host {IP}", frozen) == "host <IPV4_1>"
 
 
 def test_a_value_added_to_the_map_later_is_replaced_in_text_masked_earlier():
@@ -121,9 +123,7 @@ def test_a_value_added_to_the_map_later_is_replaced_in_text_masked_earlier():
 def test_over_the_cap_raises_input_too_large():
     with pytest.raises(runmap.InputTooLarge):
         runmap.enforce_map("a" * (defaults.MAX_REDACT_CHARS + 1), {})
-    assert (
-        runmap.enforce_map("a" * defaults.MAX_REDACT_CHARS, {}) == "a" * defaults.MAX_REDACT_CHARS
-    )
+    assert _enforce("a" * defaults.MAX_REDACT_CHARS, {}) == "a" * defaults.MAX_REDACT_CHARS
 
 
 @pytest.mark.parametrize(
@@ -173,7 +173,9 @@ def test_a_placeholder_inserted_in_this_pass_is_not_rewritten_by_a_later_shorter
 def test_stated_limit_partial_overlap_leaves_a_tail():
     """Trap 3, STATED LIMIT. `abcd` and `cdef` are both known and the text holds `abcdef`: neither contains
     the other, so only one can be replaced and the rest of the other stays readable. Which one: the longer,
-    and for equal length the one that comes first in the map."""
+    and for equal length the one that comes first in the map. A held-back value (a piece of one of the
+    map's placeholders) is the exception: it loses to a value that is not held back even when it is longer
+    (lead review round 2, m-new-3)."""
     assert _enforce("abcdef", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"}) == "<SECRET_1>ef"
     assert _enforce("abcdef", {"<SECRET_2>": "cdef", "<SECRET_1>": "abcd"}) == "ab<SECRET_2>"
     assert _enforce("abcdefg", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdefg"}) == "ab<SECRET_2>"
@@ -182,6 +184,10 @@ def test_stated_limit_partial_overlap_leaves_a_tail():
     assert _enforce("abcdef", identifiers) == "abcdef"
     # ... while each standalone copy still is
     assert _enforce("abcdef abcd cdef", identifiers) == "abcdef <TENANT_1> <TENANT_2>"
+    # the held-back value `SECRET_1` (8 characters) loses to the shorter `ET_1zz9` (7)
+    held_back = {"<SECRET_1>": "SECRET_1", "<SECRET_2>": "ET_1zz9"}
+    assert _enforce("SECRET_1zz9", held_back) == "SECR<SECRET_2>"
+    assert _enforce("SECRET_1 zz9", held_back) == "<SECRET_1> zz9"
 
 
 def test_seed_entries_of_the_map_are_harmless():
@@ -208,9 +214,9 @@ def test_pin_the_callers_cache_is_never_written_even_when_the_patterns_must_be_r
     for mapping in (stale, empty, late):
         cache, snapshot = mapping.redact_cache, copy.copy(mapping.redact_cache)
         text = f"host {IP} token {TOKEN} SECRET"
-        assert (
-            runmap.enforce_map(text, mapping) != text
-        )  # something was replaced: the patterns were built
+        out = runmap.enforce_map(text, mapping)
+        assert out != text  # something was replaced: the patterns were built
+        assert runmap.enforce_map(out, mapping) == out
         assert mapping.redact_cache is cache, "the caller's cache was replaced"
         assert cache == snapshot and all(cache[k] is snapshot[k] for k in snapshot), (
             "the caller's cache was written"
@@ -231,8 +237,8 @@ def test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_
         ({"<SECRET_1>": "web"}, "x web y"),
         ({"<TENANT_1>": "12345"}, "x 12345 y"),
         ({"<IPV4_1>": "8080"}, "port 8080 open"),
-        ({"<TENANT_1>": "prod"}, "x prod y"),
-        ({"<TENANT_1>": "Prod"}, "x Prod y"),
+        ({"<TENANT_1>": "admin"}, "x admin y"),
+        ({"<TENANT_1>": "Admin"}, "x Admin y"),
         ({"<HOSTNAME_1>": "web"}, "the web tier"),
     ]
     for mapping, text in not_swept:
@@ -240,7 +246,7 @@ def test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_
     swept = [
         ({"<SECRET_1>": "abc"}, "x abc y", "x <SECRET_1> y"),
         ({"<SECRET_1>": "12345"}, "x 12345 y", "x <SECRET_1> y"),  # a secret of 4+: digits do not exempt it
-        ({"<SECRET_1>": "prod"}, "x prod y reprod", "x <SECRET_1> y re<SECRET_1>"),  # nor a common word
+        ({"<SECRET_1>": "admin"}, "x admin y sysadmin", "x <SECRET_1> y sys<SECRET_1>"),  # nor a common word
         ({"<TENANT_1>": "123456"}, "x 123456 y", "x <TENANT_1> y"),
         ({"<TENANT_1>": "abc"}, "x abc y", "x <TENANT_1> y"),
     ]  # fmt: skip
@@ -260,6 +266,152 @@ def test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept():
     assert _enforce("x123456 1234567", {"<TENANT_1>": "123456"}) == "x123456 1234567"
     secret = {"<SECRET_1>": TOKEN}  # a secret is replaced in every copy
     assert _enforce(f"x{TOKEN}9", secret) == "x<SECRET_1>9"
+
+
+# --- lead review round 2 --------------------------------------------------------------------------------------------
+
+IDENT = "abc123" + "xyz9"  # an identifier value, built from parts
+SHORT = "Zq" + "9x"  # a short secret value, built from parts
+
+
+def _one_sweep(text: str, mapping: dict[str, str]) -> str:
+    """What enforce_map returned before the fix: the redactor's sweep, once."""
+    return runmap._Redactor(mapping, None).sweep(text)
+
+
+def test_mj2_an_identifier_glued_to_a_shorter_secret_is_replaced_too():
+    """MJ2, the reviewer's trace. One sweep skips the identifier (the secret's first letter touches it),
+    then replaces the secret: the identifier is left raw and standing alone. Reproduced 2026-11-20 on the
+    code before the fix: the first call returned `abc123xyz9<SECRET_1>`, a second `<TENANT_1><SECRET_1>`."""
+    mapping = {"<TENANT_1>": IDENT, "<SECRET_1>": SHORT}
+    once = _one_sweep(IDENT + SHORT, mapping)
+    assert once == IDENT + "<SECRET_1>"  # FAIL-BEFORE: one sweep is not a fixed point
+    assert _one_sweep(once, mapping) == "<TENANT_1><SECRET_1>"
+    out = _enforce(IDENT + SHORT, mapping)
+    assert out == "<TENANT_1><SECRET_1>", "a known identifier was left raw beside a placeholder"
+    assert IDENT not in out and SHORT not in out
+    assert _enforce(IDENT + SHORT, runmap.RunMap(mapping)) == out  # the cached path
+    assert _enforce(f"a {SHORT}{IDENT}{SHORT} b {IDENT}x", mapping) == (
+        f"a <SECRET_1><TENANT_1><SECRET_1> b {IDENT}x"  # a letter that stays keeps the stated limit
+    )
+    # the same shape with a held-back value (a piece of a placeholder of the map) as the identifier
+    late = {"<TENANT_1>": "SECRET", "<SECRET_1>": SHORT}
+    assert _enforce("SECRET" + SHORT, late) == "<TENANT_1><SECRET_1>"
+
+
+def _chain(n: int) -> tuple[dict[str, str], str]:
+    """n identifiers glued in a row before a secret, the longest first, each ending in a dot: every sweep
+    frees exactly one of them (the last one still glued to a raw neighbour), so n + 2 sweeps are needed."""
+    names = ["t" + str(i) * (2 * (n - i) + 2) + "." for i in range(n)]
+    mapping = {f"<TENANT_{i + 1}>": name for i, name in enumerate(names)}
+    mapping["<SECRET_1>"] = SHORT
+    return mapping, "".join(names) + SHORT
+
+
+def test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it():
+    """The sweep is repeated while the text changes, `ENFORCE_MAX_SWEEPS` times at most. A longer chain is
+    refused (fail closed: the gate makes no call), never returned half replaced."""
+    assert runmap.ENFORCE_MAX_SWEEPS == 4  # small and constant
+    mapping, text = _chain(2)  # sweeps: the secret, identifier 2, identifier 1, then one that finds nothing
+    assert _enforce(text, mapping) == "<TENANT_1><TENANT_2><SECRET_1>"
+    for n in (3, 6):
+        mapping, text = _chain(n)
+        with pytest.raises(runmap.RedactionError) as caught:
+            runmap.enforce_map(text, mapping)
+        assert caught.value.args == ("NotSettled",), "a text that was still changing was returned"
+        assert caught.value.__cause__ is None and not isinstance(caught.value, runmap.InputTooLarge)
+
+
+def test_m_new_1_a_map_of_many_short_values_builds_one_redactor_and_none_per_value(monkeypatch):
+    """m-new-1. A hostile document can plant many short values that are pieces of a placeholder token (`ID`,
+    `1`, `T`, `_1`, `>`): the sweep never replaces them, so they are not held back, and a call costs one
+    sweep with the run's built patterns, not one substring test and one redactor per value."""
+    mapping = runmap.RunMap({"<IPV4_1>": IP})
+    pieces = ["ID", "T", "EN", "AN", "_", "<", ">", "<T", "1>"]
+    for i in range(1, 2001):
+        dict.__setitem__(mapping, f"<TENANT_{i}>", f"{pieces[i % len(pieces)]}{i}"[:2] if i % 2 else str(i))
+    assert len(mapping) == 2001 and len(set(mapping.values())) < 2001  # short, many of them the same
+    runmap.redact_text("warm the cache", mapping)
+    built = []
+    real = runmap._Redactor
+
+    def counting(known, cache=None):
+        built.append((len(known), cache is not None))
+        return real(known, cache)
+
+    monkeypatch.setattr(runmap, "_Redactor", counting)
+    text = f"ID T EN 1 7 1999 host {IP} <TENANT_7>"
+    assert _enforce(text, mapping) == "ID T EN 1 7 1999 host <IPV4_1> <TENANT_7>"
+    assert set(built) == {(2001, True)}, "a redactor was built for a value the sweep never replaces"
+    # a value the sweep CAN replace and that is a piece of a token is still held back (one redactor for it)
+    dict.__setitem__(mapping, "<SECRET_1>", "TENANT")
+    built.clear()
+    assert _enforce(f"TENANT host {IP}", mapping) == "<SECRET_1> host <IPV4_1>"
+    assert sorted(set(built)) == [(1, False), (2001, False)]
+
+
+def test_m_new_1_enforce_map_has_the_redactors_time_budget(monkeypatch):
+    """m-new-1, ORDER 007 item 3: past `defaults.REDACT_BUDGET_S` the call fails closed (InputTooLarge)."""
+    mapping = {"<IPV4_1>": IP}
+    clock = iter([0.0, defaults.REDACT_BUDGET_S + 0.5])
+    monkeypatch.setattr(runmap, "time", SimpleNamespace(monotonic=lambda: next(clock)))
+    with pytest.raises(runmap.InputTooLarge) as caught:
+        runmap.enforce_map(f"host {IP}", mapping)
+    assert caught.value.args == ("InputTooLarge",), "the time budget was not checked"
+    clock = iter([0.0, defaults.REDACT_BUDGET_S - 0.5, defaults.REDACT_BUDGET_S - 0.4])
+    assert runmap.enforce_map(f"host {IP}", mapping) == "host <IPV4_1>"
+
+
+def test_m_new_2_stated_limit_a_map_key_that_is_not_a_genuine_placeholder_is_not_protected():
+    """m-new-2. The held-back test no longer asks for the shape of a genuine key (the `fullmatch` is gone):
+    every sweepable value that is a piece of any key of the map is held back. Run 2026-11-20: that does NOT
+    protect a key that is not a genuine placeholder (`<host_1>`, lower case), because no sweep sets such a
+    token aside (`redact._PLACEHOLDER` is upper case only): the value `host` is replaced inside it, held
+    back or not. STATED LIMIT: the placeholder is damaged, no raw value is shown, the result is stable.
+    The redactor only ever writes genuine keys, so a run's own map does not have this shape."""
+    mapping = {"<host_1>": IP, "<acct_2>": "host"}
+    out = _enforce(f"a {IP} b host c", mapping)
+    assert out == "a <<acct_2>_1> b <acct_2> c"
+    assert IP not in out
+    genuine = {"<HOST_1>": IP, "<ACCT_2>": "HOST"}  # the same map with genuine keys is protected
+    assert _enforce(f"a {IP} b HOST c", genuine) == "a <HOST_1> b <ACCT_2> c"
+
+
+def test_stated_limit_a_value_holding_a_placeholder_shaped_token_is_never_replaced():
+    """m-new-3. The sweep sets every placeholder-shaped token aside first, so such a value never lies in one
+    stretch of text. (The redactor stores a value that holds placeholders with them restored, so its own
+    entries do not have this shape; a seeded or foreign map can.)"""
+    mapping = {"<SECRET_1>": "ab<X_1>cd9", "<IPV4_1>": IP}
+    assert _enforce(f"see ab<X_1>cd9 at {IP}", mapping) == "see ab<X_1>cd9 at <IPV4_1>"
+
+
+def test_stated_limit_a_known_value_written_inside_angle_brackets_reads_as_a_placeholder():
+    """m-new-3. `ABC_1` is known; written as `<ABC_1>` it has the shape of a placeholder and is left."""
+    mapping = {"<TENANT_1>": "ABC_1", "<SECRET_1>": TOKEN}
+    assert _enforce("id <ABC_1> and ABC_1", mapping) == "id <ABC_1> and <TENANT_1>"
+    assert _enforce(f"<{TOKEN}>", mapping) == "<<SECRET_1>>"  # not token-shaped: replaced as anywhere
+
+
+def test_stated_limit_a_copy_split_by_nul_characters_is_not_found():
+    """m-new-3. enforce_map does not clean the text (`redact_text` does): a copy with a NUL between its
+    characters, which is what a UTF-16 document read as UTF-8 holds, passes as written."""
+    mapping = {"<SECRET_1>": TOKEN, "<IPV4_1>": IP}
+    split = chr(0).join(TOKEN)
+    assert _enforce(f"token {split} end", mapping) == f"token {split} end"
+    as_read = TOKEN.encode("utf-16-le").decode("utf-8", "replace")
+    assert TOKEN not in as_read and _enforce(as_read, mapping) == as_read
+    assert _enforce(f"{TOKEN}{chr(0)}{IP}", mapping) == f"<SECRET_1>{chr(0)}<IPV4_1>"  # whole copies are
+
+
+def test_stated_limit_a_value_spanning_the_end_of_a_placeholder_written_in_this_call():
+    """m-new-2, second shape, contrived. The known value `1>abc7` occurs raw in the same stretch as a value
+    whose placeholder ends in `1>` and is followed by `abc7`: it is replaced ACROSS the placeholder just
+    written. The placeholder is damaged; no raw value is shown, and the result is stable."""
+    mapping = {"<SECRET_1>": TOKEN, "<SECRET_2>": "1>abc7"}
+    out = _enforce(f"x {TOKEN}abc7 y 1>abc7", mapping)
+    assert out == "x <SECRET_<SECRET_2> y <SECRET_2>"
+    assert TOKEN not in out and "abc7" not in out
+    assert _enforce(f"x {TOKEN}abc7 y", mapping) == "x <SECRET_1>abc7 y"  # not raw in the stretch: untouched
 
 
 # --- lead review round 1, M4: redact_text never empties the live map ----------------------------------------------
@@ -301,8 +453,10 @@ def test_m4_redact_text_never_empties_the_map_on_the_way():
     assert dict(mapping) == {"<IPV4_1>": IP, "<IPV4_2>": "10.9.9.9"}
 
 
-def test_m4_a_reader_thread_never_sees_a_known_key_missing_during_many_writes():
-    """The gate reads the run's live map from another thread (k1b runs the call in a thread). While one
+def test_m4_smoke_a_reader_thread_never_sees_a_known_key_missing_during_many_writes():
+    """SMOKE TEST, not a proof: it depends on thread timing and can pass with the fault present. The
+    certain checks are `test_m4_redact_text_never_empties_the_map_on_the_way` (deterministic) and mutant R3
+    of tests/gate_mutants.py, which is pinned to that test. The gate reads the run's live map from another thread (k1b runs the call in a thread). While one
     thread writes the map many times, a reader copying it never finds a known key gone, and enforcing a
     known value never returns it raw."""
     mapping = runmap.RunMap()

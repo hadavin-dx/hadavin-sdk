@@ -2,10 +2,11 @@
 
 Guarantee: values the run has identified as sensitive are replaced by their placeholders in everything sent to a model; detection of new values is done by the producers' pattern redactor.
 
-Stated limits of that sentence (lead review round 1; each is pinned by the test named, T = tests/test_model_gate.py,
-E = tests/test_runmap_enforce_map.py). The replace is the redactor's own sweep and follows its rule (`redact._sweep`):
+Stated limits of that sentence (lead review rounds 1 and 2, design review D7). Each line names the test that
+pins it: T = tests/test_model_gate.py, E = tests/test_runmap_enforce_map.py. The replace is the redactor's own
+sweep and follows its rule (`redact._sweep`); the full list with the reasons is in `runmap.enforce_map`.
 - A known value under 3 characters is never replaced. A known value that is all digits and under 6 characters, or
-  a common word (`redact._COMMON`: prod, test, web ...), is never replaced UNLESS it is a secret kind of 4
+  a common word (`redact._COMMON`: admin, test, web ...), is never replaced UNLESS it is a secret kind of 4
   characters or more (those are replaced in every copy).
   E::test_stated_limit_short_values_short_digit_strings_and_common_words_are_not_swept
 - Any value that is not a secret kind of 4 or more (an identifier: tenant, host, address, id) is replaced only
@@ -14,23 +15,55 @@ E = tests/test_runmap_enforce_map.py). The replace is the redactor's own sweep a
 - Only the spelling the map holds is replaced: a percent-, entity- or backslash-encoded copy, a full-width or
   other look-alike spelling and a copy split by a zero-width character pass as written.
   T::test_t7_stated_limit_a_hidden_spelling_of_a_known_value_is_not_replaced_by_the_gate
+- The replace is case-sensitive: a known host or e-mail address written in another letter case passes.
+  T::test_d7_stated_limit_another_letter_case_of_a_known_value_is_not_replaced
+- A copy split by NUL characters (a UTF-16 document: the gate reads documents as UTF-8) or by an ANSI colour
+  sequence passes: the gate does not clean the text, the producers' redactor does.
+  T::test_d7_stated_limit_a_copy_split_by_nul_utf16_or_an_ansi_sequence_is_not_replaced
+  E::test_stated_limit_a_copy_split_by_nul_characters_is_not_found
+- A known value that itself holds a placeholder-shaped token is never replaced, and a known value written inside
+  angle brackets so that it reads as a placeholder (`<ABC_1>`) is left.
+  E::test_stated_limit_a_value_holding_a_placeholder_shaped_token_is_never_replaced
+  E::test_stated_limit_a_known_value_written_inside_angle_brackets_reads_as_a_placeholder
 - Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in `abcdef`):
-  one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left.
+  one is replaced and the tail of the other stays (`<A_1>ef`); two identifiers there are both left. A value that
+  is a piece of one of the map's placeholders loses to any other value, even a shorter one.
   E::test_stated_limit_partial_overlap_leaves_a_tail
+- A placeholder can be damaged, with no raw value shown: by a known value that spans the end of a placeholder
+  written in the same call, and in a map whose key is not a genuine placeholder.
+  E::test_stated_limit_a_value_spanning_the_end_of_a_placeholder_written_in_this_call
+  E::test_m_new_2_stated_limit_a_map_key_that_is_not_a_genuine_placeholder_is_not_protected
+- A text that is still changing after `runmap.ENFORCE_MAX_SWEEPS` sweeps (a chain of glued identifiers) is
+  refused, not sent. E::test_mj2_a_chain_settles_within_the_cap_and_is_refused_past_it
 - The gate runs no pattern: a value that is in no map passes as written, also a clean key and a clean value that
   only match a pattern once composed (`"user_id": "abc123"`).
   T::test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_are_not_touched
+- A known SECRET value that equals a word of the trusted framing (the tool-result marker words, a tool name) is
+  replaced there too: the marker the agent loop wrote is rewritten in what is sent. OPEN, a design decision.
+  T::test_d6_gap_a_secret_equal_to_a_marker_word_rewrites_the_trusted_tool_result_marker (strict expected failure)
 - With no map (`mapping=None`: the eval and replay command lines, the judge with its own map) there is no enforce
-  step. `system` and `tools` are operator text and are not touched.
+  step; every audit row of such a gate says so (`decision` is `no_map`, else `map_enforced`).
+  T::test_d1_every_audit_row_says_whether_the_map_was_enforced
+- Only the `content` of each message and the documents are enforced. `system`, `tools` and `output_schema` are
+  operator text and are forwarded untouched, as are a message's `role` and its other keys.
+  T::test_t20_system_and_tools_are_not_touched
+  T::test_d7_role_extra_message_keys_and_output_schema_are_forwarded_untouched
+- One writer per run map (m-new-7): two threads that write ONE map at the same time through `redact_text` can
+  give one placeholder number to two values. The gate only reads the map; one run has one writer today.
+  Not pinned by a test (a race).
 
 Before any provider contact the gate enforces the caller's run map on every message and document (a raw copy
-of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then reserves the
-worst-case cost. The client gets the enforced copies. After the call the gate settles the real cost and writes
-one audit row. If the enforce step or the reservation fails, no call is made. The gate holds no money logic and
-no redaction logic of its own: it only orders the steps.
+of a value the map holds becomes that value's existing placeholder; `runmap.enforce_map`), then asks for the
+worst-case cost, checks it and reserves it. The client gets the enforced copies. After the call the gate
+settles by the one settle rule below (the real cost of a reply, 0 for a marked refusal, nothing otherwise) and
+writes one audit row. If the enforce step, the worst case or the reservation fails, no call is made. The gate
+keeps no prices, no budgets and no patterns: the amounts come from `worst_case` and the reply, the replace
+from `runmap`. What it does decide is the ORDER of the steps and WHEN a reservation is settled.
 
-No logger, no module-level state, and no message text, no exception text and no exception chain in any audit
-row or in any exception raised here. The caller's messages, dicts and documents are never changed in place.
+No logger, no module-level state, and no message text and no exception text in any audit row. The gate's own
+refusals (`GateRefused` and its subclasses) carry a fixed code and no cause; an error of the meter, of
+`worst_case` or of the client is re-raised as the same object, with whatever chain it already had. The
+caller's messages, dicts and documents are never changed in place.
 """
 
 from __future__ import annotations
@@ -101,7 +134,10 @@ RESULT_REFUSED = "refused"
 RESULT_FAILED = "failed"
 CODE_GATE_REFUSED = "gate_refused"
 CODE_MASK_REFUSED = "mask_refused"
+CODE_WORST_CASE_FAILED = "worst_case_failed"  # `worst_case` raised: its error is re-raised, no reserve
+CODE_WORST_CASE_INVALID = "worst_case_invalid"  # it returned no finite Decimal >= 0: no reserve
 CODE_RESERVE_REFUSED = "reserve_refused"  # the meter's exception has no published `.reason`
+CODE_RESERVATION_INVALID = "reservation_invalid"  # reserve returned no usable id: no provider call
 CODE_PROVIDER_REFUSED = (
     "provider_refused"  # rule (b): marked refused before any response, settled at 0
 )
@@ -111,16 +147,31 @@ CODE_CALL_FAILED = "call_failed"  # rule (c): any other Exception from the clien
 CODE_CALL_INTERRUPTED = "call_interrupted"  # rule (c): KeyboardInterrupt, SystemExit, NOT settled
 CODE_COST_UNKNOWN = "cost_unknown"  # rule (c): a reply with no usable cost; returned, NOT settled
 CODE_SETTLE_FAILED = "settle_failed"  # the meter raised in settle: the worst case stays booked
+CODE_OVERSHOOT = "overshoot"  # a paid call (result ok) whose real cost was above its reservation
+# The `decision` field of every row: whether this bound gate enforces a run map (design review D1).
+MODE_ENFORCED = "map_enforced"
+MODE_NO_MAP = "no_map"
 # The reasons ii_meter.py publishes for `SpendRefused.reason` (README contract 1). Only these are copied from
 # a meter's exception into an audit row: a `.reason` on any other exception that is not one of them (urllib's
 # URLError has one) is never copied.
+# `usd_cap` is the sixth (ORDER 014: the in-memory budget of the eval and replay command lines).
 SPEND_REASONS = frozenset(
-    {"kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount"}
+    {
+        "kill_switch",
+        "daily_budget",
+        "monthly_budget",
+        "limits_unavailable",
+        "bad_amount",
+        "usd_cap",
+    }
 )
 # Every error code a row of this module can carry: the published reasons plus the gate's own.
 AUDIT_CODES = SPEND_REASONS | {
     CODE_MASK_REFUSED,
+    CODE_WORST_CASE_FAILED,
+    CODE_WORST_CASE_INVALID,
     CODE_RESERVE_REFUSED,
+    CODE_RESERVATION_INVALID,
     CODE_PROVIDER_REFUSED,
     CODE_PROVIDER_ERROR,
     CODE_PROVIDER_EXHAUSTED,
@@ -128,6 +179,7 @@ AUDIT_CODES = SPEND_REASONS | {
     CODE_CALL_INTERRUPTED,
     CODE_COST_UNKNOWN,
     CODE_SETTLE_FAILED,
+    CODE_OVERSHOOT,
 }
 
 
@@ -140,12 +192,15 @@ def refused_before_response(exc: BaseException) -> bool:
     return marked and isinstance(exc, ProviderError) and not isinstance(exc, ProviderExhausted)
 
 
+def usable_amount(value: Any) -> bool:
+    """A finite Decimal that is not negative: the only amount the gate reserves or settles with."""
+    return isinstance(value, Decimal) and value.is_finite() and value >= 0
+
+
 def usable_cost(reply: Any) -> Decimal | None:
-    """Rule (a): the reply's cost when it is a finite Decimal that is not negative, else None."""
+    """Rule (a): the reply's cost when it is a usable amount, else None."""
     cost = getattr(reply, "cost_usd", None)
-    if isinstance(cost, Decimal) and cost.is_finite() and cost >= 0:
-        return cost
-    return None
+    return cost if usable_amount(cost) else None
 
 
 # END OF INTERFACE (ii)
@@ -168,10 +223,25 @@ class UnmaskedInput(GateRefused):
     code = CODE_MASK_REFUSED
 
 
+class WorstCaseInvalid(GateRefused):
+    """`worst_case` returned something that is not a finite Decimal >= 0 (a float, None, NaN, a negative
+    amount): nothing was reserved and no call was made. The gate does not trust the installer's function."""
+
+    code = CODE_WORST_CASE_INVALID
+
+
+class ReservationInvalid(GateRefused):
+    """The meter's `reserve` returned something that is not a non-empty str: there is nothing to settle
+    against, so no call was made. Whatever the meter booked stays booked until its sweep."""
+
+    code = CODE_RESERVATION_INVALID
+
+
 class ModelGate:
     """Holds the client, the meter, the audit sink, the worst-case function and the enforce step. It has NO
     `chat`: a caller must `bind` it to an agent and a run first, so an unbound gate cannot call a model.
-    A client that is already a gate is refused (TypeError): one call must never be reserved twice."""
+    A client that is itself a gate is refused (TypeError), so the direct case of one call reserved twice
+    cannot be built; a gate hidden inside another wrapper is NOT detected."""
 
     def __init__(
         self,
@@ -196,15 +266,22 @@ class ModelGate:
         principal: str | None = None,
         source: str = DEFAULT_SOURCE,
     ) -> BoundGate:
-        """A gate for one call site. `mapping` is the run's LIVE map, kept by reference (never copied, never
-        written): a value the run masks later is replaced in earlier text on the next call. None (a site
-        with no run map) means no enforce step. `principal` defaults to the agent id."""
+        """A gate for one call site. `mapping` is the run's LIVE map, kept by reference and never written:
+        every `chat` takes one copy of it (`runmap.snapshot`), so a value the run masks later is replaced in
+        earlier text on the next call. The map has ONE writer at a time (the run's own thread, through
+        `redact_text`); the gate may read it from another thread. None (a site with no run map) means no
+        enforce step, and every audit row then says `no_map`. `principal` defaults to the agent id.
+        The ids go into audit rows: one that is not a str is a TypeError here, not a row lost later."""
+        if not all(isinstance(value, str) for value in (agent_id, run_id, source)):
+            raise TypeError("agent_id, run_id and source must be str")
+        if principal is not None and not isinstance(principal, str):
+            raise TypeError("principal must be a str or None")
         return BoundGate(self, agent_id, run_id, mapping, principal or agent_id, source)
 
 
 class BoundGate:
-    """Satisfies `llm.protocol.LLM`. Order: enforce the map, reserve, provider call, settle (by the one
-    settle rule in the interface block above), audit row."""
+    """Satisfies `llm.protocol.LLM`. Order: enforce the map, worst case, reserve, provider call, settle (by
+    the one settle rule in the interface block above), audit row."""
 
     def __init__(
         self,
@@ -219,6 +296,7 @@ class BoundGate:
         self._worst_case, self._enforce = gate._worst_case, gate._enforce
         self._agent_id, self._run_id, self._mapping = agent_id, run_id, mapping
         self._principal, self._source = principal, source
+        self._mode = MODE_NO_MAP if mapping is None else MODE_ENFORCED
 
     def chat(
         self,
@@ -237,12 +315,22 @@ class BoundGate:
         messages, documents = enforced  # from here on only the enforced copies are used
         try:
             reserved = self._worst_case(route, system, messages, tools, documents, output_schema)
+        except Exception:
+            self._note(RESULT_REFUSED, CODE_WORST_CASE_FAILED)
+            raise
+        if not usable_amount(reserved):
+            self._note(RESULT_REFUSED, CODE_WORST_CASE_INVALID)
+            raise WorstCaseInvalid
+        try:
             reservation = self._meter.reserve(self._agent_id, reserved, run_id=self._run_id)
         except Exception as exc:
             reason = getattr(exc, "reason", None)
             published = isinstance(reason, str) and reason in SPEND_REASONS
             self._note(RESULT_REFUSED, reason if published else CODE_RESERVE_REFUSED)
             raise
+        if not (isinstance(reservation, str) and reservation):
+            self._note(RESULT_REFUSED, CODE_RESERVATION_INVALID)
+            raise ReservationInvalid
         try:
             reply = self._llm.chat(
                 messages,
@@ -267,9 +355,7 @@ class BoundGate:
             self._note(RESULT_FAILED, CODE_CALL_INTERRUPTED, reservation)
             raise
         cost = usable_cost(reply)
-        if (
-            cost is None
-        ):  # rule (c): the call is paid and its reply is returned; nothing to settle with
+        if cost is None:  # rule (c): the call is paid and its reply is returned; nothing to settle with
             self._note(RESULT_OK, CODE_COST_UNKNOWN, reservation)
         else:  # rule (a)
             self._settle(reservation, cost, RESULT_OK, None)
@@ -278,9 +364,12 @@ class BoundGate:
     def _settle(self, reservation: str, usd: Decimal, result: str, code: str | None) -> None:
         """Settle once and write the row. A raising meter never loses a paid reply and never hides the
         client's error: the row then says `settle_failed` (with the call's own result, so a paid call is
-        still counted as `ok`) and the worst case stays booked."""
+        still counted as `ok`) and the worst case stays booked. A paid call that cost more than was
+        reserved (settle returns the overshoot) stays `ok` and carries the code `overshoot`."""
         try:
-            self._meter.settle(reservation, usd)
+            over = self._meter.settle(reservation, usd)
+            if code is None and usable_amount(over) and over > 0:
+                code = CODE_OVERSHOOT
         except Exception:  # noqa: BLE001 - see the docstring
             code = CODE_SETTLE_FAILED
         self._note(result, code, reservation)
@@ -292,9 +381,12 @@ class BoundGate:
         or document in which nothing is replaced is passed on as the same object, so the bytes are the
         caller's; one with a replaced value is a new dict or new bytes. A content that is not `str` is refused
         with or without a map. Documents are read as the adapters read them (`llm/common.py` `turns`: UTF-8,
-        bad bytes replaced)."""
+        bad bytes replaced). The live map is copied ONCE here (`runmap.snapshot`): every text of this call is
+        enforced against the same entries, and the patterns are built at most once per call."""
         mapping = self._mapping
         try:
+            if mapping is not None:
+                mapping = runmap.snapshot(mapping)
             sent: list[dict[str, Any]] = []
             for message in messages:
                 content = message["content"] if isinstance(message, dict) else None
@@ -340,6 +432,7 @@ class BoundGate:
                     principal=self._principal,
                     source=self._source,
                     object_ref=reservation if isinstance(reservation, str) else None,
+                    decision=self._mode,
                     result=result,
                     error_code=error_code,
                 )

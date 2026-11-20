@@ -1442,9 +1442,8 @@ def test_stated_limit_a_clean_key_and_value_that_match_a_pattern_once_composed_a
     )
     assert step[0]["content"] == 'tool read_logs {"name": "app", "user_id": "abc123"}'
     assert "abc123" not in mapping.values()
-    assert (
-        runmap.is_masked(step[0]["content"], mapping) is False
-    )  # the pattern redactor WOULD mask it
+    probe = runmap.RunMap(mapping)  # the pattern redactor WOULD mask it
+    assert "abc123" not in runmap.redact_text(step[0]["content"], probe) and len(probe) > len(mapping)
     messages = [*CLEAN, *step]
     sent, sent_doc = _through_the_gate(mapping, messages, doc)
     assert _identical(sent, messages, sent_doc, doc)
