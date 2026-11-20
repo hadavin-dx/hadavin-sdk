@@ -108,7 +108,8 @@ class _Proxy:
 def _still_there(path: Path) -> bool:
     """Whether the file is still on disk after a delete was refused. An error while asking (Python
     3.12 on Windows can raise PermissionError) counts as "still there": the delete is refused, and
-    the error must not reach the code under test."""
+    the error must not reach the code under test. Limit: on Linux `os.path.exists` answers False
+    for a flag in a directory without search permission, so such a flag counts as gone."""
     try:
         return os.path.exists(path)
     except OSError:
@@ -157,9 +158,12 @@ class CrashPoints:
                     left = ("<unreadable flag>", 1)
                 stuck = self._flag is not None and _still_there(self._flag)
             else:
-                if left is not None:
-                    self._disarm()
+                took = left is not None and self._disarm()
                 stuck = left is not None and self._flag is not None and _still_there(self._flag)
+                if (
+                    not took
+                ):  # nothing of ours was taken (a child fired it first): not "never fired"
+                    left = None
         if exc_type is not None:
             return
         if stuck:
@@ -278,8 +282,8 @@ class CrashPoints:
             text = self._flag.read_text(encoding="utf-8")
         except FileNotFoundError:
             text = ""
-        except PermissionError:  # a sharing violation on Windows
-            text, unreadable = "", True
+        except PermissionError:  # a sharing violation on Windows, or a directory read there
+            text, unreadable = "", not self._flag.is_dir()
         except (OSError, ValueError):  # a directory, undecodable bytes: not armed, no read error
             text = ""
         point, sep, count = text.removesuffix("\n").partition("#")

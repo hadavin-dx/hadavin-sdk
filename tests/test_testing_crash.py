@@ -17,6 +17,7 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -610,17 +611,11 @@ def test_f9_a_flag_that_cannot_be_deleted_is_an_error_naming_the_path(tmp_path, 
 
 def stub_unlink(monkeypatch, refusals):
     """Path.unlink refuses `refusals` times (None: always) with PermissionError, then works.
-    Sleeping is recorded, not done. Returns the call counter and the pauses."""
+    The pause is set to 0 and the helper's sleeps are recorded. Returns the call counter and the pauses."""
     real, calls, pauses = Path.unlink, [], []
-    real_sleep = crash_mod.time.sleep
-
-    def record(seconds):
-        if seconds == crash_mod._UNLINK_PAUSE_S:  # only the helper's own pause; others run for real
-            pauses.append(seconds)
-        else:
-            real_sleep(seconds)
-
-    monkeypatch.setattr(crash_mod.time, "sleep", record)
+    monkeypatch.setattr(crash_mod, "_UNLINK_PAUSE_S", 0)  # no real waiting
+    # the helper module's own `time` name only: the global time.sleep stays real
+    monkeypatch.setattr(crash_mod, "time", SimpleNamespace(sleep=pauses.append))
 
     def flaky(self, *args, **kwargs):
         calls.append(1)
@@ -651,7 +646,7 @@ def test_a_delete_refused_for_every_try_but_the_last_is_still_reported_as_never_
         cp.arm(POINT)
     restore()
     assert len(calls) == crash_mod._UNLINK_TRIES and not flag.exists()
-    assert pauses == [crash_mod._UNLINK_PAUSE_S] * (crash_mod._UNLINK_TRIES - 1)
+    assert pauses == [0] * (crash_mod._UNLINK_TRIES - 1)  # one pause between two tries
 
 
 def test_a_delete_refused_every_time_is_tried_the_tries_constant_then_named(tmp_path, monkeypatch):
@@ -726,7 +721,8 @@ def test_a_failed_read_when_leaving_the_block_still_deletes_the_flag(tmp_path, m
 
 def test_a_failed_read_does_not_advance_the_nth_count(tmp_path, no_real_exit, monkeypatch):
     """E5-3: with nth=2, a call whose flag read fails is "not armed this time" and is not counted:
-    the next call is the first counted one, and only the call after it crashes."""
+    the next call is the first counted one, and only the call after it crashes. Pins `hit`; it
+    passes even if the `__exit__` change were reverted (the other E5 test is the one that fails)."""
     flag = tmp_path / "flag"
     cp = CrashPoints(mode="exit", flag_path=flag)
     thing = cp.wrap(Thing(), "thing", ["step"])
@@ -746,6 +742,87 @@ def test_a_failed_read_does_not_advance_the_nth_count(tmp_path, no_real_exit, mo
     with pytest.raises(Killed):  # the second counted call crashes
         thing.step()
     assert cp.fired == (POINT,) and not flag.exists()
+
+
+def test_a_directory_flag_read_failing_with_permission_error_is_not_armed(
+    tmp_path, no_real_exit, monkeypatch
+):
+    """Windows: read_text on a directory raises PermissionError. A directory flag is not armed and
+    leaving the block raises nothing (no 20 refused deletes, no 'could not be deleted')."""
+    real_read = Path.read_text
+
+    def windows_read(self, *args, **kwargs):
+        if self == tmp_path:
+            raise PermissionError("is a directory")
+        return real_read(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", windows_read)
+    calls, _, restore = stub_unlink(monkeypatch, None)
+    with CrashPoints(mode="exit", flag_path=tmp_path) as cp:
+        assert cp.wrap(Thing(), "thing", ["step"]).step() == 1 and cp.armed() is None
+    restore()
+    assert calls == []
+
+
+def test_an_unreadable_flag_that_cannot_be_deleted_is_an_error(tmp_path, monkeypatch):
+    """Leaving the block: the read fails with PermissionError and every delete is refused: the error
+    is 'could not be deleted', after the full number of tries."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    cp.arm(POINT)
+    real_read = Path.read_text
+
+    def refused_read(self, *args, **kwargs):
+        raise PermissionError("held open")
+
+    monkeypatch.setattr(Path, "read_text", refused_read)
+    calls, _, restore = stub_unlink(monkeypatch, None)
+    with pytest.raises(RuntimeError, match="could not be deleted"):
+        cp.__exit__(None, None, None)
+    restore()
+    monkeypatch.setattr(Path, "read_text", real_read)
+    assert len(calls) == crash_mod._UNLINK_TRIES
+    flag.unlink()
+
+
+def test_an_unreadable_flag_that_cannot_be_deleted_keeps_the_error_in_flight(tmp_path, monkeypatch):
+    """The same stuck flag with a KeyError in the block: the KeyError is not replaced."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    cp.arm(POINT)
+    real_read = Path.read_text
+
+    def refused_read(self, *args, **kwargs):
+        raise PermissionError("held open")
+
+    monkeypatch.setattr(Path, "read_text", refused_read)
+    _, _, restore = stub_unlink(monkeypatch, None)
+    with pytest.raises(KeyError), cp:
+        raise KeyError("in flight")
+    restore()
+    monkeypatch.setattr(Path, "read_text", real_read)
+    flag.unlink()
+
+
+def test_a_flag_taken_by_a_child_between_the_look_and_the_delete_is_not_never_fired(
+    tmp_path, monkeypatch
+):
+    """Leaving the block: the flag was read as armed, then the file vanished before our delete
+    (a child fired): no 'never fired' error."""
+    flag = tmp_path / "flag"
+    cp = CrashPoints(mode="exit", flag_path=flag)
+    cp.arm(POINT)
+    real_unlink = Path.unlink
+
+    def vanished(self, *args, **kwargs):
+        real_unlink(self)  # the child took it first
+        raise FileNotFoundError(str(self))
+
+    monkeypatch.setattr(Path, "unlink", vanished)
+    with cp:
+        pass
+    monkeypatch.setattr(Path, "unlink", real_unlink)
+    assert not flag.exists()
 
 
 def test_the_flag_path_must_be_a_path(tmp_path):
