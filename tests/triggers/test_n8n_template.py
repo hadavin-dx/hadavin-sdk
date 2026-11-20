@@ -1283,8 +1283,8 @@ def test_readme_names_the_stated_limits():
     items = re.split(r"(?<![0-9])(?=\d+\. [A-Z])", limits)
     for must_hold in (
         (
-            "A cap on connections and a deadline per request are the reverse proxy's job.",
-            "The worker has neither.",
+            "The worker has its own bounds, and the reverse proxy's cap and deadline stay the main protection.",
+            "caps connections at 256",
         ),
         (
             "Set the process supervisor's stop grace period LONGER than the longest run, or runs in flight "

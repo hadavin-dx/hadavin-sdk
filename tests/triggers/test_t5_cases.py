@@ -107,14 +107,21 @@ def _call(app, method, path, headers, body, content_length=_AUTO):
     )
 
 
+def _sender(sender_id=SENDER, secret_name="sender-a-secret"):
+    """One sender in the shape of the config block `triggers.senders` (R1): id, secret_names, agent, principal."""
+    return SimpleNamespace(
+        id=sender_id, secret_names=(secret_name,), agent_id=AGENT, principal_id=PRINCIPAL
+    )
+
+
 def _settings(senders=None, **over):
-    """Stand-in for the planned TriggerSettings (SPINE adds the real one; field names from the draft's Config)."""
-    one = SimpleNamespace(secret_names=("sender-a-secret",), agent_id=AGENT, principal_id=PRINCIPAL)
+    """Stand-in for `config.TriggerSettings`: `senders` is a list of senders with an `id`; `max_running` and
+    `max_body_bytes` are the worker's default (1) and the config default (524288, ticket section 7b)."""
     base = {
         "tenant": TENANT,
-        "senders": senders or {SENDER: one},
-        "max_body_bytes": 262144,
-        "max_running": 4,
+        "senders": senders or [_sender()],
+        "max_body_bytes": 524288,
+        "max_running": 1,
         "ack_wait_s": 5.0,
     }
     return SimpleNamespace(**{**base, **over})
@@ -473,9 +480,8 @@ def test_case_8c_shared_or_short_secret_refuses_to_start(make_door, store, secre
     (or empty). Expected: the worker refuses to start; here that is `make_wsgi` raising ValueError. Store: nothing
     written. Not covered here: the checked ticket's form of H8 (`main` exits 2 and nothing listens), which needs
     the config block of core-b's REQUEST 001."""
-    one = SimpleNamespace(secret_names=("name-a",), agent_id=AGENT, principal_id=PRINCIPAL)
-    two = SimpleNamespace(secret_names=("name-b",), agent_id=AGENT, principal_id=PRINCIPAL)
-    senders = {SENDER: one, OTHER_SENDER: two} if OTHER_SENDER in secrets else {SENDER: one}
+    one, two = _sender(SENDER, "name-a"), _sender(OTHER_SENDER, "name-b")
+    senders = [one, two] if OTHER_SENDER in secrets else [one]
     with pytest.raises(ValueError):  # the message is not fixed by the draft
         make_door(secrets, senders=senders)
     assert _all_runs(store) == []
@@ -621,3 +627,55 @@ def test_further_kill_switch_on_gives_state_stopped(door):
     assert again.status == 200
     assert json.loads(again.body) == {"run_id": run.run_id, "state": S.STOPPED.value}
     assert len(_all_runs(door.store)) == 1
+
+
+# --- ticket edge cases E5 and E11 (closing the gaps named in DRIFT-REPORT D3) ----------------------------------------
+
+
+def test_e5_empty_document_creates_one_run_and_logs_no_document(door, caplog):
+    """E5. Request: a correctly signed body {"key": "e5-key", "document": ""} (parse_body takes it, EP:213).
+    Status: 202 or 200 with the answer holding only run_id and state, the derived run id. Store: exactly one run
+    row, trigger_ref = sender/key#sha256(b""); one "received" event. Logs: the status line only."""
+    caplog.set_level("DEBUG")
+    reply = _post(door, _body("e5-key", ""))
+    assert reply.status in (200, 202)
+    answer = json.loads(reply.body)
+    assert set(answer) == {"run_id", "state"}
+    run_id = _expected_run_id(SENDER, "e5-key")
+    assert answer["run_id"] == run_id
+    run = _settle(door, run_id)
+    assert run.trigger_ref == _expected_ref(SENDER, "e5-key", "")
+    assert run.trigger_ref.endswith("#" + hashlib.sha256(b"").hexdigest())
+    assert [r.run_id for r in _all_runs(door.store)] == [run_id]
+    assert len(_received(door, run_id)) == 1
+    lines = [r.getMessage() for r in caplog.records if r.name == "hadavin_sdk.triggers"]
+    assert lines == [f"trigger status={reply.status} sender={SENDER}"]
+
+
+def test_e5_empty_document_repeat_is_the_same_run(door):
+    """E5, repeat. The same key and the empty document sent again gives the same run id and still one row."""
+    body = _body("e5-again", "")
+    first = _post(door, body)
+    assert first.status in (200, 202)
+    second = _post(door, body)
+    assert second.status in (200, 202)
+    assert json.loads(first.body)["run_id"] == json.loads(second.body)["run_id"]
+    _settle(door, _expected_run_id(SENDER, "e5-again"))
+    assert len(_all_runs(door.store)) == 1
+
+
+def test_e11_escaped_body_over_the_cap_is_413_though_the_document_is_under_it(make_door):
+    """E11. Request: max_body_bytes 4096; the document is 1,000 NUL characters, so its text is far under the cap
+    but the JSON form (each NUL written as the six bytes backslash-u-0000) is 6,000+ bytes: over it. Correctly signed.
+    Status: 413, empty body, none of the body is read. Store: no run row. The cap is on the raw bytes."""
+    cap = 4096
+    door = make_door(max_body_bytes=cap)
+    document = "\0" * 1000
+    assert len(document.encode("utf-8")) < cap
+    body = _body("e11-key", document)
+    assert len(body) > cap
+    assert b"\\u0000" in body
+    reply = _post(door, body)
+    assert _refused(reply, 413)
+    assert reply.taken == 0
+    assert _all_runs(door.store) == []

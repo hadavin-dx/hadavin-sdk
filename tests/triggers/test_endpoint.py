@@ -640,6 +640,44 @@ def test_body_exactly_at_the_cap_is_accepted_and_one_more_is_413_unread():
     assert len(start.calls) == 1
 
 
+@pytest.mark.parametrize(
+    ("name", "document"),
+    [
+        ("nul", "\0" * 1000),  # one character, six bytes of JSON each
+        ("quotes", '"' * 2100),  # one character, two bytes of JSON each
+        ("backslashes", "\\" * 2100),
+        ("controls", "\x01\n" * 1000),
+    ],
+)
+def test_e11_cap_is_on_the_raw_bytes_not_on_the_decoded_document(name, document):
+    """Ticket E11: a document under the cap whose escaped JSON form is over it is 413 and never read."""
+    assert len(document.encode()) < CAP
+    body = body_of("k", document)
+    assert len(body) > CAP
+    app, start = build()
+    stream = SpyInput(body)
+    refused(call(app, headers=signed(body, OLD_A), body=body, stream=stream), 413)
+    assert stream.reads == 0
+    assert start.calls == []
+
+
+def test_e11_the_same_document_decoded_is_accepted_when_the_raw_body_fits():
+    """E11, the other side: raw bytes at the cap with escapes inside are accepted and the decoded document
+    comes through; the cap neither counts the decoded size nor lets an escaped body past it."""
+    unit = "\\u0000"  # six raw bytes, one character
+    n = (CAP - len(body_of("k", ""))) // 6
+    body = body_of("k", "\0" * n)
+    assert len(body) <= CAP < len(body) + 6
+    app, start = build()
+    assert call(app, headers=signed(body, OLD_A), body=body)[0] == 202
+    assert start.calls[0].document == b"\0" * n
+    assert unit.encode() in body
+    over = body_of("k", "\0" * (n + 1))
+    assert len(over) > CAP
+    refused(call(app, headers=signed(over, OLD_A), body=over), 413)
+    assert len(start.calls) == 1
+
+
 def test_answer_holds_only_run_id_and_state():
     start = Recorder(answer=(200, {"run_id": "run-x", "state": "DONE", "document": "leak"}))
     app, _ = build(start)

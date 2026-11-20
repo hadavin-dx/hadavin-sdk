@@ -53,8 +53,9 @@ Ask the operator for these four things, in writing, before anything else:
    a 401 with an empty body.
 4. The agent's `max_steps` and the settings `ack_wait_s` and "the tick runs next to the worker" (see "The numbers"
    and "One run at a time"). Also the stated fact that the `triggers` configuration block of the endpoint is NOT in the
-   configuration code on this branch yet: until it is merged the worker uses fallback numbers written in its own code
-   (stated limit 7), and the operator has to say how the senders are wired in.
+   configuration code on this branch yet: the worker has no fallback numbers, and without that block (or with a field
+   missing or misspelled in it) it refuses to start with a configuration error, exit code 2 (stated limit 7); the
+   operator has to say how the senders are wired in.
 
 ## What was run and what was not
 
@@ -349,7 +350,7 @@ below 2 to the power 53 (or sent as text); a longer one loses digits in n8n.
 | Answer | What it means | What the template does |
 |---|---|---|
 | 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | NOT the end. Goes on to the state check "Run still going?": while the run is going, the workflow waits and asks again with the same key; then it ends as a success or fails, by the state (see "A 202 is not the end"). |
-| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing, zero or longer than the bytes sent (a shorter one gives a cut body and a 401). A document with a lone surrogate (a broken half of an emoji, for example) passes the guard in n8n and is answered 400 "document is not valid text": that is a STOP, and the text must be cleaned at the source. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
+| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing, zero or longer than the bytes sent (a shorter one gives a cut body and a 401). A document with a lone surrogate (a broken half of an emoji, for example) passes the guard in n8n and is answered 400: that is a STOP, and the text must be cleaned at the source. Empty body (the words "document is not valid text" are only an internal message of the worker, never sent). | STOP: no retry, straight to the error workflow. Fix "Build request". |
 | 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | STOP: no retry, straight to the error workflow. Check the secret and both clocks. |
 | 409 | The key was already used with a different document. Empty body. | STOP: no retry, straight to the error workflow. A person must look. |
 | 413 | The body is larger than the limit (see "Size limits"). Empty body. | STOP: no retry, straight to the error workflow. Send a shorter document. |
@@ -357,7 +358,7 @@ below 2 to the power 53 (or sent as text); a longer one loses digits in n8n.
 | no answer | No HTTP status at all: the connection was refused, timed out or was reset. This is what a sender without a proxy sees while the worker is stopped or restarting. | BUSY, exactly as for 502, 503 and 504. |
 
 Any other status is a STOP as well: every other 4xx, and also 404 (the path is not `/v1/trigger`), 405 (the method
-is not POST), 414 and 431 (the request line or the headers are too long; these two come from the stdlib HTTP server layer in `server.py`, not from the worker's own code). All have an empty body; none is tried
+is not POST), 414 and 431 (the request line or the headers are too long; these two come from the stdlib HTTP server layer in `server.py`, not from the worker's own code). The same layer answers 400 before the body is read for a header name with an underscore, a second Content-Length header, or any Transfer-Encoding header (`server.py`, `_bad_headers`). All have an empty body; none is tried
 again. A 500 is a STOP too: the worker never sends 500 itself, so it is a fault that a person must look at, not a
 busy signal. A 3xx answer (a redirect) is a STOP: whether n8n follows it first was not run (UNVERIFIED).
 
@@ -544,10 +545,12 @@ rounds run out. This is the lead's reviewer's finding (round 3, Minor 5); the an
   running one finish, exit 0) is handled by `serve` in `src/hadavin_sdk/triggers/worker.py`, and the tests that show it run on Linux.
 - On a Windows laptop only Ctrl-C stops the worker cleanly. SIGTERM is never delivered there, so a stop by n8n's
   host, a service wrapper or `taskkill` is a hard kill with no drain, and the tick later sets a cut run to
-  NEEDS_PERSON "interrupted" (`handover/core-a/WINDOWS-NOTES.md`, W02). The worker's docstring says Ctrl-Break
-  (SIGBREAK) is handled like SIGTERM, but WINDOWS-NOTES says it kills the process; which is true is UNVERIFIED.
-- The worker listens on 127.0.0.1 by default and refuses another host unless `allow_non_loopback` is true, which
-  a config cannot set today (stated limit 7). n8n in a container cannot reach a loopback-only worker: inside a
+  NEEDS_PERSON "interrupted" (`handover/core-a/WINDOWS-NOTES.md`, W02). The code installs a handler for Ctrl-Break
+  (SIGBREAK) that works like the one for SIGTERM (`serve`, tested with a stand-in signal on Linux); whether Windows
+  really delivers SIGBREAK to the worker is UNVERIFIED: nobody has run it there.
+- The worker listens on 127.0.0.1 by default and refuses another host unless the worker is started with the command-line
+  flag `--allow-non-loopback` (`--host` and `--port` are options too; it is not a setting of the configuration).
+  n8n in a container cannot reach a loopback-only worker: inside a
   container 127.0.0.1 is the container itself (`WINDOWS-NOTES.md`, W03). The operator must put a TLS proxy in front
   of the worker, or run n8n on the same host and network as the worker (for example both natively, or in one
   network namespace). Whether a given Docker setup can then reach it is UNVERIFIED; nobody has run it.
@@ -677,13 +680,15 @@ What the client sees and does:
 
 These are known limits of this version. They are written down so that nobody assumes more.
 
-1. The worker's built-in web server is simple. It starts one thread for every connection and has no cap on
-   connections; a client that sends very slowly holds a thread; each connection can hold up to `max_body_bytes` in
+1. The worker's built-in web server is simple. It starts one thread for every connection, up to a cap of 256
+   connections at one time (a connection above the cap is closed at once, nothing is read or answered); a request must
+   be read completely within 30 seconds from accept (a total deadline, not only per read), but until then a slow client
+   holds a thread; each connection can hold up to `max_body_bytes` in
    memory; and before a request is refused for a bad signature the worker computes up to 16 signatures over the
    whole body (up to 8 senders with 2 secrets each). So the worker listens only on the local machine by default,
    and the client's reverse proxy in front of it MUST: read the whole request before passing it on (request
    buffering), cap the number of connections and the request size, and end TLS (the worker speaks plain HTTP
-   only). Setting `allow_non_loopback` exposes the worker without this protection; do not use it without such a
+   only). Starting the worker with `--allow-non-loopback` exposes the worker without this protection; do not use it without such a
    proxy.
 2. Listen on `127.0.0.1` or `localhost`. The IPv6 local address `::1` is not supported by the built-in server.
 3. When the worker refuses a request without reading its body (413, and some 400 and 401 cases), the connection
@@ -703,17 +708,20 @@ These are known limits of this version. They are written down so that nobody ass
    every NUL first, and no document text is written to the database. Two things to know: a document with a NUL and
    the same document without it are two different documents (with one key the second is answered 409), and other
    control characters are not removed. Removing NUL characters before sending stays the simple way.
-7. Until the `triggers` block exists in the configuration code, the worker uses fallback numbers written in its
-   own code (address `127.0.0.1`, port 8081, `max_running` 1, `ack_wait_s` 5). A misspelled setting name is not
-   reported; the fallback is used silently. Check the worker's start line for the port it serves on.
+7. The worker has no fallback numbers for the `triggers` block of the configuration. If the block is missing, or a
+   field it reads (`max_running`, `ack_wait_s`, the senders, the trigger secret) is missing or misspelled, the worker
+   refuses to start with a configuration error and exit code 2; it never runs on silent defaults. The defaults 1 for
+   `max_running` and 5 seconds for `ack_wait_s` named in this README are the defaults of the worker's `Runner`
+   class, not a fallback for a missing setting. Only the address and port have defaults, and they are command-line
+   options (address `127.0.0.1`, port 8081: `--host`, `--port`). Check the worker's start line for the port it serves on.
 8. The tick must run next to the worker. Without it, a run that was cut off stays in its last state and never
    reaches a person. The worker warns once at its start when it finds no recent tick, and starts anyway.
 9. Run rows are kept. A key that was used once stays used; there is no way to free a key through this endpoint.
-10. A cap on connections and a deadline per request are the reverse proxy's job. The worker has neither. Its only
-    time limit is per read: a client that sends one byte just inside each time limit keeps its thread for as long
-    as it likes, and every open connection can hold up to `max_body_bytes` in memory before any signature is
-    checked. This is one more reason for limit 1: the proxy in front must cap the connections and end a request
-    that takes too long as a whole.
+10. The worker has its own bounds, and the reverse proxy's cap and deadline stay the main protection. The worker
+    caps connections at 256 and ends a request that is not fully read 30 seconds after accept (a total deadline;
+    both are parameters of `make_server`, not command-line options). Inside those bounds up to 256 open connections can each hold up
+    to `max_body_bytes` in memory before any signature is checked, for up to 30 seconds. This is one more reason
+    for limit 1: the proxy in front must cap the connections and end a request that takes too long as a whole.
 11. Set the process supervisor's stop grace period LONGER than the longest run, or runs in flight at a restart end
     with a person. On the stop signal (SIGTERM) the worker closes its port, starts no new run, and lets the run
     that is going reach its end; it does not cut a run, not even in the middle of a model call. If the supervisor
@@ -721,7 +729,9 @@ These are known limits of this version. They are written down so that nobody ass
     off: the tick later sets it to NEEDS_PERSON with the reason "interrupted", and its key is used up: the key is
     never run again, and a NEW key is needed to redo the work (see "When a run shows NEEDS_PERSON after a restart
     or a crash"). As the code reads, a second stop signal does nothing
-    while the worker waits for its runs (up to 30 seconds) and kills the process after that. Not tested: a request
+    while the worker waits for its runs (up to 30 seconds); after that wait the worker does NOT kill the process or
+    cut the run: a run still going keeps the process alive until it ends (one WARNING line says how many runs are
+    still going), and only the supervisor's kill ends it earlier. Ctrl-C does the same as SIGTERM. Not tested: a request
     that waits for a free slot when the signal comes, a request that arrives between the signal and the closing of
     the port, and a second signal.
 12. There is no fairness among waiting requests: a later request can be served before an earlier one. A request
