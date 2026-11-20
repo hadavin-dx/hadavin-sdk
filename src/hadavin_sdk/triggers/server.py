@@ -82,21 +82,29 @@ class QuietRequestHandler(WSGIRequestHandler):
     def handle(self) -> None:
         try:
             self._serve()
-        except TimeoutError:
-            self._refuse_stalled()
         except Exception as exc:  # noqa: BLE001 - one broken connection never prints or stops the server
             _LOG.warning("trigger server: connection ended: %s", type(exc).__name__)
 
     def _serve(self) -> None:
-        """The steps of the stdlib `handle`, with the quiet application handler."""
-        self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE + 1)
+        """The steps of the stdlib `handle`, with the quiet application handler. A socket timeout counts as
+        a stalled client only while the request line and the headers are read (the endpoint reads the body
+        and answers a timeout there itself); one raised later, by the application or while the answer is
+        written, is not answered a second time."""
+        try:
+            self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE + 1)
+        except TimeoutError:
+            self._refuse_stalled()
+            return
         if len(self.raw_requestline) > MAX_REQUEST_LINE:
             self.requestline = self.request_version = self.command = ""
             self.send_error(LONG_LINE_STATUS)
             return
-        if (
-            not self.parse_request()
-        ):  # it has answered through send_error, or the client sent nothing
+        try:
+            parsed = self.parse_request()
+        except TimeoutError:
+            self._refuse_stalled()
+            return
+        if not parsed:  # it has answered through send_error, or the client sent nothing
             return
         handler = QuietWSGIHandler(
             self.rfile, self.wfile, self.get_stderr(), self.get_environ(), multithread=True

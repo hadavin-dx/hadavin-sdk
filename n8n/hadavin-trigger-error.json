@@ -44,7 +44,7 @@
         0
       ],
       "parameters": {},
-      "notes": "SEEN IN n8n 2.47.7: this node as written (it does nothing). Replace it with the client's chat or e-mail node and send {{ $json.message }}. What lands here by design, because a person must look: a missing business id or document text; a 401, 409, 400 or 413 from the trigger endpoint; and a 503 (busy) in every round of the main workflow's wait-and-sign-again loop, which means the event was NOT accepted."
+      "notes": "SEEN IN n8n 2.47.7: this node as written (it does nothing). Replace it with the client's chat or e-mail node and send {{ $json.message }}. What lands here by design, because a person must look: a missing business id or document text; a 401, 409, 400 or 413 from the trigger endpoint (never tried again); and a 502, 503, 504 or no answer in every round of the main workflow's wait-and-sign-again loop, which means: not acknowledged; send again with the same key; it may already be running. A short restart of the Hadavin worker must NOT land here: the loop waits it out."
     }
   ],
   "connections": {

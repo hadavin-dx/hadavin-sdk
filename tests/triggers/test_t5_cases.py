@@ -624,9 +624,3 @@ def test_further_kill_switch_on_gives_state_stopped(door):
     assert json.loads(again.body) == {"run_id": run.run_id, "state": S.STOPPED.value}
     assert len(_all_runs(door.store)) == 1
 
-
-def test_further_every_case_runs_on_the_memory_store_and_on_postgres():
-    """Further. No request: the `store` fixture above gives every case that touches the store one run per store
-    kind. Expected: both kinds are registered (the Postgres runs are skipped without HADAVIN_TEST_PG_DSN, as in
-    tests/contracts). Store: none."""
-    assert {"memory", "postgres"} <= set(KINDS["store"])

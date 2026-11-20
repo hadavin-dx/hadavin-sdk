@@ -37,6 +37,9 @@ RUN_ID_HEX: Final = 32  # "run-" + this many hex digits, the shape of models.RUN
 MIN_SECRET_CHARS: Final = 32
 MAX_SENDERS: Final = 8
 MAX_SECRETS_PER_SENDER: Final = 2  # the old and the new one while a secret is being replaced
+# Not seen in an editor and not cut by strip(): byte-order mark, zero-width space, non-joiner, joiner,
+# word joiner. A secret file saved with one of them would never verify.
+UNSEEN_CHARS: Final = "\ufeff\u200b\u200c\u200d\u2060"
 MAX_LENGTH_DIGITS: Final = 12  # a longer Content-Length is over any cap; also keeps int() cheap
 BODY_FIELDS: Final = frozenset({"key", "document"})
 ANSWER_FIELDS: Final = ("run_id", "state")
@@ -196,6 +199,13 @@ def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None:
                 raise ValueError(
                     f"trigger sender {sender!r}: a secret under {MIN_SECRET_CHARS} characters"
                 )
+            if any(char in value for char in UNSEEN_CHARS):
+                raise ValueError(
+                    f"trigger sender {sender!r}: a secret with a byte-order mark or a zero-width"
+                    " character"
+                )
+            if values.count(value) > 1:
+                raise ValueError(f"trigger sender {sender!r}: the same secret twice")
             other = owner.setdefault(value, sender)
             if other != sender:
                 raise ValueError(f"trigger senders {other!r} and {sender!r} share a secret")

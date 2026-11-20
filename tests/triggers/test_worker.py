@@ -760,6 +760,7 @@ raise SystemExit(code)
 """
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM cannot be handled on Windows")
 def test_sigterm_stops_a_serving_process_cleanly_with_exit_0():
     """`main` cannot pass its config check yet (no `triggers` block exists), so the child runs `serve`, the
     part of `main` after the start-up checks, on a real server on a free loopback port."""
@@ -785,6 +786,7 @@ def test_sigterm_stops_a_serving_process_cleanly_with_exit_0():
     assert "Traceback" not in err
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGTERM cannot be handled on Windows")
 def test_serve_gives_the_previous_sigterm_handler_back():
     if threading.current_thread() is not threading.main_thread():
         pytest.skip("signal handlers can be set in the main thread only")

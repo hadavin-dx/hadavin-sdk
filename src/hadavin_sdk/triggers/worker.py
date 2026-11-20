@@ -4,8 +4,8 @@
 the run row and that row is for the same agent, principal and `trigger_ref` (same sender, key and document). The
 answer is always decided from the ROW, never from which exception the loop raised. 202 = the run is RECEIVED or
 WORKING, 200 = any later state, 409 = a row exists for the same key but another document (nothing is written),
-503 = store not reachable, or no row within `ack_wait_s` (no ack; the sender retries with the same key). A
-request that finds no free slot is not refused at once: it waits for the row like any other, because another
+503 = store not reachable, or no row within `ack_wait_s` (not acknowledged; send again with the same key; it
+may already be running). A request that finds no free slot is not refused at once: it waits for the row like any other, because another
 request for the same key may be writing it right now. While it waits it takes a slot as soon as one is free, and
 it looks at the store less and less often (the pause doubles up to one second, about ten reads in five seconds);
 with neither a slot nor a row by the end of `ack_wait_s` it gets 503. At most
@@ -319,9 +319,13 @@ def make_app(app: Any, *, clock: Callable[[], float] = time.time) -> tuple[Any, 
 
 
 def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSGIServer:
-    """A bound stdlib server (not yet serving). The caller runs `serve_forever` and `server_close`."""
+    """A bound stdlib server (not yet serving). The caller runs `serve_forever` and `server_close`. A port
+    that is in use, or an address that cannot be bound, is a ConfigError (exit code 2 in `main`)."""
     handler = type("TriggerHandler", (QuietRequestHandler,), {"timeout": socket_timeout_s})
-    server = QuietServer((host, port), handler)
+    try:
+        server = QuietServer((host, port), handler)
+    except OSError as exc:  # the port is in use, or the address cannot be bound: not a store failure
+        raise ConfigError(f"cannot listen on {host}:{port} ({type(exc).__name__})") from None
     server.set_app(wsgi)
     return server
 

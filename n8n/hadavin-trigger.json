@@ -132,7 +132,7 @@
         },
         "includeOtherFields": false
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends that were answered 503 so far."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, with typeVersion 3.4: the output item held exactly body (one text) and round 0. Keep typeVersion 3.4: with typeVersion 3 n8n ignored 'assignments' without any error, no body was built, and the request went out with the incoming data and a signature over nothing useful. $json.body.text is a placeholder for the client's document field (text only). body is ONE string, built ONCE, and is used unchanged for signing and for sending in every round. round counts the sends so far that were not acknowledged (answered 502, 503 or 504, or not answered at all)."
     },
     {
       "name": "Stamp time",
@@ -213,7 +213,7 @@
           "timeout": 30000
         }
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); no answer at all (refused connection, timeout); the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
+      "notes": "SEEN IN n8n 2.47.7: this node as written, against a stub receiver: the body arrived byte for byte as it was signed (plain, non-ASCII, JSON-escaped and a 300 KB document), always with a Content-Length header and never in chunks; the two header names arrived in lower case; an answer 401, 409, 413, 400 or 503 sent the item to the second output with the status as a number in error.status. UNVERIFIED: the timeout timed live (its unit, milliseconds, and its default, 10000, were read from the node definition only); an answer 502 or 504 (the stub never sent one); no answer at all (refused connection, timeout, reset): whether the item then also leaves through the second output and what it holds; the real Hadavin endpoint. Retry On Fail is OFF on purpose and must stay off: in the run its retries reused the same ts and the same signature, came at most 5 times and at most about 5 seconds apart, and so cover about 20 seconds, far less than one run. A failed send leaves through the second output to 'Busy and rounds left?'. Keep Never Error off. The timeout must be longer than the time Hadavin may hold a request before answering 503 (ack_wait_s, 5 seconds unless configured otherwise)."
     },
     {
       "name": "Busy and rounds left?",
@@ -228,7 +228,7 @@
           "combinator": "and",
           "conditions": [
             {
-              "leftValue": "={{ String($json.error?.status ?? '') === '503' && $('Stamp time').last().json.round < 30 }}",
+              "leftValue": "={{ (['502', '503', '504'].includes(String($json.error?.status ?? '')) || !/^[1-5][0-9][0-9]$/.test(String($json.error?.status ?? ''))) && $('Stamp time').last().json.round < 30 }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -239,7 +239,7 @@
           ]
         }
       },
-      "notes": "UNVERIFIED: this exact expression (the run used a longer one that looked in two places for the status and found it in error.status; the other place does not exist and was taken out), and the number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. True only for an answer 503 (busy, nothing accepted) while fewer than 30 rounds were used. Everything else goes to the false branch and stops the execution, so the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README)."
+      "notes": "UNVERIFIED: this exact expression, in three parts. (1) The list of three statuses: the run had only 503 in it; 502 and 504 were never sent by the stub. (2) The part that counts a MISSING status as busy (the test with [1-5][0-9][0-9]): what the failed item holds when there is no HTTP answer at all (refused connection, timeout, reset) is NOT known, nobody has run that case; this part assumes that error.status is then missing or is not a three-digit HTTP status. The lead runs one more n8n evidence step for it. (3) The number 30 (the run used 3 rounds). SEEN IN n8n 2.47.7: the failed item holds the HTTP status as a number in error.status; with 503 the item went to output 0 (true) while rounds were left and to output 1 when they were used up; 401, 409, 413 and 400 went to output 1; $('Stamp time').last() gave the item of the latest round inside the loop. What the expression is meant to do: BUSY (true, try again) = an answer 502, 503 or 504, or no HTTP status at all, while fewer than 30 rounds were used. These are what a sender sees while the worker is busy, restarting or draining, directly or behind a proxy. STOP (false) = every other status: 400, 401, 409, 413 and any other 4xx are never tried again; the execution stops and the error workflow tells a person. 30 is a placeholder: rounds times the wait must be LONGER than the client's longest run (see the README)."
     },
     {
       "name": "Next round",
@@ -293,9 +293,9 @@
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "Hadavin trigger: the request was refused, got no answer, or was answered busy (503) in every round. The event was NOT accepted. Send it again by hand with the SAME key."
+        "errorMessage": "Hadavin trigger: the request was refused (400, 401, 409, 413 or another status that is not tried again), or no round was acknowledged (502, 503, 504 or no answer in every round). In the second case: not acknowledged; send again with the same key; it may already be running."
       },
-      "notes": "SEEN IN n8n 2.47.7: this node as written failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. The message must never hold the body, a header value or the signing value."
+      "notes": "UNVERIFIED: the message text as it stands now (it was reworded after the run; nothing else in the node changed), and that this node is reached after rounds of 502, 504 or no answer. SEEN IN n8n 2.47.7: the node with the earlier message text failed the execution after an answer 401, 409, 413 or 400 and after the last round of 503 answers, and the error workflow then ran once for each failed execution. The message must never hold the body, a header value or the signing value."
     },
     {
       "name": "Check state (optional)",
