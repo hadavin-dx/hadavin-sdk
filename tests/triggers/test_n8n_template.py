@@ -765,7 +765,7 @@ def test_the_key_text_holds_the_id_the_event_name_and_an_optional_rerun_value():
     )[0]
     for phrase in (
         "the business id (trimmed), a colon, the event name",
-        "only when the caller sends a `rerun` value",
+        "only when the caller sends a non-empty `rerun` value",
         "the word `default`",
         "a NEW `rerun` value such as `rerun-1`",
         "A Message-ID must be turned into the same text every time",

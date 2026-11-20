@@ -1,8 +1,8 @@
 # n8n trigger workflows for the Hadavin signed endpoint
 
 **Status: an earlier version of these two files was run in n8n 2.47.7 by the lead (record of that run:
-`handover/core-a/inputs/lead-evidence-n8n-1.md`). The files as they stand now were changed twice since that run (to
-follow what it showed, and after a first review), and they have NOT been imported or run in any n8n since. Nobody has
+`handover/core-a/inputs/lead-evidence-n8n-1.md`). The files as they stand now were changed after review rounds 1 and 2
+(round 3 changed text only), and they have NOT been imported or run in any n8n since. Nobody has
 run this exact version. The automatic tests that come with these files read the JSON and this page: they prove the
 shape and the wording, not how n8n behaves.**
 
@@ -323,7 +323,7 @@ webhook is told"). Any other answer means the event was not taken.
 ## The key rule
 
 `key` is the SHA-256 hash (64 hex characters) of ONE text: the business id (trimmed), a colon, the event name, and,
-only when the caller sends a `rerun` value, a colon and that value. The business id is stable: the Message-ID of a
+only when the caller sends a non-empty `rerun` value (0, an empty text and false are silently ignored), a colon and that value. The business id is stable: the Message-ID of a
 mail, or a record id. The event name is the caller's `event` field (the word `default` when there is none), so that
 two different events on one record ("created", "updated") get two keys and two runs. NEVER use the n8n execution id: n8n
 may fire twice for one event, and each firing has a new execution id, so Hadavin would start two runs. Send the hash,
@@ -345,7 +345,7 @@ below 2 to the power 53 (or sent as text); a longer one loses digits in n8n.
 | Answer | What it means | What the template does |
 |---|---|---|
 | 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | NOT the end. Goes on to the state check "Run still going?": while the run is going, the workflow waits and asks again with the same key; then it ends as a success or fails, by the state (see "A 202 is not the end"). |
-| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing or wrong. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
+| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing, zero or longer than the bytes sent (a shorter one gives a cut body and a 401). A document with a lone surrogate (a broken half of an emoji, for example) passes the guard in n8n and is answered 400 "document is not valid text": that is a STOP, and the text must be cleaned at the source. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
 | 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | STOP: no retry, straight to the error workflow. Check the secret and both clocks. |
 | 409 | The key was already used with a different document. Empty body. | STOP: no retry, straight to the error workflow. A person must look. |
 | 413 | The body is larger than the limit (see "Size limits"). Empty body. | STOP: no retry, straight to the error workflow. Send a shorter document. |
@@ -353,7 +353,7 @@ below 2 to the power 53 (or sent as text); a longer one loses digits in n8n.
 | no answer | No HTTP status at all: the connection was refused, timed out or was reset. This is what a sender without a proxy sees while the worker is stopped or restarting. | BUSY, exactly as for 502, 503 and 504. |
 
 Any other status is a STOP as well: every other 4xx, and also 404 (the path is not `/v1/trigger`), 405 (the method
-is not POST), 414 and 431 (the request line or the headers are too long). All have an empty body; none is tried
+is not POST), 414 and 431 (the request line or the headers are too long; these two come from the stdlib HTTP server layer in `server.py`, not from the worker's own code). All have an empty body; none is tried
 again. A 500 is a STOP too: the worker never sends 500 itself, so it is a fault that a person must look at, not a
 busy signal. A 3xx answer (a redirect) is a STOP: whether n8n follows it first was not run (UNVERIFIED).
 
@@ -387,7 +387,7 @@ the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode.
 Two things follow from "no answer counts as busy", and both are meant:
 
 - A wrong address, a host name that does not resolve (seen: ENOTFOUND, no status), or a TLS fault also gives no HTTP status. The template then
-  tries for all its rounds (about 45 minutes with the placeholders) before a person is told. Send one made-up
+  tries for all its rounds before a person is told: 45 minutes plus up to 45 s per send (about 79 minutes when each send times out) with the placeholders; about 45 minutes only when the connection is refused at once. Send one made-up
   event after every change of the address (the last set-up step).
 - When the worker refuses a request without reading its body (see "Stated limits"), n8n can see a broken
   connection in place of the 413, 400 or 401. That, too, is then tried again for all rounds before it stops.

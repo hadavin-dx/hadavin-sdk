@@ -74,5 +74,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run (only the name and the notes texts; the Set node's typeVersion 3.4 is the one that was run; the review round 1 changed only notes texts) and has not been imported into any n8n since. SEEN IN n8n 2.47.7: the import by command line accepted the top-level shape and the settings key and dropped this top-level notes key. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
+  "notes": "UNVERIFIED: this file as it stands now. It was changed after the run (only the name and the notes texts; the Set node's typeVersion 3.4 is the one that was run; review rounds 1 and 2 changed only notes texts, round 3 changed text only) and has not been imported into any n8n since. SEEN IN n8n 2.47.7: the import by command line accepted the top-level shape and the settings key and dropped this top-level notes key. The record of the run is handover/core-a/inputs/lead-evidence-n8n-1.md."
 }
