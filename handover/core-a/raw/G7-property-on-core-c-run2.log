@@ -84,4 +84,173 @@ tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_mas
 tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[escape-codes] PASSED [ 47%]
 tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-angle-brackets] PASSED [ 48%]
 tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-digits] PASSED [ 48%]
-tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-letters] 
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-letters] PASSED [ 49%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-mixed] PASSED [ 50%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[long-run-of-placeholders] PASSED [ 50%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[nul-in-key] PASSED [ 51%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[nul-in-secret] PASSED [ 51%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[right-to-left-around] PASSED [ 52%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[right-to-left-in-values] PASSED [ 53%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-as-a-value] PASSED [ 53%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-bank-code-then-digits] PASSED [ 54%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-email-placeholder] PASSED [ 54%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-encoded] PASSED [ 55%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-escaped] PASSED [ 56%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-escaped-as-a-value] PASSED [ 56%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-full-width] PASSED [ 57%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-huge-number] PASSED [ 58%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-ip-placeholder] PASSED [ 58%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-lower-case] PASSED [ 59%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-nested] PASSED [ 59%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-secret-placeholder] PASSED [ 60%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-unclosed] PASSED [ 61%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-unknown-kind] PASSED [ 61%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[typed-with-zero-width] PASSED [ 62%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[zero-width-in-key] PASSED [ 62%]
+tests/test_redact_idempotence_property.py::test_P7_untrusted_text_first_pass_masks_and_a_typed_placeholder_restores_to_nothing[zero-width-in-values] PASSED [ 63%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[controls-around] PASSED [ 64%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[controls-between] PASSED [ 64%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[escape-codes] PASSED [ 65%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[long-angle-brackets] PASSED [ 66%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[long-digits] PASSED [ 66%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[long-letters] PASSED [ 67%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[long-mixed] PASSED [ 67%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[long-run-of-placeholders] PASSED [ 68%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[nul-in-key] PASSED [ 69%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[nul-in-secret] PASSED [ 69%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[right-to-left-around] PASSED [ 70%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[right-to-left-in-values] PASSED [ 70%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-as-a-value] PASSED [ 71%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-bank-code-then-digits] PASSED [ 72%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-email-placeholder] PASSED [ 72%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-encoded] PASSED [ 73%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-escaped] PASSED [ 74%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-escaped-as-a-value] PASSED [ 74%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-full-width] PASSED [ 75%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-huge-number] PASSED [ 75%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-ip-placeholder] PASSED [ 76%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-lower-case] PASSED [ 77%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-nested] PASSED [ 77%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-secret-placeholder] PASSED [ 78%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-unclosed] PASSED [ 79%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-unknown-kind] PASSED [ 79%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[typed-with-zero-width] PASSED [ 80%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[zero-width-in-key] PASSED [ 80%]
+tests/test_redact_idempotence_property.py::test_P7_I6_untrusted_text_a_second_pass_adds_no_map_entry_and_a_third_changes_nothing[zero-width-in-values] PASSED [ 81%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[controls-around] PASSED [ 82%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[controls-between] PASSED [ 82%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[escape-codes] PASSED [ 83%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[long-angle-brackets] PASSED [ 83%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[long-digits] PASSED [ 84%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[long-letters] PASSED [ 85%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[long-mixed] PASSED [ 85%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[long-run-of-placeholders] PASSED [ 86%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[nul-in-key] PASSED [ 87%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[nul-in-secret] PASSED [ 87%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[right-to-left-around] PASSED [ 88%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[right-to-left-in-values] PASSED [ 88%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-as-a-value] PASSED [ 89%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-bank-code-then-digits] PASSED [ 90%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-email-placeholder] PASSED [ 90%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-encoded] PASSED [ 91%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-escaped] PASSED [ 91%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-escaped-as-a-value] PASSED [ 92%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-full-width] PASSED [ 93%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-huge-number] PASSED [ 93%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-ip-placeholder] PASSED [ 94%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-lower-case] PASSED [ 95%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-nested] PASSED [ 95%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-secret-placeholder] PASSED [ 96%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-unclosed] PASSED [ 96%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-unknown-kind] PASSED [ 97%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[typed-with-zero-width] PASSED [ 98%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[zero-width-in-key] PASSED [ 98%]
+tests/test_redact_idempotence_property.py::test_P7_P1_P2_P3_model_written_text_is_a_fixed_point_and_no_placeholder_is_corrupted[zero-width-in-values] PASSED [ 99%]
+tests/test_redact_idempotence_property.py::test_P7_a_typed_placeholder_never_takes_the_place_of_a_real_one_issued_later PASSED [100%]
+
+=================================== FAILURES ===================================
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['/'] ____
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[', '] ___
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['; '] ___
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['-'] ____
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+__ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' | '] ___
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+__ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' / '] ___
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[','] ____
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['|'] ____
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+___ test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' '] ____
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes['/'] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[', '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes['; '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes['-'] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[' | '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[' / '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[','] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes['|'] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[' '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+__ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['ABA '] __
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+__ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['BSB '] __
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['BSB: '] __
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['Sort Code: '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+__ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['bsb='] __
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['routing number '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P5_an_account_keyword_whose_only_bank_context_is_a_swept_code['sort code '] _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_ test_P5_the_second_text_of_a_run_and_the_look_alike_spellings_of_the_paying_line _
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+________________ test_P1_I2_bank_fuzz_one_pass_is_a_fixed_point ________________
+[XPASS(strict)] needs core-c G7 fix (not on this branch yet)
+_________________ test_P1_glue_fuzz_one_pass_is_a_fixed_point __________________
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass[EMAIL] _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass[IPV4] _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass[MAC] _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass[PHONE] _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass[SSN] _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_a_tenant_id_after_a_glued_copy_of_a_known_secret_is_masked_in_one_pass _
+[XPASS(strict)] FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; the sweep masks the secret, and only a second pass then reads the identifier at its new boundary
+_ test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point[Bearer -8] _
+[XPASS(strict)] FINDING G7-F1 (the ticket's own RELATED, NOT FIXED): a short token after Bearer / Basic / authorization that starts with a known secret is masked whole only by a second pass
+_ test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point[Basic -4] _
+[XPASS(strict)] FINDING G7-F1 (the ticket's own RELATED, NOT FIXED): a short token after Bearer / Basic / authorization that starts with a known secret is masked whole only by a second pass
+_ test_P1_a_short_token_that_starts_with_a_known_secret_is_a_fixed_point[authorization: -4] _
+[XPASS(strict)] FINDING G7-F1 (the ticket's own RELATED, NOT FIXED): a short token after Bearer / Basic / authorization that starts with a known secret is masked whole only by a second pass
+=========================== short test summary info ============================
+XFAIL tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['. '] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P6_P1_generated_a_value_in_a_look_alike_spelling_and_again_plainly - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[password-then-comma] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P6_a_secret_written_in_a_look_alike_spelling_and_plainly_is_masked_in_both_places[token-in-three-parts] - FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and once plainly in the same text: one of the two stays readable after one pass
+XFAIL tests/test_redact_idempotence_property.py::test_P1_I2_I4_bank_fuzz_a_second_pass_finds_no_account_the_first_pass_left - needs core-c G7 fix (not on this branch yet)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[call {}. Thanks] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[phone={}.] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+XFAIL tests/test_redact_idempotence_property.py::test_P5_a_phone_number_at_the_end_of_a_sentence_is_masked[rang {}.\nno answer] - FINDING G7-F3: a phone number directly followed by a full stop is not masked (PHONE ends with `(?![\w.])`)
+================== 37 failed, 116 passed, 9 xfailed in 28.46s ==================
