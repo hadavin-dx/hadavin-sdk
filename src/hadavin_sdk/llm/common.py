@@ -9,12 +9,13 @@ import json
 import re
 import time
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 from typing import Any
 from urllib.parse import urlsplit
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.retry import with_retry
@@ -60,6 +61,104 @@ def estimate_tokens(text: str) -> int:
     """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
     zeros never fires."""
     return max(1, len(text) // 3)
+
+
+_WORST_PLACES = Decimal(1).scaleb(-12)  # 12 decimal places, the most a spend amount may carry
+
+
+def _json_bytes(value: Any) -> int:
+    text = json.dumps(value, sort_keys=True, ensure_ascii=False, default=str)
+    return len(text.encode("utf-8", "surrogatepass"))
+
+
+def worst_case_usd(
+    route: Any,
+    system: str,
+    messages: list[dict[str, Any]],
+    *,
+    tools: list[dict[str, Any]] | None = None,
+    documents: list[bytes] | None = None,
+    output_schema: dict[str, Any] | None = None,
+    requests: int = 1,
+) -> Decimal:
+    """The most one ``chat`` call on `route` (a ``config.Route``) can cost, its retries included: what a meter
+    books before the call. Input: the UTF-8 bytes of the system prompt, of the JSON text of the messages and of
+    the tools, every document byte, the JSON text of the output schema TWICE (an adapter sends it as a forced tool
+    and as a hint in the system prompt) and ``defaults.WORST_CASE_OVERHEAD_BYTES`` for adapter framing, at one
+    token per byte (a token is never shorter than a byte). Output: ``route.max_tokens``. Times `requests` (the
+    client's ``max_attempts``), rounded UP to 12 decimal places."""
+    size = len(system.encode("utf-8", "surrogatepass")) + _json_bytes(messages)
+    if tools is not None:
+        size += _json_bytes(tools)
+    size += sum(len(d) for d in documents or [])
+    if output_schema is not None:
+        size += 2 * _json_bytes(output_schema)
+    size += defaults.WORST_CASE_OVERHEAD_BYTES
+    one = (
+        Decimal(size) * route.input_usd_per_mtok
+        + Decimal(route.max_tokens) * route.output_usd_per_mtok
+    ) / Decimal(1_000_000)
+    return (one * requests).quantize(_WORST_PLACES, rounding=ROUND_CEILING)
+
+
+def worst_case_for(
+    routes: Mapping[str, Any], llm: object
+) -> Callable[
+    [
+        str,
+        str,
+        list[dict[str, Any]],
+        list[dict[str, Any]] | None,
+        list[bytes] | None,
+        dict[str, Any] | None,
+    ],
+    Decimal,
+]:
+    """The ``worst_case`` function a model gate is built with at one install site: `routes` are the configured
+    routes (name -> ``config.Route``; none at all is a ValueError here), `llm` the client the gate wraps. The
+    gate calls it with six positional arguments and the route as a NAME. Requests of one call: the client's
+    ``max_attempts`` (1 for a client without one, or with one that is not a whole number of at least 1), times 2
+    when an output schema is given (a forced answer can cost a second request round in the openai_compat kind).
+    A name `routes` does not hold (only a test double: the config refuses an unknown route at load) is priced at
+    the LARGEST worst case over all routes. If the price cannot be worked out, it raises
+    ``limits.SpendRefused("bad_amount")``: no call is made, and no guess is ever returned."""
+    if not routes:
+        raise ValueError("worst_case_for needs at least one route")
+
+    def worst_case(
+        route: str,
+        system: str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None,
+        documents: list[bytes] | None,
+        output_schema: dict[str, Any] | None,
+    ) -> Decimal:
+        try:
+            attempts = getattr(llm, "max_attempts", 1)
+            requests = attempts if type(attempts) is int and attempts >= 1 else 1
+            if output_schema is not None:
+                requests *= 2
+            known = routes.get(route) if isinstance(route, str) else None
+            return max(
+                worst_case_usd(
+                    r,
+                    system,
+                    messages,
+                    tools=tools,
+                    documents=documents,
+                    output_schema=output_schema,
+                    requests=requests,
+                )
+                for r in ([known] if known is not None else routes.values())
+            )
+        except Exception:  # noqa: BLE001 - no price, no call
+            from hadavin_sdk.limits import (
+                SpendRefused,
+            )  # here: limits imports the registry, which imports llm
+
+            raise SpendRefused("bad_amount") from None
+
+    return worst_case
 
 
 def tools_for(
