@@ -305,3 +305,21 @@ FAILED tests/triggers/test_t5_wsgiref.py::test_no_content_length_is_400_empty
 FAILED tests/triggers/test_t5_wsgiref.py::test_client_gone_before_the_answer_leaves_the_server_quiet_and_serving
 FAILED tests/triggers/test_t5_wsgiref.py::test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only
 10 failed in 0.94s
+
+# pytest again after a fix IN THE TEST FILE only (it looked the signature header up with the wrong letter case); source still unchanged
+E       AssertionError: Seen(raw=b'', end='closed', seconds=0.5028786999998829)
+E       AssertionError: Seen(raw=b'', end='closed', seconds=0.5018984710000041)
+E       AssertionError: Seen(raw=b'HTTP/1.0 400 Bad request syntax (\'\\x16\\x03\\x01\\x02ZQ7-line-marker-88d2\')\r
+E               AssertionError: b'<!DOCTYPE HTML>
+E                         <title>Error response</title>
+E                         <h1>Error response</h1>
+E                         <p>Error code: 414</p>
+E       AssertionError: Seen(raw=b'HTTP/1.0 500 Internal Server Error\r
+E        +    where <built-in method endswith of bytes object at 0x7fc7678a0990> = b'HTTP/1.0 500 Internal Server Error'.endswith
+E        +      where b'HTTP/1.0 500 Internal Server Error' = Seen(raw=b'HTTP/1.0 500 Internal Server Error\r\nDate: Fri, 20 Nov 2026 05:44:37 GMT\r\nServer: WSGIServer/0.2 CPython...h: 59\r\n\r\nA server error occurred.  Please contact the administrator.', end='closed', seconds=0.001091118999966056
+FAILED tests/triggers/test_t5_wsgiref.py::test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]
+FAILED tests/triggers/test_t5_wsgiref.py::test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_silent_client]
+FAILED tests/triggers/test_t5_wsgiref.py::test_garbage_instead_of_a_request_line_is_400_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_request_line_over_64_kb_is_414_empty
+FAILED tests/triggers/test_t5_wsgiref.py::test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only
+5 failed, 5 passed in 1.96s

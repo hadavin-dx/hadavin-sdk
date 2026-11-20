@@ -1,8 +1,8 @@
 {
- "order": "009 (002 to 008 standing)",
+ "order": "012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
- "next": "socket test and slot fix land: tests/triggers 5 times, then my own files once with PostgreSQL 16; mutant script re-run on the final code; ticket fix lands; then REPORT.md block",
+ "next": "agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block",
  "note": "one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -82,11 +82,11 @@
   {
    "item": "T4",
    "what": "store contract test files for core-b interface",
-   "state": "BLOCKED-ON-CORE-B",
-   "percent": 0,
-   "evidence file": "",
-   "tries": 0,
-   "reason": "ORDER 006 answer 9: interface (i) not published yet; lead copies it into inputs/"
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/T4-contract-tests.log (not yet)",
+   "tries": 1,
+   "reason": "core-b published interface (i) version 2.1 at 05:44Z; tests written before the code exists, they skip until step F lands"
   },
   {
    "item": "BUILD-E",
@@ -150,6 +150,42 @@
    "evidence file": "raw/E2-wsgiref-before.log, -after.log, raw/E2-tests.log (not yet)",
    "tries": 1,
    "reason": "lead decision: in scope, do it without asking"
+  },
+  {
+   "item": "R12-worker",
+   "what": "lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/E2-tests.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 012; same agent as E2-SOCKET because one agent owns worker.py"
+  },
+  {
+   "item": "R12-endpoint",
+   "what": "lead review fixes in endpoint.py: minors 1, 5, parse edges",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-endpoint-tests-2.log (not yet)",
+   "tries": 1,
+   "reason": "ORDER 012"
+  },
+  {
+   "item": "R12-n8n",
+   "what": "n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "tests/triggers/test_n8n_template.py (not yet)",
+   "tries": 1,
+   "reason": "ORDER 012; still NOT run in n8n"
+  },
+  {
+   "item": "R12-tests",
+   "what": "missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-tests-pg16.log with test ids (not yet)",
+   "tries": 1,
+   "reason": "ORDER 012: required before done"
   }
  ],
  "agents": [
@@ -290,7 +326,7 @@
    "what exactly it is doing": "applies the 33 accepted review fixes to ticket D and writes request 001 draft 3",
    "started UTC": "05:38",
    "expected end": "about 12 min after start",
-   "percent": 30,
+   "percent": 70,
    "state": "running",
    "review round n of cap": "1 of 1 (resolve step)",
    "retries so far": 0,
@@ -303,7 +339,7 @@
    "what exactly it is doing": "writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py",
    "started UTC": "05:39",
    "expected end": "about 20 min after start",
-   "percent": 5,
+   "percent": 50,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -316,11 +352,63 @@
    "what exactly it is doing": "writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run",
    "started UTC": "05:41",
    "expected end": "about 25 min after start",
-   "percent": 25,
+   "percent": 40,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "ORDER 009; 3 agents run (ticket fix, mutant script, socket test) plus 1 heavy slot (whole suite, 3 workers)"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:46",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "lead code review round 1 of 3",
+   "retries so far": 0,
+   "id": "r12-endpoint",
+   "role": "builder",
+   "what exactly it is doing": "endpoint.py minors of the lead review plus boundary and parse-edge tests",
+   "expected end": "about 15 min after start",
+   "reason": "ORDER 012"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:46",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "lead code review round 1 of 3",
+   "retries so far": 0,
+   "id": "r12-n8n",
+   "role": "builder (templates and text)",
+   "what exactly it is doing": "n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n",
+   "expected end": "about 20 min after start",
+   "reason": "ORDER 012"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:46",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "lead code review round 1 of 3",
+   "retries so far": 0,
+   "id": "r12-tests",
+   "role": "evidence runner and test writer",
+   "what exactly it is doing": "writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop)",
+   "expected end": "about 35 min after start",
+   "reason": "ORDER 012 Major 4"
+  },
+  {
+   "model": "fable",
+   "started UTC": "05:46",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "t4-contract",
+   "role": "builder (tests)",
+   "what exactly it is doing": "contract tests for core-b's spend reservation store methods and the 50-connection cap test file",
+   "expected end": "about 25 min after start",
+   "reason": "queue item T4 READY; 7 agents run now on 4 cores: they wait on the model most of the time, load is on the CAPACITY line"
   }
  ],
  "tests": [
@@ -443,10 +531,12 @@
  ],
  "lost": [],
  "lead_actions": [
-  "handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch: rule 15 names vendor products. It will fail in any full run of cloud/core-a. I do not edit your file: reword it or keep handover/ out of the code commits you pick",
-  "Please write 'GO BUILD D' into ORDERS.md (I acted on your session message); ORDER 007 is not in my ORDERS.md (006 is followed by 008): tell me if I missed one",
-  "requests/001-config-triggers.md is DRAFT 2 and becomes DRAFT 3 in a few minutes: core-b got DRAFT 1 from you",
-  "ORDER 009 read: E1 and E3 and E4 closed as you decided, E2 being built. RISK I accept and state: the socket-test agent edits worker.py while the whole-suite run is going; if a triggers test fails in that run for this reason I re-run only tests/triggers once and say so"
+  "handover/BRIEF-PREAMBLE.md (your file) makes the repo rule test test_no_vendor_brand_string_is_tracked FAIL on this branch (rule 15 names vendor products)",
+  "ORDER 012 'add the crash= hook points': I did NOT add them and chose store wrap points instead (DECISIONS, newest row): say CHANGE if you want the parameter in the runtime code",
+  "ORDER 012 Major 1: I chose 'back the poll off' (about 10 reads per refused request) over '503 at once', see DECISIONS",
+  "ORDERS 007, 010 and 011 are not in my ORDERS.md: tell me if they were meant for me",
+  "'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)",
+  "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once"
  ],
  "failed": "2 in the whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); 1 flaky T5 test of mine (slot release race), fix in work"
 }
