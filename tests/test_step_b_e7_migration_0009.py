@@ -26,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 
 DENIED = errors.InsufficientPrivilege
 FILE_0009 = migrate_mod.MIGRATIONS / "0009_stop_state_hardening.sql"
-NEW_TABLES = ("kill_switch_resets", "kill_switch_watermark")
+NEW_TABLES = ("kill_switch_resets", "kill_switch_watermark", "hadavin_limits")  # 0009 and 0011
 ROW = "(seq, at, run_id, kind, body, prev, hash, event_id) VALUES (%s, 'a', 'r', 'k', 'b', 'p', 'h', %s)"
 
 
@@ -199,6 +199,15 @@ def test_fresh_schema_and_upgrade_from_0008(w, monkeypatch):
             )
             m.setattr(
                 migrate_mod, "GRANTS", {k: v for k, v in grants.items() if k not in NEW_TABLES}
+            )
+            m.setattr(  # the 0011 functions do not exist at 0008 either
+                migrate_mod,
+                "FUNCTION_GRANTS",
+                {
+                    k: v
+                    for k, v in migrate_mod.FUNCTION_GRANTS.items()
+                    if k not in migrate_mod.MONEY_FUNCTIONS
+                },
             )
             up.migrate()
         assert not up.run("SELECT to_regclass('kill_switch_resets')")[0][0]
