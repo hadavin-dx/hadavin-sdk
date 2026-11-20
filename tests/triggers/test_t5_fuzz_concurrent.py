@@ -271,6 +271,7 @@ def make_stack2(
         max_body_bytes=MAX_BODY,
         max_running=max_running,
         ack_wait_s=ack_wait_s,
+        conflict_events_per_minute=10,
     )
     app = SimpleNamespace(
         config=SimpleNamespace(triggers=triggers, environment="demo"),
@@ -806,6 +807,7 @@ def run_layer(
         llm,
         max_running=max_running,
         ack_wait_s=ack_wait_s,
+        conflict_events_per_minute=10,
         max_waiting=max_waiting,
         clock=clock,
     )

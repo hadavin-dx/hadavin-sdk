@@ -616,6 +616,7 @@ def make_stack(tmp_path, store):
         max_body_bytes=MAX_BODY,
         max_running=4,
         ack_wait_s=20.0,
+        conflict_events_per_minute=10,
     )
     app = SimpleNamespace(
         config=SimpleNamespace(triggers=triggers, environment="demo"),
