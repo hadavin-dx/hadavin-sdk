@@ -543,7 +543,7 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
     from hadavin_sdk.registry import load_registry
 
     config = load_config(args.config_dir)
-    settings = trigger_settings(config)  # before anything is built: no secret read, no connection
+    trigger_settings(config)  # before anything is built: no secret read, no connection
     host = args.host or LOOPBACK
     port = args.port if args.port is not None else PORT
     check_bind(host, args.allow_non_loopback)

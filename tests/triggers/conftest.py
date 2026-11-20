@@ -53,7 +53,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]):
 
 def core_b_trigger_config() -> bool:
     """True when this tree has core-b's trigger config (`hadavin_sdk.config.TriggerSettings` and `Config.triggers`)."""
-    import hadavin_sdk.config as config
+    from hadavin_sdk import config
 
     return hasattr(config, "TriggerSettings") and "triggers" in config.Config.model_fields
 

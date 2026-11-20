@@ -97,9 +97,9 @@ def _handlers_done(timeout_s: float = CLIENT_TIMEOUT_S) -> bool:
 
 
 @contextlib.contextmanager
-def serving(wsgi, timeout_s: float = SOCKET_TIMEOUT_S):
+def serving(wsgi, timeout_s: float = SOCKET_TIMEOUT_S, **server_kw):
     """The real server on a free loopback port; shut down, joined and closed on the way out."""
-    server = worker.make_server(worker.LOOPBACK, 0, wsgi, timeout_s)
+    server = worker.make_server(worker.LOOPBACK, 0, wsgi, timeout_s, **server_kw)
     thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.02})
     try:
         thread.start()
@@ -231,7 +231,8 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
             assert b"content-type" not in seen.head.lower()
         assert b"python" not in seen.head.lower() and b"wsgiserver" not in seen.head.lower()
         assert b"\r\nserver:" not in seen.head.lower()
-    assert _signatures, "no signature was recorded: the check for a signature in the output is empty"
+    # a test that signed something must have its signatures on the list, or the search below looks for nothing
+    assert bool(_signatures) == bool(_sign_calls), (len(_signatures), len(_sign_calls))
     captured = capsys.readouterr()
     for name, text in (
         ("answer", seen.raw.decode("latin-1")),
@@ -246,6 +247,7 @@ def check_quiet(seen: Seen, capsys, caplog) -> None:
 
 
 _signatures: list[str] = []
+_sign_calls: list[int] = []
 
 
 @pytest.fixture(autouse=True)
@@ -254,14 +256,18 @@ def _watch(monkeypatch, caplog):
     made: list[str] = []
     real = hmac_v0.sign
 
+    calls: list[int] = []
+
     def sign(*args, **kwargs):
         headers = real(*args, **kwargs)
+        calls.append(1)
         wanted = endpoint.SIGNATURE_HEADER.lower()
         made.extend(v.rpartition("=")[2] for k, v in headers.items() if k.lower() == wanted)
         return headers
 
     monkeypatch.setattr(hmac_v0, "sign", sign)
     monkeypatch.setattr("tests.triggers.test_t5_wsgiref._signatures", made)
+    monkeypatch.setattr("tests.triggers.test_t5_wsgiref._sign_calls", calls)
     caplog.set_level("DEBUG", logger="hadavin_sdk.triggers")
 
 
@@ -794,3 +800,128 @@ def test_the_reuse_option_is_off_on_windows_and_the_exclusive_option_is_set_wher
     monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", socket.SO_KEEPALIVE, raising=False)
     with serving(make_wsgi(FakeStart())) as server:
         assert server.socket.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE) == 1
+
+
+# --- d-fix2: the connection cap and the absolute read deadline --------------------------------------------------
+
+
+def _drip(port: int, first: bytes, rest: bytes, gap_s: float) -> Seen:
+    """Send `first`, then `rest` one byte at a time with `gap_s` between bytes (each well inside the pause limit
+    of the server) until the server closes or the bytes are gone; then read what the server answered."""
+    sock = socket.create_connection((worker.LOOPBACK, port), timeout=CLIENT_TIMEOUT_S)
+    began = time.monotonic()
+    try:
+        try:
+            sock.sendall(first)
+            for i in range(len(rest)):
+                time.sleep(gap_s)
+                sock.sendall(rest[i : i + 1])
+        except OSError:
+            pass  # the server answered and closed
+        raw, end = b"", "closed"
+        try:
+            while part := sock.recv(65536):
+                raw += part
+        except (ConnectionResetError, ConnectionAbortedError):
+            end = "reset"
+        except TimeoutError:
+            end = "client timeout"
+        return Seen(raw, end, time.monotonic() - began)
+    finally:
+        sock.close()
+
+
+def test_a_slow_body_is_cut_at_the_absolute_deadline_not_at_the_pause_limit(capsys, caplog):
+    """Slow loris on the body: a byte every 0.1 s never trips the 20 s pause limit of one read, but the whole
+    request is cut at `read_deadline_s` (0.6 s): 400 empty, the application never reached."""
+    start = FakeStart()
+    body = body_bytes()
+    data = request(body, declared=len(body))
+    head, tail = data[: -len(body)], data[-len(body) :]
+    with serving(make_wsgi(start), 20.0, read_deadline_s=0.6) as server:
+        seen = _drip(server.server_port, head, tail, 0.1)
+    assert seen.status_line.endswith(b" 400 Bad Request") and seen.end == "closed", seen
+    assert 0.5 <= seen.seconds < 0.6 + 3.0, seen.seconds  # cut at the deadline: far below 20 s
+    assert start.calls == []
+    check_quiet(seen, capsys, caplog)
+
+
+def test_slow_headers_are_cut_at_the_absolute_deadline(capsys, caplog):
+    """Slow loris on the headers: one byte of the header block every 0.1 s, never an empty line."""
+    start = FakeStart()
+    head = request(body_bytes(), declared=10, complete=False)
+    with serving(make_wsgi(start), 20.0, read_deadline_s=0.6) as server:
+        seen = _drip(server.server_port, head[:20], head[20:] + b"X-Pad: " + b"a" * 200, 0.1)
+    assert seen.status_line.endswith(b" 400 Bad Request") and seen.end == "closed", seen
+    assert 0.5 <= seen.seconds < 0.6 + 3.0, seen.seconds
+    assert start.calls == []
+    check_quiet(seen, capsys, caplog)
+
+
+def test_the_deadline_covers_the_reads_only_not_the_wait_for_the_row(capsys, caplog):
+    """The request is read at once; the application then takes 1.2 s (more than the deadline of 0.5 s) and
+    still gets its answer through."""
+    start = FakeStart()
+    start.gate.clear()
+    threading.Timer(1.2, start.gate.set).start()
+    with serving(make_wsgi(start), 20.0, read_deadline_s=0.5) as server:
+        seen = drive_signed(server.server_port)
+    assert seen.status == 202 and seen.seconds >= 1.0, seen
+    check_quiet(seen, capsys, caplog)
+
+
+def test_connections_above_the_cap_are_closed_at_once_unread_and_the_cap_frees_again(
+    capsys, caplog
+):
+    """max_connections=2: two idle connections hold the two threads; the third is closed with no byte, at once;
+    when one of the first two leaves, a signed request is served."""
+    start = FakeStart()
+    with serving(make_wsgi(start), 20.0, max_connections=2) as server:
+        port = server.server_port
+        holders = [socket.create_connection((worker.LOOPBACK, port)) for _ in range(2)]
+        try:
+            over = exchange(port, b"")  # the third (accept order is the connect order)
+            assert over.raw == b"" and over.end in ("closed", "reset"), over
+            assert over.seconds < 2.0, over.seconds  # closed at once, not at a timeout
+            holders.pop().close()
+            deadline = time.monotonic() + CLIENT_TIMEOUT_S
+            seen = Seen(b"", "closed", 0.0)
+            while (
+                seen.status is None and time.monotonic() < deadline
+            ):  # the thread of the one that left ends
+                seen = drive_signed(port)
+                time.sleep(0.02)
+        finally:
+            for sock in holders:
+                sock.close()
+    assert seen.status == 202, seen
+    assert len(start.calls) == 1
+    check_quiet(seen, capsys, caplog)
+
+
+def test_the_cap_holds_under_n_plus_one_parallel_connections():
+    """N idle connections are all held; the N+1st is refused; none of the N is disturbed."""
+    n = 4
+    with serving(make_wsgi(FakeStart()), 20.0, max_connections=n) as server:
+        port = server.server_port
+        holders = [socket.create_connection((worker.LOOPBACK, port)) for _ in range(n)]
+        try:
+            extra = exchange(port, b"")
+            assert extra.raw == b"" and extra.seconds < 2.0, extra
+            assert server._slots.acquire(blocking=False) is False  # every slot is taken by the N
+            for sock in holders:
+                sock.setblocking(False)
+                with pytest.raises(
+                    BlockingIOError
+                ):  # nothing was sent to the held ones, they are open
+                    sock.recv(1)
+        finally:
+            for sock in holders:
+                sock.close()
+
+
+def test_max_connections_below_one_is_refused():
+    with pytest.raises(ValueError, match="max_connections"):
+        server_module.QuietServer(
+            (worker.LOOPBACK, 0), server_module.QuietRequestHandler, max_connections=0
+        )
