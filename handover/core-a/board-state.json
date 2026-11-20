@@ -541,8 +541,8 @@
   {
    "item": "n8n-fix-1",
    "what": "n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary)",
-   "state": "fixed; fresh round-2 review RUNNING",
-   "percent": 80,
+   "state": "3 review rounds done (round 3 clean: 0 Blocker/Major); NOT run in n8n; final evidence run with the batch",
+   "percent": 95,
    "evidence file": "raw/n8n-template-tests-5.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence"
@@ -1569,11 +1569,11 @@
    "what exactly it is doing": "8 text nits of round 3 (README, JSON notes)",
    "started UTC": "07:26",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "3 of 3 (nits only)",
    "retries so far": 0,
-   "reason": "round 3"
+   "reason": "7 nits done; 88 template tests pass (raw/n8n-template-tests-7.log); builder did not check what round 2 changed in the error json (wording 'rounds 1 and 2 changed only notes' unconfirmed)"
   },
   {
    "id": "maint2",
