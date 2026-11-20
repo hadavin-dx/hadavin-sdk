@@ -2,7 +2,7 @@
 
 The stock classes answer a broken request with a page of text that repeats the request line, print a
 traceback when a client stalls before its headers end, and answer a failed application with a line of
-text. Here every refusal has an empty body, nothing is printed, and a failure is one log line on
+text. Each answer leaves in ONE write to the socket (status line, headers and body together). Here every refusal has an empty body, nothing is printed, and a failure is one log line on
 ``hadavin_sdk.triggers`` with the status or the class name of the exception: never its message, the
 request line, a header or the body.
 
@@ -165,7 +165,14 @@ class QuietWSGIHandler(ServerHandler):
         finally:
             if self._answer:
                 data, self._answer = bytes(self._answer), bytearray()
-                super()._write(data)
+                try:
+                    super()._write(data)
+                except OSError:
+                    # `close()` has reset `headers_sent` and `environ`: without this the stdlib `handle_error`
+                    # would try to build an error page from `environ=None` (a TypeError logged as noise).
+                    # A gone client (BrokenPipe, ConnectionReset) is still swallowed by `run()`.
+                    self.headers_sent = True
+                    raise
 
     def log_exception(self, exc_info: Any) -> None:
         kind = exc_info[0] if exc_info else None
