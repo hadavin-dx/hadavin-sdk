@@ -4,7 +4,7 @@ Lives in src/hadavin_sdk/limits.py when step F-store lands (GO BUILD given; not 
 ```python
 class SpendRefused(RuntimeError):
     """Do not call the model. reason is one of:
-    kill_switch | daily_budget | monthly_budget | limits_unavailable | bad_amount"""
+    kill_switch | daily_budget | monthly_budget | limits_unavailable | bad_amount | usd_cap"""
     def __init__(self, reason: str) -> None:
         super().__init__(reason); self.reason = reason
 
@@ -12,6 +12,9 @@ class Meter(Protocol):   # implemented by Limits (store-backed) and by k1b Budge
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str: ...
     def settle(self, reservation_id: str, actual_usd: Decimal) -> Decimal: ...
 ```
+
+SIX reasons since 06:20 UTC (lead ORDER 014): usd_cap is raised only by the in-memory Budget meter (the eval and replay command lines) when its one total cap would be passed or the budget was closed after an abandoned call. Allowlist all six.
+Provider errors: `ProviderError.refused_before_response` (class attribute, default False; set True only in llm/retry.py with_retry) marks an error where the provider refused before any response: every attempt was a refused connection or a failed name lookup, or the final answer was HTTP 400, 401, 403, 404, 413 or 422 with no earlier attempt answered or timed out. Built in commit "code F: providers mark an error ..." on cloud/core-b. OPEN (request to core-c, requests/to-core-c-1-exhausted-mark.md): an error that used up its retries arrives as ProviderExhausted, which the gate excludes by type even when the mark is True; HTTP 429 and refused connections end that way.
 
 What the gate can rely on:
 1. reserve returns a reservation id only after the worst case is booked. Any exception from reserve means: do not call the model. SpendRefused.reason is the audit error code. An unknown agent raises KeyError (still no call).
