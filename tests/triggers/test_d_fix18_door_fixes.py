@@ -22,6 +22,7 @@ from tests.triggers.test_d_fix13_single_write import (
     _serving,
     _wsgi,
 )
+from tests.triggers.test_worker import _app, _settings, rt  # noqa: F401
 
 PAD = b"a" * 190
 
@@ -61,7 +62,7 @@ def test_m1_many_small_headers_over_16_kb_are_431_in_one_write():
 
 
 def test_m1_headers_under_the_cap_are_still_taken():
-    raw, log = _exchange(_with_headers(50))  # about 10 KB
+    raw, _log = _exchange(_with_headers(50))  # about 10 KB
     assert raw.startswith(b"HTTP/1.0 202 "), raw[:60]
     assert server.MAX_HEADER_BYTES == 16384
 
@@ -80,28 +81,14 @@ def test_m4_demo_and_other_stores_pass():
     worker.check_store_stage(SimpleNamespace(), SimpleNamespace(environment="prod"))
 
 
-def test_m4_make_app_refuses_a_memory_store_at_pilot(rt_pilot_app):
+def test_m4_make_app_refuses_a_memory_store_at_pilot(rt):  # noqa: F811
+    app = _app(rt, _settings(max_running=1))
+    app.config.environment = "pilot"
     with pytest.raises(worker.ConfigError, match="demo stage only"):
-        worker.make_app(rt_pilot_app)
-
-
-@pytest.fixture
-def rt_pilot_app(monkeypatch):
-    seen = []
-    monkeypatch.setattr(worker, "trigger_settings", lambda c: seen.append(c) or object())
-    monkeypatch.setattr(worker, "secret_reader", lambda a: None)
-    monkeypatch.setattr(worker, "sender_list", lambda s: [])
-    monkeypatch.setattr(worker, "check_senders", lambda *a: None)
-    monkeypatch.setattr(worker, "read_secrets", lambda *a: {})
-    monkeypatch.setattr(worker, "_field", lambda o, n, w: getattr(o, n))
-    monkeypatch.setattr(worker, "check_secrets", lambda s: None)
-    monkeypatch.setattr(worker, "Runner", lambda *a, **k: SimpleNamespace(close=lambda *_: None))
-    return SimpleNamespace(
-        config=SimpleNamespace(environment="pilot"),
-        runtime=SimpleNamespace(agents=[]),
-        registry=SimpleNamespace(principals={}),
-        store=MemoryStore(),
-    )
+        worker.make_app(app)
+    app.config.environment = "demo"
+    _wsgi_app, runner = worker.make_app(app)
+    runner.close(0)
 
 
 # --- M6: hmac_v0 ---------------------------------------------------------------------------------------------

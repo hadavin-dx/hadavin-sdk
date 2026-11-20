@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Thirty-four groups (G32 is E1: ten mutants, G33 is E1 fix2: six, G34 is d-fix13: one), one per guarantee:
+first failing line that holds `expect`. Thirty-six groups (G32 is E1: ten mutants, G33 is E1 fix2: six, G34 is d-fix13: one, G35 is d-fix14: one, G36 is d-fix18: eight), one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -131,6 +131,8 @@ T8 = "tests/triggers/test_d_fix8_e1fix.py"
 T9 = "tests/triggers/test_d_fix9_e1fix2.py"
 T13 = "tests/triggers/test_d_fix13_single_write.py"
 T14 = "tests/triggers/test_d_fix14_single_write_edges.py"
+T18 = "tests/triggers/test_d_fix18_door_fixes.py"
+HMAC = "src/hadavin_sdk/approvals/hmac_v0.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -201,7 +203,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW, T6, T8, T9, T13, T14]
+TESTS = [TE, TC, TS, TP, TW, T6, T8, T9, T13, T14, T18]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1288,6 +1290,79 @@ M = [
         T14,
         "test_a_timeout_on_the_final_send_is_logged_once_by_class_and_nothing_else",
         "AssertionError: ['trigger server: application error: TimeoutError', 'trigger server: connection ended: TypeError']",
+    ),
+    # --- G36 d-fix18 (door review 1): the header cap, the memory store at demo only, hmac_v0, the single write, G16b halves
+    mutant(
+        "G36a the total header byte cap is never enforced",
+        SERVER,
+        "            if self._head_left < 0:\n                raise _HeadersTooLarge\n",
+        "            if False:\n                raise _HeadersTooLarge\n",
+        T18,
+        "test_m1_many_small_headers_over_16_kb_are_431_in_one_write",
+        "EXPECT_A",
+    ),
+    mutant(
+        "G36b the memory store is accepted at every stage",
+        WORKER,
+        "    if isinstance(store, MemoryStore) and is_live(\n",
+        "    if False and is_live(\n",
+        T18,
+        "test_m4_make_app_refuses_a_memory_store_at_pilot",
+        "EXPECT_B",
+    ),
+    mutant(
+        "G36c hmac_v0 compares the signature with == (not compare_digest)",
+        HMAC,
+        "    return hmac.compare_digest(_sig(body, ts, secret), sig)\n",
+        "    return _sig(body, ts, secret) == sig\n",
+        T18,
+        "test_m6_the_signature_is_compared_with_compare_digest",
+        "EXPECT_C",
+    ),
+    mutant(
+        "G36d hmac_v0 has no age window",
+        HMAC,
+        " or abs(now_ts - int(ts)) > MAX_AGE_S:\n",
+        ":\n",
+        T18,
+        "test_m6_the_five_minute_window[1301-False]",
+        "EXPECT_D",
+    ),
+    mutant(
+        "G36e hmac_v0 window refuses at exactly 300 s",
+        HMAC,
+        "abs(now_ts - int(ts)) > MAX_AGE_S",
+        "abs(now_ts - int(ts)) >= MAX_AGE_S",
+        T18,
+        "test_m6_the_five_minute_window[1300-True]",
+        "EXPECT_E",
+    ),
+    mutant(
+        "G36f send_error writes its answer in two writes",
+        SERVER,
+        '        self.wfile.write(head.encode("latin-1", "strict"))\n',
+        '        raw = head.encode("latin-1", "strict")\n        self.wfile.write(raw[:10])\n        self.wfile.write(raw[10:])\n',
+        T18,
+        "test_m6_send_error_is_exactly_one_write",
+        "EXPECT_F",
+    ),
+    mutant(
+        "G36g HTTP/0.9 alone no longer closes quietly (G16b first half)",
+        SERVER,
+        'self.request_version == "HTTP/0.9" or ',
+        "",
+        T18,
+        "test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer",
+        "EXPECT_G",
+    ),
+    mutant(
+        "G36h a header block that is not a Message no longer closes quietly (G16b second half)",
+        SERVER,
+        " or not isinstance(self.headers, Message)",
+        "",
+        T18,
+        "test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer",
+        "EXPECT_H",
     ),
 ]
 
