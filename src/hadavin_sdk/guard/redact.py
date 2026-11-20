@@ -867,30 +867,22 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
-# Own output (G7 + fix round 1): a SECRET value made of nothing but tokens this redactor wrote. One anchored shape,
-# built from the redactor's own labels (upper case, as it issues them; an escaped look-alike of any other kind or case
-# is not its own) and ASCII digits only (`runmap._LOOKALIKE` uses `\d`, so a look-alike with a non-ASCII digit is
-# escaped there but NEVER exempt here: the redactor writes ASCII digits). A token is a genuine `<KIND_n>` or an
-# ESCAPED look-alike as `runmap.escape_placeholders` writes one (`<SECRET_1>` becomes U+2039 `SECRET_1` U+203A),
-# separated by spaces, tabs, `;` or `,`; optionally the value ends in a placeholder opening cut off by
-# `tools.error_reason`'s length cut (`<SECRET_1`, `<SECRET_`, `<SEC`). The whole value must match: any other
-# character, a mixed form, an unknown kind or a glued secret is masked whole, as before G7.
-# STATED LIMIT (fail open, by design; named by the drift report): a SECRET value made ONLY of such tokens is left unmasked and
-# gets no map entry, whoever wrote it. Two rules do it, and the tests (tests/test_redact_context_after_sweep.py) split the shapes by which:
-# the older rule (a value that is nothing but genuine placeholders, `_decide`, before this one) covers `password=<EMAIL_1> <IPV4_1>`,
-# the tab, `;` and `,` runs and `password=<EMAIL_1> <SEC` (5 shapes); THIS pattern is needed for the three that hold something it alone
-# accepts: an ESCAPED look-alike (`password=‹EMAIL_1› host`: the value is the one escaped token, `host` is outside it) and a value that is
-# only a cut-off opening (`password=<SEC`, `password=<SECRET_`).
-# All stand as typed: a real credential spelled exactly like the redactor's own tokens (or like the cut-off start of one) is not masked,
-# as one spelled `<nil>` is not. That is the price of keeping a tool's error text (redacted twice) from making a junk map entry for every
-# escaped token.
-_KIND = "|".join(sorted(_LABELS, key=len, reverse=True))
-_OPENINGS = "|".join(
-    sorted({lab[:n] for lab in _LABELS for n in range(1, len(lab) + 1)}, key=len, reverse=True)
-)
-_OWN_TOKEN = rf"(?:<(?:{_KIND})_[0-9]+>|\u2039(?:{_KIND})_[0-9]+\u203a)"
+# Own output (G7 + fix round 1; E9(2) restricted to SECRET tokens): a SECRET value made of nothing but SECRET tokens this
+# redactor wrote. One anchored shape: a token is a genuine `<SECRET_n>` or an ESCAPED look-alike as
+# `runmap.escape_placeholders` writes one (`<SECRET_1>` becomes U+2039 `SECRET_1` U+203A), ASCII digits only (`runmap._LOOKALIKE`
+# uses `\d`, so a look-alike with a non-ASCII digit is escaped there but NEVER exempt here: the redactor writes ASCII digits),
+# separated by spaces, tabs, `;` or `,`; optionally the value ends in a SECRET opening cut off by `tools.error_reason`'s length
+# cut (`<SECRET_1`, `<SECRET_`, `<SECRET`, `<SEC`, `<S`). The whole value must match: any other character, a mixed form, a token of
+# another kind (`<EMAIL_1>`, `‹IPV4_1›`, `<EMA`) or a glued secret is masked whole.
+# Why SECRET only: the purpose is that a tool's error text, redacted twice (a throwaway map, then the run's), makes no junk map
+# entry for the escaped `password=‹SECRET_1›` the first pass wrote. The redactor only writes a SECRET token after a secret key, so
+# only that shape needs the exemption; `password=‹EMAIL_1› host` or `password=<EMA` is a real credential spelled like another
+# kind's token and is masked (README K43, decision 7: only `‹SECRET_n›` is exempt).
+# STATED LIMIT (fail open, by design): a SECRET value made ONLY of SECRET tokens (or of genuine placeholders of any kind, which the
+# older rule in `_decide` covers: `password=<EMAIL_1> <IPV4_1>`) gets no map entry and stays as typed, whoever wrote it.
+_OWN_TOKEN = r"(?:<SECRET_[0-9]+>|\u2039SECRET_[0-9]+\u203a)"  # noqa: S105  (a regex, not a credential)
 _OWN_OUTPUT = re.compile(
-    rf"[ \t;,]*(?:{_OWN_TOKEN}[ \t;,]*)*(?:<(?:{_KIND})_[0-9]*|<(?:{_OPENINGS}))?"
+    rf"[ \t;,]*(?:{_OWN_TOKEN}[ \t;,]*)*(?:<SECRET_[0-9]*|<(?:SECRET|SECRE|SECR|SEC|SE|S))?"
 )
 # A terminal escape sequence (colour, cursor, title): not text, and glued to a key it hid the key from every pattern
 # that needs a word boundary - `ESC[1mAKIA...` read as `mAKIA...` (ninth review, 2026-10-01).

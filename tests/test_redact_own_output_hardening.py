@@ -133,3 +133,36 @@ def test_the_cut_at_160_in_error_reason_adds_no_entry():
     out = tools.prepare_output(raw, rmap, 4096)
     assert PW not in out
     assert not any(v.startswith("<") for v in rmap.values())
+
+
+# --- E9(2): the exemption names the SECRET kind only ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "tail",
+    ["<EMAIL_1", "<EMAIL_", "<EMA", "<I", "<IPV4_12", f"{L}IPV4_1{G}", f"{L}EMAIL_1{G}"],
+)
+def test_e9_a_cut_off_opening_or_lookalike_of_another_kind_is_masked(tail):
+    """E9(2), changed shapes (fail before: `_OWN_OUTPUT` named every kind and left these unmasked; now masked whole)."""
+    result = R.redact(f"password={tail}")
+    assert result.text == "password=<SECRET_1>" and result.mapping == {"<SECRET_1>": tail}
+
+
+def test_e9_a_secret_token_followed_by_a_cut_off_opening_of_another_kind_is_masked():
+    value = f"{L}SECRET_1{G}<EMA"
+    result = R.redact(f"password={value}")
+    assert result.mapping == {"<SECRET_1>": value}
+
+
+def test_e9_a_cut_off_opening_of_another_kind_alone_is_masked():
+    """E9(2): `<EMA` is not the cut-off start of a SECRET token (fail before: any kind's opening was exempt). Killer of the cut-off-widening mutant."""
+    result = R.redact("password=<EMA")
+    assert result.text == "password=<SECRET_1>" and result.mapping == {"<SECRET_1>": "<EMA"}
+
+
+def test_e9_a_lookalike_of_another_kind_alone_is_masked():
+    """E9(2): `password=‹EMAIL_1›` is masked (fail before: exempt). Killer of the kind-widening mutant."""
+    result = R.redact(f"password={L}EMAIL_1{G}")
+    assert result.text == "password=<SECRET_1>" and result.mapping == {
+        "<SECRET_1>": f"{L}EMAIL_1{G}"
+    }

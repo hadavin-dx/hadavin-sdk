@@ -210,6 +210,22 @@ M = [
       "test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address", "ssert"),
     m("W21 the clock is not read before each view", RD, "                    self._over_budget(self._scan_deadline)\n                    aligned =", "                    aligned =", "tests/test_redact_fold_budget.py",
       "test_view_1_the_clock_is_read_before_each_view_of_a_line", "ssert"),
+    # E9(2): `_OWN_OUTPUT` names the SECRET kind only (three mutants; Mutant built directly, the PREFIX table is not touched)
+    Mutant("E9-1 own-output tokens of any kind again", RD,
+           '_OWN_TOKEN = r"(?:<SECRET_[0-9]+>|\\u2039SECRET_[0-9]+\\u203a)"',
+           '_OWN_TOKEN = r"(?:<[A-Z]+_[0-9]+>|\\u2039[A-Z]+_[0-9]+\\u203a)"', "ssert",
+           test_file="tests/test_redact_own_output_hardening.py", only_test="test_e9_a_lookalike_of_another_kind_alone_is_masked",
+           pinned="tests/test_redact_own_output_hardening::test_e9_a_lookalike_of_another_kind_alone_is_masked"),
+    Mutant("E9-2 own-output cut-off opening of any kind again", RD,
+           "(?:<SECRET_[0-9]*|<(?:SECRET|SECRE|SECR|SEC|SE|S))?",
+           "(?:<[A-Z]+(?:_[0-9]*)?)?", "ssert",
+           test_file="tests/test_redact_own_output_hardening.py", only_test="test_e9_a_cut_off_opening_of_another_kind_alone_is_masked",
+           pinned="tests/test_redact_own_output_hardening::test_e9_a_cut_off_opening_of_another_kind_alone_is_masked"),
+    Mutant("E9-3 own-output escaped look-alike alternative removed", RD,
+           '_OWN_TOKEN = r"(?:<SECRET_[0-9]+>|\\u2039SECRET_[0-9]+\\u203a)"',
+           '_OWN_TOKEN = r"(?:<SECRET_[0-9]+>)"', "ssert",
+           test_file="tests/test_redact_own_output_hardening.py", only_test="test_redact_untrusted_twice_adds_nothing",
+           pinned="tests/test_redact_own_output_hardening::test_redact_untrusted_twice_adds_nothing"),
 ]  # fmt: skip
 
 if __name__ == "__main__":
@@ -231,7 +247,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [F1, FB, FS, FP, FZ, FM],
+        [F1, FB, FS, FP, FZ, FM, "tests/test_redact_own_output_hardening.py"],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,
