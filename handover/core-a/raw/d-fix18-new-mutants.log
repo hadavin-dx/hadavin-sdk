@@ -5,3 +5,19 @@
 # sha256 915d60690d9f304eb3dac4295f6d58ee77fcb78d0d30b0646ba663c7276df6d0  src/hadavin_sdk/triggers/worker.py
 # sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
 # sha256 734183d23c6ccd60e55b30321378015e761f86e6903ba156dc3b6a1b882032c7  tests/endpoint_mutants.py
+ok  KILLED       G3b the slot is released right after submit  [test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken]
+ok  KILLED       G18c serve does not close the runner  [test_serve_gives_the_previous_sigterm_handler_back]
+ok  KILLED       G20a max_running below one is not refused by the Runner (message guard: a later check still refuses, only the text differs)  [test_bad_arguments_are_refused]
+ok  KILLED       G20c poll_s of zero is not refused as such (message guard: the POLL_S_MIN check still refuses, only the text differs)  [test_bad_arguments_are_refused]
+ok  KILLED       G36a the total header byte cap is never enforced  [test_m1_many_small_headers_over_16_kb_are_431_in_one_write]
+ok  KILLED       G36b the memory store is accepted at every stage  [test_m4_make_app_refuses_a_memory_store_at_pilot]
+ok  KILLED       G36c hmac_v0 compares the signature with == (not compare_digest)  [test_m6_the_signature_is_compared_with_compare_digest]
+ok  KILLED       G36d hmac_v0 has no age window  [test_m6_the_five_minute_window[1301-False]]
+ok  KILLED       G36e hmac_v0 window refuses at exactly 300 s  [test_m6_the_five_minute_window[1300-True]]
+ok  KILLED       G36f send_error writes its answer in two writes  [test_m6_send_error_is_exactly_one_write]
+ok  KILLED       G36g HTTP/0.9 alone no longer closes quietly (G16b first half)  [test_m6_version_0_9_with_a_header_block_is_closed_with_no_answer]
+ok  KILLED       G36h a header block that is not a Message no longer closes quietly (G16b second half)  [test_m6_a_header_block_that_is_not_a_message_is_closed_with_no_answer]
+12 killed, 0 crash-accepted (), 0 known survivors
+KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass
+  - (none: every mutant of the list has a killer test)
+12 of 12 run are as expected; problems: []
