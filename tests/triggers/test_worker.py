@@ -540,7 +540,7 @@ def _settings(senders=None, **over):
 def _app(rt, settings, secrets=None):
     values = {"door-a": SECRET} if secrets is None else secrets
     return SimpleNamespace(
-        config=SimpleNamespace(triggers=settings),
+        config=SimpleNamespace(triggers=settings, environment="demo"),
         registry=rt.registry,
         runtime=rt,
         store=rt.store,

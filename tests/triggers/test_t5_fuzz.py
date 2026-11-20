@@ -618,7 +618,7 @@ def make_stack(tmp_path, store):
         ack_wait_s=20.0,
     )
     app = SimpleNamespace(
-        config=SimpleNamespace(triggers=triggers),
+        config=SimpleNamespace(triggers=triggers, environment="demo"),
         registry=runtime.registry,
         runtime=runtime,
         store=store,

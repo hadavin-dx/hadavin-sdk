@@ -224,7 +224,7 @@ def _switch_app(tmp_path):
     store = Switch()
     runtime.store = store
     app = SimpleNamespace(
-        config=SimpleNamespace(triggers=_settings(max_running=1)),
+        config=SimpleNamespace(triggers=_settings(max_running=1), environment="demo"),
         registry=runtime.registry,
         runtime=runtime,
         store=store,

@@ -273,7 +273,7 @@ def make_stack2(
         ack_wait_s=ack_wait_s,
     )
     app = SimpleNamespace(
-        config=SimpleNamespace(triggers=triggers),
+        config=SimpleNamespace(triggers=triggers, environment="demo"),
         registry=runtime.registry,
         runtime=runtime,
         store=runner_store,
