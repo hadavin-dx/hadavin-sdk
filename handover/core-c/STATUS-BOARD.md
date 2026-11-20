@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:23:46Z
+UPDATED_UTC: 2026-11-20T10:27:49Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,16 +7,16 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 5
-CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 5, heavy agents 0
+CAPACITY: load 5.2 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 5, heavy agents 0
 DISK: / 57G free, 18% used; git worktrees 22; 1.5G	/tmp/claude-0;304M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: ORDER 023 STATUS (10:13Z): E9 (1) DONE (docstring promises fixed: redact.py module docstring, gate.py a4b2ce2), E9 (2) DONE and merged (e8ff6de2b + fix round c4d68c6ef; fresh review round 1 done: 0 Blocker, 2 Major fixed), E9 (3) DONE (is_masked: no consumer, every promise withdrawn). E10: ticket G9 written, plan review ROUND 1 done (NOT READY: 3 Blocker + 13 Major: the lead's loop as stated does not close E10, read-back must use exact map keys, G9 unions must not register pieces, gate should mask the span); v2 drafting; plan review ROUND 2 starts when v2 lands: commit time 10:45Z; round 3 (last) 11:15Z; build starts after a clean review. E11: (a) deadline NOT BUILT: ticket G10 plan review round 1 done (NOT READY: 5 Blocker incl. 3 existing tests that go red); v3 drafting; plan review round 2 by 10:50Z; build after a clean review; (b) rates: published wording drafted in G10 and the split is measured (evidence committed e70aecaa9); (c) Latin split DONE. E12 DONE (92 of 96, the 4 survivors under fix: Q9 review-fix builder), Q16 DONE (349e6ca0c). Other plan reviews: G4 v5 round 5 (readiness NOT READY: 1 Blocker (gate mutant R8 removal turns test_gate_mutants_picked_up red), codebase pending); G8 v3 round 3 (readiness NOT READY narrowly: 5 text Majors; codebase pending).
-PUSHED_UTC: 2026-11-20T10:19:56+00:00
+NEXT: ORDER 023 STATUS (10:28Z): E9 (1) DONE (a4b2ce2), E9 (2) DONE merged (e8ff6de2b + c4d68c6ef), E9 (3) DONE (is_masked: no consumer, promises withdrawn); E9 fresh result review round 2: starts 10:40Z. E10 fixed point: ticket G9 v1 plan review round 1 done (NOT READY, 3 Blocker + 13 Major); v2 drafting (agent a6219c90); plan review ROUND 2 commit 10:45Z, ROUND 3 (last) 11:15Z, build after clean review, result review until clean. E11 deadline in text fold: ticket G10 v2 plan review round 1 done (5 Blocker); v3 drafting (agent a9111b4b); plan review ROUND 2 commit 10:50Z, build after clean review. False-hit numbers published (G1-false-hits-and-cost.md, dated 2026-11-20). Merged-tree batch 6 (16 files, -n 3) after G7 round 7 + E9 fix + Q9: 2772 passed, 1 skipped, 5 xfailed in 136 s (MEASURED 10:27Z). Running: Q9 review-fix builder, G9 v2, G10 v3, G4 v6, G8 v4 drafters. No test batch running now.
+PUSHED_UTC: 2026-11-20T10:23:47+00:00
 
-(15:53 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:57 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |

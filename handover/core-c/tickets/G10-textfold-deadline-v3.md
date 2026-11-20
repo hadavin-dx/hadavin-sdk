@@ -529,19 +529,23 @@ fail-before of each assertion is the mutant run of phase 4 (each mutant puts bac
 Phase 1, guard/textnorm.py (3.3, 3.4, 3.7) and the four pin edits that follow from it: tests/test_textnorm.py:1200-1241,
 tests/test_textnorm_fixbatch.py:666-668, tests/test_textnorm_callers.py:226, tests/test_textnorm_order137.py:494. Then
 `uv run ruff format src/hadavin_sdk/guard/textnorm.py && uv run ruff check src/hadavin_sdk/guard/textnorm.py` and
-`uv run pytest -n 3 -m "not live and not perf" $TN_ALL $INJ $CANARY`. EXPECTED RED until phase 5 (and only these):
-`tests/test_textnorm.py::test_the_manifest_pins_the_files_a_demo_copies` (hash), and the meta tests that read the mutant list against the source:
-`tests/test_textnorm_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets` (4 textnorm old strings gone) until phase 4.
-Without the four pin edits these are red too (measured on HEAD tests + the prototype source): `test_the_public_names_are_exactly_the_listed_thirty_six`,
-`test_the_module_docstring_lists_every_public_name`, `test_refusal_handlers_has_five_entries_and_the_banned_names_follow_textnorm`,
-`test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused` (and see 14 for the exact red list).
+`uv run pytest -n 3 -m "not live and not perf" $TN_ALL $INJ $CANARY`. EXPECTED RED after phase 1 (and only these three):
+`tests/test_textnorm.py::test_the_manifest_pins_the_files_a_demo_copies` (hash; until phase 5),
+`tests/test_textnorm_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets` (4 textnorm old strings gone; until phase 4),
+`tests/test_textnorm_meta.py::test_the_split_of_the_mutants_into_behaviour_and_wording_only_is_derived_from_the_syntax_trees` (it applies every
+mutant; until phase 4). Without the four pin edits these four are red too (measured, 14 item 3):
+`tests/test_textnorm.py::test_the_public_names_are_exactly_the_listed_thirty_six`,
+`tests/test_textnorm_fixbatch.py::test_the_module_docstring_lists_every_public_name`,
+`tests/test_textnorm_callers.py::test_refusal_handlers_has_five_entries_and_the_banned_names_follow_textnorm`,
+`tests/test_textnorm_order137.py::test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused`.
 Phase 2, guard/injection.py (3.6), defaults.py (3.8 and 8.2), the fixbatch lint (:323) and the round2 perf row (:344, :355). Same commands
-(ruff on the two files). EXPECTED RED: the manifest test; meta g (now also the 5 injection old strings) until phase 4.
-`tests/test_textnorm_fixbatch.py::test_no_caller_in_the_package_omits_the_value_or_the_scripts` is red if its pin edit is left out.
-Phase 3, the new test file (section 5) and the meta lines that do not count mutants (:179 killer set, :190 uniqueness list) together with the
-`DL` constant and `TESTS` of tests/textnorm_mutants.py. `uv run pytest tests/test_textnorm_deadline.py -v`: 10 GREEN. Meta: red until phase 4
-(g, and the count tests :90, :204, :367 once the list grows).
-Phase 4, the mutant list: the 9 re-points (6.2), the 13 new mutants (6.1), the docstring (:12), the meta counts (4.1). Then
+(ruff on the two files). EXPECTED RED: the same three (meta g now also misses the 5 injection old strings).
+`tests/test_textnorm_fixbatch.py::test_no_caller_in_the_package_omits_the_value_or_the_scripts` is red if its pin edit is left out (measured).
+Phase 3, the new test file (section 5), the meta uniqueness list (:190), and the `DL` constant and `TESTS` of tests/textnorm_mutants.py
+(meta :173-177 still holds: `TESTS[:3]`, `TESTS[-1] == D`, no perf/meta/notices file). `uv run pytest tests/test_textnorm_deadline.py -v`:
+10 GREEN. Still red: the same three as phase 2.
+Phase 4, the mutant list: the 9 re-points (6.2), the 13 new mutants (6.1), the docstring (:12), the meta counts and the killer-file set (4.1;
+the killer set must change in the same edit as the first `test_file=DL` mutant, else it is red). Then
 `uv run pytest tests/test_textnorm_meta.py`: GREEN (25 tests with the deadline file, measured: the meta file alone is the gate).
 Run every new and re-pointed mutant ALONE: `uv run python tests/textnorm_mutants.py "deadline:"` and, one at a time,
 `uv run python tests/textnorm_mutants.py "<name>"` for each of the 9 re-pointed names and the two `injection:` names of 6.1. NOTE: each run
@@ -677,10 +681,47 @@ that fit the box at low load". It does not choose D1-D10; the defaults below are
 <PENDING>
 
 ## 13. NOT verified
-<PENDING>
+- The perf rows (`-m perf`: tests/test_textnorm_round2.py ceiling rows with the budget patched, tests/test_textnorm_perf.py): not run.
+- The `uv run python tests/textnorm_mutants.py "<name>"` command form (it runs the 11-file baseline first); the drafter used `run_mutants`
+  with the killer's file only. The whole 253-mutant run: not run.
+- The full repository suite outside TN_ALL, INJ and CANARY (other callers of `injection_check` through k5, k1b, approvals): not run; they reach
+  the detector only through `RegexDetector.check`, whose verdicts are unchanged with a 30 s budget on short texts.
+- The overhead of the readings on the v3 prototype (v2's figure is reused; v3 adds three readings per call).
+- Python 3.12; a slower machine; the GIL-contended case (a thread that waits does not advance its clock: by the clock's definition, not run).
+- The SECURITY lines of 8.4 (the lane applies them) and the "G1 review table" edit.
+- The redactor's view-building stretch as one figure (D8).
 
-## 14. What the drafter ran
-<PENDING>
+## 14. What the drafter ran (all on scratch copies; the repo tree was not edited except this file; no commit, no stash, no branch switch)
+Scratchpad `/tmp/claude-0/-home-user/1ecfcb92-30a8-505b-a8c3-27491ed2aff6/scratchpad/g10v3/`: `base` = `git archive` of HEAD 746cab51f (code
+equal to 78a0c8bcf); `proto` = base + `scripts/patch_src.py` (textnorm.py, injection.py, defaults.py) + `ruff format` + `scripts/patch_tests.py`
+(the new test file from `files/`, the pin edits, the mutant list, the meta test) + `scripts/patch_docs.py` (manifest hash, the CHANGELOG item
+from `files/changelog_item.md`); `scripts/build.sh` rebuilds it from base in one go. Python 3.13.18 (the repo's .venv), Unicode 15.1.0, 4 cores;
+every pytest run with `PYTHONPATH=<tree>/src` (the venv's editable install points at the repo; the deadline tests passing proves the tree's src
+was imported). Load 1.4 to 4.2 during the runs; one heavy process at a time; `-n 3` at most.
+1. `ruff format` + `ruff check` of the edited source and test files: clean (one pre-existing BLE001 at tests/test_textnorm_round2.py:222 at HEAD,
+   not touched).
+2. Fail-before: the new test file against HEAD's source: collection error `ImportError: cannot import name 'DeadlinePassed'` (10 of 10 red by name).
+3. HEAD's tests against the prototype's three source files (`g10v3/p2`), `pytest -n 3 -m "not live and not perf"` over TN_ALL (less the new
+   file), INJ and CANARY: 8 failed, 1,216 passed. The 8: `tests/test_textnorm.py::test_the_manifest_pins_the_files_a_demo_copies`,
+   `tests/test_textnorm.py::test_the_public_names_are_exactly_the_listed_thirty_six`,
+   `tests/test_textnorm_callers.py::test_refusal_handlers_has_five_entries_and_the_banned_names_follow_textnorm`,
+   `tests/test_textnorm_fixbatch.py::test_no_caller_in_the_package_omits_the_value_or_the_scripts`,
+   `tests/test_textnorm_fixbatch.py::test_the_module_docstring_lists_every_public_name`,
+   `tests/test_textnorm_order137.py::test_exactly_the_cap_in_scan_keys_is_allowed_and_one_over_is_refused`,
+   `tests/test_textnorm_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets`,
+   `tests/test_textnorm_meta.py::test_the_split_of_the_mutants_into_behaviour_and_wording_only_is_derived_from_the_syntax_trees` (it applies every
+   mutant to parse it; a missing old string fails it). No other test went red: the reviewers' three plus the five this ticket names.
+4. The whole prototype: MUST-STAY-GREEN (not perf): 1,234 passed in 154 s. `tests/test_textnorm_deadline.py` + `tests/test_textnorm_meta.py`:
+   25 passed. `split_counts()`: (241, 12); `len(M)` 253; no G10 mutant is wording-only.
+5. Mutants, with `tools.mutation_runner.run_mutants` (the runner's own rules: unmutated baseline first, `judge` with `expect` and `pinned`) and the
+   test list cut to the killer's file (`scripts/runmut.py`; the full `tests/textnorm_mutants.py "<name>"` form runs the baseline of all 11 files
+   first and was not used): the 13 new: 13 KILLED in 12 s (first lines: DEADLINE-SPENT ... answered True for 'Mary'; DEADLINE-NOT-FALSE ...
+   answered False for 'Mary'; DEADLINE-NOT-SIZE: 4 reads after the deadline, not 1; DEADLINE-TYPE: True gave DeadlinePassed, not NotText;
+   DEADLINE-POINTS x6 and NO-VALUE-POINTS with the changed sequence; DEADLINE-INJECTION ... not flagged (None); BUDGET-UNCHECKED: True was taken
+   as a budget). The 9 re-pointed: 9 KILLED (T: 3 in 135 s; FB: 2; O: 1; Q9: 3, the parametrized `[300]` pin included), each with its old message.
+6. The measurements of section 12 (`scripts/overrun.py`, `scripts/seq.py`).
+NOT run: the perf rows (`-m perf`), the full suite outside the listed files, the `tests/textnorm_mutants.py` command form, Python 3.12, a
+slower machine, the 2,000-value rows, any evidence run.
 
 ## 15. Findings of review round 1: TAKEN or CONTESTED
 Readiness reviewer:
