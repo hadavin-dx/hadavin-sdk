@@ -131,6 +131,7 @@ T9 = "tests/triggers/test_d_fix9_e1fix2.py"
 T13 = "tests/triggers/test_d_fix13_single_write.py"
 T14 = "tests/triggers/test_d_fix14_single_write_edges.py"
 T18 = "tests/triggers/test_d_fix18_door_fixes.py"
+T28 = "tests/triggers/test_d_fix28_make_app_bounds.py"
 HMAC = "src/hadavin_sdk/approvals/hmac_v0.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
@@ -202,7 +203,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW, T6, T8, T9, T13, T14, T18]
+TESTS = [TE, TC, TS, TP, TW, T6, T8, T9, T13, T14, T18, T28]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -923,9 +924,9 @@ M = [
         WORKER,
         "    except ValueError as exc:  # these messages name senders and bounds, never a value\n",
         "    except KeyError as exc:  # these messages name senders and bounds, never a value\n",
-        TW,
-        "test_n15_make_app_turns_a_bound_into_a_config_error",
-        "ValueError: max_running must be at most 64",
+        T28,
+        "test_make_app_turns_a_runner_only_bound_into_a_config_error[kw0-poll_s]",
+        "ValueError: poll_s must be between 0.01 and 1",
         allow_crash=True,
         crash_type="ValueError",
     ),

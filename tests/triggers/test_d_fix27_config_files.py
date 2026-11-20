@@ -111,7 +111,15 @@ def test_a_registry_file_that_cannot_be_read_exits_2_naming_the_file(
     code = worker.main(["--port", "0"])
     err = capsys.readouterr().err
     assert (code, degraded) == (2, [])
-    assert "principals.yaml" in err and "could not be read" in err
+    # the class name always; the real file path when the error carries one (never only the generic fallback text,
+    # which also contains "principals.yaml")
+    cls = {"directory": "IsADirectoryError", "permission": "PermissionError"}.get(
+        how, "UnicodeDecodeError"
+    )
+    assert cls in err
+    if how == "directory":
+        assert str(path) in err
+    assert "could not be read" in err
 
 
 # --- (c) the file becomes unreadable while degraded -----------------------------------------------------
@@ -155,7 +163,10 @@ def test_a_registry_file_that_becomes_unreadable_during_degraded_retries_exits_2
 
     state = {"readable": True}
 
+    calls: list[int] = []
+
     def build(*_a, **_k):
+        calls.append(1)
         state["readable"] = False
         raise ConnectionRefusedError("down")
 
@@ -168,7 +179,7 @@ def test_a_registry_file_that_becomes_unreadable_during_degraded_retries_exits_2
     monkeypatch.setattr(hadavin_sdk.registry, "load_registry", load_registry)
     out, thread = _run_main_in_thread(["--port", "0"])
     assert not thread.is_alive()
-    assert out == [2]
+    assert out == [2] and len(calls) == 1
     err = capsys.readouterr().err
     assert "principals.yaml" in err and "PermissionError" in err
 
@@ -320,3 +331,41 @@ def test_the_comment_does_not_claim_a_defaults_name_that_does_not_exist():
     if not hasattr(defaults, "TRIGGER_MAX_RUNNING"):
         assert "defaults.TRIGGER_MAX_RUNNING" not in head
         assert "not yet in this tree" in head
+
+
+def test_a_config_file_that_is_a_symlink_to_a_target_outside_the_root_is_a_config_error(tmp_path):
+    root = tmp_path / "cfg"
+    root.mkdir()
+    outside = tmp_path / "mounted" / "secret.yaml"
+    outside.parent.mkdir()
+    outside.write_text("x: 1\n")
+    link = root / "principals.yaml"
+    link.symlink_to(outside)
+    exc = PermissionError(13, "Permission denied", str(link))
+    assert worker._is_config_file_error(exc, root) is True  # lexically under the root
+    assert worker._is_config_file_error(PermissionError(13, "x", str(outside)), root) is False
+    assert (
+        worker._is_config_file_error(PermissionError(13, "x", str(root / "a.yaml")), root) is True
+    )
+    assert worker._is_config_file_error(PermissionError(13, "x"), root) is False
+
+
+@pytest.mark.parametrize("raised", [SystemExit(5), GeneratorExit(), KeyboardInterrupt()])
+def test_a_base_exception_from_a_recheck_is_fatal_exit_3_not_a_silent_dead_thread(
+    monkeypatch, capsys, raised
+):
+    _fast_recheck(monkeypatch)
+    calls: list[int] = []
+
+    def build(*_a, **_k):
+        calls.append(1)
+        if len(calls) == 1:
+            raise ConnectionRefusedError("down")
+        raise raised
+
+    _patch_start(monkeypatch, _settings(), build)
+    out, thread = _run_main_in_thread(["--port", "0"])
+    assert not thread.is_alive(), "the recover thread died and the worker stayed degraded forever"
+    assert out == [3] and len(calls) == 2
+    err = capsys.readouterr().err
+    assert type(raised).__name__ in err and "Traceback" not in err

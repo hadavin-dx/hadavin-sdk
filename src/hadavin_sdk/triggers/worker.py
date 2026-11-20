@@ -948,7 +948,9 @@ def _is_config_file_error(exc: OSError, root: Any) -> bool:
     if not name or root is None:
         return False
     try:
-        return Path(name).resolve().is_relative_to(Path(root).resolve())
+        path, base = Path(name), Path(root)
+        # lexically (a config file that is a symlink to a mounted secret outside the root) or resolved
+        return path.is_relative_to(base) or path.resolve().is_relative_to(base.resolve())
     except (OSError, ValueError, TypeError):
         return False
 
@@ -1120,7 +1122,17 @@ class _Degraded:
         while not self._stopped.wait(HEALTH_RECHECK_S):
             try:
                 wsgi, runner = _recover(self._args)
-            except Exception as exc:  # noqa: BLE001 - the class name only: the text could hold a value
+            except BaseException as exc:  # noqa: BLE001 - the class name only: the text could hold a value
+                if not isinstance(exc, Exception):
+                    # SystemExit, GeneratorExit, KeyboardInterrupt: the thread would end quietly and leave the
+                    # worker degraded forever. Fatal like a config error, but exit 3 (a failure, not a config).
+                    _LOG.error(
+                        "trigger worker: store re-check stopped (%s): exiting", type(exc).__name__
+                    )
+                    self.fatal = exc
+                    if self.on_fatal is not None:
+                        self.on_fatal()
+                    return
                 if isinstance(exc, AnyConfigError) and not is_connectivity_error(exc):
                     self.fatal = exc  # retrying cannot fix a configuration error
                     if self.on_fatal is not None:
@@ -1205,6 +1217,9 @@ def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
     degraded.start()
     code = serve(server, degraded)
     if degraded.fatal is not None:
+        if not isinstance(degraded.fatal, Exception):
+            print(f"trigger worker: start failed: {type(degraded.fatal).__name__}", file=sys.stderr)
+            return EXIT_FAILED
         _print_config_error(degraded.fatal)
         return EXIT_CONFIG
     return code
