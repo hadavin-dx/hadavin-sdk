@@ -1,0 +1,40 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /home/user/hadavin-sdk
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 346 items
+
+tests/triggers/test_t5_crash_matrix_paths.py::test_trace_of_a_path_without_a_crash_matches_its_table[read] PASSED [  0%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_trace_of_a_path_without_a_crash_matches_its_table[propose] PASSED [  0%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_trace_of_a_path_without_a_crash_matches_its_table[approve] PASSED [  0%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_the_tables_are_well_formed PASSED [  1%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read01-store.create_run-1-before] PASSED [  1%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read01-store.create_run-1-after] PASSED [  1%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read02-audit.write_outcome-1-before] PASSED [  2%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read02-audit.write_outcome-1-after] PASSED [  2%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read03-loop.get_run-1-before] PASSED [  2%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read03-loop.get_run-1-after] PASSED [  2%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read04-store.transition-1-before] PASSED [  3%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read04-store.transition-1-after] PASSED [  3%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read05-audit.write_outcome-2-before] PASSED [  3%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read05-audit.write_outcome-2-after] PASSED [  4%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read06-store.get_kill_switch-1-before] PASSED [  4%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read06-store.get_kill_switch-1-after] PASSED [  4%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read07-store.spend_totals-1-before] PASSED [  4%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read07-store.spend_totals-1-after] PASSED [  5%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read08-store.put_redaction_map-1-before] PASSED [  5%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read08-store.put_redaction_map-1-after] PASSED [  5%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read09-store.put_redaction_map-2-before] PASSED [  6%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read09-store.put_redaction_map-2-after] PASSED [  6%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read10-store.get_kill_switch-2-before] PASSED [  6%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read11-store.spend_totals-2-before] PASSED [  6%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read12-store.touch-1-before] PASSED [  7%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read12-store.touch-1-after] PASSED [  7%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read13-llm.chat-1-before] PASSED [  7%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read13-llm.chat-1-after] PASSED [  8%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read14-store.add_spend-1-before] PASSED [  8%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read14-store.add_spend-1-after] PASSED [  8%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read15-store.add_cost-1-before] PASSED [  8%]
+tests/triggers/test_t5_crash_matrix_paths.py::test_pg_kill_at_point[read15-store.add_cost-1-after] PASSED [  9%]
+tests/triggers/test_t5_crash_matrix_paths.p

@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T06:46:36Z
+UPDATED_UTC: 2026-11-20T06:48:01Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 48
-ITEMS_OPEN: 12
-PERCENT: 81
-AGENTS_RUNNING: 6
-CAPACITY: load 1.18 of 4 cores (1-minute average), mem 0.9/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_TOTAL: 49
+ITEMS_OPEN: 11
+PERCENT: 84
+AGENTS_RUNNING: 4
+CAPACITY: load 1.79 of 4 cores (1-minute average), mem 1.2/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 533M /home/user/hadavin-sdk; 377M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T06:46:32Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:46:39Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -53,7 +53,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | B4-fuzz | fuzz test for the endpoint: 2000 seeded requests in-process, 300 over a real socket, 300 on PostgreSQL | DONE with 1 FINDING (fix queued) | 100 | tests/triggers/test_t5_fuzz.py, raw/D-fuzz-pg16.log | 1 | 2000 requests in-process (39 percent fully valid), 301 over a raw socket, 300 on PostgreSQL 16: no row for an unsigned request, no text in a refusal, store equal to the oracle. FINDING: a request line with HTTP version 2.0 or higher gets 505 from the standard library parser (a 5xx that is not 503; empty body, no row): kept as a strict expected-failure. Also pinned, not failures: a request with no HTTP version gets no answer and a WARNING line 'AttributeError'; header names with underscores are accepted as if they were hyphens; of two different Content-Length headers the first wins. NOT covered: concurrent requests, a moving clock, the 503 paths (next item) |
 | B5-matrix | crash matrix for step D: kill at every store call on the request path, PostgreSQL 16, expected end state per point | DONE | 100 | tests/triggers/test_t5_crash_matrix.py, CRASH-MATRIX.md, raw/D-crash-matrix-pg16.log | 1 | 83 passed in 54 s: 43 kill points on PostgreSQL 16 (child process killed), 39 on memory; NO finding: at most one row per key, at most one model call across kill and retry, nothing left open after the tick. LIMITS: only the path where the model says 'nothing to do'; run 1 had 1 failure from the test itself (it read 'no row' before the dead process's database session had ended), fixed, 2 of 3 tries used. Read from code, NOT asserted: a kill after the final state write leaves a final row without its audit event and card; a kill between the model call and the spend booking leaves one model call uncounted |
 | B6-fstore | run my 102 spend contract tests against core-b's pushed F-store code (memory and PostgreSQL 16); failures are findings | DONE | 100 | FINDINGS-core-b-F-store.md (my shortened copy; the agent was not allowed to write it), raw/F-store-*.log, tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py | 1 | on core-b f390b7d6e: 183 passed, 4 strict expected-failures, 0 skipped (memory and PostgreSQL 16). 2 findings: F1 the memory store books the amount before it builds the row, so a refused reserve leaks budget for good; F2 a huge cap gives a driver error on PostgreSQL. T1: 50 connections, cap 3.00, amount 1.00: 3 granted, 47 refused, 50 distinct database processes; control (old pattern): 50 of 50 admitted. core-b's OWN tests for this step are not on its branch. 2 of our 102 tests were corrected because the interface changed (12 decimal places; settled amount after expiry), none weakened |
-| B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | RUNNING | 5 | FINDINGS-core-c-G7-redaction.md (not yet) | 1 | backlog 7 |
+| B7-g7 | non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora) | DONE | 100 | FINDINGS-core-c-G7-redaction.md, tests/test_redact_idempotence_property.py, raw/G7-property-on-core-c*.log | 1 | on core-c 17f4534a4: 154 passed, 8 xfailed; 2 findings still open (G7-F3 a phone number followed by a full stop is not masked; G7-F4 a secret written once with a full-width letter and once plainly: the plain copy stays readable after one pass); core-c fixed F1 and F2 at 06:23 (commit 486498470) |
 | B8-text | README, SECURITY and CHANGELOG text for steps D and E as a request to core-b | READY (mine) | 0 | requests/002-readme-security-text.md exists (18 sentences); to extend after ORDER 015 facts | 0 | I do this one myself while agents run |
 | B9-review | hostile re-read of all my own code with egm:egm-design, one round, and fix | RUNNING (fix pass, 2 builders) | 60 | reviews/code-D-design-review-1.md | 1 | review done; fixes DONE and tested by sonnet agents: server/endpoint/crash (397 passed), worker (255 passed, 1 skipped; 20 new worker tests fail on the old worker: 18 of 20). A fresh second pass by an EGM reviewer is still MISSING (EGM-LEDGER) |
 | O17-A | lead review round 2, Major A: template cannot produce a valid request | DONE | 100 | n8n/, raw/n8n-template-tests-2.log | 0 | all points re-checked in the files; the two negative tests added |
@@ -63,11 +63,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | O17-main | start-refusal test through main with a real config | DONE | 100 |  | 1 | same as O14-3 |
 | B5b-matrix-paths | crash matrix part 2: kills on the paths with a read-tool call, a proposal waiting for approval, and (if buildable) execute and verify; retry before and after the tick | RUNNING | 5 | raw/D-crash-matrix-paths-pg16.log (not yet) | 1 | ORDER 016 item 4b (more hostile tests for my guarantee paths): part 1 covered only the 'nothing to do' path; started in the same batch part 1 returned in |
 | CFG-2 | update tests/test_trigger_config.py to core-b's new head: its fixes make all 16 strict expected-failures pass (so the file shows 17 failures there until the markers are removed); add tests for the bound reader | RUNNING | 5 | raw/trigger-config-tests-on-core-b-run2.log (not yet) | 1 | found by the trial integration; started in the same batch |
-| METER | non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py | RUNNING | 5 | raw/meter-contract-on-core-b.log (not yet) | 1 | ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch |
+| METER | non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py | DONE | 100 | FINDINGS-core-b-meter.md, tests/contracts/test_meter.py, raw/meter-contract-on-core-b*.log | 1 | on core-b d0cac9693: 259 passed, 3 xfailed; open: M1 memory-store Limits refuses a reserve with a non-text run id but leaves the amount booked (same class as store finding F1); 5 planted bugs all caught (weakest: month cap, 3 tests); core-b built the in-memory Budget since, so the 65 skips are gone. Not checked: planted bugs in the PostgreSQL store |
 | M1-template | n8n template: a REQUIRED state check after every 202 (ask again with the same key until the run leaves RECEIVED or WORKING; a person-state goes to the error workflow) + README 'a 202 is not the end' | DONE in the files; NOT run in n8n | 100 | n8n/, tests/triggers/test_n8n_template.py, raw/n8n-template-tests-4.log | 1 | after the restart the template checks gave 193 passed (first run 1 failed: a list order in the JSON, cosmetic, fixed; lint fixed). Graph and README numbers re-checked against tick.py and models.py: they match. 27 UNVERIFIED marks remain. Not run in n8n: the 7 new nodes, the 45-check loop, signing. Known gap: the workflow cannot tell a dead run from a live one, and WAITING_FOR_APPROVAL ends it as a success |
 | B4b-fuzz-concurrent | concurrent fuzz: 16 client threads, store outages and slowness, a moving clock, raw sockets from 8 threads, PostgreSQL, close under load | RUNNING | 5 | raw/D-fuzz-concurrent-pg16.log (not yet) | 1 | ORDER 016 item 4b: the first fuzz was sequential and never reached the 503 paths |
-| EGM-SEQ | owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report) | RUNNING | 10 | EGM-LEDGER.md | 1 | step 1 running: two fresh reviewers on step E, started through the review-loop skill; session check at 06:44Z: get_session says model claude-sonnet-5-5 and last served claude-sonnet-5-5 (a harness line still said Fable: stale label, the record says Sonnet); the rest of the sequence waits for the builders |
+| EGM-SEQ | owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report) | RUNNING | 20 | EGM-LEDGER.md | 1 | step E: round 1 of 3 done (2 fresh reviewers on sonnet, resolve through the skill): no Blocker, 5 Major, report reviews/E-result-review-1.md; fixes by a separate builder started now; then an evidence runner, then round 2. The same sequence for step D, the tests and the n8n template waits for the other builders to end |
 | FU-3 | follow-ups: Retry-After 1 on 503, rename trigger_resolve to trigger_secret in 2 test helpers and delete the old-name fallback in worker.py | RUNNING | 5 | raw/DR3-followups-tests.log (not yet) | 1 | from the worker builder's report |
+| E-fix-1 | step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts) | RUNNING | 5 | reviews/E-result-review-1.md | 1 | EGM sequence: fix by a builder who is not the reviewer |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -114,20 +115,33 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | sn-n8n | builder | sonnet | run and fix the n8n template tests and README numbers (RESUME-NOTE 3) | 06:38 | ended | 100 | done | n/a | 0 (restart after the Fable limit) | finished, 79k tokens |
 | sn-matrix | builder and evidence runner | sonnet | crash matrix part 2 (RESUME-NOTE 4) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
 | sn-fuzz | builder (tests) | sonnet | concurrent fuzz (RESUME-NOTE 5) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
-| sn-findings | evidence runner | sonnet | findings files for the meter and G7 tests (RESUME-NOTE 6, 7) | 06:38 | about 40 min after start | 3 | running | n/a | 0 (restart after the Fable limit) | restart after the Fable limit; RESUME-NOTE is the brief |
-| egm-E-codebase | reviewer (egm:egm-codebase-details, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | RESULT review of step E: crash.py against ticket E, the builder's tests and the evidence logs | 06:44 | about 15 min | 5 | running | 1 of 3 | 0 | EGM sequence, missing result review (EGM-LEDGER.md) |
-| egm-E-design | reviewer (egm:egm-design, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | hostile design review of the same result | 06:44 | about 15 min | 5 | running | 1 of 3 | 0 | EGM sequence |
+| sn-findings | evidence runner | sonnet | findings files for the meter and G7 tests (RESUME-NOTE 6, 7) | 06:38 | ended | 100 | done | n/a | 0 (restart after the Fable limit) | finished, 150k tokens |
+| egm-E-codebase | reviewer (egm:egm-codebase-details, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | RESULT review of step E: crash.py against ticket E, the builder's tests and the evidence logs | 06:44 | ended | 100 | done | 1 of 3 | 0 | finished; served model claude-sonnet-5-5 (transcript) |
+| egm-E-design | reviewer (egm:egm-design, fresh, not the author) | sonnet (explicit on the call; the egm plugin line is sonnet too) | hostile design review of the same result | 06:44 | ended | 100 | done | 1 of 3 | 0 | finished; served model claude-sonnet-5-5 (transcript) |
 | sn-fu3 | builder | sonnet | Retry-After header, reader rename, fallback removal, one test run and one mutant run | 06:46 | about 15 min | 5 | running | n/a | 0 | follow-ups; 6 agents run |
+| e-fix1 | builder | sonnet | applies F2 to F9 to crash.py and test_testing_crash.py | 06:48 | about 20 min | 5 | running | step E round 1 of 3 (fix pass) | 0 | result review round 1 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 1927s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 1927s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 1927s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 1927s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 1927s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 1927s ago | running | matched by name in ps |
+| 1023 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 48s ago | running | matched by name in ps |
+| 1026 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 48s ago | running | matched by name in ps |
+| 1051 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 48s ago | running | matched by name in ps |
+| 1057 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 48s ago | running | matched by name in ps |
+| 2219 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 14s ago | running | matched by name in ps |
+| 2250 | uv run --all-extras --group test pytest -v -p no:cacheprovider --durat | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 2257 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 2505 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 2538 | /home/user/hadavin-sdk/.venv/bin/python3 -m tests.triggers.crash_launc | core-a session or its agent | 4s ago | running | matched by name in ps |
+| 3109 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 2011s ago | running | matched by name in ps |
+| 31435 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 83s ago | running | matched by name in ps |
+| 32556 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 64s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

@@ -307,11 +307,11 @@
   {
    "item": "B7-g7",
    "what": "non-builder property tests for core-c's redaction fix G7 (idempotence over the corpora)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "FINDINGS-core-c-G7-redaction.md (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "FINDINGS-core-c-G7-redaction.md, tests/test_redact_idempotence_property.py, raw/G7-property-on-core-c*.log",
    "tries": 1,
-   "reason": "backlog 7"
+   "reason": "on core-c 17f4534a4: 154 passed, 8 xfailed; 2 findings still open (G7-F3 a phone number followed by a full stop is not masked; G7-F4 a secret written once with a full-width letter and once plainly: the plain copy stays readable after one pass); core-c fixed F1 and F2 at 06:23 (commit 486498470)"
   },
   {
    "item": "B8-text",
@@ -397,11 +397,11 @@
   {
    "item": "METER",
    "what": "non-builder contract tests for core-b's meter (Limits and the in-memory Budget): tests/contracts/test_meter.py",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/meter-contract-on-core-b.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "FINDINGS-core-b-meter.md, tests/contracts/test_meter.py, raw/meter-contract-on-core-b*.log",
    "tries": 1,
-   "reason": "ORDER 016 item 4c; core-b's own tests for the spend step are not on its branch"
+   "reason": "on core-b d0cac9693: 259 passed, 3 xfailed; open: M1 memory-store Limits refuses a reserve with a non-text run id but leaves the amount booked (same class as store finding F1); 5 planted bugs all caught (weakest: month cap, 3 tests); core-b built the in-memory Budget since, so the 65 skips are gone. Not checked: planted bugs in the PostgreSQL store"
   },
   {
    "item": "M1-template",
@@ -425,10 +425,10 @@
    "item": "EGM-SEQ",
    "what": "owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report)",
    "state": "RUNNING",
-   "percent": 10,
+   "percent": 20,
    "evidence file": "EGM-LEDGER.md",
    "tries": 1,
-   "reason": "step 1 running: two fresh reviewers on step E, started through the review-loop skill; session check at 06:44Z: get_session says model claude-sonnet-5-5 and last served claude-sonnet-5-5 (a harness line still said Fable: stale label, the record says Sonnet); the rest of the sequence waits for the builders"
+   "reason": "step E: round 1 of 3 done (2 fresh reviewers on sonnet, resolve through the skill): no Blocker, 5 Major, report reviews/E-result-review-1.md; fixes by a separate builder started now; then an evidence runner, then round 2. The same sequence for step D, the tests and the n8n template waits for the other builders to end"
   },
   {
    "item": "FU-3",
@@ -438,6 +438,15 @@
    "evidence file": "raw/DR3-followups-tests.log (not yet)",
    "tries": 1,
    "reason": "from the worker builder's report"
+  },
+  {
+   "item": "E-fix-1",
+   "what": "step E fixes F2 to F9 from the result review (tests that kill the surviving mutants, opt-in latch and claim, wrap refuses async and dunder, atomic flag write, stale flag check, docstring facts)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/E-result-review-1.md",
+   "tries": 1,
+   "reason": "EGM sequence: fix by a builder who is not the reviewer"
   }
  ],
  "agents": [
@@ -990,41 +999,41 @@
   {
    "model": "sonnet",
    "started UTC": "06:38",
-   "percent": 3,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": "0 (restart after the Fable limit)",
    "id": "sn-findings",
    "role": "evidence runner",
    "what exactly it is doing": "findings files for the meter and G7 tests (RESUME-NOTE 6, 7)",
-   "expected end": "about 40 min after start",
-   "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+   "expected end": "ended",
+   "reason": "finished, 150k tokens"
   },
   {
    "model": "sonnet (explicit on the call; the egm plugin line is sonnet too)",
    "started UTC": "06:44",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "id": "egm-E-codebase",
    "role": "reviewer (egm:egm-codebase-details, fresh, not the author)",
    "what exactly it is doing": "RESULT review of step E: crash.py against ticket E, the builder's tests and the evidence logs",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence, missing result review (EGM-LEDGER.md)"
+   "expected end": "ended",
+   "reason": "finished; served model claude-sonnet-5-5 (transcript)"
   },
   {
    "model": "sonnet (explicit on the call; the egm plugin line is sonnet too)",
    "started UTC": "06:44",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "id": "egm-E-design",
    "role": "reviewer (egm:egm-design, fresh, not the author)",
    "what exactly it is doing": "hostile design review of the same result",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished; served model claude-sonnet-5-5 (transcript)"
   },
   {
    "model": "sonnet",
@@ -1038,6 +1047,19 @@
    "what exactly it is doing": "Retry-After header, reader rename, fallback removal, one test run and one mutant run",
    "expected end": "about 15 min",
    "reason": "follow-ups; 6 agents run"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "06:48",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 1 of 3 (fix pass)",
+   "retries so far": 0,
+   "id": "e-fix1",
+   "role": "builder",
+   "what exactly it is doing": "applies F2 to F9 to crash.py and test_testing_crash.py",
+   "expected end": "about 20 min",
+   "reason": "result review round 1"
   }
  ],
  "tests": [
