@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Twenty groups, one per guarantee:
+first failing line that holds `expect`. Twenty-nine groups, one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -30,9 +30,29 @@ first failing line that holds `expect`. Twenty groups, one per guarantee:
     G19 store errors told from bugs (by type), no 409 from an exception type, the BaseException of a run thread, the
         memory-store warning
     G20 the bounds of Runner: max_running, ack_wait_s, poll_s, max_waiting, and make_app turning them into a ConfigError
+    G21 the quiet server's own bounds and hooks: the connection cap, the absolute read deadline (against a per-recv
+        timeout), `handle_error`, `process_request_thread`
+    G22 `Runner.close` sets the closed flag (read the log after a close: no ERROR line, the pool is never asked)
+    G23 the 409 of `_answer` on the agent of the row, and on the principal (two mutants, one killer test with two params)
+    G24 the header set of a refusal (a 401 with an `X-Reason` header)
+    G25 `sender_map`: a sender id listed twice
+    G26 `parse_body`: a duplicate member, and exactly the fields key and document
+    G27 `_content_length`: ASCII digits only
+    G28 `check_bind`: only the value True is the switch for a non-loopback host
+    G29 `check_senders`: agent not qualified, principal unknown, principal not of kind service
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
+
+G5a and G5b are ONE mutant (the same text change) with two killers, seen as the status (G5a) and by the parse spy (G5b).
+G20a and G20c are MESSAGE GUARDS: with the guard gone a later check still refuses the same value (the pool, or the
+POLL_S_MIN bound), so only the text of the ValueError differs; their `expect` is the failed `match=`.
+G12d and G18c are POSIX killers: their tests skip on win32 (no SIGTERM there). On win32 this script does NOT run them: it
+prints `NOT RUN HERE (win32, ...)` for each, lists them at the end and exits 3 (never 0, never a SURVIVED row).
+G7a: line 178 of `test_n2_before_crashes_and_nothing_was_written` is `assert fired == (..) and armed() is None`; only the
+second conjunct fails under the mutant, so the first E line is `assert (('...',) == ('...',)` with both sides equal, which
+no other fault gives (the `expect` carries the `AssertionError: assert ((` prefix).
+G29b is crash-accepted: without the unknown-principal refusal the next line, `principal.kind`, raises AttributeError on None.
 
 One test of `tests/triggers/test_worker.py`, `test_main_without_a_triggers_block_exits_2`, takes the fixture `cfg_dir` from
 `tests/conftest.py`. The runner runs pytest with `--noconftest` on purpose, so under it that test errors at setup and the
@@ -46,13 +66,10 @@ already refuse a NUL, so every bad triple is still a ValueError and the mutant S
 LEFT OUT of G13 to G20, found by a probe run (each was run once and SURVIVED):
   - the `len(senders) > MAX_SENDERS` line of `make_wsgi` is EQUIVALENT: with it gone, `check_secrets` (called next) refuses
     the same nine senders with the same text ("more than 8 trigger senders"). The check of `check_secrets` is G13c.
-  - `QuietServer.handle_error` (the override that logs the class name): TEST MISSING, no test reaches it. `handle` catches
-    every `Exception`, so it takes an error outside `handle` (a failing `setup` or `finish`, or a BaseException) with a
-    stderr capture: without the override the stdlib prints a traceback and the client address.
-  - `self._closed = True` in `Runner.close`: TEST MISSING. A closed Runner still answers 503 without it, because the
-    shut-down pool refuses the submit (RuntimeError, caught in `_decide` and logged as an internal error), so every
-    status test passes. A test must read the log: after `close`, a new key gives 503 with NO ERROR line and the pool
-    is not asked (`runner._pool.submit` is never called).
+  - `if closed: return NO_ACK` in `_decide` (the line after `_submit`): EQUIVALENT in the answer. With it gone the call goes
+    on with `job` None and the loop's own `if self._closed: return NO_ACK` gives the same 503 at its first look (one more
+    row read, no other difference). Not run.
+  (`QuietServer.handle_error` and `self._closed = True` were here as TEST MISSING; the tests now exist: G21c and G22.)
   G19c is the "409 from the exception type" mutant of the lead's list: a StaleState of `get_run` is turned into 409; the
   loop's own exceptions never reach `_decide` (`_run` swallows them), so the type check can only be placed there.
 
@@ -64,14 +81,20 @@ Two test files run a child process: `tests/triggers/test_t5_process.py` (G12d, c
 `test_t5_process.py` imports `make_cfg` from `tests/conftest.py` as a plain module and takes no fixture from it, so it
 runs under `--noconftest` as it is (the whole `tests` folder is in the copy). G12d waits out the 15 seconds of D3.
 Weak `expect` fragments (the line is a bare "DID NOT RAISE ValueError", or a bare boolean, so the kill rests on `pinned`):
-G13c to G13e, G14a to G14c, G18c ("assert (False)"), G20b, G20d to G20i. The `expect` of G11a is weak: the assertion message is the number of store reads, about 100 and not the same in every
+G13c to G13e, G14a to G14c, G18c ("assert (False)"), G20b, G20d to G20i, G25, G26a, G26b, G28, G29a, G29c, G21c and G21d (`AssertionError: []`: the log is empty). The `expect` of G11a is weak: the assertion message is the number of store reads, about 100 and not the same in every
 run, so only `AssertionError: ` is matched and the kill is tied to its test by `pinned` alone.
 
 Most killer assertions are bare (no message text), so `expect` is then a fragment of the compared VALUES in the first failing
 line (`400 == 401`, `== (409, {})`), and the kill is tied to its test by `pinned`. Run from the repo root (no database, no
-network; exit 0 only when every mutant is good, and the last line is `N of N good; problems: []`):
+network). The first lines are `# sha256` of the trigger files, `crash.py` and this script. Every `old` text must occur
+exactly once in its file or the script stops with `ERROR anchor ...` (exit 2) before anything runs. Exit 0 only when every
+mutant not on the KNOWN SURVIVORS list is good (KILLED, or CRASH where allowed) and every listed one still SURVIVES (a
+listed mutant that gets killed is a problem: take it off the list); the list (empty if every mutant has a killer test) is
+printed. A mutant with no killer test is written `mutant(..., known_survivor=True)`: its whole test file runs and the
+expected verdict is SURVIVED. The last lines are `N killed, M crash-accepted (names), K known survivors` and
+`N of N run are as expected; problems: []`. The run is POSIX (see G12d and G18c above):
 
-    uv run python tests/endpoint_mutants.py            # all; exit 1 if any is not good
+    uv run python tests/endpoint_mutants.py            # all; exit 1 if any is not as expected
     uv run python tests/endpoint_mutants.py G3         # only names that hold the text
 """
 
