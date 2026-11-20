@@ -785,19 +785,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 13:46: share work, one agent per item"
-  },
-  {
-   "id": "rev-wipci3",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "review round 3 (cap) of the CI agreement test",
-   "started UTC": "13:52",
-   "expected end": "10 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "3 of 3",
-   "retries so far": 0,
-   "reason": "fresh review of each diff"
   }
  ],
  "tests": [
@@ -1170,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:58 DECISION FOR LEAD (CI test cap round done): wip/core-a-for-ci (3ed2a8ca9) test_ci_python_matrix.py: 108 tests, ~900 lines, review round 3: NO Blocker/Major, no false positives on the real repo, regex correct. Reviewer's proportion verdict: over-built; trim to the real-file test + requires_floor + a pin collector + raw_below_floor + ~6 tests (CI floor below pyproject, pyproject floor above CI, extra newer job not main, unquoted 3.10, raw scan fires, raw scan clean on real .github). Known holes (documented): quoted versions in shell/Dockerfile text (ARG PYTHON_VERSION=\"3.11\"), newer-than-main only checked for YAML pins. Options: (A) take as is (works, ~10-20 s); (B) I trim to ~6 tests (one builder, ~15 min). DEFAULT if you say nothing: A. Also reviewed clean: wip/core-a-for-c-e14nits. Running: c-e19, grant-tests, max-running.",
   "13:55 wip/core-a-for-c-e14nits reviewed fresh: NO Blocker/Major (README 'unwired' list true for all 14 names, comments match code, mutants E14-9/10 pin the exact boundary, T5 gate test faithful). Ready for core-c to cherry-pick (9dd034a39).",
   "13:52 pushed: wip/core-a-for-c-e14nits (core-c items 1+5) and wip/core-a-for-ci (round 2); fresh reviews rev-ce14 and rev-wipci3 (cap round) running; also running: c-e19, grant-tests, max-running. Trailer in board.py now Sonnet 5.5.",
   "13:50 FABLE TRAILER: the 'Co-Authored-By: Claude Fable 5.2' trailer on my WIP snapshot commits came from MY OWN script handover/core-a/tools/board.py (hard-coded string, written at 05:21 when the harness then asked for Fable), NOT from the harness today: the harness attribution reminder I get now says 'Claude Sonnet 5.5'. Fixed: board.py now writes 'Claude Sonnet 5.5'. 34 Fable vs 11 Sonnet trailers since 12:00Z in git log (all Fable ones are that script). Board cron changed from every minute to every 5 minutes (old cron deleted, new */5). The snapshots every ~15 s were stop-hook turns (the hook asks to commit when files change), not cron: with agents editing files constantly they recur; I answer each with ONE board run. I do no waiting turns; real work runs only through agents with explicit model sonnet. get_session at 13:46: last_served_model sonnet-5-5.",
@@ -3552,6 +3540,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "review of wip/core-a-for-c-e14nits: NO Blocker/Major; README claim true for all 14 names; comments match agent_loop.py; mutants E14-9/E14-10 sound, T6/T7 pin exact boundaries; T5 gate test faithful; one nit (fixture placement)"
+  },
+  {
+   "id": "rev-wipci3",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review round 3 (cap) of the CI agreement test",
+   "started UTC": "13:52",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "3 of 3",
+   "retries so far": 0,
+   "reason": "CI test review round 3 (cap): NO Blocker/Major; no false positives on the real repo; regex correct; holes only below-floor misses in quoted shell/Dockerfile text and newer versions in run text (documented); 1 vacuous test (scan of empty tmp_path), 4 near-duplicates; PROPORTION: reviewer says trim to ~6 tests"
   }
  ]
 }

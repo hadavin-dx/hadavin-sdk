@@ -1,2 +1,29 @@
 ........................................................................ [ 81%]
-.............
+................                                                         [100%]
+88 passed in 24.81s
+--- WITHOUT DSN ---
+...............................................ssssssssssssssssssss.ssss [ 81%]
+ssssssssssssssss                                                         [100%]
+=========================== short test summary info ============================
+SKIPPED [6] tests/test_grants_negative_roles.py:1072: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1110: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [5] tests/test_grants_negative_roles.py:1149: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/test_grants_negative_roles.py:1160: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1193: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1225: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1235: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1250: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1267: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1290: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1339: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [6] tests/test_grants_negative_roles.py:1366: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1380: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1416: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1447: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1494: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1515: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1532: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1553: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [4] tests/test_grants_negative_roles.py:1577: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_grants_negative_roles.py:1608: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+48 passed, 40 skipped in 0.77s
