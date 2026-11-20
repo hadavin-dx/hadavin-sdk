@@ -1,11 +1,10 @@
-"""S4: fake model, extraction, injection detector, redaction, egress."""
+"""S4: fake model, injection detector, redaction, egress."""
 
 from decimal import Decimal
 
 import pytest
 
 from hadavin_sdk.config import load_config
-from hadavin_sdk.extract import Valid, extract
 from hadavin_sdk.guard import (
     EgressRefused,
     RegexDetector,
@@ -14,8 +13,6 @@ from hadavin_sdk.guard import (
     redact,
 )
 from hadavin_sdk.llm import FakeLLM, UnknownRecording
-from hadavin_sdk.models import DeadLetter
-from tests.fixtures.schemas import RecordRequest
 
 
 @pytest.fixture
@@ -45,26 +42,12 @@ def test_fake_unknown_key_raises(llm):
         llm.chat([], system="s", route="default", documents=[b"never recorded"])
 
 
-def test_extract_valid(cfg, llm):
-    out = extract(llm, _doc(cfg, "extract.txt"), RecordRequest, run_id="run-1", route="default")
-    assert isinstance(out, Valid)
-    assert out.data.title == "Monitor arm" and out.data.amount == Decimal("59.90")
-
-
-def test_bad_output_one_retry_then_dead_letter(cfg, llm):
-    out = extract(llm, _doc(cfg, "bad.txt"), RecordRequest, run_id="run-1", route="default")
-    assert isinstance(out, DeadLetter)
-    assert out.reason == "extract_invalid" and len(out.errors) == 2
-    assert len(llm.calls) == 2
-    assert "failed validation" in llm.calls[1]["messages"][-1]["content"]
-
-
 def test_detector_flags_seeded_injection(cfg):
     verdict = injection_check(RegexDetector(0.5), _doc(cfg, "injected.txt").decode(), "document")
     assert verdict.flagged and verdict.reason_code == "injection_suspected"
 
 
-@pytest.mark.parametrize("name", ["create.txt", "lookup.txt", "pii.txt", "extract.txt"])
+@pytest.mark.parametrize("name", ["create.txt", "lookup.txt", "pii.txt"])
 def test_detector_passes_clean_inputs(cfg, name):
     assert not RegexDetector(0.5).check(_doc(cfg, name).decode(), "document").flagged
 

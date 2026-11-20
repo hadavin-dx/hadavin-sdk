@@ -33,7 +33,6 @@ PRODUCERS: tuple[tuple[str, str, str, frozenset[str]], ...] = (
         "injection_check",
         frozenset({"safe_head"}),
     ),
-    ("extract validation errors", "extract.py", "extract", frozenset({"safe_head"})),
     ("tick error message", "runtime/tick.py", "_message", frozenset({"safe_head"})),
     ("approval card text", "approvals/channel.py", "clean", frozenset({"redact_text"})),
     ("approval summary", "approvals/requests.py", "summary", frozenset({"clean"})),
@@ -55,7 +54,6 @@ CHOKE_POINT = "redact_text"
 MODEL_CALLERS = frozenset(
     {
         "evals.py",
-        "extract.py",
         "guard/judge.py",
         "guard/bedrock_guardrail.py",
         "guard/model_gate.py",

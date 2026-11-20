@@ -88,27 +88,6 @@ def _log_line(s, rq):
     return cap.text
 
 
-def _extract(s, rq):
-    from pydantic import BaseModel
-
-    from hadavin_sdk.extract import extract
-
-    class Out(BaseModel):
-        need: int
-
-    sent = []
-
-    class LLM:
-        def chat(self, messages, **kw):
-            sent.append(
-                messages[-1]["content"]
-            )  # the feedback the run adds (the model's own reply is its own text)
-            return Reply(text=json.dumps({"other": f"a {s} b"}), model_id="fake")
-
-    extract(LLM(), b"doc", Out, run_id="r", route="x")
-    return " ".join(sent[1:])
-
-
 def _runtime(s, rq, *, doc=None, reason=None, host="<IPV4_1>"):
     tmp_path = rq.getfixturevalue("tmp_path")
     k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused; rollout revision 17 failed"
@@ -192,7 +171,6 @@ DRIVERS = {
     "judge input": _judge,
     "vendor guardrail input": _guardrail,
     "injection screen log line": _log_line,
-    "extract validation errors": _extract,
     "tick error message": lambda s, rq: tick_mod._message(ValueError(f"a {s} b")),
     "approval card text": lambda s, rq: channel_mod.clean(f"a {s} b"),
     "approval summary": lambda s, rq: summary(_plan({"note": f"a {s} b"})),
