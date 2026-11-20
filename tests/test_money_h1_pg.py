@@ -261,3 +261,10 @@ def test_the_limit_seed_has_the_new_rows(w):
     rows = dict(w.run("SELECT name, value FROM hadavin_limits"))
     assert rows["max_day_skew"] == D(defaults.MAX_RESERVE_DAY_SKEW_DAYS)
     assert rows["min_expiry_age"] == D(defaults.MIN_EXPIRY_AGE_S)
+
+
+def test_the_seeded_min_expiry_age_never_exceeds_what_the_tick_expire_step_asks_for():
+    """Review of H1 (minor): raising MIN_EXPIRY_AGE_S alone would make every tick's expire step fail (22023)."""
+    from hadavin_sdk import defaults
+
+    assert defaults.MIN_EXPIRY_AGE_S <= defaults.RESERVATION_EXPIRE_S

@@ -17,7 +17,7 @@
 -- the limit min_expiry_age (default 3600 s; a younger age is refused, review M1), and the release function only lowers a
 -- hold that was expired for longer than that: a self-inflicted outage, safe (holds stay booked at the reserved amount,
 -- and a real late settle still finds its hold). (3b) It can name any booking day within max_day_skew days (default 1)
--- of the database's UTC date, never a far day that would start a fresh counter (review B3). (4) It can raise any counter by
+-- of the database's UTC date, never a far day that would start a fresh counter (review B3). Residual: with skew 1 the runtime can book yesterday, today and tomorrow, up to three day caps in one real day (the month cap still bounds the total). (4) It can raise any counter by
 -- add_spend.
 --
 -- Rules every function body follows:

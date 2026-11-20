@@ -276,7 +276,7 @@ def test_the_h1_checks_kill_every_mutant(name, scratch, tmp_path, monkeypatch):
     monkeypatch.setattr(mig, "_migration_files", lambda folder_=None: real(folder))
     scratch.migrate()
     if killed:
-        with pytest.raises((AssertionError, Exception, pytest.fail.Exception)):
+        with pytest.raises(BEHAVIOUR_FAILURES):
             check(scratch)
     else:
         check(scratch)
