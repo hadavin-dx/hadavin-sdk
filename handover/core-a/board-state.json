@@ -746,21 +746,7 @@
    "reason": "the lead validates head 743690369"
   }
  ],
- "agents": [
-  {
-   "id": "c-e19",
-   "role": "builder in /home/user/wt/c-e19 (wip/core-a-for-c-e19)",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c item 2: runmap _canonical_view U+0338 spoof test + docstring (+fix or strict xfail) + mutant",
-   "started UTC": "13:49",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 13:46: share work, one agent per item"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1131,6 +1117,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "14:12 core-c item 2 (E19 N2/N3) DONE on wip/core-a-for-c-e19: N3 has NO small safe fix in _canonical_view (per-character NFKC is deliberate: offset map): '<<'+U+0338+'TOOL RESULT', '<'+U+0338+'<TOOL RESULT', '<<T'+U+0338+'OOL RESULT' and precomposed U+226E all survive escape_markers/neutralise_untrusted (model-visible spoof only, never a run-map key); a real fix belongs in replace_canonical/escape_markers (held by core-c): decision for core-c. Pushed: docstrings (+9/-2 in runmap.py) + tests/test_runmap_e19_combining_marker.py (8 strict xfails + control). The builder's broader run found 6 failures at baseline too (3 seen: test_p1d_a_rows PU1_card/PU1_model, test_k5_tools keyed-by-redacted-document, test_runmap_enforce_map e5b = the known TB-2.11): not caused by this change, 3 not named. No agents running now; waiting for the lead.",
   "14:10 grant tests reviewed fresh: NO Blocker/Major; nothing weakened; one nit (a relaxed exact call-list equality in the limits-reset test) restored and pushed (wip/core-a-for-grant-tests). NOTE: the SECURITY DEFINER / PUBLIC-EXECUTE pins need a PG DSN (skip without one: no proof on a box without Postgres); trigger functions (EXCLUDED_FUNCTIONS) and definer search_path are not pinned in that file. Running: c-e19 only.",
   "14:06 MAJOR (money, core-b, found while reviewing d-fix22): with max_running one source = core-b default 4, NOTHING in the run loop calls limits.reserve (agent_loop.py:371/531 only charge AFTER the model call; grep finds no .reserve( caller): up to 4 parallel runs of one agent can each pass the budget check before any is booked. The worker's check_spend is silent because the method exists. The old worker default 1 hid this. Options in handover/core-a/requests/to-core-b.md: wire reserve/settle into the loop, or ship default 1 until it is wired, or make check_spend test the loop. Until then operators should set triggers.max_running: 1. d-fix22 itself reviewed: no Blocker. Running: c-e19, rev-grants.",
   "14:02 grant tests: wip/core-a-for-grant-tests pushed (file tests/test_grants_negative_roles.py = core-c's file re-pointed, deliverable is the file; core-c copies it after rebasing on core-b): 17 failed -> 88 passed with PG 16 (raw/grant-tests-before.log, -after.log); 48 passed + 40 skipped without a DSN; 17 not 8 because core-b added 0008-0011 since the trial. Fresh review rev-grants checks nothing was weakened. Running: c-e19, rev-dfix22, rev-grants.",
@@ -3583,6 +3570,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "grant tests review: NO Blocker/Major; nothing weakened (money tables now exact-set empty for every role, release/reset cells exact), every allow-list entry maps to a migrate.py line, reset order is a real requirement (limits.py:262-283), case10 exclusion justified (UNRELEASED_MIGRATIONS); nit 1 (relaxed calls equality) FIXED; PG-only proof for SECURITY DEFINER/PUBLIC EXECUTE pins"
+  },
+  {
+   "id": "c-e19",
+   "role": "builder in /home/user/wt/c-e19 (wip/core-a-for-c-e19)",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c item 2: runmap _canonical_view U+0338 spoof test + docstring (+fix or strict xfail) + mutant",
+   "started UTC": "13:49",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "wip/core-a-for-c-e19 pushed: N3 has NO small safe fix inside _canonical_view (per-character NFKC by design; U+0338/0301/precomposed U+226E spoofs of '<<TOOL RESULT' survive): behaviour unchanged, docstrings state the limit, 4 spoofs x 2 functions as strict xfail + control test (1 passed, 8 xfailed); a real fix needs replace_canonical/escape_markers (held)"
   }
  ]
 }
