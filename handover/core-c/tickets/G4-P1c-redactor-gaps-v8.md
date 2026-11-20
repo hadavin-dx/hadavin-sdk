@@ -378,6 +378,20 @@ re-run on G9 v2's CURRENT prototype (it now holds the reach): the tie-break tabl
   without G9 (MEASURED at 944d143db, `r8.py`); on a tree with G9 they are the G9 + G4 column above. The second lander writes the
   column of the tree it lands on and records the other in the evidence. A `RedactionError("SpelledOverlap")` row is asserted with
   `pytest.raises(RedactionError, match="SpelledOverlap")`.
+  CHANGED in v8: the whole table above was RE-MEASURED on G9 v2's current prototype (with the reach; `g9tie.py` re-run,
+  `g9v2/proto/src`): every cell is the same, including the R8 rows (G9 + R8 and G9 + G4 + R8: `x <SECRET_1><TENANT_1> y` for the R8
+  killer map). G9 v2 4.6 still holds the "FIRST one's rule" sentence and its section 11's last bullet says "the identifier's rule
+  still governs the literal sweep of that value's other copies": both become untrue once G4's tie-break is in (the row "then, the
+  same redactor" above); G9's to correct, named for the lead (L25).
+  CHANGED in v8 (design round 7 N3): THE PRICE OF KEEPING R8's BRANCH UNDER G9, named. With G9 merged, the re-sort that gate mutant
+  R8 pins (`snapshot`'s `if _rules_conflict(known):`) turns TB-2.11's map into a REFUSAL of that gate text
+  (`RedactionError("SpelledOverlap")`, model_gate `mask_refused`), where the gate without the re-sort masks it
+  (`x <SECRET_1><TENANT_1> y`, nothing readable; MEASURED, rows "R8 killer map" G9 + G4 vs G9 + G4 + R8). So keeping the branch
+  (L24's default) costs, under G9, one refused model call (and every later call carrying that text) whenever a text holds an
+  identifier value overlapping a different secret value while some third original of the map is held under two kinds. TB-2.11 pins
+  exactly that order effect, which the branch has by construction (it was written for same-original conflicts, E5): it is an
+  INCIDENTAL effect, pinned on purpose so that R8 stays killed. The lead chooses (L24): keep (default) or delete the branch with the
+  gate owner (then TB-2.11 pins the masked string).
 - Second lander's checks (G4 second: in G4's Phase 2 and Phase 3; G9 second: in G9's phases, with G4's files):
   1. the 0.2 rule, with G9's names above as table updates (not STOPs), except a change to the `_build` rules loop (STOP);
   2. Phase 2 step 2 and Phase 3 step 2 run tests/test_redact_settle_loop.py (G9's tests live there), tests/test_b64_scan.py,
@@ -386,7 +400,8 @@ re-run on G9 v2's CURRENT prototype (it now holds the reach): the tie-break tabl
   3. `python tests/redact_mutants.py` with G9's rows: each verdict as recorded by G9 (G9 second) or at Phase 0 (g) (G4 second);
      `python tests/gate_mutants.py`: R8 killed (by TB-2.11, either column);
   4. G4's Phase 0 (g) snippet run counts G9's appended mutants with the others (CHANGED in v7: the 144 of 13.3 grows by G9's
-     count on runmap.py/redact.py).
+     count on runmap.py/redact.py; CHANGED in v8: G9 v2 10 appends 16 rows on redact.py, so 160 by reading, and
+     `len(redact_mutants.M)` = `EXPECTED_COUNT` = 110 once G9 is merged).
 
 ## 1. Problem in plain words
 A secret that is only written in base64 reaches the model today, because the redactor has no decoded view:
