@@ -100,7 +100,7 @@ class Budget:
         """Replace the worst case with the real cost (it may be above it; settle never refuses) and return the
         overshoot. NotFound for an unknown id, ValueError for a bad amount. A repeat returns the first result
         and changes nothing. After `forfeit` the late settle of that call can only RAISE what is booked."""
-        return self._settle(reservation_id, actual_usd, None)
+        return self.settle_for(None, reservation_id, actual_usd)
 
     def settle_for(self, agent_id: str | None, reservation_id: str, actual_usd: Decimal) -> Decimal:
         """`settle` that also checks the agent: a reservation of ANOTHER agent is NotFound (ORDER 020 m2)."""
