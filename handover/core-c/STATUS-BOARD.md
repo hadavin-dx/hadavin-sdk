@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:26:50Z
+UPDATED_UTC: 2026-11-20T09:31:17Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 1.3 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 4, heavy agents 0
-DISK: / 58G free, 17% used; git worktrees 18; 952M	/tmp/claude-0;259M	/root/.cache/uv;
+AGENTS_RUNNING: 8
+CAPACITY: load 2.6 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
+DISK: / 58G free, 17% used; git worktrees 19; 988M	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none in merged-tree batch 4 (15 files: 2672 passed, 2 skipped, 5 xfailed). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only. Review rounds: gate = result review 3 done, fix round 4 landed (b83accc); G7 = result review 5 done, fix round 6 running; P1d-a = result review 2 done, round 3 landed (61ff6e7); G4 = plan review 4 (readiness done NOT READY, codebase running), then v5; G8 = plan review 2 (readiness done NOT READY, codebase running), then v3; wording v5 = final review waits for G7 round 6. Landed and tested: gate round 4 b83accc, G7 rounds 3-5 da0f71f/6783535/d1384342, merged-tree batch 4: 2672 passed 2 skipped 5 xfailed.
-PUSHED_UTC: 2026-11-20T09:26:44+00:00
+NEXT: LIVE only. ORDER 023 (09:30Z): E9(1) done (docstrings; redact.py module docstring in G7 r5, gate.py a4b2ce2), E9(3) is_masked: no consumer -> every promise withdrawn (Amendment 2), E9(2) builder running; E10 ticket G9 drafting then plan review; E11 ticket G10 + Latin split running; E12 Q9 builder runs both mutant lists; Q16 DONE (349e6ca0c: MIT licence checked, lock regenerated). 09:55Z target: E9 (1)-(3) done and E10 plan review started.
+PUSHED_UTC: 2026-11-20T09:30:17+00:00
 
-(14:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:01 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -25,6 +25,10 @@ PUSHED_UTC: 2026-11-20T09:26:44+00:00
 | (new) g7fix6 | builder | claude-sonnet-5-5 | G7 fix round 6 (after result review round 5) | G7 fix round 6 (bank_near hole in redact(), P x S walk, raw  | 09:17 | 09:55 | 1 | running | 6 | 0 | from G7-result-review-5.md |
 | (new) g4v5 | drafter | claude-opus-5-5 | G4 v5 ticket (after plan review round 4: card-path detection loss, stale G7 anchors, G8 order, TB fixes) | review round: 4 done, 5 next | 09:22 | 09:55 | 1 | running | 5 | 0 | EGM draft step |
 | (new) g8v3 | drafter | claude-opus-5-5 | G8 v3 ticket (after plan review round 2: IBAN opaque-token leak measured first, mutants run, G4 order) | review round: 2 done, 3 next | 09:27 | 10:00 | 1 | running | 3 | 0 | EGM draft step |
+| (new) own | builder | claude-sonnet-5-5 | E9(2): _OWN_OUTPUT restricted to SECRET tokens only (test + 3 mutants) | EGM: build now, review after | 09:36 | 10:00 | 1 | running | 1 | 0 | ORDER 023 E9 |
+| (new) g9 | drafter | claude-opus-5-5 | ticket G9: spelled sweep to a fixed point, bound 4, refuse if not converged | EGM plan review round 1 next (max 3) | 09:36 | 10:05 | 1 | running | 1 | 0 | ORDER 023 E10 |
+| (new) g10 | drafter | claude-opus-5-5 | ticket G10: deadline in the text fold + published false-hit rates | EGM plan review round 1 next | 09:36 | 10:05 | 1 | running | 1 | 0 | ORDER 023 E11 |
+| (new) split | evidence runner | claude-sonnet-5-5 | E11(c): split of Latin false hits (whole word / inside word / across spaces), low-load only | 09:36 | 10:00 | 1 | running | 1 | 0 | ORDER 023 E11 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
