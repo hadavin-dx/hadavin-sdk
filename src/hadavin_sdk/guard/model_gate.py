@@ -168,9 +168,13 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   calls `settle(reservation, usd)`) would raise TypeError, be caught as `settle_failed`, and leave every paid call
   booked at its worst case (finding F1 of the P3 end-to-end run). `LimitsMeter(limits, agent_id)` is the adapter:
   `reserve` calls `limits.reserve(agent_id, worst, run_id=...)` and `settle` calls `limits.settle_for(agent_id,
-  reservation, usd)`, as `runtime/agent_loop.py` does. It is bound to ONE agent: a `reserve` for another agent id
-  is a TypeError (the gate shows it as `reserve_refused`; a fixed text, as the source guard requires), so the settle can never name a different agent than
-  the reserve. Limits is not changed.
+  reservation, usd)`. It is bound to ONE agent, so the settle can never name a different agent than the reserve.
+  ONE GATE PER AGENT: `ModelGate.bind` with an agent id other than the one a `LimitsMeter` is bound to is a
+  TypeError at bind time (a fixed text that names the rule), before any call; a `reserve` for another agent
+  that gets past that is a TypeError too, which the gate shows as `reserve_refused` (fails closed, no call). An
+  object without callable `reserve` and `settle_for` is a TypeError in `LimitsMeter(...)`. Limits is not changed.
+  T::test_p7b_one_gate_per_agent_bind_for_another_agent_is_a_type_error_naming_the_rule
+  T::test_p7b_limits_meter_needs_callable_reserve_and_settle_for
   T::test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent
   T::test_f1_limits_meter_reserves_with_the_run_id_and_refuses_another_agent
   T::test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case
@@ -245,11 +249,12 @@ from hadavin_sdk.tools import END_MARKER, START_MARKER
 
 # ======================================================================================================
 # INTERFACE (ii), version 2 (README 2.1), as core-b PUBLISHED it: switch here if it changes
-# `Meter` mirrors handover/core-c/inputs/interfaces-from-core-b/ii_meter.py line for line (same method names,
-# argument order and keywords) and follows the ten contract points of the README.md beside it. That file is a
-# signature file, not package code, and `limits.SpendRefused` is not in src/hadavin_sdk/limits.py yet, so the
-# Protocol is kept here as a local structural one and SpendRefused is NOT imported: its `.reason` is read with
-# getattr. When step F lands them, import both from hadavin_sdk.limits and delete this copy. Nothing outside
+# `Meter` below is the gate's own local structural Protocol: `settle(reservation_id, actual_usd)` with no agent.
+# It follows handover/core-c/inputs/interfaces-from-core-b/ii_meter.py and the ten contract points of the README.md
+# beside it. core-b has since published its own `limits.Meter` (`settle(reservation_id, actual_usd, *, agent_id)`)
+# and `limits.SpendRefused` in src/hadavin_sdk/limits.py. The two Meters therefore differ in `settle`, which
+# `LimitsMeter` bridges; SpendRefused is still NOT imported here: its `.reason` is read with getattr (shape
+# check, `spend_reason`). Switching to core-b's classes is a step for the install lane. Nothing outside
 # this block names a meter method, an audit string or the worst_case arguments.
 # ------------------------------------------------------------------------------------------------------
 # reserve: returns a reservation id only after the worst case is booked; ANY exception means no model call.
@@ -282,12 +287,22 @@ class Meter(Protocol):
 class LimitsMeter:
     """Adapter from `limits.Limits` (or any object with `reserve` and `settle_for`) to `Meter`, for ONE agent.
     `Limits.settle` needs the keyword `agent_id`; the gate calls `settle(reservation, usd)`. This adapter fills
-    the agent in and calls `settle_for`, the way runtime/agent_loop.py does. Errors pass unchanged."""
+    the agent in and calls `settle_for` (core-b's `Limits.settle_for(agent_id, reservation_id, actual_usd)`).
+    Errors pass unchanged. One gate per agent: see `ModelGate.bind`."""
 
     def __init__(self, limits: Any, agent_id: str) -> None:
         if not isinstance(agent_id, str) or not agent_id:
             raise TypeError("agent_id must be a non-empty str")
+        if not (
+            callable(getattr(limits, "reserve", None))
+            and callable(getattr(limits, "settle_for", None))
+        ):
+            raise TypeError("limits must have callable reserve and settle_for")
         self._limits, self._agent_id = limits, agent_id
+
+    @property
+    def agent_id(self) -> str:
+        return self._agent_id
 
     def reserve(self, agent_id: str, worst_usd: Decimal, *, run_id: str | None = None) -> str:
         if agent_id != self._agent_id:  # fail closed: settle names the bound agent only
@@ -647,6 +662,8 @@ class ModelGate:
             raise TypeError("mapping must be the run's RunMap or NO_MAP")
         if not all(isinstance(value, str) for value in (agent_id, run_id, source)):
             raise TypeError("agent_id, run_id and source must be str")
+        if isinstance(self._meter, LimitsMeter) and self._meter.agent_id != agent_id:
+            raise TypeError("one gate per agent: the meter is bound to a different agent")
         if principal is not None and not isinstance(principal, str):
             raise TypeError("principal must be a str or None")
         return BoundGate(self, agent_id, run_id, mapping, principal or agent_id, source)

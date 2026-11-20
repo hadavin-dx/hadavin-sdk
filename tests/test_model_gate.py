@@ -1984,11 +1984,18 @@ class _RealShapeLimits:
     """The call shapes of core-b's `limits.Limits` (origin/cloud/core-b): `settle` needs the keyword `agent_id`,
     `settle_for` takes the agent first. Records every call; no database."""
 
-    def __init__(self) -> None:
+    def __init__(self, settle_value=Decimal(0), reserve_raises=None, settle_raises=None) -> None:
         self.calls: list[tuple] = []
+        self.settle_value, self.reserve_raises, self.settle_raises = (
+            settle_value,
+            reserve_raises,
+            settle_raises,
+        )
 
     def reserve(self, agent_id, worst_usd, *, run_id=None):
         self.calls.append(("reserve", agent_id, worst_usd, run_id))
+        if self.reserve_raises is not None:
+            raise self.reserve_raises
         return "res_1"
 
     def settle(self, reservation_id, actual_usd, *, agent_id):
@@ -1997,7 +2004,9 @@ class _RealShapeLimits:
 
     def settle_for(self, agent_id, reservation_id, actual_usd):
         self.calls.append(("settle_for", agent_id, reservation_id, actual_usd))
-        return Decimal(0)
+        if self.settle_raises is not None:
+            raise self.settle_raises
+        return self.settle_value
 
 
 def test_f1_limits_meter_settles_through_settle_for_with_the_bound_agent():
@@ -2036,6 +2045,73 @@ def test_f1_a_gate_with_limits_meter_settles_at_the_real_cost_not_the_worst_case
     assert limits.calls[-1] == ("settle_for", "agent-1", "res_1", COST), (
         "the paid call was not settled at its real cost through the real Limits shape"
     )
+
+
+def _limits_gate(limits, agent="agent-1"):
+    log: list = []
+    sink = Sink(log)
+    gate = ModelGate(
+        Client(log), meter=model_gate.LimitsMeter(limits, agent), audit=sink, worst_case=worst
+    )
+    return gate.bind(agent, "run-1", mapping=NO_MAP), sink
+
+
+def test_p7b_the_overshoot_comes_back_through_limits_meter_into_the_row():
+    limits = _RealShapeLimits(settle_value=Decimal("0.05"))
+    meter = model_gate.LimitsMeter(limits, "agent-1")
+    assert meter.settle("res_1", Decimal("0.2")) == Decimal("0.05")
+    bound, sink = _limits_gate(limits)
+    bound.chat(CLEAN, system="s", route="main")
+    assert sink.codes() == [("ok", "overshoot")], "the settle's overshoot was lost"
+
+
+def test_p7b_a_spend_refusal_through_limits_meter_reaches_the_gate_row():
+    error = SpendRefused("daily_budget")
+    limits = _RealShapeLimits(reserve_raises=error)
+    bound, sink = _limits_gate(limits)
+    with pytest.raises(SpendRefused) as caught:
+        bound.chat(CLEAN, system="s", route="main")
+    assert caught.value is error
+    assert sink.codes() == [("refused", "daily_budget")]
+
+
+def test_p7b_a_not_found_from_settle_for_is_settle_failed_and_the_worst_case_stays_booked():
+    class NotFound(KeyError):
+        pass
+
+    limits = _RealShapeLimits(settle_raises=NotFound("res_1"))
+    bound, sink = _limits_gate(limits)
+    bound.chat(CLEAN, system="s", route="main")  # the paid reply is returned
+    assert sink.codes() == [("ok", "settle_failed")]
+    assert [c[0] for c in limits.calls] == ["reserve", "settle_for"]  # one try, nothing released
+
+
+def test_p7b_one_gate_per_agent_bind_for_another_agent_is_a_type_error_naming_the_rule():
+    limits = _RealShapeLimits()
+    gate = ModelGate(
+        Client(), meter=model_gate.LimitsMeter(limits, "agent-1"), audit=Sink(), worst_case=worst
+    )
+    with pytest.raises(TypeError, match="one gate per agent"):
+        gate.bind("agent-2", "run-1", mapping=NO_MAP)
+    assert limits.calls == []
+    gate.bind("agent-1", "run-1", mapping=NO_MAP)  # the bound agent is fine
+
+
+def test_p7b_limits_meter_needs_callable_reserve_and_settle_for():
+    class OnlyReserve:
+        def reserve(self, *a, **k):
+            return "r"
+
+    class OnlySettleFor:
+        def settle_for(self, *a):
+            return Decimal(0)
+
+    class NotCallable:
+        reserve = settle_for = "x"
+
+    for bad in (object(), OnlyReserve(), OnlySettleFor(), NotCallable(), None):
+        with pytest.raises(TypeError, match="callable reserve and settle_for"):
+            model_gate.LimitsMeter(bad, "agent-1")
 
 
 @pytest.mark.xfail(
