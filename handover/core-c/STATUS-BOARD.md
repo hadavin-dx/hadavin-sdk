@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T10:06:20Z
+UPDATED_UTC: 2026-11-20T10:08:09Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,28 +7,28 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 4.2 of 4 cores, mem 3/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
-DISK: / 57G free, 18% used; git worktrees 23; 1.4G	/tmp/claude-0;280M	/root/.cache/uv;
+CAPACITY: load 2.5 of 4 cores, mem 5/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
+DISK: / 57G free, 18% used; git worktrees 22; 1.4G	/tmp/claude-0;304M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only. E10 plan review round 1 STARTED 09:59Z (G9 ticket: the lead's loop as stated does not close E10: it must read the text with placeholders put back; design + measurements in the ticket). E12 SUMMARY: redact_mutants.py on merged HEAD 92 of 96 good, 4 survivors (E13) under review. Heavy batches running: 0.
-PUSHED_UTC: 2026-11-20T10:05:46+00:00
+PUSHED_UTC: 2026-11-20T10:08:07+00:00
 
-(15:36 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:38 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ae8bb529 | drafter | claude-opus-5-5 | ticket G8 v3 (plan review round 2 findings; IBAN opaque-token measurement) | plan review round 3 next | 09:37 | 10:10 | 0 | running | 3 | 1 | container restart 09:35Z |
-| a83c98d5 | evidence runner | claude-sonnet-5-5 | E11(c) split of Latin false hits (low load only) | 09:37 | 10:00 | 0 | running | 1 | 1 | container restart 09:35Z |
 | a6a89e42 | builder | claude-sonnet-5-5 | G7 fix round 7 (registry memory limit, actions double count, structural growth trigger, counts/figures/scripts) | G7 result review round 6 done (0 Blocker, 1+4 Major) | 09:52 | 10:25 | 1 | running | 7 | 0 | from G7-result-review-6.md; E10 fixed point waits for ticket G9 |
 | a9111b4b | drafter | claude-opus-5-5 | G10 v3 ticket (plan review round 1: 5 Blockers, 3 red tests, overrun bound, D4 measurement) | plan review round 2 next | 09:58 | 10:30 | 1 | running | 3 | 0 | EGM draft step |
 | a8ab20a4 | builder | claude-sonnet-5-5 | Q9 review fixes: DM-1 re-pin, mutant 8 killer, N1/N14 equivalence proof or dead-code removal, undo/composed property, redact_mutants meta test | Q9 fresh review round 1 done (0 Blocker; E13: none is a leak) | 10:04 | 10:40 | 1 | running | 2 | 0 | from G1-mutants-run.md Q9 review |
 | a6219c90 | drafter | claude-opus-5-5 | G9 v2 ticket (plan review round 1: read-back = exact map keys, no pieces for unions, union kind, gate masks the span, hostile 3/5-pass) | plan review round 2 next | 10:07 | 10:40 | 1 | running | 2 | 0 | EGM draft step (max 3 rounds) |
 | abbbf74a | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (readiness) | 10:08 | 10:25 | 2 | running | 5 | 0 | build P1c only after a clean plan review |
 | a08a6b6b | reviewer | claude-sonnet-5-5 | G4 v5 PLAN review round 5 (codebase) | 10:08 | 10:25 | 2 | running | 5 | 0 | same |
+| a8b58cf7 | reviewer | claude-sonnet-5-5 | G8 v3 PLAN review round 3 (readiness) | 10:12 | 10:28 | 2 | running | 3 | 0 | build G8 only after a clean plan review |
+| a5a3a5fe | reviewer | claude-sonnet-5-5 | G8 v3 PLAN review round 3 (codebase) | 10:12 | 10:28 | 2 | running | 3 | 0 | same |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
