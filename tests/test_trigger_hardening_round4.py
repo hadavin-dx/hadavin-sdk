@@ -108,14 +108,18 @@ def _with_ref(monkeypatch, cfg_dir, ref, field="reset_credential_ref"):
     monkeypatch.setattr(type(load_config(cfg_dir).backends.store), field, ref, raising=False)
 
 
-@pytest.mark.parametrize("field", ["reset_credential_ref", "release_credential_ref"])
+@pytest.mark.parametrize(
+    "field", ["reset_credential_ref", "release_credential_ref", "caps_credential_ref"]
+)
 def test_an_aws_style_ref_starts_when_nothing_else_collides(tmp_path, monkeypatch, field):
     cfg = make_cfg(tmp_path)
     _with_ref(monkeypatch, cfg, AWS_STYLE, field)
     assert _build(cfg) is not None
 
 
-@pytest.mark.parametrize("field", ["reset_credential_ref", "release_credential_ref"])
+@pytest.mark.parametrize(
+    "field", ["reset_credential_ref", "release_credential_ref", "caps_credential_ref"]
+)
 def test_a_dot_segment_ref_gets_a_path_form_message_not_the_collision_text(
     tmp_path, monkeypatch, field
 ):

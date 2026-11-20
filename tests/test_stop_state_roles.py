@@ -65,10 +65,10 @@ class World:
         self.dsn = os.environ["HADAVIN_TEST_PG_DSN"]
         self.schema = f"sb_s_{sfx}"
         self.schemas = [self.schema]
-        self.runtime, self.portal, self.purge, self.reset = (
-            f"sb_{n}_{sfx}" for n in ("rt", "po", "pu", "rs")
+        self.runtime, self.portal, self.purge, self.reset, self.caps = (
+            f"sb_{n}_{sfx}" for n in ("rt", "po", "pu", "rs", "cp")
         )
-        self.roles = [self.runtime, self.portal, self.purge, self.reset]
+        self.roles = [self.runtime, self.portal, self.purge, self.reset, self.caps]
         self.scoped = self.scope(self.schema)
         self.stores = []
 
@@ -90,15 +90,17 @@ class World:
             "portal_role": self.portal,
             "purge_role": self.purge,
             "reset_role": self.reset,
+            "caps_role": self.caps,
         }
         return migrate(self.scoped, **{**roles, **kw})
 
     def store(self, role, scoped=None):
         """A store whose one connection is logged in as `role` (proven, not assumed)."""
         settings = PostgresSettings(**SETTINGS)
-        if (
-            role == self.reset
-        ):  # the CLI marks the reset login (E6): it is not held to the runtime's rights
+        if role in (
+            self.reset,
+            self.caps,
+        ):  # the CLI marks the reset and caps logins (E6): not held to the runtime's rights
             settings._login_role = "reset"
         s = make("store", settings, FakeSecretProvider({"pg-dsn": self.dsn_of(role, scoped)}))
         self.stores.append(s)

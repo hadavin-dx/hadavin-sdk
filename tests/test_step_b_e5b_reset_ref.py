@@ -35,10 +35,8 @@ def _build(cfg_dir):
     return app_mod.build(cfg_dir, ["test-agent"], secrets=Provider())
 
 
-def _with_ref(monkeypatch, cfg_dir, ref=REF):
-    monkeypatch.setattr(
-        type(load_config(cfg_dir).backends.store), "reset_credential_ref", ref, raising=False
-    )
+def _with_ref(monkeypatch, cfg_dir, ref=REF, field="reset_credential_ref"):
+    monkeypatch.setattr(type(load_config(cfg_dir).backends.store), field, ref, raising=False)
 
 
 # --- Major 4 ------------------------------------------------------------------------------------------------------
@@ -123,6 +121,21 @@ def test_a_secret_the_runtime_reads_that_folds_to_the_reset_ref_stops_the_start(
     with pytest.raises(ConfigError) as caught:
         _build(cfg)
     assert "reset_credential_ref" in str(caught.value) or "senders" in str(caught.value)
+    assert REF not in str(caught.value) and ALIAS not in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    "setup", [_channel, _llm_key, _restored, _tool, _sender], ids=lambda f: f.__name__
+)
+def test_a_secret_the_runtime_reads_that_folds_to_the_caps_ref_stops_the_start(
+    tmp_path, monkeypatch, setup
+):
+    """M4: the caps login (it can set every spend cap) is as unreadable to the runtime as the reset login."""
+    cfg = setup(make_cfg(tmp_path))
+    _with_ref(monkeypatch, cfg, field="caps_credential_ref")
+    with pytest.raises(ConfigError) as caught:
+        _build(cfg)
+    assert "caps_credential_ref" in str(caught.value) or "senders" in str(caught.value)
     assert REF not in str(caught.value) and ALIAS not in str(caught.value)
 
 

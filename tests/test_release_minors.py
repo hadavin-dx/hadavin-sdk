@@ -212,7 +212,9 @@ def test_the_release_ref_is_compared_in_canonical_form(monkeypatch, capsys):
     assert cli.release_expired_cmd(folded, "a", DAY, "u") == 2
 
 
-@pytest.mark.parametrize("ref_field", ["release_credential_ref", "reset_credential_ref"])
+@pytest.mark.parametrize(
+    "ref_field", ["release_credential_ref", "reset_credential_ref", "caps_credential_ref"]
+)
 def test_a_secret_that_folds_to_the_release_or_reset_ref_stops_the_start(
     cfg_dir, monkeypatch, ref_field
 ):

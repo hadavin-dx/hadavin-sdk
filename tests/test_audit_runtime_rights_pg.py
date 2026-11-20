@@ -20,6 +20,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 import psycopg
 from psycopg import errors, sql
 
+from hadavin_sdk.errors import ConfigError
 from tests.test_stop_state_roles import World
 
 pytestmark = pytest.mark.skipif(
@@ -135,3 +136,63 @@ def test_runtime_has_no_insert_on_audit_checkpoints(w):
             "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (1, %s, 'planted')",
             (HEAD_HASH,),
         )
+
+
+# --- migrate refuses a runtime or caps role that owns the audit tables (finding 2, third part) --------------------------
+
+AUDIT_TABLES = ("audit_entries", "audit_checkpoints", "audit_outbox")
+
+
+def _owner_of(w: World, table: str) -> str:
+    return w.run(
+        "SELECT tableowner FROM pg_tables WHERE schemaname = %s AND tablename = %s",
+        (w.schema, table),
+    )[0][0]
+
+
+@pytest.mark.parametrize("who", ["runtime", "caps"])
+@pytest.mark.parametrize("table", AUDIT_TABLES)
+def test_migrate_refuses_a_login_that_owns_an_audit_table(w, who, table):
+    """An owner can DISABLE the append-only triggers: the refusal names the role and the table."""
+    role, owner = getattr(w, who), _owner_of(w, table)
+    w.grant(f"ALTER TABLE {table} OWNER TO {{}}", role)
+    try:
+        with pytest.raises(ConfigError, match=rf"{role}: owns {table}"):
+            w.migrate()
+    finally:
+        w.grant(f"ALTER TABLE {table} OWNER TO {{}}", owner)
+    assert w.migrate() == []  # the refusal rolled back, and the restored owner passes again
+
+
+@pytest.mark.parametrize("who", ["runtime", "caps"])
+def test_migrate_refuses_a_login_that_is_a_member_of_the_owner_role(w, who):
+    role, owner = getattr(w, who), _owner_of(w, "audit_entries")
+    w.grant("GRANT {} TO {}", owner, role)
+    try:
+        with pytest.raises(ConfigError, match=rf"{role} is a member of {owner}"):
+            w.migrate()
+    finally:
+        w.grant("REVOKE {} FROM {}", owner, role)
+    assert w.migrate() == []
+
+
+def test_migrate_takes_back_a_hand_grant_on_the_audit_tables(w):
+    """TRIGGER and TRUNCATE can defeat the tripwires: a hand grant goes at the next run."""
+    for priv in ("TRUNCATE", "TRIGGER", "DELETE", "UPDATE"):
+        w.grant(f"GRANT {priv} ON TABLE audit_entries TO {{}}", w.runtime)
+        # migrate re-applies the grant map first (REVOKE ALL, then the map), so the extra grant is taken back
+        assert w.migrate() == []
+        assert not _has(w, "audit_entries", priv)
+
+
+def test_the_caps_login_holds_only_the_audit_append_and_the_cap_functions(w):
+    for table, privs in (
+        ("audit_entries", {"SELECT", "INSERT"}),
+        ("audit_checkpoints", {"SELECT"}),
+        ("audit_outbox", set()),
+    ):
+        for priv in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"):
+            got = w.run(
+                "SELECT has_table_privilege(%s, %s, %s)", (w.caps, f"{w.schema}.{table}", priv)
+            )[0][0]
+            assert got is (priv in privs), (table, priv)

@@ -71,12 +71,13 @@ def test_function_grants_name_the_roles_the_ticket_names():
     )
     for sig, g in who.items():
         name = sig.split("(")[0]
-        assert (g.runtime, g.purge, g.release, g.reset, g.portal) == (
+        assert (g.runtime, g.purge, g.release, g.reset, g.portal, g.caps) == (
             name in runtime_only,
             name == "hadavin_purge_spend_reservations",
             name == "hadavin_release_expired_spend",
-            name in ("hadavin_set_cap", "hadavin_cap_matches"),
+            False,  # M4: the reset role runs none of the money functions
             False,
+            name in ("hadavin_set_cap", "hadavin_cap_matches"),
         ), sig
     assert mig.FUNCTION_GRANTS[SET_CAP].runtime is False
     assert mig.FUNCTION_GRANTS[CAP_MATCHES].runtime is True
@@ -273,6 +274,7 @@ def test_execute_goes_to_exactly_the_roles_of_the_map(w):
         w.release: lambda g: g.release,
         w.reset: lambda g: g.reset,
         w.portal: lambda g: g.portal,
+        w.caps: lambda g: g.caps,
     }
     for sig, grant in mig.FUNCTION_GRANTS.items():
         for role, wants in holders.items():
@@ -284,12 +286,13 @@ def test_execute_goes_to_exactly_the_roles_of_the_map(w):
 @pytest.mark.parametrize("index", range(5))
 def test_migrate_takes_a_hand_grant_of_execute_back_from_the_wrong_role(w, index):
     sig = mig.MONEY_FUNCTIONS[index]
-    for role in (w.portal, w.reset, w.release, w.runtime, w.purge):
+    for role in (w.portal, w.reset, w.release, w.runtime, w.purge, w.caps):
         w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", role)
     w.migrate(release_role=w.release)
     grant = mig.FUNCTION_GRANTS[sig]
     assert _can_exec(w, w.runtime, sig) is grant.runtime
     assert _can_exec(w, w.purge, sig) is grant.purge
+    assert _can_exec(w, w.caps, sig) is grant.caps
     for role in (w.portal, w.reset, w.release):
         assert _can_exec(w, role, sig) is False
 
@@ -319,7 +322,7 @@ def test_the_reset_role_slot_gives_execute_to_exactly_the_mapped_function(w, mon
     w.migrate(release_role=w.release)
     assert _can_exec(w, w.reset, ADD) is True
     for sig in mig.FUNCTION_GRANTS:
-        if sig not in (ADD, SET_CAP, CAP_MATCHES):
+        if sig != ADD:
             assert _can_exec(w, w.reset, sig) is False, sig
 
 
@@ -335,10 +338,59 @@ def test_migrate_refuses_execute_for_the_reset_role_on_any_other_function(w, ind
 
 
 @NEEDS_PG
-def test_the_reset_role_holds_execute_on_exactly_the_two_cap_functions_and_passes_migrate(w):
-    ran = {sig for sig in mig.FUNCTION_GRANTS if _can_exec(w, w.reset, sig)}
+def test_the_caps_role_holds_execute_on_exactly_the_two_cap_functions_and_passes_migrate(w):
+    ran = {sig for sig in mig.FUNCTION_GRANTS if _can_exec(w, w.caps, sig)}
     assert ran == {SET_CAP, CAP_MATCHES}
     assert w.migrate(release_role=w.release) == []
+
+
+@NEEDS_PG
+def test_the_reset_role_holds_execute_on_no_money_function(w):
+    """M4 (review-money-1): one identity per function. The login that clears a stop sets no cap."""
+    assert {sig for sig in mig.FUNCTION_GRANTS if _can_exec(w, w.reset, sig)} == set()
+
+
+@NEEDS_PG
+@pytest.mark.parametrize("sig_name", ["SET_CAP", "CAP_MATCHES"])
+def test_migrate_takes_the_cap_functions_back_from_the_reset_role(w, sig_name):
+    sig = {"SET_CAP": SET_CAP, "CAP_MATCHES": CAP_MATCHES}[sig_name]
+    w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", w.reset)
+    w.migrate(release_role=w.release)
+    assert _can_exec(w, w.reset, sig) is False
+    helper = w.new_role("ch", "NOLOGIN")
+    w.grant(f"GRANT EXECUTE ON FUNCTION {sig} TO {{}}", helper)
+    w.grant("GRANT {} TO {}", helper, w.reset)
+    with pytest.raises(ConfigError, match=rf"{w.reset} can run"):
+        w.migrate(release_role=w.release)
+
+
+@NEEDS_PG
+def test_the_caps_role_may_not_be_the_reset_role_or_a_member_of_one(w):
+    with pytest.raises(ConfigError, match="must be different roles"):
+        w.migrate(release_role=w.release, caps_role=w.reset)
+    w.grant("GRANT {} TO {}", w.reset, w.caps)
+    with pytest.raises(ConfigError, match="must not be members of each other"):
+        w.migrate(release_role=w.release)
+
+
+@NEEDS_PG
+def test_a_caps_role_that_holds_more_than_the_map_is_refused(w):
+    """Rights that come through a role it is a member of cannot be revoked from the caps role itself: refused."""
+    for stmt in (
+        "GRANT UPDATE ON TABLE spend TO {}",
+        "GRANT DELETE ON TABLE audit_entries TO {}",
+        "GRANT INSERT ON TABLE kill_switch_clears TO {}",
+    ):
+        helper = w.new_role("ch2", "NOLOGIN")
+        w.grant(stmt, helper)
+        w.grant("GRANT {} TO {}", helper, w.caps)
+        with pytest.raises(ConfigError, match="the caps role holds more than the grant map"):
+            w.migrate(release_role=w.release)
+        w.grant("REVOKE {} FROM {}", helper, w.caps)
+        w.roles.remove(helper)
+        w.grant("DROP OWNED BY {}", helper)
+        w.grant("DROP ROLE {}", helper)
+        assert w.migrate(release_role=w.release) == []
 
 
 @NEEDS_PG

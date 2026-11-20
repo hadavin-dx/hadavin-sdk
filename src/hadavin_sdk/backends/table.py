@@ -130,6 +130,10 @@ class PostgresSettings(KindSettings):
     # `hadavin-sdk release-expired`. Same rule as the reset reference: its name must not end in `_secret_name`, and
     # it is never the runtime's or the reset login's secret.
     release_credential_ref: str | None = None
+    # The secret that holds the caps role's DSN (`hadavin-sdk migrate --caps-role`), read only by the cap commands
+    # (`limits set-cap`, `sync-caps`, `check-caps`). Same rule as the other references: its name must not end in
+    # `_secret_name`, and it is never the runtime's, purge, release or reset login's secret (M4: one identity per function).
+    caps_credential_ref: str | None = None
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
