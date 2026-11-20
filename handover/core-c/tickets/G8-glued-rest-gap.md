@@ -4,7 +4,8 @@ Status: DRAFT for plan review, written by the core-c drafter (opus tier), 2026-1
 context builds from this file alone. Path class: redaction. Lead rule: build only a gap that a failing input proves (G4 v2 section 0).
 Base read: cloud/core-c HEAD 459d8da (holds G7 fix round 3, da0f71f). Every number below was measured on a clean `git archive` of that
 commit in the drafter's scratchpad (the shared tree was not edited and not run); the probe was also run on 0d93f20 (before G7 round 3)
-and gave byte-identical tables.
+and gave byte-identical tables. Exception: the cost table of section 10 was measured on the 0d93f20 archive only (its pattern table
+is the same; its settle loop is G7 round 2).
 
 ## 1. Goal
 A value of kind IPV4, PHONE, IBAN or UUID that is glued straight to a letter, a digit or `_` (no word boundary) is masked in the
@@ -52,7 +53,86 @@ host: any non-suffix label, or 2 or more leading characters of one directly befo
 
 | # | kind | shape | input | output now | leak now | expected after G8 | result |
 |---|---|---|---|---|---|---|---|
-@@TABLE@@
+| 1 | ipv4 | control: spaces | `from {IP1} ok` | `from <IPV4_1> ok` | no | `from <IPV4_1> ok` | unchanged |
+| 2 | ipv4 | letter after | `from {IP1}a ok` | `from {IP1}a ok` | YES | `from <IPV4_1>a ok` | CLOSED (prototype) |
+| 3 | ipv4 | word after | `from {IP1}abc ok` | `from {IP1}abc ok` | YES | `from <IPV4_1>abc ok` | CLOSED (prototype) |
+| 4 | ipv4 | _x after | `from {IP1}_x ok` | `from {IP1}_x ok` | YES | `from <IPV4_1>_x ok` | CLOSED (prototype) |
+| 5 | ipv4 | _ after | `from {IP1}_ ok` | `from {IP1}_ ok` | YES | `from <IPV4_1>_ ok` | CLOSED (prototype) |
+| 6 | ipv4 | digit after | `from {IP1}9 ok` | `from <IPV4_1> ok` | no | `from <IPV4_1> ok` | unchanged |
+| 7 | ipv4 | letter before | `from x{IP1} ok` | `from x{IP1} ok` | YES | `from x<IPV4_1> ok` | CLOSED (prototype) |
+| 8 | ipv4 | word before (ip) | `from ip{IP1} ok` | `from ip{IP1} ok` | YES | `from ip<IPV4_1> ok` | CLOSED (prototype) |
+| 9 | ipv4 | _ before | `from node_{IP1} ok` | `from node_{IP1} ok` | YES | `from node_<IPV4_1> ok` | CLOSED (prototype) |
+| 10 | ipv4 | digit before | `from 7{IP1} ok` | `from 7{IP1} ok` | YES | unchanged, stated limit L1 | leak (limit) |
+| 11 | ipv4 | both sides letters | `from x{IP1}y ok` | `from x{IP1}y ok` | YES | `from x<IPV4_1>y ok` | CLOSED (prototype) |
+| 12 | ipv4 | both sides _ | `from eth0_{IP1}_up ok` | `from eth0_{IP1}_up ok` | YES | `from eth0_<IPV4_1>_up ok` | CLOSED (prototype) |
+| 13 | ipv4 | two glued IPs | `from {IP1}{IP2} ok` | `from {IP1}{IP2} ok` | YES | unchanged, stated limit L2 | leak (limit) |
+| 14 | ipv4 | glued to UUID | `from {UUID}{IP1} ok` | `from {UUID}{IP1} ok` | YES | `from <UUID_1><IPV4_1> ok` | CLOSED (prototype) |
+| 15 | ipv4 | letter after + clean copy | `from {IP1} and {IP1}a ok` | `from <IPV4_1> and {IP1}a ok` | YES | `from <IPV4_1> and <IPV4_1>a ok` | CLOSED (prototype) |
+| 16 | ipv4 | after = with letter | `src={IP3}x dst` | `src={IP3}x dst` | YES | `src=<IPV4_1>x dst` | CLOSED (prototype) |
+| 17 | phone | control: spaces | `call {PHONE+} now` | `call <PHONE_1> now` | no | `call <PHONE_1> now` | unchanged |
+| 18 | phone | letter after | `call {PHONE+}a now` | `call {PHONE+}a now` | YES | `call <PHONE_1>a now` | CLOSED (prototype) |
+| 19 | phone | _x after | `call {PHONE+}_x now` | `call {PHONE+}_x now` | YES | `call <PHONE_1>_x now` | CLOSED (prototype) |
+| 20 | phone | _ after | `call {PHONE+}_ now` | `call {PHONE+}_ now` | YES | `call <PHONE_1>_ now` | CLOSED (prototype) |
+| 21 | phone | letter before | `call x{PHONE+} now` | `call x+<PHONE_1> now` | no | `call x<PHONE_1> now` | no leak, output changes |
+| 22 | phone | _ before | `call tel_{PHONE+} now` | `call tel_+<PHONE_1> now` | no | `call tel_<PHONE_1> now` | no leak, output changes |
+| 23 | phone | both sides | `call x{PHONE+}y now` | `call x{PHONE+}y now` | YES | `call x<PHONE_1>y now` | CLOSED (prototype) |
+| 24 | phone | clean copy + glued copy | `call {PHONE+} or {PHONE+}a now` | `call <PHONE_1> or {PHONE+}a now` | YES | `call <PHONE_1> or <PHONE_1>a now` | CLOSED (prototype) |
+| 25 | phone | contiguous, letter after | `call {PHONE10}a now` | `call {PHONE10}a now` | YES | unchanged, stated limit L3 | leak (limit) |
+| 26 | phone | contiguous, _x after | `call {PHONE10}_x now` | `call {PHONE10}_x now` | YES | `call <PHONE_1>_x now` | CLOSED (prototype) |
+| 27 | phone | contiguous, letter before | `call x{PHONE10} now` | `call x{PHONE10} now` | YES | unchanged, stated limit L3 | leak (limit) |
+| 28 | phone | contiguous, word before | `call tel{PHONE10} now` | `call tel{PHONE10} now` | YES | `call tel<PHONE_1> now` | CLOSED (prototype) |
+| 29 | phone | contiguous, _ before | `call tel_{PHONE10} now` | `call tel_{PHONE10} now` | YES | `call tel_<PHONE_1> now` | CLOSED (prototype) |
+| 30 | phone | contiguous, both _ | `call id_{PHONE10}_x now` | `call id_{PHONE10}_x now` | YES | `call id_<PHONE_1>_x now` | CLOSED (prototype) |
+| 31 | phone | contiguous, clean copy + glued | `phone={PHONE10} then x{PHONE10} now` | `phone=<PHONE_1> then x{PHONE10} now` | YES | `phone=<PHONE_1> then x<PHONE_1> now` | CLOSED (prototype) |
+| 32 | phone | spaced UK, letter after | `call {PHONEUK}a now` | `call <PHONE_1> 1234a now` | YES | `call <PHONE_1>a now` | CLOSED (prototype) |
+| 33 | iban | control | `pay {IBAN_DE} now` | `pay <IBAN_1> now` | no | `pay <IBAN_1> now` | unchanged |
+| 34 | iban | letter after (absorbed: alnum BBAN) | `pay {IBAN_DE}a now` | `pay <IBAN_1> now` | no | `pay <IBAN_1> now` | unchanged |
+| 35 | iban | digit after | `pay {IBAN_DE}9 now` | `pay <IBAN_1> now` | no | `pay <IBAN_1> now` | unchanged |
+| 36 | iban | _x after | `pay {IBAN_DE}_x now` | `pay {IBAN_DE}_x now` | YES | `pay <IBAN_1>_x now` | CLOSED (prototype) |
+| 37 | iban | _ after | `pay {IBAN_DE}_ now` | `pay {IBAN_DE}_ now` | YES | `pay <IBAN_1>_ now` | CLOSED (prototype) |
+| 38 | iban | letter before | `pay x{IBAN_DE} now` | `pay x{IBAN_DE} now` | YES | `pay x<IBAN_1> now` | CLOSED (prototype) |
+| 39 | iban | word before | `pay iban{IBAN_DE} now` | `pay iban{IBAN_DE} now` | YES | `pay iban<IBAN_1> now` | CLOSED (prototype) |
+| 40 | iban | digit before | `pay 7{IBAN_DE} now` | `pay 7{IBAN_DE} now` | YES | unchanged, stated limit L4 | leak (limit) |
+| 41 | iban | _ before | `pay iban_{IBAN_DE} now` | `pay iban_{IBAN_DE} now` | YES | `pay iban_<IBAN_1> now` | CLOSED (prototype) |
+| 42 | iban | both _ | `pay to_{IBAN_DE}_x now` | `pay to_{IBAN_DE}_x now` | YES | `pay to_<IBAN_1>_x now` | CLOSED (prototype) |
+| 43 | iban | clean copy + _x copy | `pay {IBAN_DE} or {IBAN_DE}_x now` | `pay <IBAN_1> or <IBAN_1>_x now` | no | `pay <IBAN_1> or <IBAN_1>_x now` | unchanged |
+| 44 | iban | GB, _x after | `pay {IBAN_GB}_x now` | `pay {IBAN_GB}_x now` | YES | `pay <IBAN_1>_x now` | CLOSED (prototype) |
+| 45 | iban | GB, letter before | `pay x{IBAN_GB} now` | `pay x{IBAN_GB} now` | YES | `pay x<IBAN_1> now` | CLOSED (prototype) |
+| 46 | uuid | control | `id {UUID} ok` | `id <UUID_1> ok` | no | `id <UUID_1> ok` | unchanged |
+| 47 | uuid | digit after | `id {UUID}9 ok` | `id {UUID}9 ok` | YES | `id <UUID_1>9 ok` | CLOSED (prototype) |
+| 48 | uuid | hex letter after | `id {UUID}a ok` | `id {UUID}a ok` | YES | `id <UUID_1>a ok` | CLOSED (prototype) |
+| 49 | uuid | non-hex letter after | `id {UUID}x ok` | `id {UUID}x ok` | YES | `id <UUID_1>x ok` | CLOSED (prototype) |
+| 50 | uuid | _x after | `id {UUID}_x ok` | `id {UUID}_x ok` | YES | `id <UUID_1>_x ok` | CLOSED (prototype) |
+| 51 | uuid | _0 after (k8s) | `id _default_{UUID}_0 ok` | `id _default_{UUID}_0 ok` | YES | `id _default_<UUID_1>_0 ok` | CLOSED (prototype) |
+| 52 | uuid | letter before (non-hex) | `id x{UUID} ok` | `id x123e4567-e89b-12d3-a456-<ACCOUNTID_1> ok` | YES | `id x<UUID_1> ok` | CLOSED (prototype) |
+| 53 | uuid | hex letter before | `id a{UUID} ok` | `id a123e4567-e89b-12d3-a456-<ACCOUNTID_1> ok` | YES | `id a<UUID_1> ok` | CLOSED (prototype) |
+| 54 | uuid | digit before | `id 7{UUID} ok` | `id 7123e4567-e89b-12d3-a456-<ACCOUNTID_1> ok` | YES | `id 7<UUID_1> ok` | CLOSED (prototype) |
+| 55 | uuid | _ before | `id pod_{UUID} ok` | `id pod_123e4567-e89b-12d3-a456-<ACCOUNTID_1> ok` | YES | `id pod_<UUID_1> ok` | CLOSED (prototype) |
+| 56 | uuid | both letters | `id x{UUID}y ok` | `id x{UUID}y ok` | YES | `id x<UUID_1>y ok` | CLOSED (prototype) |
+| 57 | uuid | upper, _x after | `id {UUIDUP}_x ok` | `id {UUIDUP}_x ok` | YES | `id <UUID_1>_x ok` | CLOSED (prototype) |
+| 58 | uuid | clean copy + glued copy | `id {UUID} then {UUID}x ok` | `id <UUID_1> then {UUID}x ok` | YES | `id <UUID_1> then <UUID_1>x ok` | CLOSED (prototype) |
+| 59 | host | control | `x db-7.corp.internal y` | `x <HOSTNAME_1> y` | no | `x <HOSTNAME_1> y` | unchanged |
+| 60 | host | digit after | `x db-7.corp.internal9 y` | `x <HOSTNAME_1>.internal9 y` | no | `x <HOSTNAME_1>.internal9 y` | unchanged |
+| 61 | host | letter after | `x db-7.corp.internala y` | `x <HOSTNAME_1>.internala y` | no | `x <HOSTNAME_1>.internala y` | unchanged |
+| 62 | host | _x after | `x db-7.corp.internal_x y` | `x <HOSTNAME_1>.internal_x y` | no | `x <HOSTNAME_1>.internal_x y` | unchanged |
+| 63 | host | letter before | `x zdb-7.corp.internal y` | `x <HOSTNAME_1> y` | no | `x <HOSTNAME_1> y` | unchanged |
+| 64 | host | _ before | `x svc_db-7.corp.internal y` | `x svc_db-<HOSTNAME_1> y` | YES | `x <HOSTNAME_1> y` (G4c) | closed by G4c, not G8 |
+| 65 | host | digit before | `x 9db-7.corp.internal y` | `x <HOSTNAME_1> y` | no | `x <HOSTNAME_1> y` | unchanged |
+| 66 | host | clean copy + glued | `x db-7.corp.internal then db-7.corp.internala y` | `x <HOSTNAME_1> then <HOSTNAME_2>.internala y` | no | `x <HOSTNAME_1> then <HOSTNAME_2>.internala y` | unchanged |
+| 67 | host | ends at corp, letter after | `x db01.prod.corpa y` | `x db01.prod.corpa y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 68 | host | ends at corp, digit after | `x db01.prod.corp9 y` | `x db01.prod.corp9 y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 69 | host | ends at corp, _x after | `x db01.prod.corp_x y` | `x db01.prod.corp_x y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 70 | host | lan, letter after | `x nas02.office.lanx y` | `x nas02.office.lanx y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 71 | host | lan, _ before | `x vm_nas02.office.lan y` | `x vm_nas02.<HOSTNAME_1> y` | YES | `x <HOSTNAME_1> y` (G4c) | closed by G4c, not G8 |
+| 72 | ipv4 | dashed EC2 name, letter after | `node ip-192-0-2-10a ready` | `node ip-192-0-2-10a ready` | YES | `node ip-<IPV4_1>a ready` | CLOSED (prototype) |
+| 73 | ipv4 | dashed EC2 name, _x after | `node ip-192-0-2-10_x ready` | `node ip-192-0-2-10_x ready` | YES | `node ip-<IPV4_1>_x ready` | CLOSED (prototype) |
+| 74 | ipv4 | letter between two IPs | `from {IP1}x{IP2} ok` | `from {IP1}x{IP2} ok` | YES | `from <IPV4_1>x<IPV4_2> ok` | CLOSED (prototype) |
+| 75 | phone | two formatted phones glued | `call {PHONE+}+1 415-555-0199 now` | `call <PHONE_1>+<PHONE_2> now` | no | `call <PHONE_1>+<PHONE_2> now` | unchanged |
+| 76 | iban | two IBANs glued | `pay {IBAN_DE}{IBAN_GB} now` | `pay {IBAN_DE}{IBAN_GB} now` | YES | unchanged, stated limit L5 | leak (limit) |
+| 77 | uuid | two UUIDs glued | `id {UUID}0f8fad5b-d9cb-469f-a165-70867728950e ok` | `id {UUID}0f8fad5b-d9cb-469f-a165-70867728950e ok` | YES | `id <UUID_1><UUID_2> ok` | CLOSED (prototype) |
+| 78 | host | bare .local, digit after | `x printer7.local9 y` | `x printer7.local9 y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 79 | host | bare .local, _x after | `x printer7.local_x y` | `x printer7.local_x y` | YES | unchanged, stated limit L6 | leak (limit) |
+| 80 | host | bare .internal, letter after | `x a.b.c.internalx y` | `x a.b.c.internalx y` | YES | unchanged, stated limit L6 | leak (limit) |
 
 Must-keep rows (outside the 80; output now -> with the prototype):
 | text | now | with G8 | verdict |
@@ -61,7 +141,7 @@ Must-keep rows (outside the 80; output now -> with the prototype):
 | `dotted date 2026.11.20.10 ok` | unchanged | unchanged (digit before: L1) | kept |
 | `oid 1.3.6.1.4.1 ok` | `oid <IPV4_1>.4.1 ok` | same | unchanged (already over-masked today) |
 | a SHA-256 `3851007894abcdef...`, `commit 4155550132abcdef`, `build4155550132`, `img sha256_3851007894abcdef` | unchanged | unchanged | kept (PHONE hash guard) |
-| `wave2-2026-09-11T14:12:03Z`, `orders-db-ro-1 up`, `pod web-5d8f9c7b6-x2x7q`, `x86_64-linux-gnu`, `eth0_up` | unchanged | unchanged | kept |
+| `wave2-2026-09-11T14:12:03Z`, `orders-db-ro-1 up`, `build-1234-5678-90 ok`, `job-415-555-0132 ok`, `pod web-5d8f9c7b6-x2x7q`, `x86_64-linux-gnu`, `eth0_up` | unchanged | unchanged | kept |
 | `run_20261120101112_x ok` | unchanged | unchanged (compact timestamp guard kept in the new entry) | kept |
 | `self.local_cache = 1`, `obj.internal_state`, `nltk.corpus.reader`, `acme.corporate.site`, `ctx.local9`, `vlan10.lan2 ok` | unchanged | unchanged (no host change in G8) | kept |
 | `token AB12CDEFGHIJKLMNOPQ ok` | unchanged | unchanged | kept |
@@ -156,12 +236,13 @@ fewer, not more, rounds: the G7 "boundary class" case is now found in pass 1).
 | L-D7 | dependency order (section 8) | G7 round 3 (done, da0f71f) -> G4 (G4c) -> G8 | G8a + G8b before G4 (they touch no HOSTNAME line); then rows 64 and 71 are strict xfails naming G4c until G4 lands |
 
 ## 7. Acceptance tests (tests/test_redact_glued_rest.py; data from tests/g8_cases.py; public names only: `redact`, `redact_many`, `runmap.redact_text`, `runmap.redact_untrusted`, `runmap.restore_text`)
-- `test_glued_rows_are_masked` (parametrised over the 47 closed rows): the protected value is not readable by the 2.2 leak rule in
+- `test_glued_rows_are_masked` (parametrised over the 47 closed rows and rows 21, 22, whose output changes without a leak today:
+  `call x<PHONE_1> now`, `call tel_<PHONE_1> now`, the `+` now inside the placeholder): the protected value is not readable by the 2.2 leak rule in
   `redact()`, `redact_many([text, "other line"])[0][0]` and `redact_text`; the output equals the "expected" column exactly.
 - `test_glued_character_stays_outside_the_placeholder`: for rows 2-5, 7-9, 18-20, 36-37, 47-51: the glued text (`a`, `_x`, `_`, `x`,
   `iban`, `9`) is in the output next to the placeholder, and the map original equals the bare value.
-- `test_controls_and_untouched_rows_are_byte_identical` (rows 1, 6, 17, 32-35, 43, 46, 59-63, 65-66... every row whose result is
-  "unchanged"): output and map equal the values recorded at step 0 on the base commit.
+- `test_controls_and_untouched_rows_are_byte_identical` (the 16 "unchanged" rows: 1, 6, 17, 33, 34, 35, 43, 46, 59, 60, 61, 62,
+  63, 65, 66, 75): output and map equal the values recorded at step 0 on the base commit.
 - `test_limit_rows_are_pinned` (rows 10, 13, 25, 27, 40, 76, 67-70, 78-80): output equals the base commit's; strict `xfail` with the
   limit id in the reason, so a later fix shows up.
 - `test_host_glued_before_is_closed_by_g4c` (rows 64, 71): `x <HOSTNAME_1> y`. Ordinary test if G4c is merged first (L-D7 default);
@@ -197,11 +278,11 @@ Mutants (each must be killed; raw result in evidence/G8-1.md):
 | EC2 end `\b` | rows 72, 73 |
 | formatted PHONE entry moved after the main entry | row 32 (`<PHONE_1> 1234a`) |
 | formatted PHONE without `(?=\+|\d{1,4}[ \-]\d)` | must-keep `build4155550132`... (contiguous run after a letter) |
-| formatted PHONE allows `-` before | must-keep `orders-db-ro-1` style row and `ip-10-0-3-22` |
+| formatted PHONE allows `-` before | must-keep `build-1234-5678-90 ok` (unchanged today and with G8; the mutant masks it: checked) |
 | underscore PHONE allows a letter after | must-keep `img sha256_3851007894abcdef` |
 | underscore PHONE without the timestamp guard | must-keep `run_20261120101112_x` |
 | keyword PHONE entry removed | row 28 |
-| `_JOINS` removed (all `_ALNUM`) | rows 15, 24, 31, 58 |
+| `_JOINS` removed (all `_ALNUM`) | row 31 and the sweep test (rows 15, 24, 58 are closed by the patterns themselves) |
 | `_JOINS` given to HOSTNAME as digits | the HOSTNAME / TENANT part of the sweep test |
 
 ## 8. Build order and dependencies
@@ -219,15 +300,19 @@ Owner: core-c (guard/redact.py). No file of core-a or core-b is touched; no SPIN
 
 ## 9. Fail-before and the drafter's run
 - Fail-before: copy tests/g8_cases.py and tests/test_redact_glued_rest.py into a clean export of the base commit
-  (`git archive <base> | tar -x -C /tmp/g8-base`, no worktree, no branch switch) and run them. Expected: exactly 47 failures in
-  `test_glued_rows_are_masked`, plus `test_sweep_masks_...` and `test_bank_word_check_...`; the limit, control and must-keep tests
+  (`git archive <base> | tar -x -C /tmp/g8-base`, no worktree, no branch switch) and run them. Expected: exactly 49 failures in
+  `test_glued_rows_are_masked` (47 leaks, rows 21 and 22 by output), plus `test_sweep_masks_...` and `test_bank_word_check_...`; the limit, control and must-keep tests
   pass. Record the ids.
 - Drafter's run of the prototype (the patch of section 4 applied to a clean archive of 459d8da, every test file that names
   `guard.redact`, `guard.runmap`, `from hadavin_sdk.guard import` or `redact_text`: 79 files, `-m "not perf" -n 2`): see the batch line
   in the evidence; on 0d93f20 the same set gave base 18 failed / 10,410 passed / 1 error and prototype 19 failed / 10,409 passed /
   1 error; every failure but one is the same in both and is caused by the archive (no `.git`, no `.gitleaks.toml`, no `demos/`,
   unidata generator files); the one difference is `test_boundary_class_is_over_masked_fail_safe_and_pinned` (section 3).
-  @@SUITE@@
+  Re-run on 459d8da (G7 round 3 in), same 79 files: base 19 failed / 10,466 passed / 9 xfailed / 1 error; prototype 20 failed /
+  10,465 passed / 9 xfailed / 1 error; `diff` of the two sorted failure lists: the one line
+  `tests/test_redact_settle_loop.py::test_boundary_class_is_over_masked_fail_safe_and_pinned`. The G7 property test
+  (tests/test_redact_idempotent_property.py), tests/warden_port, tests/test_text_parts_together.py and tests/test_p1d_a_paths.py
+  are green under the prototype.
 
 ## 10. Cost (CPU seconds, best of 3, `redact()` on this 4-core container, Python 3.13.18, measured while other jobs ran: noise about 20 percent)
 | text (262,144 chars unless said) | before G8 | with G8 |
