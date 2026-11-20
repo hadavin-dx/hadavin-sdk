@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:56:08Z
+UPDATED_UTC: 2026-11-20T09:56:42Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.36 of 4 cores, mem 1/15 GB, disk 50G free, 28% used, agents light 4 heavy 2
+CAPACITY: load 2.65 of 4 cores, mem 2/15 GB, disk 50G free, 28% used, agents light 4 heavy 2
 DISK: / 50G free, 28% used; worktrees /tmp/core-b-wt 3.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T09:55:39Z (previous push; this board is pushed right after writing)
+PUSHED_UTC: 2026-11-20T09:56:40Z (previous push; this board is pushed right after writing)
 IST: 15:26 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
@@ -197,3 +197,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 09:49Z DUE NOW: E9 BUILD (A10+A11): BUILT, TESTED (795 / 154 passed, fail-first, 4 mutants killed), FRESH REVIEWS DONE: review 8 found the in-memory tick counter never reaches N (one tick per process), fixed in A11 (age-based quarantine), review 9 CLEAN. MERGED on cloud/core-b (7675ad5da). E11 (F7: purge keeps expired holds + guard trigger migration 0010): BUILDING (since 09:35Z), E12 (B6a compare-and-clear reset + rights self-check since 09:27Z; B6b session pins since 09:35Z; F6 negative/NaN cost since 09:25Z): BUILDING, none reported yet; B7 (migration 0009) QUEUED behind B6a. Each lands: merge, evidence, fresh result review. LIVE AGENTS (sonnet): F7, B6a, B6b, F6, stop-state mutants refresh (since 09:15Z).
 
 09:53Z DEADLINE 09:55Z STATE (from the builders' worktrees; test reports pending, nothing merged yet): E11 M3+M4 (F7): COMMITTED 912f6d360 + docs 03dcaff08 (purge keeps expired holds; money guard trigger migration 0010); E12 Low 5 (B6b): COMMITTED 90747eea3 + docs 4165906ab (session pins verified with SHOW); F6 (negative/NaN cost refused, PG settle delta in money context): COMMITTED a973a8408 + docs 52ffb59c5. E12 Majors 1+2 (B6a compare-and-clear reset + rights self-check): STILL BUILDING (13 changed files, not committed). E12 Mediums 3, 4 + Low 6 (B7 migration 0009): NOT STARTED (behind B6a). I merge each as its builder reports its test run, then evidence and fresh review.
+
+09:56Z E12 Low 5 (B6b session pins): BUILT, MERGED on cloud/core-b (6121eb977), its 2 new tests + lock-timeout tests 7 passed, fail-first shown. E11 (F7): BUILT (purge keeps expired: fail-first 2==1 / 4==3; money guard trigger 0010: 5 failed without it, 8 pass with it, mutants killed) but NOT MERGEABLE until migration 0009 exists (ledger refuses 0010 without 0009): B7 STARTED NOW for 0009 (schema only: reset table, seq guard, watermark, ts CHECKs; no reset code), then F7 merges. Design note from F7: a plain 'never lower' trigger broke ordinary settle; the rule now allows a counter to fall only by the reserved-minus-settled of holds settled in the same transaction (documented limit: add_spend charges can be lowered by that amount only). B6a (Majors 1+2) and F6 reports pending.
