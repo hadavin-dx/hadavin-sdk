@@ -174,6 +174,9 @@ class ChainAudit:
         # successful write of this process and by reconcile. In-process only: lost if the process exits first.
         self._pending: list[AuditEvent] = []
         self._flush_lock = threading.Lock()  # one drainer of _pending at a time
+        # Parked events the database refused for a reason other than an outage: moved here by the flush so
+        # they do not block the ones after them. In-process only, never retried: lost when the process exits.
+        self._unwritable: list[AuditEvent] = []
         # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
         # restart drops the list and `verify` then reports "never anchored", which is the truth).
         self._unanchored: dict[int, tuple[str, str]] = {}
@@ -239,25 +242,42 @@ class ChainAudit:
         return key
 
     def _flush_pending(self) -> int:
-        """Write the events parked in memory, oldest first; stop at the first one that cannot be written (it
-        and the ones after it stay, in order). Returns how many were written. Never raises."""
-        done = 0
+        """Write the events parked in memory, oldest first. An outage stops the flush at that event (it and the
+        ones after it stay, in order). An event the database refuses for another reason is moved to
+        `_unwritable` (kept in memory, counted in one warning) so it cannot block the events after it.
+        Returns how many were written. Never raises."""
+        done = aside = 0
         try:
             with self._flush_lock:
                 while self._pending:
-                    if not self._drain(self._pending[0]):
+                    failed = self._drain(self._pending[0])
+                    if failed is not None and is_connectivity_error(failed):
                         break
-                    del self._pending[0]  # only the lock holder removes; other threads only append
-                    done += 1
+                    event = self._pending.pop(
+                        0
+                    )  # only the lock holder removes; other threads only append
+                    if failed is None:
+                        done += 1
+                    else:
+                        self._unwritable.append(event)
+                        aside += 1
         except Exception as exc:  # noqa: BLE001 - a flush failure is never the caller's error
             _LOG.warning("audit pending flush stopped (%s); retried next time", type(exc).__name__)
+        if aside:
+            _LOG.warning(
+                "audit pending flush: written=%d not_writable=%d (kept in memory, total=%d)",
+                done,
+                aside,
+                len(self._unwritable),
+            )
         return done
 
     def reconcile(self) -> int:
         """Write every parked event (memory, then the outbox table) to the chain; returns how many. An outbox
-        row is deleted only after its event is in the chain. An unreadable row is kept and skipped, and the
-        call then raises with the count only. A connectivity error reading the outbox is a quiet return (retried
-        next time); any other error there (a missing grant or table) is raised."""
+        row is deleted only after its event is in the chain. A row that is unreadable, that the database refuses
+        for a reason other than an outage, or whose delete failed is kept and skipped, and the call then raises
+        with the counts only. An outage (reading the outbox or appending a row) is quiet: retried next time. Any
+        other error reading the outbox (a missing grant or table) is raised."""
         done = self._flush_pending()
         try:
             queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
@@ -265,7 +285,7 @@ class ChainAudit:
             if not is_connectivity_error(exc):
                 raise
             return done  # the database is still down: retried next time
-        unreadable = 0
+        unreadable = not_writable = not_deleted = 0
         for event_id, body in queued:
             try:
                 event = AuditEvent.model_validate_json(body)
@@ -275,22 +295,47 @@ class ChainAudit:
             if event.event_id != event_id:
                 unreadable += 1
                 continue
-            if self._drain(event):
+            failed = self._drain(event)
+            if failed is not None:
+                # An outage: stays queued quietly. Anything else (a missing grant, a rejected row) is counted.
+                not_writable += not is_connectivity_error(failed)
+                continue
+            try:
                 self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
-                done += 1
-        if unreadable:
-            _LOG.warning("audit outbox: drained=%d unreadable=%d (kept)", done, unreadable)
-            raise RuntimeError(f"audit outbox: {unreadable} unreadable rows kept")
+            except Exception:  # noqa: BLE001 - the event is in the chain; the next drain dedupes and deletes
+                not_deleted += 1
+                continue
+            done += 1
+        problems = [
+            text
+            for count, text in (
+                (unreadable, f"{unreadable} unreadable rows kept"),
+                (not_writable, f"{not_writable} rows not writable"),
+                (not_deleted, f"{not_deleted} rows not deleted"),
+            )
+            if count
+        ]
+        if problems:
+            _LOG.warning(
+                "audit outbox: drained=%d unreadable=%d not_writable=%d not_deleted=%d (kept)",
+                done,
+                unreadable,
+                not_writable,
+                not_deleted,
+            )
+            raise RuntimeError("audit outbox: " + ", ".join(problems))
         return done
 
-    def _drain(self, event: AuditEvent) -> bool:
+    def _drain(self, event: AuditEvent) -> Exception | None:
+        """Append one parked event. None when it is in the chain (now or already); else the exception, for the
+        caller to tell an outage from a refusal."""
         try:
             self._append(event)
         except DuplicateEvent:
-            pass
-        except Exception:  # noqa: BLE001 - stays queued, retried next time
-            return False
-        return True
+            return None
+        except Exception as exc:  # noqa: BLE001 - stays parked; the caller decides what the reason means
+            return exc
+        return None
 
     def verify_object(self, key: str) -> bool:
         """The event's row holds its own content's hash and links to the row before it, which holds its own."""

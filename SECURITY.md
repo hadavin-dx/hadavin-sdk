@@ -11,7 +11,11 @@ Reports are answered within 5 working days.
 **Audit (stated limits).** The audit log is eventual, not instant. An event that could not be written to the audit
 chain is parked in the outbox table and written by the next tick (step `audit_drain`). An event parked only in a
 process's memory (the database was down for the outbox as well) is written at that process's next successful audit
-write, and is lost if the process exits first. The eval and replay commands do not write to the chain.
+write, and is lost if the process exits first. That write is not capped: after a long outage the next audit write
+of a process also writes every event that process parked. Events a process could not write for a reason other than
+an outage are kept in memory, counted in a warning, and lost when the process exits. An outbox row the database
+refuses for such a reason is kept and fails the `audit_drain` step with a count. The eval and replay commands do not
+write to the chain.
 
 **Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
