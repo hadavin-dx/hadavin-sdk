@@ -54,6 +54,26 @@ ProviderExhausted = model_gate.ProviderExhausted
 # `mapping`; "no run map" is said with the constant NO_MAP (before: `mapping=None`, or left out). Older heads have
 # no NO_MAP and take None, so the same cases run on both.
 NO_MAP = getattr(model_gate, "NO_MAP", None)
+# core-c ORDER 017 item 5 (same request file, section 3): every failure BEFORE the provider call that is not a
+# SpendRefused is raised as `GateRefused` (a code and nothing else: no text, no cause, no context). Older heads let
+# the original error through; `None` here means "this head has no GateRefused": the original error comes out.
+GateRefused = getattr(model_gate, "GateRefused", None)
+
+
+def _refusal_of(error: BaseException):
+    """The exception the gate must raise for an error of the worst-case step or of `reserve`: the very same
+    object where the head passes it on (a SpendRefused, a BaseException that is not an Exception, any error on a
+    head without GateRefused), else a `GateRefused` that holds only its code."""
+    if GateRefused is None or not isinstance(error, Exception) or hasattr(error, "reason"):
+        return type(error)
+    return GateRefused
+
+
+def _assert_code_only(error: BaseException, code: str) -> None:
+    """A GateRefused carries its code and nothing else: no text, no secret, no cause, no context."""
+    assert isinstance(error, GateRefused)
+    assert error.code == code and error.args == (code,)
+    assert error.__cause__ is None and error.__context__ is None
 
 REASONS = ("kill_switch", "daily_budget", "monthly_budget", "limits_unavailable", "bad_amount")
 AGENT = "agent-" + "a1"
@@ -319,13 +339,18 @@ RESERVE_ERRORS = [
 @pytest.mark.parametrize("make", RESERVE_ERRORS)
 def test_point1_any_exception_from_reserve_means_the_inner_client_is_not_called(meter_cls, make):
     """Contract point 1 and ticket I5: every listed reason, an unknown agent (KeyError), any other exception
-    and a BaseException from reserve: zero inner calls, zero settles, ONE reserve (never retried), and the
-    caller gets the very same exception object."""
+    and a BaseException from reserve: zero inner calls, zero settles, ONE reserve (never retried). The caller
+    gets the very same exception object for a SpendRefused and for a BaseException; since ORDER 017 item 5 any
+    other error comes out as a code-only `GateRefused("reserve_refused")`."""
     rig, error = Rig(meter_cls), make()
     rig.meter.reserve_raises = error
-    with pytest.raises(type(error)) as caught:
+    expected = _refusal_of(error)
+    with pytest.raises(expected) as caught:
         rig.chat()
-    assert caught.value is error
+    if expected is GateRefused:  # ORDER 017 item 5: a code, not the error
+        _assert_code_only(caught.value, "reserve_refused")
+    else:  # a SpendRefused, or a BaseException that is no Exception: the very same object
+        assert caught.value is error
     assert rig.inner.calls == 0 and rig.inner.requests == 0
     assert len(rig.meter.reserve_calls) == 1 and rig.meter.settle_calls == []
     assert "call" not in rig.events and "settle" not in rig.events
@@ -345,8 +370,11 @@ def test_point1_an_unknown_agent_is_refused_with_a_code_and_never_with_its_text(
     """Contract point 1 (KeyError: still no call) and ticket I9: the row holds a code, not the exception text."""
     rig = Rig(meter_cls)
     rig.meter.reserve_raises = KeyError(ERROR_TEXT)
-    with pytest.raises(KeyError):
+    with pytest.raises(_refusal_of(KeyError(AGENT))) as caught:  # GateRefused since ORDER 017 item 5
         rig.chat()
+    if GateRefused is not None:
+        _assert_code_only(caught.value, "reserve_refused")
+        assert ERROR_TEXT not in repr(caught.value) and ERROR_TEXT not in str(caught.value)
     assert rig.inner.calls == 0
     (row,) = rig.sink.rows
     assert row.result == "refused" and row.error_code and row.error_code not in REASONS
@@ -360,13 +388,21 @@ def test_point1_an_unknown_agent_is_refused_with_a_code_and_never_with_its_text(
 )
 def test_point1_a_bad_worst_case_amount_refused_by_the_meter_means_no_call(meter_cls, amount):
     """Contract points 1 and 10 (bad_amount): a worst case that is not a finite Decimal >= 0 (a float, an int,
-    a bool, NaN, Infinity, a negative, None, text) is refused by the meter and the inner client is not called."""
+    a bool, NaN, Infinity, a negative, None, text) never books and the inner client is not called. Where the
+    head has `GateRefused` (ORDER 017 item 5, request 3 section 3) the GATE refuses it first, as the code
+    `worst_case_invalid`, and the meter is not asked; before, the meter refused it as `bad_amount`."""
     rig = Rig(meter_cls, worst_case=lambda *a: amount)
-    with pytest.raises(SpendRefused) as caught:
-        rig.chat()
-    assert caught.value.reason == "bad_amount"
+    if GateRefused is None:
+        with pytest.raises(SpendRefused) as caught:
+            rig.chat()
+        assert caught.value.reason == "bad_amount"
+        assert rig.sink.codes() == [("refused", "bad_amount")]
+    else:
+        with pytest.raises(GateRefused) as caught:
+            rig.chat()
+        _assert_code_only(caught.value, "worst_case_invalid")
+        assert rig.sink.codes() == [("refused", "worst_case_invalid")]
     assert rig.inner.calls == 0 and rig.meter.booked == {} and rig.meter.settle_calls == []
-    assert rig.sink.codes() == [("refused", "bad_amount")]
 
 
 def test_point1_a_worst_case_that_cannot_be_computed_means_no_reservation_and_no_call(meter_cls):
@@ -376,8 +412,10 @@ def test_point1_a_worst_case_that_cannot_be_computed_means_no_reservation_and_no
         raise ArithmeticError("no price")
 
     rig = Rig(meter_cls, worst_case=broken)
-    with pytest.raises(ArithmeticError):
+    with pytest.raises(_refusal_of(ArithmeticError("no price"))) as caught:
         rig.chat()
+    if GateRefused is not None:  # its error is NOT passed on (it may carry text): the code `worst_case_failed`
+        _assert_code_only(caught.value, "worst_case_failed")
     assert rig.meter.reserve_calls == [] and rig.inner.calls == 0 and rig.meter.settle_calls == []
 
 
@@ -878,10 +916,17 @@ def test_point10_max_attempts_zero_or_negative_books_nothing_and_calls_nothing(
 ):
     """Contract point 10 ("times the client's max_attempts"): an attempt count of 0 or below (or one that is
     not a whole number) has no worst case. The gate must not fall back to booking 0 and calling: no
-    reservation, no call, and the error of the worst-case step comes out."""
+    reservation, no call, and the refusal of the worst-case step comes out (its ValueError on a head without
+    `GateRefused`; since ORDER 017 item 5 the code-only `GateRefused("worst_case_failed")`, as the gate does not
+    pass the error of that step on)."""
     rig = Rig(meter_cls, worst_case=contract_worst_case(Decimal(3), Decimal(15), 100, max_attempts))
-    with pytest.raises(ValueError, match="max_attempts"):
-        rig.chat()
+    if GateRefused is None:
+        with pytest.raises(ValueError, match="max_attempts"):
+            rig.chat()
+    else:
+        with pytest.raises(GateRefused) as caught:
+            rig.chat()
+        _assert_code_only(caught.value, "worst_case_failed")
     assert rig.meter.reserve_calls == [] and rig.inner.calls == 0
 
 
@@ -1318,6 +1363,29 @@ def test_m1_the_whole_module_has_no_logger_no_print_and_no_exception_text():
         raised = node.exc
         if raised is None or isinstance(raised, ast.Name):
             continue
+        # ORDER 017 item 5: `raise GateRefused(failure)` hands over a failure CODE held in a local; it is allowed
+        # only when every assignment to that local in the module is a CODE_* constant (or None), so no text of any
+        # kind can reach the exception. Every other raise keeps the rule: constant arguments only.
+        if (
+            isinstance(raised, ast.Call)
+            and getattr(raised.func, "id", "") == "GateRefused"
+            and len(raised.args) == 1
+            and isinstance(raised.args[0], ast.Name)
+        ):
+            local = raised.args[0].id
+            sources = [
+                n.value
+                for n in ast.walk(tree)
+                if isinstance(n, ast.Assign | ast.AnnAssign)
+                and local in {t.id for t in ast.walk(n) if isinstance(t, ast.Name)}
+                and n.value is not None
+            ]
+            assert sources, f"line {node.lineno}: a code with no assignment"
+            for source in sources:
+                assert (isinstance(source, ast.Name) and source.id.startswith("CODE_")) or (
+                    isinstance(source, ast.Constant) and source.value is None
+                ), f"line {node.lineno}: a GateRefused code that is not a CODE_ constant"
+            continue
         assert isinstance(raised, ast.Call) and all(
             isinstance(arg, ast.Constant) for arg in raised.args
         ), f"line {node.lineno}: an exception built from a value"
@@ -1336,7 +1404,16 @@ def test_m1_the_module_keeps_no_state_between_calls():
             ), f"line {node.lineno}: a mutable module-level value"
             if isinstance(value, ast.Call):
                 name = getattr(value.func, "id", getattr(value.func, "attr", ""))
-                assert name == "frozenset", f"line {node.lineno}: module-level call of {name}"
+                # a compiled pattern (`re.compile`, since the framing rule of ORDER 017 item 6) is an immutable
+                # constant, not state; any other call still is refused
+                is_compile = (
+                    name == "compile"
+                    and isinstance(value.func, ast.Attribute)
+                    and getattr(value.func.value, "id", "") == "re"
+                )
+                assert name == "frozenset" or is_compile, (
+                    f"line {node.lineno}: module-level call of {name}"
+                )
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
     assert not names & {"ContextVar", "contextvars", "threading", "local", "lru_cache", "cache"}
     assert not [node for node in ast.walk(tree) if isinstance(node, ast.Global | ast.Nonlocal)]
