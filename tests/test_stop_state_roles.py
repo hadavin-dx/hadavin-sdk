@@ -1686,22 +1686,28 @@ def test_cli_migrate_refuses_a_lone_surrogate_in_an_accepted_role_with_exit_2(
     assert cli.main([*argv, "--accept-admin-role", chr(0xD800)]) == 2
 
 
-class _BrokenNoteOut(io.StringIO):
-    """A stdout whose write fails (closed, broken pipe) for the accepted-roles note only."""
-
-    def __init__(self, needle):
-        super().__init__()
-        self.needle = needle
+class _BrokenOut(io.StringIO):
+    """A stdout whose every write and flush fails, as a broken pipe does."""
 
     def write(self, text):
-        if self.needle in text:
-            raise OSError("broken pipe")
-        return super().write(text)
+        raise OSError("broken pipe")
+
+    def flush(self):
+        raise OSError("broken pipe")
 
 
-def test_cli_migrate_a_broken_stdout_never_replaces_the_refusal_or_fails_a_success(
-    w, cfg_dir, monkeypatch
+def _closed_out():
+    out = io.StringIO()
+    out.close()  # a write then raises ValueError, not OSError
+    return out
+
+
+@pytest.mark.parametrize("kind", ["oserror", "closed"])
+def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
+    w, cfg_dir, monkeypatch, capsys, kind
 ):
+    """EVERY stdout write fails (the accepted-roles note and the "applied" line). A success still exits 0, a refusal
+    still exits 2, and the refusal text still reaches stderr."""
     _demo(cfg_dir)
     vouched = f"sb_ac4_{w.sfx}"
     argv = [
@@ -1715,13 +1721,15 @@ def test_cli_migrate_a_broken_stdout_never_replaces_the_refusal_or_fails_a_succe
         "--accept-admin-role",
         vouched,
     ]
-    monkeypatch.setattr(sys, "stdout", _BrokenNoteOut(vouched))
+    monkeypatch.setattr(sys, "stdout", _BrokenOut() if kind == "oserror" else _closed_out())
     monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.new_schema("bo"))
-    assert cli.main(argv) == 0  # success: the note is lost, the run is not
+    assert cli.main(argv) == 0
     third = w.new_role("x4", "NOLOGIN")
     w.grant("GRANT UPDATE ON kill_switch TO {}", third)
     monkeypatch.setenv("HADAVIN_MIGRATE_DSN", w.scoped)
-    assert cli.main(argv) == 2  # refusal: the ConfigError is not replaced by the OSError
+    assert cli.main(argv) == 2
+    err = capsys.readouterr().err
+    assert "refused:" in err and third in err
 
 
 def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(

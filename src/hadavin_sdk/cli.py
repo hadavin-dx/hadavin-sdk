@@ -424,9 +424,13 @@ def _tick() -> int:
 
 
 def _say(text: str) -> None:
-    """print for a name the terminal cannot encode: escaped, never an error (exit codes stay 0 or 2)."""
+    """print to stdout for a name the terminal cannot encode (escaped) and for a stdout that is broken or closed:
+    never an error, so exit codes stay 0 or 2."""
     enc = getattr(sys.stdout, "encoding", None) or "ascii"
-    print(text.encode(enc, "backslashreplace").decode(enc))
+    try:
+        print(text.encode(enc, "backslashreplace").decode(enc))
+    except (OSError, ValueError):  # broken pipe or closed stdout: the exit code stays 0 or 2
+        pass
 
 
 def _migrate(
@@ -481,11 +485,8 @@ def _migrate(
         )
     finally:  # printed on a refusal too: the CI log is the record of who vouched
         for note in notes:
-            try:
-                _say(note)
-            except OSError:  # closed stdout, broken pipe: never replaces the refusal in flight
-                pass
-    print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
+            _say(note)
+    _say(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:
         print(
             "warning: new tables have no runtime grants; run again with --runtime-role <role>",
