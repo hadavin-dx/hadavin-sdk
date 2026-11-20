@@ -929,8 +929,14 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # pair and reads `.` `)` `!` and many more as value characters, so `password=hunter22, hunter22` stored `hunter22,` and the every-copy
 # sweep of that value left the clear copy `hunter22` readable (E18 G7-F4); the same with a wrapper (`(hunter22)`, a backtick, `**x**`,
 # `<b>x</b>`, a table bar, `x...`, an escaped newline). `_place` registers the value stripped this way as an entry of its own; it does not register a core that is one of the "says no value" words (`none!`: masked whole as before, never every `none`).
-_EDGE_OPEN = re.compile(r"<[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt]")
-_EDGE_CLOSE = re.compile(r"(?:</[A-Za-z][A-Za-z0-9]{0,15}>|\\[nrt])\Z")
+# M4 (round 2): also the escapes that end a line or a quote in transit (`%0A`, `\\u000a`, `\\x0a`, `&quot;`, `&#10;`, `&nbsp;`) and a tag with a
+# slash or a space (`<br/>`, `<br />`, `<a/>`); every form is bounded (a tag name 16, spaces 3, an entity 10), so the 64-character window stays linear.
+_EDGE_FORM = r"(?:</?[A-Za-z][A-Za-z0-9]{0,15} {0,3}/?>|\\[nrt]|%[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|&(?:#[0-9]{1,7}|[A-Za-z]{2,10});)"
+_EDGE_OPEN = re.compile(_EDGE_FORM)
+# At the end only, a known form the value class cut short (a closed list: `<bx` is no tag): `hunter22<br />` stops at the space (`hunter22<br`), `&quot;` at the `;` (`&quot`).
+_EDGE_CLOSE = re.compile(
+    rf"(?:{_EDGE_FORM}|<(?:br|hr|b|i|p|a|li|tr|td|div|span)|&(?:#[0-9]{{1,7}}|quot|amp|lt|gt|nbsp|apos))\Z"
+)
 
 
 def _bare(text: str) -> str:
@@ -951,10 +957,34 @@ def _bare(text: str) -> str:
     return text[start:end]
 
 
-def _placeholder_like(core: str) -> bool:
-    """Is `core` the text of a placeholder (`EMAIL_1`) or the start of one (`EMA`)? Registered, it would be swept out of every placeholder."""
-    return re.fullmatch(r"[A-Z][A-Z0-9]*_\d+", core) is not None or any(
-        f"{label}_".startswith(core) for label in _LABELS
+# A large value whose core differs by a few characters (a PRIVKEY: the dashes of its header and footer are the whole difference) gets no core:
+# the copy would double its characters in the map (E14: MAX_MAP_CHARS 524,288, MAX_FINDER_CHARS 786,432; a 262,144-character key, 524,222 characters
+# without the core, 786,350 with it, ended a run that was fine before G12) and a few characters of difference is no extra protection.
+_CORE_BIG = 4096
+_CORE_DELTA = 16
+
+
+_CAPS_BODY = re.compile(
+    r"[A-Z][A-Z0-9]*(?:_[A-Za-z0-9]*)?"
+)  # what stands between the brackets of an escaped look-alike: `SECRET_x`, `SECRET`
+
+
+def _cut_a_lookalike_bracket(full: str, core: str) -> bool:
+    """Did `_bare` cut the brackets of an escaped look-alike off `full`: `‹` at the start AND `›` at the end (`‹hunter2›`, `‹SECRET_x›`), or
+    a `‹` at the start of a look-alike body (`‹SECRET_1`, a cut-off one)? One stray `‹` or `›` (`hunter22!›`, `‹hunter22,`) is not that: the core is kept."""
+    i = full.find(core)
+    opened, closed = "\u2039" in full[:i], "\u203a" in full[i + len(core) :]
+    if opened and closed:
+        return True
+    return opened and _CAPS_BODY.fullmatch(core) is not None
+
+
+def _placeholder_like(core: str, full: str) -> bool:
+    """Is `core` the text of a real placeholder (`EMAIL_1`: a label of `_LABELS`, `_`, digits) or the start of one that `full` cut off
+    (`<EMA`, `<EMAIL_`: the `<` stripped from `full` stood right before it)? Registered, it would be swept out of an escaped
+    look-alike (E9). Any other core, `ADMIN_1`, `DB_PASS_2`, `SEC`, `API`, `HOST`, is a value and is registered (M2)."""
+    return _LABEL_TEXT.fullmatch(core) is not None or (
+        f"<{core}" in full and any(f"{label}_".startswith(core) for label in _LABELS)
     )
 
 
@@ -962,6 +992,12 @@ def _placeholder_like(core: str) -> bool:
 _LABELS = tuple(
     dict.fromkeys([*(label for label, _ in PATTERNS), "ENCODED"])
 )  # ENCODED: a base64 run (runmap, G4); not a pattern
+_LOOKALIKE = re.compile(
+    "\u2039[A-Z][A-Z0-9]*_[0-9]+\u203a"
+)  # an escaped placeholder, as `runmap.escape_placeholders` writes one
+_LABEL_TEXT = re.compile(
+    rf"(?:{'|'.join(map(re.escape, _LABELS))})_[0-9]+"
+)  # the text of a real placeholder, `<` `>` left off
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # Own output (G7 + fix round 1; E9(2) restricted to SECRET tokens): a SECRET value made of nothing but SECRET tokens this
 # redactor wrote. One anchored shape: a token is a genuine `<SECRET_n>` or an ESCAPED look-alike as
@@ -1822,13 +1858,18 @@ class _Redactor:
         # G12: the value without the non-alphanumeric characters at its ends, an entry of its own (as a piece), so its copies are swept as the
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
         core = _bare(full) if derived and label in SECRET_KINDS else full
-        # `none!`: masked whole, but its core would sweep every `none`; `<EMA`, `‹EMAIL_1›`: the core is a placeholder's own text
-        # a value that holds an escaped look-alike (`‹KIND_n›`, E9): no core (it would be a junk entry the E9 pins forbid: `‹SECRET_1›<UUID_3>`)
+        # No core (the value stays one entry) when:
+        #  - the core is a "no value" word (`none!`: its core would sweep every `none`);
+        #  - the core is a placeholder's own text or its cut-off start (`EMAIL_1`, `<EMA`);
+        #  - the value holds an escaped look-alike TOKEN `‹KIND_n›` (a junk entry the E9 pins forbid, `‹SECRET_1›<UUID_3>`), or `_bare` cut
+        #    the brackets of one (`_cut_a_lookalike_bracket`); a single stray `‹` or `›` does NOT drop the core;
+        #  - the value is large and the core differs by a few characters (`_CORE_BIG`).
         if (
             core.lower() in _NOT_A_VALUE
-            or _placeholder_like(core)
-            or "\u2039" in full
-            or "\u203a" in full
+            or _placeholder_like(core, full)
+            or _LOOKALIKE.search(full) is not None
+            or _cut_a_lookalike_bracket(full, core)
+            or (len(full) > _CORE_BIG and len(full) - len(core) <= _CORE_DELTA)
         ):
             core = full
         if core != full and len(core) >= 3 and core not in self.reverse:
