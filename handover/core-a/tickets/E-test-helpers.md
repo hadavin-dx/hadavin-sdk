@@ -73,7 +73,7 @@ No test pins the wheel's file list or the module list of S (grep for wheel, RECO
 
 ## 5. SIGNATURES and usage
 ```python
-# src/hadavin_sdk/testing/crash.py   (stdlib only: os, re, threading, pathlib, typing, collections.abc)
+# src/hadavin_sdk/testing/crash.py   (stdlib only: functools, inspect, os, re, threading, time, pathlib, typing, collections.abc)
 CRASH_EXIT_CODE: Final[int] = 137
 CRASH_MARKER: Final[str] = "simulate crash"
 Mode = Literal["raise", "exit"]
@@ -88,22 +88,25 @@ class SimulatedCrash(BaseException):
 class CrashPoints:
     def __init__(self, *, mode: Mode = "raise", flag_path: Path | None = None) -> None:
         ...
-        # RuntimeError outside pytest; ValueError if mode == "exit" without flag_path, or "raise" with one
+        # RuntimeError outside pytest; ValueError if mode is unknown, or "exit" without flag_path, or "raise" with one;
+        # TypeError if flag_path is not a pathlib.Path (crash.py:132-133)
 
     def __enter__(self) -> "CrashPoints": ...
     def __exit__(
         self, exc_type, exc, tb
-    ) -> None: ...  # disarms; RuntimeError if still armed and no error in flight
+    ) -> None: ...  # disarms; RuntimeError if still armed and no error in flight, or if the flag file cannot be deleted (crash.py:148-160)
     def arm(
         self, point: str, *, nth: int = 1
-    ) -> None: ...  # ValueError: bad name, nth < 1, or already armed
+    ) -> None: ...  # ValueError: bad name, nth < 1 or at least 10**9, or already armed; TypeError: nth is a bool (crash.py:174-176)
     def armed(self) -> str | None: ...  # "store.create_run:after" or None
     def hit(
         self, point: str
     ) -> None: ...  # one-shot: raise SimulatedCrash, or print marker and os._exit
     def wrap[T](self, target: T, name: str, methods: Collection[str]) -> T:
         ...
-        # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m
+        # proxy: hit("<name>.<m>:before"), call, hit("<name>.<m>:after"); AttributeError if target lacks m;
+        # TypeError for a dunder, coroutine, async-generator or generator method, or a non-callable (crash.py:232-242);
+        # each word of a name or point is at most 60 characters (crash.py:70)
 
     @property
     def fired(self) -> tuple[str, ...]: ...  # points that fired in this process, in order
@@ -139,7 +142,7 @@ None. No table, no store method, no grant, no config field.
 
 ## 7. INTERFACES
 Offered by E:
-- To step D (ours; decided shape: ONE process with endpoint and worker, ack once the run row exists, no new table, POST /v1/trigger with headers X-Hadavin-Request-Timestamp and X-Hadavin-Signature; draft-tickets-C-D.md:24, 28): the three points D's tests need. `store.create_run:before` = no row, so no ack (D invariants 7 and 11); `store.create_run:after` = row exists, ack may go out, run never continues; `llm.chat:before` = run is WORKING, no model call made. After each, D runs `run_tick(app, now=later)` and expects NEEDS_PERSON "interrupted" (S/runtime/tick.py:112-145), then repeats the signed request and expects 200, that state, zero model calls. The helper knows nothing about HTTP, headers or signing.
+- To step D (ours; decided shape: ONE process with endpoint and worker, ack once the run row exists, no new table, POST /v1/trigger with headers X-Hadavin-Request-Timestamp and X-Hadavin-Signature; draft-tickets-C-D.md:24, 28): the three points D's tests need. `store.create_run:before` = no row, so no ack (D invariants 7 and 11); `store.create_run:after` = row exists, ack may go out, run never continues; `llm.chat:before` = run is WORKING, no model call made (this was the third point when E was written; D ticket section 9 now uses `store.touch:before`, the run is WORKING at its first heartbeat, agent_loop.py:468, and also `store.get_run:after`; `llm.chat:before` is still a valid point of the helper, Usage 1 below). After each, D runs `run_tick(app, now=later)` and expects NEEDS_PERSON "interrupted" (S/runtime/tick.py:112-145), then repeats the signed request and expects 200, that state, zero model calls. The helper knows nothing about HTTP, headers or signing.
 - To step F (core-b builds, core-c writes the wrapper body; plan-v4-final.md:13): `wrap(store, "store", [<reserve and settle method names>])` gives "crash between reserve and settle" without touching the gate; names come from core-b's interface ticket (ii).
 - To step A (core-b): kill mode can be the "test crosses a process boundary" (plan-v4-final.md:8), if core-b wants it.
 - To step H (only if proven; the draft says cut, draft-tickets-C-D.md:5): the same `wrap` on any new store method.
@@ -148,7 +151,7 @@ Needed by E: nothing from core-b or core-c. From step D's own code: the worker m
 No interface ticket for the crash hook (dropped as ceremony, plan-v4-final.md:18).
 
 ## 8. TEST CASES for the helper (tests/test_testing_crash.py)
-All run on the memory store or with plain objects in this box, except P1. Normal:
+(Planned list. The built file has 44 test functions in 1030 lines, wc -l and grep 2026-11-20, and also tests the behaviour added later: delete retries, a stuck flag, type errors for `flag_path`, `nth` and `wrap`.) All run on the memory store or with plain objects in this box, except P1. Normal:
 - N1 unarmed wrap of a `MemoryStore`: create_run then get_run return the same run as unwrapped; `fired == ()`.
 - N2 arm `store.create_run:before`: SimulatedCrash, the store holds no run. N3 arm `:after`: SimulatedCrash, the run is there.
 - N4 one-shot: the second call of the same method passes; `fired` has one entry.
