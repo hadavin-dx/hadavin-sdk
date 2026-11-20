@@ -188,6 +188,8 @@ def test_undefang_text_leaves_code_and_reads_a_placeholder_dot_as_a_dot():
     # text before the defang (first written here as "stays `[.]`", which made `<EMAIL_1>[.]08::` read differently).
     assert gate.undefang_text("a[.]b `c[.]d` <HOSTNAME_1>[.]e") == "a.b `c[.]d` <HOSTNAME_1>.e"
     assert gate.defang_text(gate.undefang_text("<HOSTNAME_1>[.]e.com")) == "<HOSTNAME_1>[.]e[.]com"
+    # A double backtick run on the line: its single backticks pair no code, the whole line is prose.
+    assert gate.undefang_text("``a[.]b `c[.]d` x``") == "``a.b `c.d` x``"
     assert gate.undefang_text("x\n```\nc[.]d\n```\ny[.]z") == "x\n```\nc[.]d\n```\ny.z"
 
 
