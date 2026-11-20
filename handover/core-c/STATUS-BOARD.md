@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T09:31:17Z
+UPDATED_UTC: 2026-11-20T09:35:38Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
-BOOT_ID: 1e29cf8a
+BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 2.6 of 4 cores, mem 1/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
-DISK: / 58G free, 17% used; git worktrees 19; 988M	/tmp/claude-0;280M	/root/.cache/uv;
+CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 8, heavy agents 0
+DISK: / 58G free, 17% used; git worktrees 18; 1.1G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
-CONTAINER_RESTARTS: 1
-INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
+CONTAINER_RESTARTS: 2
+INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 4 (15 files: 2672 passed, 2 skipped, 5 xfailed). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: LIVE only. ORDER 023 (09:30Z): E9(1) done (docstrings; redact.py module docstring in G7 r5, gate.py a4b2ce2), E9(3) is_masked: no consumer -> every promise withdrawn (Amendment 2), E9(2) builder running; E10 ticket G9 drafting then plan review; E11 ticket G10 + Latin split running; E12 Q9 builder runs both mutant lists; Q16 DONE (349e6ca0c: MIT licence checked, lock regenerated). 09:55Z target: E9 (1)-(3) done and E10 plan review started.
-PUSHED_UTC: 2026-11-20T09:30:17+00:00
+PUSHED_UTC: 2026-11-20T09:34:37+00:00
 
-(15:01 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(15:05 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -108,6 +108,7 @@ PUSHED_UTC: 2026-11-20T09:30:17+00:00
 | time UTC | what | what was running | restarted | still missing |
 |---|---|---|---|---|
 | 2026-11-20T06:38:11Z | container restart: BOOT_ID 70253298 -> 1e29cf8a | see AGENTS | not yet | to be checked by the session |
+| 2026-11-20T09:35:38Z | container restart: BOOT_ID 1e29cf8a -> 8493e966 | see AGENTS | not yet | to be checked by the session |
 
 ## LOOPS
 | item | tries | review rounds | last error | reason it keeps failing |
