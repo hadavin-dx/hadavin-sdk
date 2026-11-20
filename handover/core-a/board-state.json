@@ -682,6 +682,19 @@
    "review round n of cap": "3 of 3 (fix)",
    "retries so far": 0,
    "reason": "after batch5 and round 3"
+  },
+  {
+   "id": "E-rev4",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "E5 granted: one more fresh read-only result pass on step E crash.py and its tests, then stop at that round",
+   "started UTC": "08:47",
+   "expected end": "about 15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "extra pass granted by the lead",
+   "retries so far": 0,
+   "reason": "lead verdict E5 = yes"
   }
  ],
  "tests": [
@@ -1054,6 +1067,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "Verdicts received 08:47: E7 = (a) keep the stdlib server, ticket size sentence corrected by d-fix4 (in its brief). E5 = yes: E-rev4 running. E6 = you run n8n 2.47.7: outline stays 'not run' until inputs/evidence-n8n-3.md arrives. REQ-001..004: building on my recommended answers and marking each in ticket D, after d-fix4 stops editing the ticket. Open items today are 4 (REQ-001..004; E5/E6/E7 answered), not 20: if the 20 you count are in QUEUE.md rows, tell me which rows.",
   "OPEN-ITEMS.md (handover/core-a/): 7 open items. Waiting for core-b: REQ-001..REQ-004 (oldest 05:41 UTC). Waiting for you: E5 (one more fresh pass on step E?), E6 (three n8n behaviours need a real n8n run), E7 (stdlib server size / cap and deadline). Nothing else is open.",
   "Answer to your 08:43 list (agent count now 2: d-fix4 = last step D code fixes + mutant run 14, open-items = haiku lookup). Per item: (1) n8n template retry fix + contract tests: DONE, 3 review rounds, 88 tests, evidence-n8n-2 used (ORDER 019). (2) step E crash.py: review at cap 3/3, fixes and 16 mutants done, E5 (one more pass?) waits for you. (3) T4 store contract tests against core-b interfaces: DONE, updated to core-b dba4463a5/a11ab5132 heads: tests/contracts/test_store_spend_reservations.py, test_t1_reserve_cap.py, test_meter.py (696 passed on core-b head); findings fixed by core-b are un-marked. (4) fresh step D review on the committed head: after d-fix4 ends (it still edits) as the final read-only pass. (5) running now. (6) evidence agent (tests/triggers + tests/testing, 2 batches, -n 3, handover/core-a/evidence/): starts when d-fix4 ends; max 2 heavy runs at once. Not idle by choice: d-fix4 holds the source files.",
   "DEADLINE 08:50: tested step D commit pushed 08:41 UTC: 70feef2c5 (message and handover/core-a/TESTED-D.md: tests/triggers 1182 passed, 5 skipped, 0 failed, file hashes). The code itself was already in earlier board WIP snapshots (the board script commits code files); this commit marks the tested state. Mutant run 14 and the independent batch6 (whole suite) follow.",
