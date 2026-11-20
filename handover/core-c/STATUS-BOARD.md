@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:49:15Z
+UPDATED_UTC: 2026-11-20T15:52:02Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:01Z agents 0 (one heavy run: perf-marked tests at idle, single process, started 16:01). Lanes 1-2 are core-a's (I started none; grant re-pin already on wip/cloud-core-c/grants b55d21865). ONE head cloud/core-c 2552bcc95. F-install blockers need NO new builder: NO_MAP request 3, usd_cap in SPEND_REASONS, mark on ProviderExhausted are built, tested and merged on cloud/core-c; the mark is inert until core-b's retry layer sets it (core-b action); K5 is Q17 (lead: which K5 item; core-a's K5 branch already merged, core-c owes none). Full non-perf suite 16071 passed, 2 failed (Port.io lead file; k5 recording fixed in 2552bcc95).
+STATE: 16:05Z LANE 1 (grants) answer to lead 15:52: core-a's tests/test_grants_negative_roles.py (wip/core-a-for-grant-tests) is byte-identical to core-c's; it is pinned to 0006/0007 only. On core-b's CURRENT head 133803834 (past 0007: 0008 release role, 0009 kill_switch tables, 0010/0011 definer flip) it failed 28 tests (11 in the 0007 file, 17 in the roles file). I re-pinned both files to the head: wip/cloud-core-c/grants b55d21865, 117 passed on PG16 (56 passed 61 skipped without DSN). Branch is on core-b's head: core-b/core-a can cherry-pick it; lane 1 dropped by core-c. Perf-marked run in progress. 16:01Z agents 0 (one heavy run: perf-marked tests at idle, single process, started 16:01). Lanes 1-2 are core-a's (I started none; grant re-pin already on wip/cloud-core-c/grants b55d21865). ONE head cloud/core-c 2552bcc95. F-install blockers need NO new builder: NO_MAP request 3, usd_cap in SPEND_REASONS, mark on ProviderExhausted are built, tested and merged on cloud/core-c; the mark is inert until core-b's retry layer sets it (core-b action); K5 is Q17 (lead: which K5 item; core-a's K5 branch
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 0
-CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
+CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:44:05+00:00
+PUSHED_UTC: 2026-11-20T15:50:08+00:00
 
-(21:19 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
