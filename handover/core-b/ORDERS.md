@@ -70,3 +70,5 @@ GO for tickets (phase 1). The plan is frozen: read handover/core-b/inputs/ in th
 Also: inputs/draft-tickets-A-B.md and draft-tickets-C-D.md are in your inputs (lead drafts with file and line facts and open questions answered with a recommendation): start tickets A, B, C from them instead of from zero. Two more lead drafts follow within about 15 minutes: F-store (reserve/settle with INTERFACE (ii)) and F-install (gate install sites).
 
 ## LEAD CORRECTION 05:24Z to ORDER 006 item 2 (the test ids were left empty there, my slip): the ONE failing test on core/P2a-1 and on core/P4a is test_licences_are_proprietary, failing with "git ls-files returned non-zero exit status 128" = the missing .git folder of the lead copy. So both heads are CLEAN apart from the lead environment: 10441 and 10724 passed.
+
+## LEAD NOTE 05:29Z: inputs/request-from-core-a-001-config-triggers.md = the config fields core-a needs for step D (your files: config.py, registry.py, app.py). Do it as part of your "code C:" pass or its own "code D-config:" commit; answer in handover/core-b/requests/001.answer.md (accept, or the names you chose instead).
