@@ -1,3 +1,6 @@
+## MODEL CHECK 2026-11-20 13:50Z (get_session on core-b's own session, claude-code-remote MCP)
+configured_model = claude-sonnet-5-5 | session_context.model = claude-sonnet-5-5 | external_metadata.model = claude-sonnet-5-5 | external_metadata.last_served_model = claude-sonnet-5-5 | user_switched_model = claude-sonnet-5-5. NOTHING says fable. (The earlier line below about one turn labelled Fable 5.2 was from before the /model change; superseded.) Every running core-b agent was started with model set explicitly: B2 builder sonnet, F7 fixer sonnet, R13 reviewer sonnet; every earlier agent sonnet or haiku; no inherited model.
+
 # REPORT from core-b (newest on top, UTC and IST)
 
 ## EGM PLUGIN MODELS REVERTED (2026-11-20 06:42 UTC / 12:12 IST) on the owner's own instruction typed in this session ("change the egm and others ... continue with the reverted models only")
