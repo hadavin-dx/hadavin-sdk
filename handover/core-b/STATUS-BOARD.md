@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:06:50Z
+UPDATED_UTC: 2026-11-20T09:11:06Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.38 of 4 cores, mem 1/15 GB, disk 52G free, 25% used, agents light 4 heavy 2
-DISK: / 52G free, 25% used; worktrees /tmp/core-b-wt 2.6G
+CAPACITY: load 1.16 of 4 cores, mem 1/15 GB, disk 53G free, 25% used, agents light 4 heavy 2
+DISK: / 53G free, 25% used; worktrees /tmp/core-b-wt 2.6G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T09:06:48Z (previous push; this board is pushed right after writing)
-IST: 14:36 IST
+PUSHED_UTC: 2026-11-20T09:11:04Z (previous push; this board is pushed right after writing)
+IST: 14:41 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -183,3 +183,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 08:55Z STATUS FOR THE LEAD. CORE-A ANSWER FILES: 001 DONE, 002 DONE, 003 DONE, 004 DONE (all pushed 08:50Z). ORDER 022: (1) E5 FIXES: B5b DONE+reviewed CLEAN, B5a (search_path decoy, PG17 MAINTAIN, plain migrate refused unless --no-roles) MERGED on cloud/core-b, review next, PG17 real-server test skipped here (server is 16); step A Majors DONE; (2) who_else cherry-pick 7caa8c15c DONE, stop-state suite twice green; (3) F-install: release/outbox order/transient retry DONE; core-c blockers unchanged; (4) evidence batch 7: after reviewer of B5a. LIVE AGENTS (sonnet): step C round 5 builder (memory.py sums, overflow mapping; since 08:51) | D-config round 4 merged just now | none else: starting hostile reviewer for B5a and evidence batch 7 next.
 
 09:03Z DEADLINE 09:05Z: TWO TESTED COMMITS ON cloud/core-b, both pushed: (1) E5 FIXES: B5b reset-ref/wording (reviewed CLEAN), B5a search_path/MAINTAIN/--no-roles (merged, tested: step B suite green on the merged tree, review 6 found 2 Majors about docs and role-reset scope, fix round 2 B5c running); (2) RELEASE COMMAND (ORDER 020): built, 3 review rounds, CLEAN (review 5), merged. F-install gate install: built on wip/cloud-core-b/Y-integration + F-install-4, BLOCKED by core-c (NO_MAP request 3, usd_cap, mark on ProviderExhausted, K5). LIVE AGENTS (sonnet/haiku): B5c step B fix round 2 (since 08:59Z) | evidence batch 7 whole suite on head fb9a4fb42 (haiku, since 08:57Z). Nothing else running; nothing blocked on the lead.
+
+09:11Z DONE: who_else cherry-pick of wip/lead-fix-B-who-else 7caa8c15c..cd9058083 (round 3, 10 commits in total; conflicts with my E5 fixes in cli.py, migrate.py, runbook, SECURITY.md resolved keeping both sides) + B5c (E5 fix round 2: review 6 Majors) merged on cloud/core-b; the 16 migrate-touching test modules with -n 3 on the shared server: 540 passed, 3 skipped, 0 failed (176 s). ANSWER FILES for core-a 001-004: DONE (pushed 08:50Z). EVIDENCE BATCH 7: DONE on fb9a4fb42 (12816 passed, 2 failed not core-b's); batch 8 next on the merged head. LIVE AGENTS: none now; starting: fresh reviewer of B5c, evidence batch 8. WAITING for the lead: round 4 of who_else; core-c items for F-install.
