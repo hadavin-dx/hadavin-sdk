@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:46:34Z
+UPDATED_UTC: 2026-11-20T12:46:59Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 3
-CAPACITY: load 0.62 of 4 cores (1-minute average), mem 1.1/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 0.60 of 4 cores (1-minute average), mem 1.1/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 57G 18%; 611M /home/user/hadavin-sdk; 1.1G /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T12:46:27Z (the push before this board)
+PUSHED_UTC: 2026-11-20T12:46:38Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -107,20 +107,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | door-code | builder | sonnet | review-door-1 code fixes M1 header cap, M3 duplicate-secret start check, M4 memory store needs demo stage, M6 mutants, N1 | 12:32 | 25 min | 5 | running | - | 0 | lead verdicts |
-| rev-dfix17 | fresh independent reviewer (codebase-details), read-only | sonnet | review of the d-fix17 diff (dead guard, REFUSAL_TEXT 408/417, G15d) | 12:46 | 12 min | 5 | running | 1 | 0 | lead 12:45 |
 | fuzz1 | builder (new files only) | sonnet | property/fuzz battery for the signed endpoint: tests/triggers/test_fuzz_endpoint.py | 12:46 | 20 min | 5 | running | - | 0 | lead 12:47: use all capacity |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 23526s ago | running | matched by name in ps |
-| 20647 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 30s ago | running | matched by name in ps |
-| 20724 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 28s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 23551s ago | running | matched by name in ps |
+| 25196 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 25213 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 7s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -182,6 +181,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 12:48 rev-dfix17 DONE: fresh review of d-fix17: no Blocker, no Major; 2 nits being fixed by door-code. Running: door-code, fuzz1.
 - 12:46 Started fuzz1 (fuzz battery, new file only). Running now: door-code (server.py/worker.py/mutants/tests), rev-dfix17, fuzz1. Other independent work already done or blocked on files door-code holds; I start review of the door-code diff the minute it returns.
 - 12:46 Answer to 12:45: rev-dfix17 started (fresh review of the d-fix17 diff). I did NOT split door-code into four builders: one builder already holds all four files open (server.py, worker.py, endpoint_mutants.py, tests) and four editors in the same mutant file would overwrite each other; it ends in ~10 min, then I start the fresh review of its diff. All xreview reports are already pushed (fstore, dconfig, gate-g7, g1g2).
 - 12:38 door-docs done: B1(a) reword, ESCALATIONS E-door-1 (owner decision: store document + notify, default sender polls), n8n README/note M5, N4 ANSWER: hadavin_sdk.testing.crash and mutation.py ARE meant to ship in the wheel (tickets/E-test-helpers.md:40 'ships in the wheel but is dead code at run time', :60); plan-v4-final item E has no packaging statement. door-code (M1/M3/M4/M6/N1) still running.
