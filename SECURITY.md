@@ -17,6 +17,12 @@ an outage are kept in memory, counted in a warning, and lost when the process ex
 refuses for such a reason is kept and fails the `audit_drain` step with a count. The eval and replay commands do not
 write to the chain.
 
+The runtime login holds INSERT on the audit tables and cannot UPDATE, DELETE or TRUNCATE them, so what the chain
+already holds cannot be changed without the hashes showing it. That is tamper evidence of past rows, not
+authenticity: a runtime process that is itself taken over can append new rows with valid hashes, and the chain
+cannot tell those from true ones. A signer and an anchor (checkpoints held outside the database) narrow this; they
+do not remove it.
+
 **Stop.** A stop takes effect at the next gate check; a call already in flight is not interrupted; the command-line
 eval and replay paths do not read the stop state. On PostgreSQL with the grants applied (`migrate --reset-role`), the
 runtime's database login can add a stop and cannot clear one; only the reset login can, and its reset is written to
