@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:35:20Z
+UPDATED_UTC: 2026-11-20T06:36:27Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,24 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 26
 ITEMS_OPEN: 12
 PERCENT: 72
-AGENTS_RUNNING: 0
-CAPACITY: load 1.2 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 0, heavy agents 0
+AGENTS_RUNNING: 3
+CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 3, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 63M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: all agents stopped by the Fable limit at ~06:36 UTC; restarting on normal models (opus planning, sonnet work, haiku lookups)
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: restart gate round 2 + ORDER 017, the G2/G3 integration, the grants rework, the G7 result review on claude-sonnet-5-5
-PUSHED_UTC: 2026-11-20T06:33:36+00:00
+PUSHED_UTC: 2026-11-20T06:35:23+00:00
 
-(12:05 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| (new) r-gate | builder | claude-sonnet-5-5 | restart: gate round 2 findings + ORDER 017 (mapping required with NO_MAP, one pre-call exception type, framing protection); phases with progress notes | 06:40 | 07:30 | 2 | running | 3 of 3 not used yet | 0 | restart after the Fable limit; see RESUME-NOTE item 1 |
+| (new) r-int | builder | claude-sonnet-5-5 | restart: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then the ORDER 014/016c follow-ups, one batch | 06:40 | 07:40 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 2; HEAVY at its end |
+| (new) r-grants | builder (tests only) | claude-sonnet-5-5 | restart: grants negative tests reworked for core-b step B map, local PostgreSQL 16 | 06:40 | 07:10 | 2 | running | n/a | 0 | restart; RESUME-NOTE item 3 |
 | (new) g7D | reviewer | fable | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | (new) g7C | reviewer | fable | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | ae03e30a | builder | fable | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identifier glued to a shorter secret), budget check, six refusal reasons, extra stated limits, deletes runmap.is_masked, fixes the stage-name sample word, runs gate_mutants on the final code | 06:26 | 07:20 | 5 | INTERRUPTED | 2 of 3 (lead review) | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
