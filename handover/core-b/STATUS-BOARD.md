@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:23:41Z
+UPDATED_UTC: 2026-11-20T06:24:58Z
 SESSION: core-b
 ORDER: 016
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 4
-CAPACITY: load 0.61 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 2 heavy 2
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 861M
+AGENTS_RUNNING: 3
+CAPACITY: load 0.43 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 1 heavy 2
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 867M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: step B BLOCKED-LEAD at its 3-try cap: who-else check trips over other roles on a shared server (E4); batch run 2: 13 failed, 1 error (11 mine, fixed); F-store and F-install ticket reviews not clean, answered; E1 cron refused
 NEXT: land F-store tests and the provider-mark tests; F-install build and its tests; resolve the hostile re-read; batch run 3 on a merged tree when F-install is coded
-PUSHED_UTC: 2026-11-20T06:22:41Z (previous push; this board is pushed right after writing)
-IST: 11:53 IST
+PUSHED_UTC: 2026-11-20T06:23:41Z (previous push; this board is pushed right after writing)
+IST: 11:54 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -25,7 +25,7 @@ IST: 11:53 IST
 | a86f0e17 | builder then tests | fable | provider mark for calls that ended only in 429 or refused connections; tests for the mark and for cap validation: landed | 06:22 | done | 100 | done | none | 0 | 425 passed, 1 skipped; narrow reading: a 429 followed by a 400 or 401 stays unmarked |
 | a51b4a37 | builder (tests) | fable | F-store tests (5 files): landed | 06:02 | done | 100 | done | none | 0 | 471 passed with PostgreSQL 16 (300 passed, 171 skipped without); mutants 31 of 31 and 26 of 26 by hand; no invariant broken |
 | a39cf764 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT A, B, C code against their tickets (backlog item 10) | 06:22 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | STANDING ORDER 016; started directly, then put under the review-loop skill call of 06:24 |
-| a0aa4523 | reviewer (egm-implementation-readiness) | fable | F-install ticket round 2 of 3 on the RESOLUTION section | 06:24 | +6 min | UNVERIFIED | running | 2 of 3 | 0 | lead ORDER 014; only one reviewer this round (the codebase reviewer is on the hostile re-read): see reason in QUEUE row |
+| a0aa4523 | reviewer (egm-implementation-readiness) | fable | F-install ticket round 2 of 3: NOT clean, 2 Blockers, 5 Majors; report tickets/F-install-review-2.md; answered (W1 to W7) and sent to the builder | 06:24 | done | 100 | done | 2 of 3 | 0 | lead ORDER 014; only one reviewer this round (the codebase reviewer is on the hostile re-read): see reason in QUEUE row |
 | af123633, a7f2909e | builders (fix) | fable | F-store fix 1 (caps validated), provider mark, D-config fix 1: landed (3 commits) | 06:15 | done | 100 | done | none | 0 | 206, 323 and 1183 passed on their test lists |
 | a04243c0, a7034d35 | builders (tests) | fable | step B fix-3 tests (290 passed alone, 40 of 40 mutants) and mutant scripts repair: landed | 05:58 | done | 100 | done | none | 0 | see ESCALATIONS E4: the B role tests interfere when run in parallel |
 | a6d00510, afa273dd, a9b3b5a5, aac315f5 | reviewers (egm) | fable | F-install round 1 (4 Blockers, 19 Majors), ticket C round 1 (0 Blockers) | 05:59 | done | 100 | done | 1 | 0 | reports in tickets/ |
