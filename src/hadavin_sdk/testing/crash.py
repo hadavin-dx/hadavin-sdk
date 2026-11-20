@@ -278,8 +278,10 @@ class CrashPoints:
             text = self._flag.read_text(encoding="utf-8")
         except FileNotFoundError:
             text = ""
-        except (OSError, ValueError):
+        except PermissionError:  # a sharing violation on Windows
             text, unreadable = "", True
+        except (OSError, ValueError):  # a directory, undecodable bytes: not armed, no read error
+            text = ""
         point, sep, count = text.removesuffix("\n").partition("#")
         if not _POINT.fullmatch(point) or (sep and not _NTH.fullmatch(count)):
             return None, unreadable
