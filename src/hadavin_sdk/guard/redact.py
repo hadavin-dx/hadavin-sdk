@@ -196,20 +196,38 @@ _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]
 ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
 # The private suffixes of an internal host name (a company's own `.corp`, `.lan`, ...; `defaults.PRIVATE_SUFFIX_LABELS` is a different list
 # with a different job and is not used here). `_HOST_BARE` suffixes (`.internal`, `.local`) are code when a label or a call follows
-# (`jdk.internal.reflect`, `threading.local()`). The start look-behinds name ASCII label characters, not `\w`: a name glued after a non-ASCII
-# word character (`例-_db-7.corp.internal_é`) must still start (G4c: with `\w` no start was left and the name stayed readable).
+# (`jdk.internal.reflect`, `threading.local()`). The start look-behinds AND the trailing lookaheads (after the suffix, and in HOSTKEY) name
+# ASCII label characters, not `\w`: a name glued before or after a non-ASCII word character (`例-_db-7.corp.internal_é`, `db01.corp例`,
+# `host=db01-7例`) must still match (G4c fixed the start; G4d the end: with `\w` the name stayed readable). Labels stay ASCII (L11): a non-ASCII
+# character INSIDE a label ends the name there, so `dbé01.corp.example` keeps its tail readable or masks only the part after the character
+# (a known limit, pinned xfail in tests/test_host_names.py).
 _HOST_LABEL = r"[A-Za-z0-9_-]+"
 _HOST_DOT = r"(?:\.|\[\.\])"
 _HOST_BARE = "internal|local"
 _HOST_TAIL = "corp|lan|intranet|intra|localdomain|home" + _HOST_DOT + "arpa"
+_HOST_END = r"(?![A-Za-z0-9_-])"
 HOSTNAME = (
     r"(?i)(?<![A-Za-z0-9_-])(?<![A-Za-z0-9_-]\.)(?<![A-Za-z0-9_-]\[\.\])(?:"
     + _HOST_LABEL
     + _HOST_DOT
     + r")+(?:"
-    r"(?:" + _HOST_BARE + r")(?:-[A-Za-z0-9_-]*+(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*"
-    r"|(?![\w-])(?!" + _HOST_DOT + r"\w|\())"
-    r"|(?:" + _HOST_TAIL + r")(?:-[A-Za-z0-9_-]*+)?(?![\w-])(?:" + _HOST_DOT + _HOST_LABEL + r")*)"
+    r"(?:"
+    + _HOST_BARE
+    + r")(?:-[A-Za-z0-9_-]*+"
+    + _HOST_END
+    + r"(?:"
+    + _HOST_DOT
+    + _HOST_LABEL
+    + r")*"
+    r"|" + _HOST_END + r"(?!" + _HOST_DOT + r"\w|\())"
+    r"|(?:"
+    + _HOST_TAIL
+    + r")(?:-[A-Za-z0-9_-]*+)?"
+    + _HOST_END
+    + r"(?:"
+    + _HOST_DOT
+    + _HOST_LABEL
+    + r")*)"
 )
 # CPU and platform names a build log writes after `host` (a CLOSED list: another label of that shape is masked like any host label).
 _HOST_ARCH = (
@@ -217,9 +235,9 @@ _HOST_ARCH = (
     r"|sparc(?:32|64)|ia(?:32|64)|s390|loongarch(?:32|64)|wasm(?:32|64)|win(?:32|64))"
 )
 HOSTKEY = (
-    r"(?i)(?<![\w-])(?:--)?host(?:name)?(?:[\"']?[ \t]*[:=][ \t]*[\"']?|[ \t]+)"
+    r"(?i)(?<![A-Za-z0-9_-])(?:--)?host(?:name)?(?:[\"']?[ \t]*[:=][ \t]*[\"']?|[ \t]+)"
     r"(?!" + _HOST_ARCH + r"(?![\w-]))"
-    r"([A-Za-z][A-Za-z0-9_-]{0,60}(?:-[0-9]|[0-9]{2}))(?![\w\-/@])(?!\.\w)"
+    r"([A-Za-z][A-Za-z0-9_-]{0,60}(?:-[0-9]|[0-9]{2}))(?![A-Za-z0-9_\-/@])(?!\.\w)"
 )
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # PuTTY FIRST (hadavin-sdk edit): its value runs to the end of the text, so a PuTTY block that starts inside a PEM block must be cut before the PEM
