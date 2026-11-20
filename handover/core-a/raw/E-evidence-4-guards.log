@@ -1,0 +1,19 @@
+Fri Nov 20 07:13:19 UTC 2026
+files: tests/test_mutation_runner.py tests/test_lockin_guard.py tests/test_no_hardcoded_values.py tests/test_k5_producers.py tests/test_repo_rules.py tests/test_stage_names.py (-n 3)
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 73%]
+........................................................................ [ 98%]
+....                                                                     [100%]
+292 passed in 13.11s
+Fri Nov 20 07:13:33 UTC 2026
+
+files: tests/triggers/test_t5_crash_matrix.py tests/triggers/test_worker.py tests/triggers/test_t5_postgres.py (DSN set)
+........................................................................ [ 44%]
+........................................................................ [ 88%]
+..................                                                       [100%]
+162 passed in 74.17s (0:01:14)
+Fri Nov 20 07:14:47 UTC 2026

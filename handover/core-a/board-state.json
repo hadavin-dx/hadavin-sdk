@@ -496,11 +496,11 @@
   {
    "item": "MUT-3",
    "what": "extend tests/endpoint_mutants.py to all guards added since (design review, fuzz, lead minor 10)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/endpoint-mutants-run-10.log",
+   "state": "DONE (two runs); 2 test gaps; reviewer started",
+   "percent": 100,
+   "evidence file": "tests/endpoint_mutants.py, raw/endpoint-mutants-run-10.log",
    "tries": 1,
-   "reason": "lead's reminder at 07:05Z and the EGM sequence"
+   "reason": "74 mutants (44 new in groups G13 to G20). The clean 'N of N good' line comes from TWO runs: run 2 had 73 of 74 good and G20j came back CRASH; the agent declared G20j allow_crash with a ValueError and re-ran it alone: '1 of 1 good'. Two mutants SURVIVE because a test is missing: deleting QuietServer.handle_error; removing the closed flag in Runner.close (tests are in the fix pass D-fix-1). One equivalent mutant left out. About 15 expect fragments are bare asserts (the kill rests on the named test, not on the text)"
   },
   {
    "item": "EGM-n8n",
@@ -523,11 +523,11 @@
   {
    "item": "EGM-D-code",
    "what": "fresh EGM result review of the step D code (endpoint, worker, server) after all fixes, with the batch and fuzz and matrix logs as evidence",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "reviews/D-code-result-review-1.md (not yet)",
+   "state": "RESOLVED; fix pass starting",
+   "percent": 50,
+   "evidence file": "reviews/D-code-result-review-1.md",
    "tries": 1,
-   "reason": "EGM sequence: evidence (BATCH4) first, then a fresh reviewer who is not the author; dispatched directly following the loaded review-loop procedure (resolve will go through the Skill)"
+   "reason": "one fresh reviewer: no Blocker, 3 Major (Windows: the port is not exclusive so a stale worker and a new one can both answer; the ticket text contradicts the code in many places; start-up on this tree needs core-b's config and silent defaults hide missing fields), 8 Nit. Verified by reading: no 2xx without a row, no key started twice, the waiting counter cannot leak, no log carries a body or secret. Resolve through the Skill"
   },
   {
    "item": "E-fix-3",
@@ -555,6 +555,60 @@
    "evidence file": "raw/E-evidence-4-*.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence"
+  },
+  {
+   "item": "D-fix-1",
+   "what": "step D code fixes DC1-1 to DC1-10 and the two missing tests for the surviving mutants",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/D-fix1-tests.log (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence"
+  },
+  {
+   "item": "EGM-D-tests",
+   "what": "fresh EGM review of the step D tests (do they prove the invariants or only appear to; what passes on broken code)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/D-tests-review-1.md (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence; read-only reviewer"
+  },
+  {
+   "item": "EGM-mutants",
+   "what": "fresh EGM review of tests/endpoint_mutants.py (74 mutants; the 'N of N good' came from two runs; weak expect fragments)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/mutants-review-1.md (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence; read-only reviewer"
+  },
+  {
+   "item": "WIN-notes",
+   "what": "Windows risk inventory for the lead's laptop: one checklist from all reviews (what to run, expected Linux result)",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "WINDOWS-NOTES.md (not yet)",
+   "tries": 1,
+   "reason": "owner: the lead's campaign runs on Windows; everything of mine ran on Linux only"
+  },
+  {
+   "item": "RERUN-heads",
+   "what": "re-run my non-builder tests on the NEWEST heads of core-b and core-c; list findings that now look fixed",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "TRIAL-RERUN.md, raw/RERUN-core-*.log (not yet)",
+   "tries": 1,
+   "reason": "both sessions pushed since my last runs"
+  },
+  {
+   "item": "O19",
+   "what": "ORDER 019: apply the real n8n error-item shapes to the retry loop (evidence-n8n-2.md); then a fresh EGM review of the pack",
+   "state": "RUNNING (sent to the n8n fix builder as an addition)",
+   "percent": 10,
+   "evidence file": "n8n/, raw/n8n-template-tests-5.log (not yet)",
+   "tries": 1,
+   "reason": "same files as the n8n fix builder, so it takes the order as an addition, not a second agent"
   }
  ],
  "agents": [
@@ -1302,15 +1356,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:08",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step D code round 1 of 3",
    "retries so far": 0,
    "id": "egm-D-codebase",
    "role": "reviewer (egm:egm-codebase-details, fresh)",
    "what exactly it is doing": "checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes",
-   "expected end": "about 20 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, 141k tokens: 3 Major, 8 Nit"
   },
   {
    "model": "sonnet",
@@ -1350,6 +1404,71 @@
    "what exactly it is doing": "runs everything on the fixed crash helper; 23 mutants without -x",
    "expected end": "about 25 min",
    "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:15",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step D code round 1 (fix pass)",
+   "retries so far": 0,
+   "id": "d-fix1",
+   "role": "builder",
+   "what exactly it is doing": "fixes DC1-1 to DC1-10 in worker.py, server.py, endpoint.py, tests, ticket D",
+   "expected end": "about 25 min",
+   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:15",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "tests round 1 of 3",
+   "retries so far": 0,
+   "id": "egm-D-tests",
+   "role": "reviewer (egm:egm-codebase-details, fresh)",
+   "what exactly it is doing": "reads the step D tests: invariant to test table, what passes on broken code",
+   "expected end": "about 25 min",
+   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:15",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "mutant script round 1 of 3",
+   "retries so far": 0,
+   "id": "egm-mut",
+   "role": "reviewer (egm:egm-design, fresh)",
+   "what exactly it is doing": "reads tests/endpoint_mutants.py and the runner: real guards, wrong-reason kills, the allow_crash override",
+   "expected end": "about 25 min",
+   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:15",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "win-notes",
+   "role": "analysis (writes one file)",
+   "what exactly it is doing": "collects every Windows risk from the reviews into a checklist for the laptop",
+   "expected end": "about 25 min",
+   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:15",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "id": "rerun-heads",
+   "role": "evidence runner (records)",
+   "what exactly it is doing": "re-runs six of my non-builder test files on the newest core-b and core-c heads",
+   "expected end": "about 25 min",
+   "reason": "owner order: 6 to 8 agents in parallel, independent files"
   }
  ],
  "tests": [
