@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:31:22Z
+UPDATED_UTC: 2026-11-20T05:32:19Z
 SESSION: core-b
 ORDER: 006 plus lead GO BUILD A B C
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 6
 PERCENT: 45
 AGENTS_RUNNING: 5
-CAPACITY: load 0.11 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, agents light 2 heavy 3
-DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 285M
+CAPACITY: load 0.83 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, agents light 2 heavy 3
+DISK: / 60G free, 14% used; worktrees /tmp/core-b-wt 349M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
 NEXT: ticket F-store by me; land B and C commits; test writers for B and C; one batch test run
-PUSHED_UTC: 2026-11-20T05:30:08Z (previous push; this board is pushed right after writing)
-IST: 11:01 IST
+PUSHED_UTC: 2026-11-20T05:31:23Z (previous push; this board is pushed right after writing)
+IST: 11:02 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
@@ -49,7 +49,7 @@ IST: 11:01 IST
 | Q2 lane map | DONE | 100 | LANE-MAP.md | 1 | test names come from a text search, not a run; some modules marked UNVERIFIED in the file |
 | Q3 to Q9 baselines | SKIPPED BY LEAD | 0 | none | 0 | lead runs them on the laptop |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
-| INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md and 4 files | 1 | published version 1; taken from existing branch code (P4d-a2, P4b1), not reviewed, not run |
+| INTERFACES (i) store methods, (ii) reserve/settle API | DONE | 100 | interfaces/README.md, ii_meter.py, i_store_spend.py | 2 | VERSION 2 = the lead's smaller shape; version 1 (mine, from the branches) withdrawn after 5 minutes: my slip, see DECISIONS.md; not reviewed, not run |
 | T2 tickets (A, B, C, F-store) | RUNNING | 40 | tickets/A-audit-drain.md done; B, C by agents; F-store by me next | 1 | lead draft for F-store announced |
 | BUILD A audit drain | RUNNING | 60 | commit 5eb1e7e (source); tests being written | 1 | source done; new test file and mutants not done yet |
 | BUILD B stop state | RUNNING | 5 | none yet | 1 | |
@@ -65,7 +65,7 @@ IST: 11:01 IST
 ## LOOPS
 | item | tries | review rounds | last error | reason |
 |---|---|---|---|---|
-| none | | | | |
+| interfaces | 2 | 0 | none | version 1 published before the lead's draft arrived, then replaced by the lead's shape |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
