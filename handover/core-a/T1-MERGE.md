@@ -55,3 +55,15 @@ cases from core-a/core-c; your 7 cases are unchanged). 25 pass on PG, 25 skip wi
 core-c: "Drop your variant: in the integration delete tests/contracts/test_t1_reserve_cap_core_a.py and
 tests/contracts/test_t1_reserve_cap_core_c.py and take the merged tests/contracts/test_t1_reserve_cap.py; every case
 of yours is either ported (marked 'from core-c T1') or a duplicate listed above."
+
+## review round 1 fixes (fresh reviewer rev-t1, then builder t1-fix; branch wip/core-a-t1-merge now at the head below)
+
+File changed: tests/contracts/test_t1_reserve_cap.py only. 25 -> 26 cases (one added), all green with the PG16 DSN; 26 skipped without it.
+
+- MAJOR: the portal and reset refusal case lost core-a's positive read. A new helper `_may_not_touch_reservations` now runs a read each login is meant to make BEFORE the refusals (portal: `runs`; reset: `kill_switch`; runtime: `spend`; purge: `SELECT run_id, state, updated_at FROM runs`). Mutation: `REVOKE USAGE ON SCHEMA` from the login makes the test fail on that positive read (the relation is then not found), not on a refusal.
+- Statement kinds: the helper refuses all five kinds (SELECT, INSERT, UPDATE, DELETE, TRUNCATE) for runtime, purge, portal and reset, plus the extra column/`*` selects, and asserts `w.rights(role).get("spend_reservations") is None` for all four.
+- Purge: adds an expired-and-unsettled row (kept), a settled row newer than the cutoff (kept) and the open row (kept); purge_spend_reservations deletes only `status='settled' AND closed_at < p_before` (0011). Old rows are aged by the owner so the rule, not the clock, keeps the expired one.
+- core-b duplicates strengthened (names kept): month cap over two days (each day's counter == that day's grants, 3 rows); settles below the reserve (5 rows, open ids == new grants, settled_usd 0.10 x 3, new rows open); control (day == month == WORST * admitted).
+- New case: settle at exactly the reserved amount, counters stay 3.00, a reserve that raises still raises, 50 refused.
+- Races: the interleaving cannot be asserted deterministically, so the docstrings now state that either order is accepted and that no completion-order assertion was added (it would be flaky).
+- Mutation proof: month counter read +0.25 (scratch monkeypatch) turns red the strengthened control (`day == month`), two-days, cap-3 and exact-settle cases.

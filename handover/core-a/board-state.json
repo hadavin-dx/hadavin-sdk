@@ -772,19 +772,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "integ-pg findings: my tests break on the combined tree"
-  },
-  {
-   "id": "t1-fix",
-   "role": "builder in /home/user/wt/t1",
-   "model": "sonnet",
-   "what exactly it is doing": "rev-t1 findings: restore the positive read as portal/reset login, all 5 statement kinds per login, purge keep cases, strengthen the 3 weaker duplicates, add the missing exact-reserve case",
-   "started UTC": "17:00",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "rev-t1 findings"
   }
  ],
  "tests": [
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "17:10 T1 FIXED: wip/core-a-t1-merge e4b0c2331 (the file to COPY; 276365373 is superseded): the reviewer's Major is fixed (a positive read as each login runs BEFORE the refusals, so a missing schema USAGE can no longer pass the refusal tests silently), all four logins are refused SELECT/INSERT/UPDATE/DELETE/TRUNCATE on spend_reservations and rights() is empty for all four, purge keeps the expired, the newer-settled and the open row and deletes only the old settled one, three of core-b's cases strengthened (month cap over two days, settles below the reserve, control), 'settle at exactly the reserved amount: the cap stays shut' added; 26 cases pass on PG16 (26 skip without a DSN); mutation proof: month counter +0.25 turns 4 cases red. Races still accept either order (interleaving cannot be asserted deterministically). Running: cfix, doorm. Details: handover/core-a/T1-MERGE.md (review round 1 fixes).",
   "16:31 d-fix24 reviewed fresh: NO Blocker/Major (the conflict setting is read only from the settings on the production path; the cap test uses the real limiter and an injected clock, drops are counted, per sender). Nits: the Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT: add post-merge `worker.CONFLICT_EVENTS_PER_MINUTE == defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT` (cannot be written on core-a alone); README post-merge patch: one overclaim and one wrong cite fixed in the notes of handover/core-a/pr/README-trigger-postmerge.md. Running: t1-fix, cfix, doorm.",
   "17:05 d-fix24 BUILT (cloud/core-a): the dead setting triggers.conflict_events_per_minute is now read by the worker from core-b's TriggerSettings (ConfigError if missing; no make_app parameter any more), 5 tests (3 -> 3 written + 27 dropped of 30; 3 vs 7 -> (3,27) vs (7,23); red proof 3 of 5), worker spend docstring corrected, post-merge README patch text in handover/core-a/pr/README-trigger-postmerge.md; tests/triggers + anchors + runner 1259 passed 312 skipped 0 failed. Note the Runner keeps a default 10 for ~50 direct callers (a second source; reviewer checks the drift). Fresh review rev-dfix24 running. AGENTS 4 (t1-fix, cfix, doorm, rev-dfix24).",
   "17:00 rev-t1 DONE: the merged T1 file (wip/core-a-t1-merge 276365373): NO Blocker; all 18 ported cases are at least as strict as the originals; ONE Major: the portal/reset refusal case lost core-a's positive read as the login (a missing schema USAGE would make every statement fail with 42501 and the test would pass without testing the table grant) -> being restored; nits (being fixed by t1-fix): statement kinds incomplete for purge/portal/reset, purge 'keeps expired/newer-settled' untested, three of CORE-B's 'duplicate' cases are WEAKER than the originals (month cap over two days drops the per-day counter and row count; settles-below-reserve drops the 5-row/open-id/settled_usd checks; control drops the month counter) and 'settle at exactly the reserved amount then the cap stays shut' was in no case, races accept a serial order (cannot prove interleaving). Everything in the file is PG-only (no proof without a DSN). Do NOT copy 276365373 yet: wait for the t1-fix push.",
@@ -4117,6 +4105,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "d-fix24 review: NO Blocker/Major; no other cap source on the production path; the 3-vs-7 test uses the real limiter + rate_clock (counted drops, per sender); nits: Runner default 10 can drift from core-b's TRIGGER_CONFLICT_EVENTS_DEFAULT (post-merge test needed), test does not cross the 60 s boundary (covered by test_d_fix6_e1:160-169), worker has no upper bound (core-b config enforces 1..1000), no test drives a bad value through make_app to ConfigError; README patch: 1 overclaim (ACK_WAIT_S default of a direct Runner), 1 wrong line cite (defaults.py:281 is the ceiling), 2 unverified claims: notes appended to the patch file"
+  },
+  {
+   "id": "t1-fix",
+   "role": "builder in /home/user/wt/t1",
+   "model": "sonnet",
+   "what exactly it is doing": "rev-t1 findings: restore the positive read as portal/reset login, all 5 statement kinds per login, purge keep cases, strengthen the 3 weaker duplicates, add the missing exact-reserve case",
+   "started UTC": "17:00",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "wip/core-a-t1-merge e4b0c2331 pushed: rev-t1 Major fixed (positive read as portal/reset/runtime/purge before the refusals), 5 statement kinds x 4 logins + rights() check, purge keeps expired/newer-settled/open, 3 duplicates strengthened, exact-reserve settle case; 25 -> 26 cases, 26 pass with PG16 DSN, 26 skip without; red proofs (USAGE revoke, month counter +0.25 turns 4 cases red)"
   }
  ]
 }
