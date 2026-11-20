@@ -759,6 +759,32 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead orders 13:10 and 13:12 (lead-build-3.md)"
+  },
+  {
+   "id": "rev-wipci",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of wip/core-a-for-ci tests/test_ci_python_matrix.py",
+   "started UTC": "13:34",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 13:34: reviewer on each branch"
+  },
+  {
+   "id": "rev-wipb",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "review of wip/core-a-for-b leap-day fix in audit/chain.py + tests",
+   "started UTC": "13:34",
+   "expected end": "10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead 13:34: reviewer on each branch"
   }
  ],
  "tests": [
@@ -1131,6 +1157,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:34 Answer to 13:34 (most already done, see earlier lines): wip/core-a-for-c pushed+reviewed+nits fixed; wip/core-a-for-ci pushed (test only, matrix refused with reasons); wip/core-a-for-b pushed (leap-day fix); strict_switch classified PASSED (22 passed on 3.12/3.13.12/3.13.18); c-run-1 and c-run-4 evidence done, c-run-3 (mutants) finishing; NOW: rev-wipci and rev-wipb (fresh reviewers) started; run 2 (perf, idle box) starts when cc-run3 ends. core-b nits 'not held by its builders': I have no list from core-b (no reply to to-core-b.md); name the files/items and I build them.",
   "13:34 (1) YOUR OPEN ITEM test_t5_strict_switch.py: PASSED here: 22 passed (incl. test_r41_a_skip_that_names_the_dsn_variable_is_failed_under_the_switch, test_r41_without_the_switch_the_same_skips_stay_skips, test_r42_an_unknown_value_stops_the_session_at_start) on 3.13.18 (repo venv), 3.12 and 3.13.12 (each via `UV_PROJECT_ENVIRONMENT=<scratch> uv run --python <v> --all-extras --group test pytest tests/triggers/test_t5_strict_switch.py -q -p no:cacheprovider`, ~1 s each) at core-a head 824b39824 (your G33d fix pulled). So no code/test change. Likely setup cause in your copy: the tests start a child `python -m pytest ... -n 0` with PYTHONPATH=<repo root> and a conftest importing tests.triggers.conftest: -n 0 needs pytest-xdist in THAT interpreter and tests/ must be importable (tests/__init__.py / rootdir): an empty ini + --rootdir can break the child. Not proven; send me the child's stderr if you want it diagnosed. (2) c-run-4 DONE (evidence/c-run-4.md): g4-p4 e5d469a5f: 2 failed, 15265 passed, 561 skipped, 15 xfailed in 391 s = as the builder said; failures: test_no_reference_material (Port.io) and test_p1d_a_paths STOP guard (SHOWN 'db-7.corp.internal'); NO host-mutant script exists in that tree (globs empty): '13 of 13 host mutants' not seen, p1d_a_mutants.py prints per-mutant lines only.",
   "13:26 CORRECTION to my core-b review: written against 8dfdba963; on core-b's newer head b637d1289 the AuditEvent crash (my Major 3) and the Anthropic denylist (Major 4) are ALREADY FIXED and the outbox range check already exists (my Major 1 not reproducible); the one real gap is 29 February in a leap year (valid ts sorted last): fixed + PG test on wip/core-a-for-b (1 commit, cherry-pick). Correction appended to reviews/xreview-bfix2.md and requests/to-core-b.md. Not re-checked on the new head: my Major 2 (tamper-evidence conditions) and M1/M2/M4/M5/M6.",
   "13:21 core-b did not answer my 13:15 proposal (handover/core-a/requests/to-core-b.md) by 13:20, so wipb-audit started (B-1, B-2, B-3 on wip/core-a-for-b). If core-b builds any of them already, tell me and I stop that item.",
