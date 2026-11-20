@@ -562,10 +562,10 @@ def test_every_mutant_still_applies_to_the_source():
         assert f"def {function}(" in (ROOT / f"{test_path}.py").read_text(encoding="utf-8"), m.name
 
 
-# --- 10b. M6: nothing older than 0008 may change; 0008-0011 are added to the manifest at merge ------------------------------------
-# Procedure (docs/migration-checksums.md): at the merge that releases 0008-0011 the lead runs
-# adds the four hashes to tests/fixtures/migrations_released.json, empties migrate.UNRELEASED_MIGRATIONS, and sets
-# RELEASED_CUTOFF to 12 (and the manifest length in test 10 to 11).
+# --- 10b. M6: nothing older than 0008 may change; 0008-0012 are added to the manifest at merge ------------------------------------
+# Procedure (docs/migration-checksums.md): at the merge that releases 0008-0012 the lead runs
+# adds the five hashes to tests/fixtures/migrations_released.json, empties migrate.UNRELEASED_MIGRATIONS, and sets
+# RELEASED_CUTOFF to 13 (and the manifest length in test 10 to 12).
 RELEASED_CUTOFF = 8  # migrations numbered below this are released today
 
 

@@ -27,8 +27,8 @@ NEEDS_PG = pytest.mark.skipif(
 UNRELEASED = sorted(mig.UNRELEASED_MIGRATIONS)
 
 
-def test_the_unreleased_set_is_exactly_0008_to_0011_and_all_of_them_exist():
-    assert [s[:4] for s in UNRELEASED] == ["0008", "0009", "0010", "0011"]
+def test_the_unreleased_set_is_exactly_0008_to_0012_and_all_of_them_exist():
+    assert [s[:4] for s in UNRELEASED] == ["0008", "0009", "0010", "0011", "0012"]
     assert {p.stem for p in mig._migration_files()} >= mig.UNRELEASED_MIGRATIONS
 
 

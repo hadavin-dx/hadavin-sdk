@@ -40,10 +40,10 @@ class World:
         self.sfx = uuid.uuid4().hex[:10]
         self.dsn = os.environ["HADAVIN_TEST_PG_DSN"]
         self.schema = f"e7_s_{self.sfx}"
-        self.runtime, self.portal, self.purge, self.reset = (
-            f"e7_{n}_{self.sfx}" for n in ("rt", "po", "pu", "rs")
+        self.runtime, self.portal, self.purge, self.reset, self.checkpoint = (
+            f"e7_{n}_{self.sfx}" for n in ("rt", "po", "pu", "rs", "ck")
         )
-        self.roles = [self.runtime, self.portal, self.purge, self.reset]
+        self.roles = [self.runtime, self.portal, self.purge, self.reset, self.checkpoint]
         self.scoped = make_conninfo(self.dsn, options=f"-c search_path={self.schema}")
 
     def migrate(self, **kw):
@@ -53,6 +53,7 @@ class World:
             portal_role=self.portal,
             purge_role=self.purge,
             reset_role=self.reset,
+            checkpoint_role=self.checkpoint,
             **kw,
         )
 
@@ -205,13 +206,13 @@ def test_fresh_schema_and_upgrade_from_0008(w, monkeypatch):
             m.setattr(
                 migrate_mod, "GRANTS", {k: v for k, v in grants.items() if k not in NEW_TABLES}
             )
-            m.setattr(  # the 0011 functions do not exist at 0008 either
+            m.setattr(  # the 0011 and 0012 functions do not exist at 0008 either
                 migrate_mod,
                 "FUNCTION_GRANTS",
                 {
                     k: v
                     for k, v in migrate_mod.FUNCTION_GRANTS.items()
-                    if k not in migrate_mod.MONEY_FUNCTIONS
+                    if k not in migrate_mod.MONEY_FUNCTIONS and k not in migrate_mod.AUDIT_FUNCTIONS
                 },
             )
             up.migrate()

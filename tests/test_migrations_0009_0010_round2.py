@@ -72,7 +72,7 @@ def test_a_temp_table_named_audit_entries_cannot_stand_in_for_the_seq_guard(w):
 
 def test_a_temp_table_cannot_stand_in_for_the_checkpoint_guard(w):
     w.seq_row(w.runtime, 1)
-    with w.as_(w.runtime) as db:
+    with w.as_(w.checkpoint) as db:  # only the checkpoint login holds INSERT on audit_checkpoints
         db.execute("CREATE TEMP TABLE audit_entries (seq bigint, hash text)")
         db.execute("INSERT INTO pg_temp.audit_entries VALUES (4000000000000000000, 'h')")
         with pytest.raises(psycopg.errors.CheckViolation):
@@ -98,7 +98,7 @@ def test_a_planted_checkpoint_seq_is_refused_and_a_real_one_accepted(w):
     w.seq_row(w.runtime, 1)
     w.seq_row(w.runtime, 2)
     ins = "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (%s, %s, 's')"
-    with w.as_(w.runtime) as db:
+    with w.as_(w.checkpoint) as db:  # only the checkpoint login holds INSERT on audit_checkpoints
         for seq, h in ((4000000000000000000, "h"), (3, "h"), (0, "h"), (-1, "h"), (2, "wrong")):
             with pytest.raises(psycopg.errors.CheckViolation):
                 db.execute(ins, (seq, h))

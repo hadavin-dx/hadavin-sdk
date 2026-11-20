@@ -76,6 +76,8 @@ def test_function_grants_name_the_roles_the_ticket_names():
         "hadavin_expire_spend_reservations",
         "hadavin_add_spend",
         "hadavin_cap_matches",
+        "hadavin_audit_outbox_done",  # 0012: the runtime drains its own outbox
+        "hadavin_audit_outbox_quarantine",
     )
     for sig, g in who.items():
         name = sig.split("(")[0]
@@ -89,7 +91,7 @@ def test_function_grants_name_the_roles_the_ticket_names():
         ), sig
     assert mig.FUNCTION_GRANTS[SET_CAP].runtime is False
     assert mig.FUNCTION_GRANTS[CAP_MATCHES].runtime is True
-    assert set(who) == {*mig.MONEY_FUNCTIONS, mig.RELEASE_FUNCTION}
+    assert set(who) == {*mig.MONEY_FUNCTIONS, mig.RELEASE_FUNCTION, *mig.AUDIT_FUNCTIONS}
 
 
 def test_the_trigger_functions_are_the_excluded_set_and_not_in_the_map():

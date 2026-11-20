@@ -54,6 +54,9 @@ class Grant:
     # Table-level privileges of the caps role (`migrate --caps-role`): the only identity that may run `hadavin_set_cap`.
     # It appends to the audit (the cap change is audited as an intent and an outcome) and holds nothing on any money table.
     caps: str = ""
+    # Table-level privileges of the checkpoint role (`migrate --checkpoint-role`): the only identity that may INSERT a
+    # signed checkpoint. It reads the chain head (audit_entries) and writes audit_checkpoints; nothing else.
+    checkpoint: str = ""
 
 
 @dataclass(frozen=True)
@@ -66,12 +69,13 @@ class FunctionGrant:
     reset: bool = False
     portal: bool = False
     caps: bool = False
+    checkpoint: bool = False
 
 
 _RW = "SELECT, INSERT, UPDATE"
 _APPEND = "SELECT, INSERT"  # written once, never changed
 # The one grant map. Audit rows and checkpoints are read and appended only (their triggers also refuse UPDATE,
-# DELETE and TRUNCATE to any role); reconcile deletes an outbox row once it is in the chain. A later PR adds its
+# DELETE and TRUNCATE to any role); a parked outbox event is removed through the 0012 functions. A later PR adds its
 # relations here (K5-core `redaction_maps`, K6 labels and reports, ...); the portal list never holds
 # `redaction_maps`, `events`, `tick_state.detail` or secrets.
 GRANTS: dict[str, Grant] = {
@@ -99,12 +103,26 @@ GRANTS: dict[str, Grant] = {
     "kill_switch_watermark": Grant("table", "SELECT", reset="SELECT, INSERT, UPDATE"),
     "tick_state": Grant("table", _RW),
     "audit_entries": Grant(
-        "table", _APPEND, portal=True, reset=_APPEND, release=_APPEND, caps=_APPEND
+        "table",
+        _APPEND,
+        portal=True,
+        reset=_APPEND,
+        release=_APPEND,
+        caps=_APPEND,
+        checkpoint="SELECT",
     ),
+    # Only the checkpoint role writes a checkpoint (the runtime reads them: signed_through, verify).
     "audit_checkpoints": Grant(
-        "table", _APPEND, portal=True, reset="SELECT", release="SELECT", caps="SELECT"
+        "table",
+        "SELECT",
+        portal=True,
+        reset="SELECT",
+        release="SELECT",
+        caps="SELECT",
+        checkpoint=_APPEND,
     ),
-    "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
+    # No DELETE: a parked event leaves the outbox through the two functions of 0012 (AUDIT_FUNCTIONS) only.
+    "audit_outbox": Grant("table", "SELECT, INSERT"),
     # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
     # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
     "tool_calls": Grant(
@@ -141,6 +159,11 @@ MONEY_FUNCTIONS = (
     "hadavin_set_cap(text, numeric, numeric, text)",
     "hadavin_cap_matches(text, numeric, numeric)",
 )
+# 0012: the SECURITY DEFINER outbox functions. Re-pinned on every migrate run like MONEY_FUNCTIONS (`_pin_money_functions`).
+AUDIT_FUNCTIONS = (
+    "hadavin_audit_outbox_done(text)",
+    "hadavin_audit_outbox_quarantine(text, text)",
+)
 # Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
 # purges; the release role (0008) releases; the caps role (M4, one identity per function) sets caps and compares them
 # (step 6); the reset role runs none of them. The portal role runs none. Every other role, PUBLIC included, is refused.
@@ -154,6 +177,9 @@ FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     MONEY_FUNCTIONS[5]: FunctionGrant(caps=True),
     MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, caps=True),
     RELEASE_FUNCTION: FunctionGrant(release=True),
+    # 0012: only the runtime drains its own outbox (a parked event is removed once it is in the chain, or renamed).
+    AUDIT_FUNCTIONS[0]: FunctionGrant(runtime=True),
+    AUDIT_FUNCTIONS[1]: FunctionGrant(runtime=True),
 }
 # Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.
 EXCLUDED_FUNCTIONS = (
@@ -170,6 +196,8 @@ _OWNED_RELATIONS = (
     "runs",
     "hadavin_limits",
     "hadavin_caps",
+    "audit_entries",  # 0012: the outbox functions read it and delete from audit_outbox as owner
+    "audit_outbox",
 )
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
@@ -881,7 +909,7 @@ def _pin_money_guard(db) -> None:
 def _pin_money_functions(db) -> None:
     """The five money functions of 0011, pinned like the tripwire functions on EVERY run (also when 0011 is already
     applied). A database from before 0011 has none, and nothing is done for it."""
-    for signature in MONEY_FUNCTIONS:
+    for signature in (*MONEY_FUNCTIONS, *AUDIT_FUNCTIONS):
         if db.execute("SELECT to_regprocedure(%s)", (signature,)).fetchone()[0] is not None:
             _pin_search_path(db, signature)
 
@@ -1109,6 +1137,7 @@ UNRELEASED_MIGRATIONS = frozenset(
         "0009_stop_state_hardening",
         "0010_money_guard",
         "0011_money_definer",
+        "0012_audit_outbox_functions",
     }
 )
 RELEASED_MANIFEST = Path(__file__).parent / "migrations_released.json"
@@ -1240,6 +1269,7 @@ def migrate(
     reset_role: str | None = None,
     release_role: str | None = None,
     caps_role: str | None = None,
+    checkpoint_role: str | None = None,
     no_roles: bool = False,
     iam_auth: bool = False,
     region: str | None = None,
@@ -1252,8 +1282,8 @@ def migrate(
     reset_draft: str | None = None,
 ) -> list[str]:
     """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
-    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
-    relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
+    privileges `GRANTS` lists (never TRUNCATE; DELETE only on the purged evidence tables). With `portal_role`, SELECT on the
+    relations marked `portal` and nothing else. With `release_role`, EXECUTE on the release function of 0008 and the audit append (nothing on the money tables). With `checkpoint_role`, SELECT on the chain and INSERT on audit_checkpoints (the only login that may write a checkpoint). With `reset_role`, what `Grant.reset` lists: clear stops, turn the
     old flag off, append the reset to the audit chain, and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. A run that names no
     role is refused unless `no_roles=True` (CLI `--no-roles`): it would apply the schema and never look at who can
@@ -1269,14 +1299,22 @@ def migrate(
     `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
     operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
     to the file's (the database is known to match). Both refuse a released version."""
-    roles = (runtime_role, portal_role, purge_role, reset_role, release_role, caps_role)
+    roles = (
+        runtime_role,
+        portal_role,
+        purge_role,
+        reset_role,
+        release_role,
+        caps_role,
+        checkpoint_role,
+    )
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
             raise ConfigError(f"not a plain database role name: {role!r}")
     named = [r for r in roles if r is not None]
     if len(set(named)) != len(named):
         raise ConfigError(
-            "the runtime, portal, purge, reset, release and caps roles must be different roles"
+            "the runtime, portal, purge, reset, release, caps and checkpoint roles must be different roles"
         )
     if no_roles and named:
         raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
@@ -1349,7 +1387,7 @@ def migrate(
             for b in named:
                 if a != b and db.execute(q, (a, b)).fetchone()[0]:
                     raise ConfigError(
-                        "the runtime, portal, purge, reset, release and caps roles must not be members of each other"
+                        "the runtime, portal, purge, reset, release, caps and checkpoint roles must not be members of each other"
                     )
         if unmapped := _unmapped_functions(db):
             raise ConfigError(
@@ -1406,6 +1444,12 @@ def migrate(
                 raise ConfigError(
                     "the caps role holds more than the grant map: " + "; ".join(bad[:20])
                 )
+        if checkpoint_role:
+            _apply_grants(db, checkpoint_role, lambda g: g.checkpoint)
+            if bad := effective_problems(db, checkpoint_role, lambda g: g.checkpoint if g else ""):
+                raise ConfigError(
+                    "the checkpoint role holds more than the grant map: " + "; ".join(bad[:20])
+                )
         _pin_money_guard(db)
         _apply_release_function(db, release_role, [r for r in named if r != release_role])
         _apply_money_functions(
@@ -1417,6 +1461,7 @@ def migrate(
                 "reset": reset_role,
                 "portal": portal_role,
                 "caps": caps_role,
+                "checkpoint": checkpoint_role,
             },
         )
         if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
