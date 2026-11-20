@@ -29,7 +29,7 @@ code and account x 8 separators between the two lines x 4 layouts), and over fix
 shared ground is the ticket's own example, which is one point of that grid.
 
 Marks. A property that fails on a redactor WITHOUT G7 and passes with it carries `needs_g7` (strict xfail when the
-fix is absent, detected by `_CONTEXT_PATTERNS` / `_Redactor.settle` / `_ESCAPED_LOOKALIKE`). A property that fails
+fix is absent, detected by `_Redactor.settle` / `_ESCAPED_LOOKALIKE`). A property that fails
 WITH the fix is a finding: strict xfail with the reason `FINDING G7-Fn`, smallest example in
 handover/core-a/FINDINGS-core-c-G7-redaction.md. No property was weakened to pass.
 
@@ -56,20 +56,14 @@ R = importlib.import_module(
     "hadavin_sdk.guard.redact"
 )  # the package re-exports a function of this name
 
-HAS_G7 = hasattr(R, "_CONTEXT_PATTERNS") and hasattr(R._Redactor, "settle")
+HAS_G7 = hasattr(
+    R._Redactor, "settle"
+)  # core-c rewrote G7 once: `_CONTEXT_PATTERNS` is gone, `settle` stayed
 HAS_OWN_OUTPUT_RULE = hasattr(R, "_ESCAPED_LOOKALIKE")
 _NEEDS = "needs core-c G7 fix (not on this branch yet)"
 needs_g7 = pytest.mark.xfail(not HAS_G7, strict=True, reason=_NEEDS)
 needs_own_output_rule = pytest.mark.xfail(not HAS_OWN_OUTPUT_RULE, strict=True, reason=_NEEDS)
 
-F1 = (
-    "FINDING G7-F1 (the ticket's own RELATED, NOT FIXED): a short token after Bearer / Basic / authorization "
-    "that starts with a known secret is masked whole only by a second pass"
-)
-F2 = (
-    "FINDING G7-F2: an identifier glued to a copy of a known secret (no separator) stays readable after one pass; "
-    "the sweep masks the secret, and only a second pass then reads the identifier at its new boundary"
-)
 F4 = (
     "FINDING G7-F4: a secret written once in a look-alike spelling (a full-width or zero-width character) and "
     "once plainly in the same text: one of the two stays readable after one pass"
@@ -894,7 +888,15 @@ def test_P1_I2_I4_bank_fuzz_a_second_pass_finds_no_account_the_first_pass_left()
         if new or second.text.count("<BANKACCT_") != first.text.count("<BANKACCT_"):
             failures.append((text, first.text, second.text))
         probe = R._Redactor(first.mapping)
-        if probe._find_context(first.text) != first.text:
+        again = (
+            first.text
+        )  # the BANKACCT patterns alone (core-c's first G7 had a helper for this; it is gone)
+        for label, pattern in R.PATTERNS:
+            if label == "BANKACCT":
+                again = pattern.sub(
+                    lambda m, label=label, probe=probe: probe._mask(m, label), again
+                )
+        if again != first.text:
             failures.append(("context patterns still match", text, first.text))
     _no_failures(failures, BANK_FUZZ_CASES)
 
@@ -963,7 +965,6 @@ def test_P2_P3_P4_glue_fuzz_the_map_only_grows_and_the_text_behind_the_placehold
     _no_failures(failures, GLUE_FUZZ_CASES)
 
 
-@pytest.mark.xfail(strict=True, reason=F2)
 def test_P1_glue_fuzz_one_pass_is_a_fixed_point():
     failures = [
         (text, first.text, second.text)
@@ -983,7 +984,6 @@ _GLUED = {
 }
 
 
-@pytest.mark.xfail(strict=True, reason=F2)
 @pytest.mark.parametrize("kind", sorted(_GLUED))
 def test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pass(kind):
     """Smallest form: `password=<V>` on line 1; on line 2 an identifier with <V> glued to its end. One pass
@@ -993,13 +993,11 @@ def test_P1_an_identifier_glued_to_a_copy_of_a_known_secret_is_masked_in_one_pas
     assert value not in result.text
 
 
-@pytest.mark.xfail(strict=True, reason=F2)
 def test_P1_a_tenant_id_after_a_glued_copy_of_a_known_secret_is_masked_in_one_pass():
     result = R.redact(f"password={_PW}\n{_PW}tenant_id=acme-42")
     assert "acme-42" not in result.text
 
 
-@pytest.mark.xfail(strict=True, reason=F1)
 @pytest.mark.parametrize(
     ("scheme", "length"), [("Bearer ", 8), ("Basic ", 4), ("authorization: ", 4)]
 )

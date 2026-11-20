@@ -934,7 +934,9 @@ def test_m2_a_hung_store_cannot_pile_up_request_threads(caplog):
                 time.sleep(0.01)
             assert Hung.reads == 2
             third: list = []
-            caller = threading.Thread(target=lambda: third.append(runner.start(_req(3))), daemon=True)
+            caller = threading.Thread(
+                target=lambda: third.append(runner.start(_req(3))), daemon=True
+            )
             began = time.monotonic()
             caller.start()
             caller.join(5)
