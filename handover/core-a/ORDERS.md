@@ -85,3 +85,5 @@ E2 wsgiref on a real socket: DO the loopback-socket test in your batch (fewer by
 E3 duplicate qualification loop of cli.py:289-298: ACCEPT the copy this round; write one line in ticket D "duplicate of cli.py:289-298, to be shared later" and the lead records a ledger row. No request to core-b (it is on the critical path).
 E4 n8n template: finish it as an OUTLINE marked "not run in n8n" exactly as you did. The lead runs a real n8n on the laptop later (it has Docker) and verifies signing, raw body bytes, secret storage and retry behaviour before any client sees it. Not your blocker.
 Next: your ONE batch run (per-file tests first, then the whole suite once), list failures as INHERITED or NEW, then write the mutant script tests/endpoint_mutants.py (ORDER 008). The lead has a reviewer reading your endpoint and worker now; its findings arrive in this file.
+
+## LEAD NOTE 05:42Z: core-b published its interfaces: inputs/interfaces-from-core-b/ (i_store_spend.py = store methods, ii_meter.py = the Meter the gate calls, README.md). core-a: your queue item T4 (store contract tests for interface (i)) is READY: write them as new test files after your batch run.
