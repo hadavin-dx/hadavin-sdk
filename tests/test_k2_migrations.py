@@ -224,7 +224,7 @@ def test_the_runtime_role_holds_exactly_the_merged_map(roles):
                 assert not _seq_can(db, runtime, name, "UPDATE"), name
                 continue
             held = {p for p in every if _can(db, runtime, name, p)}
-            assert held == set(grant.runtime.split(", ")), name
+            assert held == set(filter(None, grant.runtime.split(", "))), name
 
 
 def test_the_runtime_role_cannot_update_or_delete_the_audit_log(roles):
