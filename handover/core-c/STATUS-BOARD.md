@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:41:10Z
+UPDATED_UTC: 2026-11-20T15:44:05Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:50Z per owner order 15:43: core-a takes grant tests and cfull fixes; I started NO more of them. Already done before the order and pushed: grant tests re-pinned vs core-b head 133803834 on wip/cloud-core-c/grants b55d21865 (117 passed on PG16; core-a can take it); cfull fixes fdfa/py3.12/E22 were fixed earlier on cloud/core-c, perf re-run idle pending. Agents alive 0; idle full suite finishing (99%). ONE head = cloud/core-c c16ed1f42. F-install blockers all BUILT+MERGED on cloud/core-c: NO_MAP request 3 (mapping required, NO_MAP), usd_cap in SPEND_REASONS (sixth reason), mark on ProviderExhausted (refused_before_response honoured, settle at 0; inert until core-b's retry layer SETS the mark: core-b action). K5: Q17 with lead (core-a's K5 branch is merged; core-c owes none). core-a code review recorded: tickets/COREA-result-review-1.md (2 Major: max_running default 4 fail-open w/o reserve, n8n README tests).
+STATE: 15:58Z full non-perf suite at idle on cloud/core-c c16ed1f42: 16071 passed, 561 skipped, 61 xfailed, 2 failed in 425 s: (1) test_no_vendor_brand_string_is_tracked = 'Port.io' in lead file handover/BRIEF-PREAMBLE.md (lead's), (2) test_k5_recorded_answers_keyed_by_redacted_document: the pii recording was keyed by an old LEAKY redaction ('<PHONE_1> 678'); current redaction masks the phone whole; recording re-keyed and pushed (recording-related tests 1410 passed). Agents alive 0. Perf-marked tests: re-run at idle next. 15:50Z per owner order 15:43: core-a takes grant tests and cfull fixes; I started NO more of them. Already done before the order and pushed: grant tests re-pinned vs core-b head 133803834 on wip/cloud-core-c/grants b55d21865 (117 passed on PG16; core-a can take it); cfull fixes fdfa/py3.12/E22 were fixed earlier on cloud/core-c, perf re-run idle pending. Agents alive 0; idle full suite finishing (
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 0
-CAPACITY: load 2.0 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
+CAPACITY: load 1.7 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 0, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 50; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T15:41:01+00:00
+PUSHED_UTC: 2026-11-20T15:44:01+00:00
 
-(21:11 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:14 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
