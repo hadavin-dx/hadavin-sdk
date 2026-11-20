@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:17:02Z
+UPDATED_UTC: 2026-11-20T06:17:14Z
 SESSION: core-a
 ORDER: 016 standing (backlog), 014 and 015 in work
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 36
 ITEMS_OPEN: 11
 PERCENT: 76
 AGENTS_RUNNING: 6
-CAPACITY: load 2.58 of 4 cores (1-minute average), mem 1.9/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 15%; 524M /home/user/hadavin-sdk; 159M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 2.75 of 4 cores (1-minute average), mem 1.8/15.7 GB, 6 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 15%; 524M /home/user/hadavin-sdk; 205M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 in the whole-suite run, INHERITED: handover/BRIEF-PREAMBLE.md (lead's file) trips test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: first agent to end: start backlog 9 (egm-design review of my code) in the same batch; then findings files into the board; I write backlog 8 text meanwhile
-PUSHED_UTC: 2026-11-20T06:16:54Z (the push before this board)
+PUSHED_UTC: 2026-11-20T06:17:04Z (the push before this board)
 NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the trial agent, port 55433 was started by me at 06:16Z for the fuzz, crash matrix and F-store agents and I stop it when they end; data folders and scratch copies stay on disk (the safety check refuses folder deletes)
 
 ## QUEUE ITEMS
@@ -91,27 +91,23 @@ NOTE: two local PostgreSQL 16 servers: port 55432 is started and stopped by the 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 152s ago | running | matched by name in ps |
-| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 111s ago | running | matched by name in ps |
-| 12568 | postgres: checkpointer  | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 12569 | postgres: background writer  | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 12571 | postgres: walwriter  | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 12573 | postgres: logical replication launcher  | core-a session or its agent | 110s ago | running | matched by name in ps |
-| 12583 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 105s ago | running | matched by name in ps |
-| 12585 | timeout 2400 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 105s ago | running | matched by name in ps |
-| 12586 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 105s ago | running | matched by name in ps |
-| 12595 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 105s ago | running | matched by name in ps |
-| 21265 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 21270 | timeout 900 /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 21273 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -v -p no:cacheprovid | core-a session or its agent | 17s ago | running | matched by name in ps |
-| 22298 | postgres: rt_ea3cf75d0c34 postgres 127.0.0.1(50426) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 22299 | postgres: pu_2ee584649c75 postgres 127.0.0.1(50436) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 164s ago | running | matched by name in ps |
+| 12567 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-test | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12568 | postgres: checkpointer  | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12569 | postgres: background writer  | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12571 | postgres: walwriter  | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12572 | postgres: autovacuum launcher  | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12573 | postgres: logical replication launcher  | core-a session or its agent | 123s ago | running | matched by name in ps |
+| 12583 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 118s ago | running | matched by name in ps |
+| 12585 | timeout 2400 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 118s ago | running | matched by name in ps |
+| 12586 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 118s ago | running | matched by name in ps |
+| 12595 | /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchp | core-a session or its agent | 118s ago | running | matched by name in ps |
+| 23075 | postgres: postgres postgres 127.0.0.1(48928) idle in transaction | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

@@ -98,4 +98,147 @@ tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_t
 tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[memory-4242] PASSED [ 89%]
 tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-20261120] PASSED [ 90%]
 tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-7] PASSED [ 91%]
-tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-4242] 
+tests/contracts/test_store_spend_reservations.py::test_a_random_sequence_keeps_the_counters_equal_to_the_rows[postgres-4242] PASSED [ 92%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_stores_are_fifty_backends PASSED [ 93%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[day] PASSED [ 94%]
+tests/contracts/test_t1_reserve_cap.py::test_fifty_connections_against_a_cap_of_three_grant_exactly_three[month] PASSED [ 95%]
+tests/contracts/test_t1_reserve_cap.py::test_control_the_old_check_then_add_pattern_admits_more_than_three PASSED [ 96%]
+tests/contracts/test_t1_reserve_cap.py::test_the_runtime_role_may_not_delete_reservations PASSED [ 97%]
+tests/contracts/test_t1_reserve_cap.py::test_the_purge_role_deletes_closed_rows_and_reads_only_status_and_closed_at PASSED [ 98%]
+tests/contracts/test_t1_reserve_cap.py::test_the_portal_role_may_not_read_reservations PASSED [ 99%]
+tests/contracts/test_t1_reserve_cap.py::test_the_reset_role_may_not_read_reservations PASSED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_nothing_is_rounded[memory] ________________________
+
+store = <hadavin_sdk.store.memory.MemoryStore object at 0x7f74e1530710>
+
+    def test_nothing_is_rounded(store):
+        """Invariant "nothing rounded": a long Decimal survives the counters, the row and the run's cost."""
+        long_reserved, long_actual = (
+            _usd("0.000000123456789012345"),
+            _usd("0.00108225000000000001"),
+        )
+        run_id = _run(store)
+>       rid = _reserve(store, long_reserved, run_id=run_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contracts/test_store_spend_reservations.py:220: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_store_spend_reservations.py:73: in _reserve
+    store.reserve_spend(rid, agent, day, usd, day_cap=day_cap, month_cap=month_cap, run_id=run_id)
+src/hadavin_sdk/store/memory.py:316: in reserve_spend
+    check_spend_amount(usd)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+usd = Decimal('1.23456789012345E-7')
+
+    def check_spend_amount(usd: object) -> Decimal:
+        """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+        bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+        ValueError and nothing is booked."""
+        if (
+            type(usd) is not Decimal
+            or not usd.is_finite()
+            or not 0 <= usd < MAX_SPEND_USD
+            or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+        ):
+>           raise ValueError(
+                "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+            )
+E           ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+
+src/hadavin_sdk/store/protocol.py:77: ValueError
+______________________ test_nothing_is_rounded[postgres] _______________________
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f74e166d440>
+
+    def test_nothing_is_rounded(store):
+        """Invariant "nothing rounded": a long Decimal survives the counters, the row and the run's cost."""
+        long_reserved, long_actual = (
+            _usd("0.000000123456789012345"),
+            _usd("0.00108225000000000001"),
+        )
+        run_id = _run(store)
+>       rid = _reserve(store, long_reserved, run_id=run_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/contracts/test_store_spend_reservations.py:220: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/test_store_spend_reservations.py:73: in _reserve
+    store.reserve_spend(rid, agent, day, usd, day_cap=day_cap, month_cap=month_cap, run_id=run_id)
+src/hadavin_sdk/store/postgres.py:616: in reserve_spend
+    check_spend_amount(usd)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+usd = Decimal('1.23456789012345E-7')
+
+    def check_spend_amount(usd: object) -> Decimal:
+        """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
+        bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a
+        ValueError and nothing is booked."""
+        if (
+            type(usd) is not Decimal
+            or not usd.is_finite()
+            or not 0 <= usd < MAX_SPEND_USD
+            or not -MAX_SPEND_DECIMALS <= usd.as_tuple().exponent <= MAX_SPEND_EXPONENT
+        ):
+>           raise ValueError(
+                "spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places"
+            )
+E           ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+
+src/hadavin_sdk/store/protocol.py:77: ValueError
+___ test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory] ____
+
+store = <hadavin_sdk.store.memory.MemoryStore object at 0x7f74e16f4e90>
+
+    def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
+        """S1.settle (2.1): "an expired row only upward". The first settle still claims the row and the run gets the
+        actual amount; a second settle returns False."""
+        run_id = _run(store)
+        rid = _reserve(store, _usd("1.00"), run_id=run_id)
+        assert _expire_all(store) == 1
+        row, applied = store.settle_spend(rid, _usd("0.40"))
+        assert applied is True
+        assert row.status in ("settled", "expired") and row.closed_at is not None
+>       assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("0.40"))
+E       AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E         
+E         At index 1 diff: Decimal('1.00') != Decimal('0.40')
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           (
+E               Decimal('1.00'),
+E         -     Decimal('0.40'),...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/contracts/test_store_spend_reservations.py:418: AssertionError
+__ test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres] ___
+
+store = <tests.contracts.kinds.store_postgres._SplitStore object at 0x7f74e19d5cd0>
+
+    def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
+        """S1.settle (2.1): "an expired row only upward". The first settle still claims the row and the run gets the
+        actual amount; a second settle returns False."""
+        run_id = _run(store)
+        rid = _reserve(store, _usd("1.00"), run_id=run_id)
+        assert _expire_all(store) == 1
+        row, applied = store.settle_spend(rid, _usd("0.40"))
+        assert applied is True
+        assert row.status in ("settled", "expired") and row.closed_at is not None
+>       assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("0.40"))
+E       AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E         
+E         At index 1 diff: Decimal('1.00') != Decimal('0.40')
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           (
+E               Decimal('1.00'),
+E         -     Decimal('0.40'),...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/contracts/test_store_spend_reservations.py:418: AssertionError
+======================== 4 failed, 98 passed in 21.78s =========================
