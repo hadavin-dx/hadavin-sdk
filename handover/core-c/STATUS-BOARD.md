@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:30:54Z
+UPDATED_UTC: 2026-11-20T17:32:09Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 1730Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b), heavy processes 6, load (/proc/loadavg) 3.63 2.59 2.25, head bf0701d67. ANSWERS-1730Z.md. No long command in the turn (mutant run in background). 1726Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b builders) + whole-tree mutant run. Load (/proc/loadavg) 1.48 1.39 1.90. Lead decisions E25=(a), P8 item 3 fail closed, G15 YES applied; ANSWERS-1726Z.md ha
+STATE: 17:45Z REAL RUNNING AGENTS 4: Q2, Q3, P7b builders + Q1 reviewer; heavy: whole-tree redact_mutants in background. Load (/proc/loadavg) 5.01 3.20 2.49. Q1 MERGED (reply masking in the gate + guard/putback.py put_back; strict xfail F2 flipped to a passing test; ReplyMaskFailed on failure, cost still settled; gate tests 399 passed; builder mutants Q1a-i 9/9, gate_mutants whole not yet re-run on merged head: MIN 168). head a8ec2b6d6. 1730Z REAL RUNNING AGENTS 4 (Q1, Q2, Q3, P7b), heavy processes 6, load (/proc/loadavg) 3.63 2.59 2.25, head bf0701d67. ANSWERS-1730Z.md. No long command in the turn (mutant run in background). 1726Z R
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+CAPACITY: load 5.0 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;310M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:30:52+00:00
+PUSHED_UTC: 2026-11-20T17:31:17+00:00
 
-(23:00 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(23:02 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -60,9 +60,10 @@ PUSHED_UTC: 2026-11-20T17:30:52+00:00
 | p7-rev | reviewer | claude-sonnet-5-5 | FRESH review of the P7 LimitsMeter diff | 17:27 | 17:40 | 1 | done | 1 | 0 | EGM |
 | g14 | builder | claude-sonnet-5-5 | G14: per-message enforce cache keyed by map version + audit-drop counter (P8 items 4, 7); /tmp/core-c-g14 | 17:27 | 18:00 | 1 | done | 1 | 0 |  |
 | p7b | builder | claude-sonnet-5-5 | P7b: LimitsMeter review fixes (tests for overshoot/errors, constructor check, one-gate-per-agent, stale comments); /tmp/core-c-p7b | 17:30 | 17:55 | 1 | running | 1 | 0 |  |
-| q1 | builder | claude-sonnet-5-5 | Q1: E25 (a) reply masking + put-back, flip F2 xfail; /tmp/core-c-q1 | 17:37 | 18:10 | 1 | running | 1 | 0 |  |
+| q1 | builder | claude-sonnet-5-5 | Q1: E25 (a) reply masking + put-back, flip F2 xfail; /tmp/core-c-q1 | 17:37 | 18:10 | 1 | done | 1 | 0 |  |
 | q2 | builder | claude-sonnet-5-5 | Q2: fail-closed spend gate side (P8 item 3); /tmp/core-c-q2 | 17:37 | 18:10 | 1 | running | 1 | 0 |  |
 | q3 | builder | claude-sonnet-5-5 | Q3: G15 independent final net; /tmp/core-c-q3 | 17:37 | 18:10 | 1 | running | 1 | 0 |  |
+| q1-rev | reviewer | claude-sonnet-5-5 | FRESH review of the Q1 reply-masking diff | 17:45 | 17:58 | 1 | running | 1 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
