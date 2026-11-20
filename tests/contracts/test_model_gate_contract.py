@@ -114,10 +114,24 @@ def _spend_refused() -> type[Exception]:
 SpendRefused = _spend_refused()
 
 
+def run_map_cls():
+    return model_gate.runmap.RunMap
+
+
+def new_run_map(initial=None):
+    """A real `runmap.RunMap`, the only map type `bind` accepts."""
+    return run_map_cls()(initial or {})
+
+
 def _bind(gate, agent, run, **kwargs):
     """`gate.bind` with the run map said in the call: a missing or None `mapping` means "no run map" (NO_MAP)."""
-    if kwargs.get("mapping") is None:
+    mapping = kwargs.get("mapping")
+    if mapping is None:
         kwargs["mapping"] = NO_MAP
+    elif not isinstance(mapping, run_map_cls()):
+        # `bind` takes only a RunMap (ORDER 017 item 1; a plain dict is a TypeError). A literal dict in a case is
+        # wrapped here; a case that keeps writing to its map after binding builds a RunMap itself (`new_run_map`).
+        kwargs["mapping"] = run_map_cls()(mapping)
     return gate.bind(agent, run, **kwargs)
 
 
@@ -1114,7 +1128,7 @@ def test_i12_the_map_is_held_by_reference_a_value_added_later_is_enforced_on_the
             text = text.replace(original, token)
         return text
 
-    mapping: dict[str, str] = {}
+    mapping = new_run_map()  # the gate holds it by reference; the test continues it below
     rig = Rig(meter_cls, enforce=enforce, mapping=mapping)
     messages = [{"role": "user", "content": "earlier " + value}]
     rig.chat(messages)
@@ -1131,7 +1145,7 @@ def test_i13_i14_i15_the_shipped_enforce_step_on_a_real_run_map(meter_cls):
     once (I14)."""
     runmap = model_gate.runmap
     known = "AKIA" + "IOSFODNN7" + "EXAMPLE"  # the documented example key, built from parts
-    mapping: dict[str, str] = {}
+    mapping = new_run_map()
     masked = runmap.redact_text("the key is " + known + " today", mapping)
     assert known not in masked and known in mapping.values()
     before = dict(mapping)
@@ -1378,9 +1392,17 @@ def test_m1_the_whole_module_has_no_logger_no_print_and_no_exception_text():
             and isinstance(raised.args[0], ast.Name)
         ):
             local = raised.args[0].id
+            # a local is per function: the same name in another method (a `failure: list` in the chunk loop of
+            # the enforce step) is another variable, so the search is over the function holding the raise
+            scope = next(
+                f
+                for f in ast.walk(tree)
+                if isinstance(f, ast.FunctionDef | ast.AsyncFunctionDef)
+                and any(r is node for r in ast.walk(f))
+            )
             sources = [
                 n.value
-                for n in ast.walk(tree)
+                for n in ast.walk(scope)
                 if isinstance(n, ast.Assign | ast.AnnAssign)
                 and local in {t.id for t in ast.walk(n) if isinstance(t, ast.Name)}
                 and n.value is not None
