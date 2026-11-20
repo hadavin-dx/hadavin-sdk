@@ -1,0 +1,14 @@
+M1 application error writes the stdlib default body (error_output/error_body/error_headers not overridden)
+  -> CAUGHT; 1 failed, 9 passed in 1.93s; ['FAILED tests/triggers/test_t5_wsgiref.py::test_an_app_that_raises_is_503_empty_and_logged_by_class_name_only']; file restored (sha256 138025064a59)
+M1b same, second half: error_output override removed too
+  -> SURVIVED; 10 passed in 1.88s; []; file restored (sha256 138025064a59)
+M2 log_message prints to stderr (stdlib behaviour)
+  -> CAUGHT; 1 failed in 0.26s; ['FAILED tests/triggers/test_t5_wsgiref.py::test_signed_request_over_the_socket_is_acked_with_run_id_and_state_only']; file restored (sha256 138025064a59)
+M3 send_error is the stdlib one (text page)
+  -> CAUGHT; 1 failed, 3 passed in 1.27s; ['FAILED tests/triggers/test_t5_wsgiref.py::test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]']; file restored (sha256 138025064a59)
+M4 the 409 log line also holds trigger_ref
+  -> CAUGHT; 1 failed, 32 passed in 5.37s; ['FAILED tests/triggers/test_worker.py::test_409_writes_one_log_line_with_status_sender_and_run_id_only']; file restored (sha256 c1df9cfcd7f9)
+M5 no back-off in the no-slot wait
+  -> CAUGHT; 1 failed, 35 passed in 11.76s; ['FAILED tests/triggers/test_worker.py::test_a_refused_request_reads_the_store_a_few_times_not_a_hundred']; file restored (sha256 c1df9cfcd7f9)
+M6 a waiting request never takes a freed slot
+  -> CAUGHT; 1 failed, 33 passed in 8.30s; ['FAILED tests/triggers/test_worker.py::test_a_waiting_request_takes_the_slot_as_soon_as_it_is_free']; file restored (sha256 c1df9cfcd7f9)
