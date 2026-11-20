@@ -231,7 +231,9 @@ Stop rules (stop, record, ask core-c; never loosen a pin or a test to go on):
 - a mutant not good (all four runners), or an `old` not found once;
 - `find` no longer ending in the PATTERNS loop (section 4); a patch that needs more than the three places;
 - a test outside the four named files changing result against the Phase 0 run of the same tree (known reds such as E20's three are
-  recorded in Phase 0 and must stay exactly those); three failed tries at the same fix.
+  recorded in Phase 0 and must stay exactly those); three failed tries at the same fix;
+- Phase 0's g8_mutants.py baseline not green (as on `4ea3a9d99`, section 11 "Late results"): do not start Phase 1 until core-c has
+  fixed or re-pinned that red; never drop the perf tests from the runner's file list to get past it (a loosening).
 
 ## 11. Evidence (drafter) and what is NOT verified
 MEASURED, `g11` (`a60da3394` + diffs, G8 only): every table above, the 49-mutant run, tokexp N=20,000, blow, perf, fail-before.
@@ -240,7 +242,8 @@ of section 8, tokexp N=20,000 (0 / 0 / 0 injected, random 11 per mode: equal to 
 MEASURED, `h3g` (`4ea3a9d99`, G8 + G9 + G4 P0-3): patch `--fuzz=0`, ruff format and check clean (361 files), the G8 file not-perf counts,
 rows.py (218 records, only OL1-OL7 changed vs `h3`, 0 non-idempotent), prop.py (1,978), the G4 checks of section 8, and the items
 listed under "Late results" at the end.
-NOT RUN by the drafter: g8_cost compare; bandit; redact_mutants / b64_mutants / gate_mutants with G11; G4 Phase 4 + G11 (not merged).
+NOT RUN by the drafter: g8_cost compare; bandit; g8_mutants on `h3g` (blocked, see Late results); redact_mutants / b64_mutants /
+gate_mutants with G11; G4 Phase 4 + G11 (not merged).
 BY READING: the G9 reach bound (8), the hit rule (8), the equivalent / not-mutated items (6), the G4 Phase 4 overlap (8).
 
 Late results (drafter, `h3g` = `4ea3a9d99` + A + B; MEASURED):
@@ -251,7 +254,12 @@ Late results (drafter, `h3g` = `4ea3a9d99` + A + B; MEASURED):
   (TB-2.8 `test_tie_break_keeps_the_order_of_different_originals`, TB-2.11 `test_e5b_a_conflict_...`, TB-3.4
   `test_no_run_no_extra_work`): they fail identically on `h3` without G11 (same messages; TB-3.4 `(1, 160) != (1, 154)` on both: G11
   adds no clock reading). Not G11's; the wip-mix reconciliation re-pins them.
-- g8_mutants.py: MUTANTS_PENDING
+- g8_mutants.py: BLOCKED on `4ea3a9d99` WITHOUT G11 too: the runner's unmutated baseline (it runs the G8 file with its perf tests)
+  fails on `test_glued_patterns_are_linear[underscore digits-redact_text]`: ratio 6.25 and 6.61 on `h3`, 6.61 on `h3g` (limit 6.0; big
+  run about 1.5 s), while `h2` (`e75871df3`, no G4) passes it. So a PRE-EXISTING red on the merged tree, from G4 Phases 0-3's
+  `redact_text` path (the base64 view on `_4155550132` repeated), NOT G11's, and recorded nowhere in ESCALATIONS at drafting time:
+  core-c must raise it (E-number) and fix or re-pin it before G11's Phase 1 can run g8_mutants.py (the 49-of-49 figure is `g11`'s,
+  on `a60da3394`). Load average 3.3 at the time; one re-run gave the same ratio.
 - NOT RUN on `h3g`: the whole suite (two whole-suite tries on `full` copies stalled at 81-84 % with 3 pytest jobs of other lanes on the
   box: no failure seen before the stall except a git-dependent test of a `git archive` copy); the perf group beyond the G8 file;
   b64_mutants / redact_mutants / gate_mutants.
