@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:33:36Z
+UPDATED_UTC: 2026-11-20T06:35:20Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,28 +6,28 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 26
 ITEMS_OPEN: 12
 PERCENT: 72
-AGENTS_RUNNING: 5
-CAPACITY: load 2.3 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
+AGENTS_RUNNING: 0
+CAPACITY: load 1.2 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 0, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 63M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-INTERRUPTED: none
+INTERRUPTED: all agents stopped by the Fable limit at ~06:36 UTC; restarting on normal models (opus planning, sonnet work, haiku lookups)
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
-NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T06:32:44+00:00
+NEXT: restart gate round 2 + ORDER 017, the G2/G3 integration, the grants rework, the G7 result review on claude-sonnet-5-5
+PUSHED_UTC: 2026-11-20T06:33:36+00:00
 
-(12:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:05 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) g7D | reviewer | fable | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 5 | running | 1 of 3 | 0 | EGM-GATE step e for the redaction path |
-| (new) g7C | reviewer | fable | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 5 | running | 1 of 3 | 0 | EGM-GATE step e for the redaction path |
-| ae03e30a | builder | fable | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identifier glued to a shorter secret), budget check, six refusal reasons, extra stated limits, deletes runmap.is_masked, fixes the stage-name sample word, runs gate_mutants on the final code | 06:26 | 07:20 | 5 | running | 2 of 3 (lead review) | 0 | ORDER 015 round 2 + design review items D1-D9 + second review items E1-E5 (false refusal near the size cap, placeholder corruption, thread tests, tests that cannot fail) |
-| a4bfb7dd | builder (tests only) | fable | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core-b's step B grant map (reset identity), turns the 12 to-enable cases into real tests, runs on a worktree of core-b's code with local PostgreSQL 16 | 06:24 | 06:50 | 5 | running | n/a | 0 | cross-lane finding 2: the file breaks when core-b step B merges (8 failed on its code today) |
+| (new) g7D | reviewer | fable | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the second pattern pass unmask or corrupt, remaining chains, the own-output rule as a smuggling path | 06:35 | 06:50 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
+| (new) g7C | reviewer | fable | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): every pattern against the second pass, map entries holding placeholders, tests that cannot fail | 06:35 | 06:55 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
+| ae03e30a | builder | fable | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identifier glued to a shorter secret), budget check, six refusal reasons, extra stated limits, deletes runmap.is_masked, fixes the stage-name sample word, runs gate_mutants on the final code | 06:26 | 07:20 | 5 | INTERRUPTED | 2 of 3 (lead review) | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
+| a4bfb7dd | builder (tests only) | fable | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core-b's step B grant map (reset identity), turns the 12 to-enable cases into real tests, runs on a worktree of core-b's code with local PostgreSQL 16 | 06:24 | 06:50 | 5 | INTERRUPTED | n/a | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | ab3dcc71 | reviewer | fable | EGM RESULT review of the gate code at f16d48e (egm:egm-design): hostile design read of model_gate.py and the runmap functions against the ticket and the evidence file | 06:22 | 06:35 | 100 | done | 1 of 3 | 0 | finished: gate NOT ready to install by its reading: 1 Blocker (bind without mapping= silently skips the enforce step, and core-b install draft binds the run loop that way), 9 Majors, 9 Nits. Nothing executed. 6 points escalated (E6), the rest sent to the gate builder |
 | a6b83b14 | reviewer | fable | EGM RESULT review of the gate code and its tests (egm:egm-codebase-details): stated limits against the real sweep rule, call sites, tests that cannot fail | 06:22 | 06:40 | 100 | done | 1 of 3 | 0 | finished: no Blocker in the gate body; 9 Majors, 10 Nits, nothing executed. New: the gate falsely refuses a near-cap document made of short values (cap applied to redaction output); a value straddling a fresh placeholder corrupts it; both thread tests cannot catch their race; per-site install list for core-b |
-| ad457b53 | builder | fable | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto the cloud/core-c tip f16d48e in its own worktree /tmp/core-c-int, resolves runmap.py / redact.py conflicts, re-pins, adds combination tests, one batch with 2 workers | 06:20 | 07:20 | 2 | running | n/a | 0 | integration + follow-ups of ORDER 014 and 016c (typography tests, clean() cap test and timing, glued e-mail tail fix with a look at the other kinds) |
+| ad457b53 | builder | fable | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto the cloud/core-c tip f16d48e in its own worktree /tmp/core-c-int, resolves runmap.py / redact.py conflicts, re-pins, adds combination tests, one batch with 2 workers | 06:20 | 07:20 | 2 | INTERRUPTED | n/a | 0 | stopped by the Fable limit at ~06:36 UTC; stop point in RESUME-NOTE-2026-11-20.md |
 | a76951b5 | builder (tests only) | fable | backlog 7: fetches origin cloud/core-a and cloud/core-b, extends core-a's first version into tests/contracts/test_t1_reserve_cap.py (50 separate connections), grants negative tests for migration 0007 if core-b pushed it; own worktree; may start local PostgreSQL 16 | 06:16 | 06:45 | 100 | done | n/a | 0 | finished: core-b store IS pushed (576f292). tests/contracts/test_t1_reserve_cap.py (core-a 8 tests kept + 16 cases) and tests/test_grants_negative_0007.py (25 cases): 49 passed on core-b code with PostgreSQL 16, first try; 2 hand mutants killed. Committed. Not run: PostgreSQL 17, Python 3.12 |
 | a0f26f40 | lookup | fable | reads core-a and core-b pushed code through git objects and writes CROSS-LANE.md: gate contract mismatches, files two sessions edit, duplicated tests | 06:16 | 06:35 | 100 | done | n/a | 0 | finished: CROSS-LANE.md (85 lines, read only). core-b has NOT built the gate install yet. Top: nothing sets the refused-before-response mark (every failed call keeps its worst case booked about an hour); my step B grants test pins the old grant map and will break when core-b step B merges; certain merge conflicts in defaults.py and CHANGELOG.md |
 | ad708163 | builder | fable | code G7 (ORDER 012): re-runs the context patterns after the sweep in redact() so one pass masks a bank account beside a bank code; mirror shapes, timing test; traces every caller of redact_untrusted; writes tickets/G7-context-after-sweep.md | 05:59 | 06:45 | 100 | done | n/a | 0 | finished: ORDER 013 built and committed (4864984): one design, the whole pattern table once more after the sweep, no loop. 9663 passed, 1 failed (producers registry). Property test 1,835 inputs: 1,834 pass, 1 strict xfail. 2 chain shapes remain as stated limits. Cost about 2x on text with matches; all 25 redactor timing tests pass at try 1 |
@@ -121,7 +121,11 @@ PUSHED_UTC: 2026-11-20T06:32:44+00:00
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
 |---|---|---|---|---|
-| none | | | | |
+| (new) g7D EGM RESULT review of the G7 redactor change at 4864984 (egm: | EGM RESULT review of the G7 redactor change at 4864984 (egm:egm-design): can the | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
+| (new) g7C EGM RESULT review of the G7 change and its tests (egm:egm-co | EGM RESULT review of the G7 change and its tests (egm:egm-codebase-details): eve | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
+| ae03e30a lead review round 2 of the gate (ORDER 015): enforce_map mad | lead review round 2 of the gate (ORDER 015): enforce_map made idempotent (identi | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
+| a4bfb7dd reworks tests/test_grants_negative_roles.py so it is correct | reworks tests/test_grants_negative_roles.py so it is correct on main AND on core | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
+| ad457b53 integration: cherry-picks P1d-a (5 commits) and the P2d-1 po | integration: cherry-picks P1d-a (5 commits) and the P2d-1 port (6 commits) onto  | Fable usage limit (HTTP 429), resets Nov 24 03:00 UTC | restart on Sonnet/Haiku under way |  |
 
 ## LEAD ACTIONS NEEDED
-E6 (new, HIGH): bind() without mapping= skips the enforce step silently and core-b install draft binds the run loop that way: make mapping required? Plus 5 Majors that sit in core-b files or the shared contract (Reply cost default 0; retries settle only the last attempt; failed calls hold worst case; pre-call errors indistinguishable; gate sweeps trusted tool-result markers). G7 single pass vs capped loop. SECURITY-WORDING-draft.md rev 2. requests/1 and 2. G4 3 decisions; G6 text rev 2. E1 cron denied.
+Resume note pushed: handover/core-c/RESUME-NOTE-2026-11-20.md. Interrupted snapshots: wip/cloud-core-c/gate-r2-interrupted 9b5f458, int-g2g3-interrupted 5316e14 (not verified). Restart on claude-sonnet-5-5 follows now.
