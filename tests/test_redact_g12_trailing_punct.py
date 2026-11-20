@@ -257,3 +257,10 @@ def test_g12_the_edge_rule_is_linear_on_a_long_run_of_tags():
     big = "<a>" * 60_000 + "x" + "</b>" * 60_000
     assert R._bare(big) == "x"
     assert R._bare("<b>" * 50_000) == ""
+
+
+@pytest.mark.parametrize("value", ["\u2039EMAIL_1\u203a", "<EMA", "<EMAIL_", "<IPV4_12>", "(<EMA)"])
+def test_g12_a_core_that_is_a_placeholders_own_text_is_not_registered(value):
+    """A value spelled like a placeholder: its core (`EMAIL_1`, `EMA`) swept from every copy would eat the real placeholders."""
+    r = R.redact(f"password={value} host")
+    assert set(r.mapping.values()) <= {value}, f"G12-18 {r.mapping}"

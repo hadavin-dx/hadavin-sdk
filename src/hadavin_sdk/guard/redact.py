@@ -951,6 +951,13 @@ def _bare(text: str) -> str:
     return text[start:end]
 
 
+def _placeholder_like(core: str) -> bool:
+    """Is `core` the text of a placeholder (`EMAIL_1`) or the start of one (`EMA`)? Registered, it would be swept out of every placeholder."""
+    return re.fullmatch(r"[A-Z][A-Z0-9]*_\d+", core) is not None or any(
+        f"{label}_".startswith(core) for label in _LABELS
+    )
+
+
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(
     dict.fromkeys([*(label for label, _ in PATTERNS), "ENCODED"])
@@ -1814,9 +1821,8 @@ class _Redactor:
         # G12: the value without the non-alphanumeric characters at its ends, an entry of its own (as a piece), so its copies are swept as the
         # copies of a value written without it are (`_sweep` decides how: every copy from 4 characters, standalone at 3)
         core = _bare(full) if derived and label in SECRET_KINDS else full
-        if (
-            core.lower() in _NOT_A_VALUE
-        ):  # `none!`: masked whole, but its core would sweep every `none` of the text
+        # `none!`: masked whole, but its core would sweep every `none`; `<EMA`, `‹EMAIL_1›`: the core is a placeholder's own text
+        if core.lower() in _NOT_A_VALUE or _placeholder_like(core):
             core = full
         if core != full and len(core) >= 3 and core not in self.reverse:
             self.counters[label] += 1
