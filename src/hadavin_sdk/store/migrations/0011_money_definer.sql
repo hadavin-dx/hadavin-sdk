@@ -117,7 +117,7 @@ BEGIN
     -- 2099-02-01 and so on would never meet a cap (review B3). The same 22023 as any other refused argument.
     v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
     IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
-        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+        RAISE EXCEPTION 'invalid argument: p_day window' USING ERRCODE = '22023';
     END IF;
     -- written positively: NaN sorts above every number and Infinity is above the window, both fail this test
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
@@ -405,7 +405,7 @@ BEGIN
     -- the same booking-day window as hadavin_reserve_spend (review m1): no far-day counter rows from the runtime
     v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
     IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
-        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+        RAISE EXCEPTION 'invalid argument: p_day window' USING ERRCODE = '22023';
     END IF;
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
         RAISE EXCEPTION 'invalid argument: p_usd' USING ERRCODE = '22023';
