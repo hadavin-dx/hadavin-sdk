@@ -1451,3 +1451,107 @@ def test_d3_the_connection_cap_is_a_warning_at_most_once_a_minute_with_no_client
         assert all("cap" in r.getMessage() for r in warned)
     finally:
         server.server_close()
+
+
+# --- d-fix4: R3-2 fields in a config error, R3-3 log format, R3-9 empty host, R3-10 start and stop lines --------
+
+
+def test_d4_a_config_error_of_the_sdk_names_the_fields_of_its_pydantic_cause_and_no_value(
+    monkeypatch, capsys
+):
+    """R3-2. The SDK's `load_config` chains pydantic's error, whose text repeats the value that was given. `main`
+    prints only the location and the error type of each entry, never the text."""
+    import pydantic
+
+    fake_secret = "pw" + "-value-" + "Qz9" * 6
+
+    class Backend(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(extra="forbid")
+        endpoint: int
+
+    def fails(args):
+        try:
+            Backend(endpoint=fake_secret, extra_key=fake_secret)  # type: ignore[call-arg]
+        except pydantic.ValidationError as exc:
+            raise ConfigError(f"backends.llm: {exc}") from exc
+
+    assert fake_secret in str(
+        pytest.raises(ConfigError, fails, None).value
+    )  # the text does hold it
+    monkeypatch.setattr(worker, "_prepare", fails)
+    assert worker.main([]) == 2
+    err = capsys.readouterr().err
+    assert (
+        "ConfigError (fields: " in err
+        and "endpoint (" in err
+        and "extra_key (extra_forbidden)" in err
+    )
+    assert fake_secret not in err and "Traceback" not in err
+
+
+def test_d4_a_config_error_of_the_sdk_without_a_pydantic_cause_stays_class_name_only(
+    monkeypatch, capsys
+):
+    def fails(args):
+        raise ConfigError("secret 'x' value=hunter2-hunter2")
+
+    monkeypatch.setattr(worker, "_prepare", fails)
+    assert worker.main([]) == 2
+    assert capsys.readouterr().err == "trigger worker: config error: ConfigError\n"
+
+
+def test_d4_a_warning_line_of_the_worker_carries_a_time_and_a_level_word(capsys):
+    import re
+
+    worker._log_to_stderr()
+    worker._LOG.warning("trigger worker: a test line")
+    err = capsys.readouterr().err
+    assert re.fullmatch(
+        r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,\d{3} WARNING trigger worker: a test line\n", err
+    ), err
+
+
+def test_d4_an_empty_host_is_refused_not_turned_into_loopback(monkeypatch, capsys):
+    import hadavin_sdk.app
+    import hadavin_sdk.config
+
+    def not_built(*a, **kw):
+        raise AssertionError("built although the host was refused")
+
+    monkeypatch.setattr(
+        hadavin_sdk.config, "load_config", lambda d: SimpleNamespace(triggers=_settings())
+    )
+    monkeypatch.setattr(hadavin_sdk.app, "build", not_built)
+    assert worker.main(["--host", "", "--port", "0"]) == 2
+    err = capsys.readouterr().err
+    assert "--host must be an IP address or localhost" in err and "Traceback" not in err
+
+
+def test_d4_start_says_where_it_listens_and_stop_says_it_is_waiting(monkeypatch, capsys):
+    class Runner_:
+        running = 3
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    server = worker.make_server(worker.LOOPBACK, 0, lambda e, s: [], 5.0)
+    runner = Runner_()
+    monkeypatch.setattr(worker, "_prepare", lambda args: (server, runner))
+    monkeypatch.setattr(
+        server, "serve_forever", lambda *a, **kw: (_ for _ in ()).throw(KeyboardInterrupt)
+    )
+    try:
+        assert worker.main(["--port", "0"]) == 0
+    finally:
+        server.server_close()
+    lines = capsys.readouterr().err.splitlines()
+    port = server.server_port
+    listening = [x for x in lines if "listening on" in x]
+    stopping = [x for x in lines if "stopping" in x]
+    assert (
+        len(listening) == 1
+        and f"listening on http://127.0.0.1:{port}{endpoint.PATH}" in listening[0]
+    )
+    assert len(stopping) == 1 and stopping[0].endswith("stopping, waiting for 3 runs")
+    assert runner.closed

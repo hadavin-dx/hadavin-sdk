@@ -652,7 +652,8 @@ def _fields(exc: BaseException, limit: int = 10) -> str:
     try:
         found = errors(include_input=False, include_url=False, include_context=False)
         shown = [
-            f"{'.'.join(str(p) for p in e['loc'])[:80]} ({str(e['type'])[:40]})" for e in found[:limit]
+            f"{'.'.join(str(p) for p in e['loc'])[:80]} ({str(e['type'])[:40]})"
+            for e in found[:limit]
         ]
     except Exception:  # noqa: BLE001 - not a pydantic error after all: class name only
         return ""

@@ -71,7 +71,10 @@ def require_core_b(*, allow_module_level: bool = False) -> None:
     if strict():
         if allow_module_level:
             return  # each test of the module fails in `pytest_pyfunc_call`
-        pytest.fail(f"{STRICT_VARIABLE}=1: {reason}; the tests that need it must run, not skip.", pytrace=False)
+        pytest.fail(
+            f"{STRICT_VARIABLE}=1: {reason}; the tests that need it must run, not skip.",
+            pytrace=False,
+        )
     pytest.skip(reason, allow_module_level=allow_module_level)
 
 

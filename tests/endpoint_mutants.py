@@ -508,7 +508,7 @@ M = [
         "G13b verify_any accepts two matching senders (exactly one is not required)",
         ENDPOINT,
         "    return next(iter(matched)) if len(matched) == 1 else None\n",
-        "    return next(iter(matched)) if matched else None\n",
+        "    return min(matched) if matched else None\n",
         TE,
         "test_verify_any_refuses_when_two_senders_match",
         "assert 'sender-a' is None",
