@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:40:05Z
+UPDATED_UTC: 2026-11-20T05:40:18Z
 SESSION: core-a
 ORDER: 008 (002 to 006 standing; no ORDER 007 in my file)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 15
 ITEMS_OPEN: 5
 PERCENT: 80
 AGENTS_RUNNING: 2
-CAPACITY: load 0.39 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.3G 60G 14%; 297M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 1.04 of 4 cores (1-minute average), mem 1.3/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.4G 60G 14%; 345M /home/user/hadavin-sdk; 40M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: 1 rule test fails on the branch because of handover/BRIEF-PREAMBLE.md (lead's file): test_no_vendor_brand_string_is_tracked
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: batch suite ends: classify every failure as INHERITED or NEW in REPORT.md; then my own files once with PostgreSQL 16; mutant script and ticket fix land
-PUSHED_UTC: 2026-11-20T05:39:36Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:40:07Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -55,10 +55,11 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 11496 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 11499 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 11501 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 11507 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 11496 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 11499 | timeout 1500 uv run --all-extras --group test pytest -q -n 3 -m not li | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 11501 | uv run --all-extras --group test pytest -q -n 3 -m not live and not pe | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 11507 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 13s ago | running | matched by name in ps |
+| 13721 | /bin/bash -e /tmp/pytest-of-root/pytest-56/popen-gw1/test_an_ignore_en | core-a session or its agent | 0s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
