@@ -32,11 +32,12 @@ import re
 import subprocess
 import sys
 import uuid
-from datetime import date
+import xml.etree.ElementTree as ET
 from decimal import Decimal
 
 import pytest
 
+from hadavin_sdk import defaults
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
 from tests.triggers.conftest import strict  # the one reader of HADAVIN_REQUIRE_PG
@@ -103,11 +104,25 @@ TRIGGER_FUNCTIONS_OPEN_TO_PUBLIC = {
     "hadavin_watermark_guard()",
 }
 COUNTERS = ("spend", "spend_month")  # what a reservation is booked on
-DAY = date(2026, 3, 10)
+# The booking day is NOT a constant: migration 0011 (`hadavin_reserve_spend`, `hadavin_add_spend`) refuses a day more
+# than `hadavin_limits.max_day_skew` (= defaults.MAX_RESERVE_DAY_SKEW_DAYS = 1) days from the database's UTC date
+# (`(clock_timestamp() AT TIME ZONE 'UTC')::date`), error 22023 "p_day window". Only the test-only wrapper of
+# tests/money_caps_seed.py widens that window for the tests that book through the store; this file must not rely on
+# that, so every day is read from the database clock of the very connection under test (`_db_today`).
+DB_TODAY_SQL = "SELECT (clock_timestamp() AT TIME ZONE 'UTC')::date"
+MARGIN_S = 600  # how much older than min_expiry_age a hold is seeded for the release test
 
 
 def _split(privileges: str) -> set[str]:
     return {p.strip() for p in privileges.split(",") if p.strip()}
+
+
+def _db_today(dsn: str):
+    """The database's UTC date, the very day 0011 measures `max_day_skew` from. Never the Python clock."""
+    import psycopg
+
+    with psycopg.connect(dsn, autocommit=True) as db:
+        return db.execute(DB_TODAY_SQL).fetchone()[0]
 
 
 def _role_keywords() -> set[str]:
@@ -180,14 +195,90 @@ def test_function_grants_say_who_may_execute_each_function():
     assert _execute_got() == EXECUTE_HELD
 
 
+_CREATE_RELATION = re.compile(
+    r"\bCREATE\s+(?:OR\s+REPLACE\s+)?(?:(?:UNLOGGED|TEMP|TEMPORARY)\s+)?(?:MATERIALIZED\s+)?"
+    r"(TABLE|VIEW|SEQUENCE)\s+(?:IF\s+NOT\s+EXISTS\s+)?\"?(\w+)\"?",
+    re.IGNORECASE,
+)
+_BANNED = re.compile(r"SERIAL|IDENTITY|\bGRANT\b", re.IGNORECASE)
+
+
+def _sql_only(text: str) -> str:
+    """The SQL without `/* ... */` (also over several lines) and `-- ...` comments."""
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+    return "\n".join(line.split("--")[0] for line in text.splitlines())
+
+
+def _created_relations(text: str) -> list[tuple[str, str]]:
+    return [(kind.upper(), name) for kind, name in _CREATE_RELATION.findall(_sql_only(text))]
+
+
+def test_the_catalog_helper_asks_for_maintain_only_from_postgresql_17():
+    """MAINTAIN is a table right of PostgreSQL 17+; an older server would refuse the question itself."""
+    assert "MAINTAIN" not in _table_rights_to_ask(160015)
+    assert "MAINTAIN" not in _table_rights_to_ask(169999)
+    assert "MAINTAIN" in _table_rights_to_ask(170000)
+    assert "MAINTAIN" in _table_rights_to_ask(180001)
+    for version in (160015, 170000):
+        assert set(_table_rights_to_ask(version)) >= {*PRIVILEGES, "REFERENCES", "TRIGGER"}
+
+
+def test_the_scan_reads_if_not_exists_and_ignores_comments():
+    """Self-test of the scan on tiny strings: `IF NOT EXISTS` is not a table called IF, a commented-out CREATE or
+    GRANT is not one, and a keyword shows through a comment-free line only."""
+    assert _created_relations("CREATE TABLE IF NOT EXISTS x (a int);") == [("TABLE", "x")]
+    assert _created_relations("create table if  not\nexists y(a int)") == [("TABLE", "y")]
+    assert _created_relations("CREATE TABLE z (a int);") == [("TABLE", "z")]
+    assert _created_relations("CREATE UNLOGGED TABLE u (a int); CREATE SEQUENCE s;") == [
+        ("TABLE", "u"),
+        ("SEQUENCE", "s"),
+    ]
+    assert _created_relations("/* CREATE TABLE gone (a int); */ CREATE TABLE kept (a int);") == [
+        ("TABLE", "kept")
+    ]
+    assert _created_relations(
+        "/* a\nCREATE TABLE gone2 (a int);\n*/\nCREATE VIEW v AS SELECT 1;"
+    ) == [("VIEW", "v")]
+    assert _created_relations("-- CREATE TABLE no (a int);\nSELECT 1;") == []
+    assert _created_relations("CREATE FUNCTION f() RETURNS int AS $$ SELECT 1 $$;") == []
+    assert not _BANNED.search(_sql_only("/* GRANT ALL ON t TO x; */ -- SERIAL\nSELECT 1;"))
+    assert _BANNED.search(_sql_only("/* c */ GRANT SELECT ON t TO x;"))
+    assert _BANNED.search(_sql_only("CREATE TABLE t (id BIGSERIAL);"))
+
+
 def test_migration_0007_creates_this_one_table_and_no_sequence():
     """A second relation or a serial column in 0007 would need its own row here and in `GRANTS`."""
-    text = (mig.MIGRATIONS / MIGRATION).read_text(encoding="utf-8")
-    sql_only = "\n".join(line.split("--")[0] for line in text.splitlines())
-    created = re.findall(r"CREATE\s+(TABLE|VIEW|SEQUENCE)\s+(\w+)", sql_only, re.IGNORECASE)
-    assert [(kind.upper(), name) for kind, name in created] == [("TABLE", TABLE)]
-    assert not re.search(r"SERIAL|IDENTITY|\bGRANT\b", sql_only, re.IGNORECASE)
+    sql_only = _sql_only((mig.MIGRATIONS / MIGRATION).read_text(encoding="utf-8"))
+    assert _created_relations(sql_only) == [("TABLE", TABLE)]
+    assert not _BANNED.search(sql_only)
     assert mig.check_grants(mig._migration_files()) == []
+
+
+# every relation migrations 0007-0011 create (0008 and 0010 create none, 0009 the two stop-state tables, 0011 the
+# limits and the caps). A new relation in one of these files needs a row here and in `GRANTS`.
+CREATED_0007_TO_0011 = {
+    ("TABLE", TABLE),
+    ("TABLE", "kill_switch_resets"),
+    ("TABLE", "kill_switch_watermark"),
+    ("TABLE", "hadavin_limits"),
+    ("TABLE", "hadavin_caps"),
+}
+
+
+def test_migrations_0007_to_0011_create_only_the_known_relations_and_grant_nothing():
+    """The wall is built by `migrate` from `GRANTS`, never by a migration file: no GRANT, no serial column and no
+    identity column in any of the files 0007-0011, and the relations they create are the known set."""
+    files = [
+        p for p in mig._migration_files() if p.name[:4].isdigit() and 7 <= int(p.name[:4]) <= 11
+    ]
+    assert sorted(p.name[:4] for p in files) == ["0007", "0008", "0009", "0010", "0011"]
+    created: list[tuple[str, str]] = []
+    for path in files:
+        sql_only = _sql_only(path.read_text(encoding="utf-8"))
+        assert not _BANNED.search(sql_only), f"{path.name}: GRANT, SERIAL or IDENTITY"
+        created += _created_relations(sql_only)
+    assert len(created) == len(set(created))
+    assert set(created) == CREATED_0007_TO_0011
 
 
 def test_the_grants_row_of_the_table_is_there():
@@ -248,15 +339,16 @@ def _seed(dsn: str) -> tuple[str, str]:
     import psycopg
 
     open_id, closed_id = "res-" + uuid.uuid4().hex, "res-" + uuid.uuid4().hex
+    day = _db_today(dsn)
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(
             f"INSERT INTO {TABLE} (reservation_id, agent_id, day, reserved_usd) VALUES (%s, 'a', %s, 1)",  # noqa: S608 - a constant table name
-            (open_id, DAY),
+            (open_id, day),
         )
         db.execute(
             f"INSERT INTO {TABLE} (reservation_id, agent_id, day, reserved_usd, settled_usd, status, "  # noqa: S608 - a constant table name
             "closed_at) VALUES (%s, 'a', %s, 1, 0.5, 'settled', clock_timestamp())",
-            (closed_id, DAY),
+            (closed_id, day),
         )
     return open_id, closed_id
 
@@ -339,13 +431,21 @@ def test_pg_column_rights_nobody_reads_or_writes_a_single_column(identities, rol
         _refused(db, sql.SQL("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE").format(table))
 
 
+def _table_rights_to_ask(server_version_num: int) -> tuple[str, ...]:
+    """Every table right the catalog is asked about. MAINTAIN (VACUUM, ANALYZE, REINDEX, CLUSTER, REFRESH, LOCK)
+    exists from PostgreSQL 17 only: asking an older server is an error, so it is asked only from 170000 on."""
+    rights = (*PRIVILEGES, "REFERENCES", "TRIGGER")
+    return (*rights, "MAINTAIN") if server_version_num >= 170000 else rights
+
+
 def _catalog_wrong(db, name: str, held: set[str], label: str) -> list[str]:
     """The catalog view of one role against the `held` set: has_table_privilege for every table right (REFERENCES
-    and TRIGGER too) and has_column_privilege per column. Returns the differences (empty when they agree)."""
+    and TRIGGER too, MAINTAIN on PostgreSQL 17+) and has_column_privilege per column. Returns the differences (empty when they agree)."""
     wrong = []
+    version = int(db.execute("SHOW server_version_num").fetchone()[0])
     rights = {
         p
-        for p in (*PRIVILEGES, "REFERENCES", "TRIGGER")
+        for p in _table_rights_to_ask(version)
         if db.execute("SELECT has_table_privilege(%s, %s, %s)", (name, TABLE, p)).fetchone()[0]
     }
     if rights != held:
@@ -361,6 +461,25 @@ def _catalog_wrong(db, name: str, held: set[str], label: str) -> list[str]:
         if cols != held & {"SELECT", "INSERT", "UPDATE"}:
             wrong.append(f"{label} on column {column}: {sorted(cols)}")
     return wrong
+
+
+def test_pg_columns_are_exactly_the_non_dropped_user_columns_of_the_table(identities):
+    """`COLUMNS` drives every per-column probe: a column added to the table (or a dropped one) that is not written
+    in it would escape them, so the set is compared with pg_attribute (no system column, no dropped column)."""
+    import psycopg
+
+    dsn, _ = identities
+    with psycopg.connect(dsn, autocommit=True) as db:
+        rows = db.execute(
+            "SELECT attname FROM pg_attribute WHERE attrelid = %s::regclass AND attnum > 0 AND NOT attisdropped",
+            (f"{_schema(dsn)}.{TABLE}",),
+        ).fetchall()
+    actual = [r[0] for r in rows]
+    assert len(actual) == len(set(actual))
+    assert set(actual) == set(COLUMNS), (
+        f"columns in the table and not probed: {sorted(set(actual) - set(COLUMNS))}; "
+        f"probed and not in the table: {sorted(set(COLUMNS) - set(actual))}"
+    )
 
 
 def test_pg_the_catalog_agrees_for_every_role_privilege_and_column(identities):
@@ -424,14 +543,19 @@ def test_pg_the_purge_role_touches_the_table_only_through_its_function(identitie
         ):
             _refused(db, statement)
         assert _all_rows(dsn) == before
+    import psycopg
     from psycopg.conninfo import make_conninfo
 
-    from hadavin_sdk.models import now
     from hadavin_sdk.store.postgres import PostgresStore, connect
 
+    # the cutoff is read from the DATABASE clock after the seeding (the settled row was closed at the database's
+    # clock_timestamp() a moment ago), never from the Python clock: a database clock ahead of or behind this
+    # process cannot change the count
+    with psycopg.connect(dsn, autocommit=True) as db:
+        cutoff = db.execute("SELECT clock_timestamp()").fetchone()[0]
     store = PostgresStore(connect(make_conninfo(dsn, user=names["purge"])))
     try:
-        deleted = store.purge_spend_reservations(now())
+        deleted = store.purge_spend_reservations(cutoff)
     finally:
         store._db.close()
     assert deleted == 1
@@ -489,6 +613,7 @@ def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
     open_id, _ = _seed(dsn)
     before = _all_rows(dsn)
     cap = Decimal(1000)
+    day = _db_today(dsn)
 
     def store_as(role):
         return PostgresStore(connect(make_conninfo(dsn, user=names[role])))
@@ -504,7 +629,7 @@ def test_pg_the_store_methods_are_refused_under_the_wrong_identity(identities):
         try:
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 store.reserve_spend(
-                    "res-" + uuid.uuid4().hex, "a", DAY, Decimal(1), day_cap=cap, month_cap=cap
+                    "res-" + uuid.uuid4().hex, "a", day, Decimal(1), day_cap=cap, month_cap=cap
                 )
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 store.settle_spend(open_id, Decimal(0), agent_id="a")
@@ -570,30 +695,40 @@ def test_pg_execute_on_every_function_is_exactly_the_expected_set_for_every_iden
 def test_pg_the_release_function_runs_under_the_release_role_and_is_refused_to_a_stranger(
     identities,
 ):
-    """Positive: the release role releases one hold expired a day ago (0011 releases only holds older than the
-    min_expiry_age limit) and the counters fall. Negative: a stranger (and the
-    runtime) is refused the same call."""
+    """Positive: the release role releases one hold expired longer ago than the `min_expiry_age` limit (0011
+    releases only holds older than that) and the counters fall. Negative: a stranger (and the runtime) is refused
+    the same call. The age is taken from the database clock only: `clock_timestamp() - seed_age`."""
     import psycopg
 
     dsn, names = identities
     schema = _schema(dsn)
     rid = "res-" + uuid.uuid4().hex
-    month = DAY.replace(day=1)
+    day = _db_today(dsn)
+    month = day.replace(day=1)
+    seed_age_s = defaults.MIN_EXPIRY_AGE_S + MARGIN_S
     with psycopg.connect(dsn, autocommit=True) as db:
-        db.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('a', %s, 1)", (DAY,))
+        min_expiry_age = db.execute(
+            "SELECT value FROM hadavin_limits WHERE name = 'min_expiry_age'"
+        ).fetchone()[0]
+        # the relation the seeding depends on: a change of the constant (or of what migrate writes) fails HERE, loudly,
+        # and not as a release that happens not to find its hold
+        assert seed_age_s > defaults.MIN_EXPIRY_AGE_S
+        assert seed_age_s > min_expiry_age
+        db.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('a', %s, 1)", (day,))
         db.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('a', %s, 1)", (month,))
         db.execute(
             f"INSERT INTO {TABLE} (reservation_id, agent_id, day, reserved_usd, settled_usd, status, "  # noqa: S608 - a constant table name
-            "closed_at) VALUES (%s, 'a', %s, 1, 1, 'expired', clock_timestamp() - interval '1 day')",
-            (rid, DAY),
+            "closed_at) VALUES (%s, 'a', %s, 1, 1, 'expired', "
+            "clock_timestamp() - make_interval(secs => %s))",
+            (rid, day, seed_age_s),
         )
     call = f"SELECT reservations, released_usd, day_usd, month_usd FROM {schema}.hadavin_release_expired_spend('a', %s)"  # noqa: S608 - names built here
     for who in ("stranger", "runtime"):
         with _as(dsn, names[who]) as db:
-            _refused(db, call, (DAY,))
+            _refused(db, call, (day,))
     assert _all_rows(dsn) == [(rid, Decimal(1), Decimal(1), "expired")]
     with _as(dsn, names["release"]) as db:
-        row = db.execute(call, (DAY,)).fetchone()
+        row = db.execute(call, (day,)).fetchone()
         db.commit()
     assert row == (1, Decimal(1), Decimal(0), Decimal(0))
     assert _all_rows(dsn) == [(rid, Decimal(1), Decimal(0), "settled")]
@@ -715,9 +850,10 @@ def test_pg_the_runtime_role_is_allowed_to_reserve_settle_and_expire_and_a_stran
     schema = _schema(dsn)
     cap = Decimal(1000)
     rid = "res-" + uuid.uuid4().hex
+    day = _db_today(dsn)
     store = PostgresStore(connect(make_conninfo(dsn, user=names["runtime"])))
     try:
-        store.reserve_spend(rid, "a", DAY, Decimal(1), day_cap=cap, month_cap=cap)
+        store.reserve_spend(rid, "a", day, Decimal(1), day_cap=cap, month_cap=cap)
         assert [row[:2] for row in _all_rows(dsn)] == [(rid, Decimal(1))]
         store.settle_spend(rid, Decimal("0.5"), agent_id="a")
         assert [row[3] for row in _all_rows(dsn)] == ["settled"]
@@ -731,7 +867,7 @@ def test_pg_the_runtime_role_is_allowed_to_reserve_settle_and_expire_and_a_stran
         f"SELECT {schema}.hadavin_expire_spend_reservations(0)",
     )
     with _as(dsn, names["stranger"]) as db:
-        _refused(db, calls[0], (DAY,))
+        _refused(db, calls[0], (day,))
         _refused(db, calls[1], (rid,))
         _refused(db, calls[2])
     assert _all_rows(dsn) == before
@@ -740,42 +876,85 @@ def test_pg_the_runtime_role_is_allowed_to_reserve_settle_and_expire_and_a_stran
 # --- HADAVIN_REQUIRE_PG: a missing database fails the PostgreSQL tests, and without the flag they skip -----
 
 
-def _run_pg_tests_without_a_dsn(require: str | None) -> tuple[int, str]:
-    """This file's PostgreSQL tests in a child pytest with no DSN (and HADAVIN_REQUIRE_PG as given)."""
+def _pg_gated_test_names() -> set[str]:
+    """By introspection: every test function of this module that takes the `identities` fixture (the only road to
+    the database here). Not selected by a name pattern, so a differently named one cannot escape."""
+    module = sys.modules[__name__]
+    return {
+        name
+        for name, fn in vars(module).items()
+        if name.startswith("test_")
+        and inspect.isfunction(fn)
+        and "identities" in inspect.signature(fn).parameters
+    }
+
+
+def _run_this_file_without_a_dsn(require: str | None, tmp_path) -> dict[str, str]:
+    """This whole file in a child pytest with no DSN (and HADAVIN_REQUIRE_PG as given), minus the two meta tests
+    (no recursion). Returns {test id: 'passed' | 'failed' | 'error' | 'skipped'} from the child's junit XML, and
+    the child's text in the key ''."""
     env = {
         k: v
         for k, v in os.environ.items()
         if k not in ("HADAVIN_TEST_PG_DSN", "HADAVIN_REQUIRE_PG")
     }
+    assert "HADAVIN_GRANTS_0007_CHILD" not in os.environ, "the child ran a meta test: recursion"
+    env["HADAVIN_GRANTS_0007_CHILD"] = (
+        "1"  # a child that would start a child fails at once instead of forking on
+    )
     if require is not None:
         env["HADAVIN_REQUIRE_PG"] = require
+    report = tmp_path / "child.xml"
+    me = os.path.abspath(__file__)
     done = subprocess.run(  # noqa: S603 - our own interpreter, constant arguments
         [
-            sys.executable, "-m", "pytest", os.path.abspath(__file__), "-k", "test_pg_",
-            "-q", "-p", "no:cacheprovider", "-p", "no:randomly", "--no-header", "-rN",
+            sys.executable, "-m", "pytest", me, "-q", "-p", "no:cacheprovider", "-p", "no:randomly",
+            "--no-header", "-rN", f"--junitxml={report}",
+            "-k", "not test_with_require_pg_and_no_dsn and not test_without_require_pg_and_no_dsn",
         ],
         cwd=REPO, env=env, capture_output=True, text=True, timeout=300, check=False,
     )  # fmt: skip
-    return done.returncode, done.stdout + done.stderr
+    outcomes: dict[str, str] = {"": done.stdout + done.stderr}
+    for case in ET.parse(report).getroot().iter("testcase"):  # noqa: S314 - the junit file of our own child
+        kinds = {child.tag for child in case}
+        outcome = (
+            "error" if "error" in kinds
+            else "failed" if "failure" in kinds
+            else "skipped" if "skipped" in kinds
+            else "passed"
+        )  # fmt: skip
+        outcomes[case.get("name")] = outcome
+    return outcomes
+
+
+def _check_child(outcomes: dict[str, str], pg_outcomes: set[str]) -> None:
+    pg = _pg_gated_test_names()
+    assert pg, "no PostgreSQL-gated test found by introspection"
+    assert {n for n in vars(sys.modules[__name__]) if n.startswith("test_pg_")} <= pg
+    out = outcomes.pop("")
+    seen_pg = 0
+    for test_id, outcome in outcomes.items():
+        base = test_id.split("[")[0]
+        if base in pg:
+            seen_pg += 1
+            assert outcome in pg_outcomes, (
+                f"{test_id} is {outcome}, expected one of {pg_outcomes}\n{out}"
+            )
+        else:  # the pure layer needs no database: it passes in every mode
+            assert outcome == "passed", f"{test_id} (pure) is {outcome}\n{out}"
+    assert {t.split("[")[0] for t in outcomes} >= pg, "a PostgreSQL test did not run in the child"
+    assert seen_pg >= len(pg)
 
 
 @pytest.mark.parametrize("word", ["1", "true", "YES"])
-def test_with_require_pg_and_no_dsn_every_pg_test_fails_and_none_skips(word):
-    code, out = _run_pg_tests_without_a_dsn(word)
-    summary = out.strip().splitlines()[-1]
-    assert code != 0, out
+def test_with_require_pg_and_no_dsn_every_pg_test_fails_and_none_skips(word, tmp_path):
+    outcomes = _run_this_file_without_a_dsn(word, tmp_path)
+    assert "HADAVIN_REQUIRE_PG is set but HADAVIN_TEST_PG_DSN is not" in outcomes[""]
     # a failing fixture is counted as an error, a failing test body as a failure: either is not a skip
-    assert (
-        (" failed" in summary or " error" in summary)
-        and "skipped" not in summary
-        and "passed" not in summary
-    ), out
-    assert "HADAVIN_REQUIRE_PG is set but HADAVIN_TEST_PG_DSN is not" in out
+    _check_child(outcomes, {"failed", "error"})
 
 
 @pytest.mark.parametrize("word", [None, "0", "no"])
-def test_without_require_pg_and_no_dsn_every_pg_test_skips(word):
-    code, out = _run_pg_tests_without_a_dsn(word)
-    summary = out.strip().splitlines()[-1]
-    assert code == 0, out
-    assert " skipped" in summary and "failed" not in summary and "passed" not in summary, out
+def test_without_require_pg_and_no_dsn_every_pg_test_skips(word, tmp_path):
+    outcomes = _run_this_file_without_a_dsn(word, tmp_path)
+    _check_child(outcomes, {"skipped"})
