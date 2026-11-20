@@ -1412,7 +1412,7 @@ def _starts_one(ordered: list[str], piece: str) -> bool:
 
 
 def _touching_piece(text: str, snap: MapSnapshot) -> bool:
-    """G13 (E19 M1): True when a KEY of the map has, right before it, a piece of `NET_MIN_PIECE` or more characters
+    """(E:: = tests/test_runmap_enforce_map.py.) G13 (E19 M1): True when a KEY of the map has, right before it, a piece of `NET_MIN_PIECE` or more characters
     that is the START of a secret value (shorter than or equal to the value), or right after it a piece that is the
     END of one: `hunter2-<SECRET_2>`, `<SECRET_1>-ZZZZ`. Such a piece is what is left when two known values overlap and
     one was masked across the other, whatever the placeholder holds. Not a piece (G13b, design M-1): characters that
@@ -1422,10 +1422,15 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     value it is a piece OF: a piece that starts (ends) a value made ONLY of separators (`!!!!!!!!`, `....----`) is a
     piece however short, and a piece of separators that starts a value with other characters (`-----BEGIN`) is not. G13c (m1): the public auth words of `_LEAD` are read in any letter case
     (`bearer `, `BEARER `) and are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`,
-    `AWS4-HMAC-SHA256`, `Bot`, `Key`; any other word before a secret (a custom scheme) is not exempt. Stated limit:
+    `AWS4-HMAC-SHA256`, `Bot`, `Key`; any other word before a secret (a custom scheme) is not exempt (letter case
+    matters only for these words: the VALUE itself is compared as written, so a piece of a value in another letter case
+    is not read; E::test_g13c_5). Stated limit (G13d, pinned: E::test_g13d_1): a secret made ONLY of separator
+    characters (whitespace, `********`) makes any run of 4 or more of them before or after a key a piece, so indentation
+    or `****<HOST_1>` is refused for the run; whether a producer can register such a value, and the minimum run length
+    for those values, are open (handover ESCALATIONS E24). Stated limit:
     a secret whose own first characters are ordinary words (`the quick brown fox`) refuses text that starts the same way
     beside a key (`the <HOST_1>`; the net cannot tell a copy of those words from a leak), and that refusal stays for
-    the run (the message stays in the history); it is the same `held_value_left` code as a leak (pinned, G13c-7). Only
+    the run (the message stays in the history); it is the same `held_value_left` code as a leak (pinned: E::test_g13c_6, E::test_g13c_6b). Only
     the text between the key and the next (or previous) key is read, at most the longest value's length minus one.
     Cost (G13c): a position is tested by its first (left) or last (right) `NET_MIN_PIECE` characters (a slice of
     that size) BEFORE the piece is cut, so a gap with no head hit copies nothing and a hit copies one piece (the
@@ -1434,10 +1439,16 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     not looked up, nor charged, again; `seen` keeps the piece itself when it is at most `_LOOKUP_COST` characters and
     else a 16-byte digest, so its memory does not grow with the length of the pieces (it held every piece whole: about
     370 MB at a 16,000-character value on a hostile gap); each lookup spends at most `_LOOKUP_COST` characters of the
-    call's budget (`InputTooLarge` past it) and the deadline is read every 256 hits. At most `_KEY_HITS_MAX` head hits
+    call's budget (`InputTooLarge` past it) and the deadline is read every 256 hits (E::test_g13c_9). G13d (review 1 M1): the
+    charge is made at EVERY head hit, before the `seen` test: `1 + len(piece) // _LOOKUP_COST` characters (the work a
+    repeated hit still does is the cut and the digest, O(piece)), so an identical gap repeated before many keys is
+    budgeted (E::test_g13c_7, E::test_g13c_8) while a short repeated head costs one character a hit (E::test_g13b_4:
+    378,000 repeats stay under 1M); the lookup itself (`min(len, _LOOKUP_COST)`) is charged once per distinct piece. Memory: E::test_g13c_2, E::test_g13c_10. At most `_KEY_HITS_MAX` head hits
     are read around one key (both sides together, repeated pieces included): past it `InputTooLarge`, which the
     gate reports as `mask_budget_exceeded` (fail closed: a hostile run of one head repeated, one hit a character,
-    would otherwise cost the whole call's budget; the 1,978-input property corpus never gets near it)."""
+    would otherwise cost the whole call's budget; the 1,978-input property corpus never gets near it; E::test_g13c_3).
+    The cap also trips on honest text: a PEM head (`-----BEGIN ...`) beside a long run of dashes or equals signs (a gap
+    over 4,096 characters of one repeated head) is refused as `mask_budget_exceeded` (E::test_g13c_3)."""
     plain, leaded, rev, seps, seps_rev, heads, tails, longest = snap.pieces
     if not heads:
         return False
@@ -1464,6 +1475,7 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
             if not hits % 256:
                 budget.check()
             piece = left[i:]
+            budget.spend_chars(1 + len(piece) // _LOOKUP_COST)  # every hit
             mark = (True, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
             if mark in seen:
                 continue
@@ -1490,6 +1502,7 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
             if not hits % 256:
                 budget.check()
             piece = right[:j]
+            budget.spend_chars(1 + len(piece) // _LOOKUP_COST)  # every hit
             mark = (False, piece if len(piece) <= _LOOKUP_COST else _digest(piece))
             if mark in seen:
                 continue

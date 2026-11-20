@@ -73,17 +73,27 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   first characters are ordinary words (`the quick brown fox`) refuses text that starts so beside a key (`the <HOST_1>`:
   the net cannot tell a copy of those words from a leak), with the same `held_value_left` code as a leak, and the
   refusal is PERMANENT for the run: the message stays in the history, so every later call that carries it is refused
-  too; a planted value of that kind can do it on purpose. One key reads at most 4,096 head hits
+  too; a planted value of that kind can do it on purpose. Stated limit (G13d): the same holds for a secret made only
+  of separator characters (whitespace, `********`): a run of 4 or more of them before or after a key refuses the
+  call (the minimum run for those values is an open lead question, ESCALATIONS E24). One key reads at most 4,096 head hits
   (`runmap._KEY_HITS_MAX`): past it the call is refused as `mask_budget_exceeded` (a dense run of one head beside a
-  key, fail closed; also permanent while the text stays in the history). A text over `runmap.VIEW_WINDOW` is read in
+  key, fail closed, which an honest PEM head beside a dash or equals run over 4,096 characters also is; permanent while
+  the text stays in the history). Every head hit is charged to the call's budget (a repeated piece at 1 + length/64 characters). A text over `runmap.VIEW_WINDOW` is read in
   windows; a value of more than 1,636 characters gets an overlap of `runmap.WINDOW_OVERLAP_MAX` only (its raw copy is
   found on the whole text). NOT read: a piece from the middle of a value between two keys, a piece one character
-  away from a key, a piece shorter than 4, another letter case, an ANSI-split copy, a base64-encoded copy (the
+  away from a key, a piece shorter than 4, another letter case of a value (only the public auth words match in any case), an ANSI-split copy, a base64-encoded copy (the
   producers' G4 step), a copy in several stacked escape layers (`%26%23...`) that crosses a window edge of a text over
   `VIEW_WINDOW` characters and is longer than the overlap, and the forms the decoder does not undo: UTF-7,
   quoted-printable, hex or ROT13 dumps, reversed text, homoglyphs NFKC leaves alone, a secret wrapped across lines.
   T::test_g13_10_a_secret_in_a_decoded_form_refuses_the_call
   T::test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call
+  T::test_g13c_3_a_dense_head_beside_a_key_is_refused_as_mask_budget_exceeded
+  E::test_g13c_1_a_gap_with_no_head_hit_cuts_no_piece
+  E::test_g13c_3_one_key_reads_a_bounded_number_of_head_hits
+  E::test_g13c_7_a_repeated_piece_is_charged_at_every_hit_left
+  E::test_g13c_8_a_repeated_piece_is_charged_at_every_hit_right
+  E::test_g13c_10_the_seen_set_does_not_hold_long_pieces_whole_right
+  E::test_g13d_1_values_of_only_separators_refuse_a_run_of_four_beside_a_key_a_stated_limit
   T::test_g13b_1_a_url_scheme_beside_a_key_is_sent_while_a_webhook_value_is_in_the_map
   T::test_g13b_3_a_long_secret_does_not_refuse_a_long_non_ascii_chunk
   T::test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_sent
