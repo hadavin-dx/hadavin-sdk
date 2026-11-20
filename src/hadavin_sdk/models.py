@@ -259,6 +259,14 @@ class KillSwitch(Shape):
     ts: datetime = Field(default_factory=now)
 
 
+class OpenStop(Shape):
+    """One stop that no reset has cleared: what `limits reset` shows the operator and then clears by id."""
+
+    id: str
+    by: str | None = None
+    ts: datetime
+
+
 class GateRun(Shape):
     agent_id: str
     model_id: str

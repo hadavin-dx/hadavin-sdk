@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import threading
 from decimal import Decimal, localcontext
@@ -9,7 +10,7 @@ from typing import Protocol
 
 from hadavin_sdk import defaults
 from hadavin_sdk.audit.protocol import AuditSink
-from hadavin_sdk.models import AuditEvent, KillSwitch, new_id, now
+from hadavin_sdk.models import AuditEvent, KillSwitch, OpenStop, new_id, now
 from hadavin_sdk.registry import Registry
 from hadavin_sdk.store.protocol import (
     NotFound,
@@ -135,6 +136,11 @@ class Budget:
 _CAP_REASON = {"day": "daily_budget", "month": "monthly_budget"}
 
 
+_AUDITED_IDS = (
+    50  # stop ids written into one reset intent; more are covered by the hash and the clear rows
+)
+
+
 class Limits:
     def __init__(self, store: Store, audit: AuditSink, registry: Registry) -> None:
         self.store, self.audit, self.registry = store, audit, registry
@@ -243,12 +249,26 @@ class Limits:
         self.store.set_kill_switch(KillSwitch(on=True, by=by))
         self.audit.write_outcome(self._event(True, by, "stop"))
 
-    def reset(self, by: str) -> None:
-        """Removing a safety control is audited first; if that fails, the switch stays on. A clear the store
-        refuses (the runtime role may not reset) leaves a `reset_failed` outcome, and the error is raised again."""
-        self.audit.write_intent(self._event(False, by, "reset"))
+    def reset(self, by: str) -> list[OpenStop]:
+        """Compare-and-clear. Reads the open stops first, writes the audit intent WITH their ids (and their count and
+        a hash of the ids), then clears exactly those ids. Removing a safety control is audited first; if that
+        fails, the switch stays on. A stop set after the read (also one set while the intent is written) is not in
+        the list, so it stays open and the caller's read-back says ON. A clear the store refuses (the runtime role
+        may not reset) leaves a `reset_failed` outcome, and the error is raised again. Returns the stops it cleared."""
+        stops = self.store.open_stops()
+        ids = [s.id for s in stops]
+        event = self._event(False, by, "reset").model_copy(
+            update={
+                # The ids are listed up to a bound (a flood of stops would make a huge row); the hash covers all.
+                "object_ref": f"stops:{len(ids)}"
+                + (":" + ",".join(ids) if 0 < len(ids) <= _AUDITED_IDS else ""),
+                "inputs_hash": hashlib.sha256("\n".join(sorted(ids)).encode()).hexdigest(),
+            }
+        )
+        self.audit.write_intent(event)
         try:
-            self.store.set_kill_switch(KillSwitch(on=False, by=by))
+            self.store.clear_stops(by, ids)
         except Exception:
             self.audit.write_outcome(self._event(True, by, "reset_failed"))
             raise
+        return stops

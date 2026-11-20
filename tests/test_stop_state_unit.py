@@ -51,6 +51,12 @@ class StoreStub:
         if self.set_error is not None and not ks.on:
             raise self.set_error
 
+    def open_stops(self):  # E6: a reset reads the open stops first, then clears exactly those ids
+        return []
+
+    def clear_stops(self, by, stop_ids):
+        self.set_kill_switch(KillSwitch(on=False, by=by))
+
     def get_kill_switch(self):
         self.reads += 1
         if isinstance(self.read, BaseException):
@@ -267,7 +273,7 @@ def test_reset_exits_0_and_says_off_only_after_reading_off(capsys):
     limits, _ = _limits(store)
     assert cli.kill_switch(limits, "reset", "user:op") == 0
     out, err = capsys.readouterr()
-    assert out == "kill switch OFF (by user:op)\n" and err == ""
+    assert out == "kill switch OFF (by user:op; cleared 0 stop(s))\n" and err == ""
     assert store.reads == 1
 
 

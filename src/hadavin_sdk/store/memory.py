@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import threading
+import uuid
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from decimal import Decimal, localcontext
 
@@ -16,6 +18,7 @@ from hadavin_sdk.models import (
     DeadLetter,
     GateDecision,
     KillSwitch,
+    OpenStop,
     Plan,
     Run,
     RunState,
@@ -50,6 +53,9 @@ class MemoryStore:
         self._dead: dict[str, list[DeadLetter]] = defaultdict(list)
         self._spend: dict[tuple[str, date], Decimal] = defaultdict(Decimal)
         self._kill = KillSwitch()
+        self._stops: list[
+            OpenStop
+        ] = []  # the open ones; a clear removes them (the history is not kept)
         self._ticks: dict[str, TickState] = {}
         self._tool_calls: dict[str, ToolCallRecord] = {}
         self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
@@ -224,12 +230,31 @@ class MemoryStore:
             return self._spend.get((agent_id, day), Decimal(0)), month
 
     def get_kill_switch(self) -> KillSwitch:
+        """ON while any stop is open (the oldest is reported), else the flag. Same reading as Postgres; the memory
+        store still guarantees nothing about who may clear (any caller can)."""
         with self._lock:
+            if self._stops:
+                first = self._stops[0]
+                return KillSwitch(on=True, by=first.by, ts=first.ts)
             return self._kill.model_copy(deep=True)
 
     def set_kill_switch(self, ks: KillSwitch) -> None:
         with self._lock:
+            if ks.on:
+                self._stops.append(OpenStop(id=str(uuid.uuid4()), by=ks.by, ts=ks.ts))
+                return
+            self._stops.clear()
             self._kill = ks.model_copy(deep=True)
+
+    def open_stops(self) -> list[OpenStop]:
+        with self._lock:
+            return [s.model_copy() for s in sorted(self._stops, key=lambda s: s.ts)]
+
+    def clear_stops(self, by: str, stop_ids: Sequence[str]) -> None:
+        with self._lock:
+            wanted = set(stop_ids)
+            self._stops = [s for s in self._stops if s.id not in wanted]
+            self._kill = KillSwitch(on=False, by=by)
 
     def get_tick_state(self, step: str) -> TickState | None:
         with self._lock:
