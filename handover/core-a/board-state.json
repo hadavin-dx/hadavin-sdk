@@ -1,5 +1,5 @@
 {
- "order": "005 (002 to 004 standing)",
+ "order": "006 (002 to 005 standing)",
  "state": "WORKING",
  "boot_id_first": "3f12152f",
  "next": "ticket E lands: build E on cloud/core-a in separate 'code E:' commits (ORDER 005 item 2); ticket D lands: one EGM review round with 2 reviewers",
@@ -68,7 +68,7 @@
    "percent": 0,
    "evidence file": "",
    "tries": 0,
-   "reason": "ticket D agent gives the verdict on a delta; lead draft says cut"
+   "reason": "ORDER 006: cut unless ticket D proves a delta"
   },
   {
    "item": "T3",
@@ -82,11 +82,11 @@
   {
    "item": "T4",
    "what": "store contract test files for core-b interface",
-   "state": "WAIT interfaces",
+   "state": "BLOCKED-ON-CORE-B",
    "percent": 0,
    "evidence file": "",
    "tries": 0,
-   "reason": "READY only after interfaces are published"
+   "reason": "ORDER 006 answer 9: interface (i) not published yet; lead copies it into inputs/"
   },
   {
    "item": "BUILD-E",
@@ -128,7 +128,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 45,
+   "percent": 60,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -141,7 +141,7 @@
   {
    "model": "fable",
    "started UTC": "05:22",
-   "percent": 45,
+   "percent": 60,
    "state": "running",
    "review round n of cap": "n/a",
    "retries so far": 0,
@@ -157,7 +157,6 @@
  "loops": [],
  "lost": [],
  "lead_actions": [
-  "QUESTIONS.md has 10 questions with a recommended answer each; 1, 9 and 10 need a lead word, the rest are decided in ticket D unless the lead says otherwise",
-  "interface (i) of core-b is needed in inputs/ before queue item T4 can start"
+  "none: ORDER 006 answered questions 1 to 10; the answers were sent to both running ticket writers"
  ]
 }
