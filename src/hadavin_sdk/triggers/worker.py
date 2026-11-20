@@ -901,6 +901,8 @@ class _Degraded:
         with self._lock:
             self._stopped.set()
             runner = self._runner
+        if self._thread.is_alive():
+            self._thread.join(1.0)  # a re-check in the middle of a build closes its own Runner
         if runner is not None:
             runner.close()
 
