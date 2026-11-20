@@ -748,17 +748,30 @@
  ],
  "agents": [
   {
-   "id": "door-code",
-   "role": "builder",
+   "id": "rev-dfix18-server",
+   "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
-   "what exactly it is doing": "review-door-1 code fixes M1 header cap, M3 duplicate-secret start check, M4 memory store needs demo stage, M6 mutants, N1",
-   "started UTC": "12:32",
-   "expected end": "25 min",
+   "what exactly it is doing": "M1 header cap + M6 mutants G36 + N1 check_quiet",
+   "started UTC": "12:51",
+   "expected end": "12 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "-",
+   "review round n of cap": "1",
    "retries so far": 0,
-   "reason": "lead verdicts"
+   "reason": "lead verdict: fresh review of the diff"
+  },
+  {
+   "id": "rev-dfix18-worker",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "M4 store/stage check, M3 claim, B1/M2/M5 doc truth",
+   "started UTC": "12:51",
+   "expected end": "12 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead verdict: fresh review of the diff"
   }
  ],
  "tests": [
@@ -1131,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "12:51 door-code DONE (d-fix18): M1 431 header cap (G36a), M4 memory store only on demo (G36b), M6 mutants G36a-h all killed, N1 fixed; M3: no code change (same value under two senders already refused; cross-tenant reuse cannot be seen by one worker; documented). Two fresh reviewers (server side, worker side) started. After them: your full mutant run needs your two-line patch for G33d (the script exits 2 on that stale anchor otherwise).",
   "12:50 fuzz1 DONE: tests/triggers/test_fuzz_endpoint.py (new file) 4 properties x300 seeded cases (no 500/no leak, flipped bit or stale timestamp never 2xx, idempotence/409, raw garbage on the real server: one write per answer): 4 passed 5.1 s, NO product failure. Running: door-code.",
   "12:48 rev-dfix17 DONE: fresh review of d-fix17: no Blocker, no Major; 2 nits being fixed by door-code. Running: door-code, fuzz1.",
   "12:46 Started fuzz1 (fuzz battery, new file only). Running now: door-code (server.py/worker.py/mutants/tests), rev-dfix17, fuzz1. Other independent work already done or blocked on files door-code holds; I start review of the door-code diff the minute it returns.",
@@ -3091,6 +3105,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "tests/triggers/test_fuzz_endpoint.py: 4 properties x300 seeded cases, 4 passed in 5.1 s, no product finding (414 documented refusal added to the wire-only status set); raw/FUZZ-1.log"
+  },
+  {
+   "id": "door-code",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "review-door-1 code fixes M1 header cap, M3 duplicate-secret start check, M4 memory store needs demo stage, M6 mutants, N1",
+   "started UTC": "12:32",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "d-fix18: M1 header cap 16 KB (G36a), M4 memory store only on demo stage (G36b), M6 mutants G36c-h, N1 check_quiet empty-answer fails; M3 no code change (check_secrets already refuses same value under two senders; cross-tenant impossible from one worker; docstring added); 12 mutants killed; 1234 passed 312 skipped 1 xfailed"
   }
  ]
 }

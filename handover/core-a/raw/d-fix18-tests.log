@@ -1,0 +1,4 @@
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1234 passed, 312 skipped, 1 xfailed, 8 warnings in 56.37s
