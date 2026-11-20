@@ -96,6 +96,37 @@ EMPTY_REFUSAL = (
     "        self.end_headers()\n"
 )
 LOG_409 = '_LOG.warning("trigger status=409 sender=%s run=%s", req.sender, req.run_id)'
+READ_THEN_CAP = (
+    "        if length > max_body:\n"
+    "            return 413, None, None  # the body is not read\n"
+    "        try:\n"
+    '            body = environ["wsgi.input"].read(length)\n'
+    "        except Exception:  # noqa: BLE001 - a broken or timed-out connection is the sender's fault\n"
+    "            return 400, None, None\n"
+)
+EXCEPT_STORE = "        except Exception as exc:  # noqa: BLE001 - no ack in every case, the sender retries\n"
+STALL_1 = (
+    "            self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE + 1)\n"
+    "        except TimeoutError:\n"
+)
+STALL_2 = "            parsed = self.parse_request()\n        except TimeoutError:\n"
+NO_VERSION = (
+    "        if not isinstance(\n"
+    "            self.headers, Message\n"
+    "        ):  # a request line with no version has no header block\n"
+)
+OS_ENVIRON = (
+    "    os_environ: ClassVar[\n"
+    "        dict[str, str]\n"
+    "    ] = {}  # the stdlib default is a copy of the process environment\n"
+)
+HANDLE_ERROR = (
+    "    def handle_error(self, request: Any, client_address: Any) -> None:\n"
+    '        """The stdlib prints the traceback and the client address here; this logs the class name."""\n'
+    "        exc = sys.exception()\n"
+    '        _LOG.warning("trigger server: connection error: %s", type(exc).__name__)\n'
+)
+N15 = "test_n15_runner_bounds_are_refused"
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -405,6 +436,445 @@ M = [
         "test_d3_sigterm_stops_a_serving_worker_cleanly",
         "the child did not end within",
     ),
+    # --- G13 the checks of the endpoint itself
+    mutant(
+        'G13a verify_any stops after the first secret that verifies',
+        ENDPOINT,
+        "                matched.add(sender)\n",
+        "                return sender\n",
+        TE,
+        "test_verify_any_tries_every_secret_with_no_early_stop",
+        "??????",
+    ),
+    mutant(
+        'G13b verify_any accepts two matching senders (exactly one is not required)',
+        ENDPOINT,
+        "    return next(iter(matched)) if len(matched) == 1 else None\n",
+        "    return next(iter(matched)) if matched else None\n",
+        TE,
+        "test_verify_any_refuses_when_two_senders_match",
+        "??????",
+    ),
+    mutant(
+        'G13c check_secrets accepts more than eight senders',
+        ENDPOINT,
+        "    if len(secrets) > MAX_SENDERS:\n",
+        "    if False:\n",
+        TE,
+        SECRETS_TEST + "[secrets7-more than 8]",
+        "??????",
+    ),
+    mutant(
+        'G13d make_wsgi does not compare the sender ids with the secret ids',
+        ENDPOINT,
+        "    if set(secrets) != set(senders):\n",
+        "    if False:\n",
+        TE,
+        "test_make_wsgi_refuses_a_bad_setup",
+        "??????",
+    ),
+    mutant(
+        'G13e make_wsgi has no upper bound for max_body_bytes',
+        ENDPOINT,
+        "    if max_body > MAX_BODY_BYTES_LIMIT:\n",
+        "    if False:\n",
+        TE,
+        "test_make_wsgi_has_its_own_upper_bounds_for_a_callers_settings_object",
+        "??????",
+    ),
+    mutant(
+        'G13f the body is read before the size cap is looked at',
+        ENDPOINT,
+        READ_THEN_CAP,
+        (
+            "        try:\n"
+            '            body = environ["wsgi.input"].read(length)\n'
+            "        except Exception:  # noqa: BLE001 - a broken or timed-out connection is the sender's fault\n"
+            "            return 400, None, None\n"
+            "        if length > max_body:\n"
+            "            return 413, None, None\n"
+        ),
+        TE,
+        "test_t5_7_content_length_over_the_cap_is_413_without_reading",
+        "??????",
+    ),
+    # --- G14 the rules for a secret value
+    mutant(
+        'G14a a byte-order mark or zero-width character in a secret is accepted',
+        ENDPOINT,
+        "            if any(char in value for char in UNSEEN_CHARS):\n",
+        "            if False:\n",
+        TE,
+        "test_check_secrets_refuses_an_unseen_character_anywhere_in_a_value[start-byte-order mark]",
+        "??????",
+    ),
+    mutant(
+        'G14b a control character inside a secret is accepted',
+        ENDPOINT,
+        '            if any(unicodedata.category(char) == "Cc" for char in value):\n',
+        "            if False:\n",
+        TE,
+        "test_check_secrets_refuses_a_control_character_inside_a_value[C1]",
+        "??????",
+    ),
+    mutant(
+        'G14c the same value twice for one sender is accepted',
+        ENDPOINT,
+        "            if values.count(value) > 1:\n",
+        "            if False:\n",
+        TE,
+        "test_check_secrets_refuses_the_same_value_twice_for_one_sender",
+        "??????",
+    ),
+    # --- G15 the quiet server: timeouts and the long request line
+    mutant(
+        'G15a a timeout on the request line is not a stalled client',
+        SERVER,
+        STALL_1,
+        STALL_1.replace("TimeoutError", "KeyError"),
+        TS,
+        "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_silent_client]",
+        "??????",
+    ),
+    mutant(
+        'G15b a timeout in the header block is not a stalled client',
+        SERVER,
+        STALL_2,
+        STALL_2.replace("TimeoutError", "KeyError"),
+        TS,
+        "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_headers_then_stall]",
+        "??????",
+    ),
+    mutant(
+        'G15c a request line over the cap is not answered 414',
+        SERVER,
+        "        if len(self.raw_requestline) > MAX_REQUEST_LINE:\n",
+        "        if False:\n",
+        TS,
+        "test_request_line_over_64_kb_is_414_empty",
+        "??????",
+    ),
+    mutant(
+        'G15d the stalled-client refusal needs no request_version default',
+        SERVER,
+        '        if not hasattr(self, "request_version"):\n',
+        "        if False:\n",
+        TS,
+        "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_silent_client]",
+        "??????",
+    ),
+    mutant(
+        'G15e send_error does not note that an answer was begun',
+        SERVER,
+        "        self._answer_begun = True\n",
+        "",
+        TS,
+        "test_n9_a_timeout_while_a_refusal_is_written_gives_no_second_status_line",
+        "??????",
+    ),
+    mutant(
+        'G15f a stalled client is answered although an answer was begun',
+        SERVER,
+        "        if self._answer_begun:\n",
+        "        if False:\n",
+        TS,
+        "test_n9_a_timeout_while_a_refusal_is_written_gives_no_second_status_line",
+        "??????",
+    ),
+    # --- G16 the quiet server: framing, names, version and the environment
+    mutant(
+        'G16a an HTTP version of 2.0 or higher is answered 505 again',
+        SERVER,
+        "            code >= SERVER_ERROR\n",
+        "            False\n",
+        TS,
+        "test_f1_http_version_2_or_higher_is_400_empty_never_a_5xx[HTTP/2.0]",
+        "??????",
+    ),
+    mutant(
+        'G16b a request line with no version is not closed quietly',
+        SERVER,
+        NO_VERSION,
+        "        if False:\n",
+        TS,
+        "test_f2_a_request_line_without_a_version_is_closed_on_purpose",
+        "??????",
+    ),
+    mutant(
+        'G16c a header name with an underscore is accepted',
+        SERVER,
+        '        if any("_" in name for name in self.headers):\n',
+        "        if False:\n",
+        TS,
+        "test_f3_a_header_name_with_an_underscore_is_400_empty[signed names]",
+        "??????",
+    ),
+    mutant(
+        'G16d two Content-Length headers are accepted',
+        SERVER,
+        '        if len(self.headers.get_all("Content-Length", [])) > 1:\n',
+        "        if False:\n",
+        TS,
+        "test_f4_two_content_lengths_or_a_transfer_encoding_is_400_before_the_body_is_read[two equal lengths]",
+        "??????",
+    ),
+    mutant(
+        'G16e a Transfer-Encoding header is accepted',
+        SERVER,
+        '        return "Transfer-Encoding" in self.headers\n',
+        "        return False\n",
+        TS,
+        "test_f4_two_content_lengths_or_a_transfer_encoding_is_400_before_the_body_is_read[chunked]",
+        "??????",
+    ),
+    mutant(
+        'G16f the application handler takes the process environment again',
+        SERVER,
+        OS_ENVIRON,
+        "",
+        TS,
+        "test_n11_a_process_variable_cannot_stand_in_for_a_missing_header",
+        "??????",
+    ),
+    # --- G17 the 503 hint and the log level of a refusal
+    mutant(
+        'G17a a 503 carries no Retry-After header',
+        ENDPOINT,
+        "        if status == 503:\n",
+        "        if False:\n",
+        TE,
+        "test_503_carries_retry_after_and_no_other_answer_does",
+        "??????",
+    ),
+    mutant(
+        'G17b a request that did not verify is logged at INFO',
+        ENDPOINT,
+        "            level = logging.INFO if sender else logging.DEBUG  # DEBUG: refused before it verified\n",
+        "            level = logging.INFO\n",
+        TS,
+        "test_n10_refusals_before_the_signature_are_debug_and_a_verified_request_is_info",
+        "??????",
+    ),
+    # --- G18 the cap on waiting requests and the drain
+    mutant(
+        'G18a no cap on the requests waiting inside start',
+        WORKER,
+        "        if not self._waiting.acquire(blocking=False):\n",
+        "        if False:\n",
+        TW,
+        "test_m2_a_hung_store_cannot_pile_up_request_threads",
+        "??????",
+    ),
+    mutant(
+        'G18b the waiting place is not given back',
+        WORKER,
+        "        try:\n            return self._decide(req)\n        finally:\n            self._waiting.release()\n",
+        "        return self._decide(req)\n",
+        TW,
+        "test_m2_a_place_is_given_back_after_every_answer",
+        "??????",
+    ),
+    mutant(
+        'G18c serve does not close the runner',
+        WORKER,
+        "        runner.close()\n        if previous is not None:\n",
+        "        if previous is not None:\n",
+        TW,
+        "test_serve_gives_the_previous_sigterm_handler_back",
+        "??????",
+    ),
+    mutant(
+        'G18d close writes no warning for a loop still going',
+        WORKER,
+        "        if going:\n",
+        "        if False:\n",
+        TW,
+        "test_m3_close_warns_once_when_a_loop_is_still_going",
+        "??????",
+    ),
+    mutant(
+        'G18e close warns although nothing is running',
+        WORKER,
+        "        if going:\n",
+        "        if True:\n",
+        TW,
+        "test_m3_close_with_nothing_running_is_quiet",
+        "??????",
+    ),
+    mutant(
+        'G18f a waiter keeps polling after the runner was closed',
+        WORKER,
+        "                    if self._closed:\n                        return NO_ACK  # closed while it waited: no loop begins here any more\n",
+        "",
+        TW,
+        "test_n3_a_waiter_gets_503_at_once_when_the_runner_is_closed",
+        "??????",
+    ),
+    # --- G19 what a store error and a bug are told apart by, and what is logged
+    mutant(
+        'G19a every error of start is logged as a store error',
+        WORKER,
+        "            if is_store_error(exc):\n",
+        "            if True:\n",
+        TW,
+        "test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503",
+        "??????",
+    ),
+    mutant(
+        'G19b every error of start is logged as internal',
+        WORKER,
+        "            if is_store_error(exc):\n",
+        "            if False:\n",
+        TW,
+        "test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503",
+        "??????",
+    ),
+    mutant(
+        'G19c a StaleState of the store is answered 409 from its type',
+        WORKER,
+        EXCEPT_STORE,
+        EXCEPT_STORE + "            if isinstance(exc, StaleState):\n                return CONFLICT\n",
+        TW,
+        "test_n5_a_store_error_is_a_warning_and_a_bug_is_an_error_both_503",
+        "??????",
+    ),
+    mutant(
+        'G19d the exception of a run thread is not logged',
+        WORKER,
+        "        if exc is not None:\n",
+        "        if False:\n",
+        TW,
+        "test_n7_a_base_exception_of_a_run_thread_is_logged_by_class_name_and_frees_the_slot",
+        "??????",
+    ),
+    mutant(
+        'G19e the memory store is not warned about',
+        WORKER,
+        "    if not isinstance(store, MemoryStore):\n",
+        "    if True:\n",
+        TW,
+        "test_n1_the_memory_store_is_warned_about_and_the_start_goes_on",
+        "??????",
+    ),
+    # --- G20 the bounds of Runner
+    mutant(
+        'G20a max_running below one is not refused by the Runner',
+        WORKER,
+        "max_running < 1 or ",
+        "",
+        TW,
+        "test_bad_arguments_are_refused",
+        "??????",
+    ),
+    mutant(
+        'G20b ack_wait_s of zero is accepted',
+        WORKER,
+        " or ack_wait_s <= 0",
+        "",
+        TW,
+        "test_bad_arguments_are_refused",
+        "??????",
+    ),
+    mutant(
+        'G20c poll_s of zero is not refused as such',
+        WORKER,
+        " or poll_s <= 0:",
+        ":",
+        TW,
+        "test_bad_arguments_are_refused",
+        "??????",
+    ),
+    mutant(
+        'G20d max_running has no ceiling',
+        WORKER,
+        "    if max_running > MAX_RUNNING_CEILING:\n",
+        "    if False:\n",
+        TW,
+        N15 + "[kw0-at most 64]",
+        "??????",
+    ),
+    mutant(
+        'G20e ack_wait_s has no ceiling',
+        WORKER,
+        "        if ack_wait_s > ACK_WAIT_S_CEILING:\n",
+        "        if False:\n",
+        TW,
+        N15 + "[kw1-at most 30]",
+        "??????",
+    ),
+    mutant(
+        'G20f poll_s has no lower bound',
+        WORKER,
+        "POLL_S_MIN <= poll_s <= POLL_S_MAX",
+        "poll_s <= POLL_S_MAX",
+        TW,
+        N15 + "[kw2-between 0.01 and 1]",
+        "??????",
+    ),
+    mutant(
+        'G20g poll_s has no upper bound',
+        WORKER,
+        "POLL_S_MIN <= poll_s <= POLL_S_MAX",
+        "POLL_S_MIN <= poll_s",
+        TW,
+        N15 + "[kw3-between 0.01 and 1]",
+        "??????",
+    ),
+    mutant(
+        'G20h max_waiting of zero is accepted',
+        WORKER,
+        " or max_waiting < 1:",
+        ":",
+        TW,
+        N15 + "[kw4-max_waiting]",
+        "??????",
+    ),
+    mutant(
+        'G20i max_waiting may be a bool',
+        WORKER,
+        "isinstance(max_waiting, bool) or ",
+        "",
+        TW,
+        N15 + "[kw5-max_waiting]",
+        "??????",
+    ),
+    mutant(
+        'G20j make_app lets a bound of the Runner through as a ValueError',
+        WORKER,
+        "    except ValueError as exc:  # these messages name senders and bounds, never a value\n",
+        "    except KeyError as exc:  # these messages name senders and bounds, never a value\n",
+        TW,
+        "test_n15_make_app_turns_a_bound_into_a_config_error",
+        "??????",
+    ),
+    # --- G99 probes (dev only)
+    mutant(
+        'G99a no handle_error override',
+        SERVER,
+        HANDLE_ERROR,
+        "",
+        TS,
+        "test_n11_a_process_variable_cannot_stand_in_for_a_missing_header",
+        "??????",
+    ),
+    mutant(
+        'G99b make_wsgi has no MAX_SENDERS check',
+        ENDPOINT,
+        "    if len(senders) > MAX_SENDERS:\n",
+        "    if False:\n",
+        TE,
+        "test_make_wsgi_has_its_own_upper_bounds_for_a_callers_settings_object",
+        "??????",
+    ),
+    mutant(
+        'G99c close does not set the closed flag',
+        WORKER,
+        "            self._closed = True\n",
+        "",
+        TW,
+        "test_closed_runner_takes_no_new_work",
+        "??????",
+    ),
 ]
 
 if __name__ == "__main__":
@@ -420,8 +890,8 @@ if __name__ == "__main__":
             f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:70]}]",
             flush=True,
         )
-        if not good:
-            print("      first line:", first_lines.get(name, "")[:200], flush=True)
+        if True:  # DEV
+            print("      first line:", first_lines.get(name, "")[:400], flush=True)
 
     # set for the pytest child only (the runner's fixed child variables), not in this process's environment
     mutation_runner.CHILD_FIXED_ENV["PYTEST_ADDOPTS"] = f"--deselect {NEEDS_CONFTEST}"
