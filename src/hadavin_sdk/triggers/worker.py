@@ -50,6 +50,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import logging
+import re
 import signal
 import sys
 import threading
@@ -640,6 +641,24 @@ def _unlog_stderr() -> None:
     top.setLevel(logging.NOTSET)
 
 
+_SAFE_SEGMENT = re.compile(r"[A-Za-z0-9_.-]{1,40}")
+
+
+def _safe_segment(part: object) -> str:
+    """One location segment as text, or `?` when it is not plain (an extra YAML key is user text). No slicing: a
+    segment that does not match whole is replaced whole."""
+    text = str(part)
+    return text if _SAFE_SEGMENT.fullmatch(text) else "?"
+
+
+def _loc_text(loc: object) -> str:
+    return ".".join(_safe_segment(p) for p in loc)  # type: ignore[attr-defined]
+
+
+def _error_type(kind: object) -> str:
+    return _safe_segment(kind)
+
+
 def _fields(exc: BaseException, limit: int = 10) -> str:
     """` (fields: a.b (missing), c (extra_forbidden))` from the pydantic error that `load_config` chained to a config
     error, else an empty string. Only the location and the error type are taken, never the message or the input:
@@ -651,10 +670,7 @@ def _fields(exc: BaseException, limit: int = 10) -> str:
         return ""
     try:
         found = errors(include_input=False, include_url=False, include_context=False)
-        shown = [
-            f"{'.'.join(str(p) for p in e['loc'])[:80]} ({str(e['type'])[:40]})"
-            for e in found[:limit]
-        ]
+        shown = [f"{_loc_text(e['loc'])} ({_error_type(e['type'])})" for e in found[:limit]]
     except Exception:  # noqa: BLE001 - not a pydantic error after all: class name only
         return ""
     if not shown:
