@@ -41,6 +41,10 @@ pytestmark = pytest.mark.skipif(
 )
 
 DENIED = errors.InsufficientPrivilege
+# One advisory lock for the whole server. Every case holds it SHARED while it runs; a case that makes a role that
+# every other case's migrate would refuse (below PostgreSQL 16, a CREATEROLE login is listed server-wide) takes it
+# EXCLUSIVE, so no other case runs meanwhile, with or without pytest-xdist.
+GATE = 7311
 STOP_RELATIONS = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
 OFF = KillSwitch(on=False, by="admin:reset")
 SETTINGS = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
@@ -168,6 +172,8 @@ class World:
 @pytest.fixture(name="w")
 def stop_world():
     world = World()
+    world.gate = psycopg.connect(world.dsn, autocommit=True)
+    world.gate.execute("SELECT pg_advisory_lock_shared(%s)", (GATE,))
     with psycopg.connect(world.dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(world.schema)))
         for r in world.roles:
@@ -178,6 +184,7 @@ def stop_world():
     finally:
         for s in world.stores:
             s._db.close()
+        world.gate.close()  # the locks go with the session; the cleanup below needs no gate
         with psycopg.connect(world.dsn, autocommit=True) as db:
             for schema in world.schemas:
                 db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
@@ -1168,6 +1175,11 @@ S2_STRAY = {
     "insert_on_the_clears": "GRANT INSERT ON kill_switch_clears TO {}",
     "column_update_of_on": 'GRANT UPDATE ("on") ON kill_switch TO {}',
     "column_insert_of_stop_id": "GRANT INSERT (stop_id) ON kill_switch_clears TO {}",
+    "delete_on_the_flag": "GRANT DELETE ON kill_switch TO {}",
+    "truncate_on_the_flag": "GRANT TRUNCATE ON kill_switch TO {}",
+    "trigger_on_the_flag": "GRANT TRIGGER ON kill_switch TO {}",
+    "trigger_on_the_stops": "GRANT TRIGGER ON kill_switch_stops TO {}",
+    "trigger_on_the_clears": "GRANT TRIGGER ON kill_switch_clears TO {}",
 }
 
 
@@ -1177,7 +1189,7 @@ def test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear(w, case):
     w.grant(S2_STRAY[case], third)
     names = _refused_naming(w, third)
     assert w.reset not in names and w.runtime not in names
-    w.grant("REVOKE ALL ON kill_switch, kill_switch_clears FROM {}", third)
+    w.grant("REVOKE ALL ON kill_switch, kill_switch_stops, kill_switch_clears FROM {}", third)
     assert w.migrate() == []  # the right gone: the same command passes
 
 
@@ -1305,12 +1317,15 @@ def _membership(w, role, member):
     )
 
 
-def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_not_listed(w):
+def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_listed(w):
     """PostgreSQL 16 and later: a CREATEROLE login that is not a superuser is made a member, WITH ADMIN OPTION
-    only, of every role it creates. It cannot use the role's rights until it grants itself SET or INHERIT; once it
-    does, it is listed."""
+    only, of every role it creates. It cannot use the role's rights today, but it can grant itself SET or INHERIT
+    at any time, so it is listed (review B-WE-M1; until 2026-11-20 this case was NOT listed). Revoking the ADMIN
+    option makes the check pass."""
     if w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
-        pytest.skip("pg_auth_members has no inherit_option and set_option before PostgreSQL 16")
+        pytest.skip(
+            "pg_auth_members has no admin_option, inherit_option and set_option before PostgreSQL 16"
+        )
     creator = w.new_role("cr", "LOGIN CREATEROLE")
     made = f"sb_s8_{w.sfx}"
     with psycopg.connect(w.dsn_of(creator, w.dsn), autocommit=True) as db:
@@ -1323,20 +1338,126 @@ def test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_not_list
     ):
         db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(made)))
     fresh = w.new_schema("cr")
-    assert "0006_stop_state" in migrate(fresh, runtime_role=w.runtime, reset_role=made)
-    assert _who(fresh, made) == []
-    with psycopg.connect(w.dsn_of(creator, w.dsn), autocommit=True) as db:
-        db.execute(
-            sql.SQL("GRANT {} TO {} WITH SET TRUE").format(
-                sql.Identifier(made), sql.Identifier(creator)
-            )
-        )
-    assert _who(fresh, made) == [creator]
+    assert "0006_stop_state" in migrate(
+        fresh
+    )  # a plain migrate runs no check (and a refusal rolls back)
     with pytest.raises(
         ConfigError, match="roles other than the reset role could clear a stop"
     ) as e:
         migrate(fresh, runtime_role=w.runtime, reset_role=made)
     assert creator in str(e.value)
+    assert _who(fresh, made) == [creator]
+    w.grant("REVOKE ADMIN OPTION FOR {} FROM {}", made, creator)
+    assert _who(fresh, made) == []
+    assert migrate(fresh, runtime_role=w.runtime, reset_role=made) == []
+
+
+def test_s2_a_member_of_a_role_that_holds_a_right_with_the_admin_option_only_is_listed(w):
+    """PostgreSQL 16 and later: ADMIN on a role that holds the right (not only on the reset role) counts."""
+    if w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
+        pytest.skip("no admin_option before PostgreSQL 16")
+    group, admin = w.new_role("ga", "NOLOGIN"), w.new_role("ad", "LOGIN")
+    w.grant("GRANT INSERT ON kill_switch_clears TO {}", group)
+    w.grant("GRANT {} TO {} WITH ADMIN TRUE, INHERIT FALSE, SET FALSE", group, admin)
+    assert _who(w.scoped, w.reset) == sorted([group, admin])
+
+
+def test_s2_below_16_a_createrole_login_that_is_not_a_superuser_is_listed(w):
+    """Before PostgreSQL 16 a CREATEROLE login can GRANT the reset role to itself, and holds nothing now."""
+    if not w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
+        pytest.skip(
+            "from PostgreSQL 16 CREATEROLE alone cannot grant a role it has no ADMIN option on"
+        )
+    w.gate.execute("SELECT pg_advisory_lock(%s)", (GATE,))  # exclusive: see GATE
+    creator = None
+    try:
+        creator = w.new_role("cq", "LOGIN CREATEROLE")
+        assert _who(w.scoped, w.reset) == [creator]
+        with pytest.raises(ConfigError, match="roles other than the reset role could clear a stop"):
+            w.migrate()
+        w.grant("ALTER ROLE {} NOCREATEROLE", creator)
+        assert w.migrate() == []
+    finally:
+        if creator:
+            w.grant("ALTER ROLE {} NOCREATEROLE", creator)
+        w.gate.execute("SELECT pg_advisory_unlock(%s)", (GATE,))
+
+
+def test_s2_from_16_a_createrole_login_with_no_membership_is_not_listed(w):
+    """From PostgreSQL 16 a CREATEROLE login can only grant roles it has the ADMIN option on."""
+    if w.run("SELECT current_setting('server_version_num')::int < 160000")[0][0]:
+        pytest.skip("below PostgreSQL 16 a CREATEROLE login is listed")
+    w.new_role("cq", "LOGIN CREATEROLE")
+    assert _who(w.scoped, w.reset) == []
+    assert w.migrate() == []
+
+
+def test_s2_a_superuser_with_a_right_or_a_membership_is_not_listed(w):
+    """A superuser is outside the guarantee (it can do anything), so it is never listed, however it got the right."""
+    su = w.new_role("su", "LOGIN SUPERUSER")
+    w.grant("GRANT UPDATE ON kill_switch TO {}", su)
+    w.grant("GRANT {} TO {}", w.reset, su)
+    assert _who(w.scoped, w.reset) == []
+    assert w.migrate() == []
+
+
+def test_s2_a_dropped_column_keeps_no_grant(w):
+    """A dropped column holds no right, even where the server (PostgreSQL 15) leaves its ACL in pg_attribute: the
+    `NOT attisdropped` filter keeps the role out of the list."""
+    third = w.new_role("dc", "NOLOGIN")
+    w.do("ALTER TABLE kill_switch ADD COLUMN zz int")
+    w.grant("GRANT UPDATE (zz) ON kill_switch TO {}", third)
+    assert _who(w.scoped, w.reset) == [third]
+    w.do("ALTER TABLE kill_switch DROP COLUMN zz")
+    assert _who(w.scoped, w.reset) == []
+    assert w.migrate() == []
+
+
+def _refuses_to_read(conninfo, reset, *must_name):
+    with psycopg.connect(conninfo, autocommit=True) as db, pytest.raises(ConfigError) as e:
+        migrate_mod.who_else_can_clear(db, reset)
+    text = str(e.value)
+    assert "cannot check who could clear a stop" in text
+    for part in must_name:
+        assert part in text, f"{part!r} is not named in: {text}"
+    return text
+
+
+def test_s2_an_empty_search_path_is_refused_not_passed(w):
+    _refuses_to_read(make_conninfo(w.dsn, options="-c search_path="), w.reset, "schema None")
+
+
+def test_s2_a_search_path_whose_first_schema_has_no_stop_tables_is_refused_not_passed(w):
+    # A schema that exists and holds nothing is first; the real tables (a leftover copy, from this check's point
+    # of view) are one schema further on.
+    w.new_schema("em")
+    name = f"sb_em_{w.sfx}"
+    path = f"{name},{w.schema}"  # the real tables are one schema further on
+    text = _refuses_to_read(
+        make_conninfo(w.dsn, options=f"-c search_path={path}"),
+        w.reset,
+        name,
+        path,
+        "kill_switch_clears",
+    )
+    assert "missing" in text
+
+
+def test_s2_one_missing_stop_table_is_refused_not_passed(w):
+    fresh = w.new_schema("pt")
+    migrate(fresh, runtime_role=w.runtime, reset_role=w.reset)
+    with psycopg.connect(fresh, autocommit=True) as db:
+        db.execute("DROP TABLE kill_switch_clears")
+    _refuses_to_read(fresh, w.reset, "kill_switch_clears")
+
+
+def test_s2_a_temporary_table_with_a_stop_table_name_is_refused_not_passed(w):
+    with psycopg.connect(w.scoped, autocommit=True) as db:
+        db.execute("CREATE TEMP TABLE kill_switch_clears (stop_id uuid)")
+        with pytest.raises(ConfigError) as e:
+            migrate_mod.who_else_can_clear(db, w.reset)
+    assert "resolve to another relation" in str(e.value)
+    assert "kill_switch_clears" in str(e.value)
 
 
 def test_s2_a_noinherit_member_of_the_reset_role_that_can_set_role_is_listed(w):
@@ -1362,6 +1483,15 @@ def test_s2_a_reset_role_that_is_not_named_in_the_run_is_listed_with_its_members
     w.grant("REVOKE {} FROM {}", w.reset, member)
     assert _who(w.scoped, None) == [w.reset]
     assert _who(w.scoped, w.reset) == []  # the reset role alone: nobody else
+
+
+def test_s2_members_of_the_reset_role_are_listed_even_when_it_holds_no_right_yet(w):
+    """The reset role is a base row of the check, not only a grantee: before its grants exist (or after someone
+    revoked them) a member of it is still listed, because the role is the one that is given the right."""
+    member = w.new_role("n8")
+    w.grant("GRANT {} TO {}", w.reset, member)
+    w.grant("REVOKE ALL ON kill_switch, kill_switch_stops, kill_switch_clears FROM {}", w.reset)
+    assert _who(w.scoped, w.reset) == [member]
 
 
 def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_earlier_call(w):
