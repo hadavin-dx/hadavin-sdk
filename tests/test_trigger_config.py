@@ -31,7 +31,7 @@ FIELDS = config_mod.TriggerSettings.model_fields
 AGENT = "test-agent"  # the fixture's agent and its service principal
 SERVICE = "svc:test-agent"
 PERSON = "user:a"  # a fixture principal of kind person
-EXECUTOR_SECRET = "fixture-token"  # the secret name of the fixture's http actions
+ACTION_KEY_NAME = "fixture-token"  # the secret name of the fixture's http actions
 # Fake values, built from parts so that no key-shaped literal stands in the file.
 TOKEN = "tok" + "-trigger"
 VALUE_ONE = "one-" + "x" * 36
@@ -248,8 +248,7 @@ def test_zero_or_three_secret_names_refused(cfg_dir, count):
 
 def test_secret_names_must_be_a_list(cfg_dir):
     """Case: one name written as plain text, not as a list. Refused (it must not be read letter by letter)."""
-    sender = _sender()
-    sender["secret_names"] = "key-one"
+    sender = {**_sender(), "secret_names": "key-one"}
     assert "triggers.senders.s1.secret_names" in _refused(cfg_dir, _block({"s1": sender}))
 
 
@@ -264,9 +263,7 @@ def test_empty_secret_name_refused(cfg_dir):
     reason="FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a "
     "line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)",
 )
-@pytest.mark.parametrize(
-    "name", [" ", "\t", "   ", "key-one\n", "key\none", " key-one"], ids=repr
-)
+@pytest.mark.parametrize("name", [" ", "\t", "   ", "key-one\n", "key\none", " key-one"], ids=repr)
 def test_blank_or_newline_secret_name_refused(cfg_dir, name):
     """Case: a secret name that is blank, only whitespace, or holds a line break or a leading space. Must be
     refused, naming the sender and the field."""
@@ -500,7 +497,7 @@ class _Recording(FakeSecretProvider):
 def _build(cfg_dir: Path, block: dict | None, values: dict[str, str]):
     _write(cfg_dir, block)
     qualify(load_registry(load_config(cfg_dir)))
-    provider = _Recording({EXECUTOR_SECRET: TOKEN, **values})
+    provider = _Recording({ACTION_KEY_NAME: TOKEN, **values})
     return build(cfg_dir, [AGENT], secrets=provider), provider
 
 
@@ -519,7 +516,7 @@ def test_without_the_block_no_extra_secret_is_read(cfg_dir):
     """Case: no block. The app starts and reads nothing but the fixture's own secret."""
     app, provider = _build(cfg_dir, None, {})
     assert app.config.triggers is None
-    assert set(provider.read) == {EXECUTOR_SECRET}
+    assert set(provider.read) == {ACTION_KEY_NAME}
 
 
 @pytest.mark.parametrize("missing", sorted(TWO_SENDER_VALUES))
@@ -536,7 +533,7 @@ def test_a_missing_sender_secret_fails_the_start(cfg_dir, missing):
 def test_a_sender_secret_name_that_is_an_action_secret_fails_the_start(cfg_dir):
     """Case: a sender lists the name of an action executor's secret. The start is refused."""
     with pytest.raises(ConfigError, match="secret names used by both") as info:
-        _build(cfg_dir, _block({"s1": _sender(EXECUTOR_SECRET)}), {})
+        _build(cfg_dir, _block({"s1": _sender(ACTION_KEY_NAME)}), {})
     assert TOKEN not in str(info.value)
 
 
@@ -549,7 +546,7 @@ def test_a_sender_secret_name_that_is_an_action_secret_fails_the_start(cfg_dir):
 def test_shared_action_secret_refusal_names_the_sender(cfg_dir):
     """Case: as above. The refusal must point to `triggers.senders.s1`, not to a backend."""
     with pytest.raises(ConfigError) as info:
-        _build(cfg_dir, _block({"s1": _sender(EXECUTOR_SECRET)}), {})
+        _build(cfg_dir, _block({"s1": _sender(ACTION_KEY_NAME)}), {})
     assert "triggers.senders.s1" in str(info.value)
 
 
@@ -617,7 +614,7 @@ def test_reader_refuses_a_name_that_no_sender_lists(cfg_dir):
     app, _ = _build(cfg_dir, _block(TWO_SENDERS), TWO_SENDER_VALUES)
     read = _reader(app)
     with pytest.raises((PermissionError, ConfigError)):
-        read(EXECUTOR_SECRET)
+        read(ACTION_KEY_NAME)
     with pytest.raises((PermissionError, ConfigError)):
         read("no-such-name")
 
@@ -644,7 +641,15 @@ def test_no_reader_without_the_block(cfg_dir):
         _block({"s1": {**_sender(), "secret_names": PASTED}}),
         _block({"s1": _sender(PASTED, agent_id=["x"])}),
     ],
-    ids=["three-names", "extra-key", "max_running", "ack_wait_s", "tenant", "not-a-list", "agent_id"],
+    ids=[
+        "three-names",
+        "extra-key",
+        "max_running",
+        "ack_wait_s",
+        "tenant",
+        "not-a-list",
+        "agent_id",
+    ],
 )
 def test_validation_refusal_names_the_field_and_never_shows_a_written_value(cfg_dir, block):
     """Case: a secret-like text stands somewhere in a block that is refused for its shape (three names, an extra

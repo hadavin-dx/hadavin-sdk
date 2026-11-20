@@ -347,9 +347,9 @@ def _tooled(door, monkeypatch) -> str:
     document = CASES["nul_inside_an_address"][0]
     run_id = _run_id()
     assert door.post(document).status in (200, 202)
-    run = door.settled(run_id)
+    door.drain()  # the loop passes PLAN_READY on its way: wait for the thread, then read the row
+    run = door.store.get_run(run_id)
     assert (run.state.value, run.reason_code) == ("NO_ACTION", "shadow")
-    door.drain()
     assert door.store.get_plan(run_id).inputs == {"host": "<IPV4_1>", "revision": "17"}
     assert door.store.get_redaction_map(run_id) == MAP_OF_ADDRESS
     assert [call.call_id for call in door.store.list_tool_calls(run_id)] == [f"{run_id}:1"]
