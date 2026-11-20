@@ -1,5 +1,4 @@
-"""d-fix10 e1-fix3: a ping that fails with a refusal (not a connectivity error) counts toward the degraded
-worker's fatal count; a conflict event that cannot be built leaves no stuck flag; a late close also closes the
+"""d-fix10 e1-fix3: a degraded worker retries a store that refuses forever (WARNING once per 5 minutes); a conflict event that cannot be built leaves no stuck flag; a late close also closes the
 App's store. Memory store."""
 
 from __future__ import annotations
@@ -82,24 +81,59 @@ def _degraded_main(monkeypatch, tmp_path, exc):
     return codes, builds, made, thread, store
 
 
-def test_fix3_a_refusing_store_at_every_ping_stops_the_worker_with_exit_3(
+def test_fix3_a_refusing_store_is_retried_forever_health_503_and_the_class_is_named_once_per_5_min(
     monkeypatch, tmp_path, caplog
 ):
+    clock = [5000.0]
+    monkeypatch.setattr(worker, "_monotonic", lambda: clock[0])
     with caplog.at_level("INFO", logger="hadavin_sdk.triggers"):
         codes, builds, made, thread, store = _degraded_main(monkeypatch, tmp_path, Refused)
-        thread.join(20)
-        if thread.is_alive():
+        try:
+            deadline = time.monotonic() + 15
+            while len(builds) < 20 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert len(builds) >= 20 and thread.is_alive() and codes == []  # not even 5 stops it
+            status, body = _http(made[0].server_port, "GET", "/health")
+            assert status == 503 and b"store_down" in body
+
+            def once():
+                return [
+                    r for r in caplog.records
+                    if "re-check failed (Refused)" in r.getMessage() and r.levelno == logging.WARNING
+                ]
+
+            assert len(once()) == 1  # 20 refusals, one WARNING naming the class
+            clock[0] += 301
+            n = len(builds)
+            while len(builds) < n + 5 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert len(once()) == 2  # 5 minutes later it is named again
+        finally:
             made[0].shutdown()
-            thread.join(20)
-            pytest.fail("the worker did not stop on its own")
-    assert codes == [worker.EXIT_FAILED] and len(builds) == worker.DEGRADED_FATAL_AFTER == 5
-    assert store.closes == 5  # every failed try closed the connection it opened
+            thread.join(30)
+    assert codes == [0]
+    assert store.closes >= 20  # every failed try closed the connection it opened
     assert "private text" not in caplog.text
-    once = [r for r in caplog.records if "re-check failed (Refused)" in r.getMessage()]
-    assert (
-        len(once) == 1 and once[0].levelno == logging.WARNING
-    )  # the class is named once, at WARNING
-    assert len([r for r in caplog.records if "not a store outage" in r.getMessage()]) == 1
+
+
+def test_fix3_a_store_that_refuses_and_then_answers_is_recovered_from(monkeypatch, tmp_path):
+    codes, builds, made, thread, store = _degraded_main(monkeypatch, tmp_path, Refused)
+    try:
+        deadline = time.monotonic() + 15
+        while len(builds) < 5 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert len(builds) >= 5 and codes == []
+        store.exc = None  # the store comes back
+        store.get_run = lambda run_id: (_ for _ in ()).throw(worker.NotFound(run_id))
+        status = 503
+        while status == 503 and time.monotonic() < deadline:
+            time.sleep(0.02)
+            status, _body = _http(made[0].server_port, "GET", "/health")
+        assert status == 200
+    finally:
+        made[0].shutdown()
+        thread.join(30)
+    assert codes == [0]
 
 
 def test_fix3_a_store_refusing_the_connection_never_stops_the_worker_and_health_stays_503(
@@ -112,7 +146,7 @@ def test_fix3_a_store_refusing_the_connection_never_stops_the_worker_and_health_
         deadline = time.monotonic() + 15
         while len(builds) < 20 and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert len(builds) >= 20 > worker.DEGRADED_FATAL_AFTER and thread.is_alive() and codes == []
+        assert len(builds) >= 20 and thread.is_alive() and codes == []
         status, body = _http(made[0].server_port, "GET", "/health")
         assert status == 503 and b"store_down" in body
     finally:
@@ -121,7 +155,7 @@ def test_fix3_a_store_refusing_the_connection_never_stops_the_worker_and_health_
     assert codes == [0]
 
 
-def test_fix3_health_keeps_its_shape_for_a_refusal_and_keeps_the_error_class(tmp_path):
+def test_fix3_health_keeps_its_shape_for_a_refusal(tmp_path):
     app, _old = _switch_app(tmp_path)
     store = Failing(Refused)
     app.store = store
@@ -130,9 +164,8 @@ def test_fix3_health_keeps_its_shape_for_a_refusal_and_keeps_the_error_class(tmp
     with runner:
         status, body, _headers = _get(wsgi)
         assert status == 503 and body == b'{"status": "store_down", "store_failures": 1}'
-        assert type(runner.ping_error) is Refused
         store.exc = ConnectionRefusedError
-        assert runner.health() == (False, 2) and type(runner.ping_error) is ConnectionRefusedError
+        assert runner.health() == (False, 2)
 
 
 # --- E1b-2: an event that cannot be built leaves no stuck flag ----------------------------------------

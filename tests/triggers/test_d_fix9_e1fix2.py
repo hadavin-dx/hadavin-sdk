@@ -1,11 +1,12 @@
 """d-fix9 e1-fix2: no leak per failed re-check try, a ping thread that fails to start, a bounded conflict audit
-write, a degraded worker that stops on a persistent non-store error, and the per-sender cap. Memory store."""
+write, a degraded worker that retries every error forever, and the per-sender cap. Memory store."""
 
 from __future__ import annotations
 
 import argparse
 import io
 import json
+import logging
 import threading
 import time
 from types import SimpleNamespace
@@ -239,23 +240,9 @@ def _run_degraded(monkeypatch, outcomes):
     return codes, builds, made, thread
 
 
-def test_fix2_five_non_store_failures_in_a_row_stop_the_worker_with_exit_3(monkeypatch, caplog):
-    assert worker.DEGRADED_FATAL_AFTER == 5
-    with caplog.at_level("INFO", logger="hadavin_sdk.triggers"):
-        codes, builds, made, thread = _run_degraded(monkeypatch, [KeyError("private-key-text")])
-        thread.join(20)
-        if thread.is_alive():
-            made[0].shutdown()
-            thread.join(20)
-            pytest.fail("the worker did not stop on its own")
-    assert codes == [worker.EXIT_FAILED] and len(builds) == 5
-    warns = [r.getMessage() for r in caplog.records if "not a store outage" in r.getMessage()]
-    assert len(warns) == 1 and "KeyError" in warns[0] and "private-key-text" not in caplog.text
-
-
-def test_fix2_store_down_failures_retry_forever_and_reset_the_count(monkeypatch):
+def test_fix2_every_error_is_retried_forever_and_the_worker_never_exits_by_itself(monkeypatch):
     down, bug = StoreUnavailable("down"), RuntimeError("bug")
-    outcomes = [bug] * 4 + [down] + [bug] * 4 + [down]  # never 5 non-store failures in a row
+    outcomes = [bug] * 8 + [down] + [bug] * 8 + [KeyError("k")]  # none of them ever stops the worker
     codes, builds, made, thread = _run_degraded(monkeypatch, outcomes)
     try:
         deadline = time.monotonic() + 15
@@ -266,6 +253,61 @@ def test_fix2_store_down_failures_retry_forever_and_reset_the_count(monkeypatch)
         made[0].shutdown()
         thread.join(30)
     assert codes == [0]
+
+
+def test_fix2_the_recheck_warning_is_once_per_5_minutes_and_again_when_the_class_changes(
+    monkeypatch, caplog
+):
+    assert worker.DEGRADED_WARN_EVERY_S == 300
+    clock = [1000.0]
+    monkeypatch.setattr(worker, "_monotonic", lambda: clock[0])
+    outcomes: list = [RuntimeError("secret-a")] * 5
+    calls: list = []
+
+    def build(args):
+        calls.append(1)
+        if len(calls) > len(outcomes):
+            raise outcomes[-1]
+        raise outcomes[len(calls) - 1]
+
+    monkeypatch.setattr(worker, "_build_app", build)
+    monkeypatch.setattr(worker, "HEALTH_RECHECK_S", 0.01)
+
+    def wait_calls(n):
+        deadline = time.monotonic() + 15
+        while len(calls) < n and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert len(calls) >= n
+
+    def warns():
+        return [
+            r for r in caplog.records
+            if "re-check failed" in r.getMessage() and r.levelno == logging.WARNING
+        ]
+
+    degraded = worker._Degraded(argparse.Namespace())
+    with caplog.at_level("INFO", logger="hadavin_sdk.triggers"):
+        degraded.start()
+        try:
+            wait_calls(20)
+            assert [r.getMessage().count("RuntimeError") for r in warns()] == [1]  # 20 failures, 1 line
+            clock[0] += 299
+            n = len(calls)
+            wait_calls(n + 10)
+            assert len(warns()) == 1
+            clock[0] += 2  # 301 s after the first line
+            n = len(calls)
+            wait_calls(n + 10)
+            assert len(warns()) == 2
+            outcomes[:] = [KeyError("secret-b")]  # the class changes: logged at once, inside the window
+            calls.clear()
+            wait_calls(10)
+            assert len(warns()) == 3 and "KeyError" in warns()[-1].getMessage()
+        finally:
+            degraded._stopped.set()
+            degraded._thread.join(10)
+    assert "secret-a" not in caplog.text and "secret-b" not in caplog.text
+    assert degraded.failures > 40 and degraded.health() == (False, degraded.failures)
 
 
 # --- nit: the degraded socket timeout ----------------------------------------------------------------

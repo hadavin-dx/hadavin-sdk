@@ -127,8 +127,8 @@ CONFLICT_OPERATION: Final[str] = "conflict"
 AUDIT_WRITE_TIMEOUT_S: Final[float] = (
     2.0  # a request waits this long for its conflict audit write, then the 409 goes out anyway
 )
-DEGRADED_FATAL_AFTER: Final[int] = (
-    5  # consecutive non-store errors of a re-check before the worker stops
+DEGRADED_WARN_EVERY_S: Final[float] = (
+    300.0  # a degraded worker logs its re-check failure class at most this often (and when it changes)
 )
 HASH_RE: Final = re.compile(r"[0-9a-f]{64}")
 PING_RUN_ID: Final[str] = (
@@ -143,6 +143,11 @@ HEALTH_PING_TIMEOUT_S: Final[float] = (
 )
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
+
+
+def _monotonic() -> float:
+    """The clock of the degraded re-check's WARNING rate limit (a function so a test can patch it)."""
+    return time.monotonic()
 
 
 class ConfigError(AnyConfigError):
@@ -230,9 +235,6 @@ class Runner:
         self.owned_app: Any = (
             None  # set by `_recover`: the App whose connection a late close must also close
         )
-        self._ping_error: BaseException | None = (
-            None  # why the last answered ping failed (for _recover)
-        )
 
     @property
     def ack_wait_s(self) -> float:
@@ -274,18 +276,10 @@ class Runner:
                     fresh  # assigned only after the thread runs: no wait on a dead ping
                 )
         if not ping.done.wait(HEALTH_PING_TIMEOUT_S):
-            self._ping_error = None  # no answer: a timeout is store-down, there is no cause
             self._count_store_failure()
             _LOG.debug("trigger health: store ping did not return in time")
             return False, self.store_failures
-        self._ping_error = None if ping.up else ping.cause
         return ping.up, self.store_failures
-
-    @property
-    def ping_error(self) -> BaseException | None:
-        """The error the last answered `/health` ping failed with (None when it was up or timed out). For
-        `_recover`, which tells a store that is down from one that refuses."""
-        return self._ping_error
 
     def _count_store_failure(self) -> None:
         with self._stats_lock:
@@ -502,7 +496,6 @@ class _Ping:
     def __init__(self, store: Any, on_failure: Callable[[], None]) -> None:
         self.done = threading.Event()
         self.up = False
-        self.cause: BaseException | None = None  # the error of a failed ping, kept for the re-check
         self._store, self._on_failure = store, on_failure
         self.thread = threading.Thread(target=self._run, name="trigger-ping", daemon=True)
 
@@ -514,7 +507,6 @@ class _Ping:
                 pass
             self.up = True
         except Exception as exc:  # noqa: BLE001 - down in every case; the class name only
-            self.cause = exc.with_traceback(None)
             self._on_failure()
             _LOG.debug("trigger health: store ping failed (%s)", type(exc).__name__)
         finally:
@@ -921,11 +913,6 @@ def _prepare(args: argparse.Namespace) -> tuple[WSGIServer, Runner]:
         raise
 
 
-def _is_store_down(exc: BaseException) -> bool:
-    """The store did not answer (retried forever by the re-check); anything else is a refusal or a bug."""
-    return isinstance(exc, StoreUnavailable) or is_connectivity_error(exc)
-
-
 def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
     """One try of a degraded worker to get the real app: build it and ping the store with `Runner.health`.
     Raises while the store is down (any error: the caller tries again later); on success (wsgi, runner)."""
@@ -934,9 +921,6 @@ def _recover(args: argparse.Namespace) -> tuple[Any, Runner]:
     try:
         up, _failures = runner.health()
         if not up:
-            cause = runner.ping_error
-            if cause is not None and not _is_store_down(cause):
-                raise cause  # the store answered with a refusal: _watch counts it as a non-store failure
             raise StoreUnavailable("store ping failed")
         _warn_no_audit(app)
         runner.owned_app = app
@@ -963,10 +947,6 @@ class _Degraded:
         self._app: Callable[..., Any] = health_only_app(self.health)
         self._runner: Runner | None = None
         self._stopped = threading.Event()
-        self.exit_code = (
-            EXIT_OK  # EXIT_FAILED when the re-check gave up on a persistent non-store error
-        )
-        self.stop_server: Callable[[], None] = lambda: None  # set by `_serve_degraded`
         self._thread = threading.Thread(target=self._watch, name="trigger-recover", daemon=True)
 
     def start(self) -> None:
@@ -988,8 +968,11 @@ class _Degraded:
         return runner.running if runner is not None else 0
 
     def _watch(self) -> None:
+        """Retry every error, forever, every `HEALTH_RECHECK_S`: the worker never exits by itself here. The
+        exception class name (never its text) is logged at WARNING at most once per `DEGRADED_WARN_EVERY_S`,
+        and once more whenever the class changes."""
         last = ""
-        other = 0  # consecutive failures that are not a store-down kind
+        last_warned = 0.0
         while not self._stopped.wait(HEALTH_RECHECK_S):
             try:
                 wsgi, runner = _recover(self._args)
@@ -997,26 +980,12 @@ class _Degraded:
                 with self._lock:
                     self.failures += 1
                 name = type(exc).__name__
-                if _is_store_down(exc):
-                    other = 0  # the store is down: retried forever
-                else:
-                    other += 1
-                    if other >= DEGRADED_FATAL_AFTER:
-                        _LOG.warning(
-                            "trigger worker: store re-check failed %d times in a row with %s, not a store"
-                            " outage: stopping",
-                            other,
-                            name,
-                        )
-                        with self._lock:
-                            self.exit_code = EXIT_FAILED
-                        self.stop_server()
-                        return
-                    if name != last:
-                        _LOG.warning(
-                            "trigger worker: store re-check failed (%s): still degraded", name
-                        )
-                last = name
+                now = _monotonic()
+                if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:
+                    _LOG.warning(
+                        "trigger worker: store re-check failed (%s): still degraded", name
+                    )
+                    last, last_warned = name, now
                 continue
             with self._lock:
                 if not self._stopped.is_set():
@@ -1083,12 +1052,8 @@ def _serve_degraded(args: argparse.Namespace, exc: BaseException) -> int:
         server.server_address[0],
         server.server_port,
     )
-    degraded.stop_server = lambda: threading.Thread(
-        target=server.shutdown, name="trigger-stop", daemon=True
-    ).start()
     degraded.start()
-    code = serve(server, degraded)
-    return degraded.exit_code or code
+    return serve(server, degraded)
 
 
 def _log_to_stderr() -> logging.Handler:
