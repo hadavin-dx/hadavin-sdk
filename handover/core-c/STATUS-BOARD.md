@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:19:22Z
+UPDATED_UTC: 2026-11-20T07:20:19Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,23 +6,23 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 39
 ITEMS_OPEN: 25
 PERCENT: 66
-AGENTS_RUNNING: 9
-CAPACITY: load 3.5 of 4 cores, mem 2/15 GB, disk 60G free, 15% used, light agents 9, heavy agents 0
+AGENTS_RUNNING: 7
+CAPACITY: load 3.3 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 7, heavy agents 0
 DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:19:07+00:00
+PUSHED_UTC: 2026-11-20T07:19:22+00:00
 
-(12:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:50 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) wR1 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the owner-facing wording draft (egm:egm-comprehension): naive reader | 07:40 | 07:52 | 2 | running | 1 of 3 | 0 | wording rule 14: a reader who never saw the project |
-| (new) wR2 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the wording draft (egm:egm-style): calibrated claims, status words, owner summary stands alone | 07:40 | 07:52 | 2 | running | 1 of 3 | 0 | wording rule 14 and 6 |
+| a5e0642d | reviewer | claude-sonnet-5-5 | EGM RESULT review of the owner-facing wording draft (egm:egm-comprehension): naive reader | 07:40 | 07:52 | 100 | done | 1 of 3 | 0 | finished: naive reader: not ready: 4 Blockers, 19 Majors, 9 Nits |
+| aad54501 | reviewer | claude-sonnet-5-5 | EGM RESULT review of the wording draft (egm:egm-style): calibrated claims, status words, owner summary stands alone | 07:40 | 07:52 | 100 | done | 1 of 3 | 0 | finished: style: not ready: 3 Blockers, 12 Majors, 8 Nits |
 | (new) tw20 | builder (tests only) | claude-sonnet-5-5 | ORDER 020 test files: install test that parses src for model callers (strict xfail until core-b installs), micro-sign/Han/Hangul mixed-script pins, mutants pickup wrapper | 07:36 | 08:10 | 2 | running | n/a | 0 | lane: three NEW test files only |
 | (new) pick | builder | claude-sonnet-5-5 | picks the integration (16 commits) onto cloud/core-c in its own worktree /tmp/core-c-pick (branch wip-pick), resolves redact.py/runmap.py conflicts with the hardened own-output rule and the fold fix, one batch | 07:27 | 08:20 | 2 | running | n/a | 0 | lane: own worktree; the gate files in the main checkout are not touched; HEAVY at its end |
 | (new) g4R | reviewer | claude-sonnet-5-5 | EGM PLAN review of ticket G4 (P1c) readiness (egm:egm-implementation-readiness) | 07:20 | 07:35 | 2 | running | 1 of 3 | 0 | EGM sequence: plan review before any build |
@@ -137,7 +137,7 @@ PUSHED_UTC: 2026-11-20T07:19:07+00:00
 | Gate fix round for review round 2 | RUNNING | 2 | evidence/F-G0-1.md | 1 | builder in the main checkout; the code reviewer's findings go to it by message |
 | EGM plan review of ticket G4 (P1c) | RUNNING | 5 | tickets/G4-review-1.md | 1 | two reviewers |
 | Fold false-hit and cost measurement | RUNNING | 2 | evidence/G1-false-hits-and-cost.md | 1 | evidence runner, no code |
-| SECURITY and README wording final | written; review running | 70 | SECURITY-README-final.md | 1 | 288 lines, 53 limits; EGM wording review (naive reader + style) running |
+| SECURITY and README wording final | review done: NOT READY; rewrite on opus next | 70 | SECURITY-README-final.md | 1 | tickets/SEC-wording-review-1.md has the condensed list |
 | Pick of the integration onto cloud/core-c | RUNNING | 2 | evidence/PICK-int-onto-core-c.md | 1 | one builder in a worktree |
 | Glued-rest gap of IPv4, phone, IBAN, UUID, host name (from the integration probe) | READY (needs a ticket + plan review) | 0 | evidence/INT-g2-g3.md | 0 | ORDER 016c item 15 asked for a look at the other kinds: listed, not fixed |
 | ORDER 020 (lead review round 3): MJ-A, MJ-D, minors | RUNNING | 10 | tickets/F-result-review-2.md, evidence/F-G0-1.md | 1 | gate fix agent has them (MJ-A = dz2-B1) |
