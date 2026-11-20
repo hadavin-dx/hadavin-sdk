@@ -69,6 +69,8 @@ DECLARE
     v_max_amount NUMERIC;
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
+    v_skew NUMERIC;
+    v_today DATE;
     v_month DATE;
     v_day_cap NUMERIC;
     v_month_cap NUMERIC;
@@ -79,6 +81,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_decimals missing' USING ERRCODE = 'HD004'; END IF;
     SELECT l.value INTO v_max_id FROM hadavin_limits l WHERE l.name = 'max_id_chars';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_id_chars missing' USING ERRCODE = 'HD004'; END IF;
+    SELECT l.value INTO v_skew FROM hadavin_limits l WHERE l.name = 'max_day_skew';
+    IF NOT FOUND THEN RAISE EXCEPTION 'limit max_day_skew missing' USING ERRCODE = 'HD004'; END IF;
 
     IF p_id IS NULL OR pg_catalog.char_length(p_id) NOT BETWEEN 1 AND v_max_id OR p_id !~ '^[A-Za-z0-9._:-]+$' THEN
         RAISE EXCEPTION 'invalid argument: p_id' USING ERRCODE = '22023';
@@ -92,6 +96,13 @@ BEGIN
         RAISE EXCEPTION 'invalid argument: p_run_id' USING ERRCODE = '22023';
     END IF;
     IF p_day IS NULL OR NOT pg_catalog.isfinite(p_day) OR p_day < DATE '1970-01-01' OR p_day > DATE '9999-12-31' THEN
+        RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
+    END IF;
+    -- the booking day is the database's UTC date, give or take max_day_skew days (a clock a little off, a call across
+    -- midnight). Any other day would start a fresh day and month counter, so a runtime that names 2099-01-01, then
+    -- 2099-02-01 and so on would never meet a cap (review B3). The same 22023 as any other refused argument.
+    v_today := (pg_catalog.clock_timestamp() AT TIME ZONE 'UTC')::date;
+    IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN
         RAISE EXCEPTION 'invalid argument: p_day' USING ERRCODE = '22023';
     END IF;
     -- written positively: NaN sorts above every number and Infinity is above the window, both fail this test

@@ -7,7 +7,6 @@ the mutant file. Real PostgreSQL 16, real logins. Needs HADAVIN_TEST_PG_DSN."""
 from __future__ import annotations
 
 import os
-from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
 
@@ -19,10 +18,11 @@ from hadavin_sdk.config import ConfigError
 from hadavin_sdk.models import new_id
 from hadavin_sdk.store.protocol import SpendCapExceeded
 from tests.money_caps_seed import seed_caps
+from tests.money_days import today_utc
 from tests.test_stop_state_roles import World
 
 D = Decimal
-DAY = date(2026, 1, 15)
+DAY = today_utc()
 AGENT = "agent-caps"
 HUGE = D(10) ** 30
 pytestmark = [

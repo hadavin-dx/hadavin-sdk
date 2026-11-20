@@ -19,6 +19,9 @@ from hadavin_sdk.config import ConfigError
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store.protocol import SpendCapExceeded
 from tests.test_money_caps_reserve_pg import caps_battery
+from tests.test_money_h1_pg import (
+    check_b3_day_window,
+)
 from tests.test_stop_state_roles import World
 
 pytestmark = [
@@ -160,3 +163,54 @@ def test_the_caps_battery_kills_every_mutant(name, scratch, tmp_path, monkeypatc
             caps_battery(scratch)
     else:
         caps_battery(scratch)
+
+
+# --- builder H1 (lead review xr-money-lead-1): the day window, the minimum expiry age, the counter CHECKs ------------
+B3_WINDOW = "IF p_day < v_today - v_skew::integer OR p_day > v_today + v_skew::integer THEN"
+H1_MUTANTS = {
+    "control": (lambda t: t, check_b3_day_window, False),
+    "M-B3a the day window check is removed": (
+        lambda t: t.replace(B3_WINDOW, "IF false THEN"),
+        check_b3_day_window,
+        True,
+    ),
+    "M-B3b only a past day is refused, a future day passes": (
+        lambda t: t.replace(B3_WINDOW, "IF p_day < v_today - v_skew::integer THEN"),
+        check_b3_day_window,
+        True,
+    ),
+    "M-B3c only a future day is refused, a past day passes": (
+        lambda t: t.replace(B3_WINDOW, "IF p_day > v_today + v_skew::integer THEN"),
+        check_b3_day_window,
+        True,
+    ),
+    "M-B3d the window is a literal, the table row is ignored": (
+        lambda t: t.replace("v_skew::integer", "1"),
+        check_b3_day_window,
+        True,
+    ),
+    "M-B3e the window is wide (a literal 100000 days)": (
+        lambda t: t.replace("v_skew::integer", "100000"),
+        check_b3_day_window,
+        True,
+    ),
+}
+
+
+@pytest.mark.parametrize("name", list(H1_MUTANTS))
+def test_the_h1_checks_kill_every_mutant(name, scratch, tmp_path, monkeypatch):
+    mutate, check, killed = H1_MUTANTS[name]
+    text = SQL_FILE.read_text(encoding="utf-8")
+    mutated = mutate(text)
+    assert (mutated != text) or name == "control", "the mutation did not change the SQL"
+    folder = tmp_path / "migrations"
+    shutil.copytree(mig.MIGRATIONS, folder)
+    (folder / SQL_FILE.name).write_text(mutated, encoding="utf-8")
+    real = mig._migration_files
+    monkeypatch.setattr(mig, "_migration_files", lambda folder_=None: real(folder))
+    scratch.migrate()
+    if killed:
+        with pytest.raises((AssertionError, Exception, pytest.fail.Exception)):
+            check(scratch)
+    else:
+        check(scratch)

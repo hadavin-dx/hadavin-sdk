@@ -158,6 +158,15 @@ TRIGGER_CONFLICT_EVENTS_MAX = 1000
 # Seconds after which an open spend reservation is marked expired (its worst case stays booked). The tick step uses
 # the larger of this and the stuck-run age, so a reservation never expires while its run could still be working.
 RESERVATION_EXPIRE_S = 3600
+# The youngest an open hold may be for `hadavin_expire_spend_reservations` to expire it (row `min_expiry_age` of
+# `hadavin_limits`). It equals the floor the only legitimate caller (the tick step) already uses, so nothing that works
+# today changes; a runtime login that calls the function directly can no longer expire a live hold at age 0 (an expired
+# hold can be released by the operator and the real cost of a late settle would be lost, review M1).
+MIN_EXPIRY_AGE_S = RESERVATION_EXPIRE_S
+# How many days the booking day of `hadavin_reserve_spend` may differ from the database's UTC date (row
+# `max_day_skew` of `hadavin_limits`). One day covers a clock a few hours off and a call made across midnight; a
+# larger window would let a runtime login start a fresh day counter and month counter by naming a far day (review B3).
+MAX_RESERVE_DAY_SKEW_DAYS = 1
 # Bytes added to the input of every worst-case price of a model call (llm/common.py worst_case_usd): room for what
 # an adapter adds around the prompt (JSON framing, role names, the forced-tool wrapper). Not measured against a
 # provider (UNVERIFIED); a lead may raise it.

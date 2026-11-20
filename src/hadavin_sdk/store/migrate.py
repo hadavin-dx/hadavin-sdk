@@ -17,6 +17,7 @@ from typing import Literal
 
 from psycopg import errors, sql
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import MAX_SPEND_DECIMALS, MAX_SPEND_USD
 from hadavin_sdk.store.postgres import connect, names_of
@@ -350,6 +351,8 @@ def money_limits() -> dict[str, int]:
         "max_decimals": MAX_SPEND_DECIMALS,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
+        "min_expiry_age": defaults.MIN_EXPIRY_AGE_S,
+        "max_day_skew": defaults.MAX_RESERVE_DAY_SKEW_DAYS,
     }
 
 
