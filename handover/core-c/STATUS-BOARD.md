@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:11:41Z
+UPDATED_UTC: 2026-11-20T09:13:00Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,22 +6,21 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 7, heavy agents 0
+AGENTS_RUNNING: 6
+CAPACITY: load 0.9 of 4 cores, mem 0/15 GB, disk 58G free, 17% used, light agents 6, heavy agents 0
 DISK: / 58G free, 17% used; git worktrees 16; 947M	/tmp/claude-0;259M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: Only failure seen: tests/test_runmap_enforce_map.py::test_m_new_1_enforce_map_has_the_redactors_time_budget under -n load (the test patched runmap.time only); fix is in the working tree, being verified by merged-tree batch 3.
 NEXT: LIVE only. Landed: G7 round 5 d1384342; gate time-budget test fix 833a86b (47 and 441 passed after; batch 3 before the fix 1 failed 2671 passed). Next: reviews in, G8 v2 plan review, tnmut evidence, wording refresh, E12 mutant snippet.
-PUSHED_UTC: 2026-11-20T09:11:35+00:00
+PUSHED_UTC: 2026-11-20T09:12:57+00:00
 
-(14:41 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:43 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) g7D5 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 5 of G7 (design) | 09:09 | 09:22 | 2 | running | 5 | 0 | fresh reviewer after fixes |
 | (new) g7C5 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 5 of G7 (codebase) | 09:09 | 09:22 | 2 | running | 5 | 0 | fresh reviewer after fixes |
 | (new) g4R4 | reviewer | claude-sonnet-5-5 | G4 v4 PLAN review round 4: implementation readiness | 09:13 | 09:28 | 2 | running | 4 | 0 | build P1c only after a clean plan review |
 | (new) g4C4 | reviewer | claude-sonnet-5-5 | G4 v4 PLAN review round 4: codebase details | 09:13 | 09:28 | 2 | running | 4 | 0 | same |
