@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T16:58:50Z
+UPDATED_UTC: 2026-11-20T16:59:02Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 2
-CAPACITY: load 3.65 of 4 cores (1-minute average), mem 1.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 14G 55G 21%; 667M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
+CAPACITY: load 3.62 of 4 cores (1-minute average), mem 1.6/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 14G 55G 21%; 668M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 17:45 rev-b-9b76 + docs-for-c + integ3 + door-money running; then: fresh review of docs-for-c's changes, push core/integration-dryrun from integ3, apply door-merged-support-2.patch after review
-PUSHED_UTC: 2026-11-20T16:57:09Z (the push before this board)
+PUSHED_UTC: 2026-11-20T16:58:57Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -112,19 +112,15 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 5848 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 12s ago | running | matched by name in ps |
-| 8618 | /home/user/wt/integ3/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 8695 | postgres: postgres postgres 127.0.0.1(60682) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 8715 | /home/user/wt/integ3/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 8780 | /home/user/wt/integ3/.venv/bin/python -m tests.triggers.test_t5_crash_ | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 38664s ago | running | matched by name in ps |
-| 30446 | uv run pytest tests/triggers -n 3 -q -p no:cacheprovider -rfE | core-a session or its agent | 183s ago | running | matched by name in ps |
-| 30450 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 183s ago | running | matched by name in ps |
+| 9904 | /home/user/hadavin-sdk/.venv/bin/python -m pytest -q -p no:cacheprovid | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 38675s ago | running | matched by name in ps |
+| 30446 | uv run pytest tests/triggers -n 3 -q -p no:cacheprovider -rfE | core-a session or its agent | 194s ago | running | matched by name in ps |
+| 30450 | /home/user/wt/integ3/.venv/bin/python /home/user/wt/integ3/.venv/bin/p | core-a session or its agent | 194s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
