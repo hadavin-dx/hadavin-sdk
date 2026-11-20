@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:34:53Z
+UPDATED_UTC: 2026-11-20T15:39:07Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
-AGENTS_RUNNING: 0
-CAPACITY: load 0.05 of 4 cores (1-minute average), mem 1.1/15.7 GB, 0 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 1
+CAPACITY: load 0.00 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 56G 20%; 644M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:33:12Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:34:58Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,17 +106,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| none | | | | | | | | | | |
+| rev-c-G9b | fresh independent reviewer (codebase-details), read-only | sonnet | core-c G9b (1a0965361 occurrences charge M1, SECRET union M2) + mutant expects + PU1 re-pin SECRET_3->SECRET_2 | 15:41 | 15 min | 5 | running | 1 | 0 | new behaviour-changing core-c code landed |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 33625s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 33625s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 33625s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 33625s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 33625s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 33625s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 33881s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 33881s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 33881s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 33881s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 33881s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 33881s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -178,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:41 AGENTS 1 (rev-c-G9b: core-c 1a0965361 G9b M1/M2 + mutant expects + PU1 re-pin). The rest of your 15:40 list is DONE and the heads are UNCHANGED, so I do not re-run it: wip/lead-b-migrate 0891d81bd (reviews/rev-lead-migrate.md, rev-lead-migrate-2.md), wip/lead-b-ts-watermark de8967aba (rev-lead-tswm.md, rev-lead-tswm-2.md); merge-c: nothing to merge, all 4 commits superseded (handover/core-c/requests/from-core-a-merge.md): core-c cannot merge g2+g3 either without regressing; CRASH-MATRIX part 2 DONE; E-door-1 README DONE+reviewed. core-b moved to 13eecf78f (only tests/harness/e9 test since 763d71c42: no new behaviour to review); core-c moved to 78f75592c (G9b = the new review).
 - 15:40 core-c G4c and core-b B2 reviewed (reviews/rev-c-G4c.md, rev-b-B2.md; appended to the core-c and core-b request files). core-c G4c: closes the p1d STOP-guard input; residual Major: a host ending at a suffix (corp/lan/internal/local/...) followed DIRECTLY by a non-ASCII char stays readable (`db01.corp例`, `db01.corpé`: end checks use Unicode \w); the four gate-mutant fixes die for their own reasons. core-b B2 (reserve before, settle after the model call): no Blocker; cap race closed in SQL; MAJORS: (1) a provider error never releases the hold even when refused_before_response is true (nothing reads the mark): two failed runs in an outage lock the agent for the day (expiry >= 3600 s), and a non-ProviderError from chat escapes with the hold open and no audit note; (2) the document screen (agent_loop.py:517) runs BEFORE the reserve: 4 parallel runs each make an uncapped judge call; render_shadow uncharged. M5 only partly fixed (Limits.reserve still a new id per call, no retry). No agents running.
 - 15:37 core-c G13c + G12c reviewed (reviews/rev-c-G13c-G12c.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker. FIXED: my quadratic-slicing Major (4-gram tested before the slice; charge still min(len,64): bounded fail-closed cost nit), and the G12b ABC_12!/SEC/ADMIN_1/DB_PASS_2/HOST/JWT cases. STILL OPEN, all mine: (a) stacked-encoding window overlap LEAK (runmap.py:1548 unchanged: 20-char secret spelled %26%23<dec>%3B per char at VIEW_WINDOW-217 is sent; fails open; no test), (c1) `password=‹hunter22›` core drop (deliberate, pinned by LK[‹hunter2zz›]/G12-M33), (c2) `password=Secret!`/`Token,` NOT_A_VALUE drop (no limit recorded), (d) U+226E marker spoof (no change). Running: rev-c-G4c, rev-b-B2.
 - 15:31 AGENTS 3: found NEW code that answers my findings (heads moved: core-c 107717a7e, core-b 763d71c42): core-c G13c (net lookups: head test before slice) and G12c (core rules) = answers to my G13b/G12b Majors; core-c G4c (start look-behind) + four gate mutant fixes; core-b F-install B2 (live path reserves BEFORE and settles AFTER the model call) = answer to my 'nothing calls limits.reserve' Major. One fresh reviewer each (rev-c-G13c-G12c, rev-c-G4c, rev-b-B2). The wip/lead-b-* heads are unchanged.
