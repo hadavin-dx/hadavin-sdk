@@ -1,7 +1,50 @@
 # G7: one more pattern pass after the sweep (ORDERS 012 and 013, escalations E3 and E5)
 
-Status: BUILT as ordered in ORDER 013 (builder, 2026-11-20). Evidence: evidence/G7-1.md (three parts, in order of work).
+Status: BUILT as ordered in ORDER 013 (builder, 2026-11-20); FIX ROUND 2 (ORDER 020 MJ-B and the G7 result review, same day) replaced the one extra pass by a
+capped fixed-point loop: read "Design as built, round 2" first, the older sections describe round 1 and are kept as the record.
+Evidence: evidence/G7-1.md (parts in order of work; "G7 fix round 2" is the last).
 This text replaces the first design (context patterns only, bounded rounds): that design is GONE from the code.
+
+## Design as built, ROUND 2 (supersedes "Design as built" below and the ORDER 013 one-pass wording)
+`_Redactor.settle(originals, swept)` (guard/redact.py), called by `redact()` and `redact_many()`:
+1. pattern pass 1 (`find`), sweep 1 (as before).
+2. Round 1: the whole table runs again over each string that pass 1 or sweep 1 changed. If the map did NOT grow, done.
+3. If the map grew: sweep every string again (the new value's other copies go). The strings THAT sweep changed (a placeholder now
+   stands where a value stood) go through the table again: round 2, and so on, only over the strings the last sweep changed.
+4. Hard cap `_SETTLE_ROUNDS = 4` rounds. A text the last sweep still changed after round 4 is not settled: `RedactionError("NotSettled")`
+   (the type `redact_text` re-raises as RedactionError; nothing is shown). A refusal, never a silent leak.
+5. Deadline: `settle` checks the call's deadline (the `_deadline` of `redact`, the same CPU clock as `REDACT_BUDGET_S`; new keyword
+   `_deadline=None` on `redact_many`, callers unchanged) before every round and raises `InputTooLarge` when it is spent. A round is never skipped.
+6. Cost: text that needs no more passes pays nothing extra (a clean text: 1 pass, 1 sweep; one planted secret: 2 passes, 1 sweep; the chain of
+   three: 3 passes over the one text that changed). Measured 2026-11-20 (CPU s, best of 3): 100,000 chars of bank lines 0.395 (one pass 0.182,
+   round 1 code 0.484 on the earlier machine run); 60,000 -> 240,000 chars 0.263 -> 1.023 (linear); hostile `password=` at the 262,144 cap with
+   planted matches through `redact_untrusted` with views 1.9 s (round 1 code 1.7 s); `curl -u ` 4.0 s; all under the 6 s budget.
+7. Compound tail (dz-2): when `_place` stores a compound SECRET entry whose written form held placeholders (`<SECRET_1>xy`), that spelling is
+   registered; `sweep` replaces it as a literal on the unsplit text before the placeholder split. Other copies the first sweep had cut to
+   `<SECRET_1>xy` no longer keep `xy`. A rolled-back entry (fold journal) is ignored (checked against the map).
+Fixed by the loop: the chain of three (`password=V`, `BSB: <code>V`, `paid <code>/<account>`) and the compound tail (BEARER up to 7 characters,
+BASIC / authorization / `"auth":` about 3, `sig=` up to 11). Both strict expected failures of round 1 are now ordinary passing tests.
+
+## Limits that remain after round 2
+- A chain that needs more than 4 rounds is REFUSED (RedactionError), not masked. No natural chain found needs more than 3 passes; the cap is tested by
+  setting it to 1.
+- Boundary class, fail safe (cb nit, pinned in tests/test_redact_settle_loop.py): a boundary pattern (SSN, PHONE, EMAIL, IBAN, UUID, IPV4, APIKEY) can
+  match where pass 1 saw a word character and the sweep then left a placeholder: `password=hunter` then `ref hunter123-45-6789` gives
+  `ref <SECRET_1><SSN_1>`. A fresh call on the second line alone would not mask the digits. More is masked, never less.
+- The sweep's own rule for short or common values (under 3 characters; all-digit under 6; common words; an identifier where a letter or digit touches it) is unchanged.
+- A secret that no pattern matches and no known value contains is not found (as before; the patterns are the control).
+- The test generator and the reference loop cover the shapes listed in the evidence, not every chain.
+- The deadline is checked between rounds, not inside a pass: one pass over a hostile text at the cap is not interruptible (about 4 s measured).
+- Removed test: `test_the_patterns_that_name_a_placeholder_are_still_these_two` pinned the list of patterns that spell a placeholder (a record of step 1
+  of ORDER 012); the design no longer depends on that list (the whole table runs), so the test could only block a harmless new pattern.
+
+## For SECURITY wording (round 2; replaces the list at the end of this ticket where they differ)
+- After the first pass and sweep the redactor runs the patterns again over the strings the sweep changed, to a fixed point, at most 4 rounds; a call that
+  is still changing then is refused (RedactionError), never returned half masked. A text that needs nothing more pays nothing more.
+- Each round is checked against the call's time budget (InputTooLarge past it); a pass in progress is not interrupted.
+- A longer credential found only because a shorter known secret inside it was masked first is stored whole and its other copies are masked whole (no `tail`).
+- Boundary class: a call may mask a little MORE than a fresh call on the same text would (digits glued to a swept word), never less.
+- Unchanged: values and copies the sweep leaves by rule; escaped look-alikes are never credentials; a tool error text is redacted twice (see below).
 
 ## Problem (one root cause)
 A pattern's result can change once placeholders stand in the text, and the sweep writes placeholders after every pattern ran.

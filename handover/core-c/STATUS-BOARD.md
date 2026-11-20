@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:31:18Z
+UPDATED_UTC: 2026-11-20T07:36:14Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,23 +6,23 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 40
 ITEMS_OPEN: 24
 PERCENT: 73
-AGENTS_RUNNING: 7
-CAPACITY: load 2.2 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 7, heavy agents 0
-DISK: / 60G free, 15% used; git worktrees 6; 70M	/tmp/claude-0;398M	/root/.cache/uv;
+AGENTS_RUNNING: 5
+CAPACITY: load 6.0 of 4 cores, mem 1/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
+DISK: / 60G free, 15% used; git worktrees 6; 71M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: tests/test_gate_mutants_picked_up.py fails on purpose (24 mutants out of sync, re-sync by the gate fix agent); producers registry (core-b patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:28:50+00:00
+PUSHED_UTC: 2026-11-20T07:31:18+00:00
 
-(13:01 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:06 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (new) w2a | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-comprehension): fresh naive reader | 07:42 | 07:55 | 2 | running | 2 of 3 | 0 | fresh reviewers, not the round 1 ones |
-| (new) w2b | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-style): count mismatches, status words, overclaims | 07:42 | 07:55 | 2 | running | 2 of 3 | 0 | fresh reviewers |
+| a7f772ca | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-comprehension): fresh naive reader | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: naive reader on v2: 4 Blockers, many Majors; real contradictions found (K2 example, decision 5 cites the wrong gaps, banner vs item 3, "never" vs K26) |
+| a7208aaf | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-style): count mismatches, status words, overclaims | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: style on v2: 4 Blockers, 18 Majors, 10 Nits; the status totals (62) recount correctly |
 | (new) g7f2 | builder | claude-sonnet-5-5 | G7 fix round 2 (lead ORDER 020 MJ-B): capped fixed-point loop in the redactor with RedactionError past the cap, tail leak, deadline inside pass 2, a property generator with a reference fixed point, duplicate TEXTNORM_PINNED_PYTHON | 07:33 | 08:15 | 2 | running | 2 of 3 (G7 result review) | 0 | starts the minute the pick landed; lane: redact.py + defaults.py comments + G7 tests |
 | addcb0ba | drafter | claude-opus-5-5 | rewrites the owner-facing security wording as v2 from both reviews (verdict first, glossary, five status words, plain labels) | 07:41 | 08:10 | 100 | done | round 2 of the wording review follows | 0 | finished: SECURITY-README-v2.md (536 lines, DRAFT): 62 known gaps (15 PINNED, 11 STATED, 7 WAITING, 22 OPEN, 5 FIXED, 2 FIXED ON BRANCH), 18 marked UNVERIFIED; corrected facts: the 4.50 overshoot arithmetic, a failed call stays booked for the rest of the day (not about an hour); contested in part: lead = coordinating session, banner covers gate + secret finder + store |
 | (new) g4v2 | drafter | claude-opus-5-5 | rewrites ticket G4 (P1c) as v2 resolving all 8 Blockers and 12 Majors of the plan review | 07:41 | 08:15 | 2 | running | plan review round 2 follows | 0 | EGM: draft/resolve on opus; nothing is built before the plan review is clean |
@@ -143,7 +143,7 @@ PUSHED_UTC: 2026-11-20T07:28:50+00:00
 | Gate fix round for review round 2 | RUNNING | 2 | evidence/F-G0-1.md | 1 | builder in the main checkout; the code reviewer's findings go to it by message |
 | EGM plan review of ticket G4 (P1c) | DONE (round 1) | 100 | tickets/G4-review-1.md | 1 | NOT READY: 6 distinct Blockers, 12 Majors; ticket v2 being drafted on opus |
 | Fold false-hit and cost measurement | RUNNING | 2 | evidence/G1-false-hits-and-cost.md | 1 | evidence runner, no code |
-| SECURITY and README wording final | v2 written (opus); review round 2 running | 85 | SECURITY-README-final.md | 1 | 536 lines; 62 known gaps |
+| SECURITY and README wording final | v2 reviewed (round 2): NOT CLEAN; v3 (last round) on opus next | 85 | SECURITY-README-final.md | 1 | tickets/SEC-wording-review-2.md |
 | Pick of the integration onto cloud/core-c | DONE | 100 | evidence/PICK-int-onto-core-c.md | 1 | merged d95a727; verified in the worktree |
 | Glued-rest gap of IPv4, phone, IBAN, UUID, host name (from the integration probe) | READY (needs a ticket + plan review) | 0 | evidence/INT-g2-g3.md | 0 | ORDER 016c item 15 asked for a look at the other kinds: listed, not fixed |
 | ORDER 020 (lead review round 3): MJ-A, MJ-D, minors | RUNNING | 10 | tickets/F-result-review-2.md, evidence/F-G0-1.md | 1 | gate fix agent has them (MJ-A = dz2-B1) |
