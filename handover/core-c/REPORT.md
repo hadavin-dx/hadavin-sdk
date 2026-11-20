@@ -1,5 +1,29 @@
 # REPORT from core-c (newest on top, UTC and IST)
 
+## Build status after ORDERS 002 to 011. 2026-11-20T05:53Z (IST = UTC + 5:30)
+
+### What failed or is open (first)
+- Combined tree on cloud/core-c (53ee2b2): 2 tests red. tests/test_k5_producers.py (the new gate module is not in SPINE's guard/producers.py; requests/1-producers.patch) and test_m16 in tests/test_textnorm_round1.py (two heads disagree; ORDER 010 decided, fix running).
+- P1d-a (G2): 2 property tests fail, inherited from the input head (the lead's baseline shows the same two, ORDER 009). Fix try 1 running; cap 2 more tries, else P1d-a is left out as ORDER 009 allows.
+- Redactor gap confirmed by a run (E3): one redaction pass leaves a bank account number readable beside a bank code. Pinned as a strict expected failure; not fixed (waiting for the lead: build as part G7 or accept).
+- Lead code review round 1 of the gate (ORDER 011: 1 Blocker, 4 Majors, 9 Minors): the Blocker (old design) is already replaced by commit 45156c1; the Majors and Minors are being applied now. Round 1 of at most 3.
+- One-minute board cron: refused by the session's permission layer (E1). Boards go out per tool batch.
+- NOT RUN anywhere in this session: the full test suite, Python 3.12, PostgreSQL 17, the textnorm and P1d-a mutant runners.
+
+### Code branches and tips (ORDER 010 item 4)
+| branch | tip | what |
+|---|---|---|
+| cloud/core-c | 53ee2b2 | "code B:" grants negative tests; "code G: G0" is_masked + enforce_map; "code F:" gate wrapper; "code G: G1 step 1 to 4" the fold. Code commits touch only src/, tests/, tools/ and the fold's own docs/config files |
+| wip/cloud-core-c/g1-fold | 8e4d234 | the fold alone on main 51c9fc4 (same 5 commits) |
+| wip/cloud-core-c/g2-p1d-a | 4bd78f6 | P1d-a picked onto main + 27 path tests; 2 inherited failures, fix in progress (not pushed yet) |
+| (local only) wip-g3-p2d | in progress | P2d-1 fold-scan port on top of the fold |
+
+### FILE-INDEX (handover/core-c/)
+CAPABILITY.md, LANE-MAP.md, PLAN-READBACK.md, DECISIONS.md, ESCALATIONS.md (E1 to E4), QUESTIONS.md, STATUS-BOARD.md;
+tickets/: F-gate-wrapper-body.md (with Amendment 1 and As Built), F-review-1.md, G-text-deltas.md, G-review-1.md, G-survey-P1a-P1b.md, G-survey-P2d-P1d-P1c.md, G4-P1c-redactor-gaps.md, B-mutant-cases.md;
+evidence/: F-G0-1.md, G1-fold.md, G2-p1d-a.md, P1c-probe.md, p1c_probe.py; requests/: 1-producers.patch.
+R-numbers used (from the handover files only; the bible is not in this box): R454 needed-check, R447/R448 rung table, R456 work conduct, R461 capacity, R462 best-first.
+
 ## ORDER 001 proof: EGM VISIBLE. 2026-11-20T04:12:22Z (2026-11-20T09:42:22+05:30 IST)
 
 ### Status block

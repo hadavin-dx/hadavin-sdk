@@ -1,26 +1,28 @@
-UPDATED_UTC: 2026-11-20T05:52:30Z
+UPDATED_UTC: 2026-11-20T05:53:51Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
-ITEMS_TOTAL: 16
-ITEMS_OPEN: 7
-PERCENT: 81
-AGENTS_RUNNING: 2
-CAPACITY: load 1.9 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 2, heavy agents 0
+ITEMS_TOTAL: 17
+ITEMS_OPEN: 8
+PERCENT: 77
+AGENTS_RUNNING: 4
+CAPACITY: load 2.0 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
 DISK: / 60G free, 14% used; git worktrees 4; 7.7M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: combined tree: 2 known failing tests (producers patch for SPINE; E4 for the lead). G2: 2 inherited tests (fix running)
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:50:00+00:00
+PUSHED_UTC: 2026-11-20T05:52:30+00:00
 
-(11:22 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(11:23 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| aa4ceadd | builder | fable | applies the lead's code review round 1 of the gate (ORDER 011): new settle rule, map write without clear(), ast-based guard test, mutants, stated limits; main checkout | 05:56 | 06:20 | 5 | running | 1 of 3 (lead review) | 0 | ORDER 011 |
+| a7728368 | builder | fable | ORDER 010: changes the one test clause to the stricter has_mixed_script rule, pins it, writes the Unicode 15.1.0 requirement into README/CHANGELOG/ticket G; main checkout, other files than the gate agent | 05:56 | 06:10 | 5 | running | n/a | 0 | ORDER 010 decision on E4 |
 | aa070de5 | builder | fable | code G3: ports the fold scan of core/P2d-1 (its own 14 files) onto the fold in its own worktree /tmp/core-c-g3, branch wip-g3-p2d cut from wip-g1-fold; adds the redactor action counter asked by the review; one test batch with 2 workers | 05:47 | 06:40 | 2 | running | n/a | 0 | the fold is in, so G3 can start; HEAVY at the end (tests) |
 | aed773ca | builder | fable | code G2: cherry-picks core/P1d-a (6875f27) onto main in its own worktree /tmp/core-c-g2 (local branch wip-g2-p1d-a), checks every approval path redacts before defang, adds path tests, runs its test batch with at most 2 workers | 05:43 | 06:15 | 70 | running | n/a | 0 | P1d-a picked clean onto main, path tests added (27 pass), pushed as wip/cloud-core-c/g2-p1d-a. 2 tests FAIL, both inherited from the input head itself (it ran the head to prove it). Now on fix try 1 of 2 for both; mutant script blocked by the red baseline |
 | a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 100 | done | n/a | 0 | finished: base64 52 of 142 cases leak (no decoded view; blobs under 40 characters pass unchanged), host names 28 of 44 (4 kept on purpose), bare numbers 24 of 43 not masked (accepted property). evidence/P1c-probe.md |
@@ -70,11 +72,12 @@ PUSHED_UTC: 2026-11-20T05:50:00+00:00
 | T3 EGM review of ticket F | DONE | 100 | tickets/F-review-1.md | 1 | NOT CLEAN after the one round: 6 Blockers, 9 Majors, 7 Nits merged; resolved or assumed in tickets/F-review-1.md; one escalated (E2) |
 | T4 step B grants negative tests + mutant cases | DONE | 100 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | committed as "code B:"; PostgreSQL 17 not run; mutants 11, 14, 15, 16 not applied; 12 cases wait for step B names |
 | BUILD G0 + F (check-only function, gate wrapper) | DONE | 100 | evidence/F-G0-1.md | 1 | committed and pushed as "code G: G0" and "code F:"; as-built differences listed at the end of ticket F |
-| BUILD G1 fold | DONE except 1 test (BLOCKED-LEAD E4) | 95 | evidence/G1-fold.md | 1 | 5 fold commits picked onto cloud/core-c with no conflict (also still on wip/cloud-core-c/g1-fold) |
+| BUILD G1 fold | RUNNING (ORDER 010 fix) | 95 | evidence/G1-fold.md | 1 | fold is on cloud/core-c; the one failing clause is being changed as the lead decided |
 | BUILD G2 P1d-a | RUNNING | 70 | evidence/G2-p1d-a.md | 1 | built and pushed on wip/cloud-core-c/g2-p1d-a; 2 inherited failing property tests (a host keeps a linkable last dot; a glued e-mail leaves residue on the first pass) are being fixed, cap 2 more tries |
 | BUILD G3 P2d-1 port | RUNNING | 2 | evidence/G3-p2d-port.md | 1 | one builder in a worktree on top of the fold; port decisions from the review are in its brief |
-| BUILD G4 P1c (base64 scan, whole host names) | RUNNING | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | builder starts now in the main checkout (guard/runmap.py is free) |
+| BUILD G4 P1c (base64 scan, whole host names) | WAIT gate fixes | 35 | evidence/P1c-probe.md, tickets/G4-P1c-redactor-gaps.md | 1 | both edit guard/runmap.py in the main checkout; starts when the ORDER 011 fix agent ends |
 | BUILD G6 wording (docstrings) | WAIT lead OK | 0 | tickets/G-review-1.md (text revision 2) | 0 | two docstring edits; text needs the lead's OK |
+| Gate: lead code review round 1 fixes (ORDER 011) | RUNNING | 5 | evidence/F-G0-1.md | 1 | review round 1 of at most 3 |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -94,4 +97,4 @@ PUSHED_UTC: 2026-11-20T05:50:00+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-E3 (new, confirmed by run): one redaction pass leaves a bank account readable; fix as part G7? E4: has_mixed_script rule. Ticket F "AS BUILT": 8 differences for verdict (enforce= keyword instead of mask_check=). Python 3.12 has Unicode 15.0.0 (decision). requests/1-producers.patch for SPINE. G4 3 decisions; G6 text rev 2; E1 cron denied.
+E3 (confirmed by run): one redaction pass leaves a bank account readable: build as G7 or accept? Ticket F AS BUILT: enforce= keyword instead of mask_check=. requests/1-producers.patch for SPINE. G4 3 decisions; G6 text rev 2. E1 cron denied. 4 agents run (1 heavy at its end).
