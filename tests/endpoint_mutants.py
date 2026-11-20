@@ -1058,7 +1058,7 @@ M = [
     mutant(
         "G29c check_senders does not refuse a principal that is not of kind service",
         WORKER,
-        '        if principal.kind != "service":\n',
+        '        if _field(principal, "kind", f"principal {sender.principal_id} kind") != "service":\n',
         "        if False:\n",
         TP,
         "test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-service]",
