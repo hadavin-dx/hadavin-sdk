@@ -112,11 +112,7 @@ TICK_MAX_AGE_S: Final[float] = 600.0  # a good "stuck" tick older than this is w
 IN_PROGRESS: Final[frozenset[RunState]] = frozenset({RunState.RECEIVED, RunState.WORKING})
 NO_ACK: Final[tuple[int, dict[str, str]]] = (503, {})
 CONFLICT: Final[tuple[int, dict[str, str]]] = (409, {})
-EXIT_OK, EXIT_CONFIG, EXIT_FAILED = (
-    0,
-    2,
-    3,
-)  # no exit code 4: a store that is down is /health 503 (d-fix6)
+EXIT_OK, EXIT_CONFIG, EXIT_FAILED = 0, 2, 3
 # A signed 409 is written to the audit as `trigger.conflict` (domain "trigger", operation "conflict"; the chain
 # audit stores `domain.operation` as the entry kind). At most this many per sender per minute: the 409 is still
 # answered, the extra events are only counted. Core-b's config field is proposed in requests/005.
@@ -980,10 +976,10 @@ class _Degraded:
                 with self._lock:
                     self.failures += 1
                 name = type(exc).__name__
-                now = _monotonic()
-                if name != last or now - last_warned >= DEGRADED_WARN_EVERY_S:
+                at = _monotonic()
+                if name != last or at - last_warned >= DEGRADED_WARN_EVERY_S:
                     _LOG.warning("trigger worker: store re-check failed (%s): still degraded", name)
-                    last, last_warned = name, now
+                    last, last_warned = name, at
                 continue
             with self._lock:
                 if not self._stopped.is_set():

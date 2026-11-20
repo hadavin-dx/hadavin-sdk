@@ -212,7 +212,7 @@ def test_fix2_a_blocked_audit_write_costs_the_409_at_most_2_s_and_one_write_is_p
         assert audit.calls == 2 and audit.peak == 1
 
 
-# --- major 4: a persistent non-store error stops a degraded worker -----------------------------------
+# --- major 4: every error of the re-check is retried forever; a degraded worker never exits by itself -----------------------------------
 
 
 def _run_degraded(monkeypatch, outcomes):

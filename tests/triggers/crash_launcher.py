@@ -199,7 +199,12 @@ def signed_post(port: int, body: bytes, secret: str) -> tuple[int | None, bytes]
     try:
         conn.request("POST", PATH, body=body, headers=headers)
         reply = conn.getresponse()
-        return reply.status, reply.read()
+        data = reply.read()
+        if 200 <= reply.status < 300:
+            declared = reply.getheader("Content-Length")
+            if declared is None or not declared.isdigit() or len(data) < int(declared):
+                return None, b"IncompleteResponse"  # a truncated answer is no complete ack
+        return reply.status, data
     except (OSError, http.client.HTTPException) as exc:
         return None, type(exc).__name__.encode()
     finally:
