@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T05:51:11Z
+UPDATED_UTC: 2026-11-20T05:51:26Z
 SESSION: core-a
 ORDER: 012 (002 to 009 standing; ORDERS 007, 010, 011 are not in my file)
 STATE: WORKING
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 4
-PERCENT: 85
-AGENTS_RUNNING: 3
-CAPACITY: load 0.56 of 4 cores (1-minute average), mem 0.7/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 9.3G 60G 14%; 347M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
+ITEMS_OPEN: 3
+PERCENT: 90
+AGENTS_RUNNING: 2
+CAPACITY: load 0.44 of 4 cores (1-minute average), mem 0.7/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 9.3G 60G 14%; 348M /home/user/hadavin-sdk; 52M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: none
 FAILED: whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: agents land one by one: check each, commit; then mutant script on the final code, my files once more, REPORT.md block
-PUSHED_UTC: 2026-11-20T05:51:03Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:51:13Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
@@ -38,7 +38,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | E2-SOCKET | real loopback-socket tests of the server (short body, stalled client, garbage); quiet handler in triggers/server.py if wsgiref leaks; one log line on 409 (ORDER 009 E1a, E2) | DONE (ESCALATIONS E2 closed by a fix) | 100 | raw/E2-wsgiref-before.log, raw/E2-wsgiref-after.log, raw/E2-tests.log, raw/E2-mutants.log | 1 | the standard server DID leak before the fix: HTML bodies on 400 and 414, the request line echoed, a 500 with text, tracebacks with the client address on stderr, a Server header with the Python version; new src/hadavin_sdk/triggers/server.py (125 lines) makes all refusals empty and quiet. NOT checked: a slow-drip client, refusals with a large unread body, the too-many-headers case |
 | R12-worker | lead review fixes in worker.py and server.py: backed-off no-slot wait (Major 1), SIGTERM drain (Major 2), minors 3, 7, 8, 14 | DONE (its own tests pass; kill and database tests by another agent still running) | 100 | raw/E2-tests.log, raw/E2-triggers-all.log | 1 | back-off wait (10 store reads per refused request, test asserts 5 to 12), a waiting request takes a freed slot (fix of the flaky batch failure), SIGTERM drain tested on worker.serve with a child process (main itself cannot start until core-b's config exists), minors 3, 7, 14 done; minor 8 done for foreign errors only, see LEAD ACTIONS |
 | R12-endpoint | lead review fixes in endpoint.py: minors 1, 5, parse edges | DONE (its own tests pass; final batch re-run still open) | 100 | raw/D-endpoint-tests-2.log, raw/D-endpoint-mutants.log | 1 | minors 1 and 5 applied, 409 line left to the worker only; 265 tests pass, 2 skipped; 2 new hand mutants caught. NOT applied: minor 6 (literals stay until core-b's defaults exist), minor 12 (a NUL byte inside the document is still accepted and not checked downstream). Stated side effect: a request up to 300.999 s old by a real clock is accepted |
-| R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | RUNNING | 5 | tests/triggers/test_n8n_template.py (not yet) | 1 | ORDER 012; still NOT run in n8n |
+| R12-n8n | n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY | DONE as an OUTLINE (NOT run in n8n; the lead verifies on a real n8n) | 100 | n8n/ (3 files), tests/triggers/test_n8n_template.py, requests/002-readme-security-text.md | 1 | empty-field guard before hashing, outer loop for 503 with re-sign (60 s x 30 rounds as placeholders), README limits; 24 checks pass that need no n8n (re-run by me on the final code); 19 node parameters are guesses marked UNVERIFIED; stated in the README: the answer carries no reason, so a client cannot tell 'interrupted' from other NEEDS_PERSON cases, and the tick posts no card for an interrupted run |
 | R12-tests | missing tests (Major 4): PostgreSQL cases, child-process kill cases, two processes on one database, start refusal through main, oversize, two senders | RUNNING | 5 | raw/D-tests-pg16.log with test ids (not yet) | 1 | ORDER 012: required before done |
 
 ## AGENTS
@@ -58,18 +58,14 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | mutants | builder (test tooling) | fable | writes tests/endpoint_mutants.py (7 groups) and runs it once through tools/mutation_runner.py | 05:39 | ended | 100 | done | n/a | 0 | finished, 175k tokens |
 | e2-socket | builder | fable | writes tests/triggers/test_t5_wsgiref.py, records what wsgiref does today, adds a quiet handler only if needed, adds the 409 log line; PLUS the slot-wait fix in Runner.start found by the batch run | 05:41 | ended | 100 | done | n/a | 0 | finished, 162k tokens |
 | r12-endpoint | builder | fable | endpoint.py minors of the lead review plus boundary and parse-edge tests | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished |
-| r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | about 20 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 |
+| r12-n8n | builder (templates and text) | fable | n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n | 05:46 | ended | 100 | done | lead code review round 1 of 3 | 0 | finished, 182k tokens |
 | r12-tests | evidence runner and test writer | fable | writes PostgreSQL, kill and two-process tests; owns the local PostgreSQL 16 server (start and stop) | 05:46 | about 35 min after start | 5 | running | lead code review round 1 of 3 | 0 | ORDER 012 Major 4 |
 | t4-contract | builder (tests) | fable | contract tests for core-b's spend reservation store methods and the 50-connection cap test file | 05:46 | about 25 min after start | 5 | running | n/a | 0 | queue item T4 READY; 7 agents run now on 4 cores: they wait on the model most of the time, load is on the CAPACITY line |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 25264 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 25297 | timeout 580 uv run --all-extras --group test pytest -v -p no:cacheprov | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 25300 | uv run --all-extras --group test pytest -v -p no:cacheprovider tests/t | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 25303 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 25310 | /home/user/hadavin-sdk/.venv/bin/python -m hadavin_sdk.triggers.worker | core-a session or its agent | 0s ago | running | matched by name in ps |
+| none | | | | | |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -88,6 +84,7 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 | tests/endpoint_mutants.py (mutation runner, 17 mutants) | working tree at 05:45Z | 3 (mine, final code) | 17 of 17 good; problems: [] | none | done | 17 of 17 good on the final code; database tests are skipped inside mutant runs |
 | tests/triggers/test_endpoint.py (after lead review fixes) | working tree | 2 (builder) | 265 / 0 / 0, 2 skipped | none | done | UNVERIFIED by me until the final run of my files |
 | tests/triggers (all files, -n 3) | working tree | 1 after the lead-review fixes (builder) | 385 / 0 / 0, 68 skipped | none (the first run on the new code had 3 failures from an over-strict helper in the builder's own new test, fixed: try 1 of 3) | done | 68 skips are database cases without the variable; UNVERIFIED by me until my final run |
+| tests/triggers/test_n8n_template.py | working tree | 2 (mine, final code) | 24 / 0 / 0 | none | done | checks JSON shape, guard and loop order, no secret-shaped text, signing recipe equals the code; proves nothing about a real n8n |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
@@ -114,3 +111,5 @@ NOTE: one board per minute is driven by a session cron; the cron only fires whil
 - Your message 05:44Z (no repeated test loops): applied, the agent was told to run once
 - Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400
 - Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict
+- requests/002-readme-security-text.md: 18 sentences proposed for core-b's README.md, SECURITY.md and CHANGELOG.md (5 marked HOLD until the code they describe is merged): please pass it to core-b
+- FINDING for the plan, not fixable in my files: a run ended by the tick as NEEDS_PERSON 'interrupted' gets a state and an audit record but NO card to a person (tick.py), so nobody is told unless they look; ticket D invariant 12 assumed a card

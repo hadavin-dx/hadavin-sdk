@@ -172,11 +172,11 @@
   {
    "item": "R12-n8n",
    "what": "n8n outline: empty-field guard (Major 3), outer 503 loop with re-sign (Major 1), README limits; request 002 text for core-b's README and SECURITY",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "tests/triggers/test_n8n_template.py (not yet)",
+   "state": "DONE as an OUTLINE (NOT run in n8n; the lead verifies on a real n8n)",
+   "percent": 100,
+   "evidence file": "n8n/ (3 files), tests/triggers/test_n8n_template.py, requests/002-readme-security-text.md",
    "tries": 1,
-   "reason": "ORDER 012; still NOT run in n8n"
+   "reason": "empty-field guard before hashing, outer loop for 503 with re-sign (60 s x 30 rounds as placeholders), README limits; 24 checks pass that need no n8n (re-run by me on the final code); 19 node parameters are guesses marked UNVERIFIED; stated in the README: the answer carries no reason, so a client cannot tell 'interrupted' from other NEEDS_PERSON cases, and the tick posts no card for an interrupted run"
   },
   {
    "item": "R12-tests",
@@ -374,15 +374,15 @@
   {
    "model": "fable",
    "started UTC": "05:46",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "lead code review round 1 of 3",
    "retries so far": 0,
    "id": "r12-n8n",
    "role": "builder (templates and text)",
    "what exactly it is doing": "n8n guard node, 503 loop with re-sign, README limits, template checks that run without n8n",
-   "expected end": "about 20 min after start",
-   "reason": "ORDER 012"
+   "expected end": "ended",
+   "reason": "finished, 182k tokens"
   },
   {
    "model": "fable",
@@ -537,6 +537,15 @@
    "first failing line": "none (the first run on the new code had 3 failures from an over-strict helper in the builder's own new test, fixed: try 1 of 3)",
    "state": "done",
    "reason": "68 skips are database cases without the variable; UNVERIFIED by me until my final run"
+  },
+  {
+   "suite or file": "tests/triggers/test_n8n_template.py",
+   "branch and SHA": "working tree",
+   "run number": "2 (mine, final code)",
+   "passed / failed / errors": "24 / 0 / 0",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "checks JSON shape, guard and loop order, no secret-shaped text, signing recipe equals the code; proves nothing about a real n8n"
   }
  ],
  "restarts": [],
@@ -565,7 +574,9 @@
   "'GO BUILD D' is still not written in ORDERS.md (ORDER 012 implies it)",
   "Your message 05:44Z (no repeated test loops): applied, the agent was told to run once",
   "Review minor 12 (NUL byte inside the document accepted) is NOT fixed: what the runtime does with it downstream is unchecked; say if the endpoint should refuse it with 400",
-  "Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict"
+  "Review minor 8: the worker prints class name only for store and foreign config errors, but still prints the full text of ITS OWN refusals (for example 'triggers block not configured', which holds ids and bounds, never a secret). Strict class-name-only would tell the operator nothing. Say CHANGE if you want it strict",
+  "requests/002-readme-security-text.md: 18 sentences proposed for core-b's README.md, SECURITY.md and CHANGELOG.md (5 marked HOLD until the code they describe is merged): please pass it to core-b",
+  "FINDING for the plan, not fixable in my files: a run ended by the tick as NEEDS_PERSON 'interrupted' gets a state and an audit record but NO card to a person (tick.py), so nobody is told unless they look; ticket D invariant 12 assumed a card"
  ],
  "failed": "whole-suite run: 1 repo rule test fails because of handover/BRIEF-PREAMBLE.md (lead's file); the flaky T5 test is fixed in code and passed twice since"
 }

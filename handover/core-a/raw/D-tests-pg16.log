@@ -19,4 +19,936 @@ tests/triggers/test_t5_postgres.py::test_b3_kill_inside_handle_after_working_the
 tests/triggers/test_t5_postgres.py::test_b4_no_answer_is_sent_before_the_row_was_read ERROR [ 34%]
 tests/triggers/test_t5_postgres.py::test_c1_two_processes_and_one_request_give_one_row ERROR [ 37%]
 tests/triggers/test_t5_postgres.py::test_c2_two_processes_and_two_documents_give_one_run_and_one_409 ERROR [ 40%]
-tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block 
+tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block PASSED [ 43%]
+tests/triggers/test_t5_process.py::test_d1_main_refuses_an_unreadable_config_without_a_traceback PASSED [ 46%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[short] PASSED [ 50%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[shared] PASSED [ 53%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[shared-second-value] PASSED [ 56%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[none] PASSED [ 59%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[empty] PASSED [ 62%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_refuses_and_never_prints_a_value[no-sender] PASSED [ 65%]
+tests/triggers/test_t5_process.py::test_d2_check_secrets_accepts_the_floor_and_two_values PASSED [ 68%]
+tests/triggers/test_t5_process.py::test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-agent] PASSED [ 71%]
+tests/triggers/test_t5_process.py::test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-principal] PASSED [ 75%]
+tests/triggers/test_t5_process.py::test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-service] PASSED [ 78%]
+tests/triggers/test_t5_process.py::test_d2_check_senders_accepts_a_qualified_agent_and_a_service_principal PASSED [ 81%]
+tests/triggers/test_t5_process.py::test_d2_check_bind_refuses_a_host_that_is_not_loopback[every-interface] PASSED [ 84%]
+tests/triggers/test_t5_process.py::test_d2_check_bind_refuses_a_host_that_is_not_loopback[other-address] PASSED [ 87%]
+tests/triggers/test_t5_process.py::test_d2_check_bind_refuses_a_host_that_is_not_loopback[empty] PASSED [ 90%]
+tests/triggers/test_t5_process.py::test_d2_check_bind_refuses_a_host_that_is_not_loopback[host-name] PASSED [ 93%]
+tests/triggers/test_t5_process.py::test_d2_check_bind_needs_the_switch_to_be_exactly_true PASSED [ 96%]
+tests/triggers/test_t5_process.py::test_d3_sigterm_stops_a_serving_worker_cleanly PASSED [100%]
+
+==================================== ERRORS ====================================
+_ ERROR at setup of test_a1_new_signed_request_gives_one_row_with_the_expected_fields _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+____ ERROR at setup of test_a2_repeat_gives_the_same_run_and_no_model_call _____
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_a3_same_key_with_another_document_is_409_and_the_row_stays _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_______ ERROR at setup of test_a4_two_senders_with_one_key_give_two_rows _______
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_a5_fifty_parallel_requests_with_one_key_give_one_row __
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_a6_document_over_the_document_cap_is_accepted_and_ends_with_a_person _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+__ ERROR at setup of test_a6_body_over_the_body_cap_is_413_and_writes_nothing __
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_b1_kill_before_the_row_gives_no_ack_and_the_retry_is_accepted _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+__ ERROR at setup of test_b2_kill_after_the_row_then_tick_ends_with_a_person ___
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_b3_kill_inside_handle_after_working_then_tick_ends_with_a_person _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_____ ERROR at setup of test_b4_no_answer_is_sent_before_the_row_was_read ______
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_____ ERROR at setup of test_c1_two_processes_and_one_request_give_one_row _____
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+_ ERROR at setup of test_c2_two_processes_and_two_documents_give_one_run_and_one_409 _
+
+    @pytest.fixture
+    def dsn():
+        """A DSN on a fresh migrated schema; the schema is dropped afterwards."""
+>       yield from pg_schema()
+
+tests/triggers/test_t5_postgres.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 port=55432 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+=========================== short test summary info ============================
+ERROR tests/triggers/test_t5_postgres.py::test_a1_new_signed_request_gives_one_row_with_the_expected_fields
+ERROR tests/triggers/test_t5_postgres.py::test_a2_repeat_gives_the_same_run_and_no_model_call
+ERROR tests/triggers/test_t5_postgres.py::test_a3_same_key_with_another_document_is_409_and_the_row_stays
+ERROR tests/triggers/test_t5_postgres.py::test_a4_two_senders_with_one_key_give_two_rows
+ERROR tests/triggers/test_t5_postgres.py::test_a5_fifty_parallel_requests_with_one_key_give_one_row
+ERROR tests/triggers/test_t5_postgres.py::test_a6_document_over_the_document_cap_is_accepted_and_ends_with_a_person
+ERROR tests/triggers/test_t5_postgres.py::test_a6_body_over_the_body_cap_is_413_and_writes_nothing
+ERROR tests/triggers/test_t5_postgres.py::test_b1_kill_before_the_row_gives_no_ack_and_the_retry_is_accepted
+ERROR tests/triggers/test_t5_postgres.py::test_b2_kill_after_the_row_then_tick_ends_with_a_person
+ERROR tests/triggers/test_t5_postgres.py::test_b3_kill_inside_handle_after_working_then_tick_ends_with_a_person
+ERROR tests/triggers/test_t5_postgres.py::test_b4_no_answer_is_sent_before_the_row_was_read
+ERROR tests/triggers/test_t5_postgres.py::test_c1_two_processes_and_one_request_give_one_row
+ERROR tests/triggers/test_t5_postgres.py::test_c2_two_processes_and_two_documents_give_one_run_and_one_409
+======================== 19 passed, 13 errors in 3.33s =========================
