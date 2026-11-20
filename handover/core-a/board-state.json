@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "integ3",
-   "role": "builder (scratch worktree /home/user/wt/integ3, never pushed)",
-   "model": "sonnet",
-   "what exactly it is doing": "INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current",
-   "started UTC": "17:45",
-   "expected end": "50 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 16:38"
-  },
-  {
    "id": "A4-B8-text",
    "role": "builder (docs)",
    "model": "sonnet",
@@ -772,6 +759,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead 16:55 A4"
+  },
+  {
+   "id": "grantfix2",
+   "role": "builder (tests)",
+   "model": "sonnet",
+   "what exactly it is doing": "fix 11 failures of test_grants_negative_0007.py on the merged tree (release role)",
+   "started UTC": "17:05",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "dry-run 3 finding"
   }
  ],
  "tests": [
@@ -1412,6 +1412,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c G12d: no Blocker; Major: <HUNTER2 all-caps after < leaks (regression of G12c), \u2039SECRET_1\u203ahunter22 leak pinned, _outside_lookalikes super-linear (unrun); c1 fixed, c2 not; reviews/rev-c-G12d.md"
+  },
+  {
+   "id": "integ3",
+   "role": "builder (scratch worktree /home/user/wt/integ3, never pushed)",
+   "model": "sonnet",
+   "what exactly it is doing": "INTEGRATION DRY-RUN 3: core-b 9156f7339 -> core-a -> core-c d53d6e7d1 (+ my fix branches), PG16 runs of contracts/triggers/grants; INTEGRATION-DRYRUN-2.md kept current",
+   "started UTC": "17:45",
+   "expected end": "50 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "dry-run 3 done; core/integration-dryrun pushed c47b08bec (conflicts resolved; T1 = core-b's; 2 extra T1 files); triggers 1379 passed 0 failed; contracts 1623 passed 21 failed (core-c T1 19 + gate 2); grants 308 passed 11 failed (mine, 0007 release role): fixer started"
   }
  ]
 }
