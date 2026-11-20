@@ -167,3 +167,26 @@ SKIPPED [1] tests/test_trigger_config.py:626: field not built on this branch: Ap
 SKIPPED [1] tests/contracts/test_model_gate_contract.py:44: the model gate (step F) is not on this branch yet: hadavin_sdk.guard.model_gate is missing
 1 skipped in 0.23s
 ##### trial-newb (e443a3c3b) tests/contracts/test_store_spend_reservations.py
+=================================== FAILURES ===================================
+E   ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-newb/src/hadavin_sdk/store/protocol.py:77: ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+E   ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-newb/src/hadavin_sdk/store/protocol.py:77: ValueError: spend amount must be a finite Decimal with 0 <= amount < 10**9 and at most 12 decimal places
+E   AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+      
+      At index 1 diff: Decimal('1.00') != Decimal('0.40')
+      Use -v to get more diff
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-newb/tests/contracts/test_store_spend_reservations.py:418: AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+E   AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+      
+      At index 1 diff: Decimal('1.00') != Decimal('0.40')
+      Use -v to get more diff
+/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/trial-newb/tests/contracts/test_store_spend_reservations.py:418: AssertionError: assert (Decimal('1.0...cimal('1.00')) == (Decimal('1.0...cimal('0.40'))
+=========================== short test summary info ============================
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_nothing_is_rounded[postgres]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[memory]
+FAILED tests/contracts/test_store_spend_reservations.py::test_settle_after_expiry_with_a_lower_actual_moves_nothing_down[postgres]
+4 failed, 90 passed in 20.12s
+##### trial-newb (e443a3c3b) tests/contracts/test_t1_reserve_cap.py
+8 passed in 3.05s

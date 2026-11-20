@@ -1,0 +1,43 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /home/user/hadavin-sdk
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 83 items
+
+tests/triggers/test_t5_crash_matrix.py::test_the_table_covers_every_wrapped_call_once PASSED [  1%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[r1-store.get_run-1-before] PASSED [  2%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h01-store.create_run-1-before] PASSED [  3%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h01-store.create_run-1-after] PASSED [  4%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h02-audit.write_outcome-1-before] PASSED [  6%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h02-audit.write_outcome-1-after] PASSED [  7%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h03-loop.get_run-1-before] PASSED [  8%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h03-loop.get_run-1-after] PASSED [  9%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h04-store.transition-1-before] PASSED [ 10%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h04-store.transition-1-after] PASSED [ 12%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h05-audit.write_outcome-2-before] PASSED [ 13%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h05-audit.write_outcome-2-after] PASSED [ 14%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h06-store.get_kill_switch-1-before] PASSED [ 15%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h06-store.get_kill_switch-1-after] PASSED [ 16%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h07-store.spend_totals-1-before] PASSED [ 18%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h07-store.spend_totals-1-after] PASSED [ 19%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h08-store.put_redaction_map-1-before] PASSED [ 20%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h08-store.put_redaction_map-1-after] PASSED [ 21%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h09-store.put_redaction_map-2-before] PASSED [ 22%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h09-store.put_redaction_map-2-after] PASSED [ 24%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h10-store.get_kill_switch-2-before] PASSED [ 25%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h10-store.get_kill_switch-2-after] PASSED [ 26%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h11-store.spend_totals-2-before] PASSED [ 27%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h11-store.spend_totals-2-after] PASSED [ 28%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h12-store.touch-1-before] PASSED [ 30%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h12-store.touch-1-after] PASSED [ 31%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h13-llm.chat-1-before] PASSED [ 32%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h13-llm.chat-1-after] PASSED [ 33%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h14-store.add_spend-1-before] PASSED [ 34%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h14-store.add_spend-1-after] PASSED [ 36%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h15-store.add_cost-1-before] PASSED [ 37%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h15-store.add_cost-1-after] PASSED [ 38%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h16-loop.get_run-2-before] PASSED [ 39%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h16-loop.get_run-2-after] PASSED [ 40%]
+tests/triggers/test_t5_crash_matrix.py::test_pg_kill_at_point[h17-store.transition-2-before] PASSED [ 42%]
+tests/triggers/test_t5_
