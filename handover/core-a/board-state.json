@@ -774,19 +774,6 @@
    "reason": "lead GO 16:51 + heads moved"
   },
   {
-   "id": "rev-lead-tswm-3",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "lead wip/lead-b-ts-watermark fix round 3 (dbc1c0db0): my 6 nits closed? catalog lookups, settle timeouts, retry vs refusal",
-   "started UTC": "17:05",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead GO 16:51 + heads moved"
-  },
-  {
    "id": "A4-B8-text",
    "role": "builder (docs)",
    "model": "sonnet",
@@ -4286,6 +4273,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c G4d: NO Blocker/Major; db01.corp\u4f8b family FIXED (_HOST_END ASCII set, redact.py:223-227, traced on 11 inputs); na\u00efve.local over-mask NOT fixed (deliberate); nits: m\u00fcnchen.corp -> m\u00fc<HOSTNAME_1>, \u65e5\u672c\u8a9e.corp unmasked (not pinned), \\w remains at redact.py:223/240-241, no mutant for the hyphen branch; reviews/rev-c-G4d.md"
+  },
+  {
+   "id": "rev-lead-tswm-3",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead wip/lead-b-ts-watermark fix round 3 (dbc1c0db0): my 6 nits closed? catalog lookups, settle timeouts, retry vs refusal",
+   "started UTC": "17:05",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead ts-watermark round 3: NO Blocker/Major provable; earlier nits 2,5 closed, 3,6 mostly; 1,4 open; 5 new nits (no lock_timeout on 0009 file loop, 75 too broad, unqualified names); reviews/rev-lead-tswm-3.md"
   }
  ]
 }
