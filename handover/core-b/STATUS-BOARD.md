@@ -1,26 +1,26 @@
-UPDATED_UTC: 2026-11-20T05:22:28Z
+UPDATED_UTC: 2026-11-20T05:25:03Z
 SESSION: core-b
 ORDER: 004
 STATE: WORKING
 BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 6
-ITEMS_OPEN: 4
-PERCENT: 20
-AGENTS_RUNNING: 3
-CAPACITY: load 0.03 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, agents light 3 heavy 0
+ITEMS_OPEN: 3
+PERCENT: 25
+AGENTS_RUNNING: 2
+CAPACITY: load 0.11 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, agents light 2 heavy 0
 DISK: / 60G free, 13% used; worktrees /tmp/core-b-wt 0
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
 NEXT: T1 plan read-back, then interface tickets (i) store methods and (ii) reserve/settle API
-PUSHED_UTC: 2026-11-20T05:20:41Z (previous push; this board is pushed right after writing)
-IST: 10:52 IST
+PUSHED_UTC: 2026-11-20T05:22:28Z (previous push; this board is pushed right after writing)
+IST: 10:55 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a468ce14 | lookup | fable | Q2: reads the package and writes LANE-MAP.md | 05:19 | +8 min | UNVERIFIED | running | n/a | 0 | tickets need the file and line facts |
+| a468ce14 | lookup | fable | Q2: reads the package and writes LANE-MAP.md | 05:19 | done | 100 | done | n/a | 0 | tickets need the file and line facts |
 | ae122278 | lookup | fable | reads input branches P4b1, P4d, P4d-a2, P4a, T1-T2 for what reserve/settle code already exists; writes notes/heads-money.md | 05:27 | +10 min | UNVERIFIED | running | n/a | 0 | interface tickets must reuse, not rebuild |
 | a367057d | lookup | fable | reads main and branches P2a-1, P4a for steps A, B, C facts; writes notes/heads-stop-audit-price.md | 05:27 | +10 min | UNVERIFIED | running | n/a | 0 | tickets A, B, C need file and line facts |
 | a65b1e8c | reviewer (egm-comprehension) | fable | ORDER 001 dry run | 04:10 | done | 100 | done | 1 of 1 | 0 | proof only |
@@ -40,7 +40,7 @@ IST: 10:52 IST
 | # | state | % | evidence file | tries | reason |
 |---|---|---|---|---|---|
 | Q1 capability probe | DONE | 100 | CAPABILITY.md, evidence/capability-raw.txt | 1 | no Docker service, no PostgreSQL 14 or 17, gh login invalid; PostgreSQL 16 works |
-| Q2 lane map | RUNNING | UNVERIFIED | LANE-MAP.md (not yet) | 1 | one lookup agent |
+| Q2 lane map | DONE | 100 | LANE-MAP.md | 1 | test names come from a text search, not a run; some modules marked UNVERIFIED in the file |
 | Q3 to Q9 baselines | SKIPPED BY LEAD | 0 | none | 0 | lead runs them on the laptop |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
 | T2 tickets (interfaces i, ii first, then A, B, C, F-store) | RUNNING | 5 | interfaces/, tickets/ (not yet) | 1 | waiting for the two lookup notes; I read store code meanwhile |
