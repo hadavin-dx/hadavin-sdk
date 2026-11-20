@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-20T06:34:44Z
+UPDATED_UTC: 2026-11-20T06:35:56Z
 SESSION: core-b
-ORDER: 016
+ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
 BOOT_ID: 2ee8a4de
 ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 5
-CAPACITY: load 0.49 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 931M
+AGENTS_RUNNING: 4
+CAPACITY: load 0.92 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 0 heavy 4
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 945M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
-INTERRUPTED: none
+INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
-NEXT: land F-store tests and the provider-mark tests; F-install build and its tests; resolve the hostile re-read; batch run 3 on a merged tree when F-install is coded
-PUSHED_UTC: 2026-11-20T06:33:26Z (previous push; this board is pushed right after writing)
-IST: 12:04 IST
+NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
+PUSHED_UTC: 2026-11-20T06:34:45Z (previous push; this board is pushed right after writing)
+IST: 12:05 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -32,22 +32,15 @@ IST: 12:04 IST
 | 10 | hostile re-read of A, B, C code | DONE; B findings with the lead (ESCALATIONS E5), A findings in A's fix round 3 (queued behind the running A agent) | tickets/ABC-hostile-review-1.md |
 Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
 
-## AGENTS
+## AGENTS (RESTART on the normal models after the Fable limit, 06:45 UTC; model set explicitly on every call; none on fable)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a439a627 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT F-store, provider mark and trigger config code (through the review-loop skill) | 06:42 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | STANDING ORDER 016 item 4a |
-| a5f7551d | builder (tests) | fable | random-sequence model test of the reservation store on both stores (30 seeds x 200 operations); worktree P | 06:33 | +25 min | UNVERIFIED | running | none | 0 | STANDING ORDER 016 item 4b: more hostile tests for a guarantee path |
-| a6dd2beb | lookup | fable | reads core-c's gate, its enforce step and tests against my meter and install plan; writes CROSS-LANE-gate.md | 06:33 | +15 min | UNVERIFIED | running | n/a | 0 | STANDING ORDER 016 item 4c; mismatches found now are cheaper than at integration |
-| a70b774c | builder | fable | F-install: local merge of core-c's gate, then extract.py deletion, Budget meter, gate installed in run loop, judge, evals, replay, charge sites removed, docs; worktree FI | 06:22 | +45 min | UNVERIFIED | running | round 2 alongside | 0 | lead ORDER 014 GO BUILD F-install |
-| ae79ea4d | builder then tests | fable | step A fix round 2 (failure text counts events never written), M1 re-pin, all four mutant scripts re-run on the head; worktree M | 06:28 | +20 min | UNVERIFIED | running | none | 1 | lead review round 2 item AB-4; ORDER 008 mutant scripts must end good |
-| a86f0e17 | builder then tests | fable | provider mark for calls that ended only in 429 or refused connections; tests for the mark and for cap validation: landed | 06:22 | done | 100 | done | none | 0 | 425 passed, 1 skipped; narrow reading: a 429 followed by a 400 or 401 stays unmarked |
-| a51b4a37 | builder (tests) | fable | F-store tests (5 files): landed | 06:02 | done | 100 | done | none | 0 | 471 passed with PostgreSQL 16 (300 passed, 171 skipped without); mutants 31 of 31 and 26 of 26 by hand; no invariant broken |
-| a39cf764 | reviewer (egm-codebase-details) | fable | hostile re-read of the BUILT A, B, C code: 1 Blocker and 5 Majors in B, 2 Majors in A, none in C; report tickets/ABC-hostile-review-1.md | 06:22 | done | 100 | done | 1 of 1 | 0 | STANDING ORDER 016; started directly, then put under the review-loop skill call of 06:24 |
-| a0aa4523 | reviewer (egm-implementation-readiness) | fable | F-install ticket round 2 of 3: NOT clean, 2 Blockers, 5 Majors; report tickets/F-install-review-2.md; answered (W1 to W7) and sent to the builder | 06:24 | done | 100 | done | 2 of 3 | 0 | lead ORDER 014; only one reviewer this round (the codebase reviewer is on the hostile re-read): see reason in QUEUE row |
-| af123633, a7f2909e | builders (fix) | fable | F-store fix 1 (caps validated), provider mark, D-config fix 1: landed (3 commits) | 06:15 | done | 100 | done | none | 0 | 206, 323 and 1183 passed on their test lists |
-| a04243c0, a7034d35 | builders (tests) | fable | step B fix-3 tests (290 passed alone, 40 of 40 mutants) and mutant scripts repair: landed | 05:58 | done | 100 | done | none | 0 | see ESCALATIONS E4: the B role tests interfere when run in parallel |
-| a6d00510, afa273dd, a9b3b5a5, aac315f5 | reviewers (egm) | fable | F-install round 1 (4 Blockers, 19 Majors), ticket C round 1 (0 Blockers) | 05:59 | done | 100 | done | 1 | 0 | reports in tickets/ |
-| earlier agents (22) | | fable | builders, test writers, reviewers, lookups since 04:10 | | done | 100 | done | | | see REPORT.md and tickets/ |
+| (starting) | builder | sonnet | F-store fix round 2: reservation id validated in both stores (the random-sequence test found: memory stores an id with a NUL, PostgreSQL raises DataError); worktree F4 | 06:46 | +15 min | 0 | starting | none | 0 | finding from tests/contracts/test_store_spend_model.py |
+| (starting) | builder | sonnet | step A fix round 3 (last): outage narrowed to connection-level errors; unwritable list retried once per reconcile; worktree A3 | 06:46 | +15 min | 0 | starting | none | 0 | hostile re-read findings 7 and 8 |
+| (starting) | builder (tests) | sonnet | F-install tests: test_model_gate_install.py, contracts/test_meter.py, gate_install_mutants.py; worktree FI-tests on the wip branch | 06:46 | +40 min | 0 | starting | none | 0 | F-install built, no tests of its own |
+| (starting) | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config (the Fable one was cut off by the limit, no report) | 06:46 | +15 min | 0 | starting | 1 of 1 | 1 | restart |
+| a5f7551d, ae79ea4d, a439a627 | Fable agents | fable | cut off by the Fable limit at 06:44; their commits were recovered (A fix 2 and its tests, the random-sequence test); a439a627 produced no report | | | | KILLED (limit) | | | see RESUME-NOTE |
+| 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
 
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
