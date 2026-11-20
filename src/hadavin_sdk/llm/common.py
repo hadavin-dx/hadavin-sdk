@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
-from hadavin_sdk.llm.retry import with_retry
+from hadavin_sdk.llm.retry import REFUSED_STATUSES, with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
@@ -338,6 +338,7 @@ class NetworkLLM:
             retryable=self.retryable,
             detail=self.detail,
             http_status=self.http_status,
+            refused_statuses=self.refused_statuses,
         )
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
@@ -346,6 +347,8 @@ class NetworkLLM:
     # Where the kind's SDK keeps the HTTP status when it is not `status_code` / `code` (feeds only the mark
     # `refused_before_response`, llm/retry.py).
     http_status: Callable[[BaseException], int | None] | None = None
+    # The statuses this kind counts as refused before any response (a kind behind routers or proxies narrows it).
+    refused_statuses: frozenset[int] = REFUSED_STATUSES
 
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly

@@ -12,8 +12,9 @@ class ProviderError(RuntimeError):
 
     `refused_before_response` is the mark the model gate reads (`getattr(exc, "refused_before_response",
     False) is True`) to settle a spend reservation at 0. It is False unless `llm/retry.py` sets it on the
-    instance: True only when it is certain that no response was produced and nothing was billed (see
-    `REFUSED_STATUSES` and `never_sent` there). False means "unknown": the worst case stays booked."""
+    instance: True only when no response was seen and no work is known (see `REFUSED_STATUSES` and `never_sent`
+    there; the status list is per kind). False means "unknown": the worst case stays booked. The openai_compat
+    kind can clear the mark on its second request (the first one was answered)."""
 
     refused_before_response: bool = False
 
