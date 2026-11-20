@@ -34,7 +34,7 @@ from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
-from hadavin_sdk.secret_name import collides
+from hadavin_sdk.secret_name import collides, path_form_problem
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
 from hadavin_sdk.stages import is_live
@@ -178,6 +178,9 @@ def build(
         sender_id: sender.secret_names
         for sender_id, sender in (cfg.triggers.senders if cfg.triggers else {}).items()
     }
+    file_backed = getattr(b.secrets, "kind", None) == "mounted_file" or bool(
+        getattr(secrets, "file_backed", False)
+    )
     platform_secrets.check_senders(
         secrets,
         sender_names,
@@ -189,6 +192,7 @@ def build(
             {getattr(b.store, "reset_credential_ref", None)} - {None},
             {getattr(b.store, "release_credential_ref", None)} - {None},
         ),
+        file_backed=file_backed,
     )
     # The reset and release logins are read only by their own commands, never by this process: NO secret name the
     # runtime reads (tool, source, executor, restored-hash key, any backend, sender) may be, or fold to, either.
@@ -200,7 +204,13 @@ def build(
     )
     for ref_field in ("release_credential_ref", "reset_credential_ref"):
         ref = getattr(b.store, ref_field, None)
-        if ref and collides(ref, runtime_names):
+        if ref and path_form_problem(ref, file_backed):
+            raise ConfigError(
+                f"backends.store.{ref_field} is a path-shaped name (a '.' or '..' segment"
+                + (", or a leading or trailing '/'" if file_backed else "")
+                + "), which cannot be compared with the secrets the runtime reads; write a plain secret name"
+            )
+        if ref and collides(ref, runtime_names, file_backed=file_backed):
             raise ConfigError(
                 f"backends.store.{ref_field} names a secret that the runtime also reads (a backend, tool, source, "
                 "executor, sender or the restored-hash key): the runtime must never hold that login"
