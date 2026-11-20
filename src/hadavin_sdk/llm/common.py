@@ -238,11 +238,15 @@ class NetworkLLM:
             sleep=self._sleep,
             retryable=self.retryable,
             detail=self.detail,
+            http_status=self.http_status,
         )
 
     # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
     retryable: Callable[[BaseException], bool | None] | None = None
     detail: Callable[[BaseException], str] | None = None
+    # Where the kind's SDK keeps the HTTP status when it is not `status_code` / `code` (feeds only the mark
+    # `refused_before_response`, llm/retry.py).
+    http_status: Callable[[BaseException], int | None] | None = None
 
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly

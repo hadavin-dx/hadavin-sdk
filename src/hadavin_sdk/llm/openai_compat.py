@@ -28,6 +28,7 @@ from hadavin_sdk.llm.common import (
     schema_hint,
     stop_reason,
 )
+from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.models import Reply, ToolCall
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
@@ -115,10 +116,17 @@ class OpenAICompatLLM(NetworkLLM):
         if forced:
             body["tool_choice"] = {"type": "function", "function": {"name": forced}}
         started, used = time.monotonic(), [0, 0]
-        for _ in range(2):  # the forced answer missing: one more request (design 4.3)
-            got = self._retry(
-                lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
-            )
+        for nth in range(2):  # the forced answer missing: one more request (design 4.3)
+            try:
+                got = self._retry(
+                    lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
+                )
+            except ProviderError as exc:
+                if (
+                    nth
+                ):  # the first request was answered (and billed): this call is not "refused before"
+                    exc.refused_before_response = False
+                raise
             used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
             # Done when answered, or when asking again would end the same way (cut off, refused).
             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")

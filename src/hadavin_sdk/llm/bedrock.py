@@ -101,6 +101,17 @@ def detail(exc: BaseException) -> str:
     return " ".join(str(p) for p in (status, _code(exc)) if p)
 
 
+def http_status(exc: BaseException) -> int | None:
+    """The HTTP status of a botocore ClientError, for the mark `refused_before_response` (llm/retry.py)."""
+    response = getattr(exc, "response", None)
+    code = (
+        response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if isinstance(response, dict)
+        else None
+    )
+    return code if isinstance(code, int) and not isinstance(code, bool) else None
+
+
 def retryable(exc: BaseException) -> bool | None:
     if isinstance(exc, _NETWORK):
         return True
@@ -114,6 +125,7 @@ class BedrockLLM(NetworkLLM):
     label = "bedrock"
     retryable = staticmethod(retryable)
     detail = staticmethod(detail)
+    http_status = staticmethod(http_status)
 
     def __init__(
         self,

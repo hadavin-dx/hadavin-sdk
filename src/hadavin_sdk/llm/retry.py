@@ -8,11 +8,24 @@ at once.
 Vendor-neutral (lock-in audit 2026-10-31, row 2): this module knows HTTP statuses, the standard library's network
 errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``retryable(exc) -> bool | None``
 (None: no opinion, the generic rule decides) and ``detail(exc) -> str`` (an error code safe to log).
+
+The mark "refused before any response" (``ProviderError.refused_before_response``, read by the model gate, which
+then settles the spend reservation at 0 instead of the worst case) is set to True here and nowhere else (a kind
+may only clear it: openai_compat does, for its second request). It is True only when EVERY attempt of the call ended in one of two ways:
+  1. the request was never sent: the connection was refused or the host name did not resolve (``never_sent``);
+  2. the final, not retried error carries an HTTP status of ``REFUSED_STATUSES`` (400, 401, 403, 404, 413, 422).
+One attempt that got any other answer, timed out, was cut off or failed to parse leaves the mark False, and so
+does every status that is retried (408, 429, 5xx) and 409. A ``ProviderError`` raised by the call itself passes
+through as it is (unmarked unless its raiser marked it).
+Stated limit (UNVERIFIED): the status list is a judgement from the HTTP meaning of the codes (the request was
+rejected before any model work), not verified against each provider's billing rules. A provider that bills a
+400 would be under-counted by that call.
 """
 
 from __future__ import annotations
 
 import random
+import socket
 import ssl
 import time
 from collections.abc import Callable
@@ -40,6 +53,10 @@ def retryable_status(code: int) -> bool:
     return code in (408, 429) or code >= 500
 
 
+# Statuses that reject a request before any model work (see the module docstring for the stated limit).
+REFUSED_STATUSES = frozenset({400, 401, 403, 404, 413, 422})
+
+
 def _chain(exc: BaseException) -> list[BaseException]:
     """The error and what it wraps (urllib's ``reason``, ``__cause__``, ``__context__``), at most 8 deep."""
     seen: list[BaseException] = []
@@ -50,6 +67,15 @@ def _chain(exc: BaseException) -> list[BaseException]:
             seen.append(e)
             todo += [getattr(e, "reason", None), e.__cause__, e.__context__]
     return seen
+
+
+def never_sent(exc: BaseException) -> bool:
+    """True when the request certainly never left: the connection was refused or the name did not resolve,
+    and nothing in the chain is a timeout or carries an HTTP status."""
+    chain = _chain(exc)
+    if any(isinstance(e, TimeoutError) or status(e) is not None for e in chain):
+        return False
+    return any(isinstance(e, (ConnectionRefusedError, socket.gaierror)) for e in chain)
 
 
 def transient(exc: BaseException, retryable: Retryable | None = None) -> bool:
@@ -88,19 +114,32 @@ def with_retry[T](
     sleep: Callable[[float], None] = time.sleep,
     retryable: Retryable | None = None,
     detail: Callable[[BaseException], str] | None = None,
+    http_status: Callable[[BaseException], int | None] | None = None,
 ) -> T:
+    """``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
+    ``status`` finds none; it only feeds the mark, never the retry decision."""
+    unsent = True  # every attempt so far failed before any request was sent
     for attempt in range(1, max_attempts + 1):
         try:
             return call()
         except ProviderError:
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
+            this_unsent = never_sent(exc)
             if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+                code = status(exc)
+                if code is None and http_status is not None:
+                    code = http_status(exc)
+                error = ProviderError(f"{label}: {describe(exc, detail)}")
+                error.refused_before_response = unsent and (this_unsent or code in REFUSED_STATUSES)
+                raise error from exc
+            unsent = unsent and this_unsent
             if attempt == max_attempts:
-                raise ProviderExhausted(
+                exhausted = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
+                )
+                exhausted.refused_before_response = unsent
+                raise exhausted from exc
             # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
             # sooner than the server asked.
             jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311

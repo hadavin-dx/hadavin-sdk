@@ -8,7 +8,14 @@ from hadavin_sdk.models import Reply
 
 
 class ProviderError(RuntimeError):
-    """The provider refused the request (a bad key, a malformed request): retrying would fail the same way."""
+    """The provider refused the request (a bad key, a malformed request): retrying would fail the same way.
+
+    `refused_before_response` is the mark the model gate reads (`getattr(exc, "refused_before_response",
+    False) is True`) to settle a spend reservation at 0. It is False unless `llm/retry.py` sets it on the
+    instance: True only when it is certain that no response was produced and nothing was billed (see
+    `REFUSED_STATUSES` and `never_sent` there). False means "unknown": the worst case stays booked."""
+
+    refused_before_response: bool = False
 
 
 class ProviderExhausted(ProviderError):
