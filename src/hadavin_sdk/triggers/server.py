@@ -145,6 +145,28 @@ class QuietWSGIHandler(ServerHandler):
         dict[str, str]
     ] = {}  # the stdlib default is a copy of the process environment
 
+    _answer: bytearray
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._answer = bytearray()
+
+    def _write(self, data: bytes) -> None:
+        """Keep the bytes: the stdlib hands over the status line, the Date line, the header block and each
+        body chunk one by one, and the socket is unbuffered (`wbufsize` is 0), so a worker killed between
+        two of them left the client a status line and nothing else (a 2xx with an empty body)."""
+        self._answer += data
+
+    def finish_response(self) -> None:
+        """The answer goes out in ONE write, also when the application failed half way (what was kept is
+        sent as the stdlib would have sent it; `handle_error` is unchanged)."""
+        try:
+            super().finish_response()
+        finally:
+            if self._answer:
+                data, self._answer = bytes(self._answer), bytearray()
+                super()._write(data)
+
     def log_exception(self, exc_info: Any) -> None:
         kind = exc_info[0] if exc_info else None
         _LOG.error("trigger server: application error: %s", getattr(kind, "__name__", "unknown"))
