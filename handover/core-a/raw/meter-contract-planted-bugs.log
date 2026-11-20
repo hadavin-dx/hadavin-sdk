@@ -84,3 +84,26 @@ FAILED tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_
 FAILED tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-settle-twice-higher-then-zero]
 FAILED tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-higher]
 FAILED tests/contracts/test_meter.py::test_every_implementer_gives_the_outcomes_of_the_shared_table[budget-swept-then-settled-lower]
+=== P4 stop state ignored (Limits)
+16 failed, 243 passed, 3 xfailed in 22.54s
+FAILED tests/contracts/test_meter.py::test_a_stop_set_before_reserve_refuses_with_kill_switch_and_books_nothing[limits-memory]
+FAILED tests/contracts/test_meter.py::test_a_stop_set_before_reserve_refuses_with_kill_switch_and_books_nothing[limits-postgres]
+FAILED tests/contracts/test_meter.py::test_a_stop_set_between_the_read_and_the_booking_lets_one_call_through[limits-memory]
+FAILED tests/contracts/test_meter.py::test_a_stop_set_between_the_read_and_the_booking_lets_one_call_through[limits-postgres]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-key-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-not-found-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-os-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-runtime-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-timeout-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-memory-value-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-key-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-not-found-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-os-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-runtime-error-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-timeout-get_kill_switch]
+FAILED tests/contracts/test_meter.py::test_a_store_that_cannot_be_asked_refuses_with_limits_unavailable[limits-postgres-value-error-get_kill_switch]
+=== P5 month cap not checked (memory store)
+3 failed, 256 passed, 3 xfailed in 23.65s
+FAILED tests/contracts/test_meter.py::test_the_month_cap_refuses_with_monthly_budget_and_books_nothing[limits-memory]
+FAILED tests/contracts/test_meter.py::test_a_cap_of_zero_refuses_every_call[limits-memory-100-0-monthly_budget]
+FAILED tests/contracts/test_meter.py::test_the_month_cap_holds_across_the_days_of_a_month_and_a_new_month_is_free[limits-memory]

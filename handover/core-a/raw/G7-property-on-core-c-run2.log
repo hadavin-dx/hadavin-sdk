@@ -1,0 +1,35 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
+rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/corec-g7b
+configfile: pyproject.toml
+plugins: xdist-3.8.0, platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 162 items
+
+tests/test_redact_idempotence_property.py::test_the_corpora_are_loaded PASSED [  0%]
+tests/test_redact_idempotence_property.py::test_P1_I2_corpus_a_second_pass_with_the_same_map_changes_nothing PASSED [  1%]
+tests/test_redact_idempotence_property.py::test_P1_corpus_a_second_pass_with_a_fresh_map_changes_nothing PASSED [  1%]
+tests/test_redact_idempotence_property.py::test_P2_P3_corpus_the_map_only_grows_and_no_placeholder_is_redacted_again PASSED [  2%]
+tests/test_redact_idempotence_property.py::test_P4_corpus_restore_gives_the_text_back_after_one_pass_and_after_two PASSED [  3%]
+tests/test_redact_idempotence_property.py::test_I3_I5_corpus_without_a_bank_code_placeholder_the_result_is_the_old_path_and_find_only_is_unchanged PASSED [  3%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['\\n'] PASSED [  4%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b[' '] PASSED [  4%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['; '] PASSED [  5%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['\\n\\n'] PASSED [  6%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b[' | '] PASSED [  6%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['\\t'] PASSED [  7%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b[', '] PASSED [  8%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['\\r\\n'] PASSED [  8%]
+tests/test_redact_idempotence_property.py::test_P5_whatever_is_found_in_a_and_in_b_alone_is_found_in_a_then_b['. '] XFAIL [  9%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['/'] FAILED [  9%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[', '] FAILED [ 10%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['; '] FAILED [ 11%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['-'] FAILED [ 11%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' | '] FAILED [ 12%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' / '] FAILED [ 12%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[','] FAILED [ 13%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass['|'] FAILED [ 14%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' '] FAILED [ 14%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' acct '] PASSED [ 15%]
+tests/test_redact_idempotence_property.py::test_P5_the_account_beside_a_swept_bank_code_is_masked_in_one_pass[' account number '] PASSED [ 16%]
+tests/test_redact_idempotence_property.py::test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes['/'] FAILED [ 16%]
+tests/test_redact_idempotence_property.py::test_P1_I1_I2_I4_the_ticket_grid_is_a_fixed_point_and_equals_two_old_passes[', '] 
