@@ -88,7 +88,7 @@ M = [
     m("G8-P12 keyword entry without tel", "(?:tel|phone|mobile|cell|fax)", "(?:phone|mobile|cell|fax)", GR, "ROW 28 "),
     m("G8-P13 the _ entry without the \u203a guard (M2)", E7, r'r"\d{10,16}(?![0-9A-Za-z>]|\.\w)"', UNT, "UNTRUSTED U1"),
     m("G8-P14 the + entry without its date guard after + (N4)", r'\+(?!\d{4}-\d\d-\d\d)\d(?:', r'\+\d(?:', KEEP, "ROW K81 "),
-    m("G8-P15 the + entry end back to refusing a full stop (G7-F3)", r'\d(?![0-9]|\.\w)"', r'\d(?![0-9.])"', FS, "ROW F3 "),
+    m("G8-P15 the + entry end back to refusing a full stop (G7-F3)", r'\d(?![0-9]|\.\w)"', r'\d(?![0-9.])"', FS, "ROW F4 "),
     m("G8-P16 the main entry end back to refusing a full stop (G7-F3)", r'[\d \-]){8,14}\d(?!\w|\.\w)"', r'[\d \-]){8,14}\d(?![\w.])"', FS, "ROW F1 "),
     m("G8-P17 the _ entry end back to refusing a full stop (G7-F3)", r'\d{10,16}(?![0-9A-Za-z>›]|\.\w)"', r'\d{10,16}(?![0-9A-Za-z.>›])"', FS, "ROW F5 "),
     m("G8-P18 the phone-word entry end back to refusing a full stop (G7-F3)", r'(\d{10,16})(?![0-9a-z]|\.\w)"', r'(\d{10,16})(?![0-9a-z.])"', FS, "ROW F6 "),

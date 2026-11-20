@@ -4,8 +4,8 @@ Status: BUILD TICKET, core-c drafter, 2026-11-20. NOT built: a ticket only until
 cloud/core-c HEAD `4ea3a9d99` (G8; G9 as `9652b20aa`..`3ee2361d4`; G4 Phases 0-3 as `b4ac46668`..`35a068f2a`: all IN it; G4 Phase 4
 (host names, branch `wip-g4-p4`, local, STOPPED) is NOT). Labels: MEASURED (run on a scratch `git archive` copy, figure recorded), BY
 READING, NOT RUN. Scratch copies (drafter's, the repo untouched): `head` = `git archive a60da3394` (G8 only), `g11` = head + this
-ticket's diffs; `h2` = `e75871df3` (G8 + G9), `h2g` = h2 + diffs; `h3` = `4ea3a9d99` (G8 + G9 + G4 P0-3), `h3g` = h3 + Appendix A + B. Inputs: ESCALATIONS.md E16
-and its 12:1xZ update, `handover/core-c/tickets/G11-files/` (cand2_postpass.diff, rows.py, cmp.py, tokexp.py, prop.py, memut.py),
+ticket's diffs; `h2` = `e75871df3` (G8 + G9), `h2g` = h2 + diffs; `h3` = `4ea3a9d99` (G8 + G9 + G4 P0-3), `h3g` = h3 +
+Appendix A + B. Inputs: ESCALATIONS.md E16 and its 12:1xZ update, `handover/core-c/tickets/G11-files/` (cand2_postpass.diff, rows.py, cmp.py, tokexp.py, prop.py, memut.py),
 G8 v6 (OL1-OL7, L15), tests/g8_cases.py `OPAQUE_LIMITS`, tests/test_redact_glued_rest.py, tests/fixtures/timing.py.
 
 ## 0. Decision for the lead (E16 (a) or (b))
@@ -65,8 +65,8 @@ the tail). So HIGHENTROPY stays in the run and the WRITTEN-BACK size is capped i
 
 ## 4. Placement on the merged tree and how to rebase
 Appendix A is against `4ea3a9d99` (`find` at line 1231); MEASURED with `--fuzz=0`: the same +/- lines apply to `a60da3394` (G8 only)
-and `e75871df3` (G8 + G9) with line offsets only; Appendix B applies unchanged to all three (the three test files are byte-identical). If `patch -p1 --fuzz=0` fails on the tree of the day, apply BY NAME
-(three places in src/hadavin_sdk/guard/redact.py; nothing else in src):
+and `e75871df3` (G8 + G9) with line offsets only; Appendix B applies unchanged to all three (the three test files are
+byte-identical). If `patch -p1 --fuzz=0` fails on the tree of the day, apply BY NAME (three places in src/hadavin_sdk/guard/redact.py; nothing else in src):
 1. Module docstring: replace the two lines that start `token) (G8). A UUID or phone number set off by` and end
    `(limit L15: tests/g8_cases.py OPAQUE_LIMITS).` with Appendix A's four `+` lines.
 2. Module level: insert the `_PH_RUN` comment, `_PH_RUN = re.compile(...)` and `_PH_RUN_CHARS = 1024` right after the line that
@@ -79,7 +79,7 @@ ask core-c where the pass goes (the drafter's answer is "after every pattern ste
 tree; record each beside this ticket's figure; a difference in a count is NOT a failure by itself, a difference in a pinned output is
 a STOP (section 10).
 
-## 5. Tests (Appendix B; MEASURED on `g11` and `h2g`)
+## 5. Tests (Appendix B; MEASURED on `g11`, `h2g` and `h3g`)
 OL1-OL7 (were limit pins; the `after` column changes; `base` kept; new `g8` = the old `after`; new `keys`):
 
 | row | G8 (`g8`) | G11 (`after`) | keys after one call |
@@ -156,7 +156,7 @@ was good before and is not after is a STOP.
   The existing `test_glued_patterns_are_linear` (14) still passes (MEASURED on `h2g`). Also run `python -m tests.g8_cost run` on HEAD
   and on the build and `compare` (the G8 acceptance rule: big < 3.0 s, ratio <= 6.0, build <= 1.5 x base + 0.05 s): NOT RUN by the
   drafter. The E16 measurer's cost ratios for cand2 were 0.90-1.06; G11's pass is cand2's plus an O(run) size sum.
-- Idempotence: rows.py over the 218 records (209 at HEAD + OL8-OL16): 0 non-idempotent (MEASURED `g11`, `h2g`; rows.py needs
+- Idempotence: rows.py over the 218 records (209 at HEAD + OL8-OL16): 0 non-idempotent (MEASURED `g11`, `h2g`, `h3g`; rows.py needs
   `getattr(G, "OPAQUE_RUNS", None) or G.OPAQUE_LIMITS` in its `for o in` line, a scratch copy, the G11-files original stays). The OL test
   asserts the second call with a fresh and with the same map.
 - Property corpus (G11-files/prop.py, the repo's .venv python): `corpus pinned ok`, `no refusal ok`, 0 fail: 1,836 inputs on `g11` and
@@ -183,7 +183,8 @@ keys a token gives (the whole token as HIGHENTROPY, plus `_place`'s piece entrie
 UUID, PHONE and HIGHENTROPY values, never ENCODED (`<ENCODED_n>` is not in the run's placeholder group, and `<` ends a run, so a run
 next to `<ENCODED_1>` stops there). MEASURED: G9's own files (`test_redact_settle_loop.py`, `test_model_gate.py`,
 `test_runmap_enforce_map.py`, `test_redact_idempotent_property.py`: 2,261 passed, 1 skipped, the same as without G11, on a trial merge
-`a60da3394` + `wip-g9` before G9 landed; on `h3g` in the subset row of "Late results"); on `h2g` and `h3g`: G8's tripwire `test_g9_read_back_follows_the_sweeps_joins` passes; `redact_many([tok, "see " + tok + " and " + uuid])`
+`a60da3394` + `wip-g9` before G9 landed; on `h3g` in the subset row of "Late results"); on `h2g` and `h3g`: G8's tripwire
+`test_g9_read_back_follows_the_sweeps_joins` passes; `redact_many([tok, "see " + tok + " and " + uuid])`
 gives `<HIGHENTROPY_1>` and `see <HIGHENTROPY_1> and <UUID_1>`; the gate `enforce_map("model says " + tok, map)` gives
 `model says <HIGHENTROPY_1>` (HEAD leaves the tail readable there too); `redact("x<HIGHENTROPY_1>y " + tok, mapping=...)` keeps the
 quoted `x<HIGHENTROPY_1>y` (no UUID/PHONE in that run). G9's `_read_back` reach (`SPELLED_READBACK_REACH`) bounds what it reads of a
@@ -229,7 +230,8 @@ Stop rules (stop, record, ask core-c; never loosen a pin or a test to go on):
 - a perf test red twice in a row (one re-run allowed, timing.py's note), or a ratio over 6.0 in g8_cost; a new `InputTooLarge` anywhere;
 - a mutant not good (all four runners), or an `old` not found once;
 - `find` no longer ending in the PATTERNS loop (section 4); a patch that needs more than the three places;
-- a test outside the four named files changing result; three failed tries at the same fix.
+- a test outside the four named files changing result against the Phase 0 run of the same tree (known reds such as E20's three are
+  recorded in Phase 0 and must stay exactly those); three failed tries at the same fix.
 
 ## 11. Evidence (drafter) and what is NOT verified
 MEASURED, `g11` (`a60da3394` + diffs, G8 only): every table above, the 49-mutant run, tokexp N=20,000, blow, perf, fail-before.
@@ -241,7 +243,18 @@ listed under "Late results" at the end.
 NOT RUN by the drafter: g8_cost compare; bandit; redact_mutants / b64_mutants / gate_mutants with G11; G4 Phase 4 + G11 (not merged).
 BY READING: the G9 reach bound (8), the hit rule (8), the equivalent / not-mutated items (6), the G4 Phase 4 overlap (8).
 
-Late results (drafter, `h3g`): PENDING
+Late results (drafter, `h3g` = `4ea3a9d99` + A + B; MEASURED):
+- fail-before (B's tests on `h3`'s src): 17 failed, 451 passed, 18 deselected, 37 xfailed: the ids of section 5.
+- tokexp N=20,000: injected 0 of 4,971 / 3,820 / 3,927; random 6, 2, 1, 2 per class in each mode (= `head`, `h2g`).
+- guard subset (`tests/test_redact*.py test_runmap*.py test_model_gate*.py test_b64*.py test_p1c*.py test_p1d*.py
+  warden_port/test_redaction.py`, `-m "not perf and not live" -n 2`): 3 failed, 4,464 passed, 64 xfailed in 923 s. The 3 are E20's
+  (TB-2.8 `test_tie_break_keeps_the_order_of_different_originals`, TB-2.11 `test_e5b_a_conflict_...`, TB-3.4
+  `test_no_run_no_extra_work`): they fail identically on `h3` without G11 (same messages; TB-3.4 `(1, 160) != (1, 154)` on both: G11
+  adds no clock reading). Not G11's; the wip-mix reconciliation re-pins them.
+- g8_mutants.py: MUTANTS_PENDING
+- NOT RUN on `h3g`: the whole suite (two whole-suite tries on `full` copies stalled at 81-84 % with 3 pytest jobs of other lanes on the
+  box: no failure seen before the stall except a git-dependent test of a `git archive` copy); the perf group beyond the G8 file;
+  b64_mutants / redact_mutants / gate_mutants.
 
 ## Appendix A: src/hadavin_sdk/guard/redact.py (diff against `4ea3a9d99`; `patch -p1 --fuzz=0`)
 ```diff
