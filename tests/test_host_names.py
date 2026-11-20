@@ -124,10 +124,47 @@ def test_host_starts_after_a_non_ascii_word_character():
     glued = "mail_9\u4f8b-_db-7.corp.internal_\u00e9\u4f8b"
     out = red(glued)
     assert "db-7" not in out and "corp" not in out, f"TB-4.13 after a CJK letter and `-_`: {out!r}"
-    assert "db-7" not in red("x \u4f8bdb01.corp.example y"), "TB-4.13 glued after a CJK letter"
+    assert red("x \u4f8bdb01.corp.example y") == "x \u4f8b<HOSTNAME_1> y", (
+        "TB-4.13 glued after a CJK letter"
+    )
     assert "db01" not in red("\u00e9-_db01.corp.example"), (
         "TB-4.13 after an accented letter and `-_`"
     )
+
+
+def test_host_ends_before_a_non_ascii_word_character():
+    """TB-4.13 (trailing glue, G4d). The lookahead after the suffix names ASCII label characters, so a CJK glue does not hide the name."""
+    for text, want in (
+        ("db01.corp\u4f8b", "<HOSTNAME_1>\u4f8b"),
+        ("db01.local\u4f8b", "<HOSTNAME_1>\u4f8b"),
+        ("a db01.corp\u4f8b b", "a <HOSTNAME_1>\u4f8b b"),
+        ("db01.local-x\u4f8b", "<HOSTNAME_1>\u4f8b"),
+        ("db01.corp.example\u4f8b", "<HOSTNAME_1>\u4f8b"),
+    ):
+        assert red(text) == want, f"TB-4.13 trailing glue {text!r}"
+    assert red("threading.local()") == "threading.local()", "TB-4.13 local() guard"
+    assert red("jdk.internal.reflect.Method") == "jdk.internal.reflect.Method", (
+        "TB-4.13 internal.reflect guard"
+    )
+
+
+def test_host_key_glued_to_a_non_ascii_word_character():
+    """TB-4.13 (HOSTKEY, G4d). The host-key look-behind and look-ahead name ASCII characters."""
+    assert red("\u4f8bhost=db01-7") == "\u4f8bhost=<HOSTNAME_1>", "TB-4.13 HOSTKEY glued before"
+    assert red("host=db01-7\u4f8b") == "host=<HOSTNAME_1>\u4f8b", "TB-4.13 HOSTKEY glued after"
+    assert red("host=db01-7") == "host=<HOSTNAME_1>", "TB-4.13 HOSTKEY plain"
+    for cpu in ("x86", "arm64", "x86_64"):
+        assert red(f"host={cpu}\u4f8b") == f"host={cpu}\u4f8b", (
+            f"TB-4.13 HOSTKEY CPU name {cpu} stays kept before a CJK letter"
+        )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="L-H5 (G4d): labels are ASCII (L11); a non-ASCII letter inside a label leaves the part before it readable",
+)
+def test_host_non_ascii_inside_a_label_is_masked():
+    assert red("db\u4f8b01.corp.example") == "<HOSTNAME_1>", "TB-4.14 non-ASCII inside a label"
 
 
 def test_host_whole_names():

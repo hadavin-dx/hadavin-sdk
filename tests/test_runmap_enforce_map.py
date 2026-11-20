@@ -1226,7 +1226,7 @@ def test_g13c_8_a_repeated_piece_is_charged_at_every_hit_right():
 
 def test_g13c_9_the_deadline_is_read_every_256_hits_on_both_sides(monkeypatch):
     """G13c-9 (nit 3): `hits % 256` reads the deadline: 1,000 head hits left of a key read it 1 (the key) + 3 times, and
-    the same on the right (the hit count is shared by both sides: 2,000 hits, 7 reads past the key's one)."""
+    the same on the right (two separate calls of 1,000 hits each, one per side, each reading 1 + 3 pieces)."""
     calls = []
     monkeypatch.setattr(runmap.EnforceBudget, "check", lambda self: calls.append(1))
     left = _g13c_snap(["aaaa" + "c" * 5_000])

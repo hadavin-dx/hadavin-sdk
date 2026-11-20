@@ -1,0 +1,14 @@
+# Root docs style review 4 (fresh, style, read only): NOT clean. 3 Blocker, 5 Major
+Blockers
+1. CHANGELOG ~112 and ~114 cite Kn ("see K46 and K84 in SECURITY.md", "SECURITY.md, K64") outside SECURITY.md: point to section titles instead.
+2. Team/process/evidence-file references in shipped text, mostly SECURITY.md: ~24 "the published SECURITY.md on the main line"; ~38-40 "the notes of that batch", "a progress line of 2026-11-20 kept by the team"; ~46 "its fourth fix round"; ~565 "the text and masking team's own notes"; ~108, 185-195 "a team note names the test", "the builder's figure"; ~159, 237 "the project's written plan, frozen on 2026-11-20"; ~473 "a team note of that date"; CHANGELOG ~80 "recorded run of 2026-11-11, on its own base"; ~192, 515 "Review round:"; ~63 "reported by the builder". State the fact and its label, not who recorded it (e.g. "UNVERIFIED: the tests are named in a development note that holds no result line"); K19: name the actual source.
+3. CHANGELOG top note (~5) "Product names appear only as exact config values" is false: the section also names Kubernetes, Postgres, PHP, curl, mysql, Windows, Slack-style cards (~92, 123, 133, 139, 160); README names Kubernetes throughout. Narrow the claim ("Vendor names appear only as config values or as the names of the interfaces they implement") or replace the brand strings.
+Majors
+4. Two statuses on one gap (K36 ~314, K67 ~147, K70 ~370, K74 ~398; K24 and K82 split): one Status line per gap; move each open question to its own gap (e.g. K36a ... Status: OPEN).
+5. Section 1 (~24) gives STATED to a limit K46 and K84 cover (K84 is OPEN): point, carry no status.
+6. Sentences over 30 words: CHANGELOG ~21, 22, 33 (~120 words); README ~111; SECURITY K50 (~464-473), K73 (~385-392), K85.
+7. Contradicting numbers in CHANGELOG Unreleased: ~144 max_document_bytes 1048576 vs ~139 "now defaults to 262144 (was 1 MiB)"; ~114 "256 values" pairing vs K64 (~135) "the old limit of 256 is gone": state each final value once, say which limit each belongs to.
+8. Unlabelled behaviour claims: CHANGELOG ~63 ("reported by the builder; not re-run here": add UNVERIFIED), README ~17 headline claim, SECURITY ~3-7 "Reports are answered within 5 working days" (add STATED + source or drop).
+Nits: SECURITY ~11 "only place that explains both words" (appendix also does); dated deadlines (K14/26/29/31/55/69, README ~111) are internal process: state the default; ~17 pointer should be K84; README ~111 name K26/K29 by title (README may not use Kn); CHANGELOG ~123 "see the next entry" wrong; ~222 `k1b:` unexplained; K85a "Evidence: NONE" misuse; headings (README Limits and trust also covers egress/grounding; CHANGELOG Breaking/Changed mix).
+Cross-references present: #words-used-here, README sections, CHANGELOG "Pin" entries, K12-K85a, 2.10; 14 text-fold functions agree.
+Not read: CHANGELOG ~230-812 (search only); ~130-229 skimmed.

@@ -1,0 +1,9 @@
+# DOCS6 notes (fix of style review 5: 5 Major, Nits; Unreleased/new material only)
+
+Major 1: K78 and the 2.1 safety-net line: the "piece beside a placeholder" behaviour is UNVERIFIED (no result line; same as K12 and the last row of 2.10). K78 FIXED now covers the overlap masking only.
+Major 2: K82 numbered 1 to 8. PINNED for 1, 2, 3, 4, 6 (named strict expected failures in tests/test_b64_scan.py). K82a: cases 5, 7, 8 have no test (was "two").
+Major 3: owner-default wording "If the owner does not decide, the plan is to ... Today ..." in K14, K26, K29, K31, K55, K69 and the README waiver line. Checked in code: grant map (store/migrate.py) gives the runtime role read-write on spend, spend_month, kill_switch and approval_requests, so "today not tightened"; the gate accepts an empty map (model_gate.py, map_enforced_empty), so K69 "today it accepts one". K31 (no masked field) and K55 (wider matching in force) stated from the document's own text, not re-run.
+Major 4: 2.9 test-run claims labelled UNVERIFIED (development note, no result line).
+Major 5: heading 2.10 renamed; "team" roles now "connector-and-store maintainer" and "text-and-masking maintainer" (named by what they own); CHANGELOG "the plan's defaults" -> "defaults chosen in the code".
+Nits: section 1 retitled and labelled with a pointer to K46/K84; unclear sentences at old lines 18 and 191 reworded; K70 card line and K83 labelled; README TESTED label and DENY definition; CHANGELOG list level fix (the "why the field exists" item) and heading "Store protocol and import changes; database repair"; top-note OPEN definition now matches the appendix in meaning (nobody has fixed or decided it yet; the line names who must act). Older entries untouched.
+Tests: docs/brand subset 71 passed, 1 failed (vendor-brand test, only on handover/BRIEF-PREAMBLE.md); 20 passed for the CHANGELOG-reading tests plus tests/test_textnorm_meta.py.

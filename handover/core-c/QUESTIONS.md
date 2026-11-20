@@ -25,3 +25,6 @@ The P1d-a link oracle is checked against linkify-it-py (markdown-it's linkifier;
 
 ## Q17 (13:18Z) F-install blockers (lead message 13:15Z): item (d) "K5"
 (a) NO_MAP (request 3) is built and merged; (b) `usd_cap` is built (SPEND_REASONS, model_gate.py:271-279); (c) the mark on ProviderExhausted is being built now (builder a578fea4, ETA 13:45Z; the two E4 pins change by design). (d) "K5": core-c has NO open item named K5: the lead's 13:10Z message gave `tools.py:996` and `tests/test_k5_producers.py:143` to core-a. QUESTION: is (d) those two core-a items, a SECURITY K5 gap-list entry (README K5 "who acts"), or something else owed by core-c? Default until answered: core-c takes nothing for (d).
+
+## Q18 (root docs style review loop reached its cap)
+Rounds: r1 4B/7M, r2 2B/7M, r3 0B/8M, r4 3B/5M, r5 0B/5M (EGM cap is 5; two clean rounds were not reached). Fix passes DOCS2-DOCS5 are merged; DOCS6 (round 5 findings) is running. Question for the owner: accept the root docs after DOCS6 (open items listed in tickets/DOCS-style-review-5.md and the notes), or authorise more review rounds? Older CHANGELOG entries by other sessions still hold ticket codes and long sentences (out of this pass's scope).

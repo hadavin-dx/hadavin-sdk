@@ -1436,7 +1436,7 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     that size) BEFORE the piece is cut, so a gap with no head hit copies nothing and a hit copies one piece (the
     earlier code cut a piece of up to the longest value's length at every position: quadratic in the gap, unbudgeted).
     A piece is looked up only where those characters are those of a value; a piece already looked up in this text is
-    not looked up, nor charged, again; `seen` keeps the piece itself when it is at most `_LOOKUP_COST` characters and
+    not looked up again (every hit is still charged at the hit); `seen` keeps the piece itself when it is at most `_LOOKUP_COST` characters and
     else a 16-byte digest, so its memory does not grow with the length of the pieces (it held every piece whole: about
     370 MB at a 16,000-character value on a hostile gap); each lookup spends at most `_LOOKUP_COST` characters of the
     call's budget (`InputTooLarge` past it) and the deadline is read every 256 hits (E::test_g13c_9). G13d (review 1 M1): the

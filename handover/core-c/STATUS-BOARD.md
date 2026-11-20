@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:25:41Z
+UPDATED_UTC: 2026-11-20T16:55:17Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:31Z agents 4 (G12d, G9c, G4d, DOCS3 builders), load 3.1. Root docs style review round 2 recorded: still 2 Blocker, 7 Major (labels vs definitions, remaining internal codes, brand list check, README/CHANGELOG decode mismatch). EGM needs two clean rounds, cap 5: DOCS3 fixes then round 3. 16:25Z agents 3 (G12d, G9c, G4d builders), load 2.0. DOCS2 MERGED (root docs: breaking changes first, codes/brands removed, labels fixed; doc tests 71 passed, only the lead-file vendor test red). Fresh style review round 2 of the root docs next. 16:21Z agents 4 (G12d, G9c, G4d, DOCS2 builders), load 2.4. G13d MERGED onto cloud/core-c (every head hit charged 1+len//64 before the seen test; separator-only limit pinned test_g13d_1 + owner question ESCALATIONS E24; 8 new mutants, gate_mutants 146/14
+STATE: 17:23Z REAL RUNNING AGENTS 6: G9c builder, DOCS6 builder, P3 builder (gate e2e with core-b store), reviewers for G13d, G12d, G4d diffs. Load (/proc/loadavg) 1.82 1.60 2.27. Lead 16:55 orders: docs review cap = 2 rounds: NO more docs review rounds (DOCS6 fix already running will merge, then stop; open style Majors go in the ledger); P2 DONE handover/core-c/requests/for-core-b-f-install.md; P5 DONE handover/core-c/DECISION-extract.md (KEEP: 2 tests import it, nothing in src); P6 DONE handover/core-c/DECISION-textnorm-deny.md (KEEP); P4 perf at idle on the final head after merges; P1 merge as each lands. Q18 answered by the lead rule (no more docs rounds).
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 3.1 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
-DISK: / 54G free, 23% used; git worktrees 57; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+AGENTS_RUNNING: 6
+CAPACITY: load 1.8 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 6, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 61; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:25:34+00:00
+PUSHED_UTC: 2026-11-20T16:54:50+00:00
 
-(21:55 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:25 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -36,14 +36,24 @@ PUSHED_UTC: 2026-11-20T16:25:34+00:00
 | a60a4532 | reviewer | claude-sonnet-5-5 | FRESH egm result review of G13c merged diff (5d8c8ca04) on plain-file snapshot | 16:21 | 16:35 | 1 | done | 1 | 0 | EGM |
 | g12c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G12c (f67fac5ae) on snapshot | 16:25 | 16:40 | 1 | done | 1 | 0 | EGM |
 | g13d | builder | claude-sonnet-5-5 | BUILDS G13d: G13c review fixes (charge every head hit, separator-only limit pinned, mutants, docstrings); /tmp/core-c-g13d | 16:25 | 16:55 | 1 | done | 1 | 0 |  |
-| afce289e | builder | claude-sonnet-5-5 | BUILDS G12d: G12c review fixes (label-core decline, budget-based large-value rule, look-alike bracket cores, sweep skips escaped look-alikes, _bare perf); /tmp/core-c-g12d | 16:28 | 17:00 | 1 | running | 1 | 0 |  |
+| afce289e | builder | claude-sonnet-5-5 | BUILDS G12d: G12c review fixes (label-core decline, budget-based large-value rule, look-alike bracket cores, sweep skips escaped look-alikes, _bare perf); /tmp/core-c-g12d | 16:28 | 17:00 | 1 | done | 1 | 0 |  |
 | g9b-rev | reviewer | claude-sonnet-5-5 | FRESH egm design result review of G9b (24f1983fc) on snapshot | 16:29 | 16:42 | 1 | done | 1 | 0 | EGM |
 | a7823001 | builder | claude-sonnet-5-5 | BUILDS G9c: G9b review fixes (charge accepted+rejected occurrences, per-edge/_expand calibration measured, kind rule at reverse[full], exact-work test); /tmp/core-c-g9c | 16:33 | 17:05 | 1 | running | 1 | 0 |  |
 | g4c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G4c (ab8ee0440) | 16:34 | 16:48 | 1 | done | 1 | 0 | EGM |
 | docs-rev | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review of root SECURITY/CHANGELOG/README (merged docs branch) | 16:34 | 16:48 | 1 | done | 1 | 0 | EGM style |
 | a56a54a7 | builder | claude-sonnet-5-5 | BUILDS DOCS2: fixes the root-docs style review (4 Blocker, 7 Major); /tmp/core-c-docs2 | 16:42 | 17:10 | 1 | done | 1 | 0 | docs only |
-| g4d | builder | claude-sonnet-5-5 | BUILDS G4d: G4c review fixes (trailing glue, HOSTKEY, label-internal non-ASCII limit, TB-4.13); /tmp/core-c-g4d | 16:43 | 17:10 | 1 | running | 1 | 0 |  |
-| a3142375 | builder | claude-sonnet-5-5 | BUILDS DOCS3: root docs style review round 2 fixes (2 Blocker, 7 Major); /tmp/core-c-docs3 | 16:30 | 17:00 | 1 | running | 1 | 0 | docs only |
+| g4d | builder | claude-sonnet-5-5 | BUILDS G4d: G4c review fixes (trailing glue, HOSTKEY, label-internal non-ASCII limit, TB-4.13); /tmp/core-c-g4d | 16:43 | 17:10 | 1 | done | 1 | 0 |  |
+| a3142375 | builder | claude-sonnet-5-5 | BUILDS DOCS3: root docs style review round 2 fixes (2 Blocker, 7 Major); /tmp/core-c-docs3 | 16:30 | 17:00 | 1 | done | 1 | 0 | docs only |
+| docs-rev3 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 3 of root docs after DOCS3 | 16:41 | 16:55 | 1 | done | 1 | 0 | EGM style |
+| docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | done | 1 | 0 | docs only |
+| docs-rev4 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 4 of root docs after DOCS4 | 17:00 | 17:12 | 1 | done | 1 | 0 | EGM style |
+| a6873a2f | builder | claude-sonnet-5-5 | BUILDS DOCS5: style review round 4 fixes (3 Blocker, 5 Major); /tmp/core-c-docs5 | 17:05 | 17:30 | 1 | done | 1 | 0 | docs only |
+| docs-rev5 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 5 (cap) of root docs after DOCS5 | 17:12 | 17:25 | 1 | done | 1 | 0 | EGM style |
+| docs6 | builder | claude-sonnet-5-5 | BUILDS DOCS6: round 5 fixes (0 Blocker, 5 Major); /tmp/core-c-docs6 | 17:17 | 17:40 | 1 | running | 1 | 0 | docs only |
+| p3 | builder | claude-sonnet-5-5 | P3: gate end-to-end hostile test with core-b REAL store on a scratch merge of cloud/core-b + cloud/core-c; /tmp/core-c-p3 | 17:22 | 17:55 | 1 | running | 1 | 0 | 1 PG |
+| g13d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G13d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
+| g12d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G12d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
+| g4d-rev | reviewer | claude-sonnet-5-5 | FRESH review of G4d fix diff | 17:23 | 17:35 | 1 | running | 1 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
