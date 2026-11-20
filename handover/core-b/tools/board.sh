@@ -5,6 +5,9 @@ set -u
 cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)" || exit 1
 D=handover/core-b
 [ "$(git rev-parse --abbrev-ref HEAD)" = "cloud/core-b" ] || { echo "not on cloud/core-b"; exit 1; }
+GD=$(git rev-parse --git-dir)
+for f in CHERRY_PICK_HEAD MERGE_HEAD REBASE_HEAD; do [ -e "$GD/$f" ] && { echo "refusing to commit a board: $f is present (finish or abort it first)"; exit 1; }; done
+git diff --name-only --diff-filter=U | grep -q . && { echo "refusing: unmerged files"; exit 1; }
 . "$D/board-head.env"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ); IST=$(TZ=Asia/Kolkata date '+%H:%M IST')
 BOOT=$(cut -c1-8 /proc/sys/kernel/random/boot_id)
