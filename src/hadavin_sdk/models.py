@@ -230,6 +230,19 @@ def audit_ref(text: str | None) -> str | None:
     return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
 
 
+_AUDIT_BAD = re.compile(r"[^\w.:@/+=#~, -]")
+
+
+def audit_code(text: object) -> str:
+    """Outside text (a provider stop reason, a tool error, a user or executor string) as an audit identifier field:
+    every disallowed character becomes `_`, cut to AUDIT_FIELD_MAX; empty becomes `unknown`. Never raises."""
+    try:
+        out = "" if text is None else _AUDIT_BAD.sub("_", str(text))[:AUDIT_FIELD_MAX]
+    except Exception:  # noqa: BLE001 - a text whose str() fails still gets a row
+        out = ""
+    return out or "unknown"
+
+
 AuditToken = Annotated[str, Field(max_length=AUDIT_FIELD_MAX, pattern=AUDIT_FIELD_PATTERN)]
 
 
