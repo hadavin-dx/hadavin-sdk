@@ -841,9 +841,10 @@ def test_a_port_in_use_is_a_listen_error_exit_2_not_store_unreachable(monkeypatc
         taken.bind((worker.LOOPBACK, 0))
         taken.listen(1)
         port = taken.getsockname()[1]
-        with pytest.raises(ConfigError, match=f"cannot listen on {worker.LOOPBACK}:{port}") as refused:
+        line = f"cannot listen on {worker.LOOPBACK}:{port} (OSError)"
+        with pytest.raises(ConfigError) as refused:
             worker.make_server(worker.LOOPBACK, port, lambda e, s: [], 5.0)
-        assert "OSError" in str(refused.value)
+        assert str(refused.value) == line
         assert refused.value.__cause__ is None and refused.value.__suppress_context__
 
         def binds(args):
@@ -854,7 +855,7 @@ def test_a_port_in_use_is_a_listen_error_exit_2_not_store_unreachable(monkeypatc
     finally:
         taken.close()
     err = capsys.readouterr().err
-    assert err == f"trigger worker: config error: cannot listen on {worker.LOOPBACK}:{port} (OSError)\n"
+    assert err == f"trigger worker: config error: {line}\n"
     assert "store unreachable" not in err and "Traceback" not in err
 
 

@@ -324,7 +324,7 @@ def make_server(host: str, port: int, wsgi: Any, socket_timeout_s: float) -> WSG
     handler = type("TriggerHandler", (QuietRequestHandler,), {"timeout": socket_timeout_s})
     try:
         server = QuietServer((host, port), handler)
-    except OSError as exc:  # the port is in use, or the address cannot be bound: not a store failure
+    except OSError as exc:  # port in use, or an address that cannot be bound: not the store
         raise ConfigError(f"cannot listen on {host}:{port} ({type(exc).__name__})") from None
     server.set_app(wsgi)
     return server

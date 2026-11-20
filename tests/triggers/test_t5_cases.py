@@ -623,4 +623,3 @@ def test_further_kill_switch_on_gives_state_stopped(door):
     assert again.status == 200
     assert json.loads(again.body) == {"run_id": run.run_id, "state": S.STOPPED.value}
     assert len(_all_runs(door.store)) == 1
-

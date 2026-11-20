@@ -38,7 +38,9 @@ NOT run by anybody (each is also in the list at the end):
 - One webhook call that starts two executions.
 - n8n Cloud and queue mode.
 - n8n versions other than 2.47.7.
-- The editor menu for importing a file, the HTTP Request timeout timed live, and a receiver that gives no answer.
+- The editor menu for importing a file and the HTTP Request timeout timed live.
+- A receiver that answers 502 or 504, and a receiver that gives no answer (refused connection, timeout, reset).
+  The loop now treats all of these as "busy"; only 503 was run.
 
 Words used here: a "run" is one piece of work Hadavin does for one event. The "worker" is the Hadavin process that
 receives the signed request and does the run. The "tick" is a second, scheduled Hadavin job that looks for runs that
@@ -50,8 +52,9 @@ stopped moving. The "sender" is the n8n side: one sender has one id and one secr
 - `hadavin-trigger.json` (main): something happens in the client's n8n (a web call, a mail, a schedule). The workflow
   first checks that the business id and the document text are there, then builds one text (the "body") with a
   request key and a document, signs it with a shared secret, and sends it to Hadavin. Hadavin starts at most one run
-  per key and answers with a run id and a state. When Hadavin answers "busy" (503), the workflow waits, signs the
-  same body again with a new timestamp, and sends again, for a fixed number of rounds.
+  per key and answers with a run id and a state. When Hadavin does not acknowledge the request (an answer 502, 503
+  or 504, or no answer at all), the workflow waits, signs the same body again with a new timestamp, and sends
+  again, for a fixed number of rounds.
 - `hadavin-trigger-error.json` (error workflow): when the main workflow fails, n8n starts this one, but only if it
   is published. It builds a short message (workflow name, execution link, last node, error text) for a chat or
   e-mail node that you add.
@@ -204,20 +207,49 @@ users can read it, so it must not be personal data, and only letters, digits and
 are accepted. Same key and same document always give the same run. The same key with a different document is
 refused (409).
 
-## Response codes and what the main workflow does
+## What the template does on each answer
 
-| Code | Meaning | What the main workflow does |
+| Answer | What it means | What the template does |
 |---|---|---|
-| 202 | Accepted. The run exists and its state is RECEIVED or WORKING (first time or a repeat). Body: `run_id`, `state`. | Goes on to "Check state (optional)". |
-| 200 | The run for this key exists and its state is anything other than RECEIVED and WORKING. This does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | Goes on to "Check state (optional)". |
-| 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | Stops with an error; the error workflow runs. Check the secret and both clocks. |
-| 409 | The key was already used with a different document. Empty body. | Stops with an error; the error workflow runs. A person must look; do not retry. |
-| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing or wrong. Empty body. | Stops with an error; the error workflow runs. Fix "Build request". |
-| 413 | The body is larger than the limit (see "Size limits"). Empty body. | Stops with an error; the error workflow runs. Send a shorter document. |
-| 503 | Hadavin is busy with another run, or its database cannot be reached. Nothing was accepted. Empty body. | Waits, signs again with a new timestamp, sends again; after the last round it stops with an error and the error workflow runs. |
+| 202 or 200 | Hadavin holds a run for this key. 202: its state is RECEIVED or WORKING (first time or a repeat). 200: its state is anything else; this does NOT mean the run has ended (see below). Body: `run_id`, `state`. Nothing runs twice. | Goes on to "Check state (optional)". No retry. |
+| 400 | The body is not the two-field JSON, the key has a character that is not allowed, or the Content-Length header is missing or wrong. Empty body. | STOP: no retry, straight to the error workflow. Fix "Build request". |
+| 401 | Signature wrong, header missing, secret unknown, or timestamp more than 300 s off. Empty body. | STOP: no retry, straight to the error workflow. Check the secret and both clocks. |
+| 409 | The key was already used with a different document. Empty body. | STOP: no retry, straight to the error workflow. A person must look. |
+| 413 | The body is larger than the limit (see "Size limits"). Empty body. | STOP: no retry, straight to the error workflow. Send a shorter document. |
+| 502, 503 or 504 | 503 comes from the worker (it is busy with another run, it is shutting down, or its database cannot be reached) and means: not acknowledged; send again with the same key; it may already be running. 502 and 504 come from the reverse proxy when the worker behind it is restarting, draining or not answering in time; the template treats them the same way. | BUSY: waits, then sends the same body with the SAME key, a NEW timestamp and a NEW signature. At most 30 rounds (a placeholder); then the error workflow. |
+| no answer | No HTTP status at all: the connection was refused, timed out or was reset. This is what a sender without a proxy sees while the worker is stopped or restarting. | BUSY, exactly as for 502, 503 and 504. |
 
-Also: 404 means the path is not `/v1/trigger`; 405 means the method is not POST; 414 and 431 mean the request line
-or the headers are too long. All have an empty body and all stop the workflow with an error.
+Any other status is a STOP as well: every other 4xx, and also 404 (the path is not `/v1/trigger`), 405 (the method
+is not POST), 414 and 431 (the request line or the headers are too long). All have an empty body; none is tried
+again.
+
+UNVERIFIED: the "no answer" row and the 502 and 504 part of the row above it. The lead's run had a stub that
+answered 503, 401, 409, 413 and 400, and nothing else. What n8n puts on the failed item when there is no HTTP
+answer is NOT known. The condition in "Busy and rounds left?" assumes that the field `error.status` is then missing
+or is not a three-digit HTTP status, and counts exactly that as busy. The lead runs one more n8n evidence step for
+this case; until then do not rely on it.
+
+Two things follow from "no answer counts as busy", and both are meant:
+
+- A wrong address, a host name that does not resolve, or a TLS fault also gives no HTTP status. The template then
+  tries for all its rounds (about 30 minutes with the placeholders) before a person is told. Send one made-up
+  event after every change of the address (set-up step 10).
+- When the worker refuses a request without reading its body (see "Stated limits"), n8n can see a broken
+  connection in place of the 413, 400 or 401. That, too, is then tried again for all rounds before it stops.
+
+### A restart of the worker must not land events in the error workflow
+
+Restarting the worker is a routine act (a new version, a changed setting). On the stop signal (SIGTERM) the worker
+drains: it closes its port at once, starts no new run, lets the run that is going reach its end, and only then
+exits. A run can last minutes, and the process supervisor normally starts the new worker only after the old one
+has exited. So for minutes there may be nothing that listens on the port.
+
+An event that arrives in that time gets, depending on what stands in front of the worker: 502 or 504 from the
+reverse proxy, a refused connection or a timeout with no proxy, or 503 from a request that was already inside the
+worker. None of these means that the event is bad. If the template stopped on them, every event that arrives
+during a restart would end with a person who has to send it again by hand. So all of them count as busy: the
+template waits and sends again until the new worker answers. Trying again is safe by design: the key stays the
+same, so Hadavin starts at most one run for it, and each round has its own timestamp and signature.
 
 ### 200 does not mean "ended"
 
@@ -230,18 +262,21 @@ The answer holds only `run_id` and `state`. A 200 can carry any of these states:
 To learn how a run went, send the same request again later (same key, same document, new signature) and read the
 state. The answer never holds a reason and never holds the result of the run.
 
-## One run at a time: what the sender must do with 503
+## One run at a time: what the sender must do when it is not acknowledged
 
 In plain words: with the default setting the worker handles ONE run at a time.
 
 - The setting is `max_running`, and its default is 1. It stays 1 until Hadavin can reserve spend before a model
   call; until then two runs side by side could together go over a spending limit.
 - A second event that arrives while a run is going is not queued. The worker holds the request for up to
-  `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503. Nothing is stored
-  for that second event.
+  `ack_wait_s` (default 5 seconds), in case the first run ends in that time, and then answers 503.
+- What 503 means: not acknowledged; send again with the same key; it may already be running. (In most cases
+  nothing was stored. But a request that gets the free slot just before its wait is over can be answered 503
+  although its run has started. The next send with the same key then finds that run and is answered 202 or 200.)
 - A run can last minutes. How long depends on the agent's step limit and the model's timeouts.
-- So the sender must keep trying a 503 over a span that is LONGER than its longest run, and must sign again for
-  every try, because a signature stops being valid 300 seconds after its timestamp.
+- So the sender must keep trying over a span that is LONGER than its longest run, and must sign again for every
+  try, because a signature stops being valid 300 seconds after its timestamp. The same holds for 502, 504 and no
+  answer (see the table above).
 
 The main workflow does this with a loop: "Busy and rounds left?" then "Next round" then "Wait before next round"
 then back to "Stamp time" and the sign node. The outline holds placeholders: a wait of 60 seconds and 30 rounds,
@@ -255,17 +290,20 @@ correct; then the execution failed at "Stop: refused or gave up" and the error w
 rounds, 60 seconds) were not run.
 
 The loop finds the status of a failed send in the field `error.status` of the item that leaves the HTTP node's
-second output (seen for 401, 409, 413, 400 and 503). There is no field `error.httpCode`.
+second output (seen for 401, 409, 413, 400 and 503). There is no field `error.httpCode`. A send with no HTTP answer
+is expected to have no status there (UNVERIFIED, see the table above).
 
-When the workflow gives up (30 rounds answered 503, or no answer at all), the execution fails at "Stop: refused or
-gave up" and the error workflow tells a person. The event was NOT accepted and Hadavin holds nothing for it. The
-person sends it again later with the SAME key; the same key is safe because nothing ran. Whether n8n's own
-"retry execution" signs again was not run (see the list at the end); until that is checked, start the workflow
-anew.
+When the workflow gives up (30 rounds, each answered 502, 503 or 504 or not answered at all), the execution fails
+at "Stop: refused or gave up" and the error workflow tells a person. For that event the rule is the same as for a
+single 503: not acknowledged; send again with the same key; it may already be running. The person sends it again
+later with the SAME key: if a run exists by then, the answer is 202 or 200 with its state, and nothing runs twice.
+Whether n8n's own "retry execution" signs again was not run (see the list at the end); until that is checked,
+start the workflow anew.
 
 ### Why n8n's own Retry On Fail stays off
 
-The HTTP node has a switch "Retry On Fail". It is OFF in this workflow and must stay off for the 503 case. What the
+The HTTP node has a switch "Retry On Fail". It is OFF in this workflow and must stay off for the 503 case (and for
+502, 504 and no answer, which take the same way). What the
 lead's run measured with a receiver that always answers 503:
 
 - Switched on with nothing else set: 3 requests, about 1 and 2 seconds apart.
@@ -282,7 +320,11 @@ If the worker process stops or crashes during a run, that run is not continued w
 document was only in the worker's memory. Later the tick finds the run that stopped moving and sets its state to
 NEEDS_PERSON with the reason "interrupted" (or "outcome_unknown" if it stopped while carrying out an action, or
 "verify_interrupted" if it stopped while checking the result). This only happens if the tick runs in the same
-deployment; the worker does not check that it does.
+deployment. The worker looks once, when it starts, for a good tick of the last 600 seconds; if it finds none it
+writes one warning and starts all the same. After the start it does not look again.
+
+A restart that drains (see "A restart of the worker must not land events in the error workflow") does not cut a
+run off, as long as the supervisor waits long enough; stated limit 11 says what happens when it does not.
 
 What the client sees and does:
 
@@ -306,8 +348,8 @@ What the client sees and does:
   configuration, and that block is not in the configuration code yet. The value proposed for it is 524288 bytes
   (two times the document limit), with 2097152 as the highest allowed setting.
 - The document itself may be at most 262144 bytes as UTF-8 text (`MAX_DOCUMENT_BYTES`). A longer document that
-  fits in the body is accepted by the endpoint and, as the code reads, the run then stops in NEEDS_PERSON (no test
-  sends such a document through the endpoint yet).
+  fits in the body is accepted by the endpoint and the run then stops in NEEDS_PERSON. One test sends such a
+  document through the endpoint; it needs a PostgreSQL test database and is skipped without one.
 - JSON escaping makes a document larger on the wire. A quote or a backslash takes 2 bytes, a line break 2 bytes, and
   other control characters 6 bytes each. A document made mostly of such characters can be up to six times its own
   size in the body, so a document under the document limit can still be answered 413.
@@ -327,22 +369,45 @@ These are known limits of this version. They are written down so that nobody ass
 2. Listen on `127.0.0.1` or `localhost`. The IPv6 local address `::1` is not supported by the built-in server.
 3. When the worker refuses a request without reading its body (413, and some 400 and 401 cases), the connection
    may be closed while the sender is still sending. The sender can then see a broken connection instead of the
-   status code. This was not tested on a real connection. In the main workflow such a case ends in the error
-   workflow.
+   status code. On a real connection only one such case is tested (the 400 for a missing Content-Length, and that
+   test accepts a reset connection); a 413 or a 401 with a large unread body is not. In the main workflow a broken
+   connection has no HTTP status, so it counts as busy: it is tried again for all rounds and only then ends in the
+   error workflow.
 4. n8n must send a `Content-Length` header. A request sent in chunks without one is answered 400. In the lead's
    run n8n 2.47.7 sent the header in every request, up to a 300 KB document, with no proxy in between.
 5. Renaming is not free. The run id is computed from the tenant id, the sender id and the key. If the tenant id or
    a sender id is renamed, every old key gives a NEW run id, so an event that was already handled would run again
    when it is sent again. If a sender's agent or principal is changed, every old key of that sender is answered
    409. Do neither on a deployment that has handled events, unless a person has decided what happens to old keys.
-6. A document may contain the NUL character (written `\u0000` in JSON); the endpoint accepts it. Whether the later
-   steps and the database handle such a document was not checked. Remove NUL characters before sending.
+6. A document may contain the NUL character (written `\u0000` in JSON); the endpoint accepts it, and tests pin
+   what happens today: the run ends like the same document without the NUL, because the redaction step removes
+   every NUL first, and no document text is written to the database. Two things to know: a document with a NUL and
+   the same document without it are two different documents (with one key the second is answered 409), and other
+   control characters are not removed. Removing NUL characters before sending stays the simple way.
 7. Until the `triggers` block exists in the configuration code, the worker uses fallback numbers written in its
    own code (address `127.0.0.1`, port 8081, `max_running` 1, `ack_wait_s` 5). A misspelled setting name is not
    reported; the fallback is used silently. Check the worker's start line for the port it serves on.
 8. The tick must run next to the worker. Without it, a run that was cut off stays in its last state and never
-   reaches a person.
+   reaches a person. The worker warns once at its start when it finds no recent tick, and starts anyway.
 9. Run rows are kept. A key that was used once stays used; there is no way to free a key through this endpoint.
+10. A cap on connections and a deadline per request are the reverse proxy's job. The worker has neither. Its only
+    time limit is per read: a client that sends one byte just inside each time limit keeps its thread for as long
+    as it likes, and every open connection can hold up to `max_body_bytes` in memory before any signature is
+    checked. This is one more reason for limit 1: the proxy in front must cap the connections and end a request
+    that takes too long as a whole.
+11. Set the process supervisor's stop grace period LONGER than the longest run, or runs in flight at a restart end
+    with a person. On the stop signal (SIGTERM) the worker closes its port, starts no new run, and lets the run
+    that is going reach its end; it does not cut a run, not even in the middle of a model call. If the supervisor
+    kills the process before that (Docker, for example, waits 10 seconds unless told otherwise), the run is cut
+    off: the tick later sets it to NEEDS_PERSON with the reason "interrupted", and its key is used up (see "When a
+    run shows NEEDS_PERSON after a restart or a crash"). As the code reads, a second stop signal does nothing
+    while the worker waits for its runs (up to 30 seconds) and kills the process after that. Not tested: a request
+    that waits for a free slot when the signal comes, a request that arrives between the signal and the closing of
+    the port, and a second signal.
+12. There is no fairness among waiting requests: a later request can be served before an earlier one. A request
+    that has just arrived tries for the free slot at once; one that is already waiting looks only about once a
+    second. With a steady flow of events an early event can lose every round and end in the error workflow while
+    later ones run. No request is ever acknowledged without a stored run. This setup is for a low event rate.
 
 ## VERIFY ON A REAL n8n BEFORE ANY CLIENT USE
 
@@ -356,7 +421,8 @@ Nobody has run any of these. The record of what WAS run is `handover/core-a/inpu
 4. NOT VERIFIED: the two "Answer caller" nodes: the caller gets 422 when the guard stops the event and 202 when it
    passes, the stop node still fails the execution, and the caller is answered before the sending chain starts.
 5. NOT VERIFIED: the placeholder `webhookId` and a fresh UUID in its place both give the address `/webhook/<path>`.
-6. NOT VERIFIED: the status check as it is written now (it reads `error.status` only).
+6. NOT VERIFIED: the status check as it is written now (it reads `error.status` only, counts 502, 503 and 504 as
+   busy, and counts a missing status as busy).
 7. NOT VERIFIED: whether a manual retry from the editor, or a `retryOf` retry, runs the sign node again (if not,
    a retry later than 300 s gets 401).
 8. NOT VERIFIED: the real loop values, 30 rounds with 60 second waits, and any wait above 65 seconds.
@@ -367,9 +433,12 @@ Nobody has run any of these. The record of what WAS run is `handover/core-a/inpu
 12. NOT VERIFIED: n8n versions other than 2.47.7. Pin the version that was tested.
 13. NOT VERIFIED: the HTTP Request timeout timed live (its unit, milliseconds, and its default, 10000, were read
     from the node's definition only).
-14. NOT VERIFIED: a receiver that gives no answer at all (refused connection or timeout) ends in the error
-    workflow.
+14. NOT VERIFIED: a receiver that gives no answer at all (refused connection, timeout, reset): what the failed
+    item holds, that it leaves through the HTTP node's second output, and that the loop counts it as busy. The
+    lead runs one more n8n evidence step for this.
 15. NOT VERIFIED: the editor menu for importing a file.
 16. NOT VERIFIED: a body larger than 300 KB, and a proxy between n8n and the receiver.
 17. NOT VERIFIED: the endpoint secret is written down, for each client, as the one exception to "secrets stay
     out of n8n".
+18. NOT VERIFIED: an answer 502 or 504 goes the busy way (the run had only 503), and a restart of the real worker
+    under load: events sent during the drain are taken by the new worker and none reaches the error workflow.

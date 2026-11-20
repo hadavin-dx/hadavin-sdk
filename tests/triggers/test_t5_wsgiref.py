@@ -389,7 +389,7 @@ def test_a_timeout_raised_by_the_code_behind_the_socket_is_503_empty_not_a_slow_
     check_quiet(seen, capsys, caplog)
 
 
-def test_a_timeout_after_the_read_phase_writes_no_stalled_client_answer(monkeypatch, capsys, caplog):
+def test_a_timeout_after_the_read_phase_is_not_answered_as_a_stall(monkeypatch, capsys, caplog):
     """Review 2, Minor 2. A timeout that leaves the application handler (the stdlib lets one through
     when the answer cannot be written) is not a client that sent too little: no 400 head is written
     after it, the connection is closed, and the log holds the class name only."""
