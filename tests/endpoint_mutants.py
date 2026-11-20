@@ -15,6 +15,12 @@ first failing line that holds `expect`. Seven groups, one per guarantee:
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
 
+One test of `tests/triggers/test_worker.py`, `test_main_without_a_triggers_block_exits_2`, takes the fixture `cfg_dir` from
+`tests/conftest.py`. The runner runs pytest with `--noconftest` on purpose, so under it that test errors at setup and the
+unmutated copy would not pass. It kills no mutant of this list and is deselected for every run here, the baseline included
+(`NEEDS_CONFTEST`, handed to the pytest child as `PYTEST_ADDOPTS`); no file is changed for it. When that test builds its
+config folder without the conftest fixture, delete `NEEDS_CONFTEST` and the two lines that use it.
+
 Most killer assertions are bare (no message text), so `expect` is then a fragment of the compared VALUES in the first failing
 line (`400 == 401`, `== (409, {})`), and the kill is tied to its test by `pinned`. Run from the repo root (no database, no
 network; exit 0 only when every mutant is good, and the last line is `N of N good; problems: []`):
@@ -30,6 +36,7 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parents[1])
 )  # the repo root: tools.* is not installed
 
+from tools import mutation_runner
 from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,6 +61,7 @@ PARSE_FIRST = (
 )
 CLOSED = "            if closed:\n                return NO_ACK\n"
 SECRETS_TEST = "test_check_secrets_refuses_and_names_the_sender_not_the_value"
+NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
 def mutant(name, src, old, new, test_file, killer, expect, **kw):
@@ -262,6 +270,8 @@ if __name__ == "__main__":
         if not good:
             print("      first line:", first_lines.get(name, "")[:200], flush=True)
 
+    # set for the pytest child only (the runner's fixed child variables), not in this process's environment
+    mutation_runner.CHILD_FIXED_ENV["PYTEST_ADDOPTS"] = f"--deselect {NEEDS_CONFTEST}"
     res = run_mutants(
         ROOT,
         M,
