@@ -219,7 +219,7 @@ def test_the_settings_of_the_chunked_read_are_checked(monkeypatch):
                 list(injection.RegexDetector._read(over))
             except ValueError as caught:
                 message = str(caught)
-            except Exception as caught:  # the read ran on a bad setting and failed somewhere else
+            except Exception as caught:  # noqa: BLE001 - the read ran on a bad setting and failed somewhere else
                 raise AssertionError(
                     f"GEOMETRY-UNCHECKED: {name}={value!r} was not refused by its rule ({type(caught).__name__}: {caught})"
                 ) from None

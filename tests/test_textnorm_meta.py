@@ -176,7 +176,17 @@ def test_a_the_test_list_puts_the_killer_files_first_and_leaves_out_perf_meta_an
     assert mm.TESTS[-1] == mm.D, "the differential and golden file runs last"
     for left_out in ("perf", "meta", "notices"):
         assert not any(left_out in t for t in mm.TESTS), left_out
-    assert {m.test_file for m in mm.M} == {mm.T, mm.G, mm.SC, mm.SB, mm.FB, mm.O, mm.RO, mm.R2, mm.Q9}
+    assert {m.test_file for m in mm.M} == {
+        mm.T,
+        mm.G,
+        mm.SC,
+        mm.SB,
+        mm.FB,
+        mm.O,
+        mm.RO,
+        mm.R2,
+        mm.Q9,
+    }
 
 
 def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
