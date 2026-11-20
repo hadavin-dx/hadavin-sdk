@@ -27,3 +27,14 @@ Fixes (e1-fix3) wait for mutant run 17 (it reads worker.py).
 | E1c-3 | Nit | a store down for hours shows only the /health counter | PROPOSE FIX | one WARNING (class name only) per 5 minutes while down |
 | E1c-4..6 | Nit | ping thread per hung re-check; owned_app not closed on normal shutdown; stop_server thread | DECLINE | bounded; process exits |
 Churn (EGM rule: a new finding is at the scope of an applied fix and reverting that fix would resolve it): rounds 2 and 3 both found problems INSIDE the 'fatal after 5 non-store failures -> exit 3' machinery that round 1 asked for (M4). The lead's verdict (E1b) asks only for '/health 503 plus a counter while the store is down; no exit 4'; the machinery is not in it (about 35 lines: DEGRADED_FATAL_AFTER, the `other` counter, _is_store_down, _Ping.cause, Runner._ping_error/ping_error, `raise cause` in _recover). DECISION (reversible, mine): delete it; `_watch` retries every error forever, logs the exception CLASS once per 5 minutes at WARNING, /health stays 503 + counter. Cost: a permanent schema/grant/path fault shows as /health 503 + the periodic WARNING, never as a process exit; the supervisor/operator reads /health. If the lead wants exit 3 back: say so, and the E1c-1 fix (not-store-down for FileNotFoundError/PermissionError/IsADirectoryError/NotADirectoryError, same helper in main) is the way.
+
+## Round 4 (fresh, zoom-out): NO Blocker, NO Major: THE E1 REVIEW ENDS
+No leftovers of the deleted code in src (exit_code, stop_server, _is_store_down gone; EXIT_FAILED still used for 'start failed'); docstrings match; no 2xx before the real Runner exists; late close and failed tries close Runner and app store; logs class names only.
+| id | sev | finding | category | action |
+|---|---|---|---|---|
+| E1d-1 | Nit | EXIT_OK, EXIT_CONFIG, EXIT_FAILED tuple over five lines with an old comment about code 4 | PROPOSE FIX | one line (after batch9: it hashes the tree) |
+| E1d-2 | Nit | test_d_fix9_e1fix2.py ~215 section header describes the deleted behaviour | PROPOSE FIX | reword |
+| E1d-3 | Nit | `now = _monotonic()` in _watch shadows models.now | PROPOSE FIX | rename to `at` |
+| E1d-4 | Nit | two tests check 'retried forever' | DECLINE | cheap, each pins its own path |
+| E1d-5 | Nit | AUDIT_WRITE_TIMEOUT_S 2.0 plus a store read: a 409 can take slightly over 2 s | DECLINE | stated as 'about 2 s' in the ticket |
+| E1d-6 | Option | deletions ranked: _ack_wait_of (18 lines), _warn_no_audit (11), the 5-minute warning limit (10), the conflict-drop warning throttle (8), param validation (7) | DECLINE | each has a test and a use; not needed for the verdict; listed for the lead |

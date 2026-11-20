@@ -736,19 +736,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after e1-fix4"
-  },
-  {
-   "id": "E1-rev4",
-   "role": "fresh reviewer (zoom-out)",
-   "model": "sonnet",
-   "what exactly it is doing": "E1 round 4 after the deletion: dead code/stale text/tests, one more adversarial pass, simplicity (top 5 deletions)",
-   "started UTC": "10:41",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "4, no cap (behaviour-changing)",
-   "retries so far": 0,
-   "reason": "after e1-fix4"
   }
  ],
  "tests": [
@@ -1121,6 +1108,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "E1 REVIEW ENDED (round 4, fresh): no Blocker, no Major; 4 rounds in all. Final independent batch (batch9) running on the final tree; after it: 3 cosmetic nits, final tested commit, REPORT.md block. Optional deletions the reviewer ranked (not needed for your verdict): _ack_wait_of 18 lines, _warn_no_audit 11, the 5-minute warning limit 10, the drop-warning throttle 8, parameter validation 7: tell me if you want any gone.",
   "CHURN DECISION (reversible, mine) on E1: three review rounds in a row found problems inside the 'exit 3 after 5 non-store failures' machinery that was added after round 1; your verdict asks only for '/health 503 + counter, no exit 4'. I delete that machinery (about 35 lines); the degraded worker retries forever, logs the exception class once per 5 min at WARNING, /health is 503 + counter. If you want a process exit for permanent faults back, say so: the fix is known (file errors are not store-down). Details: reviews/D-code-result-review-5.md round 3.",
   "Answer 09:58: (1) FAILED and NEXT on the board rewritten to the real state. (2) Your list against the facts: step D code review round 1 incl. E1: DONE 09:52 (0 Blocker, 4 Major, fixes running in e1-fix2: the 'agents 2' you see is e1-fix2 + a stale evidence agent that keeps re-sending an old report); step E: 7 fresh rounds, round 7 found no Blocker/Major: ended; mutants for E1: written (G32a-j: audit event removed, result field leak, hash swap, /health extra key, no health callable, degraded start, recovery ping, ping bound, audit warning) + cap removed (G32a): hand-probed, the full run 17 waits for e1-fix2 because worker.py changes under it (a full run during edits broke the baseline twice); n8n template fixes from evidence-n8n-3: DONE and pushed (70 s waits); REQ-001..004: read from core-b's answer files and marked in ticket D (last section). Low load is because evidence runs and mutant runs need a quiet tree: they start the minute e1-fix2 ends (about 10:08), BATCH8 about 10:25: the 10:20 deadline: D review has the exact open Majors listed in reviews/D-code-result-review-5.md.",
   "09:50 TESTED COMMIT pushed for D (with E1) and E: tests/triggers + crash 1352 passed, 5 skipped (TESTED-D.md, hashes). E1 is BUILT: audit event + cap, /health, in-process recovery (store down at start), no exit 4. Running now: mut-e1 (mutants + full mutant run 17) and E1-rev (fresh review); then ONE independent batch (BATCH8). Failing ids: none on my files; whole-suite: see BATCH7.",
@@ -2682,6 +2670,19 @@
    "review round n of cap": "fix after round 3 (no cap)",
    "retries so far": 0,
    "reason": "exit-3-after-5 machinery deleted (worker.py 1194 -> 1157 lines); degraded worker retries forever, class-name WARNING per 5 min, /health 503 + counter; tests rewritten with kill checks; tests/triggers+crash 1370 passed 5 skipped; mutant run 18: 109 of 109 as expected, 0 problems, no known survivors; bandit no issues"
+  },
+  {
+   "id": "E1-rev4",
+   "role": "fresh reviewer (zoom-out)",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 round 4 after the deletion: dead code/stale text/tests, one more adversarial pass, simplicity (top 5 deletions)",
+   "started UTC": "10:41",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "4, no cap (behaviour-changing)",
+   "retries so far": 0,
+   "reason": "E1 round 4: NO Blocker, NO Major: the E1 review ENDS; 3 nits (one-line tuple, stale test header, shadowed name) applied after batch9; optional deletions ranked (_ack_wait_of 18 lines, _warn_no_audit 11, 5-min warning limit 10, drop throttle 8, param validation 7): declined, listed for the lead"
   }
  ]
 }
