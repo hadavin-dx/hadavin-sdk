@@ -42,7 +42,7 @@
   - **Upgrade steps, in this order.** (1) Run `hadavin-sdk migrate` with the same role options as before
     (`--runtime-role R --portal-role P --purge-role U --reset-role X`): it creates the table and grants the runtime
     login SELECT, INSERT and UPDATE on it, and the purge login DELETE plus SELECT on `status` and `closed_at` only.
-    (2) Then deploy the code. Code first makes the `expire_reservations` tick step fail (the tick exits 1), and once
+    (2) Then deploy the code. Code first makes the `expire_reservations` tick step and the `purge_evidence` tick step fail (the tick exits 1), and once
     the model calls use `reserve` every call is refused as `limits_unavailable`. (3) A custom store must add four
     methods (`reserve_spend`, `settle_spend`, `expire_spend_reservations`, `purge_spend_reservations`); without them
     the app refuses to start and names them (`ConfigError`).
