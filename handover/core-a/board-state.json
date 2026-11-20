@@ -708,6 +708,15 @@
    "evidence file": "reviews/D-code-result-review-5.md round 3",
    "tries": 1,
    "reason": "batch8 running"
+  },
+  {
+   "item": "FIX-signed_post",
+   "what": "crash_launcher.signed_post: incomplete 2xx response = no complete ack (test client); + 3 cosmetic E1 nits",
+   "state": "QUEUED after batch9's mutant item ends (tree)",
+   "percent": 0,
+   "evidence file": "FINDINGS-flake-pg-kill.md",
+   "tries": 0,
+   "reason": "batch9 mutant run in progress"
   }
  ],
  "agents": [
@@ -736,19 +745,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "after e1-fix4"
-  },
-  {
-   "id": "flake2",
-   "role": "investigator",
-   "model": "sonnet",
-   "what exactly it is doing": "BATCH9 failure test_pg_kill_at_point[read31-audit.write_outcome-4-after]: 2xx status with an EMPTY body (JSONDecodeError): truncated response of a killed worker, or a real bug? (read + 2 runs)",
-   "started UTC": "10:47",
-   "expected end": "20 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "1 failure in the final suite"
   }
  ],
  "tests": [
@@ -2697,6 +2693,19 @@
    "review round n of cap": "4, no cap (behaviour-changing)",
    "retries so far": 0,
    "reason": "E1 round 4: NO Blocker, NO Major: the E1 review ENDS; 3 nits (one-line tuple, stale test header, shadowed name) applied after batch9; optional deletions ranked (_ack_wait_of 18 lines, _warn_no_audit 11, 5-min warning limit 10, drop throttle 8, param validation 7): declined, listed for the lead"
+  },
+  {
+   "id": "flake2",
+   "role": "investigator",
+   "model": "sonnet",
+   "what exactly it is doing": "BATCH9 failure test_pg_kill_at_point[read31-audit.write_outcome-4-after]: 2xx status with an EMPTY body (JSONDecodeError): truncated response of a killed worker, or a real bug? (read + 2 runs)",
+   "started UTC": "10:47",
+   "expected end": "20 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "TEST RACE (verified with a raw-socket server, not reproduced in 171+1 runs): worker killed by os._exit at audit.write_outcome:after while the request thread had sent the status line but not the headers/body; signed_post returned (2xx, b'') and json.loads failed; no code bug, no guarantee break (the row existed; the sender would retry with the same key); fix in the TEST client: crash_launcher.signed_post returns (None, 'IncompleteResponse') for a 2xx without Content-Length or a short body; line 822 stays and still asserts that a COMPLETE 2xx implies the row; FINDINGS-flake-pg-kill.md"
   }
  ]
 }
