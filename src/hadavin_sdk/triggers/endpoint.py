@@ -12,6 +12,11 @@ the body, the key, a header value or a secret. A request that was not verified i
 (anyone who reaches the port decides how many there are), a verified one at INFO. A 409 is logged by
 the caller's ``start``, which adds
 the run id; this module writes no second line for it.
+
+``GET /health`` is the one unauthenticated path. It asks the caller's ``health`` callable (store up or down,
+a failure counter) and answers 200 or 503 with a body of exactly ``status`` and ``store_failures``: no sender,
+key, hash or secret, and nothing of the request is read or logged. Without a ``health`` callable the path is
+a 404 like any other.
 """
 
 from __future__ import annotations
@@ -35,6 +40,10 @@ TIMESTAMP_HEADER: Final = f"{PREFIX}-Request-Timestamp"
 SIGNATURE_HEADER: Final = f"{PREFIX}-Signature"
 PATH: Final = "/v1/trigger"
 METHOD: Final = "POST"
+HEALTH_PATH: Final = "/health"
+HEALTH_METHOD: Final = "GET"
+HEALTH_OK: Final = "ok"
+HEALTH_DOWN: Final = "store_down"
 KEY_RE: Final = re.compile(r"[A-Za-z0-9._:-]{1,128}")
 ID_RE: Final = re.compile(r"[a-z0-9-]{1,40}")  # tenant and sender ids
 RUN_ID_HEX: Final = 32  # "run-" + this many hex digits, the shape of models.RUN_ID_PATTERN
@@ -105,6 +114,55 @@ class Accepted:
 
 
 Start = Callable[[Accepted], tuple[int, "dict[str, str] | None"]]
+Health = Callable[[], tuple[bool, int]]  # (store is up, store failures counted since start)
+
+
+def health_reply(health: Health) -> tuple[int, bytes]:
+    """(status, body) of ``GET /health``: 200 when the store is up, else 503; the body is exactly
+    ``{"status": "ok"|"store_down", "store_failures": <int>}``. A ``health`` that raises is a 503 with a zero
+    counter (the class name is logged, nothing else)."""
+    try:
+        up, failures = health()
+        up, failures = bool(up), int(failures)
+    except Exception as e:  # noqa: BLE001 - never a traceback page
+        _LOG.error("trigger health failed: %s", type(e).__name__)
+        up, failures = False, 0
+    body = {"status": HEALTH_OK if up else HEALTH_DOWN, "store_failures": failures}
+    return (200 if up else 503), json.dumps(body).encode("utf-8")
+
+
+def _health_app(health: Health) -> Callable[..., list[bytes]]:
+    """WSGI answer for ``/health`` alone: GET gives `health_reply`, any other method a 405."""
+
+    def app(environ: Mapping[str, Any], start_response: Callable[..., Any]) -> list[bytes]:
+        if environ.get("REQUEST_METHOD") != HEALTH_METHOD:
+            start_response(STATUS_TEXT[405], [("Content-Length", "0"), ("Allow", HEALTH_METHOD)])
+            return [b""]
+        status, out = health_reply(health)
+        headers = [("Content-Length", str(len(out))), ("Content-Type", JSON_TYPE)]
+        if status == 503:
+            headers.append(("Retry-After", str(RETRY_AFTER_SECONDS)))
+        _LOG.debug("trigger health status=%d", status)
+        start_response(STATUS_TEXT[status], headers)
+        return [out]
+
+    return app
+
+
+def health_only_app(health: Health) -> Callable[..., list[bytes]]:
+    """The WSGI callable of a worker that started with the store down: ``/health`` as above, every other
+    path an empty 503 (no trigger is taken, nothing is verified)."""
+    served = _health_app(health)
+
+    def app(environ: Mapping[str, Any], start_response: Callable[..., Any]) -> list[bytes]:
+        if environ.get("PATH_INFO") == HEALTH_PATH:
+            return served(environ, start_response)
+        start_response(
+            STATUS_TEXT[503], [("Content-Length", "0"), ("Retry-After", str(RETRY_AFTER_SECONDS))]
+        )
+        return [b""]
+
+    return app
 
 
 def derive_run_id(tenant: str, sender: str, key: str) -> str:
@@ -251,8 +309,9 @@ def make_wsgi(
     secrets: Mapping[str, tuple[str, ...]],
     start: Start,
     clock: Callable[[], float] = time.time,
+    health: Health | None = None,
 ) -> Callable[..., list[bytes]]:
-    """The WSGI application for ``POST /v1/trigger``. Raises ValueError on a bad setup.
+    """The WSGI application for ``POST /v1/trigger`` (and ``GET /health`` when `health` is given). Raises ValueError on a bad setup.
 
     The rule that a run row exists before the answer is sent, and that a repeat of the same key is told apart from a
     different document by the stored payload hash, holds for ``Runner.start``;
@@ -278,6 +337,7 @@ def make_wsgi(
     secrets = {sender: tuple(values) for sender, values in secrets.items()}
     ts_env = "HTTP_" + TIMESTAMP_HEADER.upper().replace("-", "_")
     sig_env = "HTTP_" + SIGNATURE_HEADER.upper().replace("-", "_")
+    health_app = _health_app(health) if health is not None else None
 
     def decide(environ: Mapping[str, Any]) -> tuple[int, str | None, dict[str, str] | None]:
         """(status, verified sender or None, answer or None), in the fixed check order."""
@@ -327,6 +387,8 @@ def make_wsgi(
         return status, sender, answer
 
     def app(environ: Mapping[str, Any], start_response: Callable[..., Any]) -> list[bytes]:
+        if health_app is not None and environ.get("PATH_INFO") == HEALTH_PATH:
+            return health_app(environ, start_response)
         try:
             status, sender, answer = decide(environ)
         except Exception as e:  # noqa: BLE001 - never a traceback page; nothing of the request
