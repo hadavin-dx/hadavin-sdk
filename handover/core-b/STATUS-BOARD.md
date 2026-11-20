@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:56:02Z
+UPDATED_UTC: 2026-11-20T07:56:10Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 3.18 of 4 cores, mem 1/15 GB, disk 55G free, 22% used, agents light 4 heavy 2
+CAPACITY: load 3.07 of 4 cores, mem 1/15 GB, disk 55G free, 22% used, agents light 4 heavy 2
 DISK: / 55G free, 22% used; worktrees /tmp/core-b-wt 1.8G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
