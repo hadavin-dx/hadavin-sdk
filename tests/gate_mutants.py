@@ -239,7 +239,7 @@ M = [
     mutant("G13e a mark that raises on read escapes from the except handler",
         "    try:\n        marked = getattr(exc, \"refused_before_response\", False) is True\n    except Exception:  # noqa: BLE001  a property that raises is not a mark (the audit row must still be written)\n        return False\n",
         "    marked = getattr(exc, \"refused_before_response\", False) is True\n",
-        "test_pin_a_mark_that_raises_on_read_is_not_a_mark_and_the_audit_row_is_still_written", "a raising mark counted", param="[error]"),
+        "test_pin_a_mark_that_raises_on_read_is_not_a_mark_and_the_audit_row_is_still_written", "hostile property", param="[error]"),
     mutant("G14 a document that is not bytes is passed on",
         "                    if not isinstance(document, bytes):\n                        return CODE_MASK_REFUSED\n", "",
         "test_pin_a_document_that_is_not_bytes_means_no_call", "a document that is not bytes"),
