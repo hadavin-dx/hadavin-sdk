@@ -696,6 +696,19 @@
    "what exactly it is doing": "adds mutants for every guard added since the last script version",
    "expected end": "about 30 min",
    "reason": "minor 10 + new guards"
+  },
+  {
+   "id": "mut-e5e11",
+   "role": "builder (mutants)",
+   "model": "sonnet",
+   "what exactly it is doing": "mutants G30a/G30b/G31 for the E5 and E11 guards, one full mutant run (run 16)",
+   "started UTC": "09:24",
+   "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "never idle"
   }
  ],
  "tests": [
