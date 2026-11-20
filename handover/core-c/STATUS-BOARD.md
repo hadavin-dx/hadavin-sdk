@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T17:32:58Z
+UPDATED_UTC: 2026-11-20T17:33:16Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:50Z LOAD 4.06 3.23 2.54 (/proc/loadavg; was 4-5). Heavy processes alive: 3 at the last ps (my whole-tree redact_mutants, Q2 gate_mutants subset, Q3 gate_mutants subset). Action: Q2, Q3, P7b builders told to run ONE heavy process at a time and no whole gate_mutants run until `pgrep -f mutants.py` is empty; timings taken above load 4 are INVALID-LOAD; P10 perf only at load under 2. Running agents 4 (Q2, Q3, P7b builders, Q1 reviewer). 17:45Z REAL RUNNING AGENTS 4: Q2, Q3, P7b builders + Q1 reviewer; heavy: whole-tree redact_mutants in background. Load (/proc/loadavg) 5.01 3.20 2.49. Q1 MERGED (reply masking in the gate + guard/putb
+STATE: STOP received (owner order ~23:03 IST). Starting NOTHING new. Waiting for the running agents to finish: Q2 builder, Q3 builder, P7b builder (pushed 5a1be73c8), Q1 reviewer; my background whole-tree redact_mutants is finishing. Then: merge what is verified, push all branches, verify remote hash = local, write RESUME-NOTE-2026-11-20.md and ANSWERS file, final heartbeat. Load (/proc/loadavg) 4.21 3.33 2.58.
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 4.1 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
+CAPACITY: load 4.2 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 4, heavy agents 0
 DISK: / 53G free, 24% used; git worktrees 68; 2.8G	/tmp/claude-0;310M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T17:32:10+00:00
+NEXT: finish running agents; no new starts; write RESUME-NOTE and ANSWERS; final heartbeat
+PUSHED_UTC: 2026-11-20T17:32:59+00:00
 
-(23:02 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(23:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
