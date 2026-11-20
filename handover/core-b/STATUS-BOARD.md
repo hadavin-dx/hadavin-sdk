@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T06:43:00Z
+UPDATED_UTC: 2026-11-20T06:43:50Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 5
-CAPACITY: load 0.74 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
-DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1010M
+CAPACITY: load 1.00 of 4 cores, mem 1/15 GB, disk 59G free, 16% used, agents light 2 heavy 3
+DISK: / 59G free, 16% used; worktrees /tmp/core-b-wt 1.1G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T06:42:18Z (previous push; this board is pushed right after writing)
+PUSHED_UTC: 2026-11-20T06:43:01Z (previous push; this board is pushed right after writing)
 IST: 12:13 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
@@ -31,6 +31,19 @@ IST: 12:13 IST
 | 9 | ONE batch whole-suite run when 1 to 7 are coded | NOT YET (batch run 2 at 06:00 covered A, B, C, F-store source) | batch run 3 after F-install lands, on a tree with core-c's gate |
 | 10 | hostile re-read of A, B, C code | DONE; B findings with the lead (ESCALATIONS E5), A findings in A's fix round 3 (queued behind the running A agent) | tickets/ABC-hostile-review-1.md |
 Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
+
+## EGM STEP AUDIT (owner order 12:15 IST "use egm in sequence"; lead message): what each item had, what is missing, what I run now
+Order required: brainstorm, draft, plan review, resolve, build, evidence runner, result review by a fresh reviewer, resolve and fix, repeat, drift report. Honest list (the brainstorm and draft steps were NOT run through the skills for any item: my tickets were written from the lead's drafts and plan-v4-final; the egm-resolve skill was NOT invoked: I wrote the resolution sections myself in the main context; egm-drift-report was NOT run for anything):
+| item | plan review | build | evidence | result review (fresh) | missing now |
+|---|---|---|---|---|---|
+| A audit drain | none ordered (lead) | done | tests and mutants by other agents | lead review x2, hostile re-read (fresh, 1 round) | drift report |
+| B stop state | 1 round | done (3 fix rounds, cap) | tests and mutants | ticket review round (fresh), hostile re-read (fresh); the lead has taken the rest | drift report (lead) |
+| C price constraint | AFTER the build (order reversed), 1 round | done | tests and mutants | the ticket review round doubled as result review (fresh) | drift report |
+| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review only; NO egm result review | RUNNING NOW: egm result review |
+| F-store | 2 rounds | done (fix 1 and 2) | tests, mutants, random-sequence model test | hostile re-read RUNNING (sonnet) | result review resolve; drift report |
+| provider mark | NONE | done | tests/test_refused_before_response.py | NO egm result review | RUNNING NOW: egm result review (post-hoc ticket tickets/F-provider-mark.md) |
+| F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
+Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
 
 ## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
