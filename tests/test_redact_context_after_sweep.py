@@ -1,21 +1,18 @@
-"""G7 (ORDER 012, escalation E3): a pattern that needs a placeholder the SWEEP writes is run again after the sweep.
+"""G7 (ORDERS 012 and 013, escalations E3 and E5): ONE more pattern pass after the sweep.
 
-The gap, confirmed by a run on main: line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account>`. The
-pattern pass masks the code on line 1; the sweep then writes its placeholder on line 2; the account pattern, which
-needs that placeholder before the digits, had already run. One pass left the account number readable; a second
-pass masked it.
+A pattern's result can change once placeholders stand in the text, and the sweep writes placeholders after every
+pattern ran. Two shapes found by runs on main, both masked only by a SECOND pass before G7:
+- E3: line 1 `BSB: <bank code>`, line 2 `paid <same bank code>/<account>`. The account pattern needs the code's
+  placeholder before the digits; on line 2 only the sweep writes it. The account stayed readable.
+- E5: line 1 `password=V`, line 2 `Bearer V+xy` with the token under BEARER's 12 characters. Swept to
+  `Bearer <SECRET_1>xy`, which is 12 characters or more: only a second pass masked the tail. The same for BASIC
+  (8 characters) and `authorization:` (8 characters).
+The fix is for the class: `redact()` and `redact_many()` run the whole pattern table once more over the swept text
+and sweep once more what that finds (`_Redactor.settle`). Never a loop: two pattern passes and two sweeps at most.
+A text the first pass and its sweep left unchanged is not scanned again.
+The property over the repo's corpora is in tests/test_redact_idempotent_property.py.
 
-The patterns of the table whose match can depend on a placeholder already in the text (`redact._CONTEXT_PATTERNS`),
-each with a test here:
-- BANKACCT, the account straight after its code: `<BANKCODE_n>` is a literal part of its regex.
-- BANKACCT, the account after an account keyword: its regex names no placeholder, but its match counts only with
-  bank context (`_bank_context`), and one form of that context is a `<BANKCODE_n>` within 100 characters.
-One more pattern names a placeholder shape in its regex, the cookie header (`Cookie: <KIND_n>` followed by a space
-or the end is NOT a cookie value). It is a negative guard: a placeholder written by the sweep can only stop that
-pattern from matching, and the value it would have matched is the placeholder itself. It is not run again
-(`test_the_table_has_no_other_pattern_that_names_a_placeholder` pins that these are all there are).
-
-Every digit string here is made up and built from parts.
+Every digit string and credential here is made up and built from parts.
 """
 
 from __future__ import annotations
@@ -188,69 +185,120 @@ def test_digits_without_bank_context_are_masked_no_more_than_before(text):
     assert "BANKACCT" not in now.kinds
 
 
-def test_a_text_with_no_bank_code_placeholder_never_takes_the_second_look(monkeypatch):
-    calls = []
-    monkeypatch.setattr(
-        R._Redactor, "_find_context", lambda self, text: calls.append(text) or text, raising=True
-    )
-    R.redact(f"order {ACCOUNT} shipped, password={'hun' + 'ter' + '9'}")
-    assert calls == []
+# --- E5: a short token that only the sweep makes long enough ------------------------------------------------------
+
+V = (
+    "hun" + "ter" + "9"
+)  # 7 characters: with a 2-character tail the token is under every minimum length below
+E5 = {
+    "bearer": (f"password={V}\nBearer {V}xy", "password=<SECRET_1>\nBearer <BEARER_1>", "BEARER"),
+    "basic": (
+        f"password={V[:5]}\nBasic {V[:5]}ab",
+        "password=<SECRET_1>\nBasic <BASIC_1>",
+        "BASIC",
+    ),
+    "authorization": (
+        f"password={V[:5]}\nauthorization: {V[:5]}ab",
+        "password=<SECRET_1>\nauthorization: <SECRET_2>",
+        "SECRET",
+    ),
+}
 
 
-# --- the table, the bound ----------------------------------------------------------------------------------------
+@pytest.mark.parametrize("name", sorted(E5))
+def test_e5_a_token_tail_beside_a_swept_secret_is_masked_in_one_pass(name):
+    text, expected, kind = E5[name]
+    result = R.redact(text)
+    assert result.text == expected
+    assert kind in result.kinds
+    tail = text[-2:]
+    assert not result.text.endswith(tail)
+    # the whole token is one value in the map, stored restored
+    assert text.rsplit(" ", 1)[1] in result.mapping.values()
+    # what one pass gave before G7: the tail in clear after the swept placeholder
+    assert _old_one_pass(text).endswith("<SECRET_1>" + tail)
 
 
-def test_the_table_has_no_other_pattern_that_names_a_placeholder():
-    """A new pattern that names a placeholder in its regex must be looked at: it may need the second look."""
+@pytest.mark.parametrize("name", sorted(E5))
+def test_e5_through_redact_text_one_pass_is_a_fixed_point(name):
+    text, expected, _ = E5[name]
+    mapping = runmap.RunMap()
+    once = runmap.redact_text(text, mapping)
+    assert once == expected
+    held = dict(mapping)
+    assert runmap.is_masked(once, mapping) is True
+    assert runmap.redact_text(once, mapping) == once and dict(mapping) == held
+
+
+def test_e5_must_keep_a_short_word_after_bearer_with_no_known_secret_in_it():
+    """Under the minimum length and no swept value inside: kept, before as now."""
+    for text in (
+        f"Bearer {V}xy",
+        "Basic abc12",
+        "the bearer of news",
+        f"password={V}\nBearer other",
+    ):
+        now = R.redact(text)
+        assert now.text == _old_one_pass(text), text
+
+
+# --- the design: what runs how many times --------------------------------------------------------------------------
+
+
+def _counted(monkeypatch):
+    calls = {"find": 0, "sweep": 0}
+    find, sweep = R._Redactor.find, R._Redactor.sweep
+
+    def counted_find(self, text):
+        calls["find"] += 1
+        return find(self, text)
+
+    def counted_sweep(self, out):
+        calls["sweep"] += 1
+        return sweep(self, out)
+
+    monkeypatch.setattr(R._Redactor, "find", counted_find)
+    monkeypatch.setattr(R._Redactor, "sweep", counted_sweep)
+    return calls
+
+
+def test_a_text_with_nothing_to_mask_is_scanned_once(monkeypatch):
+    calls = _counted(monkeypatch)
+    R.redact(f"order {ACCOUNT} shipped, nothing else here")
+    assert calls == {"find": 1, "sweep": 1}
+
+
+def test_a_text_with_a_value_gets_exactly_one_more_pattern_pass_and_no_second_sweep(monkeypatch):
+    calls = _counted(monkeypatch)
+    R.redact(f"password={V} then nothing")
+    assert calls == {"find": 2, "sweep": 1}  # the second pass found nothing new: no second sweep
+
+
+def test_never_more_than_two_pattern_passes_and_two_sweeps(monkeypatch):
+    calls = _counted(monkeypatch)
+    for text in [*SHAPES.values(), *(e[0] for e in E5.values())]:
+        calls["find"] = calls["sweep"] = 0
+        R.redact(text)
+        assert calls["find"] <= 2 and calls["sweep"] <= 2, text
+    calls["find"] = calls["sweep"] = 0
+    R.redact(DIRECT)
+    assert calls == {"find": 2, "sweep": 2}  # the second pass found the account: one more sweep
+
+
+def test_redact_many_scans_again_only_the_strings_that_changed(monkeypatch):
+    calls = _counted(monkeypatch)
+    R.redact_many(["nothing here", f"password={V}", "nor here"])
+    assert calls == {"find": 4, "sweep": 3}
+
+
+def test_the_patterns_that_name_a_placeholder_are_still_these_two():
+    """Kept as a record of step 1 of ORDER 012 (the whole table runs again now, so a new one needs no list)."""
     naming = [
-        (label, p)
+        label
         for label, p in R.PATTERNS
         if "_\\d+>" in p.pattern or "BANKCODE" in p.pattern or "<[A-Z]" in p.pattern
     ]
-    assert [label for label, _ in naming] == ["BANKACCT", "SECRET"]
-    assert naming[0][1].pattern.startswith("<BANKCODE_")
-    assert (
-        "(?!<[A-Z][A-Z0-9]*_\\d+>(?:\\s|$))" in naming[1][1].pattern
-    )  # the cookie header's negative guard
-    context = list(R._CONTEXT_PATTERNS)
-    assert [label for label, _ in context] == ["BANKACCT", "BANKACCT"]
-    assert naming[0] in context
-    assert all(entry in R.PATTERNS for entry in context)
-    assert context == [entry for entry in R.PATTERNS if entry[0] == "BANKACCT"]
-    assert R._CONTEXT_MARK == "<BANKCODE_"
-    assert (
-        "<BANKCODE_" in R._BANK_CONTEXT.pattern
-    )  # the keyword pattern's context names the same mark
-
-
-def test_the_round_bound_is_a_small_constant():
-    assert R._CONTEXT_ROUNDS == 4
-
-
-def test_at_the_bound_the_redactor_raises_and_returns_no_text(monkeypatch):
-    """Fail closed: with the bound set to 0 the plain shape cannot settle, so `redact` raises instead of returning a
-    text with an account it knows of; through `runmap` that is a RedactionError (nothing is sent), the caller's
-    map is not written, and the message holds no value."""
-    monkeypatch.setattr(R, "_CONTEXT_ROUNDS", 0)
-    with pytest.raises(R.ContextNotSettled) as raised:
-        R.redact(DIRECT)
-    assert ACCOUNT not in str(raised.value) and BSB not in str(raised.value)
-    mapping = runmap.RunMap()
-    with pytest.raises(runmap.RedactionError) as wrapped:
-        runmap.redact_text(DIRECT, mapping)
-    assert str(wrapped.value) == "ContextNotSettled"
-    assert dict(mapping) == {}
-    with pytest.raises(R.ContextNotSettled):
-        R.redact_many([f"BSB: {BSB}", f"paid {BSB}/{ACCOUNT}"])
-    # a text that needs no second look is not affected by the bound
-    assert R.redact(f"order {ACCOUNT} shipped").text == f"order {ACCOUNT} shipped"
-
-
-def test_one_round_settles_the_plain_shapes(monkeypatch):
-    """The bound of 4 is slack: every shape here settles in one round (a second look, then one check)."""
-    monkeypatch.setattr(R, "_CONTEXT_ROUNDS", 1)
-    for text in SHAPES.values():
-        assert R.redact(text).text == _two_old_passes(text)
+    assert naming == ["BANKACCT", "SECRET"]
 
 
 def _two_old_passes(text: str) -> str:
@@ -316,7 +364,7 @@ def test_T1_the_second_look_stays_within_a_fixed_ceiling_on_100000_characters_of
     old = _seconds(_old_one_pass, text)
     new = _seconds(R.redact, text)
     print(f"\nG7 timing 100,000 chars: old one pass {old:.3f} s, redact() now {new:.3f} s")
-    assert new < 20.0  # the fixed ceiling, generous: measured 0.27 s (old one pass 0.21 s)
+    assert new < 20.0  # the fixed ceiling, generous: measured 0.48 s (old one pass 0.21 s)
     # two old passes are the work this replaces; the second look must not cost more than a few of them
     assert new < 6 * max(old, 0.05)
 
