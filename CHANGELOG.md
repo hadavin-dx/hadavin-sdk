@@ -331,20 +331,28 @@
   - **Keys.** `tenant` (required) and `senders` (at least one), each id 1 to 40 characters of `a-z`, `0-9` and `-`.
     A sender has `secret_names` (one or two NAMES of secrets in the configured secrets kind, never a value; two
     names let a secret be changed with no downtime), `agent_id` and `principal_id`. A secret name is 1 to 128
-    characters of letters, digits and `_ . : / -`; the two ids the same without `/`.
-  - **Limits.** `max_body_bytes` (default 524288, above 0, at most 524288: twice the document cap, so a full-size
+    characters of letters, digits and `_ . : -` (no `/`, no `..`, at least one letter or digit); the two ids the same.
+    Names are compared in one canonical form (every run of characters outside `A-Za-z0-9` becomes `_` first, then
+    lower case), so `db-pass`, `DB_PASS`, `db.pass` and a Unicode look-alike such as a dotted capital I name one
+    secret. A name elsewhere in the config with a `.` or `..` segment or a leading or trailing `/` (a mounted file
+    resolves `a/../x` to `x`) is refused at start, not folded.
+  - **Limits.** `max_body_bytes` (default 524288, at least 1024, at most 524288: twice the document cap, so a full-size
     document still fits once it is wrapped in JSON), `max_running` (default 4, 1 to 64), `ack_wait_s` (default 5.0,
-    above 0, at most 30). The three are strict: `true` or a quoted number is refused.
+    at least 0.1, at most 30). The three are strict: `true` or a quoted number is refused.
   - **No agent has to be re-gated.** The block is not part of `config_hash`, so adding or changing it changes no
     agent's qualification hash.
   - **Refused at start, naming the sender and the field and never the value:** a secret name twice in one sender or
     in two senders; a secret name that a backend, an action executor, a read tool, a source or
     `evidence.restored_hash_key_secret_name` also uses; a named secret that cannot be read; an `agent_id` that is
     not in `agents.yaml` or whose agent is not `live`; a `principal_id` that is not in `principals.yaml` or is not
-    of kind `service`.
+    of kind `service`. The sender secrets are checked in their own start step, before the main secret check; a
+    config error in the `triggers:` block is raised without the validation error chained (its text can still show
+    a bad sender id or extra key, never a value).
   - **For code that builds on `App`.** New required field `App.trigger_secret(name)`, placed right after `runtime`:
     it reads one sender secret by name and raises `PermissionError`, without asking the secrets provider, for any
-    name that is not under `triggers.senders`. The secrets provider itself is not on the `App`.
+    name that is not a real `str` under `triggers.senders`; a provider failure is `RuntimeError("sender secret
+    unavailable")` with no name in it. The secrets provider is not an attribute of the `App`, but the reader is a
+    closure: code running in the same process can still reach it, so this limits the worker's API, not Python code.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,
