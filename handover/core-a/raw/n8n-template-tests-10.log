@@ -1,0 +1,98 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+............................................F........................... [ 79%]
+.............F.....                                                      [100%]
+=================================== FAILURES ===================================
+_ test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example _
+
+    def test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example():
+        raw = _readme()
+        readme = " ".join(raw.split())
+        head = readme.partition("## What was run and what was not")[0]
+        assert "TOGETHER WITH the client's automation builder" in head
+        glossary = head.partition("## Words used here")[2].partition("## Before you start")[0]
+        for word in ("Hadavin:", "run:", "key:", "sender:", "state:", "NEEDS_PERSON:", "tick:"):
+            assert f"- {word}" in glossary, word
+        operator = head.partition("## Before you start: what you need from the Hadavin operator")[2]
+        for phrase in (
+            "reverse proxy that ends TLS",
+            "at least 32 random characters, no space or line break at the start or end",
+            "secrets.token_urlsafe",
+            "the request carries no sender id",
+            "is NOT in the configuration code",
+        ):
+            assert phrase.lower() in operator.lower(), phrase
+        curl = raw.partition("## What the caller sends to the webhook")[2].partition("## The key rule")[
+            0
+        ]
+        assert "curl -i -X POST" in curl and '"record_id"' in curl and '"text"' in curl
+        assert "HTTP 202 with an empty body" in " ".join(curl.split())
+        steps = readme.partition("## Set-up")[2].partition("## The webhook address")[0]
+        for phrase in (
+            "TEST sender or a test agent",
+            "starts a REAL run",
+            "EMPTY text",
+            "tolerate running TWICE for one key",
+            "does NOT mean that the action happened",
+            "n8n list:workflow",
+            "n8n publish:workflow",
+            "(UNVERIFIED)",
+        ):
+            assert phrase in steps, phrase
+>       assert 'write its id and name into the node "Sign"' in steps and "shows the credential" in steps
+E       assert ('write its id and name into the node "Sign"' in " These steps are for the Hadavin operator together with the client's automation builder. Every step is required. 1. G...t with the caller's own data, no timestamp header and a useless signature, and n8n marked the execution as a success. ")
+
+tests/triggers/test_n8n_template.py:816: AssertionError
+_ test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap _
+
+    def test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap():
+        flow = _load(MAIN)
+        nodes, c = _nodes(flow), _check_nodes(flow)
+        form = re.fullmatch(r"=\{\{ " + re.escape(CHECKS_READ) + r" < (\d+) \}\}", _rule(flow, c.left))
+        assert form, "the count condition changed its form: update this test with it"
+        checks = int(form.group(1))
+        assert 1 <= checks <= 1000
+        # the count goes up by one in every check round and is carried, never set back, over a busy round
+        busy = flow["connections"][c.http]["main"][1][0]["node"]
+        next_round = nodes[flow["connections"][busy]["main"][0][0]["node"]]
+        carried = {
+            a["name"]: a["value"] for a in next_round["parameters"]["assignments"]["assignments"]
+        }
+        assert carried["checks"] == "={{ " + CHECKS_READ[1:-1] + " }}"
+        writers = [
+            name
+            for name, node in nodes.items()
+            if any(
+                a["name"] == "checks"
+                for a in node["parameters"].get("assignments", {}).get("assignments", [])
+            )
+        ]
+        assert sorted(writers) == sorted([c.again, next_round["name"]])
+        # the busy rounds are bounded too, and a check round does not hand out new ones
+        _listed, rounds = _busy_parts(_rule(flow, busy))
+        assert 1 <= rounds <= 1000
+        # the span of the checks against the code's own numbers, for the README's example agent
+        wait = nodes[_one(flow, "wait")]["parameters"]
+        # above 65 s on purpose: a 60 s wait was lost in a restart of n8n, a 120 s wait survived (third record)
+        assert wait["unit"] == "seconds" and wait["amount"] == 70
+        llm = SimpleNamespace(
+            call_timeout_s=table.AnthropicSettings.model_fields["call_timeout_s"].default,
+            max_attempts=table.AnthropicSettings.model_fields["max_attempts"].default,
+        )
+        app = SimpleNamespace(
+            config=SimpleNamespace(backends=SimpleNamespace(llm=llm)),
+            registry=SimpleNamespace(agents={"a": SimpleNamespace(max_steps=EXAMPLE_STEPS)}),
+        )
+        stuck = tick.stuck_after_s(app, "a")
+        assert stuck == EXAMPLE_STEPS * llm.call_timeout_s * llm.max_attempts + 60
+        span, limit = checks * wait["amount"], stuck + tick.TICK_SLACK_S
+        assert span > limit
+        minutes = span // 60
+        message = nodes[c.too_long]["parameters"]["errorMessage"]
+>       assert f"still shown as running after {checks} checks, about {minutes} minutes" in message
+E       AssertionError: assert 'still shown as running after 45 checks, about 52 minutes' in 'Hadavin trigger: the run was still shown as running after 45 checks, about 52 to 53 minutes. Either it runs very long... (no lookup tool exists yet in this tree). Do not send the event with a new key before the state of this run is known.'
+
+tests/triggers/test_n8n_template.py:1692: AssertionError
+=========================== short test summary info ============================
+FAILED tests/triggers/test_n8n_template.py::test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_curl_example
+FAILED tests/triggers/test_n8n_template.py::test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap
+2 failed, 89 passed in 0.62s
