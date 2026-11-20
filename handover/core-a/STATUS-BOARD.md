@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:28:10Z
+UPDATED_UTC: 2026-11-20T05:28:26Z
 SESSION: core-a
 ORDER: 006 (002 to 005 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 43
 AGENTS_RUNNING: 3
-CAPACITY: load 0.00 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.06 of 4 cores (1-minute average), mem 0.6/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 9.2G 60G 14%; 239M /home/user/hadavin-sdk; 39M /tmp/claude-0; 130M /root/.cache
 INTERRUPTED: none
 FAILED: none
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: ticket E lands: start builder agent for step E ('code E:' commits); ticket D lands: write requests/001-config-triggers.md and run one EGM review round
-PUSHED_UTC: 2026-11-20T05:28:02Z (the push before this board)
+PUSHED_UTC: 2026-11-20T05:28:12Z (the push before this board)
 NOTE: one board per minute is driven by a session cron; the cron only fires while the session is not in the middle of a turn, so a board can be up to a few minutes late during long tool batches; ORDER 005 read at 05:23 UTC: code goes on cloud/core-a in separate commits, no wip branch
 
 ## QUEUE ITEMS
