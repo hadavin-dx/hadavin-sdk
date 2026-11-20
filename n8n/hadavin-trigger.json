@@ -438,7 +438,7 @@
       ],
       "parameters": {
         "errorType": "errorMessage",
-        "errorMessage": "Hadavin trigger: the run was still shown as running after 45 checks, about 52 to 53 minutes. Either it runs very long, or it was cut off and Hadavin's clean-up job (the tick) has not ended it: check that the tick runs. A person must have the run looked at: ask the Hadavin operator (no lookup tool exists yet in this tree). Do not send the event with a new key before the state of this run is known."
+        "errorMessage": "Hadavin trigger: the run was still shown as running after 45 checks, about 52 minutes. Either it runs very long, or it was cut off and Hadavin's clean-up job (the tick) has not ended it: check that the tick runs. A person must have the run looked at: ask the Hadavin operator (no lookup tool exists yet in this tree). Do not send the event with a new key before the state of this run is known."
       },
       "notes": "UNVERIFIED: this node in this place; it was added after the run. SEEN IN n8n 2.47.7: a Stop and Error node of this version with a fixed message failed the execution and the error workflow ran. The numbers in the message (45 checks, about 52 to 53 minutes) are the placeholders of 'Checks left?' and 'Wait before next round': change the text when you change them. The message must never hold the body, a header value or the signing value."
     }

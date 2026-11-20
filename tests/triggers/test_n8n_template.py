@@ -813,7 +813,8 @@ def test_the_readme_has_the_operator_section_the_audience_the_glossary_and_a_cur
         "(UNVERIFIED)",
     ):
         assert phrase in steps, phrase
-    assert 'write its id and name into the node "Sign"' in steps and "shows the credential" in steps
+    assert 'write the id and name of the trigger secret credential into the node "Sign"' in steps
+    assert "each shows its credential" in steps
 
 
 def test_the_error_message_names_no_event_and_the_readme_says_the_person_opens_the_execution():

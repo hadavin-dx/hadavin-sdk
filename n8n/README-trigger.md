@@ -462,7 +462,7 @@ the process supervisor waited a shorter time than the run needed.
   failed execution (the message has the execution link). The operator can check it: the run id is `run-` and the first 32
   hex characters of the SHA-256 of tenant, a NUL byte, sender, a NUL byte and key.
 - When the checks are used up and the run still shows as going, the execution fails at "Stop: still running"
-  ("still shown as running after 45 checks, about 52 to 53 minutes").
+  ("still shown as running after 45 checks, about 52 minutes").
 - A check that is answered 502, 503, 504 or 520 to 524, or not answered, goes the busy way like any other send (wait,
   sign again, send again). The busy rounds are counted over the whole execution: 45 in all, not 45 for each check, and
   one counter serves the first send and every check.
