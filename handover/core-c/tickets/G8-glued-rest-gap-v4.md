@@ -10,7 +10,7 @@ build only a gap that a failing input proves.
 What changed from v2, in one list (each with its finding):
 - IBAN start: the fallback `(?<![A-Za-z0-9])` is now the default (F1, measured: the camelCase start left up to 39 characters of
   an opaque token readable; section 2.4). Rows 38, 39, 45 become limits (L4); K24, K25, K66 are kept.
-- PHONE entry 5: `+`-led numbers only (F6 / L-D9 flipped). K34, K70, K71, K72 are back to the base output; row 75 now changes
+- PHONE entry 6 (v3 said "entry 5" here; CHANGED in v4, N2): `+`-led numbers only (F6 / L-D9 flipped). K34, K70, K71, K72 are back to the base output; row 75 now changes
   (`<PHONE_1><PHONE_2>`, the `+` inside the second placeholder).
 - IPv4 dashed forms glued before: the EC2 start is `(?<![A-Za-z0-9])` and the pod-DNS start `(?<![0-9])` (F4): rows 81-84
   closed, rows 85, 86 limit L10.
@@ -197,7 +197,7 @@ Rows that differ from v2 are marked (v3).
 | input | base | v2 design on a5247ac4a | v3 | what is true |
 |---|---|---|---|---|
 | `eth0 1500 9000`, `PO12-3456-7890`, `INV2026-0042-1234`, `ISBN978-3-16-148410-0`, `sha256-3851007894abcdef0123`, `rev 2-3851007894abcdef`, `backup_20-11-2026 done`, `ref hunter123-45-6789`, `<TENANT_4155550132>`, `ssn 123-45-6789a` | unchanged | unchanged | unchanged | as the codebase reviewer traced |
-| `rtt 120 118 131 125ms` | `rtt <PHONE_1> 125ms` | `rtt <PHONE_1>ms` | `rtt <PHONE_1> 125ms` (= base) | L-D9 flipped: entry 5 is `+`-led only |
+| `rtt 120 118 131 125ms` | `rtt <PHONE_1> 125ms` | `rtt <PHONE_1>ms` | `rtt <PHONE_1> 125ms` (= base) | L-D9 flipped: entry 6 is `+`-led only (CHANGED in v4: numbered 6, N2) |
 | `call 415-555-0132x123` | unchanged | `call <PHONE_1>x123` | unchanged (= base) | L-D9 flipped (K72) |
 | `x4242 4242 4242 4242` | `x4242 <PHONE_1>` (map `4242 4242 4242`, storable) | same as base | `x<CREDITCARD_1>` (not storable) | L-D12 (K36) |
 | `card 4242 4242 4242 4242x` | `card <PHONE_1> 4242x` | same as base | `card <CREDITCARD_1>x` | L-D12 (K74) |
@@ -213,7 +213,7 @@ Rows that differ from v2 are marked (v3).
 | `xip-192-0-2-10 up`, `zip-192-0-2-10 up`, `7192-0-2-10.ns.pod up` | unchanged | unchanged | unchanged | L10 (rows 85, 86) |
 | `host_ip-192-0-2-10.eu-west-1.compute.internal up` | `host_ip-<HOSTNAME_1> up` | same | `host_ip-<IPV4_1>.eu-west-1.compute.internal up` | IPV4 now runs first; the rest is a kept cloud suffix (`_KEPT_HOST`); no leak either way |
 | `call 415-555-0132.`, `call 4155550132.`, `call +1 415-555-0132.` | unchanged | unchanged | unchanged | L7 (section 6, L-D13) |
-| `call +1 415-555-0132+1 415-555-0199 now` | `<PHONE_1>+<PHONE_2>` | same as base | `<PHONE_1><PHONE_2>` | row 75 (v3): entry 5 masks the first number, the main entry then takes `+1 415-555-0199` after `>` |
+| `call +1 415-555-0132+1 415-555-0199 now` | `<PHONE_1>+<PHONE_2>` | same as base | `<PHONE_1><PHONE_2>` | row 75 (v3): entry 6 masks the first number, the main entry then takes `+1 415-555-0199` after `>` (CHANGED in v4: numbered 6, N2) |
 
 ### 2.4 F1 measured: an IBAN-shaped tail inside an opaque token (scratch script f1.py; base, v3 and v3camel)
 Method: random tokens of the 62 ASCII letters and digits (seed 20261120), each written as `key <token> end` (HIGHENTROPY context)
@@ -347,8 +347,8 @@ Full-stop rows (L7, unchanged): F1 `call 415-555-0132.`, F2 `call 4155550132.`, 
 ## 3. Files
 Modify:
 - `src/hadavin_sdk/guard/redact.py`: the IBAN (266-274), UUID (275-280), EC2 (375), pod-DNS (376), dotted IPV4 (377) and
-  CREDITCARD (471) entries; two new PHONE entries (entry 5 directly before the main PHONE tuple 491-498, entries 6 and 7 directly
-  after it); a comment above each changed or new entry; one paragraph in the module docstring; the `sweep` comment (1983-1987,
+  CREDITCARD (471) entries; three new PHONE entries (CHANGED in v4, N2: entry 6 directly before the main PHONE tuple 491-498,
+  entries 7 and 8 directly after it; the main tuple itself is unchanged and has no number); a comment above each changed or new entry; one paragraph in the module docstring; the `sweep` comment (1983-1987,
   F3: the UUID `_0` copy is now the pattern's own match); `_JOINS` and `_joins()` after `_ALNUM` (2225); the `joins` parameter
   and docstring of `_replace_standalone` (2228-2244); the one call in `_Redactor.sweep` (2041). Exact text: section 4 and
   appendix D.
@@ -437,7 +437,13 @@ value (the keyword stays in the text).
     # (G8) A number that starts with `+`, BEFORE the main entry (which would leave `<PHONE_1> 1234a`): a letter or `_` may
     # stand before the `+` (`x+1 415-555-0132`, `tel_+44 20 5550 1234`) and after the last digit (`+1 415-555-0132a`);
     # a digit or `.` may not. A number without `+` keeps the main entry's rules (`415-555-0132x123` is not masked).
-    ("PHONE", re.compile(r"(?<![0-9.\-])\+\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![0-9.])")),
+    # No date right after the `+` either (`x+2026-11-20T10:00:00Z` stays).
+    (
+        "PHONE",
+        re.compile(
+            r"(?<![0-9.\-])\+(?!\d{4}-\d\d-\d\d)\d(?:(?!\d{4}-\d\d-\d\d)[\d \-]){8,14}\d(?![0-9.])"
+        ),
+    ),
     (
         "PHONE",
         re.compile(
@@ -447,14 +453,15 @@ value (the keyword stays in the text).
         ),
     ),
     # (G8) A contiguous 10 to 16 digit number with `_` on one side and no letter or digit on the other (`tel_4155550132`,
-    # `4155550132_x`); not a compact timestamp; `>` ends no phone (a placeholder `<TENANT_4155550132>`). `sha256_3851...ab`
-    # stays (a letter after); `order_1234567890` is masked (L-D10). Then a number glued straight to a phone word.
+    # `4155550132_x`); not a compact timestamp; `>` and `›` end no phone (a placeholder `<TENANT_4155550132>`, and the
+    # same literal as `redact_untrusted` escapes it, `‹TENANT_4155550132›`). `sha256_3851...ab` stays (a letter after);
+    # `order_1234567890` is masked (L-D10). Then a number glued straight to a phone word.
     (
         "PHONE",
         re.compile(
             r"(?<![0-9A-Za-z.\-+])(?:(?<=_)|(?=\d{10,16}_))"
             r"(?!(?:19|20)\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?:[01]\d|2[0-3])[0-5]\d[0-5]\d(?!\d))"
-            r"\d{10,16}(?![0-9A-Za-z.>])"
+            r"\d{10,16}(?![0-9A-Za-z.>›])"
         ),
     ),
     (
@@ -524,13 +531,18 @@ of today's HOSTNAME entry (scratch mkg4v4.py), on `base` (`base_g4`) and on `v3`
 `after_g4c` column with 0 differences in all 86 rows, the 80 must-keep rows (all equal to `after`), the 3 full-stop rows and
 the 6 at-rest rows. So the column v2 measured with G4 v3 holds with v4 unchanged: rows 60, 61, 62 and 66 change output only
 (`x <HOSTNAME_1> y`), rows 64 and 71 close, rows 67-70 and 78-80 stay leaks (L6), rows 81-86 are not affected (no host in them).
-G8 changes no host row with or without G4c. G4 v5 is being drafted: if its section 5.2 / 5.3 differs from v4's, the column is
-checked by the G4 builder's run of the G8 test file with `G4C_MERGED = True` (8.1 step G4-2; `python -m tests.g8_cases` checks
-only `now` and does not cover it); a red host row there is a finding to report, not an edit of the column.
+G8 changes no host row with or without G4c. CHANGED in v4 (M3): G4 v5's 5.2 / 5.3 regex lines are the same text as v4's
+(compared, 8.1), so the column holds for v5 (not re-run). The column is checked again by the G4 builder's run of the G8 test file
+with `G4C_MERGED = True` (8.1 step G4-2; `python -m tests.g8_cases` checks only `now` and does not cover it). A red `after_g4c`
+cell there follows G4 v5's rule (0.3 step 2, adopted here): the G4 builder writes the measured output into the cell, records old
+and new in evidence/G4-1.md and reports it; a leak in the new output is a STOP. (v3 said "a finding to report, not an edit of the
+column"; that is withdrawn in favour of G4 v5's rule.)
 G4a / G4b (base64, ENCODED; readiness Major 2): not measured (they are not built and live in `runmap.redact_text`'s base64 view).
 `test_must_keep_rows` calls `redact()`, which G4a does not change; K60 (`Zm9vYmFy_<PHONE_1>_YmF6`) and K66 (a base64 blob) are
-the two rows that a base64 view could move through `redact_text`. Rule for whoever lands second: run the G8 file (8.1); a
-changed must-keep or probe row is a finding, reported, not edited away.
+the two rows that a base64 view could move through `redact_text`. Rule for whoever lands second: run the G8 file (8.1).
+CHANGED in v4 (M3, G4 v5 0.3 adopted): a must-keep row that changes under G4a is recorded (old and new output); if the new output
+masks a base64 blob that decodes to text holding a secret, it is intended and the row's cell is updated; otherwise STOP and report.
+A changed probe row is a finding, reported, not edited away.
 
 ## 5. Decisions made (drafter)
 - The glued text stays outside the placeholder (as the e-mail fix): `restore_text` gives back the input exactly (test
@@ -596,13 +608,33 @@ tests/test_redact_glued_rest.py and tests/g8_cases.py; v3's appendices are the f
 the changed files says "already formatted"; the ROWS table is under `# fmt: off`).
 
 ### 8.1 Order with G4 (L-D7; readiness Major 1, F5; G4-review-4 Major 2)
-Default: G8 first, with `G4C_MERGED = False` (appendix A). G4 v4 does not mention G8 and G4 v5 is being drafted; this section is
-the text the G4 v5 ticket should carry (the coordinator passes it to the G4 v5 drafter):
+CHANGED in v4 (G8-review-3-codebase M3): v3 said G4 v5 was "still a copy of v4". It is not: G4 v5 (blob c96f9c01de99 at
+99787d5b3) has its own section 0.3 "Order with G8" and decision L23, and G4 v6 is being drafted (an untracked file in the shared
+tree, read at 10:26Z while it was still being written: its header names this reconciliation, its section 0.3 then still read as
+v5's). The table below is the reconciled text: where G4 v5 differs, the resolution column says which wording both tickets carry and
+who edits. G4 v5's own rules are adopted where they are G4's to make (its regex, its builder's evidence).
+
+| point | G4 v5 says (section) | G8 v3 said | resolution (both tickets) |
+|---|---|---|---|
+| order | G8 first, `G4C_MERGED = False`; fallback G4 first (0.3, L23) | the same (L-D7) | agreed, no edit |
+| the property-test oracle line | "about line 121" (0.3) | 141 | 141 at a5247ac4a and at 99787d5b3 (MEASURED: `grep -n _replace_standalone tests/test_redact_idempotent_property.py`); the G4 v6 drafter writes 141, by name `raw_copies` |
+| PHONE entry numbers | "G8 entries 5-7" (section 6) | mixed (5 and 6 for the `+` entry) | 6 (`+`-led, before the main tuple), 7 (contiguous beside `_`), 8 (phone word); the main tuple has no number (N2, section 4.1). G4 v6 writes "G8 entries 6-8" |
+| G8 mutants in G4's runs | not listed: step 2 runs only the two G8 test files (0.3) | G4-2: `python tests/g8_mutants.py` in G4's phase 5 | kept: G4 phase 5 runs `python tests/g8_mutants.py`, expected `32 of 32 good` (CHANGED in v4: two mutants added, 8.2); G4 v6 adds the command to its Phase 5 list (its header names "30 of 30", which is v3's count) |
+| a red `after_g4c` cell in the G4c commit | the G4 builder writes the measured output into the cell, records old and new in evidence/G4-1.md and reports; a LEAK in the new output is a STOP (0.3 step 2) | "a red host row is a finding to report, not an edit of the column" | G4 v5's rule is adopted (the regex is G4's; the cell is data G8 measured with an older G4 text). G8 v4 section 4.5 says the same |
+| a changed must-keep row under G4a (K60, K66) | intended and the cell updated when the new output masks a base64 blob that decodes to text holding a secret; otherwise STOP (0.3) | "a changed row is a finding, reported, not edited away" | G4 v5's rule is adopted; G8 v4 section 4.5 says the same |
+| docstring placement | G8's paragraph after the "What this is not" paragraph; G4's bare-number paragraph and base64 sentence after G8's, before the closing `"""` (0.3, section 6) | G8's paragraph after the "(A re-scan inside redact() ...)" sentence | the same place: that sentence is the last line of the "What this is not" paragraph (redact.py 21-25 at 99787d5b3, read). Wording to use in both: "after the 'What this is not' paragraph (it ends with the '(A re-scan inside redact() ...)' sentence)" |
+| HOSTNAME regex | 5.2 / 5.3 | measured with G4 v4's | v5's 5.2 / 5.3 code lines equal v4's (MEASURED: the regex lines of the two sections compared as text, 14 lines, only a prose line differs); so the `after_g4c` column holds; NOT RE-RUN with v5 (same code) |
+| who rebases | the second lander (G4 under the default) | the same | agreed |
+| G4 v5's header | "G8 (ticket G8-glued-rest-gap-v2, v3 drafting)" | - | stale: the G8 ticket is this v4; G4 v6 names it |
+
+The text G4 has to carry (passed by the coordinator to the G4 v6 drafter; G4 v5 already carries G4-1, the test-file half of G4-2,
+G4-3 and G4-4):
 - G4-1. The G4c commit (G4 phase 4) sets `G4C_MERGED = True` in tests/g8_cases.py. That turns rows 64 and 71 into ordinary tests
   (they would otherwise XPASS under strict xfail and go red) and switches rows 60-62 and 66 to the `after_g4c` column (section
   4.5, measured with G4 v4's regex).
 - G4-2. G4's phase 4 step 1 run list gets `tests/test_redact_glued_rest.py`, and its phase 5 the mutant run `python
-  tests/g8_mutants.py` (expected: 30 of 30 good). Expected red: none. A red row is a finding (the G4 regex moved a G8 row), reported.
+  tests/g8_mutants.py` (expected: 32 of 32 good; CHANGED in v4, was 30). Expected red: none. A red `after_g4c` host cell: G4 v5's
+  rule (the table above: write the measured output, record, report; a leak is a STOP). Any other red row is a finding, reported.
 - G4-3. Rebase of tests/test_redact_idempotent_property.py: owned by whoever lands second; the two edits do not overlap (G8: the
   `raw_copies` oracle line 141; G4: the `p1c-b64` group, `EXPECTED_INPUTS`, `P1C_B64`). The redact.py module docstring: G8 adds
   one paragraph (4.3), G4 another (its phase 5): the second lander puts its paragraph after the first's. Textual conflict in
@@ -615,9 +647,22 @@ the text the G4 v5 ticket should carry (the coordinator passes it to the G4 v5 d
 Fallback (G4 first): G8 is built on the G4 head with `G4C_MERGED = True` from the start; phase 0 then expects the `after_g4c`
 column for rows 60-62 and 66 in `now` too (the step-0 check prints them as BAD: compare them with 4.5 and go on; any other BAD:
 STOP).
-Other tickets: G7 round 6 is merged (a5247ac4a); E9 is merged; G9 (spelled sweep fixed point, draft v1) edits `_Redactor.sweep`'s
-loop around the sweep call (2041; 2047 at 93c0d08ee), the line G8 changes: whichever lands second re-applies its one-line change (G8: the `_joins(placeholder)`
-argument); G10 (textfold deadline, draft) touches no G8 line.
+Other tickets: G7 round 6 is merged (a5247ac4a); E9 is merged; G7 fix round 7 (bff88a7a1) is merged after the measured base
+(section 0: it moves lines only, the tables hold on 99787d5b3). G10 (textfold deadline, draft) touches no G8 line.
+G9 (spelled sweep fixed point; v1, and v2 being drafted, G9-spelled-fixed-point-v2.md at 10:22Z) touches G8 in TWO places
+(CHANGED in v4, G8-review-3-codebase M4):
+- the literal-sweep call in `_Redactor.sweep` (2041 at a5247ac4a, 2072 at 99787d5b3), which G8 gives the `_joins(placeholder)`
+  argument and which G9 moves into `_sweep_once` (same text). Whichever lands second applies its edit to the moved line, by name.
+- G9's read-back (`_overlaps`; G9 v2 section 4.1, the `add()` helper: `E[at - 1:at] in _ALNUM or E[end:end + 1] in _ALNUM`)
+  mirrors the sweep's standalone rule with `_ALNUM`. After G8 the sweep's rule is `_joins(placeholder)` (a digit only, for a PHONE
+  value). The two must stay the same rule, or a PHONE copy glued to a letter, which G8's sweep replaces, is judged differently by
+  the read-back (it would see a letter-glued known phone in E as "touched", not an occurrence). RULE: whichever of G8 and G9 lands
+  SECOND changes G9's read-back test to `in _joins(placeholder)` for the occurrence's placeholder (the rule entry's placeholder,
+  `rule[...]` in G9's `rules` map; G9's ticket names the field), in the same commit, and adds one G9 test: a map with
+  `<PHONE_1>` = `4155550132` and a text where that number is glued to a letter beside another placeholder, read back as an
+  occurrence. If G8 lands second, the G8 builder makes this edit (it is then a G9 file region: name it in evidence/G8-1.md); if
+  G9 lands second, the G9 builder does. NOT MEASURED (G9 is not built); by reading of G9 v1 (section 4.2: "the same rule as
+  `_replace_standalone`") and v2 (section 4.1, the `add()` code). The coordinator passes this paragraph to the G9 drafter.
 
 Phase 0, no code. (a) Base sha recorded; `git archive <base> | tar -x -C /tmp/g8-base` (no worktree switch). (b) Copy appendix A to
 /tmp/g8-base/tests/g8_cases.py; `cd /tmp/g8-base && uv run --all-extras --group test python -m tests.g8_cases`. Green: exit 0, last
@@ -633,7 +678,14 @@ D and E, add appendices A, B, C, F.
 1. `pytest -q -p no:cacheprovider -m "not perf" tests/test_redact_glued_rest.py`. Green: `396 passed, 12 deselected, 20 xfailed`
    (its own count, a separate run).
 2. `pytest -q -p no:cacheprovider -m "not perf" -n 3 tests/test_redact_g3_port.py tests/test_redact_idempotent_property.py
-   tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py tests/test_model_gate.py tests/warden_port`. Green: all pass.
+   tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py tests/test_model_gate.py tests/warden_port
+   tests/test_redact_fold.py tests/test_redact_context_after_sweep.py tests/test_redact_own_output.py
+   tests/test_redact_own_output_hardening.py tests/test_text_parts_together.py tests/test_k5_classes.py tests/test_s4_llm_guard.py
+   tests/test_k5_round8.py tests/test_k5_round12_fuzz.py`. Green: all pass. (CHANGED in v4, G8-review-3-codebase M5: the
+   last nine files are added; they hold redact / redact_untrusted / sweep / fold assertions a pattern or `_joins` change can turn.
+   None is expected red: by the reviewer's reading and by this drafter's reading of their PHONE / IPV4 / IBAN / UUID / CARD
+   literals, NOT RUN by the v4 drafter (box rule: no test suite), so a red id there is a finding, reported, not edited away.
+   Their count is the builder's to record in evidence/G8-1.md; v3's `2679 passed, 3 skipped` covers the first six only.)
    (The enforce_map flake of v2 section 9, `test_m_new_1_enforce_map_has_the_redactors_time_budget`, is fixed by 833a86b: the test
    patches the redactor's clock too; a red there now is a finding.)
    If the builder prefers two commits (G8a, then G8b): after G8a alone, step 1 gives exactly `3 failed`:
@@ -852,7 +904,7 @@ Codebase reviewer:
   - CREDITCARD glued (L9) TAKEN beyond the ask: measured and closed by default (L-D12; only K36, K74 change; K80 added; mutants C1,
     C2), with "keep L9" as the fallback.
   - phone before a full stop TAKEN as a question to the lead (L-D13) with the default "unchanged" and the measured fallback.
-  - branch A of entry 5 / L-D9 TAKEN: the default is flipped to `+`-led only (measured: K34, K70, K71, K72 back to the base; the
+  - branch A of entry 6 (v2 called it entry 5; CHANGED in v4, N2) / L-D9 TAKEN: the default is flipped to `+`-led only (measured: K34, K70, K71, K72 back to the base; the
     probe counts unchanged; row 75 now changes).
   - import line TAKEN (`_joins` at runmap.py:32).
   - "the model sees the gate's rewritten text" TAKEN (4.2, the model_gate.py docstring, section 12).
@@ -866,7 +918,7 @@ B1 (exact regexes: 4.1, appendix D), B2 (exact red ids: section 7, re-measured),
 strict xfail), B4 (order: 8.1; host rows re-measured with G4 v4), M1 (must-keep rows, now 80), M2 (decisions with consequences,
 section 6), M3 (leak rule and data in appendix A), M4 (`_JOINS` PHONE only), M5 (cost: now with a script, section 10), M6 (suite
 command; the full suite stays the builder's phase 0 (d) / 3), M7 (phases with commands), N1-N6, the "For SECURITY wording" form;
-codebase M1 (entry 5 redesign: v3 keeps only its `+` branch, L-D9), M2 (versions L-D8; `1.2.3.4rc1` not masked today), M3
+codebase M1 (the `+` entry redesign, v2's "entry 5", now entry 6 (CHANGED in v4, N2): v3 keeps only its `+` branch, L-D9), M2 (versions L-D8; `1.2.3.4rc1` not masked today), M3
 (`_sweep_held`, the oracle, the gate test), M4 (host rows with two columns), M5 (suites, g3 re-point, fold_budget live), N1
 (`>` guard, K64), N2 (K65), N3 (K35, K57, K59, K62, K63, K66), N4, N5: all kept as v2 resolved them, re-measured on a5247ac4a.
 
