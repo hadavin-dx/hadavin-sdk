@@ -39,12 +39,15 @@ v0 (Phase 0 of the v2 re-architecture, 2026-09-27). Two of the planned rules:
   - removals run until nothing changes: removing one token could join the rest into a link or image;
   - a line the gate changed starts no block (heading, quote, list, fence, indented code);
   - a mention becomes `at-here` (`(at)here` after a removed link was a link).
-- **G5, leaks.** If the final text still contains anything the redactor classes as secret (every
-  kind except the identifiers an operator may choose to show), the message is BLOCKED and a stub
-  goes out instead: a person reads the full report locally.
+- **G5, leaks: NOT in this module.** WARDEN blocked a message that still held anything the redactor
+  classed as secret. That check was not ported and nothing here runs a secret pattern. Text is masked
+  once, by `guard.runmap.redact_text`, before it reaches this module; nothing in this module re-checks
+  it on the way out. (The model gate's `runmap.enforce_map` is a different thing: it replaces values the
+  run's map already holds, runs no pattern, and so cannot see a new secret.) The original WARDEN
+  paragraph said a message holding a secret was BLOCKED and a stub went out instead.
 
-- **G2, unverifiable claims** (`hedge`, Phase 1). The model may write "no customer impact", "no data
-  was lost" or "the issue is resolved". WARDEN verifies none of these: it reads no impact data, and
+- **G2, unverifiable claims** (`hedge`, Phase 1; not ported, there is no `hedge` here).
+  The model may write "no customer impact", "no data was lost" or "the issue is resolved". WARDEN verifies none of these: it reads no impact data, and
   it checks no outcome (that is Phase 2's success check). Each such claim in model-written text is
   marked `[unverified: ...]` where it stands. "The root cause is" is not marked: the report already
   heads the model's text as its hypothesis, with its confidence.
@@ -55,12 +58,12 @@ v0 (Phase 0 of the v2 re-architecture, 2026-09-27). Two of the planned rules:
   (models.ModelProse, discuss.Answer). A change goes only through a catalogue plan and a signed
   approval.
 
-Every way out uses this module (audit A-C-8):
-- chat sinks: `enforce`, with G5 also over the text as built, before notify re-redacts it;
-- stdout: `for_terminal`;
-- MCP results and generic webhooks: `outbound_data`.
+In WARDEN every way out used this module (audit A-C-8) through `enforce`, `for_terminal` and
+`outbound_data`. None of those three exists here. In this repo the approval and channel text goes
+through `sanitise_text` (G3) and `withhold_commands` (G4), via `channel.clean`.
 
-Verdicts: PASS (unchanged), REWRITE (G3 removed something), BLOCK (G5). G1 (every claim grounded) is
+Verdicts (WARDEN): PASS (unchanged), REWRITE (G3 removed something), BLOCK (G5). No verdict type or BLOCK
+exists here (the list at the top of this file says what was not ported). G1 (every claim grounded) is
 P13 in the verifier; the report says when it fired.
 """
 

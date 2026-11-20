@@ -244,3 +244,7 @@ The guarantee sentence ("values the run has identified as sensitive are replaced
 | code N5 | NOTED | `test_every_error_code_...` stays; the new code `mask_budget_exceeded` is reachable (test). |
 | code N6 | FIXED | `MIN_MUTANTS` is the real count (105); new mutants for the documents path of the net, the re-encoding of documents, the call-id and assistant branches of `framing_free`, `map_failed`, the bind copy, and every round 4 guard; thread test t15 now runs with a real map that has a held-back value. |
 | code N7 | STATED | `isdigit()` and the placeholder shape `\d` take digits of any script; limit text and test `test_r3_n7_*`. |
+
+
+## CORRECTION (core-c 08:12Z, drift report evidence/DRIFT-G1-G2-G3.md)
+Item 11 of Amendment 1 above ("`runmap.is_masked` ... is still delivered ... but the gate does not call it") is void: `runmap.is_masked` is deleted (round 2 item 4), so nothing is delivered. See G-text-deltas.md Amendment 2 item 1. The gate uses `runmap.enforce_map`, which replaces known values and runs no pattern.
