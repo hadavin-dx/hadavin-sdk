@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:03:24Z
+UPDATED_UTC: 2026-11-20T15:08:51Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 14:59Z: merged G13c (gate mutants 135/140; R8,E19g,E19i,G13d,G13e problems to check), G12c (g12 mutants 35/35). E9 r3 review recorded (0B/2M); G9 r2 review recorded as E23 (3 Major: _overlaps collect-before-charge, union kind downgrade, weight calibration). Docs v7 drafts in handover/core-c. Agents alive: G4c a0194822 only (load ~2). F-install: NO_MAP r3, usd_cap, mark on ProviderExhausted merged; K5 Q17 with lead. core-a branches reviewed/merged. cfull fixes done (fdfa, py3.12 unicode, perf E22). | 15:03Z head sha of cloud/core-c = see git log; g2/g3 mostly cherry-picked already, 4 leftovers being reconciled (coordinate with core-a wip/core-a-merge-c: core-c head has priority). Grant tests vs core-b 0006/0007 NOT done: needs core-b store, queued after rec. Agents alive: 4 (G4c, G9b, gm, rec).
+STATE: 15:08Z load 8.8. Agents 4: G4c (host patterns), G9b (E23 fixes), gm (gate mutants G13d/G13e/E19g/E19i), rec (g2/g3 leftovers into ONE head; core-c head has priority over core-a merge-c). cloud/core-c head = 7a602867f (contains G13c, G12c, G12b, G13b, G9, G4 P0-3, E9, E14, G8, G10; g2/g3 mostly cherry-picked, 4 commits under reconcile). F-install blockers: NO_MAP r3 merged; usd_cap in SPEND_REASONS merged; mark on ProviderExhausted merged (inert until core-b retry layer sets it); K5 Q17 waiting lead. Grant tests vs core-b 0006/0007: queued, need core-b store. Reviews: E9 r3, G9 r2 recorded (E23). cfull fixes done.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 3.9 of 4 cores, mem 1/15 GB, disk 54G free, 22% used, light agents 4, heavy agents 0
-DISK: / 54G free, 22% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
+CAPACITY: load 8.8 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Build G9b (E23 M1-M3), check gate mutants G13d/G13e/E19g/E19i, docs root pass, then G11 once lead decides E16.
-PUSHED_UTC: 2026-11-20T14:58:23+00:00
+PUSHED_UTC: 2026-11-20T15:03:38+00:00
 
-(20:33 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:38 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
