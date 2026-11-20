@@ -30,9 +30,16 @@ old flag ON, which is also a stop (the safe direction). (4) A reset clears the s
 a stop committed after that statement began stays ON, and one committed between the audit row and that statement is
 cleared; the command reads the state back and exits 2 while it is still ON. (5) `migrate` refuses, when it applies
 grants, any other role that could clear a stop through a grant on this schema's stop tables or through membership
-in a role that holds one (or in the reset role); a plain `migrate` that names no role applies and checks no grants and
-leaves old ones in place, so name all roles in ONE command. Not checked: a role whose only path is membership in the
-owner role, in a superuser or in a PostgreSQL predefined role such as `pg_write_all_data`.
+in a role that holds one (or in the reset role), through UPDATE, DELETE or TRUNCATE on `kill_switch`, INSERT on
+`kill_switch_clears` or TRIGGER on any of the three; below PostgreSQL 16 also every non-superuser role with CREATEROLE,
+from 16 every holder of the ADMIN option on such a role or on the reset role (so the login that created the reset role
+is listed until it revokes that option). It refuses when it cannot find the three stop tables in the schema the store
+uses. A plain `migrate` that names no role applies and checks no grants and leaves old ones in place, so name all roles
+in ONE command. Outside the guarantee and not checked: the schema owner (it can DROP and recreate the stop tables: the
+runtime login must not own the schema), superusers and managed-database admin roles that are not superusers
+(`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`), SECURITY DEFINER functions or views of a privileged role
+(review them), and a role whose only path is membership in the owner role, in a superuser or in a PostgreSQL predefined
+role such as `pg_write_all_data`.
 
 **Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
 (for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT

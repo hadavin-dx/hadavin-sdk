@@ -282,12 +282,21 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
     return problems
 
 
+_STOP_TABLES = ("kill_switch", "kill_switch_stops", "kill_switch_clears")
+
+# The right that clears or defeats a stop, per relation: flip or delete the legacy flag (UPDATE, DELETE, TRUNCATE),
+# append a clear (INSERT), and TRIGGER on all three (a BEFORE INSERT trigger can swallow a stop, a trigger can
+# be dropped). A column grant counts for UPDATE and INSERT (the only privileges a column can hold).
 _CAN_CLEAR = """
-WITH RECURSIVE rel AS (
-    SELECT c.oid, c.relacl, c.relowner,
-           CASE c.relname WHEN 'kill_switch' THEN 'UPDATE' ELSE 'INSERT' END AS priv
+WITH RECURSIVE want(relname, priv) AS (
+    VALUES ('kill_switch', 'UPDATE'), ('kill_switch', 'DELETE'), ('kill_switch', 'TRUNCATE'),
+           ('kill_switch', 'TRIGGER'), ('kill_switch_stops', 'TRIGGER'), ('kill_switch_clears', 'TRIGGER'),
+           ('kill_switch_clears', 'INSERT')
+), rel AS (
+    SELECT c.oid, c.relacl, c.relowner, w.priv
     FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = pg_catalog.current_schema() AND c.relname IN ('kill_switch', 'kill_switch_clears')
+         JOIN want w ON w.relname = c.relname
+    WHERE n.nspname = pg_catalog.current_schema()
 ), acl AS (
     SELECT a.grantee FROM rel, pg_catalog.aclexplode(rel.relacl) a WHERE a.privilege_type = rel.priv
     UNION
@@ -298,7 +307,8 @@ WITH RECURSIVE rel AS (
     SELECT relowner AS oid FROM rel UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper
 ), can AS (
     SELECT s.oid FROM (SELECT grantee AS oid FROM acl WHERE grantee <> 0
-                       UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s) s
+                       UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = %(reset)s
+                       UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE {creators}) s
     WHERE s.oid NOT IN (SELECT oid FROM outside)
     UNION
     SELECT m.member FROM pg_catalog.pg_auth_members m JOIN can ON m.roleid = can.oid
@@ -313,29 +323,69 @@ SELECT name FROM (
 """
 
 
-def who_else_can_clear(db, reset_role: str | None) -> list[str]:
-    """Who, besides the reset role, could clear a stop IN THIS SCHEMA, read from the grants on this schema's
-    `kill_switch` (UPDATE) and `kill_switch_clears` (INSERT) only, so roles of other schemas or applications on
-    the same server never change the answer. Listed: every role those two relations grant the right to (table or
-    column grant; `PUBLIC` is listed as PUBLIC), and every role that is a member, directly or through other
-    roles, with or without inheritance (a NOINHERIT member can SET ROLE), of such a role or of the reset role.
-    From PostgreSQL 16 a membership counts only when its SET or INHERIT option is true: a membership with the
-    ADMIN option alone (what a CREATEROLE login gets on every role it creates) cannot use the role's rights
-    until its holder grants itself more, and the next migrate then lists it.
+def _check_stop_relations(db) -> None:
+    """The check below reads the grants of the three stop relations in `current_schema()`. It must find all three
+    there, and their bare names must resolve to them: a search_path that names no schema, a schema without the
+    tables, a missing table or a temporary table of the same name would leave the check reading nothing (or the
+    wrong thing) and passing."""
+    schema, path = db.execute(
+        "SELECT pg_catalog.current_schema(), pg_catalog.current_setting('search_path')"
+    ).fetchone()
+    found = {}
+    if schema:
+        found = dict(
+            db.execute(
+                "SELECT c.relname, c.oid::int8 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
+                "ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relkind IN ('r','p') "
+                "AND c.relname = ANY(%s)",
+                (schema, list(_STOP_TABLES)),
+            ).fetchall()
+        )
+    missing = [t for t in _STOP_TABLES if t not in found]
+    shadowed = [
+        t
+        for t in found
+        if db.execute("SELECT pg_catalog.to_regclass(%s)::oid::int8", (t,)).fetchone()[0]
+        != found[t]
+    ]
+    if not schema or missing or shadowed:
+        raise ConfigError(
+            f"cannot check who could clear a stop: the tables {', '.join(_STOP_TABLES)} must all be in the "
+            f"schema the store uses, and they are not (schema {schema!r}, search_path {path!r}, missing "
+            f"{missing or 'none'}, names that resolve to another relation {shadowed or 'none'}). Run migrate "
+            "with a search_path whose first existing schema holds the stop tables"
+        )
 
-    Outside the guarantee, never listed and never followed: the reset role itself, the owner of the two
-    relations, superusers, and a role whose only path is membership in the owner, in a superuser, or in a
-    PostgreSQL predefined role that holds no grant here (`pg_write_all_data` and the like can write every table
-    of the server). Whoever hands out those memberships owns that risk; `effective_problems` still refuses the
-    NAMED roles for them."""
-    # pg_auth_members has the two option columns from PostgreSQL 16; before that every membership can SET ROLE.
+
+def who_else_can_clear(db, reset_role: str | None) -> list[str]:
+    """Who, besides the reset role, could clear or defeat a stop IN THIS SCHEMA, read from the grants on this
+    schema's `kill_switch` (UPDATE, DELETE, TRUNCATE), `kill_switch_clears` (INSERT) and the three stop tables
+    (TRIGGER) only, so roles of other schemas or applications on the same server never change the answer. It
+    raises ConfigError when the three tables are not all in `current_schema()` or a bare name resolves to
+    something else: nothing to read is never a pass. Listed: every role those relations grant such a right to
+    (table or column grant; `PUBLIC` is listed as PUBLIC), every role that is a member, directly or through other
+    roles, with or without inheritance (a NOINHERIT member can SET ROLE), of such a role or of the reset role, and
+    the roles that can hand themselves the reset role: below PostgreSQL 16 every non-superuser with CREATEROLE;
+    from 16 a membership counts when its SET, INHERIT or ADMIN option is true, so the holder of the ADMIN option
+    on the reset role (the login that created it has it) is listed.
+
+    Outside the guarantee, never listed and never followed: the reset role itself, the owner of the relations
+    (it can DROP and recreate them), superusers, managed-database admin roles that are not superusers
+    (rds_superuser, azure_pg_admin, cloudsqlsuperuser; below PostgreSQL 16 listed only if they hold CREATEROLE),
+    SECURITY DEFINER functions of another privileged role, and a role whose only path is membership in the owner,
+    in a superuser, or in a PostgreSQL predefined role that holds no grant here (`pg_write_all_data` and the like
+    can write every table of the server). Whoever hands out those memberships owns that risk;
+    `effective_problems` still refuses the NAMED roles for them."""
+    _check_stop_relations(db)
+    # pg_auth_members has the option columns from PostgreSQL 16; before that every membership can SET ROLE and a
+    # CREATEROLE login can grant any role to itself.
     new = db.execute(
         "SELECT pg_catalog.current_setting('server_version_num')::int >= 160000"
     ).fetchone()[0]
-    usable = "(m.inherit_option OR m.set_option)" if new else "TRUE"
-    return [
-        r[0] for r in db.execute(_CAN_CLEAR.format(usable=usable), {"reset": reset_role}).fetchall()
-    ]
+    usable = "(m.inherit_option OR m.set_option OR m.admin_option)" if new else "TRUE"
+    creators = "FALSE" if new else "r.rolcreaterole"
+    query = _CAN_CLEAR.format(usable=usable, creators=creators)
+    return [r[0] for r in db.execute(query, {"reset": reset_role}).fetchall()]
 
 
 def _excess_privileges(db, role: str) -> list[str]:

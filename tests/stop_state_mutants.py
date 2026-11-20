@@ -194,7 +194,7 @@ HAND = [
         "    WHERE FALSE",
         S2, "DID NOT RAISE"),
     mutant("S2: membership without inheritance is not counted", MIG,
-        'usable = "(m.inherit_option OR m.set_option)" if new', 'usable = "m.inherit_option" if new',
+        '"(m.inherit_option OR m.set_option OR m.admin_option)" if new', '"m.inherit_option" if new',
         "test_s2_migrate_refuses_a_member_of_the_reset_role", "DID NOT RAISE"),
     mutant("S2: membership of a grantee ignored (the group a role can SET ROLE to)", MIG,
         "JOIN can ON m.roleid = can.oid", "JOIN can ON FALSE",
@@ -207,18 +207,74 @@ HAND = [
         "WHERE EXISTS (SELECT 1 FROM acl WHERE grantee = 0)", "WHERE FALSE",
         "test_s2_a_grant_to_public_is_listed_as_public", "== ['PUBLIC']"),
     mutant("S2: the check reads every schema of the database, not this one", MIG,
-        "    WHERE n.nspname = pg_catalog.current_schema() AND c.relname IN",
-        "    WHERE c.relname IN",
+        "    WHERE n.nspname = pg_catalog.current_schema()\n)",
+        "    WHERE TRUE\n)",
         "test_s2_a_second_schema_with_its_own_stop_tables_and_roles_does_not_change_this_schemas_answer",
         "could clear a stop"),
     mutant("S2: a member of the owner is followed", MIG,
         "    SELECT relowner AS oid FROM rel UNION SELECT r.oid",
         "    SELECT r.oid",
         "test_s2_a_member_of_an_owner_that_is_not_a_superuser_is_not_listed", "could clear a stop"),
-    mutant("S2: a membership with the ADMIN option only is counted", MIG,
-        'usable = "(m.inherit_option OR m.set_option)" if new', 'usable = "TRUE" if new',
-        "test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_not_listed",
-        "could clear a stop"),
+    mutant("S2: a membership with the ADMIN option only is not counted (the creator of the reset role)", MIG,
+        '"(m.inherit_option OR m.set_option OR m.admin_option)" if new', '"(m.inherit_option OR m.set_option)" if new',
+        "test_s2_the_creator_of_the_reset_role_with_the_admin_option_only_is_listed", "DID NOT RAISE"),
+    mutant("S2: a membership with the ADMIN option only is not counted (a role that holds the right)", MIG,
+        '"(m.inherit_option OR m.set_option OR m.admin_option)" if new', '"(m.inherit_option OR m.set_option)" if new',
+        "test_s2_a_member_of_a_role_that_holds_a_right_with_the_admin_option_only_is_listed", "assert ["),
+    mutant("S2: below 16 a membership is not counted", MIG,
+        '" if new else "TRUE"', '" if new else "FALSE"',
+        "test_s2_migrate_refuses_a_member_of_the_reset_role", "DID NOT RAISE"),
+    mutant("S2: below 16 a CREATEROLE login is not listed", MIG,
+        'creators = "FALSE" if new else "r.rolcreaterole"', 'creators = "FALSE"',
+        "test_s2_below_16_a_createrole_login_that_is_not_a_superuser_is_listed", "assert [] == ["),
+    mutant("S2: from 16 a CREATEROLE login with no membership is listed", MIG,
+        'creators = "FALSE" if new else "r.rolcreaterole"', 'creators = "r.rolcreaterole"',
+        "test_s2_from_16_a_createrole_login_with_no_membership_is_not_listed", "sb_cq_"),
+    mutant("S2: the reset role is not a base row", MIG,
+        "WHERE r.rolname = %(reset)s\n                       UNION", "WHERE FALSE\n                       UNION",
+        "test_s2_members_of_the_reset_role_are_listed_even_when_it_holds_no_right_yet", "== ['sb_n8_"),
+    mutant("S2: a dropped column is counted", MIG,
+        "AND NOT att.attisdropped AND a.privilege_type", "AND a.privilege_type",
+        "test_s2_a_dropped_column_keeps_no_grant", "assert ['sb_dc_"),
+    mutant("S2: a superuser is not excluded", MIG,
+        "UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolsuper", "UNION SELECT r.oid FROM pg_catalog.pg_roles r WHERE FALSE",
+        "test_s2_a_superuser_with_a_right_or_a_membership_is_not_listed", "assert ["),
+    mutant("S2: the update right is read on the clears, not the insert right", MIG,
+        "('kill_switch_clears', 'INSERT')", "('kill_switch_clears', 'UPDATE')",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: the insert right is read on the flag, not the update right", MIG,
+        "VALUES ('kill_switch', 'UPDATE')", "VALUES ('kill_switch', 'INSERT')",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: DELETE on the flag is not read", MIG,
+        "('kill_switch', 'DELETE'), ", "",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: TRUNCATE on the flag is not read", MIG,
+        "('kill_switch', 'TRUNCATE'),\n", "\n",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: TRIGGER on the stops is not read", MIG,
+        "('kill_switch_stops', 'TRIGGER'), ", "",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: TRIGGER on the clears is not read", MIG,
+        "('kill_switch_clears', 'TRIGGER'),\n", "\n",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: TRIGGER on the flag is not read", MIG,
+        "('kill_switch', 'TRIGGER'), ('kill_switch_stops'", "('kill_switch_stops'",
+        "test_s2_migrate_refuses_a_third_role_that_holds_a_right_to_clear", "DID NOT RAISE"),
+    mutant("S2: the check passes when no relations are found (empty search_path)", MIG,
+        "    if not schema or missing or shadowed:", "    if False:",
+        "test_s2_an_empty_search_path_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: the check passes when no relations are found (a schema without the tables)", MIG,
+        "    if not schema or missing or shadowed:", "    if False:",
+        "test_s2_a_search_path_whose_first_schema_has_no_stop_tables_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: the check passes when one relation is missing", MIG,
+        "    if not schema or missing or shadowed:", "    if not schema or shadowed:",
+        "test_s2_one_missing_stop_table_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: the check passes when a bare name resolves to another relation", MIG,
+        "    if not schema or missing or shadowed:", "    if not schema or missing:",
+        "test_s2_a_temporary_table_with_a_stop_table_name_is_refused_not_passed", "DID NOT RAISE"),
+    mutant("S2: the refusal does not name the schema and the search_path", MIG,
+        "(schema {schema!r}, search_path {path!r}, missing", "(missing",
+        "test_s2_a_search_path_whose_first_schema_has_no_stop_tables_is_refused_not_passed", "is not named in"),
     mutant("S2: the check runs only when a reset role is named", MIG,
         "        if named and (others := who_else_can_clear(db, reset_role)):",
         "        if reset_role and (others := who_else_can_clear(db, reset_role)):",
@@ -282,7 +338,32 @@ ALSO = {
 }  # fmt: skip
 
 # Mutants no test can kill; (name, file, reason). Printed, never run.
-EQUIVALENT: list[tuple[str, str, str]] = []
+EQUIVALENT: list[tuple[str, str, str]] = [
+    ("S2: grantee 0 (PUBLIC) is followed as a role (`WHERE grantee <> 0` removed)", MIG,
+     ("role oid 0 does not exist: it is in `can` but matches no pg_roles row and no pg_auth_members row, and "
+      "PUBLIC is listed by its own branch (test_s2_a_grant_to_public_is_listed_as_public)")),
+]  # fmt: skip
+
+# Mutants of one PostgreSQL branch: run on a server of that branch only (the other branch is dead code there and the
+# mutant would survive). Run the list on a 15 and on a 17 server; every mutant is then KILLED on one of the two.
+GE16 = {
+    "S2: membership without inheritance is not counted",
+    "S2: a membership with the ADMIN option only is not counted (the creator of the reset role)",
+    "S2: a membership with the ADMIN option only is not counted (a role that holds the right)",
+    "S2: from 16 a CREATEROLE login with no membership is listed",
+}
+LT16 = {
+    "S2: a dropped column is counted",  # PostgreSQL 15 keeps the ACL of a dropped column, 17 clears it
+    "S2: below 16 a membership is not counted",
+    "S2: below 16 a CREATEROLE login is not listed",
+}
+
+
+def _server_version() -> int:
+    import psycopg
+
+    with psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"]) as db:
+        return int(db.execute("SHOW server_version_num").fetchone()[0])
 
 
 def _killer(name: str) -> tuple[int, str]:
@@ -308,7 +389,14 @@ def run_by_hand(only: list[str]) -> int:
         print("refused: a target file has uncommitted changes:\n" + dirty)
         return 1
     bad, clean = 0, {}
+    version = _server_version()
     for m in chosen:
+        if (m.name in GE16 and version < 160000) or (m.name in LT16 and version >= 160000):
+            print(
+                f"N/A      | {m.name} | needs the other PostgreSQL branch (this is {version}) | {m.only_test}",
+                flush=True,
+            )
+            continue
         edits = [(m.file, m.old, m.new), *ALSO.get(m.name, [])]
         before = {f: (ROOT / f).read_bytes() for f, _, _ in edits}
         after = {f: data.decode("utf-8") for f, data in before.items()}

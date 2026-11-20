@@ -46,15 +46,30 @@ The `kill_switch` row is missing, or its flag is on, or at least one stop has no
 all, a run ends with a person (`limits_unavailable`) and makes no model call.
 
 ## Limits
-- The database owner and a superuser can still change these tables' triggers; they are outside the guarantee.
+- The database owner and a superuser can still change these tables' triggers; they are outside the guarantee. The
+  owner can also DROP and recreate the three stop tables (and so any grant on them). Close that: the runtime login
+  and every other login must NOT own the schema (nor be a member of its owner); create the schema as the migrate
+  login only.
+- Managed-database admin roles (`rds_superuser`, `azure_pg_admin`, `cloudsqlsuperuser`) are NOT superusers to
+  PostgreSQL, but they can do what a superuser does here. They are outside the guarantee and not listed (below
+  PostgreSQL 16 they are listed only because they hold CREATEROLE: see the next point).
 - Not checked by migrate, and so also outside the guarantee: a role whose only way to these tables is membership in
   the owner role, in a superuser, or in a PostgreSQL predefined role such as `pg_write_all_data` (it can write every
   table of the server). Do not hand out those memberships on a server that holds a stop switch. The roles NAMED in
-  the migrate command are still refused when they are members of the owner.
-- PostgreSQL 16 and later: a membership counts only when its SET or INHERIT option is true. A login with CREATEROLE
-  that created the reset role is a member WITH ADMIN OPTION only; it cannot use the reset role's rights, so it is
-  not refused. If it grants itself SET or INHERIT on the reset role, the next migrate that names a role refuses it.
-  A NOINHERIT member that can `SET ROLE` is always refused.
+  the migrate command are still refused when they are members of the owner. Also not checked: a SECURITY DEFINER
+  function or view owned by a privileged role (review every function of the schema; the check reads grants only).
+- What migrate lists as able to clear or defeat a stop: any role that holds UPDATE, DELETE or TRUNCATE on
+  `kill_switch`, INSERT on `kill_switch_clears` or TRIGGER on any of the three stop tables (a trigger can drop a stop
+  or block a clear), directly or by column grant or through PUBLIC; any member (with or without inheritance) of such
+  a role or of the reset role; below PostgreSQL 16 every non-superuser role with CREATEROLE (it can grant the reset
+  role to itself); from PostgreSQL 16 every holder of the ADMIN option on such a role or on the reset role. The
+  login that created the reset role holds the ADMIN option (when it is not a superuser), so it is listed: either
+  create the reset role as a superuser or the owner, or run `REVOKE ADMIN OPTION FOR <reset role> FROM <creator>`.
+  Before this change (2026-11-20) the ADMIN-only creator and the CREATEROLE login below 16 were not listed.
+- migrate refuses (ConfigError that names the schema and the search_path) when the three stop tables are not all
+  found in the schema the store uses (an empty search_path, a schema without the tables, a missing table, or a
+  temporary table with a stop table's name): a check that finds nothing never passes. Set the same search_path for
+  the migrate and the runtime login.
 - The guarantee is about the state stored in the database. A runtime process that is itself taken over can ignore any
   switch: stop the process too.
 - "Audited first" is done by the `limits reset` command. The database does not force it: a person with the reset
