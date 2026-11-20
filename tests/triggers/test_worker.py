@@ -1166,7 +1166,9 @@ def test_start_warns_once_with_the_names_of_settings_that_have_no_field(rt, capl
         assert "door-a" not in mine[0] and SECRET not in mine[0]
 
 
-def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handlers_back(monkeypatch):
+def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handlers_back(
+    monkeypatch,
+):
     """DC1-4. SIGBREAK is Windows only; a stand-in number is used here."""
     monkeypatch.setattr(signal, "SIGBREAK", signal.SIGUSR1, raising=False)
     before = {n: signal.getsignal(n) for n in (signal.SIGTERM, signal.SIGUSR1)}
@@ -1187,7 +1189,10 @@ def test_serve_installs_the_break_signal_where_it_exists_and_puts_the_old_handle
     closed = []
     runner = SimpleNamespace(close=lambda: closed.append(True))
     assert worker.serve(Server(), runner) == worker.EXIT_OK  # type: ignore[arg-type]
-    assert seen[signal.SIGTERM] is seen[signal.SIGUSR1] and seen[signal.SIGTERM] != before[signal.SIGTERM]
+    assert (
+        seen[signal.SIGTERM] is seen[signal.SIGUSR1]
+        and seen[signal.SIGTERM] != before[signal.SIGTERM]
+    )
     assert {n: signal.getsignal(n) for n in before} == before and closed == [True]
 
 
