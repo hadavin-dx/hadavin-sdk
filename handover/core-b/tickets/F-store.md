@@ -51,6 +51,8 @@ Review report: tickets/F-store-review-1.md. Every Blocker and Major is answered 
 | tests/spend_reservation_mutants.py | create: the mutants, in the format of tests/stage_mutants.py, each with the name of the test that kills it | T |
 Not brought in from the branches: tests/pg_dsn.py, test_pg_dsn_guard.py, meter_support.py, reserve_workers.py, test_store_time_rules.py, postgres_mutants.py, meter_mutants.py and the demo conftest edit. Decision 4.4 above is withdrawn (it would edit files outside this list); the test writer may copy ideas into its own new files. Line citations of those branch files in the test plan are pointers to ideas, not to files in this tree.
 
+tests/contracts/test_store_spend_caps.py and tests/contracts/test_store_spend_model.py (added later by the test writers, 2026-11-20 06:00 and 06:30 UTC) belong to the T rows above. Reviewer finding 16 of the hostile re-read.
+
 ### R2. Who lands what (M1)
 F-store lands SpendRefused, the Meter Protocol, Limits.reserve and Limits.settle. F-install commit 3 lands only the k1b Budget changes.
 
@@ -140,7 +142,7 @@ UPDATE spend_reservations SET status = 'settled', settled_usd = %(a)s, closed_at
 -- settle, steps 2 and 3: usd = usd + (actual - reserved) on the row's day, then its month; zero rows raises
 -- expire
 UPDATE spend_reservations SET status = 'expired', settled_usd = reserved_usd, closed_at = clock_timestamp()
- WHERE status = 'open' AND created_at < clock_timestamp() - make_interval(secs => %(age)s);
+ WHERE status = 'open' AND created_at <= clock_timestamp() - make_interval(secs => %(age)s);
 -- purge (purge role)
 DELETE FROM spend_reservations WHERE status <> 'open' AND closed_at < %(before)s;
 ```

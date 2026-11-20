@@ -31,11 +31,13 @@ Drift report (egm-drift-report skill): to run once, at the end of the current se
 |---|---|---|---|---|---|---|---|---|---|---|
 | a879d0f3 | reviewer (egm-codebase-details) | sonnet | RESULT review of the provider mark against the built code (missing step found by the EGM audit) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
 | ac7e13a5 | reviewer (egm-codebase-details) | sonnet | RESULT review of the trigger config (D-config) against the built code (missing step) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
-| ae188231 | builder | sonnet | F-install Y2 and Y3: Reply.cost_usd None when unknown, retries never under-book; worktree Y on the F-install tree | 06:55 | +25 min | UNVERIFIED | running | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
+| ae188231 | builder | sonnet | F-install Y2 and Y3: commit d8d76ff on branch wip/cloud-core-b/F-install (18 files); 540 passed, 2 failed (1 fixed, 1 core-c's known test) | 06:55 | done | 100 | done | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
 | a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
 | a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
 | a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
-| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config | 06:46 | +10 min | UNVERIFIED | running | 1 of 1 | 1 | restart after the limit |
+| a99a298a | builder (fix) | sonnet | F-store fix round 3 from the hostile re-read (7 code items); worktree F5 | 06:58 | +25 min | UNVERIFIED | running | none | 0 | hostile re-read findings 3 to 6, 12, 17 |
+| abb69602 | builder (merge) | sonnet | merge cloud/core-b into the F-install integration tree (4 conflicts: retry.py, limits.py, defaults.py, k1b/loop.py); worktree Y | 06:58 | +20 min | UNVERIFIED | running | none | 0 | the integration tree must carry the 429 mark and the F-store fixes before batch run 3 |
+| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config: 2 doc Blockers, 7 Majors, 10 Nits; report tickets/F-store-hostile-review-1.md | 06:46 | done | 100 | done | 1 of 1 | 1 | answered: code in fix round 3, docs fixed |
 | earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
 | 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
 | 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
