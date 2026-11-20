@@ -3,9 +3,9 @@
 ## Unreleased
 
 ### Money status (read this first)
-Exact money and the no-lowering wall are in force; no-overspend holds for the live loop's main model call only and is NOT in force for the listed ungated sites until the model gate installs reserve/settle (F-install). The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it.
+Exact money and the no-lowering wall are in force; no-overspend is in force for every model call that goes through the gate; the listed ungated sites (Bedrock guardrail, per-process Budget, unknown-cost run cost) are not covered. The live loop's main model call reserves the worst case before the call and settles after: the reservation bounds the booked worst case per call; a reply costing more than the worst case is booked in full (an overshoot, audited); the kill switch is read before the reserve, not atomic with it.
 - In force: exact decimal money; on PostgreSQL the runtime login cannot lower a booked amount or change a cap (grants flip in `migrate`, migrations 0010 and 0011); caps live in `hadavin_caps`; `Limits.reserve` and `Limits.settle` exist and are tested.
-- NOT gated: `_screen` llm_judge (charged after the fact), `cards.render_shadow` with a detector (an llm_judge cost there is not charged at all), `guard/bedrock_guardrail` (`apply_guardrail`), `k1b/loop.py`, `evals.py`, `guard/judge.py`. Concurrent use of those can overshoot a cap. The core-c model gate will move the reserve/settle pair. A hold of a failed run (provider error, crash) stays booked on the day and month counters until an operator runs `release_expired_spend` (see the runbook); the tick only marks it expired. A store failure at reserve ends the run in NEEDS_PERSON `limits.limits_unavailable` with no retry.
+- The model gate owns the one reserve and settle of every model call: the agent's main call, the in-run `llm_judge` screen, the `render_shadow` detector screen, `evals.py`, and `k1b/loop.py` / `replay`. STILL NOT gated or inexact: (a) Bedrock `apply_guardrail` is an unpriced vendor call outside the gate (also in the approval-summary screen when configured); (b) `gate` and `replay` use a per-process in-memory `Budget`, not the store: no day or month counter and no cross-process cap; (c) a call whose cost is unknown (no usage reported, or an earlier attempt may have been billed) keeps its worst case on the day counter but adds 0 to the run cost, so `max_run_usd` does not see it; (d) the kill switch is read before the reserve, not atomic with it; (e) an overshoot (a reply that costs more than its worst case) is booked in full after the fact, so one call can pass a cap by its overshoot; (f) a model-backed detector passed to `app.build(detector=...)` is metered only inside a run: the approval-summary screen runs its unmetered members only. A hold of a failed call (provider error, crash) stays on the day and month counters: the tick's `expire_reservations` step closes it (status `expired`) after at least 3600 seconds but the counters do not move; an operator lowers them with `hadavin-sdk limits release-expired` (see the runbook). A store failure at reserve ends the run in NEEDS_PERSON `limits.limits_unavailable` with no retry.
 - Migrations in this release: 0006 `stop_state`, 0007 `spend_reservations`, 0008 `release_expired_spend`, 0009 `stop_state_hardening`, 0010 `money_guard`, 0011 `money_definer` (0007 to 0011 are unreleased and may still change; see `handover/core-b/MIGRATIONS.md`).
 - Operator sequence: stop the tick scheduler and every runtime-side process; `hadavin-sdk migrate` naming ALL roles (including `--reset-role`); `hadavin-sdk limits sync-caps --by WHO --yes`; start; one smoke `tick`. Every run is refused (`limits_unavailable`) until `sync-caps` has completed. There is no rolling upgrade.
 
@@ -28,8 +28,9 @@ Exact money and the no-lowering wall are in force; no-overspend holds for the li
     plus the route's `max_tokens` at the output price, times the client's `max_attempts` (times 2 with an output
     schema). A daily budget smaller than one worst case refuses every call.
   - **A failed call can hold budget.** When a provider call fails and the provider did not clearly refuse it
-    before doing any work, the most that call could have cost stays counted against the day and month budget for
-    about an hour (the tick's `expire_reservations` step closes it; at least 3600 seconds). Before, a failed call
+    before doing any work, the most that call could have cost stays counted against the day and month budget (the
+    tick's `expire_reservations` step closes the hold after at least 3600 seconds, but the counters do not move until an
+    operator runs `limits release-expired`). Before, a failed call
     cost nothing. A wrong API key or throttling can therefore use up a small daily budget without real spend. The
     run's cost moves only when a call is settled, so day spend and run cost can differ for failed calls, and a
     reply whose cost is unusable does not count toward the run cap (`max_run_usd`).
@@ -136,7 +137,7 @@ Exact money and the no-lowering wall are in force; no-overspend holds for the li
 - **Breaking: the worst-case cost of a model call can be booked before the call (migration `0007_spend_reservations.sql`).**
   - **What changed.** New table `spend_reservations`. `Limits.reserve(agent_id, worst_usd, run_id=...)` books the worst
     case of one model call on the agent's day and month counters (`spend`, `spend_month`) in one database transaction
-    and refuses at the cap (the function does this; the live loop's main model call calls it since B2; the ungated sites do not, see the money block) (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
+    and refuses at the cap (the function does this; every model call reaches it through the model gate; the sites still not covered are in the money block) (`SpendRefused`, reasons `kill_switch`, `daily_budget`, `monthly_budget`,
     `limits_unavailable`, `bad_amount`; a sixth, `usd_cap`, comes with the in-memory meter of the eval and replay
     commands). `Limits.settle(reservation_id, actual_usd)` replaces the worst case with the
     real cost, adds the real cost to the run's cost (`runs.cost_usd`) and returns the amount above the reserved one. A
