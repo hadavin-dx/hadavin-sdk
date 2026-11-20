@@ -485,26 +485,44 @@ def test_the_placeholder_shape_is_what_the_redactor_issues_and_what_the_patterns
 @pytest.mark.parametrize(
     "text",
     [
-        "password=\u2039EMAIL_1\u203a host",  # the value is the one escaped token; `host` stands outside it
-        "password=<EMAIL_1> <IPV4_1>",  # token runs: a space ...
+        "password=<EMAIL_1> <IPV4_1>",  # token runs of genuine placeholders (any kind): a space ...
         "password=<EMAIL_1>\t<IPV4_1>",  # ... a tab ...
         "password=<EMAIL_1>;<IPV4_1>",  # ... `;` ...
         "password=<EMAIL_1>,<IPV4_1>",  # ... `,`
-        "password=<SEC",  # a cut-off opening
+        "password=<SEC",  # a cut-off opening of a SECRET token
         "password=<SECRET_",
         "password=<EMAIL_1> <SEC",
+        "password=\u2039SECRET_1\u203a",  # the run's own escaped SECRET look-alike
     ],
 )
 def test_a_secret_value_made_only_of_own_label_tokens_is_left_unmasked_a_stated_limit(text):
-    """Drift report, E9: the `_OWN_OUTPUT` rule (in `_decide`) leaves a SECRET value that is nothing but the redactor's own tokens (genuine or
-    escaped, separated by space, tab, `;` or `,`, with an optional cut-off opening) as typed, and makes no map entry. A real credential
-    spelled like that is therefore NOT masked: a limit stated in the comment above `_OWN_OUTPUT`, pinned here so a change is looked at."""
+    """Drift report, E9: the older rule (genuine placeholders only) and the `_OWN_OUTPUT` rule (in `_decide`; since E9(2) SECRET tokens only: genuine
+    or escaped, separated by space, tab, `;` or `,`, with an optional cut-off SECRET opening) leave such a SECRET value as typed and make no map
+    entry. A real credential spelled like that is therefore NOT masked: a limit stated in the comment above `_OWN_OUTPUT`, pinned here so a change is
+    looked at. Changed by E9(2): the shape `password=\u2039EMAIL_1\u203a host` (an escaped token of another kind) used to be in this list and is now
+    masked (`test_e9_*` below); the escaped SECRET token took its place."""
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
 
 
+@pytest.mark.parametrize(
+    ("text", "value"),
+    [
+        ("password=\u2039EMAIL_1\u203a host", "\u2039EMAIL_1\u203a"),
+        ("password=\u2039IPV4_1\u203a", "\u2039IPV4_1\u203a"),
+        ("password=<EMA", "<EMA"),
+        ("password=<EMAIL_", "<EMAIL_"),
+    ],
+)
+def test_e9_a_secret_value_spelled_like_a_token_of_another_kind_is_masked(text, value):
+    """E9(2), changed shapes (fail before: they stayed as typed, `_OWN_OUTPUT` took any kind; now masked as the secrets they may be)."""
+    result = R.redact(text)
+    assert result.text == text.replace(value, "<SECRET_1>", 1)
+    assert result.mapping == {"<SECRET_1>": value}
+
+
 # Round 4 codebase nit N5: which of the eight shapes above are held by `_OWN_OUTPUT`, and which by the older rule (a value that is nothing but
-# genuine placeholders, in `_decide`, which returns first). Checked by switching `_OWN_OUTPUT` off: the first list is left as typed all the same,
+# genuine placeholders, in `_decide`, which returns first; E9(2): the escaped look-alike of another kind left the list, SECRET's joined). Checked by switching `_OWN_OUTPUT` off: the first list is left as typed all the same,
 # the second is masked (a junk entry in the map) without it.
 _PLACEHOLDERS_ONLY_RULE_HOLDS = [
     "password=<EMAIL_1> <IPV4_1>",
@@ -514,8 +532,8 @@ _PLACEHOLDERS_ONLY_RULE_HOLDS = [
     "password=<EMAIL_1> <SEC",
 ]
 _NEEDS_OWN_OUTPUT = [
-    "password=\u2039EMAIL_1\u203a host",  # an escaped look-alike
-    "password=<SEC",  # a value that is only a cut-off opening
+    "password=\u2039SECRET_1\u203a",  # an escaped SECRET look-alike (E9(2): the escaped look-alike of another kind is masked now)
+    "password=<SEC",  # a value that is only a cut-off opening of a SECRET token
     "password=<SECRET_",
 ]
 

@@ -7,7 +7,7 @@ The second pass must escape the first pass's placeholders (`<SECRET_1>` of the t
 that escaped token for a new secret: the run map gained `<SECRET_n>` = `‹SECRET_1›`, a junk entry of a secret kind
 whose "value" was swept from every later text.
 
-The rule now (`redact._mask`): a value that is nothing but escaped look-alikes (`‹KIND_n›`, exactly what
+The rule now (`redact._decide`; E9(2): SECRET tokens only, any other kind is masked): a value that is nothing but escaped look-alikes (`‹SECRET_n›`, exactly what
 `runmap.escape_placeholders` writes) and genuine placeholders, with nothing besides but spaces, `;` and `,`, is left
 alone, as a value of genuine placeholders alone already was. A value that holds a look-alike AND anything a secret
 can be made of is masked whole, as before. Nothing is added to a map for an escaped token, so it restores to nothing.
@@ -180,16 +180,42 @@ def test_only_the_exact_escaped_shape_is_left_alone():
         assert result.mapping == {"<SECRET_1>": value}
 
 
-def test_lookalikes_and_genuine_placeholders_together_are_left_alone():
-    text = f"password={ESC_SECRET}<UUID_3>{ESC_IP}"
+def test_secret_lookalikes_and_genuine_placeholders_together_are_left_alone():
+    """E9(2): a run of escaped `‹SECRET_n›` and genuine SECRET placeholders is left alone, as before."""
+    text = f"password={ESC_SECRET}<SECRET_3>{ESC_SECRET}"
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
 
 
-def test_lookalikes_separated_by_spaces_semicolons_or_commas_are_left_alone():
-    text = f"Cookie: {ESC_SECRET}; {ESC_IP}, {ESC_SECRET}"
+def test_a_genuine_placeholder_of_another_kind_beside_a_lookalike_is_masked_whole():
+    """E9(2), changed shape (before: `password=‹SECRET_1›<UUID_3>‹SECRET_1›` was left unmasked as one own-output run; now masked whole): the
+    older placeholders-only rule does not cover it (an escaped token is not a placeholder) and `<UUID_3>` is not a SECRET token."""
+    value = f"{ESC_SECRET}<UUID_3>{ESC_SECRET}"
+    result = R.redact(f"password={value}")
+    assert result.text == "password=<SECRET_1>" and result.mapping == {"<SECRET_1>": value}
+
+
+def test_a_lookalike_of_another_kind_in_a_secret_value_is_masked_whole():
+    """E9(2), changed shape (before: left unmasked, a stated limit; now: masked): `password=‹SECRET_1›<UUID_3>‹IPV4_1›` held an escaped
+    token of a kind that is not SECRET, so it is a real value spelled like a token and is masked whole."""
+    value = f"{ESC_SECRET}<UUID_3>{ESC_IP}"
+    result = R.redact(f"password={value}")
+    assert result.text == "password=<SECRET_1>"
+    assert result.mapping == {"<SECRET_1>": value}
+
+
+def test_secret_lookalikes_separated_by_spaces_semicolons_or_commas_are_left_alone():
+    text = f"Cookie: {ESC_SECRET}; {L}SECRET_2{G}, {ESC_SECRET}"
     result = R.redact(text)
     assert result.text == text and result.mapping == {}
+
+
+def test_a_cookie_run_with_a_lookalike_of_another_kind_is_masked_whole():
+    """E9(2), changed shape (before: left unmasked; now: masked): the escaped `‹IPV4_1›` in a SECRET run is not exempt."""
+    value = f"{ESC_SECRET}; {ESC_IP}, {ESC_SECRET}"
+    result = R.redact(f"Cookie: {value}")
+    assert result.text == "Cookie: <SECRET_1>"
+    assert result.mapping == {"<SECRET_1>": value}
 
 
 def test_a_value_of_genuine_placeholders_alone_is_left_alone_as_before():
