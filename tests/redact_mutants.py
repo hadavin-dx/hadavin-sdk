@@ -2,7 +2,7 @@
 (the views that drop spacing marks, the control-character gate, the block that grows over a second block, the line end of a withheld block).
 
 ``tools.mutation_runner`` replaces EVERY occurrence of a mutant's ``old`` text. Mutant 21 therefore removes both
-``_deadline=started + defaults.REDACT_BUDGET_S`` arguments of ``runmap.redact_text`` (the first pass and the loop over the views), which is
+``_deadline=started + defaults.REDACT_BUDGET_S`` arguments of ``runmap._pass_one`` (pass one and the pass on the replaced text, used for the input and every view), which is
 what its name says ("the views get no shared deadline"); its killer fails on either one alone.
 
 Each mutant reverts ONE guard in a temp copy of the package (``tools.mutation_runner``) and the named test must fail first, for the
@@ -142,8 +142,8 @@ M = [
     m("R2 the check after stage 1 is removed", GM, "if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:", "if False:", FB,
       "test_budget_1b_the_check_after_stage_one_runs_before_any_decoded_mask", "ssert"),
     m("R3 the check in the loop over views is removed", GM,
-      "                time.thread_time() - started > defaults.REDACT_BUDGET_S\n            ):  # a hostile text",
-      "                False\n            ):  # a hostile text", FB, "test_budget_2_the_deadline_is_shared_by_every_view", "DID NOT RAISE"),
+      "            time.thread_time() - started > defaults.REDACT_BUDGET_S\n        ):  # a hostile text",
+      "            False\n        ):  # a hostile text", FB, "test_budget_2_the_deadline_is_shared_by_every_view", "DID NOT RAISE"),
     m("DM-1 no check per stored original", GM,
       "        if deadline is not None and time.thread_time() > deadline:\n            raise InputTooLarge(\"InputTooLarge\")  # one check per stored original, before any skip\n", "",
       FB, "test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip", "DID NOT RAISE"),

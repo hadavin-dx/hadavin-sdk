@@ -46,10 +46,7 @@ HOST_CLOSED_IDS = [
     f"host-{n:02d}"
     for n in (1, 2, 17, 19, 21, 24, 26, 29, 32, 33, 34, 35, 36, 37, 38, 39, 40, 43, 44)
 ]
-OPEN_ROWS: dict[str, str] = {
-    **dict.fromkeys(LEAK_IDS + KIND_CHANGE_IDS, "G4a"),
-    **dict.fromkeys(HOST_CLOSED_IDS, "G4c"),
-}
+OPEN_ROWS: dict[str, str] = dict.fromkeys(HOST_CLOSED_IDS, "G4c")
 
 CASES = pc.build()
 FUNCTIONS = {"text": runmap.redact_text, "untrusted": runmap.redact_untrusted}
@@ -211,4 +208,4 @@ def test_inputs_are_the_probe_inputs():
     assert (len(CASES.b64), len(CASES.hosts), len(CASES.numbers)) == (142, 44, 43), (
         "TG-I25 row counts"
     )
-    assert len(OPEN_ROWS) == 76, "TG-I25 open rows"
+    assert len(OPEN_ROWS) == 19, "TG-I25 open rows"
