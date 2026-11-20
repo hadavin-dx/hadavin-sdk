@@ -26,6 +26,7 @@ With CRASH_MATRIX_OBSERVED set to a file path, every case appends one JSON line 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import os
@@ -79,6 +80,10 @@ from tests.triggers.test_t5_postgres import (
     _settled,
     _stuck_tick,
 )
+
+if os.environ.get("HADAVIN_TEST_PG_DSN"):  # set: the driver must be there, never a silent skip
+    import psycopg
+    from psycopg.conninfo import make_conninfo
 
 SENDER, KEY = "sender-a", "key-1"
 SECRET = "cm" * 4 + "c" * 32  # a fake secret, built from parts (40 characters)
@@ -359,7 +364,29 @@ def _matrix_child(tmp_path: Path, dsn: str, point: Point | None = None) -> Matri
         args += ["--slow-create-s", str(point.slow_create_s)]
         args += ["--llm-delay-s", str(point.llm_delay_s)]
     runs = len(list(home.glob("run-*")))
-    return MatrixChild(home / f"run-{runs}", home / "config", *args, dsn=dsn)
+    tagged = make_conninfo(dsn, application_name=_tag(tmp_path))
+    return MatrixChild(home / f"run-{runs}", home / "config", *args, dsn=tagged)
+
+
+def _tag(tmp_path: Path) -> str:
+    """The application_name of this test's children on the database server (unique per test)."""
+    return "cm-" + hashlib.sha256(str(tmp_path).encode()).hexdigest()[:24]
+
+
+def _backends_gone(dsn: str, tag: str) -> None:
+    """Wait until the server holds no session of the killed child. A kill does not take back a
+    statement the child had already sent: the server finishes it, so the row may appear a moment
+    AFTER the process died. Only then is "the row after the kill" a stable reading."""
+    deadline = time.monotonic() + FIRE_WAIT_S
+    with psycopg.connect(dsn, autocommit=True) as db:
+        while True:
+            left = db.execute(
+                "SELECT count(*) FROM pg_stat_activity WHERE application_name = %s", (tag,)
+            ).fetchone()[0]
+            if not left:
+                return
+            assert time.monotonic() < deadline, f"{left} session(s) of the killed child remain"
+            time.sleep(0.01)
 
 
 @pytest.fixture
@@ -383,6 +410,7 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
         ack_status, ack_data = signed_post(child.port, body, SECRET)
         _killed(child)
     assert not flag.exists()
+    _backends_gone(dsn, _tag(tmp_path))
 
     rows = _rows(dsn)
     assert len(rows) <= 1

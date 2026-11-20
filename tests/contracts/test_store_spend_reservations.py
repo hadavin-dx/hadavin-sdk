@@ -1,24 +1,24 @@
-"""Store suite, spend reservations: interface (i) version 2.1 as published by core-b (README section 1 and
-i_store_spend.py), over every registered store kind. Written before the code exists: while `MemoryStore` has no
-`reserve_spend`, every test here is skipped with the reason in `NOT_LANDED`; the minute step F lands they run.
+"""Store suite, spend reservations: interface (i) as published by core-b (README section 1 and i_store_spend.py),
+over every registered store kind. Written against version 2.1 before the code existed; brought to version 2.3
+(core-b interfaces/README.md and requests/003.answer.md at core-b commit f390b7d6e) when the code landed. While
+`MemoryStore` has no `reserve_spend`, every test here is skipped with the reason in `NOT_LANDED`.
 
-Each test names the README section 1 table row it covers (S1.reserve, S1.settle, S1.expire, S1.purge) and quotes the
-invariant phrase. The README says the invariants are numbered 1 to 12 in the F-store ticket but lists ten phrases, and
-the ticket was not among this session's inputs, so the phrases are quoted and no number is invented.
+Each test names the README section 1 table row it covers (S1.reserve, S1.settle, S1.expire, S1.purge) and, since
+version 2.3 numbers them, the invariant ("inv N" is invariant N of README section 1; "003 Gn" is core-b's answer to
+gap n of request 003).
 
-Assumptions (also in handover/core-a/requests/003-interface-i-questions.md):
-- A1. `SpendCapExceeded` is looked up at run time in `hadavin_sdk.store.protocol`, then `hadavin_sdk.models` (the
-  interface file says "added to Store in protocol.py and to models.py" without saying which name goes where). When
-  the methods exist and the name is in neither module, the test FAILS; it never skips.
-- A2. The booking is visible through the existing `spend_totals` (the reservation sits on the same day and month
-  counters as `add_spend`), and an amount already there counts towards the cap.
-- A3. There is no read method for a reservation: a row is observed only through what `settle_spend` returns.
-- A4. On a store that splits its identities (the postgres kind: runtime and purge role), the purge runs through the
-  purge identity, found as the `_purge` attribute of the kind's wrapper.
-- A5. `expire_spend_reservations(0)` expires every open row created before the call (after a short sleep).
-- A6. Reserve does not touch the run's cost; only settle adds to it.
-Not asserted because the interface does not say (questions in request 003): whether purge deletes an expired row that
-was never settled; the status of an expired row after its settle; bad caps; an int amount; a run id with no run row.
+What the tests rely on (answers of core-b to request 003):
+- G1. `SpendCapExceeded` lives in `hadavin_sdk.store.protocol`. It is looked up at run time so this file still
+  imports where the code is absent; when the methods exist and the name is missing the test FAILS, it never skips.
+- G9. The booking is visible through `spend_totals` (the same counters as `add_spend`); reserve adds nothing to the
+  run's cost.
+- G2. There is no read method for a reservation: a row is observed only through what `settle_spend` returns.
+- P1. The postgres kind routes `purge_spend_reservations` to the purge login itself.
+- G10. `expire_spend_reservations(0)` expires every open row created at or before the call.
+
+A test marked xfail(strict) with a reason starting "FINDING Fn" is a defect of the code as built, written up in
+handover/core-a/FINDINGS-core-b-F-store.md; where only one store kind has the defect the mark is applied to that
+kind only (`_finding`).
 """
 
 import importlib
@@ -39,7 +39,7 @@ NOT_LANDED = "core-b step F not landed: Store.reserve_spend missing"
 LANDED = hasattr(MemoryStore, "reserve_spend")  # detected once, on the in-package reference store
 pytestmark = pytest.mark.skipif(not LANDED, reason=NOT_LANDED)
 
-_HOMES = ("hadavin_sdk.store.protocol", "hadavin_sdk.models")
+_HOMES = ("hadavin_sdk.store.protocol",)  # 003 G1
 D1, D2 = date(2026, 3, 10), date(2026, 3, 11)  # two days of one month, both in the past
 OTHER_MONTH = date(2026, 4, 2)
 WIDE = Decimal(1000)  # a cap that is never reached
@@ -50,7 +50,7 @@ def _usd(text):
 
 
 def _cap_error():
-    """Assumption A1: the error type by name, from the modules the interface names."""
+    """003 G1: the error type by name, from the module core-b named."""
     for home in _HOMES:
         found = getattr(importlib.import_module(home), "SpendCapExceeded", None)
         if found is not None:
@@ -80,10 +80,14 @@ def _expire_all(store):
 
 
 def _purge(store, before):
-    """Assumption A4."""
-    split = getattr(store, "_purge", None)
-    target = split if hasattr(split, "purge_spend_reservations") else store
-    return target.purge_spend_reservations(before)
+    """003 P1: the kind itself sends the purge to the purge login; no reaching into the wrapper."""
+    return store.purge_spend_reservations(before)
+
+
+def _finding(request, kind, reason):
+    """Mark this test as a strict expected failure for ONE store kind (the other kind must still pass)."""
+    if request.node.callspec.params.get("store") == kind:
+        request.applymarker(pytest.mark.xfail(strict=True, reason=reason))
 
 
 HOSTILE = [
@@ -97,6 +101,11 @@ HOSTILE = [
     pytest.param(True, id="bool-true"),
     pytest.param(False, id="bool-false"),
     pytest.param("1.00", id="str"),
+    # added with version 2.3 (inv 9, 003 G5): exactly a Decimal, below 10**9, at most 12 decimal places
+    pytest.param(1, id="int"),
+    pytest.param(None, id="none"),
+    pytest.param(Decimal("0.0000000000001"), id="thirteen-decimal-places"),
+    pytest.param(Decimal("1E+9"), id="ten-to-the-ninth"),
 ]
 
 
@@ -211,10 +220,12 @@ def test_zero_is_an_allowed_amount(store):
 
 
 def test_nothing_is_rounded(store):
-    """Invariant "nothing rounded": a long Decimal survives the counters, the row and the run's cost."""
+    """Inv 9 "nothing is rounded": the longest Decimal the interface allows (12 decimal places since version 2.3;
+    this test used 21 places under 2.1) survives the counters, the row and the run's cost; one place more is
+    refused, not rounded (the refusal itself is in the HOSTILE list)."""
     long_reserved, long_actual = (
-        _usd("0.000000123456789012345"),
-        _usd("0.00108225000000000001"),
+        _usd("0.000000123457"),
+        _usd("999999.001082250001"),
     )
     run_id = _run(store)
     rid = _reserve(store, long_reserved, run_id=run_id)
@@ -407,15 +418,17 @@ def test_expire_takes_only_rows_older_than_the_bound(store):
 
 
 def test_settle_after_expiry_with_a_lower_actual_moves_nothing_down(store):
-    """S1.settle (2.1): "an expired row only upward". The first settle still claims the row and the run gets the
-    actual amount; a second settle returns False."""
+    """S1.settle; inv 3 and 4: "an expired row only upward". The first settle still claims the row and the run gets
+    the actual amount; a second settle returns False."""
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
     assert _expire_all(store) == 1
     row, applied = store.settle_spend(rid, _usd("0.40"))
     assert applied is True
-    assert row.status in ("settled", "expired") and row.closed_at is not None
-    assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("0.40"))
+    assert row.status == "settled" and row.closed_at is not None  # 003 G3
+    # version 2.3 (003 G3): settled_usd is what stays booked, max(actual, reserved); under 2.1 this test read 0.40.
+    # The real cost of the lower settle is visible only in the run's cost, asserted below.
+    assert (row.reserved_usd, row.settled_usd) == (_usd("1.00"), _usd("1.00"))
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.get_run(run_id).cost_usd == _usd("0.40")
     again, applied = store.settle_spend(rid, _usd("5.00"))
@@ -431,7 +444,7 @@ def test_settle_after_expiry_with_a_higher_actual_books_the_difference(store):
     rid = _reserve(store, _usd("1.00"), day_cap=cap, month_cap=cap, run_id=run_id)
     assert _expire_all(store) == 1
     row, applied = store.settle_spend(rid, _usd("1.75"))
-    assert applied is True and row.settled_usd == _usd("1.75")
+    assert applied is True and (row.settled_usd, row.status) == (_usd("1.75"), "settled")
     assert store.spend_totals("a", D1) == (_usd("1.75"), _usd("1.75"))
     assert store.get_run(run_id).cost_usd == _usd("1.75")
     _, applied = store.settle_spend(rid, _usd("9.00"))
@@ -455,8 +468,8 @@ def test_an_expired_row_keeps_its_headroom_taken(store):
 
 
 def test_purge_deletes_closed_rows_only_and_returns_the_count(store):
-    """S1.purge; invariant "purge deletes closed rows only". Open and settled rows only: whether an expired row that
-    nobody settled counts as closed is an open question (request 003). Counters never move on a purge."""
+    """S1.purge; inv 12. Open and settled rows here; the expired row is the next test. Counters never move on a
+    purge."""
     kept_open = _reserve(store, _usd("1.00"))
     closed = [_reserve(store, _usd("0.50")) for _ in range(2)]
     for rid in closed:
@@ -474,6 +487,190 @@ def test_purge_deletes_closed_rows_only_and_returns_the_count(store):
     assert store.spend_totals("a", D1) == totals
     row, applied = store.settle_spend(kept_open, _usd("1.00"))  # the open row outlived both purges
     assert applied is True and row.status == "settled"
+
+
+def test_purge_deletes_an_expired_row_nobody_settled_and_a_late_settle_is_not_found(store):
+    """S1.purge; inv 12 and the stated limit (003 C1): an expired row counts as closed, so the purge deletes it; a
+    settle that arrives afterwards raises NotFound and the worst case stays on the counters."""
+    crashed = _reserve(store, _usd("1.00"))
+    assert _expire_all(store) == 1
+    still_open = _reserve(store, _usd("0.50"))
+    assert _purge(store, now() - timedelta(days=1)) == 0  # expired, but after the bound
+    assert _purge(store, now() + timedelta(days=1)) == 1
+    with pytest.raises(NotFound):
+        store.settle_spend(crashed, _usd("0.10"))
+    assert store.spend_totals("a", D1) == (_usd("1.50"), _usd("1.50"))
+    _, applied = store.settle_spend(still_open, _usd("0.50"))
+    assert applied is True
+
+
+# --- answers of core-b to request 003, asserted since version 2.3 ---------------------------------------------
+
+
+def test_a_zero_amount_is_refused_once_the_counter_is_at_its_cap(store):
+    """S1.reserve; 003 G4: the rule is counter < cap AND counter + amount <= cap."""
+    cap = _usd("1.00")
+    _reserve(store, Decimal(0), day_cap=cap)  # below the cap: granted
+    _reserve(store, _usd("1.00"), day_cap=cap)
+    with pytest.raises(_cap_error()) as caught:
+        _reserve(store, Decimal(0), day_cap=cap)
+    assert caught.value.which == "day"
+    with pytest.raises(_cap_error()) as caught:
+        _reserve(store, Decimal(0), day=D2, month_cap=cap)
+    assert caught.value.which == "month"
+    with pytest.raises(_cap_error()):
+        _reserve(store, Decimal(0), agent="b", day_cap=Decimal(0))  # a cap of zero admits nothing
+    assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
+
+
+BAD_CAPS = [
+    pytest.param(Decimal("NaN"), id="nan"),
+    pytest.param(Decimal("sNaN"), id="signalling-nan"),
+    pytest.param(Decimal("Infinity"), id="infinity"),
+    pytest.param(Decimal("-0.01"), id="negative"),
+    pytest.param(3.0, id="float"),
+    pytest.param(3, id="int"),
+    pytest.param(True, id="bool"),
+    pytest.param("3.00", id="str"),
+    pytest.param(None, id="none"),
+]
+
+
+@pytest.mark.parametrize("which", ["day_cap", "month_cap"])
+@pytest.mark.parametrize("bad", BAD_CAPS)
+def test_reserve_refuses_a_bad_cap_and_books_nothing(store, bad, which):
+    """S1.reserve; inv 9 and 003 G5 (fix round 1): a cap that is not a finite Decimal >= 0 is a ValueError. A NaN
+    cap must never reach the comparison (PostgreSQL sorts NaN above every number: no cap at all)."""
+    refused = _rid()
+    with pytest.raises(ValueError):
+        _reserve(store, _usd("1.00"), rid=refused, **{which: bad})
+    assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
+    with pytest.raises(NotFound):
+        store.settle_spend(refused, Decimal(0))
+
+
+def test_a_cap_that_is_a_finite_decimal_is_either_applied_or_a_value_error(store, request):
+    """S1.reserve: the errors of reserve_spend are SpendCapExceeded, StaleState and ValueError, and inv 9 says caps
+    are validated like amounts. A very large finite cap must therefore be granted (it is above the counter) or be
+    a ValueError; no third outcome, and the same on both kinds."""
+    _finding(
+        request,
+        "postgres",
+        "FINDING F2: a finite cap too large for NUMERIC (1E+200000) is not refused by check_spend_cap (no upper "
+        "bound) and PostgreSQL raises psycopg NumericValueOutOfRange, an error the interface does not list; the "
+        "memory store grants the same call",
+    )
+    huge = Decimal("1E+200000")
+    for which in ("day_cap", "month_cap"):
+        try:
+            _reserve(store, _usd("1.00"), **{which: huge})
+        except ValueError:
+            pass
+    day_total, month_total = store.spend_totals("a", D1)
+    assert day_total == month_total and day_total in (Decimal(0), _usd("2.00"))
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        pytest.param({"run_id": 7}, id="run-id-int"),
+        pytest.param({"rid": 7}, id="reservation-id-int"),
+        pytest.param({"agent": None}, id="agent-none"),
+    ],
+)
+def test_a_reserve_that_fails_for_any_reason_leaves_no_counter_change(store, request, bad):
+    """Inv 2 "all or nothing: a refused or FAILED reserve leaves no reservation row and no counter change". A
+    wrongly typed argument passes the amount and cap checks. Each store may then either take the call whole (the
+    postgres kind stores the int 7 as the text "7": booked, with a row) or fail it whole; when it fails, nothing
+    may be booked and the whole cap must still be free for the same agent and day."""
+    _finding(
+        request,
+        "memory",
+        "FINDING F1: MemoryStore.reserve_spend adds the amount to the day counter BEFORE it builds the "
+        "SpendReservation row; when the row is refused by pydantic (run_id, reservation_id or agent_id not a str) "
+        "the exception leaves the amount booked with no row, so nothing can ever settle or expire it",
+    )
+    cap = _usd("1.00")
+    agent = bad.get("agent", "a")
+    failed = None
+    try:
+        _reserve(store, _usd("1.00"), day_cap=cap, month_cap=cap, **bad)
+    except Exception as exc:  # noqa: BLE001 - which error is not fixed by the interface
+        failed = exc
+    if failed is None:  # taken whole: booked once, and the cap is now shut
+        assert store.spend_totals(agent, D1) == (_usd("1.00"), _usd("1.00"))
+        with pytest.raises(_cap_error()):
+            _reserve(store, _usd("1.00"), agent=agent, day_cap=cap, month_cap=cap)
+        return
+    assert not isinstance(failed, _cap_error())
+    assert store.spend_totals(agent, D1) == (Decimal(0), Decimal(0))
+    if agent is not None:
+        _reserve(
+            store, _usd("1.00"), agent=agent, day_cap=cap, month_cap=cap
+        )  # the cap is still all free
+
+
+def test_a_run_id_without_a_run_row_is_booked_and_settled_without_a_run_cost(store):
+    """003 G6: reserve does not check the run; settle moves the counters, closes the row and skips the run cost.
+    NotFound at settle always means "no such reservation"."""
+    rid = _reserve(store, _usd("1.00"), run_id="run-that-does-not-exist")
+    row, applied = store.settle_spend(rid, _usd("0.40"))
+    assert applied is True
+    assert (row.run_id, row.status, row.settled_usd) == (
+        "run-that-does-not-exist",
+        "settled",
+        _usd("0.40"),
+    )
+    assert store.spend_totals("a", D1) == (_usd("0.40"), _usd("0.40"))
+    with pytest.raises(NotFound):
+        store.get_run("run-that-does-not-exist")
+
+
+def test_reserve_checks_the_amount_then_the_caps_then_the_id_then_the_cap_comparison(store):
+    """003 G7: ValueError (amount, then caps), then StaleState, then SpendCapExceeded."""
+    cap = _usd("1.00")
+    rid = _reserve(store, _usd("1.00"), day_cap=cap)
+    with pytest.raises(StaleState):  # a duplicate id that would also pass the cap
+        _reserve(store, _usd("1.00"), day_cap=cap, rid=rid)
+    with pytest.raises(ValueError):  # a duplicate id with a bad amount
+        _reserve(store, Decimal("NaN"), day_cap=cap, rid=rid)
+    with pytest.raises(ValueError):  # a duplicate id with a bad cap
+        _reserve(store, _usd("1.00"), day_cap=Decimal("NaN"), rid=rid)
+    with pytest.raises(_cap_error()):  # a fresh id against the full counter
+        _reserve(store, _usd("1.00"), day_cap=cap)
+    assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
+    _, applied = store.settle_spend(rid, _usd("1.00"))
+    assert applied is True  # the first row is untouched by the four refused calls
+
+
+def test_expire_zero_takes_a_row_made_just_now(store):
+    """S1.expire; 003 G10: the comparison is "created at or before", so no wait is needed."""
+    _reserve(store, _usd("1.00"))
+    assert store.expire_spend_reservations(0) == 1
+    assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        pytest.param(-1, id="negative"),
+        pytest.param(True, id="bool"),
+        pytest.param(1.0, id="float"),
+        pytest.param("0", id="str"),
+        pytest.param(None, id="none"),
+        pytest.param(Decimal(0), id="decimal"),
+    ],
+)
+def test_expire_refuses_a_bad_age_and_expires_nothing(store, bad):
+    """S1.expire; 003 G10 (fix round 1): ValueError, and the open row stays open (its settle still frees)."""
+    rid = _reserve(store, _usd("1.00"))
+    with pytest.raises(ValueError):
+        store.expire_spend_reservations(bad)
+    store.settle_spend(rid, _usd("0.25"))
+    assert store.spend_totals("a", D1) == (
+        _usd("0.25"),
+        _usd("0.25"),
+    )  # an expired row would stay at 1.00
 
 
 # --- invariant "atomic reserve": exactly floor(cap / amount) succeed ---------------------------------------------
@@ -582,6 +779,7 @@ def test_a_random_sequence_keeps_the_counters_equal_to_the_rows(store, seed):
                 rows[rid] = [day, reserved, "closed", max(reserved, actual)]
                 run_cost += actual
             assert row.reserved_usd == reserved
+            assert row.settled_usd == rows[rid][3]  # the row says what stays booked (003 G3)
         else:
             open_ids = [rid for rid, r in rows.items() if r[2] == "open"]
             assert _expire_all(store) == len(open_ids)

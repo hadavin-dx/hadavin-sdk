@@ -1,5 +1,6 @@
-"""T1, PostgreSQL only: the spend cap under 50 separate connections (interface (i) version 2.1, README section 1,
-invariant "atomic reserve under N separate connections (exactly floor(cap / amount) succeed)", and README section 3).
+"""T1, PostgreSQL only: the spend cap under 50 separate connections (interface (i), README section 1, invariant 1
+"atomic reserve ... from separate connections ... exactly floor(c / w) succeed", and README section 3). Written
+against version 2.1 before the code existed; brought to version 2.3 (core-b commit f390b7d6e) when it landed.
 
 Needs HADAVIN_TEST_PG_DSN (the convention of tests/contracts/kinds/store_postgres.py: a fresh migrated schema and
 fresh roles per test, dropped afterwards). Written before the code exists: while `PostgresStore` has no
@@ -8,7 +9,7 @@ the unset variable; with the variable set nothing here skips, except the one tes
 repository does not have yet.
 
 Assumptions (also in handover/core-a/requests/003-interface-i-questions.md):
-- A1. `SpendCapExceeded` is looked up at run time in `hadavin_sdk.store.protocol`, then `hadavin_sdk.models`.
+- A1. `SpendCapExceeded` is looked up at run time in `hadavin_sdk.store.protocol` (answer 003 G1).
 - A2. The reservation sits on the counters `spend_totals` reads.
 - A7. One `PostgresStore` per connection is built as the package does it: `PostgresStore(connect(dsn))`, logged in as
   the runtime role of `pg_schema(runtime=True)`.
@@ -34,7 +35,7 @@ except ModuleNotFoundError:  # the pg extra is not installed: nothing to detect
 LANDED = hasattr(PostgresStore, "reserve_spend")  # detected once
 pytestmark = pytest.mark.skipif(not LANDED, reason=NOT_LANDED)
 
-_HOMES = ("hadavin_sdk.store.protocol", "hadavin_sdk.models")
+_HOMES = ("hadavin_sdk.store.protocol",)  # 003 G1
 THREADS = 50
 DAY = date(2026, 3, 10)
 CAP, WORST, WIDE = Decimal("3.00"), Decimal("1.00"), Decimal(1000)
@@ -124,6 +125,10 @@ def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, ru
     unexpected = [e for e in errors if e is not None and not isinstance(e, cap_error)]
     assert not unexpected
     assert len(set(pids)) == THREADS
+    print(  # shown with -s: the numbers the evidence log quotes
+        f"T1 {which} cap: granted={len(granted)} refused={len(refused)} other={len(unexpected)} "
+        f"distinct_backend_pids={len(set(pids))}"
+    )
     assert (len(granted), len(refused)) == (3, THREADS - 3)
     assert {e.which for e in refused} == {which}
     reader = PostgresStore(connect(runtime_dsn))  # a 51st connection reads what was committed
@@ -172,8 +177,131 @@ def test_control_the_old_check_then_add_pattern_admits_more_than_three(stores, r
         day_total, month_total = reader.spend_totals("a", DAY)
     finally:
         reader._db.close()
+    print(
+        f"T1 control: admitted={admitted} of {THREADS} distinct_backend_pids={len(set(pids))} "
+        f"day_total={day_total} cap={CAP}"
+    )
     assert day_total == month_total == WORST * admitted
     assert day_total > CAP
+
+
+def test_the_cap_holds_when_the_login_defaults_to_repeatable_read(runtime_dsn):
+    """Ticket F-store, resolution Q8: `connect()` pins READ COMMITTED for the session, so a role default of
+    REPEATABLE READ cannot turn the row-lock wait into an error (a false refusal or a failure). The runtime login
+    gets that default here; a plain connection shows the default took, the store's connection shows the pin."""
+    import psycopg
+    from psycopg import sql
+    from psycopg.conninfo import conninfo_to_dict
+
+    role = conninfo_to_dict(runtime_dsn)["user"]
+    with psycopg.connect(os.environ["HADAVIN_TEST_PG_DSN"], autocommit=True) as db:
+        db.execute(
+            sql.SQL("ALTER ROLE {} SET default_transaction_isolation = 'repeatable read'").format(
+                sql.Identifier(role)
+            )
+        )
+    with _as(runtime_dsn) as db:
+        assert db.execute("SHOW transaction_isolation").fetchone()[0] == "repeatable read"
+    cap_error = _cap_error()
+    built = [PostgresStore(connect(runtime_dsn)) for _ in range(THREADS)]
+    try:
+        assert built[0]._db.execute("SHOW transaction_isolation").fetchone()[0] == "read committed"
+        ids = {id(s): _rid() for s in built}
+
+        def reserve(store):
+            store.reserve_spend(ids[id(store)], "a", DAY, WORST, day_cap=CAP, month_cap=WIDE)
+            return ids[id(store)]
+
+        results, errors, pids = _in_threads(built, reserve)
+        granted = [r for r in results if r is not None]
+        refused = [e for e in errors if isinstance(e, cap_error)]
+        assert not [e for e in errors if e is not None and not isinstance(e, cap_error)]
+        assert len(set(pids)) == THREADS
+        assert (len(granted), len(refused)) == (3, THREADS - 3)
+        assert built[0].spend_totals("a", DAY) == (CAP, CAP)
+    finally:
+        for s in built:
+            s._db.close()
+
+
+def test_fifty_connections_settling_one_reservation_apply_it_once(stores, runtime_dsn):
+    """Invariant 3 "idempotent settle" from separate connections: 50 connections settle ONE reservation with 50
+    different amounts at once. Exactly one call applies; all 50 get the same stored row; the counters and the
+    run's cost hold the winner's amount once."""
+    from hadavin_sdk.models import Run
+
+    run = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t")
+    stores[0].create_run(run)
+    rid = _rid()
+    stores[0].reserve_spend(rid, "a", DAY, WORST, day_cap=WIDE, month_cap=WIDE, run_id=run.run_id)
+    amounts = {id(s): Decimal(i + 1) / 100 for i, s in enumerate(stores)}  # 0.01 .. 0.50
+
+    results, errors, pids = _in_threads(
+        stores, lambda store: store.settle_spend(rid, amounts[id(store)])
+    )
+    assert not [e for e in errors if e is not None]
+    assert len(set(pids)) == THREADS
+    assert sum(1 for _, applied in results if applied) == 1
+    winner = next(
+        amounts[id(s)] for s, (_, applied) in zip(stores, results, strict=True) if applied
+    )
+    assert {row for row, _ in results} == {results[0][0]}
+    assert (results[0][0].settled_usd, results[0][0].status) == (winner, "settled")
+    reader = PostgresStore(connect(runtime_dsn))
+    try:
+        assert reader.spend_totals("a", DAY) == (winner, winner)
+        assert reader.get_run(run.run_id).cost_usd == winner
+    finally:
+        reader._db.close()
+
+
+def test_settles_racing_the_expiry_sweep_leave_counters_equal_to_the_rows(stores, runtime_dsn):
+    """Invariants 3 and 4 with ticket resolution Q9 ("the counters can be reconciled from the table"): 40
+    connections each settle their own open reservation of 1.00 at 0.25 while 10 connections run the expiry sweep
+    with age 0. Whichever comes first for a row, afterwards every row is settled, each says 0.25 (settled while
+    open) or 1.00 (expired first: never down), and the day counter equals the sum over the rows; the run's cost
+    is 40 times the real 0.25."""
+    from hadavin_sdk.models import Run
+
+    low = Decimal("0.25")
+    run = Run(agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="t")
+    stores[0].create_run(run)
+    settlers = stores[:40]
+    ids = {id(s): _rid() for s in settlers}
+    for s in settlers:
+        s.reserve_spend(
+            ids[id(s)], "a", DAY, WORST, day_cap=WIDE, month_cap=WIDE, run_id=run.run_id
+        )
+
+    def work(store):
+        if id(store) in ids:
+            return store.settle_spend(ids[id(store)], low)
+        return store.expire_spend_reservations(0)
+
+    results, errors, _ = _in_threads(stores, work)
+    assert not [e for e in errors if e is not None]
+    assert all(applied for _, applied in results[:40])  # each row's first settle, open or expired
+    reader = PostgresStore(connect(runtime_dsn))
+    try:
+        rows = reader._db.execute("SELECT status, settled_usd FROM spend_reservations").fetchall()
+        assert len(rows) == 40
+        booked = [Decimal(r["settled_usd"] if isinstance(r, dict) else r[1]) for r in rows]
+        states = {r["status"] if isinstance(r, dict) else r[0] for r in rows}
+        expired_first = sum(1 for b in booked if b == WORST)
+        print(
+            f"T1 settle/expire race: rows=40 expired_first={expired_first} "
+            f"expired_by_sweeps={sum(results[40:])}"
+        )
+        assert states == {"settled"}
+        assert set(booked) <= {low, WORST}
+        assert expired_first == sum(
+            results[40:]
+        )  # every row a sweep reported is one that stayed at 1.00
+        assert [row.settled_usd for row, _ in results[:40]].count(WORST) == expired_first
+        assert reader.spend_totals("a", DAY) == (sum(booked), sum(booked))
+        assert reader.get_run(run.run_id).cost_usd == low * 40
+    finally:
+        reader._db.close()
 
 
 # --- per-role negative tests: the README's grants on spend_reservations ----------------------------------------
