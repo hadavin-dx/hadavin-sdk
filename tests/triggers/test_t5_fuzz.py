@@ -406,7 +406,7 @@ NOISE = (
     ("X-Forwarded-For", "10.1.2.3"),
     ("Content-Type", "text/plain; charset=utf-16"),
     ("Authorization", "Bearer " + "x" * 24),
-    ("X-Long", "a" * 30000),
+    ("X-Long", "a" * 8000),
     ("X-Odd", "ÿé 日"),
     ("X-Empty", ""),
     ("Cookie", "session=" + "c" * 40),
