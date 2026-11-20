@@ -134,6 +134,15 @@ def test_tie_break_keeps_the_order_of_different_originals():
     assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, the redactor's own sweep"
     got = _outcome(lambda: runmap.enforce_map(text, dict(fifth)))
     assert got == "x <SECRET_1><SECRET_2> y", "TB-2.8 fifth map, enforce_map"
+    # sixth map (MIX builder, E20): two originals of the SAME length, one of a secret kind and one of an identifier kind, written
+    # glued together. The identifier kind is swept only at a boundary, so the order of the two decides whether `abcd` is replaced: the secret
+    # rule goes first (the `_build` tie-break), `efgh` becomes `<SECRET_1>`, and `abcd` stays (no SECRET value is readable; the identifier
+    # `abcd` is left by its own boundary rule). With the secret rule NOT first on a tie (gate mutant "b64 tie-break as v3's sort key") the
+    # bare sweep gives `<EMAIL_1><SECRET_1>`. G9's read-back masks the shared overlaps of TB-2.8's maps 1-5 whatever the order, so
+    # only this map, which the read-back does not touch, still tells the two orders apart.
+    sixth = {"<EMAIL_1>": "abcd", "<SECRET_1>": "efgh"}
+    got = _outcome(lambda: runmap._Redactor(dict(sixth), None).sweep("abcdefgh"))
+    assert got == "abcd<SECRET_1>", "TB-2.8 sixth map, the redactor's own sweep"
 
 
 def test_encoded_is_never_restored_or_stored():
