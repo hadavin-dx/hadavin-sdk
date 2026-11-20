@@ -141,13 +141,19 @@ def test_the_runtime_login_cannot_write_a_checkpoint(w):
 
 
 def test_the_inline_checkpoint_is_skipped_when_the_checkpoint_login_is_set(w):
-    """With checkpoint_every = 1 every append would checkpoint inline: the runtime connection must not even try."""
+    """With checkpoint_every = 1 every append would checkpoint inline: with the checkpoint login set it must not (only
+    the tick step signs), and the runtime connection must not even try."""
     log = _chain(w, LocalSigner(Ed25519PrivateKey.generate()), checkpoint=True, every=1)
+    log.write_intent(_event(9))
+    before = w.run("SELECT MAX(seq) FROM audit_checkpoints")[0][0] or 0
     seen: list[str] = []
     real = log._db.run
     log._db.run = lambda s, p=(): (seen.append(s), real(s, p))[1]
     log.write_intent(_event(10))
     assert not [s for s in seen if "audit_checkpoints" in s], seen
+    head = w.run("SELECT MAX(seq) FROM audit_entries")[0][0]
+    after = w.run("SELECT MAX(seq) FROM audit_checkpoints")[0][0] or 0
+    assert (before, after) == (before, before) and head > after, (before, after, head)
 
 
 def test_without_a_checkpoint_login_the_inline_checkpoint_still_runs_on_the_one_db():

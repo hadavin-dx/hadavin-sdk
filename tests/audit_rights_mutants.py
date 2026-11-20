@@ -63,7 +63,7 @@ HAND = [
         f"{ROLES}::test_the_checkpoint_role_holds_only_the_checkpoint_write_and_the_chain_read", "audit_entries"),
     Hand("A5 the inline checkpoint is no longer skipped when the checkpoint login is set", CHAIN,
         "            and self._checkpoint_db is None\n", "",
-        f"{ROLES}::test_the_inline_checkpoint_is_skipped_when_the_checkpoint_login_is_set", "audit_checkpoints"),
+        f"{ROLES}::test_the_inline_checkpoint_is_skipped_when_the_checkpoint_login_is_set", "head > after"),
     Hand("A6 _quarantine is back to INSERT and DELETE on the runtime login", CHAIN,
         "            if self._db.pg:\n                # Postgres: the runtime holds no DELETE",
         "            if False:\n                # Postgres: the runtime holds no DELETE",
@@ -74,11 +74,14 @@ HAND = [
         f"{ROLES}::test_the_outbox_functions_are_pinned_to_the_catalog_the_schema_and_the_temp_schema", "search_path"),
     Hand("A8 EXECUTE on the outbox functions is left on PUBLIC", SQL12,
         "REVOKE ALL ON FUNCTION hadavin_audit_outbox_done(TEXT) FROM PUBLIC;\n", "",
-        f"{ROLES}::test_public_cannot_execute_the_outbox_functions", "PUBLIC can run"),
+        f"{ROLES}::test_public_cannot_execute_the_outbox_functions", "can run hadavin_audit_outbox_done"),
     Hand("A9 the owner refusal skips a MEMBER of the owner role", MIG, MEMBER_OWNER,
         MEMBER_OWNER.replace("if db.execute(", "if False and db.execute("),
         f"{ROLES}::test_migrate_refuses_a_checkpoint_login_that_is_a_member_of_the_owner_role", "DID NOT RAISE",
-        more=((MEMBER_FUNC, MEMBER_FUNC.replace("elif db.execute(", "elif False and db.execute("))),),
+        more=(
+            (MEMBER_FUNC, MEMBER_FUNC.replace("elif db.execute(", "elif False and db.execute(")),
+        ),
+    ),
 ]  # fmt: skip
 
 
