@@ -399,7 +399,8 @@ def drop_raw(schema):
 
 def _validated_in(conn):
     rows = conn.execute(
-        "SELECT conname FROM pg_constraint WHERE conname = ANY(%s) AND convalidated",
+        "SELECT k.conname FROM pg_constraint k JOIN pg_namespace n ON n.oid = k.connamespace "
+        "WHERE k.conname = ANY(%s) AND k.convalidated AND n.nspname = current_schema()",  # other workers' schemas too
         (STOP_YEAR_CONSTRAINTS,),
     ).fetchall()
     return sorted(r[0] for r in rows)
