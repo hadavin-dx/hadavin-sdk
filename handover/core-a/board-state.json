@@ -550,11 +550,11 @@
   {
    "item": "E-evidence-4",
    "what": "EVIDENCE RUNNER after round 3 fixes: identity, tests with ids, guards, 23 formal mutants (no -x), hostile inputs; no verdicts",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/E-evidence-4-*.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/E-evidence-4-identity.log, -tests.log, -guards.log, -mutants.log, -hostile.log",
    "tries": 1,
-   "reason": "EGM sequence"
+   "reason": "recorded without verdicts on the FINAL step E files (crash.py 283 lines, tests 976; hashes compared by me, see the next line): tests with the database 105 passed; guard files 292 passed; matrix, worker and postgres users 162 passed (74 s); 24 formal mutants (23 planned + one extra on the left-armed raise): ALL KILLED, none survived, every restore compared; hostile inputs refused as designed; 20 of 20 flag races gave one crash. Step E is DONE under the cap EXCEPT: no fresh reviewer has looked at the round 3 fixes (ESCALATIONS E5: the lead decides about one more pass), nothing was run on Windows, the drift report is still to do"
   },
   {
    "item": "D-fix-1",
@@ -1404,15 +1404,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:13",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E after the cap",
    "retries so far": 0,
    "id": "e-evidence4",
    "role": "evidence runner (records, never judges)",
    "what exactly it is doing": "runs everything on the fixed crash helper; 23 mutants without -x",
-   "expected end": "about 25 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, 90k tokens"
   },
   {
    "model": "sonnet",
@@ -1813,6 +1813,15 @@
    "first failing line": "none in the final run",
    "state": "done",
    "reason": "PostgreSQL 16.15 on port 55433; heavy: 4 minutes of the batch"
+  },
+  {
+   "suite or file": "step E after round 3: tests/test_testing_crash.py + guards + users",
+   "branch and SHA": "working tree",
+   "run number": "evidence 4",
+   "passed / failed / errors": "105 / 0 / 0; guards 292; users 162; 24 of 24 mutants killed",
+   "first failing line": "none",
+   "state": "done",
+   "reason": "PostgreSQL 16.15"
   }
  ],
  "restarts": [],

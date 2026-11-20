@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T07:17:13Z
+UPDATED_UTC: 2026-11-20T07:17:25Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 68
-ITEMS_OPEN: 20
-PERCENT: 79
-AGENTS_RUNNING: 8
-CAPACITY: load 1.39 of 4 cores (1-minute average), mem 1.0/15.7 GB, 8 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+ITEMS_OPEN: 19
+PERCENT: 81
+AGENTS_RUNNING: 7
+CAPACITY: load 1.33 of 4 cores (1-minute average), mem 0.9/15.7 GB, 7 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 539M /home/user/hadavin-sdk; 439M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:16:20Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:17:17Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -80,7 +80,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | EGM-D-code | fresh EGM result review of the step D code (endpoint, worker, server) after all fixes, with the batch and fuzz and matrix logs as evidence | RESOLVED; fix pass starting | 50 | reviews/D-code-result-review-1.md | 1 | one fresh reviewer: no Blocker, 3 Major (Windows: the port is not exclusive so a stale worker and a new one can both answer; the ticket text contradicts the code in many places; start-up on this tree needs core-b's config and silent defaults hide missing fields), 8 Nit. Verified by reading: no 2xx without a row, no key started twice, the waiting counter cannot leak, no log carries a body or secret. Resolve through the Skill |
 | E-fix-3 | step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line) | DONE (builder's run); evidence runner next; NO fresh round 4 (ESCALATIONS E5) | 100 | raw/E-fix3-tests.log | 1 | H1 to H6 by a builder who is not author or reviewer: flag parsing cases tested (another point, #0, #-1, #x, #, #01: no crash, no error, file left alone); a refused delete in hit is retried (20 tries at 20 ms) and fires only when our own delete worked; loose docstring test pinned to 3 phrases; retry counts pinned; flag_path must be a Path; functools.wraps; docstring facts; ticket E invariant 7 line. crash.py 264 to 283 lines, tests 857 to 976; 494 passed in 40 s; ruff and bandit clean. The builder checked the flag-parsing mutants by hand on a scratch script, not on the real code. Nothing run on Windows |
 | n8n-fix-1 | n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary) | RUNNING | 5 | raw/n8n-template-tests-5.log (not yet) | 1 | EGM sequence |
-| E-evidence-4 | EVIDENCE RUNNER after round 3 fixes: identity, tests with ids, guards, 23 formal mutants (no -x), hostile inputs; no verdicts | RUNNING | 5 | raw/E-evidence-4-*.log (not yet) | 1 | EGM sequence |
+| E-evidence-4 | EVIDENCE RUNNER after round 3 fixes: identity, tests with ids, guards, 23 formal mutants (no -x), hostile inputs; no verdicts | DONE | 100 | raw/E-evidence-4-identity.log, -tests.log, -guards.log, -mutants.log, -hostile.log | 1 | recorded without verdicts on the FINAL step E files (crash.py 283 lines, tests 976; hashes compared by me, see the next line): tests with the database 105 passed; guard files 292 passed; matrix, worker and postgres users 162 passed (74 s); 24 formal mutants (23 planned + one extra on the left-armed raise): ALL KILLED, none survived, every restore compared; hostile inputs refused as designed; 20 of 20 flag races gave one crash. Step E is DONE under the cap EXCEPT: no fresh reviewer has looked at the round 3 fixes (ESCALATIONS E5: the lead decides about one more pass), nothing was run on Windows, the drift report is still to do |
 | D-fix-1 | step D code fixes DC1-1 to DC1-10 and the two missing tests for the surviving mutants | RUNNING | 5 | raw/D-fix1-tests.log (not yet) | 1 | EGM sequence |
 | EGM-D-tests | fresh EGM review of the step D tests (do they prove the invariants or only appear to; what passes on broken code) | RUNNING | 5 | reviews/D-tests-review-1.md (not yet) | 1 | EGM sequence; read-only reviewer |
 | EGM-mutants | fresh EGM review of tests/endpoint_mutants.py (74 mutants; the 'N of N good' came from two runs; weak expect fragments) | RUNNING | 5 | reviews/mutants-review-1.md (not yet) | 1 | EGM sequence; read-only reviewer |
@@ -152,7 +152,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | egm-D-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes | 07:08 | ended | 100 | done | step D code round 1 of 3 | 0 | finished, 141k tokens: 3 Major, 8 Nit |
 | e-fix3 | builder | sonnet | applies H1 to H6 to crash.py, its tests and one ticket line | 07:09 | ended | 100 | done | step E after round 3 (cap reached) | 0 | finished |
 | n8n-fix1 | builder (templates and text) | sonnet | applies the n8n review fixes to the two workflow files, the README and the template checks | 07:10 | about 30 min | 5 | running | n8n pack round 1 of 3 (fix pass) | 0 | resolve of review round 1 |
-| e-evidence4 | evidence runner (records, never judges) | sonnet | runs everything on the fixed crash helper; 23 mutants without -x | 07:13 | about 25 min | 5 | running | step E after the cap | 0 | EGM sequence |
+| e-evidence4 | evidence runner (records, never judges) | sonnet | runs everything on the fixed crash helper; 23 mutants without -x | 07:13 | ended | 100 | done | step E after the cap | 0 | finished, 90k tokens |
 | d-fix1 | builder | sonnet | fixes DC1-1 to DC1-10 in worker.py, server.py, endpoint.py, tests, ticket D | 07:15 | about 25 min | 5 | running | step D code round 1 (fix pass) | 0 | owner order: 6 to 8 agents in parallel, independent files |
 | egm-D-tests | reviewer (egm:egm-codebase-details, fresh) | sonnet | reads the step D tests: invariant to test table, what passes on broken code | 07:15 | about 25 min | 5 | running | tests round 1 of 3 | 0 | owner order: 6 to 8 agents in parallel, independent files |
 | egm-mut | reviewer (egm:egm-design, fresh) | sonnet | reads tests/endpoint_mutants.py and the runner: real guards, wrong-reason kills, the allow_crash override | 07:15 | about 25 min | 5 | running | mutant script round 1 of 3 | 0 | owner order: 6 to 8 agents in parallel, independent files |
@@ -162,12 +162,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3764s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 3764s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 3764s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 3764s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3764s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3764s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3775s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 3775s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 3775s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 3775s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3775s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3775s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -209,6 +209,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | tests/triggers (endpoint, worker, fuzz, postgres, process, wsgiref) after the follow-ups | working tree | 1 (sonnet agent) | 421 / 0 / 0, 2 skipped | none | done | UNVERIFIED by me until the batch |
 | tests/triggers/test_t5_fuzz_concurrent.py | working tree | 3 (agent; run 1 failed on the test's own bugs) | 9 / 0 / 0 (14 s) | run 1: a key tag with '/' and a retry delay race, both test bugs | done | PostgreSQL 16.15 on port 55433 |
 | tests/triggers/test_t5_crash_matrix_paths.py | working tree | final (agent; one earlier PostgreSQL case failed once with no text kept) | 346 / 0 / 0 (228 s) | none in the final run | done | PostgreSQL 16.15 on port 55433; heavy: 4 minutes of the batch |
+| step E after round 3: tests/test_testing_crash.py + guards + users | working tree | evidence 4 | 105 / 0 / 0; guards 292; users 162; 24 of 24 mutants killed | none | done | PostgreSQL 16.15 |
 
 ## RESTARTS
 | time UTC | kind | what was running | what was lost | restarted | still missing |
