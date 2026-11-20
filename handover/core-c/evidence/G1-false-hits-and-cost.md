@@ -101,3 +101,327 @@ Injection check path, `injection.RegexDetector(0.5).check(text, "t")` (reads in 
 - 2,000-value runs without the cache, and with the cache over the distinct text: extrapolated or killed as marked.
 - A text of 262,144 distinct non-ASCII characters is refused by the size rule (weight 287,409); the 236,879-character prefix was timed instead.
 - Mutant/test suite not run (not asked). Values drawn at random are not real redactor values: names are random pronounceable strings plus a 70-name hand list (about 30 %).
+
+
+## Round 2 (2026-11-20, low load)
+
+Evidence runner, order 023 E11(c). Measurements only. Script: `g1_split.py` in this folder (it is `g1_false_hits.py` unchanged up to its `def why`, plus the split code and a `G1_STAGE=real` stage; it was run from the clean export /tmp/core-c-split, HEAD 2e3a081, module path printed `/tmp/core-c-split/src/hadavin_sdk/guard/textnorm.py`). The sections above are NOT changed. One process at a time, started at load 3.0 or below (`nice`), about 4 CPU minutes for the Latin run and about 1 minute for the real-text run.
+
+Run lines: `HADAVIN_SRC=/tmp/core-c-split/src python -I g1_split.py 1000 200 10000` (Latin, split) and `G1_STAGE=real HADAVIN_SRC=... python -I g1_split.py 10 200 10000` (real text). Note: `python -I` ignores PYTHONPATH and the venv's editable install points at the main tree (its src is byte-identical to the export's apart from `__pycache__`), so the script puts `HADAVIN_SRC` first on `sys.path` itself.
+
+### How a hit is located (scan_holds gives no span)
+`scan_holds(text=, value=)` returns a bool only; the views it searches are folded (case, NFKD, whitespace collapsed, squeeze view drops every separator) and keep NO offsets back to the text. So the span is recomputed: the squeeze view, the two scan-key spellings (A, B) and the script view all act ONE CHARACTER AT A TIME (the `scan_keyset` docstring says so; NFKC joining is the only exception), so each character of the chunk is folded on its own, the pieces are joined with an index back to the original character, and the needles of the value (`_needle_pairs`: squeeze needle, script needle; plus `scan_keyset(value)` for the look-alike keys) are searched in the joined strings. The span in the ORIGINAL text, first to last matched character, is classified:
+- whole word: every character of the span is a letter or digit (`str.isalnum`), the character before and the one after are not. A `_`, `.`, `-` or a quote counts as a boundary (`foo_cond` holds the whole word `cond`).
+- inside a word: the span is contiguous letters/digits and at least one end touches another letter/digit (prefix of a longer word / suffix / middle).
+- across a space or punctuation: at least one non-letter/digit (space, newline, punctuation, mark) sits between the first and the last matched character. Sub-split: "a word is cut at an end" (a letter/digit touches the span from outside, so a fragment of a word is matched) and "clean at both ends" (the span is whole words only).
+A hit with several occurrences in the chunk goes to its best class (whole > inside > across); the occurrence counts are given too. A hit whose needle was not found in the per-character joins is "unlocated" (1 of 21,591 hits: one name-4 hit in repo text).
+
+### What is the same and what is not versus the typed numbers above
+Same: script, seed 20261120, chunk size 10,000, 199 chunks per Latin class (67 repo, 66 stdlib, 66 markov), 1,000 values per class, same classes, same order of random draws. NOT identical: the export is a newer HEAD than the first run, so the repo corpus is 5,533,673 chars / 489 files (was 5,053,368 / 468), the stdlib docstring corpus 10,095,890 (was 10,069,421), the markov text 3,000,001 (was 3,000,005); and the street/host class draws its words from a `set` (hash-seeded: two runs of this very script gave 8,879 and 7,789 hits, 4.46 % and 3.91 %; the table has the second run, the split of the first run was whole 5,978 / inside 2,015 / across 886, the same shape). So the rates are comparable, not equal: name 4: 5.22 to 5.33 %, name 5: 0.80 to 0.99 %, name 6: 0.25 to 0.40 %, street/host 4.10 to 3.91 %, digits 6: 0.005 to 0.007 %, short id 0.196 to 0.218 %. Classes with 0 earlier hits (name 8 and 12, word-word, digits 8 12 16) were not re-run (the same values and corpora would give the same 0; saved time). Values: 30 % of the name values are a hand list of real first names (Mary, Robert, Thomas, David ...) so some whole-word hits are real names that stand in the corpus text, as in the first run.
+
+### Result 1: the three-way split of the Latin false hits
+| class | hits / scans | rate | whole word | inside a word (prefix / suffix / middle) | across a space or punctuation (word cut at an end / clean) | unlocated | hits that mask a fragment of a word (inside + across-cut) |
+|---|---|---|---|---|---|---|---|
+| name-4 | 10,600 / 199,000 | 5.327 % | 567 (5.3 %) | 4567 (43.1 %) (720 / 2033 / 1814) | 5465 (51.6 %) (5404 / 61) | 1 | 9971 (94.1 %) |
+| name-5 | 1,962 / 199,000 | 0.986 % | 710 (36.2 %) | 600 (30.6 %) (281 / 61 / 258) | 652 (33.2 %) (644 / 8) | 0 | 1244 (63.4 %) |
+| name-6 | 794 / 199,000 | 0.399 % | 722 (90.9 %) | 42 (5.3 %) (41 / 0 / 1) | 30 (3.8 %) (30 / 0) | 0 | 72 (9.1 %) |
+| street/host (corpus word, 5-10) | 7,789 / 199,000 | 3.914 % | 5085 (65.3 %) | 1869 (24.0 %) (1169 / 474 / 226) | 835 (10.7 %) (753 / 82) | 0 | 2622 (33.7 %) |
+| digits-6 | 13 / 199,000 | 0.007 % | 0 (0.0 %) | 0 (0.0 %) (0 / 0 / 0) | 13 (100.0 %) (11 / 2) | 0 | 11 (84.6 %) |
+| short ascii id (4-5) | 433 / 198,801 | 0.218 % | 2 (0.5 %) | 51 (11.8 %) (20 / 8 / 23) | 380 (87.8 %) (377 / 3) | 0 | 428 (98.8 %) |
+
+Occurrences (a hit can have several; counted for the located hits): name-4: whole 734, inside 10630, across 8703; name-5: whole 1116, inside 4125, across 1039; name-6: whole 953, inside 128, across 30; street/host: whole 15151, inside 5283, across 1674; digits-6: whole 0, inside 0, across 13; short ascii id: whole 2, inside 85, across 671
+
+Path that produced the hit (located hits): name-4: exact squeeze needle 9636, scan key (look-alike/class map) 963; name-5: exact squeeze needle 1881, scan key (look-alike/class map) 81; name-6: exact squeeze needle 777, scan key (look-alike/class map) 17; street/host: exact squeeze needle 7601, scan key (look-alike/class map) 188; digits-6: exact squeeze needle 13, scan key (look-alike/class map) 0; short ascii id: exact squeeze needle 224, scan key (look-alike/class map) 209
+
+Per corpus (whole / inside / across, hits): 
+- name-4: repo 46 / 822 / 1388; stdlib-docstrings 136 / 1010 / 1717; generated-markov 385 / 2735 / 2360
+- name-5: repo 40 / 150 / 181; stdlib-docstrings 10 / 130 / 209; generated-markov 660 / 320 / 262
+- name-6: repo 0 / 0 / 19; stdlib-docstrings 19 / 1 / 6; generated-markov 703 / 41 / 5
+- street/host (corpus word, 5-10): repo 913 / 345 / 263; stdlib-docstrings 1342 / 491 / 219; generated-markov 2830 / 1033 / 353
+- digits-6: repo 0 / 0 / 2; stdlib-docstrings 0 / 0 / 3; generated-markov 0 / 0 / 8
+- short ascii id (4-5): repo 0 / 18 / 85; stdlib-docstrings 0 / 13 / 93; generated-markov 2 / 20 / 202
+
+Reading the table (counts are of hits, each hit once):
+- name 4 letters (5.33 %): 94 % of the hits cover a fragment of a word; only 5.3 % are a whole word. Half (51.6 %) span a space or punctuation (`ses/L`, `for o`, `o mar`) and in 99 % of those a word is cut at an end; 43 % sit inside a word (suffix 19 %: `summary`, `distribute`; middle 17 %).
+- name 5 letters (0.99 %): 36 % whole word (mostly real names/words in licence text: David, Pavel, `codes`), 31 % inside a word, 33 % across a space; 63 % mask a fragment.
+- name 6 letters (0.40 %): 91 % whole word (Robert, Thomas, Martin ... in copyright lines of the markov text), 5 % prefix of a longer word (`Martindale`, `Johannes`), 4 % across. Only 9 % mask a fragment. The rate here is almost all literal names in the text.
+- street/host corpus word 5 to 10 letters (3.91 %): 65 % whole word (the value IS a common word of the text: `shall`, `behavior`), 24 % inside a word (mostly the prefix of a longer word: `Current` in `Currently`; `Present` inside `representation`), 11 % across.
+- digits 6 (0.007 %, 13 hits): all across a separator (`1994, 19` of `1994, 1997`, `52 ;\t0027`): the squeeze view of a number reads through the comma/space; 11 of 13 cut a number at an end.
+- short ascii id 4 to 5 chars (0.218 %): 88 % across a space or punctuation (`ieln` in `hand[[le in]]direct`, `pwww` in `http://www`), 12 % inside a word, 0.5 % whole (`fp32`). 99 % mask a fragment. Half of the located hits (209 of 433) come from the look-alike/class-map scan key, not from the exact squeeze needle.
+- Share of hits that mask a fragment of a word (inside a word + across with a word cut at an end), over the six rows: 94.1, 63.4, 9.1, 33.7, 84.6 and 98.8 %. Over all 21,591 located hits of the six rows: whole 7,086 (32.8 %), inside 7,129 (33.0 %), across 7,375 (34.2 %): about two thirds of the false hits are NOT a whole word, one third is. The mix changes with value length and kind: the shorter the value, the more fragments (4-letter and short-id rows 94 to 99 %); the longer the value, the more the hits are literal words (name 6 91 % whole).
+
+What this means for masking quality (as measured, not a verdict): for a value that is 4 to 5 characters long, almost every false hit masks a piece of an ordinary word or pieces of two neighbouring words with the separator between them (`[[o mar]]k`, `sum[[mary]]`); the text around stays readable but a word is damaged. For a 6-letter or longer value drawn from names or words the hits are mostly whole words, which a person would call a true match of that word (not a fragment). Across-hits matter beyond damage: the mask covers a span that crosses a word boundary, so a redactor that masks the matched span (not just the value) removes the separator and the neighbouring letters too. The "inside a word" bucket is the one a word-boundary rule on top of the match would remove (33 % of all hits here); the "across" bucket (34 %) a word-boundary rule would also remove, but it is the very bucket that finds a value hidden by an inserted separator (true hits of that kind are not counted here: no value is in the corpora), so what a boundary rule would cost in recall is NOT measured by this table.
+
+### Result 2: one row of real non-Latin text
+The first run said none existed: its search looked only at .txt .md .po .rst .json .py .html .xml. Compiled gettext catalogs (.mo) were not searched. They exist: /usr/share/vim/vim91/lang/*/LC_MESSAGES/vim.mo (real human translations of the editor's messages and help lines; a user-interface and technical register, short lines, NOT literary prose, one program's vocabulary, so the rate is for that register only). Read with the stdlib `gettext`, de-duplicated: Russian 154,485 characters (15 chunks of 10,000), Chinese (zh_CN, zh_TW, other zh_*) 75,486 characters (7 chunks). Arabic and Devanagari: no catalog on the box (a scan of all .mo under /usr/share found Han and Cyrillic only), so those two stay synthetic-only (the earlier rows). Values (not words of the text, drawn at random from the corpus's own character frequencies; 300 per row): Russian 4 to 8 letters, Chinese 2/3/4 characters drawn by corpus frequency and drawn uniformly from the distinct characters.
+
+| real text row | hits / scans | rate | refused (too short) | whole | inside a word / run | across (cut / clean) | earlier synthetic row |
+|---|---|---|---|---|---|---|---|
+| Russian, 4-8 letters, frequency-drawn | 262 / 3,450 | 7.59 % | 1,050 | 0 | 55 (prefix 14, suffix 6, middle 35) | 207 (205 / 2) | Cyrillic 4-8: 13.81 % |
+| Chinese 2 chars, frequency-drawn | 109 / 2,100 | 5.19 % | 0 | 4 | 66 (prefix 6, suffix 7, middle 53) | 39 (all cut) | Han 2 Zipf 26.37 % |
+| Chinese 2 chars, uniform over distinct | 1 / 2,100 | 0.048 % | 0 | 0 | 0 | 1 | Han 2 uniform 0.065 % |
+| Chinese 3 chars (both draws) | 0 / 2,100 each | 0 | 0 | | | | Han 3 Zipf 4.21 %, uniform 0 |
+| Chinese 4 chars (both draws) | 0 / 2,100 each | 0 | 0 | | | | Han 4 Zipf 0.24 %, uniform 0 |
+
+For Chinese there are no word boundaries, so "whole word / inside" only says whether the match is bounded by punctuation, a newline or a Latin letter versus sits inside a longer run of Han characters; "inside a run" (66 of 109) is the normal case and does not mean a word is cut. Rates here are over small corpora (7 and 15 chunks, 300 values): treat them as an order of magnitude. Real Russian gave 7.6 % against the synthetic 13.8 % (the synthetic letters are independent; real ones are not); real Chinese 2-character values drawn by frequency gave 5.2 % against the synthetic Zipf 26.4 %, and the uniform draw agrees (0.05 against 0.065 %). Russian hits: 79 % across a space or newline (a word is cut at an end in 205 of 207), 21 % inside a word (`нтак` in `синтаксиса`).
+
+Samples of the real rows (corpus text only):
+
+**REAL Russian, values 4-8 letters drawn by the corpus letter frequency**
+
+- across spaces/punctuation: a word is cut at an end: value `Тсуйжлие`: `рех. Стр.  Кол.   Файл ил[[и текст\\n\\n# Журнал %s (от новых к старым):\\n\\n\\n# Строки]], начинающиеся с вертикал`
+- across spaces/punctuation: a word is cut at an end: value `Овне`: `"     для других параметр[[ов не]]обходимо перед этим отред`
+- across spaces/punctuation: a word is cut at an end: value `Няпеанн`: `от верхней строки на экра[[не\\n данн]]ых о закладках;\\n данных о`
+- across spaces/punctuation: a word is cut at an end: value `Осчьин`: `езопасности для \\n\\nНе удал[[ось н]]азначить атрибут безопасн`
+- across spaces/punctuation: a word is cut at an end: value `Осдиов`: `В строках, начинающихся с[[о слов]]а «set», показано текущее`
+- inside word: middle: value `Нтапкд`: `ачки ---\\n\\n--- Элементы си[[нтак]]сиса ---\\n\\n--- Элементы си`
+- inside word: middle: value `Оястадя`: `   Параметры  Действует П[[одста]]новка      Что делает\\n\\n  `
+- inside word: middle: value `Тово`: `  t: поиск указанной текс[[тово]]й строки\\n\\n\\n   Команда    `
+- inside word: middle: value `Нтапкд`: `ения экрана. Подсветка си[[нтак]]сиса отключена\\nНе задано `
+- inside word: middle: value `Нтапкд`: `а переменная %s\\nE1002: Си[[нтак]]сическая ошибка в %s\\nE100`
+- inside word: prefix of a longer word: value `Двыс`: `ен\\n--remote-expr <выраж>\t[[Вычис]]ление на Vim-сервере с вы`
+- inside word: prefix of a longer word: value `Оястадя`: `менено\\n%d строк изменено\\n[[Оста]]лся не отредактированным `
+- inside word: prefix of a longer word: value `Оястадя`: `е %s\\nПсевдографика\\nТочка [[оста]]нова в "%s%s", строка %ld`
+- inside word: prefix of a longer word: value `Оястадя`: `начения по умолчанию для [[оста]]точных параметров\\nE1161: `
+- inside word: prefix of a longer word: value `Оястадя`: `ionary\\nE1285: Не удалось [[оста]]новить таймер, ошибка %s\\n`
+- inside word: suffix of a longer word: value `Иааниь`: `ком рекурсивно %s\\nE116: З[[аданы]] недопустимые аргументы в`
+- inside word: suffix of a longer word: value `Овне`: `ть определён только на ур[[овне]] командного файла\\nE139: Ф`
+- inside word: suffix of a longer word: value `Иааниь`: `подсветки. У группы уже з[[аданы]] параметры\\nE415: Непредви`
+- inside word: suffix of a longer word: value `Осдиов`: `ные вызовы поисковых запр[[осов]]\\nE957: Задан некорректный`
+- inside word: suffix of a longer word: value `Ыинлиая`: `d\'\\nв "expr"\\nкомпонент выч[[исления]] выражений отключён при к`
+- across spaces/punctuation: clean at both ends: value `Ыинлиая`: `гумента должен быть List [[или Dictionary\\nE713: Требуется]] указать наименование клю`
+- across spaces/punctuation: clean at both ends: value `Удзеь`: `e() не вернула данные об [[узле в]] функцию channel_open()\\nE`
+
+**REAL Chinese, 2-character values drawn by corpus frequency**
+
+- inside word: suffix of a longer word: value `入行`: `当前的 %s语言: "%s"\\n自定义\\n西里尔文\\n输[[入行]]\\n在 PFX 项之后定义 COMPOUNDFORB`
+- inside word: suffix of a longer word: value `行数`: `了要写入的缓冲区\\nE204: 自动命令意外地改变了[[行数]]\\nE205: Patchmode: 无法保存原始文`
+- inside word: suffix of a longer word: value `不同`: `（diff）时无足够的内存\\n不读取撤销文件，所有者[[不同]]：%s\\n注意：不支持对交换文件加密，因此禁用了交换`
+- inside word: suffix of a longer word: value `入行`: `取行\\n不能同时有列表和 "what" 参数\\n无法插[[入行]]\\n无法插入/追加行\\n不能修改已固定的字典\\n不能修改`
+- inside word: suffix of a longer word: value `行数`: `显示光标的屏幕列\\n突出显示光标的屏幕行\\n记住的命令[[行数]]\\n显示路径的多少个部分\\n在标签文件中搜索如何处理大`
+- inside word: middle: value `不同`: `  如果是这样，修改时请注意避免同一个文件产生两个[[不同]]的版本。\\n    退出，或者小心地继续。\\n\\n\\n(你`
+- inside word: middle: value `法使`: `C)\\n' 未知。可用的内建终端有:\\n'-nb' 无[[法使]]用：编译时未启用\\n\\n选项 'dictionary'`
+- inside word: middle: value `式打`: `加载文件(&L)\\n加载文件和选项(&A)\\n以只读方[[式打]]开(&O)\\n直接编辑(&E)\\n恢复(&R)\\n删除交`
+- inside word: middle: value `用的`: `调用此函数的函数\\n       d: 搜索此函数调[[用的]]函数\\n       e: 搜索此 egrep 模式`
+- inside word: middle: value `符不`: `066: 不能声明寄存器：%s\\nE1067: 分隔[[符不]]匹配：%s\\nE1068: '%s' 前不允许有空白`
+- across spaces/punctuation: a word is cut at an end: value `改不`: `模式启动\\n-L\t\t\t同 -r\\n-M\t\t\t文本不可修[[改\\n-N\t\t\t不]]完全兼容传统的 Vi: 'nocompatible`
+- across spaces/punctuation: a word is cut at an end: value `用预`: `            模式\\n  以不同大小写来使[[用 tag！\\n         $VIM 预]]设值: "\\n  组=%s\\n    系统 gvimr`
+- across spaces/punctuation: a word is cut at an end: value `式使`: `限制模式 (同 "rvim")\\n-b\t\t\t二进制模[[式\\n-background <color>\t使]]用 <color> 作为背景色 (也可用 -bg)`
+- across spaces/punctuation: a word is cut at an end: value `行不`: `行\\n+<lnum>\t\t启动后跳到第 <lnum> [[行\\n+reverse\t\t不]]使用反显 (也可用 +rv)\\n，\\n或是此文件已损坏`
+- across spaces/punctuation: a word is cut at an end: value `行名`: `如果你已经进行了恢复，请删除交换文件 "\\n    [[行=%ld  id=%d%s  名]]称=%s  优先级=%d\\n        系统菜单`
+- inside word: prefix of a longer word: value `行数`: `被插入/删除过\\n???缺少块\\n???空的块\\n???[[行数]]错误\\n???缺少了一些行\\n???缺少了太多行\\nAN`
+- inside word: prefix of a longer word: value `自动`: `你可能想要将这个文件另存为别的文件名\\n\\n\\n--- [[自动]]命令 ---\\n\\n--- 全局选项值 ---\\n\\n--`
+- inside word: prefix of a longer word: value `行不`: `6: 在没有返回类型的函数中返回值\\nE1097: [[行不]]完整\\nE1098: 需要字符串、列表或者 blob`
+- inside word: prefix of a longer word: value `中有`: `) 中收到 SIG%s\\nE369: %s%%[] [[中有]]无效的项\\nE36: 没有足够的空间\\nE370: 无`
+- inside word: prefix of a longer word: value `中的`: `形界面\\nE532: defineAnnoType [[中的]]高亮颜色名太长\\nE533: 无法选择宽字体\\nE53`
+- whole word: value `中的`: `imrc\\n-unregister\t\t取消 OLE [[中的]] gvim 注册\\n-v\t\t\tVi 模式 (同 "v`
+- whole word: value `用时`: ` display 超时\\n打开 X display [[用时]] %ld 秒\\n原始文件 "%s"\\n其他\\n覆盖已存在`
+- whole word: value `自动`: `默认为零\\n<Tab> 在文本中代表的空格数\\n每步（[[自动]]）缩进所使用的空格数\\n已废止，用 'filefor`
+- whole word: value `中的`: `imrc\\n-unregister\t\t取消 OLE [[中的]] gvim 註冊\\n-w <scriptout>\t對`
+
+**REAL Chinese, 2-character values drawn uniformly from the distinct characters**
+
+- across spaces/punctuation: a word is cut at an end: value `告错`: `被创建\\nW14: 警告: 文件名过多\\nW15: 警[[告: 错]]误的行分隔符，可能是少了 ^M\\nW16: 警告: `
+
+### Sample hits, Latin (5 per bucket)
+
+**name-4 (hand list+synth)**
+
+- whole word:
+  - value `John` (generated-markov): `, Lars Ruben Skyum 1992, [[John]] Cristy 2000, Milan Votav`
+  - value `Omar` (generated-markov): `.c Copyright: 2010-2012, [[Omar]] Campagne License: GPL-2+`
+  - value `Omar` (generated-markov): `.c Copyright: 2010-2012, [[Omar]] Campagne License: GPL-2+`
+  - value `John` (stdlib-docstrings): `initially implemented by [[John]] Hunter for\nmatplotlib.  `
+  - value `John` (stdlib-docstrings): `initially implemented by [[John]] Hunter for\nmatplotlib.  `
+- inside word: prefix of a longer word:
+  - value `Modu` (stdlib-docstrings): `inalg.\n\nNotes\n-----\nThis [[modu]]le is a lite version of t`
+  - value `Supe` (generated-markov): `res solution to a common [[supe]]rtype of 'instance' that `
+  - value `Modu` (repo): ` 5 that need WARDEN-only [[modu]]les or unported gate poli`
+  - value `John` (generated-markov): `7, Ming Yang 2018, Chris [[John]]son License: Expat Commen`
+  - value `John` (generated-markov): `2003+, Evgeniy Polyakov <[[john]]pol@2ka.mxt.ru> License: `
+- inside word: suffix of a longer word:
+  - value `Mary` (generated-markov): `e in a more-or-less custo[[mary]] fashion, plus the script`
+  - value `Lilb` (repo): `json\nimport sys\nimport ur[[llib]].error\nfrom datetime impo`
+  - value `Maln` (generated-markov): `_curdir: if true, will re[[main]] true even after an input`
+  - value `Sult` (generated-markov): `eturning 'InputRequiredRe[[sult]]' past the first exactly `
+  - value `Mary` (stdlib-docstrings): `es to the table.\n\nAdd sum[[mary]] line with dtypes present`
+- inside word: middle:
+  - value `Anna` (generated-markov): `for newlib) git://git.sav[[anna]]h.gnu.org/gm2.git (for Mo`
+  - value `Anna` (generated-markov): `for newlib) git://git.sav[[anna]]h.gnu.org/gm2.git (for Mo`
+  - value `Parl` (stdlib-docstrings): `ts to customize field com[[pari]]son.\n\nThe resulting class`
+  - value `Derr` (stdlib-docstrings): ` instead of NotImplemente[[dErr]]or for abstract methods.\n`
+  - value `Nida` (generated-markov): `ark Adamson. License: Ope[[nLDA]]P-2.8 Files: contrib/slap`
+- across spaces/punctuation: a word is cut at an end:
+  - value `Omar` (repo): ` the test and recorded fr[[om a r]]eal run in handover/core-`
+  - value `Nerk` (generated-markov): ` Josefsson 2011, 2014 Wer[[ner K]]och License: TinySCHEME F`
+  - value `Omar` (repo): `nforce=' is 'enforce_cust[[om'; a r]]efusal of the step is 'ma`
+  - value `Anna` (generated-markov): ` b 0 0.00 Comodo Dragon N[[aN Na]]N NaN NaN salmon 2.0 3.0 `
+  - value `Rewi` (repo): `"cloud-x",\n        "featu[[re/wi]]p/cloud-x",\n        "wip/`
+- across spaces/punctuation: clean at both ends:
+  - value `Anna` (stdlib-docstrings): `f True,\n\n    * rows with [[an NA]] value in any column will`
+  - value `Anna` (stdlib-docstrings): `f True,\n\n    * rows with [[an NA]] value in any column will`
+  - value `Anna` (stdlib-docstrings): `f True,\n\n    * rows with [[an NA]] value in any column will`
+  - value `Anna` (stdlib-docstrings): `f True,\n\n    * rows with [[an NA]] value in any column will`
+  - value `Anna` (stdlib-docstrings): `f True,\n\n    * rows with [[an NA]] value in any column will`
+
+**name-5 (hand list+synth)**
+
+- whole word:
+  - value `David` (generated-markov): `017 Danny Forghieri 2012 [[David]] King 2010 David Zeuthen `
+  - value `David` (generated-markov): `r Benoit Macq 2001-2003, [[David]] Janssens 2002-2003, Yann`
+  - value `Peter` (generated-markov): `pritts@sdf.lonestar.org> [[Peter]] Edwards <peter@dragonsta`
+  - value `David` (generated-markov): ` <raven@themaw.net> 1998 [[David]] S. Miller >davem@redhat.`
+  - value `Lukas` (generated-markov): `se.* Copyright: (C) 2006 [[Lukas]] Novotny <lukasnov@cvs.gn`
+- inside word: prefix of a longer word:
+  - value `Peter` (generated-markov): `right 1999 -- 2011 Pearu [[Peter]]son all rights reserved. `
+  - value `Lucia` (generated-markov): `11, Kaori Hagihara 2011, [[Lucia]]n Corlaciu, GSoC License:`
+  - value `Peter` (generated-markov): `right 1999 -- 2011 Pearu [[Peter]]son all rights not expres`
+  - value `Versi` (stdlib-docstrings): ` all pandas objects.\n\n.. [[versi]]onchanged:: 2.0.0\n\n   Ind`
+  - value `Circi` (generated-markov): `es() ['arrow', 'blank', '[[circl]]e', ... , c_{10}, c_{11},`
+- inside word: suffix of a longer word:
+  - value `Namer` (stdlib-docstrings): ` Series using a nested re[[namer]] (dict-of-dict).\n\nThe sec`
+  - value `Teral` (repo): `ish guard never sees a\nli[[teral]] that looks real."""\n\nfro`
+  - value `Teral` (stdlib-docstrings): `, you can use ''typing.Li[[teral]][NOTHING]'' to show\nthat `
+  - value `Teral` (repo): `at=%H -1 \"$@\" -- \":(li[[teral]])$p\" || true)\n    refs=`
+  - value `Codes` (generated-markov): `54321','01234567891').bar[[codes]]) AADTFFDFTDADTAADAATFDTD`
+- inside word: middle:
+  - value `Lemen` (generated-markov): `xplode : Transform each e[[lemen]]t in the 'operator' modul`
+  - value `Versi` (generated-markov): ` the same shape after con[[versi]]on. In either case, eithe`
+  - value `Lemen` (generated-markov): `laceholder image. If an e[[lemen]]t in the Data Files ("DAT`
+  - value `Lemen` (generated-markov): `der trio. This module imp[[lemen]]ts specialized container `
+  - value `Versi` (generated-markov): `e: LGPL-2+ Files: atk/atk[[versi]]on.h.in Copyright: 2012 S`
+- across spaces/punctuation: a word is cut at an end:
+  - value `Focop` (generated-markov): `iles: doc/libext2fs.texin[[fo Cop]]yright: 1997-2014 Theodor`
+  - value `Tisas` (repo): `needle of its own) or tha[[t is\n# a s]]cript value alone with ev`
+  - value `Teral` (repo): `# Lo   [8] MANICHAEAN LET[[TER AL]]EPH..MANICHAEAN LETTER WA`
+  - value `Namer` (generated-markov): `tation. . “Reserved Font [[Name” r]]efers to a group of check`
+  - value `Codes` (generated-markov): ` so disk and store their [[code s]]tatically compiled. Priva`
+- across spaces/punctuation: clean at both ends:
+  - value `Tagof` (repo): `om_the_branch_not_from_a_[[tag_of]]_the_same_short_name(repo`
+  - value `Codes` (repo): `t (run.state, run.reason_[[code) == (S]].NO_ACTION, "shadow")\n   `
+  - value `Funca` (stdlib-docstrings): `pt.NBitBase)\n    >>> def [[func(a]]: np.floating[T], b: np.f`
+  - value `Funca` (stdlib-docstrings): `unc' is called as 'res = [[func(a]], axis)', where 'axis' is`
+  - value `Valis` (stdlib-docstrings): `ue| if './w:vertAlign/@w:[[val' is]] "subscript".\n\n|False| if`
+
+**name-6 (hand list+synth)**
+
+- whole word:
+  - value `Robert` (generated-markov): `rolasa@iki.fi> 2002-2003 [[Robert]] Love <rml@tech9.net> 199`
+  - value `Robert` (generated-markov): `2, 1993 by David Turner, [[Robert]] Wilhelm, and Werner Lemb`
+  - value `Thomas` (generated-markov): `TWARE. IN NO EVENT SHALL [[THOMAS]] ROELL AND SGCS DISCLAIMS`
+  - value `Robert` (stdlib-docstrings): `tributed to piddlePDF by [[Robert]] Kern, 28/7/99.\nDraw a pa`
+  - value `Daniel` (generated-markov): `rovided that the name of [[Daniel]] Veillard shall not be di`
+- inside word: prefix of a longer word:
+  - value `Stefan` (generated-markov): `y@debian.org> 2021-2023, [[Stefan]]o Rivera <stefanor@debian`
+  - value `Johann` (generated-markov): `zik@pobox.com> 2006-2010 [[Johann]]es Berg <johannes@sipsolu`
+  - value `Johann` (generated-markov): `zik@pobox.com> 2006-2010 [[Johann]]es Berg <johannes@sipsolu`
+  - value `Martin` (generated-markov): `2001 Andreas Dilger Dave [[Martin]]dale Guy Eric Schalnat, G`
+  - value `Stefan` (generated-markov): `y@debian.org> 2021-2023, [[Stefan]]o Rivera <stefanor@debian`
+- inside word: suffix of a longer word: no hit
+- inside word: middle:
+  - value `Lererr` (stdlib-docstrings): `t()' will have BrokenBarr[[ierErr]]or raised.\n\nReturn the nu`
+- across spaces/punctuation: a word is cut at an end:
+  - value `Claire` (repo): `head.count("\r\n")\n\n\n_SPE[[CIAL = re]].compile(r"[-/'\"$]")\n_PL`
+  - value `Sedonf` (generated-markov): ` a larger work that is ba[[sed on f]]ull SVD, 2D case: >>> U, `
+  - value `Claire` (repo): `head.count("\r\n")\n\n\n_SPE[[CIAL = re]].compile(r"[-/'\"$]")\n_PL`
+  - value `Claire` (repo): `head.count("\r\n")\n\n\n_SPE[[CIAL = re]].compile(r"[-/'\"$]")\n_PL`
+  - value `Claire` (repo): `head.count("\r\n")\n\n\n_SPE[[CIAL = re]].compile(r"[-/'\"$]")\n_PL`
+- across spaces/punctuation: clean at both ends: no hit
+
+**street/host (corpus word, 5-10)**
+
+- whole word:
+  - value `Closed` (repo): `xt'; the body lines of a [[closed]] backtick fence stay as t`
+  - value `Scalar` (stdlib-docstrings): `t\n    Window length.\nd : [[scalar]], optional\n    Sample spa`
+  - value `Intel` (generated-markov): `IGHTS, IN NO EVENT SHALL [[INTEL]] BE LIABLE FOR ANY DIRECT`
+  - value `Pydantic` (repo): `ated, Any, Literal\n\nfrom [[pydantic]] import BaseModel, Config`
+  - value `Level` (generated-markov): ` (arithmetic mean) pixel [[level]] for the next value when `
+- inside word: prefix of a longer word:
+  - value `Proto` (generated-markov): `son helpers. Date-string [[proto]]col revisions happen to s`
+  - value `Therefor` (stdlib-docstrings): `Hash table-based unique, [[therefor]]e does NOT sort.\n\nReturns`
+  - value `Tuple` (stdlib-docstrings): `erleave list of addrinfo [[tuple]]s by family.\n\nWait until `
+  - value `Vander` (generated-markov): `data. Returns the pseudo-[[Vander]]monde matrix of given deg`
+  - value `Request` (generated-markov): `eware sealing/unsealing '[[request]]State' at the end of LICE`
+- inside word: suffix of a longer word:
+  - value `Lance` (generated-markov): `eived notice of non-compl[[iance]] with this engine. If the`
+  - value `Never` (stdlib-docstrings): ` uncalculated hashes, whe[[never]] this is copied,\nthe copy`
+  - value `Meters` (generated-markov): ` rewriting the spawn para[[meters]] are NOT 1000 ems wide, k`
+  - value `Resumption` (generated-markov): `rt or imply any general p[[resumption]] that third-party softwar`
+  - value `Fused` (repo): `   }\n)\n\n\ndef re[[fused]]_before_response(exc: Bas`
+- inside word: middle:
+  - value `Dicts` (stdlib-docstrings): `e logic specific to Typed[[DictS]]chema\nfor the sake of rea`
+  - value `Berne` (repo): `"db")\n\n\ndef test_vault_ku[[berne]]tes_signs_in_with_the_ser`
+  - value `Values` (generated-markov): `ing the Excel XLSX rdrich[[values]]tructure.xml file. Constr`
+  - value `Script` (generated-markov): `ispatch generic method de[[script]]or. Args: descriptor: The`
+  - value `Xport` (stdlib-docstrings): `es.\n\nFor names that are e[[xport]]ed in a shared library (n`
+- across spaces/punctuation: a word is cut at an end:
+  - value `Purposes` (generated-markov): `FITNESS FOR A PARTICULAR [[PURPOSE. S]]ee the GNU Lesser General`
+  - value `Small` (generated-markov): `on 25, A Guide to Busines[[s Mail]] Preparation http://new.u`
+  - value `Raises` (stdlib-docstrings): `or SSL socket on Unix).\n\n[[Raise S]]endfileNotAvailableError `
+  - value `Afresh` (stdlib-docstrings): `rned by this function\nis [[a fresh]]ly allocated copy with a `
+  - value `Along` (repo): `econds fit in 12 digits; [[a long]]er header would make int(`
+- across spaces/punctuation: clean at both ends:
+  - value `Users` (stdlib-docstrings): `e default\nis to keep the [[user's]] current zoom settings. t`
+  - value `Metaclass` (stdlib-docstrings): `ssage_class: The message [[meta class]].\n  js_dict: Dict represe`
+  - value `Firstline` (stdlib-docstrings): ` The line number for the [[first line]] (default: ''1'').\n\n'line`
+  - value `Shutdown` (generated-markov): `ult. - If there has been [[shut down]]. Remove and return AnyTy`
+  - value `Afresh` (repo): ` when there is one, else [[a FRESH]] allowance of that budget`
+
+**digits-6**
+
+- whole word: no hit
+- inside word: prefix of a longer word: no hit
+- inside word: suffix of a longer word: no hit
+- inside word: middle: no hit
+- across spaces/punctuation: a word is cut at an end:
+  - value `199419` (generated-markov): `c Copyright: 1987, 1993, [[1994, 19]]97 Free Software Foundati`
+  - value `090028` (repo): ` RIGHT PARENTHESIS	# \n\n32[[09 ;	0028]] 110E 0029 ;	MA	#* ( ㈉ → `
+  - value `199419` (generated-markov): `Copyright: Copyright (c) [[1994, 19]]97, 2001, 2002, Sun Micro`
+  - value `919941` (generated-markov): `81, 1983, 1986, 1988, 198[[9, 1994, 1]]998 The Open Group shall `
+  - value `199419` (generated-markov): `ismus GmbH Copyright (C) [[1994, 19]]95, 1996, 1997, 1999, 200`
+- across spaces/punctuation: clean at both ends:
+  - value `520027` (stdlib-docstrings): `5:00    18\n2000-10-01 23:[[52:00    27]]\n2000-10-02 00:09:00    3`
+  - value `013080` (stdlib-docstrings): `))\n     C    D\n0  4.0  6.[[0\n1  3.0  8.0]]\n2  4.0  6.0\n3  3.0  8.0\n`
+
+**short ascii id (4-5)**
+
+- whole word:
+  - value `fp32` (generated-markov): `ch optimized operator in [[FP32]] could benefit most Assum`
+  - value `fp32` (generated-markov): `vel. Support 0 (unset),1([[fp32]]), 2(fp16), 3(bf16), or 4`
+- inside word: prefix of a longer word:
+  - value `duri` (generated-markov): ` imaginary line traveled [[duri]]ng teleporting act as a s`
+  - value `duri` (generated-markov): `tegories will be ignored [[duri]]ng cloning (applies to ch`
+  - value `duri` (stdlib-docstrings): `ositioned over the\nshape [[duri]]ng a slide show.\n\nIf ther`
+  - value `duri` (generated-markov): ` strings from the client [[duri]]ng the GNOME Foundation 2`
+  - value `duri` (stdlib-docstrings): `ether to exclude a field [[duri]]ng serialization based on`
+- inside word: suffix of a longer word:
+  - value `iiis` (repo): `failing_tree_kill_still_k[[ills]]_the_child(monkeypatch):\n`
+  - value `potq` (generated-markov): `.c, fmodq.c, frexpq.c, hy[[potq]].c, ilogbq.c, isnanq.c, j`
+  - value `potq` (generated-markov): `.c, fmodq.c, frexpq.c, hy[[potq]].c, ilogbq.c, isnanq.c, j`
+  - value `iiis` (generated-markov): ` the grace period, then k[[ills]] the whole path is a soun`
+  - value `iiis` (generated-markov): `lpcontent2/help3xsl/polyf[[ills]].js Copyright: Copyright `
+- inside word: middle:
+  - value `ieln` (generated-markov): `8 Daniel Nylander <po@dan[[ieln]]ylander.se> 2009, 2014 Ni`
+  - value `ieln` (generated-markov): `> Daniel Nylander <po@dan[[ieln]]ylander.se> Danishka Navi`
+  - value `iiis` (generated-markov): `ribley Copyright © 2007 A[[llis]]on Lortie © 2007 Ilmari H`
+  - value `ildu` (repo): `TTER E, COMBINING LONG SO[[LIDU]]S OVERLAY	# →e̷→\n\n0246 ;	`
+  - value `iiis` (repo): `et_kill_switch(self) -> K[[illS]]witch:\n        found = se`
+- across spaces/punctuation: a word is cut at an end:
+  - value `ieln` (repo): `total USD cap for the who[[le in]]vocation. One reply can o`
+  - value `veyl` (generated-markov): ` Provided in order to con[[vey i]]nformation (although in d`
+  - value `ieln` (repo): `tr], body: bytes\n) -> tup[[le[in]]t, bytes]:\n    """401 for`
+  - value `nred` (generated-markov): ` is free software; you ca[[n red]]istribute it and/or modif`
+  - value `iiis` (stdlib-docstrings): `lback already scheduled w[[ill s]]till run.  This simply\nin`
+- across spaces/punctuation: clean at both ends:
+  - value `l512` (repo): `rts), 2):\n        if not [[i % 512]] and time.thread_time() >`
+  - value `iiis` (stdlib-docstrings): `'. The element :math:'C_{[[ii}' is]] the variance\nof :math:'x`
+  - value `toto` (stdlib-docstrings): `ethod to create data for [[to ''to]]_dict(orient="split")''\nt`
+(One caveat on the samples: `Maln` found in `main`, `Parl` in `pari`, `Sesl` in `ses/L` are the look-alike scan-key path: the class map reads `l` as `i`, so `Maln` and `main` have the same key. It is by design of the key and counts as a false hit here.)
+
+### NOT RUN, with reasons
+- 2,000 values WITHOUT the cache (any text): not run, as ordered (hours: first-run extrapolation 756 s ASCII, 2,023 s 1 % non-ASCII, about 10,000 s for the distinct non-ASCII text).
+- Latin classes that gave 0 hits in the first run (name 8, name 12, word-word 8-14, digits 8, 12, 16): not re-run, nothing to split.
+- Non-Latin SYNTHETIC classes (Han, Cyrillic, Arabic, Devanagari models) were not re-split; only the real Russian and Chinese rows were run, with the split. Arabic and Devanagari real text: none on the box (a scan of every .mo under /usr/share; no other multilingual text corpus was looked for beyond .mo catalogs and the earlier text-file search).
+- The real Russian/Chinese corpus is one program's messages (vim) in 154 k and 75 k characters: 15 and 7 chunks only, not the 200 of the Latin classes.
+- The span is re-derived by this script, not reported by `scan_holds` (it reports none); NFKC joins across characters are the one step the per-character join does not model (1 hit unlocated of 21,591 Latin hits; none in the real rows). What a redactor really masks (the span it replaces) was not run: that is in guard/redact, not in `scan_holds`.
+- No mutant or test suite run.
