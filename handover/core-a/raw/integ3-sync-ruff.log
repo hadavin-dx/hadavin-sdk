@@ -1,0 +1,7 @@
+ + urllib3==2.8.0
+ + werkzeug==3.1.9
+ + xmltodict==1.0.4
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+import ok

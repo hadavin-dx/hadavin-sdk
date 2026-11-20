@@ -31,3 +31,20 @@ The stage/demo refusal, model_gate, own_money_rights_problems and TriggerSetting
 Apply handover/core-a/pr/door-merged-support.patch (`git apply`; it applies cleanly to core-a head too and to the
 merged tree, where it is already applied in worktree /home/user/wt/doorm, branch wip/core-a-door-merged, uncommitted).
 Future: if core-b renames the seed helpers in tests/money_caps_seed.py, update `install_pg_test_seeding`.
+
+## Follow-up: money end state per crash point (door-merged-support-2.patch, applies after door-merged-support.patch)
+Review found that with RESERVES nothing read the money state. Added (RESERVES mode only; the RESERVES=False matrix is
+unchanged): tests/triggers/crash_money.py and per-point STATIC expectations (from the call tables, not from a run):
+before `reserve_spend` no row, day total 0; between `reserve_spend:after` and `settle_spend:before` exactly one OPEN
+row per call in flight (reserved_usd > 0, day total = sum of the open holds); after `settle_spend` the row is settled
+at the real cost (0 with the model doubles), day total = settled costs. After restart + tick + signed retry: a run
+with a row is never booked again (its rows are those of the kill; an open hold STAYS open, the documented step-1
+limit: it waits for expiry), a run without a row ends with every call reserved and settled; the day total always
+equals the rows' sum. Read by plain SQL (spend_reservations, spend) on PostgreSQL, by the store's own dict and
+spend_totals on memory. RESERVES is tied to the loop (`check_reserves_wiring`: the loop source calls limits.reserve
+and money_caps_seed.py exists, else a clear import-time failure; `test_reserves_is_what_the_loop_really_does`:
+one real request makes exactly one reserve_spend call iff RESERVES).
+
+LIMIT: the children's seeding (`install_pg_test_seeding`) widens `max_day_skew` to 100000 days and sets
+`min_expiry_age` to 0. The matrix therefore does NOT exercise the real day window or the 3600 s expiry floor and
+proves nothing about either; it only proves the door's one-run-row / one-approval / one-hold guarantees.

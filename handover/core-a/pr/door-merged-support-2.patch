@@ -1,0 +1,405 @@
+diff --git a/tests/triggers/crash_launcher.py b/tests/triggers/crash_launcher.py
+index 316ac47f9..de42f16c6 100644
+--- a/tests/triggers/crash_launcher.py
++++ b/tests/triggers/crash_launcher.py
+@@ -15,6 +15,18 @@ Stdout, line by line: ``port <n>`` (first line, once the socket is bound); after
+ ``run <run_id> <STATE>`` line per stored run and then ``stopped``. The model double appends one
+ byte to ``--calls-file`` per call, so the parent can count model calls across restarts.
+ 
++LIMIT of the seeding: on PostgreSQL the child installs the test-only money wrappers (`install_pg_test_seeding`),
++which write ``hadavin_caps`` and WIDEN ``max_day_skew`` to 100000 days and ``min_expiry_age`` to 0. So the
++matrix does NOT exercise the real day window or the 3600 s expiry floor and proves nothing about either; it
++only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
++state of `crash_money.py`).
++
++LIMIT of the seeding: on PostgreSQL the child installs the test-only money wrappers (`install_pg_test_seeding`),
++which write ``hadavin_caps`` and WIDEN ``max_day_skew`` to 100000 days and ``min_expiry_age`` to 0. So the
++matrix does NOT exercise the real day window or the 3600 s expiry floor and proves nothing about either; it
++only proves the door's guarantees: one run row, one approval, one hold per model call (and the money end
++state of `crash_money.py`).
++
+ Environment: ``TRIGGER_CHILD_SECRETS`` is a JSON object sender id -> fake secret value;
+ ``CRASH_CHILD_DSN`` is the PostgreSQL DSN for ``--store postgres``.
+ """
+@@ -23,6 +35,8 @@ from __future__ import annotations
+ 
+ import argparse
+ import http.client
++import inspect
++import inspect
+ import json
+ import os
+ import subprocess
+@@ -44,6 +58,42 @@ from tests.k5_support import ScriptLLM, build_runtime
+ # The live loop reserves the worst case before a model call and settles after (core-b); an older loop
+ # books with add_spend/add_cost after the call. The crash tables follow whichever the code under test does.
+ RESERVES = hasattr(Limits, "reserve")
++
++
++def check_reserves_wiring() -> None:
++    """RESERVES must be what the loop REALLY does: the live loop calls `self.limits.reserve(` (and `Limits` has
++    `reserve`), or neither is true. A mismatch would run the wrong crash table; and with RESERVES the child needs
++    tests/money_caps_seed.py, else every run would end late in a NEEDS_PERSON timeout."""
++    from hadavin_sdk.runtime import agent_loop
++
++    calls = "limits.reserve(" in inspect.getsource(agent_loop)
++    assert RESERVES == calls, (
++        f"RESERVES={RESERVES} but the agent loop {'calls' if calls else 'does not call'} limits.reserve: "
++        "the crash tables follow the wrong booking"
++    )
++    if RESERVES and not (ROOT / "tests" / "money_caps_seed.py").exists():
++        raise AssertionError(
++            "RESERVES is True but tests/money_caps_seed.py is missing: the children could not seed hadavin_caps "
++            "and every run would end in NEEDS_PERSON"
++        )
++
++
++def check_reserves_wiring() -> None:
++    """RESERVES must be what the loop REALLY does: the live loop calls `self.limits.reserve(` (and `Limits` has
++    `reserve`), or neither is true. A mismatch would run the wrong crash table; and with RESERVES the child needs
++    tests/money_caps_seed.py, else every run would end late in a NEEDS_PERSON timeout."""
++    from hadavin_sdk.runtime import agent_loop
++
++    calls = "limits.reserve(" in inspect.getsource(agent_loop)
++    assert RESERVES == calls, (
++        f"RESERVES={RESERVES} but the agent loop {'calls' if calls else 'does not call'} limits.reserve: "
++        "the crash tables follow the wrong booking"
++    )
++    if RESERVES and not (ROOT / "tests" / "money_caps_seed.py").exists():
++        raise AssertionError(
++            "RESERVES is True but tests/money_caps_seed.py is missing: the children could not seed hadavin_caps "
++            "and every run would end in NEEDS_PERSON"
++        )
+ AGENT, PRINCIPAL, TENANT = "test-agent", "svc:test-agent", "tenant-a"
+ HOST = "127.0.0.1"
+ SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
+@@ -52,6 +102,8 @@ RUNNER_POINTS = ("get_run",)
+ ROOT = Path(__file__).resolve().parents[2]
+ PATH, PREFIX = "/v1/trigger", "X-Hadavin"
+ START_WAIT_S, EXIT_WAIT_S, REQUEST_TIMEOUT_S = 60.0, 30.0, 30.0
++check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
++check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
+ 
+ 
+ class CountingLLM(ScriptLLM):
+diff --git a/tests/triggers/crash_money.py b/tests/triggers/crash_money.py
+new file mode 100644
+index 000000000..8de07c977
+--- /dev/null
++++ b/tests/triggers/crash_money.py
+@@ -0,0 +1,113 @@
++"""The money end state of the crash tests, for the loop that reserves before a model call and settles after
++(core-b; `crash_launcher.RESERVES`). Not a test file.
++
++Every crash point has a STATIC expectation, written from the code path and never from a run: how many
++reservations of the run are booked at the kill (`reserved`) and how many of those are settled (`settled`).
++`reserve_spend` is one store call, `settle_spend` is one, and a hold is open between the two:
++
++  before the first `reserve_spend`           no row, day total 0
++  after `reserve_spend`, before `settle_spend`   one OPEN row per model call in flight (reserved_usd > 0),
++                                              day total = the sum of the open holds' reserved_usd
++  after `settle_spend`                        the row is SETTLED at the real cost (the model doubles price
++                                              every call at 0), day total = the sum of the settled costs
++
++A crash leaves an open hold OPEN: the tick steps of these tests do not expire it, and the documented
++step-1 limit is "an open hold stays until expiry". After the restart, the tick and the signed retry: a run
++that had a row is never run again, so its rows are exactly the ones of the kill (no re-reservation); a run
++that had NO row at the kill is run once by the retry and ends with every call reserved AND settled. The day
++total always equals what the rows say (it never exceeds their sum).
++
++Limit of the seeding (see crash_launcher.py): the child widens `max_day_skew` and `min_expiry_age`, so none of
++this says anything about the real day window or the 3600 s expiry floor.
++
++PostgreSQL is read by plain SQL on a connection of the test's own (tables `spend_reservations`, `spend`);
++the memory store by its own reservations dict and `spend_totals`.
++"""
++
++from __future__ import annotations
++
++from datetime import timedelta
++from decimal import Decimal
++
++from hadavin_sdk.models import now
++from tests.triggers.crash_launcher import AGENT
++
++# (status, reserved_usd, settled_usd) per reservation of the run, oldest first
++Rows = list[tuple[str, Decimal, Decimal | None]]
++Pair = tuple[int, int]  # (reservations booked, of which settled)
++
++
++def pg_money(dsn: str, run_id: str) -> tuple[Rows, Decimal]:
++    import psycopg
++
++    with psycopg.connect(dsn) as db:
++        found = db.execute(
++            "SELECT status, reserved_usd, settled_usd FROM spend_reservations"
++            " WHERE run_id = %s ORDER BY created_at, reservation_id",
++            (run_id,),
++        ).fetchall()
++        total = db.execute("SELECT coalesce(sum(usd), 0) FROM spend WHERE agent_id = %s", (AGENT,))
++        return [(r[0], r[1], r[2]) for r in found], total.fetchone()[0]
++
++
++def memory_money(store, run_id: str) -> tuple[Rows, Decimal]:
++    mine = sorted(
++        (r for r in store._reservations.values() if r.run_id == run_id),  # noqa: SLF001 - the dict IS the table
++        key=lambda r: (r.created_at, r.reservation_id),
++    )
++    days = {r.day for r in mine} | {now().date(), now().date() - timedelta(days=1)}
++    total = sum((store.spend_totals(AGENT, d)[0] for d in days), Decimal(0))
++    return [(r.status, r.reserved_usd, r.settled_usd) for r in mine], total
++
++
++def calls_done(rows, number: int, edge: str) -> Pair:
++    """(reserved, settled) at the kill from a table of calls: `rows` yields the call name of each step in
++    order, `number` is the 1-based step of the point, `edge` "before" or "after" its call."""
++    reserved = settled = 0
++    for n, call in enumerate(rows, start=1):
++        if n > number or (n == number and edge == "before"):
++            break
++        reserved += call == "store.reserve_spend"
++        settled += call == "store.settle_spend"
++    return reserved, settled
++
++
++def assert_state(rows: Rows, total: Decimal, want: Pair, label: str) -> None:
++    reserved, settled = want
++    assert [r[0] for r in rows] == ["settled"] * settled + ["open"] * (reserved - settled), (
++        label,
++        want,
++        rows,
++    )
++    booked = Decimal(0)
++    for status, hold, cost in rows:
++        assert hold > 0, (label, rows)  # the worst case of a call is never free
++        if status == "settled":
++            assert cost == 0, (label, rows)  # the double's reply costs nothing: the hold is replaced
++            booked += cost
++        else:
++            assert cost is None, (label, rows)  # stuck-open: still the full worst case, NOT released
++            booked += hold
++    assert total == booked, (label, total, rows)  # no leak, no double booking, never above the rows
++
++
++def assert_kill_state(rows: Rows, total: Decimal, allowed: set[Pair], label: str) -> Pair:
++    """The state at the kill must be one of `allowed` (two only where a request thread races the loop)."""
++    for want in sorted(allowed):
++        try:
++            assert_state(rows, total, want, label)
++        except AssertionError:
++            continue
++        return want
++    raise AssertionError((label, "money state matches none of", sorted(allowed), rows, total))
++
++
++def assert_end_state(
++    rows: Rows, total: Decimal, at_kill: Pair, row_at_kill: str | None, full: int, label: str
++) -> None:
++    """After restart, tick and the signed retry: no row at the kill means one fresh run (every call booked
++    and settled); a row means nothing ran again, so the rows are the ones of the kill (an open hold stays
++    open). At most `full` reservations either way."""
++    want = (full, full) if row_at_kill is None else at_kill
++    assert len(rows) <= full, (label, rows)
++    assert_state(rows, total, want, label)
+diff --git a/tests/triggers/test_t5_crash_matrix.py b/tests/triggers/test_t5_crash_matrix.py
+index 94465b71b..ff1b0f78e 100644
+--- a/tests/triggers/test_t5_crash_matrix.py
++++ b/tests/triggers/test_t5_crash_matrix.py
+@@ -71,6 +71,13 @@ from tests.triggers.crash_launcher import (
+     signed_post,
+     wire_body,
+ )
++from tests.triggers.crash_money import (
++    assert_end_state,
++    assert_kill_state,
++    calls_done,
++    memory_money,
++    pg_money,
++)
+ from tests.triggers.test_t5_postgres import (
+     DOCUMENT,
+     _arm,
+@@ -280,6 +287,17 @@ MEMORY_POINTS: tuple[Point, ...] = tuple(
+ )
+ 
+ 
++def money_at_kill(point: Point) -> set[tuple[int, int]]:
++    """(reservations booked, settled) at the kill, from the table `HANDLE_STEPS` (NOT from a run): the
++    store calls `reserve_spend` and `settle_spend` complete before their `:after` point and not before
++    their `:before` point. The request-thread points: r1-r3 come before any reserve; r4 and r5 race the
++    loop thread, which may or may not have reserved yet (the model double waits 1 s, so never settled)."""
++    if point.id.startswith("h"):
++        number, edge = int(point.id[1:3]), point.point.rpartition(":")[2]
++        return {calls_done([step[0] for step in HANDLE_STEPS], number, edge)}
++    return {(0, 0), (1, 0)} if point.id[:2] in ("r4", "r5") else {(0, 0)}
++
++
+ def _after_tick(row: str | None) -> tuple[str, str | None] | None:
+     """(state, reason) after restart and tick: a cut-off run goes to a person, a final one stays."""
+     if row is None:
+@@ -318,6 +336,39 @@ def test_the_table_covers_every_wrapped_call_once():
+     assert all(p.ack == (None,) for p in POINTS if p.row == (None,) or p.thread == "request")
+ 
+ 
++def test_reserves_is_what_the_loop_really_does(tmp_path):
++    """RESERVES picks the crash table. One full request through the real loop (memory store): the number of
++    `store.reserve_spend` calls must be 1 exactly when RESERVES is True, else 0. A table for the wrong booking
++    would otherwise run with crash points the child never reaches."""
++    seen: list[str] = []
++
++    class Spy:
++        def __init__(self, target):
++            self._target = target
++
++        def reserve_spend(self, *args, **kwargs):
++            seen.append("reserve_spend")
++            return self._target.reserve_spend(*args, **kwargs)
++
++        def __getattr__(self, attr):
++            return getattr(self._target, attr)
++
++    store = MemoryStore()
++    config_dir = k5_cfg(tmp_path / "w")
++    runtime, _cards = build_runtime(config_dir, CountingLLM(tmp_path / "calls", 0.0), store=store)
++    runtime.limits.store = Spy(store)
++    wsgi, runner = worker.make_app(make_trigger_app(runtime, store, ONE))
++    try:
++        status, data = _wsgi_post(wsgi, wire_body(KEY, DOCUMENT))
++        assert status in OK, (status, data)
++        assert _memory_settled(store, _run_id(SENDER, KEY)) == FINAL
++    finally:
++        runner.close()
++    assert seen == (["reserve_spend"] if RESERVES else []), (
++        f"RESERVES={RESERVES} but the loop made {len(seen)} reserve_spend call(s)"
++    )
++
++
+ # --- wiring shared by the child and the memory run ---------------------------------------------------
+ 
+ 
+@@ -443,6 +494,10 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
+         assert json.loads(ack_data)["run_id"] == run_id
+     assert row in point.row, rows
+     assert all(found[:4] == identity for found in rows)
++    money_kill = (0, 0)
++    if RESERVES:  # the money at the kill: one open hold between reserve and settle, none before, settled after
++        money_kill = assert_kill_state(*pg_money(dsn, run_id), money_at_kill(point), point.id)
++        assert row is not None or money_kill == (0, 0)  # no run row, no hold
+ 
+     expected = _after_tick(row)
+     with _matrix_child(tmp_path, dsn) as child:
+@@ -462,6 +517,8 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
+ 
+     end = _rows(dsn)
+     assert len(end) == 1 and end[0][:4] == identity and end[0][4] not in IN_PROGRESS
++    if RESERVES:  # an open hold stays open (no expiry step here); a retry never books a second hold
++        assert_end_state(*pg_money(dsn, run_id), money_kill, row, 1, point.id)
+     total = _calls(home / "calls")
+     _observe(
+         "postgres",
+@@ -586,6 +643,10 @@ def test_memory_raise_at_point(point: Point, tmp_path):
+         assert rows and rows[0][:4] == identity
+         assert json.loads(ack_data)["run_id"] == run_id
+     assert row in point.row, rows
++    money_kill = (0, 0)
++    if RESERVES:
++        money_kill = assert_kill_state(*memory_money(store, run_id), money_at_kill(point), point.id)
++        assert row is not None or money_kill == (0, 0)
+ 
+     expected = _after_tick(row)
+     runtime, _cards = build_runtime(config_dir, CountingLLM(calls_file, 0.0), store=store)
+@@ -608,6 +669,8 @@ def test_memory_raise_at_point(point: Point, tmp_path):
+ 
+     end = _memory_rows(store)
+     assert len(end) == 1 and end[0][:4] == identity and end[0][4] not in IN_PROGRESS
++    if RESERVES:
++        assert_end_state(*memory_money(store, run_id), money_kill, row, 1, point.id)
+     total = _calls(calls_file)
+     _observe(
+         "memory",
+diff --git a/tests/triggers/test_t5_crash_matrix_paths.py b/tests/triggers/test_t5_crash_matrix_paths.py
+index d83efc985..9d3dded3c 100644
+--- a/tests/triggers/test_t5_crash_matrix_paths.py
++++ b/tests/triggers/test_t5_crash_matrix_paths.py
+@@ -77,6 +77,13 @@ from tests.triggers.crash_launcher import (
+     signed_post,
+     wire_body,
+ )
++from tests.triggers.crash_money import (
++    assert_end_state,
++    assert_kill_state,
++    calls_done,
++    memory_money,
++    pg_money,
++)
+ from tests.triggers.test_t5_crash_matrix import (
+     FIRE_WAIT_S,
+     SECRET,  # the fake secret of part 1 (`_wsgi_post` signs with it)
+@@ -319,6 +326,29 @@ def _points(path: Path_) -> list[Point]:
+ ALL_POINTS: dict[str, list[Point]] = {name: _points(path) for name, path in PATHS.items()}
+ 
+ 
++# Money at the start of a path (RESERVES): `approve` starts from a whole propose run (two model calls, each
++# reserved and settled); the others start with nothing booked.
++MONEY_START: dict[str, tuple[int, int]] = {"approve": (2, 2)}
++
++
++def money_at_kill(point: Point) -> tuple[int, int]:
++    """(reservations booked, settled) at the kill, from the TABLE of the path (not from a run): a
++    `reserve_spend` / `settle_spend` row counts once its `:after` point is passed and not at its `:before`."""
++    start = MONEY_START.get(point.path, (0, 0))
++    number = int(point.id[len(point.path) : len(point.path) + 2])
++    reserved, settled = calls_done(
++        [row[0] for row in PATHS[point.path].rows], number, point.point.rpartition(":")[2]
++    )
++    return start[0] + reserved, start[1] + settled
++
++
++def money_full(path: str) -> int:
++    """Reservations of a whole run of the path: the start plus one per `reserve_spend` row."""
++    return MONEY_START.get(path, (0, 0))[0] + sum(
++        row[0] == "store.reserve_spend" for row in PATHS[path].rows
++    )
++
++
+ def after_tick(path: str, row: str | None, req: str | None) -> tuple[str, str | None] | None:
+     """(state, reason) after restart and tick, from the code of tick.py (STUCK, the orphan rule,
+     `reconcile`) and of `Runtime.execute`: what the table says the run is, the tick makes of it."""
+@@ -848,6 +878,9 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
+         len(files.executed()),
+     )
+     assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
++    if RESERVES:  # one open hold between reserve and settle, none before, settled after; open stays open
++        money_kill = assert_kill_state(*pg_money(dsn, run_id), {money_at_kill(point)}, point.id)
++        assert row is not None or money_kill == (0, 0)  # no run row, no hold
+     assert ack_status in ((None,) if row is None else (None, 202, 200)), (ack_status, ack_data)
+     if ack_status in OK:
+         assert rows and json.loads(ack_data)["run_id"] == run_id
+@@ -888,6 +921,8 @@ def test_pg_kill_at_point(point: Point, dsn, tmp_path):
+     want_cards = path.fresh_cards if row is None else point.cards + (req == "unsent")
+     seen = _check_invariants(files, point, row, calls_at_kill, state_after)
+     assert seen["cards"] == want_cards, (seen, want_cards)
++    if RESERVES:  # no second hold from the restart, the tick or the retry; the day total is the rows' sum
++        assert_end_state(*pg_money(dsn, run_id), money_kill, row, money_full(point.path), point.id)
+     _observe(
+         "postgres",
+         point,
+@@ -970,6 +1005,9 @@ def test_memory_raise_at_point(point: Point, tmp_path):
+         len(files.executed()),
+     )
+     assert at_kill == (point.row, point.llm, point.tool, point.req, point.cards, point.acts)
++    if RESERVES:
++        money_kill = assert_kill_state(*memory_money(store, run_id), {money_at_kill(point)}, point.id)
++        assert row is not None or money_kill == (0, 0)
+     if path.via == "worker":  # the request thread survives the loop thread and always answers
+         assert ack_status in ((503,) if row is None else (202, 200)), (ack_status, ack_data)
+ 
+@@ -1008,6 +1046,8 @@ def test_memory_raise_at_point(point: Point, tmp_path):
+     want_cards = path.fresh_cards if row is None else point.cards + (req == "unsent")
+     seen = _check_invariants(files, point, row, calls_at_kill, state_after)
+     assert seen["cards"] == want_cards, (seen, want_cards)
++    if RESERVES:
++        assert_end_state(*memory_money(store, run_id), money_kill, row, money_full(point.path), point.id)
+     _observe(
+         "memory",
+         point,
