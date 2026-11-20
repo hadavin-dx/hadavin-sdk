@@ -110,6 +110,7 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parents[1])
 )  # the repo root: tools.* is not installed
 
+from tests.mutation_exit import check_test_files, exit_guard
 from tools import mutation_runner
 from tools.mutation_runner import Mutant, run_mutants
 
@@ -127,6 +128,7 @@ T6 = "tests/triggers/test_d_fix6_e1.py"
 T8 = "tests/triggers/test_d_fix8_e1fix.py"
 T9 = "tests/triggers/test_d_fix9_e1fix2.py"
 T13 = "tests/triggers/test_d_fix13_single_write.py"
+T14 = "tests/triggers/test_d_fix14_single_write_edges.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -208,7 +210,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW, T6, T8, T9]
+TESTS = [TE, TC, TS, TP, TW, T6, T8, T9, T13, T14]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1291,6 +1293,16 @@ M = [
         "test_every_answer_is_one_write[202]",
         "AssertionError: [b'HTTP/1.0 202 Accepted",
     ),
+    # --- G35 d-fix14: a failing final send (not a gone client) is logged once, by class
+    mutant(
+        "G35 finish_response does not mark the headers as sent after a failing final send (handle_error builds a page from environ=None)",
+        SERVER,
+        "                    self.headers_sent = True\n",
+        "                    pass\n",
+        T14,
+        "test_a_timeout_on_the_final_send_is_logged_once_by_class_and_nothing_else",
+        "AssertionError: ['trigger server: application error: TimeoutError', 'trigger server: connection ended: TypeError']",
+    ),
 ]
 
 POSIX_ONLY = ("G12d", "G18c")  # their killers skip on win32 (SIGTERM is not delivered there)
@@ -1319,8 +1331,9 @@ def header():
     sys.stdout.flush()
 
 
-if __name__ == "__main__":
-    only = sys.argv[1:]
+def main():
+    argv = sys.argv[1:]
+    only = argv
     if only and not any(o in m.name for m in M for o in only):
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
@@ -1377,3 +1390,7 @@ if __name__ == "__main__":
         print(f"NOT RUN HERE (win32): {skipped}")
     print(f"{len(res) - len(bad)} of {len(res)} run are as expected; problems: {bad}")
     sys.exit(1 if bad else (3 if skipped else 0))
+
+
+if __name__ == "__main__":
+    sys.exit(exit_guard(main))
