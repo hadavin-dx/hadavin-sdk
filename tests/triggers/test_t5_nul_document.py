@@ -137,7 +137,9 @@ def _door(tmp_path, store, script: list[dict]) -> SimpleNamespace:
     cfg_dir = k5_cfg(tmp_path)
     llm = ScriptLLM(script)
     runtime, cards = build_runtime(cfg_dir, llm, store=store)
-    wsgi, runner = worker.make_app(make_trigger_app(runtime, store, {SENDER: SECRET}))
+    wsgi, runner = worker.make_app(
+        make_trigger_app(runtime, store, {SENDER: SECRET}, max_running=1)
+    )
     audit_dir = load_config(cfg_dir).backends.audit.dir
 
     def audit_events() -> list[dict]:
