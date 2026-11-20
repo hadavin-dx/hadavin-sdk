@@ -702,17 +702,17 @@
    "reason": "batch6 failures"
   },
   {
-   "id": "n8n-rev5",
-   "role": "fresh reviewer (design)",
+   "id": "n8n-fix5",
+   "role": "builder",
    "model": "sonnet",
-   "what exactly it is doing": "read-only review of the n8n pack after evidence-n8n-3: SEEN vs inferred, arithmetic at 70 s, stale numbers",
-   "started UTC": "09:03",
+   "what exactly it is doing": "n8n pack: 3 Majors and nits from the review after the real n8n run",
+   "started UTC": "09:04",
    "expected end": "about 15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "1 of 3 (new evidence round)",
+   "review round n of cap": "1 of 3 (fix)",
    "retries so far": 0,
-   "reason": "after n8n-fix4"
+   "reason": "after n8n-rev5"
   }
  ],
  "tests": [
@@ -2282,6 +2282,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "template at 70 s waits (45 rounds, 45 checks; about 52 min per loop), SEEN marks for the 3 behaviours with evidence-n8n-3 line cites (each ran once), restart loss as an operator step; 91 template tests pass; 70 s is inferred (only 60 and 120 were run)"
+  },
+  {
+   "id": "n8n-rev5",
+   "role": "fresh reviewer (design)",
+   "model": "sonnet",
+   "what exactly it is doing": "read-only review of the n8n pack after evidence-n8n-3: SEEN vs inferred, arithmetic at 70 s, stale numbers",
+   "started UTC": "09:03",
+   "expected end": "about 15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 of 3 (new evidence round)",
+   "retries so far": 0,
+   "reason": "0 Blocker; 3 Major (65 s threshold is a premise of the evidence not seen; 'Respond behaviours seen' too strong: only respondWith json seen; step 12 gives no way to tell nothing is in flight), nits (73 vs 82 s, arithmetic wording, stale comment, step order); arithmetic at 70 s recomputed correct (2280 s limit; min checks 18/33/54)"
   }
  ]
 }
