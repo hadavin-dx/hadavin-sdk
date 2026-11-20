@@ -17,14 +17,16 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   other look-alike spelling and a copy split by a zero-width character pass as written. EXCEPTION (code review round
   3, M2): for a value that is not ASCII the redactor also sweeps its folded (NFKC) spellings, so a full-width
   `TENANT` known as such is replaced, and so is the plain `TENANT`; each spelling is its own item and never cuts
-  the placeholder written for another.
-  T::test_t7_stated_limit_a_hidden_spelling_of_a_known_value_is_not_replaced_by_the_gate
+  the placeholder written for another. Since G13 (E19 M2) the net reads those forms: for a value of a SECRET kind the
+  call is then refused (`held_value_left`); an identifier in such a form passes as written.
+  T::test_t7_a_hidden_spelling_of_a_known_secret_refuses_the_call_an_identifier_passes
   T::test_r3_c_m2_stated_rule_the_sweep_also_replaces_the_folded_spelling_of_a_non_ascii_value
 - The replace is case-sensitive: a known host or e-mail address written in another letter case passes.
   T::test_d7_stated_limit_another_letter_case_of_a_known_value_is_not_replaced
-- A copy split by NUL characters (a UTF-16 document: the gate reads documents as UTF-8) or by an ANSI colour
-  sequence passes: the gate does not clean the text, the producers' redactor does.
-  T::test_d7_stated_limit_a_copy_split_by_nul_utf16_or_an_ansi_sequence_is_not_replaced
+- The gate does not clean the text it sends. A copy of a SECRET value split by NUL characters (a UTF-16 document: the
+  gate reads documents as UTF-8) refuses the call (G13: the net reads the text without NUL); a copy of an identifier split
+  so, and any copy split by an ANSI colour sequence, passes as written.
+  T::test_d7_a_copy_split_by_nul_or_utf16_refuses_the_call_an_ansi_split_copy_passes
   E::test_stated_limit_a_copy_split_by_nul_characters_is_not_found
 - A known value that itself holds a placeholder-shaped token is never replaced, and a known value written inside
   angle brackets so that it reads as a placeholder (`<ABC_1>`) is left by the sweep. For a value of a SECRET kind
@@ -45,7 +47,8 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   E::test_trap3_an_overlap_of_two_identifiers_is_masked_with_their_placeholders
 - A known value that begins with the tail of a placeholder (`>abc`) or ends with the head of one (`xyz<`) is
   replaced only where it stands clear of every placeholder: beside a placeholder written in the same call its
-  tail stays readable (`<SECRET_1>abc`), but the placeholder is never cut open.
+  tail stays readable (`<SECRET_1>abc`), but the placeholder is never cut open. For a SECRET value the net refuses
+  the call when 4 or more of its characters stand there (G13).
   E::test_e2_a_value_straddling_the_edge_of_a_placeholder_written_in_the_same_pass
 - In a map whose key is not a genuine placeholder (`<host_1>`) a placeholder can be damaged, with no raw value
   shown. E::test_m_new_2_stated_limit_a_map_key_that_is_not_a_genuine_placeholder_is_not_protected
@@ -57,7 +60,15 @@ sweep and follows its rule (`redact._sweep`); the full list with the reasons is 
   (4 or more characters) that still stands raw refuses the call. Only an exact KEY of the map hides a value: a
   forged `<AKIA...EXAMPLE_1>` does not. Each chunk is checked on its own, so a value that SPANS a chunk (a fixed
   framing word between: `password="tool read_logs"`) is cut by it and passes as written; checking it would also
-  refuse every value that merely lies inside a fixed word (`ESULT`).
+  refuse every value that merely lies inside a fixed word (`ESULT`). G13 (E19): the net also refuses (1) a piece of 4 or
+  more characters of a SECRET value that touches a key of the map and is the value's start (before the key) or end (after
+  it): `hunter2-<SECRET_2>`, and (2) a SECRET value found in a decoded form of the chunk (`runmap.held_in_views`: without
+  NUL, NFKC, invisible characters removed, JSON/percent/entity/backslash escapes undone, composed). NOT read: a piece from
+  the middle of a value between two keys, a piece one character away from a key, a piece shorter than 4, another letter
+  case, an ANSI-split copy, a base64-encoded copy (the producers' G4 step).
+  T::test_g13_10_a_secret_in_a_decoded_form_refuses_the_call
+  T::test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call
+  E::test_g13_4_boundaries_of_the_piece_rule
   T::test_r3_m3_a_secret_hidden_in_a_placeholder_shaped_token_that_is_not_a_key_refuses_the_call
   T::test_r3_m3_the_net_covers_every_secret_value_not_only_the_held_back_ones
   T::test_r3_n2_stated_limit_a_value_spanning_a_fixed_framing_word_is_not_replaced
@@ -756,7 +767,7 @@ class BoundGate:
         fixed = self._enforce(text, mapping)
         if not isinstance(fixed, str):
             return "", CODE_MASK_REFUSED
-        if runmap.held_value_left(fixed, mapping):
+        if runmap.held_value_left(fixed, mapping) or runmap.held_in_views(fixed, mapping):
             return "", CODE_HELD_LEFT
         return fixed, None
 

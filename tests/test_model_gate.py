@@ -400,13 +400,23 @@ HIDDEN = {
 
 
 @pytest.mark.parametrize("spelling", HIDDEN.values(), ids=HIDDEN.keys())
-def test_t7_stated_limit_a_hidden_spelling_of_a_known_value_is_not_replaced_by_the_gate(spelling):
-    """Only the spelling the map holds is replaced. Finding hidden spellings is the pattern redactor's work
-    (the producers call redact_text / redact_untrusted, which scan the decoded views)."""
+def test_t7_a_hidden_spelling_of_a_known_secret_refuses_the_call_an_identifier_passes(spelling):
+    """Only the spelling the map holds is replaced (finding hidden spellings is the pattern redactor's work). Since G13
+    (E19 M2) the net reads the decoded forms: a hidden spelling of a SECRET value refuses the call; a hidden spelling of an
+    identifier still passes as written (stated limit)."""
     doc = f"line {spelling} end".encode()
     bound, client, _, _ = build(mapping=known())
-    bound.chat(CLEAN, system="s", route="main", documents=[doc])
-    assert client.sent[0]["docs"][0] is doc
+    exc = gate_refusal(bound, documents=[doc])
+    assert exc.code == "held_value_left" and client.sent == [], (
+        "T7 a hidden secret spelling was sent"
+    )
+    host = "db1.corp.example.org"
+    wide = f"line {''.join(chr(ord(c) + 0xFEE0) for c in host)} end".encode()
+    bound, client, _, _ = build(mapping=runmap.RunMap({"<HOST_1>": host}))
+    bound.chat(CLEAN, system="s", route="main", documents=[wide])
+    assert client.sent[0]["docs"][0] is wide, (
+        "T7 a hidden identifier spelling was not sent as written"
+    )
 
 
 def test_a_second_copy_of_a_value_beside_its_placeholder_is_replaced():
@@ -1865,24 +1875,25 @@ def test_d7_stated_limit_another_letter_case_of_a_known_value_is_not_replaced():
     assert client.sent[1]["docs"] == [b"see <HOST_1>"]  # the spelling the map holds is replaced
 
 
-def test_d7_stated_limit_a_copy_split_by_nul_utf16_or_an_ansi_sequence_is_not_replaced():
-    """The gate does not clean the text: a NUL between characters, a UTF-16 document read as UTF-8, and an ANSI
-    colour sequence inside a copy pass as written. Whole copies beside them are replaced."""
+def test_d7_a_copy_split_by_nul_or_utf16_refuses_the_call_an_ansi_split_copy_passes():
+    """The gate does not clean the text it sends. Since G13 (E19 M2) its net reads the text without NUL: a secret split by
+    NUL, or in a UTF-16 document read as UTF-8, refuses the call. A copy split by an ANSI colour sequence still passes
+    as written (stated limit); a whole copy beside it is replaced."""
     mapping = runmap.RunMap({"<SECRET_1>": TOKEN, "<IPV4_1>": IP})
     nul = chr(0).join(TOKEN)
     ansi = TOKEN[:4] + "\x1b[31m" + TOKEN[4:]
     utf16 = f"key {TOKEN} at {IP}".encode("utf-16-le")
     assert TOKEN.encode() not in utf16
+    for messages, documents in (
+        ([{"role": "user", "content": f"a {nul} b"}], None),
+        (CLEAN, [utf16]),
+    ):
+        bound, client, _, _ = build(mapping=mapping)
+        exc = gate_refusal(bound, messages=messages, documents=documents)
+        assert exc.code == "held_value_left" and client.sent == [], "D7 a NUL-split secret was sent"
     bound, client, _, _ = build(mapping=mapping)
-    bound.chat(
-        [{"role": "user", "content": f"a {nul} b {ansi} c {TOKEN}"}],
-        system="s",
-        route="main",
-        documents=[utf16, f"{nul} {IP}".encode()],
-    )
-    assert client.sent[0]["messages"][0]["content"] == f"a {nul} b {ansi} c <SECRET_1>"
-    assert client.sent[0]["docs"][0] is utf16
-    assert client.sent[0]["docs"][1] == f"{nul} <IPV4_1>".encode()
+    bound.chat([{"role": "user", "content": f"b {ansi} c {TOKEN}"}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == f"b {ansi} c <SECRET_1>"
 
 
 def test_d7_role_extra_message_keys_and_output_schema_are_forwarded_untouched():
@@ -2507,8 +2518,10 @@ def test_r2_m2_safety_net_a_held_back_secret_value_left_raw_refuses_the_call():
     bound = gate.bind("agent-1", "run-1", mapping=mapping)
     exc = gate_refusal(bound, messages=[{"role": "user", "content": f"a{value_b}"}])
     assert exc.code == "held_value_left" and gate._llm.sent == []
-    # a copy that sits at the edge of a placeholder already in the text is not "raw"
-    bound.chat([{"role": "user", "content": "<SECRET_1>abcdef"}], system="s", route="main")
+    # since G13 (E19 M1) six of its seven characters beside a placeholder are a piece of it: refused; apart from it, sent
+    exc = gate_refusal(bound, messages=[{"role": "user", "content": "<SECRET_1>abcdef"}])
+    assert exc.code == "held_value_left", "R2-M2 the tail beside a placeholder was sent"
+    bound.chat([{"role": "user", "content": "<SECRET_1> abc"}], system="s", route="main")
 
 
 def test_r2_m3_one_budget_per_chat_call_and_a_cap_on_held_back_values(monkeypatch):
@@ -2865,3 +2878,71 @@ def test_r3_m4_an_enforce_function_other_than_the_default_is_marked_and_document
     )
     gate.bind("a", "r", mapping=known()).chat(CLEAN, system="s", route="main")
     assert sink.rows[0].decision == "map_enforced" and sink2.rows[0].decision == "enforce_custom"
+
+
+# --- G13 (E19 M2): the net also reads the decoded forms of every enforced chunk ------------------------------------------
+FULL_WIDTH = "".join(chr(ord(c) + 0xFEE0) for c in TOKEN)
+
+
+def _g13_outcome(bound, messages=CLEAN, documents=None) -> str:
+    """The refusal code of one call, or "sent" (the id of each G13 assertion stays on its failure line)."""
+    try:
+        bound.chat(messages, system="s", route="main", documents=documents)
+    except GateRefused as exc:
+        return exc.code
+    return "sent"
+
+
+G13_SPELLINGS = {
+    "utf-16-le document": ("doc", f"key {TOKEN} at x".encode("utf-16-le")),
+    "utf-16-le document with a BOM": ("doc", b"\xff\xfe" + f"key {TOKEN}".encode("utf-16-le")),
+    "nul-split message": ("msg", "a " + chr(0).join(TOKEN) + " b"),
+    "zero-width-space-split document": ("doc", f"k {TOKEN[:5]}\u200b{TOKEN[5:]} y".encode()),
+    "full-width document": ("doc", f"k {FULL_WIDTH} y".encode()),
+    "percent-encoded message": ("msg", "k " + "".join(f"%{ord(c):02X}" for c in TOKEN)),
+}
+
+
+@pytest.mark.parametrize("where,payload", G13_SPELLINGS.values(), ids=G13_SPELLINGS.keys())
+def test_g13_10_a_secret_in_a_decoded_form_refuses_the_call(where, payload):
+    """G13-10 (E19 M2): a known secret that reached the gate in a form a reader decodes (a document that bypassed every
+    producer) refuses the call with `held_value_left`; nothing is sent."""
+    bound, client, _, sink = build(mapping=runmap.RunMap({"<SECRET_1>": TOKEN, "<IPV4_1>": IP}))
+    messages = [{"role": "user", "content": payload}] if where == "msg" else CLEAN
+    code = _g13_outcome(bound, messages, [payload] if where == "doc" else None)
+    assert code == "held_value_left" and client.sent == [], "G13-10 a decoded secret was sent"
+    assert sink.codes() == [("refused", "held_value_left")], (
+        "G13-10 the row does not say held_value_left"
+    )
+
+
+def test_g13_11_a_document_with_decodable_forms_and_no_secret_is_sent_as_written():
+    """G13-11: non-ASCII letters, `%41`, `&amp;` and `\\u0041` with no known secret in any form: the caller's bytes are sent."""
+    doc = "ｈｅｌｌｏ wörld %41 &amp; \\u0041 <IPV4_1>".encode()
+    bound, client, _, _ = build(mapping=runmap.RunMap({"<SECRET_1>": TOKEN, "<IPV4_1>": IP}))
+    bound.chat(CLEAN, system="s", route="main", documents=[doc])
+    assert client.sent[0]["docs"][0] is doc, "G13-11 a clean document was changed or refused"
+
+
+def test_g13_12_a_long_document_is_read_in_windows_and_a_secret_on_a_window_edge_is_found():
+    """G13-12: a document over `runmap.VIEW_WINDOW` (the gate holds texts up to 8 x the redaction cap) is read in overlapping
+    windows; a full-width secret at every position around the first window edge is found, and the same document without it is sent."""
+    filler = "wörd " * (runmap.VIEW_WINDOW // 5 + 50)
+    edge = runmap.VIEW_WINDOW - (10 * len(TOKEN) + 16)
+    for at in (edge - len(TOKEN), edge - 3, edge, runmap.VIEW_WINDOW - 3):
+        doc = (filler[:at] + FULL_WIDTH + filler[at:]).encode()
+        bound, client, _, _ = build(mapping=runmap.RunMap({"<SECRET_1>": TOKEN}))
+        assert _g13_outcome(bound, documents=[doc]) == "held_value_left", f"G13-12 missed at {at}"
+    bound, client, _, _ = build(mapping=runmap.RunMap({"<SECRET_1>": TOKEN}))
+    bound.chat(CLEAN, system="s", route="main", documents=[filler.encode()])
+    assert client.sent, "G13-12 a long clean document was refused"
+
+
+def test_g13_13_m1_a_secret_prefix_beside_a_key_refuses_the_call():
+    """G13-13 (E19 M1 at the gate): `hunt` + a key of the map, `hunt` being the first 4 characters of a secret value."""
+    mapping = runmap.RunMap({"<SECRET_1>": "hunter2-" + "ABCDEFGH", "<IPV4_1>": IP})
+    bound, client, _, _ = build(mapping=mapping)
+    code = _g13_outcome(bound, [{"role": "user", "content": "x hunt<IPV4_1> y"}])
+    assert code == "held_value_left" and client.sent == [], (
+        "G13-13 the prefix beside a key was sent"
+    )
