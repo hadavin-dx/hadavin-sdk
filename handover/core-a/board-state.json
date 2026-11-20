@@ -789,19 +789,6 @@
    "reason": "EGM"
   },
   {
-   "id": "d-fix26",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "degraded start: a non-connectivity ConfigError is fatal (exit 2), ack_wait_s in check_fields, value checks before store",
-   "started UTC": "17:26",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "fix of round 2",
-   "retries so far": 0,
-   "reason": "EGM"
-  },
-  {
    "id": "rev-grantfix2-r5",
    "role": "reviewer",
    "model": "sonnet",
@@ -811,6 +798,32 @@
    "percent": 10,
    "state": "running",
    "review round n of cap": "5 of 5",
+   "retries so far": 0,
+   "reason": "EGM"
+  },
+  {
+   "id": "mutant-run-21",
+   "role": "evidence runner",
+   "model": "script",
+   "what exactly it is doing": "full endpoint_mutants.py on the d-fix26 tree (/tmp/mut-run21.log)",
+   "started UTC": "17:41",
+   "expected end": "35 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "worker.py changed"
+  },
+  {
+   "id": "rev-dfix26",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh round 3 of d-fix25+d-fix26 (worker.py)",
+   "started UTC": "17:41",
+   "expected end": "12 min",
+   "percent": 10,
+   "state": "running",
+   "review round n of cap": "3 of 5",
    "retries so far": 0,
    "reason": "EGM"
   }
@@ -1623,6 +1636,19 @@
    "review round n of cap": "4 of 5",
    "retries so far": 0,
    "reason": "round 4 CLEAN (6 nits); reviews/rev-grantfix2-r4.md; round 5 (cap) started"
+  },
+  {
+   "id": "d-fix26",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "degraded start: a non-connectivity ConfigError is fatal (exit 2), ack_wait_s in check_fields, value checks before store",
+   "started UTC": "17:26",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "fix of round 2",
+   "retries so far": 0,
+   "reason": "d-fix26: tests/triggers 1139 passed 314 skipped; new file 72 passed (40 red before); check_run_values shared; senders checked before build; fatal config error in degraded start exit 2; 4 earlier tests edited (wording/stubs)"
   }
  ]
 }
