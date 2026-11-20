@@ -1,202 +1,168 @@
 # G survey: P2d-1, P1d-a, P1c, check-only mask, `_Redactor`, G5 wording
 
-Read-only survey for plan step G (plan-v4-final.md:14). Work tree: branch `cloud/core-c`, HEAD 848be14.
-`git diff --quiet refs/inputs/main HEAD -- src/` exits 0: every `src/` line number below is the same on main (51c9fc4) and on HEAD.
-Every number comes from a git or grep command run on 2026-11-20. No test was run. Refs are under `refs/inputs/`.
+Read-only survey for plan step G (plan-v4-final.md:14). Branch `cloud/core-c`, HEAD 848be14. `git diff --quiet refs/inputs/main HEAD -- src/`
+exits 0, so every `src/` line number below is the same on main (51c9fc4) and on HEAD. Every number comes from a git or grep command run
+on 2026-11-20. No test was run. Refs are under `refs/inputs/`.
 
 ## 1. The two heads
 
-### 1.1 Position against main (51c9fc4)
-
-| head | SHA | behind / ahead of main | merge base with main | merge into main (`git merge-tree --write-tree`) |
+| head | SHA | behind / ahead of main | merge base | `git merge-tree --write-tree --name-only main <head>` |
 |---|---|---|---|---|
 | core/P2d-1 (PR #77) | 76adadb | 10 / 22 | 13ebfaf | exit 0, no conflict |
 | core/P1d-a | 6875f27 | 7 / 1 | 2742c1b | exit 0, no conflict |
-| core/P1a | 27ae996 | 8 / 19 | 0dabf1f | not run |
-| core/P1b | e3f946f | 8 / 26 | 0dabf1f | not run |
-| rebase/P1a | 8ca324e | 4 / 15 | a8b4d8e | not run |
-| rebase/P1b-o140 | 851ad92 | 4 / 26 | a8b4d8e | not run |
+| core/P1a / core/P1b | 27ae996 / e3f946f | 8 / 19 and 8 / 26 | 0dabf1f | not run |
+| rebase/P1a / rebase/P1b-o140 | 8ca324e / 851ad92 | 4 / 15 and 4 / 26 | a8b4d8e | not run |
 
-### 1.2 Does P2d-1 contain the P1a / P1b fold? No: it holds an OLD P1a and no P1b.
+### 1.1 Does P2d-1 contain the P1a / P1b fold? No: it holds an OLD P1a and no P1b.
 
-- `git merge-base --is-ancestor <x> core/P2d-1` is false for core/P1a, core/P1b, core/P1b-fixwip, rebase/P1a, rebase/P1b-o140 and core/P1d-a.
-- P2d-1 holds P1a only up to "P1a fix5 WIP" (5693d79) plus the merge 2572847 (merge base of P2d-1 with core/P1a and with core/P1b = 2572847).
-  Nine commits of core/P1a are missing from P2d-1, among them fix6 (ffd16e1, 2ff0afe), fix7 (bf955e9) and fix8 (c9fa644, 27ae996).
-- No P1b commit is in P2d-1 (no subject starting "P1b" in `main..core/P2d-1`; 22 commits: 10 are P2d-1's own, the rest P1a and merges).
-- P2d-1's own change (`git diff 2572847 core/P2d-1`): 14 files, 2,642 insertions, 43 deletions. The other about 16,900 inserted lines of
-  the 19,584 are the old P1a it carries.
-- Merging P2d-1 into the fold heads conflicts (merge-tree exit 1):
-  - into rebase/P1b-o140: 18 files, among them `guard/textnorm.py` (add/add), `guard/runmap.py`, `defaults.py`, CHANGELOG, 3 fixtures, 8 test files, `tools/gen_confusables.py`.
-  - into core/P1b and into core/P1a: 4 files each (CHANGELOG, `guard/textnorm.py`, `textnorm_manifest.json`, `tests/test_textnorm.py`).
-  - into rebase/P1a: 12 files.
+- `git merge-base --is-ancestor <x> core/P2d-1` is false for core/P1a, core/P1b, core/P1b-fixwip, rebase/P1a, rebase/P1b-o140, core/P1d-a.
+- P2d-1 holds P1a only up to "P1a fix5 WIP" (5693d79) and the merge 2572847 (its merge base with core/P1a and with core/P1b). Nine commits
+  of core/P1a are missing: fix6 (ffd16e1, 2ff0afe), fix7 (bf955e9), fix8 (c9fa644, 27ae996) and merges. No commit subject starts "P1b".
+- P2d-1's own change (`git diff 2572847 core/P2d-1`): 14 files, 2,642 insertions, 43 deletions. The rest of the 19,584 is the old P1a.
+- Merging P2d-1 into a fold head conflicts (exit 1): into rebase/P1b-o140 18 files (`guard/textnorm.py` add/add, `guard/runmap.py`,
+  `defaults.py`, CHANGELOG, 3 fixtures, 8 test files, `tools/gen_confusables.py`, others); into core/P1b and core/P1a 4 files each
+  (CHANGELOG, `guard/textnorm.py`, `textnorm_manifest.json`, `tests/test_textnorm.py`); into rebase/P1a 12 files.
 - API gap: P2d-1's `redact.py` imports `SPACING_CATEGORIES, fold, fold_view` and its `runmap.py` imports `without_spacing_marks` from
-  `guard/textnorm.py`. P2d-1 added those public names itself (62 inserted lines in textnorm.py: `fold_view` at 483, `without_spacing_marks`
-  at 502, `_SPACING_CATEGORIES` renamed to `SPACING_CATEGORIES` at 228). rebase/P1b-o140 has only `_without_spacing_marks` (576),
-  `fold_views` (798) and `_SPACING_CATEGORIES` (383). So P2d-1 does not run on the fold head until those 62 lines are ported.
-- "P2d-1 on": the plans use "on" as a state, not as "stacked on". inventory-gap.md:5 "P2d ON in v1 (not off)"; old-plan-v4-3.md:97
-  "ruling 2: P2d stays on in v1"; old-plan-v4-3.md:743 `plan-v4: P2d "off by default" (withdrawn by ruling 2)`. In the code there is no
-  switch: `_Redactor.find` (P2d-1 redact.py:1039) calls `_fold_scan` for every text that is not plain. Stacking on the fold is still
-  required in practice (step G lists the fold first), and it is a port, not a merge.
+  textnorm. P2d-1 added these public names itself (62 inserted lines). rebase/P1b-o140 has only `_without_spacing_marks` (576),
+  `fold_views` (798), `_SPACING_CATEGORIES` (383). P2d-1 cannot import on the fold head until those lines are ported.
+- "P2d-1 on" in the plans is a state, not "stacked on": inventory-gap.md:5 "P2d ON in v1 (not off)"; old-plan-v4-3.md:97 "ruling 2: P2d
+  stays on in v1"; old-plan-v4-3.md:743 `P2d "off by default" (withdrawn by ruling 2)`. The code has no switch: `_Redactor.find` (P2d-1
+  redact.py:1039) runs `_fold_scan` on every text that is not plain. Stacking on the fold is still needed, and it is a port, not a merge.
 
-### 1.3 P2d-1 numstat (main...core/P2d-1: 34 files, 19,584 insertions, 33 deletions)
+### 1.2 P2d-1 numstat (main...core/P2d-1: 34 files, 19,584 insertions, 33 deletions)
 
 | group | files | + | - | generated or hand-written |
 |---|---|---|---|---|
-| src | 5 | 2,155 | 30 | `_confusables.py` (871) GENERATED by `tools/gen_confusables.py` ("Do not edit"); `textnorm.py` (725), `redact.py` (+514 -17), `runmap.py` (+28 -9), `defaults.py` (+17 -4) hand-written |
-| tests | 16 | 5,340 | 1 | hand-written; `redact_mutants.py` (242) and `textnorm_mutants.py` (393) are mutant lists, not collected by pytest |
-| fixtures | 6 | 1,975 | 0 | data: `textnorm_corpus.json` (1,741), `textnorm_names.json` (182, hand-written lists per its note), `textnorm_golden.json` (27), `textnorm_vectors.json` (12), `textnorm_manifest.json` (9, sha256 pins), `third_party_notices.json` (4, sha256 pin) |
-| tools | 1 | 264 | 0 | `tools/gen_confusables.py` hand-written |
-| tool data | 1 | 9,638 | 0 | `tools/data/confusables.txt`: Unicode UTS #39 file, version 15.1.0, vendored unchanged (`-text` in .gitattributes) |
+| src | 5 | 2,155 | 30 | `_confusables.py` (871) GENERATED by `tools/gen_confusables.py` ("Do not edit"); hand-written: `textnorm.py` (725), `redact.py` (+514 -17), `runmap.py` (+28 -9), `defaults.py` (+17 -4) |
+| tests | 16 | 5,340 | 1 | hand-written; `redact_mutants.py` (242) and `textnorm_mutants.py` (393) are mutant lists |
+| fixtures | 6 | 1,975 | 0 | data: `textnorm_corpus.json` (1,741), `textnorm_names.json` (182, hand-written per its note), `textnorm_golden.json` (27), `textnorm_vectors.json` (12), `textnorm_manifest.json` (9, sha256 pins), `third_party_notices.json` (4) |
+| tools + data | 2 | 9,902 | 0 | `tools/gen_confusables.py` (264) hand-written; `tools/data/confusables.txt` (9,638) = Unicode UTS #39 file 15.1.0, vendored |
 | docs / config | 5 | 212 | 2 | CHANGELOG (+137), THIRD-PARTY-NOTICES (+63), README (+8), pyproject (+3 -1), .gitattributes (+1) |
 
-Against rebase/P1b-o140, of P2d-1's 34 files: 7 are byte-identical (`_confusables.py`, `confusables.txt`, README, 3 fixtures,
-`test_k5_round9.py`), 21 differ, 6 are absent there (the 5 `test_redact_*` files and `tests/redact_mutants.py`).
+Against rebase/P1b-o140, of these 34 files 7 are byte-identical (among them `_confusables.py`, `confusables.txt`), 21 differ, 6 are
+absent there (`tests/redact_mutants.py`, `test_redact_fold.py`, `_fold_budget`, `_fold_property`, `_fold_seams`, `test_redact_marks.py`).
 
-### 1.4 What P2d-1 changes in `src/hadavin_sdk` (line numbers are P2d-1's own files)
+### 1.3 What P2d-1 changes in `src/hadavin_sdk` (line numbers of P2d-1's own files)
 
-- `guard/redact.py`: a fold scan that runs BEFORE the pattern pass on any text with non-ASCII or hidden characters, so a value written
-  with look-alike letters is found in the folded spelling and masked in the written text.
-  - `redact(text, *, mapping=None, near=(), _sweep_copies=True, _cache=None, _deadline: float | None = None) -> RedactionResult` (872): new `_deadline`.
-  - `_Redactor.__init__(self, mapping, cache=None, deadline: float | None = None)` (999); class at 996 (890 on main).
-  - `find` (1039) calls `_fold_scan(self, text: str) -> str` (1093); helpers `_dry_hits` (1061), `_line_hits` (1074), `_aligned_fold` (1185),
-    `_mask_in_place` (1222), `_register_written(self, label, written) -> str` (1269), `_folded_line(self, line, only=None) -> str` (1284),
-    `_open_journal` (1350), `_rollback` (1355), `_withhold(self, views, line, eol="") -> str` (1367), `_decide` (1389), `_mask_ex` (1418).
-  - New constants: `MAX_FOLD_ROUNDS = 4` (903); `FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"` (904): a line that
-    cannot be masked in place within 4 rounds is replaced by this fixed text. New module functions `_char_class` (908), `_plain` (948),
-    `_mark_flags` (959), `_view_specs` (971), `_alias_keys` (989).
-- `guard/runmap.py`: `_views` adds a fourth view `canonical(without_spacing_marks(text))`; `_decoded_masks(current, text, deadline=None)`;
-  `redact_text` (479) measures CPU time of the thread (`time.thread_time()`) instead of the wall clock and passes one deadline to `redact`.
-  The map write moves to 543-544. Signature of `redact_text` unchanged.
+Plain words: before the pattern pass, a text with non-ASCII or hidden characters is scanned in its folded spelling, so a value written
+with look-alike letters is found and masked in the written text; a line that cannot be masked in place is withheld.
+- `guard/redact.py`: `redact(text, *, mapping=None, near=(), _sweep_copies=True, _cache=None, _deadline: float | None = None) -> RedactionResult`
+  (872, new `_deadline`); `class _Redactor` at 996, `__init__(self, mapping, cache=None, deadline: float | None = None)` (999); `find` (1039)
+  calls `_fold_scan(self, text: str) -> str` (1093); new methods `_dry_hits` (1061), `_line_hits` (1074), `_aligned_fold` (1185),
+  `_mask_in_place` (1222), `_register_written(self, label, written) -> str` (1269), `_folded_line(self, line, only=None) -> str` (1284),
+  `_open_journal` (1350), `_rollback` (1355), `_withhold(self, views, line, eol="") -> str` (1367), `_decide` (1389), `_mask_ex` (1418);
+  `MAX_FOLD_ROUNDS = 4` (903); `FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"` (904).
+- `guard/runmap.py`: `_views` gets a fourth view `canonical(without_spacing_marks(text))`; `_decoded_masks(current, text, deadline=None)`;
+  `redact_text` (479, signature unchanged) counts CPU time (`time.thread_time()`), not the wall clock; the map write moves to 543-544.
 - `guard/textnorm.py`: `fold_view(raw, *, marks_dropped=False, iota=True, casefold=False, collapse_ws=False) -> str` (483),
-  `without_spacing_marks(raw: str) -> str` (502), `SPACING_CATEGORIES` public (228), a weight memo.
-- `defaults.py`: comment of `REDACT_BUDGET_S = 6.0` rewritten (CPU seconds, where it is and is not checked); `TEXTNORM_MAX_CHARS`,
-  `TEXTNORM_PINNED_UNIDATA = "15.1.0"` (from P1a).
+  `without_spacing_marks(raw: str) -> str` (502), `SPACING_CATEGORIES` (228). `defaults.py`: `REDACT_BUDGET_S = 6.0` comment rewritten.
 
-### 1.5 P1d-a numstat (main...core/P1d-a: 11 files, 1,748 insertions, 36 deletions; one commit)
+### 1.4 P1d-a numstat (main...core/P1d-a: 11 files, 1,748 insertions, 36 deletions; one commit)
 
 | group | files | + | - | generated or hand-written |
 |---|---|---|---|---|
 | src | 4 | 96 | 35 | hand-written: `approvals/gate.py` (+62 -21), `guard/redact.py` (+25 -6), `approvals/channel.py` (+5 -5), `approvals/slack_channel.py` (+4 -3) |
 | tests | 2 | 404 | 0 | `test_p1d_a_rows.py` (148), `p1d_a_mutants.py` (256, mutant list) |
-| fixtures | 3 | 823 | 0 | `p1d_cases.py` (705, hand-written case code; fake secrets "built from parts" per its docstring, nothing copied here); `p1d_a_base_rows.json` (94) and `p1d_a_gate_base.json` (24) are GENERATED by `tools/p1d_corpus.py` (`--rows`, `--freeze-gate`) |
-| tools | 1 | 423 | 0 | `tools/p1d_corpus.py` hand-written |
-| docs | 1 | 2 | 1 | CHANGELOG |
+| fixtures | 3 | 823 | 0 | `p1d_cases.py` (705, hand-written; fake secrets "built from parts" per its docstring, nothing copied here); `p1d_a_base_rows.json` (94) and `p1d_a_gate_base.json` (24) GENERATED by `tools/p1d_corpus.py` (`--rows`, `--freeze-gate`) |
+| tools / docs | 2 | 425 | 1 | `tools/p1d_corpus.py` (423) hand-written; CHANGELOG (+2 -1) |
 
-Other merges of P1d-a: into rebase/P1b-o140 exit 0 (clean); into core/P2d-1 exit 1 with ONE conflict, CHANGELOG.md (`guard/redact.py` auto-merges).
+Other merges: P1d-a into rebase/P1b-o140 exit 0; into core/P2d-1 exit 1 with ONE conflict, CHANGELOG.md (`guard/redact.py` auto-merges).
 
-### 1.6 What P1d-a changes in `src/hadavin_sdk` (line numbers are P1d-a's own files)
+### 1.5 What P1d-a changes in `src/hadavin_sdk` (line numbers of P1d-a's own files)
 
-Plain words: approval cards used to write `[.]` into addresses BEFORE the redactor ran, so e-mail addresses and internal host names
-were shown defanged but unmasked. Now the redactor runs first and `[.]` is written last. Three redactor pattern fixes ride along.
-
-- `approvals/gate.py`: `sanitise_text(text: str, *, defang: bool = True) -> str` (353; was `sanitise_text(text)`);
-  new `defang_text(text: str) -> str` (269) and `undefang_text(text: str) -> str` (274, undoes the old `[.]` in stored requests);
-  helpers `_defang_plain` (237), `_defang_prose` (241), `_per_part` (250), `_outside_code` (261); `_clean_line(line, defang)` (279),
-  `_clean_prose(lines, defang)` (305), `_all_prose(lines, defang)` (349); regexes `_PLACEHOLDER_DOT` (232), `_LEGACY_DOT` (234).
-- `approvals/channel.py`: `clean` returns `defang_text(...)` (38, 39); `_neutralise` calls `sanitise_text(text, defang=False)` (48).
-- `approvals/slack_channel.py`: `withhold_commands(undefang_text(req.summary))` (75); `defang_text(runmap.redact_text(...))` (82).
-- `guard/redact.py` SECRET pattern: key prefix unbounded (`[\w.\-]*`, was `{0,40}`; 598, comment 614); `&` and `&amp;` are part of a
-  value in the plain form; a second SECRET pattern for the query form (key right after `?`, `&` or `&amp;`; 622) where `&` ends the
-  value only before a `name=value` segment. `_Redactor` moves to 909. `runmap.py` is NOT touched (464, 524-525, 568, 601, 607, 617 unchanged).
-- P1d-a is the "a" part only; inventory-gap.md:13 lists "P1d rest" as NOT STARTED.
+Plain words: approval cards wrote `[.]` into addresses BEFORE the redactor ran, so e-mail addresses and internal host names were shown
+defanged but unmasked. Now the redactor runs first and `[.]` is written last. Three fixes to the SECRET pattern ride along.
+- `approvals/gate.py`: `sanitise_text(text: str, *, defang: bool = True) -> str` (353); new `defang_text(text: str) -> str` (269) and
+  `undefang_text(text: str) -> str` (274, for requests stored before the change); helpers `_defang_plain` (237), `_defang_prose` (241),
+  `_per_part` (250), `_outside_code` (261); `_clean_line(line, defang)` (279), `_clean_prose(lines, defang)` (305), `_all_prose` (349).
+- `approvals/channel.py`: `clean` returns `defang_text(...)` (38, 39); `_neutralise` uses `sanitise_text(text, defang=False)` (48).
+  `approvals/slack_channel.py`: `withhold_commands(undefang_text(req.summary))` (75), `defang_text(runmap.redact_text(...))` (82).
+- `guard/redact.py`: key prefix unbounded (598; was `{0,40}`); `&` and `&amp;` belong to a value in the plain form; a second SECRET
+  pattern for the query form (622) where `&` ends the value only before `name=value`. `_Redactor` moves to 909. `runmap.py` not touched.
+- This is part "a" only; inventory-gap.md:13 lists "P1d rest" as NOT STARTED.
 
 ## 2. P1c ("redactor gaps")
-
-What the plans say (exact quotes):
 
 - plan-v4-final.md:40: "P1c redactor gaps". Row G (plan-v4-final.md:14) only names it: "P1a+P1b fold (one head), P1c, P2d-1 on, P1d-a".
 - old-plan-v4-3.md:194: "| P1c | redactor gaps found by the library comparison: base64 decoded view, whole internal host names, the
   bare number as a decided property, a permanent corpus test | order 64; `tickets/P1c.md:1` (revision 7, FROZEN) [AUTHOR] |"
 - old-plan-v4-3.md:377: "TICKET FROZEN (revision 7), NOT STARTED; after P1b merges (order 70 item 1)" and "order 64: our chokepoint
   misses 6 of 30 hostile inputs; P1c closes the 3 base64 ones and the 2 partial host names and pins the bare number as a decided property".
-- old-plan-v4-3.md:547: "(3-5) three base64-encoded values (hostile rows 25-27): closed by P1c's decoded view"; "the sixth miss is
-  hostile row 6, \"ref 55556666 paid\", a bare number with no context**: NOT masked by decision (order 64 item 4, an accepted property)";
-  "The two PARTIAL must-mask lines (host names keeping \".example\") are closed by P1c's whole-host-name rule."
-- old-plan-v4-3.md:546: "The runner is P1c's permanent corpus test (order 64 item 5; `tickets/P1c.md:57`): the corpus copied into the repo
-  as data with the span-level rule of `score_common.py`; known misses are strict xfail with their owner ticket. The accepted property is
-  written in `guard/redact.py`'s module docstring and pinned by `test_redactor_accepted_properties.py` and
+- old-plan-v4-3.md:547: "(3-5) three base64-encoded values (hostile rows 25-27): closed by P1c's decoded view"; "hostile row 6, \"ref
+  55556666 paid\", a bare number with no context**: NOT masked by decision (order 64 item 4, an accepted property)"; "The two PARTIAL
+  must-mask lines (host names keeping \".example\") are closed by P1c's whole-host-name rule."
+- old-plan-v4-3.md:546: "The runner is P1c's permanent corpus test (order 64 item 5; `tickets/P1c.md:57`): the corpus copied into the
+  repo as data with the span-level rule of `score_common.py`; known misses are strict xfail with their owner ticket. The accepted property
+  is written in `guard/redact.py`'s module docstring and pinned by `test_redactor_accepted_properties.py` and
   `test_accepted_property_bare_number_not_masked_order64_item4`".
-- old-plan-v4-1.md:58: "redactor gaps from the library comparison (base64 view, internal host names)"; inventory-gap.md:13: "NOT STARTED: P1c, ...";
-  inventory-gap.md:26 order: "#63+#70 -> P1c -> #77 -> P1d".
-- One more item on a fetched ref, rebase/P1b-o140 `tests/test_textnorm_siblings.py:8`: "The look-alike placeholder marker belongs to P1c."
+- old-plan-v4-1.md:58: "redactor gaps from the library comparison (base64 view, internal host names)". inventory-gap.md:13: "NOT STARTED:
+  P1c, ...". inventory-gap.md:26 order: "#63+#70 -> P1c -> #77 -> P1d".
+- On a fetched ref, rebase/P1b-o140 `tests/test_textnorm_siblings.py:8`: "The look-alike placeholder marker belongs to P1c."
 
-So the four named gaps are: (1) a base64 decoded view (3 hostile rows), (2) whole internal host names (2 partial lines), (3) the bare
-number written down and pinned as an accepted property, not masked, (4) a permanent corpus test (30 hostile inputs, 48 must-mask, 14
-must-keep lines). A possible fifth: the look-alike placeholder marker.
+The gaps by name: (1) a base64 decoded view (3 hostile rows); (2) whole internal host names (2 partial lines); (3) the bare number
+written down and pinned as an accepted property, NOT masked; (4) a permanent corpus test (30 hostile inputs, 48 must-mask and 14
+must-keep lines, old-plan-v4-3.md:546). Possible fifth: the look-alike placeholder marker.
 
-Code on fetched refs: NONE. No file named `*p1c*` on any of the 8 input refs; no commit subject with "P1c" (`git log --all --grep`);
-"P1c" occurs only in CHANGELOG.md and `tests/test_textnorm_siblings.py` of the P1b heads (as a pointer) and in `handover/`. No added
-`src/` line with base64 or b64decode in P2d-1, P1d-a or P1b-o140 (count 0 each). The ticket `tickets/P1c.md` (revision 7), the hostile
-corpus and `score_common.py` are not in this repository (`git ls-files` has no match): the 30-row corpus cannot be rebuilt from here.
+Code on fetched refs: NONE. No file named `*p1c*` on any of the 8 input refs; no commit subject with "P1c" (`git log --all --grep`); "P1c"
+occurs only in CHANGELOG.md and `tests/test_textnorm_siblings.py` of the P1b heads (a pointer) and in `handover/`. Added `src/` lines
+with base64 or b64decode in P2d-1, P1d-a, P1b-o140: 0 each. `tickets/P1c.md`, the hostile corpus and `score_common.py` are not in this
+repository (`git ls-files`: no match), so the 30-row corpus cannot be rebuilt from here.
 
 ## 3. The check-only mask function
 
-Cited lines on the current branch (`src/hadavin_sdk/guard/runmap.py`):
+Cited lines in `src/hadavin_sdk/guard/runmap.py` on the current branch: 464 `def redact_text(text: str, mapping: dict[str, str], neutralise:
+Callable[[str], str] | None = None) -> str` VERIFIED; 524-525 `mapping.clear()` / `mapping.update(current)` VERIFIED; 568 `redact_value(value:
+Any, mapping: dict[str, str]) -> Any` VERIFIED; 601 `restore_text(text: str, mapping: dict[str, str], kinds: frozenset[str] | None = None) ->
+str` VERIFIED; 607 `restore_value(value: Any, mapping, kinds=None) -> Any` VERIFIED; 617 `has_placeholder(value: Any) -> bool` VERIFIED.
+The numbers DIFFER on the heads: rebase/P1b-o140 has `redact_text` at 489, the map write at 549-550, restore at 626 / 632, `has_placeholder`
+at 642; core/P2d-1 has 479, 543-544, 620 / 626, 636. core/P1d-a keeps main's numbers. A ticket must cite the head it builds on.
 
-| citation | found | verdict |
-|---|---|---|
-| 464 | `def redact_text(text: str, mapping: dict[str, str], neutralise: Callable[[str], str] \| None = None) -> str:` | VERIFIED |
-| 524-525 | `mapping.clear()` / `mapping.update(current)` | VERIFIED |
-| 568 | `def redact_value(value: Any, mapping: dict[str, str]) -> Any:` | VERIFIED |
-| 601 | `def restore_text(text: str, mapping: dict[str, str], kinds: frozenset[str] \| None = None) -> str:` | VERIFIED |
-| 607 | `def restore_value(value: Any, mapping: dict[str, str], kinds: frozenset[str] \| None = None) -> Any:` | VERIFIED |
-| 617 | `def has_placeholder(value: Any) -> bool:` | VERIFIED |
-
-After the fold the numbers move: on rebase/P1b-o140 `redact_text` is at 489 and the map write at 549-550; on core/P2d-1 479 and 543-544;
-restore functions 626/632 and 620/626. The ticket must cite the head it is built on.
-
-What `redact_text` does to the map: the whole work (485-523) runs on copies. `redact()` copies the map (`self.mapping = dict(mapping or {})`,
-redact.py:897) and returns a new one; the loop over views keeps the newest in the local `current`. Only after everything succeeded do
-lines 524-525 empty the caller's dict in place and fill it from `current`. So: on success the caller's map ALWAYS becomes `current` (same
-object, new content, new placeholders for every value found); on any exception (520-523) the map is untouched. There is no argument to
-turn the write off.
+What `redact_text` does to the map: all work (485-523) runs on copies. `redact()` copies the map (`self.mapping = dict(mapping or {})`,
+redact.py:897) and returns a new one; the loop over views keeps the newest in the local `current` (518). After success, 524-525 empty the
+caller's dict in place and refill it from `current`: same object, with a new placeholder for every value found. On an exception (520-523)
+the map is untouched. No argument turns the write off.
 
 A check-only variant MUST:
-- run the same reading as `redact_text` (cap `_within_cap`, `_clean`, `fits_after_nfkc`, `_views`, `_decoded_masks`, `_keep_earlier_masks`,
-  the budget, and after P2d-1 the fold scan), with the caller's map as the starting map, so a value already in the map still counts as known;
-- fail closed: `InputTooLarge`, `TooDeep`, `RedactionError` mean "not clean", never "clean";
-- report unmasked content by the rule of line 517: the map would grow (`current != mapping`) OR the result holds more placeholders than
-  the input (`_held(out) > _held(text)`). Map growth alone is not enough: `sweep` masks a further copy of an already-known value without
-  adding a map entry.
+- read the text exactly as `redact_text` does (`_within_cap`, `_clean`, `fits_after_nfkc`, `_views`, `_decoded_masks`, `_keep_earlier_masks`,
+  the budget, and after P2d-1 the fold scan), starting from the caller's map so a value already in it counts as known;
+- fail closed: `InputTooLarge`, `TooDeep`, `RedactionError` mean "not clean";
+- decide by the rule of line 517: the map would grow (`current != mapping`) OR the result holds more placeholders than the input
+  (`_held`, 417). Map growth alone misses a further copy of a known value, which `sweep` masks without a new map entry.
 
 It MUST NOT:
-- execute lines 524-525 or write the caller's map in any other way (plan-v3.md:37: "it never creates a new map"; ORDERS.md:47);
-- return or log the masked text, the found values or the would-be map (a verdict, and at most the kinds, is enough);
-- compare `out != text` as the test: `_clean`, NFKC, `strip_ansi` and `neutralise` change text without masking anything;
-- OPEN: pass `mapping.redact_cache`. `_Redactor._build` writes `cache["map"]` and `cache["state"]` (redact.py:1007-1009), i.e. the would-be
-  map with new originals is kept on the `RunMap` object. It is harmless for results (the cache is used only when `cache["map"] == mapping`,
-  redact.py:915) but it is a write to the caller's object; passing `_cache=None` avoids it at the cost of a rebuild per call.
+- run 524-525 or write the caller's map in any way (plan-v3.md:37: the mask step "never creates a new map"; ORDERS.md:47);
+- return or log the masked text, the found values or the would-be map (a verdict, at most the kinds);
+- use `out != text` as the test: `_clean`, NFKC, `strip_ansi` and `neutralise` change text without masking anything.
+- OPEN: `mapping.redact_cache`. `_Redactor._build` writes `cache["map"]` and `cache["state"]` (redact.py:1007-1009), so the would-be map
+  stays on the `RunMap` object. Results are not affected (the cache is used only when `cache["map"] == mapping`, redact.py:915), but it is a
+  write to the caller's object; `_cache=None` avoids it at the cost of one rebuild per call.
 
-Existing functions that check without mutating: none does this job.
-- `runmap.has_placeholder` (runmap.py:617): pure, but it only looks for `<KIND_n>`; it says nothing about unmasked values.
-- `runmap.storable_original` (runmap.py:244): checks ONE stored original against `_SECRET_PATTERNS` (235); no map write (a digest cache only).
-- `redact.redact` (redact.py:862): does not write the caller's map (copy at 897), but it returns the masked text and map, runs no decoded
-  views, has no cap and writes `_cache`; runmap.py:483-484 says no bare `redact()` call may exist outside runmap.
-- Callers that pass a throw-away `{}` (judge.py:71, bedrock_guardrail.py:98, evals.py:63, tools.py:1005) redact; they do not check.
-- WARDEN's check (`leaked_kinds`, `data_leaks`) is listed as "Not ported" at approvals/gate.py:5-7.
+Existing functions that check without mutating: none does this job. `runmap.has_placeholder` (runmap.py:617) is pure but only finds
+`<KIND_n>`. `runmap.storable_original` (runmap.py:244) checks ONE stored original against `_SECRET_PATTERNS` (235). `redact.redact`
+(redact.py:862) leaves the caller's map alone (copy at 897) but returns the masked text and map, runs no decoded views, has no cap, and
+runmap.py:483-484 forbids a bare `redact()` outside runmap. Callers that pass a throw-away `{}` (judge.py:71, bedrock_guardrail.py:98,
+evals.py:63, tools.py:1005) redact, they do not check. WARDEN's check (`leaked_kinds`, `data_leaks`) is "Not ported" (approvals/gate.py:5-7).
 
 ## 4. `_Redactor` and the restore functions: what exists
 
-- `class _Redactor` at guard/redact.py:890: VERIFIED (996 on P2d-1, 909 on P1d-a). Private, one per `redact()` call. `__init__(self, mapping,
-  cache=None)` (893), `find` (919), `_mask` (925), `_place` (958), `_build` (973), `sweep` (1011). The only pattern source is the module
-  list `PATTERNS: list[tuple[str, re.Pattern[str]]]` (153). Public entries: `redact` (862), `redact_many` (1246), `RedactionResult` (842)
-  with `.restore(text)` (855, restores EVERY kind, no caller in `src/`).
+- `class _Redactor` at guard/redact.py:890 VERIFIED (996 on P2d-1, 909 on P1d-a). Private, one per `redact()` call: `__init__(self, mapping,
+  cache=None)` (893), `find` (919), `_mask` (925), `_place` (958), `_build` (973), `sweep` (1011). Its only pattern source is the module
+  list `PATTERNS: list[tuple[str, re.Pattern[str]]]` (153). Public: `redact` (862), `redact_many` (1246), `RedactionResult` (842).
 - Put-back exists: `restore_text` (601) restores only `storable(mapping, kinds)` (265: kinds in `STORED_KINDS` whose original fits its
-  grammar and holds no secret-shaped text), one pass; `restore_value` (607) walks dict and list; `has_placeholder` (617) reports what is
-  left. Callers: runtime/agent_loop.py:295, 306, 832; tools.py:1178-1179; actions/authorizer.py:39.
-- Kind registry: there IS one, `backends/table.py` `TABLE: dict[str, dict[str, Entry]]` (386), built through `backends/factory.py` `make`
-  (29, `TABLE[capability][settings.kind]` at 36). Capabilities today (table.py:570-578): secrets, signer, anchor, store, audit, llm,
-  detector, channel. There is NO redactor capability: `grep -i redact` in `backends/` gives one comment line (table.py:119), and
-  `registry.py` has no redactor entry. The redactor is imported directly (`runmap.py:25`), not built from config.
-- Delta statement: "pattern redactor kind" = a new `redactor` capability in `TABLE` with one kind that wraps what `runmap.redact_text`
-  already does. Nothing in step G needs a second backend (Presidio was reduced to an outline in plan-v2.md:18), and table.py is not a
-  TEXT file (plan-v2.md:29 gives `backends/table.py` to SPINE). "Put-back" = no delta found: 601 and 607 already do it and
-  plan-v4-final.md:18 freezes them. By the rule of row G ("only as a named delta ..., else cut") both read as CUT unless the lead names
-  a delta. review-plan-3-zoom-out.md:16 says the same: "redactor kind and put-back unproven against existing code".
+  grammar and holds no secret-shaped text), in one pass; `restore_value` (607) walks dict and list; `has_placeholder` (617) reports what
+  is left. Callers: runtime/agent_loop.py:295, 306, 832; tools.py:1178-1179; actions/authorizer.py:39.
+- Kind registry: yes, `backends/table.py` `TABLE: dict[str, dict[str, Entry]]` (386), built by `backends/factory.py` `make` (29;
+  `TABLE[capability][settings.kind]` at 36). Capabilities (table.py:570-578): secrets, signer, anchor, store, audit, llm, detector,
+  channel. NO redactor capability: `grep -i redact` in `backends/` gives one comment (table.py:119); `registry.py` has none. The
+  redactor is imported directly (runmap.py:25), not built from config.
+- Delta: "pattern redactor kind" would be a new `redactor` capability in `TABLE` with one kind wrapping `runmap.redact_text`; no second
+  backend is in step G, and `backends/table.py` belongs to SPINE (plan-v2.md:29). "Put-back": no delta found; 601 and 607 do it and
+  plan-v4-final.md:18 freezes them. By row G ("only as a named delta ..., else cut") both read as CUT unless the lead names a delta;
+  review-plan-3-zoom-out.md:16: "redactor kind and put-back unproven against existing code".
 
 ## 5. G5 wording
 
-approvals/gate.py lines 38-66, exact (line 66 is blank):
+approvals/gate.py lines 38-66, exact (65 closes the docstring, 66 is blank):
 
 ```
     the fences differ from the ones it kept, everything is cleaned as prose;
@@ -229,7 +195,7 @@ P13 in the verifier; the report says when it fired.
 """
 ```
 
-guard/redact.py lines 10-20, exact (line 20 is blank):
+guard/redact.py lines 10-20, exact (19 closes the docstring, 20 is blank):
 
 ```
 Every string is scrubbed before it can reach the model. Patterns FIND values; a final sweep then masks
@@ -244,43 +210,33 @@ it was removed - second review, 2026-09-30.)
 """
 ```
 
-Citations: gate.py:42-44, 59, 63 VERIFIED; redact.py:16 VERIFIED (the sentence runs 15-17, as review-plan-1-codebase.md:26 says). The
-same line numbers hold on core/P2d-1, rebase/P1b-o140 and core/P1d-a (grep "G5": 42, 59, 63 on all three).
+Citations gate.py:42-44, 59, 63 VERIFIED; redact.py:16 VERIFIED (the sentence runs 15-17). "G5" is at gate.py 42, 59, 63 on core/P2d-1,
+rebase/P1b-o140 and core/P1d-a too. Facts: no `def` of `enforce`, `for_terminal`, `outbound_data`, `hedge` or `leaked_kinds` exists in
+`src/` (grep: no hit); gate.py:5-7 already says "Not ported (WARDEN outbound policy): enforce, hedge,
+leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal, outbound_data, sanitise_data, GateResult." Equally stale in the
+same block: gate.py:46-50 (G2 `hedge`) and 58-61.
 
-Facts behind the wording: no `enforce`, `for_terminal`, `outbound_data`, `hedge` or `leaked_kinds` is defined anywhere in `src/` (grep for
-`def` of each: no hit). gate.py:5-7 already says "Not ported (WARDEN outbound policy): enforce, hedge,
-leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal, outbound_data, sanitise_data, GateResult." The lines quoted above
-are the copied WARDEN notes that follow that header. Also stale in the same block: gate.py:46-50 (G2 `hedge`) and 58-61 ("Every way out").
-
-What the plans require the wording to say:
-- The fault is named: inventory-gap.md:20 "G5: `approvals/gate.py:42` and `guard/redact.py:16` promise a second leak check that has no
-  code (lead dropped it, ORDER 009, text not reworded)."
-- Place and owner are named: review-plan-3-codebase.md:18 "G5 text is in approvals\gate.py:42-44, 59, 63 and guard\redact.py:16; one
-  owner"; plan-v4-final.md:14 "(owner TEXT)".
-- The replacement text itself: plan is silent. Nearest normative sentence, usable as the bound of any new claim, plan-v4-final.md:31:
-  "every document and message passes the pattern redactor and a mask failure means no call; this is not \"nothing secret can reach a
-  model\" (patterns catch the named kinds only; operator prompts and tool schemas are not masked; text sent to tools and sources is out of scope)."
+What the plans require:
+- The fault: inventory-gap.md:20 "G5: `approvals/gate.py:42` and `guard/redact.py:16` promise a second leak check that has no code (lead
+  dropped it, ORDER 009, text not reworded)."
+- Place and owner: review-plan-3-codebase.md:18 "G5 text is in approvals\gate.py:42-44, 59, 63 and guard\redact.py:16; one owner";
+  plan-v4-final.md:14 "(owner TEXT)".
+- The replacement text: plan is silent. The nearest sentence that bounds any new claim is plan-v4-final.md:31: "every document and
+  message passes the pattern redactor and a mask failure means no call; this is not \"nothing secret can reach a model\" (patterns catch
+  the named kinds only; operator prompts and tool schemas are not masked; text sent to tools and sources is out of scope)."
 
 ## 6. Open questions and NOT CHECKED
 
-Open questions for the lead:
-1. P1c has no branch, no ticket file and no corpus in this repository. Build from the four gaps of old-plan-v4-3.md:194 alone, or will
-   `tickets/P1c.md` revision 7 and the 30/48/14 corpus be supplied? Is "the look-alike placeholder marker" part of it?
-2. Which fold head is "one head": rebase/P1b-o140 (851ad92, 4 behind main) or core/P1b (e3f946f, 8 behind)? Its commit 2a7e169 is titled
-   "WIP snapshot, UNVERIFIED".
-3. P2d-1 sits on P1a fix5 and needs `fold_view`, `without_spacing_marks`, `SPACING_CATEGORIES` in textnorm: port P2d-1's 14 own files
-   (2,642 lines) onto the fold head, or merge and resolve 18 conflicts?
-4. Order of P1d-a and P2d-1: both edit `guard/redact.py` (auto-merge reported, CHANGELOG conflicts). Not tested together.
-5. Check-only function: name, return type (bool, or kinds found), and whether it may touch `RunMap.redact_cache`.
+1. P1c has no branch, ticket file or corpus here. Build from the four gaps of old-plan-v4-3.md:194 alone, or will `tickets/P1c.md`
+   revision 7 and the corpus be supplied? Is the look-alike placeholder marker part of it?
+2. Which fold head is the "one head": rebase/P1b-o140 (4 behind main; its commit 2a7e169 is titled "WIP snapshot, UNVERIFIED") or core/P1b?
+3. P2d-1: port its 14 own files (2,642 lines, plus the three textnorm names) onto the fold head, or merge and resolve 18 conflicts?
+4. P1d-a and P2d-1 both edit `guard/redact.py`; git reports an auto-merge, the result was not tested.
+5. Check-only function: name, return type (bool or kinds found), and whether it may touch `RunMap.redact_cache`.
 6. "Pattern redactor kind" and "put-back": cut (section 4), or does the lead name a delta?
-7. G5: delete the stale WARDEN notes (gate.py:42-44, 46-50, 58-63; redact.py:16-17) or rewrite them as "not ported"? Does the check-only
-   function of step F/G become the SDK's G5?
+7. G5: delete the stale WARDEN notes or mark them "not ported"? Does the check-only function become the SDK's G5?
 
-NOT CHECKED:
-- No test, linter or mutant run on any head; CI state of #63, #70, #77 not read (no network).
-- The diffs of `tests/` on both heads were not read (names and docstring heads only); fixtures were not read for content.
-- `guard/textnorm.py` and `_fold_scan` logic were read by signature and docstring only, not reviewed for correctness.
-- core/P1b-fixwip (4bf610e) was compared by ancestry only; rebase/P1a and the fix heads were not diffed.
-- agent_loop.py:844-876 (restored-hash check, plan-v3.md:37) not read; replay.py:119-123 read only to confirm the refusal is there.
-- ORDER 009, order 64 and order 70 are quoted through the plans; the order files themselves were not found or read.
-- Whether the merge-tree results still hold after the fold lands on main: UNVERIFIED (main will move).
+NOT CHECKED: no test, linter or mutant run on any head; CI state of #63, #70, #77 (no network). Test diffs of both heads (file names and
+docstring heads only); fixture contents. `_fold_scan` and textnorm logic (signatures and docstrings only, no correctness review).
+core/P1b-fixwip (ancestry only). agent_loop.py:844-876 (plan-v3.md:37) not read; replay.py:119-123 read only to confirm the refusal.
+ORDER 009, orders 64 and 70 are known only through the plans. Whether the merge-tree results hold once main moves: UNVERIFIED.

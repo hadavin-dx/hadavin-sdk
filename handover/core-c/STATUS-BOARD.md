@@ -1,26 +1,27 @@
-UPDATED_UTC: 2026-11-20T05:26:42Z
+UPDATED_UTC: 2026-11-20T05:27:42Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 70253298
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 6
-PERCENT: 60
-AGENTS_RUNNING: 2
-CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 2, heavy agents 0
-DISK: / 60G free, 13% used; git worktrees 1; 388K	/tmp/claude-0;116M	/root/.cache/uv;
+PERCENT: 62
+AGENTS_RUNNING: 3
+CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, light agents 3, heavy agents 0
+DISK: / 60G free, 13% used; git worktrees 1; 392K	/tmp/claude-0;116M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket F findings into tickets/F-review-1.md; write ticket G when the two surveys end; then one EGM round on G
-PUSHED_UTC: 2026-11-20T05:25:46+00:00
+PUSHED_UTC: 2026-11-20T05:26:42+00:00
 
-(10:56 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(10:57 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a5098f29 | builder (tests only) | fable | writes NEW tests/test_grants_negative_roles.py and tickets/B-mutant-cases.md for step B; may try once to start PostgreSQL 16 as the postgres user under /tmp/core-c-pg | 05:28 | 05:45 | 5 | running | n/a | 0 | lead message 05:27 item 2; tests are written by a different agent than the builder |
 | a8830db0 | reviewer | fable | EGM plan review of tickets/F-gate-wrapper-body.md against the implementation-readiness standard (egm:egm-implementation-readiness) | 05:24 | 05:32 | 100 | done | 1 of 1 | 0 | finished: ticket F NOT READY, 6 Blockers, 6 Majors, 5 Nits; all opened line citations accurate |
 | a112f9c8 | reviewer | fable | EGM plan review of ticket F: checks every cited file:line and code reuse (egm:egm-codebase-details) | 05:24 | 05:34 | 10 | running | 1 of 1 | 0 | ORDER 004 item 3: one round per ticket |
 | a0321052 | lookup | fable | Q2: reads repo docs and src/hadavin_sdk layout, writes LANE-MAP.md | 05:20 | 05:30 | 100 | done | n/a | 0 | finished 05:22, LANE-MAP.md written (48 lines, 16 modules); guard/textnorm* does not exist on main |
@@ -48,11 +49,11 @@ PUSHED_UTC: 2026-11-20T05:25:46+00:00
 | Q3-Q9 baselines | SKIPPED-BY-LEAD | 100 | none | 0 | GO message item 4: the lead runs these on the laptop and puts results in inputs/ |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | agent finished; branch heads and old plans not read by it |
 | T2 prep: survey of input heads for step G | RUNNING | 50 | tickets/G-survey-*.md | 1 | P1a/P1b survey done; P2d/P1d/P1c survey still running |
-| T2 ticket G text deltas | WAIT surveys | 0 | tickets/G-text-deltas.md | 0 | needs the two head surveys (2 agents running) |
+| T2 ticket G text deltas | RUNNING | 10 | tickets/G-text-deltas.md | 0 | the session writes it now from the P1a/P1b survey; P2d/P1d/P1c part filled when that survey ends |
 | T2 ticket F gate wrapper body | DONE (draft) | 100 | tickets/F-gate-wrapper-body.md | 0 | written by the session itself while 3 agents run; 5 open questions inside; EGM round is next |
 | T3 EGM review of ticket G | WAIT T2 | 0 | tickets/G-review-1.md | 0 | one round only |
 | T3 EGM review of ticket F | RUNNING | 50 | tickets/F-review-1.md | 1 | readiness reviewer done (6 Blockers, 6 Majors, 5 Nits); codebase reviewer still running; resolve follows |
-| T4 test files for other steps | WAIT interfaces | 0 | none | 0 | core-b has not published reserve/settle yet; needs GO BUILD or lead word on which files |
+| T4 step B grants negative tests + mutant cases | RUNNING | 5 | tests/test_grants_negative_roles.py, tickets/B-mutant-cases.md | 1 | one agent; will be a separate commit 'code B:' |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -70,4 +71,4 @@ PUSHED_UTC: 2026-11-20T05:25:46+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-8 questions in QUESTIONS.md (work continues with the recommended answers). E1 in ESCALATIONS.md (cron denied; boards per tool batch).
+GO BUILD F is not in ORDERS.md: no gate code written (DECISIONS row 05:28). 8 questions in QUESTIONS.md. E1 cron denied.
