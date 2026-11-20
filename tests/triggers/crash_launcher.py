@@ -36,7 +36,6 @@ from __future__ import annotations
 import argparse
 import http.client
 import inspect
-import inspect
 import json
 import os
 import subprocess
@@ -78,22 +77,6 @@ def check_reserves_wiring() -> None:
         )
 
 
-def check_reserves_wiring() -> None:
-    """RESERVES must be what the loop REALLY does: the live loop calls `self.limits.reserve(` (and `Limits` has
-    `reserve`), or neither is true. A mismatch would run the wrong crash table; and with RESERVES the child needs
-    tests/money_caps_seed.py, else every run would end late in a NEEDS_PERSON timeout."""
-    from hadavin_sdk.runtime import agent_loop
-
-    calls = "limits.reserve(" in inspect.getsource(agent_loop)
-    assert RESERVES == calls, (
-        f"RESERVES={RESERVES} but the agent loop {'calls' if calls else 'does not call'} limits.reserve: "
-        "the crash tables follow the wrong booking"
-    )
-    if RESERVES and not (ROOT / "tests" / "money_caps_seed.py").exists():
-        raise AssertionError(
-            "RESERVES is True but tests/money_caps_seed.py is missing: the children could not seed hadavin_caps "
-            "and every run would end in NEEDS_PERSON"
-        )
 AGENT, PRINCIPAL, TENANT = "test-agent", "svc:test-agent", "tenant-a"
 HOST = "127.0.0.1"
 SECRETS_ENV, DSN_ENV = "TRIGGER_CHILD_SECRETS", "CRASH_CHILD_DSN"
@@ -102,7 +85,6 @@ RUNNER_POINTS = ("get_run",)
 ROOT = Path(__file__).resolve().parents[2]
 PATH, PREFIX = "/v1/trigger", "X-Hadavin"
 START_WAIT_S, EXIT_WAIT_S, REQUEST_TIMEOUT_S = 60.0, 30.0, 30.0
-check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
 check_reserves_wiring()  # at import, in the tests and in every child: a wrong RESERVES fails here, loudly
 
 

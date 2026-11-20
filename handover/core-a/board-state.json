@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "A4-B8-text",
-   "role": "builder (docs)",
-   "model": "sonnet",
-   "what exactly it is doing": "A4: refresh the step D+E text package (README/SECURITY/CHANGELOG door sections + PR description) to the current state; request file for core-b",
-   "started UTC": "17:12",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 16:55 A4"
-  },
-  {
    "id": "grantfix2",
    "role": "builder (tests)",
    "model": "sonnet",
@@ -1477,6 +1464,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "dry-run 3 done; core/integration-dryrun pushed c47b08bec (conflicts resolved; T1 = core-b's; 2 extra T1 files); triggers 1379 passed 0 failed; contracts 1623 passed 21 failed (core-c T1 19 + gate 2); grants 308 passed 11 failed (mine, 0007 release role): fixer started"
+  },
+  {
+   "id": "A4-B8-text",
+   "role": "builder (docs)",
+   "model": "sonnet",
+   "what exactly it is doing": "A4: refresh the step D+E text package (README/SECURITY/CHANGELOG door sections + PR description) to the current state; request file for core-b",
+   "started UTC": "17:12",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "5 PR files rewritten + handover/core-b/requests/from-core-a-B8-text.md; unverified claims listed in the hand-back; fresh review still to do; found duplicated block in crash_launcher.py (fixed: 18 lines removed, ruff clean, paths test 175 passed)"
   }
  ]
 }
