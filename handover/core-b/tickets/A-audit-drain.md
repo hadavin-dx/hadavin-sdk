@@ -46,3 +46,9 @@ A8. FIX ROUND 5 (review A-review-4; code commit "code A: ..."), wins over A7 whe
 - (g) The paged outbox read has no snapshot: a second process deleting or renaming rows between pages can make one tick skip a row (picked up next tick) or read one twice (deduped by event_id; the `done` and `unreadable` counts can double count).
 - (h) `_transient_stuck` is reset only in `_flush_pending`; after an outage it can go stale for one tick and raise a false "events not writable in memory" text.
 - (i) A naive `ts` is ordered as UTC in `_sort_ts` but stamped as local time by `_append`; on a non-UTC host the order and the stamp can disagree. Events built by the SDK always carry an aware ts.
+
+### A9 limits (review 6 of the older-first drain on the write path: CLEAN)
+- (j) The drain holds `_flush_lock` for a whole pass (up to AUDIT_DRAIN_BATCH appends): other writer threads queue behind it; on a sick PostgreSQL the worst case is about twice the 10 s lock timeout (one in the drain, one in the new append).
+- (k) `_outbox_dirty` clears only when the SELECT finds no rows: unreadable rows or rows refused with 42501 keep it True, so every write in the process runs a drain pass until an operator mends them.
+- (l) Older-first covers only outbox rows this process parked, not `_pending` memory events or rows of an earlier process (those reconcile by ts on the tick). A benign race on the `_outbox_dirty` flag can skip the guard for one row until the next tick; the row is never lost.
+- Missing tests (to add in A9): a drain that raises or stalls on the write path; the release role keeping `_outbox_dirty` False.
