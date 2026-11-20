@@ -4,3 +4,44 @@ All checks passed!
 warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
 351 files already formatted
 [bandit done]
+SKIPPED [1] tests/contracts/test_t1_reserve_cap.py:405: core-b step F not landed: Store.reserve_spend missing
+SKIPPED [1] tests/contracts/test_meter.py:319: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:319: k1b Budget has no reserve/settle on this tree: the in-memory meter arrives with step F-install (ii-meter.md header); its cases are written from tickets/F-install.md and have never run
+SKIPPED [3] tests/contracts/test_meter.py:350: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:365: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:382: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:393: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:400: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:412: core-b meter not on this branch yet
+SKIPPED [24] tests/contracts/test_meter.py:436: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:450: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:464: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:476: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:490: core-b meter not on this branch yet
+SKIPPED [15] tests/contracts/test_meter.py:517: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:537: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:552: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:567: core-b meter not on this branch yet
+SKIPPED [45] tests/contracts/test_meter.py:579: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:596: core-b meter not on this branch yet
+SKIPPED [12] tests/contracts/test_meter.py:612: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:631: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:659: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:676: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:697: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:721: core-b meter not on this branch yet
+SKIPPED [3] tests/contracts/test_meter.py:732: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:743: core-b meter not on this branch yet
+SKIPPED [6] tests/contracts/test_meter.py:755: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:768: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:783: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:820: core-b meter not on this branch yet
+SKIPPED [2] tests/contracts/test_meter.py:831: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:852: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:879: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:892: core-b meter not on this branch yet
+SKIPPED [1] tests/contracts/test_meter.py:909: core-b meter not on this branch yet
+SKIPPED [39] tests/contracts/test_meter.py:1029: core-b meter not on this branch yet
+SKIPPED [1] tests/test_redact_idempotence_property.py:202: tests/fixtures/textnorm_corpus.json is not on this branch: that corpus is not run here
+1567 passed, 455 skipped, 75 xfailed, 9 warnings in 163.77s (0:02:43)
+ended 2026-11-20T07:07:52Z

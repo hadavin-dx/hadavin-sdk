@@ -509,7 +509,7 @@
    "percent": 5,
    "evidence file": "reviews/n8n-result-review-1.md",
    "tries": 1,
-   "reason": "lead's reminder at 07:05Z and the EGM sequence"
+   "reason": "naive-reader review done: 1 Blocker (the README never says where the Hadavin URL and the secret come from, so steps 1 and 8 cannot be done from the page), 9 Majors (caller payload shape unstated; the key rule cannot be followed with the template: two events on one record share a key and a re-send needs a new key the template cannot make; a test event starts a real run; a duplicate reaches Done and the client's follow-up runs twice; the error message does not hold the key or event; publish steps need an id; credential order fragile; the loop numbers are inside expressions and the default is shorter than the README's own example; some 'seen in n8n' notes are not backed by the evidence file); waiting for the design reviewer, then resolve"
   },
   {
    "item": "E-round-3",
@@ -1214,15 +1214,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:05",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "id": "egm-n8n-comp",
    "role": "reviewer (egm:egm-comprehension, fresh)",
    "what exactly it is doing": "naive-reader review of n8n/README-trigger.md",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, report in hand: 1 Blocker, 9 Major, 2 Nit (naive reader)"
   },
   {
    "model": "sonnet",
