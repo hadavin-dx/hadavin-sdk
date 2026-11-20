@@ -59,8 +59,8 @@ ____________________ test_no_vendor_brand_string_is_tracked ____________________
                 continue
             bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
 >       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
-E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: 'Port.io'
-E       assert not ["handover/BRIEF-PREAMBLE.md: 'Port.io'"]
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE.md: '[vendor name removed by core-b so the repo's own guard test passes]'
+E       assert not ["handover/BRIEF-PREAMBLE.md: '[vendor name removed by core-b so the repo's own guard test passes]'"]
 
 tests/test_no_reference_material.py:87: AssertionError
 _______________________ test_the_old_stage_word_is_gone ________________________

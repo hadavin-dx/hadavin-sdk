@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:53:37Z
+UPDATED_UTC: 2026-11-20T05:55:13Z
 SESSION: core-b
 ORDER: 011
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 7
 PERCENT: 70
 AGENTS_RUNNING: 6
-CAPACITY: load 1.18 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 4
-DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 705M
+CAPACITY: load 1.70 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, agents light 2 heavy 4
+DISK: / 59G free, 15% used; worktrees /tmp/core-b-wt 706M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: ticket B review found a Blocker in the built code (temporary tables can make the runtime read OFF): fix round 3 of 3 running; lead review A-1, B-2 being fixed; batch run 1: 3 failed (1 mine, fixed; 2 not from my code); E1 cron refused
 NEXT: land A fix, B fix 3, mutant scripts, F-store; tests for F-store by a different agent; ticket C and F-install review rounds; ONE batch run when F-store is coded
-PUSHED_UTC: 2026-11-20T05:52:13Z (previous push; this board is pushed right after writing)
-IST: 11:23 IST
+PUSHED_UTC: 2026-11-20T05:53:38Z (previous push; this board is pushed right after writing)
+IST: 11:25 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
