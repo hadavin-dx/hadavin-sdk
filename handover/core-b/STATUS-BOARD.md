@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:47:46Z
+UPDATED_UTC: 2026-11-20T07:47:59Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.10 of 4 cores, mem 1/15 GB, disk 56G free, 20% used, agents light 4 heavy 2
+CAPACITY: load 1.99 of 4 cores, mem 1/15 GB, disk 56G free, 20% used, agents light 4 heavy 2
 DISK: / 56G free, 20% used; worktrees /tmp/core-b-wt 1.7G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T07:47:43Z (previous push; this board is pushed right after writing)
+PUSHED_UTC: 2026-11-20T07:47:57Z (previous push; this board is pushed right after writing)
 IST: 13:17 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
@@ -165,3 +165,5 @@ MODELS (07:21Z): every Agent call of core-b sets model sonnet or haiku explicitl
 
 07:38Z: DONE and pushed on cloud/core-b since 07:20: step A fix round 4 (ORDER 021 Majors), step B who-else round 1 (lead's range), release command + F-store minors (ORDER 020, migration 0008). Running: A fix round 5 (review-4 Major), evidence batch 4, fresh reviewer of the release command, PG test isolation, provider-mark mutants.
 F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on wip/cloud-core-b/Y-integration + wip/cloud-core-b/F-install-4 (fix rounds 1-2 of the run-state hostile review done). Blocked by core-c only: (1) request 3 (bind needs REQUIRED mapping, NO_MAP) not published, (2) usd_cap not in SPEND_REASONS, (3) gate ignores the mark on ProviderExhausted, (4) K5 import chain in guard/injection.py. core-b side is ready: once the gate lands on cloud/core-c I merge Y-integration and run the evidence batch.
+
+07:49Z: step A is CLEAN (review 5). Release command (ORDER 020): review 4 found 1 Major (exit code 5 unreachable with the real audit chain), fix round 2 is running (local/code-REL3). Evidence batch 4, provider-mark mutants and PG test isolation still running. F-INSTALL blockers (unchanged): core-c request 3 (required bind mapping, NO_MAP), usd_cap in SPEND_REASONS, gate honouring the mark on ProviderExhausted, K5 import chain in guard/injection.py. core-b side is built and reviewed on wip/cloud-core-b/Y-integration + F-install-4; I merge it as soon as the gate lands on cloud/core-c.
