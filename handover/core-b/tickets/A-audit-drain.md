@@ -40,3 +40,9 @@ A8. FIX ROUND 5 (review A-review-4; code commit "code A: ..."), wins over A7 whe
 (c) Unreadable rows (valid JSON that is not an AuditEvent, or an event_id that differs from the row) no longer use the batch: the read pages on (LIMIT/OFFSET) until it holds AUDIT_DRAIN_BATCH readable rows or the table ends; they are counted each tick ("N unreadable rows kept") and cost one scan of them per tick.
 (d) A naive `ts` no longer raises in the sort: it is ordered as UTC (only the order; the event keeps its ts).
 (e) Stated limit (Minor 2, not built): batches are cut by the lexical text of `ts` in SQL, so with a backlog above AUDIT_DRAIN_BATCH a memory event can enter the chain before older outbox rows that lie in a later batch, and mixed offsets / `Z` vs `+00:00` / fractional seconds can pick the wrong rows at the batch edge. Order inside a batch is exact.
+
+### A8 addendum (review 5: CLEAN, 0 Major; four Minors recorded as stated limits)
+- (f) A persistent outage-class refusal on the head row (a SQLSTATE-less OperationalError or an OSError) holds back every later row and the step stays green (`_is_outage` rows are not counted as deferred, chain.py:425-428). Needs an unusual driver error; the connection layer alarms separately.
+- (g) The paged outbox read has no snapshot: a second process deleting or renaming rows between pages can make one tick skip a row (picked up next tick) or read one twice (deduped by event_id; the `done` and `unreadable` counts can double count).
+- (h) `_transient_stuck` is reset only in `_flush_pending`; after an outage it can go stale for one tick and raise a false "events not writable in memory" text.
+- (i) A naive `ts` is ordered as UTC in `_sort_ts` but stamped as local time by `_append`; on a non-UTC host the order and the stamp can disagree. Events built by the SDK always carry an aware ts.
