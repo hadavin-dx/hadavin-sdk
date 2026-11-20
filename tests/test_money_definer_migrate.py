@@ -48,8 +48,8 @@ LIMIT_NAMES = (
     "max_decimals",
     "max_id_chars",
     "max_expiry_age",
-    "max_day_skew",
     "min_expiry_age",
+    "max_day_skew",
 )
 
 
