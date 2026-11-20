@@ -137,7 +137,7 @@ def delays_short(rng: random.Random) -> float:
     return 0.0 if rng.random() < 0.6 else rng.uniform(0.002, 0.015)
 
 
-REVISION = re.compile(rb"revision (\d+)")
+REVISION = re.compile(rb"revision\s+(\d+)")
 
 
 def revision_of(document: bytes) -> str:
