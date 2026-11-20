@@ -6,3 +6,11 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 # sha256 e426352fee2f4468975e2b996bbea874887c62c1c78fbef743dd23d8adb6757a  src/hadavin_sdk/triggers/worker.py
 # sha256 ebf79b05cc0bd9131b7121c494155e6934cdd812c5fbdc8a5322861b982551df  src/hadavin_sdk/testing/crash.py
 # sha256 b050c6629161ff65ba8dc380884b6e6040b01bf8c24605dfa9d7d5b25b943520  tests/endpoint_mutants.py
+ok  KILLED       G1a the tenant is dropped from derive_run_id  [test_tenant_is_part_of_the_run_id_at_the_endpoint]
+ok  KILLED       G1b the sender is dropped from derive_run_id  [test_two_senders_same_key_give_two_run_ids_and_their_own_identity]
+ok  KILLED       G1c the NUL separator is dropped from the hash input  [test_derive_run_id_separates_tenant_sender_and_key]
+ok  KILLED       G2a the document hash is dropped from trigger_ref  [test_trigger_ref_changes_with_the_document]
+ok  KILLED       G2b Runner.start skips the trigger_ref comparison on a hit  [test_same_key_with_another_document_is_409_and_writes_nothing]
+ok  KILLED       G3a 202 right after submit, the row is not read  [test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken]
+ok  KILLED       G3b the slot is released right after submit  [test_no_row_within_ack_wait_is_503_and_the_slot_stays_taken]
+ok  KILLED       G3c no free slot answers 503 at once  [test_pool_full_is_503_and_a_later_retry_is_acked]
