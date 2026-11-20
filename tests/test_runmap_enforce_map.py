@@ -14,6 +14,10 @@ import pytest
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 
+redact_module = importlib.import_module(
+    "hadavin_sdk.guard.redact"
+)  # `guard.redact` the name is the function
+
 KEY = "AKIA" + "IOSFODNN7EXAMPLE"  # the documented AWS example key, built from parts
 TOKEN = "s3cr3t" + "VALUE9xQ2"  # a fake, built from parts
 IP = "10.0.0.5"
@@ -365,9 +369,11 @@ def test_m_new_1_enforce_map_has_the_redactors_time_budget(monkeypatch):
     """m-new-1, ORDER 007 item 3: past `defaults.REDACT_BUDGET_S` the call fails closed (InputTooLarge)."""
     mapping = {"<IPV4_1>": IP}
     clock = iter([0.0, defaults.REDACT_BUDGET_S + 0.5])
-    monkeypatch.setattr(
-        runmap, "time", SimpleNamespace(monotonic=lambda: next(clock), thread_time=lambda: 0.0)
-    )
+    fake_time = SimpleNamespace(monotonic=lambda: next(clock), thread_time=lambda: 0.0)
+    monkeypatch.setattr(runmap, "time", fake_time)
+    # the redactor reads its own `time`: without this a pytest-xdist worker that has already used more than
+    # REDACT_BUDGET_S of CPU makes the second call below fail on the real thread clock (flaky under -n)
+    monkeypatch.setattr(redact_module, "time", fake_time)
     with pytest.raises(runmap.InputTooLarge) as caught:
         runmap.enforce_map(f"host {IP}", mapping)
     assert caught.value.args == ("InputTooLarge",), "the time budget was not checked"
