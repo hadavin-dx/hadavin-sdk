@@ -759,19 +759,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "the dry-run agent looked at the wrong socket"
-  },
-  {
-   "id": "A6b-rev-b-newest",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-b newest code since fa21e8fbb: start-up self-check of the runtime login's money rights (my rev-b-G Major 3), clock hint, k1b audit code, attack battery re-count",
-   "started UTC": "16:14",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "new core-b code found while checking heads"
   }
  ],
  "tests": [
@@ -1144,6 +1131,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "16:25 core-b newest code reviewed (reviews/rev-b-newest2.md; appended to handover/core-b/requests/xr-from-core-a-reviews.md): no Blocker; the NEW start-up self-check of the runtime login's money rights (postgres.py:102-140) is a real improvement (refuses, effective privileges, no leak) BUT: MAJOR 1 a NOINHERIT route passes it, I CONFIRMED on the real PG16.15: `CREATE ROLE g NOLOGIN; GRANT UPDATE ON hadavin_caps TO g; GRANT g TO runtime WITH INHERIT FALSE, SET TRUE` -> as runtime has_table_privilege = false, has_any_column_privilege = false (check passes) but after `SET ROLE g` it is true: `UPDATE hadavin_caps SET day_cap=1e9` works; MAJOR 2 the owner skip is all-or-nothing: a login owning ONE money table skips the check on the other four; MAJOR 3 0011 edited in place: hadavin_add_spend's new +-max_day_skew window never reaches an already-migrated DB (ledger keeps the old checksum, migrate only warns) and the charge-failure handling is untested. Fine: clock hint, k1b audit code, attack-battery re-count (a tightening). Running: integ-pg only.",
   "16:20 A6 DONE (reviews/rev-c-rekey.md + NEW FILE handover/core-c/requests/from-core-a-review.md as you named it): core-c 2552bcc95 (pii recording re-keyed): no Blocker; the claim 'phone masked whole' is RIGHT ('+61 412 345 678.'+newline hits the G7-F3 sentence-end rule, not the glued '.'+letter case); MAJOR: the commit only ADDED the new-key recording, the OLD key's file seems still present (25 files, record.py would produce 24; three recordings contain 'Office chair'): a regression to the old partial mask would still find it and the test would pass: delete the stale file or regenerate. Running: integ-pg, A6b-rev-b-newest.",
   "16:14 AGENTS 3 (integ-pg, A6-rev-c-rekey, A6b-rev-b-newest): found NEW core-b code (head 0aab18e9d): 197e24cae 'start-up self-check of the runtime login's money rights (review M3)' = the startup check I asked for in rev-b-G Major 3; reviewer started on it plus e750160ec (clock hint), 2356179a8 (k1b audit code), ef465c3fd (attack battery counts a repeat that meets the range check as not refused: scrutinising whether that is a test loosening).",
   "16:12 PACKAGES A1-A6 (your 16:09 list; heads: core-c 443ef0b69, core-b 0aab18e9d, lead-b-migrate 0891d81bd, lead-b-ts-watermark de8967aba): A1 cfull fixes: DONE, NOTHING TO FIX: all 5 ids pass at core-c fc4af41a7 on py3.13.12 x3 and py3.12.3 (evidence/cfull-fix-check.md): no wip/core-a-for-c-cfull branch because there is no diff; A2 migrate review: DONE twice (reviews/rev-lead-migrate.md, rev-lead-migrate-2.md) -> handover/core-b/requests/xr-review-migrate.md (new file, name as you asked); A3 ts review: DONE twice -> handover/core-b/requests/xr-review-ts.md; heads unchanged since: waiting for your fix rounds; A4 integration dry-run: DONE (INTEGRATION-DRYRUN-2.md; scratch/core-a-integration-dryrun-2 never pushed) + integ-pg RUNNING (strict PG run of tests/triggers etc. on the merged tree: the dry-run agent wrongly said there is no PG: mine is on :55433); A5 CRASH-MATRIX part 2: DONE; A6 core-c newest merges: the only new code commit since G9b is 2552bcc95 (a test re-keyed to the current redaction: scrutinising whether it hides a regression): reviewer RUNNING. AGENTS 2 (integ-pg, A6). QUEUE.md has no READY item: I can take nothing more from the queue; from core-b I can take S1/R1/W1 tests not touching migrate.py if you send the names.",
@@ -4002,6 +3990,19 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "core-c 2552bcc95 pii re-key: NO Blocker; mask-whole claim is right ('+61 412 345 678.'+newline hits the G7-F3 sentence-end rule, not the glued '.'+letter case); MAJOR: the stale OLD-key recording file is probably still there (25 files, record.py makes 24; three contain 'Office chair') so the re-key may guard nothing; nit: test never asserts the clear digits are absent; reviews/rev-c-rekey.md + handover/core-c/requests/from-core-a-review.md"
+  },
+  {
+   "id": "A6b-rev-b-newest",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b newest code since fa21e8fbb: start-up self-check of the runtime login's money rights (my rev-b-G Major 3), clock hint, k1b audit code, attack battery re-count",
+   "started UTC": "16:14",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-b newest (0aab18e9d): NO Blocker; 3 Majors: NOINHERIT bypass of the new startup money check (CONFIRMED on PG16.15: GRANT g TO runtime WITH INHERIT FALSE; has_table_privilege false, SET ROLE g then UPDATE hadavin_caps works), owner skip is all-or-nothing per login, 0011 edited in place so already-migrated DBs never get the add_spend day window; clock hint/k1b code/attack battery fine; reviews/rev-b-newest2.md"
   }
  ]
 }
