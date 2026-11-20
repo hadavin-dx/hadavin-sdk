@@ -898,6 +898,11 @@ def strip_ansi(text: str) -> str:
 class RedactionResult:
     text: str
     mapping: dict[str, str] = field(default_factory=dict)  # placeholder -> original
+    # How many times the redactor changed the text of this call: one per value masked by a pattern or masked in place by the fold scan,
+    # one per copy replaced by the sweep, one per line (or block of lines) withheld. 0 means the redactor masked nothing and withheld nothing (removed ANSI sequences are not counted). The count
+    # of placeholders and the map cannot tell that: a withheld line swallows the placeholders it held and gains one per hit (review
+    # finding cb-1-1). The masks of a fold round that was rolled back are not counted.
+    actions: int = 0
 
     @property
     def size(self) -> int:
@@ -935,7 +940,7 @@ def redact(
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
         out = r.settle([r.sweep(out)])[0]
-    return RedactionResult(text=out, mapping=r.mapping)
+    return RedactionResult(text=out, mapping=r.mapping, actions=r.actions)
 
 
 def _countable(suffix: str) -> bool:
@@ -1055,6 +1060,9 @@ class _Redactor:
         # the time.thread_time() value (CPU seconds of the calling thread, so load from other threads cannot change the outcome) the folded scan must finish by; runmap passes ONE deadline for a text and all its views
         self._deadline = deadline
         self._scan_deadline = float("inf")
+        # the changes this redactor made to its texts (see RedactionResult.actions)
+        self.actions = 0
+        self._journal_actions = 0  # `actions` when the journal of the line in progress was opened
         self._cache = (
             cache  # a run's built finders, reused while its map is unchanged (see runmap.RunMap)
         )
@@ -1382,6 +1390,7 @@ class _Redactor:
         placeholder = (
             self.reverse[full] if full in self.reverse else self._place(label, full, written)
         )
+        self.actions += 1
         if not _plain(full):
             for key in _alias_keys(full):
                 if key and key != full and key not in self.alias:
@@ -1459,6 +1468,7 @@ class _Redactor:
     def _open_journal(self) -> dict[str, int]:
         """Start recording the registrations of one line (placeholders, alias keys), with the counters as they were."""
         self._journal = []
+        self._journal_actions = self.actions
         return dict(self.counters)
 
     def _rollback(self, counters: dict[str, int]) -> None:
@@ -1472,6 +1482,8 @@ class _Redactor:
                 if self.reverse.get(b) == a:
                     del self.reverse[b]
         self.counters = counters
+        # the masks of the discarded rounds changed no text that is kept
+        self.actions = self._journal_actions
 
     def _withhold(self, views: list[str], line: str, eol: str = "") -> str:
         """The fixed note plus the placeholders of the hits found in any of the ``views`` (the folded texts, never emitted); ``line`` (what
@@ -1487,13 +1499,18 @@ class _Redactor:
         for cur in views:
             for label, pattern in PATTERNS:
                 cur = pattern.sub(lambda m, label=label: mask(m, label), cur)
+        # one for the withheld line (or block), beside one per hit counted by `_mask`
+        self.actions += bool(hits)
         return f"{FOLD_NOTE} {' '.join(dict.fromkeys(hits))}{eol}" if hits else line
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new). Registers the
         FOLDED spelling: used by the direct pass and by `_withhold` (the written spelling of a withheld line cannot be located)."""
         res = self._mask_ex(m, label)
-        return m.group(0) if res is None else m.group(0).replace(*res)
+        if res is None:
+            return m.group(0)
+        self.actions += 1
+        return m.group(0).replace(*res)
 
     def _decide(self, m: re.Match[str], label: str) -> str | None:
         """Is this match a hit? The sensitive value, or ``None`` when the match is left alone. Registers nothing."""
@@ -1658,10 +1675,12 @@ class _Redactor:
             for original, placeholder, rule in todo:
                 if original not in segment:
                     continue
+                before = segment.count(placeholder)
                 if rule is _EVERY_COPY:
                     segment = segment.replace(original, placeholder)
                 else:
                     segment = _replace_standalone(segment, original, placeholder)
+                self.actions += segment.count(placeholder) - before  # one per copy replaced
             parts[i] = segment
         return "".join(parts)
 
