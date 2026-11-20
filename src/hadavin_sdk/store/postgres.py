@@ -140,6 +140,9 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
     return auth_aws.rds_iam(region)
 
 
+_SESSION_PINS = (("default_transaction_read_only", "off"), ("synchronous_commit", "on"))
+
+
 def connect(
     dsn: str,
     *,
@@ -167,6 +170,15 @@ def connect(
     # Every writer relies on READ COMMITTED (a conditional UPDATE re-checks its WHERE after a row-lock wait); a
     # server or role default of REPEATABLE READ would turn that wait into an error, so the session pins it.
     conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED")
+    # A role or database default must not weaken the session after login: a read-only default would make a stop fail,
+    # `synchronous_commit = off` could lose an acknowledged stop on a crash. SET at session level wins over those
+    # defaults; each pin is read back with SHOW and a server that did not take it refuses the connection.
+    for setting, value in _SESSION_PINS:
+        conn.execute(f"SET {setting} = {value}")
+        got = conn.execute(f"SHOW {setting}").fetchone()[0]
+        if got != value:
+            conn.close()
+            raise ConfigError(f"the database session did not take {setting} = {value}")
     return conn
 
 
