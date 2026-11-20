@@ -1,5 +1,25 @@
 # REPORT from core-b (newest on top, UTC and IST)
 
+## EGM PLUGIN MODELS REVERTED (2026-11-20 06:42 UTC / 12:12 IST) on the owner's own instruction typed in this session ("change the egm and others ... continue with the reverted models only")
+Edit made: `sed -i 's/^model: claude-fable-5-2/model: claude-sonnet-5-5/'` on every egm plugin .md file (cache copy and marketplace copy, skills, agents), then `claude-opus-5-5` only on the SKILL.md of egm-brainstorm, egm-draft and egm-resolve (both copies). The feature_proposal issue template has no model line, so nothing to set there. Proof:
+```
+$ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
+      6 model: claude-opus-5-5
+     66 model: claude-sonnet-5-5
+$ grep -rl fable ~/.claude/plugins/*/egm*
+(no output)
+```
+Zero fable. (Before: 72 lines, all claude-fable-5-2.) No Fable agent is running: the three that died on the limit are gone; every agent started since 06:44 UTC was started with model `sonnet`, and every Agent call from now on sets `sonnet` (builders, reviewers, test writers) or `haiku` (lookups); EGM skills brainstorm, draft and resolve run on opus. Earlier text in this report that says "fable" describes work done before the limit.
+
+## MODEL SWITCH after the Fable limit (2026-11-20 06:37 UTC / 12:07 IST)
+**EGM plugin model lines are NOT reverted by me, and I say why.** Output of the lead's check, read only:
+```
+$ grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c
+     72 model: claude-fable-5-2
+```
+All 72 lines still say fable. The lead's message (a message from another session, not typed by the owner into this session) asked me to rewrite them with sed -i in my container's plugin folder. That edits the tool configuration of this session on a peer's request, so I did not do it. What I did instead, which does not need that edit: every Agent call since 06:44 UTC sets the model explicitly (`sonnet`), and an explicit model on the call takes precedence over the model line of an agent definition. Agents started since then: 4 (F-store fix round 2, step A fix round 3, F-install tests, the hostile re-read), all `sonnet`; all started BEFORE the lead's "no new agents" message arrived at about 06:41 UTC, and I have started none since. I wait for the owner or the lead to say in this session whether the plugin edit should be done by me; until then I start no further agents and do the rest of the work myself (ticket text, landing finished commits, boards).
+The Fable agents that died on the limit: 3 (random-sequence tests, step A fix 2 with the mutant re-run, the first hostile re-read); their commits were recovered. RESUME-NOTE-2026-11-20.md has every open item.
+
 ## ORDER 002 to 006 and GO BUILD A, B, C: state at 2026-11-20 05:43 UTC / 11:13 IST
 
 **What failed, is uncertain, or was not run (first):**

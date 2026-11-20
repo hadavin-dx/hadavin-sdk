@@ -98,8 +98,8 @@ def app(live_cfg_dir, fake_system):
 
 def test_n1_audit_drain_is_the_last_tick_step():
     names = [s.name for s in tick.STEPS]
+    assert names.count(STEP) == 1  # first: without the row this fails here, not in the lookup below
     assert next(s for s in tick.STEPS if s.name == STEP).every_s == 0
-    assert names.count(STEP) == 1
     # audit_drain comes before expire_reservations, which is the last step
     assert names[-2:] == [STEP, "expire_reservations"]
 
@@ -587,7 +587,9 @@ def test_tick_logs_the_drain_count_on_the_tick_logger(app, caplog):
 # psycopg's OperationalError/InterfaceError.
 # =========================================================================================================
 
-LAST = [next(s for s in tick.STEPS if s.name == STEP)]
+# The audit step alone, selected by name (other steps come after it). A list filter, not `next`: a STEPS
+# without the row must fail test n1 on its count, not the import of this file.
+LAST = [s for s in tick.STEPS if s.name == STEP]
 # Stands for row text inside the database's own error message.
 REFUSAL = "REFUSALTEXT-must-not-leak"
 
@@ -918,15 +920,17 @@ def test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order(kind, monkeyp
     assert _ids(log) == [e.event_id for e in (a, b, c)] and log._pending == [] and log.verify().ok
 
 
-def test_f5_reconcile_counts_only_outbox_rows_in_its_error_not_events_moved_aside(caplog):
+def test_f5_reconcile_still_drains_the_outbox_after_its_flush_moved_an_event_aside(caplog):
     """A refused memory-parked event is moved aside by the flush inside reconcile; the outbox drain after it
-    still runs, and the error text speaks of outbox rows only."""
+    still runs to its end, and only then the call raises (fix round 2: the event moved aside is counted)."""
     log, (a, b, c) = _log(), _three()
     _park_in_memory(log, a, b)
     _park(log, c)
     _refuse(log, a)
     caplog.set_level("WARNING")
-    assert log.reconcile() == 2  # b from memory, c from the outbox; no outbox row has a problem
+    with pytest.raises(RuntimeError, match="^audit outbox: 1 events not writable in memory$"):
+        log.reconcile()
+    # b from memory, c from the outbox; no outbox row has a problem
     assert _ids(log) == [b.event_id, c.event_id] and log._unwritable == [a] and _outbox(log) == []
     assert "audit pending flush: written=1 not_writable=1 (kept in memory, total=1)" in caplog.text
 
@@ -1035,3 +1039,94 @@ def test_f6_pg_in_one_process_the_refused_row_does_not_block_and_is_drained_afte
         assert app.store.get_tick_state(STEP).last_error is None and app.audit.verify().ok
     finally:
         _close(app)
+
+
+# --- (8) fix round 2: events this process could never write are in the failure text ---------------------------
+
+
+def test_f8_an_event_moved_aside_in_memory_fails_the_step_with_its_count(app, caplog):
+    log, a = app.audit, _event(0, event_id="evt-a", result=MARK)
+    _park_in_memory(log, a)
+    _refuse(log, a)
+    caplog.set_level("DEBUG")
+    assert log._flush_pending() == 0 and log._unwritable == [a] and log._pending == []
+    with pytest.raises(RuntimeError) as caught:
+        log.reconcile()
+    assert str(caught.value) == "audit outbox: 1 events not writable in memory"
+    assert type(caught.value) is RuntimeError and caught.value.__cause__ is None
+    assert run_tick(app, steps=LAST) == 1  # the tick step fails, on every tick of this process
+    state = app.store.get_tick_state(STEP)
+    assert state.last_error == "RuntimeError: audit outbox: 1 events not writable in memory"
+    assert state.last_ok_at is None
+    _allow_all(log)  # fix round 3: reconcile retries such an event once per run; now it is written
+    assert run_tick(app, steps=LAST) == 0 and log._unwritable == [] and _ids(log) == [a.event_id]
+    a = _event(
+        1, event_id="evt-a2", result=MARK
+    )  # a new refused event for the four-counts check below
+    _park_in_memory(log, a)
+    _refuse(log, a)
+    assert log._flush_pending() == 0 and log._unwritable == [a]
+    # all four counts at once: the first three keep their order and their texts, the new one is last
+    with pytest.MonkeyPatch.context() as mp:
+        kept = _mixed(log, mp, 2, 1, 3)
+        with pytest.raises(RuntimeError) as caught:
+            log.reconcile()
+        assert str(caught.value) == (
+            "audit outbox: 2 unreadable rows kept, 1 rows not writable, 3 rows not deleted, "
+            "1 events not writable in memory"
+        )
+        assert [r[0] for r in _outbox(log)] == kept and log._unwritable == [a]
+    # counts only, never event text
+    for text in (MARK, REFUSAL, a.event_id):
+        assert text not in caplog.text and text not in state.last_error
+    assert log.verify().ok
+
+
+# --- fix round 3: only connection-level errors count as an outage (chain._is_outage) --------------------------------
+# Stand-ins named like psycopg's classes in a module that starts with "psycopg": the helper recognises driver errors
+# by class name along the MRO (no driver import), exactly as store.protocol.is_connectivity_error does.
+
+
+def _driver_error(name, sqlstate="__none__"):
+    base = type("Error", (Exception,), {"__module__": "psycopg.errors"})
+    cls = type(name, (base,), {"__module__": "psycopg.errors"})
+    exc = cls("driver text that must not matter")
+    if sqlstate != "__none__":
+        exc.sqlstate = sqlstate
+    return exc
+
+
+@pytest.mark.parametrize(
+    ("exc", "outage"),
+    [
+        (OSError("refused"), True),
+        (_driver_error("InterfaceError"), True),
+        (_driver_error("OperationalError"), True),  # no SQLSTATE: unknown, treated as an outage
+        (_driver_error("OperationalError", None), True),
+        (_driver_error("OperationalError", "08006"), True),  # connection failure
+        (_driver_error("OperationalError", "08001"), True),
+        (_driver_error("OperationalError", "57P01"), True),  # administrator shutdown
+        (_driver_error("OperationalError", "57P03"), True),  # cannot connect now
+        (_driver_error("OperationalError", "54000"), False),  # row too large for an index
+        (_driver_error("OperationalError", "57014"), False),  # query cancelled (statement timeout)
+        (_driver_error("OperationalError", "53100"), False),  # disk full
+        (_driver_error("OperationalError", "25006"), False),  # read-only transaction
+        (_driver_error("ProgrammingError", "42501"), False),  # missing grant
+        (RuntimeError("something else"), False),
+        (ValueError("bad row"), False),
+    ],
+)
+def test_f9_only_connection_level_errors_are_an_outage(exc, outage):
+    assert audit._is_outage(exc) is outage
+
+
+def test_f9_a_store_unavailable_is_an_outage():
+    from hadavin_sdk.store.protocol import StoreUnavailable
+
+    assert audit._is_outage(StoreUnavailable("down")) is True
+
+
+def test_f9_a_sqlite_error_is_not_an_outage():
+    import sqlite3
+
+    assert audit._is_outage(sqlite3.IntegrityError("trigger refused")) is False

@@ -166,8 +166,6 @@ TEXTNORM_PINNED_PYTHON = "3.13"
 # Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call). A whole number
 # of at least 1 (guard.textnorm refuses another value when it is imported and every time a scan key is made).
 TEXTNORM_MAX_PASSES = 3
-# The Python minor version that carries the pinned Unicode data (TEXTNORM_PINNED_UNIDATA); only used in the message of UnidataMismatch.
-TEXTNORM_PINNED_PYTHON = "3.13"
 # The most scan keys one text may make (scan_keyset): 2 variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16 by
 # construction; 13 is the most a real text reaches. More than this is refused (TextTooLong), never cut off.
 TEXTNORM_SCAN_KEY_CAP = 16

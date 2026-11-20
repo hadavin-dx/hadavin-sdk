@@ -16,3 +16,11 @@ Out: a flush in local_dir, a shutdown hook, a LIMIT on the outbox read, moving t
 Open questions (recommended): step position last (contract at tick.py:4-5 is append-only); unreadable row: keep it and fail the step; limits stop when the audit write returned None: print one stderr line (about 4 lines; out if A should stay minimal).
 Size: about 35 src lines, 180 test lines, 15 doc lines.
 
+## RESOLUTION and state of the built code (2026-11-20 06:40 UTC; wins over the text above where they differ). Sources: lead review rounds 1 and 2 (inputs/lead-review-code-AB-1.md, AB-2), hostile re-read tickets/ABC-hostile-review-1.md findings 7, 8, 9, 17, 18.
+A1. audit_drain is no longer the LAST tick step: step F-store appended expire_reservations after it. Tests select the step by name and pin that audit_drain comes before expire_reservations.
+A2. Flush rule as built (fix round 1): an OUTAGE at an event stops the flush there and keeps the order; a refusal that is not an outage moves that event to the in-memory list _unwritable and the flush goes on with the next. Invariant 2 reads so. Events in _unwritable are lost when the process exits (extends invariant 7).
+A3. Error text of reconcile as built: "audit outbox: N unreadable rows kept, M rows not writable, K rows not deleted" (non-zero parts only); fix round 2 adds ", J events not writable in memory". The step fails for each of them.
+A4. _drain returns the exception or None (not a bool); mutant M5 is "an outbox row is deleted although its append failed".
+A5. OPEN, fix round 3 (the last for step A): (a) "outage" is too wide today: every psycopg OperationalError counts, also errors that can never succeed (a row too large for an index, a statement timeout, a full disk); the two drain sites will count as an outage only OSError, StoreUnavailable, InterfaceError, or an OperationalError with no SQLSTATE or one starting with 08 or 57P; (b) reconcile retries the events in _unwritable once per run before counting them.
+A6. Stated limits (not built): the outbox is drained in event-id order, which is random, so events drained together enter the chain in no particular order among themselves (each keeps its own timestamp); the inline flush is not capped; the audit chain's advisory lock can be held by any login of the database, which would block every audit write (older code, not this step).
+

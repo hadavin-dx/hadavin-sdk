@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Protocol
@@ -62,6 +63,25 @@ MAX_SPEND_DECIMALS = 12  # decimal places one amount may carry
 MAX_SPEND_EXPONENT = (
     9  # a larger exponent can only be a zero such as 0E+999999, which the database refuses
 )
+
+
+MAX_RESERVATION_ID_CHARS = 200
+_RESERVATION_ID = re.compile(r"[A-Za-z0-9._:-]+")
+
+
+def check_reservation_id(reservation_id: object) -> str:
+    """The one id rule of the spend reservations, used by both stores before any lock or SQL: exactly a str of
+    1 to 200 characters, only A-Z a-z 0-9 . _ : - (a NUL, for one, would reach PostgreSQL as a DataError).
+    Anything else is a ValueError that names the rule, never the value."""
+    if (
+        type(reservation_id) is not str
+        or not 1 <= len(reservation_id) <= MAX_RESERVATION_ID_CHARS
+        or _RESERVATION_ID.fullmatch(reservation_id) is None
+    ):
+        raise ValueError(
+            "reservation id must be a str of 1 to 200 characters from A-Z a-z 0-9 . _ : -"
+        )
+    return reservation_id
 
 
 def check_spend_amount(usd: object) -> Decimal:

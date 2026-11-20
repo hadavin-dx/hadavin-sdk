@@ -11,15 +11,19 @@ errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``
 
 The mark "refused before any response" (``ProviderError.refused_before_response``, read by the model gate, which
 then settles the spend reservation at 0 instead of the worst case) is set to True here and nowhere else (a kind
-may only clear it: openai_compat does, for its second request). It is True only when EVERY attempt of the call ended in one of two ways:
-  1. the request was never sent: the connection was refused or the host name did not resolve (``never_sent``);
-  2. the final, not retried error carries an HTTP status of ``REFUSED_STATUSES`` (400, 401, 403, 404, 413, 422).
-One attempt that got any other answer, timed out, was cut off or failed to parse leaves the mark False, and so
-does every status that is retried (408, 429, 5xx) and 409. A ``ProviderError`` raised by the call itself passes
-through as it is (unmarked unless its raiser marked it).
-Stated limit (UNVERIFIED): the status list is a judgement from the HTTP meaning of the codes (the request was
-rejected before any model work), not verified against each provider's billing rules. A provider that bills a
-400 would be under-counted by that call.
+may only clear it: openai_compat does, for its second request). It is True in two cases, and only when no
+attempt of the call got any other answer, timed out, was cut off or failed to parse:
+  1. the final error is not retried, every earlier attempt was never sent (the connection was refused or the
+     host name did not resolve: ``never_sent``), and the final error is itself never sent or carries an HTTP
+     status of ``REFUSED_STATUSES`` (400, 401, 403, 404, 413, 422);
+  2. the retries ran out (``ProviderExhausted``) and EVERY attempt ended in HTTP 429 (throttled) or was never
+     sent, in any mix.
+Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
+retried (a 400 after a 429 stays unmarked), and a 429 that a kind chose not to retry. A ``ProviderError`` raised
+by the call itself passes through as it is (unmarked unless its raiser marked it).
+Stated limit (UNVERIFIED for anthropic, bedrock, openai_compat, gemini): the list follows the HTTP meaning of
+the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
+429 was not verified against its billing rules. A provider that bills one of them is under-counted by that call.
 """
 
 from __future__ import annotations
@@ -55,6 +59,8 @@ def retryable_status(code: int) -> bool:
 
 # Statuses that reject a request before any model work (see the module docstring for the stated limit).
 REFUSED_STATUSES = frozenset({400, 401, 403, 404, 413, 422})
+# Throttled: retried, and no model work was done for it (same stated limit).
+THROTTLED_STATUS = 429
 
 
 def _chain(exc: BaseException) -> list[BaseException]:
@@ -122,6 +128,7 @@ def with_retry[T](
     (timeout, reset, 5xx, 429). ``common.reply()`` prices a retried call from it (Y3). ``http_status(exc)`` is the kind's way to the HTTP status of its SDK's errors when the generic
     ``status`` finds none; it only feeds the mark, never the retry decision."""
     unsent = True  # every attempt so far failed before any request was sent
+    unbilled = True  # every attempt so far was never sent or was answered 429 (throttled)
     for attempt in range(1, max_attempts + 1):
         try:
             return call()
@@ -129,21 +136,22 @@ def with_retry[T](
             raise
         except Exception as exc:  # every failure is classified below, never swallowed
             this_unsent = never_sent(exc)
+            code = status(exc)
+            if code is None and http_status is not None:
+                code = http_status(exc)
             if not transient(exc, retryable):
-                code = status(exc)
-                if code is None and http_status is not None:
-                    code = http_status(exc)
                 error = ProviderError(f"{label}: {describe(exc, detail)}")
                 error.refused_before_response = unsent and (this_unsent or code in REFUSED_STATUSES)
                 raise error from exc
             unsent = unsent and this_unsent
             if record is not None:
                 record.append(this_unsent)
+            unbilled = unbilled and (this_unsent or code == THROTTLED_STATUS)
             if attempt == max_attempts:
                 exhausted = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
                 )
-                exhausted.refused_before_response = unsent
+                exhausted.refused_before_response = unbilled
                 raise exhausted from exc
             # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
             # sooner than the server asked.

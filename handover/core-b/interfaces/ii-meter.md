@@ -1,5 +1,5 @@
 # INTERFACE (ii): the Meter the model gate calls. FINAL after the F-store ticket review and the lead's ORDER 010 (2026-11-20 05:50 UTC)
-Lives in src/hadavin_sdk/limits.py when step F-store lands (GO BUILD given; not built yet, nothing run). Full context: interfaces/README.md (version 2.1).
+BUILT: src/hadavin_sdk/limits.py on cloud/core-b (commit 8db9c29 and fix round 1; tests tests/test_limits_reserve.py, tests/contracts/test_store_spend.py, tests/contracts/test_t1_reserve_cap.py: 471 passed on PostgreSQL 16 in this container; the lead's PostgreSQL 17 run is the one that counts). The in-memory Budget meter arrives with step F-install. Full context: interfaces/README.md (version 2.3).
 
 ```python
 class SpendRefused(RuntimeError):

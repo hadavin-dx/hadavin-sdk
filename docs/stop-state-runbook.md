@@ -25,6 +25,7 @@ stop visible to the clear statement is cleared. A stop committed after that stat
 between the audit row and that statement is cleared. The command then reads the state back: it prints
 `kill switch OFF` and exits 0 only when the state really is OFF; when it is still ON it says so and exits 2 (run the
 reset again). A reset that finds no `kill_switch` row fails (exit 2, audit outcome `limits.reset_failed`): run migrate.
+If the audit log is also down at that moment, the `reset_failed` outcome cannot be kept for later by this command (the login it runs under has no right to park events): the refusal is then shown only on the screen and in the exit code.
 The command refuses (exit 2, before any connection) when `backends.store.reset_credential_ref` names the same secret
 as `backends.store.dsn_secret_name`.
 

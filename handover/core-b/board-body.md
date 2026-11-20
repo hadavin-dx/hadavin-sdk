@@ -1,18 +1,44 @@
-## AGENTS
+## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
+| # | item | state | where |
+|---|---|---|---|
+| 1 | requests/001.answer.md with the reader bound to the sender names; trigger-config fixes | DONE and pushed 06:17 UTC | requests/001.answer.md DRAFT 2; commit "code D-config: fix round 1"; core-a's test file against it: 92 passed, 17 failed (16 are its expected-failure marks now passing, 1 a changed refusal text) |
+| 2 | requests/003.answer.md and corrected interfaces | DONE and pushed 06:08 UTC | requests/003.answer.md; interfaces/README.md 2.3; ii-meter.md (six reasons) |
+| 3 | F-store build with review round 2 | DONE | source 8db9c29, fix round 1 (caps, sweep age), review-2 answered; core-a's 187 contract and T1 tests against it: 183 passed, 4 expected failures |
+| 4 | ORDER 011: A-1, B-2, B role tests and mutants | DONE | A fix 15c86e5 with tests; B fix round 3 358361e with tests 6fb410a (also covers lead AB-1, AB-2: stop_state_mutants.py updated, 40 of 40 killed alone; CLI tests for still-ON and same-secret) |
+| 5 | ORDER 013 refused-before-response mark | DONE | commits "code F: providers mark ..." (two) and tests/test_refused_before_response.py; request to core-c open (its gate ignores the mark on exhausted retries) |
+| 6 | F-install review round and build | RUNNING | review rounds 1 and 2 answered (V and W sections); builder a70b774c on a local merge of core-c |
+| 7 | reserve_mutants.py, stop_state_mutants.py | DONE, re-run on the head RUNNING | tests/reserve_mutants.py 31 of 31 and 26 of 26 by hand; agent ae79ea4d re-runs all four scripts on the head |
+| 8 | docs for A, B, C, F | DONE for A, B, C, F-store; F-install's sentences come with its build | README.md, SECURITY.md, CHANGELOG.md, docs/stop-state-runbook.md |
+| 9 | ONE batch whole-suite run when 1 to 7 are coded | NOT YET (batch run 2 at 06:00 covered A, B, C, F-store source) | batch run 3 after F-install lands, on a tree with core-c's gate |
+| 10 | hostile re-read of A, B, C code | DONE; B findings with the lead (ESCALATIONS E5), A findings in A's fix round 3 (queued behind the running A agent) | tickets/ABC-hostile-review-1.md |
+Lead review items of ORDER 016b: F-1 tests exist (tests/test_limits_reserve.py, contracts/test_store_spend.py, contracts/test_t1_reserve_cap.py, test_spend_reservations_pg.py incl. settle racing expire); F-2 and F-3 done (caps and sweep age validated); F-4, F-5, AB-5 done (docs); AB-4 running (ae79ea4d); AB-3 is the lead's.
+
+## EGM STEP AUDIT (owner order 12:15 IST "use egm in sequence"; lead message): what each item had, what is missing, what I run now
+Order required: brainstorm, draft, plan review, resolve, build, evidence runner, result review by a fresh reviewer, resolve and fix, repeat, drift report. Honest list (the brainstorm and draft steps were NOT run through the skills for any item: my tickets were written from the lead's drafts and plan-v4-final; the egm-resolve skill was NOT invoked: I wrote the resolution sections myself in the main context; egm-drift-report was NOT run for anything):
+| item | plan review | build | evidence | result review (fresh) | missing now |
+|---|---|---|---|---|---|
+| A audit drain | none ordered (lead) | done | tests and mutants by other agents | lead review x2, hostile re-read (fresh, 1 round) | drift report |
+| B stop state | 1 round | done (3 fix rounds, cap) | tests and mutants | ticket review round (fresh), hostile re-read (fresh); the lead has taken the rest | drift report (lead) |
+| C price constraint | AFTER the build (order reversed), 1 round | done | tests and mutants | the ticket review round doubled as result review (fresh) | drift report |
+| D-config | NONE | done (fix round 1) | core-a's tests (92 of 109 pass, marks to remove) | lead review; egm result review RUNNING (ac7e13a5) | resolve its findings; drift report |
+| F-store | 2 rounds | done (fix 1 and 2) | tests, mutants, random-sequence model test | hostile re-read RUNNING (sonnet) | result review resolve; drift report |
+| provider mark | NONE | done | tests/test_refused_before_response.py | egm result review RUNNING (a879d0f3; post-hoc ticket tickets/F-provider-mark.md) | resolve its findings; drift report |
+| F-install | 3 rounds (round 3 running) | done (Y2/Y3 build running) | tests being written | none yet | result review after tests land; batch run 3 as evidence |
+Drift report (egm-drift-report skill): to run once, at the end of the current set, over handover/core-b and src.
+
+## AGENTS (all on the reverted models: sonnet for builders, reviewers and test writers; none on fable; egm plugin lines proven 6 opus, 66 sonnet, 0 fable in REPORT.md)
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| a51b4a37 | builder (tests) | fable | F-store tests: store contract, T1 with 50 connections, Limits, crash and role tests, tests/reserve_mutants.py; worktree F-tests | 06:02 | +40 min | UNVERIFIED | running | none | 0 | tests by a different agent than the builder |
-| a04243c0 | builder (tests) | fable | tests and mutants for step B fix round 3; worktree B-tests | 05:58 | +25 min | UNVERIFIED | running | none | 0 | the fix builder committed no tests for its new checks |
-| a7034d35 | builder (tests) | fable | re-anchors 2 audit mutants after the fix, adds 6, closes one hole in the price tests; worktree M | 06:02 | +12 min | UNVERIFIED | running | none | 1 | audit_drain_mutants.py gave 11 of 13 good on the fixed code |
-| af123633 | builder (fix) | fable | F-store fix round 1 (caps and expiry age validated: a NaN cap meant no cap) and the refused-before-response mark in llm/ (lead ORDER 013); worktree F | 06:15 | +15 min | UNVERIFIED | running | none | 0 | core-a request 003 gap G5; ORDER 013 |
-| a7f2909e | builder (fix) | fable | D-config fix round 1: sender-only secret reader, overlap refusal, strict types, charset (lead ORDER 012); worktree D | 06:15 | +15 min | UNVERIFIED | running | none | 0 | lead review: 3 Majors |
-| a6d00510, afa273dd | reviewers (egm) | fable | ticket F-install round 1 of 1: NOT ready, 4 Blockers, 19 Majors; report tickets/F-install-review-1.md; answered in the ticket (V1 to V12) | 06:09 | done | 100 | done | 1 of 1 | 0 | five answers wait for the lead: ESCALATIONS.md E3 |
-| a9b3b5a5, aac315f5 | reviewers (egm) | fable | ticket C round 1 of 1: 0 Blockers, 11 Majors, 15 Nits; built code equals the ticket; report tickets/C-review-1.md | 05:59 | done | 100 | done | 1 of 1 | 0 | answered in the ticket (P1 to P8); no source change |
-| abc08a01 | builder | fable | F-store: commit 8db9c29 on cloud/core-b (540 added, 24 removed in 18 files), with the round 2 corrections | 05:50 | done | 100 | done | 2 of 3 | 0 | 673 passed on 14 test files, PostgreSQL 16; its own test files not written yet |
-| adbe69e5 | builder (tests) | fable | tests/audit_drain_mutants.py (13) and tests/price_mutants.py (20): landed | 05:50 | done | 100 | done | none | 0 | found a hole: one price mutant survives because the test configs are written with sorted keys |
-| a52e1b89, ade5688d, a71d4b00, a86831dc, a87e21e9, a86102dd | builders | fable | B fix 3, A fix 1 and its tests, B role tests, C tests, A tests | 05:32 | done | 100 | done | | | see TESTS |
-| a6122910, a5a79255, a862ea5f, a64fad56, a27419bd | builders | fable | B fix 2, B, C, A, D-config source commits | 05:27 | done | 100 | done | | | |
-| 10 reviewer runs, 5 lookups | | fable | F-store rounds 1 and 2, ticket B round 1, ORDER 001 dry run, notes, lane map, tickets B and C | 04:10 | done | 100 | done | | | reports in tickets/ and notes/ |
+| a879d0f3 | reviewer (egm-codebase-details) | sonnet | RESULT review of the provider mark against the built code (missing step found by the EGM audit) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
+| ac7e13a5 | reviewer (egm-codebase-details) | sonnet | RESULT review of the trigger config (D-config) against the built code (missing step) | 07:00 | +10 min | UNVERIFIED | running | 1 of 1 | 0 | owner order: egm in sequence |
+| ae188231 | builder | sonnet | F-install Y2 and Y3: Reply.cost_usd None when unknown, retries never under-book; worktree Y on the F-install tree | 06:55 | +25 min | UNVERIFIED | running | review alongside (round 3) | 0 | lead ORDER 017B items 2 and 3 |
+| a66cf336 | reviewer (egm-implementation-readiness) | sonnet | F-install ticket round 3 of 3: section Y1 to Y6, esp. the release command Y4 (money path) | 06:56 | +10 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a83fab17 | reviewer (egm-codebase-details) | sonnet | same round: Y2, Y3, Y4 against the real code | 06:56 | +12 min | UNVERIFIED | running | 3 of 3 | 0 | |
+| a9cce047 | builder (tests) | sonnet | F-install tests, meter contract tests, gate_install_mutants.py; worktree FI-tests | 06:46 | +30 min | UNVERIFIED | running | none | 0 | no tests of its own yet |
+| a68fb992 | reviewer (egm-codebase-details) | sonnet | hostile re-read of built F-store, provider mark, trigger config | 06:46 | +10 min | UNVERIFIED | running | 1 of 1 | 1 | restart after the limit |
+| earlier sonnet agents | | sonnet | step A fix round 3 (a747ac5), F-store fix round 2 (8ca4d45): landed | 06:46 | done | 100 | done | | | |
+| 3 Fable agents | | fable | died on the limit at 06:44; commits recovered | | | | KILLED (limit) | | | |
+| 40 earlier Fable agents | | fable | done before the limit | | | 100 | done | | | |
 
 ## SHELLS AND PROCESSES
 | pid | command | started by | since | state | reason |
@@ -38,6 +64,12 @@
 | F-store builder's list (14 files) | local/code-F 9473bb2 (8db9c29) | 1 | 673 passed / 0 / 0 | none | done | PostgreSQL 16 |
 | tests/audit_drain_mutants.py on the fixed code | 0b0b150 | 1 | 11 of 13 good | M4, M5: SNIPPET NOT FOUND | being re-anchored | the source fix changed the lines |
 | tests/price_mutants.py | cad5069 | 1 | 20 of 20 good, 1 hole listed | routes-not-sorted mutant survives | being closed | |
+| landed test files together (stop state, audit drain, price), -n 3 | f40f369 | 1 | 475 passed / 2 failed / 1 error | ConfigError: roles other than the reset role could clear a stop ...: sb_mo_... | done | evidence/landed-tests-run-1.txt. Cause: the step B who-else check reads every role of the server and trips over roles other tests create at the same moment (ESCALATIONS E4, step B is at its 3-try cap). Serial run: 175 passed, 1 failed (a stale pin, fixed) |
+| tests/audit_drain_mutants.py, tests/price_mutants.py | f40f369 | 2 | 18 of 19 good; 22 of 22 good | M1 the STEPS row is removed | open | M1's killer now ends differently on the head (two test commits met); to be re-pinned with the F-store mutant work |
+| F-store test files (contract, T1 with 50 connections, limits, crash and roles) | local/code-F-tests 92aabbd | 1 | 471 passed / 0 / 0 | none | done | evidence/F-store-tests-evidence.txt; written before the cap validation fix |
+| mark and cap validation tests | local/code-F3 3aa3ba7 | 1 | 425 passed / 0 / 0, 1 skipped | none | done | |
+| core-a's tests/test_trigger_config.py against my fixed config code | cloud/core-b b2547a2 with their file copied in, not committed | 1 | 92 passed / 17 failed, 20 skipped | Regex pattern did not match: 'secret names used by both' | done | 16 are their expected-failure marks that now pass; 1 is a refusal text I changed; told core-a in requests/001.answer.md |
+| core-a's tests/contracts/test_store_spend_reservations.py and test_t1_reserve_cap.py against my store code | cloud/core-b 20bc17d with their two files copied in, not committed | 1 | 183 passed / 0 failed, 4 expected failures | none | done | their file, my code; PostgreSQL 16 |
 | full suite, batch run 2 | 21c869b | 1 | 11249 passed / 13 failed / 1 error, 1 skipped, 193 s | tests/test_audit_drain.py f2: assert 0 == 1 | done | evidence/batch-run-2.log (last 120 lines). NEW, mine: 11 failures in tests/test_audit_drain.py (the fix-round tests picked the LAST tick step, and F-store added a step after audit_drain): fixed by selecting the step by name, re-run 150 of 150. 1 ERROR in tests/test_stop_state_roles.py::test_h2: passes when run alone; cause NOT established (the shared test database had two other agents creating roles at the same time). Not from my code: demo dblink test (needs a server on the default socket), vendor-name guard on handover/BRIEF-PREAMBLE.md |
 | full suite, batch run 1 | cloud/core-b 737c93c | 1 | 11129 passed / 3 failed / 0 errors, 1 skipped, 208 s | psycopg SqlclientUnableToEstablishSqlconnection (dblink to socket port 5432) | done | evidence/batch-run-1.log. 1 NEW in my file: test_stage_names flagged the parameter name in tests/test_price_constraint.py, fixed and re-run (343 passed on the two files). 2 not from my code: demo dblink test needs a PostgreSQL on the default socket (this container's runs on port 55439); test_no_reference_material flags a vendor name in handover/BRIEF-PREAMBLE.md (the lead's file on this handover branch) |
 
@@ -55,8 +87,9 @@
 | ORDER 013 refused-before-response mark | RUNNING | 10 | | 1 | |
 | REQUEST 001 from core-a (config for step D), ORDER 012 fixes | RUNNING (fix round 1) | 70 | requests/001.answer.md (names and refusal texts), code D-config commit | 1 | test file for the block not written yet (core-a offered it) |
 | BUILD A audit drain | DONE except mutant script and batch run 2 | 95 | commits 5eb1e7e (source), e5a64ee (docs), 3394b2c (tests); evidence/A-tests-evidence.txt | 1 | full suite not run yet (one batch run for A, B, C) |
-| BUILD F-store | RUNNING | 70 | commit 8db9c29 (source, pins, changelog) | 1 | lead GO BUILD F-store |
-| BUILD B stop state | RUNNING (3 of 3 fix rounds used) | 85 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
+| BUILD F-install | RUNNING | 5 | none yet | 1 | lead GO; built on a local merge of core-c (not pushed): its commits may not apply to cloud/core-b alone |
+| BUILD F-store | DONE except batch run 3 | 95 | source 8db9c29, fix round 1, tests and mutants; evidence/F-store-tests-evidence.txt | 1 | lead GO BUILD F-store |
+| BUILD B stop state | LEAD TOOK OVER the who-else check (ORDER 015); rest done | 92 | commits 80a07ce, 6662afe, 8bb386f (docs), 7afdab2 (role tests, mutants); evidence/B-tests-after-fix.txt | 2 | review round half done; 2 mutants not run after the fix; not in a full-suite run yet |
 | BUILD C price constraint | DONE except batch run 2 | 97 | commits eb775a8 (source), 388c9a0 (changelog), 737c93c (tests); evidence/C-tests-evidence.txt | 1 | ticket review round and the batch run not done |
 | T3 EGM review rounds | DONE (all ordered rounds run; none clean; all answered in text) | 100 | tickets/F-install-review-1.md; | tickets/C-review-1.md (0 Blockers, answered); F-install round running; | tickets/F-store-review-1.md, B-review-1.md (NOT clean, answered); F-store round 2 running; C and F-install not started (one stage at a time) | 1 | tickets/F-store-review-1.md (NOT clean: 2 Blockers, 19 Majors; all answered in the ticket, answers not re-reviewed; ESCALATIONS.md E2) | 1 | next: ticket B, then C, then F-install, one after the other |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
@@ -84,7 +117,10 @@
 - QUESTIONS.md 1 to 4 (cron fallback, which baseline test fails, step A build without extra GO, local PostgreSQL 16 for my lane run).
 - core-c ESCALATION E2 (strict mask check would refuse normal runs): needs the lead's ruling before ticket F-install can be final.
 - Lead: handover/BRIEF-PREAMBLE.md contains a vendor name that tests/test_no_reference_material.py refuses (rule 15 text). It fails the suite on every cloud branch that carries the handover folder; it is your file, I did not touch it.
-- ESCALATIONS.md E3: ticket F-install review not clean; five design answers need the lead's OK before GO BUILD F-install; one behaviour change for the owner (failed provider calls keep a worst case booked for an hour).
+- ESCALATIONS.md E5: the hostile re-read found 1 Blocker and 5 Majors in built step B code (search path decoy, reset command steering an operator to erase a fresh stop, reset secret readable by the runtime, PostgreSQL 17 table lock). B is at its 3-try cap: the lead decides and builds.
+- ESCALATIONS.md E4: step B's who-else-can-clear check refuses healthy set-ups on a shared server and makes the role tests interfere in parallel; B is at its 3-try cap, so I stopped. Lead: decide the one-clause fix or take it over. Until then run tests/test_stop_state_roles.py with -n 1 on its own server.
+- requests/to-core-c-1-exhausted-mark.md: core-c's gate ignores the unbilled mark on errors that used up their retries (429, refused connections).
+- requests/002.answer.md: two points for the lead (default runs at a time 1 or 4; comparing the approvals secret with trigger secrets).
 - My slip: I missed ORDER 012, ORDER 013 and core-a requests 002 and 003 for about 12 minutes (I searched the orders file for the wrong heading). 003 is answered (requests/003.answer.md, interface README 2.3); 012 and 013 are being built; 002 is next.
 - Duplicate work: core-a wrote 102 contract tests and a T1 file for interface (i) while my own test writer does the same. Lead: say which T1 file is kept.
 - ESCALATIONS.md E2: F-store ticket review was not clean; three of my answers change the lead's draft design (settle returns row and applied; expired rows are always claimed by the first settle; expiry age from the stuck-run age). Lead: OK or CHANGE before GO BUILD F.

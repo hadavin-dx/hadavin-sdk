@@ -40,7 +40,7 @@ from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import AuditEvent
-from hadavin_sdk.store.protocol import is_connectivity_error
+from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
 
 GENESIS = "0" * 64
 _LOG = logging.getLogger("hadavin_sdk.audit.chain")
@@ -71,6 +71,23 @@ def _hash(prev: str, seq: int, at: str, run_id: str, kind: str, body: str) -> st
         [prev, seq, at, run_id, kind, body], ensure_ascii=False, separators=(",", ":")
     )
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def _is_outage(exc: BaseException) -> bool:
+    """True only for "the database cannot be reached right now": OSError, StoreUnavailable, a psycopg
+    InterfaceError, or a psycopg OperationalError with no SQLSTATE or one of class 08 (connection) or 57P
+    (operator shutdown). Any other error (a row too large for an index 54000, a statement timeout 57014, a full
+    disk 53100, a missing grant) can never succeed by waiting and is "not writable". A sqlite3 error is not an
+    outage. No driver import: psycopg errors are recognised by class name along the MRO."""
+    if isinstance(exc, StoreUnavailable | OSError):
+        return True
+    names = {c.__name__ for c in type(exc).__mro__ if c.__module__.startswith("psycopg")}
+    if "InterfaceError" in names:
+        return True
+    if "OperationalError" in names:
+        state = getattr(exc, "sqlstate", None)
+        return state is None or state.startswith(("08", "57P"))
+    return False
 
 
 def _takes_meta(put: Callable) -> bool:
@@ -175,7 +192,7 @@ class ChainAudit:
         self._pending: list[AuditEvent] = []
         self._flush_lock = threading.Lock()  # one drainer of _pending at a time
         # Parked events the database refused for a reason other than an outage: moved here by the flush so
-        # they do not block the ones after them. In-process only, never retried: lost when the process exits.
+        # they do not block the ones after them. In-process only, retried once per reconcile: lost when the process exits.
         self._unwritable: list[AuditEvent] = []
         # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
         # restart drops the list and `verify` then reports "never anchored", which is the truth).
@@ -251,7 +268,7 @@ class ChainAudit:
             with self._flush_lock:
                 while self._pending:
                     failed = self._drain(self._pending[0])
-                    if failed is not None and is_connectivity_error(failed):
+                    if failed is not None and _is_outage(failed):
                         break
                     event = self._pending.pop(
                         0
@@ -278,6 +295,9 @@ class ChainAudit:
         for a reason other than an outage, or whose delete failed is kept and skipped, and the call then raises
         with the counts only. An outage (reading the outbox or appending a row) is quiet: retried next time. Any
         other error reading the outbox (a missing grant or table) is raised."""
+        # One retry per run: events refused earlier go back in front of the queue.
+        with self._flush_lock:
+            self._pending[:0], self._unwritable = self._unwritable, []
         done = self._flush_pending()
         try:
             queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
@@ -286,6 +306,8 @@ class ChainAudit:
                 raise
             return done  # the database is still down: retried next time
         unreadable = not_writable = not_deleted = 0
+        # Events still refused after this run's retry: counted in the error.
+        in_memory = len(self._unwritable)
         for event_id, body in queued:
             try:
                 event = AuditEvent.model_validate_json(body)
@@ -298,7 +320,7 @@ class ChainAudit:
             failed = self._drain(event)
             if failed is not None:
                 # An outage: stays queued quietly. Anything else (a missing grant, a rejected row) is counted.
-                not_writable += not is_connectivity_error(failed)
+                not_writable += not _is_outage(failed)
                 continue
             try:
                 self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
@@ -312,6 +334,7 @@ class ChainAudit:
                 (unreadable, f"{unreadable} unreadable rows kept"),
                 (not_writable, f"{not_writable} rows not writable"),
                 (not_deleted, f"{not_deleted} rows not deleted"),
+                (in_memory, f"{in_memory} events not writable in memory"),
             )
             if count
         ]

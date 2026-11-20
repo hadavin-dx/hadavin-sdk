@@ -50,6 +50,7 @@ from hadavin_sdk.store.protocol import (
     StaleState,
     StoreUnavailable,
     check_expiry_age,
+    check_reservation_id,
     check_spend_amount,
     check_spend_cap,
 )
@@ -613,6 +614,7 @@ class PostgresStore:
         month_cap: Decimal,
         run_id: str | None = None,
     ) -> None:
+        check_reservation_id(reservation_id)
         check_spend_amount(usd)
         check_spend_cap(day_cap)  # before any SQL: a NaN cap would compare as no cap
         check_spend_cap(month_cap)
@@ -668,6 +670,7 @@ class PostgresStore:
     def settle_spend(
         self, reservation_id: str, actual_usd: Decimal
     ) -> tuple[SpendReservation, bool]:
+        check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
         with self._lock, self._db.transaction():
             # The claim comes first. A second caller waits on the row lock, finds the row settled, claims

@@ -28,6 +28,7 @@ from hadavin_sdk.store.protocol import (
     SpendCapExceeded,
     StaleState,
     check_expiry_age,
+    check_reservation_id,
     check_spend_amount,
     check_spend_cap,
 )
@@ -313,6 +314,7 @@ class MemoryStore:
         month_cap: Decimal,
         run_id: str | None = None,
     ) -> None:
+        check_reservation_id(reservation_id)
         check_spend_amount(usd)
         check_spend_cap(day_cap)
         check_spend_cap(month_cap)
@@ -338,6 +340,7 @@ class MemoryStore:
     def settle_spend(
         self, reservation_id: str, actual_usd: Decimal
     ) -> tuple[SpendReservation, bool]:
+        check_reservation_id(reservation_id)
         check_spend_amount(actual_usd)
         with self._lock:
             row = self._reservations.get(reservation_id)

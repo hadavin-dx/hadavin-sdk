@@ -24,11 +24,15 @@ changes and runs the killer on the clean tree first. Exit 1 if any is not KILLED
 M4 is written as "the drained event is not removed and the flush stops": the plain form (the ``pop`` removed)
 loops forever, which the runner would report as TIMEOUT and not as a kill.
 
-M1 ends its killer in an exception, not in a failed assertion (the test looks the step up by name before it
-asserts on the order), so it is marked ``allow_crash`` and the exception class is checked.
+M1 is killed by the count of the step's name in ``STEPS`` (0, not 1), the first assertion of n1. The test file
+selects the audit step by name (``LAST``) with a list filter, so a ``STEPS`` without the row still imports: a
+lookup with ``next`` at module level ended the mutant in a collection error, which is no kill.
 
 F1 to F6 are the mutants of fix round 1 (``_drain`` returns the exception, a refused event or row no longer blocks
-the ones after it, the step fails with the counts); their killers are the f1 to f7 tests."""
+the ones after it, the step fails with the counts); their killers are the f1 to f7 tests.
+
+G1 is the mutant of fix round 2 (the fourth count of the failure text: events this process moved aside in
+memory); its killer is the f8 test."""
 
 import os
 import subprocess
@@ -71,6 +75,7 @@ F1_TEXT = "test_f1_reconcile_raises_only_after_the_whole_loop_and_with_counts_on
 F3 = "test_f3_a_failed_delete_is_counted_and_the_next_drain_deletes_without_a_duplicate"
 F5_ASIDE = "test_f5_a_flush_moves_a_refused_event_aside_and_writes_the_ones_after_it"
 F5_OUTAGE = "test_f5_a_flush_stops_at_an_outage_and_keeps_the_rest_in_order"
+F8 = "test_f8_an_event_moved_aside_in_memory_fails_the_step_with_its_count"
 F6_PG = "test_f6_pg_a_runtime_role_that_cannot_insert_fails_the_step_and_keeps_the_row"
 
 FLUSH = "            self._flush_pending()\n        return key\n\n    def "
@@ -87,6 +92,7 @@ FLUSH_STOP = "                    if failed is not None and is_connectivity_erro
 ROW_FAILED = "            if failed is not None:\n"
 COUNT = "                not_writable += not is_connectivity_error(failed)\n"
 NOT_DELETED = "                not_deleted += 1\n                continue\n"
+IN_MEMORY = '                (in_memory, f"{in_memory} events not writable in memory"),\n'
 RAISE = '            raise RuntimeError("audit outbox: " + ", ".join(problems))\n'
 
 
@@ -110,7 +116,7 @@ def by_hand(name, file, old, new, killer, expect):
 
 
 M = [
-    mutant("M1 the STEPS row is removed", TICK, STEP_ROW, "", N1, "StopIteration", crash="StopIteration"),
+    mutant("M1 the STEPS row is removed", TICK, STEP_ROW, "", N1, "assert 0 == 1"),
     mutant("M2 the audit_drain body is empty", TICK, STEP_BODY, "        pass\n", N2, "assert (0 == 1)"),
     mutant("M3a the flush call is removed from write_intent", CHAIN,
         FLUSH + "write_outcome", NO_FLUSH + "write_outcome", N3 + "[write_intent]", "rows=None)] == []"),
@@ -149,6 +155,8 @@ M = [
         "                    if failed is not None:\n", F5_ASIDE, "assert 1 == 2"),
     mutant("F6 the flush moves an outage failure aside", CHAIN, FLUSH_STOP, "                    if False:\n",
         F5_OUTAGE + "[OSError]", "assert 2 == 1"),
+    mutant("G1 the events moved aside in memory are not in the failure text", CHAIN, IN_MEMORY, "", F8,
+        "DID NOT RAISE"),
 ]  # fmt: skip
 
 HAND = [
