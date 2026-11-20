@@ -3,7 +3,7 @@ server classes (`triggers/server.py`) and the crash helper of step E (`testing/c
 (`tools/mutation_runner.py`). Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy of the package; the test in `killer` must be the one that fails first, with a
-first failing line that holds `expect`. Thirty-two groups (G32 is E1: ten mutants), one per guarantee:
+first failing line that holds `expect`. Thirty-three groups (G32 is E1: ten mutants, G33 is E1 fix2: six), one per guarantee:
 
     G1  the dedupe key: tenant, sender and the NUL separator are all part of `derive_run_id`
     G2  the payload-hash conflict: the document hash is in `trigger_ref`, and `Runner.start` compares it on a hit
@@ -43,6 +43,8 @@ first failing line that holds `expect`. Thirty-two groups (G32 is E1: ten mutant
     G30 the size cap is on the raw body bytes (the guard itself; not a cap on the decoded document), G31 an empty document
         is a document (`parse_body` does not refuse it)
     G32 E1 (d-fix6, d-fix8): the 409 audit event and its cap, /health, the degraded start and its recovery, the no-audit warning
+    G33 E1 fix2 (d-fix9): `_close_app` in `_recover`, the ping set after start, the 2 s audit wait, `DEGRADED_FATAL_AFTER`,
+        the per-sender cap, an unsigned request is never a sender
 
 G4: the five-minute window itself lives inside `approvals/hmac_v0.verify`. That file is NOT mutated and not edited here: the
 mutant is on the endpoint side only (the request's own timestamp is passed as "now", so the window can never close).
@@ -123,6 +125,7 @@ CRASH = "src/hadavin_sdk/testing/crash.py"
 SERVER = "src/hadavin_sdk/triggers/server.py"
 T6 = "tests/triggers/test_d_fix6_e1.py"
 T8 = "tests/triggers/test_d_fix8_e1fix.py"
+T9 = "tests/triggers/test_d_fix9_e1fix2.py"
 
 JOINED = 'joined = f"{tenant}\\0{sender}\\0{key}".encode()'
 VERIFY = (
@@ -204,7 +207,7 @@ N15 = "test_n15_runner_bounds_are_refused"
 # The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
 # logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
 # in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
-TESTS = [TE, TC, TS, TP, TW, T6, T8]
+TESTS = [TE, TC, TS, TP, TW, T6, T8, T9]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1213,6 +1216,69 @@ M = [
         T8,
         "test_e1fix_main_warns_once_when_the_app_has_no_audit_and_make_app_does_not",
         "assert (0 == 1)",
+    ),
+    # --- G33 E1 fix2 (d-fix9): the guards of worker.py's re-check, the audit write bound, the per-sender cap
+    mutant(
+        "G33a _recover does not close the App's store after a failed try",
+        WORKER,
+        "            runner.close(0)\n            _close_app(app)\n",
+        "            runner.close(0)\n",
+        T9,
+        "test_fix2_recover_closes_the_store_on_every_failed_try",
+        "assert 0 == 1",
+    ),
+    mutant(
+        "G33b Runner.health puts the ping in place before its thread has started",
+        WORKER,
+        "                fresh = _Ping(self._store, self._count_store_failure)\n",
+        "                fresh = _Ping(self._store, self._count_store_failure)\n                self._ping = fresh\n",
+        T9,
+        "test_fix2_a_ping_thread_that_does_not_start_is_a_counted_503_and_the_next_call_works",
+        "assert (True, 1)",
+    ),
+    mutant(
+        "G33c the conflict audit write is waited for 30 s, not 2 s",
+        WORKER,
+        "AUDIT_WRITE_TIMEOUT_S: Final[float] = (\n    2.0",
+        "AUDIT_WRITE_TIMEOUT_S: Final[float] = (\n    30.0",
+        T9,
+        "test_fix2_a_blocked_audit_write_costs_the_409_at_most_2_s_and_one_write_is_pending",
+        "assert 30.0 == 2.0",
+    ),
+    mutant(
+        "G33d a degraded worker never stops on repeated non-store errors",
+        WORKER,
+        "                    if other >= DEGRADED_FATAL_AFTER:\n",
+        "                    if False:\n",
+        T9,
+        "test_fix2_five_non_store_failures_in_a_row_stop_the_worker_with_exit_3",
+        "the worker did not stop on its own",
+    ),
+    mutant(
+        "G33e the 409 event cap uses one shared key for all senders",
+        WORKER,
+        "            start, seen = self._conflict_windows.get(req.sender, (at, 0))\n"
+        "            if at - start >= CONFLICT_WINDOW_S or at < start:\n"
+        "                start, seen = at, 0\n"
+        "            seen += 1\n"
+        "            self._conflict_windows[req.sender] = (start, seen)\n",
+        "            start, seen = self._conflict_windows.get('-', (at, 0))\n"
+        "            if at - start >= CONFLICT_WINDOW_S or at < start:\n"
+        "                start, seen = at, 0\n"
+        "            seen += 1\n"
+        "            self._conflict_windows['-'] = (start, seen)\n",
+        T9,
+        "test_fix2_the_cap_is_per_sender_and_the_window_dict_is_bounded_by_the_senders",
+        "assert 0 == 1",
+    ),
+    mutant(
+        "G33f an unsigned request is taken as the first configured sender",
+        ENDPOINT,
+        "        sender = verify_any(headers, body, clock(), secrets)\n",
+        "        sender = verify_any(headers, body, clock(), secrets) or next(iter(senders))\n",
+        T9,
+        "test_fix2_an_unsigned_or_wrongly_signed_conflicting_document_writes_no_event",
+        "assert 409 == 401",
     ),
 ]
 
