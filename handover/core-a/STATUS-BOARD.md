@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:40:07Z
+UPDATED_UTC: 2026-11-20T08:40:31Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 72
 ITEMS_OPEN: 20
 PERCENT: 82
 AGENTS_RUNNING: 2
-CAPACITY: load 0.46 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 555M /home/user/hadavin-sdk; 475M /tmp/claude-0; 160M /root/.cache
+CAPACITY: load 0.44 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 556M /home/user/hadavin-sdk; 475M /tmp/claude-0; 160M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T08:39:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T08:40:10Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -102,12 +102,12 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 8738s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 8738s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 8738s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 8738s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 8738s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 8738s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 8761s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 8761s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 8761s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 8761s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 8761s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 8761s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -169,6 +169,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- DEADLINE 08:50: tested step D commit pushed 08:41 UTC: 70feef2c5 (message and handover/core-a/TESTED-D.md: tests/triggers 1182 passed, 5 skipped, 0 failed, file hashes). The code itself was already in earlier board WIP snapshots (the board script commits code files); this commit marks the tested state. Mutant run 14 and the independent batch6 (whole suite) follow.
 - ORDER 022 (read 08:38): the lead's list is stale on 3 points: (a) the 14 failing trigger tests are fixed since 07:30 (tests/triggers: 1175 passed, 5 skipped in my run; FAILED list now: none in my trigger files; the only FAILED in my last evidence batch were 74 n8n tests my runner broke by not copying n8n/); (b) n8n template retry fix is DONE (ORDER 019, 3 review rounds, 88 tests); (c) step E review is at its cap (E5 waits for you). Live now: d-fix4 (last step D code fixes, writes the tested commit) + ruff-haiku. The tested step D code commit (not WIP) follows when d-fix4 ends and its tests pass: target before 08:50 UTC. Then batch6: whole suite, -n 3 if pytest-xdist is installed, one shell.
 - BATCH5 result: whole suite with REQUIRE_PG=1 did NOT complete in the checkout: my own strict switch turns the missing core-b config into an ImportError at collection (bug of mine, fixed in d-fix4: it will fail at test time). Combined tree (core-b 05159ec19 + my files): 1110 passed, 0 real failures (74 n8n failures were my runner not copying n8n/). Your 5 failing ids at 5bacdc05f: not reproduced yet; the next batch (batch6, after d-fix4) lists them. Lint: all ruff errors are in handover/core-a/inputs/ (your files: demo-hooks.py RET501, README.md and i_store_spend.py format): not mine to edit.
 - E7 (ESCALATIONS.md): step D code round 3 left one Major that is yours: is the stdlib-based server (316 lines: connection cap + total read deadline + quiet handler) acceptable, or drop cap/deadline to the proxy, or vet a server library? Default if you say nothing: keep it and fix the ticket's size sentence.
