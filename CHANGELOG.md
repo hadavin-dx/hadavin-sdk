@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- `triggers.conflict_events_per_minute` (strict whole number, 1 to 1000, default 10): the cap on `trigger.conflict` audit events per sender per minute. Optional, outside `config_hash`.
+
 ### Upgrade steps
 - **`migrate` now refuses a database whose `hadavin_*` functions or money tables have more than one owner (F-money-definer, migration 0011).**
   - **What changed.** Every `hadavin_*` function must have the same owner, that owner must not be a named role (or

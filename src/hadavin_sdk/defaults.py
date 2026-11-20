@@ -149,6 +149,10 @@ TRIGGER_MAX_RUNNING = 4  # runs the worker's pool handles at once
 TRIGGER_MAX_RUNNING_CEILING = 64
 TRIGGER_ACK_WAIT_S = 5.0  # how long a request waits for its run row before it answers 503
 TRIGGER_ACK_WAIT_S_CEILING = 30.0
+# `trigger.conflict` audit events one sender may write per minute (the rest are counted, logged once).
+TRIGGER_CONFLICT_EVENTS_DEFAULT = 10
+TRIGGER_CONFLICT_EVENTS_MIN = 1
+TRIGGER_CONFLICT_EVENTS_MAX = 1000
 
 # --- spend reservations (limits.py, the `expire_reservations` tick step) -------------------------------------------------
 # Seconds after which an open spend reservation is marked expired (its worst case stays booked). The tick step uses

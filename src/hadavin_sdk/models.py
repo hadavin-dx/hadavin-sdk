@@ -226,6 +226,8 @@ class AuditEvent(Shape):
     principal: str
     source: str
     object_ref: str | None = None
+    # The payload hash of the call or request: a tool call's inputs; for `trigger.conflict`, the NEW request's
+    # payload hash (never the payload).
     inputs_hash: str | None = None
     decision: str | None = None
     rule_id: str | None = None
@@ -235,7 +237,8 @@ class AuditEvent(Shape):
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None
     # A tool call's audit event carries the SHA-256 of the output text as STORED (redacted, truncated), so a
-    # later edit of the `tool_calls` row is detectable against the chain. None for every other event.
+    # later edit of the `tool_calls` row is detectable against the chain. For `trigger.conflict` it is the hash of
+    # the STORED request the new one conflicted with. None for every other event.
     output_hash: str | None = None
     # The gate's decide event carries the hash of the plan's inputs with their placeholders restored, so an
     # approval is bound to the real values and execution refuses a map that changed since (R6, before K8).

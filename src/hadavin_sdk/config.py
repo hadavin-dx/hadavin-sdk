@@ -412,6 +412,12 @@ class TriggerSettings(_Strict):
         le=defaults.TRIGGER_ACK_WAIT_S_CEILING,
         strict=True,
     )
+    conflict_events_per_minute: int = Field(
+        default=defaults.TRIGGER_CONFLICT_EVENTS_DEFAULT,
+        ge=defaults.TRIGGER_CONFLICT_EVENTS_MIN,
+        le=defaults.TRIGGER_CONFLICT_EVENTS_MAX,
+        strict=True,
+    )
 
 
 def _trigger_refusals(triggers: TriggerSettings | None) -> list[str]:
