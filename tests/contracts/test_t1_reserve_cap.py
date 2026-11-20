@@ -38,7 +38,6 @@ _HOMES = ("hadavin_sdk.store.protocol", "hadavin_sdk.models")
 THREADS = 50
 DAY = date(2026, 3, 10)
 CAP, WORST, WIDE = Decimal("3.00"), Decimal("1.00"), Decimal(1000)
-TABLE = "spend_reservations"
 
 
 def _cap_error():
