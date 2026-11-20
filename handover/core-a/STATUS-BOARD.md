@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T17:14:44Z
+UPDATED_UTC: 2026-11-20T17:16:05Z
 SESSION: core-a
 ORDER: ORDER 023 (+ lead lanes 15:43/16:09/16:12, answers in handover/core-a/ANSWERS-1612.md)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 4
-CAPACITY: load 1.93 of 4 cores (1-minute average), mem 1.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.59 of 4 cores (1-minute average), mem 1.4/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 14G 55G 21%; 673M /home/user/hadavin-sdk; 1.4G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: ['ledger NEEDS REVIEW queue (15): d-fix17, d-fix18, crash matrix 1+2, support patches 1+2, contract-fix, grant tests, T1 merge, CI matrix test, docs for core-c, PR package, README text; max 2 reviewers at a time']
-PUSHED_UTC: 2026-11-20T17:13:53Z (the push before this board)
+PUSHED_UTC: 2026-11-20T17:14:50Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -110,24 +110,24 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | A10-fuzz-pg | builder/reviewer | sonnet | hostile concurrency/crash fuzz of door against core-b real PG store (PG16) -> evidence/fuzz-pg-store.md | 17:08 | 30 min | 5 | running | - | 0 | lead 17:02 order A7-A10 |
 | d-fix25 | builder | sonnet | fix the 2 Majors + nits of rev-dfix22-24 in worker.py with tests first | 17:16 | 25 min | 5 | running | fix of round 1 | 0 | EGM |
 | d-fix26 | builder | sonnet | degraded start: a non-connectivity ConfigError is fatal (exit 2), ack_wait_s in check_fields, value checks before store | 17:26 | 25 min | 5 | running | fix of round 2 | 0 | EGM |
-| rev-grantfix2-r4 | reviewer | sonnet | fresh result review round 4 of grant-test fix bdf8a9f8d | 17:36 | 10 min | 10 | running | 4 of 5 | 0 | EGM |
+| rev-grantfix2-r5 | reviewer | sonnet | round 5 (cap) fresh review of grant-test fix bdf8a9f8d | 17:39 | 10 min | 10 | running | 5 of 5 | 0 | EGM |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 10909 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 41s ago | running | matched by name in ps |
-| 10913 | .venv/bin/python -m pytest tests/triggers -q -p no:cacheprovider -n 2 | core-a session or its agent | 41s ago | running | matched by name in ps |
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 39617s ago | running | matched by name in ps |
-| 15940 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 15943 | timeout 250 .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_sto | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 15945 | .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_store.py -k tes | core-a session or its agent | 9s ago | running | matched by name in ps |
-| 15950 | /home/user/wt/fuzz-b/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 8s ago | running | matched by name in ps |
-| 15952 | postgres: postgres postgres 127.0.0.1(49724) idle | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 39699s ago | running | matched by name in ps |
+| 22951 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 41s ago | running | matched by name in ps |
+| 22986 | .venv/bin/python -m pytest tests/triggers -q -p no:cacheprovider -n 2 | core-a session or its agent | 40s ago | running | matched by name in ps |
+| 27081 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 9s ago | running | matched by name in ps |
+| 27084 | timeout 250 .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_sto | core-a session or its agent | 9s ago | running | matched by name in ps |
+| 27086 | .venv/bin/python -m pytest tests/triggers/test_fuzz_pg_store.py -k tes | core-a session or its agent | 9s ago | running | matched by name in ps |
+| 27091 | /home/user/wt/fuzz-b/.venv/bin/python -m tests.triggers.crash_launcher | core-a session or its agent | 8s ago | running | matched by name in ps |
+| 27093 | postgres: postgres postgres 127.0.0.1(47154) idle | core-a session or its agent | 8s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
