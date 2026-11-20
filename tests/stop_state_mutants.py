@@ -1,5 +1,5 @@
 """Mutants of the stop state (step B). Each reverts ONE guard; the pinned test of ``tests/test_stop_state_roles.py``
-must fail, and its output must hold ``expect``. Not collected by pytest. Re-anchored after fix rounds 2 and 3.
+must fail, and its output must hold ``expect``. Not collected by pytest. Re-anchored after fix rounds 2 and 3, and again for the E5 guards (see the end of ``HAND``).
 
 Same file format as the other mutant lists (``Mutant`` of ``tools/mutation_runner.py``), with one difference in how
 they are run. The runner gives a mutant run no DSN and no conftest (by design: the child sees no secret of the
@@ -25,6 +25,7 @@ never run."""
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(
@@ -42,6 +43,17 @@ PG = "src/hadavin_sdk/store/postgres.py"
 CLI = "src/hadavin_sdk/cli.py"
 SQL = "src/hadavin_sdk/store/migrations/0006_stop_state.sql"
 LOOP = "src/hadavin_sdk/runtime/agent_loop.py"
+APP = "src/hadavin_sdk/app.py"
+SECN = "src/hadavin_sdk/secret_name.py"
+E5S = "tests/test_step_b_e5_search_path.py"
+E5R = "tests/test_step_b_e5c_role_settings.py"
+E5M = "tests/test_step_b_e5_maintain.py"
+E5B = "tests/test_step_b_e5b_reset_ref.py"
+H4 = "tests/test_trigger_hardening_round4.py"
+UNIT = "tests/test_stop_state_unit.py"
+LOCKT = "tests/test_store_lock_timeout_pg.py"
+NOROLES = "tests/test_step_b_e5_no_roles.py"
+NEW = "tests/test_mutants_stop_state_e5.py"
 
 DENIED = "test_runtime_login_is_denied_and_the_switch_stays_on"
 N2 = "test_n2_a_reset_by_the_reset_login_reads_off"
@@ -88,9 +100,16 @@ TRIGGERS = (
 )
 
 
-def mutant(name, file, old, new, killer, expect):
+def mutant(name, file, old, new, killer, expect, test=TEST):
     return Mutant(
-        name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
+        name,
+        file,
+        old,
+        new,
+        expect,
+        test_file=test,
+        only_test=killer,
+        pinned=test[:-3] + "::" + killer,
     )
 
 
@@ -106,8 +125,8 @@ HAND = [
         '"kill_switch": Grant("table", _RW, reset="SELECT, UPDATE")',
         DENIED, WHO_ELSE),
     mutant("grants: the reset role may not append to audit_entries", MIG,
-        '"audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND)',
-        '"audit_entries": Grant("table", _APPEND, portal=True, reset="SELECT")',
+        '"audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND, release=_APPEND)',
+        '"audit_entries": Grant("table", _APPEND, portal=True, reset="SELECT", release=_APPEND)',
         N3, "assert 3 == 0"),
     mutant("migrate: the reset block is skipped", MIG,
         "        if reset_role:\n            _apply_grants(db, reset_role, lambda g: g.reset)",
@@ -314,12 +333,13 @@ HAND = [
         "test_s7_a_reset_with_the_flag_row_missing_clears_nothing_so_the_stop_survives_the_repair",
         "DID NOT RAISE"),
     mutant("B-2: the read-back after the reset is removed", CLI,
-        '    if state.on:\n        print(\n            f"kill switch still ON',
-        '    if False:\n        print(\n            f"kill switch still ON',
+        "    if state.on:\n        who = (",
+        "    if False:\n        who = (",
         "test_b2_cli_reset_says_still_on_when_a_stop_commits_after_its_clear_statement_began",
         "assert [0] == [2]"),
     mutant("B-4: the same-secret refusal is removed", CLI,
-        "        if reset_ref and reset_ref == b.store.dsn_secret_name:", "        if False:",
+        "            and collides(reset_ref, [b.store.dsn_secret_name], file_backed=_file_backed(b))",
+        "            and False",
         "test_b4_a_reset_ref_equal_to_the_runtime_secret_name_is_refused_before_any_connection",
         "was called"),
     mutant("S12: the isfinite CHECK is removed from the stops", SQL,
@@ -345,6 +365,126 @@ HAND = [
         LOOP_PLAN, LOOP_PLAN.replace(LOOP_RETURN, "            raise\n"),
         "test_e9_a_stop_state_that_turns_unreadable_at_any_later_read_means_no_card_and_no_action",
         "InsufficientPrivilege"),
+    # ---- the guards added since (verify_schema, role settings, MAINTAIN, no_roles, reset-ref overlap, lock_timeout) ----
+    mutant("verify_schema: an empty search_path is not refused", PG,
+        '    if not schema:\n        raise ConfigError(\n            "store postgres: the search_path names no schema',
+        '    if False:\n        raise ConfigError(\n            "store postgres: the search_path names no schema',
+        "test_s1_a_search_path_that_names_no_schema_is_refused_at_connect", "Regex pattern did not match"),
+    mutant("verify_schema: the effective path is not compared with the expected one", PG,
+        "    if effective != expected or schema != expected[0]:", "    if schema != expected[0]:",
+        "test_e5e_an_extra_schema_on_the_effective_path_is_refused", "DID NOT RAISE", test=NEW),
+    mutant("verify_schema: current_schema() is not compared with the first expected schema", PG,
+        "    if effective != expected or schema != expected[0]:", "    if effective != expected:",
+        "test_e5e_a_path_that_starts_with_pg_catalog_is_refused_by_current_schema", "Regex pattern did not match", test=NEW),
+    mutant("verify_schema: the missing stop tables are not refused", PG,
+        "    if missing := [t for t in _STOP_TABLES if t not in found]:", "    if missing := []:",
+        "test_missing_stop_tables_say_kill_switch_not_found_in_current_schema_and_name_it", "DID NOT RAISE", test=E5S),
+    mutant("verify_schema: a view with a stop table's name counts as the table", PG,
+        "c.relkind IN ('r','p') AND c.relname = ANY(%s)", "c.relkind IN ('r','p','v') AND c.relname = ANY(%s)",
+        "test_e5e_a_view_named_like_a_stop_table_is_not_the_stop_table", "DID NOT RAISE", test=NEW),
+    mutant("verify_schema: the connection is left open when the check refuses", PG,
+        "    except BaseException:\n        conn.close()\n        raise", "    except BaseException:\n        raise",
+        "test_e5e_a_refused_schema_check_closes_the_connection", "assert False is True", test=NEW),
+    mutant("lock_timeout: the setting is not sent", PG,
+        '    conn.execute(\n        sql.SQL("SET lock_timeout = {}").format(sql.Literal(defaults.STORE_LOCK_TIMEOUT_MS))\n    )\n',
+        "",
+        "test_the_default_is_ten_seconds_and_the_runtime_connection_carries_it", "== '10s'", test=LOCKT),
+    mutant("lock_timeout: the value is not the default", PG,
+        "sql.Literal(defaults.STORE_LOCK_TIMEOUT_MS)", "sql.Literal(0)",
+        "test_the_value_comes_from_the_default_at_build_time", "2500ms", test=LOCKT),
+    mutant("migrate: --no-roles together with a role is accepted", MIG,
+        "    if no_roles and named:", "    if False:",
+        "test_no_roles_together_with_a_role_is_refused", "AssertionError: connected", test=NOROLES),
+    mutant("migrate: a run that names no role and not --no-roles is accepted", MIG,
+        "    if not named and not no_roles:", "    if False:",
+        "test_a_migrate_that_names_no_role_is_refused_before_connecting", "AssertionError: connected", test=NOROLES),
+    mutant("migrate: --no-roles is not honoured", MIG,
+        "    if not named and not no_roles:", "    if not named:",
+        "test_the_explicit_flag_gets_past_the_refusal", "ConfigError", test=NOROLES),
+    mutant("migrate: check_role_settings is not run", MIG,
+        "            for note in check_role_settings(db, named):", "            for note in []:",
+        "test_a_role_wide_default_survives_and_this_database_is_pinned_to_the_schema", "assert", test=E5R),
+    mutant("role settings: a database-wide default is not refused", MIG,
+        "        if setrole == 0:", "        if False:",
+        "test_migrate_refuses_a_database_wide_search_path_that_is_not_the_schema", "unknown (OID=0)", test=E5S),
+    mutant("role settings: a role-wide row that this database overrides is not skipped", MIG,
+        "            if role in wide:\n                continue  # overwritten by the SET below",
+        "            if False:\n                continue  # overwritten by the SET below",
+        "test_e5e_a_role_with_a_role_wide_row_and_a_row_for_this_database_is_changed_once", "could not be repaired", test=NEW),
+    mutant("role settings: the read-back is not checked", MIG,
+        "    if left := _effective_rows(_path_rows(db, named), schema):", "    if left := []:",
+        "test_e5e_a_search_path_default_that_the_repair_did_not_change_is_refused", "DID NOT RAISE", test=NEW),
+    mutant("role settings: what changed is not reported", MIG,
+        "        changes.append(note)\n", "        pass\n",
+        "test_a_role_wide_default_survives_and_this_database_is_pinned_to_the_schema", "assert", test=E5R),
+    mutant("migrate: check_maintain is not run", MIG,
+        "            check_maintain(db, named)\n", "            pass\n",
+        "test_e5e_migrate_runs_check_maintain_for_the_named_roles", "assert [] == [", test=NEW),
+    mutant("maintain: the version gate is lowered", MIG,
+        "        < 170000\n", "        < 160000\n",
+        "test_below_postgresql_17_nothing_is_checked_or_named", "MAINTAIN named", test=E5M),
+    mutant("maintain: the grants are not revoked", MIG,
+        "    for table, grantee in _maintainers(db, schema):\n        who", "    for table, grantee in []:\n        who",
+        "test_a_maintain_grant_on_a_stop_table_is_revoked", "is still held on the stop tables", test=E5M),
+    mutant("maintain: a grant that stays is not refused", MIG,
+        "    if left := _maintainers(db, schema):", "    if left := []:",
+        "test_a_maintain_grant_that_stays_after_the_revoke_is_refused", "DID NOT RAISE", test=E5M),
+    mutant("maintain: a named role that can maintain through a membership is not refused", MIG,
+        "    for role in named:\n        for table in _STOP_TABLES:\n            if _holds(",
+        "    for role in []:\n        for table in _STOP_TABLES:\n            if _holds(",
+        "test_a_named_role_that_can_maintain_through_pg_maintain_is_refused", "DID NOT RAISE", test=E5M),
+    mutant("app: a reset_credential_ref that the runtime reads is accepted", APP,
+        "        if ref and collides(ref, runtime_names, file_backed=file_backed):", "        if False:",
+        "test_a_secret_the_runtime_reads_that_folds_to_the_reset_ref_stops_the_start", "DID NOT RAISE", test=E5B),
+    mutant("app: the reset_credential_ref is not checked (only the release ref is)", APP,
+        '    for ref_field in ("release_credential_ref", "reset_credential_ref"):',
+        '    for ref_field in ("release_credential_ref",):',
+        "test_a_secret_the_runtime_reads_that_folds_to_the_reset_ref_stops_the_start", "DID NOT RAISE", test=E5B),
+    mutant("app: a path-shaped ref is accepted", APP,
+        "        if ref and path_form_problem(ref, file_backed):", "        if False:",
+        "test_a_dot_segment_ref_gets_a_path_form_message_not_the_collision_text", "DID NOT RAISE", test=H4),
+    mutant("collides: a path-shaped name does not fail closed for a file-backed provider", SECN,
+        "    if file_backed and (is_path_shaped(ref) or any(is_path_shaped(n) for n in names)):", "    if False:",
+        "test_collides_fails_closed_for_a_file_backed_provider_when_there_is_something_to_compare", "assert", test=H4),
+    mutant("collides: no names still fails closed", SECN,
+        "    if not names:\n        return False\n", "",
+        "test_e5e_collides_with_no_names_is_false_for_a_file_backed_provider_too", "assert True is False", test=NEW),
+    mutant("collides: the file-system fold is not added", SECN,
+        '        out.add(canonical_secret_name(unicodedata.normalize("NFKC", name).casefold()))\n', "        pass\n",
+        "test_a_folding_file_system_name_collides_with_the_sender_for_mounted_file", "assert", test=H4),
+    mutant("cli: the path-shaped reset ref is not refused", CLI,
+        "        if reset_ref and path_form_problem(reset_ref, _file_backed(b)):", "        if False:",
+        "test_the_reset_command_gives_the_path_form_message", "Failed: connected", test=H4),
+    mutant("cli: two names for one login are not refused", CLI,
+        "        if reset_ref and _same_login(secrets, reset_ref, [b.store.dsn_secret_name]):", "        if False:",
+        "test_a_reset_ref_holding_the_same_login_under_another_name_is_refused", "assert", test=E5B),
+    mutant("cli: the still-ON reset exits 0", CLI,
+        '"a second reset erases that stop too.",\n            file=sys.stderr,\n        )\n        return 2',
+        '"a second reset erases that stop too.",\n            file=sys.stderr,\n        )\n        return 0',
+        "test_reset_exits_2_and_says_still_on_when_the_read_back_is_on", "assert", test=UNIT),
+    mutant("cli: the still-ON message does not warn against a second reset", CLI,
+        '"have just set it, or an older flag is on. Check the stop reason with them before resetting again: "',
+        '"have just set it, or an older flag is on. "',
+        "test_a_reset_that_finds_the_switch_on_does_not_say_reset_again", "assert", test=E5B),
+    mutant("cli: the still-ON message does not say who set it", CLI,
+        "            f\"set by {state.by!r} at {state.ts.isoformat()}\"", "            \"set by someone unknown\"",
+        "test_a_reset_that_finds_the_switch_on_does_not_say_reset_again", "assert", test=E5B),
+    mutant("cli: the unknown setter is not said", CLI,
+        '            else "set by someone unknown"', '            else ""',
+        "test_e5e_a_reset_that_finds_the_switch_on_with_no_known_setter_says_so", "someone unknown", test=NEW),
+    mutant("cli: a reset with the audit down exits 2, not 3", CLI,
+        '"The kill switch stays ON. Fix the audit store, then try again.",\n            file=sys.stderr,\n        )\n        return 3',
+        '"The kill switch stays ON. Fix the audit store, then try again.",\n            file=sys.stderr,\n        )\n        return 2',
+        "test_e8_cli_reset_with_the_audit_down_exits_3_and_clears_nothing", "assert"),
+    mutant("cli: an unreachable store at the read-back exits 2, not 4", CLI,
+        "        return 4 if is_connectivity_error(exc) else 2\n    if state.on:", "        return 2\n    if state.on:",
+        "test_reset_exits_4_when_the_state_cannot_be_read_back_because_the_store_is_gone", "assert", test=UNIT),
+    mutant("cli: a read-back that fails with an answer exits 4, not 2", CLI,
+        "        return 4 if is_connectivity_error(exc) else 2\n    if state.on:", "        return 4\n    if state.on:",
+        "test_reset_exits_2_when_the_read_back_is_answered_with_an_error", "assert", test=UNIT),
+    mutant("cli: a clean reset does not exit 0", CLI,
+        '    print(f"kill switch OFF (by {by})")\n    return 0', '    print(f"kill switch OFF (by {by})")\n    return 1',
+        "test_reset_exits_0_and_says_off_only_after_reading_off", "assert", test=UNIT),
     mutant("loop: the limits_unavailable hunk is removed (recheck)", LOOP,
         '            return "recheck.limits_unavailable"\n', "            raise\n",
         "test_e9_an_unreadable_stop_state_at_the_recheck_means_no_action", "InsufficientPrivilege"),
@@ -387,11 +527,15 @@ def _server_version() -> int:
         return int(db.execute("SHOW server_version_num").fetchone()[0])
 
 
-def _killer(name: str) -> tuple[int, str]:
-    done = subprocess.run(  # noqa: S603 - this interpreter, a fixed test id
-        [sys.executable, "-m", "pytest", f"{TEST}::{name}", "-q", "-x", "-p", "no:cacheprovider"],
-        cwd=ROOT, capture_output=True, text=True, timeout=900, check=False,
-    )  # fmt: skip
+def _killer(name: str, test: str = TEST) -> tuple[int, str]:
+    # A mutant that keeps the size of the file (``return 2`` -> ``return 0``) and is written in the same second as
+    # the clean file would be served from the clean bytecode: every killer gets a fresh bytecode cache.
+    with tempfile.TemporaryDirectory() as cache:
+        done = subprocess.run(  # noqa: S603 - this interpreter, a fixed test id
+            [sys.executable, "-m", "pytest", f"{test}::{name}", "-q", "-x", "-p", "no:cacheprovider"],
+            cwd=ROOT, capture_output=True, text=True, timeout=900, check=False,
+            env={**os.environ, "PYTHONPYCACHEPREFIX": cache},
+        )  # fmt: skip
     return done.returncode, done.stdout + done.stderr
 
 
@@ -427,9 +571,10 @@ def run_by_hand(only: list[str]) -> int:
             if old not in after[f]:
                 missing.append(f)
             after[f] = after[f].replace(old, new)
-        if m.only_test not in clean:
-            clean[m.only_test] = _killer(m.only_test)[0] == 0
-        if not clean[m.only_test]:
+        key = (m.test_file, m.only_test)
+        if key not in clean:
+            clean[key] = _killer(m.only_test, m.test_file)[0] == 0
+        if not clean[key]:
             verdict = "BASELINE FAILS (the killer fails on the clean tree)"
         elif missing:
             verdict = f"NOT APPLIED (the old text is not in {', '.join(missing)})"
@@ -437,7 +582,7 @@ def run_by_hand(only: list[str]) -> int:
             try:
                 for f, text in after.items():
                     (ROOT / f).write_bytes(text.encode("utf-8"))
-                code, out = _killer(m.only_test)
+                code, out = _killer(m.only_test, m.test_file)
             finally:
                 for f, data in before.items():
                     (ROOT / f).write_bytes(data)
@@ -448,8 +593,8 @@ def run_by_hand(only: list[str]) -> int:
             else:
                 verdict = "KILLED"
         bad += verdict != "KILLED"
-        key = verdict.split(" ")[0]
-        tally[key] = tally.get(key, 0) + 1
+        word = verdict.split(" ")[0]
+        tally[word] = tally.get(word, 0) + 1
         print(f"{verdict:8} | {m.name} | {m.file} | {m.only_test}", flush=True)
     for name, file, reason in EQUIVALENT if not only else []:
         tally["EQUIVALENT"] = tally.get("EQUIVALENT", 0) + 1
