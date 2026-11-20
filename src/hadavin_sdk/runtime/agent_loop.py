@@ -388,14 +388,28 @@ class Runtime:
             self.store.add_cost(run.run_id, verdict.cost_usd)
         return verdict
 
-    def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> None:
-        """Replace the held worst case of one model call with its real cost. A failure keeps the hold at the
-        worst case (it expires through the tick: an over-count, the safe direction) and never raises."""
+    def _settle_model_call(self, run: Run, rid: str, cost_usd: Any) -> Run | None:
+        """Replace the held worst case of one model call with its real cost; the store books the run cost with
+        the settle. Returns None when done, or the run ended in NEEDS_PERSON `limits.limits_unavailable` when the
+        cost cannot be booked at all (a bad amount). A failure keeps the hold at the worst case (an over-count,
+        the safe direction; an operator releases it, see the runbook). A DEFINITE refusal (ValueError, NotFound:
+        nothing committed) books the run cost directly; an ambiguous failure (a lost connection) books nothing
+        more, since the settle may have committed and booked it already. Never raises."""
         try:
             self.limits.settle_for(run.agent_id, rid, cost_usd)
-        except Exception:  # noqa: BLE001
-            _LOG.warning("run %s: settle failed; the hold stays at the worst case", run.run_id)
-            self.store.add_cost(run.run_id, cost_usd)  # the settle did not book the run cost
+            return None
+        except (ValueError, NotFound):
+            _LOG.warning("run %s: settle refused; the hold stays at the worst case", run.run_id)
+            try:
+                self.store.add_cost(run.run_id, cost_usd)
+            except Exception:  # noqa: BLE001 - a bad amount: nothing can be booked, a person looks
+                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
+            return None
+        except Exception:  # noqa: BLE001 - ambiguous: the settle may have committed
+            _LOG.warning(
+                "run %s: settle failed (unknown outcome); run cost left to the settle", run.run_id
+            )
+            return None
 
     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
         cur = self.store.get_run(run.run_id)
@@ -548,7 +562,7 @@ class Runtime:
                     return self._to(run, S.STOPPED, "kill_switch")
                 return self._to(run, S.NEEDS_PERSON, f"limits.{exc.reason}")
             except Exception:  # noqa: BLE001 - no price or no booking: fail closed, no model call
-                return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
+                return self._to(run, S.NEEDS_PERSON, "limits.limits_unavailable")
             try:
                 reply = self.llm.chat(
                     messages,
@@ -565,9 +579,8 @@ class Runtime:
                 )
                 self._note(run, "llm", "chat", result="failed", error_code=code)
                 return self._abstain(run, S.NEEDS_PERSON, code, cited)
-            self._settle_model_call(
-                run, rid, reply.cost_usd
-            )  # the store books the run cost with the settle
+            if (ended := self._settle_model_call(run, rid, reply.cost_usd)) is not None:
+                return ended
             if reply.stop_reason in (
                 "max_tokens",
                 "refusal",

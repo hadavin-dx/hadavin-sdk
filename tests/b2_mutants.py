@@ -20,6 +20,9 @@ RESERVE = "                rid = self.limits.reserve(run.agent_id, worst, run_id
 SETTLE = "            self.limits.settle_for(run.agent_id, rid, cost_usd)\n"
 ERR = '                self._note(run, "llm", "chat", result="failed", error_code=code)\n'
 
+FALLBACK = "                self.store.add_cost(run.run_id, cost_usd)\n"
+KILL = '                    return self._to(run, S.STOPPED, "kill_switch")\n'
+
 M = [
     # reserve removed: the model is called with no booking (and the settle has no id to settle)
     Mutant(
@@ -48,6 +51,33 @@ M = [
         "quota",  # the first E line is the chained provider error; the assertion on spy.settles follows
         allow_crash=True,
         crash_type="ProviderExhausted",
+        test_file=T,
+    ),
+    # the definite-refusal fallback removed: the run cost is never booked
+    Mutant(
+        "B2-4 settle fallback removed",
+        LOOP,
+        FALLBACK,
+        "                pass\n",
+        "assert",
+        test_file=T,
+    ),
+    # the fallback also runs on an ambiguous failure: the run cost is double counted
+    Mutant(
+        "B2-5 fallback on ambiguous failure",
+        LOOP,
+        "            return None\n\n    def _to(",
+        "            self.store.add_cost(run.run_id, cost_usd)\n            return None\n\n    def _to(",
+        "assert",
+        test_file=T,
+    ),
+    # kill switch at reserve mapped to NEEDS_PERSON
+    Mutant(
+        "B2-6 kill switch at reserve not STOPPED",
+        LOOP,
+        KILL,
+        '                    return self._to(run, S.NEEDS_PERSON, "kill_switch")\n',
+        "assert",
         test_file=T,
     ),
 ]
