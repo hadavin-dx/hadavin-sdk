@@ -101,6 +101,13 @@ def check_store_id(value: object, what: str) -> str:
     return value
 
 
+def check_spend_day(day: object) -> date:
+    """A booking day is a plain date: a datetime or a string would be kept under another key than the row."""
+    if type(day) is not date:
+        raise ValueError("a spend day must be a date")
+    return day
+
+
 def check_spend_amount(usd: object) -> Decimal:
     """The one amount rule of the spend reservations, used by both stores: a Decimal (not a float, an int or a
     bool), finite, 0 <= usd < 10**9, at most 12 decimal places and an exponent of at most 9. Anything else is a

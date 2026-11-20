@@ -32,6 +32,7 @@ from hadavin_sdk.store.protocol import (
     check_reservation_id,
     check_spend_amount,
     check_spend_cap,
+    check_spend_day,
     check_store_id,
 )
 
@@ -319,6 +320,7 @@ class MemoryStore:
         check_store_id(agent_id, "agent_id")
         if run_id is not None:
             check_store_id(run_id, "run_id")
+        check_spend_day(day)
         check_reservation_id(reservation_id)
         check_spend_amount(usd)
         check_spend_cap(day_cap)
