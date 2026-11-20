@@ -789,25 +789,25 @@
    "reason": "lead 17:02 order A7-A10"
   },
   {
-   "id": "rev-dfix22-24",
-   "role": "reviewer",
-   "model": "sonnet",
-   "what exactly it is doing": "fresh result review of d-fix22 + d-fix24 (worker settings)",
-   "started UTC": "17:12",
-   "expected end": "10 min",
-   "percent": 10,
-   "state": "running",
-   "review round n of cap": "1 of 3",
-   "retries so far": 0,
-   "reason": "A8 ledger item"
-  },
-  {
    "id": "grantfix2-r2",
    "role": "builder (tests)",
    "model": "sonnet",
    "what exactly it is doing": "fix the 2 Majors + nits of rev-grantfix2 on wip/core-a-grant-fix2",
    "started UTC": "17:14",
    "expected end": "15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "fix of round 1",
+   "retries so far": 0,
+   "reason": "EGM"
+  },
+  {
+   "id": "d-fix25",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "fix the 2 Majors + nits of rev-dfix22-24 in worker.py with tests first",
+   "started UTC": "17:16",
+   "expected end": "25 min",
    "percent": 5,
    "state": "running",
    "review round n of cap": "fix of round 1",
@@ -1519,6 +1519,19 @@
    "review round n of cap": "1 of 3",
    "retries so far": 0,
    "reason": "round 1: no Blocker, 2 Major (EXECUTE_HELD half-covers FUNCTION_GRANTS; never compared with live DB), nits; reviews/rev-grantfix2.md; fix round started"
+  },
+  {
+   "id": "rev-dfix22-24",
+   "role": "reviewer",
+   "model": "sonnet",
+   "what exactly it is doing": "fresh result review of d-fix22 + d-fix24 (worker settings)",
+   "started UTC": "17:12",
+   "expected end": "10 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "reason": "round 1: no Blocker, 2 Major (docstring says 10/min; ConfigError swallowed in degraded start so no exit 2), nits; reviews/rev-dfix22-24.md; fix d-fix25 started"
   }
  ]
 }
