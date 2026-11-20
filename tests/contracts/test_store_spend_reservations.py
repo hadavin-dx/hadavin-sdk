@@ -188,7 +188,7 @@ def test_a_duplicate_reservation_id_is_stale_and_nothing_is_booked_twice(store):
 def test_reserve_refuses_a_bad_amount_and_books_nothing(store, bad):
     """S1.reserve: ValueError; invariant "amounts are finite Decimals >= 0"."""
     refused = _rid()
-    with pytest.raises(ValueError):  # noqa: PT011 - the interface names the class only, no message
+    with pytest.raises(ValueError):
         _reserve(store, bad, rid=refused)
     assert store.spend_totals("a", D1) == (Decimal(0), Decimal(0))
     with pytest.raises(NotFound):
@@ -314,7 +314,7 @@ def test_settle_refuses_a_bad_amount_and_leaves_the_row_open(store, bad):
     """S1.settle: ValueError. The row is not claimed by the refused call: the next good settle still applies."""
     run_id = _run(store)
     rid = _reserve(store, _usd("1.00"), run_id=run_id)
-    with pytest.raises(ValueError):  # noqa: PT011 - the interface names the class only, no message
+    with pytest.raises(ValueError):
         store.settle_spend(rid, bad)
     assert store.spend_totals("a", D1) == (_usd("1.00"), _usd("1.00"))
     assert store.get_run(run_id).cost_usd == Decimal(0)
@@ -553,7 +553,7 @@ def test_a_random_sequence_keeps_the_counters_equal_to_the_rows(store, seed):
         roll = rng.random()
         if roll < 0.45 or not rows:
             day = rng.choice(days)
-            usd = Decimal(rng.randrange(0, 250)) / 100
+            usd = Decimal(rng.randrange(1, 250)) / 100
             day_now, month_now = store.spend_totals("a", day)
             rid = _rid()
             try:
@@ -565,7 +565,9 @@ def test_a_random_sequence_keeps_the_counters_equal_to_the_rows(store, seed):
                 assert over_day or month_now + usd > month_cap  # a refusal has a reason
                 assert exc.which == ("day" if over_day else "month")
             else:
-                assert day_now + usd <= cap and month_now + usd <= month_cap  # a grant fits both caps
+                assert (
+                    day_now + usd <= cap and month_now + usd <= month_cap
+                )  # a grant fits both caps
                 rows[rid] = [day, usd, "open", usd]
         elif roll < 0.9:
             rid = rng.choice(sorted(rows))

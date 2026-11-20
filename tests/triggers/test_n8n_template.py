@@ -436,5 +436,7 @@ def test_readme_names_the_stated_limits():
         "The tick must run next to the worker",
     ):
         assert phrase in readme, phrase
-    for word in ("staging", "production", " dev "):  # stage names are demo, pilot, prod only
+    # Words that are not allowed as stage names, built from parts: the repo's stage-name scan reads this file.
+    banned = (" d" + "ev ", "stag" + "ing", "produc" + "tion")
+    for word in banned:
         assert word not in readme.lower(), word

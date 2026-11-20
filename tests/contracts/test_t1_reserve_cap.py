@@ -107,7 +107,11 @@ def test_fifty_stores_are_fifty_backends(stores):
 def test_fifty_connections_against_a_cap_of_three_grant_exactly_three(stores, runtime_dsn, which):
     """Cap 3.00, worst case 1.00, 50 connections at once: exactly 3 granted, 47 SpendCapExceeded, counters at 3.00."""
     cap_error = _cap_error()
-    caps = {"day_cap": CAP, "month_cap": WIDE} if which == "day" else {"day_cap": WIDE, "month_cap": CAP}
+    caps = (
+        {"day_cap": CAP, "month_cap": WIDE}
+        if which == "day"
+        else {"day_cap": WIDE, "month_cap": CAP}
+    )
     ids = {id(s): _rid() for s in stores}
 
     def reserve(store):

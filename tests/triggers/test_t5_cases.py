@@ -603,22 +603,9 @@ def test_further_store_down_is_503(door, monkeypatch):
     assert _all_runs(door.store) == []
 
 
-@pytest.mark.skip(reason="needs step E crash hook")
-def test_further_kill_during_the_run_then_tick_ends_with_a_person(door):
-    """Further [K1]. Request: signed and acked (202); the process is killed while the run is WORKING; then a tick runs.
-    Status: the repeat of the request is 200 with state NEEDS_PERSON. Store: the one row is NEEDS_PERSON with
-    reason "interrupted"; the run is not started again (no second "received" event, no model call)."""
-    # 1. from hadavin_sdk.testing.crash import CrashPoints, SimulatedCrash (ticket E; same-process mode).
-    # 2. Arm a crash point at a boundary after create_run (for example the audit write of "received" or the
-    #    first model call) with CrashPoints.wrap around that collaborator of door.rt.
-    # 3. reply = _post(door, _body("key-1", _text(door))); assert reply.status == 202; the handle thread ends
-    #    with SimulatedCrash and the row stays RECEIVED or WORKING.
-    # 4. Build an App over the same store (as tests/test_p7_tick.py does) and call
-    #    run_tick(app, now=<row.updated_at + stuck_after_s + 1 s>).
-    # 5. run = door.store.get_run(run_id); assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "interrupted").
-    # 6. again = _post(door, body, ts=NOW + 10) with door.clock[0] = NOW + 10; assert again.status == 200 and
-    #    json.loads(again.body)["state"] == "NEEDS_PERSON".
-    # 7. assert len(_all_runs(door.store)) == 1 and len(_received(door, run_id)) <= 1 and no new model call.
+# The case "kill during the run, then the tick ends it with a person" (K1) is NOT in this file: it runs for real in
+# tests/triggers/test_worker.py (same process, memory store) and in tests/triggers/test_t5_postgres.py (child
+# process killed on PostgreSQL, cases B2 and B3).
 
 
 def test_further_kill_switch_on_gives_state_stopped(door):
