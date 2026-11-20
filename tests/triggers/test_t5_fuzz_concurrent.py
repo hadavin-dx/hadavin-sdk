@@ -604,7 +604,9 @@ def retry_503(ctx: Ctx, run_one) -> int:
         # of the endpoint says "send again with the same key". One 503 on a retry is so not a bug. What can only
         # be a bug: still 503 after RETRY_503_TRIES sends with a quiet model and a free pool (a stuck loop, a
         # lost slot, a row that is never written), or any status that is neither 2xx nor 409.
-        for attempt in range(RETRY_503_TRIES):
+        sends = 0
+        for _ in range(RETRY_503_TRIES):
+            sends += 1
             got = run_one(rec.case)
             again += 1
             if got.status != 503:
@@ -615,7 +617,7 @@ def retry_503(ctx: Ctx, run_one) -> int:
         if got.status not in OK | {409}:
             ctx.problem(
                 rec.case,
-                f"I8 the retry of a 503 got {got.status} after {attempt + 1} sends on a free pool",
+                f"I8 the retry of a 503 got {got.status} after {sends} sends on a free pool",
             )
     return again
 

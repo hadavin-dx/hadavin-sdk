@@ -105,9 +105,11 @@ def test_r42_unset_is_not_strict(monkeypatch):
 @pytest.mark.parametrize("value", ["2", "on", "tru", "y", "enable"])
 def test_r42_any_other_value_is_an_error_naming_the_variable(value):
     # not monkeypatch: that would keep the bad value set while this session's own makereport hook reads it
-    with mock.patch.dict(os.environ, {STRICT_VARIABLE: value}):
-        with pytest.raises(pytest.UsageError, match=STRICT_VARIABLE):
-            switch.strict()
+    with (
+        mock.patch.dict(os.environ, {STRICT_VARIABLE: value}),
+        pytest.raises(pytest.UsageError, match=STRICT_VARIABLE),
+    ):
+        switch.strict()
 
 
 def test_r42_an_unknown_value_stops_the_session_at_start(tmp_path):
