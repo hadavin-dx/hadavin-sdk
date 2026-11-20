@@ -279,7 +279,9 @@ def _v1_prefix(body):
 
 def _upper_hex(body):
     headers = _signed(body, OLD_SECRET, NOW)
-    return {k: v.replace("v0=", "", 1).upper().join(("v0=", "")) for k, v in headers.items()}, body
+    return {
+        k: (v if k.endswith("timestamp") else "v0=" + v[3:].upper()) for k, v in headers.items()
+    }, body
 
 
 def _non_ascii(body):
@@ -291,7 +293,15 @@ def _non_ascii(body):
 
 @pytest.mark.parametrize(
     "spoil",
-    [_wrong_secret, _altered_body, _no_signature, _no_timestamp, _v1_prefix, _upper_hex, _non_ascii],
+    [
+        _wrong_secret,
+        _altered_body,
+        _no_signature,
+        _no_timestamp,
+        _v1_prefix,
+        _upper_hex,
+        _non_ascii,
+    ],
 )
 def test_case_2_bad_signature_is_401_and_the_body_is_never_parsed(door, monkeypatch, spoil):
     """Case 2 [H1]. Request: POST with a bad signature (wrong secret, altered body, a missing header, a `v1=`
