@@ -478,11 +478,11 @@
   {
    "item": "E-evidence-3",
    "what": "EVIDENCE RUNNER round 3 for step E: identity, tests with ids, guards, 16 formal mutants in a scratch copy with ALL failing test ids (no -x), hostile inputs",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/E-evidence-3-*.log (not yet)",
+   "state": "DONE",
+   "percent": 100,
+   "evidence file": "raw/E-evidence-3-identity.log, -tests.log, -guards.log, -mutants.log, -hostile.log",
    "tries": 1,
-   "reason": "EGM sequence after the round 2 fix"
+   "reason": "recorded without verdicts on the CURRENT files (hashes compared by me: equal): crash.py 264 lines, tests 857; tests with the database 92 passed; guard files 292 passed; matrix, worker and postgres users 162 passed (77 s); 16 formal mutants, ALL KILLED with full failing ids (no -x); hostile inputs refused as designed, 20 of 20 flag races gave one crash, marker reads fine with a closed reader. __init__.py and mutation.py hashes equal to the earlier run. Note: the evidence runner ran the hostile script twice because the first had a bug in its own script"
   },
   {
    "item": "BATCH-4",
@@ -510,6 +510,15 @@
    "evidence file": "reviews/n8n-result-review-1.md",
    "tries": 1,
    "reason": "lead's reminder at 07:05Z and the EGM sequence"
+  },
+  {
+   "item": "E-round-3",
+   "what": "step E result review ROUND 3 of 3 (the cap): fresh egm:egm-codebase-details and egm:egm-design on the simplified helper",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "reviews/E-result-review-3.md (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence; a Blocker or Major left after this round goes to ESCALATIONS.md"
   }
  ],
  "agents": [
@@ -1179,15 +1188,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:02",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E before round 3 of 3",
    "retries so far": 0,
    "id": "e-evidence3",
    "role": "evidence runner (records, never judges)",
    "what exactly it is doing": "runs everything on the simplified crash helper; mutants without -x so results are deterministic",
-   "expected end": "about 25 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, 90k tokens"
   },
   {
    "model": "sonnet",
@@ -1225,6 +1234,32 @@
    "id": "egm-n8n-design",
    "role": "reviewer (egm:egm-design, fresh)",
    "what exactly it is doing": "hostile design review of the workflow graph and the README",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:06",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 3 of 3",
+   "retries so far": 0,
+   "id": "egm-E3-codebase",
+   "role": "reviewer (egm:egm-codebase-details, fresh)",
+   "what exactly it is doing": "round 3: did the deletions and the unlink retry break a guarantee; dead leftovers; do the tests prove the invariants",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:06",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E round 3 of 3",
+   "retries so far": 0,
+   "id": "egm-E3-design",
+   "role": "reviewer (egm:egm-design, fresh)",
+   "what exactly it is doing": "round 3: hostile design review of the final helper",
    "expected end": "about 15 min",
    "reason": "EGM sequence"
   }
