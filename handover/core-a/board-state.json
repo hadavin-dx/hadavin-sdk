@@ -532,11 +532,11 @@
   {
    "item": "E-fix-3",
    "what": "step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line)",
-   "state": "RUNNING",
-   "percent": 5,
-   "evidence file": "raw/E-fix3-tests.log (not yet)",
+   "state": "DONE (builder's run); evidence runner next; NO fresh round 4 (ESCALATIONS E5)",
+   "percent": 100,
+   "evidence file": "raw/E-fix3-tests.log",
    "tries": 1,
-   "reason": "EGM sequence: fix by a builder who is not author or reviewer"
+   "reason": "H1 to H6 by a builder who is not author or reviewer: flag parsing cases tested (another point, #0, #-1, #x, #, #01: no crash, no error, file left alone); a refused delete in hit is retried (20 tries at 20 ms) and fires only when our own delete worked; loose docstring test pinned to 3 phrases; retry counts pinned; flag_path must be a Path; functools.wraps; docstring facts; ticket E invariant 7 line. crash.py 264 to 283 lines, tests 857 to 976; 494 passed in 40 s; ruff and bandit clean. The builder checked the flag-parsing mutants by hand on a scratch script, not on the real code. Nothing run on Windows"
   },
   {
    "item": "n8n-fix-1",
@@ -544,6 +544,15 @@
    "state": "RUNNING",
    "percent": 5,
    "evidence file": "raw/n8n-template-tests-5.log (not yet)",
+   "tries": 1,
+   "reason": "EGM sequence"
+  },
+  {
+   "item": "E-evidence-4",
+   "what": "EVIDENCE RUNNER after round 3 fixes: identity, tests with ids, guards, 23 formal mutants (no -x), hostile inputs; no verdicts",
+   "state": "RUNNING",
+   "percent": 5,
+   "evidence file": "raw/E-evidence-4-*.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence"
   }
@@ -1306,15 +1315,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:09",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E after round 3 (cap reached)",
    "retries so far": 0,
    "id": "e-fix3",
    "role": "builder",
    "what exactly it is doing": "applies H1 to H6 to crash.py, its tests and one ticket line",
-   "expected end": "about 20 min",
-   "reason": "round 3 resolve"
+   "expected end": "ended",
+   "reason": "finished"
   },
   {
    "model": "sonnet",
@@ -1328,6 +1337,19 @@
    "what exactly it is doing": "applies the n8n review fixes to the two workflow files, the README and the template checks",
    "expected end": "about 30 min",
    "reason": "resolve of review round 1"
+  },
+  {
+   "model": "sonnet",
+   "started UTC": "07:13",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "step E after the cap",
+   "retries so far": 0,
+   "id": "e-evidence4",
+   "role": "evidence runner (records, never judges)",
+   "what exactly it is doing": "runs everything on the fixed crash helper; 23 mutants without -x",
+   "expected end": "about 25 min",
+   "reason": "EGM sequence"
   }
  ],
  "tests": [

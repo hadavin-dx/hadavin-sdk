@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T07:12:18Z
+UPDATED_UTC: 2026-11-20T07:13:06Z
 SESSION: core-a
 ORDER: 017 on top of the backlog (016 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
-ITEMS_TOTAL: 60
+ITEMS_TOTAL: 61
 ITEMS_OPEN: 14
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 2.14 of 4 cores (1-minute average), mem 1.3/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
-DISK: / size used free 252G 11G 59G 16%; 536M /home/user/hadavin-sdk; 409M /tmp/claude-0; 131M /root/.cache
+CAPACITY: load 1.54 of 4 cores (1-minute average), mem 0.9/15.7 GB, 4 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+DISK: / size used free 252G 11G 59G 16%; 537M /home/user/hadavin-sdk; 409M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:12:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:12:21Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -78,8 +78,9 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | EGM-n8n | fresh EGM result review of the n8n pack: naive reader (egm:egm-comprehension) and hostile design (egm:egm-design) | RESOLVED; fix pass running | 60 | reviews/n8n-result-review-1.md | 1 | both fresh reviewers done: naive reader 1 Blocker + 9 Major, hostile design 6 Major (the webhook has NO authentication: anyone can start runs and pre-claim keys; WAITING_FOR_APPROVAL success can later become approval_missing; the 202 to the caller is sent before anything is durable and the loops live in n8n memory; two ordering assumptions fail badly; a duplicate reaches Done and the follow-up runs twice; the busy span is shorter than the README's own example); resolve through the Skill: all fixed in text and graph by a builder, three behaviours escalated to the lead's next real n8n run (E6) |
 | E-round-3 | step E result review ROUND 3 of 3 (the cap): fresh egm:egm-codebase-details and egm:egm-design on the simplified helper | RESOLVED at the cap; fix pass H1 to H6 running; NO round 4 (ESCALATIONS E5) | 70 | reviews/E-result-review-3.md | 1 | both fresh reviewers done: no Blocker, 2 Major (untested flag-file parsing; a refused delete on Windows moves the crash to a later call), 14 Nit; fixes by a separate builder now; the question 'grant one more fresh pass' is in ESCALATIONS E5 |
 | EGM-D-code | fresh EGM result review of the step D code (endpoint, worker, server) after all fixes, with the batch and fuzz and matrix logs as evidence | RUNNING | 5 | reviews/D-code-result-review-1.md (not yet) | 1 | EGM sequence: evidence (BATCH4) first, then a fresh reviewer who is not the author; dispatched directly following the loaded review-loop procedure (resolve will go through the Skill) |
-| E-fix-3 | step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line) | RUNNING | 5 | raw/E-fix3-tests.log (not yet) | 1 | EGM sequence: fix by a builder who is not author or reviewer |
+| E-fix-3 | step E fix pass H1 to H6 from round 3 (flag parsing tests, hit retry on a refused delete, retry count 20, flag_path type check, functools.wraps, docstring facts, one ticket line) | DONE (builder's run); evidence runner next; NO fresh round 4 (ESCALATIONS E5) | 100 | raw/E-fix3-tests.log | 1 | H1 to H6 by a builder who is not author or reviewer: flag parsing cases tested (another point, #0, #-1, #x, #, #01: no crash, no error, file left alone); a refused delete in hit is retried (20 tries at 20 ms) and fires only when our own delete worked; loose docstring test pinned to 3 phrases; retry counts pinned; flag_path must be a Path; functools.wraps; docstring facts; ticket E invariant 7 line. crash.py 264 to 283 lines, tests 857 to 976; 494 passed in 40 s; ruff and bandit clean. The builder checked the flag-parsing mutants by hand on a scratch script, not on the real code. Nothing run on Windows |
 | n8n-fix-1 | n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary) | RUNNING | 5 | raw/n8n-template-tests-5.log (not yet) | 1 | EGM sequence |
+| E-evidence-4 | EVIDENCE RUNNER after round 3 fixes: identity, tests with ids, guards, 23 formal mutants (no -x), hostile inputs; no verdicts | RUNNING | 5 | raw/E-evidence-4-*.log (not yet) | 1 | EGM sequence |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -142,26 +143,19 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | egm-E3-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | round 3: did the deletions and the unlink retry break a guarantee; dead leftovers; do the tests prove the invariants | 07:06 | ended | 100 | done | step E round 3 of 3 | 0 | finished |
 | egm-E3-design | reviewer (egm:egm-design, fresh) | sonnet | round 3: hostile design review of the final helper | 07:06 | ended | 100 | done | step E round 3 of 3 | 0 | finished |
 | egm-D-codebase | reviewer (egm:egm-codebase-details, fresh) | sonnet | checks the final endpoint, worker and server against the ticket invariants and the earlier reviews' fixes | 07:08 | about 20 min | 5 | running | step D code round 1 of 3 | 0 | EGM sequence |
-| e-fix3 | builder | sonnet | applies H1 to H6 to crash.py, its tests and one ticket line | 07:09 | about 20 min | 5 | running | step E after round 3 (cap reached) | 0 | round 3 resolve |
+| e-fix3 | builder | sonnet | applies H1 to H6 to crash.py, its tests and one ticket line | 07:09 | ended | 100 | done | step E after round 3 (cap reached) | 0 | finished |
 | n8n-fix1 | builder (templates and text) | sonnet | applies the n8n review fixes to the two workflow files, the README and the template checks | 07:10 | about 30 min | 5 | running | n8n pack round 1 of 3 (fix pass) | 0 | resolve of review round 1 |
+| e-evidence4 | evidence runner (records, never judges) | sonnet | runs everything on the fixed crash helper; 23 mutants without -x | 07:13 | about 25 min | 5 | running | step E after the cap | 0 | EGM sequence |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3469s ago | running | matched by name in ps |
-| 13840 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 24s ago | running | matched by name in ps |
-| 13870 | uv run --all-extras --group test pytest -q -p no:cacheprovider -n 3 te | core-a session or its agent | 24s ago | running | matched by name in ps |
-| 13877 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 24s ago | running | matched by name in ps |
-| 18623 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.crash_launch | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 18633 | postgres: postgres postgres 127.0.0.1(53514) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 18639 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.crash_launch | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 18650 | /home/user/hadavin-sdk/.venv/bin/python -m tests.triggers.test_t5_cras | core-a session or its agent | 0s ago | running | matched by name in ps |
-| 18658 | postgres: postgres postgres 127.0.0.1(53656) idle | core-a session or its agent | 0s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 3517s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 3517s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 3517s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 3517s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 3517s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 3517s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |

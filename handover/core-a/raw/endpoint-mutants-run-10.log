@@ -68,3 +68,7 @@ ok  KILLED       G20i max_waiting may be a bool  [test_n15_runner_bounds_are_ref
 BAD CRASH        G20j make_app lets a bound of the Runner through as a ValueError  [test_n15_make_app_turns_a_bound_into_a_config_error]
       first line: E           ValueError: max_running must be at most 64
 73 of 74 good; problems: ['G20j make_app lets a bound of the Runner through as a ValueError']
+--- run 3: G20j only, after the crash declaration was added (the full run above had 73 of 74 good, G20j was CRASH)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  CRASH        G20j make_app lets a bound of the Runner through as a ValueError  [test_n15_make_app_turns_a_bound_into_a_config_error]
+1 of 1 good; problems: []
