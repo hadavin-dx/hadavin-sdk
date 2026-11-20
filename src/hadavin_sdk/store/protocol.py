@@ -253,10 +253,12 @@ class Store(Protocol):
         """The stops no reset has cleared, oldest first (what `limits reset` shows before it clears)."""
         ...
 
-    def clear_stops(self, by: str, stop_ids: Sequence[str]) -> None:
+    def clear_stops(self, by: str, stop_ids: Sequence[str], audit_seq: int | None = None) -> None:
         """Compare-and-clear: turn the old flag off and clear exactly the stops named by `stop_ids` (an id that is
         not a stop, or is already cleared, is ignored). Any other stop, one set after `open_stops` was read, stays
-        open and the switch reads ON. On Postgres only the reset role may (the runtime role is refused)."""
+        open and the switch reads ON. On Postgres only the reset role may (the runtime role is refused), and the same
+        transaction records the reset (`kill_switch_resets`: the ids really cleared, `audit_seq` when known, else
+        NULL) and moves the watermark. The memory store keeps no such record."""
         ...
 
     def get_tick_state(self, step: str) -> TickState | None: ...

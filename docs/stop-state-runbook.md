@@ -44,6 +44,18 @@ The command refuses (exit 2, before any connection) when `backends.store.reset_c
 as `backends.store.dsn_secret_name`, or when the two names hold the same DSN. `release_credential_ref` is checked the same way
 against the runtime, reset and purge secrets.
 
+### What a reset records (migration 0009, B8)
+In the same transaction as the clears, the reset (the reset login only) inserts one row into `kill_switch_resets`
+(`by`, `at`, `cleared_ids` = the ids it really cleared, `audit_seq` = the audit chain seq of its intent when the store
+knows it, otherwise NULL: the chain returns an event id, not a seq) and moves `kill_switch_watermark.through` to the
+newest cleared stop time (never lower). This record survives if the audit row is lost. The runtime login holds nothing
+on `kill_switch_resets` and only SELECT on the watermark. Read it as the database owner:
+`SELECT at, "by", cardinality(cleared_ids), audit_seq FROM kill_switch_resets ORDER BY at;`.
+The gate read does NOT hide stops below the watermark: a stop with an old `ts` (planted, or hand-inserted after a reset)
+that has no clear still reads as ON. The read compares `count(kill_switch_stops)` with `count(kill_switch_clears)`
+(every clear names one distinct stop, so a surplus of stops means an open stop; both are index-only counts, about
+tens of milliseconds for 200000 rows) and only then looks for the oldest open stop.
+
 ## Exit codes of `limits stop` and `limits reset`
 | code | meaning | what to do |
 |---|---|---|
