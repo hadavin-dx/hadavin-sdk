@@ -21,3 +21,9 @@ Branch wip-g10 on cloud/core-c 555ef68fa. Built from handover/core-c/tickets/G10
 
 ## Not run
 - Python 3.12, other platforms, full suite outside TN_ALL/INJ/CANARY, the 255-mutant full run (only the 24 of phase 4), evidence-script remeasurements of section 12 (not re-run; numbers are the ticket's).
+
+## Review-fix round 1 (builder, wip-g10b)
+- M1: T3 = "测试" * 5000 (V = 密码测试): measured, the second loop of `_holds_with_one_insertion` ticks once (hit 4,096), the first loop never; same reading sequence as T2 (POINTS_T3 = POINTS_T2). New mutant 256 "deadline: no reading in the second loop of the insertion match", killed by D-3 (DEADLINE-POINTS). Counts: 256 mutants (244 behaviour, 12 wording), names[28:] 228, names[240:] 16, test_textnorm_deadline.py 13 tests (D-2b zero budget on a frozen clock, D-8b fake detector raising DeadlinePassed over alone/AnyOf/nested/combine). N2 `>=` pinned by D-2b (no mutant added for it).
+- defaults.py comment: "slowest ORDINARY text ... (16.0 s; a constructed text took 185 s)". textnorm.py docstring: "never a False in place of the error", overrun "of the text work", value work 7.2-7.5 s longer. Long lines reflowed (injection.py _deadline, defaults.py).
+- New textnorm.py sha256 5938ea86571ad4c42057bf49c8638aaf58dd03cb3e6b50d8921e1969a4ca2879 (manifest and CHANGELOG item updated; CHANGELOG count text 13 tests, 256 mutants, 16 of G10, 244).
+- Runs: mutant runner (deadline: + 12 named) 25 of 25 good; gate 1,248 passed + 1 red (meta names[28:] 227 -> 228, fixed, meta+deadline re-run 28 passed); ruff, format, bandit clean. NOT RUN: perf rows, a re-run of the whole gate after the one-number fix.
