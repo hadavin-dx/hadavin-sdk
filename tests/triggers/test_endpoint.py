@@ -474,6 +474,23 @@ def test_check_secrets_refuses_a_control_character_inside_a_value(name):
         make_wsgi(FakeSettings(), secrets, Recorder())
 
 
+def test_check_secrets_refuses_a_value_that_cannot_be_written_as_utf8_and_names_the_sender_only():
+    """Code review 1, DC1-6: a lone surrogate (category Cs, so neither the whitespace, the unseen-character
+    nor the control rule sees it) cannot be encoded: without this check every request would end in a 503 and
+    an ERROR line. Refused at start, also through make_wsgi."""
+    lone = "\ud800"
+    bad = STRANGER[:20] + lone + STRANGER[20:]
+    secrets = {"sender-a": (NEW_A, bad), "sender-b": (ONLY_B,)}
+    with pytest.raises(ValueError) as info:
+        check_secrets(secrets)
+    text = str(info.value)
+    assert "sender-a" in text and "UTF-8" in text and "sender-b" not in text
+    for value in (bad, STRANGER, STRANGER[:20], NEW_A, ONLY_B, lone):
+        assert value not in text
+    with pytest.raises(ValueError):
+        make_wsgi(FakeSettings(), secrets, Recorder())
+
+
 def test_make_wsgi_has_its_own_upper_bounds_for_a_callers_settings_object():
     """Design review 1, N15: the body cap and the number of senders are bounded here, not only in a
     config model the caller may not use."""

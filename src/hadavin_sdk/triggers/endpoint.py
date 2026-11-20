@@ -207,6 +207,12 @@ def check_secrets(secrets: Mapping[str, tuple[str, ...]]) -> None:
                 raise ValueError(
                     f"trigger sender {sender!r}: a secret under {MIN_SECRET_CHARS} characters"
                 )
+            try:
+                value.encode("utf-8")
+            except UnicodeEncodeError:  # a lone surrogate: every request would end in a 503
+                raise ValueError(
+                    f"trigger sender {sender!r}: a secret that cannot be written as UTF-8"
+                ) from None
             if any(char in value for char in UNSEEN_CHARS):
                 raise ValueError(
                     f"trigger sender {sender!r}: a secret with a byte-order mark or a zero-width"

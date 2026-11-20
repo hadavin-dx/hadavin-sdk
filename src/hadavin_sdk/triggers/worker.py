@@ -535,7 +535,8 @@ def serve(server: WSGIServer, runner: Any) -> int:
         server.server_close()
         runner.close()
         for number, handler in previous.items():
-            signal.signal(number, handler)
+            if handler is not None:  # None: the old handler was not set from Python
+                signal.signal(number, handler)
     return EXIT_OK
 
 
