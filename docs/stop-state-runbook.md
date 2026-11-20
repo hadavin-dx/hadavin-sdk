@@ -51,7 +51,27 @@ all, a run ends with a person (`limits_unavailable`) and makes no model call.
 - A refused UPDATE, DELETE or TRUNCATE on `kill_switch_stops` or `kill_switch_clears` says "the audit log is
   append-only": the two tables reuse the audit log's trigger function. It means the stop tables are append-only.
 - The command-line eval and replay paths do not read the stop state.
+- Kill switch and spend reserve are two steps (ORDER 020 m1): a model call reads the stop state and then books its
+  worst case, not in one transaction. A stop committed between the two lets one more call through per caller that
+  already passed the read; the next reserve of every caller sees it. A call already reserved or running is not
+  cancelled. For a hard cut, stop the processes as well.
 - Old code must not run against a database that has migration `0006_stop_state`.
+
+## Release expired spend holds
+A hold nobody settled (a crash, a lost connection) is marked expired by the tick and stays booked at its worst case, so
+an agent can sit at its cap. The one sanctioned way to free it is the release command, under its own login (not the
+runtime and not the reset login):
+1. As the owner: `hadavin-sdk migrate --runtime-role R ... --reset-role X --release-role Y` (name all roles in ONE command).
+   Y holds EXECUTE on one function and the audit append, and nothing on the money tables.
+2. Put Y's DSN in a secret and set `backends.store.release_credential_ref` to its NAME (not ending in `_secret_name`; not
+   the runtime, purge or reset secret).
+3. `hadavin-sdk release-expired AGENT --day YYYY-MM-DD --by WHO`. The audit intent row is written first; then one
+   transaction sets the EXPIRED holds of that agent and day to settled at 0 and lowers the day and the month counter by
+   the same sum (never below zero); then the outcome row. Open holds and other days are never touched. Exit 0 done
+   (also when 0 rows), 2 refused or the login lacks the right, 3 the audit is unavailable (nothing changed), 4 the store
+   is unreachable (nothing changed).
+Release only the holds of calls you know were not billed: a late settle of a released hold changes nothing, so a call
+that really was billed is then missing from the counters.
 
 ## Going back to the release before the stop state
 The change of meaning cannot be undone by code alone: old code does not read `kill_switch_stops`, and its stop needs
