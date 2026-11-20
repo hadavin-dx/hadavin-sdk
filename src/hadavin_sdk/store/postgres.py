@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import replace
 from datetime import date, datetime
-from decimal import Decimal, localcontext
+from decimal import Decimal
 from enum import Enum
 from typing import Any
 
@@ -370,6 +370,33 @@ def _row(model: BaseModel) -> dict[str, Any]:
 _SCHEMA_TABLES = ("spend", "spend_month", "spend_reservations")
 
 
+def _money_error(
+    exc: psycopg.errors.DatabaseError, reservation_id: str | None = None
+) -> BaseException:
+    """Map what a money definer function raised to the store's exceptions. `HD***` has no named psycopg class, so
+    the branch is on `exc.sqlstate`. Anything not listed is returned unchanged (the caller fails closed)."""
+    code = exc.sqlstate
+    if code == "HD001":  # cap reached; the message is `day` or `month`
+        which = str(exc.diag.message_primary or "")
+        return SpendCapExceeded(which if which in ("day", "month") else "day")
+    if code == "HD002":  # unknown or another agent's id: the same error, nothing is revealed
+        return NotFound(reservation_id)
+    if code == "HD003":  # counter row missing; the transaction rolled back
+        return RuntimeError("spend counter row missing")
+    if code in (
+        "HD004",
+        "HD005",
+    ):  # a limit or cap row missing: fail closed, the schema is not set up
+        return ConfigError(
+            f"store postgres: money limits unavailable ({code}); run hadavin-sdk migrate"
+        )
+    if code == "23505":  # duplicate reservation id
+        return StaleState(f"spend reservation exists: {reservation_id}")
+    if code == "22023":  # the function refused an argument the Python check let through
+        return ValueError("spend argument refused by the database")
+    return exc
+
+
 class PostgresStore:
     # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when throughput matters.
     # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
@@ -600,26 +627,19 @@ class PostgresStore:
         return self._select(DeadLetter, "dead_letters", "run_id = %s", (run_id,), " ORDER BY seq")
 
     def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
-        """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency."""
+        """Day and month counters, each one atomic upsert, in one transaction: exact under concurrency. The
+        bookings are done by the definer function `hadavin_add_spend` (the function is the authority; the Python
+        check is the early, friendly refusal)."""
         usd = clean_spend_amount(usd)  # a bad amount is a ValueError before any SQL; -0 becomes 0
-        month = day.replace(day=1)
-        with self._lock, self._db.transaction():
-            d = self._exec(
-                self._t(
-                    "INSERT INTO {spend} (agent_id, day, usd) VALUES (%s, %s, %s) "
-                    "ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd"
-                ),
-                (agent_id, day, usd),
-            ).fetchone()["usd"]
-            m = self._exec(
-                self._t(
-                    "INSERT INTO {spend_month} (agent_id, month, usd) VALUES (%s, %s, %s) "
-                    "ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd "
-                    "RETURNING usd"
-                ),
-                (agent_id, month, usd),
-            ).fetchone()["usd"]
-        return Decimal(d), Decimal(m)
+        try:
+            with self._lock, self._db.transaction():
+                row = self._exec(
+                    self._money_call("hadavin_add_spend", "%s::text, %s::date, %s::numeric"),
+                    (agent_id, day, usd),
+                ).fetchone()
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+        return Decimal(row["day_usd"]), Decimal(row["month_usd"])
 
     def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]:
         with self._lock:
@@ -638,6 +658,20 @@ class PostgresStore:
         s = sql.Identifier(self._schema)
         return sql.SQL(text).format(
             **{t: sql.SQL("{}.{}").format(s, sql.Identifier(t)) for t in _SCHEMA_TABLES}
+        )
+
+    def _money_call(self, function: str, placeholders: str) -> sql.Composed:
+        """`SELECT * FROM <schema>.<function>(<placeholders>)`: a definer function called by its schema-qualified
+        name (the same reasoning as `_t`: an unqualified name is looked up in the temporary schema first)."""
+        return sql.SQL("SELECT * FROM {}.{}({})").format(
+            sql.Identifier(self._schema), sql.Identifier(function), sql.SQL(placeholders)
+        )
+
+    def _reserve_call(self) -> sql.Composed:
+        """The ONE place that names `hadavin_reserve_spend` and its argument list (step 6 changes it)."""
+        return self._money_call(
+            "hadavin_reserve_spend",
+            "%s::text, %s::text, %s::date, %s::numeric, %s::numeric, %s::numeric, %s::text",
         )
 
     def _stop_tables(self) -> dict[str, sql.Composed]:
@@ -886,64 +920,14 @@ class PostgresStore:
         check_spend_amount(usd)
         check_spend_cap(day_cap)  # before any SQL: a NaN cap would compare as no cap
         check_spend_cap(month_cap)
-        month = day.replace(day=1)
         try:
             with self._lock, self._db.transaction():
                 self._exec(
-                    self._t(
-                        "INSERT INTO {spend_reservations} "
-                        "(reservation_id, agent_id, day, run_id, reserved_usd) VALUES (%s, %s, %s, %s, %s)"
-                    ),
-                    (reservation_id, agent_id, day, run_id, usd),
+                    self._reserve_call(),
+                    (reservation_id, agent_id, day, usd, day_cap, month_cap, run_id),
                 )
-                self._exec(
-                    self._t(
-                        "INSERT INTO {spend} (agent_id, day, usd) VALUES (%s, %s, 0) ON CONFLICT DO NOTHING"
-                    ),
-                    (agent_id, day),
-                )
-                # strictly day before month (the order of add_spend): seed and book the day, then the month;
-                # zero rows = refused, everything rolls back
-                booked = self._exec(
-                    self._t(
-                        "UPDATE {spend} SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
-                        "AND day = %(day)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"
-                    ),
-                    {"amt": usd, "agent": agent_id, "day": day, "cap": day_cap},
-                ).fetchone()
-                if booked is None:
-                    raise SpendCapExceeded("day")
-                self._exec(
-                    self._t(
-                        "INSERT INTO {spend_month} (agent_id, month, usd) VALUES (%s, %s, 0) "
-                        "ON CONFLICT DO NOTHING"
-                    ),
-                    (agent_id, month),
-                )
-                booked = self._exec(
-                    self._t(
-                        "UPDATE {spend_month} SET usd = usd + %(amt)s WHERE agent_id = %(agent)s "
-                        "AND month = %(month)s AND usd < %(cap)s AND usd + %(amt)s <= %(cap)s RETURNING usd"
-                    ),
-                    {"amt": usd, "agent": agent_id, "month": month, "cap": month_cap},
-                ).fetchone()
-                if booked is None:
-                    raise SpendCapExceeded("month")
-        except psycopg.errors.UniqueViolation:
-            raise StaleState(f"spend reservation exists: {reservation_id}") from None
-
-    # One statement: the inner SELECT locks the row and reads its status BEFORE the change (after a row-lock
-    # wait it reads the committed status, so a concurrent expire or settle cannot be misread). settled_usd is
-    # what stays booked on the counters: the actual amount, or for a row that was expired the larger of the
-    # actual and the reserved amount (after expiry the booking never goes down).
-    _CLAIM = (
-        "WITH old AS (SELECT status FROM {spend_reservations} WHERE reservation_id = %(id)s "
-        "AND (%(agent)s::text IS NULL OR agent_id = %(agent)s) AND status IN ('open', 'expired') FOR UPDATE) "
-        "UPDATE {spend_reservations} r SET status = 'settled', settled_usd = CASE WHEN old.status = 'expired' "
-        "THEN GREATEST(%(a)s::numeric, r.reserved_usd) ELSE %(a)s::numeric END, "
-        "closed_at = clock_timestamp() FROM old WHERE r.reservation_id = %(id)s "
-        "RETURNING r.*, old.status AS was"
-    )
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc, reservation_id) from None
 
     def settle_spend(
         self, reservation_id: str, actual_usd: Decimal, *, agent_id: str | None = None
@@ -952,72 +936,46 @@ class PostgresStore:
         check_spend_amount(actual_usd)
         if agent_id is not None:
             check_store_id(agent_id, "agent_id")
-        with self._lock, self._db.transaction():
-            # The claim comes first. A second caller waits on the row lock, finds the row settled, claims
-            # nothing and gets the stored row back unchanged.
-            row = self._exec(
-                self._t(self._CLAIM), {"id": reservation_id, "a": actual_usd, "agent": agent_id}
-            ).fetchone()
-            if row is None:
+        try:
+            with self._lock, self._db.transaction():
+                # The claim comes first, inside the function: a second caller waits on the row lock, finds the
+                # row settled, claims nothing and gets the stored row back unchanged (claimed = false).
                 row = self._exec(
-                    self._t("SELECT * FROM {spend_reservations} WHERE reservation_id = %s"),
-                    (reservation_id,),
+                    self._money_call("hadavin_settle_spend", "%s::text, %s::numeric, %s::text"),
+                    (reservation_id, actual_usd, agent_id),
                 ).fetchone()
-                if row is None or (agent_id is not None and row["agent_id"] != agent_id):
-                    raise NotFound(reservation_id)  # also another agent's id: nothing is revealed
-                return SpendReservation.model_validate(row), False
-            was = row.pop("was")
-            # what the counters must move by: the booked amount changes from reserved to settled_usd
-            with localcontext(defaults.money_context()):  # not the caller's precision
-                delta = row["settled_usd"] - row["reserved_usd"]
-            if (
-                was == "open" or delta
-            ):  # a row that was expired and does not rise leaves the counters alone
-                # the row's own day and its month, never today's; day first, then month
-                for query, key in (
-                    (
-                        "UPDATE {spend} SET usd = usd + %s WHERE agent_id = %s AND day = %s",
-                        row["day"],
-                    ),
-                    (
-                        "UPDATE {spend_month} SET usd = usd + %s WHERE agent_id = %s AND month = %s",
-                        row["day"].replace(day=1),
-                    ),
-                ):
-                    if self._exec(self._t(query), (delta, row["agent_id"], key)).rowcount == 0:
-                        raise RuntimeError("spend counter row missing")  # rolls the claim back
-            if row["run_id"] is not None:  # the real actual amount; a missing run row is ignored
-                self._exec(
-                    "UPDATE runs SET cost_usd = cost_usd + %s WHERE run_id = %s",
-                    (actual_usd, row["run_id"]),
-                )
-        return SpendReservation.model_validate(row), True
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc, reservation_id) from None
+        claimed = row.pop("claimed")
+        return SpendReservation.model_validate(row), bool(claimed)
 
     def expire_spend_reservations(self, older_than_s: int) -> int:
         """The age is measured on the database clock; the counters do not move."""
         check_expiry_age(older_than_s)
-        with self._lock:
-            return self._exec(
-                self._t(
-                    "UPDATE {spend_reservations} SET status = 'expired', settled_usd = reserved_usd, "
-                    "closed_at = clock_timestamp() WHERE status = 'open' "
-                    "AND created_at <= clock_timestamp() - make_interval(secs => %s::double precision)"
-                ),
-                (older_than_s,),
-            ).rowcount
+        try:
+            with self._lock, self._db.transaction():
+                row = self._exec(
+                    self._money_call("hadavin_expire_spend_reservations", "%s::integer"),
+                    (older_than_s,),
+                ).fetchone()
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+        return int(row["hadavin_expire_spend_reservations"])
 
     def purge_spend_reservations(self, before: datetime) -> int:
         """SETTLED rows only (a settled row, or one released by 0008: settled at 0). An expired hold nobody
         settled is KEPT: it is still booked, and a late settle must find it (E11 M3). Run by the purge role,
         which reads `status` and `closed_at` and nothing else."""
         check_purge_bound(before)
-        with self._lock:
-            return self._exec(
-                self._t(
-                    "DELETE FROM {spend_reservations} WHERE status = 'settled' AND closed_at < %s"
-                ),
-                (before,),
-            ).rowcount
+        try:
+            with self._lock, self._db.transaction():
+                row = self._exec(
+                    self._money_call("hadavin_purge_spend_reservations", "%s::timestamptz"),
+                    (before,),
+                ).fetchone()
+        except psycopg.errors.DatabaseError as exc:
+            raise _money_error(exc) from None
+        return int(row["hadavin_purge_spend_reservations"])
 
     def release_expired_spend(
         self, agent_id: str, day: date, actor: str, audit: Any
