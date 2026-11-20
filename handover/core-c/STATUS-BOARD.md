@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T16:43:38Z
+UPDATED_UTC: 2026-11-20T16:45:10Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 17:00Z agents 2 (G9c builder, docs style reviewer round 4), load 2.8. DOCS4 MERGED (9 Majors of round 3); DOCS3 notes scrubbed of vendor strings: vendor-brand test now red ONLY on the lead's handover/BRIEF-PREAMBLE.md (tracked scope). 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (label-core decline only when issued/within counter; budget-based large-value rule 262,144; look-alike bracket cores registered; sweep leaves escaped look-alikes; _bare 0.90 s -> 0.10 s on 500k '!'; g12 mutants 41/41; redact_mutants 130/13
+STATE: 17:05Z agents 2 (G9c, DOCS5 builders), load 2.2. Root docs style rounds so far: r1 4B/7M, r2 2B/7M, r3 0B/8M, r4 3B/5M (each fresh reviewer finds new classes of issue; not converging by itself). DOCS5 = fix pass for r4; round 5 is the cap: after it I list what is open and ask the owner whether to accept or continue. 17:00Z agents 2 (G9c builder, docs style reviewer round 4), load 2.8. DOCS4 MERGED (9 Majors of round 3); DOCS3 notes scrubbed of vendor strings: vendor-brand test now red ONLY on the lead's handover/BRIEF-PREAMBLE.md (tracked scope). 16:56Z agents 2 (G9c, DOCS4 builders), load 3.5. G12d MERGED (lab
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 2
-CAPACITY: load 2.8 of 4 cores, mem 1/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
-DISK: / 53G free, 24% used; git worktrees 58; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
+CAPACITY: load 2.2 of 4 cores, mem 0/15 GB, disk 53G free, 24% used, light agents 2, heavy agents 0
+DISK: / 53G free, 24% used; git worktrees 59; 2.8G	/tmp/claude-0;309M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:43:22+00:00
+PUSHED_UTC: 2026-11-20T16:45:04+00:00
 
-(22:13 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(22:15 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -46,7 +46,8 @@ PUSHED_UTC: 2026-11-20T16:43:22+00:00
 | a3142375 | builder | claude-sonnet-5-5 | BUILDS DOCS3: root docs style review round 2 fixes (2 Blocker, 7 Major); /tmp/core-c-docs3 | 16:30 | 17:00 | 1 | done | 1 | 0 | docs only |
 | docs-rev3 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 3 of root docs after DOCS3 | 16:41 | 16:55 | 1 | done | 1 | 0 | EGM style |
 | docs4 | builder | claude-sonnet-5-5 | BUILDS DOCS4: style review round 3 fixes (8 Major); /tmp/core-c-docs4 | 16:47 | 17:15 | 1 | done | 1 | 0 | docs only |
-| docs-rev4 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 4 of root docs after DOCS4 | 17:00 | 17:12 | 1 | running | 1 | 0 | EGM style |
+| docs-rev4 | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review round 4 of root docs after DOCS4 | 17:00 | 17:12 | 1 | done | 1 | 0 | EGM style |
+| a6873a2f | builder | claude-sonnet-5-5 | BUILDS DOCS5: style review round 4 fixes (3 Blocker, 5 Major); /tmp/core-c-docs5 | 17:05 | 17:30 | 1 | running | 1 | 0 | docs only |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
