@@ -1,0 +1,35 @@
+--- base/src/hadavin_sdk/guard/redact.py	2026-11-20 11:49:22.000000000 +0000
++++ c2c/src/hadavin_sdk/guard/redact.py	2026-11-20 12:01:37.425287889 +0000
+@@ -186,6 +186,10 @@
+ # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
+ _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
+ ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
++# (G11) A run of token characters that holds placeholders; one linear scan (each run is consumed once).
++_PH_RUN = re.compile(
++    r"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+/_\-]*(?:<(?:UUID|PHONE|HIGHENTROPY)_\d+>[A-Za-z0-9+/_\-]*)+(?![A-Za-z0-9+/=_\-])"
++)
+ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+     # PuTTY FIRST (hadavin-sdk edit): its value runs to the end of the text, so a PuTTY block that starts inside a PEM block must be cut before the PEM
+     # pattern shortens the text; the PEM pattern then masks the rest (its unterminated form runs to the end). The other order left the lines after the PEM END in clear.
+@@ -1233,7 +1237,20 @@
+                 out = self._sub_glued(pattern, label, out)
+             else:
+                 out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
+-        return out
++        return _PH_RUN.sub(self._remask_run, out) if "<" in out else out
++
++    def _remask_run(self, m: re.Match[str]) -> str:
++        """(G11) A run of token characters that holds a UUID or PHONE placeholder and is, with the values written back, a run
++        HIGHENTROPY would mask (40 or more characters with upper case, lower case and a digit): masked whole, as the base did."""
++        run = m.group(0)
++        if "<UUID_" not in run and "<PHONE_" not in run:
++            return run
++        full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), run)
++        if len(full) < 40 or not (
++            re.search(r"[A-Z]", full) and re.search(r"[a-z]", full) and re.search(r"\d", full)
++        ):
++            return run
++        return self._mask(m, "HIGHENTROPY")
+ 
+     def settle(self, originals: list[str], swept: list[str], known: int | None = None) -> list[str]:
+         """The pattern passes after the first sweep, to a fixed point with a hard cap (G7; ORDER 020 MJ-B; fix round 3).
