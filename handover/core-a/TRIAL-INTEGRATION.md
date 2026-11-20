@@ -13,7 +13,7 @@ while the trial ran. S = `/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86e
   "core-b f390b7d6e + core-a files" (no core-c). **No combined tree of the new heads was built or run.**
 - core-c's new head 93f7f24e4 was not combined at all (read with git only: it fixes failure 15 of section 6 and
   changes `guard/redact.py` again, so the conflicts of section 3 will come back in the same places).
-- The combined tree holds MY trial resolutions of 9 conflict hunks in core-c's own files (section 3). They made the
+- The combined tree holds MY trial resolutions of 7 conflict hunks in core-c's own files (section 3). They made the
   tree run; they are not reviewed and are not a proposal for the final text.
 - Not run: tests marked `live` and `perf` (deselected, 70 tests), any mutant script, PostgreSQL 17 (CI uses 17.10;
   this run used 16.15), the demos, the n8n template against a real n8n, a live model call.
@@ -60,7 +60,7 @@ the package does not build without it; `.gitattributes`, `.github/workflows/ci.y
 `README.md` (core-b and core-c), `SECURITY.md`, `docs/stop-state-runbook.md` (core-b) TAKEN because tests read
 them. `uv.lock`: no session changed it. Migrations: 0006 and 0007, both core-b, no number used twice.
 
-## 3. Conflicts (9 files touched by more than one side; 4 with real conflicts)
+## 3. Conflicts (4 files with real conflicts, 12 hunks; 2 more merged clean)
 | File | Sides | What each side did | Suggested resolution | Who |
 |---|---|---|---|---|
 | src/hadavin_sdk/defaults.py | core-b x core-c | both add a block at the same place (end of the K8S block): core-b the price cap, TRIGGER_*, RESERVATION_EXPIRE_S; core-c the TEXTNORM_* block | keep both blocks, core-b's first (done in the trial; ruff clean) | whoever merges second (core-c), 1 hunk |
@@ -73,7 +73,7 @@ them. `uv.lock`: no session changed it. Migrations: 0006 and 0007, both core-b, 
 Also for the lead, no text conflict but an ownership point: g2 edits `approvals/channel.py`, a file the plan gives
 to SPINE (core-b); its own commit message says so. core-b did not touch the file, so it merged without a conflict.
 Still 3 unmerged lines of work inside core-c: cloud/core-c, g3 (contains g1) and g2 have never been put together
-by core-c itself; all 9 hunks above except defaults.py and CHANGELOG are between core-c's own branches.
+by core-c itself; the 7 hunks in redact.py and runmap.py are all between core-c's own branches.
 
 ## 4. Name and import mismatches between sessions
 | What | Where on each side | Effect | Suggested owner |
@@ -155,7 +155,7 @@ No failure was about PostgreSQL 16 as a version (no INHERITED-PG16). No failure 
 5. core-c, after rebasing on core-b: one hunk in defaults.py (keep both blocks), CHANGELOG entries in agreed
    order, rewrite tests/test_grants_negative_roles.py for the grants after 0006 and 0007 (6 pins, 2 markers), drop
    the duplicate `TEXTNORM_PINNED_PYTHON`.
-6. Then core-a's files (all new, no conflict). The 331 tests of section 5 that only skipped now run in CI.
+6. Then core-a's files (all new, no conflict). The 433 tests of our four files in section 5 that only skipped now run in CI.
 7. Run the whole suite again on the combined NEW heads on PostgreSQL 17 (not done here), then step F install
    (gate into Runtime, worst-case function), which nothing above covers.
 
