@@ -1,9 +1,41 @@
 # G7: the table again after the sweep, to a capped fixed point (ORDERS 012 and 013, escalations E3 and E5)
 
 Status: BUILT as ordered in ORDER 013 (one extra pass); FIX ROUND 2 (ORDER 020 MJ-B) replaced it by a capped fixed-point loop; FIX ROUND 3 (G7 result
-review 2, fresh reviewers, 2026-11-20) made it a real fixed point and fixed what the review found. READ "Design as built, ROUND 3" FIRST. Every section
-marked ROUND 1 or ROUND 2 below is the record of an earlier design and is not the code.
-Evidence: evidence/G7-1.md (parts in order of work; "G7 fix round 3" is the last). Review: tickets/G7-result-review-2.md.
+review 2, fresh reviewers, 2026-11-20) made it a real fixed point; FIX ROUND 4 (G7 result review 3) bounded the spelled-form scan, fixed its overlap rule and
+the rollback ghost, made the first sweep carry the deadline, and made the time claims, the numbers and the docs say what the tests enforce. READ "Design as
+built, ROUND 3" and then "ROUND 4 changes" FIRST. Every section marked ROUND 1 or ROUND 2 below is the record of an earlier design and is not the code.
+Evidence: evidence/G7-1.md (parts in order of work; "G7 fix round 4" is the last and holds the raw tail of a real run). Reviews: tickets/G7-result-review-2.md, -3.md.
+
+## ROUND 4 changes (supersede the same items of "Design as built, ROUND 3" below)
+- Deadline (was item 7): `redact()` and `redact_many()` pass the call's deadline into the FIRST sweep too; `settle` checks it before every round and passes it
+  into every sweep of a round. Each sweep checks it in `_build` (every 512th value), every 32nd free segment (when the map holds a value), before each value replaced and every 1,024th unit of
+  work of the spelled-form scan (a token of the text, with or without a form, or a step of a trie walk). NOT checked: a pattern pass (`find`) and the loop over the
+  strings of one round. THE BOUND the tests enforce (T4): budget + twice the measured unit (one pass and one sweep of the biggest text) + 0.5 s; the claim is
+  smaller: the pass in progress when the budget is crossed (pass 1 over every string, or the pass of a round) plus one `str.replace` or finder pass of a sweep. A
+  `redact()` or `redact_many()` with no `_deadline` has no total bound (the fold scan restarts a fresh 6 s allowance on every `find`; stated in `_fold_scan`).
+  The segment check is made only when the map holds a value to look for (no value, no work to bound): a spent deadline still returns a text that needs nothing, as before,
+  and tests/test_redact_fold_budget.py, which counts the clock reads of a call, is unchanged.
+- The numbers have ONE source: defaults.py (unit timings, the 25 percent statement, the Windows figure) and the raw tail in evidence G7-1.md ("G7 fix round 4"). This
+  ticket does not repeat them. In short: on the Linux test machine `curl -u ` at the cap costs 4.5 to 5.3 s of the 6.0 s budget, so a machine about 25 percent slower (14 percent at the slow end)
+  REFUSES that text (InputTooLarge, fail closed; a legitimate 262 KB document of that shape is lost); the Windows laptop figure of 7.2 s (2026-11-02, before the
+  deadline) is OVER the budget: that machine would refuse it too.
+- Gate clocks (was "the gate converts its monotonic deadline"; false): `runmap.EnforceBudget` keeps TWO clocks and converts neither. A `thread_time` deadline
+  (`cpu_deadline`) is passed INTO `_Redactor.sweep` and the held-back sweeps and checked inside them; a monotonic wall deadline is read only by `check()` (every
+  64th held-back value, after each sweep), together with the CPU one.
+- Spelled forms (was item 8): the scan costs tokens x offsets under that token x trie depth, NOT "independent of the number of forms" (it is independent of the
+  forms under OTHER tokens). Two caps in defaults.py bound it per first token: `SPELLED_MAX_OFFSETS` 32 distinct offsets and `SPELLED_MAX_FORMS` 256 forms; a
+  registration past either is refused (InputTooLarge), before anything is stored. The deadline is checked per token (before the "no form" skip) and every 1,024
+  walk steps.
+- Overlap rule, exactly: every full match is a candidate (start, end); at one start the longest; taken leftmost first; a candidate that starts inside one already taken
+  is skipped. (Before: the first matching offset won; `xyz<SECRET_1>ab` with forms `<SECRET_1>ab` and `xyz<SECRET_1>` left `xyz` readable. Now `<BEARER_2>ab`.)
+- `_rollback` deletes the `_spelled` entry of a rolled-back placeholder (`_unspell`; the journal holds the placeholder). The `mapping.get(placeholder) == full` check stays
+  as a safety net. The same-value reissue with another meaning of the form's own token is a test (it failed before).
+- `redact_many` (and `settle`) read every string again when `bank_near` flips while a string is read (the fold scan sets it from a FOLDED view): an account in an earlier
+  string was left readable (`acct 12345678 paid` then a full-width `BSB 062-000`); the same two strings in the other order masked it.
+- `_decide`'s rule for a value of own tokens is `_OWN_OUTPUT` (not `_ESCAPED_LOOKALIKE`, a name that is gone). STATED LIMIT, pinned by a test: a SECRET value made ONLY of own-label tokens
+  (`password=<EMAIL_1> host`-shaped: token runs separated by space, tab, `;` or `,`, or a cut-off opening `<SEC`, `<SECRET_`) is left unmasked and gets no map entry.
+- redact.py module docstring: there is NO second independent pass on what leaves; the model gate replaces the values the run's map holds (`runmap.enforce_map`) and runs no pattern.
+- The three builders of the p1c inputs moved to tests/p1c_builders.py (the property test no longer executes an evidence file; a parity test compares them with the probe when it exists).
 The first design (context patterns only, bounded rounds) is GONE from the code.
 
 ## Design as built, ROUND 3 (supersedes every other design section of this ticket)
@@ -18,11 +50,12 @@ The first design (context patterns only, bounded rounds) is GONE from the code.
 4. ACCEPTANCE RULE, exactly: the call is settled when some round r, 1 <= r <= `_SETTLE_ROUNDS` (4), changes no text. A chain whose last change is made
    in round 3 is accepted (round 4 confirms). A chain that still changes a text in round 4 is REFUSED: `RedactionError("NotSettled")`, nothing shown,
    because no round has read that text since. (Round 2 coded "a fourth growing round is accepted if its sweep changes nothing"; that is gone.)
-5. The cap is a FAIL-CLOSED MARGIN, not a derived bound. Measured depth (tests/test_redact_settle_loop.py; evidence G7-1.md, round 3): over 8,000
-   generated compositions of 4 to 8 lines (half from a pre-seeded run map; the test's own generator, seed 20261121) the rounds run were: 1 round 604,
-   2 rounds 6,879, 3 rounds 517, none more (a second seed, 99: 567 / 6,925 / 508). The maximum, 3, is pinned in the test (`MAX_ROUNDS_SEEN`). The reference
-   loop (every string re-read every pass) needed a third pass for 12%, a fourth for 3.7% and a fifth for 0.2% of the same inputs (the test asserts the
-   fourth is reached: > 0). The real chain of three takes 3 rounds (two that change, one that confirms). No
+5. The cap is a FAIL-CLOSED MARGIN, not a derived bound. Measured depth (tests/test_redact_settle_loop.py prints it; the real run is the raw tail in evidence
+   G7-1.md, "G7 fix round 4", the ONE source of these numbers): over the test's 2,000 generated compositions of 4 to 8 lines (half from a pre-seeded run map; seed
+   20261121) the rounds run were 1 round 156, 2 rounds 1,715, 3 rounds 129, none more. The maximum, 3, is pinned in the test (`MAX_ROUNDS_SEEN`). The reference
+   loop (every string re-read every pass), by the pass that LAST changed something (exact shares): 3rd 249 (12.5%), 4th 73 (3.65%), 5th 5 (0.25%); cumulative (the
+   test's counters, "a third pass or more"): 327 (16.4%), "a fourth or more" 78 (3.9%). Both are in the table; the 12 / 3.7 / 0.2 percent of the round 3 text were the exact
+   shares of an 8,000-input scratch run that is not in the repo. The real chain of three takes 3 rounds (two that change, one that confirms). No
    natural chain of 4 rounds was found (generated, a 20,000-input random search over 21 bank/secret lines, hand search), so the cap stays at 4 (one round
    of headroom); the tests for exactly 4 rounds (settled) and 5 rounds (refused) use a pass that changes its text for exactly that many rounds (a stub of
    `find` only; the real cap, never patched): an off-by-one in the loop (3 or 5 rounds) fails them. A chain planted on purpose that needs 5 rounds
@@ -32,20 +65,18 @@ The first design (context patterns only, bounded rounds) is GONE from the code.
    (agent_loop, the trigger document) abstains as "redaction failed", not as "too large"; a tool result is refused with the same reason as any
    redaction failure; a deadline `InputTooLarge` is a different subclass and keeps its own reason. A document planted to need 5 rounds therefore
    makes the run abstain: that is the intended fail-closed behaviour.
-7. Deadline: `settle` checks the call's deadline before every round, and passes it into every sweep of a round and (through them) into `_build`
-   (`InputTooLarge`, never a skipped pass). The deadline is `time.thread_time()` based (CPU time of the creating thread) and valid only in that
-   thread. HONEST BOUND: budget + ONE UNINTERRUPTIBLE UNIT, per `redact()` call, where the unit is one pattern pass over the biggest string (or one
-   `str.replace` / finder pass over one segment). Measured on the Linux test machine (one pass + one sweep of the text at the cap): 0.4 s for `password=`
-   repeated, 1.9 s for `curl -u ` repeated (7.2 s end to end for `curl -u ` on the earlier Windows laptop, so its unit is larger). It is CPU time, not a
-   wall bound (GIL waits and blocked time do not advance it): a caller that needs a wall-clock bound adds its own guard. The gate (`runmap.enforce_map`)
-   converts its monotonic deadline to this clock in its own lane. T4 asserts the claim: at the cap with a planted chain of three, redacted under the real
-   budget and REFUSED under a budget of 0.5 s, each within budget + twice the measured unit + 0.5 s.
+7. Deadline (see "ROUND 4 changes" for the final wording): `settle` checks the call's deadline before every round, and passes it into every sweep of a round and
+   (through them) into `_build` (`InputTooLarge`, never a skipped pass); since round 4 the first sweep carries it too. The deadline is `time.thread_time()` based (CPU
+   time of the creating thread) and valid only in that thread. It is CPU time, not a wall bound (GIL waits and blocked time do not advance it): a caller that needs a
+   wall-clock bound adds its own guard. The bound, the unit timings, the 25 percent statement and the Windows figure are in defaults.py (one source). The gate's two clocks
+   are described in "ROUND 4 changes". T4 asserts: at the cap with a planted chain of three, redacted under the real budget and REFUSED under a budget of 0.5 s, each within
+   budget + twice the measured unit + 0.5 s.
 8. Compound tail (dz-2, round 3 M3/M4): when `_place` stores a compound SECRET entry whose written form held placeholders (`<SECRET_1>xy`), that
    form is registered under the FIRST placeholder token it contains, with (placeholder, full value) at the end of a character trie. `sweep` looks the
-   placeholder tokens of the text up and walks the trie: linear in the text, not entries x text (the old loop searched every form in the whole text on
-   every sweep: 5,000 forms in 250,000 characters 0.17 s per sweep, up to 5 sweeps per call; now 0.002 s). An entry whose placeholder no longer maps to
-   its full value (a rolled-back line, or the number reissued to another value) is ignored when read, so a ghost never writes a wrong placeholder that
-   would restore to the wrong value (round 3 M3). Label change, noted (design N3): honest text spelled like a swept compound (`<SECRET_1>xy`) is
+   placeholder tokens of the text up and walks the trie: cost tokens x offsets under that token x trie depth, capped per token (ROUND 4 changes), not entries x text
+   (the old loop searched every form in the whole text on every sweep: 5,000 forms in 250,000 characters 0.17 s per sweep, up to 5 sweeps per call). A rolled-back
+   registration deletes its form (round 4); an entry whose placeholder no longer maps to its full value is still ignored when read, so a ghost never writes a wrong
+   placeholder that would restore to the wrong value (round 3 M3). Label change, noted (design N3): honest text spelled like a swept compound (`<SECRET_1>xy`) is
    relabelled with the compound's placeholder; the restore round trip is exact, only the label differs.
 9. Cost (measured, evidence G7-1.md round 3): a clean text 1 pass 1 sweep; one planted secret 2 passes 1 sweep (unchanged); the chain of three 4 passes
    (one more than round 2: the confirming round over the one string it changed) and 3 sweeps. A string that the table rewrote in the last changing
@@ -65,7 +96,9 @@ authorization / `"auth":` about 3, `sig=` up to 11).
   sweep) keeps the part after the known compound readable (the generator avoids it by giving every tail a different first letter). Planted text only.
 - The sweep's own rule for short or common values (under 3 characters; all-digit under 6; common words; an identifier where a letter or digit touches it) is unchanged.
 - A secret that no pattern matches and no known value contains is not found (the patterns are the control).
-- The time bound is budget + one uninterruptible unit, CPU time of one thread (item 7).
+- The time bound is stated once, in defaults.py and "ROUND 4 changes": CPU time of one thread; a slow machine refuses the hostile text, it never shows it.
+- A hostile map past the caps (more than 32 offsets or 256 forms under one placeholder token) is REFUSED (InputTooLarge), not masked: availability, never a leak.
+- A SECRET value of own-label tokens only is left unmasked (stated limit, `_OWN_OUTPUT`).
 - The test generator and the reference loop cover the shapes listed in the evidence, not every chain. The reference shares `find` and `sweep` with the code.
 
 ## Guards that replaced the deleted test (round 3 M7, N2)
@@ -79,8 +112,9 @@ pass is a function of the text; (c) `_PLACEHOLDER`, `kind_of` and the `<BANKCODE
 - After the first pass and sweep the redactor runs the patterns again over the strings that changed, round after round until a round changes no text, at
   most 4 rounds; a call that is still changing in round 4 is refused (RedactionError "NotSettled"), never returned half masked. A text that needs nothing
   more pays nothing more.
-- Each round, each sweep of a round and the build of the sweep rules are checked against the call's time budget (InputTooLarge past it; CPU time of the
-  calling thread, not wall time). A pattern pass in progress is not interrupted: the bound is the budget plus one pass.
+- Each round, each sweep of a call (the first included) and the build of the sweep rules are checked against the call's time budget (InputTooLarge past it; CPU time of the
+  calling thread, not wall time). A pattern pass in progress is not interrupted: the bound is in defaults.py. A machine about 25 percent slower than the test machine refuses
+  a `curl -u `-shaped 262 KB text (fail closed).
 - A longer credential found only because a shorter known secret inside it was masked first is stored whole and its other copies are masked whole (no `tail`).
 - Boundary class: a call may mask a little MORE than a fresh call on the same text would (digits glued to a swept word), never less.
 - Unchanged: values and copies the sweep leaves by rule; escaped look-alikes are never credentials; a tool error text is redacted twice (see below).
@@ -128,8 +162,8 @@ Inputs: 1,835, none dropped (counts pinned by a test):
 | own-shapes | tests/warden_port/test_redaction.py OWN_SHAPES | 8 |
 | spellings | tests/test_k5_round8.py SPELLINGS (the layered spellings rounds 8 and 9 drive) | 3 |
 | round12-fuzz | tests/test_k5_round12_fuzz.py `_case`, its seed | 1,200 |
-| round-trip | tests/test_runmap_is_masked.py `_random_text` (its seed) + LOOKALIKES | 300 + 6 |
-| p1c | handover/core-c/evidence/p1c_probe.py gap1_values, gap2_cases, gap3_cases | 16 + 44 + 43 |
+| round-trip | tests/redact_corpus_support.py `random_text` (its seed) + LOOKALIKES | 300 + 6 |
+| p1c | tests/p1c_builders.py gap1_values, gap2_cases, gap3_cases (moved from handover/core-c/evidence/p1c_probe.py) | 16 + 44 + 43 |
 | g7 | tests/test_redact_context_after_sweep.py SHAPES, MUST_KEEP, E5 | 6 + 8 + 3 |
 | constructed | built for this file to find what one extra pass misses | 1 |
 Not used (not redactor inputs): tests/demo_askdata/fuzzgen.py (SQL), tests/test_peel_run_id.py HOSTILE (run ids),
@@ -149,14 +183,16 @@ Result (round 3, measured): 1,835 pass, 0 refused, 0 fail. With settle switched 
 A text with matches costs about 2.0x to 2.4x the old pass; a text with no match costs 1.0x (skip). All 25 perf-marked
 redactor tests pass on try 1 of 3 (22 existing + 3 new; serial, 70 s; slowest: the per-pattern super-linear sweep 33 s).
 
-## Tests (ROUND 3 counts; collect-only numbers are in evidence G7-1.md)
-- tests/test_redact_settle_loop.py: the cap at its real value (hop chains of 1 to 4 rounds settled, 5 refused, no monkeypatch of the cap; NotSettled text
-  asserted through `redact_text`), the real chain of three (3 rounds), the fixed-point and union tests, the rolled-back and reissued spelled forms, the
-  5,000-form scan at the size cap (ratio test), deadline tests (value loop with a stepping clock, `_build`, settle passes the deadline), the generator of
-  4 to 8 lines with a pre-seeded map against the reference loop plus the depth distribution, T4 with budget 6.0 and 0.5.
-- tests/test_redact_context_after_sweep.py: E3 shapes, redact_many, E5, must-keep, call counts, timing, and the three guards of "Guards that replaced the
-  deleted test".
-- tests/test_redact_idempotent_property.py: 1,835 params + 5 tests.
+## Tests (ROUND 4 counts; the collect-only lines are in evidence G7-1.md)
+- tests/test_redact_settle_loop.py (54 non-perf + 4 perf): the cap at its real value (hop chains of 1 to 4 rounds settled, 5 refused, no monkeypatch of the cap;
+  NotSettled text asserted through `redact_text`), the real chain of three (3 rounds), the fixed-point and union tests, the rolled-back and reissued spelled forms (and
+  the deleted ghost), the 5,000-form scan at the size cap with a text that walks the trie (ratio test), the hostile-map tests (refused past the offset cap; at the cap a time
+  bound; the walk's own deadline with the caps raised; a deadline for a token with no form; the forms cap), the overlap rule, deadline tests (value loop and segment check
+  with a stepping clock, `_build`, settle passes the deadline to every sweep, a direct `settle` with a spent deadline and a stub `find`), the `bank_near` flip, the generator
+  of 4 to 8 lines with a pre-seeded map against the reference loop plus the depth distribution, T4 with budget 6.0 and 0.5.
+- tests/test_redact_context_after_sweep.py (59 + 3 perf): E3 shapes, redact_many, E5, must-keep, call counts, timing, the three guards of "Guards that replaced the
+  deleted test" (the pattern-source guard is named for what it sees, and states that value classes that merely admit `<` are invisible to it), and the own-token limit.
+- tests/test_redact_idempotent_property.py: 1,835 params + 7 tests (one is the parity test of tests/p1c_builders.py with the evidence probe; skipped when the probe is gone).
 - tests/test_redact_own_output.py (23).
 - Fail-before (round 3, new files on the round 2 redact.py and runmap.py swapped in for a few seconds): 14 of the new tests failed; the ones that fail
   for the reason of a finding: the hop chains (the loop ended on map growth), the union test, the reissue ghost, the 5,000-form ratio, the `_build` deadline,
@@ -175,7 +211,7 @@ redactor tests pass on try 1 of 3 (22 existing + 3 new; serial, 70 s; slowest: t
 
 Verdict: ONE caller can and does: the tool-error path (both loops); an echoing tool does the same. FIXED in the
 follow-up (coordinator order after ORDER 012 item 2), in `guard/redact.py` `_Redactor._mask` only:
-- Rule: a value that is nothing but ESCAPED look-alikes (`_ESCAPED_LOOKALIKE`: U+2039, letters/digits, `_`, ASCII digits,
+- Rule: a value that is nothing but ESCAPED look-alikes (`_OWN_OUTPUT`, matched in `_decide`: U+2039, letters/digits, `_`, ASCII digits,
   U+203A, exactly what `runmap.escape_placeholders` writes) and genuine placeholders, with nothing else but spaces, `;`
   and `,`, is left alone, as a value of genuine placeholders alone already was. No map entry is made.
 - Result (through `tools.error_reason` then `tools.prepare_output`): `password=‹SECRET_1› host ‹IPV4_1›`, run map
@@ -204,7 +240,7 @@ No pattern regex, no pattern order, no change to `tools.py`, the sweep rule or t
 - The whole test suite: only the files named in evidence G7-1.md (redact, runmap, stage names, hard-coded values).
 - A natural chain of 4 rounds: none found (generated, random search, by hand); the 4 and 5 round tests use a stub pass.
 - Timing on Windows or under load. The wall-clock behaviour of the budget (it is CPU time of one thread).
-- The gate's conversion of its monotonic deadline to the `thread_time` clock (another agent's lane, `runmap.enforce_map`).
+- The gate's own clocks beyond what its code says (another agent's lane, `runmap.EnforceBudget`): round 4 only re-read them and corrected the wording.
 - tools.py `error_reason` redacting before `prepare_output` (a double pass, harmless; not mine).
 
 ## For SECURITY wording (ROUND 3, END)

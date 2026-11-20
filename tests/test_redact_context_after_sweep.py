@@ -15,7 +15,8 @@ the guards on what the design relies on (the list of patterns that read a placeh
 shape). A text the first pass and its sweep left unchanged is not scanned again. The property over the repo's corpora is in
 tests/test_redact_idempotent_property.py.
 
-Every digit string and credential here is made up and built from parts.
+Every digit string and credential here is made up and built from parts. The `print` lines of the perf tests (shown with `-s`) are the
+measured numbers the evidence file quotes; no assertion reads them.
 """
 
 from __future__ import annotations
@@ -35,6 +36,10 @@ BSB = "062" + "-" + "000"
 BSB_2 = "033" + "-" + "111"
 ACCOUNT = "1234" + "5678"
 ACCOUNT_2 = "8765" + "4321"
+SID = "abcdef" + "123456"
+MAIL = "bob" + "@" + "example" + ".com"
+IPV4 = "10." + "1.2.3"
+SSN = "123" + "-" + "45" + "-" + "6789"
 FAR = "x " * 80  # 160 characters: wider than the 100-character bank window
 
 DIRECT = f"BSB: {BSB}\npaid {BSB}/{ACCOUNT}"
@@ -396,10 +401,12 @@ _GUARD_ONLY = {
 }  # reads a placeholder only to LEAVE one alone: a fold-only hit never depends on it
 
 
-def test_every_pattern_that_reads_a_placeholder_shape_is_a_context_label():
+def test_every_pattern_whose_source_names_a_placeholder_shape_is_a_context_label():
     """`_CONTEXT_LABELS` takes a full round in the fold scan whatever the scan found. A pattern whose result depends on a placeholder
     must be listed; a new one that is not fails here. The loop of `settle` does not rely on this list (it runs the whole table),
-    the fold scan does."""
+    the fold scan does. THE LIMIT of this check (round 3 nit 4): it sees only a pattern whose regex SOURCE names a placeholder
+    (`_\\d+>` or `<[A-Z`). A value class that merely ADMITS `<` and `>` (BEARER, BASIC, authorization, cookies, flags) is invisible to
+    it, and that is why `settle` runs the whole table again instead of a list."""
     import re
 
     readers = {label for label, p in R.PATTERNS if re.search(r"_\\d\+>|<\[A-Z", p.pattern)}
@@ -420,12 +427,15 @@ def test_the_pattern_decision_does_not_read_the_map():
     what is a value) ignores `mapping`, `reverse`, `counters`, `alias` and the spelled forms. Only `_mask_ex` reads the map, to choose the
     placeholder. A source check and a behavioural one: the same decisions with an empty and with a full map."""
     import inspect
+    import re
 
     src = inspect.getsource(R._Redactor._decide)
-    for name in ("self.mapping", "self.reverse", "self.counters", "self.alias", "self._spelled"):
-        assert name not in src, (
-            f"_decide reads {name}: the settle loop assumes a pass is a function of the text"
-        )
+    # every attribute of the redactor that `_decide` names, not a list of forbidden ones (round 3 nit 5): only the batch flag. Its LIMIT:
+    # a source check sees this function's own text, not what a module-level helper it calls reads; the behavioural check below, the same
+    # decisions with an empty and a full map, covers that side.
+    assert set(re.findall(r"self\.(\w+)", src)) <= {"bank_near"}, (
+        "_decide reads redactor state: the settle loop assumes a pass is a function of the text and the batch flag"
+    )
     texts = [
         DIRECT,
         KEYWORD,
@@ -436,9 +446,9 @@ def test_the_pattern_decision_does_not_read_the_map():
     ]
     texts += [
         "Bearer <SECRET_1>xy and Basic <SECRET_2>ab",
-        "password=<SECRET_1>xy; Cookie: <SECRET_3>; sid=abcdef123456",
-        "Cookie: a=<SECRET_1>; sid=abcdef123456",
-        "mail bob@example.com from 10.1.2.3 at 123-45-6789",
+        f"password=<SECRET_1>xy; Cookie: <SECRET_3>; sid={SID}",
+        f"Cookie: a=<SECRET_1>; sid={SID}",
+        f"mail {MAIL} from {IPV4} at {SSN}",
         f"paid <BANKCODE_1>/{ACCOUNT} and <BANKCODE_1> {ACCOUNT_2}",
     ]
     full = {f"<SECRET_{n}>": f"k{n:04d}abc" for n in range(1, 40)} | {"<BANKCODE_1>": BSB}
@@ -470,3 +480,24 @@ def test_the_placeholder_shape_is_what_the_redactor_issues_and_what_the_patterns
     assert R._BANK_CONTEXT.search("x <BANKCODE_1> y") and R._BANK_CONTEXT.search(
         "x <BANKCODE_99999> y"
     )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "password=\u2039EMAIL_1\u203a host",  # the value is the one escaped token; `host` stands outside it
+        "password=<EMAIL_1> <IPV4_1>",  # token runs: a space ...
+        "password=<EMAIL_1>\t<IPV4_1>",  # ... a tab ...
+        "password=<EMAIL_1>;<IPV4_1>",  # ... `;` ...
+        "password=<EMAIL_1>,<IPV4_1>",  # ... `,`
+        "password=<SEC",  # a cut-off opening
+        "password=<SECRET_",
+        "password=<EMAIL_1> <SEC",
+    ],
+)
+def test_a_secret_value_made_only_of_own_label_tokens_is_left_unmasked_a_stated_limit(text):
+    """Drift report, E9: the `_OWN_OUTPUT` rule (in `_decide`) leaves a SECRET value that is nothing but the redactor's own tokens (genuine or
+    escaped, separated by space, tab, `;` or `,`, with an optional cut-off opening) as typed, and makes no map entry. A real credential
+    spelled like that is therefore NOT masked: a limit stated in the comment above `_OWN_OUTPUT`, pinned here so a change is looked at."""
+    result = R.redact(text)
+    assert result.text == text and result.mapping == {}

@@ -18,9 +18,10 @@ changes no text: a fixed point with a hard cap (`_SETTLE_ROUNDS`, 4 rounds). A c
 is refused (RedactionError("NotSettled")), never returned half masked (G7, ORDER 020 MJ-B and fix round 3; see `settle`).
 
 ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
-the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
-everything that leaves. (A re-scan inside redact() used the sweep's own rule and could never fire, so
-it was removed - second review, 2026-09-30.)
+the control; HIGHENTROPY is their backstop. There is NO second, independent pattern pass on what leaves: the outbound
+model gate (`runmap.enforce_map`) replaces the values the run's map already holds (the redactor's own final sweep, with the
+gate's held-back values) and runs no pattern at all, so a value no pattern here matched and no map entry holds passes it.
+(A re-scan inside redact() used the sweep's own rule and could never fire, so it was removed - second review, 2026-09-30.)
 """
 
 from __future__ import annotations
@@ -873,6 +874,12 @@ _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 # separated by spaces, tabs, `;` or `,`; optionally the value ends in a placeholder opening cut off by
 # `tools.error_reason`'s length cut (`<SECRET_1`, `<SECRET_`, `<SEC`). The whole value must match: any other
 # character, a mixed form, an unknown kind or a glued secret is masked whole, as before G7.
+# STATED LIMIT (fail open, by design; named by the drift report): a SECRET value made ONLY of such tokens is left unmasked and
+# gets no map entry, whoever wrote it. `password=‹EMAIL_1› host` (the value is the one token; `host` is outside it),
+# `password=<EMAIL_1> <IPV4_1>` and token runs separated by a space, a tab, `;` or `,`, and a cut-off opening
+# (`password=<SEC`, `password=<SECRET_`, `password=<EMAIL_1> <SEC`) all stand as typed: a real credential spelled exactly like the
+# redactor's own tokens (or like the cut-off start of one) is not masked, as one spelled `<nil>` is not. That is the price of
+# keeping a tool's error text (redacted twice) from making a junk map entry for every escaped token.
 _KIND = "|".join(sorted(_LABELS, key=len, reverse=True))
 _OPENINGS = "|".join(
     sorted({lab[:n] for lab in _LABELS for n in range(1, len(lab) + 1)}, key=len, reverse=True)
@@ -949,7 +956,7 @@ def redact(
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
-        out = r.settle([text], [r.sweep(out)])[0]
+        out = r.settle([text], [r.sweep(out, r._deadline)])[0]
     return RedactionResult(text=out, mapping=r.mapping, actions=r.actions)
 
 
@@ -1121,10 +1128,15 @@ class _Redactor:
         # A secret compound value written with a placeholder in it (`<SECRET_1>xy`, as the first sweep left it): swept as a literal
         # before the placeholder split (see `sweep`), so another copy the first sweep already cut is not left with its tail.
         # Indexed by the FIRST placeholder token the written form holds -> {offset of that token in the form -> a character trie of
-        # the forms}; a terminal node (key "") holds (placeholder, full value). Sweeping looks the tokens of the text up: linear in
-        # the text, not entries x text. An entry whose placeholder no longer maps to its full value (a rolled-back line, the number
-        # reissued for another value) is ignored when read, so a ghost never writes a wrong placeholder.
+        # the forms}; a terminal node (key "") holds (placeholder, full value). Sweeping looks the tokens of the text up: the cost is
+        # tokens x offsets under that token x walk depth, bounded per token by `defaults.SPELLED_MAX_OFFSETS` and `SPELLED_MAX_FORMS`
+        # (a registration past either is refused, InputTooLarge), never entries x text. A rolled-back registration deletes its form
+        # (`_unspell`); an entry whose placeholder no longer maps to its full value is still ignored when read (a safety net).
         self._spelled: dict[str, dict[int, dict[str, Any]]] = {}
+        self._spelled_forms: dict[str, int] = {}  # forms registered under each first token (capped)
+        self._spelled_at: dict[
+            str, str
+        ] = {}  # placeholder -> the written form registered for it (to delete it on a rollback)
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
@@ -1164,9 +1176,14 @@ class _Redactor:
         derived bound. A text that needs no more passes pays nothing extra: the confirming round runs over the strings
         the previous round changed, and a clean text, or one whose second pass finds nothing, ends in round 1.
 
-        Time: the call's deadline (CPU clock of the creating thread) is checked before every round and inside every sweep
-        and `_build` of the round (`InputTooLarge`, never a skipped pass: that would fail open). A pattern pass over one
-        string is not interruptible: the bound is the budget plus one pass over the largest string (see defaults.py)."""
+        Time: the call's deadline (CPU clock of the creating thread) is checked before every round and inside every sweep and
+        `_build` of the round; `redact` and `redact_many` pass the same deadline into the FIRST sweep (InputTooLarge, never a skipped
+        pass: that would fail open). NOT checked: a pattern pass (`find`) over a string, and the loop over the strings of one round, so
+        a call can overrun the budget by pass 1 (every string) or by the pass of the round in progress, plus the one `str.replace` or
+        finder pass of a sweep that was running. The bound the tests enforce (tests/test_redact_settle_loop.py T4) is the budget plus
+        twice the measured unit (one pass and one sweep of the biggest text) plus 0.5 s: looser than that claim, and it is what is
+        checked. A machine slow enough that pass 1 alone exceeds the budget refuses the text (InputTooLarge) at the first check
+        after it, fail closed; defaults.py has the figures."""
         cur = list(swept)
         todo = {
             i for i, (o, t) in enumerate(zip(originals, cur, strict=True)) if t != strip_ansi(o)
@@ -1176,6 +1193,7 @@ class _Redactor:
                 return cur
             self._check_deadline()
             known = len(self.mapping)
+            near_before = self.bank_near
             changed: set[int] = set()
             for i in sorted(todo):
                 text = self.find(cur[i])
@@ -1189,6 +1207,10 @@ class _Redactor:
                     cur[i] = text
                     changed.add(i)
             todo = changed
+            if self.bank_near != near_before:
+                # the fold scan of a string found a bank word in a folded view during this round: every string is read again
+                # (a pass depends on the text AND on `bank_near`, so "unchanged" no longer means "read")
+                todo = set(range(len(cur)))
         if todo:
             from hadavin_sdk.guard.runmap import RedactionError  # runmap imports this module
 
@@ -1277,7 +1299,9 @@ class _Redactor:
         """The fold pass over a text with non-ASCII characters. A cheap whole-text scan first finds the lines whose FOLDED form holds a match
         the line itself does not (one pattern pass over the text and one over its folded form, matches counted per line); only those lines
         get the exact per-line treatment of ``_folded_line``. Many short non-ASCII lines (``é`` x 130,000) therefore cost two passes, not
-        two pattern runs per line. The work is bounded by ``defaults.REDACT_BUDGET_S`` (``InputTooLarge``, checked inside the passes)."""
+        two pattern runs per line. The work is bounded by ``defaults.REDACT_BUDGET_S`` (``InputTooLarge``, checked inside the passes): the
+        call's ``_deadline`` when there is one, else a FRESH allowance of that budget for THIS call of ``find`` (a ``redact`` or ``redact_many``
+        made with no ``_deadline`` restarts it on every ``find``, the rounds of ``settle`` included, so such a call has no total bound)."""
         started = (
             self._deadline
             if self._deadline is not None
@@ -1547,8 +1571,9 @@ class _Redactor:
                 self.mapping.pop(a, None)
                 if self.reverse.get(b) == a:
                     del self.reverse[b]
-        # a `_spelled` entry of the rolled-back registrations stays in its index but is ignored: its placeholder no longer maps to
-        # its full value (`_spelled_hit`), and a number reissued to ANOTHER value does not revive it
+                self._unspell(
+                    a
+                )  # the journal holds the placeholder: its written form goes with it, no ghost is left to revive
         self.counters = counters
         # the masks of the discarded rounds changed no text that is kept
         self.actions = self._journal_actions
@@ -1628,6 +1653,8 @@ class _Redactor:
 
     def _place(self, label: str, full: str, original: str) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it."""
+        if label in SECRET_KINDS and original != full and len(full) >= 4:
+            self._spell_cap_check(original)  # refuses before anything is registered
         self.counters[label] += 1
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
@@ -1647,36 +1674,101 @@ class _Redactor:
                     self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         return placeholder
 
+    def _spell_cap_check(self, original: str) -> None:
+        """Refuse (`InputTooLarge`) a written form that would pass `defaults.SPELLED_MAX_OFFSETS` or `defaults.SPELLED_MAX_FORMS`
+        registered under its first placeholder token: the scan walks every offset of the token of the text, so these two numbers
+        bound its work per token. Called BEFORE the entry is made, so a refusal leaves nothing half registered."""
+        first = _PLACEHOLDER.search(original)
+        if first is None:
+            return
+        by_offset = self._spelled.get(first.group(1), {})
+        if (first.start() not in by_offset and len(by_offset) >= defaults.SPELLED_MAX_OFFSETS) or (
+            self._spelled_forms.get(first.group(1), 0) >= defaults.SPELLED_MAX_FORMS
+        ):
+            from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+            raise InputTooLarge("SpelledFormsTooMany")
+
     def _spell(self, original: str, placeholder: str, full: str) -> None:
         """Register the written form `original` (it holds at least one placeholder token, since it differs from `full`)."""
         first = _PLACEHOLDER.search(original)
         if first is None:
             return
-        node = self._spelled.setdefault(first.group(1), {}).setdefault(first.start(), {})
+        token = first.group(1)
+        node = self._spelled.setdefault(token, {}).setdefault(first.start(), {})
         for ch in original:
             node = node.setdefault(ch, {})
+        if "" not in node:
+            self._spelled_forms[token] = self._spelled_forms.get(token, 0) + 1
         node[""] = (placeholder, full)
+        self._spelled_at[placeholder] = original
+
+    def _unspell(self, placeholder: str) -> None:
+        """Delete the written form registered for `placeholder` (a rolled-back registration), and the trie nodes only it used."""
+        original = self._spelled_at.pop(placeholder, None)
+        first = _PLACEHOLDER.search(original) if original is not None else None
+        if original is None or first is None:
+            return
+        token, offset = first.group(1), first.start()
+        by_offset = self._spelled.get(token, {})
+        root = by_offset.get(offset)
+        if root is None:
+            return
+        path = [root]
+        for ch in original:
+            nxt = path[-1].get(ch)
+            if nxt is None:
+                return
+            path.append(nxt)
+        term = path[-1].get("")
+        if term is None or term[0] != placeholder:
+            return  # the form there is another entry's: leave it
+        del path[-1][""]
+        self._spelled_forms[token] -= 1
+        for depth in range(len(original), 0, -1):  # prune the nodes that hold nothing now
+            if path[depth]:
+                break
+            del path[depth - 1][original[depth - 1]]
+        if not root:
+            del by_offset[offset]
+        if not by_offset:
+            del self._spelled[token]
+        if not self._spelled_forms.get(token):
+            self._spelled_forms.pop(token, None)
 
     def _spelled_sweep(self, out: str, deadline: float | None) -> str:
-        """Replace the written forms of compound secrets (`<SECRET_1>xy`) by their placeholder, left to right, the longest form at
-        a position. One look-up per placeholder token of the text and a walk of a character trie, so the cost is linear in the text
-        and independent of the number of forms; a deadline is checked every 256 tokens."""
+        """Replace the written forms of compound secrets (`<SECRET_1>xy`) by their placeholder.
+
+        THE RULE, exactly: every form that matches in full somewhere in `out` is a candidate (start, end); at one start the
+        longest form is the candidate. The candidates are taken leftmost first, and a candidate that begins before the end of
+        one already taken is skipped (non-overlapping, the earliest start wins, at one start the longest wins). The cost is
+        the placeholder tokens of the text, times the offsets registered under a token (at most `defaults.SPELLED_MAX_OFFSETS`),
+        times the walk of a character trie (at most the length of the form): it does NOT depend on the number of forms
+        registered under OTHER tokens, and the forms under one token are capped by `defaults.SPELLED_MAX_FORMS`. The deadline
+        (when given) is checked every `_SPELL_CHECK_EVERY` units of work, a token with no form and a step of a walk each
+        counting one, so a text of tokens with no forms is checked too."""
         if not self._spelled:
             return out
-        pieces: list[str] = []
-        last = 0
-        for n, m in enumerate(_PLACEHOLDER.finditer(out)):
+        found: list[tuple[int, int, str]] = []
+        work = _SPELL_CHECK_EVERY  # the first token is checked
+        for m in _PLACEHOLDER.finditer(out):
+            work += 1
+            if deadline is not None and work >= _SPELL_CHECK_EVERY:
+                work = 0
+                self._over_budget(deadline)
             by_offset = self._spelled.get(m.group(1))
             if by_offset is None:
                 continue
-            if deadline is not None and n % 256 == 0:
-                self._over_budget(deadline)
             for offset, root in by_offset.items():
                 start = m.start() - offset
-                if start < last:
+                if start < 0:
                     continue
                 node, best, i = root, None, start
                 while True:
+                    work += 1
+                    if deadline is not None and work >= _SPELL_CHECK_EVERY:
+                        work = 0
+                        self._over_budget(deadline)
                     term = node.get("")
                     if term is not None and self.mapping.get(term[0]) == term[1]:
                         best = (i, term[0])
@@ -1684,13 +1776,18 @@ class _Redactor:
                         break
                     i += 1
                 if best is not None:
-                    end, placeholder = best
-                    pieces += (out[last:start], placeholder)
-                    last = end
-                    self.actions += 1
-                    break
-        if not pieces:
+                    found.append((start, best[0], best[1]))
+        if not found:
             return out
+        found.sort(key=lambda c: (c[0], -c[1]))
+        pieces: list[str] = []
+        last = 0
+        for start, end, placeholder in found:
+            if start < last:
+                continue
+            pieces += (out[last:start], placeholder)
+            last = end
+            self.actions += 1
         pieces.append(out[last:])
         return "".join(pieces)
 
@@ -1775,9 +1872,10 @@ class _Redactor:
         # per map: testing every value against every segment was quadratic - 217 s for 2,000 lines of
         # 22,500 distinct values (fourth review, 2026-09-30).
         # `deadline` (default None: unchecked): a time.thread_time() value, the clock of `_deadline` (CPU time of the thread that
-        # made this redactor; see defaults.REDACT_BUDGET_S). `_Redactor.settle` passes its own. Checked in `_build`, every 256th
-        # placeholder token of the spelled-form scan, every 32nd free segment and before each value replaced (InputTooLarge,
-        # nothing returned). A single `str.replace` or one finder pass over one segment is not interrupted.
+        # made this redactor; see defaults.REDACT_BUDGET_S). `redact`, `redact_many` and `_Redactor.settle` pass the call's own to
+        # EVERY sweep, the first included. Checked in `_build`, every `_SPELL_CHECK_EVERY` units of work of the spelled-form scan
+        # (a token of the text or a step of a trie walk, tokens with no form counted), every 32nd free segment (only when the map holds a value to look for) and before each value
+        # replaced (InputTooLarge, nothing returned). A single `str.replace` or one finder pass over one segment is not interrupted.
         if self._built_for != len(self.mapping):
             self._build_deadline = deadline
             try:
@@ -1796,8 +1894,8 @@ class _Redactor:
             if not segment:
                 continue
             if (
-                deadline is not None and i % 64 == 0
-            ):  # every 32nd free segment (a text of 100,000 placeholders has 100,000)
+                deadline is not None and i % 64 == 0 and (self._finders or self._slow)
+            ):  # every 32nd free segment (a text of 100,000 placeholders has 100,000); with no value to look for there is no work to bound
                 self._over_budget(deadline)
             present = {w for w in self._slow if w in segment}
             for finder, prefixes in self._finders:
@@ -1823,10 +1921,13 @@ class _Redactor:
 _MAX_NESTING = 200
 # The most rounds (a pattern pass over the strings the previous round changed, then a sweep) `_Redactor.settle` makes after the first
 # sweep. A call is settled when some round within the cap changes no text, so the last CHANGING round that is accepted is round 3 (round
-# 4 confirms). A margin that fails closed, not a derived bound: measured over 8,000 generated compositions of 4 to 8 lines with a
-# pre-seeded map, the most rounds run were 3 (a chain of three needs 3: two that change and one that confirms); a chain that changes
-# a text in round 4 is refused (RedactionError("NotSettled")).
+# 4 confirms). A margin that fails closed, not a derived bound: over the generated compositions of 4 to 8 lines with a pre-seeded map
+# (tests/test_redact_settle_loop.py; the distribution is printed by the test and recorded from a real run in handover/core-c/evidence/G7-1.md)
+# the most rounds run were 3 (a chain of three needs 3: two that change and one that confirms); a chain that changes a text in
+# round 4 is refused (RedactionError("NotSettled")).
 _SETTLE_ROUNDS = 4
+# The scan of the written forms (`_spelled_sweep`) checks its deadline every this many units of work (a placeholder token of the text, or one step of a trie walk).
+_SPELL_CHECK_EVERY = 1024
 
 
 def _compile_uncached(pattern: str) -> re.Pattern[str]:
@@ -2034,5 +2135,10 @@ def redact_many(
     `_deadline`: as for `redact` (CPU clock; InputTooLarge past it)."""
     r = _Redactor(mapping, None, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
+    near_before = r.bank_near
     found = [r.find(item) for item in items]
-    return r.settle(items, [r.sweep(text) for text in found]), r.mapping
+    if r.bank_near != near_before:
+        # `_fold_scan` found a bank word only in a FOLDED view while the strings were read: the strings read before that
+        # were read without the batch's bank context. Read them all again (the placeholders the first reading made are reused).
+        found = [r.find(item) for item in items]
+    return r.settle(items, [r.sweep(text, r._deadline) for text in found]), r.mapping
