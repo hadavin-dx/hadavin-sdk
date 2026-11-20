@@ -6,6 +6,7 @@ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live i
 from __future__ import annotations
 
 import re
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
@@ -74,6 +75,22 @@ class Route(_Strict):
     input_usd_per_mtok: Money
     output_usd_per_mtok: Money
     max_tokens: int = Field(gt=0)
+
+    @field_validator("input_usd_per_mtok", "output_usd_per_mtok")
+    @classmethod
+    def _price(cls, v: Decimal) -> Decimal:
+        """Finite (pydantic already refuses non-finite Decimals; kept as a second line), not negative or minus zero,
+        at most `defaults.MAX_ROUTE_PRICE_USD_PER_MTOK`, at most 6 decimals (checked last, so a huge exponent cannot
+        make `quantize` raise)."""
+        if not v.is_finite():
+            raise ValueError("a price must be a finite number")
+        if v.is_signed():
+            raise ValueError("a price must not be negative")
+        if v > defaults.MAX_ROUTE_PRICE_USD_PER_MTOK:
+            raise ValueError(f"a price may be at most {defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}")
+        if v != v.quantize(Decimal("1E-6")):
+            raise ValueError("a price may have at most 6 decimal places")
+        return v
 
 
 class Backends(_Strict):
@@ -374,7 +391,19 @@ class Config(_Strict):
     # it. Pilot and prod hold client data, so a config for either (or for any environment that is not `demo`) that
     # sets it is refused.
     made_up_data_only: StrictBool = False  # strict: "yes" or 1 must not switch it on
+    # The day the route prices were read from the provider's price list (UTC), YYYY-MM-DD; required in pilot and prod.
+    # On Config, not on Route: a route is inside config_hash, so a date there would un-qualify agents at every refresh.
+    prices_as_of: date | None = None
     root: Path
+
+    @field_validator("prices_as_of", mode="before")
+    @classmethod
+    def _plain_date(cls, v: object) -> object:
+        """A date, or the text YYYY-MM-DD; nothing else (pydantic alone would also read whole-day timestamps)."""
+        text = isinstance(v, str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", v)
+        if v is not None and not text and (not isinstance(v, date) or isinstance(v, datetime)):
+            raise ValueError("prices_as_of must be a date written YYYY-MM-DD")
+        return v
 
     @field_validator("environment", mode="before")
     @classmethod
@@ -419,6 +448,7 @@ class Config(_Strict):
             sends_text_out = _sends_text_out(self.backends)
         refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)
+        refused += _price_refusals(self)
         if refused:
             tail = (
                 "; a demo config that names a real model, a vendor detector or a real approval channel "
@@ -440,6 +470,31 @@ def _sends_text_out(b: Backends) -> list[str]:
     out = [f"llm: {b.llm.kind}"] if ("llm", b.llm.kind) not in DEMO_ONLY else []
     out += [f"detector: {d.kind}" for d in b.detector if d.kind not in LOCAL_DETECTORS]
     out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEMO_ONLY else []
+    return out
+
+
+def _today() -> date:
+    return datetime.now(UTC).date()  # a function, so a test can set the day
+
+
+def _price_refusals(cfg: Config) -> list[str]:
+    """A zero price makes every reply cost 0, so no spend cap could fire: only the fake llm kind in demo may have one
+    (negative and non-finite prices are refused on Route). Names route and field, never the price."""
+    live = is_live(cfg.environment)
+    out = []
+    if live or cfg.backends.llm.kind != "fake":
+        out = [
+            f"routes.{name}.{field}: a zero price is allowed only for the fake llm kind in demo"
+            for name, route in sorted(cfg.routes.items())
+            for field in ("input_usd_per_mtok", "output_usd_per_mtok")
+            if getattr(route, field) == 0
+        ]
+    if live and cfg.prices_as_of is None:
+        out.append(
+            "prices_as_of is required in pilot and prod (the day the route prices were read)"
+        )
+    if cfg.prices_as_of is not None and cfg.prices_as_of > _today():
+        out.append("prices_as_of is in the future (UTC)")
     return out
 
 

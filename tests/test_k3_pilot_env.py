@@ -41,6 +41,7 @@ def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=
     signer_mod.generate_key(root / "audit-key.pem", root / "audit-key.pub", None, base=root)
     cfg = {
         "environment": env,
+        "prices_as_of": "2026-11-01",
         "routes": {
             "default": {
                 "model_id": "fake-model",
