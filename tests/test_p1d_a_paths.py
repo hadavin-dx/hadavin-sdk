@@ -7,11 +7,13 @@ values are built from parts.
 
 from __future__ import annotations
 
+import hashlib
 import importlib
 import time
 from types import SimpleNamespace
 
 import pytest
+from markdown_it import MarkdownIt
 
 from hadavin_sdk.approvals import cards, channel, gate, slack_channel
 from hadavin_sdk.approvals.requests import summary
@@ -181,8 +183,11 @@ def test_stored_request_from_before_the_change_is_masked_on_the_slack_card(order
     assert shown == channel.clean(TEXT)
 
 
-def test_undefang_text_leaves_code_and_placeholder_dots():
-    assert gate.undefang_text("a[.]b `c[.]d` <HOSTNAME_1>[.]e") == "a.b `c[.]d` <HOSTNAME_1>[.]e"
+def test_undefang_text_leaves_code_and_reads_a_placeholder_dot_as_a_dot():
+    # Fix round: the `[.]` behind a placeholder is undone too, so the redactor reads a stored card as it read the
+    # text before the defang (first written here as "stays `[.]`", which made `<EMAIL_1>[.]08::` read differently).
+    assert gate.undefang_text("a[.]b `c[.]d` <HOSTNAME_1>[.]e") == "a.b `c[.]d` <HOSTNAME_1>.e"
+    assert gate.defang_text(gate.undefang_text("<HOSTNAME_1>[.]e.com")) == "<HOSTNAME_1>[.]e[.]com"
     assert gate.undefang_text("x\n```\nc[.]d\n```\ny[.]z") == "x\n```\nc[.]d\n```\ny.z"
 
 
@@ -255,3 +260,117 @@ def test_secret_patterns_are_linear_on_a_50000_character_run(name):
         pass  # refusing (fail closed) is allowed; taking long is not
     took = time.perf_counter() - t0
     assert took < 10.0, f"{name}: redact_text took {took:.2f} s"
+
+
+# --- fix round: defang over the whole token, glued addresses, a card that reads the same twice --------------------
+EVIL = "evil" + "." + "com"
+_PIECES = [
+    EM, HOST, PUBLIC, EVIL, "www" + "." + "evil" + "." + "digital", "<HOSTNAME_1>", "<EMAIL_1>",
+    "_", "*", "[", "]", "(", ")", "-", "@", ".", ",", ":", "/", "~", "0", "9", "x", "q", "é", "例",
+    "。", " ", " ", "\n", "08::", "pass" + "word=", "&", "?",
+]  # fmt: skip
+_PIECES_CODE = [*_PIECES, "`", "`", "```"]
+_LINKABLE = (
+    gate._DOMAIN,
+    gate._DOMAIN_LAST,
+    gate._NON_ASCII_HOST,
+    gate._PLACEHOLDER_DOT,
+    gate._WIDE_DOTS,
+)
+_HALF = gate._NAME_DOT  # a plain dot between two name characters
+
+
+def _glue(stream: str, pieces: list[str], count: int = 400) -> list[str]:
+    """Seeded texts (no `random`): 3 to 14 pieces each, picked by sha256 of the stream name and a counter."""
+    out, k = [], 0
+    for _ in range(count):
+        parts = []
+        n = 3 + int(hashlib.sha256(f"{stream}:n:{k}".encode()).hexdigest(), 16) % 12
+        for _ in range(n):
+            k += 1
+            parts.append(
+                pieces[int(hashlib.sha256(f"{stream}:{k}".encode()).hexdigest(), 16) % len(pieces)]
+            )
+        out.append("".join(parts))
+    return out
+
+
+def _text_tokens(text: str):
+    for tok in MarkdownIt("commonmark").parse(text):
+        for child in tok.children or []:
+            if child.type == "text":
+                yield child.content
+
+
+def _assert_not_linkable(shown: str, source: str) -> None:
+    for piece in (shown, *_text_tokens(shown)):
+        for rx in _LINKABLE:
+            assert not rx.search(piece), (
+                f"LINK: {source!r} -> {shown!r}: {piece!r} matches {rx.pattern}"
+            )
+        for token in gate._DOTTED_TOKEN.finditer(piece):
+            if "[.]" in token.group(0):
+                assert not _HALF.search(token.group(0)), (
+                    f"HALF: {source!r} -> {shown!r}: {token.group(0)!r}"
+                )
+
+
+def test_defang_takes_every_dot_of_a_host_with_text_glued_on():
+    done = PUBLIC_DEFANGED
+    for tail in ("_x", "_", "0x", "9", "_x.y", "例"):
+        assert gate.defang_text("see " + PUBLIC + tail).startswith("see " + done), tail
+    assert gate.defang_text("see " + EVIL + "_x") == "see " + EVIL.replace(".", "[.]") + "_x"
+    assert gate.defang_text("_a" + PUBLIC + "_") == "_a" + done + "_"
+    assert gate.defang_text("<HOSTNAME_1>." + PUBLIC + "0x") == "<HOSTNAME_1>[.]" + done + "0x"
+    assert gate.defang_text("v1.2 and 3.14") == "v1.2 and 3.14"  # no host: nothing written
+
+
+def test_defang_reads_inline_code_as_a_renderer_does():
+    # Unambiguous inline code stays; a backtick left over on another line shifts the pairs, so nothing is code.
+    assert gate.defang_text("run `" + PUBLIC + "` now") == "run `" + PUBLIC + "` now"
+    shifted = "a ` b\n`" + PUBLIC + "` c"
+    assert gate.defang_text(shifted) == "a ` b\n`" + PUBLIC_DEFANGED + "` c"
+    fenced = "x\n```\n" + PUBLIC + "\n```\n`" + PUBLIC + "` " + PUBLIC
+    assert (
+        gate.defang_text(fenced)
+        == "x\n```\n" + PUBLIC + "\n```\n`" + PUBLIC + "` " + PUBLIC_DEFANGED
+    )
+
+
+def test_property_no_linkable_host_after_defang_text():
+    for x in [*_glue("G2-defang", _PIECES), *_glue("G2-defang-code", _PIECES_CODE)]:
+        once = gate.defang_text(x)
+        if "`" not in x:
+            _assert_not_linkable(once, x)
+        assert gate.defang_text(once) == once, f"NOT IDEMPOTENT: {x!r} -> {once!r}"
+        if "`" not in x:  # inside inline code a wide dot stays as written
+            assert once.replace("[.]", ".") == gate._WIDE_DOTS.sub(".", x).replace("[.]", "."), (
+                f"DOTS ONLY: {x!r}"
+            )
+
+
+def test_glued_addresses_are_masked_whole_in_one_pass():
+    for n in (2, 3, 5):
+        for tail in ("", "sq", " end"):
+            mapping = runmap.RunMap()
+            out = runmap.redact_text("to " + EM * n + tail, mapping)
+            assert "@" not in out and "example" not in out, (n, tail, out)
+            seeded = runmap.RunMap({p: "\0seed" + p for p in mapping})
+            assert runmap.redact_text(out, seeded) == out, (n, tail, out)
+    assert _masked(EM + " " + EM) == "<EMAIL_1> <EMAIL_1>"  # separate addresses: as before
+
+
+@pytest.mark.perf  # a wall-clock bound: measured well under 1 s each
+@pytest.mark.parametrize("unit", [EM, "a@b.cc", "a@b.cc.", EM + "."])
+def test_glued_addresses_are_linear(unit):
+    text = unit * (40_000 // len(unit))
+    t0 = time.perf_counter()
+    try:
+        runmap.redact_text(text, runmap.RunMap())
+    except runmap.RedactionError:
+        pass
+    took = time.perf_counter() - t0
+    assert took < 10.0, f"{unit!r}: {took:.2f} s"
+    t0 = time.perf_counter()
+    gate.defang_text((PUBLIC + "_") * 5_000 + ("a." * 20_000))
+    assert time.perf_counter() - t0 < 5.0
