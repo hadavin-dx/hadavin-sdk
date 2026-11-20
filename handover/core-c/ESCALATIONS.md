@@ -178,3 +178,5 @@ PASS: 0995617c0 (G8 tip), 222b08d1f/608be6874 (E14), 9652b20aa and e75871df3 (G9
 - NEW finding (MIX builder, MEASURED): `tests/test_redact_glued_rest.py::test_glued_patterns_are_linear[underscore digits-redact_text]` (perf-marked or not: it ran in the g8 mutant baseline) fails on the merged tree, ratio 6.18 (bound 6.0), consistently (3 of 3 in pytest). Cause G4 Phase 3 (commit 35a068f2a, the base64 view): `("_4155550132" * n)[:N]` is one 262,144-character base64url-alphabet run; large text 0.92 s -> 1.35 s, small 0.23 s. It blocks `tests/g8_mutants.py` (baseline must pass) so the G8 mutants were NOT RUN on the merged tree. Lead decides: bound the b64 unit cost for one huge run (G4 owner) or re-pin the ratio (a loosening: the lead's).
 - Also re-pointed: b64 mutant "tie-break as v3's sort key" (killed again by a sixth TB-2.8 map, see MIX notes).
 
+
+## E23 (G9 round 2 review): M1 `_overlaps` collect-before-charge (resource hole), M2 SECRET union downgraded by `_place_union` reverse hit, M3 weight calibration. Record: tickets/G9-result-review-2-design.md. Status: OPEN, fix to be built (G9b).
