@@ -730,29 +730,18 @@ _CARD_SHAPE = next(
     p for label, p in PATTERNS if label == "CREDITCARD"
 )  # _mask leaves a card to CREDITCARD
 
-# G7 (2026-11-20): the patterns whose match can depend on a placeholder that is ALREADY in the text. Both account
-# patterns: the second names `<BANKCODE_n>` in its regex; the first counts only with bank context (_bank_context),
-# and one form of that context is a `<BANKCODE_n>` nearby. The pattern pass writes that placeholder only where a
-# code stands beside its keyword; the sweep writes it on every other copy of the code, AFTER the account patterns
-# ran, so `BSB: 062-000` on one line and `paid 062-000/12345678` on the next left the account readable after one
-# pass (a second pass masked it). These patterns are therefore run again after the sweep (_Redactor.settle).
-# The cookie header pattern names a placeholder too, as a negative guard (`Cookie: <KIND_n>` is not a value): a
-# placeholder the sweep writes can only stop it from matching, so it is not run again.
-_CONTEXT_PATTERNS = tuple((label, p) for label, p in PATTERNS if label == "BANKACCT")
-_CONTEXT_MARK = "<BANKCODE_"  # without it in the text no context pattern can match anything it did not match before
-# The most rounds of (context patterns, then sweep) after the first sweep. One round does the work: an account the
-# round finds is swept as a BANKACCT placeholder, and no context pattern reads that one. A further round has work
-# only if that sweep wrote a NEW bank-code placeholder, which takes a planted adjacency (the sweep does not look
-# again at a value once a shorter neighbour is replaced after it). Past the bound nothing is returned.
-_CONTEXT_ROUNDS = 4
-
-
-class ContextNotSettled(RuntimeError):
-    """The context patterns still found a value after `_CONTEXT_ROUNDS` rounds: no text is returned (fail closed).
-    `guard/runmap.py` turns it into its RedactionError, like any other failure of the redactor."""
-
-    def __init__(self) -> None:
-        super().__init__("ContextNotSettled")  # never the text or a value
+# G7 (2026-11-20, ORDERS 012 and 013): ONE more pattern pass after the sweep. A pattern's result can change once
+# placeholders stand in the text, and the sweep writes them after every pattern ran:
+#   - `BSB: 062-000` on one line, `paid 062-000/12345678` on the next: the account pattern needs `<BANKCODE_n>`
+#     before the digits, and on line 2 only the sweep writes it (E3);
+#   - `password=V` on one line, `Bearer Vxy` on the next (a token under BEARER's 12 characters): swept to
+#     `Bearer <SECRET_1>xy`, which IS 12 characters, so only a second pass masked the tail (E5; the same for BASIC,
+#     `authorization:` and every value class that admits `<` and `>` and has a minimum length).
+# Which patterns can change is not cheap to tell with certainty (any value class that admits `<`, any guard that
+# reads the text around a match), so the whole table runs again, once, over the swept text, and what that pass
+# finds is swept once (_Redactor.settle). Never a loop: at most two pattern passes and two sweeps per call. A text
+# the first pass and its sweep left unchanged is not scanned again (the same patterns over the same text with the
+# same state give the same result), so a text with nothing to mask costs what it did.
 
 
 def _has_bank_word(text: str) -> bool:
@@ -939,7 +928,7 @@ def redact(
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
-        out = r.settle([r.sweep(out)])[0]
+        out = r.settle([text], [r.sweep(out)])[0]
     return RedactionResult(text=out, mapping=r.mapping, actions=r.actions)
 
 
@@ -1126,30 +1115,18 @@ class _Redactor:
                 out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
-    def _find_context(self, text: str) -> str:
-        """The context patterns only (_CONTEXT_PATTERNS), over a text the sweep has been through."""
-        for label, pattern in _CONTEXT_PATTERNS:
-            text = pattern.sub(lambda m, label=label: self._mask(m, label), text)
-        return text
-
-    def settle(self, texts: list[str]) -> list[str]:
-        """`texts` (one call's swept strings, one namespace) with the context patterns run again until they find
-        nothing more: an account beside a bank-code placeholder that only the sweep wrote is masked in the same
-        call. When a round finds a NEW value every text is swept again, so its other copies go too. Each round is
-        two pattern passes and at most one sweep, each linear in the text, and there are at most _CONTEXT_ROUNDS
-        of them plus one check; a text with no bank-code placeholder costs one substring test. If the last check
-        still finds a value, ContextNotSettled is raised and no text is returned."""
-        for round_ in range(_CONTEXT_ROUNDS + 1):
-            if not any(_CONTEXT_MARK in text for text in texts):
-                return texts
-            known = len(self.mapping)
-            again = [self._find_context(t) if _CONTEXT_MARK in t else t for t in texts]
-            if again == texts:
-                return texts
-            if round_ == _CONTEXT_ROUNDS:
-                break
-            texts = [self.sweep(t) for t in again] if len(self.mapping) != known else again
-        raise ContextNotSettled
+    def settle(self, originals: list[str], swept: list[str]) -> list[str]:
+        """The one extra pattern pass (see the G7 note above `_has_bank_word`). `swept`: one call's strings after
+        find() and sweep(), `originals` the strings they were made from. Every string that the first pass or its
+        sweep changed goes through the whole table once more; if that finds a NEW value, every string is swept once
+        more so its other copies go too. Nothing is repeated after that: two pattern passes and two sweeps at most,
+        each linear in the text."""
+        known = len(self.mapping)
+        again = [
+            text if text == strip_ansi(original) else self.find(text)
+            for original, text in zip(originals, swept, strict=True)
+        ]
+        return [self.sweep(text) for text in again] if len(self.mapping) != known else again
 
     def _sub_glued(self, pattern: re.Pattern[str], label: str, text: str) -> str:
         """`pattern.sub`, and a match may also start exactly where the masked one before it ended.
@@ -1905,4 +1882,4 @@ def redact_many(
     r = _Redactor(mapping)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
     found = [r.find(item) for item in items]
-    return r.settle([r.sweep(text) for text in found]), r.mapping
+    return r.settle(items, [r.sweep(text) for text in found]), r.mapping
