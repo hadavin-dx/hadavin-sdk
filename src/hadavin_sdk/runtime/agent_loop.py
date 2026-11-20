@@ -39,6 +39,7 @@ from hadavin_sdk.models import (
     RunState,
     ToolCall,
     ToolCallRecord,
+    audit_ref,
     sha256_hex,
 )
 from hadavin_sdk.registry import Registry
@@ -730,7 +731,7 @@ class Runtime:
             call = checked.call
             if checked.cited:
                 cited = checked.cited  # the cards list the evidence the proposal rests on
-                self._note(run, "proposal", "cited", object_ref=",".join(cited))
+                self._note(run, "proposal", "cited", object_ref=audit_ref(",".join(cited)))
             if checked.reason is not None:
                 return self._abstain(run, S.NEEDS_PERSON, checked.reason, cited)
         try:  # model output: a float or a non-string id must not strand the run
@@ -922,7 +923,7 @@ class Runtime:
             run,
             "action",
             "result",
-            object_ref=result.external_ref,
+            object_ref=audit_ref(result.external_ref),
             result=result.outcome,
             error_code=result.error_code,
         )

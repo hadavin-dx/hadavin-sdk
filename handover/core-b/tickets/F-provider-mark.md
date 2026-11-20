@@ -15,3 +15,4 @@ N6. protocol.py docstring: "no response seen and no work known", not "nothing wa
 N7. New tests: 429 then 400 stays unmarked; a kind that does not retry a 429; a TLS error stays unmarked; one gate-level case once core-c's gate honours the mark.
 Code for M1, M2, N3, N5, N6, N7 is "provider mark fix round 1": BUILT on cloud/core-b (retry.py rule 2 INERT at llm/retry.py:56-58; `OpenAICompatLLM.refused_statuses = {401, 403, 404}` at llm/openai_compat.py:78; N6 wording at llm/protocol.py:15-17).
 
+xr-abc-lead-1 M2: the two tests that read the gate source and the retry.py docstring were deleted; the behavioural test (ProviderExhausted with the mark settles at 0) belongs to the gate suite.

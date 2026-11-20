@@ -18,6 +18,7 @@ import anthropic  # the extra: a missing install fails at start-up with the hint
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.llm.common import Answer, NetworkLLM, pinned, reply
+from hadavin_sdk.llm.retry import REFUSED_STATUSES
 from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
@@ -85,12 +86,16 @@ def make(settings: Any, deps: Any) -> AnthropicLLM:
         pinned(dict(deps.routes), floating),
         settings.max_attempts,
         key=key,
+        direct_api=settings.platform not in ("vertex", "foundry"),
     )
 
 
 class AnthropicLLM(NetworkLLM):
     label = "anthropic"
     retryable = staticmethod(retryable)
+    # Narrow unless the client is known to talk to the direct Claude API (`direct_api`): behind Vertex or Foundry
+    # a 400, 413 or 422 can come from the gateway after the model started, and would settle at 0 (under-counted).
+    refused_statuses = frozenset({401, 403, 404})
 
     def __init__(
         self,
@@ -99,8 +104,11 @@ class AnthropicLLM(NetworkLLM):
         max_attempts: int,
         sleep: Callable[[float], None] = time.sleep,
         key: Callable[[], str] | None = None,
+        direct_api: bool = False,
     ) -> None:
         super().__init__(routes, max_attempts, sleep)
+        if direct_api:
+            self.refused_statuses = REFUSED_STATUSES
         self._client, self._key = client, key
 
     def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:

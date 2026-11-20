@@ -12,7 +12,7 @@ import uuid
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, ClassVar, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -215,24 +215,44 @@ class ApprovalDecision(Shape):
     decided_at: datetime = Field(default_factory=now)
 
 
+# Audit rows carry identifiers and codes, never prose: a bounded length (a btree index row on `run_id` refuses
+# a long value with 54000 at write time, far too late) and a charset without whitespace or control characters.
+AUDIT_FIELD_MAX = 128
+AUDIT_FIELD_PATTERN = r"^[\w.:@/+=#~,-]*$"
+_AUDIT_TOKEN = re.compile(AUDIT_FIELD_PATTERN)
+
+
+def audit_ref(text: str | None) -> str | None:
+    """A free-form reference (a list of cited calls, an executor's external id) as an audit `object_ref`: the text
+    itself when it fits the field, else `sha256:<hex prefix>` of it (the row never carries prose)."""
+    if text is None or (len(text) <= AUDIT_FIELD_MAX and _AUDIT_TOKEN.match(text)):
+        return text
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
+
+
+AuditToken = Annotated[str, Field(max_length=AUDIT_FIELD_MAX, pattern=AUDIT_FIELD_PATTERN)]
+
+
 class AuditEvent(Shape):
-    """Hashes and codes only: never payload text."""
+    """Hashes and codes only: never payload text. Identifier fields (`principal`, `object_ref`, `result`,
+    `rule_id`, `error_code`) are at most 128 characters of word characters and `.:@/+=#~,-`; `run_id`, `domain`,
+    `operation` and `source` are length-bounded."""
 
     event_id: str = Field(default_factory=lambda: new_id("evt"))
     ts: datetime = Field(default_factory=now)
-    run_id: str
-    domain: str
-    operation: str
-    principal: str
-    source: str
-    object_ref: str | None = None
+    run_id: str = Field(max_length=AUDIT_FIELD_MAX)
+    domain: str = Field(max_length=AUDIT_FIELD_MAX)
+    operation: str = Field(max_length=AUDIT_FIELD_MAX)
+    principal: AuditToken
+    source: str = Field(max_length=AUDIT_FIELD_MAX)
+    object_ref: AuditToken | None = None
     # The payload hash of the call or request: a tool call's inputs; for `trigger.conflict`, the NEW request's
     # payload hash (never the payload).
     inputs_hash: str | None = None
     decision: str | None = None
-    rule_id: str | None = None
-    result: str | None = None
-    error_code: str | None = None
+    rule_id: AuditToken | None = None
+    result: AuditToken | None = None
+    error_code: AuditToken | None = None
     # Which control caught a mistake: gate, recheck, abstain, guard, verify, human_label, human_reject (K6 sets
     # the human values). Rows written before this field existed hash unchanged (the chain hashes stored text).
     caught_by: str | None = None

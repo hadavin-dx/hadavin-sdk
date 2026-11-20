@@ -473,10 +473,16 @@ class ChainAudit:
     def _outbox_sql(self) -> str:
         """The read of one batch, oldest `ts` first (the body is text and `ts` is its ISO timestamp: a row whose body
         is not JSON has no `ts` and sorts last, it is never a reason for the read to fail)."""
+        # The text ts is normalised before it sorts: a fraction-less ts sorts after a fractional one as text, and
+        # an offset other than Z sorts by its wall clock. PostgreSQL casts to timestamptz (only a well-formed ISO
+        # value is cast: a malformed one is NULL, never an error; a ts without an offset is read as UTC, the session
+        # time zone is pinned); SQLite uses julianday, which reads offsets and fractions and returns NULL otherwise.
         ts = (
-            'substring(body from \'"ts":"([^"]*)"\')'
+            'CASE WHEN substring(body from \'"ts":"([^"]*)"\') ~ '
+            "'^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}(Z|[+-]\\d{2}(:{0,1}\\d{2}){0,1}){0,1}$' "
+            'THEN (substring(body from \'"ts":"([^"]*)"\'))::timestamptz END'
             if self._db.pg
-            else "CASE WHEN json_valid(body) THEN json_extract(body, '$.ts') END"
+            else "CASE WHEN json_valid(body) THEN julianday(json_extract(body, '$.ts')) END"
         )
         return (
             "SELECT event_id, body FROM audit_outbox WHERE event_id NOT LIKE ? "  # noqa: S608 - ts is a constant

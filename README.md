@@ -38,7 +38,7 @@ What this release does and does not promise, in one place.
 - `caught_by=guard` is set when a guard stopped a concrete proposal (ungrounded, uncited, invalid_proposal, run_budget, injection_suspected); failures (tool, redaction, evidence, a guard outage, the provider) are not catches.
 - A tooled agent's action contracts must set `additionalProperties: false`; an undeclared input is refused as `invalid_proposal`.
 - A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_SLACK_S`).
-- Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
+- Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. The runtime login cannot alter or delete audit rows, so the log is tamper evidence of past rows; it is not proof of authenticity (a taken-over runtime can still append rows, see SECURITY.md). Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 
 ## Running the tests

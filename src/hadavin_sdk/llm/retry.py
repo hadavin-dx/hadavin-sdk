@@ -18,8 +18,10 @@ attempt of the call got any other answer, timed out, was cut off or failed to pa
      status the kind counts as refused (``refused_statuses``: ``REFUSED_STATUSES`` = 400, 401, 403, 404, 413,
      422 by default; the openai_compat kind narrows it to 401, 403, 404);
   2. the retries ran out (``ProviderExhausted``) and EVERY attempt ended in HTTP 429 (throttled) or was never
-     sent, in any mix. INERT for now: the model gate ignores the mark on ``ProviderExhausted`` by type
-     (requests/to-core-c-1-exhausted-mark.md), so rule 2 has no effect until the gate honours it.
+     sent, in any mix. NOT YET CONSUMED: the model gate ignores the mark on ``ProviderExhausted`` by type
+     (requests/to-core-c-1-exhausted-mark.md), so rule 2 sets the mark but settles nothing until the gate honours
+     it; it is not evidence that the case is covered. Rule 2 is also not narrowed for routers: a 429 from a router
+     (openai_compat) may follow upstream work, so a gate honouring it must treat that kind as unmarked.
 Everything else leaves the mark False: 408, 409 and 5xx on any attempt, a 429 followed by an error that is not
 retried (a 400 after a 429 stays unmarked), and a 429 that a kind chose not to retry. A parse failure of an
 answer is wrapped here into a new ``ProviderError`` like any other failure and gets the normal rule (unmarked
@@ -29,7 +31,9 @@ Stated limit (UNVERIFIED for every network kind): the list follows the HTTP mean
 the codes (the request was rejected before any model work). Whether a given provider bills a 400, 401, 403 or
 429 was not verified against its billing rules. A provider that bills one of them is under-counted by that call.
 For a kind whose base_url can be any router or proxy (openai_compat) a 400, 413 or 422 may come from the
-router after the upstream model consumed tokens, so only 401, 403 and 404 count there.
+router after the upstream model consumed tokens, so only 401, 403 and 404 count there. The anthropic kind
+narrows the same way unless it is built for the direct Claude API (``direct_api``): on Vertex or Foundry a
+gateway can answer after the model started.
 """
 
 from __future__ import annotations
