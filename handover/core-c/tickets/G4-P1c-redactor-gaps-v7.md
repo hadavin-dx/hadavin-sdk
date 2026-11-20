@@ -214,48 +214,104 @@ The same order is written in G8 v3 (handover core-c reconciles the two tickets).
   718 (the PHONE `_joins` clauses) and model_gate.py 12-13: different sentences from G4's clause (runmap.py 732), so a textual merge
   only.
 
-### 0.3b Order with G9 (CHANGED in v6, new: review round 5 M3; decision L25)
-Source: tickets/G9-spelled-fixed-point.md (DRAFT v1) and tickets/G9-review-1.md (its handling names the v2 decisions). There is NO
-G9 v2 file at bff88a7a1; when one exists, the second lander re-reads it against this section by name.
+### 0.3b Order with G9 (CHANGED in v6, new: review round 5 M3; decision L25; CHANGED in v7: rewritten against G9 v2)
+CHANGED in v7 (review round 6 design M1, readiness N3). Source: tickets/G9-spelled-fixed-point-v2.md (DRAFT v2; its sections 1-6
+are written, 7-15 are "[filled below]"), read by name, and its drafter's prototype (scratch `g9v2/proto`, imported read-only for the
+MEASURED rows below; it is a draft and may still change). v6's "there is NO G9 v2 file" is withdrawn. Where G9 v2 and this
+section differ, the second lander follows the merged code and re-measures the rows named here.
 - Default: EITHER SIDE. Neither ticket needs the other; the second lander rebases, by name, and owns the checks below.
 - What each edits in redact.py (by name; lines 0.1):
-  - G9: `sweep` (the pass loop; today's body becomes `_sweep_once`), new `_overlaps` / `_union_spans`, `_spelled_sweep` (a shared
-    work count), `_place_union` (the union kind, D-3; G9-review-1 asks v2 for a kind-taking signature), `_place`, `_mask` and the
-    literal / spelled replacements (G9 v1's `_written`), `_build` and the cached-state path (`_longest`), `settle`'s docstring,
-    `redact` / `redact_many` (`_may_register`), the module docstring (an overlap line); defaults.py `SPELLED_MAX_PASSES = 4` after
-    `SPELLED_MAX_WORK` and that constant's comment.
-  - G4: `_LABELS`, `SECRET_KINDS`, `_build`'s RULES LOOP only (1970-1974; 4 point 5), new module-level `place_encoded` (after
+  - G9 v2 (its section 3): `_Redactor.__init__` (`_may_register`; `_longest` on the cached path), `_build` (`_longest`, set before
+    `self._built_for = ...`), `sweep` (the pass loop), new `_sweep_once` (today's body of `sweep`), `_ensure_built`, `_spend`,
+    `_read_back`, `_overlaps`, `_masked`, `_close`, `_place` (`derived`), `_place_union` (takes a kind), `_spelled_sweep`
+    (`shared`), `redact` / `redact_many` (`r._may_register = True`), module `_SEP` and `import bisect`; docstrings of
+    `_spelled_sweep`, `settle`, `sweep` and the module; defaults.py `SPELLED_MAX_PASSES = 4` after `SPELLED_MAX_WORK` and that
+    constant's comment; runmap.py docstrings of `enforce_map` (the overlap bullet is REPLACED) and `held_value_left`.
+  - G4: `_LABELS`, `SECRET_KINDS`, `_build`'s RULES LOOP only (1967-1972; 4 point 5), new module-level `place_encoded` (after
     `_replace_standalone`), the HOSTNAME / HOSTKEY entries of PATTERNS, the module docstring (6); defaults.py the eight constants of
-    section 7 and two comment sentences.
-  - So `_build`, `sweep` and `_place_union` are touched by G4 at different lines from G9 or not at all: G4 does not edit `sweep`
-    or `_place_union`; in `_build` G4 edits the rules loop and G9 the `_longest` line (and must keep N15's alias-loop anchor,
-    1958-1960, and the sort key line `key=lambda kv: -len(kv[1]),`, the `old` of G4's mutant `b64 tie-break as v3's sort key`).
-    Textual overlaps are limited to: the module docstring (second lander puts its paragraph after the other's), defaults.py
-    (G4's eight constants and G9's `SPELLED_MAX_PASSES` both follow the spelled-form constants: the second lander puts its block
-    after the other's), tests/redact_mutants.py (G9 appends at the end; G4 edits only R3 and mutant 21's sentence).
-- The new refusals: under G9, either `redact()` of `_pass_one` can raise `InputTooLarge("SpelledNotSettled")` (a sweep not settled
-  in `SPELLED_MAX_PASSES` passes); `InputTooLarge("SpelledOverlap")` comes only from a redactor that may not register, i.e. the
-  gate (`enforce_map`, `held_value_left`'s checker), never from `redact()` (`_may_register = True` there). Both propagate through
-  `redact_text` as raised (2.3 step 5: `InputTooLarge` is re-raised) and refuse the text; the map is not written. Listed in 2.6
-  and 8.
-- ENCODED tokens and G9's read-back. A `<ENCODED_n>` reaches step 9's `redact(T2, mapping=base)` as an INPUT token: `_b64_place`
-  writes it into T2 and `place_encoded` writes its entry into `base` directly, never through `_Redactor._place` / `_mask` / a
-  replacement. Under G9 v1 (read-back of `_written` only, G9 4.2 and D-4), such a token is not read back: it is a separator. It is
-  read back only when that same redactor also WRITES the placeholder (the literal sweep of a further copy of the blob, every copy
-  since ENCODED is a secret kind); its value is then the blob as written, read back as any other SECRET value. G9-review-1
-  proposes for v2 a read-back of every token that is an exact key of the map; under that rule every `<ENCODED_n>` of T2 is read
-  back. In both cases a union that holds an `<ENCODED_n>` is a SECRET kind under G9's D-3 (ENCODED is in `SECRET_KINDS`), so it is
-  swept in every copy and never stored. One effect on this ticket (BY READING, not measured): G9's `_place_union` registers a union
-  through `_place` with the kind of its first token, so a union whose first token is `<ENCODED_n>` makes an ENCODED entry that
-  `place_encoded` did not write. 4 point 4's "the only writer of ENCODED" then reads "the only writer of an ENCODED entry for a
-  base64 unit"; such a union entry is a secret kind like any other.
+    section 7 and two comment sentences; runmap.py the `enforce_map` overlap clause (4 point 5) and the `snapshot` comment (9.3).
+  - So in `_build` G4 edits the rules loop and G9 adds the `_longest` line; both keep N15's alias-loop anchor (1955-1957) and the
+    sort key line `key=lambda kv: -len(kv[1]),` (the `old` of G4's mutant `b64 tie-break as v3's sort key`). G4 does not edit
+    `sweep`, `_place` or `_place_union`. Textual overlaps: the module docstring (second lander after the other's paragraph);
+    defaults.py (second lander's block after the other's); tests/redact_mutants.py (G9 appends; G4 edits only R3 and mutant 21's
+    sentence; G9's commit raises `EXPECTED_COUNT` of tests/test_redact_mutants_meta.py); and the `enforce_map` overlap bullet
+    (runmap.py 730-733): G9 replaces it; G4 edits its clause "(the earlier in the map when equal)". Second lander: when that
+    clause survives G9's text, G4's words are added to it as in 4 point 5; when G9's bullet no longer names an order, G4 adds its
+    sentence ("Since G4, an original held under a secret kind and an identifier kind follows the secret kind's rule; different
+    originals keep the map's order.") after G9's bullet.
+- The new refusals, by CLASS (review round 6 design M1). Under G9, either `redact()` of `_pass_one` can raise
+  `InputTooLarge("SpelledNotSettled")`. `SpelledOverlap` is a `RedactionError` (G9 v2 1, 4.5 `_close`: `raise
+  RedactionError("SpelledOverlap")`), not an `InputTooLarge` as v6 said. It comes only from a redactor that may not register (the
+  gate: `enforce_map`, `held_value_left`'s checker; also a bare `_Redactor(m, None).sweep`, which TB-2.8 and test_e5 call), never
+  from `redact()` / `redact_many` and so never from `redact_text` or `_pass_one`. The class decides the handler: model_gate maps a
+  `RedactionError` to `mask_refused` (`CODE_MASK_REFUSED`) and an `InputTooLarge` to `mask_budget_exceeded` (G9 v2 L-D1b keeps
+  that, no new code); `tools.redact_layered` catches only `TooDeep` and `redact_text` re-raises both classes as raised (2.3 step 5).
+  `InputTooLarge` is a subclass of `RedactionError` (runmap.py 52, 56), so `except RedactionError` catches both; nothing in G4 adds
+  an `except` for either. Listed in 2.6 and 8.
+- ENCODED tokens and G9 v2's read-back (D-4: every token that is an EXACT KEY of the redactor's map is read back, whoever wrote
+  it). So every `<ENCODED_n>` in T2 (step 9 of 2.5), and every one in a later text (a gate text, an agent message, a tool result
+  that quotes it), is read back as its blob, line breaks included, before G9 looks for overlaps. What follows (BY READING G9 v2 4.3
+  and 4.4, and MEASURED where marked):
+  1. Overlap: a unit's neighbours are never base64 alphabet characters (3.1 point 1's look-behind and look-ahead), so a rule
+     original that covers part of the blob and a readable character must hold a non-alphabet character next to blob characters
+     (`password=ab!` + blob, the TB-3.33 route, or a model that writes `x<ENCODED_1>y`). Such a union holds an ENCODED token, so its
+     kind is a SECRET kind (D-3: the first secret kind met; ENCODED is in `SECRET_KINDS`): swept in every copy, never stored. At the
+     gate a free stretch covered only by an identifier refuses that text (`RedactionError("SpelledOverlap")`); a blob never makes
+     an identifier rule (ENCODED is a secret kind).
+  2. `place_encoded` stays the only writer of an ENCODED entry FOR A BASE64 UNIT. G9 v2's `_close` registers a union through
+     `_place_union(..., kind, derived=False)` with the union's kind, which is ENCODED when the first secret kind met in the run is
+     an `<ENCODED_n>` token: an ENCODED entry that `place_encoded` did not write (4 point 4).
+  3. COST (review round 6 design M1; MEASURED on the G9 v2 prototype, `g9cost.py` / `g9edge.py`, `enforce_map` and `redact`). A
+     read-back costs one work unit per character put back, and each finder pass and each slow value adds `len(E)` more (G9 v2 4.3,
+     4.4), all inside the one `SPELLED_MAX_WORK` = 4,000,000 count of a `sweep` call. A token touching free text on both sides is
+     read back WHOLE when its value is shorter than `2 x (_longest - 1)`, so a long ENCODED value is itself `_longest` and is read
+     back whole at every mention. Measured, a text of `step i see <ENCODED_1> now.` lines, map `{"<ENCODED_1>": v}`, v a random
+     base64 value wrapped at 32 (an ENCODED original as G4 writes it):
+     | value (characters, line breaks included) | largest number of mentions NOT refused | then |
+     |---|---|---|
+     | 28 | 80 tried, none refused | - |
+     | 4,223 | 80 tried, none refused | (about 470 by the same arithmetic, not run) |
+     | 16,895 | 118 | `InputTooLarge("SpelledWorkTooMuch")` at 119 |
+     | 67,583 (a 65,536-character blob) | 29 | refused at 30, by `enforce_map` and by `redact` alike, in about 0.1-0.2 s |
+     | 206,249 | 9 | refused at 10 |
+     So about 2,000,000 characters read back (twice that in units: one put, one finder pass) refuse the sweep. v6's "honest text
+     cannot reach `SpelledWorkTooMuch` through G4" holds for ONE `redact_text` call of a text G4 reads (its T2 is no longer than
+     its input, at most `MAX_REDACT_CHARS`), and is WITHDRAWN for later texts under G9: a gate text or agent message that mentions
+     a long `<ENCODED_n>` 10 to 30 times is refused, fail closed (gate: `mask_budget_exceeded`; producer: refused, map not
+     written). An ENCODED value longer than 65,536 characters exists: a unit over `B64_MAX_UNIT_CHARS` is masked unread whole (3.4
+     point 2), up to `MAX_REDACT_CHARS`. This is not G4's alone (a 64 KiB HIGHENTROPY value costs the same under G9), but G4 makes
+     it likelier: a wrapped block that was one short HIGHENTROPY entry per line (or none) becomes ONE long ENCODED entry. Decision
+     L26 (14).
+- The `_build` first-rule versus G4's tie-break (review round 6 design M1, readiness N3). G9 v2 4.6 says "`_build` keeps the FIRST
+  one's rule for its literal sweep (the identifier's, standalone)" for a value under two placeholders. Once G4's tie-break is in,
+  `_build` keeps the SECRET kind's rule. MEASURED on the G9 v2 prototype with the tie-break patched into `_build` in-process
+  (`g9tie.py`):
+  | case | G9 alone | G9 + G4 tie-break |
+  |---|---|---|
+  | G9 v2's pinned row, `_registering({"<TENANT_1>": A + "ijkl", "<SECRET_1>": A, "<SECRET_2>": B}).sweep("z" + A + "ijkl y")` (`A`, `B` as in G9's tests) | `z<SECRET_3> y` | `z<SECRET_3> y` (the pin holds both ways) |
+  | then, the same redactor, `sweep("q" + A + "ijkl" + "r " + A + "ijkl")` | `q<SECRET_3>r <TENANT_1>` (the standalone copy under the identifier, restorable) | `q<SECRET_3>r <SECRET_3>` |
+  | test_e5's `_one_sweep(f"a{V}b", {"<TENANT_1>": V, "<SECRET_1>": V})` | `aZq9xLm4wb` | `a<SECRET_1>b` |
+  | TB-2.8 map 1 `{"<TENANT_1>": "cd-ef", "<SECRET_1>": "ab-cd"}`, `enforce_map("x ab-cd-ef y", m)` and the bare sweep | `x <SECRET_1><TENANT_1> y` both | the same |
+  | TB-2.8 map 2 `{"<SECRET_1>": "ab-cd", "<TENANT_1>": "cd-ef"}` | `RedactionError("SpelledOverlap")` both | the same |
+  | TB-2.8 map 3 `{"<TENANT_1>": "ab-cd", "<SECRET_1>": "cd-ef"}` | `x <TENANT_1><SECRET_1> y` both | the same |
+  | TB-2.8 map 4 `{"<SECRET_1>": "cd-ef", "<TENANT_1>": "ab-cd"}` | `RedactionError("SpelledOverlap")` both | the same |
+  | fifth map (4 point 5) | `enforce_map`: `x <SECRET_1><SECRET_2> y`; bare sweep: `x <SECRET_1><TENANT_1> y` | `x <SECRET_1><SECRET_2> y` both |
+  | R8 killer map (9.3, TB-2.11) | `enforce_map`: `RedactionError("SpelledOverlap")`; bare sweep `x <SECRET_1><TENANT_1> y` | the same; with R8 applied `enforce_map` gives `x <SECRET_1><TENANT_1> y` (R8 still killed) |
+  Consequences: G9 v2 4.6's sentence is G9's to correct once G4 is in (the tie-break improves G9: a later standalone copy of a
+  union value is no longer written under the identifier); G9's pinned `z<SECRET_3> y` does not flip. On G4's side, TB-2.8's four
+  map rows, its fifth map, TB-2.11 and test_e5's three asserts are ORDER-DEPENDENT: the values of 4 point 5 and 10.2 hold on a tree
+  without G9 (MEASURED at 944d143db, `r8.py`); on a tree with G9 they are the G9 + G4 column above. The second lander writes the
+  column of the tree it lands on and records the other in the evidence. A `RedactionError("SpelledOverlap")` row is asserted with
+  `pytest.raises(RedactionError, match="SpelledOverlap")`.
 - Second lander's checks (G4 second: in G4's Phase 2 and Phase 3; G9 second: in G9's phases, with G4's files):
   1. the 0.2 rule, with G9's names above as table updates (not STOPs), except a change to the `_build` rules loop (STOP);
-  2. Phase 2 step 2 and Phase 3 step 2 run tests/test_redact_settle_loop.py (G9's tests live there) and tests/test_b64_scan.py;
-     expected red: none; a red G9 test or TB test is a finding, reported;
+  2. Phase 2 step 2 and Phase 3 step 2 run tests/test_redact_settle_loop.py (G9's tests live there), tests/test_b64_scan.py,
+     tests/test_runmap_enforce_map.py and tests/test_redact_mutants_meta.py; expected red: none once the order-dependent rows above
+     are re-pinned; any other red G9 test or TB test is a finding, reported;
   3. `python tests/redact_mutants.py` with G9's rows: each verdict as recorded by G9 (G9 second) or at Phase 0 (g) (G4 second);
-  4. G4's Phase 0 (g) snippet run counts G9's appended mutants with the others (the 146 of 13.3 grows by G9's count on
-     runmap.py/redact.py).
+     `python tests/gate_mutants.py`: R8 killed (by TB-2.11, either column);
+  4. G4's Phase 0 (g) snippet run counts G9's appended mutants with the others (CHANGED in v7: the 144 of 13.3 grows by G9's
+     count on runmap.py/redact.py).
 
 ## 1. Problem in plain words
 A secret that is only written in base64 reaches the model today, because the redactor has no decoded view:
@@ -316,6 +372,7 @@ class _B64Unit(NamedTuple):
     written: str             # the unit as written, line breaks included: the ENCODED original
     joined: str              # its lines, stripped, joined with nothing between: what _b64_text decodes
     lines: tuple[str, ...]   # its lines as written (stripped), for the held rule
+    parts: tuple["_B64Unit", ...] = ()   # CHANGED in v7 (M3): a LOOSE block's lines as RUN units (3.1 point 3); () otherwise
 
 def _scan(text, mapping, cache, neutralise, budget, depth) -> tuple[str, dict[str, str]]
 def _pass_one(text, mapping, cache, budget, depth) -> RedactionResult
@@ -394,6 +451,8 @@ Changed from v4 (review B2): `_pass_one` and `_b64_hits` take NO `neutralise`: a
    stripped)` and `parts = tuple(originals of the JWT and PRIVKEY placeholders)`; drop held units (`_b64_held(u, secret, parts)`,
    3.3). (The prototype built the set per unit; a builder must not: with 2,000 map entries and 2,600 units that is 5 million steps.)
    For the decision, keep one unit per distinct `written`; every copy is still replaced in step 8. None left: return `first`.
+   CHANGED in v7 (review round 6 design M3): the candidates are the units AND the `parts` of every loose block (3.1 point 3), each
+   through the same held filter and dedupe; a part costs a unit of the budget like any other.
 5. `hits, kept = _b64_hits(distinct_units, first.mapping, budget, depth)`. No hit: return `first`, whose output and map are
    byte-identical to the base commit's for that text.
 6. `base = dict(mapping)` (the INCOMING map; pass 1's additions are dropped: they hold junk such as one HIGHENTROPY entry per wrapped
@@ -401,9 +460,15 @@ Changed from v4 (review B2): `_pass_one` and `_b64_hits` take NO `neutralise`: a
    Major 5): for each kept entry in the order of `kept`, its kind `k` gets `<k_{n+1}>` where `n` starts at
    `_Redactor(dict(base)).counters[k]` and grows by one per entry of that kind. A kept placeholder never appears in any text (the
    decoded view's output is thrown away), so renaming it is safe; the numbers in `base` then have no gaps.
-7. `placeholders = dict(zip(runs, place_encoded(base, runs)))`, with `runs` the `written` of the hit units, in order.
+7. CHANGED in v7 (M3): `chosen` is built by walking the units of step 3 in order: a unit that is not a loose block, or a loose
+   block whose `written` is a hit, is chosen when it is a hit; a loose block that is NOT a hit gives instead its `parts` that are
+   hits. So a loose block is replaced whole when its join decodes to a hit, else line by line (as v6 did for those lines); chosen
+   units never overlap. `placeholders = dict(zip(runs, place_encoded(base, runs)))`, with `runs` the distinct `written` of the
+   chosen units, in order. (A part's kept entries stay kept even when its block wins: an over-mask of a plain copy at most.)
 8. `T2 = _b64_place(stripped, copies, placeholders)`, where `copies` are all units of `stripped` (step 3, after the held filter, before
-   the dedupe) whose `written` is a key of `placeholders`. Every copy is replaced by position; units do not overlap.
+   the dedupe) whose `written` is a key of `placeholders`. Every copy is replaced by position; units do not overlap. CHANGED in v7
+   (M3): `copies` are the chosen units of step 7 and their copies (the same `written`, chosen by the same rule), never a part of a
+   block that is itself replaced.
 9. `return redact(T2, mapping=base, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S)`. Pass 1 leaves a placeholder
    alone, so the result holds `<ENCODED_n>` where the blob stood. Nothing is mapped back by position.
 
@@ -433,9 +498,12 @@ Settle and fold interplay:
 | `RedactionError("NotSettled")` | propagates (as raised, 2.3 step 5) | propagates |
 | CHANGED in v6: `InputTooLarge("SpelledMemoryTooMuch")` (G7 r7, in the tree at bff88a7a1: the spelled-form registry past `SPELLED_MAX_CHARS` in either `redact()` of `_pass_one`; BY READING) | propagates: refused, map not written; a card raises (as 8) | propagates: refused |
 | CHANGED in v6 (review round 5 M3; only when G9 is merged, 0.3b): `InputTooLarge("SpelledNotSettled")` from either `redact()` of `_pass_one` (a sweep not settled in `SPELLED_MAX_PASSES` passes) | propagates: refused, map not written; a card raises (as 8) | propagates: refused |
-| CHANGED in v6 (only when G9 is merged): `InputTooLarge("SpelledOverlap")` | never from `redact_text` (`redact()` may register); from `enforce_map` / `held_value_left`'s checker only (the gate: TB-2.8, TB-3.27 call `enforce_map`) | - |
+| CHANGED in v7 (review round 6 design M1; only when G9 is merged): `RedactionError("SpelledOverlap")` (a RedactionError, not an InputTooLarge: G9 v2 4.5) | never from `redact_text` (`redact()` may register); from `enforce_map` / `held_value_left`'s checker / a bare `_Redactor.sweep` only (the gate: model_gate `mask_refused`; TB-2.8, TB-2.11, TB-3.27 call `enforce_map`, 0.3b) | - |
+| CHANGED in v7 (only when G9 is merged; 0.3b point 3): `InputTooLarge("SpelledWorkTooMuch")` from G9's read-back of a long `<ENCODED_n>` mentioned many times in a LATER text (a gate text, an agent message) | refused, map not written (producer); the gate: `mask_budget_exceeded` | propagates: refused |
 
 A decoded view that only grows past the cap through its escapes (a `ﷺ` run) is refused. This is stated, not handled.
+CHANGED in v7 (review round 6 design M1): the next sentence holds for ONE `redact_text` call on the tree without G9; with G9 a
+later text that mentions a long `<ENCODED_n>` 10 to 30 times is refused (MEASURED on the G9 v2 prototype, 0.3b point 3; L26).
 Honest text cannot reach `SpelledWorkTooMuch` through G4: a unit becomes one `<ENCODED_n>` token, and 262,144 characters hold at
 most about 22,000 tokens of 12 or more characters, far under 4,000,000 units. MEASURED on the prototype: `password=ab!<SB>` then
 3,000 copies of `SB` separated by spaces scans in 0.45 s with the real limit; with `SPELLED_MAX_WORK` patched to 1,000 it is refused

@@ -25,7 +25,7 @@ Purpose, as far as it holds: a tool error redacted twice makes no junk map entry
 - ::test_e9_a_cut_off_opening_of_another_kind_alone_is_masked, ::test_e9_a_lookalike_of_another_kind_alone_is_masked
 - tests/test_redact_context_after_sweep.py::test_e9_a_secret_value_spelled_like_a_token_of_another_kind_is_masked (4 params)
 
-## Mutants (tests/redact_mutants.py, contiguous block at the end; `python tests/redact_mutants.py E9`): 3 of 3 KILLED
+## Mutants (tests/redact_mutants.py, block `redact_mutants.py:212-228` (the 30 Q9 mutants follow it); `python tests/redact_mutants.py E9`): 3 of 3 KILLED
 - E9-1 any kind again -> test_e9_a_lookalike_of_another_kind_alone_is_masked
 - E9-2 cut-off opening of any kind -> test_e9_a_cut_off_opening_of_another_kind_alone_is_masked
 - E9-3 escaped alternative removed -> test_redact_untrusted_twice_adds_nothing
