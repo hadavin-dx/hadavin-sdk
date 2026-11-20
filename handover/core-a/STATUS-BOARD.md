@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:53:53Z
+UPDATED_UTC: 2026-11-20T15:57:35Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 82
 ITEMS_OPEN: 24
 PERCENT: 80
 AGENTS_RUNNING: 1
-CAPACITY: load 0.56 of 4 cores (1-minute average), mem 1.2/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 0.25 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 13G 56G 19%; 648M /home/user/hadavin-sdk; 1.3G /tmp/claude-0; 184M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T15:52:23Z (the push before this board)
+PUSHED_UTC: 2026-11-20T15:53:58Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -106,22 +106,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| integ-dryrun | builder (scratch worktree /home/user/wt/integ, never pushed) | sonnet | dry-run merge core-b head -> cloud/core-a -> cloud/core-c, handover excluded: conflict list + resolution plan -> handover/core-a/INTEGRATION-DRYRUN-2.md | 15:55 | 40 min | 5 | running | - | 0 | lead 15:52 item (c) |
+| integ-pg | evidence runner (never judges) | sonnet | strict-PG run on the MERGED scratch tree (PG16 at :55433): tests/triggers (my 10 by-design failures should pass), t5/contracts/grants, the three T1 files -> evidence/integ-pg-run.md | 15:58 | 25 min | 5 | running | - | 0 | the dry-run agent looked at the wrong socket |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34766s ago | running | matched by name in ps |
-| 12217 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 12222 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 12223 | timeout 900 uv run --all-extras --group test pytest -q -n 2 -p no:cach | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 12225 | uv run --all-extras --group test pytest -q -n 2 -p no:cacheprovider te | core-a session or its agent | 18s ago | running | matched by name in ps |
-| 12228 | /home/user/wt/integ/.venv/bin/python /home/user/wt/integ/.venv/bin/pyt | core-a session or its agent | 18s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 34987s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 34987s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 34987s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 34987s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 34987s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 34987s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -183,6 +178,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 15:58 INTEGRATION DRY-RUN 2 DONE (handover/core-a/INTEGRATION-DRYRUN-2.md; scratch branch scratch/core-a-integration-dryrun-2, never pushed, worktree /home/user/wt/integ): heads core-b 463760813 -> core-a d1ee703ab -> core-c bd7f9d978, handover excluded. Merging core-a into core-b: ONE conflict (tests/contracts/test_t1_reserve_cap.py add/add: core-b's F-store T1 vs core-a's original T1); merging core-c: FIVE (CHANGELOG.md, defaults.py, tests/conftest.py = kept both sides, no duplicate constants; guard/producers.py = core-c's wording (registered callers identical on both sides, no check lost); the T1 file again). Your five named files: CHANGELOG/defaults/producers/conftest conflict ONLY at the core-c step, test_t1 at both. DECISION NEEDED: THREE T1 files now coexist (core-b's at the path, core-a's and core-c's saved as test_t1_reserve_cap_core_a.py/_core_c.py): pick one canonical. Checks on the final tree: ruff ok, import ok, pytest --co 22535 collected 0 errors, anchors+runner tests 130 passed, no TypeError at import/collection; 168 files differ from core-b (142 added, 26 modified, 0 handover). RISK: both T1 variants and tests/test_grants_negative_0007.py / _roles.py call migrate() WITHOUT reset_role/no_roles which core-b's migrate refuses (PG-only, unrun). NOT done by that agent (it looked at the wrong socket: my PG is on :55433): strict-PG run of tests/triggers: running now as integ-pg. AGENTS 1.
 - 15:55 LEAD 15:52: your four items: (a) lane 2 cfull: DONE (all 5 ids pass at core-c fc4af41a7 on py3.13 x3 and py3.12: evidence/cfull-fix-check.md); no wip/core-a-for-c-cfull needed: nothing to fix; (b) lane 3 reviews of lead-b-migrate/ts-watermark: DONE twice (xr-review-wip-lead-b-*.md); heads unchanged; (c) integration prep: STARTED (agent integ-dryrun: scratch worktree, merge core-b head -> cloud/core-a -> cloud/core-c with handover excluded, lists every conflict incl. the five you named, resolution plan -> handover/core-a/INTEGRATION-DRYRUN-2.md; never pushed); (d) crash matrix part 2: DONE. AGENTS 1. Lane 1 skipped as you said. If lanes are empty I can take core-b's S1/R1/W1 test files that do not touch migrate.py: send me the list or the file names.
 - 15:53 LANE 2 DONE (evidence/cfull-fix-check.md): the cfull ids ALL PASS at core-c fc4af41a7 on py3.13.12 (3 repeats) and py3.12.3 (1 run) on a quiet box (start load 0.04): 17 passed, 0 failed per run: test_hostile_1 'fdfa', the py3.12 Unicode 15.1.0 test (passes, not skipped), test_glued_patterns_are_linear all 12 params, settle-loop thread_time test; whole-test times 3.2-4.3 s (3.13) and up to 5.25 s (3.12) for the glued ids, 11-12 s settle-loop, 39-42 s fold_budget. No fix needed from core-a: core-c's earlier fixes hold. ALL FOUR LANES DONE. AGENTS 0; nothing open on my side; waiting for new heads or orders.
 - 15:46 LANE TABLE (your 15:43 order; your 15:47 GO crossed my pushes): LANE 1 grant tests: DONE (agent grants-run; both versions green on core-b fa21e8fbb PG16.15: core-c 85 passed, mine 88 passed, take mine (superset); evidence/grants-a-vs-b.md; handover/core-c/requests/from-core-a-grants.md). LANE 2 cfull fixes: RUNNING (agent cfull-run: verifies fdfa / py3.12 Unicode / glued-linear perf margin / settle-loop on py3.13 AND 3.12 on a quiet box; core-c says these were fixed earlier on cloud/core-c) -> evidence/cfull-fix-check.md. LANE 3 reviews lead-b-migrate (0891d81bd) and lead-b-ts-watermark (de8967aba): DONE twice each, findings in handover/core-b/requests/xr-review-wip-lead-b-migrate.md and xr-review-wip-lead-b-ts-watermark.md (heads unchanged: tell me when fix round 1 lands and I review the delta). LANE 4 crash matrix part 2 + E-door-1 README: DONE (reviewed fresh, fixed). AGENTS 1 (cfull-run). 3 lanes are finished, not skipped; no open lane without an agent.
