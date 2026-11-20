@@ -318,6 +318,63 @@ up to 39 (measured maximum 45, counting the 3 base cases) characters readable. B
 takes the token whole) but its map holds the split pieces. The start `(?<![A-Za-z0-9])` gives the base's behaviour in every class
 (0 tokens with an IBAN). Decision: L-D2 default is the fallback start (section 6). Rows K75 (60 characters), K76 (140), K77
 (Bearer, 60) pin it, with `test_an_iban_never_starts_inside_an_opaque_token` asserting one map entry.
+CHANGED in v4 (G8-review-3-codebase M1): the two sentences "gives the base's behaviour in every class" and "0 tokens with an
+IBAN" are WITHDRAWN. They hold only for tokens of the 62 letters and digits, the alphabet v3 drew from. In base64url (`-`, `_`)
+and standard base64 (`+`, `/`) tokens, v3's start and end take `_` as a break inside the token; the base itself takes `-`, `+`
+and `/` (a `\b`). Measured in 2.4b; the v4 fix is in 4.1 (L-D15).
+
+### 2.4b M1 measured: an IBAN shape at a separator inside a base64url / base64 token (CHANGED in v4; scratch m1.py; MEASURED)
+Method: trees `base4` (99787d5b3), `v3h` (v3's appendix D on it), `A2` (v3h with the start `(?<![A-Za-z0-9_])` only), `E` (v3h
+with the short-word context, without the `-`/`+`/`/` end guard), `v4` (the default of 4.1; measured as the variant `E3`, whose
+IBAN regex is the same string, sha1 prefix 1e99398ea2e3, 693 characters). Random tokens (Python `random`, string seeds
+`20261120|<class>|<ctx>`) of the base64url alphabet (A-Z a-z 0-9 `-` `_`) or the standard alphabet (A-Z a-z 0-9 `+` `/`), 20,000
+per class, written `key <token> end` or `Authorization: Bearer <token> end`, through `redact()`. Injected: a random alphanumeric
+head, then `_` or `-`, `DE89` + 18 letters or digits, then `_`, `-` or the token's end, then a random tail (1,000 per class).
+"readable" = 8 or more token characters in a row outside the placeholders AND an `<IBAN_n>` in the map (a token without an IBAN
+that HIGHENTROPY leaves readable is HIGHENTROPY's own rule, not counted); "split" = more than one map entry.
+
+Random tokens, summed over the four length classes 40-61, 62-75, 76-128, 129-163 (80,000 tokens per row):
+| alphabet / context | base4: readable / IBAN in map / split | v3h | A2 | E | v4 (E3) |
+|---|---|---|---|---|---|
+| base64url / key | 9 / 22 / 17 | 22 / 57 / 47 | 14 / 39 / 31 | 9 / 25 / 20 | 9 / 22 / 17 |
+| base64url / Bearer | 0 / 20 / 21 | 0 / 47 / 48 | 0 / 29 / 30 | 0 / 22 / 23 | 0 / 21 / 22 |
+| base64 (`+` `/`) / key | 26 / 57 / 45 | same | same | same | same |
+| base64 (`+` `/`) / Bearer | 0 / 43 / 43 | same | same | same | same |
+Per class (base64url, `key`; readable / IBAN in map, longest readable run): 40-61: base 4/4 (39), v3h 7/7 (39), v4 4/4 (39);
+62-75: 1/5, 3/8, 1/5; 76-128: 1/7, 2/18, 1/7; 129-163: 3/6 (13), 10/24 (31), 3/6 (13). The one v4 difference from the base is
+one more split (no readable text, BEARER takes the whole token first) in the 129-163 Bearer class: an IBAN after a word of
+letters that starts the token (`ab_DE89...`), the context v4 accepts by design.
+
+Injected (1,000 each; readable / IBAN in map, longest readable run):
+| shape | length | base4 | v3h | A2 | E | v4 (E3) |
+|---|---|---|---|---|---|---|
+| `head_DE89..._tail` | 40-75 | 0 / 0 | 934 / 1000 (39) | 0 / 0 | 0 / 0 | 0 / 0 |
+| `head_DE89..._tail` | 129-163 | 0 / 0 | 584 / 1000 (43) | 0 / 1 | 0 / 0 | 0 / 0 |
+| `head_DE89...` (token end) | 40-75 | 0 / 0 | 702 / 1000 (39) | 0 / 0 | 18 / 120 (9) | 18 / 120 (9) |
+| `head_DE89...` (token end) | 129-163 | 0 / 0 | 266 / 1000 (39) | 0 / 0 | 5 / 25 (9) | 5 / 25 (9) |
+| `head-DE89..._tail` | 40-75 | 0 / 0 | 930 / 1000 (39) | 930 / 1000 (39) | 237 / 273 (39) | 0 / 0 |
+| `head-DE89..._tail` | 129-163 | 0 / 1 | 520 / 1000 (39) | 520 / 1000 (39) | 17 / 57 (9) | 0 / 1 |
+| `head-DE89...-tail` | 40-75 | 941 / 999 (39) | same | same | same | same |
+| `head-DE89...-tail` | 129-163 | 510 / 1000 (39) | same | same | same | same |
+| `head-DE89...` (token end) | 40-75 | 749 / 1000 (39) | same | same | same | same |
+| `head-DE89...` (token end) | 129-163 | 259 / 1000 (39) | same | same | same | same |
+Read:
+- v3's leak is real and is the `_` share: v3 adds 13 readable tokens per 80,000 random base64url `key` tokens to the base's 9
+  (about 1.6e-4 per token; the reviewer's estimate, about 1e-4 per `_` position, is the same order), and about 30 more split map
+  entries under `key` and under `Bearer`. Up to 39 characters of a head stay readable (43 in one injected long token).
+- v4 (E3) equals the base in readable text in all 16 random classes and in the injected `_` classes, except where the 2-8
+  characters before `_` are letters that start the token (`head_DE89...` with a short all-letter head: 18 of 120 and 5 of 25 IBAN
+  matches leave the head word readable, at most 9 characters, which is the word itself): that is the shape of row 41
+  (`iban_DE89...`) and cannot be told apart from it by a pattern.
+- `E` without the `-`/`+`/`/` end guard still leaks `head-DE89..._x` at a token end (237 of 1,000 short injected tokens): so
+  both halves of `_IBAN_START` are needed.
+- A2 (the one-character start fix) halves v3's extra but keeps the `_` END inside tokens (`-DE89..._`): 14 readable vs the base's
+  9; it also turns rows 41, 42 into limits.
+- The base itself splits an IBAN shape that starts after `-`, `+`, `/` (or at the token's start) and ends at `-`, `+`, `/` or the
+  token's end: 9 readable per 80,000 base64url and 26 per 80,000 base64 `key` tokens; 941 of 999 injected short `-DE89...-`
+  tokens. This is NOT a G8 change (v3h, A2, E and v4 give the same numbers): limit L12, follow-up L-D16.
+- BEARER never leaves token text readable (it takes the token before IBAN runs); its map can hold the split pieces.
+Wall time: 139-153 s per tree on a box with load 2.8-3.3; the numbers do not depend on time.
 
 ### 2.5 At rest and `storable()` (F6; `redact()` map and `runmap.storable(map)`; appendix A `AT_REST`)
 | id | text | base: text / map / storable | v3 | what is true |
@@ -328,11 +385,14 @@ takes the token whole) but its map holds the split pieces. The start `(?<![A-Za-
 | AT4 | `password=a-192.0.2.10-b` | `<IPV4_1>` in the map and storable already | same | the base does it today for a piece set off by `-` or `.`: G8 widens an existing class, it does not start it |
 | AT5 | `arn:aws:s3:::bucket_DE89370400440532013000` | `<ARN_1>`, storable | `<ARN_1>`, NOT storable | IBAN is in `runmap._SECRET_PATTERNS` (runmap.py:256-258): an original holding `_DE89...` now fails `storable_original` (fail safe: not stored, so not restorable after the run) |
 | AT6 | `tenant_id=acme_DE89370400440532013000` | `<TENANT_1>` = `acme_DE89...` | `tenant_id=<TENANT_1><IBAN_1>`, TENANT = `acme_` | the IBAN is masked first; the tenant value is cut (fail safe) |
+| AT7 (v4, N1) | `ORD1234-5678-9012-3456` | unchanged / empty / none | `ORD<CREDITCARD_1>`; map `<CREDITCARD_1>` = `1234-5678-9012-3456`; storable: none | L-D12's over-mask: an order number in card groups glued to letters is masked as a card; CREDITCARD is a SECRET kind, so it is never stored and the evidence is not restorable after the run (fail safe; MEASURED on `v4`) |
 With v2's camelCase start, `tenant_id=acmeDE89...` would be cut too; with v3's start it is not (measured: unchanged).
+CHANGED in v4: AT5 and AT6 are unchanged by v4's IBAN context (`bucket_` and `acme_` are short words that start their token
+after `:` / `=`): MEASURED on `v4`, the same three columns as v3.
 Why G8 does not fix L11: the class exists on the base (AT4); a fix belongs in `runmap.storable` or in map pruning for every kind,
 not in four patterns (L-D14 offers it as a follow-up ticket).
 
-### 2.6 Must-keep rows (appendix A, `MUST_KEEP`: 80 rows; K1-K28 v1's table, K29-K74 v2's, K75-K80 v3's)
+### 2.6 Must-keep rows (appendix A, `MUST_KEEP`: 84 rows; K1-K28 v1's table, K29-K74 v2's, K75-K80 v3's, K81-K84 v4's: CHANGED in v4)
 Verdicts: kept (nothing masked, before and after) | same (masked today; G8 leaves it, or changes only what the note says) |
 over-mask L-Dn (accepted, owned by that decision) | closed (a real value newly masked). Tokens: `{SHA}` a 64-hex digest
 starting 3851007894, `{SHA16}` its first 16, `{CARD}` 4242 4242 4242 4242, `{SSN}` 123-45-6789, `{UUIDHEX}` the UUID without
@@ -421,12 +481,42 @@ column) and `mut` (after column); 80 of 80 as listed. Rows that differ from v2 a
 | K78 (v3) | `+{SSN}x` | `+{SSN}x` | `<PHONE_1>x` | over-mask L-D11 (stored as PHONE) |
 | K79 (v3) | `x+{SSN}` | `x+<SSN_1>` | `x+<SSN_1>` | same (the SSN entry runs first) |
 | K80 (v3) | `card_{CARD with -}_x` | `card_{CARD with -}_x` | `card_<CREDITCARD_1>_x` | closed (L-D12) |
+| K81 (v4) | `x+2026-11-20T10:00:00Z` | `x+2026-11-20T10:00:00Z` | `x+2026-11-20T10:00:00Z` | kept (N4; v3 gave `x<PHONE_1>T10:00:00Z`) |
+| K82 (v4) | `t+2026-11-20 1012 ok` | `t+2026-11-20 1012 ok` | `t+2026-11-20 1012 ok` | kept (N4; v3 gave `t<PHONE_1> ok`) |
+| K83 (v4) | `key opaque(20)_{F1_MID}-opaque(17) end` | `key <HIGHENTROPY_1> end` | `key <HIGHENTROPY_1> end` | same (L-D15, M1: `_` before, `-` after; v3 gave `key <head>_<IBAN_1>-<tail> end`) |
+| K84 (v4) | `key opaque(20)-{F1_MID}_opaque(5) end` | `key <HIGHENTROPY_1> end` | `key <HIGHENTROPY_1> end` | same (L-D15, M1: `-` before, `_` after; v3 gave `key <head>-<IBAN_1>_<tail> end`) |
+`{F1_MID}` is `DE89Xq7Lm2Pw9Rt4Ys6Vb3` (F1's tail without its `a`). K83 and K84 are also asserted with one map entry by
+`test_an_iban_never_starts_inside_an_opaque_token` (OPAQUE ids K75, K76, K77, K83, K84). Base and after columns MEASURED on
+`base4` and `v4` (84 of 84).
 
 Full-stop rows (L7, unchanged): F1 `call 415-555-0132.`, F2 `call 4155550132.`, F3 `call +1 415-555-0132.` (v3).
+Untrusted rows (CHANGED in v4, M2; appendix A `UNTRUSTED`): U1 `redact_untrusted("<TENANT_4155550132>")` ==
+`‹TENANT_4155550132›` with an empty map; U2 `redact_text("‹TENANT_4155550132›")` unchanged with an empty map. Base: both hold;
+v3h: both give `‹TENANT_<PHONE_1>›` and a PHONE entry; v4: both hold (MEASURED).
+
+### 2.7 Non-ASCII glue (CHANGED in v4, G8-review-3-codebase N6; scratch probe.py, `redact()`; MEASURED on `base4`, `v3h`, `v4`)
+The new guards are ASCII classes (`[0-9]`, `[A-Za-z0-9]`), the bodies use `\d` (Unicode digits in a `str` pattern), and the
+fold scan reads folded views. v3h and v4 give the same outputs:
+| input | base | v4 | what is true |
+|---|---|---|---|
+| `from х192.0.2.10 ok` (Cyrillic х before) | unchanged | `from х<IPV4_1> ok` | a non-ASCII letter is glued text, like an ASCII one |
+| `from 192.0.2.10х ok` | unchanged | `from <IPV4_1>х ok` | the same after |
+| `from ٧192.0.2.10 ok` (Arabic-Indic 7 before) | unchanged | `from ٧<IPV4_1> ok` | a non-ASCII digit is not a guard (`[0-9]`): masked (L1 holds for ASCII digits only) |
+| `from ７192.0.2.10 ok` (full-width 7 before) | unchanged | `from ７<IPV4_1> ok` | the same |
+| `from 192.0.2.10٩ ok` | `from <IPV4_1> ok`, original `192.0.2.10٩`, not storable | same | the BASE already takes a Unicode digit into the value (`\d`): not restorable after the run (fail safe) |
+| `call tel_4155550132٧ now` | unchanged | `call tel_<PHONE_1> now`, original `4155550132٧`, not storable | entry 7 takes the Unicode digit into the value (`\d{10,16}`); fail safe |
+| `call ١٢٣٤٥٦٧٨٩٠_x now` | unchanged | `call <PHONE_1>_x now`, not storable | entry 7 masks an Arabic-Indic digit run beside `_` |
+| `call +1 415-555-0132а now` (Cyrillic а after) | unchanged | `call <PHONE_1>а now` | as an ASCII letter |
+| `id х123e4567-...-426614174000 ok` | `id х123e4567-e89b-12d3-a456-<ACCOUNTID_1> ok` | `id х<UUID_1> ok` | closed, as row 52 |
+| `pay хDE89370400440532013000 now` | unchanged | `pay х<IBAN_1> now` | a non-ASCII letter before an IBAN is not in `_IBAN_START`'s ASCII class: masked (L4 is for ASCII letters only; fail safe) |
+| `pay DE89370400440532013000х now` | `[line withheld: look-alike text hid a protected value] <IBAN_1>` | same | the fold scan's own rule on the base; unchanged |
+Read: no non-ASCII shape leaks more with G8 than on the base; non-ASCII glue is masked more, and a Unicode digit taken into a
+value makes it non-storable. No code change (consistent fail-safe direction); stated in section 11 (L13).
 
 ## 3. Files
 Modify:
-- `src/hadavin_sdk/guard/redact.py`: the IBAN (266-274), UUID (275-280), EC2 (375), pod-DNS (376), dotted IPV4 (377) and
+- `src/hadavin_sdk/guard/redact.py`: CHANGED in v4: two module constants `_IBAN_START`, `_IBAN_END` directly after
+  `_NOT_IN_WORD` (74) (M1); the IBAN (266-274), UUID (275-280), EC2 (375), pod-DNS (376), dotted IPV4 (377) and
   CREDITCARD (471) entries; three new PHONE entries (CHANGED in v4, N2: entry 6 directly before the main PHONE tuple 491-498,
   entries 7 and 8 directly after it; the main tuple itself is unchanged and has no number); a comment above each changed or new entry; one paragraph in the module docstring; the `sweep` comment (1983-1987,
   F3: the UUID `_0` copy is now the pattern's own match); `_JOINS` and `_joins()` after `_ALNUM` (2225); the `joins` parameter
@@ -434,7 +524,7 @@ Modify:
   appendix D.
 - `src/hadavin_sdk/guard/runmap.py`: import `_joins` at line 32 (after `_alias_keys`, 31; F6); `_sweep_held` (849) passes
   `_joins(placeholder)`; two sentences of the `enforce_map` docstring (699, 718).
-- `src/hadavin_sdk/guard/model_gate.py:12-13` (F3): the guarantee "replaced only where no ASCII letter or digit touches it" gets
+- `src/hadavin_sdk/guard/model_gate.py:12-14` (F3; CHANGED in v4, N3: the bullet is lines 12-14, the hunk edits 13): the guarantee "replaced only where no ASCII letter or digit touches it" gets
   the PHONE sentence (a known `4155550132` in `build4155550132` reaches the model as `build<PHONE_1>`); its pinning test
   `E::test_stated_limit_an_identifier_touching_a_letter_or_digit_is_not_swept` (tests/test_runmap_enforce_map.py:263) gets the
   PHONE assertion and a docstring sentence (appendix E).
@@ -443,41 +533,75 @@ Modify:
 - `tests/test_redact_g3_port.py:56-59`: re-pointed at a copy only the sweep can reach after G8: `redact("tenant_id=acme42 and
   x_acme42_0")` gives `tenant_id=<TENANT_1> and x_<TENANT_1>_0`, actions 2 (run: green on `mut`, section 9). Order with G4: 8.1.
 - `tests/test_runmap_enforce_map.py:263-275`: the pinning test above (appendix E).
+- CHANGED in v4 (N5): `tests/test_redact_idempotent_property.py` docstring (b), line 7: the copy rule names the PHONE case;
+  `tests/warden_port/test_redaction.py` 243-251 and 375-379: the two UUID-sweep docstrings say that since G8 the UUID pattern
+  takes the `_0` copy itself (the tests' assertions are unchanged and stay green: the copies are still masked). Docstrings
+  only (appendix E).
 - `SECURITY.md`: one bullet appended to the list under `## Stated limits of redaction (reviewed, not bugs)` (heading at line 9),
   after the second bullet ("A form-encoded `;` or `&` ...") and before the line "Control that does not depend on these limits".
   `CHANGELOG.md`: one bullet under `## Unreleased` / `### Upgrade steps` (line 5), in that list's form: `- **G8, values glued to
   a word.** ...` (a bold lead sentence, then plain text). Text: section 13, through the security wording review.
 Create:
-- `tests/g8_cases.py` (appendix A): the 86 rows, the leak rule, the 80 must-keep rows, the full-stop and at-rest rows, the
-  `G4C_MERGED` flag and the step-0 check (`python -m tests.g8_cases`).
+- `tests/g8_cases.py` (appendix A): the 88 rows, the leak rule, the 84 must-keep rows, the full-stop, at-rest (7) and untrusted
+  (2) rows, the `G4C_MERGED` flag and the step-0 check (`python -m tests.g8_cases`) (CHANGED in v4: counts).
 - `tests/test_redact_glued_rest.py` (appendix B): the tests of section 7.
-- `tests/g8_mutants.py` (appendix C): the 30 mutants, run by `tools/mutation_runner.py`.
+- `tests/g8_mutants.py` (appendix C): the 34 mutants (CHANGED in v4: was 30), run by `tools/mutation_runner.py`.
 - `tests/g8_cost.py` (appendix F): the cost script of section 10 (not collected by pytest).
 - `handover/core-c/evidence/G8-1.md`: the raw output of every command of section 8.
 Not changed (decided): the G7 test `tests/test_redact_settle_loop.py::test_boundary_class_is_over_masked_fail_safe_and_pinned`
 (936) stays byte-identical (K42); textnorm, defaults.py, `_countable`, `_LABELS`, `_sub_glued` (EMAIL only), STORED_KINDS,
 `_SECRET_PATTERNS`: unchanged (no new kind; new originals fit `runmap._GRAMMAR` IPV4 / PHONE, runmap.py:241-249; UUID, IBAN and
-CREDITCARD are never stored). `EXPECTED_INPUTS` of the property test is unchanged (g8_cases.py is its own data).
+CREDITCARD are never stored; CHANGED in v4: an original holding a non-ASCII digit does not fit the grammar and is not stored,
+2.7). `runmap.neutralise_untrusted` / `escape_placeholders` (the `‹ ›` escape): unchanged; G8 only stops entry 7 reading
+inside the escaped literal (M2). `EXPECTED_INPUTS` of the property test is unchanged (g8_cases.py is its own data).
 
-## 4. Design (exact; the text is copied from `mut`, the formatted tree; appendix D is the same as a diff)
+## 4. Design (exact; CHANGED in v4: the text is copied from `v4`, the formatted tree at 99787d5b3; appendix D is the same as a diff)
 ### 4.1 PATTERNS, in order (flags: none unless the pattern starts with `(?i)`; group count stated per entry)
-Entry 1, IBAN (replaces 266-274). Preceded by the EMAIL tuple and the IBAN comment, to which three lines are added; followed
+Entry 0 (CHANGED in v4, M1, L-D15), two module constants directly after `_NOT_IN_WORD` (redact.py 74), before the
+"# Key to value: ..." comment:
+```python
+_NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))"
+# Where an IBAN may start and end beside `_` (ticket G8 v4, M1). `_` is a base64url character, so inside an opaque token
+# `..._DE89..._...` is no IBAN (masking it there would cut the token and leave its head readable). `_` before counts as a
+# break only after a word of 2 to 8 ASCII letters that starts its token (`iban_DE89...`, `to_DE89...`); `_` after only
+# when at most 8 letters or digits follow it to the token's end (`DE89..._x`, `DE89..._`), and not when the IBAN starts
+# after `-`, `+` or `/` (inside a token, as the base already reads `...-DE89...-...`).
+_IBAN_START = (
+    r"(?:(?<![A-Za-z0-9+/_\-])"
+    r"|(?<=[+/\-])(?![A-Z]{2}\d{2}[A-Za-z0-9]{11,30}_)"
+    + "".join(rf"|(?<=(?<![A-Za-z0-9+/_\-])[A-Za-z]{{{n}}}_)" for n in range(2, 9))
+    + ")"
+)
+_IBAN_END = r"(?:(?![A-Za-z0-9_])|(?=_[A-Za-z0-9]{0,8}(?![A-Za-z0-9+/=_\-])))"
+```
+Read in parts. Start: (a) no token character before (`[A-Za-z0-9+/_-]`: the base's `\b` minus `_`, for ASCII); or (b) `-`,
+`+` or `/` before, as the base allows, but then the IBAN may not end at `_` (the lookahead is bounded: 2 + 2 + 30 + 1
+characters); or (c) `_` after a word of exactly n ASCII letters (n = 2 to 8) that has no token character before it (seven
+fixed-width look-behinds, so Python `re` accepts them). End: no letter, digit or `_` after (the base's `\b` for ASCII); or `_`
+and then at most 8 letters or digits up to a character that is not a token character (or the end of the text). Every repeat is
+bounded; each look-around is at most 35 characters, so the cost per start position is constant (section 10 adds the
+`iban underscore` text).
+
+Entry 1, IBAN (replaces 266-274). Preceded by the EMAIL tuple and the IBAN comment, to which four lines are added; followed
 by the UUID entry. No group.
 ```python
     # evidence token like `AB12CDEF...` is NOT clobbered — only a genuine IBAN country prefix fires.
-    # Glued (G8): not after an ASCII letter or digit and not before one (one would join the BBAN), so `iban_DE89...`
-    # and `DE89..._x` are masked with the `_` text outside; `xDE89...`, `7DE89...` stay (limit L4: inside a token an
-    # IBAN-shaped tail would cut a longer credential in two and leave its head readable, ticket G8 v3 F1).
+    # Glued (G8): not after an ASCII letter or digit and not before one (one would join the BBAN); `_` only in the
+    # short-word context of `_IBAN_START` / `_IBAN_END`, so `iban_DE89...` and `DE89..._x` are masked with the `_` text
+    # outside; `xDE89...`, `7DE89...`, `acct_iban_DE89...` stay (limit L4: inside a token an IBAN-shaped piece would cut
+    # a longer credential in two and leave its head readable, ticket G8 v3 F1 and v4 M1).
     (
         "IBAN",
         re.compile(
-            r"(?<![A-Za-z0-9])(?:AD|AE|AL|AT|AZ|BA|BE|BG|BH|BI|BR|BY|CH|CR|CY|CZ|DE|DJ|DK|DO|EE|EG|ES|FI|FO|FR|GB|GE"
+            _IBAN_START
+            + r"(?:AD|AE|AL|AT|AZ|BA|BE|BG|BH|BI|BR|BY|CH|CR|CY|CZ|DE|DJ|DK|DO|EE|EG|ES|FI|FO|FR|GB|GE"
             r"|GI|GL|GR|GT|HN|HR|HU|IE|IL|IQ|IS|IT|JO|KW|KZ|LB|LC|LI|LT|LU|LV|LY|MC|MD|ME|MK|MN|MR|MT"
             r"|MU|NI|NL|NO|PK|PL|PS|PT|QA|RO|RS|RU|SA|SC|SD|SE|SI|SK|SM|SO|ST|SV|TL|TN|TR|UA|VA|VG|XK)"
-            r"\d{2}[A-Za-z0-9]{11,30}(?![A-Za-z0-9])"
+            r"\d{2}[A-Za-z0-9]{11,30}" + _IBAN_END
         ),
     ),
 ```
+(v3's entry 1 was `r"(?<![A-Za-z0-9])(?:AD|...|XK)" r"\d{2}[A-Za-z0-9]{11,30}(?![A-Za-z0-9])"`; it is L-D15's "v3 as is" option.)
 Entry 2, UUID (replaces 275-280; `ruff format` puts it on one line). No group. `_UUID_SHAPE` (738) follows automatically.
 ```python
     # No word boundary (G8): the 8-4-4-4-12 run is found inside a longer token (`pod_<uuid>_0`, `x<uuid>`, `<uuid>9`) and
@@ -487,7 +611,8 @@ Entry 2, UUID (replaces 275-280; `ruff format` puts it on one line). No group. `
         re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"),
     ),
 ```
-Entries 3 and 4, IPV4 (replace 374-377). Preceded by `("ACCOUNTID", re.compile(r"\b\d{12}\b")),`; followed by the IPv6 comment.
+Entries 3 and 4, IPV4 (replace 374-377; CHANGED in v4, N2: entry 3 is the pair of dashed tuples, EC2 then pod DNS, entry 4
+the dotted quad). Preceded by `("ACCOUNTID", re.compile(r"\b\d{12}\b")),`; followed by the IPv6 comment.
 EC2 and pod DNS: one group (the dashed address), as today; dotted: no group.
 ```python
     # An EC2 private DNS name carries the address with dashes: ip-10-0-3-22(.region.compute.internal).
@@ -511,7 +636,9 @@ comment block.
 Entries 6 to 8, PHONE. Preceded by the PHONE comment block (472-490, unchanged, ending `#     still masked.`). Entry 6 is NEW and
 sits directly BEFORE the main PHONE tuple (491-498, unchanged); entries 7 and 8 are NEW and sit directly AFTER it; the tuple after
 entry 8 is the SECRET entry preceded by `# password=..., secret: ...`. Entries 6 and 7: no group. Entry 8: `(?i)`, group 1 is the
-value (the keyword stays in the text).
+value (the keyword stays in the text). CHANGED in v4: entry 6 gets `(?!\d{4}-\d\d-\d\d)` right after `\+` (N4) and a comment
+line, and `ruff format` now wraps it into the three-line tuple form; entry 7's end class gets `›` (M2) and its comment says
+why. The main PHONE tuple between them is unchanged and has no entry number.
 ```python
     #     still masked.
     # (G8) A number that starts with `+`, BEFORE the main entry (which would leave `<PHONE_1> 1234a`): a letter or `_` may
@@ -550,8 +677,15 @@ value (the keyword stays in the text).
     ),
     # password=..., secret: ..., aws_secret_access_key="...": the value after a credential-ish key.
 ```
-Entry 6 read in parts: a `+` with no digit, `.` or `-` before (a letter or `_` may stand before it), then the main entry's
-body with its date guard, and the end `(?![0-9.])` (a letter or `_` may follow, a digit or `.` may not). It has no compact
+Entry 6 read in parts: a `+` with no digit, `.` or `-` before (a letter or `_` may stand before it), then (CHANGED in v4, N4)
+no ISO date right after the `+`, then the main entry's body with its date guard, and the end `(?![0-9.])` (a letter or `_` may
+follow, a digit or `.` may not). Without the guard after `+`, v3 read `x+2026-11-20T10:00:00Z` as `x<PHONE_1>T10:00:00Z`
+(the body's guard is checked only from the second digit on); the main entry has the same blind spot after `+` but refuses a
+letter before it, so on the base only `at +2026-11-20 10:00` (a space before `+`) is masked, and that stays as it is (2.3).
+Entry 7 (CHANGED in v4, M2): `›` joins `>` in the end class. `redact_untrusted` escapes a placeholder-shaped literal
+`<TENANT_4155550132>` to `‹TENANT_4155550132›` BEFORE the patterns run (runmap.py `neutralise_untrusted`), so v3's `>` guard
+never saw it there and entry 7 wrote `‹TENANT_<PHONE_1>›` and a PHONE map entry (MEASURED). `‹` before needs no guard: the
+start of entry 7 is `_` or a digit run followed by `_`. It has no compact
 timestamp guard: a 14-digit timestamp never starts with `+`. v2's branch A (10 digits, no run of 5, no `+`) is dropped (L-D9
 flipped, F6): it closed none of the probe rows and only K72, and cost K34, K70, K71. Cost bound: every repeat is bounded
 (`{8,14}`, `{10,16}`); the start guards allow at most one start per `+` or digit.
@@ -593,10 +727,12 @@ the edited E test (appendix E); stated in model_gate.py's docstring. `_JOINS` ho
 ```
 A value glued to a letter or `_` is masked with the glued text left outside the placeholder (`node_<IPV4_1>`, `<UUID_1>x`):
 an e-mail address, an IPv4 address, a UUID, a phone number that starts with `+`, a contiguous one beside `_` or straight
-after a phone word, and an IBAN beside `_` (G8). A contiguous digit run glued to a letter is not read as a phone number
-(hashes and identifiers), and a letter or digit glued before an IBAN, or a digit before an address, is not read as one.
+after a phone word, and an IBAN beside `_` after a short word (`iban_DE89...`; not inside a longer token) (G8).
+A contiguous digit run glued to a letter is not read as a phone number (hashes and identifiers), and a letter or digit
+glued before an IBAN, or a digit before an address, is not read as one.
 A copy of a known phone number is swept where a letter or `_` touches it (not a digit).
 ```
+(CHANGED in v4: the IBAN clause, M1.)
 CHANGED in v4 (M3): place, in G4 v5's words: after the "What this is not" paragraph (which ends with the "(A re-scan inside
 redact() ...)" sentence, redact.py 21-25), before the closing `"""`. G4 v5 section 6 adds its bare-number paragraph and base64
 sentence AFTER this G8 paragraph; under the default order (G8 first) the G4 builder places them (textual merge only). G4 v5's
@@ -605,8 +741,9 @@ entries 6-8 here). runmap.py `enforce_map` docstring 699 and 718, model_gate.py 
 
 ### 4.4 What stays as it is
 `_sub_glued` stays EMAIL only (rows 74, 75, 77 are masked by plain `sub`); rows 13 and 76 (two values of one kind with nothing
-between) cannot be split by a boundary rule (L2, L5). The settle loop is untouched. Placeholders: entry 7 refuses `>` after and
-every new start refuses a digit before, so a placeholder number is never re-masked (K64).
+between) cannot be split by a boundary rule (L2, L5). The settle loop is untouched. Placeholders: entry 7 refuses `>` and
+(CHANGED in v4, M2) `›` after, and every new start refuses a digit before, so a placeholder number is never re-masked, written
+`<KIND_n>` (K64) or escaped `‹KIND_n›` by `redact_untrusted` (U1, U2).
 
 ### 4.5 HOSTNAME under G4c (re-measured with G4 v4 sections 5.2 and 5.3, blob a029802bd1f3; F5, readiness Major 1)
 G4 v4's `_HOST_LABEL`, `_HOST_DOT`, `_HOST_BARE`, `_HOST_TAIL`, HOSTNAME and HOSTKEY, compiled as written there and put in place
@@ -650,7 +787,7 @@ A changed probe row is a finding, reported, not edited away.
 | L-D9 (v3: default flipped, F6) | a phone without `+`, in groups, with a letter or `_` after | NOT masked: entry 6 is `+`-led only | K72 `415-555-0132x123` readable as today; K34, K70, K71 as today; the probe counts do not change (no probe row needs it; measured: v2h vs v3camel differ only in K34, K70, K71, K72 and row 75) | v2's branch A (10 digits, no run of 5) | K72 closed; K34, K71 grow, K70 over-masked (measured on `v2h`) |
 | L-D10 | a contiguous 10-16 digit run glued to `_` (entry 7) | masked | rows 26, 29, 30 closed; K26, K54-K60 over-masked, stored as PHONE | cut entry 7, let entry 8 take `tel_` | rows 26, 30 limits (not run) |
 | L-D11 | an SSN-shaped value glued to a letter | not taken as PHONE, except `+123-45-6789x` (K78, stored as PHONE) | `ssn 123-45-6789a` readable as today (L8, K73) | SSN-safe lookahead `(?!\+?\d{3}-\d{2}-\d{4}(?!\d))` in entry 6 | K78 readable as today (not run) |
-| L-D12 (new, F6 / L9) | a grouped card number glued to a letter or `_` | masked whole as CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` | K36 `x<CREDITCARD_1>`, K74 `card <CREDITCARD_1>x`, K80 `card_<CREDITCARD_1>_x`; the 12 digits no longer go to the map at rest as PHONE (CREDITCARD is a SECRET kind, never stored); measured on a variant against v2's 156 data rows (80 + 74 + 2): only K36 and K74 change; K80 added in v3 | keep `\b` (L9 stays a limit) | one group of the card readable, 12 digits stored as PHONE (today's behaviour) |
+| L-D12 (new, F6 / L9) | a grouped card number glued to a letter or `_` | masked whole as CREDITCARD: start `(?<![0-9])`, end `(?![0-9])` | K36 `x<CREDITCARD_1>`, K74 `card <CREDITCARD_1>x`, K80 `card_<CREDITCARD_1>_x`; the 12 digits no longer go to the map at rest as PHONE (CREDITCARD is a SECRET kind, never stored); measured on a variant against v2's 156 data rows (80 + 74 + 2): only K36 and K74 change; K80 added in v3. CHANGED in v4 (N1): the over-mask is measured and pinned: AT7 `ORD1234-5678-9012-3456` -> `ORD<CREDITCARD_1>` (and `INV_1234-5678-9012-3456_x` -> `INV_<CREDITCARD_1>_x`, 2.3): an order or invoice number in four groups of four glued to letters is masked as a card and, CREDITCARD being a SECRET kind, is not storable (evidence lost after the run, no leak) | keep `\b` (L9 stays a limit) | one group of the card readable, 12 digits stored as PHONE (today's behaviour) |
 | L-D13 (new, F6 / L7; ASK THE LEAD) | a phone number directly before a full stop (`call 415-555-0132.`) | unchanged: not masked (L7, F1-F3 pinned) | a phone at the end of a sentence leaks, as today | end guard `(?![0-9]|\.\d)` in entry 6 and the main entry | F1-F3 masked; measured over-masks: `build 1234567890.tar` -> `build <PHONE_1>.tar`, `pid 4155550132.log`, `at 1732095071. done` (an epoch); `ts 1732095071.123` and `v 415-555-0132.5` stay (variant `v3fs`; v2's 80 rows and 74 must-keep rows otherwise identical). The default is not G8's to change: not glued, and the fallback trades evidence for a common leak |
 | L-D14 (new, F6 / L11) | a piece of a secret with a stored kind's shape (AT1-AT3) | not fixed in G8; pinned (AT1-AT4); a follow-up ticket (owner core-c) | a password like `hunter192.0.2.10x` leaves `192.0.2.10` in the map at rest (as `a-192.0.2.10-b` does today) | in G8: `runmap.storable` refuses an original that is a substring of a SECRET-kind original of the same map | AT1-AT4 storable empty; not built, not measured |
 
