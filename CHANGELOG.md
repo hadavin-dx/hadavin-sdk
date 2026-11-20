@@ -219,6 +219,14 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+### Added (audit drain)
+- **Parked audit events are now written.** A new tick step `audit_drain` (the last step) writes the events that wait in
+  the `audit_outbox` table into the audit chain; before, nothing in the package did this. A running process also
+  writes its own memory-parked events at its next successful audit write. An outbox row that cannot be read is kept,
+  the rows after it are still written, and the step fails with a count (no row text). A missing grant or table on the
+  outbox now fails the step instead of looking like "nothing to do". No migration, no new setting.
+- **Stated limits** are in `SECURITY.md` ("What the core does and does not guarantee in pilot and prod").
+
 ### Added
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.

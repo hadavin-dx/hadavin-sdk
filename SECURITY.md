@@ -6,6 +6,19 @@ details, and a private channel will be arranged. Do not post vulnerability detai
 
 Reports are answered within 5 working days.
 
+## What the core does and does not guarantee in pilot and prod (this round)
+
+**Audit (stated limits).** The audit log is eventual, not instant. An event that could not be written to the audit
+chain is parked in the outbox table and written by the next tick (step `audit_drain`). An event parked only in a
+process's memory (the database was down for the outbox as well) is written at that process's next successful audit
+write, and is lost if the process exits first. The eval and replay commands do not write to the chain.
+
+**Not guaranteed by the core this round.** In pilot and prod the approved write is performed by the client's own tool
+(for example n8n or the CRM) with its own credential, not by the core. For that write the core therefore does NOT
+guarantee: that the write matches the plan that was shown; that the named approver approved it; that it happened
+exactly once; that the stop switch halts it; that it appears in the core's audit log. These belong to the client's
+tool and its own log. Nothing in this package's texts may claim otherwise.
+
 ## Stated limits of redaction (reviewed, not bugs)
 
 Redaction is pattern based and treats the end of a value the way the redactor's own value pattern does. Two consequences are known and stated:

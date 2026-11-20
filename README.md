@@ -55,4 +55,6 @@ does not grant any licence to use it.
 
 ## Security
 
+What the core guarantees in pilot and prod, and what it leaves to the client's own tool, is stated in `SECURITY.md`.
+
 See [SECURITY.md](SECURITY.md).
