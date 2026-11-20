@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T09:48:22Z
+UPDATED_UTC: 2026-11-20T09:48:50Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 6.5 of 4 cores, mem 1/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
+CAPACITY: load 6.6 of 4 cores, mem 2/15 GB, disk 57G free, 18% used, light agents 8, heavy agents 0
 DISK: / 57G free, 18% used; git worktrees 20; 1.3G	/tmp/claude-0;280M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
-NEXT: LIVE only (7). G7 round 6 landed 9d8bc580a; fresh result reviews of round 6 and merged-tree batch 5 start now. ORDER 023: E9(1)(3) done, E9(2) building, E10 ticket G9 drafting then plan review round 1, E11 ticket G10 + split running, E12 Q9 builder, Q16 done.
-PUSHED_UTC: 2026-11-20T09:48:16+00:00
+NEXT: LIVE only (8 agents). HEAVY BATCHES RUNNING NOW: 2 (the Q9 mutant run and the E9 fix-round pytest -n 3); everything else is model work. No further batch starts until one ends (lead rule: at most 2 at once, -n 3 or less). Load 6.8 at 09:48Z (mutant run 93 percent of one core + xdist).
+PUSHED_UTC: 2026-11-20T09:48:23+00:00
 
 (15:18 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
@@ -33,7 +33,8 @@ PUSHED_UTC: 2026-11-20T09:48:16+00:00
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 4036 | postgres (defunct zombie) | agent a5098f29 | 05:30 | defunct | left by the stopped test server; holds no resources; not killed by pattern |
+| textnorm_mutants.py (Q9 builder, worktree /tmp/core-c-q9) | running 5 min | one mutant runner, 1 pytest at a time | heavy batch 1 of 2 |
+| pytest -n 3 not perf: own-output/context/settle files (E9 fix-round builder) | running 75 s | timeout 1200 | heavy batch 2 of 2 |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
