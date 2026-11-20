@@ -3036,3 +3036,16 @@ def test_g13b_5_the_stated_limits_a_base64_copy_and_a_nul_split_identifier_are_s
     assert _g13_outcome(bound, [{"role": "user", "content": f"a {split} b"}]) == "sent", (
         "G13b-5 a NUL-split identifier was refused"
     )
+
+
+def test_r15_the_sweep_is_given_the_calls_deadline_so_a_deadline_that_passes_after_the_snapshot_stops_it(
+    monkeypatch,
+):
+    """R15 (design M2): the snapshot builds its patterns under the budget; the call's CPU deadline then passes (set in the past
+    on the snapshot's budget) and ONLY the sweep itself can refuse, because `EnforceBudget.check` is off: `enforce_map` must give
+    the sweep `budget.cpu_deadline`, so the text that holds a known value is refused with `InputTooLarge` and nothing is returned."""
+    monkeypatch.setattr(runmap.EnforceBudget, "check", lambda self: None)
+    snap = runmap.snapshot(runmap.RunMap({"<IPV4_1>": IP}))
+    snap.budget.cpu_deadline = -1.0  # any thread_time() value is later than this
+    with pytest.raises(runmap.InputTooLarge):
+        runmap.enforce_map(f"host {IP} and more text", snap)
