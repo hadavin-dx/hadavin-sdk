@@ -41,6 +41,15 @@ LIMITS = {
     90: "L4",
     91: "L4",
     92: "L4",
+    93: "L4",  # v6: rows 93-96 (G8-review-5-design N2)
+    94: "L4",
+    95: "L4",
+    96: "L4",
+    97: "L14",  # v6: rows 97-99 (design M2)
+    98: "L14",
+    99: "L14",
+    100: "L3",  # v6: rows 100, 101 (design N4)
+    101: "L3",
     85: "L10",
     86: "L10",
 }
@@ -144,7 +153,8 @@ def test_an_iban_never_starts_inside_an_opaque_token(k):
 @pytest.mark.parametrize("aid,text,now,after", [pytest.param(*a, id=a[0]) for a in G.AT_REST])
 def test_at_rest_rows(aid, text, now, after):
     """G8-review-2 F6: what `redact()` writes to the map and what `runmap.storable` keeps of it. AT1-AT3 pin limit L11 (a
-    piece of a secret with a stored kind's shape is stored), AT5 and AT6 the IBAN start's effect on stored originals."""
+    piece of a secret with a stored kind's shape is stored), AT5 and AT6 the IBAN start's effect on stored originals,
+    AT8 and AT9 a contiguous card number stored as PHONE (v6)."""
     r = redact(text)
     got = (r.text, sorted(r.mapping.items()), sorted(runmap.storable(dict(r.mapping)).items()))
     assert got == (after or now), f"AT {aid}: {got!r}"
@@ -251,16 +261,16 @@ def test_row_counts_are_pinned():
     from collections import Counter
 
     assert (
-        len(G.CASES) == 92
+        len(G.CASES) == 101
         and len(G.KEEP) == 84
         and len(G.FULL_STOP) == 4
-        and len(G.AT_REST) == 7
+        and len(G.AT_REST) == 9
         and len(G.UNTRUSTED) == 2
     )
     assert Counter(c["cls"] for c in G.CASES) == {
         "closed": 48,
         "unchanged": 15,
-        "limit": 24,
+        "limit": 33,
         "changed": 3,
         "g4c": 2,
     }
