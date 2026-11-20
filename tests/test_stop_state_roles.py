@@ -65,10 +65,10 @@ class World:
         self.dsn = os.environ["HADAVIN_TEST_PG_DSN"]
         self.schema = f"sb_s_{sfx}"
         self.schemas = [self.schema]
-        self.runtime, self.portal, self.purge, self.reset = (
-            f"sb_{n}_{sfx}" for n in ("rt", "po", "pu", "rs")
+        self.runtime, self.portal, self.purge, self.reset, self.caps = (
+            f"sb_{n}_{sfx}" for n in ("rt", "po", "pu", "rs", "cp")
         )
-        self.roles = [self.runtime, self.portal, self.purge, self.reset]
+        self.roles = [self.runtime, self.portal, self.purge, self.reset, self.caps]
         self.scoped = self.scope(self.schema)
         self.stores = []
 
@@ -90,15 +90,17 @@ class World:
             "portal_role": self.portal,
             "purge_role": self.purge,
             "reset_role": self.reset,
+            "caps_role": self.caps,
         }
         return migrate(self.scoped, **{**roles, **kw})
 
     def store(self, role, scoped=None):
         """A store whose one connection is logged in as `role` (proven, not assumed)."""
         settings = PostgresSettings(**SETTINGS)
-        if (
-            role == self.reset
-        ):  # the CLI marks the reset login (E6): it is not held to the runtime's rights
+        if role in (
+            self.reset,
+            self.caps,
+        ):  # the CLI marks the reset and caps logins (E6): not held to the runtime's rights
             settings._login_role = "reset"
         s = make("store", settings, FakeSecretProvider({"pg-dsn": self.dsn_of(role, scoped)}))
         self.stores.append(s)
@@ -1757,6 +1759,8 @@ def test_cli_migrate_a_fully_broken_stdout_never_changes_the_exit_code(
         w.purge,
         "--portal-role",
         w.portal,
+        "--caps-role",
+        w.caps,
         "--accept-admin-role",
         vouched,
     ]
@@ -1790,6 +1794,8 @@ def test_cli_migrate_prints_the_accepted_admin_roles_when_it_refuses_too(
         w.purge,
         "--portal-role",
         w.portal,
+        "--caps-role",
+        w.caps,
     ]
     assert cli.main([*argv, "--accept-admin-role", vouched]) == 2
     captured = capsys.readouterr()
@@ -1944,6 +1950,7 @@ def test_s2_migrate_naming_only_the_runtime_role_refuses_the_reset_role_of_an_ea
         w.reset,
         w.portal,
         w.purge,
+        w.caps,
     ):  # else the money check (an unnamed executor) refuses first
         w.grant("REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA {} FROM {}", w.schema, role)
     names = _refused_naming(w, w.reset, lambda: migrate(w.scoped, runtime_role=w.runtime))

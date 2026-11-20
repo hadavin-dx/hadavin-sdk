@@ -130,7 +130,7 @@ def _main(argv: list[str] | None = None) -> int:
             "--by", required=True
         )
     sc_p = lim_sub.add_parser(
-        "set-cap", help="write the day and month spend cap of one agent (reset login, audited)"
+        "set-cap", help="write the day and month spend cap of one agent (caps login, audited)"
     )
     sc_p.add_argument("agent")
     sc_p.add_argument("--day", required=True, type=_cap, help="the daily cap in USD, 0 or more")
@@ -141,7 +141,7 @@ def _main(argv: list[str] | None = None) -> int:
     )
     sy_p = lim_sub.add_parser(
         "sync-caps",
-        help="write the registry caps of every live and draft agent into the caps table (reset login, audited)",
+        help="write the registry caps of every live and draft agent into the caps table (caps login, audited)",
     )
     sy_p.add_argument("--by", required=True)
     sy_p.add_argument(
@@ -179,6 +179,10 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument(
         "--reset-role",
         help="grant this database role the kill switch reset (clear stops, write the reset to the audit) and nothing else",
+    )
+    mig.add_argument(
+        "--caps-role",
+        help="grant this database role the spend caps (set a cap, compare one, write the change to the audit) and nothing else; its own login, never the reset role's",
     )
     mig.add_argument(
         "--accept-admin-role",
@@ -240,6 +244,7 @@ def _main(argv: list[str] | None = None) -> int:
             args.release_role,
             args.no_roles,
             tuple(args.accept_admin_role),
+            args.caps_role,
             tuple(args.accept_changed_draft),
             args.reset_draft,
         )
@@ -247,7 +252,7 @@ def _main(argv: list[str] | None = None) -> int:
         return release_expired_cmd(cfg, args.agent, args.day, args.by)
     if (
         args.cmd == "limits" and args.action in _CAP_ACTIONS
-    ):  # reset login only, never the kill switch
+    ):  # caps login only, never the kill switch
         return caps_cmd(cfg, args)
     reg = load_registry(cfg)
     if args.cmd in (
@@ -497,6 +502,7 @@ def _migrate(
     release_role: str | None = None,
     no_roles: bool = False,
     accepted_admin_roles: tuple[str, ...] = (),
+    caps_role: str | None = None,
     accept_changed_draft: tuple[str, ...] = (),
     reset_draft: str | None = None,
 ) -> int:
@@ -511,7 +517,9 @@ def _migrate(
     if not dsn:
         print("refused: set HADAVIN_MIGRATE_DSN to the migration role's DSN", file=sys.stderr)
         return 2
-    if not no_roles and not any((runtime_role, portal_role, purge_role, reset_role, release_role)):
+    if not no_roles and not any(
+        (runtime_role, portal_role, purge_role, reset_role, release_role, caps_role)
+    ):
         print(
             "refused: no role is named, so the check of who could clear a stop would be skipped; name the "
             "roles (--runtime-role ... --reset-role) in ONE command, or pass --no-roles to apply the schema only",
@@ -531,6 +539,7 @@ def _migrate(
             purge_role=purge_role,
             reset_role=reset_role,
             release_role=release_role,
+            caps_role=caps_role,
             no_roles=no_roles,
             accepted_admin_roles=accepted_admin_roles,
             accept_changed_draft=accept_changed_draft,
@@ -555,6 +564,12 @@ def _migrate(
         print(
             "warning: no reset role was named, so nobody but the owner can reset the kill switch; run again "
             "with --reset-role <role>",
+            file=sys.stderr,
+        )
+    if runtime_role and not caps_role:
+        print(
+            "warning: no caps role was named, so nobody but the owner can set a spend cap; run again with "
+            "--caps-role <role>",
             file=sys.stderr,
         )
     return 0
@@ -735,8 +750,8 @@ _CAP_ACTIONS = ("set-cap", "sync-caps", "check-caps")
 
 def _caps_refusals(cfg, what: str) -> int | None:
     """The refusals of the three cap commands that need no connection (nothing was changed): the postgres store,
-    a `reset_credential_ref` (in every environment: the runtime login cannot write a cap, so there is no fallback
-    to it), a plain name that is not the runtime, purge or release secret. 2 when refused, else None."""
+    a `caps_credential_ref` (in every environment: the runtime login cannot write a cap, so there is no fallback
+    to it), a plain name that is not the runtime, purge, release or reset secret. 2 when refused, else None."""
     b = cfg.backends
     if b.store.kind != "postgres":
         print(
@@ -745,11 +760,11 @@ def _caps_refusals(cfg, what: str) -> int | None:
             file=sys.stderr,
         )
         return 2
-    ref = getattr(b.store, "reset_credential_ref", None)
+    ref = getattr(b.store, "caps_credential_ref", None)
     if not ref:
         print(
-            f"refused: {what} needs the reset role's login, in every environment. Create the reset role, run "
-            "hadavin-sdk migrate --reset-role <role>, then set backends.store.reset_credential_ref to the name "
+            f"refused: {what} needs the caps role's login, in every environment. Create the caps role, run "
+            "hadavin-sdk migrate --caps-role <role>, then set backends.store.caps_credential_ref to the name "
             "of the secret that holds its DSN. Nothing was changed.",
             file=sys.stderr,
         )
@@ -760,12 +775,13 @@ def _caps_refusals(cfg, what: str) -> int | None:
             getattr(b.store, "dsn_secret_name", None),
             getattr(b.store, "purge_dsn_secret_name", None),
             getattr(b.store, "release_credential_ref", None),
+            getattr(b.store, "reset_credential_ref", None),
         )
         if n
     ]
     if path_form_problem(ref, _file_backed(b)):
         print(
-            "refused: backends.store.reset_credential_ref is a path-shaped name (a '.' or '..' segment, or for a "
+            "refused: backends.store.caps_credential_ref is a path-shaped name (a '.' or '..' segment, or for a "
             "mounted_file folder a leading or trailing '/'), which cannot be compared with the other logins. "
             "Write a plain secret name. Nothing was changed.",
             file=sys.stderr,
@@ -773,8 +789,8 @@ def _caps_refusals(cfg, what: str) -> int | None:
         return 2
     if collides(ref, others_names, file_backed=_file_backed(b)):
         print(
-            "refused: backends.store.reset_credential_ref names the same secret as the runtime, purge or release "
-            "login. Point it at the secret that holds the reset role's own DSN. Nothing was changed.",
+            "refused: backends.store.caps_credential_ref names the same secret as the runtime, purge, release or reset "
+            "login. Point it at the secret that holds the caps role's own DSN. Nothing was changed.",
             file=sys.stderr,
         )
         return 2
@@ -782,16 +798,17 @@ def _caps_refusals(cfg, what: str) -> int | None:
 
 
 def _caps_login(cfg, what: str):
-    """The store and the audit of the RESET login for the three cap commands, or the exit code (an int) when the
+    """The store and the audit of the CAPS login for the three cap commands, or the exit code (an int) when the
     command is refused (`_caps_refusals` ran before). Returns `(store, audit_or_None)`."""
     b = cfg.backends
-    ref = b.store.reset_credential_ref
+    ref = b.store.caps_credential_ref
     others_names = [
         n
         for n in (
             getattr(b.store, "dsn_secret_name", None),
             getattr(b.store, "purge_dsn_secret_name", None),
             getattr(b.store, "release_credential_ref", None),
+            getattr(b.store, "reset_credential_ref", None),
         )
         if n
     ]
@@ -799,20 +816,16 @@ def _caps_login(cfg, what: str):
         secrets = make("secrets", b.secrets)
         if _same_login(secrets, ref, others_names):
             print(
-                "refused: backends.store.reset_credential_ref holds the same login as the runtime, purge or "
-                "release secret (two names, one DSN). Point it at the secret that holds the reset role's own "
+                "refused: backends.store.caps_credential_ref holds the same login as the runtime, purge, release or "
+                "reset secret (two names, one DSN). Point it at the secret that holds the caps role's own "
                 "DSN. Nothing was changed.",
                 file=sys.stderr,
             )
             return 2
-        as_reset = b.store.model_copy(
-            update={"dsn_secret_name": ref, "purge_dsn_secret_name": None}
-        )
-        platform_secrets.check(secrets, [as_reset, b.audit], set())
-        as_reset._login_role = (
-            "reset"  # the reset login is not held to the runtime's rights at start
-        )
-        store = make("store", as_reset, secrets)
+        as_caps = b.store.model_copy(update={"dsn_secret_name": ref, "purge_dsn_secret_name": None})
+        platform_secrets.check(secrets, [as_caps, b.audit], set())
+        as_caps._login_role = "reset"  # the caps login, like the reset login, is not held to the runtime's rights at start
+        store = make("store", as_caps, secrets)
         audit = (
             None
             if what == "limits check-caps"  # read-only: no audit line
@@ -870,8 +883,8 @@ def _set_one_cap(store, audit, agent: str, day: Decimal, month: Decimal, by: str
             print(f"cap of {agent} NOT set: the store is unreachable.", file=sys.stderr)
             return 4
         print(
-            f"cap of {agent} NOT set ({type(exc).__name__}). Is this the reset role's login "
-            "(hadavin-sdk migrate --reset-role)? Nothing was changed for this agent.",
+            f"cap of {agent} NOT set ({type(exc).__name__}). Is this the caps role's login "
+            "(hadavin-sdk migrate --caps-role)? Nothing was changed for this agent.",
             file=sys.stderr,
         )
         return 2
@@ -901,7 +914,7 @@ def _confirm(args, what: str) -> bool:
 
 def caps_cmd(cfg, args) -> int:
     """`limits set-cap`, `limits sync-caps`, `limits check-caps`: the spend caps live in a table the runtime login
-    cannot write (migration 0011); these commands run under the reset login. Own function, own exit codes,
+    cannot write (migration 0011); these commands run under the caps login. Own function, own exit codes,
     nothing shared with `kill_switch`: 0 done (check-caps: every cap matches); 1 check-caps found a difference or a
     missing row; 2 refused; 3 the audit store is unavailable (nothing changed); 4 the store is unreachable; 5 set,
     but an outcome row could not be audited. Refusals come before any connection."""
@@ -957,7 +970,7 @@ def caps_cmd(cfg, args) -> int:
             return 4
         print(
             f"{what}: the store answered with an error ({type(exc).__name__}); run hadavin-sdk migrate and check "
-            "the reset role's grants. Nothing was changed.",
+            "the caps role's grants. Nothing was changed.",
             file=sys.stderr,
         )
         return 2

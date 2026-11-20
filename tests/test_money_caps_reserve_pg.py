@@ -114,7 +114,7 @@ def caps_battery(w):
 def _cap_function_battery(w):
     """`hadavin_set_cap` (an upsert that overwrites BOTH caps) and `hadavin_cap_matches` (same only when BOTH caps
     are equal, differs otherwise, missing without a row)."""
-    rs, rt = w.store(w.reset), w.store(w.runtime)
+    rs, rt = w.store(w.caps), w.store(w.runtime)
     assert rt.cap_matches("cm-agent", D("3"), D("30")) == "missing"
     rs.set_cap("cm-agent", D("3"), D("30"), "user:op")
     assert rt.cap_matches("cm-agent", D("3"), D("30")) == "same"

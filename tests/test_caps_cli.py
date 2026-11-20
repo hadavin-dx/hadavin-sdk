@@ -75,7 +75,7 @@ def _config(tmp_path, ref=REF, store=None, agents=EXTRA):
 
     def conf(d):
         d["backends"]["store"] = (
-            dict(SETTINGS) | ({"reset_credential_ref": ref} if ref else {}) | (store or {})
+            dict(SETTINGS) | ({"caps_credential_ref": ref} if ref else {}) | (store or {})
         )
         d["backends"]["audit"] = {"kind": "chain"}
 
@@ -121,7 +121,7 @@ class Spy:
 
 @pytest.fixture(name="spy")
 def spy_fixture(w, monkeypatch):
-    return Spy(w, monkeypatch, {"pg-dsn": w.dsn_of(w.runtime), REF: w.dsn_of(w.reset)})
+    return Spy(w, monkeypatch, {"pg-dsn": w.dsn_of(w.runtime), REF: w.dsn_of(w.caps)})
 
 
 def _run(cfg, *args):
@@ -166,35 +166,55 @@ def test_a_missing_reset_ref_is_refused_before_any_connection_in_every_environme
     cfg = _config(tmp_path, ref=None)  # environment: demo
     assert _run(cfg, *ARGS[command]) == 2
     err = capsys.readouterr().err
-    assert "reset_credential_ref" in err and "migrate --reset-role" in err
+    assert "caps_credential_ref" in err and "migrate --caps-role" in err
     assert not spy.connected and _table(w) == {}
 
 
 @pytest.mark.parametrize("command", ARGS)
 @pytest.mark.parametrize(
-    "case", ["same name", "same value", "path form", "purge name", "purge value", "release name"]
+    "case",
+    [
+        "same name",
+        "same value",
+        "path form",
+        "purge name",
+        "purge value",
+        "release name",
+        "reset name",
+        "reset value",
+    ],
 )
-def test_a_reset_ref_that_collides_with_a_runtime_secret_or_login_is_refused(
+def test_a_caps_ref_that_collides_with_another_secret_or_login_is_refused(
     w, tmp_path, spy, capsys, command, case
 ):
     store = {}
     if case == "same name":
-        store = {"reset_credential_ref": "pg-dsn"}
+        store = {"caps_credential_ref": "pg-dsn"}
     elif case == "path form":
-        store = {"reset_credential_ref": "a/../reset"}
+        store = {"caps_credential_ref": "a/../reset"}
     elif case == "purge name":
         store = {"purge_dsn_secret_name": REF}
     elif case == "purge value":
         store = {"purge_dsn_secret_name": "pg-purge"}
-        spy.held["pg-purge"] = w.dsn_of(w.reset)
+        spy.held["pg-purge"] = w.dsn_of(w.caps)
     elif case == "release name":
         store = {"release_credential_ref": REF}
+    elif case == "reset name":
+        store = {"reset_credential_ref": REF}
+    elif case == "reset value":
+        store = {"reset_credential_ref": "pg-reset"}
+        spy.held["pg-reset"] = w.dsn_of(w.caps)
     elif case == "same value":
         spy.held[REF] = w.dsn_of(w.runtime)  # two names, one login
     cfg = _config(tmp_path, store=store)
     assert _run(cfg, *ARGS[command]) == 2
     err = capsys.readouterr().err
-    assert "reset_credential_ref" in err and "Traceback" not in err
+    assert "caps_credential_ref" in err and "Traceback" not in err
+    # a name clash is refused by NAME, before any secret is read; two names with one DSN by VALUE
+    want = {"path form": "path-shaped"}.get(
+        case, "same login" if case.endswith("value") else "same secret"
+    )
+    assert want in err
     assert "postgresql://" not in err and w.runtime not in err  # no value in a message
     assert "store" not in spy.made and _table(w) == {}
 

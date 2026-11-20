@@ -191,10 +191,11 @@ def build(
             # The reset login is never read by this process; a sender must not carry its name all the same.
             {getattr(b.store, "reset_credential_ref", None)} - {None},
             {getattr(b.store, "release_credential_ref", None)} - {None},
+            {getattr(b.store, "caps_credential_ref", None)} - {None},
         ),
         file_backed=file_backed,
     )
-    # The reset and release logins are read only by their own commands, never by this process: NO secret name the
+    # The reset, release and caps logins are read only by their own commands, never by this process: NO secret name the
     # runtime reads (tool, source, executor, restored-hash key, any backend, sender) may be, or fold to, either.
     runtime_names = set().union(
         extra_secret_names,
@@ -202,7 +203,7 @@ def build(
         *(platform_secrets.secret_names(s) for _, s in b.entries()),
         *(set(names) for names in sender_names.values()),
     )
-    for ref_field in ("release_credential_ref", "reset_credential_ref"):
+    for ref_field in ("release_credential_ref", "reset_credential_ref", "caps_credential_ref"):
         ref = getattr(b.store, ref_field, None)
         if ref and path_form_problem(ref, file_backed):
             raise ConfigError(

@@ -68,7 +68,7 @@ def caps_world():
 
 
 def _seed(w, agent, daily, monthly):
-    w.store(w.reset).set_cap(agent, D(daily), D(monthly), "user:op")
+    w.store(w.caps).set_cap(agent, D(daily), D(monthly), "user:op")
 
 
 def test_the_step_is_registered_and_appended_last():

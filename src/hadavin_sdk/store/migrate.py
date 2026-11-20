@@ -51,6 +51,9 @@ class Grant:
     # Table-level privileges of the release role (0008): it releases expired spend holds through ONE function and
     # appends to the audit; it holds no right on any money table.
     release: str = ""
+    # Table-level privileges of the caps role (`migrate --caps-role`): the only identity that may run `hadavin_set_cap`.
+    # It appends to the audit (the cap change is audited as an intent and an outcome) and holds nothing on any money table.
+    caps: str = ""
 
 
 @dataclass(frozen=True)
@@ -62,6 +65,7 @@ class FunctionGrant:
     release: bool = False
     reset: bool = False
     portal: bool = False
+    caps: bool = False
 
 
 _RW = "SELECT, INSERT, UPDATE"
@@ -94,8 +98,12 @@ GRANTS: dict[str, Grant] = {
     "kill_switch_resets": Grant("table", "", reset=_APPEND),
     "kill_switch_watermark": Grant("table", "SELECT", reset="SELECT, INSERT, UPDATE"),
     "tick_state": Grant("table", _RW),
-    "audit_entries": Grant("table", _APPEND, portal=True, reset=_APPEND, release=_APPEND),
-    "audit_checkpoints": Grant("table", _APPEND, portal=True, reset="SELECT", release="SELECT"),
+    "audit_entries": Grant(
+        "table", _APPEND, portal=True, reset=_APPEND, release=_APPEND, caps=_APPEND
+    ),
+    "audit_checkpoints": Grant(
+        "table", _APPEND, portal=True, reset="SELECT", release="SELECT", caps="SELECT"
+    ),
     "audit_outbox": Grant("table", "SELECT, INSERT, DELETE"),
     # K5-core: append and purge only (no UPDATE); `redaction_maps` is never portal-readable.
     # The runtime role appends and reads evidence; only the purge role (its own identity) deletes it.
@@ -134,17 +142,17 @@ MONEY_FUNCTIONS = (
     "hadavin_cap_matches(text, numeric, numeric)",
 )
 # Who may EXECUTE each callable function of ours: the runtime books, settles, expires and adds; the purge role
-# purges; the release role (0008) releases; the reset role sets caps and compares them (step 6). The portal role runs none. Every other role, PUBLIC included,
-# is refused.
+# purges; the release role (0008) releases; the caps role (M4, one identity per function) sets caps and compares them
+# (step 6); the reset role runs none of them. The portal role runs none. Every other role, PUBLIC included, is refused.
 FUNCTION_GRANTS: dict[str, FunctionGrant] = {
     MONEY_FUNCTIONS[0]: FunctionGrant(runtime=True),
     MONEY_FUNCTIONS[1]: FunctionGrant(runtime=True),
     MONEY_FUNCTIONS[2]: FunctionGrant(runtime=True),
     MONEY_FUNCTIONS[3]: FunctionGrant(purge=True),
     MONEY_FUNCTIONS[4]: FunctionGrant(runtime=True),
-    # Step 6: only the reset role sets a cap; the runtime (tick check) and the reset role compare one.
-    MONEY_FUNCTIONS[5]: FunctionGrant(reset=True),
-    MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, reset=True),
+    # Step 6 / M4: only the caps role sets a cap; the runtime (tick check) and the caps role compare one.
+    MONEY_FUNCTIONS[5]: FunctionGrant(caps=True),
+    MONEY_FUNCTIONS[6]: FunctionGrant(runtime=True, caps=True),
     RELEASE_FUNCTION: FunctionGrant(release=True),
 }
 # Trigger functions need no EXECUTE grant (the trigger runs them); every other hadavin_* function must be mapped.
@@ -736,6 +744,37 @@ def check_role_settings(db, named: list[str]) -> list[str]:
     return changes
 
 
+def check_isolation_settings(db, named: list[str]) -> list[str]:
+    """Role, database and server defaults of `default_transaction_isolation` that reach the named logins
+    (`pg_db_role_setting`), reported when they are not `read committed`. The connection pins READ COMMITTED itself
+    (`postgres.py` `_SESSION_PINS`, read back), so such a default changes nothing for the store; it is reported, not
+    erased, because the audit chain and every conditional UPDATE rely on that level and a default that says otherwise
+    is a sign someone tried to weaken the session. One line per row (role or `every role`, scope, value). The
+    server-wide `postgresql.conf` value is not in this catalog; the pin covers it."""
+    rows = db.execute(
+        "SELECT pg_catalog.pg_get_userbyid(s.setrole), s.setrole, d.datname, c "
+        "FROM pg_catalog.pg_db_role_setting s CROSS JOIN LATERAL unnest(s.setconfig) c "
+        "LEFT JOIN pg_catalog.pg_database d ON d.oid = s.setdatabase "
+        "WHERE c LIKE 'default\\_transaction\\_isolation=%%' "
+        "AND (s.setdatabase = 0 OR d.datname = current_database()) "
+        "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = ANY(%s))) "
+        "ORDER BY 1, 3, 4",
+        (named,),
+    ).fetchall()
+    notes = []
+    for role, setrole, dbname, config in rows:
+        value = config.split("=", 1)[1].strip().strip("'\"").lower()
+        if value == "read committed":
+            continue
+        who = f"role {role}" if setrole else "every role"
+        where = f"in database {dbname}" if dbname else "in every database"
+        notes.append(
+            f"{who} {where}: default_transaction_isolation = {value} (not read committed). Not changed: the "
+            "store's connection pins read committed itself; remove the default so nobody relies on it"
+        )
+    return notes
+
+
 def _maintainers(db, schema: str):
     """(stop table, grantee) for every MAINTAIN grant on a stop table other than the owner's own (PUBLIC as 'PUBLIC')."""
     return db.execute(
@@ -1200,6 +1239,7 @@ def migrate(
     purge_role: str | None = None,
     reset_role: str | None = None,
     release_role: str | None = None,
+    caps_role: str | None = None,
     no_roles: bool = False,
     iam_auth: bool = False,
     region: str | None = None,
@@ -1229,14 +1269,14 @@ def migrate(
     `reset_draft`: an unreleased version whose ledger row and every later one are deleted before applying (the
     operator drops what they made first). `accept_changed_draft`: unreleased versions whose recorded checksum is set
     to the file's (the database is known to match). Both refuse a released version."""
-    roles = (runtime_role, portal_role, purge_role, reset_role, release_role)
+    roles = (runtime_role, portal_role, purge_role, reset_role, release_role, caps_role)
     for role in roles:
         if role is not None and (not _ROLE.fullmatch(role) or role in _FORBIDDEN_ROLES):
             raise ConfigError(f"not a plain database role name: {role!r}")
     named = [r for r in roles if r is not None]
     if len(set(named)) != len(named):
         raise ConfigError(
-            "the runtime, portal, purge, reset and release roles must be different roles"
+            "the runtime, portal, purge, reset, release and caps roles must be different roles"
         )
     if no_roles and named:
         raise ConfigError("no_roles (--no-roles) says no role is named, and a role is named")
@@ -1309,7 +1349,7 @@ def migrate(
             for b in named:
                 if a != b and db.execute(q, (a, b)).fetchone()[0]:
                     raise ConfigError(
-                        "the runtime, portal, purge, reset and release roles must not be members of each other"
+                        "the runtime, portal, purge, reset, release and caps roles must not be members of each other"
                     )
         if unmapped := _unmapped_functions(db):
             raise ConfigError(
@@ -1360,6 +1400,12 @@ def migrate(
                 raise ConfigError(
                     "the release role holds more than the grant map: " + "; ".join(bad[:20])
                 )
+        if caps_role:
+            _apply_grants(db, caps_role, lambda g: g.caps)
+            if bad := effective_problems(db, caps_role, lambda g: g.caps if g else ""):
+                raise ConfigError(
+                    "the caps role holds more than the grant map: " + "; ".join(bad[:20])
+                )
         _pin_money_guard(db)
         _apply_release_function(db, release_role, [r for r in named if r != release_role])
         _apply_money_functions(
@@ -1370,6 +1416,7 @@ def migrate(
                 "release": release_role,
                 "reset": reset_role,
                 "portal": portal_role,
+                "caps": caps_role,
             },
         )
         if any(roles) and (extra_exec := _unnamed_money_executors(db, [r for r in roles if r])):
@@ -1394,6 +1441,10 @@ def migrate(
                 _log.warning("migrate changed a role setting: %s", note)
                 if on_role_change:
                     on_role_change(note)
+            for note in check_isolation_settings(db, named):
+                _log.warning("migrate: %s", note)
+                if notes is not None:
+                    notes.append(note)
             check_maintain(db, named)
         if accepted:
             names = ", ".join(accepted)

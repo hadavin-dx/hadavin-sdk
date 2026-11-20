@@ -107,3 +107,19 @@ def test_the_purge_and_portal_logins_start_with_their_own_function_rights(w):
     # the purge login holds EXECUTE on the purge (its job) and is not the runtime: not refused
     for role in (w.portal, w.purge):
         _build(w, w.dsn_of(role))
+
+
+def test_the_caps_login_mark_is_exempt_like_the_reset_login(w):
+    w.grant(f"GRANT UPDATE ON {w.schema}.hadavin_caps TO {{}}", w.caps)
+    settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106
+    settings._login_role = "reset"  # what the CLI sets for the caps login (cli._caps_login)
+    store = make("store", settings, FakeSecretProvider({"pg-dsn": w.dsn_of(w.caps)}))
+    w.stores.append(store)
+
+
+@pytest.mark.parametrize("table", ["spend", "hadavin_caps"])
+def test_the_caps_login_cannot_start_the_runtime_store_with_a_money_table_write(w, table):
+    # an unmarked caps login (the runtime path) is held to the runtime's rights: a money-table write refuses it
+    w.grant(f"GRANT UPDATE ON {w.schema}.{table} TO {{}}", w.caps)
+    with pytest.raises(ConfigError, match=f"UPDATE on {table}"):
+        _build(w, w.dsn_of(w.caps))
