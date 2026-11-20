@@ -663,6 +663,15 @@
    "evidence file": "reviews/E-result-review-4.md",
    "tries": 0,
    "reason": "batch6 hashes crash.py"
+  },
+  {
+   "item": "D-fix5",
+   "what": "D-rev4 Majors R4-1..5 + nits + E-nits (one builder, tests + small code + crash.py nits + ticket)",
+   "state": "QUEUED after batch6 ends",
+   "percent": 0,
+   "evidence file": "reviews/D-code-result-review-4.md",
+   "tries": 0,
+   "reason": "batch6 hashes the tree"
   }
  ],
  "agents": [
@@ -691,19 +700,6 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "lead: full suite, failing ids"
-  },
-  {
-   "id": "D-rev4",
-   "role": "fresh reviewer (codebase-details)",
-   "model": "sonnet",
-   "what exactly it is doing": "extra fresh read-only pass on step D: do the tests really fail if a guarantee breaks; d-fix4 code; strict-mode hook",
-   "started UTC": "08:47",
-   "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "extra pass ordered by the lead",
-   "retries so far": 0,
-   "reason": "lead: fresh result review on the committed head"
   }
  ],
  "tests": [
@@ -2229,6 +2225,19 @@
    "review round n of cap": "extra pass granted by the lead",
    "retries so far": 0,
    "reason": "E5 extra pass: 0 Blocker, 0 Major, 7 Nits (reviews/E-result-review-4.md); nit fixes queued after batch6 (crash.py is in its hashed tree); stop at this round"
+  },
+  {
+   "id": "D-rev4",
+   "role": "fresh reviewer (codebase-details)",
+   "model": "sonnet",
+   "what exactly it is doing": "extra fresh read-only pass on step D: do the tests really fail if a guarantee breaks; d-fix4 code; strict-mode hook",
+   "started UTC": "08:47",
+   "expected end": "about 15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "extra pass ordered by the lead",
+   "retries so far": 0,
+   "reason": "extra pass: 0 Blocker, 5 Major (strict-mode makereport untested; strict only '1'; _prepare host/allow-non-loopback wiring unpinned; Runner.running untested; ticket still says exit 3), 4 Nits; reviews/D-code-result-review-4.md"
   }
  ]
 }
