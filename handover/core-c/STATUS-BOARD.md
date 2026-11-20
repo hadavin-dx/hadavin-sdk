@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:47:57Z
+UPDATED_UTC: 2026-11-20T07:48:49Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,24 +6,24 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 9
-CAPACITY: load 1.1 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 9, heavy agents 0
-DISK: / 59G free, 15% used; git worktrees 7; 90M	/tmp/claude-0;398M	/root/.cache/uv;
+AGENTS_RUNNING: 10
+CAPACITY: load 1.5 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 10, heavy agents 0
+DISK: / 59G free, 15% used; git worktrees 7; 99M	/tmp/claude-0;398M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T07:47:13+00:00
+PUSHED_UTC: 2026-11-20T07:47:57+00:00
 
-(13:17 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:18 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | (new) g3D | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of the gate (egm:egm-design): fresh reviewer on the round 2 fixes | 07:50 | 08:05 | 100 | done | 3 (EGM) / lead round 3 separate | 0 | reported: 0 Blocker, 4 Major, 5 Nit (F-result-review-3.md) |
 | (new) g3C | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of the gate and tests (egm:egm-codebase-details): mutant plausibility, install notes, stated limits vs the sweep | 07:50 | 08:10 | 100 | done | 3 | 0 | reported: 0 Blocker, 5 Major, 7 Nit (F-result-review-3.md) |
-| aa4b815a | drafter | claude-opus-5-5 | rewrites the owner-facing security wording as v3 (the last review round) from both round 2 reviews and the newest facts (merge d95a727) | 07:44 | 08:20 | 2 | running | 3 of 3 after this | 0 | EGM: draft/resolve on opus |
+| aa4b815a | drafter | claude-opus-5-5 | rewrites the owner-facing security wording as v3 (the last review round) from both round 2 reviews and the newest facts (merge d95a727) | 07:44 | 08:20 | 100 | done | 3 of 3 after this | 0 | finished: SECURITY-README-v3.md (63 gaps) committed 78c1322 |
 | a7f772ca | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-comprehension): fresh naive reader | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: naive reader on v2: 4 Blockers, many Majors; real contradictions found (K2 example, decision 5 cites the wrong gaps, banner vs item 3, "never" vs K26) |
 | a7208aaf | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 2 of the wording v2 (egm:egm-style): count mismatches, status words, overclaims | 07:42 | 07:55 | 100 | done | 2 of 3 | 0 | finished: style on v2: 4 Blockers, 18 Majors, 10 Nits; the status totals (62) recount correctly |
 | (new) g7f2 | builder | claude-sonnet-5-5 | G7 fix round 2 (lead ORDER 020 MJ-B): capped fixed-point loop in the redactor with RedactionError past the cap, tail leak, deadline inside pass 2, a property generator with a reference fixed point, duplicate TEXTNORM_PINNED_PYTHON | 07:33 | 08:15 | 100 | done | 2 of 3 (G7 result review) | 0 | finished: capped settle loop (cap 4), compound tails, deadline arg in sweep (thread_time clock), property test 2,500 inputs; builder reported 9681 passed 0 failed 5 xfailed (not re-run by me) |
@@ -87,6 +87,8 @@ PUSHED_UTC: 2026-11-20T07:47:13+00:00
 | (new) g4R | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: implementation readiness | 07:55 | 08:10 | 2 | running | 2 | 0 | build P1c only after clean plan review |
 | (new) g4C | reviewer | claude-sonnet-5-5 | G4 v2 PLAN review round 2: codebase details | 07:55 | 08:10 | 2 | running | 2 | 0 | same |
 | (new) gfix4 | builder | claude-sonnet-5-5 | gate fix round 4 on review round 3 findings (model_gate.py, enforce functions, gate tests, ticket, request 3) | 07:52 | 08:40 | 1 | running | 4 | 0 | EGM sequence: fix, evidence batch, fresh reviewer |
+| (new) secC | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: comprehension | 08:00 | 08:12 | 2 | running | 3 | 0 | final review of the wording |
+| (new) secS | reviewer | claude-sonnet-5-5 | wording v3 final review round 3: style | 08:00 | 08:12 | 2 | running | 3 | 0 | final review of the wording |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
