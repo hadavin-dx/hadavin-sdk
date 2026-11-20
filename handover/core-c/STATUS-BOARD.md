@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:18:37Z
+UPDATED_UTC: 2026-11-20T08:19:11Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -7,16 +7,16 @@ ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 8
-CAPACITY: load 3.6 of 4 cores, mem 1/15 GB, disk 59G free, 15% used, light agents 8, heavy agents 0
+CAPACITY: load 2.9 of 4 cores, mem 0/15 GB, disk 59G free, 15% used, light agents 8, heavy agents 0
 DISK: / 59G free, 15% used; git worktrees 12; 152M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 8 agents running, none blocked: gate4, g7fix3, p1dr2, g8, g4v3, sec4, drift, fold evidence. Pushing the board after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:18:29+00:00
+PUSHED_UTC: 2026-11-20T08:19:09+00:00
 
-(13:48 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(13:49 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
