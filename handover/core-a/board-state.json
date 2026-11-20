@@ -748,19 +748,6 @@
  ],
  "agents": [
   {
-   "id": "rev-c-G13c-G12c",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "core-c G13c (net lookups) + G12c (core rules): are my G13b/G12b Majors fixed (window overlap leak, quadratic _touching_piece, guillemet core drop, U+226E)",
-   "started UTC": "15:30",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "new landed code that answers my findings"
-  },
-  {
    "id": "rev-c-G4c",
    "role": "fresh independent reviewer (codebase-details), read-only",
    "model": "sonnet",
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:37 core-c G13c + G12c reviewed (reviews/rev-c-G13c-G12c.md; appended to handover/core-c/requests/xr-from-core-a-reviews-2.md): no Blocker. FIXED: my quadratic-slicing Major (4-gram tested before the slice; charge still min(len,64): bounded fail-closed cost nit), and the G12b ABC_12!/SEC/ADMIN_1/DB_PASS_2/HOST/JWT cases. STILL OPEN, all mine: (a) stacked-encoding window overlap LEAK (runmap.py:1548 unchanged: 20-char secret spelled %26%23<dec>%3B per char at VIEW_WINDOW-217 is sent; fails open; no test), (c1) `password=\u2039hunter22\u203a` core drop (deliberate, pinned by LK[\u2039hunter2zz\u203a]/G12-M33), (c2) `password=Secret!`/`Token,` NOT_A_VALUE drop (no limit recorded), (d) U+226E marker spoof (no change). Running: rev-c-G4c, rev-b-B2.",
   "15:31 AGENTS 3: found NEW code that answers my findings (heads moved: core-c 107717a7e, core-b 763d71c42): core-c G13c (net lookups: head test before slice) and G12c (core rules) = answers to my G13b/G12b Majors; core-c G4c (start look-behind) + four gate mutant fixes; core-b F-install B2 (live path reserves BEFORE and settles AFTER the model call) = answer to my 'nothing calls limits.reserve' Major. One fresh reviewer each (rev-c-G13c-G12c, rev-c-G4c, rev-b-B2). The wip/lead-b-* heads are unchanged.",
   "15:29 SINCE 15:19 (AGENTS 0): 15:19-15:21 rev-lead-tswm-2 reviewed wip/lead-b-ts-watermark de8967aba (reviews/rev-lead-tswm-2.md: no Blocker/Major, 5 nits). YOUR 15:27 LIST IS ALL DONE; I am not re-running identical work on unchanged heads: wip/lead-b-migrate = 0891d81bd (reviewed twice: reviews/rev-lead-migrate.md and rev-lead-migrate-2.md; waiting for your fix round 1: give me the new head and I review it at once); wip/lead-b-ts-watermark = de8967aba (reviewed twice: rev-lead-tswm.md, rev-lead-tswm-2.md); wip/core-a-merge-c: nothing to merge (all 4 g2/g3 commits SUPERSEDED: handover/core-c/requests/from-core-a-merge.md); CRASH-MATRIX part 2 DONE (CRASH-MATRIX.md 'Part 2', 171 points PG16 + memory); E-door-1 README DONE, reviewed, fixed. I start an agent the minute a head moves or an order names work.",
   "15:25 YOUR wip/lead-b-ts-watermark de8967aba (fix rounds 2-4) reviewed fresh (reviews/rev-lead-tswm-2.md): NO Blocker, NO Major provable. VALIDATE now runs inside the migrate transaction: a crash rolls back 0009 AND the validate (no forever-NOT-VALID window); a planted row only warns; 0009 is still NOT released (manifest 0001-0007, UNRELEASED 0008-0011); no semantic conflict with the core-b merge; exit 75 (EX_TEMPFAIL) is real and tested with stubs. Nits for your round: (1) tests/test_migrations_0009_0010_round2.py:195 `'VALIDATE CONSTRAINT' in 0009.sql` passes only because of the comment at 0009.sql:23 and :201 pins a runbook string: text-matching vacuity, replace with behaviour tests; (2) NO test runs the documented chain leftovers -> DROP -> --accept-changed-draft -> migrate succeeds; and accepting the checksum does not verify the old draft has the constraints/index; (3) the in-migrate settle has NO lock_timeout/statement_timeout (only the standalone command has 5 s/60 s) and ADD CONSTRAINT/CREATE INDEX hold ACCESS EXCLUSIVE until the whole migrate transaction commits: the runbook's 'short lock' is true only on small tables; (4) handover/core-b/MIGRATIONS.md:16 stale; (5) test_a_migrate_that_never_warns_is_killed loosened to BaseException. No agents running.",
@@ -3898,6 +3886,19 @@
    "review round n of cap": "2",
    "retries so far": 0,
    "reason": "lead ts-watermark fix rounds 2-4 (de8967aba): NO Blocker/Major provable; VALIDATE runs inside the migrate transaction (a crash rolls back everything, no forever-NOT-VALID), planted row warns only; 0009 still unreleased; no semantic conflict with the core-b merge; nits: in-migrate settle has no lock/statement timeout, ACCESS EXCLUSIVE held to the end of the whole migrate transaction (runbook 'short' lock only true on small tables), text-matching vacuity test_migrations_0009_0010_round2.py:195/201, no test for the leftovers->DROP->accept-changed-draft chain, MIGRATIONS.md:16 stale, mutant test loosened to BaseException; reviews/rev-lead-tswm-2.md"
+  },
+  {
+   "id": "rev-c-G13c-G12c",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "core-c G13c (net lookups) + G12c (core rules): are my G13b/G12b Majors fixed (window overlap leak, quadratic _touching_piece, guillemet core drop, U+226E)",
+   "started UTC": "15:30",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "core-c G13c+G12c: NO Blocker; FIXED: quadratic slicing (head 4-gram before slice, digest in seen), G12b ABC_12!/SEC/ADMIN_1/HOST cores; STILL OPEN (my findings): stacked-encoding window overlap LEAK (runmap.py:1548 unchanged), password=\u2039hunter22\u203a core drop, password=Secret!/Token, NOT_A_VALUE drop, U+226E spoof; no new leak; reviews/rev-c-G13c-G12c.md"
   }
  ]
 }
