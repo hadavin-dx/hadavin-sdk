@@ -115,3 +115,29 @@ def _migrate_takes_the_server_gate():
             mp.setattr(mod, "migrate", patched)
     yield
     mp.undo()
+
+
+@pytest.fixture(autouse=True)
+def _seed_caps_before_reserve(request):
+    """Step 6: the Postgres reserve function reads the caps from `hadavin_caps`, so a PG test that passes caps as
+    arguments needs them in the table. Test-only wrapper around `PostgresStore.reserve_spend` (never in src): it
+    writes the pair as the owner first (tests/money_caps_seed.py). `@pytest.mark.no_cap_seed` turns it off, for the
+    tests that prove the table wins or that a missing row refuses."""
+    if not os.environ.get("HADAVIN_TEST_PG_DSN") or request.node.get_closest_marker("no_cap_seed"):
+        yield
+        return
+    try:
+        from hadavin_sdk.store import postgres as postgres_mod
+    except ImportError:  # no psycopg: no Postgres test can run
+        yield
+        return
+    from tests.money_caps_seed import seeding_reserve
+
+    mp = pytest.MonkeyPatch()
+    mp.setattr(
+        postgres_mod.PostgresStore,
+        "reserve_spend",
+        seeding_reserve(postgres_mod.PostgresStore.reserve_spend),
+    )
+    yield
+    mp.undo()

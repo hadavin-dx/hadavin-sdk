@@ -15,6 +15,7 @@ from psycopg import errors, sql
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
+from tests.money_caps_seed import seed_caps
 from tests.test_stop_state_roles import World
 
 D = Decimal
@@ -25,7 +26,7 @@ NEEDS_PG = pytest.mark.skipif(
 SQL_FILE = Path(mig.__file__).parent / "migrations" / "0011_money_definer.sql"
 DAY = date(2026, 1, 15)
 TEN = D("10")
-RESERVE = "hadavin_reserve_spend(%s, %s, %s, %s, %s, %s, %s)"
+RESERVE = "hadavin_reserve_spend(%s, %s, %s, %s, %s)"
 SETTLE = "SELECT * FROM hadavin_settle_spend(%s, %s, %s)"
 
 
@@ -122,8 +123,15 @@ def review_world():
                 db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
 
 
+def _seed(db, agent):
+    """The reserve function reads the caps from the table: seed them as the owner (no hook sits on a raw call)."""
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    seed_caps(os.environ["HADAVIN_TEST_PG_DSN"], schema, agent, D("1000"), D("1000"))
+
+
 def _reserve(db, rid="r1", agent="A", day=DAY, usd=TEN, run=None):
-    db.execute(f"SELECT {RESERVE}", (rid, agent, day, usd, D("1000"), D("1000"), run))
+    _seed(db, agent)
+    db.execute(f"SELECT {RESERVE}", (rid, agent, day, usd, run))
 
 
 @NEEDS_PG
@@ -178,7 +186,8 @@ def test_m7_an_out_of_range_day_is_22023(w, day):
         with pytest.raises(errors.InvalidParameterValue, match="p_day"):
             db.execute("SELECT * FROM hadavin_add_spend('A', %s::date, 1)", (day,))
         with pytest.raises(errors.InvalidParameterValue, match="p_day"):
-            db.execute(f"SELECT {RESERVE}", ("r7", "A", day, D("1"), D("9"), D("9"), None))
+            _seed(db, "A")
+            db.execute(f"SELECT {RESERVE}", ("r7", "A", day, D("1"), None))
 
 
 @NEEDS_PG

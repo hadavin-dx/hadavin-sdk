@@ -139,8 +139,8 @@ def test_the_money_function_calls_name_their_schema_so_a_temporary_function_neve
     rt = w.store(w.runtime)
     pu = w.store(w.purge)
     decoys = {
-        "hadavin_reserve_spend": "(p_id text, p_agent text, p_day date, p_usd numeric, p_day_cap numeric, "
-        "p_month_cap numeric, p_run_id text) RETURNS void",
+        "hadavin_reserve_spend": "(p_id text, p_agent text, p_day date, p_usd numeric, "
+        "p_run_id text) RETURNS void",
         "hadavin_settle_spend": "(p_id text, p_actual numeric, p_agent text) RETURNS SETOF record",
         "hadavin_expire_spend_reservations": "(p_age_s integer) RETURNS bigint",
         "hadavin_purge_spend_reservations": "(p_before timestamptz) RETURNS bigint",

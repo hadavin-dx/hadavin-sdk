@@ -60,7 +60,7 @@ REVOKE ALL ON hadavin_limits FROM PUBLIC;
 -- adds the reservation row, refusing it when it would pass a cap (HD001 day first, then month; the whole function rolls
 -- back with the caller's transaction). A duplicate id is the native unique_violation (23505).
 CREATE OR REPLACE FUNCTION hadavin_reserve_spend(
-    p_id TEXT, p_agent TEXT, p_day DATE, p_usd NUMERIC, p_day_cap NUMERIC, p_month_cap NUMERIC, p_run_id TEXT
+    p_id TEXT, p_agent TEXT, p_day DATE, p_usd NUMERIC, p_run_id TEXT
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -74,6 +74,8 @@ DECLARE
     v_max_decimals NUMERIC;
     v_max_id NUMERIC;
     v_month DATE;
+    v_day_cap NUMERIC;
+    v_month_cap NUMERIC;
 BEGIN
     SELECT l.value INTO v_max_amount FROM hadavin_limits l WHERE l.name = 'max_amount';
     IF NOT FOUND THEN RAISE EXCEPTION 'limit max_amount missing' USING ERRCODE = 'HD004'; END IF;
@@ -100,15 +102,10 @@ BEGIN
     IF p_usd IS NULL OR NOT (p_usd >= 0 AND p_usd < v_max_amount) OR pg_catalog.scale(p_usd) > v_max_decimals THEN
         RAISE EXCEPTION 'invalid argument: p_usd' USING ERRCODE = '22023';
     END IF;
-    -- a cap has no upper bound except finiteness (NOT the amount window)
-    IF p_day_cap IS NULL OR NOT (p_day_cap >= 0 AND p_day_cap < 'Infinity'::numeric)
-       OR pg_catalog.scale(p_day_cap) > v_max_decimals THEN
-        RAISE EXCEPTION 'invalid argument: p_day_cap' USING ERRCODE = '22023';
-    END IF;
-    IF p_month_cap IS NULL OR NOT (p_month_cap >= 0 AND p_month_cap < 'Infinity'::numeric)
-       OR pg_catalog.scale(p_month_cap) > v_max_decimals THEN
-        RAISE EXCEPTION 'invalid argument: p_month_cap' USING ERRCODE = '22023';
-    END IF;
+    -- the caps come from hadavin_caps (owner-written; the runtime cannot choose or change them), read without a lock: a
+    -- concurrent hadavin_set_cap is seen either before or after, both are fine. No row: refuse, fail closed (HD005).
+    SELECT c.day_cap, c.month_cap INTO v_day_cap, v_month_cap FROM hadavin_caps c WHERE c.agent_id = p_agent;
+    IF NOT FOUND THEN RAISE EXCEPTION 'caps' USING ERRCODE = 'HD005'; END IF;
     v_month := pg_catalog.date_trunc('month', p_day)::date;
 
     INSERT INTO spend_reservations (reservation_id, agent_id, day, run_id, reserved_usd)
@@ -116,19 +113,19 @@ BEGIN
     INSERT INTO spend (agent_id, day, usd) VALUES (p_agent, p_day, 0) ON CONFLICT DO NOTHING;
     -- strictly day before month: seed and book the day, then the month; a refusal raises and everything rolls back
     UPDATE spend s SET usd = s.usd + p_usd
-     WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < p_day_cap AND s.usd + p_usd <= p_day_cap;
+     WHERE s.agent_id = p_agent AND s.day = p_day AND s.usd < v_day_cap AND s.usd + p_usd <= v_day_cap;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'day' USING ERRCODE = 'HD001';
     END IF;
     INSERT INTO spend_month (agent_id, month, usd) VALUES (p_agent, v_month, 0) ON CONFLICT DO NOTHING;
     UPDATE spend_month m SET usd = m.usd + p_usd
-     WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < p_month_cap AND m.usd + p_usd <= p_month_cap;
+     WHERE m.agent_id = p_agent AND m.month = v_month AND m.usd < v_month_cap AND m.usd + p_usd <= v_month_cap;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'month' USING ERRCODE = 'HD001';
     END IF;
 END
 $fn$;
-REVOKE ALL ON FUNCTION hadavin_reserve_spend(TEXT, TEXT, DATE, NUMERIC, NUMERIC, NUMERIC, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION hadavin_reserve_spend(TEXT, TEXT, DATE, NUMERIC, TEXT) FROM PUBLIC;
 
 -- hadavin_settle_spend: replace a hold by the real cost. The claim comes first (the row lock; a second caller waits,
 -- finds the row settled, claims nothing and gets the stored row back with claimed = false). settled_usd is what stays

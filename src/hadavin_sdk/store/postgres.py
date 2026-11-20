@@ -383,13 +383,12 @@ def _money_error(
         return NotFound(reservation_id)
     if code == "HD003":  # counter row missing; the transaction rolled back
         return RuntimeError("spend counter row missing")
-    if code in (
-        "HD004",
-        "HD005",
-    ):  # a limit or cap row missing: fail closed, the schema is not set up
+    if code == "HD004":  # a limit row missing: fail closed, the schema is not set up
         return ConfigError(
             f"store postgres: money limits unavailable ({code}); run hadavin-sdk migrate"
         )
+    if code == "HD005":  # no cap row for this agent: fail closed
+        return ConfigError("store postgres: no cap for this agent: run limits sync-caps")
     if code == "23505":  # duplicate reservation id
         return StaleState(f"spend reservation exists: {reservation_id}")
     if code is not None and code.startswith(
@@ -673,10 +672,10 @@ class PostgresStore:
         )
 
     def _reserve_call(self) -> sql.Composed:
-        """The ONE place that names `hadavin_reserve_spend` and its argument list (step 6 changes it)."""
+        """The ONE place that names `hadavin_reserve_spend` and its argument list (five arguments: the caps are read from `hadavin_caps` by the function, never passed)."""
         return self._money_call(
             "hadavin_reserve_spend",
-            "%s::text, %s::text, %s::date, %s::numeric, %s::numeric, %s::numeric, %s::text",
+            "%s::text, %s::text, %s::date, %s::numeric, %s::text",
         )
 
     def _stop_tables(self) -> dict[str, sql.Composed]:
@@ -925,11 +924,13 @@ class PostgresStore:
         check_spend_amount(usd)
         check_spend_cap(day_cap)  # before any SQL: a NaN cap would compare as no cap
         check_spend_cap(month_cap)
+        # The two caps are validated and then IGNORED: on Postgres the `hadavin_caps` row of the agent wins (the
+        # runtime cannot write it). The memory store compares the argument: a documented divergence.
         try:
             with self._lock, self._db.transaction():
                 self._exec(
                     self._reserve_call(),
-                    (reservation_id, agent_id, day, usd, day_cap, month_cap, run_id),
+                    (reservation_id, agent_id, day, usd, run_id),
                 )
         except psycopg.errors.DatabaseError as exc:
             raise _money_error(exc, reservation_id) from None
