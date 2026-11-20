@@ -11,8 +11,9 @@ tries again.
 
 Flag file: one line of text, `<point>` or `<point>#<nth>`, written by `arm`. A missing, unreadable
 or malformed file means "not armed". A read error (a sharing violation on Windows) means "not armed
-this time", and the `nth` count does not advance for that call. Arm before the child starts, one child per case. Counts are never reset in a child: it
-counts the matching calls for as long as it lives. On leaving the `with` block a flag that never
+this time", and the `nth` count does not advance for that call. Arm before the child starts, one
+child per case. Counts are never reset in a child: it counts the matching calls for as long as it
+lives. On leaving the `with` block a flag that never
 fired is deleted; if the delete is refused (Windows can refuse while a reader holds the file open)
 it is tried again, 20 times at 20 ms apart, then `RuntimeError` names the path. With an error
 already in flight the block reports nothing about a stuck flag and does not replace that error.
@@ -42,8 +43,9 @@ What a test must know, or the helper misleads it:
 - Only references that go through the proxy are covered. Wrap EVERY reference the code under test
   uses: the runtime keeps its own store reference, so wrapping the test's reference is not enough.
   Two wraps with the same name and method share one point and one nth counter.
-- A misspelled point never matches, so in mode "exit" the child simply runs on and a test that only waits for
-  the end passes without a crash: an exit-mode test must assert the marker line and the exit code.
+- A misspelled point never matches, so in mode "exit" the child simply runs on and a test that
+  only waits for the end passes without a crash: an exit-mode test must assert the marker line
+  and the exit code.
 - Mode "raise" behind a thread: the test thread sees nothing; poll `cp.fired`.
 - `hit` is an extension hook: a caller may subclass `CrashPoints` and override it.
 - Mode "raise" behind a worker pool: the crash is stored in the Future and the process lives on.
@@ -104,9 +106,9 @@ class _Proxy:
 
 
 def _still_there(path: Path) -> bool:
-    """Whether the file is still on disk after a delete was refused. An error while asking (Python 3.12 on
-    Windows can raise PermissionError) counts as "still there": the delete is refused, and the error must not
-    reach the code under test."""
+    """Whether the file is still on disk after a delete was refused. An error while asking (Python
+    3.12 on Windows can raise PermissionError) counts as "still there": the delete is refused, and
+    the error must not reach the code under test."""
     try:
         return os.path.exists(path)
     except OSError:
@@ -148,10 +150,16 @@ class CrashPoints:
     def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
         """Delete a flag that never fired. With an error already in flight, report nothing."""
         with self._lock:
-            left = self._current()
-            if left is not None:
-                self._disarm()
-            stuck = left is not None and self._flag is not None and _still_there(self._flag)
+            left, unreadable = self._look()
+            if left is None and unreadable:
+                # A read error is not proof of "not armed": still try to delete the flag.
+                if self._disarm():
+                    left = ("<unreadable flag>", 1)
+                stuck = self._flag is not None and _still_there(self._flag)
+            else:
+                if left is not None:
+                    self._disarm()
+                stuck = left is not None and self._flag is not None and _still_there(self._flag)
         if exc_type is not None:
             return
         if stuck:
@@ -258,16 +266,24 @@ class CrashPoints:
     def _current(self) -> tuple[str, int] | None:
         """The armed point and its nth, from memory or from the flag file. Call with the lock
         held."""
+        return self._look()[0]
+
+    def _look(self) -> tuple[tuple[str, int] | None, bool]:
+        """Like `_current`, plus whether reading the flag failed for a reason other than a missing
+        file (a sharing violation). Call with the lock held."""
         if self._flag is None:
-            return self._memory
+            return self._memory, False
+        unreadable = False
         try:
             text = self._flag.read_text(encoding="utf-8")
-        except (OSError, ValueError):
+        except FileNotFoundError:
             text = ""
+        except (OSError, ValueError):
+            text, unreadable = "", True
         point, sep, count = text.removesuffix("\n").partition("#")
         if not _POINT.fullmatch(point) or (sep and not _NTH.fullmatch(count)):
-            return None
-        return point, int(count) if sep else 1
+            return None, unreadable
+        return (point, int(count) if sep else 1), False
 
     def _disarm(self) -> bool:
         """Delete the flag, trying again if the delete is refused. True only if our own delete
