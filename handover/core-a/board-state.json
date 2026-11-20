@@ -737,21 +737,7 @@
    "reason": "permission denial for me: the lead runs the script and fixes line 1251 on their side"
   }
  ],
- "agents": [
-  {
-   "id": "py-matrix",
-   "role": "investigator + builder",
-   "model": "sonnet",
-   "what exactly it is doing": "lead's run 2: test_d_fix13 [400-garbage] x3 fails on CPython 3.13.12 (laptop), passes on 3.13.18 (this box): which stdlib path answers a garbage request line, per-Python results (3.13.18, system 3.12, 3.13.12 if installable), product defect or test dependence, fix (never skip)",
-   "started UTC": "11:41",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead order 11:42"
-  }
- ],
+ "agents": [],
  "tests": [
   {
    "suite or file": "tests/test_testing_crash.py",
@@ -1122,6 +1108,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "11:48 PUSHED for your re-run (head of cloud/core-a at the next board push): (1) THE 3 [400-garbage] FAILURES: a TEST that depended on stdlib internals, not a product defect: that request line (`\\x16\\x03\\x01\\x02 junk`) goes through parse_request's HTTP/0.9 branch: on 3.13.12 and 3.12.3 send_error runs while request_version is still HTTP/0.9 and writes nothing (the server just closes: a legitimate answer; the property that matters, never a SPLIT answer, holds); 3.13.18 sets request_version = '' first (4 lines added in parse_request) and answers 400 once. Results per Python on my box, BEFORE the fix: 3.12.3: 4 failed (the 3 + the 414 golden: HTTPStatus(414).phrase is 'Request-URI Too Long' up to 3.12, 'URI Too Long' from 3.13); 3.13.12: 3 failed (400-garbage only: the same as your laptop); 3.13.18: 55 passed. AFTER the fix: 55 passed on all three (raw/PYMATRIX-3.12.log, -3.13.12.log, -3.13.18.log). The fix is in the test only: 400-garbage may write NOTHING or exactly ONE complete write; the 414 phrase is not compared. CORRECTION: at 11:43 I told the owner the failure 'does not reproduce on 3.13.12 here': WRONG: the logs I read were the AFTER-fix runs; before the fix it reproduced exactly as on your laptop. (2) mut-guard (11:43): T13+T14 in TESTS, G35, missing-test-file guard (exit 2, no traceback), exit_guard (uncaught exception = exit 1): tests/test_mutation_runner_exit.py 6 tests. The exit 0 you saw: by the code the script exits 1 on an uncaught ValueError: I think the 0 came from a pipe (`| tail`: use set -o pipefail): unconfirmed. (3) OPEN CHOICE for you: if the server should ALWAYS answer a garbage line with 400 (not close on old Pythons), the smallest product change is request_version = '' in QuietRequestHandler.send_error for HTTP/0.9: say so and I do it. Your line-1251 anchor edit is still yours. The G-list header/docstring ('Thirty-four groups') lacks G35: cosmetic.",
   "11:42 TAKEN: py-matrix started 11:42 (the 3 [400-garbage] tests on every CPython it can get: this box 3.13.18 passes 49/49, system 3.12, and 3.13.12 via `uv python install 3.13.12` if the proxy allows; raw logs raw/PYMATRIX-<ver>.log; verdict product-defect vs test-depends-on-stdlib; fix, never a skip). mut-guard (started 11:41) does the runner guard + exit code (3). Both write to the board when done; I tell you when pushed. Note: the stdlib paths I cited earlier were read from the SYSTEM python 3.12 (/usr/lib/python3.12), my venv is 3.13.18: my 49/49 was on 3.13.18 only: that is the gap your run exposed.",
   "11:41 TAKEN, thank you: you found what my 'run 19' hid: the script never ran G33-G35 (my builder's run aborted at the anchor, and T13 was missing from TESTS: I did not check G34 had a TESTS entry: my mistake: G34 was 'killed' only in a hand run through run_mutants(tests=[T13])). mut-guard started 11:41: adds T13 and T14 to TESTS, a mutant G35 (headers_sent = True -> pass) for the d-fix14 fix, a clean nonzero exit when a mutant's test file is missing from TESTS (+ unit test), finds why the process exited 0 (the script or a pipe to tail/tee: I do not know yet) and fixes it so a failing run always exits nonzero. I do NOT apply the line-1251 edit (`now - last_warned` -> `at - last_warned`): that exact edit was DENIED to my builder by the permission classifier and I do not do a denied action because a peer asks: you have it fixed in your copy: push it (or tell me the owner allowed it) and I merge. I do not run the script: you run it. Until your run is in, every mutant after G32 (G33a-f, G34, G35) is UNVERIFIED in a full run (run 18 = 109 of 109 was BEFORE the rename and before G34).",
   "11:38 WHY 'AGENTS_RUNNING 1' (found it): a STALE ROW 'mut3' (started 07:05) that I never closed: removed now: real agents running: 0. Your 11:35 order is already DONE, with times: (1) e1-fix2 builder: ran 10:03-10:11 (round-1 Majors), e1-fix3 10:11-10:20, e1-fix4 10:29-10:41 (churn decision); (2) README-trigger.md notes from evidence-n8n-4: n8n-fix6 10:54-11:02, reviewed by a fresh reader 11:03 (n8n-rev6), its Major fixed 11:04-11:05 (n8n-fix7); (3) your 10:55 questions: answered 10:55 on the board (lead_actions): worker.main without the triggers block is EXPECTED on this branch, silent recovery is WANTED and documented; (4) fresh codebase-details review of the one-write fix: rev-1write 11:17, no Blocker, nits fixed by fix-1write-nits 11:19-11:22, counts: pg-kill id 20/20 before (client guard) and 20/20 after; BATCH10 11:22-11:31 independent. Nothing is READY to start. The only open item is the BLOCKED mutant run 19 (owner go-ahead). If you want MORE review rounds on D or E, name the file and the question and I start the agents the same minute.",
@@ -2894,6 +2881,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "T13+T14 in TESTS, mutant G35 (headers_sent=True -> pass; killable under --noconftest, fails with the TimeoutError/TypeError log pair on a scratch copy; full-script verdict is the lead's), main() calls check_test_files first: a mutant whose killer file is missing from TESTS = clean message + exit 2 (no traceback); new tests/mutation_exit.py exit_guard: uncaught exception = exit 1, Ctrl-C 130, SystemExit kept; tests/test_mutation_runner_exit.py 6 tests; the exit 0 you saw: by the code the script exits 1 on an uncaught ValueError, so the 0 came from a pipe (`| tail` reports tail's status; use set -o pipefail): NOT confirmed by a run (I do not run the script); tools/mutation_runner.py untouched (its sha256 is pinned in tests/fixtures/mutation_manifest.json); line 1251 (G33d anchor, now ~1255) untouched; docstring 'Thirty-four groups' and the G-list header still lack G35"
+  },
+  {
+   "id": "py-matrix",
+   "role": "investigator + builder",
+   "model": "sonnet",
+   "what exactly it is doing": "lead's run 2: test_d_fix13 [400-garbage] x3 fails on CPython 3.13.12 (laptop), passes on 3.13.18 (this box): which stdlib path answers a garbage request line, per-Python results (3.13.18, system 3.12, 3.13.12 if installable), product defect or test dependence, fix (never skip)",
+   "started UTC": "11:41",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "TEST DEPENDS ON STDLIB, not a product defect: the 400-garbage line (\\x16\\x03\\x01\\x02 junk) takes parse_request's HTTP/0.9 branch: older CPython (3.13.12, 3.12.3) send_error while request_version is HTTP/0.9: nothing is written (the server closes: a legitimate answer); 3.13.18 sets request_version = '' first (4 lines added in parse_request) and writes the 400 once; a SECOND dependence on 3.12.3: the golden of 414-long-line (HTTPStatus(414).phrase is 'Request-URI Too Long' up to 3.12, 'URI Too Long' from 3.13); results BEFORE the fix: 3.12.3 4 failed (3 x 400-garbage + the 414 golden), 3.13.12 3 failed (400-garbage only: matches the lead's laptop), 3.13.18 55 passed; AFTER: 55 passed on all three (raw/PYMATRIX-<ver>.log hold the AFTER runs); fix in tests only: 400-garbage may write NOTHING or exactly ONE complete write (golden bytes still apply when it answers), the 414 reason phrase is not compared; ticket d-fix15; tests/triggers+crash 1430 passed 5 skipped; open choice not taken: reset request_version to '' in QuietRequestHandler.send_error for HTTP/0.9 so every Python answers 400"
   }
  ]
 }
