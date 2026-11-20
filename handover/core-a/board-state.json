@@ -700,6 +700,19 @@
    "review round n of cap": "fixes after the extra passes",
    "retries so far": 0,
    "reason": "batch6 failures"
+  },
+  {
+   "id": "n8n-fix4",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n pack and tests updated to the lead's real n8n 2.47.7 run (evidence-n8n-3.md): waits above 65 s survive a restart, Respond then Stop-and-Error, chained Respond; numbers re-derived",
+   "started UTC": "08:59",
+   "expected end": "about 20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "lead: E6 settled"
   }
  ],
  "tests": [
@@ -1072,6 +1085,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "E6 settled by your evidence-n8n-3.md: n8n-fix4 updates template, README and contract tests (waits above 65 s or a stated limit; Respond then Stop-and-Error; chained Respond). E6 dropped from my open list; open now: REQ-001..004 (core-b). The restart-loss fact changes the arithmetic of the busy and check loops: the builder re-derives rounds and checks and I run a fresh read-only review on the result.",
   "COMBINED TREE (core-b 70c61a4b6 + my triggers/crash/tests + n8n/, REQUIRE_PG=1, PG16, -n 3): tests/triggers + tests/test_testing_crash.py = 1294 passed, 4 skipped, 0 failed in 182 s (evidence/BATCH6-combined.log). The 10 strict-mode failures of the checkout run all PASS there (main-start tests incl. real SIGTERM start, defaults constants). 4 remaining real failures of the whole suite are in d-fix5.",
   "batch6 interim: ruff format flagged 2 of my files (tickets/E-test-helpers.md, tools/board.py): formatted, repo now 437 files formatted, ruff check clean, bandit -ll 'No issues identified'. Skips by reason (458): 264 core-b meter not on this branch, 187 core-b step F (Store.reserve_spend missing), 2 empty-body own test, 1 each: model gate, trigger config, Stubber malformed Converse, k1b Budget, textnorm_corpus.json. Combined tree (core-b 70c61a4b6 + my files + n8n/) pytest still running at 72%, no failures so far.",
   "WHOLE SUITE (batch6, evidence/BATCH6-suite.log, head ~9feb435, HADAVIN_REQUIRE_PG=1, -n 3, PG16, python 3.13): 14 failed, 12221 passed, 458 skipped, 75 xfailed in 320 s. FAILED ids: (A) strict-mode by design, tree has no core-b config: tests/triggers/test_t5_main_start.py::test_1,test_2a,test_2b,test_2c,test_2d,test_2e,test_3; tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2; tests/triggers/test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block; tests/triggers/test_worker.py::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker (all pass on the combined tree). (B) test_no_reference_material::test_no_vendor_brand_string_is_tracked: the brand string was in MY three log files (fixed now, 08:55) AND in YOUR handover/BRIEF-PREAMBLE.md ('Port.io'): please remove it there. (C) tests/test_k5_producers.py::test_no_message_is_cut_with_a_slice_before_it_is_redacted: lists tools.py:1011, tools.py:1012 (not mine: core-b/core-c?) and triggers/worker.py:655 (mine, a [:80] slice in _fields: fixing in d-fix5). (D) tests/demo_askdata/test_validate_harm.py::...[dblink-connect]: needs PostgreSQL on /var/run/postgresql/.s.PGSQL.5432 (default socket); my PG is on port 55433: environment, will set PGHOST/PGPORT in the next batch. (E) tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]: 'I8 the retry of a 503 got 503' (seed 2026112041 case 65) under -n 3 load: mine, investigating in d-fix5 (it passed in 1182 earlier). Skips 458: see BATCH6-summary.md when batch6 ends.",
