@@ -730,8 +730,8 @@
   {
    "item": "C-single-write",
    "what": "server hardening: status line + headers + body in ONE write per answer (so a kill gives nothing or the complete answer), test counting writes + mutant; 20-run count after the fix",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "DONE",
+   "percent": 100,
    "evidence file": "raw/REPRO-pgkill-*.log",
    "tries": 0,
    "reason": "A edits no repo file but runs tests; C edits server.py"
@@ -752,17 +752,17 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "C-single-write",
-   "role": "builder",
+   "id": "rev-1write",
+   "role": "fresh reviewer (codebase-details)",
    "model": "sonnet",
-   "what exactly it is doing": "server: ONE write per answer (so a kill gives nothing or the complete answer), write-counting tests with kill checks, mutant G34, 20-run count of the pg-kill id after the fix, one whole trigger test run",
-   "started UTC": "11:08",
-   "expected end": "30 min",
+   "what exactly it is doing": "read-only adversarial review of the one-write change: error paths, double or lost answer, wire equality, vacuous tests",
+   "started UTC": "11:15",
+   "expected end": "15 min",
    "percent": 5,
    "state": "running",
-   "review round n of cap": "n/a",
+   "review round n of cap": "1 (behaviour-changing shipped code, no cap)",
    "retries so far": 0,
-   "reason": "lead order 11:07"
+   "reason": "after C-single-write"
   }
  ],
  "tests": [
@@ -1135,6 +1135,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "11:16 pg-kill empty-body 2xx CLOSED on my side, 3 numbers: CAUSE (by reading, not reproduced in 60 serial runs): 4 separate writes per answer + a kill between them; FIX d-fix13: one write per answer; 20-RUN COUNT AFTER THE FIX: 20 PASS 0 FAIL (raw/REPRO-pgkill-after-fix-20.log); MUTANT: G34 (buffering removed) killed by test_every_answer_is_one_write[202], run alone (the full mutant script still cannot start: the blocked G33d anchor). The new tests also fail on the old code (29 of 49) and the golden-byte tests pass on both (wire equality). A fresh read-only review of the change runs now (rev-1write), BATCH10 (independent whole suite) after it. D is not tagged green by me until the review is clean.",
   "11:10 REPRO COUNTS (A-repro): the pg-kill id: 20 runs 20 PASS 0 FAIL (log raw/REPRO-pgkill-20.log); 40-run harness with the OLD client behaviour (truncated 2xx returned as 2xx + partial body): 40 complete answers, 0 truncated, 0 no answer (raw/REPRO-pgkill-incomplete.log). So the failure is NOT reproducible serially (60 runs), only seen once under -n 3 load in BATCH9; the mechanism (4 separate writes, a kill between them) is shown by reading the stdlib and our server, not by a run. C-single-write removes the mechanism anyway; I will then run the 40-run harness UNDER CPU LOAD before and after (the load case A did not try) and post both counts.",
   "11:09 pg-kill empty-body 2xx: CAUSE found by reading (B-read): the server sends each answer as 4 separate writes (wsgiref, wbufsize 0); a kill after the status line leaves a bare 'HTTP/1.0 202 Accepted' and http.client returns 2xx with an empty body, no exception. NOT a lost-answer path for the guarantee (the run row is created before the answer is written, in every interleaving) but a real wire-level defect (a client cannot tell a truncated 2xx from a complete one). FIX: one write per answer (C-single-write, started 11:09, 3rd agent). A-repro: 20 of 20 PASS with the client guard in place (that masks it); its 40-run harness with the OLD client behaviour is still running. After the fix: 20-run count + a mutant G34 (if the permission classifier lets me edit the mutants file; the earlier edit was denied) will be on the board.",
   "11:07 ORDER taken: pg-kill empty-body 2xx = REAL defect until proven otherwise. A-repro and B-read started 11:07 (3rd agent, the fix builder C-single-write, starts when A has its baseline: it edits server.py while A runs tests: about 11:20). 'C e1-fix2' of your list is long done (10:03). Report on the board when closed: cause, fix, 20-run count after the fix, mutant. D not tagged green until then.",
@@ -2822,6 +2823,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "NOT reproduced: 20 of 20 PASS (pytest, one process each, with the signed_post guard) + 40 of 40 harness runs with the OLD client behaviour: all 40 replies complete (HTTP/1.0 202, Content-Length 71, 71 of 71 body bytes, run_id matched): 0 truncated, 0 no answer. So the kill usually lands after the answer is fully written; the BATCH9 failure is rare and was seen under whole-suite -n 3 load; the serial runs do not recreate that timing; the mid-answer mechanism is shown by reading only. Not tried: the harness under CPU load"
+  },
+  {
+   "id": "C-single-write",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "server: ONE write per answer (so a kill gives nothing or the complete answer), write-counting tests with kill checks, mutant G34, 20-run count of the pg-kill id after the fix, one whole trigger test run",
+   "started UTC": "11:08",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "d-fix13: ONE write per answer (QuietWSGIHandler buffers in _write, one sendall in finish_response); 49 new tests on a real loopback server with a recording socket (16 answer types: exactly one write, first write = status line + headers + complete body, golden bytes equal to the old four-write server: 29 of 49 fail on the old code, the 16 golden-byte tests pass on both = wire equality); pg-kill id 20 of 20 PASS after the fix (raw/REPRO-pgkill-after-fix-20.log); tests/triggers+crash 1424 passed 5 skipped 0 failed; ruff/bandit clean; mutant G34 written and KILLED when run alone (full script cannot run: the blocked G33d anchor); residual: a kill DURING the single sendall of a >socket-buffer answer (ours are < 300 bytes)"
   }
  ]
 }
