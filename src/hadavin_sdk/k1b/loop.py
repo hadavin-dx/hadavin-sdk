@@ -103,11 +103,14 @@ def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) ->
     """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
     ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
     tokens_in = estimate_tokens(system + _dumps(messages))
-    with localcontext(defaults.money_context()):
-        return (
-            Decimal(tokens_in) * route.input_usd_per_mtok
-            + Decimal(route.max_tokens) * route.output_usd_per_mtok
-        ) / Decimal(1_000_000)
+    try:
+        with localcontext(defaults.money_context()):
+            return (
+                Decimal(tokens_in) * route.input_usd_per_mtok
+                + Decimal(route.max_tokens) * route.output_usd_per_mtok
+            ) / Decimal(1_000_000)
+    except ArithmeticError as exc:  # no price is guessed: the caller charges the whole cap instead
+        raise ValueError("bad_amount: the worst-case price overflowed") from exc
 
 
 def run_case(
@@ -155,7 +158,11 @@ def run_case(
             # The abandoned call may still be running and billed (a retry layer can re-send), so charge the
             # worst case and stop the run: at most one such call per invocation, and the cap still holds.
             if route_prices is not None:
-                budget.charge(worst_case_usd(route_prices, system, messages))
+                try:
+                    worst = worst_case_usd(route_prices, system, messages)
+                except ValueError:  # an unpriceable abandoned call: book the whole cap, never less
+                    worst = budget.limit
+                budget.charge(worst)
             out.status, out.stop_reason, out.halt = "timeout", "call_timeout", "aborted"
             return out
         except ProviderExhausted:

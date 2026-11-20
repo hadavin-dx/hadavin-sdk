@@ -18,6 +18,7 @@ from urllib.parse import urlsplit
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
+from hadavin_sdk.llm.protocol import ProviderError
 from hadavin_sdk.llm.retry import REFUSED_STATUSES, with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -263,11 +264,14 @@ def reply(
     answer keeps its cost but loses its tool calls: their input may be incomplete."""
     tokens_in = tokens[0] or estimate_tokens(sent)
     tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
-    with localcontext(defaults.money_context()):
-        cost = (
-            Decimal(tokens_in) * route.input_usd_per_mtok
-            + Decimal(tokens_out) * route.output_usd_per_mtok
-        ) / Decimal(1_000_000)
+    try:
+        with localcontext(defaults.money_context()):
+            cost = (
+                Decimal(tokens_in) * route.input_usd_per_mtok
+                + Decimal(tokens_out) * route.output_usd_per_mtok
+            ) / Decimal(1_000_000)
+    except ArithmeticError as exc:  # no price is ever guessed: the call is a refusal, its cost forfeits at the worst case
+        raise ProviderError("bad_amount: the reply price overflowed") from exc
     stop = stop_reason(stop, calls)
     return Reply(
         text=text,

@@ -14,11 +14,11 @@ import re
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 
-from hadavin_sdk import __version__
+from hadavin_sdk import __version__, defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import Detector
 from hadavin_sdk.hashing import hash_files
@@ -224,7 +224,7 @@ def _replay(
             counts["unreadable"] += o.status == "ok" and diag is None
             counts["hard_check_a"] += len(o.hard_check_a)
             counts["injection_flagged"] += o.injection_flagged
-            run_usd += budget.spent - before
+            run_usd = _spent_sum(run_usd, budget.spent, before)
         meta = {
             "schema": 1,
             "run_index": run_index,
@@ -261,6 +261,16 @@ def _replay(
     atomic_write(out / "outputs.sha256", hash_files(out, outputs_files(out)) + "\n")
     atomic_write(out / "replay-report.md", render_replay_report(runs, result))
     return ReplayResult(0 if result == "complete" else 1, result, run_id, out, runs)
+
+
+def _spent_delta(after: Decimal, before: Decimal) -> Decimal:
+    with localcontext(defaults.money_context()):
+        return after - before
+
+
+def _spent_sum(total: Decimal, after: Decimal, before: Decimal) -> Decimal:
+    with localcontext(defaults.money_context()):
+        return total + (after - before)
 
 
 def replay(*args: Any, **kwargs: Any) -> ReplayResult:
