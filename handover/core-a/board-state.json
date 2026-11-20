@@ -119,10 +119,10 @@
    "item": "BUILD-D-worker",
    "what": "src/hadavin_sdk/triggers/worker.py + tests/triggers/test_worker.py",
    "state": "RUNNING",
-   "percent": 60,
+   "percent": 85,
    "evidence file": "raw/D-worker-tests.log, -mutants.log (not yet)",
    "tries": 1,
-   "reason": "builder got the review blocker on the slot race and is changing Runner.start"
+   "reason": "first version done: worker.py 379 lines, 24 tests pass 4 times in a row, 3 mutants caught; sent back for ONE change (poll the store when no slot is free, so two worker processes behave right); NOT tested: main beyond its two refusal paths, PostgreSQL, a child process"
   },
   {
    "item": "BATCH",
@@ -230,14 +230,14 @@
    "model": "fable",
    "started UTC": "05:30",
    "expected end": "about 30 min after start",
-   "percent": 60,
+   "percent": 85,
    "state": "running",
    "review round n of cap": "review runs alongside (0 of 1 started)",
-   "retries so far": 0,
+   "retries so far": "0 (1 follow-up change, not a retry of a failure)",
    "id": "build-D-wk",
    "role": "builder",
    "what exactly it is doing": "worker.py: Runner (ack only after the run row exists, bounded pool), main, thread tests, 3 mutants",
-   "reason": "GO BUILD D; 5 agents now run on 4 cores, they are mostly waiting on the model, load is on the board"
+   "reason": "resumed for one change after its first report (166k tokens so far)"
   },
   {
    "role": "reviewer",
@@ -302,6 +302,24 @@
    "first failing line": "none",
    "state": "done",
    "reason": "same"
+  },
+  {
+   "suite or file": "tests/triggers/test_worker.py",
+   "branch and SHA": "working tree",
+   "run number": "1 to 5 (builder, 5 runs to look for flaky timing)",
+   "passed / failed / errors": "24 / 0 / 0 each time",
+   "first failing line": "none",
+   "state": "done, will re-run after the change",
+   "reason": "UNVERIFIED by me until the batch run"
+  },
+  {
+   "suite or file": "tests/triggers/test_t5_cases.py (skeleton, another agent's file)",
+   "branch and SHA": "working tree",
+   "run number": "1 (worker builder, not ordered)",
+   "passed / failed / errors": "65 / 0 / 0, 66 skipped",
+   "first failing line": "none",
+   "state": "interim",
+   "reason": "skeleton writer still running; 66 skips must be explained before this counts"
   }
  ],
  "restarts": [],
