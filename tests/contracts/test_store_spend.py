@@ -265,6 +265,21 @@ def test_a_retry_with_the_same_arguments_succeeds_and_books_nothing_more(store):
     assert _totals(store) == (D("1.00"), D("1.00"))
 
 
+def test_a_retry_of_a_closed_hold_is_stale_state_not_success(store):
+    """Review M1: only a live (open) hold is the retry's own success; after settle or expiry the caller must not
+    go on to call the model on a dead hold."""
+    settled = _reserve(store, "1.00")
+    store.settle_spend(settled, D("0.40"), agent_id=AGENT)
+    expired = _reserve(store, "1.00")
+    _older(store, expired, 5000)
+    assert store.expire_spend_reservations(2500) >= 1
+    before = _totals(store)
+    for rid in (settled, expired):
+        with pytest.raises(StaleState):
+            store.reserve_spend(rid, AGENT, DAY, D("1.00"), day_cap=BIG, month_cap=BIG)
+    assert _totals(store) == before
+
+
 def test_a_duplicate_id_is_stale_state_and_is_booked_once(store):
     rid = _reserve(store, "1.00")
     first = _rows(store)[rid]

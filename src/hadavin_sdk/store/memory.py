@@ -351,7 +351,12 @@ class MemoryStore:
         with self._lock:
             prior = self._reservations.get(reservation_id)
             if prior is not None:
-                if (prior.agent_id, prior.day, prior.reserved_usd, prior.run_id) == (
+                if prior.status == "open" and (
+                    prior.agent_id,
+                    prior.day,
+                    prior.reserved_usd,
+                    prior.run_id,
+                ) == (
                     agent_id,
                     day,
                     usd,

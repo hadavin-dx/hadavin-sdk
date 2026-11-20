@@ -137,7 +137,8 @@ BEGIN
     IF NOT FOUND THEN
         PERFORM 1 FROM spend_reservations r
          WHERE r.reservation_id = p_id AND r.agent_id = p_agent AND r.day = p_day
-           AND r.reserved_usd = p_usd AND r.run_id IS NOT DISTINCT FROM p_run_id;
+           AND r.reserved_usd = p_usd AND r.run_id IS NOT DISTINCT FROM p_run_id
+           AND r.status = 'open';  -- a settled, expired or released hold is not a live hold: no success
         IF FOUND THEN RETURN; END IF;
         RAISE EXCEPTION 'reservation exists' USING ERRCODE = '23505';
     END IF;
