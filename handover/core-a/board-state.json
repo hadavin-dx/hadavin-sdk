@@ -2,7 +2,7 @@
  "order": "017 on top of the backlog (016 standing)",
  "state": "WORKING (restart on normal models)",
  "boot_id_first": "3f12152f",
- "next": "the two fix builders end: mutant extension (minor 10 + all new guards) and then ONE batch of my own files on PostgreSQL 16; report block",
+ "next": "reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n",
  "note": "models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees",
  "session_restarts": 0,
  "container_restarts": 0,
@@ -425,10 +425,10 @@
    "item": "EGM-SEQ",
    "what": "owner order 12:15 IST: every item through the EGM sequence; ledger of what is missing: handover/core-a/EGM-LEDGER.md (almost every built item lacks the fresh RESULT review, the resolve, the repeat and the drift report)",
    "state": "RUNNING",
-   "percent": 5,
+   "percent": 10,
    "evidence file": "EGM-LEDGER.md",
    "tries": 1,
-   "reason": "owner order relayed at 06:43Z; step 1 = result review of step E started; the rest waits for the builders to end so the reviewers see the final code"
+   "reason": "step 1 running: two fresh reviewers on step E, started through the review-loop skill; session check at 06:44Z: get_session says model claude-sonnet-5-5 and last served claude-sonnet-5-5 (a harness line still said Fable: stale label, the record says Sonnet); the rest of the sequence waits for the builders"
   }
  ],
  "agents": [
@@ -990,6 +990,32 @@
    "what exactly it is doing": "findings files for the meter and G7 tests (RESUME-NOTE 6, 7)",
    "expected end": "about 40 min after start",
    "reason": "restart after the Fable limit; RESUME-NOTE is the brief"
+  },
+  {
+   "model": "sonnet (explicit on the call; the egm plugin line is sonnet too)",
+   "started UTC": "06:44",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "id": "egm-E-codebase",
+   "role": "reviewer (egm:egm-codebase-details, fresh, not the author)",
+   "what exactly it is doing": "RESULT review of step E: crash.py against ticket E, the builder's tests and the evidence logs",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence, missing result review (EGM-LEDGER.md)"
+  },
+  {
+   "model": "sonnet (explicit on the call; the egm plugin line is sonnet too)",
+   "started UTC": "06:44",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "1 of 3",
+   "retries so far": 0,
+   "id": "egm-E-design",
+   "role": "reviewer (egm:egm-design, fresh, not the author)",
+   "what exactly it is doing": "hostile design review of the same result",
+   "expected end": "about 15 min",
+   "reason": "EGM sequence"
   }
  ],
  "tests": [

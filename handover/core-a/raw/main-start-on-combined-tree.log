@@ -1,5 +1,4 @@
 d0cac96934091dead22038e834ad7d61c483cfce
-/tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/combo-main2/src/hadavin_sdk/__init__.py
 ============================= test session starts ==============================
 platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/hadavin-sdk/.venv/bin/python
 rootdir: /tmp/claude-0/-home-user/ea49ef2e-0676-59dd-b1e0-cd86ea69f123/scratchpad/combo-main2
@@ -81,4 +80,4 @@ tests/triggers/test_worker.py::test_n15_make_app_turns_a_bound_into_a_config_err
 tests/triggers/test_worker.py::test_spend_warning_only_above_one_loop_and_without_reserve PASSED [ 98%]
 tests/triggers/test_worker.py::test_make_app_reads_secrets_only_through_the_named_reader_and_refuses_other_names PASSED [100%]
 
-============================= 73 passed in 18.50s ==============================
+============================= 73 passed in 18.08s ==============================
