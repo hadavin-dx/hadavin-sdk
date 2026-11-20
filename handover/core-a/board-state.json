@@ -631,10 +631,10 @@
   {
    "item": "D-fix2",
    "what": "fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest",
-   "state": "QUEUED after d-fix1 ends",
-   "percent": 0,
+   "state": "RUNNING (code + tests); mutant script fix after it",
+   "percent": 5,
    "evidence file": "reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md",
-   "tries": 0,
+   "tries": 1,
    "reason": "d-fix1 still edits the same files"
   }
  ],
@@ -1435,15 +1435,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:15",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step D code round 1 (fix pass)",
    "retries so far": 0,
    "id": "d-fix1",
    "role": "builder",
    "what exactly it is doing": "fixes DC1-1 to DC1-10 in worker.py, server.py, endpoint.py, tests, ticket D",
    "expected end": "about 25 min",
-   "reason": "owner order: 6 to 8 agents in parallel, independent files"
+   "reason": "DC1-1..8,10 done, DC1-9 declined; 2 missing tests written (both survivor mutants now killed); tests/triggers 566 passed 3 skipped; mutant script 70 of 74 good: 4 anchors no longer match (G7a, G18c, G20b, G20e): to fix after d-fix2; added QuietServer.process_request_thread"
   },
   {
    "model": "sonnet",
@@ -1613,6 +1613,32 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "SKIP-REPORT.md: of 455 skips the batch-4 log names reasons for 264 (all 'another session's branch'); 191 unknown; HADAVIN_REQUIRE_PG covers only tests/triggers, other DB skips (store_postgres, p2, p7, k5 postgres) still skip silently"
+  },
+  {
+   "id": "d-fix2",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "ORDER 020 code (connection cap, read deadline, helpers, REQUIRE_PG skip) + test review T-1/T-4/T-5/T-6",
+   "started UTC": "07:30",
+   "expected end": "about 30 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "after d-fix1"
+  },
+  {
+   "id": "ticket-D",
+   "role": "builder (text only)",
+   "model": "sonnet",
+   "what exactly it is doing": "ticket D passages about the n8n pack made to match the JSON and README",
+   "started UTC": "07:30",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "round 3 nit 7"
   }
  ],
  "tests": [

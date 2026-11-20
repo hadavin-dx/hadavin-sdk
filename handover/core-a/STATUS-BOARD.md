@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T07:30:06Z
+UPDATED_UTC: 2026-11-20T07:30:34Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -6,15 +6,15 @@ BOOT_ID: 3f12152f
 ITEMS_TOTAL: 70
 ITEMS_OPEN: 19
 PERCENT: 82
-AGENTS_RUNNING: 2
-CAPACITY: load 0.81 of 4 cores (1-minute average), mem 0.9/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 3
+CAPACITY: load 0.53 of 4 cores (1-minute average), mem 0.9/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 545M /home/user/hadavin-sdk; 467M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:30:02Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:30:09Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -89,7 +89,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | O19 | ORDER 019: apply the real n8n error-item shapes to the retry loop (evidence-n8n-2.md); then a fresh EGM review of the pack | RUNNING (sent to the n8n fix builder as an addition) | 10 | n8n/, raw/n8n-template-tests-5.log (not yet) | 1 | same files as the n8n fix builder, so it takes the order as an addition, not a second agent |
 | O20 | ORDER 020 (lead review round 3 of endpoint + worker: 0 Blocker, 2 Major, 7 Minor): Major 1 make HADAVIN_REQUIRE_PG also fail the 'trigger config not on this branch' skip and use core-b's fields directly (no getattr fallbacks for fields core-b has); Major 2 a bounded semaphore on connections plus an absolute per-request deadline before the signature check; minors: one shared qualified-agents helper, one sender-map helper, README permanent-fault versus outage text, delete dead 'status < 500 or == 503' asserts, log level on hadavin_sdk loggers only (no root basicConfig), README: worker is for Linux and containers | QUEUED behind D-fix-1 (same files: worker.py, server.py, endpoint.py and their tests) | 0 | inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log | 0 | no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too |
 | MAINT-1 | update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files | DONE (one last re-run on core-c's newest head at the final batch) | 95 | raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet) | 1 | found by the rerun |
-| D-fix2 | fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest | QUEUED after d-fix1 ends | 0 | reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md | 0 | d-fix1 still edits the same files |
+| D-fix2 | fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest | RUNNING (code + tests); mutant script fix after it | 5 | reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md | 1 | d-fix1 still edits the same files |
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
@@ -155,7 +155,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | e-fix3 | builder | sonnet | applies H1 to H6 to crash.py, its tests and one ticket line | 07:09 | ended | 100 | done | step E after round 3 (cap reached) | 0 | finished |
 | n8n-fix1 | builder (templates and text) | sonnet | applies the n8n review fixes to the two workflow files, the README and the template checks | 07:10 | about 30 min | 100 | done | n8n pack round 1 of 3 (fix pass) | 0 | finished; 200 template tests pass; deviations: timeout 45000 ms, headerAuth placeholder credential (unverified shape), no event reference in Stop node |
 | e-evidence4 | evidence runner (records, never judges) | sonnet | runs everything on the fixed crash helper; 23 mutants without -x | 07:13 | ended | 100 | done | step E after the cap | 0 | finished, 90k tokens |
-| d-fix1 | builder | sonnet | fixes DC1-1 to DC1-10 in worker.py, server.py, endpoint.py, tests, ticket D | 07:15 | about 25 min | 5 | running | step D code round 1 (fix pass) | 0 | owner order: 6 to 8 agents in parallel, independent files |
+| d-fix1 | builder | sonnet | fixes DC1-1 to DC1-10 in worker.py, server.py, endpoint.py, tests, ticket D | 07:15 | about 25 min | 100 | done | step D code round 1 (fix pass) | 0 | DC1-1..8,10 done, DC1-9 declined; 2 missing tests written (both survivor mutants now killed); tests/triggers 566 passed 3 skipped; mutant script 70 of 74 good: 4 anchors no longer match (G7a, G18c, G20b, G20e): to fix after d-fix2; added QuietServer.process_request_thread |
 | egm-D-tests | reviewer (egm:egm-codebase-details, fresh) | sonnet | reads the step D tests: invariant to test table, what passes on broken code | 07:15 | about 25 min | 100 | done | tests round 1 of 3 | 0 | report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md |
 | egm-mut | reviewer (egm:egm-design, fresh) | sonnet | reads tests/endpoint_mutants.py and the runner: real guards, wrong-reason kills, the allow_crash override | 07:15 | about 25 min | 100 | done | mutant script round 1 of 3 | 0 | report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md |
 | win-notes | analysis (writes one file) | sonnet | collects every Windows risk from the reviews into a checklist for the laptop | 07:15 | about 25 min | 100 | done | n/a | 0 | report received; resolved into reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md, WINDOWS-NOTES.md |
@@ -169,16 +169,18 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | maint2 | builder (test, non-builder) | sonnet | decides interface change vs finding for the one new core-c gate test failure and fixes the test | 07:27 | about 10 min | 100 | done | n/a | 1 | treated as interface change (core-c 613611e25: _NoMap singleton cache _one); guard now accepts an AnnAssign None plus a write to cls._one only inside __new__; ev-c 201 passed 1 skipped (log raw/MAINT-core-c-2.log). Caveats: could not read core-c's decision notes (not in this checkout); verified before ruff format; core-c head moved to dc9a13501 |
 | o20-readme | builder | sonnet | ORDER 020 README items: permanent faults vs outage table; worker on Linux/containers, Windows limits | 07:29 | about 10 min | 100 | done | n/a | 0 | README: permanent vs outage table, where the worker runs; 88 template tests pass (n8n-template-tests-8.log); Ctrl-Break and Docker-behind-proxy UNVERIFIED |
 | skip-rep | read-only analyst | haiku | classifies the 456 skips by reason from the batch-4 log and a grep of skip markers | 07:29 | about 5 min | 100 | done | n/a | 0 | SKIP-REPORT.md: of 455 skips the batch-4 log names reasons for 264 (all 'another session's branch'); 191 unknown; HADAVIN_REQUIRE_PG covers only tests/triggers, other DB skips (store_postgres, p2, p7, k5 postgres) still skip silently |
+| d-fix2 | builder | sonnet | ORDER 020 code (connection cap, read deadline, helpers, REQUIRE_PG skip) + test review T-1/T-4/T-5/T-6 | 07:30 | about 30 min | 5 | running | 2 of 3 (fix) | 0 | after d-fix1 |
+| ticket-D | builder (text only) | sonnet | ticket D passages about the n8n pack made to match the JSON and README | 07:30 | about 10 min | 5 | running | n/a | 0 | round 3 nit 7 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4537s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4537s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4537s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4537s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4537s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4537s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4564s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4564s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4564s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4564s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4564s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4564s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
