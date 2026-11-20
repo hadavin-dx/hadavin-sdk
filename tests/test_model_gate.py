@@ -129,9 +129,20 @@ def build(
     return gate.bind("agent-1", "run-1", mapping=mapping, **bind), client, meter, sink
 
 
-def refused(
-    bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None
-):  # mapping: only to compare
+def gate_refusal(bound, **kwargs) -> GateRefused:
+    """The GateRefused a call raises; any other error (the original one passed on as it is) fails the test."""
+    messages, route = kwargs.pop("messages", CLEAN), kwargs.pop("route", "main")
+    try:
+        bound.chat(messages, system="s", route=route, **kwargs)
+    except GateRefused as exc:
+        return exc
+    except Exception:  # noqa: BLE001 - reported by type only
+        raise AssertionError("the error was passed on as it is") from None
+    raise AssertionError("the call did not raise")
+
+
+def refused(bound, client, meter, sink, messages=CLEAN, documents=None, mapping=None):
+    # `mapping`: only the map to compare before and after (bind has its own)
     """A hostile input: UnmaskedInput, zero client calls, zero reservations, map unchanged, one refused row."""
     before = copy.deepcopy(dict(mapping)) if mapping is not None else None
     with pytest.raises(UnmaskedInput) as caught:
@@ -690,9 +701,7 @@ def test_o17_5_a_reserve_error_that_is_not_a_spend_refusal_is_one_gate_exception
     could not tell `no call was made` from a client failure. Now every such failure is `GateRefused` with the
     code `reserve_refused`, no text, no cause and no context (raised outside the `except`)."""
     bound, client, meter, sink = build(meter=Meter(reserve_raises=error))
-    with pytest.raises(GateRefused) as caught:
-        bound.chat(CLEAN, system="s", route="main")
-    exc = caught.value
+    exc = gate_refusal(bound)
     assert (
         type(exc) is GateRefused
         and exc.code == "reserve_refused"
@@ -759,10 +768,7 @@ def test_m4_only_the_published_reasons_become_an_audit_code():
         error = OSError("network")
         error.reason = reason
         bound, client, _, sink = build(meter=Meter(reserve_raises=error))
-        with pytest.raises(
-            GateRefused
-        ):  # not a SpendRefused: one gate exception with a code (ORDER 017 item 5)
-            bound.chat(CLEAN, system="s", route="main")
+        gate_refusal(bound)  # not a SpendRefused: one gate exception with a code (ORDER 017 item 5)
         assert sink.codes() == [("refused", "reserve_refused")], (
             "a reason that is not published was copied"
         )
@@ -844,8 +850,9 @@ def test_d2_worst_case_raising_has_its_own_code_and_comes_out_as_the_gate_except
         raise LookupError("no such route")
 
     bound, client, meter, sink = build(worst_case=cannot)
-    with pytest.raises(GateRefused) as caught:  # ORDER 017 item 5: was the LookupError itself
-        bound.chat(CLEAN, system="s", route="nope")
+    caught = SimpleNamespace(
+        value=gate_refusal(bound, route="nope")
+    )  # item 5: was the LookupError itself
     assert caught.value.code == "worst_case_failed" and caught.value.args == ("worst_case_failed",)
     assert caught.value.__cause__ is None and caught.value.__context__ is None
     assert client.sent == [] and meter.reserved == {}  # a raising worst_case is not a meter refusal
