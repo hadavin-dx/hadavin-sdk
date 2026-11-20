@@ -1,16 +1,12 @@
 # n8n trigger workflows for the Hadavin signed endpoint
 
-**Status: an earlier version of these two files was run in n8n 2.47.7 by the lead (record of that run:
-`handover/core-a/inputs/lead-evidence-n8n-1.md`). The files as they stand now were changed after review rounds 1 and 2
-(round 3 changed text only), and they have NOT been imported or run in any n8n since. Nobody has
-run this exact version. The automatic tests that come with these files read the JSON and this page: they prove the
-shape and the wording, not how n8n behaves. Three behaviours were seen later in n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, each case run once): a wait of 60 seconds is lost in a restart of n8n, a wait of 120 seconds survives it; a Respond node followed by a Stop and Error node; two Respond nodes in a row.**
+**Status: these two files were imported, published and run in n8n 2.47.7 by the lead (fourth record, `handover/core-a/inputs/evidence-n8n-4.md`, head 02226ce047b9b483b45c0f8fa8b845620d99f4f8, 2026-11-20, each case run ONCE; the endpoint and worker code of this tree with a recorded model double and a memory store). Their nodes and connections are as they were run; since then only the two workflow names and the `notes` texts changed. The placeholder values (credential ids, `webhookId`, address, error workflow id) were replaced before that import, so the placeholders themselves were not run. Earlier versions were run in the first record (`handover/core-a/inputs/lead-evidence-n8n-1.md`) and in two more (`handover/core-a/inputs/evidence-n8n-2.md`, `handover/core-a/inputs/evidence-n8n-3.md`). SEEN in the fourth record (line numbers of that file): both files import and publish (line 46); a new event gives 202, a wait loop and NO_ACTION as a success, and the same event again gives 200 with the same run id and no second run (lines 47 and 48); the same key with another text gives 409 and the error workflow once (line 49); a wrong signing value gives 401 without a retry and the error workflow runs (line 51); a receiver that is down gives ECONNREFUSED for three rounds and then a success, and the error workflow does NOT run (line 50); a missing or unusable record id gives HTTP 500 to the caller and the error workflow (lines 59 and 62 to 64); a wrong or missing webhook header gives HTTP 403 (line 60); the Respond node set to noData with the code 202 answers the caller early and passes the item on (lines 84 to 86); an execution in a wait of 70 seconds survived a restart of n8n (line 66). Everything a note or a list below still marks UNVERIFIED or NOT VERIFIED was not run: a timeout of 45 seconds, a redirect, 502, 503 or 504 with a body, 520 to 524, the Retry-After header, 45 rounds to their end, every state but NO_ACTION, RECEIVED and WORKING, a lone surrogate, null values, an execution lost in a restart. The automatic tests that come with these files read the JSON and this page: they prove the shape and the wording, not how n8n behaves. Three behaviours were seen earlier in n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, each case run once): a wait of 60 seconds is lost in a restart of n8n, a wait of 120 seconds survives it; a Respond node followed by a Stop and Error node; two Respond nodes in a row.**
 
 Who this is for: the set-up steps below are for the Hadavin operator (the person who runs Hadavin for the client)
 TOGETHER WITH the client's automation builder (the person who builds workflows in the client's n8n). Neither can finish
 them alone: the operator holds the Hadavin address and the secret, the builder holds n8n.
 
-What that means for a reader: the changes follow observed facts, but a file that nobody has imported can still hold a
+What that means for a reader: the nodes and connections were run once as they stand (fourth record), but what was not run can still hold a
 mistake. Every node carries a `notes` field. A note that starts with `SEEN IN n8n 2.47.7:` describes a node that ran
 exactly as it is written here. A note that starts with `UNVERIFIED:` names what nobody has seen working (the same
 note may also say what WAS seen on an earlier version). Do not give these files to a client before the list at the end
@@ -89,24 +85,30 @@ A third run (record: `handover/core-a/inputs/evidence-n8n-3.md`, 2026-11-20, one
 - A Respond to Webhook node, then a Stop and Error node (lines 82 to 96): the caller got HTTP 200 with the body of the Respond node, the execution ended in error, and the error workflow ran once, 0.12 seconds after the execution began. The answer node's early answer therefore stands when a later node fails the execution.
 - Two Respond to Webhook nodes in a row (lines 98 to 118): the caller got the first body only; the second Respond node received the item that came before it (the item of the first Respond node, or of a Set node placed between them) and nothing was raised in the log, no warning and no error. The first Respond node passes its input item on unchanged except the headers, which the printout left out (evidence lines 104 to 105; with respondWith json).
 
+A fourth run (record: `handover/core-a/inputs/evidence-n8n-4.md`, 2026-11-20, one n8n 2.47.7 container on a Windows laptop, made-up data, no model call, each case run ONCE; the cases with the first two events were run twice and the first try kept) ran both files as they stand now against the endpoint and worker code of this tree (a recorded model double, a memory store, no reverse proxy; the placeholder values were replaced before the import, lines 31 to 34). SEEN there:
+
+- Both files imported and published; after one container restart both were listed as active (line 46).
+- A new event: the caller got HTTP 202 with an empty body after 0.18 seconds (the Respond node set to noData with the code 202), the receiver answered 202 RECEIVED, the workflow waited, asked again with the same key and the receiver answered 200 NO_ACTION; the execution ended in success at "Done: finished or waits for approval" (line 47). The same event again: 200 with the same run id and no second run (line 48). The early answer before the long chain, and the item passed on unchanged by the Respond node set to noData, were SEEN here (lines 84 to 86); the earlier text of this page said they were not.
+- The same key with a changed text: 409 with an empty body, "Stop: refused or gave up", and the error workflow ran once, 0.047 seconds later (line 49). A wrong signing value: 401, no second round, the error workflow ran (line 51).
+- A receiver that was down (about two minutes): ECONNREFUSED in rounds 0 and 1, each after the 70 second wait; the receiver came back, round 2 was answered 202, the next check 200 NO_ACTION; the execution ended in success and the error workflow did NOT run (lines 50 and 124).
+- A slow run (answered WORKING twice): checks 1 and 2, waits of 73.7 and 75.6 seconds, then success (line 58). The waits of the loop ran 72.8 to 75.6 seconds from one send to the next (line 105).
+- A missing record id, an id above the safe integer limit, an empty event or a text of spaces: the caller got HTTP 500 with the body {"message":"Error in workflow"}, the execution ended at "Stop: id or text missing", the error workflow ran, nothing was sent (lines 59 and 62 to 64). A call with no webhook header or a wrong value: HTTP 403 "Authorization data is wrong!" and no execution (line 60).
+- A restart of n8n 5 seconds into a wait of 70 seconds: the execution stayed waiting, the wait resumed, the next send was made and the execution finished with success (line 66).
+
 NOT run by anybody (each is also in the list at the end):
 
-- These two files as they stand now.
-- The Crypto node of typeVersion 2 with a credential INSIDE the full chain (it was run in a small test workflow).
-- The "Answer caller: taken" node as written (noData, code 202), and the webhook authentication setting (added
-  after the run). The Respond node was seen once in the third run with respondWith json only; noData, the 202 code and an early answer before a long chain were not seen (see above).
-- The changed guard and the new key text (event name and rerun value).
+- The placeholder values of these two files as they stand now (credential ids, `webhookId`, address, error workflow id): they were replaced before the import of the fourth record, so the placeholders themselves were not run (lines 31 to 34, 76).
+- The guard with a lone surrogate, with null values and with an empty id; a falsy rerun value (lines 81, 82 and 88).
 - A manual retry of a failed execution from the n8n editor.
-- The real loop values: 45 rounds with 70 second waits, and an n8n restart during a wait of exactly 70 seconds (the restart was run with 60 and 120 seconds only; see the third run above).
-- The state check after a 202 or 200 answer (added after the run): the seven nodes from "Run still going?" on, the
-  second way into the wait node, and the real Hadavin states in an answer (the stub's state was a made-up word).
-- The real Hadavin endpoint (a stub answered).
+- The real loop values: 45 rounds with 70 second waits to their end (the fourth record ran 3 rounds with the real 70 second wait, line 102), and a restart of n8n at any moment but a wait.
+- The state check after a 202 or 200 answer for every state but NO_ACTION, RECEIVED and WORKING: SUCCEEDED, WAITING_FOR_APPROVAL, the six states of the failing list, the checks used up, "Run ended well?" going false, "Stop: run did not end well" and "Stop: still running" (lines 114 and 117 to 120).
+- The real Hadavin endpoint behind a real reverse proxy, with the real model, a PostgreSQL store, the worker's own start command and the tick job (the fourth record used the code of this tree with a model double; line 22 to 31).
 - One webhook call that starts two executions.
 - n8n Cloud and queue mode.
 - n8n versions other than 2.47.7.
-- The editor menu for importing a file and the HTTP Request timeout of 45 seconds timed live.
-- A receiver that answers 520 to 524, a redirect, a TLS failure, and Retry On Fail switched on. (A receiver that
-  answers 502 or 504, and a receiver that gives no answer, WERE run in the second record.)
+- The editor menu for importing a file and the HTTP Request timeout of 45 seconds timed live (no answer took longer than 5 seconds, line 94).
+- A receiver that answers 520 to 524, a redirect (3xx), a 502, 503 or 504 with a body, the Retry-After header, a TLS failure, and Retry On Fail switched on (lines 94, 95 and 103). (A receiver that answers 502 or 504, and a receiver that gives no answer, WERE run in the second record.)
+- Whether anybody is told when an execution is lost in a restart of n8n (lines 108 and 123).
 
 ## What the two workflows do
 
@@ -135,7 +137,7 @@ These steps are for the Hadavin operator together with the client's automation b
    the webhook header credential into the node "Trigger placeholder"; replace the `webhookId` of "Trigger placeholder"
    with a fresh UUID and the `path` with a long random value (see "The webhook address").
 4. Import both files. After the import open "Sign" and "Trigger placeholder" and check that each shows its credential. In the lead's run this was done by command line: `n8n import:workflow --input=<file>`, once
-   for each file; `n8n list:workflow` then printed the id and the name of each workflow (seen). The editor's menu for
+   for each file; `n8n list:workflow` then printed the id and the name of each workflow (seen; seen again in the fourth record with `n8n import:workflow`, `n8n import:credentials` and `n8n publish:workflow`, line 46). The editor's menu for
    importing a file was not run (UNVERIFIED).
 5. In the error workflow, replace "Notify placeholder" with your chat or e-mail node. The message to send is
    `{{ $json.message }}`.
@@ -162,7 +164,7 @@ These steps are for the Hadavin operator together with the client's automation b
 11. Publish the main workflow and test it with a TEST sender or a test agent: a made-up event starts a REAL run, so
     send it only to an agent that has nothing real to act on. Check that Hadavin answered. Then send one event with an
     EMPTY text and check that the failure notice reaches your chat or e-mail node.
-12. Operating rule, a known fact in n8n 2.47.7 (stated limit 15): do not restart or update n8n while an event is in flight. The operator checks this in the n8n Executions list: no execution is Running or Waiting (UNVERIFIED: whether the Executions list shows a Waiting state for a Wait node; the evidence shows the word waiting only in the database rows, not in the list). A crash or a host reboot has the same effect as a restart. The 105 minutes below is the worst case. Step 6's restart is the one before any event is sent. An execution that is in a wait of 60 seconds at a restart is lost for good (marked crashed, never resumed) although the caller was already answered; an execution in a wait of 120 seconds survived (seen once each). Wait for the loops to end (up to about 105 minutes, see limit 15), or accept that after the restart the operator must compare what the client sent with the runs Hadavin holds.
+12. Operating rule, a known fact in n8n 2.47.7 (stated limit 15): do not restart or update n8n while an event is in flight. The operator checks this in the n8n Executions list: no execution is Running or Waiting (UNVERIFIED: whether the Executions list shows a Waiting state for a Wait node; the evidence shows the word waiting only in the database rows, not in the list). A crash or a host reboot has the same effect as a restart. The 105 minutes below is the worst case. Step 6's restart is the one before any event is sent. An execution that is in a wait of 60 seconds at a restart is lost for good (marked crashed, never resumed) although the caller was already answered; an execution in a wait of 120 seconds survived (seen once each), and so did one in a wait of 70 seconds (seen once, fourth record, line 66). Wait for the loops to end (up to about 105 minutes, see limit 15), or accept that after the restart the operator must compare what the client sent with the runs Hadavin holds.
 
 Do not change the `typeVersion` of the Set nodes ("Build request", "Stamp time", "Next round", "Next check", and
 "Build message" in the error workflow). It is 3.4. With typeVersion 3, n8n 2.47.7 ignored the fields these nodes are meant to build
@@ -178,9 +180,8 @@ registered". Test workflows whose webhook node had a `webhookId` answered on `/w
 
 The `webhookId` in the file, `00000000-0000-4000-8000-000000000000`, is a made-up placeholder. Give every
 installation its own: before the import, replace it in the JSON with a fresh UUID (for example the output of
-`python3 -c "import uuid; print(uuid.uuid4())"`). UNVERIFIED: which forms of value n8n accepts here, and what
-happens when two workflows hold the same value; the run only shows that a node with a `webhookId` got the short
-address.
+`python3 -c "import uuid; print(uuid.uuid4())"`). SEEN IN n8n 2.47.7 (fourth record, once, line 78): a fresh UUID in the form 8-4-4-4-12 registered and answered on `/webhook/<path>`. UNVERIFIED: the placeholder value itself, which other forms of value n8n accepts here, and what
+happens when two workflows hold the same value.
 
 ## The guard: no id or no text means no request
 
@@ -188,7 +189,7 @@ address.
 the document text is missing, null, empty or only spaces, the execution FAILS at "Stop: id or text missing" and the
 error workflow tells a person. Nothing is sent. This was seen in the lead's run for all four cases. The guard was changed after the run: a number id must be a whole
 number that n8n can hold exactly (`Number.isSafeInteger`; a bigger number loses digits and two ids could get one
-key), and an `event` field, if the caller sends one, must be a non-empty text. UNVERIFIED: that changed expression.
+key), and an `event` field, if the caller sends one, must be a non-empty text. SEEN IN n8n 2.47.7 (fourth record, once each, lines 79 and 80): that changed expression: a text id and a whole-number id passed; a missing id, an id above `Number.isSafeInteger`, an empty `event` and a text of spaces were stopped and nothing was sent. UNVERIFIED: null values, an empty id and a lone surrogate with it (lines 81 and 82).
 
 Why it is required: with the guard taken out of the chain, the run sent a missing id as the hash of the text
 "undefined" and a null id as the hash of the text "null". Every such event would get the same key, and Hadavin would
@@ -207,12 +208,11 @@ To change that, one node was added AFTER the run, and the webhook node's respons
   never learns from this answer how the run ended.
 - A refused event (the guard's second output) has NO answer node. "Stop: id or text missing" is the only node on that
   output, so a refused event always fails the execution and the error workflow tells a person. The caller then gets
-  n8n's own error answer. UNVERIFIED: its status and body (in the run, with another response mode, the caller got 200;
-  in the second record, with the mode "last node", a failed execution gave the caller HTTP 500 with the body
-  `{"message":"Error in workflow"}` after the whole execution had ended, lines 285 to 293 of `handover/core-a/inputs/evidence-n8n-2.md`). A caller
+  n8n's own error answer. SEEN IN n8n 2.47.7 (fourth record, once each, lines 59, 62 to 64 and 83): with the response mode `responseNode` and no answer node run, that answer is HTTP 500 with the body
+  `{"message":"Error in workflow"}` (the second record had seen the same answer with the mode "last node", after the whole execution had ended, lines 285 to 293 of `handover/core-a/inputs/evidence-n8n-2.md`; the first run, with another response mode, gave the caller 200). A caller
   should treat only a 202 as "taken".
 
-This branch was NOT run in n8n as written. SEEN IN n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, each case once): a Respond to Webhook node answered the caller with the status and body it was given (lines 85 to 86); it passed its input item on unchanged except the headers, which the printout left out (lines 104 to 107, with respondWith json); and when a Stop and Error node ended the same execution later, the caller KEPT the Respond answer (HTTP 200 there), the execution ended in error and the error workflow ran once (lines 82 to 96). This chain relies on exactly that: the caller's 202 stands, and a failed run reaches a person through the error workflow. A second Respond node in one execution never reaches the caller and raises no warning (lines 98 to 118), so never add another answer node to this chain. UNVERIFIED: this node as written (type name, version and parameter names were written from memory of the n8n documentation; the run used respondWith json and no response code), the exact parameter text of the response mode value (the record names the mode only as "Respond node mode"), that it passes its input item on unchanged when it is set to noData (the hash node reads the id from it), and that n8n answers the caller before it starts the long sending chain (the cases seen ended within about 0.1 seconds; if n8n does not answer early, the caller waits until the whole execution ends). Until somebody has run it as written, do not rely on the status the caller gets.
+This branch WAS run in n8n as written (fourth record, once, lines 47 to 49, 59 and 84 to 86): the caller got HTTP 202 with an empty body from the Respond node set to noData with the code 202, the node passed its item on unchanged, and n8n answered at once, before the long chain (0.10 to 0.33 seconds while the executions ran up to 73 seconds more). SEEN IN n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, each case once): a Respond to Webhook node answered the caller with the status and body it was given (lines 85 to 86); it passed its input item on unchanged except the headers, which the printout left out (lines 104 to 107, with respondWith json); and when a Stop and Error node ended the same execution later, the caller KEPT the Respond answer (HTTP 200 there), the execution ended in error and the error workflow ran once (lines 82 to 96). This chain relies on exactly that: the caller's 202 stands, and a failed run reaches a person through the error workflow. A second Respond node in one execution never reaches the caller and raises no warning (lines 98 to 118), so never add another answer node to this chain. The earlier text of this page, that the node as written, the noData setting, the 202 code, the parameter text of the response mode and the early answer were not seen, is corrected by the fourth record. A caller still treats only a 202 as "taken".
 
 ## Webhook authentication
 
@@ -224,15 +224,15 @@ workflow. So one of these is a REQUIRED set-up step (step 8):
   random value (at least 32 random characters; never the trigger secret; never saved in these files). Choose it in the
   Authentication setting of "Trigger placeholder" and give the caller the header name and value. The JSON holds
   `"authentication": "headerAuth"` and a credential reference of the type `httpHeaderAuth` with a placeholder id.
-  UNVERIFIED: that shape. It was written from memory of the n8n documentation and never imported; what the import does
-  with the placeholder credential id is not known either. Open the node after the import and check it shows the
+  SEEN IN n8n 2.47.7 (fourth record, once, lines 35, 60 and 75): that shape: the setting `headerAuth` with a credential of the type `httpHeaderAuth` (made by `n8n import:credentials` with a made-up header value) was enforced: the right header gave 202, no header or a wrong value gave HTTP 403 with the text "Authorization data is wrong!" and no execution was created. UNVERIFIED: what the import does
+  with the placeholder credential id (it was replaced before the import, line 76). Open the node after the import and check it shows the
   credential.
   How to create it without a browser (the same file form as the Crypto credential under "Where the secret lives"; the
   record of the lead's run shows `n8n import:credentials` only for the Crypto type): write a file with
   `[{"id": "<AN-ID-YOU-CHOOSE>", "name": "<A-NAME-YOU-CHOOSE>", "type": "httpHeaderAuth", "data": {"name": "<HEADER-NAME>",
   "value": "<LONG-RANDOM-VALUE>"}}]`, run `n8n import:credentials --input=<that file>`, and DELETE the file.
-  UNVERIFIED: the field names `name` and `value` are from memory of n8n's documentation and appear in no evidence file;
-  the import of this type was not run. In the editor, a credential's id is in the address of its page (the part after
+  UNVERIFIED: the field names `name` and `value`
+  are from memory of n8n's documentation and are not quoted in any evidence file; the import of this type ran in the fourth record (line 35) and its header was enforced, so a file of this form worked, but the evidence does not print the file. In the editor, a credential's id is in the address of its page (the part after
   `/credentials/`); UNVERIFIED: the editor was not run. `n8n export:credentials` also lists the ids.
 - If you cannot use that setting: an unguessable path. Replace `replace-with-your-path` with a random value of at least 32
   characters, treat the whole address as a secret (it can show up in logs of proxies and callers), and do not post it
@@ -247,7 +247,7 @@ the Hadavin side under the sender's secret name.
 The template has ONE way: the node "Sign" is a Crypto node of typeVersion 2, and it takes the secret from an n8n
 credential of the type `crypto`. The node has no field for the secret. In the lead's run, on default n8n settings,
 this gave the same HMAC as Python, and the made-up signing value was found 0 times in the workflow export, 0 times
-in n8n's database files and 0 times in the normal credential export (which holds it encrypted).
+in n8n's database files and 0 times in the normal credential export (which holds it encrypted). In the fourth record the same node and credential, inside the full chain, signed requests that the receiver accepted (lines 91 and 93).
 
 How to create the credential:
 
@@ -385,6 +385,8 @@ shows, in n8n 2.47.7 against a stub receiver, for the HTTP node with Retry On Fa
   ECONNREFUSED, a timeout and a 502 each ran all rounds with a new timestamp and a new signature, then ended in "Stop:
   refused or gave up" and the error workflow (lines 221 to 272).
 
+The fourth record (lines 50, 98 to 102, once each) adds, against the endpoint and worker code of this tree: a send with no status at all (`connect ECONNREFUSED`, no `status`) went to the busy output in rounds 0 and 1 with the real 70 second wait, and 401 and 409 went to the stop output with no second round; each round of the down receiver showed one send, as Retry On Fail is off.
+
 Still UNVERIFIED: 520 to 524 (added to the list after the run), a redirect, a TLS failure, a receiver that answers after
 the timeout, Retry On Fail switched on, the loop with the real values (45 rounds, 70 second wait, 45 second timeout),
 the real Hadavin endpoint behind a real proxy, n8n Cloud and queue mode.
@@ -410,6 +412,14 @@ worker. None of these means that the event is bad. If the template stopped on th
 during a restart would end with a person who has to send it again by hand. So all of them count as busy: the
 template waits and sends again until the new worker answers. Trying again is safe by design: the key stays the
 same, so Hadavin starts at most one run for it, and each round has its own timestamp and signature.
+
+### A receiver that is down and then recovers is silent: success, no error workflow
+
+This is documented and deliberate: an outage that recovers needs no person. If the receiver (the Hadavin worker or the proxy in front of it) is down at the moment an event is sent, the workflow waits and sends again; when the receiver is back inside the busy rounds, the run is started late, the execution ends as a success, and the error workflow is NOT started. Nobody is told, because nothing needs a person. The client's records show such an event as a late success: the run exists, but it started later than the event (the execution's "Send to Hadavin" shows the refused rounds).
+
+SEEN IN n8n 2.47.7 (fourth record, once, lines 50 and 124): the receiver was down for about two minutes; rounds 0 and 1 gave ECONNREFUSED, round 2 was answered 202 after the receiver was started again, the next check gave 200 NO_ACTION, the execution ended in success, and no execution of the error workflow was created.
+
+The bound: the outage must end within the busy rounds, 45 waits of 70 seconds, 3150 seconds, 52 minutes (about 52 to 53 minutes in a real run, and up to about 87 minutes when each of the 46 sends times out). An outage that lasts longer ends at "Stop: refused or gave up" and the error workflow tells a person. A person who wants every outage reported has to add that to the client's own follow-up steps; this template does not.
 
 ### 200 does not mean "ended"
 
@@ -553,7 +563,7 @@ rounds run out. This is the lead's reviewer's finding (round 3, Minor 5); the an
   n8n in a container cannot reach a loopback-only worker: inside a
   container 127.0.0.1 is the container itself (`WINDOWS-NOTES.md`, W03). The operator must put a TLS proxy in front
   of the worker, or run n8n on the same host and network as the worker (for example both natively, or in one
-  network namespace). Whether a given Docker setup can then reach it is UNVERIFIED; nobody has run it.
+  network namespace). SEEN IN n8n 2.47.7 (fourth record, once, lines 28 and 34): n8n in a container reached a worker listening on all interfaces (0.0.0.0, not loopback, put together by a launch script and not started with the worker's own command) as `host.docker.internal`, on Docker Desktop on Windows. UNVERIFIED: any other Docker setup, and the worker's own start command with `--allow-non-loopback`.
 
 ### Three limits
 
@@ -576,9 +586,7 @@ when it is carried out, this execution has already ended as a success, and this 
 those later ends. And an event that is sent again with the key of a run that ended
 badly fails again, every time: that is meant, the key is used up.
 
-UNVERIFIED: all of this section's n8n side. The state check was added after the lead's run and nobody has run it
-in any n8n. Seen in the run: the IF node, the Set node, the Wait node and the Stop and Error node as types, a
-connection back to "Stamp time" running as a loop, and an answer 202 whose item held `run_id` and `state`.
+SEEN IN n8n 2.47.7 (fourth record, once each, lines 47, 58, 112 to 118): "Run still going?" sent RECEIVED and WORKING to the loop and NO_ACTION out; "Checks left?" and "Next check" counted 0, 1, 2 in one execution; "Run ended well?" sent NO_ACTION to "Done: finished or waits for approval"; the wait node worked when entered from "Next check". UNVERIFIED: all of this section's n8n side for every other state (SUCCEEDED, WAITING_FOR_APPROVAL, the six failing states, an answer without a state), for the checks used up, and for "Stop: run did not end well" and "Stop: still running" (lines 114 and 117 to 120): the receiver of the run answered only NO_ACTION, RECEIVED and WORKING.
 
 ## One run at a time: what the sender must do when it is not acknowledged
 
@@ -598,14 +606,14 @@ In plain words: with the default setting the worker handles ONE run at a time.
 
 The main workflow does this with a loop: "Busy and rounds left?" then "Next round" then "Wait before next round"
 then back to "Stamp time" and the sign node. The outline holds placeholders: a wait of 70 seconds and 45 rounds,
-about 52 to 53 minutes in total. Nobody has measured a run for this file; set both numbers for each client so that
+about 52 to 53 minutes in total. Nobody has measured the 45 rounds to their end (the fourth record ran 3 rounds and 2 checks with the real 70 second wait: 72.8 to 75.6 seconds from one send to the next, line 105); set both numbers for each client so that
 rounds times wait is longer than that client's longest run. If events arrive faster than runs finish, the waiting
 executions pile up in n8n and some will use up their rounds; this setup is for a low event rate.
 
 What the lead's run showed for the loop, cut to 3 rounds and a 2 second wait: 4 requests reached the receiver,
 about 2 seconds apart, each with the same body, a new timestamp and a new signature that the receiver found
 correct; then the execution failed at "Stop: refused or gave up" and the error workflow ran. The real numbers (45
-rounds, 70 seconds) were not run.
+rounds, 70 seconds) were run for 3 rounds only, in the fourth record (line 102).
 
 The loop finds the status of a failed send in the field `error.status` of the item that leaves the HTTP node's
 second output (seen for 401, 409, 413, 400, 502, 503 and 504). There is no field `error.httpCode`. A send with no HTTP answer has
@@ -749,7 +757,7 @@ These are known limits of this version. They are written down so that nobody ass
     until Hadavin has answered 202 or 200 there is no record of it anywhere else, and the caller will not send it again,
     because it was told 202. The loops can take long: up to 45 busy waits and then up to 45 checks, 70 seconds each,
     6300 seconds of waiting, about 105 minutes plus the time of the sends. If n8n stops, restarts or is updated in that time, the execution may be
-    lost. SEEN IN n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, lines 46 to 80, each case run once, with `docker restart` and its 10 second stop timeout): an execution in a wait of 60 seconds, restarted at about second 20, was LOST (marked crashed, never resumed, checked up to about 73 to 82 seconds past the planned end of the wait, so at least 70 s; the evidence says 82 s in one place and its own timeline gives 73 s; the caller had already got 200); an execution in a wait of 120 seconds, restarted at about second 30, was saved as waiting, survived, and finished about 2 seconds after its planned end. So the loops of this template use a wait of 70 seconds, above 65 (the 65 s figure comes from outside the evidence (the lead's brief); the evidence file only says it as a premise, lines 51 and 65). UNVERIFIED: that a wait of exactly 70 seconds is saved like the 120 seconds one (an inference from the threshold, not run); a restart at another moment (during a send, between two nodes); a crash of n8n or a longer stop timeout; whether the error workflow runs for a lost execution (the test workflow had no error workflow). If an execution is lost, this template tells nobody (an error workflow runs for an execution that fails inside a running n8n, seen once for a Stop and Error node, lines 90 to 95;
+    lost. SEEN IN n8n 2.47.7 (third record, `handover/core-a/inputs/evidence-n8n-3.md`, lines 46 to 80, each case run once, with `docker restart` and its 10 second stop timeout): an execution in a wait of 60 seconds, restarted at about second 20, was LOST (marked crashed, never resumed, checked up to about 73 to 82 seconds past the planned end of the wait, so at least 70 s; the evidence says 82 s in one place and its own timeline gives 73 s; the caller had already got 200); an execution in a wait of 120 seconds, restarted at about second 30, was saved as waiting, survived, and finished about 2 seconds after its planned end. So the loops of this template use a wait of 70 seconds, above 65 (the 65 s figure comes from outside the evidence (the lead's brief); the evidence file only says it as a premise, lines 51 and 65). SEEN IN n8n 2.47.7 (fourth record, once, line 66): the earlier inference that a wait of exactly 70 seconds is saved like the 120 seconds one: an execution in a wait of 70 seconds, restarted 5 seconds in, stayed waiting, resumed and finished with success. UNVERIFIED: a restart at another moment (during a send, between two nodes); a crash of n8n or a longer stop timeout; whether the error workflow runs for a lost execution (the test workflow had no error workflow). If an execution is lost, this template tells nobody (an error workflow runs for an execution that fails inside a running n8n, seen once for a Stop and Error node, lines 90 to 95;
     UNVERIFIED for a crash of n8n itself). The rule: keep the wait above 65 seconds (70); do not restart n8n while events are in flight; after any n8n
     restart the operator compares what the client sent with the runs Hadavin holds, and an event with no run is sent
     again with the SAME key.
@@ -762,36 +770,34 @@ These are known limits of this version. They are written down so that nobody ass
     or stop it saving the data of successful executions, so that documents do not pile up there. UNVERIFIED: the names
     of those n8n settings were not checked here; read n8n's own documentation for your version.
 18. Not run, and not stated as working: a manual retry of a failed execution from the editor (see verify item 7), the
-    error workflow when n8n itself crashes, and that the Respond to Webhook node set to noData (the one seen used respondWith json) and the Crypto node of version 2 pass
-    the item through unchanged.
+    error workflow when n8n itself crashes, (the Respond to Webhook node set to noData and the Crypto node of version 2 were seen to pass
+    the item through unchanged, fourth record, lines 85 and 91).
 
 ## VERIFY ON A REAL n8n BEFORE ANY CLIENT USE
 
-Nobody has run any of these. The records of what WAS run are `handover/core-a/inputs/lead-evidence-n8n-1.md`,
-`handover/core-a/inputs/evidence-n8n-2.md` and `handover/core-a/inputs/evidence-n8n-3.md`. These checks prove nothing by themselves about n8n: the automatic tests only read the JSON and this page.
+Items marked DONE were run once in n8n 2.47.7 in the fourth record (`handover/core-a/inputs/evidence-n8n-4.md`, line numbers below); the placeholder values were replaced before that run. Items marked NOT VERIFIED were not run. The records of what WAS run are `handover/core-a/inputs/lead-evidence-n8n-1.md`,
+`handover/core-a/inputs/evidence-n8n-2.md`, `handover/core-a/inputs/evidence-n8n-3.md` and `handover/core-a/inputs/evidence-n8n-4.md`. These checks prove nothing by themselves about n8n: the automatic tests only read the JSON and this page.
 
-1. NOT VERIFIED: these two files as they stand now import without error and run from the trigger to the answer
-   (they were changed after the run and not imported again).
-2. NOT VERIFIED: the Crypto node of typeVersion 2 with the credential inside the full chain: it keeps the
+1. DONE (lines 46 and 47, once): these two files as they stand now import without error and run from the trigger to the answer (with the placeholder values replaced before the import; the placeholders themselves were not run).
+2. DONE (lines 91 and 93, once): the Crypto node of typeVersion 2 with the credential inside the full chain: it keeps the
    timestamp, the body and the round counter on the item, and the receiver finds the signature correct.
-3. NOT VERIFIED: what the import does with the placeholder credential id, and creating the credential in the editor.
-4. NOT VERIFIED: the "Answer caller: taken" node as written (noData, code 202): the caller gets 202 when the guard passes and is answered before the
-   sending chain starts, and the node passes its item on to the hash node unchanged. (A Respond node with respondWith json was seen to answer the caller and to pass its item on, once, and a later Stop and Error node did not change the caller's answer: third record.)
-5. NOT VERIFIED: the placeholder `webhookId` and a fresh UUID in its place both give the address `/webhook/<path>`.
+3. NOT VERIFIED: what the import does with the placeholder credential id, and creating the credential in the editor. (A credential made by `n8n import:credentials` was seen, line 35.)
+4. DONE (lines 47 to 49 and 84 to 86, once): the "Answer caller: taken" node as written (noData, code 202): the caller gets 202 when the guard passes and is answered before the
+   sending chain starts, and the node passes its item on to the hash node unchanged. (A Respond node with respondWith json was also seen, third record, and a later Stop and Error node did not change the caller's answer.)
+5. NOT VERIFIED: the placeholder `webhookId` and a fresh UUID in its place both give the address `/webhook/<path>`. (The fresh UUID was seen, line 78.)
 6. NOT VERIFIED: the status check as it is written now (it reads `error.status` only, counts 502, 503, 504 and 520 to
-   524 as busy, and counts a missing status as busy). The same form without 520 to 524 was run in the second record.
+   524 as busy, and counts a missing status as busy). The same form without 520 to 524 was run in the second record; in the fourth record a missing status went to busy and 401 and 409 to the stop output (lines 99 to 101); 520 to 524 was not run.
 7. NOT VERIFIED: whether a manual retry from the editor, or a `retryOf` retry, runs the sign node again (if not,
    a retry later than 300 s gets 401).
-8. NOT VERIFIED: the real loop values, 45 rounds with 70 second waits, and a wait of exactly 70 seconds (a 120 second wait was seen once to be saved and a 60 second wait was seen once to be lost, see stated limit 15).
-9. NOT VERIFIED: the real Hadavin endpoint: every status in the run came from a stub that answered with an empty
-   body.
+8. NOT VERIFIED: the real loop values, 45 rounds with 70 second waits, run to their end (3 rounds with the real 70 second wait were seen, line 102; a wait of 60 seconds was seen once to be lost in a restart and one of 120 and one of 70 seconds to survive, see stated limit 15).
+9. DONE (lines 47 to 51 and 97, once): the real Hadavin endpoint (its code in this tree: endpoint.py and worker.py with a model double and a memory store) answered 202, 200, 409 and 401 to the workflow. NOT VERIFIED, with items 14 and 18: the endpoint behind a real proxy, with the real model, a PostgreSQL store, the worker's own start command and the tick job.
 10. NOT VERIFIED: one webhook call that starts two executions still yields one run when the key is stable.
 11. NOT VERIFIED: n8n Cloud, queue mode, and an external task runner.
 12. NOT VERIFIED: n8n versions other than 2.47.7. Pin the version that was tested.
 13. NOT VERIFIED: the HTTP Request timeout timed live (its unit, milliseconds, and its default, 10000, were read
-    from the node's definition only).
+    from the node's definition only; no answer in the fourth record took longer than 5 seconds, line 94).
 14. NOT VERIFIED: no answer at all from the REAL Hadavin endpoint behind a real proxy, a redirect, a TLS failure, and
-    statuses 520 to 524. (A stub that refused, reset, hung up or timed out was run in the second record; see "What
+    statuses 520 to 524. (A stub that refused, reset, hung up or timed out was run in the second record, and a worker of this tree that was down gave ECONNREFUSED in the fourth, line 50; see "What
     the template does on each answer".)
 15. NOT VERIFIED: the editor menu for importing a file.
 16. NOT VERIFIED: a body larger than 300 KB, and a proxy between n8n and the receiver.
@@ -800,24 +806,25 @@ Nobody has run any of these. The records of what WAS run are `handover/core-a/in
     client.
 18. NOT VERIFIED: an answer 502 or 504 goes the busy way behind a real proxy (the stub case was run in the second
     record), and a restart of the real worker
-    under load: events sent during the drain are taken by the new worker and none reaches the error workflow.
-19. NOT VERIFIED: the state check after a 202 or 200: the workflow asks again with a new signature while the state
-    is one of the five "still going" states, ends as a success on NO_ACTION, SUCCEEDED and WAITING_FOR_APPROVAL,
-    fails with the state in the message on the six other states and on an answer without a state, and fails at
-    "Stop: still running" after the set number of checks. Also: the count of checks survives a busy round, the
-    wait node works when entered from "Next check", and the Stop and Error node takes an expression as its
-    message.
+    under load: events sent during the drain are taken by the new worker and none reaches the error workflow. (A worker of this tree that was killed and started again about two minutes later, with one event in flight, was seen once to be waited out with no error workflow, line 50.)
+19. NOT VERIFIED: the state check after a 202 or 200 for the states and ends not run: the workflow asks again with a new signature while the state
+    is one of the five "still going" states (RECEIVED and WORKING were seen, line 112), ends as a success on NO_ACTION (seen, line 116), SUCCEEDED and WAITING_FOR_APPROVAL (not run),
+    fails with the state in the message on the six other states and on an answer without a state (not run), and fails at
+    "Stop: still running" after the set number of checks (not run). Also: the count of checks survives a busy round (not run), the
+    wait node works when entered from "Next check" (seen, lines 58 and 109), and the Stop and Error node takes an expression as its
+    message (not run).
 20. NOT VERIFIED: the gap itself, against a real worker and a real tick: kill the worker right after it stored a
     run, send again, and see the execution fail with NEEDS_PERSON within the stuck limit plus one tick gap, and
     the error workflow tell a person.
-21. NOT VERIFIED: the webhook authentication: the setting `headerAuth` and the credential type `httpHeaderAuth` as the
-    JSON writes them import without error, the node shows the credential, a call without the header is refused and a
-    call with it reaches the guard.
-22. NOT VERIFIED: an n8n restart during a wait of 70 seconds: whether the execution resumes (60 seconds: lost, 120 seconds: survived,
-    once each, third record; the 65 s threshold comes from outside the evidence, the lead's brief), and whether anybody is told of a lost execution.
-23. NOT VERIFIED: the publish steps: that `n8n publish:workflow` needs a restart of n8n afterwards (the run restarted it),
+21. DONE (lines 35, 60 and 75, once): the webhook authentication: the setting `headerAuth` and the credential type `httpHeaderAuth` as the
+    JSON writes them import without error, a call without the header is refused (HTTP 403) and a
+    call with it reaches the guard. (That the node shows the credential after the import was not looked at, and the placeholder id was replaced before the import.)
+22. DONE (line 66 and 106, once): an n8n restart during a wait of 70 seconds: the execution resumed and finished with success (60 seconds: lost, 120 seconds: survived,
+    once each, third record; the 65 s threshold comes from outside the evidence, the lead's brief).
+23. NOT VERIFIED: the publish steps: that `n8n publish:workflow` needs a restart of n8n afterwards (the run restarted it; both workflows were listed as active afterwards, line 46),
     and the editor's own Publish switch.
-24. NOT VERIFIED: a refused event (an empty text): "Stop: id or text missing" always runs and fails the execution, the
-    error workflow tells a person, and what status and body the caller gets from n8n.
-25. NOT VERIFIED: the Respond to Webhook node set to noData and the Crypto node of version 2 pass the item through to the next node
-    unchanged (the Respond node with respondWith json was seen to pass it on); a manual retry; the error workflow when n8n itself crashes; the execution retention setting.
+24. DONE (lines 59, 62 to 64 and 83, once each): a refused event (an empty text, a missing or unusable id): "Stop: id or text missing" always runs and fails the execution, the
+    error workflow tells a person, and the caller gets HTTP 500 with the body {"message":"Error in workflow"} from n8n.
+25. NOT VERIFIED: a manual retry; the error workflow when n8n itself crashes; the execution retention setting. (The Respond to Webhook node set to noData and the Crypto node of version 2 were seen to pass the item through to the next node
+    unchanged, lines 85 and 91.)
+26. NOT VERIFIED: whether anybody is told of an execution that is lost in a restart of n8n (the execution of line 66 was not lost: the log says "Marked executions as `crashed`" but no execution row has that status, line 108).
