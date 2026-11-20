@@ -25,6 +25,7 @@ Summary of what is pinned (every case below is SAFE; this file holds no FINDING)
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import io
 import json
@@ -244,7 +245,7 @@ def _follow(door, caplog, name: str) -> str:
 
     # The person: one abstain card, no control character of the document in it.
     assert len(door.cards) == 1
-    card_text = json.dumps(door.cards[0].model_dump(mode="json"), ensure_ascii=False)
+    card_text = json.dumps(dataclasses.asdict(door.cards[0]), ensure_ascii=False)
     assert NUL not in card_text and "\\u0000" not in card_text
     assert "\x01" not in card_text and "\x1f" not in card_text
 
@@ -318,25 +319,26 @@ def test_level2_memory_other_control_characters_reach_the_model_unchanged(
     assert control.encode() in memory_door.llm.sent[0]["documents"][0]
 
 
-def test_level2_memory_same_key_with_and_without_the_nul_are_two_documents(memory_door):
+def test_level2_memory_same_key_with_and_without_the_nul_are_two_documents(tmp_path):
     """today: the NUL counts for the payload hash although the model never sees it. After the
     document with a NUL has been stored, the same key with the NUL taken out is 409 with an empty
     body and writes nothing; and the other way round. Safe: a sender that strips the NUL on a
     retry gets a plain refusal, never a second run."""
-    with_nul, without = (
-        CASES["nul_in_the_middle"][0],
-        CASES["nul_in_the_middle"][0].replace(NUL, ""),
-    )
-    assert memory_door.post(with_nul, "key-1").status in (200, 202)
-    memory_door.settled(_run_id("key-1"))
-    refused = memory_door.post(without, "key-1")
-    assert (refused.status, refused.body) == (409, b"")
-    assert memory_door.post(without, "key-2").status in (200, 202)
-    memory_door.settled(_run_id("key-2"))
-    refused = memory_door.post(with_nul, "key-2")
-    assert (refused.status, refused.body) == (409, b"")
-    memory_door.drain()
-    assert len(memory_door.llm.sent) == 2
+    with_nul = CASES["nul_in_the_middle"][0]
+    without = with_nul.replace(NUL, "")
+    door = _door(tmp_path, MemoryStore(), [{"noaction": True}, {"noaction": True}])
+    try:
+        assert door.post(with_nul, "key-1").status in (200, 202)
+        door.settled(_run_id("key-1"))
+        refused = door.post(without, "key-1")
+        assert (refused.status, refused.body) == (409, b"")
+        assert door.post(without, "key-2").status in (200, 202)
+        door.settled(_run_id("key-2"))
+        refused = door.post(with_nul, "key-2")
+        assert (refused.status, refused.body) == (409, b"")
+    finally:
+        door.drain()
+    assert len(door.llm.sent) == 2
 
 
 def _tooled(door, monkeypatch) -> str:
@@ -354,7 +356,7 @@ def _tooled(door, monkeypatch) -> str:
     everything = door.llm.everything_sent()
     assert NUL not in everything and "\\u0000" not in everything
     assert len(door.cards) == 1
-    card_text = json.dumps(door.cards[0].model_dump(mode="json"), ensure_ascii=False)
+    card_text = json.dumps(dataclasses.asdict(door.cards[0]), ensure_ascii=False)
     assert NUL not in card_text and "\\u0000" not in card_text
     on_disk = door.audit_bytes()
     assert b"\x00" not in on_disk and b"\\u0000" not in on_disk
