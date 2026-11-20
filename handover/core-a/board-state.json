@@ -772,19 +772,6 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "lead-build-3 run 4"
-  },
-  {
-   "id": "wipb-audit",
-   "role": "builder in /home/user/wt/for-b",
-   "model": "sonnet",
-   "what exactly it is doing": "core-b audit findings from xreview-bfix2: B-1 outbox ts range check, B-2 AuditEvent producer sanitising, B-3 Anthropic allowlist (branch wip/core-a-for-b)",
-   "started UTC": "13:21",
-   "expected end": "25 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "-",
-   "retries so far": 0,
-   "reason": "lead 13:10 item 4; core-b gave no answer by 13:20"
   }
  ],
  "tests": [
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "13:26 CORRECTION to my core-b review: written against 8dfdba963; on core-b's newer head b637d1289 the AuditEvent crash (my Major 3) and the Anthropic denylist (Major 4) are ALREADY FIXED and the outbox range check already exists (my Major 1 not reproducible); the one real gap is 29 February in a leap year (valid ts sorted last): fixed + PG test on wip/core-a-for-b (1 commit, cherry-pick). Correction appended to reviews/xreview-bfix2.md and requests/to-core-b.md. Not re-checked on the new head: my Major 2 (tamper-evidence conditions) and M1/M2/M4/M5/M6.",
   "13:21 core-b did not answer my 13:15 proposal (handover/core-a/requests/to-core-b.md) by 13:20, so wipb-audit started (B-1, B-2, B-3 on wip/core-a-for-b). If core-b builds any of them already, tell me and I stop that item.",
   "13:20 c-run-1 DONE (evidence/c-run-1.md, raw/c-run-1.log): core-c head 9072e701f: 15754 passed, 4 failed, 0 errors, 561 skipped, 76 xfailed in 364 s; the 4 failures are exactly the known ones (test_no_reference_material Port.io in handover/BRIEF-PREAMBLE.md and handover/core-c/evidence/G4-build-notes.md; TB-2.8 test_tie_break_keeps_the_order_of_different_originals; TB-2.11 test_e5b_a_conflict_puts_every_secret_entry_first...; TB-3.4 test_no_run_no_extra_work (1,160) != (1,154)); no other failure. Load 1.1 to 4.3. Run 4 (g4-p4) started; run 3 (mutants) still running; run 2 (perf) waits for an idle box.",
   "13:17 wip/core-a-for-c READY and pushed (2 commits on core-c head 9072e701f): both Majors fixed, fresh review clean (no Blocker/Major), nits fixed; open decision for core-c noted in handover/core-c/requests/from-core-a.md (exception whose __str__ raises is unguarded in error_reason). core-c cherry-picks. Runs: cc-run1 (suite) and cc-run3 (mutants) running, load ~4.",
@@ -3384,6 +3372,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "c-run-1 at core-c 9072e701f: 15754 passed, 4 failed (the 4 known: no_reference_material, TB-2.8, TB-2.11, TB-3.4), 0 errors, 561 skipped, 76 xfailed, 364 s; evidence/c-run-1.md"
+  },
+  {
+   "id": "wipb-audit",
+   "role": "builder in /home/user/wt/for-b",
+   "model": "sonnet",
+   "what exactly it is doing": "core-b audit findings from xreview-bfix2: B-1 outbox ts range check, B-2 AuditEvent producer sanitising, B-3 Anthropic allowlist (branch wip/core-a-for-b)",
+   "started UTC": "13:21",
+   "expected end": "25 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "-",
+   "retries so far": 0,
+   "reason": "core-b head b637d1289: B-2 and B-3 ALREADY fixed there, B-1 range check already existed; only real gap: 29 Feb leap year excluded from _TS_SHAPE: fixed on wip/core-a-for-b with PG (red without fix) + SQLite tests; 6 pre-existing test_audit_drain failures under a superuser DSN"
   }
  ]
 }
