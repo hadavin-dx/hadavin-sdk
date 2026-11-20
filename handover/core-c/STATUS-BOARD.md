@@ -1,26 +1,23 @@
-UPDATED_UTC: 2026-11-20T16:13:30Z
+UPDATED_UTC: 2026-11-20T16:15:06Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 16:30Z agents 4 (docs builder, G13d builder, G12d builder, G9b reviewer), load 0.7. G12c result review recorded (0B/2M, tickets/G12c-result-review-1-codebase.md). Next: G4c review. 16:26Z agents 3 (docs builder, G12c reviewer, G13d builder), load 0.1. G13c result review recorded (0B/2M/4N: tickets/G13c-result-review-1-codebase.md); G13d builder started on its findings. Next in sequence: G9b review, G4c review. 16:22Z OWNER ORDER 16:09 rows (agents 2: docs builder ad19c825, G13c reviewer a60a4532; load 0.2):
-C1 NO_MAP request 3 (mapping REQUIRED in bind) | branch cloud/core-c | sha c11fafb99 | DONE+MERGED, tests/mutants in gate_mutants 139/140
-C2 usd_cap in SPEND_REASONS | cloud/core-c | c11fafb99 | DONE+MERGED
-C3 gate honours mark on ProviderExhausted | cloud/core-c | bfc13e45e (+e05cee9f0 raising-mark fix) | DONE+MERGED; inert until core-b's retry layer SETS the mark
-
+STATE: 16:35Z agents 5 (G13d, G12d, G9c builders; G4c reviewer, docs style reviewer), load 2.1. Merged onto cloud/core-c: docs root pass (SECURITY/CHANGELOG/README, v8 drafts). G9b result review recorded (0B/2M, tickets/G9b-result-review-1-design.md) -> G9c builder. Vendor-brand test red only on the lead's handover/BRIEF-PREAMBLE.md now. 16:30Z agents 4 (docs builder, G13d builder, G12d builder, G9b reviewer), load 0.7. G12c result review recorded (0B/2M, tickets/G12c-result-review-1-codebase.md). Next: G4c review. 16:26Z agents 3 (docs builder, G12c reviewer, G13d builder), load 0.1. G13c result review recorded (0B/2M/4N: tickets/G13c-result-review-1-codebase.md); G13d builder started on its findings. Next in sequence: G9b review, G4c review. 16:22Z OWNER ORDER 16:09 rows (agents 2: docs builder ad19c825, G13c reviewer a60a4532; load 0.2):
+C1 NO_MAP request 3 (mapping REQUIRED in bind) | branch cloud/core-c | sha c11fafb99 | 
 BOOT_ID: d22e08d6
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: load 1.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
-DISK: / 54G free, 23% used; git worktrees 53; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
+AGENTS_RUNNING: 5
+CAPACITY: load 2.1 of 4 cores, mem 0/15 GB, disk 54G free, 23% used, light agents 5, heavy agents 0
+DISK: / 54G free, 23% used; git worktrees 54; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T15:49:15Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Collect full-suite result; docs root pass; G11 waits E16.
-PUSHED_UTC: 2026-11-20T16:12:03+00:00
+PUSHED_UTC: 2026-11-20T16:14:46+00:00
 
-(21:43 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(21:45 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -36,12 +33,15 @@ PUSHED_UTC: 2026-11-20T16:12:03+00:00
 | rec-1 | builder | claude-sonnet-5-5 | RECONCILES the g2/g3 leftovers (73d624c12, 7de1c4f86, 2be153143, 7d6b5fbf) into the one head; /tmp/core-c-rec | 15:03 | 15:30 | 1 | done | 1 | 0 |  |
 | grants-1 | builder | claude-sonnet-5-5 | RE-PINS the 8 grant tests against core-b head (migrations 0006/0007); /tmp/core-c-grants wip/cloud-core-c/grants | 15:24 | 15:50 | 1 | done | 1 | 0 | light, 1 pytest |
 | core-a-rev | reviewer | claude-sonnet-5-5 | FRESH read-only result review of core-a newest src/tests commits (last 3 h) and wip/core-a-for-ci, for-c-e19 | 15:43 | 15:55 | 1 | done | 1 | 0 | EGM codebase |
-| ad19c825 | builder | claude-sonnet-5-5 | DOCS root pass: SECURITY.md/CHANGELOG.md/README.md from v7 drafts + G13c/G12c/G9b/G4c facts; /tmp/core-c-docs wip/cloud-core-c/docs | 16:13 | 16:40 | 1 | running | 1 | 0 | docs only |
+| ad19c825 | builder | claude-sonnet-5-5 | DOCS root pass: SECURITY.md/CHANGELOG.md/README.md from v7 drafts + G13c/G12c/G9b/G4c facts; /tmp/core-c-docs wip/cloud-core-c/docs | 16:13 | 16:40 | 1 | done | 1 | 0 | docs only |
 | a60a4532 | reviewer | claude-sonnet-5-5 | FRESH egm result review of G13c merged diff (5d8c8ca04) on plain-file snapshot | 16:21 | 16:35 | 1 | done | 1 | 0 | EGM |
 | g12c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G12c (f67fac5ae) on snapshot | 16:25 | 16:40 | 1 | done | 1 | 0 | EGM |
 | g13d | builder | claude-sonnet-5-5 | BUILDS G13d: G13c review fixes (charge every head hit, separator-only limit pinned, mutants, docstrings); /tmp/core-c-g13d | 16:25 | 16:55 | 1 | running | 1 | 0 |  |
 | afce289e | builder | claude-sonnet-5-5 | BUILDS G12d: G12c review fixes (label-core decline, budget-based large-value rule, look-alike bracket cores, sweep skips escaped look-alikes, _bare perf); /tmp/core-c-g12d | 16:28 | 17:00 | 1 | running | 1 | 0 |  |
-| g9b-rev | reviewer | claude-sonnet-5-5 | FRESH egm design result review of G9b (24f1983fc) on snapshot | 16:29 | 16:42 | 1 | running | 1 | 0 | EGM |
+| g9b-rev | reviewer | claude-sonnet-5-5 | FRESH egm design result review of G9b (24f1983fc) on snapshot | 16:29 | 16:42 | 1 | done | 1 | 0 | EGM |
+| a7823001 | builder | claude-sonnet-5-5 | BUILDS G9c: G9b review fixes (charge accepted+rejected occurrences, per-edge/_expand calibration measured, kind rule at reverse[full], exact-work test); /tmp/core-c-g9c | 16:33 | 17:05 | 1 | running | 1 | 0 |  |
+| g4c-rev | reviewer | claude-sonnet-5-5 | FRESH egm result review of G4c (ab8ee0440) | 16:34 | 16:48 | 1 | running | 1 | 0 | EGM |
+| docs-rev | reviewer | claude-sonnet-5-5 | FRESH egm STYLE review of root SECURITY/CHANGELOG/README (merged docs branch) | 16:34 | 16:48 | 1 | running | 1 | 0 | EGM style |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
