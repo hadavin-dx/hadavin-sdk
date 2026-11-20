@@ -64,9 +64,9 @@ def _check_geometry() -> None:
 
 def _deadline() -> float | None:
     """The CPU deadline of one ``RegexDetector.check``: ``defaults.INJECTION_BUDGET_S`` seconds of the CPU clock of the thread that runs the
-    check, from now (``time.thread_time()``; read and used in that one call, never handed to another thread), or None (no deadline) when the budget is None. A budget that is not a positive finite number (a ``bool``, a string,
-    zero, a negative number, NaN, infinity) raises ``ValueError``, which ``injection_check`` turns into a flag, as for a bad setting of the chunked
-    read (``_check_geometry``)."""
+    check, from now (``time.thread_time()``; read and used in that one call, never handed to another thread), or None (no deadline) when the
+    budget is None. A budget that is not a positive finite number (a ``bool``, a string, zero, a negative number, NaN, infinity) raises
+    ``ValueError``, which ``injection_check`` turns into a flag, as for a bad setting of the chunked read (``_check_geometry``)."""
     budget = defaults.INJECTION_BUDGET_S
     if budget is None:
         return None

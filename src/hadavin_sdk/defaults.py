@@ -249,9 +249,10 @@ TEXTNORM_MIN_DIGIT_CHARS = 6
 # word of the Unicode name, Han and kana grouped; see guard.textnorm); a shorter needle is matched exactly only, because "a?b" matches too many ordinary words.
 # The numbers come from a measurement on running text (CHANGELOG, "ONE INSERTED LETTER"): for each script, the shortest needle for which the
 # extra matches the insertion adds stay near 1% or lower per 10,000 characters of text (that figure is only what the one-inserted-letter match ADDS,
-# per script, on Bible text; it is NOT the false-hit rate of the whole scan, see FALSE HITS below); a needle holding several groups takes the largest minimum, except a needle of Han and kana only (a Japanese word), which takes the Han
-# minimum (measured on its own, CHANGELOG order 137 D3). A
-# script not in the table (Armenian, Georgian, ... : not measured) takes the default, 12: the LARGEST minimum measured for any script (Greek, 12; Cyrillic 10), the safe side for a script nobody measured. INSERTION_MAX: the longest needle
+# per script, on Bible text; it is NOT the false-hit rate of the whole scan, see FALSE HITS below); a needle holding several groups takes the largest minimum, except a
+# needle of Han and kana only (a Japanese word), which takes the Han minimum (measured on its own, CHANGELOG order 137 D3). A script not in the
+# table (Armenian, Georgian, ... : not measured) takes the default, 12: the LARGEST minimum measured for any script (Greek, 12; Cyrillic 10), the
+# safe side for a script nobody measured. INSERTION_MAX: the longest needle
 # the matcher takes (its work grows with the needle length for each hit); a longer needle is matched exactly only.
 # FALSE HITS of the whole scan_holds (measured 2026-11-20, Python 3.13.18, Unicode 15.1.0; handover/core-c/evidence/G1-false-hits-and-cost.md,
 # "Round 2"): the share of 10,000-character chunks of ordinary Latin text (repository prose and code, standard-library docstrings, generated
@@ -295,7 +296,7 @@ TEXTNORM_INJECTION_MAX_CHARS = MAX_BUNDLE_CHARS
 # INJECTION_BUDGET_S (guard.injection, G10): the CPU seconds (time.thread_time() of the thread that runs the check) that ONE RegexDetector check,
 # one detector call on one text, may spend in the text fold; past them textnorm raises DeadlinePassed and the run is flagged guard_unavailable
 # (fail closed). Per check, not per run: a run that checks many texts (k1b: one check per tool result) may spend it once per check. None: no
-# deadline. A positive finite number; anything else flags every run. 30.0: about 1.9x the slowest text of 2,000,000 characters measured on the
-# build box (16.0 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. CPU only: waiting for the GIL,
+# deadline. A positive finite number; anything else flags every run. 30.0: about 1.9x the slowest ORDINARY text of 2,000,000 characters measured
+# on the build box (16.0 s; a constructed text took 185 s; G10 ticket, D4); on a machine more than about 1.9x slower that text is flagged on every run. CPU only: waiting for the GIL,
 # a lock or I/O does not count, and no call site of the injection check has a wall-clock limit.
 INJECTION_BUDGET_S = 30.0
