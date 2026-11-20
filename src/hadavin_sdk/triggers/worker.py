@@ -124,6 +124,10 @@ CONFLICT_EVENTS_PER_MINUTE: Final[int] = 10
 CONFLICT_WINDOW_S: Final[float] = 60.0
 CONFLICT_DOMAIN: Final[str] = "trigger"
 CONFLICT_OPERATION: Final[str] = "conflict"
+AUDIT_WRITE_TIMEOUT_S: Final[float] = (
+    2.0  # a request waits this long for its conflict audit write, then the 409 goes out anyway
+)
+DEGRADED_FATAL_AFTER: Final[int] = 5  # consecutive non-store errors of a re-check before the worker stops
 HASH_RE: Final = re.compile(r"[0-9a-f]{64}")
 PING_RUN_ID: Final[str] = (
     "run-" + "0" * 32
@@ -158,7 +162,12 @@ def is_store_error(exc: BaseException) -> bool:
 
 
 class Runner:
-    """Starts at most `max_running` agent loops at a time and tells the endpoint what to answer."""
+    """Starts at most `max_running` agent loops at a time and tells the endpoint what to answer.
+
+    `store_failures` counts store errors on request paths and failed or timed-out `/health` pings. A degraded
+    worker builds a new Runner when the store is back, so the count restarts at zero after that swap (the
+    `/health` answer then reports the new Runner's count). Concurrent `health` callers that wait on one hung
+    ping each count a failure when their 2 s run out, so a burst of calls adds one per caller, not one per ping."""
 
     def __init__(
         self,
@@ -203,6 +212,7 @@ class Runner:
             str, tuple[float, int]
         ] = {}  # sender -> (window start, events seen)
         self._conflicts_dropped = 0
+        self._audit_pending = False  # one conflict audit write may be pending (guarded by _stats_lock)
         self._last_drop_warning: float | None = None
         self._ack_wait_s, self._poll_s = float(ack_wait_s), float(poll_s)
         self._slots = threading.BoundedSemaphore(max_running)
@@ -241,8 +251,14 @@ class Runner:
         with self._ping_lock:
             ping = self._ping
             if ping is None or ping.done.is_set():
-                ping = self._ping = _Ping(self._store, self._count_store_failure)
-                ping.thread.start()
+                fresh = _Ping(self._store, self._count_store_failure)
+                try:
+                    fresh.thread.start()
+                except Exception as exc:  # noqa: BLE001 - e.g. "can't start new thread": down, counted
+                    self._count_store_failure()
+                    _LOG.warning("trigger health: ping thread did not start (%s)", type(exc).__name__)
+                    return False, self.store_failures
+                ping = self._ping = fresh  # assigned only after the thread runs: no wait on a dead ping
         if not ping.done.wait(HEALTH_PING_TIMEOUT_S):
             self._count_store_failure()
             _LOG.debug("trigger health: store ping did not return in time")
@@ -341,9 +357,12 @@ class Runner:
 
     def _conflict(self, found: Run, req: Accepted) -> None:
         """A signed 409 is a forensic fact: one audit event, hashes only, at most `cap` per sender per minute.
-        Beyond the cap the event is only counted, with one WARNING per minute. Never raises."""
+        Beyond the cap, or while another audit write is still pending, the event is only counted, with one
+        WARNING per minute. The write runs on its own daemon thread and the request waits at most
+        `AUDIT_WRITE_TIMEOUT_S` for it; at most one write is pending. Never raises."""
         at = self._rate_clock()
         warn = False
+        reason = ""
         with self._stats_lock:
             start, seen = self._conflict_windows.get(req.sender, (at, 0))
             if at - start >= CONFLICT_WINDOW_S or at < start:
@@ -351,27 +370,55 @@ class Runner:
             seen += 1
             self._conflict_windows[req.sender] = (start, seen)
             if seen > self._cap:
+                reason = f"over the cap of {self._cap} per minute for sender {req.sender}"
+            elif self._audit is not None and self._audit_pending:
+                reason = "an audit write is still pending"
+            elif self._audit is not None:
+                self._audit_pending = True
+            if reason:
                 self._conflicts_dropped += 1
                 last = self._last_drop_warning
                 if last is None or at - last >= CONFLICT_WINDOW_S or at < last:
                     self._last_drop_warning, warn = at, True
                 dropped = self._conflicts_dropped
-        if seen > self._cap:
+        if reason:
             if warn:
                 _LOG.warning(
-                    "trigger conflict events over the cap of %d per minute for sender %s: %d not written so far"
-                    " (the 409 is still answered)",
-                    self._cap,
-                    req.sender,
+                    "trigger conflict events %s: %d not written so far (the 409 is still answered)",
+                    reason,
                     dropped,
                 )
             return
         if self._audit is None:
             return
+        event = _conflict_event(found, req)
+        done = threading.Event()
+
+        def write() -> None:
+            try:
+                self._audit.write_outcome(event)
+            except Exception as exc:  # noqa: BLE001 - the 409 stands whatever the audit does
+                _LOG.warning("trigger conflict: audit write failed (%s)", type(exc).__name__)
+            finally:
+                with self._stats_lock:
+                    self._audit_pending = False
+                done.set()
+
         try:
-            self._audit.write_outcome(_conflict_event(found, req))
-        except Exception as exc:  # noqa: BLE001 - the 409 stands whatever the audit does
-            _LOG.warning("trigger conflict: audit write failed (%s)", type(exc).__name__)
+            threading.Thread(target=write, name="trigger-audit", daemon=True).start()
+        except Exception as exc:  # noqa: BLE001 - no thread: not written, the 409 stands
+            with self._stats_lock:
+                self._audit_pending = False
+            _LOG.warning("trigger conflict: audit thread did not start (%s)", type(exc).__name__)
+            return
+        if not done.wait(AUDIT_WRITE_TIMEOUT_S):
+            _LOG.warning("trigger conflict: audit write did not return in time; the 409 goes out")
+
+    @property
+    def audit_pending(self) -> bool:
+        """True while a conflict audit write has not returned (at most one at a time)."""
+        with self._stats_lock:
+            return self._audit_pending
 
     def _row(self, run_id: str) -> Run | None:
         try:
