@@ -88,10 +88,15 @@ TRIGGERS = (
 )
 
 
+PARAM: dict[
+    str, str
+] = {}  # mutant name -> "[id]": a killer pinned on one parameter of a parametrized test
+
+
 def mutant(name, file, old, new, killer, expect):
-    return Mutant(
-        name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
-    )
+    base, bracket, rest = killer.partition("[")
+    PARAM[name] = bracket + rest
+    return Mutant(name, file, old, new, expect, test_file=TEST, only_test=base, pinned=PIN + base)
 
 
 M: list[Mutant] = []  # nothing the runner can run without a database (see the module docstring)
@@ -468,10 +473,11 @@ def run_by_hand(only: list[str]) -> int:
     bad, clean, tally = 0, {}, {}
     version = _server_version()
     for m in chosen:
+        killer = m.only_test + PARAM.get(m.name, "")
         if (m.name in GE16 and version < 160000) or (m.name in LT16 and version >= 160000):
             tally["N/A"] = tally.get("N/A", 0) + 1
             print(
-                f"N/A      | {m.name} | needs the other PostgreSQL branch (this is {version}) | {m.only_test}",
+                f"N/A      | {m.name} | needs the other PostgreSQL branch (this is {version}) | {killer}",
                 flush=True,
             )
             continue
@@ -483,9 +489,9 @@ def run_by_hand(only: list[str]) -> int:
             if old not in after[f]:
                 missing.append(f)
             after[f] = after[f].replace(old, new)
-        if m.only_test not in clean:
-            clean[m.only_test] = _killer(m.only_test)[0] == 0
-        if not clean[m.only_test]:
+        if killer not in clean:
+            clean[killer] = _killer(killer)[0] == 0
+        if not clean[killer]:
             verdict = "BASELINE FAILS (the killer fails on the clean tree)"
         elif missing:
             verdict = f"NOT APPLIED (the old text is not in {', '.join(missing)})"
@@ -493,7 +499,7 @@ def run_by_hand(only: list[str]) -> int:
             try:
                 for f, text in after.items():
                     (ROOT / f).write_bytes(text.encode("utf-8"))
-                code, out = _killer(m.only_test)
+                code, out = _killer(killer)
             finally:
                 for f, data in before.items():
                     (ROOT / f).write_bytes(data)
@@ -506,7 +512,7 @@ def run_by_hand(only: list[str]) -> int:
         bad += verdict != "KILLED"
         key = verdict.split(" ")[0]
         tally[key] = tally.get(key, 0) + 1
-        print(f"{verdict:8} | {m.name} | {m.file} | {m.only_test}", flush=True)
+        print(f"{verdict:8} | {m.name} | {m.file} | {killer}", flush=True)
     for name, file, reason in EQUIVALENT if not only else []:
         tally["EQUIVALENT"] = tally.get("EQUIVALENT", 0) + 1
         print(f"EQUIVALENT | {name} | {file} | {reason}", flush=True)
