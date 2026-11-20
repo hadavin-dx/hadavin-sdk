@@ -150,6 +150,10 @@ OS_ENVIRON = (
     "    ] = {}  # the stdlib default is a copy of the process environment\n"
 )
 N15 = "test_n15_runner_bounds_are_refused"
+# The order matters: a test of `test_worker.py` leaves the stderr handler of `_log_to_stderr` on the `hadavin_sdk`
+# logger (bound to a captured stream that is closed later), and `test_t5_wsgiref.py` then fails on "Logging error" text
+# in stderr. `test_worker.py` therefore runs LAST (a finding for the test files; not edited here).
+TESTS = [TE, TC, TS, TP, TW]
 NEEDS_CONFTEST = "tests/triggers/test_worker.py::test_main_without_a_triggers_block_exits_2"  # see the module text
 
 
@@ -1096,7 +1100,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         todo,
-        [TE, TW, TC, TS, TP],
+        TESTS,
         extra_dirs=("tests",),
         only=only,
         on_result=show,
