@@ -1,2 +1,582 @@
 .F.F......F..F.F....F...............F.FFF..F.........................FFF [ 88%]
-..FF....
+..FF....F                                                                [100%]
+=================================== FAILURES ===================================
+_______________ test_the_identities_are_the_ones_this_file_knows _______________
+
+    def test_the_identities_are_the_ones_this_file_knows():
+        """A new role keyword or Grant field is a new identity: its denials must be written here first."""
+        keywords = {p for p in inspect.signature(mig.migrate).parameters if p.endswith("_role")}
+>       assert keywords == (ROLE_KEYWORDS_AFTER_STEP_B if STEP_B else ROLE_KEYWORDS_BEFORE_STEP_B)
+E       AssertionError: assert {'portal_role...runtime_role'} == {'portal_role...runtime_role'}
+E         
+E         Extra items in the left set:
+E         'release_role'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:348: AssertionError
+______________ test_every_write_privilege_is_on_the_reviewed_list ______________
+
+    def test_every_write_privilege_is_on_the_reviewed_list():
+        actual = {role: {} for role in ROLES}
+        for (role, table, privilege), held in _matrix().items():
+            if held and privilege != "SELECT":
+                actual[role].setdefault(table, set()).add(privilege)
+>       assert actual == WRITES
+E       AssertionError: assert {'runtime': {...PDATE'}, ...}} == {'runtime': {...: {'INSERT'}}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'purge': {'tool_calls': {'DELETE'}, 'redaction_maps': {'DELETE'}}} != {'purge': {'tool_calls': {'DELETE'}, 'redaction_maps': {'DELETE'}, 'spend_reservations': {'DELETE'}}}
+E         {'runtime': {'runs': {'INSERT', 'UPDATE'}, 'plans': {'INSERT', 'UPDATE'}, 'gate_decisions': {'INSERT'}, 'approval_requests': {'INSERT', 'UPDATE'}, ...}} != {'runtime': {'runs': {'INSERT', 'UPDATE'}, 'plans': {'INSERT', 'UPDATE'}, 'gate_decisions': {'INSERT'}, 'approval_requests': {'INSERT', 'UPDATE'}, ...}}
+E         {'reset': {'kill_switch': {'UPDATE'},...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_grants_negative_roles.py:368: AssertionError
+_________ test_only_the_reviewed_roles_hold_anything_on_the_stop_state _________
+
+    def test_only_the_reviewed_roles_hold_anything_on_the_stop_state():
+        """Case 6 (no database): the portal and the purge role hold nothing; nobody can remove a row."""
+        assert set(STOP_RELATIONS) <= set(_tables())
+        for relation, reviewed in STOP_HOLDS.items():
+            held = {role: {p for p in PRIVILEGES if _matrix()[role, relation, p]} for role in ROLES}
+            assert held == {role: reviewed.get(role, set()) for role in ROLES}, relation
+            assert _holders(relation, "DELETE", "TRUNCATE") == set(), relation
+            assert _holders(relation, *PRIVILEGES) & {"portal", "purge"} == set(), relation
+            assert not mig.GRANTS[relation].purge_cols and not mig.GRANTS[relation].portal, relation
+        # no relation of the stop state is missing from the reviewed list (a fourth one must be added by hand)
+>       assert {t for t in _tables() if t.startswith("kill_switch")} == set(STOP_RELATIONS)
+E       AssertionError: assert {'kill_switch...ch_watermark'} == {'kill_switch...switch_stops'}
+E         
+E         Extra items in the left set:
+E         'kill_switch_watermark'
+E         'kill_switch_resets'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:428: AssertionError
+_________ test_delete_is_held_only_on_the_outbox_and_the_purged_tables _________
+
+    def test_delete_is_held_only_on_the_outbox_and_the_purged_tables():
+        deletes = {(r, t) for (r, t, p), held in _matrix().items() if held and p == "DELETE"}
+>       assert deletes == DELETES
+E       AssertionError: assert {('purge', 'r...udit_outbox')} == {('purge', 'r...udit_outbox')}
+E         
+E         Extra items in the right set:
+E         ('purge', 'spend_reservations')
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:440: AssertionError
+________ test_the_purge_role_holds_delete_only_and_no_whole_table_read _________
+
+    def test_the_purge_role_holds_delete_only_and_no_whole_table_read():
+        for table in _tables():
+            assert HOLDS["purge"](mig.GRANTS[table]) <= {"DELETE"}, table
+        # column reads exist only to find the rows to delete or the run they belong to, never on other tables
+>       assert {
+            t: mig.GRANTS[t].purge_cols for t in _tables() if mig.GRANTS[t].purge_cols
+        } == PURGE_COLS
+E       AssertionError: assert {'runs': ('ru...'updated_at')} == {'runs': ('ru... 'closed_at')}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'spend_reservations': ('status', 'closed_at')}
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:453: AssertionError
+_________ test_case10_the_released_manifest_names_every_migration_file _________
+
+    def test_case10_the_released_manifest_names_every_migration_file():
+        """A migration that arrives without its manifest row (or is edited after release) is caught here too."""
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+>       assert manifest == {path.stem: _sha(path) for path in mig._migration_files()}
+E       AssertionError: assert {'0001_core':...aef76a7', ...} == {'0001_core':...aef76a7', ...}
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Right contains 4 more items:
+E         {'0008_release_expired_spend': '7d604399be619f3225a90e25defc1365ffc08b124cd8b716f75b9850af1c15d3',
+E          '0009_stop_state_hardening': '1a67babf477464c66bb2f76efecb4be2f529e9199ec39190eb5a9db7a00cd87d',
+E          '0010_money_guard': '4e9a1420275c45631635d59f140e2794fbf07b4930627b703aad76966cbc8935',
+E          '0011_money_definer': 'ed2d7c1921c6ebe3a432569114e72a0be110ede437892add3de070040ad97b72'}
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:501: AssertionError
+________ test_case2_the_reset_identity_holds_exactly_the_reviewed_cells ________
+
+    @needs_step_b
+    def test_case2_the_reset_identity_holds_exactly_the_reviewed_cells():
+        assert set(RESET_HOLDS) <= set(_tables()) and set(RESET_NEVER) <= set(_tables())
+>       assert set(RESET_HOLDS) | set(RESET_NEVER) == set(
+            _tables()
+        )  # every table is on one of the two lists
+E       AssertionError: assert {'approval_de...letters', ...} == {'approval_de...letters', ...}
+E         
+E         Extra items in the right set:
+E         'kill_switch_watermark'
+E         'hadavin_limits'
+E         'kill_switch_resets'
+E         'hadavin_caps'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:564: AssertionError
+_______ test_reset_writes_the_audit_intent_before_it_touches_the_switch ________
+
+    def test_reset_writes_the_audit_intent_before_it_touches_the_switch():
+        both = _Recorder()
+>       Limits(both, both, None).reset(by="user:a")
+
+tests/test_grants_negative_roles.py:619: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hadavin_sdk.limits.Limits object at 0x7fa3976c9bd0>, by = 'user:a'
+
+    def reset(self, by: str) -> list[OpenStop]:
+        """Compare-and-clear. Reads the open stops first, writes the audit intent WITH their ids (and their count and
+        a hash of the ids), then clears exactly those ids. Removing a safety control is audited first; if that
+        fails, the switch stays on. A stop set after the read (also one set while the intent is written) is not in
+        the list, so it stays open and the caller's read-back says ON. A clear the store refuses (the runtime role
+        may not reset) leaves a `reset_failed` outcome, and the error is raised again. Returns the stops it cleared."""
+>       stops = self.store.open_stops()
+                ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: '_Recorder' object has no attribute 'open_stops'
+
+src/hadavin_sdk/limits.py:268: AttributeError
+________ test_reset_leaves_the_switch_alone_when_the_audit_intent_fails ________
+
+    def test_reset_leaves_the_switch_alone_when_the_audit_intent_fails():
+        both = _Recorder(fail="intent")
+        with pytest.raises(AuditUnavailable):
+>           Limits(both, both, None).reset(by="user:a")
+
+tests/test_grants_negative_roles.py:626: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hadavin_sdk.limits.Limits object at 0x7fa3976c8550>, by = 'user:a'
+
+    def reset(self, by: str) -> list[OpenStop]:
+        """Compare-and-clear. Reads the open stops first, writes the audit intent WITH their ids (and their count and
+        a hash of the ids), then clears exactly those ids. Removing a safety control is audited first; if that
+        fails, the switch stays on. A stop set after the read (also one set while the intent is written) is not in
+        the list, so it stays open and the caller's read-back says ON. A clear the store refuses (the runtime role
+        may not reset) leaves a `reset_failed` outcome, and the error is raised again. Returns the stops it cleared."""
+>       stops = self.store.open_stops()
+                ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: '_Recorder' object has no attribute 'open_stops'
+
+src/hadavin_sdk/limits.py:268: AttributeError
+_______ test_case8_a_reset_the_store_refuses_is_audited_as_reset_failed ________
+
+    @needs_step_b
+    def test_case8_a_reset_the_store_refuses_is_audited_as_reset_failed():
+        """Ticket B invariant 5: the chain then holds `reset` followed by `reset_failed`, and the error leaves."""
+        both = _Recorder(fail="switch")
+        with pytest.raises(PermissionError):
+>           Limits(both, both, None).reset(by="user:a")
+
+tests/test_grants_negative_roles.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hadavin_sdk.limits.Limits object at 0x7fa39770b6f0>, by = 'user:a'
+
+    def reset(self, by: str) -> list[OpenStop]:
+        """Compare-and-clear. Reads the open stops first, writes the audit intent WITH their ids (and their count and
+        a hash of the ids), then clears exactly those ids. Removing a safety control is audited first; if that
+        fails, the switch stays on. A stop set after the read (also one set while the intent is written) is not in
+        the list, so it stays open and the caller's read-back says ON. A clear the store refuses (the runtime role
+        may not reset) leaves a `reset_failed` outcome, and the error is raised again. Returns the stops it cleared."""
+>       stops = self.store.open_stops()
+                ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: '_Recorder' object has no attribute 'open_stops'
+
+src/hadavin_sdk/limits.py:268: AttributeError
+__ test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1176/test_case7_limits_reset_builds0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa397622c80>
+
+    @needs_step_b
+    def test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only(
+        tmp_path, monkeypatch
+    ):
+        """The secrets provider holds ONLY the reset secret. The store must be built from the settings that name
+        it, the audit must sit on that same store with no signer and no anchor, and nothing else is built."""
+        from hadavin_sdk import cli
+        from hadavin_sdk.actions.secrets import FakeSecretProvider
+    
+        cfg = _pilot_config(tmp_path, RESET_REF)
+        both, made = _Recorder(), []
+    
+        def fake(capability, settings, *args, **kwargs):
+            made.append((capability, settings, kwargs))
+            if capability == "secrets":
+                return FakeSecretProvider({RESET_REF: "the reset login, not read by this test"})
+            if capability in ("store", "audit"):
+                return both
+            raise AssertionError(f"limits reset built a {capability}: it runs as the reset login only")
+    
+        monkeypatch.setattr(cli, "make", fake)
+>       assert _limits_reset(cfg, "user:op") == 0
+E       AssertionError: assert 2 == 0
+E        +  where 2 = _limits_reset(PosixPath('/tmp/pytest-of-root/pytest-1176/test_case7_limits_reset_builds0/pilot'), 'user:op')
+
+tests/test_grants_negative_roles.py:715: AssertionError
+----------------------------- Captured stderr call -----------------------------
+kill switch NOT reset: the store answered with an error (AttributeError); run hadavin-sdk migrate and check the runtime role's grants (a reset needs the reset role: migrate --reset-role and backends.store.reset_credential_ref). Nothing was changed.
+_ test_pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells _
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa3965bc050>
+
+    @needs_step_b
+    def test_pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells(world):
+        """Connected as the reset login. On the 13 tables of RESET_NEVER (and the migration ledger) every one of
+        the five statements is refused; on its own five tables every cell RESET_HOLDS does not name is refused.
+        The catalog agrees, column grants included. Then the cells it holds are shown to work."""
+        tables, sequences = _catalog(world.dsn)
+        schema = _schema(world.dsn)
+        assert set(RESET_NEVER) <= set(tables) and set(RESET_HOLDS) <= set(tables)
+>       assert set(tables) == {*RESET_NEVER, *RESET_HOLDS, "schema_migrations"}
+E       AssertionError: assert {'approval_de...letters', ...} == {'approval_de...letters', ...}
+E         
+E         Extra items in the left set:
+E         'kill_switch_watermark'
+E         'hadavin_limits'
+E         'kill_switch_resets'
+E         'hadavin_caps'
+E         Use -v to get more diff
+
+tests/test_grants_negative_roles.py:1192: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_pg_case4_the_reset_role_switches_the_stop_off_and_the_runtime_role_can_stop_again _
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa3955e5d60>
+
+    @needs_step_b
+    def test_pg_case4_the_reset_role_switches_the_stop_off_and_the_runtime_role_can_stop_again(world):
+        """First by hand, with only the statements its grants are for (so the grants are enough, whatever the
+        store does); then through the real store under the reset login."""
+        runtime = world.store("runtime")
+        runtime.set_kill_switch(KillSwitch(on=True, by="ops:a"))
+        runtime.set_kill_switch(KillSwitch(on=True, by="ops:b"))
+        world.owner('UPDATE kill_switch SET "on" = true WHERE id = 1')
+        assert world.on() is True and world.reads_on().on is True
+        with _as(world.dsn, world.names["reset"]) as db:
+            done = db.execute('UPDATE kill_switch SET "on" = false, "by" = %s WHERE id = 1', ("op",))
+            assert done.rowcount == 1
+            done = db.execute(
+                'INSERT INTO kill_switch_clears (stop_id, "by") SELECT s.id, %s FROM kill_switch_stops s '
+                "WHERE NOT EXISTS (SELECT 1 FROM kill_switch_clears c WHERE c.stop_id = s.id)",
+                ("op",),
+            )
+            assert done.rowcount == 2
+            db.commit()
+        assert world.on() is False and world.reads_on().on is False
+        # the runtime identity can stop again, with one statement, and the stop is open again
+        with _as(world.dsn, world.names["runtime"]) as db:
+            assert db.execute(_STOP, ("ops:later",)).rowcount == 1
+            db.commit()
+        state = world.reads_on()
+        assert world.on() is True and (state.on, state.by) == (True, "ops:later")
+>       world.store("reset").set_kill_switch(KillSwitch(on=False, by="op:again"))
+        ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_roles.py:1246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_grants_negative_roles.py:865: in store
+    store = make(
+src/hadavin_sdk/backends/factory.py:54: in make
+    built = getattr(module, func)(settings, deps)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+settings = PostgresSettings(kind='postgres', dsn_secret_name='dsn', db_schema=None, purge_dsn_secret_name=None, reset_credential_...release_credential_ref=None, iam_auth=False, region=None, sslmode=None, sslrootcert=None, sslrootcert_secret_name=None)
+deps = Deps(resolve=<function bound.<locals>.resolve at 0x7fa3965723e0>, routes=None, store=None, signer=None, anchor=None, llm=None)
+
+    def build(settings, deps) -> PostgresStore:
+        """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
+        password_source(
+            settings.iam_auth, settings.region
+        )  # a missing `aws` extra fails here, with the hint
+        dsn = deps.resolve(settings.dsn_secret_name)
+        if settings.iam_auth and conninfo_to_dict(dsn).get("password"):
+            raise ConfigError(
+                "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
+            )
+        try:
+            conn = connect(
+                dsn,
+                iam_auth=settings.iam_auth,
+                region=settings.region,
+                sslmode=settings.sslmode,
+                sslrootcert=ca_file(settings, deps.resolve),
+            )
+        except psycopg.OperationalError as exc:
+            # The class only: driver messages can carry the host and user.
+            raise StoreUnavailable(
+                f"store postgres: cannot connect ({exc.__class__.__name__})"
+            ) from None
+        try:
+            schema = verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+            if getattr(settings, "_login_role", "runtime") == "runtime" and (
+                problems := own_stop_rights_problems(conn, schema)
+            ):
+>               raise ConfigError(
+                    "store postgres: this login holds rights on the stop tables that only the reset role may hold ("
+                    + "; ".join(problems)
+                    + "). A login that can write there can clear a stop. Revoke them from the login and from the "
+                    "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
+                    "(it resets the grants and refuses what stays)"
+                )
+E               hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can write there can clear a stop. Revoke them from the login and from the roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login (it resets the grants and refuses what stays)
+
+src/hadavin_sdk/store/postgres.py:345: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_pg_case5_the_reset_role_appends_its_audit_intent_and_can_change_no_audit_row _
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa3955e7b60>
+
+    @needs_step_b
+    def test_pg_case5_the_reset_role_appends_its_audit_intent_and_can_change_no_audit_row(world):
+        """`Limits.reset` on a store and a chain audit that both hold ONLY the reset login's connection."""
+        world.store("runtime").set_kill_switch(KillSwitch(on=True, by="ops:a"))
+>       reset = world.store("reset")
+                ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_roles.py:1255: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_grants_negative_roles.py:865: in store
+    store = make(
+src/hadavin_sdk/backends/factory.py:54: in make
+    built = getattr(module, func)(settings, deps)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+settings = PostgresSettings(kind='postgres', dsn_secret_name='dsn', db_schema=None, purge_dsn_secret_name=None, reset_credential_...release_credential_ref=None, iam_auth=False, region=None, sslmode=None, sslrootcert=None, sslrootcert_secret_name=None)
+deps = Deps(resolve=<function bound.<locals>.resolve at 0x7fa396570a40>, routes=None, store=None, signer=None, anchor=None, llm=None)
+
+    def build(settings, deps) -> PostgresStore:
+        """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
+        password_source(
+            settings.iam_auth, settings.region
+        )  # a missing `aws` extra fails here, with the hint
+        dsn = deps.resolve(settings.dsn_secret_name)
+        if settings.iam_auth and conninfo_to_dict(dsn).get("password"):
+            raise ConfigError(
+                "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
+            )
+        try:
+            conn = connect(
+                dsn,
+                iam_auth=settings.iam_auth,
+                region=settings.region,
+                sslmode=settings.sslmode,
+                sslrootcert=ca_file(settings, deps.resolve),
+            )
+        except psycopg.OperationalError as exc:
+            # The class only: driver messages can carry the host and user.
+            raise StoreUnavailable(
+                f"store postgres: cannot connect ({exc.__class__.__name__})"
+            ) from None
+        try:
+            schema = verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+            if getattr(settings, "_login_role", "runtime") == "runtime" and (
+                problems := own_stop_rights_problems(conn, schema)
+            ):
+>               raise ConfigError(
+                    "store postgres: this login holds rights on the stop tables that only the reset role may hold ("
+                    + "; ".join(problems)
+                    + "). A login that can write there can clear a stop. Revoke them from the login and from the "
+                    "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
+                    "(it resets the grants and refuses what stays)"
+                )
+E               hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can write there can clear a stop. Revoke them from the login and from the roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login (it resets the grants and refuses what stays)
+
+src/hadavin_sdk/store/postgres.py:345: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_____ test_pg_case8_reset_with_the_audit_intent_refused_leaves_the_stop_on _____
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa397769a50>
+
+    @needs_step_b
+    def test_pg_case8_reset_with_the_audit_intent_refused_leaves_the_stop_on(world):
+        """Under the reset login, with the audit chain refusing its append: no audit intent, so no reset. The
+        flag, the open stop and the clears are as before."""
+        world.store("runtime").set_kill_switch(KillSwitch(on=True, by="ops:kept"))
+        world.owner('UPDATE kill_switch SET "on" = true WHERE id = 1')
+>       reset = world.store("reset")
+                ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_roles.py:1342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_grants_negative_roles.py:865: in store
+    store = make(
+src/hadavin_sdk/backends/factory.py:54: in make
+    built = getattr(module, func)(settings, deps)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+settings = PostgresSettings(kind='postgres', dsn_secret_name='dsn', db_schema=None, purge_dsn_secret_name=None, reset_credential_...release_credential_ref=None, iam_auth=False, region=None, sslmode=None, sslrootcert=None, sslrootcert_secret_name=None)
+deps = Deps(resolve=<function bound.<locals>.resolve at 0x7fa3955aac00>, routes=None, store=None, signer=None, anchor=None, llm=None)
+
+    def build(settings, deps) -> PostgresStore:
+        """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
+        password_source(
+            settings.iam_auth, settings.region
+        )  # a missing `aws` extra fails here, with the hint
+        dsn = deps.resolve(settings.dsn_secret_name)
+        if settings.iam_auth and conninfo_to_dict(dsn).get("password"):
+            raise ConfigError(
+                "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
+            )
+        try:
+            conn = connect(
+                dsn,
+                iam_auth=settings.iam_auth,
+                region=settings.region,
+                sslmode=settings.sslmode,
+                sslrootcert=ca_file(settings, deps.resolve),
+            )
+        except psycopg.OperationalError as exc:
+            # The class only: driver messages can carry the host and user.
+            raise StoreUnavailable(
+                f"store postgres: cannot connect ({exc.__class__.__name__})"
+            ) from None
+        try:
+            schema = verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+            if getattr(settings, "_login_role", "runtime") == "runtime" and (
+                problems := own_stop_rights_problems(conn, schema)
+            ):
+>               raise ConfigError(
+                    "store postgres: this login holds rights on the stop tables that only the reset role may hold ("
+                    + "; ".join(problems)
+                    + "). A login that can write there can clear a stop. Revoke them from the login and from the "
+                    "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
+                    "(it resets the grants and refuses what stays)"
+                )
+E               hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can write there can clear a stop. Revoke them from the login and from the roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login (it resets the grants and refuses what stays)
+
+src/hadavin_sdk/store/postgres.py:345: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+_ test_pg_case11_migrate_again_takes_back_what_was_granted_by_hand_to_the_reset_role _
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa396ceee10>
+
+    @needs_step_b
+    def test_pg_case11_migrate_again_takes_back_what_was_granted_by_hand_to_the_reset_role(world):
+        extra = [
+            ("kill_switch_clears", "DELETE"),
+            ("kill_switch_stops", "INSERT"),
+            ("audit_entries", "DELETE"),
+            ("runs", "SELECT"),
+            ("redaction_maps", "SELECT"),
+            ("spend", "UPDATE"),
+        ]
+        for table, privilege in extra:
+            world.grant(f"GRANT {privilege} ON {table} TO {{}}", "reset")
+            assert world.can("reset", table, privilege)
+        assert mig.migrate(world.dsn, **{f"{r}_role": world.names[r] for r in ROLES}) == []
+        for table, privilege in extra:
+            assert not world.can("reset", table, privilege), (table, privilege)
+        tables, _ = _catalog(world.dsn)
+        for table in tables:
+            held = {p for p in mig._TABLE_PRIVS if world.can("reset", table, p)}
+>           assert held == RESET_HOLDS.get(table, set()), table
+E           AssertionError: kill_switch_resets
+E           assert {'INSERT', 'SELECT'} == set()
+E             
+E             Extra items in the left set:
+E             'SELECT'
+E             'INSERT'
+E             Use -v to get more diff
+
+tests/test_grants_negative_roles.py:1376: AssertionError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+________ test_pg_case12_a_reset_cannot_turn_a_missing_stop_row_into_off ________
+
+world = <tests.test_grants_negative_roles._World object at 0x7fa3955a8410>
+
+    @needs_step_b
+    def test_pg_case12_a_reset_cannot_turn_a_missing_stop_row_into_off(world):
+        """The flag row is gone (a broken schema). It reads ON; a reset by the reset login fails loudly, is
+        audited as failed, clears nothing, and it still reads ON."""
+        world.store("runtime").set_kill_switch(KillSwitch(on=True, by="ops:a"))
+        world.owner("DELETE FROM kill_switch")
+>       reset = world.store("reset")
+                ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_grants_negative_roles.py:1416: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_grants_negative_roles.py:865: in store
+    store = make(
+src/hadavin_sdk/backends/factory.py:54: in make
+    built = getattr(module, func)(settings, deps)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+settings = PostgresSettings(kind='postgres', dsn_secret_name='dsn', db_schema=None, purge_dsn_secret_name=None, reset_credential_...release_credential_ref=None, iam_auth=False, region=None, sslmode=None, sslrootcert=None, sslrootcert_secret_name=None)
+deps = Deps(resolve=<function bound.<locals>.resolve at 0x7fa3965716c0>, routes=None, store=None, signer=None, anchor=None, llm=None)
+
+    def build(settings, deps) -> PostgresStore:
+        """Table factory: the DSN is a platform secret named in the settings (never the executor's)."""
+        password_source(
+            settings.iam_auth, settings.region
+        )  # a missing `aws` extra fails here, with the hint
+        dsn = deps.resolve(settings.dsn_secret_name)
+        if settings.iam_auth and conninfo_to_dict(dsn).get("password"):
+            raise ConfigError(
+                "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
+            )
+        try:
+            conn = connect(
+                dsn,
+                iam_auth=settings.iam_auth,
+                region=settings.region,
+                sslmode=settings.sslmode,
+                sslrootcert=ca_file(settings, deps.resolve),
+            )
+        except psycopg.OperationalError as exc:
+            # The class only: driver messages can carry the host and user.
+            raise StoreUnavailable(
+                f"store postgres: cannot connect ({exc.__class__.__name__})"
+            ) from None
+        try:
+            schema = verify_schema(conn, expected_schemas(dsn, settings.db_schema))
+            if getattr(settings, "_login_role", "runtime") == "runtime" and (
+                problems := own_stop_rights_problems(conn, schema)
+            ):
+>               raise ConfigError(
+                    "store postgres: this login holds rights on the stop tables that only the reset role may hold ("
+                    + "; ".join(problems)
+                    + "). A login that can write there can clear a stop. Revoke them from the login and from the "
+                    "roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login "
+                    "(it resets the grants and refuses what stays)"
+                )
+E               hadavin_sdk.errors.ConfigError: store postgres: this login holds rights on the stop tables that only the reset role may hold (UPDATE on kill_switch; INSERT on kill_switch_clears). A login that can write there can clear a stop. Revoke them from the login and from the roles it is a member of, or run hadavin-sdk migrate with --runtime-role naming this login (it resets the grants and refuses what stays)
+
+src/hadavin_sdk/store/postgres.py:345: ConfigError
+------------------------------ Captured log setup ------------------------------
+WARNING  hadavin_sdk.store:migrate.py:1333 migrate: the hadavin_* functions are owned by a superuser: allowed (test servers and some managed services), but a superuser owner is a wider key than a plain owner role
+=========================== short test summary info ============================
+FAILED tests/test_grants_negative_roles.py::test_the_identities_are_the_ones_this_file_knows
+FAILED tests/test_grants_negative_roles.py::test_every_write_privilege_is_on_the_reviewed_list
+FAILED tests/test_grants_negative_roles.py::test_only_the_reviewed_roles_hold_anything_on_the_stop_state
+FAILED tests/test_grants_negative_roles.py::test_delete_is_held_only_on_the_outbox_and_the_purged_tables
+FAILED tests/test_grants_negative_roles.py::test_the_purge_role_holds_delete_only_and_no_whole_table_read
+FAILED tests/test_grants_negative_roles.py::test_case10_the_released_manifest_names_every_migration_file
+FAILED tests/test_grants_negative_roles.py::test_case2_the_reset_identity_holds_exactly_the_reviewed_cells
+FAILED tests/test_grants_negative_roles.py::test_reset_writes_the_audit_intent_before_it_touches_the_switch
+FAILED tests/test_grants_negative_roles.py::test_reset_leaves_the_switch_alone_when_the_audit_intent_fails
+FAILED tests/test_grants_negative_roles.py::test_case8_a_reset_the_store_refuses_is_audited_as_reset_failed
+FAILED tests/test_grants_negative_roles.py::test_case7_limits_reset_builds_its_store_and_audit_from_the_reset_dsn_only
+FAILED tests/test_grants_negative_roles.py::test_pg_case2_the_reset_role_is_refused_everything_outside_its_reviewed_cells
+FAILED tests/test_grants_negative_roles.py::test_pg_case4_the_reset_role_switches_the_stop_off_and_the_runtime_role_can_stop_again
+FAILED tests/test_grants_negative_roles.py::test_pg_case5_the_reset_role_appends_its_audit_intent_and_can_change_no_audit_row
+FAILED tests/test_grants_negative_roles.py::test_pg_case8_reset_with_the_audit_intent_refused_leaves_the_stop_on
+FAILED tests/test_grants_negative_roles.py::test_pg_case11_migrate_again_takes_back_what_was_granted_by_hand_to_the_reset_role
+FAILED tests/test_grants_negative_roles.py::test_pg_case12_a_reset_cannot_turn_a_missing_stop_row_into_off
+17 failed, 64 passed in 21.57s
