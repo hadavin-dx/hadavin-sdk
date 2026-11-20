@@ -1,3 +1,7 @@
+# MODEL PROOF 13:46:48Z (2026-11-20, lead order 13:50Z; get_session, no argument = this session)
+configured_model = claude-sonnet-5-5; session_context.model = claude-sonnet-5-5; external_metadata.model = claude-sonnet-5-5; external_metadata.last_served_model = claude-sonnet-5-5; user_switched_model = claude-sonnet-5-5. NO FABLE in the session.
+Agents of this session running now, each spawned with an explicit model parameter (never fable): a40ba60b (builder, mix/reconciliation) = sonnet; a0168528 (builder G12b) = sonnet; a6a30c03 (builder E22 perf) = sonnet; aa116cd5 (reviewer G13 design) = sonnet; a3005ce3 (reviewer G13 codebase) = sonnet. Finished (all explicit): drafters = opus (G4 v6/v7/v8, G8 v4/v5/v6, G9 v3, G10 v4, G11, G12, G13, E14 tickets); builders/reviewers/probers/bisecters = sonnet (G4 acdb3947, G8 acdad2b4 + ad4304a3, G9 a2a7bac8 + a7047a97, G10 af982b06 + a88d44ca, E14 a2d5237c, M3 a6d4dfa8, G12 a2860143, G7-F3 a2275035, gate (c) a578fea4, G13 a1f4448a, E15/E19-M2/E22 probes). The earlier fable agents were stopped at ORDER 018 (see RESUME-NOTE-2026-11-20.md); no agent of this session has been spawned with fable since.
+
 # REPORT from core-c (newest on top, UTC and IST)
 
 ## SESSION MODEL PROOF, 2026-11-20T07:22Z (owner order: nothing may use the retired tier, including this session)
