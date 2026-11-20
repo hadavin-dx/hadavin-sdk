@@ -933,7 +933,8 @@ def test_g13_6_the_piece_check_spends_the_call_budget():
     snap = _g13_snap()
     snap.budget.chars = 1_000  # 150 lookups of 8 characters
     try:
-        runmap.held_value_left("q huntXXXX<HOST_1> " * 150, snap)
+        # distinct pieces (G13b: a piece already looked up in the text is not charged again)
+        runmap.held_value_left("".join(f"q hunt{n:04d}<HOST_1> " for n in range(150)), snap)
     except runmap.InputTooLarge:
         return
     raise AssertionError("G13-6 the piece lookups spent nothing")
@@ -963,3 +964,94 @@ def test_g13_7_a_marker_look_alike_with_a_combining_mark_is_escaped():
     assert runmap.escape_markers("cafe\u0301 x") == "cafe\u0301 x", (
         "G13-7 a text with no marker changed"
     )
+
+
+# --- G13b (design M-1, M-2, m-2) ------------------------------------------------------------------------------------------
+def test_g13b_1_the_public_start_of_a_value_and_separators_are_not_a_piece():
+    """G13b-1: `https://` before a key is not a piece of a webhook value; `https://h`, and 4 characters of an ordinary secret, are;
+    separators alone (the `-----` of a PEM start) are not."""
+    snap = runmap.snapshot(
+        runmap.RunMap(
+            {
+                "<SECRET_1>": "https://hooks.slack.com/services/T0/B0/" + "q" * 24,
+                "<SECRET_2>": "-----BEGIN KEY-----",
+                "<HOST_1>": "db1.corp.example.org",
+            }
+        )
+    )
+    for text in (
+        "a https://<HOST_1>/x",
+        "a http:<HOST_1>",
+        "a -----<HOST_1>",
+        "<HOST_1>/////",
+        "<HOST_1>-----",
+    ):
+        assert not runmap.held_value_left(text, snap), (
+            f"G13b-1 read a public start as a piece: {text}"
+        )
+    for text in ("a https://h<HOST_1>", "a -----B<HOST_1>"):
+        assert runmap.held_value_left(text, snap), (
+            f"G13b-1 a piece past the public start was not seen: {text}"
+        )
+    assert runmap.held_value_left("a https://hoo<HOST_1>", snap), (
+        "G13b-1 a piece past the scheme was not seen"
+    )
+
+
+def test_g13b_4_repeated_heads_between_keys_are_charged_once_per_distinct_piece():
+    """G13b-4 (m-2): a 4-character head that repeats 14 times between 27,000 keys (2.1 MB) charged about 7.4M of the 8M budget
+    (a hostile text refused for what costs milliseconds); the same piece is looked up and charged once now."""
+    snap = runmap.snapshot(
+        runmap.RunMap({"<SECRET_1>": "hunt" + "ABCDEFGHIJ" * 5, "<HOST_1>": "db1.corp.example.org"})
+    )
+    text = ("hunt!" * 14 + "<HOST_1>") * 27_000
+    assert not runmap.held_value_left(text, snap)
+    spent = runmap.ENFORCE_MAX_TOTAL_CHARS - snap.budget.chars
+    assert spent < 1_000_000, f"G13b-4 the repeated pieces were charged again: {spent}"
+    snap = runmap.snapshot(
+        runmap.RunMap({"<SECRET_1>": "hunt" + "ABCDEFGHIJ" * 5, "<HOST_1>": "d"})
+    )
+    snap.budget.chars = 2_000  # distinct pieces are still charged: past the budget, InputTooLarge
+    try:
+        runmap.held_value_left("".join(f"hunt{n}!hunt!<HOST_1>" for n in range(500)), snap)
+    except runmap.InputTooLarge:
+        return
+    raise AssertionError("G13b-4 distinct pieces were not charged")
+
+
+def test_g13b_3_the_window_overlap_is_bounded_whatever_the_longest_value():
+    """G13b-3 (design M-2): a longest value of 4,000 or 65,536 characters no longer makes `_windows` refuse; the overlap
+    is at most `WINDOW_OVERLAP_MAX`, and below the bound it is ten characters a character plus 16."""
+    state, letters = 12345, []
+    for _ in range(3 * runmap.VIEW_WINDOW):  # a text that does not repeat itself
+        state = (state * 1103515245 + 12345) % 2**31
+        letters.append(chr(97 + state // 65536 % 26))
+    text = "".join(letters)
+    for longest, overlap in (
+        (100, 1_016),
+        (1_000, 10_016),
+        (4_000, runmap.WINDOW_OVERLAP_MAX),
+        (65_536, runmap.WINDOW_OVERLAP_MAX),
+    ):
+        windows = runmap._windows(text, longest)
+        step = text.index(windows[1][:64])
+        assert runmap.VIEW_WINDOW - step == overlap, (
+            f"G13b-3 the overlap for {longest} is not {overlap}"
+        )
+        assert windows[-1] and text.endswith(windows[-1][-64:]), (
+            "G13b-3 the last window does not reach the end"
+        )
+
+
+def test_g13b_6_the_deadline_is_read_before_the_views_of_a_window_are_built(monkeypatch):
+    """G13b-6 (N1): a call whose time is spent builds no view at all (`_views` is the costly step)."""
+    snap = runmap.snapshot(runmap.RunMap({"<SECRET_1>": "hunter2-" + "ABCDEFGH"}))
+    snap.budget.deadline = 0.0
+    built = []
+    monkeypatch.setattr(runmap, "_views", lambda window: built.append(1) or [])
+    try:
+        runmap.held_in_views("w\u00f6rd " * 100, snap)
+    except runmap.InputTooLarge:
+        assert not built, "G13b-6 the views were built before the deadline was read"
+        return
+    raise AssertionError("G13b-6 the spent deadline was not read")

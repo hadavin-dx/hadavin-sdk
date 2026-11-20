@@ -1179,7 +1179,7 @@ class MapSnapshot(dict):
     secret_values: frozenset[str]  # originals swept in every copy (a secret kind of 4+ characters)
     checker: Any  # a redactor over exactly those secret values, for `held_value_left`
     # `_piece_index` of the secret values (G13)
-    pieces: tuple[list[str], list[str], frozenset[str], frozenset[str], int]
+    pieces: Any  # `PieceIndex`
 
 
 def _rules_conflict(known: Mapping[str, str]) -> bool:
@@ -1329,39 +1329,63 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
 
 # G13 (E19 M1): the shortest piece of a secret value that the net reads as a leak where it touches a placeholder.
 NET_MIN_PIECE = 4
+# G13b (design M-1): a piece that is only the public start of a value (its URL scheme `https://`, `postgres://`, or an
+# auth word `Bearer `) or only separator characters is no leak: `https://<HOSTNAME_1>/health` is ordinary text beside a
+# WEBHOOK value that starts `https://hooks.`. A piece that goes one character past that start (`https://h`) still is.
+_LEAD = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.\-]{0,14}://|(?:Bearer|Basic|Token|Digest)[ \t]+)")
+_SEPARATORS = " \t\r\n/\\:;,.?&=#@!-_+*~|<>()[]{}'\"%"
+_LOOKUP_COST = 64  # characters one piece lookup charges to the call budget (a compare stops at the first difference)
+PieceIndex = tuple[list[str], dict[int, list[str]], list[str], frozenset[str], frozenset[str], int]
 
 
-def _piece_index(
-    values: frozenset[str],
-) -> tuple[list[str], list[str], frozenset[str], frozenset[str], int]:
-    """G13: the secret values longer than `NET_MIN_PIECE`, sorted; their reversals, sorted; the first and the last
-    `NET_MIN_PIECE` characters of each; the longest length. `_touching_piece` looks a piece up by bisection."""
-    fwd = sorted(v for v in values if len(v) > NET_MIN_PIECE)
+def _piece_index(values: frozenset[str]) -> PieceIndex:
+    """G13: the secret values longer than `NET_MIN_PIECE` that have no public start, sorted; those that have one (G13b:
+    `_LEAD`; only starts of `NET_MIN_PIECE` or more matter), sorted, by the length of that start; the reversals of all of
+    them, sorted; the first and the last `NET_MIN_PIECE` characters of each; the longest length of any value (kept here so
+    a chunk does not scan the values). `_touching_piece` looks a piece up by bisection."""
+    fwd = [v for v in values if len(v) > NET_MIN_PIECE]
+    plain: list[str] = []
+    leaded: dict[int, list[str]] = {}
+    for v in fwd:
+        lead = _LEAD.match(v)
+        if lead and lead.end() >= NET_MIN_PIECE:
+            leaded.setdefault(lead.end(), []).append(v)
+        else:
+            plain.append(v)
+    plain.sort()
+    for group in leaded.values():
+        group.sort()
     rev = sorted(v[::-1] for v in fwd)
     heads = frozenset(v[:NET_MIN_PIECE] for v in fwd)
     tails = frozenset(v[-NET_MIN_PIECE:] for v in fwd)
-    return fwd, rev, heads, tails, max(map(len, fwd), default=0)
+    return plain, leaded, rev, heads, tails, max(map(len, values), default=0)
 
 
 def _starts_one(ordered: list[str], piece: str) -> bool:
-    """True when some string of the sorted list `ordered` starts with `piece`."""
+    """True when some string of the sorted list `ordered` starts with `piece` (a string equal to it counts)."""
     i = bisect.bisect_left(ordered, piece)
     return i < len(ordered) and ordered[i].startswith(piece)
 
 
 def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     """G13 (E19 M1): True when a KEY of the map has, right before it, a piece of `NET_MIN_PIECE` or more characters
-    that is the START of a secret value (shorter than the value), or right after it a piece that is the END of one:
-    `hunter2-<SECRET_2>`, `<SECRET_1>-ZZZZ`. Such a piece is what is left when two known values overlap and one was
-    masked across the other, whatever the placeholder holds. Only the text between the key and the next (or previous)
-    key is read, at most the longest value's length minus one. A piece is looked up only where its
-    first (left) or last (right) `NET_MIN_PIECE` characters are those of a value; each lookup's characters are spent
-    from the call's budget (`InputTooLarge` past it)."""
-    fwd, rev, heads, tails, longest = snap.pieces
-    if not fwd:
+    that is the START of a secret value (shorter than or equal to the value), or right after it a piece that is the
+    END of one: `hunter2-<SECRET_2>`, `<SECRET_1>-ZZZZ`. Such a piece is what is left when two known values overlap and
+    one was masked across the other, whatever the placeholder holds. Not a piece (G13b, design M-1): characters that
+    are only separators, and the public start of a value (`https://`, `Bearer `; `_LEAD`) taken alone: ordinary text
+    beside a placeholder (`https://<HOSTNAME_1>/health`) is not refused because a webhook value starts the same way;
+    `https://h` is a piece. Stated limit: a secret whose own first characters are ordinary words refuses text that
+    starts the same way beside a key (the net cannot tell a copy of those words from a leak). Only the text between
+    the key and the next (or previous) key is read, at most the longest value's length minus one. A piece is looked
+    up only where its first (left) or last (right) `NET_MIN_PIECE` characters are those of a value; a piece already
+    looked up in this text is not looked up, nor charged, again; each lookup spends at most `_LOOKUP_COST` characters
+    of the call's budget (`InputTooLarge` past it) and the deadline is read every 1,024 lookups."""
+    plain, leaded, rev, heads, tails, longest = snap.pieces
+    if not heads:
         return False
     budget, k = snap.budget, NET_MIN_PIECE
     tokens = [m.span() for m in _PLACEHOLDER.finditer(text) if m.group() in snap]
+    seen: set[tuple[bool, str]] = set()  # the pieces looked up in this text that were not a leak
     for n, (start, end) in enumerate(tokens):
         if not n % 256:
             budget.check()
@@ -1369,54 +1393,85 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
         after = tokens[n + 1][0] if n + 1 < len(tokens) else len(text)
         left = text[max(before, start - longest + 1) : start]
         for i in range(len(left) - k, -1, -1):  # the piece left[i:] ends at the key
-            if left[i : i + k] in heads:
-                budget.spend_chars(len(left) - i)
-                if _starts_one(fwd, left[i:]):
-                    return True
+            piece = left[i:]
+            if left[i : i + k] not in heads or (True, piece) in seen:
+                continue
+            seen.add((True, piece))
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if not len(seen) % 1024:
+                budget.check()
+            if piece.strip(_SEPARATORS) and (
+                _starts_one(plain, piece)
+                or any(
+                    len(piece) > lead and _starts_one(group, piece)
+                    for lead, group in leaded.items()
+                )
+            ):
+                return True
         right = text[end : min(after, end + longest - 1)]
         for j in range(k, len(right) + 1):  # the piece right[:j] starts at the key
-            if right[j - k : j] in tails:
-                budget.spend_chars(j)
-                if _starts_one(rev, right[:j][::-1]):
-                    return True
+            piece = right[:j]
+            if right[j - k : j] not in tails or (False, piece) in seen:
+                continue
+            seen.add((False, piece))
+            budget.spend_chars(min(len(piece), _LOOKUP_COST))
+            if not len(seen) % 1024:
+                budget.check()
+            if piece.strip(_SEPARATORS) and _starts_one(rev, piece[::-1]):
+                return True
     return False
 
 
 def held_in_views(text: str, snap: MapSnapshot) -> bool:
     """G13 (E19 M2): the net over the forms of `text` a reader (or the model) may decode: the text without NUL and lone
     surrogates (a UTF-16 document read as UTF-8) and, when it holds a non-ASCII character or `\\`, `%` or `&`, every
-    `_views` form of that. True when `held_value_left` finds a secret value in any of them. Each view's characters are
-    spent from the call's budget; a text whose views would pass `defaults.MAX_REDACT_CHARS` is read in overlapping
-    windows. `_views` can raise `InputTooLarge` or `TooDeep`: the caller refuses the call."""
+    `_views` form of that. True when `held_value_left` finds a secret value in any of them (that is the sweep over
+    the form AND the piece rule `_touching_piece`, so a piece beside a key in a decoded form refuses too). Each
+    view's characters are spent from the call's budget, and the deadline is read before each window's views are
+    built; a text whose views would pass `defaults.MAX_REDACT_CHARS` is read in overlapping windows (`_windows`).
+    `_views` can raise `InputTooLarge` or `TooDeep`: the caller refuses the call. Stated limits: a copy spelled in
+    several stacked layers (`%26%23...`, up to `SCRUB_MAX_LAYERS` = 8 undone; each layer can multiply the spelling by up
+    to 10) across a window edge of a text over `VIEW_WINDOW` characters is missed when the spelling is longer than the
+    overlap (`WINDOW_OVERLAP_MAX`); the producers read the same layers whole, so this matters only where a producer was
+    bypassed. Not pinned: the stacked-layer limit."""
     if not snap.secret_values:
         return False
     cleaned = _clean(text)
-    views = [cleaned] if cleaned != text else []
-    if not cleaned.isascii() or any(c in cleaned for c in "\\%&"):
-        for window in _windows(cleaned, max(map(len, snap.secret_values))):
-            views += _views(window)
-    for view in views:
-        snap.budget.spend_chars(len(view))
+    if cleaned != text:
+        snap.budget.spend_chars(len(cleaned))
         snap.budget.check()
-        if held_value_left(view, snap):
+        if held_value_left(cleaned, snap):
             return True
+    if cleaned.isascii() and not any(c in cleaned for c in "\\%&"):
+        return False
+    for window in _windows(cleaned, snap.pieces[-1]):
+        snap.budget.check()
+        for view in _views(window):
+            snap.budget.spend_chars(len(view))
+            snap.budget.check()
+            if held_value_left(view, snap):
+                return True
     return False
 
 
 # G13: a text longer than this is read by `held_in_views` in windows of this size (`_views` refuses a form past
 # `defaults.MAX_REDACT_CHARS`, and NFKC can triple a text; the gate holds texts up to 8 times that cap).
 VIEW_WINDOW = defaults.MAX_REDACT_CHARS // 4
+# G13b (design M-2): the most two windows overlap. A value of up to (WINDOW_OVERLAP_MAX - 16) / 10 = 1,636 characters
+# keeps the full overlap of ten characters a character; a longer one (a PEM key, a planted blob up to 65,536
+# characters) is read with this overlap: its spelling of up to this many characters is found across a window edge
+# (an NFKC or percent form is 1 to 3 characters a character, so values up to about 5,000 in a form of 3), and the
+# raw copy is found by `held_value_left` on the whole text, which has no windows.
+WINDOW_OVERLAP_MAX = VIEW_WINDOW // 4
 
 
 def _windows(text: str, longest: int) -> list[str]:
     """`text` whole when it fits one window, else windows of `VIEW_WINDOW` characters that overlap by ten times the
-    longest secret value plus 16 (an escaped spelling is at most ten characters a character: `&#1114111;`). An overlap of
-    half a window or more is `InputTooLarge`."""
+    longest secret value plus 16 (an escaped spelling is at most ten characters a character: `&#1114111;`), at most
+    `WINDOW_OVERLAP_MAX` (G13b: a long value no longer refuses every long text; its limit is in `held_in_views`)."""
     if len(text) <= VIEW_WINDOW:
         return [text]
-    overlap = 10 * longest + 16
-    if overlap * 2 >= VIEW_WINDOW:
-        raise InputTooLarge("InputTooLarge")
+    overlap = min(10 * longest + 16, WINDOW_OVERLAP_MAX)
     step = VIEW_WINDOW - overlap
     return [text[i : i + VIEW_WINDOW] for i in range(0, len(text) - overlap, step)]
 
@@ -1430,7 +1485,9 @@ def held_value_left(text: str, snap: MapSnapshot) -> bool:
     (a fixed framing word between) is not seen here: a stated limit of the gate. Since G9 the checker's sweep reads
     the text back: a secret value spelled across a placeholder is found; that sweep can raise `InputTooLarge` (its
     work count, the deadline, `SpelledNotSettled`), which `_chunk` does not catch: `_enforced` reports it as
-    `mask_budget_exceeded`."""
+    `mask_budget_exceeded`. Since G13 the piece rule runs too (`_touching_piece`: a piece of a secret value beside a
+    key of the map, `hunter2-<HOST_1>`; G13b: not a bare URL scheme or separators). `held_in_views` calls this on each
+    decoded form of a text."""
     if not snap.secret_values:
         return False
     opened = _NOT_RAW.sub(

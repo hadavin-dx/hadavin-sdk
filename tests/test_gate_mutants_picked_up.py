@@ -17,7 +17,7 @@ import pytest
 from tests import gate_mutants
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MIN_MUTANTS = 121
+MIN_MUTANTS = 128
 
 
 def test_the_gate_mutant_list_imports_and_is_not_shrunk():
