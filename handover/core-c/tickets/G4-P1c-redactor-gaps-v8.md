@@ -342,6 +342,21 @@ re-run on G9 v2's CURRENT prototype (it now holds the reach): the tie-break tabl
      point 2), up to `MAX_REDACT_CHARS`. This is not G4's alone (a 64 KiB HIGHENTROPY value costs the same under G9), but G4 makes
      it likelier: a wrapped block that was one short HIGHENTROPY entry per line (or none) becomes ONE long ENCODED entry. Decision
      L26 (14).
+     CHANGED in v8 (design round 7 N2; G9 v2 complete): the table above was measured on a G9 v2 prototype BEFORE its read-back
+     reach; it is SUPERSEDED. G9 v2 4.3 now reads a run of placeholders back at most `SPELLED_READBACK_REACH` = 1,024 characters
+     deep on each side that touches free text (`keep = min(self._longest - 1, defaults.SPELLED_READBACK_REACH)`), so one mention of
+     a value longer than about 2,048 characters costs about 2 x 1,024 characters read back, whatever its length. MEASURED on the
+     CURRENT G9 v2 prototype (`g9cost.py` re-run, `g9reach.py`; same text shape and values; ENCODED added to `SECRET_KINDS`
+     in-process):
+     | value (characters) | mentions, none refused | refused (`InputTooLarge("SpelledWorkTooMuch")`, `enforce_map` and `redact` alike) |
+     |---|---|---|
+     | 28 | 1-80 tried | - |
+     | 4,223 | 1-80, 200, 500 | 1,000, 2,000, 4,000 (0.02-0.3 s) |
+     | 67,583 (a 65,536-character blob) | 1-80, 200, 500 (0.1-0.3 s each) | 1,000, 2,000, 4,000 (0.15-0.4 s) |
+     So under G9 v2 a value over about 2 KB is refused between 500 and 1,000 mentions in one text, the SAME for a 4 KB and a 64 KB
+     value: the length of an ENCODED original no longer changes the count, and G4's long ENCODED entries cost a later text no more
+     than any secret value over 2 KB (a HIGHENTROPY key, a PEM block). v7's "10 to 30 mentions" is WITHDRAWN. What stays G4's: the
+     MEMORY of a long original in every redactor built from the map (L26, MEASURED, 8).
 - The `_build` first-rule versus G4's tie-break (review round 6 design M1, readiness N3). G9 v2 4.6 says "`_build` keeps the FIRST
   one's rule for its literal sweep (the identifier's, standalone)" for a value under two placeholders. Once G4's tie-break is in,
   `_build` keeps the SECRET kind's rule. MEASURED on the G9 v2 prototype with the tie-break patched into `_build` in-process
