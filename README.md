@@ -17,7 +17,7 @@ Rules:
 **Production and pilot must run Python 3.13.x (Unicode 15.1.0). Python 3.12 (Unicode 15.0.0) is for demos only.** The text fold in
 `guard/textnorm.py` depends on the interpreter's Unicode data, and its look-alike table is the Unicode 15.1.0 table. On another Python the
 fold still runs, but every check name starts with a tag and never equals one made on 3.13. `require_pinned_unidata()` raises on the wrong
-Python; nothing in this package calls it yet (the next package, P1b, calls it in `app.build`). Moving the pin to a later Python (for example
+Python; `app.build` calls it when the stage is pilot or prod, so a start on other Unicode data is refused. Moving the pin to a later Python (for example
 3.14) is a data migration, not a version bump: see the CHANGELOG.
 
 Requirement since the text fold (ticket G, part G1): pilot and prod need a Python whose Unicode data is 15.1.0 (3.13). `app.build` now calls
