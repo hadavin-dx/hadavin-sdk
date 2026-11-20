@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T15:35:18Z
+UPDATED_UTC: 2026-11-20T15:40:28Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 3.09 of 4 cores, mem 1/15 GB, disk 40G free, 44% used, agents light 4 heavy 2
-DISK: / 40G free, 44% used; worktrees /tmp/core-b-wt 4.2G
+CAPACITY: load 3.62 of 4 cores, mem 2/15 GB, disk 39G free, 44% used, agents light 4 heavy 2
+DISK: / 39G free, 44% used; worktrees /tmp/core-b-wt 4.2G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T15:32:50Z (previous push; this board is pushed right after writing)
-IST: 21:05 IST
+PUSHED_UTC: 2026-11-20T15:39:50Z (previous push; this board is pushed right after writing)
+IST: 21:10 IST
 
 MODEL CHECK 14:15Z (get_session on core-b, again): configured_model=claude-sonnet-5-5 | session_context.model=claude-sonnet-5-5 | external_metadata.model=claude-sonnet-5-5 | last_served_model=claude-sonnet-5-5 | user_switched_model=claude-sonnet-5-5. NOT FABLE-SERVED. Trailer my harness gives for commits: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>" (this commit uses exactly it).
 
@@ -330,3 +330,5 @@ LEAD 15:37 FIX LIST on cloud/core-b head e337feb6e+: (1) money-definer collectio
 25 BASE FAILURES from wip/lead-b-migrate: routed per the 14:25Z lines: stop-state ones -> S1, definer/mutants/parallel ones fixed above; waiting for the laptop review of that branch to be clean, then I merge it and fix docs 'reset login sets caps'. Then A-audit-rights builder (needs lead's yes, DECISIONS.md 14:30Z).
 
 15:31Z The lead's list of READY items (S1, R1, W1, B2, AR reviewer) is already RUNNING-or-DONE, per the 15:24Z status: DONE+merged: R1, B2 (+review fixes), AR (design), W1 (commit waits via S1), I1, F7. RUNNING now (3, sonnet/haiku): S1 stop-state fixer (since 14:14Z) | HR hostile end-to-end re-read of the whole money path (sonnet, since 15:30Z; tickets/money-hostile-reread-2.md) | EV11 evidence batch 11, whole suite on its own DB (haiku, since 15:30Z; evidence/batch-11.md). Heavy batches: 1 of 2.
+
+15:41Z PER AGENT (the lead's five names): S1 = DONE, merged 6a688ae57 (stop-state tests 216 passed here, mutants 126 killed / 0 survived / 11 N/A needing PG15) | R1 = DONE, merged e337feb6e (money battery, mutant baselines 20/31/22/37/56 all good, hand 4/4 and 27/27) | W1 = DONE, its commit 600feeba0 merged inside S1's merge (test-side gate; I refused its migrate.py weakening) | B2 = DONE, merged d070fda3d (live path reserve/settle + review fixes; 32 tests, 6/6 mutants) | AR reviewer = DONE (A-audit-rights-review-1.md; decision in DECISIONS.md; builder waits for the lead's yes + merge of wip/lead-b-migrate). RUNNING NOW (2): H3 builder (MH3, sonnet since 15:40Z: add_spend day window + memory parity, start-up self-check of the runtime login's money rights in postgres.py, clock-skew log hint) | EV11 evidence batch 11 (haiku since 15:30Z, whole suite, own DB). HR hostile re-read DONE (no Blocker; M1/M2 to laptop list items 5-6, M3/m1/m3 to H3, M4 accepted).
