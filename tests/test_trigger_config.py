@@ -2,15 +2,24 @@
 
 Written by a different agent than the builder, against the code as built on cloud/core-b. On a branch where the block
 does not exist yet the whole module is skipped. Fields the request asked for and that are not built yet (host, port,
-poll_s, allow_non_loopback, a name-limited reader on App) are tested only when present; their tests skip by name.
+poll_s, allow_non_loopback, a limit on the number of senders) are tested only when present; their tests skip by name.
 
 A test marked xfail(strict) is a FINDING: the code is weaker than the review of it says it should be. The assertion
 is the wanted behaviour; when the code is fixed the mark must be removed (strict makes the fixed code fail the mark).
+
+Second round (core-b's fix round 1, commit d0de90512): the findings F2, F3, F4a, F4b, F5, F7 and F8 of the first round
+are fixed in the code, so their marks are gone and their assertions now guard the fixes. The reader the worker gets
+is `App.trigger_secret`; `App.secrets` is gone. Open: FINDING T1 (the `env` secrets kind folds different names
+onto one variable).
 """
 
 from __future__ import annotations
 
+import dataclasses
+import inspect
 import math
+import traceback
+import types
 from pathlib import Path
 
 import pytest
@@ -116,14 +125,41 @@ def test_the_ceilings_as_built():
     assert 0 < defaults.TRIGGER_ACK_WAIT_S <= defaults.TRIGGER_ACK_WAIT_S_CEILING
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: the default body cap (TRIGGER_MAX_BODY_BYTES) equals MAX_DOCUMENT_BYTES, so a full-size "
-    "document cannot fit once it is wrapped and escaped as JSON (review finding 7; request 001 asked for 2 x)",
-)
 def test_default_body_cap_leaves_room_for_a_full_size_document():
-    """Case: the default request body cap is larger than the largest document."""
+    """Case: the default request body cap is larger than the largest document (first-round finding F7, fixed)."""
     assert defaults.TRIGGER_MAX_BODY_BYTES > defaults.MAX_DOCUMENT_BYTES
+
+
+def test_default_body_cap_is_at_least_twice_the_document_cap_and_inside_its_own_ceiling(cfg_dir):
+    """Case: the new default body cap. It is at least two times the document cap (what request 001 asked for), it
+    is not above the ceiling a config may write, and a block that names no cap loads with exactly this number."""
+    assert defaults.TRIGGER_MAX_BODY_BYTES >= 2 * defaults.MAX_DOCUMENT_BYTES
+    assert defaults.TRIGGER_MAX_BODY_BYTES <= defaults.TRIGGER_MAX_BODY_BYTES_CEILING
+    cap = _load(cfg_dir, _block()).triggers.max_body_bytes
+    assert type(cap) is int
+    assert cap == defaults.TRIGGER_MAX_BODY_BYTES
+
+
+def test_default_max_running_and_ack_wait_as_built(cfg_dir):
+    """Case: the defaults the worker gets when the block names no number: max_running is the whole number 4 and
+    ack_wait_s is the float 5.0 (core-b's answer to request 001, DRAFT 2: both unchanged)."""
+    t = _load(cfg_dir, _block()).triggers
+    assert (type(t.max_running), t.max_running) == (int, 4)
+    assert (type(t.ack_wait_s), t.ack_wait_s) == (float, 5.0)
+
+
+def test_number_of_senders_is_limited(cfg_dir):
+    """Case: one sender more than the largest allowed number of senders. Refused, and the largest number loads.
+    Skips until a limit on the number of senders is built."""
+    limit = next(
+        (m.max_length for m in FIELDS["senders"].metadata if getattr(m, "max_length", None)), None
+    )
+    if limit is None:
+        pytest.skip("field not built on this branch: a limit on the number of triggers.senders")
+    senders = {f"s{i}": _sender(f"key-{i}") for i in range(limit + 1)}
+    assert "triggers.senders" in _refused(cfg_dir, _block(senders))
+    del senders["s0"]
+    assert len(_load(cfg_dir, _block(senders)).triggers.senders) == limit
 
 
 @pytest.mark.parametrize("where", ["settings", "sender"])
@@ -169,6 +205,13 @@ BAD_IDS = [
     ("underscore", "sender_one"),
     ("dot", "sender.one"),
     ("colon", "svc:sender"),
+    ("tab inside", "sender\tone"),
+    ("carriage return at the end", "sender\r"),
+    ("non-breaking space", "sender\u00a0one"),
+    ("zero-width space", "sender\u200bone"),
+    ("NUL character", "sender\x00one"),
+    ("digit of another script", "\u0661"),
+    ("letter outside a-z", "stra\u00dfe"),
 ]
 
 
@@ -258,28 +301,81 @@ def test_empty_secret_name_refused(cfg_dir):
     assert "triggers.senders.s1.secret_names" in text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: a secret name is only checked for length 1, so a whitespace-only name or a name holding a "
-    "line break loads (review finding 5: needs a charset pattern or stripping with a minimum length)",
-)
 @pytest.mark.parametrize("name", [" ", "\t", "   ", "key-one\n", "key\none", " key-one"], ids=repr)
 def test_blank_or_newline_secret_name_refused(cfg_dir, name):
     """Case: a secret name that is blank, only whitespace, or holds a line break or a leading space. Must be
-    refused, naming the sender and the field."""
+    refused, naming the sender and the field (first-round finding F5, fixed by a character rule)."""
     assert "triggers.senders.s1.secret_names" in _refused(cfg_dir, _block({"s1": _sender(name)}))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: agent_id and principal_id are only checked for length 1 in config; a whitespace-only value "
-    "passes the config model and is refused only later, by the registry, as an unknown id (review finding 5)",
-)
+# Neighbours of finding F5: characters that look like nothing, or like an allowed character, and are neither.
+HOSTILE_NAMES = [
+    ("tab inside", "key\tone"),
+    ("trailing space", "key-one "),
+    ("carriage return", "key\rone"),
+    ("vertical tab", "key\x0bone"),
+    ("non-breaking space alone", "\u00a0"),
+    ("non-breaking space inside", "key\u00a0one"),
+    ("zero-width space", "key\u200bone"),
+    ("byte order mark in front", "\ufeffkey-one"),
+    ("NUL character", "key\x00one"),
+    ("delete character", "key-one\x7f"),
+    ("full-width letter", "\uff4bey-one"),
+    ("letter of another script that looks like e", "k\u0435y-one"),
+    ("accented letter", "k\u00e9y-one"),
+    ("inner space", "key one"),
+    ("one character too long", "k" * 129),
+]
+
+
+@pytest.mark.parametrize(("case", "name"), HOSTILE_NAMES, ids=[c for c, _ in HOSTILE_NAMES])
+def test_hostile_secret_name_refused_and_not_shown(cfg_dir, case, name):
+    """Case: a secret name with a tab, a trailing space, a carriage return, a vertical tab, a non-breaking space,
+    a zero-width space, a byte order mark, a NUL, a delete character, a full-width or other-script or accented
+    letter, an inner space, or 129 characters. Refused; the sender and the field are named, the name is not
+    shown."""
+    text = _refused(cfg_dir, _block({"s1": _sender(name)}))
+    assert "triggers.senders.s1.secret_names" in text, case
+    assert name not in text, case
+
+
+def test_hostile_secret_name_as_second_of_two_refused(cfg_dir):
+    """Case: a good first name and a second name with a zero-width space (the pair used while a secret is being
+    changed). Refused: the rule holds for every name of the list, not only the first."""
+    text = _refused(cfg_dir, _block({"s1": _sender("key-one", "key\u200btwo")}))
+    assert "triggers.senders.s1.secret_names" in text
+
+
+@pytest.mark.parametrize("name", ["k", "K" * 128, "Key_one.v2:eu/primary-1"], ids=["one", "128", "all"])
+def test_secret_name_characters_allowed_as_built(cfg_dir, name):
+    """Case: the secret names the character rule lets through as built: one character, 128 characters, and one
+    name with every allowed kind of character (letters of both cases, digits, underscore, dot, colon, slash,
+    hyphen). Loads unchanged."""
+    sender = _load(cfg_dir, _block({"s1": _sender(name)})).triggers.senders["s1"]
+    assert sender.secret_names == (name,)
+
+
+HOSTILE_REF_IDS = [" ", "\t", "a b", "a\n", "a\u00a0b", "a\u200bb", "a\x00b", "a/b", "a" * 129, ""]
+
+
+@pytest.mark.parametrize("value", HOSTILE_REF_IDS, ids=repr)
 @pytest.mark.parametrize("field", ["agent_id", "principal_id"])
-def test_blank_agent_or_principal_refused_by_the_model(field):
-    """Case: a whitespace-only agent_id or principal_id given to the model itself. Must be a validation error."""
-    with pytest.raises(ValueError, match=field):
-        config_mod.TriggerSender(**_sender(**{field: " "}))
+def test_blank_agent_or_principal_refused_by_the_model(field, value):
+    """Case: an agent_id or principal_id given to the model itself that is whitespace-only (first-round finding
+    F5, fixed), or holds a tab, a space, a line break, a non-breaking space, a zero-width space, a NUL or a slash,
+    or has 129 characters, or is empty. Must be a validation error that names the field and does not show the
+    value."""
+    with pytest.raises(ValueError, match=field) as info:
+        config_mod.TriggerSender(**_sender(**{field: value}))
+    assert not value.strip() or value not in str(info.value)
+
+
+@pytest.mark.parametrize("field", ["agent_id", "principal_id"])
+def test_agent_and_principal_id_characters_allowed_as_built(field):
+    """Case: an agent_id or principal_id of 128 characters, and one with a colon, a dot, an underscore and a
+    hyphen (the fixture's service principal has a colon). The model accepts both unchanged."""
+    for value in ("a" * 128, "svc:Agent_one.v2-b"):
+        assert getattr(config_mod.TriggerSender(**_sender(**{field: value})), field) == value
 
 
 def test_duplicate_secret_name_inside_one_sender_refused(cfg_dir):
@@ -377,15 +473,53 @@ def test_fraction_for_a_whole_number_refused(cfg_dir, field):
 # --- booleans and numbers are not each other ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: `true` loads as the number 1 for max_running, max_body_bytes and ack_wait_s (the fields are "
-    "not strict), so a mistyped switch becomes a limit of 1 (review finding 8)",
-)
 @pytest.mark.parametrize("field", ["max_running", "max_body_bytes", "ack_wait_s"])
 def test_true_is_not_a_number(cfg_dir, field):
-    """Case: `true` where a number is expected (max_running, max_body_bytes, ack_wait_s). Must be refused."""
+    """Case: `true` where a number is expected (max_running, max_body_bytes, ack_wait_s). Must be refused
+    (first-round finding F8, fixed by strict fields)."""
     assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: True}))
+
+
+@pytest.mark.parametrize("value", [False, "1", "4", "4.0", " 4", None, [4], {"n": 4}], ids=repr)
+@pytest.mark.parametrize("field", ["max_running", "max_body_bytes", "ack_wait_s"])
+def test_not_a_number_is_not_a_number(cfg_dir, field, value):
+    """Case: neighbours of finding F8: `false`, the texts "1", "4", "4.0" and " 4", an explicit null, a list and a
+    mapping where a number is expected (max_running, max_body_bytes, ack_wait_s). Refused, the field named: text
+    is never turned into a number."""
+    assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: value}))
+
+
+@pytest.mark.parametrize("value", [4.0, 1.0, 1e0], ids=repr)
+@pytest.mark.parametrize("field", ["max_running", "max_body_bytes"])
+def test_float_for_a_whole_number_refused(cfg_dir, field, value):
+    """Case: a float with no fraction (4.0, 1.0) where a whole number is expected (max_running, max_body_bytes).
+    Refused, the field named: a float is not silently cut to a whole number."""
+    assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: value}))
+
+
+@pytest.mark.parametrize("field", ["max_running", "max_body_bytes", "ack_wait_s"])
+def test_number_far_above_the_ceiling_refused(cfg_dir, field):
+    """Case: a whole number too large for 64 bits (2 to the power 70) in a bounded field. Refused, the field named
+    (no overflow, no wrap-around to a small number)."""
+    assert f"triggers.{field}" in _refused(cfg_dir, _block(**{field: 2**70}))
+
+
+def test_whole_number_for_ack_wait_loads_as_a_float(cfg_dir):
+    """Case: ack_wait_s written as the whole number 5 (the one mixing of types core-b keeps). Loads as the float
+    5.0."""
+    value = _load(cfg_dir, _block(ack_wait_s=5)).triggers.ack_wait_s
+    assert (type(value), value) == (float, 5.0)
+
+
+def test_exponent_text_for_ack_wait_refused(cfg_dir):
+    """Case: ack_wait_s written as 1e1 in the YAML file itself. The YAML reader hands this over as text, not as a
+    number, so the strict field refuses it (it is not read as 10 seconds)."""
+    _write(cfg_dir, _block())
+    path = cfg_dir / "config.yaml"
+    path.write_text(path.read_text(encoding="utf-8") + "  ack_wait_s: 1e1\n", encoding="utf-8")
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["triggers"]["ack_wait_s"] == "1e1"
+    with pytest.raises(ConfigError, match=r"triggers\.ack_wait_s"):
+        load_config(cfg_dir)
 
 
 @pytest.mark.parametrize("field", ["port", "poll_s"])
@@ -444,6 +578,19 @@ def test_registry_refuses_a_sender_whose_principal_is_a_person(cfg_dir):
     """Case: principal_id names a principal of kind person. Refused: a sender runs as a service principal."""
     text = _registry_refusal(cfg_dir, _block({"s1": _sender(principal_id=PERSON)}))
     assert "triggers.senders.s1.principal_id: the principal must be of kind service" in text
+
+
+@pytest.mark.parametrize("status", ["draft", "retired"])
+def test_registry_refuses_a_sender_whose_agent_is_not_live(cfg_dir, status):
+    """Case (new in core-b's fix round): the sender's agent exists and has status draft or retired. Refused with
+    the sender and the field; the same agents.yaml without a triggers block still loads."""
+    path = cfg_dir / "agents.yaml"
+    text = path.read_text(encoding="utf-8")
+    assert text.count("status: live") == 1
+    path.write_text(text.replace("status: live", f"status: {status}"), encoding="utf-8")
+    refusal = _registry_refusal(cfg_dir, _block())
+    assert "triggers.senders.s1.agent_id: the agent must have status live" in refusal
+    assert AGENT in load_registry(_load(cfg_dir, None)).agents
 
 
 def test_registry_reports_every_sender_problem_at_once(cfg_dir):
@@ -528,69 +675,179 @@ def test_a_missing_sender_secret_fails_the_start(cfg_dir, missing):
         _build(cfg_dir, _block(TWO_SENDERS), values)
     text = str(info.value)
     assert not any(v in text for v in (*TWO_SENDER_VALUES.values(), TOKEN))
+    # The refusal points to the sender that lists the missing name, and does not show the name itself.
+    owner = "s2" if missing == "key-three" else "s1"
+    assert f"triggers.senders.{owner}.secret_names" in text
+    assert missing not in text
+
+
+def _start_refusal(cfg_dir: Path, block: dict, values: dict[str, str]) -> tuple[str, _Recording]:
+    """The text of the ConfigError that stops the start, and the provider with what was read before it."""
+    _write(cfg_dir, block)
+    qualify(load_registry(load_config(cfg_dir)))
+    provider = _Recording({ACTION_KEY_NAME: TOKEN, **values})
+    with pytest.raises(ConfigError) as info:
+        build(cfg_dir, [AGENT], secrets=provider)
+    return str(info.value), provider
 
 
 def test_a_sender_secret_name_that_is_an_action_secret_fails_the_start(cfg_dir):
-    """Case: a sender lists the name of an action executor's secret. The start is refused."""
-    with pytest.raises(ConfigError, match="secret names used by both") as info:
-        _build(cfg_dir, _block({"s1": _sender(ACTION_KEY_NAME)}), {})
-    assert TOKEN not in str(info.value)
+    """Case: a sender lists the name of an action executor's secret. The start is refused; the text names the
+    sender's field and shows neither the secret's value nor the shared name, and no secret was read before the
+    refusal."""
+    text, provider = _start_refusal(cfg_dir, _block({"s1": _sender(ACTION_KEY_NAME)}), {})
+    assert "triggers.senders.s1.secret_names" in text
+    assert "also used" in text
+    assert TOKEN not in text
+    assert ACTION_KEY_NAME not in text
+    assert provider.read == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: a sender secret name shared with an action secret is refused with the backend sentence "
-    "('used by both a backend and an action executor ... give the backend its own secret'); the text does not "
-    "name the sender or the triggers block (review finding 4, request 001 R1c)",
-)
 def test_shared_action_secret_refusal_names_the_sender(cfg_dir):
-    """Case: as above. The refusal must point to `triggers.senders.s1`, not to a backend."""
-    with pytest.raises(ConfigError) as info:
-        _build(cfg_dir, _block({"s1": _sender(ACTION_KEY_NAME)}), {})
-    assert "triggers.senders.s1" in str(info.value)
+    """Case: as above with two senders, only the second one sharing the action's name. The refusal points to
+    `triggers.senders.s2`, not to a backend and not to the sender that is in order (first-round finding F4b,
+    fixed)."""
+    block = _block({"s1": _sender("key-one"), "s2": _sender(ACTION_KEY_NAME)})
+    text, _ = _start_refusal(cfg_dir, block, {"key-one": VALUE_ONE})
+    assert "triggers.senders.s2" in text
+    assert "triggers.senders.s1" not in text
+    assert "give the backend its own secret" not in text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: text typed into secret_names is echoed by the start-up check (secret '<text>' cannot be read "
-    "at start-up), although config.py says a mistyped config may hold the secret itself there and names only the "
-    "sender (review finding 4)",
-)
 def test_start_refusal_does_not_echo_what_was_typed_as_a_secret_name(cfg_dir):
-    """Case: a real secret pasted where a name belongs; the provider has no such name. The start must fail
-    naming the sender, and the pasted text must not be in the message."""
+    """Case: a real secret pasted where a name belongs (it has only characters a name may have); the provider has
+    no such name. The start fails naming the sender, and the pasted text is neither in the message nor in the
+    printed traceback (first-round finding F4a, fixed: the provider's own error is not chained)."""
+    _write(cfg_dir, _block({"s1": _sender(PASTED)}))
+    qualify(load_registry(load_config(cfg_dir)))
     with pytest.raises(ConfigError) as info:
-        _build(cfg_dir, _block({"s1": _sender(PASTED)}), {})
+        build(cfg_dir, [AGENT], secrets=_Recording({ACTION_KEY_NAME: TOKEN}))
+    assert "triggers.senders.s1.secret_names" in str(info.value)
     assert PASTED not in str(info.value)
+    printed = "".join(traceback.format_exception(info.value))
+    assert PASTED not in printed.replace("_sender(PASTED)", "")
+    assert info.value.__cause__ is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: a sender secret name may equal another platform secret name (here the restored-hash key; the "
-    "same holds for a tool secret or a source token): the names are put into one set and never compared, so the "
-    "signing secret held by the sender could be an internal credential (review finding 2)",
-)
-def test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start(cfg_dir):
-    """Case: a sender lists the name configured as evidence.restored_hash_key_secret_name. Must be refused,
-    naming the sender."""
+def _edit_config(cfg_dir: Path, change) -> None:
     path = cfg_dir / "config.yaml"
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    data["evidence"] = {"restored_hash_key_secret_name": "shared-key"}
+    change(data)
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
-    with pytest.raises(ConfigError, match=r"triggers\.senders\.s1"):
-        _build(cfg_dir, _block({"s1": _sender("shared-key")}), {"shared-key": VALUE_ONE})
+
+
+def test_a_sender_secret_name_that_is_another_platform_secret_fails_the_start(cfg_dir):
+    """Case: a sender lists the name configured as evidence.restored_hash_key_secret_name. Must be refused,
+    naming the sender (first-round finding F2, fixed); the shared name is not shown and nothing was read."""
+    _edit_config(
+        cfg_dir, lambda d: d.update(evidence={"restored_hash_key_secret_name": "shared-key"})
+    )
+    text, provider = _start_refusal(
+        cfg_dir, _block({"s1": _sender("shared-key")}), {"shared-key": VALUE_ONE}
+    )
+    assert "triggers.senders.s1.secret_names" in text
+    assert "shared-key" not in text
+    assert provider.read == []
+
+
+@pytest.mark.parametrize(
+    "store",
+    [
+        {"dsn_secret_name": "shared-key"},
+        {"dsn_secret_name": "dsn-key", "purge_dsn_secret_name": "shared-key"},
+        {"dsn_secret_name": "dsn-key", "sslrootcert_secret_name": "shared-key"},
+        {"dsn_secret_name": "dsn-key", "reset_credential_ref": "shared-key"},
+    ],
+    ids=["dsn", "purge-dsn", "root-certificate", "reset-login"],
+)
+def test_a_sender_secret_name_that_is_a_backend_secret_fails_the_start(cfg_dir, store):
+    """Case (neighbour of finding F2): a sender lists a name the store backend uses: its DSN, its purge DSN, its
+    root certificate, or the reset login reference. The start is refused naming the sender, before any secret is
+    read and before the store is built (no database is touched)."""
+    _edit_config(cfg_dir, lambda d: d["backends"].update(store={"kind": "postgres", **store}))
+    text, provider = _start_refusal(
+        cfg_dir,
+        _block({"s1": _sender("shared-key")}),
+        {"shared-key": VALUE_ONE, "dsn-key": VALUE_TWO},
+    )
+    assert "triggers.senders.s1.secret_names" in text
+    assert "shared-key" not in text
+    assert provider.read == []
+
+
+def test_second_name_of_a_pair_shared_with_an_action_secret_fails_the_start(cfg_dir):
+    """Case (neighbour of finding F2): a sender with two names, the first its own and the SECOND the action's
+    secret name. Refused: every name of the pair is compared, not only the first."""
+    text, provider = _start_refusal(
+        cfg_dir, _block({"s1": _sender("key-one", ACTION_KEY_NAME)}), {"key-one": VALUE_ONE}
+    )
+    assert "triggers.senders.s1.secret_names" in text
+    assert provider.read == []
+
+
+# --- the `env` secrets kind folds names ------------------------------------------------------------------------------
+
+ENV_PREFIX = "TRIGGER_TEST_"
+
+
+def _env_provider():
+    from hadavin_sdk.actions.secrets_env import EnvSecretProvider
+
+    environ = {
+        ENV_PREFIX + "FIXTURE_TOKEN": TOKEN,
+        ENV_PREFIX + "KEY_ONE": VALUE_ONE,
+        ENV_PREFIX + "KEY_TWO": VALUE_TWO,
+    }
+    return EnvSecretProvider(ENV_PREFIX, environ)
+
+
+def _build_with_env(cfg_dir: Path, senders: dict):
+    _write(cfg_dir, _block(senders))
+    qualify(load_registry(load_config(cfg_dir)))
+    return build(cfg_dir, [AGENT], secrets=_env_provider())
+
+
+def test_env_kind_with_distinct_sender_secrets_starts(cfg_dir):
+    """Case: the `env` secrets kind (its own table of variables, not the process environment), two senders whose
+    names stand for two different variables. The app starts and each sender reads its own value. (The control
+    for the finding below: the env kind itself works here.)"""
+    app = _build_with_env(cfg_dir, {"s1": _sender("key-one"), "s2": _sender("key-two")})
+    assert app.trigger_secret("key-one") == VALUE_ONE
+    assert app.trigger_secret("key-two") == VALUE_TWO
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="FINDING T1: the overlap and same-name checks compare the secret NAMES as text, but the `env` secrets "
+    "kind reads <prefix><NAME> upper-cased with every other character as `_`, so different names are one secret: "
+    "a sender name FIXTURE_TOKEN is the action's secret fixture-token, and key-one / key_one / KEY-ONE are one "
+    "variable for two senders or for both names of one sender. The start is not refused (config.py "
+    "_trigger_refusals, platform_secrets.check_senders)",
+)
+@pytest.mark.parametrize(
+    "senders",
+    [
+        {"s1": _sender("FIXTURE_TOKEN")},
+        {"s1": _sender("fixture.token")},
+        {"s1": _sender("key-one"), "s2": _sender("key_one")},
+        {"s1": _sender("key-one", "KEY-ONE")},
+    ],
+    ids=["action-secret-upper", "action-secret-dot", "two-senders", "one-sender-pair"],
+)
+def test_env_kind_alias_of_a_secret_name_fails_the_start(cfg_dir, senders):
+    """Case: with the `env` secrets kind, a sender secret name that is written differently from, and stands for
+    the same variable as, (1, 2) the action's secret, (3) another sender's secret, (4) the other name of the same
+    sender. Must be refused at start, naming the sender: one secret must not serve two jobs or two senders."""
+    with pytest.raises(ConfigError, match=r"triggers\.senders\."):
+        _build_with_env(cfg_dir, senders)
 
 
 # --- the reader the worker gets --------------------------------------------------------------------------------------
 
 
 def _reader(app):
-    """The reader for sender secrets as built: a name-limited callable when one exists (the request's
-    `trigger_resolve`, the review's `trigger_secret`), else `App.secrets.get` (the whole provider)."""
-    for name in ("trigger_resolve", "trigger_secret"):
-        if callable(getattr(app, name, None)):
-            return getattr(app, name)
-    return app.secrets.get
+    """The reader for sender secrets as built on core-b's head: `App.trigger_secret`, called with one name."""
+    return app.trigger_secret
 
 
 def test_reader_hands_out_every_listed_sender_secret(cfg_dir):
@@ -602,29 +859,161 @@ def test_reader_hands_out_every_listed_sender_secret(cfg_dir):
             assert read(name) == TWO_SENDER_VALUES[name]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FINDING: the only way to a sender secret is App.secrets, the WHOLE secret provider; there is no reader "
-    "limited to the sender names (no App.trigger_resolve), so the worker can read every secret of the app "
-    "(review finding 3, request 001 R1d)",
-)
 def test_reader_refuses_a_name_that_no_sender_lists(cfg_dir):
     """Case: the worker asks for a secret that exists and that no sender lists (an action's secret). The reader
-    must refuse; a name that does not exist at all must be refused the same way."""
+    must refuse; a name that does not exist at all must be refused the same way (first-round finding F3, fixed by
+    `App.trigger_secret`)."""
     app, _ = _build(cfg_dir, _block(TWO_SENDERS), TWO_SENDER_VALUES)
     read = _reader(app)
-    with pytest.raises((PermissionError, ConfigError)):
+    with pytest.raises(PermissionError):
         read(ACTION_KEY_NAME)
-    with pytest.raises((PermissionError, ConfigError)):
+    with pytest.raises(PermissionError):
         read("no-such-name")
 
 
-def test_no_reader_without_the_block(cfg_dir):
-    """Case: no block. `App.trigger_resolve` is None. Skips until the field is built."""
-    app, _ = _build(cfg_dir, None, {})
-    if not hasattr(app, "trigger_resolve"):
-        pytest.skip("field not built on this branch: App.trigger_resolve")
-    assert app.trigger_resolve is None
+def _app_with_other_secrets(cfg_dir: Path):
+    """An app whose provider holds, next to the sender secrets, an action secret, the restored-hash key (a secret
+    of another part of the platform) and a secret nothing in the config names."""
+    _edit_config(
+        cfg_dir, lambda d: d.update(evidence={"restored_hash_key_secret_name": "hash-key"})
+    )
+    values = {**TWO_SENDER_VALUES, "hash-key": "hash-" + "h" * 40, "stray-key": "stray-" + "s" * 40}
+    app, provider = _build(cfg_dir, _block(TWO_SENDERS), values)
+    return app, provider, values
+
+
+@pytest.mark.parametrize(
+    "asked",
+    [
+        ACTION_KEY_NAME,
+        "hash-key",
+        "stray-key",
+        "no-such-name",
+        "",
+        "KEY-ONE",
+        "key-one ",
+        " key-one",
+        "key-one\n",
+        "key-one\x00",
+        "s1",
+        PASTED,
+    ],
+    ids=repr,
+)
+def test_trigger_secret_refuses_every_name_that_is_not_a_sender_secret_name(cfg_dir, asked):
+    """Case (new: `App.trigger_secret`): the worker asks for an action's secret, another platform secret (the
+    restored-hash key), a secret no part of the config names, an unknown name, the empty name, a sender name in
+    another case or with a space, a line break or a NUL added, a sender id, and a secret value typed as a name.
+    Each is refused with PermissionError; the provider is not asked; the text shows no secret value and not the
+    name that was asked for."""
+    app, provider, values = _app_with_other_secrets(cfg_dir)
+    before = list(provider.read)
+    with pytest.raises(PermissionError) as info:
+        app.trigger_secret(asked)
+    text = str(info.value)
+    assert provider.read == before
+    assert not any(v in text for v in (*values.values(), TOKEN))
+    assert not asked or asked not in text
+    assert "triggers.senders" in text
+
+
+@pytest.mark.parametrize(
+    "asked", [None, 0, 1, True, b"key-one", ("key-one",), ["key-one"], {"key-one"}], ids=repr
+)
+def test_trigger_secret_refuses_a_name_of_another_kind(cfg_dir, asked):
+    """Case (new: `App.trigger_secret`): the worker passes something that is not text where the name belongs:
+    null, a number, a boolean, bytes, a tuple, a list or a set holding a sender name. Each is refused (a
+    PermissionError, or a TypeError for a list or set), no value is handed out, the provider is not asked and
+    no secret value is in the text."""
+    app, provider, values = _app_with_other_secrets(cfg_dir)
+    before = list(provider.read)
+    with pytest.raises((PermissionError, TypeError)) as info:
+        app.trigger_secret(asked)
+    assert provider.read == before
+    assert not any(v in str(info.value) for v in (*values.values(), TOKEN))
+
+
+def test_trigger_secret_is_called_with_one_name_and_reads_the_provider_each_time(cfg_dir):
+    """Case (new: `App.trigger_secret`): the call signature as built is one parameter called `name`; it works by
+    position and by keyword and returns the secret's text. Each call asks the provider once (the reader keeps no
+    copy of a value), so a changed secret is seen at the next call."""
+    app, provider, values = _app_with_other_secrets(cfg_dir)
+    assert list(inspect.signature(app.trigger_secret).parameters) == ["name"]
+    before = len(provider.read)
+    assert app.trigger_secret("key-one") == VALUE_ONE
+    assert app.trigger_secret(name="key-three") == values["key-three"]
+    assert provider.read[before:] == ["key-one", "key-three"]
+    provider._values["key-one"] = "changed-" + "c" * 36
+    assert app.trigger_secret("key-one") == "changed-" + "c" * 36
+    with pytest.raises(TypeError):
+        app.trigger_secret()
+    with pytest.raises(TypeError):
+        app.trigger_secret("key-one", "key-two")
+
+
+def test_trigger_secret_is_a_plain_function_that_does_not_hand_out_the_provider(cfg_dir):
+    """Case (new: `App.trigger_secret`): what the object is. A plain function: not the provider, not a method bound
+    to the provider (no `__self__`), not a partial (no `func`, `args`, `keywords`), with no public attribute at
+    all and no `get`. So nothing reachable by a normal attribute leads from the reader to the whole provider."""
+    app, provider, _ = _app_with_other_secrets(cfg_dir)
+    read = app.trigger_secret
+    assert read is not provider
+    assert type(read) is types.FunctionType
+    assert not isinstance(read, FakeSecretProvider)
+    for attribute in ("__self__", "func", "args", "keywords", "get", "secrets", "provider"):
+        assert not hasattr(read, attribute), attribute
+    assert [a for a in dir(read) if not a.startswith("_")] == []
+    assert read.__dict__ == {}
+    assert read.__defaults__ is None
+    assert read.__kwdefaults__ is None
+
+
+def test_app_has_no_secrets_field_and_no_field_that_is_the_provider(cfg_dir):
+    """Case (new): `App.secrets` is gone: no attribute and no field of that name, on the class or on a built app.
+    No field of the app IS the secrets provider, and no public attribute of a field's value is the provider
+    either. `trigger_secret` is a field of App."""
+    app, provider, _ = _app_with_other_secrets(cfg_dir)
+    names = [f.name for f in dataclasses.fields(app)]
+    assert "secrets" not in names
+    assert not hasattr(app, "secrets")
+    assert not hasattr(type(app), "secrets")
+    assert "trigger_secret" in names
+    assert not any(n in names for n in ("provider", "secret_provider", "trigger_resolve"))
+    for name in names:
+        value = getattr(app, name)
+        assert value is not provider, name
+        public = {k: v for k, v in getattr(value, "__dict__", {}).items() if not k.startswith("_")}
+        assert not any(v is provider for v in public.values()), name
+
+
+def test_without_the_block_the_reader_exists_and_refuses_every_name(cfg_dir):
+    """Case (new, as built): no triggers block. `App.trigger_secret` is not None: it is the same kind of reader
+    with no name allowed, so every name is refused with PermissionError, the fixture's own action secret
+    included, and the provider is not asked."""
+    app, provider = _build(cfg_dir, None, {"key-one": VALUE_ONE})
+    assert app.config.triggers is None
+    assert callable(app.trigger_secret)
+    before = list(provider.read)
+    for asked in (ACTION_KEY_NAME, "key-one", "no-such-name", ""):
+        with pytest.raises(PermissionError) as info:
+            app.trigger_secret(asked)
+        assert TOKEN not in str(info.value)
+        assert VALUE_ONE not in str(info.value)
+    assert provider.read == before
+
+
+def test_reader_of_one_app_does_not_read_for_another_apps_senders(cfg_dir, tmp_path):
+    """Case (new): two apps built one after the other from two configs with different senders. Each reader hands
+    out only its own app's sender names (the allowed names are not shared between apps)."""
+    first, _ = _build(cfg_dir, _block({"s1": _sender("key-one")}), TWO_SENDER_VALUES)
+    other_dir = make_cfg(tmp_path / "other")
+    second, _ = _build(other_dir, _block({"s1": _sender("key-three")}), TWO_SENDER_VALUES)
+    assert first.trigger_secret("key-one") == VALUE_ONE
+    assert second.trigger_secret("key-three") == TWO_SENDER_VALUES["key-three"]
+    with pytest.raises(PermissionError):
+        first.trigger_secret("key-three")
+    with pytest.raises(PermissionError):
+        second.trigger_secret("key-one")
 
 
 # --- refusal texts never show a value --------------------------------------------------------------------------------
