@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T08:42:08Z
+UPDATED_UTC: 2026-11-20T08:45:24Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,17 +6,17 @@ BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: load 2.7 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, light agents 7, heavy agents 0
-DISK: / 59G free, 16% used; git worktrees 13; 207M	/tmp/claude-0;476M	/root/.cache/uv;
+AGENTS_RUNNING: 6
+CAPACITY: load 1.6 of 4 cores, mem 0/15 GB, disk 59G free, 16% used, light agents 6, heavy agents 0
+DISK: / 59G free, 16% used; git worktrees 14; 226M	/tmp/claude-0;476M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: all agents of the earlier tier were stopped at ~06:36 UTC; everything restarted on claude-sonnet-5-5 / claude-opus-5-5; none uses the retired tier
 FAILED: none known on the merged tree except what the running builders are mid-editing; stage-name test fixed (word built from parts)
 NEXT: 7 agents running, none blocked (g7fix4, p1dr3, g8, fold evidence, g4R3, g4C3 + merged-tree batch done). Board pushed after every tool batch (cron refused, E1).
-PUSHED_UTC: 2026-11-20T08:42:06+00:00
+PUSHED_UTC: 2026-11-20T08:45:17+00:00
 
-(14:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(14:15 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
@@ -102,15 +102,17 @@ PUSHED_UTC: 2026-11-20T08:42:06+00:00
 | (new) p1dR | reviewer | claude-sonnet-5-5 | EGM RESULT review of P1d-a round 2 (egm:egm-codebase-details): oracle independence, over-defang, fail-before | 08:14 | 08:28 | 100 | done | 2 | 0 | reported: 0 Blocker, 3 Major, 3 Nit (G2-result-review-2.md) |
 | (new) g7D3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-design) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: no leak; 0B 2M 2N (G7-result-review-3.md) |
 | (new) g7C3 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 3 of G7 (egm:egm-codebase-details) | 08:17 | 08:30 | 100 | done | 3 | 0 | reported: 1 Blocker (doc claim, stale at HEAD), 5 Major, nits (G7-result-review-3.md) |
-| (new) p1dr3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix: oracle boundaries, four exclusions, linkifier dependency | 08:22 | 08:50 | 1 | running | 3 | 0 | from G2-result-review-2.md |
+| (new) p1dr3 | builder | claude-sonnet-5-5 | P1d-a round 3 fix: oracle boundaries, four exclusions, linkifier dependency | 08:22 | 08:50 | 100 | done | 3 | 0 | finished: P1d-a round 3 merged as 61ff6e7 without the pyproject hunk (QUESTIONS 16); oracle rewritten, defanger over-defangs src/app.py, builder batch 1872 passed 1 failed (CPU-deadline test under -n 4 load, passes serially); my focused run 295 passed |
 | (new) g7fix4 | builder | claude-sonnet-5-5 | G7 fix round 4 (bounded spelled scan, overlap rule, deadline tests, builders moved, bank_near, docstrings E9) | 08:25 | 08:55 | 100 | done | 4 | 0 | finished: G7 round 4 cherry-picked as 6783535; builder batch 2597 passed 4 xfailed, perf 10 passed; pushed wip/cloud-core-c/g7-r4 |
 | (new) g4R3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: implementation readiness | 08:27 | 08:42 | 100 | done | 3 | 0 | reported: G4 v3 NOT READY (1 Blocker: stop condition tripped by merges; 7 Major) (G4-review-3.md) |
 | (new) g4C3 | reviewer | claude-sonnet-5-5 | G4 v3 PLAN review round 3: codebase details (current tree with gate r4 and G7 r3) | 08:27 | 08:42 | 100 | done | 3 | 0 | reported: not clean, 1 Blocker (redact_text except text stale), 5 Major (G4-review-3.md) |
 | (new) g8R | reviewer | claude-sonnet-5-5 | G8 PLAN review round 1: implementation readiness | 08:36 | 08:50 | 100 | done | 1 | 0 | reported: G8 NOT READY, 4 Blocker, 7 Major (G8-review-1.md) |
-| (new) g8C | reviewer | claude-sonnet-5-5 | G8 PLAN review round 1: codebase details | 08:36 | 08:50 | 2 | running | 1 | 0 | same |
+| (new) g8C | reviewer | claude-sonnet-5-5 | G8 PLAN review round 1: codebase details | 08:36 | 08:50 | 100 | done | 1 | 0 | reported: G8 NOT READY, 0 Blocker 5 Major (G8-review-1.md) |
 | (new) g4v4 | drafter | claude-opus-5-5 | ticket G4 v4 taking plan review round 3 | 08:40 | 09:10 | 1 | running | 4 | 0 | EGM draft step; then plan review round 4 |
 | (new) g7D4 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 4 of G7 (egm:egm-design) | 08:38 | 08:52 | 100 | done | 4 | 0 | reported: 0 Blocker, 3 Major (caps refuse honest cookie logs; overlap tail left readable; time bound claims), nits (G7-result-review-4.md) |
-| (new) g7C4 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 4 of G7 (egm:egm-codebase-details) | 08:38 | 08:52 | 2 | running | 4 | 0 | fresh reviewer after fixes |
+| (new) g7C4 | reviewer | claude-sonnet-5-5 | EGM RESULT review ROUND 4 of G7 (egm:egm-codebase-details) | 08:38 | 08:52 | 100 | done | 4 | 0 | reported: 0 Blocker, 3 Major (test robustness), nits (G7-result-review-4.md) |
+| (new) g7fix5 | builder | claude-sonnet-5-5 | G7 fix round 5 (caps vs honest cookie logs, overlap tail, time bound, test robustness) | 08:55 | 09:25 | 1 | running | 5 | 0 | from G7-result-review-4.md |
+| (new) g8v2 | drafter | claude-opus-5-5 | ticket G8 v2 taking plan review round 1 (PHONE redesign, traces run, host rows vs G4 v3) | 08:53 | 09:25 | 1 | running | 2 | 0 | EGM draft step |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
