@@ -37,3 +37,4 @@
 - 07:06Z: F-install fix (client fault -> NEEDS_PERSON model_error; final write retried) on wip/cloud-core-b/F-install-4. Waiting: full suite on Y (haiku), core-c request 3, lead on E6. Next: push integration tree Y as wip/cloud-core-b/Y-integration, EGM drift report.
 - 07:12Z: grants tests fixed for spend_reservations (wip/cloud-core-b/F-store-grants); left: kill_switch/kill_switch_stops (step B, lead) and test_runmap_is_masked (guard/runmap, not core-b).
 - 07:18Z: F-install fix round 2 (11760ae29, afdd6c84b) on wip/cloud-core-b/F-install-4: ends retried and idempotent, meter outage not a provider error, RunEndFailed has no chain. New reason code store_unavailable (builder's choice, lead may rename).
+- 07:44Z: step A: review 5 of fix round 5 is CLEAN (0 Blocker, 0 Major). Minors f-i recorded in A-audit-drain.md A8.
