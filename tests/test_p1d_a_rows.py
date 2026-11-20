@@ -176,3 +176,16 @@ def test_row_G2_undefang():
         "a `x[.]y` c"
     )  # one backtick pair: the span is code, left as it is
     assert clean_line == "a `x[.]y` c", f"ROW G2 undefang: {clean_line!r}"
+
+
+def test_row_G2b_defang():
+    # A43 (ORDER 014 / P1d-a), the DEFANG side: `_defang_outside_code` reads a line with a double backtick run as prose
+    # (`_per_part` does not split it), so a domain inside what looks like a single-backtick span is defanged too. Without the
+    # guard the span would count as code and keep a live domain. (`defang_text` reaches this only through `_outside_code`, which
+    # takes the whole line for prose first, so only the line-level function pins the guard.)
+    out = gate._defang_outside_code("a``b `example.com` c")
+    assert out == "a``b `example[.]com` c", f"ROW G2b defang: {out!r}"
+    one_pair = gate._defang_outside_code(
+        "a `example.com` c"
+    )  # one backtick pair: the span is code, left as it is
+    assert one_pair == "a `example.com` c", f"ROW G2b defang: {one_pair!r}"

@@ -87,7 +87,7 @@ M = [
     m(
         "A3d",
         GATE,
-        "return _outside_code(text, _undefang_prose)",
+        "return _outside_code(text, _undefang_prose, certain=True)",
         "return _undefang_prose(text)",
         "test_row_L10_slack",
     ),
@@ -134,7 +134,7 @@ M = [
         GATE,
         'parts = [line] if "``" in line else _INLINE_CODE.split(line)',
         "parts = _INLINE_CODE.split(line)",
-        "test_row_G2_undefang",
+        "test_row_G2b_defang",
     ),
     m(
         "A38",
