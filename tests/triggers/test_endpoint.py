@@ -645,6 +645,34 @@ def test_start_503_passes_through():
     refused(call(app, headers=signed(body, OLD_A), body=body), 503)
 
 
+def test_503_carries_retry_after_and_no_other_answer_does():
+    assert endpoint.RETRY_AFTER_SECONDS == 1
+    body = body_of()
+    for answer in [
+        (503, None),
+        (202, {"run_id": "run-x", "state": "RECEIVED"}),
+        (200, {}),
+        (409, {}),
+    ]:
+        app, _ = build(Recorder(answer=answer))
+        status, headers, out = call(app, headers=signed(body, OLD_A), body=body)
+        assert status == answer[0]
+        assert headers.get("Retry-After") == ("1" if status == 503 else None)
+        assert (out == b"") == (status in (503, 409))
+    app, _ = build(Recorder(error=RuntimeError("down")))
+    status, headers, out = call(app, headers=signed(body, OLD_A), body=body)
+    assert (status, headers["Retry-After"], out) == (503, "1", b"")
+    app, _ = build()
+    for result in (
+        call(app, headers={}, body=body),
+        call(app, headers=signed(body, OLD_A.replace(OLD_A[0], "z")), body=body),
+        call(app, headers=signed(b"{", OLD_A), body=b"{"),
+    ):
+        assert result[0] in (400, 401)
+        assert "Retry-After" not in result[1]
+        assert result[2] == b""
+
+
 @pytest.mark.parametrize("error", [RuntimeError("store down"), KeyError("x"), ValueError("y")])
 def test_start_raising_gives_503(error):
     app, start = build(Recorder(error=error))

@@ -63,6 +63,7 @@ STATUS_TEXT: Final[Mapping[int, str]] = {
     503: "503 Service Unavailable",
 }
 BODY_STATUSES: Final = frozenset({200, 202})  # only these answers carry a body
+RETRY_AFTER_SECONDS: Final = 1  # whole seconds a sender waits before it sends again after a 503
 
 _LOG = logging.getLogger("hadavin_sdk.triggers")
 
@@ -330,6 +331,8 @@ def make_wsgi(
             response_headers.append(("Content-Type", JSON_TYPE))
         if status == 405:
             response_headers.append(("Allow", METHOD))
+        if status == 503:
+            response_headers.append(("Retry-After", str(RETRY_AFTER_SECONDS)))
         if status != 409:  # ``start`` wrote the 409 line, with the run id: one line per request
             level = logging.INFO if sender else logging.DEBUG  # DEBUG: refused before it verified
             _LOG.log(level, "trigger status=%d sender=%s", status, sender or "-")

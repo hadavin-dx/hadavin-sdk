@@ -103,7 +103,7 @@ def make_trigger_app(runtime, store, secrets: dict[str, str], **over):
         registry=runtime.registry,
         runtime=runtime,
         store=store,
-        trigger_resolve=by_name.__getitem__,
+        trigger_secret=by_name.__getitem__,
     )
 
 

@@ -357,13 +357,11 @@ def check_bind(host: str, allow_non_loopback: bool) -> None:
 
 def secret_reader(app: Any) -> Callable[[str], str]:
     """The reader of sender secrets the App was built with: `App.trigger_secret`, a callable from a secret NAME
-    to its value that refuses every name no sender lists (PermissionError). `trigger_resolve` is the OLD name:
-    only test launchers still pass it, delete the fallback when they use `trigger_secret`. Without a reader
-    the worker does not start."""
-    for name in ("trigger_secret", "trigger_resolve"):
-        reader = getattr(app, name, None)
-        if callable(reader):
-            return reader
+    to its value that refuses every name no sender lists (PermissionError). Without a reader the worker does
+    not start."""
+    reader = getattr(app, "trigger_secret", None)
+    if callable(reader):
+        return reader
     raise ConfigError("App.trigger_secret is not available: the trigger secrets cannot be read")
 
 

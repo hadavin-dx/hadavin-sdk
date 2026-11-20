@@ -623,7 +623,7 @@ def make_stack(tmp_path, store):
         registry=runtime.registry,
         runtime=runtime,
         store=store,
-        trigger_resolve=names.__getitem__,
+        trigger_secret=names.__getitem__,
     )
     return worker.make_app(app, clock=lambda: CLOCK)
 
