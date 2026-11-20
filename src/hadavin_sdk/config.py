@@ -243,6 +243,9 @@ class EvidenceSettings(_Strict):
     # A run whose document or tool results plant more distinct values than this ends `document_too_complex`:
     # building the redactor over a bigger map is CPU the client's text should not be able to spend.
     max_map_entries: int = Field(default=defaults.MAX_MAP_ENTRIES, gt=0)
+    # The same, in characters of distinct values (ticket E14): the finder build costs about 0.46 KB per character, so a run whose map holds more than this
+    # ends `document_too_complex`. `le`: a larger cap is never reached (the build refuses past `MAX_FINDER_CHARS` first, as a `redaction_error`).
+    max_map_chars: int = Field(default=defaults.MAX_MAP_CHARS, gt=0, le=defaults.MAX_FINDER_CHARS)
     max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
     max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
     # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
