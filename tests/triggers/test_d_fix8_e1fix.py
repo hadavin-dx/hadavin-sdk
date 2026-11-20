@@ -150,11 +150,13 @@ def test_e1fix_a_degraded_worker_stops_cleanly_while_still_down(monkeypatch):
     while not made and time.monotonic() < deadline:
         time.sleep(0.01)
     assert made
-    time.sleep(0.2)  # several failed re-checks
-    status, body = _http(made[0].server_port, "GET", "/health")
+    try:
+        time.sleep(0.2)  # several failed re-checks
+        status, body = _http(made[0].server_port, "GET", "/health")
+    finally:
+        made[0].shutdown()
+        thread.join(30)
     assert status == 503 and json.loads(body)["store_failures"] > 1
-    made[0].shutdown()
-    thread.join(30)
     assert not thread.is_alive() and codes == [0]
     assert not [t for t in threading.enumerate() if t.name == "trigger-recover" and t.is_alive()]
 
