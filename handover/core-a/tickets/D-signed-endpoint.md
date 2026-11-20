@@ -13,7 +13,7 @@ The client runs an automation tool called n8n. When something happens there (a m
 Three things can go wrong with a web request: a stranger sends a fake one, the tool sends the same one twice, or our process dies half way. This ticket builds the small "door" that handles all three:
 1. Only the client's tool may ask. Each request carries a **signature**: a keyed checksum (HMAC-SHA256) made with a secret both sides know. We already have this checksum code for Slack buttons; we reuse it.
 2. One request starts at most one piece of work. The tool puts a **request key** (a stable id it chooses, the same on every retry) into the request. We turn the key into the id of the **run** (one row in our `runs` table = one piece of agent work). The database refuses a second row with the same id, so a repeat finds the first run instead of starting a second.
-3. We say "received" only when the run row is stored. If our process dies after that, a housekeeping pass that already exists (the **tick**) marks the run "needs a person"; nothing is silently lost and nothing runs twice.
+3. We say "received" only when the run row is stored. If our process dies after that, a housekeeping pass that already exists (the **tick**) marks the run "needs a person" (state only: no stored document, no notification; the sender must poll the run state, see ESCALATIONS E-door-1); nothing runs twice.
 The outcome of the run is shown to people the way it is today (the **shadow card**: a message that shows what the agent would do and never acts). The door returns only the run id and its state.
 We also ship a ready n8n workflow that signs and sends the request, and a second small n8n workflow that reports a failed hand-over to a person.
 

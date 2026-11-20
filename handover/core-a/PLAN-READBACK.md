@@ -67,7 +67,7 @@ Offered by this session:
 4. VERIFIED. `handle` runs the whole model loop before it returns (`for _step in range(agent.max_steps)` at agent_loop.py:465, ends at 585), so it cannot sit in the endpoint before the ack; hence worker.py (R-code M6).
 5. VERIFIED. trigger_kind is `Literal["event", "schedule", "user"]` (models.py:99) (R-code N1).
 6. VERIFIED WITH A DIFFERENCE. Agent check: `if agent_id not in self.agents: raise Unqualified` (agent_loop.py:377-378) matches. Principal (770-774): an unknown principal does NOT raise; it gets no rights and the gate denies and audits. So "principal in the registry" is a precondition for a useful run, not an error the endpoint will see.
-7. VERIFIED. A run left in RECEIVED/WORKING/PLAN_READY goes to NEEDS_PERSON "interrupted" by the tick step `stuck` (tick.py:112-145; function at 122) (R-code N1; R-zoom M1). "Never lost" means "ends with a person".
+7. VERIFIED. A run left in RECEIVED/WORKING/PLAN_READY goes to NEEDS_PERSON "interrupted" by the tick step `stuck` (tick.py:112-145; function at 122) (R-code N1; R-zoom M1). Truth (door review B1): acknowledged, then NEEDS_PERSON with no notification and no stored document; the sender must poll the run state; it is not "never lost" and not "handed to a person".
 8. VERIFIED. store/postgres.py:257-268 `transition` is a conditional `UPDATE ... WHERE state = %s RETURNING` (R-zoom M1).
 9. VERIFIED by grep. Nothing in SRC calls `Runtime.handle` (R-code Confirmed); Runtime is built once, at app.py:275.
 10. VERIFIED. `handle_slack_action` (receiver.py:22-38): 413 for a body over 64 KB, 401 for a bad signature, else 200.
