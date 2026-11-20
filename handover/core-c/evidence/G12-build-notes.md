@@ -25,3 +25,17 @@ Branch wip-g12 on cloud/core-c e75871df3 (G9, E14, G8, G10 merged). Code commits
 (`password=(hunter22), hunter22` still leaves `hunter22`: registers `(hunter22`; limit L-G12a). 6.5 small-capital fold to textnorm owner.
 6.6 B-N4 widening accepted. 6.7 reverse direction stays P2d-2 open hole.
 Interplay: only `_place` and `_TRAIL` (after `_PIECE`) touched in redact.py; E14 cap lives elsewhere (no `_place` check seen).
+
+## G12b (result review round 1: M-1, M-2, N-1, N-3, N-4) - branch wip-g12b, code commit 36dfce4f3
+- Design: ONE rule `_bare` (redact.py, replaces `_TRAIL`): at both ends strip non-alphanumeric characters (`str.isalnum`, Unicode too), markup tags
+  (`<b>` leading, `</b>` trailing) and escaped `\n` `\r` `\t`; index based, last 64 characters only (linear). `_place` core = `_bare(full)`
+  (guards unchanged: secret kinds, derived=True, core != full, len >= 3); `_decide` exempts `_bare(original).lower() in _NOT_A_VALUE`.
+- Measured (scratch copies, `runmap.redact_text` + `redact().mapping`, 2,185 rows: property corpus 1,836 + g8 CASES and their `after` texts +
+  the 5 k5 perf units at 16 KiB; sha256 over the property outputs, sorted ids; NOT the G12 hash method, so before = cc991f487cb13af3, after =
+  c76c1c4f59c619c3): 20 rows differ, 16 of them only by a shifted placeholder number (a core took the number between two values); NO text lost or gained a
+  mask except 4 perf units (`password= password= ...`: the value was the next key `password=`; now exempt because `_bare("password=")` is a listed
+  word. Fewer masks, not more; the e2e perf test still scans them).
+- Map entries before/after: 2,055 -> 2,141 (+86, +4.2%) over 96 changed rows, at most +1 per row; 5 rows -1 (2 fuzz rows where the value and its
+  dot-wrapped copy now share one core; 3 perf units). Floor re-measured: 3 vs 4 differs in 2 fuzz rows only by a placeholder number (`k.8`); 3 stays.
+- Not on the corpora: the over-mask of the both-ends rule is nil. Notes of G12 L-G12a (leading bracket) is CLOSED: `password=(hunter22), hunter22` masks both.
+- Widening to know: the exemption now also reads `*none*`, `(null),`, `<b>true</b>`, `none\n` as "no value" (same rule as the core).
