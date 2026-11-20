@@ -1376,9 +1376,18 @@ def test_d3_the_edges_of_the_bounds_are_accepted():
     server.server_close()
 
 
-def test_d3_main_with_a_bad_port_exits_2_before_anything_is_built(cfg_dir, capsys):
-    require_core_b()
-    assert worker.main(["--config-dir", str(cfg_dir), "--port", "70000"]) == 2
+def test_d3_main_with_a_bad_port_exits_2_before_anything_is_built(monkeypatch, capsys):
+    import hadavin_sdk.app
+    import hadavin_sdk.config
+
+    def not_built(*a, **kw):
+        raise AssertionError("built before the port was checked")
+
+    monkeypatch.setattr(
+        hadavin_sdk.config, "load_config", lambda d: SimpleNamespace(triggers=_settings())
+    )
+    monkeypatch.setattr(hadavin_sdk.app, "build", not_built)
+    assert worker.main(["--port", "70000"]) == 2
     assert "--port must be" in capsys.readouterr().err
 
 
