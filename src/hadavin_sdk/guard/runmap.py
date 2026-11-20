@@ -1331,7 +1331,7 @@ def snapshot(mapping: Mapping[str, str], cache: dict[str, Any] | None = None) ->
 NET_MIN_PIECE = 4
 # G13b (design M-1): a piece that is only the public start of a value (its URL scheme `https://`, `postgres://`, or an
 # auth word `Bearer `) or only separator characters is no leak: `https://<HOSTNAME_1>/health` is ordinary text beside a
-# WEBHOOK value that starts `https://hooks.`. A piece that goes one character past that start (`https://h`) still is.
+# WEBHOOK value that starts `https://hooks...`. A piece that goes one character past that start (the scheme plus one letter) still is.
 _LEAD = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.\-]{0,14}://|(?:Bearer|Basic|Token|Digest)[ \t]+)")
 _SEPARATORS = " \t\r\n/\\:;,.?&=#@!-_+*~|<>()[]{}'\"%"
 _LOOKUP_COST = 64  # characters one piece lookup charges to the call budget (a compare stops at the first difference)
@@ -1374,7 +1374,7 @@ def _touching_piece(text: str, snap: MapSnapshot) -> bool:
     one was masked across the other, whatever the placeholder holds. Not a piece (G13b, design M-1): characters that
     are only separators, and the public start of a value (`https://`, `Bearer `; `_LEAD`) taken alone: ordinary text
     beside a placeholder (`https://<HOSTNAME_1>/health`) is not refused because a webhook value starts the same way;
-    `https://h` is a piece. Stated limit: a secret whose own first characters are ordinary words refuses text that
+    a scheme plus one more character is a piece. Stated limit: a secret whose own first characters are ordinary words refuses text that
     starts the same way beside a key (the net cannot tell a copy of those words from a leak). Only the text between
     the key and the next (or previous) key is read, at most the longest value's length minus one. A piece is looked
     up only where its first (left) or last (right) `NET_MIN_PIECE` characters are those of a value; a piece already
