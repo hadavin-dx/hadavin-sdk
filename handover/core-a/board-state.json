@@ -707,19 +707,6 @@
    "reason": "minor 10 + new guards"
   },
   {
-   "id": "e1",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "E1a: trigger.conflict audit event on a signed 409 (sender, key, both hashes, never payload) + per-sender rate cap; E1b: GET /health 200/503 + store-failure counter, start with the store down instead of exit 4; tests, ticket invariants 7/10, request 005 for core-b",
-   "started UTC": "09:29",
-   "expected end": "30 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "n/a",
-   "retries so far": 0,
-   "reason": "lead verdicts E1a/E1b 09:29"
-  },
-  {
    "id": "E-fix6",
    "role": "builder",
    "model": "sonnet",
@@ -731,6 +718,19 @@
    "review round n of cap": "6 fix (no cap)",
    "retries so far": 0,
    "reason": "after E-rev6"
+  },
+  {
+   "id": "e1-fix",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "E1 gaps: degraded worker recovers when the store returns (no restart), /health ping bounded to 2 s, warning when App has no audit",
+   "started UTC": "09:41",
+   "expected end": "20 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "after e1"
   }
  ],
  "tests": [
@@ -1103,6 +1103,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "E1 built (09:41): see ticket D section d-fix6 and requests/005 (the audit kind needs NO registration: AuditEvent domain='trigger' operation='conflict'; I propose core-b config field triggers.conflict_events_per_minute=10, today a keyword with default 10). e1-fix is closing 3 gaps (recovery without restart, /health ping bound, audit warning); then: mutants for E1, a fresh result review of the E1 code, ONE full batch. The 09:55 'full batch result' will NOT make it for E1 (about 10:15): I will push the tested D and E commit at 09:55 as it stands and the E1 batch after.",
   "E5: fresh round 5 of step E found NO Blocker and NO Major (7 nits, fixed by E-nits2): by your rule the rounds end here; evidence after the fixes: the 09:55 full batch.",
   "Verdicts 09:29 received: E1(a) trigger.conflict audit + per-sender rate cap, E1(b) /health 503 + counter instead of exit 4: agent e1 builds both (tests, ticket invariants 7/10, request 005 for the config field and, if needed, the audit kind: core-b's files); E5: round 4 (extra pass, done earlier) found 0 Blocker/Major and 7 nits (fixed in d-fix5); E-rev5 is the next fresh round now, repeated until a fresh pass finds none, evidence run after each. Your template for the E4 real-n8n run: PUSHED already (n8n/ at head of cloud/core-a, 91 template tests pass; waits 70 s; see n8n/README-trigger.md 'Before you start'). Deadline 09:55: D and E tested commits with the full batch result: planned.",
   "09:24 tested commits pushed for the three items and the drift work (TESTED-n8n-E-T4.md, commit message with counts). Failing test ids on my files now: none. Whole-suite FAILED ids (BATCH7): 10 strict-mode by design + test_no_vendor_brand_string_is_tracked (your BRIEF-PREAMBLE.md) + the dblink test (environment). Next: mutants for E5/E11, a last evidence run, final REPORT.md block.",
@@ -2476,6 +2477,19 @@
    "review round n of cap": "6, no cap (lead ruling)",
    "retries so far": 0,
    "reason": "round 6: 0 Blocker, 1 Major (Windows only, from knowledge of the Windows error for read_text on a directory), 6 nits (false 'never fired' if the child fires between look and delete; tests; a hash in the mutant header)"
+  },
+  {
+   "id": "e1",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "E1a: trigger.conflict audit event on a signed 409 (sender, key, both hashes, never payload) + per-sender rate cap; E1b: GET /health 200/503 + store-failure counter, start with the store down instead of exit 4; tests, ticket invariants 7/10, request 005 for core-b",
+   "started UTC": "09:29",
+   "expected end": "30 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "n/a",
+   "retries so far": 0,
+   "reason": "E1a/E1b built: trigger.conflict audit event (AuditEvent domain=trigger operation=conflict via app.audit.write_outcome, fields: ids + both hashes, never payload), per-sender cap 10/min (keyword, counter, one WARNING/min), request 005 (config field triggers.conflict_events_per_minute); GET /health 200/503 + store_failures, no exit code 4; 10 new tests with kill checks; tests/triggers+crash 1341 passed 5 skipped (own run). Gaps: degraded worker never recovers, /health ping has no timeout, silent drop without app.audit"
   }
  ]
 }

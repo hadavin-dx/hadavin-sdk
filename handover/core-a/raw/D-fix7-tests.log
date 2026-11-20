@@ -20,4 +20,47 @@ bringing up nodes...
 ........................................................................ [ 85%]
 ........................................................................ [ 91%]
 ........................................................................ [ 96%]
-........................
+.................................................                        [100%]
+=============================== warnings summary ===============================
+tests/triggers/test_t5_fuzz_concurrent.py::test_c2_memory_slow_and_down_store_gives_503_and_recovers
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C2 seed=2026112044: sent=1362 valid=729 (54%) rows=60 overlapping_keys=41 samples=129 model_calls=60 statuses[200:302, 202:81, 400:346, 401:194, 404:37, 405:34, 409:287, 413:22, 503:59] retried_503=59 get_run_calls=1189 raised=57 slowed=320
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c3_memory_moving_clock_accepts_and_refuses_as_the_clock_it_saw_says
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C3 seed=2026112045: sent=1507 valid=194 (13%) rows=51 overlapping_keys=25 samples=108 model_calls=51 statuses[200:81, 202:58, 400:152, 401:1059, 404:36, 405:35, 409:51, 413:31, 503:4] retried_503=4 clock_calls=1332 jumps=69 backwards=136
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c5_postgresql_8_threads_hot_keys_rows_read_back_by_sql
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C5 seed=2026112047: sent=503 valid=274 (54%) rows=48 overlapping_keys=31 samples=26 model_calls=48 statuses[200:68, 202:105, 400:117, 401:78, 404:13, 405:13, 409:101, 413:8] retried_503=0
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c4_raw_sockets_8_threads_against_the_quiet_server
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:1121: UserWarning: C4 seed=2026112046: sent=457 (skipped 0) valid=254 (56%) rows=111 overlapping_keys=101 no_answer=14 retried_503=0 statuses[0:14, 200:76, 202:156, 400:110, 401:45, 404:7, 405:13, 409:22, 413:6, 414:2, 431:6]
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c6_runner_close_under_load
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C6 seed=2026112048: sent=2504 valid=1325 (53%) rows=37 overlapping_keys=32 samples=192 model_calls=37 statuses[200:266, 202:30, 400:625, 401:382, 404:60, 405:68, 409:126, 413:44, 503:903] close_took=0.03s requests_after_close=1138 new_keys_after_close=894
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=1]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/1 seed=2026112041: sent=1505 valid=1019 (68%) rows=50 overlapping_keys=27 samples=28 model_calls=50 statuses[200:303, 202:23, 400:271, 401:135, 404:33, 405:29, 409:190, 413:18, 503:503] retried_503=503
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=2]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/2 seed=2026112042: sent=1515 valid=1045 (69%) rows=53 overlapping_keys=36 samples=48 model_calls=53 statuses[200:215, 202:55, 400:251, 401:148, 404:32, 405:21, 409:263, 413:18, 503:512] retried_503=512
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1_memory_16_threads_hot_keys_and_slow_model[max_running=4]
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:719: UserWarning: C1/4 seed=2026112043: sent=1011 valid=545 (54%) rows=57 overlapping_keys=39 samples=113 model_calls=57 statuses[200:179, 202:131, 400:245, 401:156, 404:26, 405:23, 409:229, 413:16, 503:6] retried_503=6
+    say(
+
+tests/triggers/test_t5_fuzz_concurrent.py::test_c1b_the_two_503_paths_held_open_by_hand
+  /home/user/hadavin-sdk/tests/triggers/test_t5_fuzz_concurrent.py:933: UserWarning: C1b: 4 requests, 503 at once (max_waiting) and 503 after ack_wait_s, no row written, retries acknowledged
+    say(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [3] tests/triggers/conftest.py:101: core-b trigger config (TriggerSettings, Config.triggers) not on this tree
+SKIPPED [1] tests/triggers/test_endpoint.py:864: an empty body is refused at Content-Length (own test)
+SKIPPED [1] tests/triggers/test_endpoint.py:847: an empty body is refused at Content-Length (own test)
+1341 passed, 5 skipped, 9 warnings in 191.15s (0:03:11)
