@@ -55,9 +55,7 @@ READ_DEADLINE_S: Final[float] = (
 )
 REFUSAL_TEXT: Final[dict[int, str]] = {  # one phrase per code, the same on every CPython
     400: "Bad Request",
-    408: "Request Timeout",
     414: "URI Too Long",
-    417: "Expectation Failed",
     431: "Request Header Fields Too Large",
 }
 SERVER_ERROR: Final[int] = 500  # no refusal made here has a status from this number up
@@ -220,7 +218,10 @@ class QuietRequestHandler(WSGIRequestHandler):
         self._answer_begun = True
         self.close_connection = True
         _LOG.debug("trigger status=%d sender=- (refused before the endpoint)", code)
-        head = f"{self.protocol_version} {code} {REFUSAL_TEXT[code]}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+        head = (
+            f"{self.protocol_version} {code} {REFUSAL_TEXT[code]}\r\n"
+            "Content-Length: 0\r\nConnection: close\r\n\r\n"
+        )
         self.wfile.write(head.encode("latin-1", "strict"))
 
     def handle(self) -> None:
@@ -252,9 +253,9 @@ class QuietRequestHandler(WSGIRequestHandler):
             return
         if (
             self.request_version == "HTTP/0.9" or not isinstance(self.headers, Message)
-        ):  # a request line with no version has no header block (3.12 reads one anyway: also closed here)
+        ):  # a request line with no version has no header block (3.12 reads one anyway: also closed here, with no answer once the request is complete; a stalled or over-limit request after `GET /path` still gets 400 through `_refuse_stalled` / 431->400 on 3.12, and on 3.13 the connection is closed silently)
             _LOG.debug(
-                "trigger server: request line without an HTTP version, closed with no answer"
+                "trigger server: request line without an HTTP version, closed once the request is complete"
             )
             return
         if self._bad_headers():
@@ -280,8 +281,6 @@ class QuietRequestHandler(WSGIRequestHandler):
         if self._answer_begun:
             _LOG.debug("trigger server: timeout while an answer was written, closed")
             return
-        if not hasattr(self, "request_version"):
-            self.request_version = ""
         try:
             self.send_error(STALLED_STATUS)
         except OSError as exc:  # not writable any more: just close

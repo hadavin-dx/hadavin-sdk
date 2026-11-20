@@ -276,6 +276,9 @@ def test_d_fix16_send_error_writes_one_answer_whatever_the_request_version():
         for code, line in (
             (400, b"400 Bad Request"),
             (414, b"414 URI Too Long"),
+            (431, b"431 Request Header Fields Too Large"),
+            (404, b"400 Bad Request"),
+            (500, b"400 Bad Request"),
             (505, b"400 Bad Request"),
         ):
             writes: list[bytes] = []
@@ -283,6 +286,7 @@ def test_d_fix16_send_error_writes_one_answer_whatever_the_request_version():
             h.request_version = version
             h.wfile = SimpleNamespace(write=writes.append)  # type: ignore[assignment]
             h.send_error(code, "echo of the request", "explain")
+            assert h.close_connection is True
             assert writes == [
                 b"HTTP/1.0 " + line + b"\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
             ]

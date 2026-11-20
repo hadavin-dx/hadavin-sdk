@@ -20,8 +20,9 @@ first failing line that holds `expect`. Thirty-four groups (G32 is E1: ten mutan
     G13 the endpoint's own checks: every secret tried, exactly one sender matches, MAX_SENDERS, sender and secret ids line
         up, the upper bound of max_body_bytes, the size cap before the body is read
     G14 the rules for a secret value: no byte-order mark or zero-width character, no control character, no repeated value
-    G15 the quiet server: a timeout on the request line or in the headers is a stalled client, 414, the request_version
-        default, and the `_answer_begun` flag (set in send_error, read in `_refuse_stalled`)
+    G15 the quiet server: a timeout on the request line or in the headers is a stalled client, 414, and the
+        `_answer_begun` flag (set in send_error, read in `_refuse_stalled`). G15d was deleted (equivalent: the
+        `request_version` default of `_refuse_stalled` it guarded no longer exists, `send_error` never reads it)
     G16 the quiet server: HTTP 2.0 and up is 400, no version is closed quietly, underscore names, two Content-Length,
         Transfer-Encoding, and the process environment kept out of the request (`os_environ = {}`)
     G17 Retry-After on a 503, and DEBUG for a request that did not verify
@@ -647,15 +648,6 @@ M = [
         TS,
         "test_request_line_over_64_kb_is_414_empty",
         "AssertionError: (b'HTTP/1.0 400 Bad Request",
-    ),
-    mutant(
-        "G15d the stalled-client refusal needs no request_version default",
-        SERVER,
-        '        if not hasattr(self, "request_version"):\n',
-        "        if False:\n",
-        TS,
-        "test_stall_before_the_headers_end_is_400_empty_at_the_timeout[drive_silent_client]",
-        "Seen(raw=b'', end='closed'",
     ),
     mutant(
         "G15e send_error does not note that an answer was begun",
