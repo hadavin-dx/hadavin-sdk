@@ -1430,7 +1430,36 @@ def test_m1_the_module_keeps_no_state_between_calls():
                         and not b.value.elts
                         for b in c.body
                     )
-                    and all(isinstance(b, ast.FunctionDef | ast.Assign | ast.Expr) for b in c.body)
+                    and all(
+                        isinstance(b, ast.FunctionDef | ast.Assign | ast.AnnAssign | ast.Expr)
+                        for b in c.body
+                    )
+                    # the one-instance cache (`_one: Any = None`, set once by `__new__` when the sentinel is built
+                    # at import): the only annotated class value allowed is None, and the only attribute write
+                    # allowed in the class is `cls.<that name> = ...` inside `__new__`
+                    and all(
+                        isinstance(b.value, ast.Constant) and b.value.value is None
+                        for b in c.body
+                        if isinstance(b, ast.AnnAssign)
+                    )
+                    and all(
+                        isinstance(w, ast.Attribute)
+                        and isinstance(w.value, ast.Name)
+                        and w.value.id == "cls"
+                        and f.name == "__new__"
+                        and w.attr
+                        in {
+                            getattr(b.target, "id", "")
+                            for b in c.body
+                            if isinstance(b, ast.AnnAssign)
+                        }
+                        for f in c.body
+                        if isinstance(f, ast.FunctionDef)
+                        for a in ast.walk(f)
+                        if isinstance(a, ast.Assign | ast.AnnAssign | ast.AugAssign)
+                        for w in (a.targets if isinstance(a, ast.Assign) else [a.target])
+                        if isinstance(w, ast.Attribute | ast.Subscript)
+                    )
                 ]
                 assert name == "frozenset" or is_compile or stateless, (
                     f"line {node.lineno}: module-level call of {name}"
