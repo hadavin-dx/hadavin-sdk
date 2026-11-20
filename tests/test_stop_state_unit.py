@@ -178,7 +178,7 @@ WARNING = "warning: no reset role was named, so nobody but the owner can reset t
         (["--runtime-role", "rt", "--purge-role", "pu", "--portal-role", "po"], True),
         (["--runtime-role", "rt", "--reset-role", "rs"], False),
         (["--reset-role", "rs"], False),
-        ([], False),
+        (["--no-roles"], False),  # a plain migrate with no role named is refused now (step B E5): see test_step_b_e5_no_roles
     ],
 )
 def test_migrate_warns_on_stderr_when_a_runtime_role_is_named_without_a_reset_role(
