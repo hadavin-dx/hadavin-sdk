@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T12:04:16Z
+UPDATED_UTC: 2026-11-20T12:04:50Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
@@ -7,14 +7,14 @@ ITEMS_TOTAL: 81
 ITEMS_OPEN: 23
 PERCENT: 81
 AGENTS_RUNNING: 1
-CAPACITY: load 2.84 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+CAPACITY: load 1.58 of 4 cores (1-minute average), mem 1.1/15.7 GB, 1 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 12G 58G 18%; 602M /home/user/hadavin-sdk; 998M /tmp/claude-0; 183M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: 11:28 UTC, BATCH10 (independent, head after the one-write fix, whole suite REQUIRE_PG=1 -n 3): 12 failed / 12366 passed / 458 skipped / 75 xfailed in 345 s; the 12: 10 strict-mode by design (tests/triggers/test_t5_main_start.py test_1,2a,2b,2c,2d,2e,3; test_worker.py::test_main_without_a_triggers_block_exits_2 and ::test_the_defaults_constants_of_core_b_equal_the_literals_of_the_worker; test_t5_process.py::test_d1_main_refuses_to_start_without_a_triggers_block: all pass on the combined tree) + tests/demo_askdata/test_validate_harm.py::..[dblink-connect] (needs PostgreSQL on the default socket) + tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked (the lead's handover/BRIEF-PREAMBLE.md). The pg-kill id passes (BATCH9's 13th failure is gone: 20 of 20 after the one-write fix).
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: 11:36 UTC: NOTHING READY except the BLOCKED item: complete mutant run 19 (tests/endpoint_mutants.py line 1251 `now - last_warned` -> `at - last_warned` + `uv run python tests/endpoint_mutants.py`; denied by the permission classifier for my builder: waits for the owner's go-ahead). Everything of your list is DONE: e1-fix2 (10:03), n8n notes from evidence-n8n-4 (11:02, reviewed 11:04, fixed 11:05), E1 review 4 rounds, one-write fix + fresh review (11:17) + nits fixed + BATCH10 (11:31). After the go-ahead: mutant run 19 (G34 one write + the d-fix14 mutant included), then stop PostgreSQL on 55433.
-PUSHED_UTC: 2026-11-20T12:04:11Z (the push before this board)
+PUSHED_UTC: 2026-11-20T12:04:20Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -105,17 +105,17 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries so far | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
-| py-product | builder | sonnet | lead run 3: QuietRequestHandler gets its OWN send_error (one write, 400 empty, 505->400, own phrase table, no dependence on stdlib request_version) so a bad request line and HTTP/2+ are answered 400 on every CPython >=3.12; restore the strict 400-garbage test and the 414 phrase golden; test_t5_wsgiref + T13 + T14 on 3.12.3, 3.13.12, 3.13.18 (raw logs); whole D/E set once on 3.12.3 with every stdlib-version dependence listed and fixed | 11:53 | 40 min | 5 | running | n/a | 0 | lead 11:52 run 3 |
+| rev-send-error | fresh reviewer (codebase-details) | sonnet | read-only review of d-fix16: every stdlib refusal path on 3.12.3/3.13.12/3.13.18 routed through our send_error? the _serve condition: can a legit request be closed? phrase table; blind spots of the 3.13.18-only box | 12:04 | 15 min | 5 | running | 1 (behaviour-changing shipped code, no cap) | 0 | after py-product |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 20988s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 20988s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 20988s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 20988s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 20988s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 20988s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 21022s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 21022s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 21022s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 21022s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 21022s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 21022s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -177,6 +177,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- 12:06 PUSHED, re-run the full mutant script now (head = the head of this board push; server.py anchors of G34 `self._answer += data` and G35 `self.headers_sent = True` unchanged). d-fix16 (the stdlib-patch-version defect, YOUR call was right): our own send_error writes the whole refusal in ONE write (400/408/414/417/431 table, 505 and unknown codes -> 400, no request_version, same bytes as the golden), a second dependence fixed (versionless line `GET /path`: 3.12 answered it, 3.13 did not: closed without answer on every Python), the 400-garbage relaxation REVERTED. RAW COUNTS on my box (t5_wsgiref + d_fix13 + d_fix14 = 104 tests): 3.12.3: 104 passed; 3.13.12: 104 passed; 3.13.18: 104 passed (raw/PYMATRIX2-<ver>.log). BEFORE (old send_error, 3.12.3): 12 failed 92 passed (the 6 wsgiref tests you named + test_f2 + 400-garbage x3 + 414 golden + the new test). WHOLE D/E (tests/triggers + crash) on system 3.12.3: 1431 passed 5 skipped 0 failed: nothing else depends on the stdlib patch version; box venv 1431 passed. The exit-code question stays as in my 11:53 message (send me your command line). A fresh read-only review of d-fix16 runs now (rev-send-error, 12:06): you need not wait for it for the script run.
 - 11:53 TAKEN, you are right and my py-matrix call was wrong: I relaxed the 400-garbage test to 'nothing or one write' and called it a test dependence; but the ticket's contract is a 400 (and test_t5_wsgiref asserts it since step D: it only passed because my box is the newest patch release). py-product started 11:53: our OWN send_error (ONE write, 400 empty, 505 mapped to 400, our own phrase table, no stdlib request_version), the relaxation of 400-garbage REVERTED (strict again) and the 414 phrase golden restored, the 6 wsgiref tests + T13 + T14 on 3.12.3 / 3.13.12 / 3.13.18 with raw logs (raw/PYMATRIX2-<ver>.log), then the WHOLE D/E set once on system 3.12.3: every stdlib-patch-version dependence listed and fixed. EXIT CODE (your item 3): I read tests/mutation_exit.py and the end of tests/endpoint_mutants.py: `sys.exit(exit_guard(main))`; exit_guard prints the traceback and RETURNS 1 for any exception (RuntimeError included): tests/test_mutation_runner_exit.py runs it in a REAL subprocess and pins exit 1 for RuntimeError and ValueError. So on my reading the python process cannot exit 0 after that traceback; the EXIT=0 you saw is the shell's: how did you run it? `... | tee log; echo EXIT=$?` reports tee's status (use `set -o pipefail` or ${PIPESTATUS[0]}); if you ran it WITHOUT a pipe and still got 0, send me the exact command line and the first lines of the log and I debug it: that would contradict the unit tests. I do not run the script. Head will be posted when py-product is pushed.
 - 11:48 PUSHED for your re-run (head of cloud/core-a at the next board push): (1) THE 3 [400-garbage] FAILURES: a TEST that depended on stdlib internals, not a product defect: that request line (`\x16\x03\x01\x02 junk`) goes through parse_request's HTTP/0.9 branch: on 3.13.12 and 3.12.3 send_error runs while request_version is still HTTP/0.9 and writes nothing (the server just closes: a legitimate answer; the property that matters, never a SPLIT answer, holds); 3.13.18 sets request_version = '' first (4 lines added in parse_request) and answers 400 once. Results per Python on my box, BEFORE the fix: 3.12.3: 4 failed (the 3 + the 414 golden: HTTPStatus(414).phrase is 'Request-URI Too Long' up to 3.12, 'URI Too Long' from 3.13); 3.13.12: 3 failed (400-garbage only: the same as your laptop); 3.13.18: 55 passed. AFTER the fix: 55 passed on all three (raw/PYMATRIX-3.12.log, -3.13.12.log, -3.13.18.log). The fix is in the test only: 400-garbage may write NOTHING or exactly ONE complete write; the 414 phrase is not compared. CORRECTION: at 11:43 I told the owner the failure 'does not reproduce on 3.13.12 here': WRONG: the logs I read were the AFTER-fix runs; before the fix it reproduced exactly as on your laptop. (2) mut-guard (11:43): T13+T14 in TESTS, G35, missing-test-file guard (exit 2, no traceback), exit_guard (uncaught exception = exit 1): tests/test_mutation_runner_exit.py 6 tests. The exit 0 you saw: by the code the script exits 1 on an uncaught ValueError: I think the 0 came from a pipe (`| tail`: use set -o pipefail): unconfirmed. (3) OPEN CHOICE for you: if the server should ALWAYS answer a garbage line with 400 (not close on old Pythons), the smallest product change is request_version = '' in QuietRequestHandler.send_error for HTTP/0.9: say so and I do it. Your line-1251 anchor edit is still yours. The G-list header/docstring ('Thirty-four groups') lacks G35: cosmetic.
 - 11:42 TAKEN: py-matrix started 11:42 (the 3 [400-garbage] tests on every CPython it can get: this box 3.13.18 passes 49/49, system 3.12, and 3.13.12 via `uv python install 3.13.12` if the proxy allows; raw logs raw/PYMATRIX-<ver>.log; verdict product-defect vs test-depends-on-stdlib; fix, never a skip). mut-guard (started 11:41) does the runner guard + exit code (3). Both write to the board when done; I tell you when pushed. Note: the stdlib paths I cited earlier were read from the SYSTEM python 3.12 (/usr/lib/python3.12), my venv is 3.13.18: my 49/49 was on 3.13.18 only: that is the gap your run exposed.
