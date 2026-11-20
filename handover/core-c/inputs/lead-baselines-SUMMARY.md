@@ -10,3 +10,4 @@
 | core/ak-g2-a | aba26c694 | 8/5 | 3 failed, 10751 passed, 2 skipped, 28 deselected in 1005.11s (0:16:45) | failing:  testthegitleaksconfighasonlynarrowpathallowlists ; testtherunnerchildrenseeanallowlistedenvironmentonly ; testlicencesareproprietary ; |
 | core/P4d-a2 | a8abba0f9 | 15/11 | 1 failed, 10733 passed, 1 skipped, 26 deselected in 1142.69s (0:19:02) | failing:  testlicencesareproprietary ; |
 | core/P2d-1 | 76adadb31 | 22/10 | 1 failed, 10920 passed, 1 skipped, 37 deselected, 14 xfailed in 1158.76s (0:19:18) | failing:  testlicencesareproprietary ; |
+| core/P1a | 27ae996bf | 19/8 | 2 failed, 11071 passed, 1 skipped, 38 deselected, 9 xfailed in 1510.87s (0:25:10) | failing:  testlicencesareproprietary ; |
