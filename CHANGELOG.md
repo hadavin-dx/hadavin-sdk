@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-The labels TESTED, MEASURED, UNVERIFIED, NOT RUN, PINNED and OPEN are defined in [SECURITY.md](SECURITY.md#words-used-here). PINNED means a test fixes the behaviour as built, even where the behaviour is a known gap. OPEN means a question or gap with no decision on file. A statement with no label describes how the code is built, as read in the code: UNVERIFIED unless a label says otherwise. Vendor and product names appear only as config values or as the names of the interfaces and systems this kit talks to; they are never a recommendation.
+The labels TESTED, MEASURED, UNVERIFIED, NOT RUN, PINNED and OPEN are defined in [SECURITY.md](SECURITY.md#words-used-here). PINNED means a test fixes the behaviour as built, even where the behaviour is a known gap. OPEN means nobody has fixed or decided it yet; the SECURITY.md line names who must act. A statement with no label describes how the code is built, as read in the code: UNVERIFIED unless a label says otherwise. Vendor and product names appear only as config values or as the names of the interfaces and systems this kit talks to; they are never a recommendation.
 
 ### Breaking changes
 These need action before you upgrade. Each item says what to change.
@@ -26,10 +26,10 @@ These need action before you upgrade. Each item says what to change.
     - A real model.
     - A detector kind that is not on the local list. `regex` and `llm_judge` are local. Every other kind counts as sending text out; today that is `bedrock_guardrail`.
     - A real approval channel, which is any kind not in `DEMO_ONLY`. That is the list in `backends/table.py` of the six kind pairs that exist only for demos; today the chat kind is `slack`.
-    - Such kinds may send text built from case data to a service outside the process (a vendor, or a model you host).
+  - **Why the field exists.** Such kinds may send text built from case data to a service outside the process (a vendor, or a model you host).
   - **The field is for demo configs only.** A pilot or prod config that sets it is refused. So a pilot config copied from a demo config must drop the line. The field takes only a real YAML true or false. The quoted text `"yes"` and the number `1` are refused. An unquoted `yes` is already the YAML value true and works. The refusal also applies to `hadavin-sdk gate`, `replay` and `score`, because the check sits in the config itself.
   - **Limits of the field.** (a) The field is the operator's own word and the code cannot check it. A demo config that holds client data and sets `made_up_data_only: true` is not refused. (b) The check covers only the llm, detector and channel kinds. Other parts also send data out of the process: systems with a real `base_url`, `egress_hosts`, HTTP tools and sources. The check does not cover them.
-- **Read-only evidence, upgrade steps for an existing database.**
+- **Store protocol and import changes; database repair.**
   - **API changes (breaking for custom code; pre-1.0, so the minor version moves).** The `Store` protocol gains six methods (`add_tool_call`, `list_tool_calls`, `purge_tool_calls`, `put_redaction_map`, `get_redaction_map`, `purge_redaction_maps`). A custom store without them is refused at start with their names (`ConfigError`).
     - `Executor.execute` takes an optional `inputs_view`.
     - Source kinds register through `sources.kinds.register`, which refuses overlapping operation prefixes.
@@ -52,7 +52,7 @@ These need action before you upgrade. Each item says what to change.
   - No stage is stored today. The first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision. It must also add a test through that real read site.
 - **Client-profile check: a test.** `tests/test_client_profile.py` also checks that every `(capability, kind)` pair of `TABLE` is decided as demo-only or client-reviewed.
 - **Cloud-metadata addresses in one table.** `guard/http.py` now holds the cloud-metadata addresses that no tool may reach as one documented table, `METADATA_ENDPOINTS`. The six addresses are the same as before. The other refused ranges are unchanged.
-- **Finder memory cap and a run-level character cap (the two limits are the plan's defaults; the owner has not approved them: OPEN).**
+- **Finder memory cap and a run-level character cap (the two limits are defaults chosen in the code; the owner has not approved them: OPEN).**
   - A redactor build over more than 786,432 search-tree entries (`defaults.MAX_FINDER_CHARS`) is refused with `InputTooLarge("FinderMemoryTooMuch")`, nothing shown.
   - A run whose map holds more than 524,288 characters of distinct values (`evidence.max_map_chars`, default `defaults.MAX_MAP_CHARS`, at most `MAX_FINDER_CHARS`) ends `NEEDS_PERSON document_too_complex`, checked next to `max_map_entries`.
   - Before, one call could spend about 960 MB and 9 s on eight 260,000-character values. MEASURED: 960 MB and 9.17 s in one run; another recorded run printed 956 MB.

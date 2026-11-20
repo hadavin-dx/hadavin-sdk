@@ -6,16 +6,16 @@ details, and a private channel will be arranged. Do not post vulnerability detai
 
 Reports are answered within 5 working days (STATED: this is a target. UNVERIFIED: no record of answer times is kept).
 
-## 1. Stated limits of redaction (reviewed, not bugs)
+## 1. Stated limits of redaction
 
 The words in capitals (TESTED, MEASURED, FIXED and the others) and the technical terms are defined in the appendix, [Words used here](#words-used-here). The redactor and the secret finder are the same code. This file says "secret finder"; the README and the CHANGELOG say "redactor".
 
-Redaction is pattern based and treats the end of a value the way the secret finder's own value pattern does. Two consequences are known and stated:
+Redaction is pattern based and treats the end of a value the way the secret finder's own value pattern does. Two consequences are known and stated. UNVERIFIED (read in the code; the examples are as built, and each limit's status and evidence are in K46 and K84):
 
 - An unquoted secret value that itself contains a plain (not encoded) space or `;` is masked only up to that character in pass one. Example: `password=my secret phrase`. Its tail is shown, because by the secret finder's definition the value ended there.
   - A quoted value with spaces (`password="my secret phrase"`) is masked whole.
   - A `,` or `&` inside a `key=value` value does not end it either. Then the plain copy of that value elsewhere in the text can stay readable (see K84).
-  - Put a secret that holds a space in quotes handled by the pattern, or do not hand it to a tool.
+  - Write a secret that holds a space inside quotes (`password="my secret phrase"`), or do not hand it to a tool.
 - A form-encoded `;` or `&` inside a value is ambiguous. `password%3Dab%3Bzq9` can be one secret, or a key and a value followed by more text.
   - The secret finder decodes it and masks what its value pattern reaches.
   - It keeps what pass one masked whole when the decoded view would mask less.
@@ -33,8 +33,8 @@ As of 2026-11-20 15:44 UTC (commit 2552bcc95). The words TESTED, MEASURED and th
 
 ### 2.0 State of the work
 
-- WAITING: the gate is not installed. No point in the code that calls a model goes through it yet. The connector and store team must install it.
-- STATED (a written order dated 2026-11-20 06:30 UTC, not shipped with the kit): the connector and store team will not install the gate yet. The model connectors cannot yet say "refused before any answer".
+- WAITING: the gate is not installed. No point in the code that calls a model goes through it yet. The connector-and-store maintainer must install it.
+- STATED (a written order dated 2026-11-20 06:30 UTC, not shipped with the kit): the connector-and-store maintainer will not install the gate yet. The model connectors cannot yet say "refused before any answer".
 - TESTED: a batch of the whole test suite, without the slow-timing and live tests, gave 15,955 passed, 561 skipped, 74 expected failures and 10 failures. It ran on the merged code from 14:06 to 14:17 UTC on 2026-11-20.
 - STATED (a development note dated 2026-11-20, not shipped). UNVERIFIED: no result line is on file for this split. 6 of the 10 failures were a fault of a secret finder change. It was fixed, and its 4 test files then passed (297 passed). Two were approval-message rows, re-recorded twice since, from the measured output. One is a project file that names a vendor. One failed on the older code too.
 - STATED (a development note dated 2026-11-20, not shipped): a later batch of the same kind gave 16,071 passed and 2 failed. The 2 failures were the vendor-string test and a recording that was re-keyed since. UNVERIFIED: the commit of that batch (the note names 2552bcc95 only for the next batch).
@@ -44,12 +44,12 @@ As of 2026-11-20 15:44 UTC (commit 2552bcc95). The words TESTED, MEASURED and th
   - 2.10 lists the batches run on the changed code.
   - The last row of 2.10 has no result line, so what it covers is UNVERIFIED.
 - NOT RUN: a batch of the whole test suite whose commit is named and is the code this file describes.
-- UNVERIFIED (read in the test file): five install tests are marked as strict expected failures until the gate is installed. Once it is installed, they pass, and that pass fails the batch. Then the connector and store team removes the five marks.
+- UNVERIFIED (read in the test file): five install tests are marked as strict expected failures until the gate is installed. Once it is installed, they pass, and that pass fails the batch. Then the connector-and-store maintainer removes the five marks.
 - UNVERIFIED: no independent review of the gate as last changed is on file. FIXED on the gate means that the tests of the change pass, unless a review is named.
 
 ### 2.1 Masking before a model call (the gate)
 
-Shown by tests. TESTED here means that test_model_gate.py and test_runmap_enforce_map.py passed in the batches named in 2.0. The tests added since passed in the batches listed in 2.10. The last row of 2.10 has no result line, so it does not count:
+Shown by tests. TESTED here means that test_model_gate.py and test_runmap_enforce_map.py passed in the batches named in 2.0. The tests added since passed in the batches listed in 2.10. The last row of 2.10 has no result line, so it does not count, and the safety-net piece rule below is UNVERIFIED:
 
 - TESTED: before a call, the gate masks each known value with its placeholder. This covers message text and documents only. K8 lists what it skips.
 - TESTED: the gate searches for no new values. The secret finder does that (K1).
@@ -58,7 +58,8 @@ Shown by tests. TESTED here means that test_model_gate.py and test_runmap_enforc
 - TESTED: if no known value is present, the text goes out unchanged.
 - TESTED: the gate does not change the calling code's messages, documents or run map.
 - TESTED: the calling code must name its run map or state "no map". Leaving it out is an error, and so is a plain dict or a copy of the map. Only the test and replay command lines may state "no map" (K9).
-- TESTED: the safety net refuses a call when a known secret of 4 or more characters is still readable. Since the latest change it also reads a piece of a secret beside a placeholder, and decoded spellings (K78, K3).
+- TESTED: the safety net refuses a call when a known secret of 4 or more characters is still readable.
+- UNVERIFIED (no result line is on file; see 2.10 and K12): since the latest change it also reads a piece of a secret beside a placeholder, and decoded spellings (K78, K3).
 - NOT RUN: the whole file of deliberate code breaks for the gate on this code (140 breaks; one is known to survive as equivalent). No result line is on file for single breaks run by hand.
 
 Known gaps and fixed findings:
@@ -108,16 +109,16 @@ Known gaps and fixed findings:
 - **K12. Changed, not shown fixed:** a secret at a held-back value's edge could leave its tail beside a placeholder.
   - Example: known `S3cr3t` and `>abcdef`. A reviewer read that `S3cr3t>abcdef` becomes `<SECRET_1>abcdef`. A run gave `<SECRET_1><SECRET_2>`, with no leak.
   - UNVERIFIED (a development note names the test; no result line is on file; see 2.10): the safety net now refuses a call whose text holds `<SECRET_1>abcdef`. That is a piece of 4 or more characters of a known secret beside a placeholder. The same note says that test failed before the change.
-  - Status: OPEN (the code is changed; FIXED needs a recorded batch of that test). Evidence: UNVERIFIED. Who acts: the text and masking team records a batch.
+  - Status: OPEN (the code is changed; FIXED needs a recorded batch of that test). Evidence: UNVERIFIED. Who acts: the text-and-masking maintainer records a batch.
 - **K13. Not fully limited:** the time the gate spends on one model call. One budget per call covers the characters, the steps and two time limits of 6.0 seconds each. The first is processor time, read inside the masking step. The second is wall-clock time, read only between values and after each sweep.
   - TESTED: a deadline that passes inside the masking step refuses the call with the code `mask_budget_exceeded`.
   - TESTED: the masking step is given the call's own deadline. A deadline that passes after the start of the call stops it.
   - NOT REPRODUCED: a long stall inside one scan of one stretch of text was reported. A run of the reported shape, as understood, took 0.47 seconds of processor time for the gate's masking step. The secret finder took 0.89 seconds on the same text.
   - MEASURED earlier, before the current budget: 100 messages against a run map of 2,000 entries took 0.018 seconds.
-  - Status: OPEN. Evidence: TESTED; NOT REPRODUCED (the stall). Who acts: the text and masking team.
+  - Status: OPEN. Evidence: TESTED; NOT REPRODUCED (the stall). Who acts: the text-and-masking maintainer.
 - **K14. Not protected:** a run's later tool-using calls. A planted secret of 4 or more characters makes each of them refuse. It does so when it equals a tool's name or a call number, or is a piece of a name in the tool list.
   - Example: a tool result contains `password=search_web`, where `search_web` is a tool's name. Later calls in that run refuse.
-  - Status: OPEN. Evidence: TESTED (the rule as built). Who acts: the owner decides which rule. Default that applies until the owner decides: the rule as built stays.
+  - Status: OPEN. Evidence: TESTED (the rule as built). Who acts: the owner decides which rule. If the owner does not decide, the plan is to keep the rule as built. Today it is the rule in force.
 - **K15. Fixed:** planted text could rewrite part of a tool's name in the line where the model asked for that tool.
   - Example: a document planted `password=logs`; the model then saw two names for one tool call.
   - Status: FIXED. Evidence: TESTED. Who acts: nobody. See K66 for the tool list.
@@ -129,12 +130,12 @@ Known gaps and fixed findings:
 - **K17. Not safe:** two threads writing one run map at the same time can give one placeholder number to two values.
   - Example: two tools finish together and both values become `<SECRET_3>`.
   - Status: OPEN. Evidence: UNVERIFIED (stated in the code's notes, not run).
-  - Who acts: the text and masking team adds "one writer per run map" to its install request to the connector and store team.
+  - Who acts: the text-and-masking maintainer adds "one writer per run map" to its install request to the connector-and-store maintainer.
 - **K64. Not protected:** a run's later calls, when planted text holds too many values. The limits are more than 4,096 values at a placeholder's edge (such as `password=>aaaa1`), or more than 20,480 values in all. The gate then refuses every later call of that run.
   - Example: one planted document with 4,097 such lines would stop the run (worked out from the code, not run).
   - The agent loop stops a run before that. At its default limit of 2,000 values, or 524,288 characters of values, the run ends asking for a person (UNVERIFIED, read in the code).
   - A separate per-key cap applies to the lookups of one key: see K85.
-  - Status: OPEN. Evidence: TESTED (the gate's old cap of 256 held-back values is gone; 257 values no longer stop a run). The secret finder's separate limit of 256 values that need pairing across decoded views stays. Who acts: the text and masking team.
+  - Status: OPEN. Evidence: TESTED (the gate's old cap of 256 held-back values is gone; 257 values no longer stop a run). The secret finder's separate limit of 256 values that need pairing across decoded views stays. Who acts: the text-and-masking maintainer.
 - **K65. Not refused:** a known secret that spans a fixed framing word. The safety net checks each stretch of text between fixed framing words on its own.
   - Example: a known secret written as `tool read_logs` inside `password="tool read_logs"` is cut by the fixed word `tool ` and goes out as written.
   - TESTED: the safety net covers every known secret of 4 or more characters, not only held-back ones. A secret hidden in a made-up placeholder-shaped token that is not a key of the map refuses the call.
@@ -149,23 +150,23 @@ Known gaps and fixed findings:
   - Status: FIXED. Evidence: TESTED. Who acts: nobody.
 - **K67a. Not installed:** the gate itself. No call point in the code goes through it yet, even though the list of call points is now complete (K67).
   - Example: the agent loop still calls the model connector directly.
-  - Status: WAITING (a written install request to the connector and store team; see 2.0 and K18). Evidence: UNVERIFIED (read in the code; five install tests are strict expected failures, see 2.0). Who acts: the connector and store team.
+  - Status: WAITING (a written install request to the connector-and-store maintainer; see 2.0 and K18). Evidence: UNVERIFIED (read in the code; five install tests are strict expected failures, see 2.0). Who acts: the connector-and-store maintainer.
 - **K69. Not checked:** that the run map given to the gate is the run's own, current map. The gate refuses a plain dict and a `dict(run_map)` copy. It cannot tell the run's own map from another run's map, or from a run map built from a copy. An empty run map is accepted, and the audit row says "map empty".
   - Example: the calling code passes yesterday's run map object. Values found today are not masked, and the row says the map was used.
   - Status: OPEN. Evidence: TESTED (the dict refusal and the empty-map row); UNVERIFIED (the stale-map case, stated in the code).
   - Who acts: the owner decides it together with one question: whether the gate refuses a call when the run map is empty.
-  - Default that applies until the owner decides: the gate refuses an empty map. Then the text and masking team changes the code.
+  - If the owner does not decide, the plan is to make the gate refuse an empty map. Today it accepts one. Then the text-and-masking maintainer changes the code.
 - **K18. Not handled:** a gate refusal or a refused reservation leaves the run's status "working" instead of "stopped".
   - Example (UNVERIFIED, read from the code): the agent loop turns a model connector's error into a stop that asks for a person. A gate refusal is a different error, so it is not caught there. The planted-instruction check reports the same refusal as a guard failure.
-  - Status: WAITING. Evidence: UNVERIFIED. Who acts: the connector and store team (written install request).
+  - Status: WAITING. Evidence: UNVERIFIED. Who acts: the connector-and-store maintainer (written install request).
 - **K19. Not through the gate:** the guardrail call. It is neither masked by the gate nor counted against the cap.
   - Example: a run's guardrail calls cost money that the cap never sees.
   - Status: STATED (source: the table of calls kept outside the gate by design, in `tests/test_gate_install_callers.py`). Evidence: UNVERIFIED (read in that table; no test checks that these calls cost money). Who acts: nobody.
 - **K78. Fixed:** two known secrets that overlap in the text left part of one readable, and the safety net missed it.
   - Example: known `hunter2-ABCDEFGH` and `ABCDEFGH-ZZZZZZZZ`. The text `x hunter2-ABCDEFGH-ZZZZZZZZ y` used to go out as `x hunter2-<SECRET_2> y`. It now goes out as `x <SECRET_1><SECRET_2> y`, in either map order (MEASURED here).
   - TESTED: a secret and an identifier that overlap are masked with their own placeholders.
-  - TESTED: a piece of 4 or more characters of a known secret beside a placeholder refuses the call (K12).
-  - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
+  - UNVERIFIED (no result line is on file; see K12 and 2.10): a piece of 4 or more characters of a known secret beside a placeholder refuses the call.
+  - Status: FIXED for the overlap masking only. Evidence: TESTED (the overlap masking); MEASURED. Who acts: nobody. The piece refusal is not claimed as fixed (K12).
 - **K79. Not refused by the safety net:** a base64 copy of a known secret, an identifier split by NUL characters, and any copy split by terminal colour codes. Each goes out as written.
   - Example: a known secret written in base64 inside a message reaches the model. A base64 copy is the secret finder's work (K37).
   - Status: PINNED. Evidence: TESTED. Who acts: nobody.
@@ -180,15 +181,15 @@ Known gaps and fixed findings:
 - **K80a. Changed, not shown fixed:** a known secret made only of punctuation (`!!!!!!!!`) is now read as a piece. A piece of 4 or more of its characters that starts or ends it beside a placeholder refuses the call.
   - Example (MEASURED here): `!!!!<HOST_1>` and `<HOST_1>!!!!` are refused.
   - Separators that start a private key's header line stay exempt.
-  - Status: OPEN (the code is changed; FIXED needs a recorded batch of its test). Evidence: MEASURED here (the example); UNVERIFIED (the test; no result line, see 2.10). Who acts: the text and masking team records a batch.
+  - Status: OPEN (the code is changed; FIXED needs a recorded batch of its test). Evidence: MEASURED here (the example); UNVERIFIED (the test; no result line, see 2.10). Who acts: the text-and-masking maintainer records a batch.
 - **K80b. Not read as a piece, in any letter case:** the public words that start an authorization value. They are `Bearer`, `Basic`, `Token`, `Digest`, `OAuth`, `ApiKey`, `Negotiate`, `NTLM`, `AWS4-HMAC-SHA256`, `Bot` and `Key`.
   - The same word plus one more character of the secret is read.
-  - Status: OPEN (a development note names a test for it; no result line is on file; PINNED is not claimed). Evidence: UNVERIFIED (see 2.10). Who acts: the text and masking team records a batch.
+  - Status: OPEN (a development note names a test for it; no result line is on file; PINNED is not claimed). Evidence: UNVERIFIED (see 2.10). Who acts: the text-and-masking maintainer records a batch.
 - **K85. Refused more than needed:** the safety net can refuse ordinary text beside a placeholder. One planted value can make every later call of a run refuse.
   - Example: a known secret `the quick brown fox` makes the text `the <HOST_1>` look like a leak (MEASURED here: the net answers "leak"). The gate reports that as the code `held_value_left`, the same code as a real leak.
   - The message stays in the run's history, so each later call refuses.
   - UNVERIFIED (a development note names the tests; no result line is on file; see 2.10): the refusal is held as built, not PINNED. A strict expected failure records the wanted behaviour (ordinary words beside a placeholder sent).
-  - UNVERIFIED (same note): a bare web address start (`https://`) beside a placeholder is not read as a piece. So are the public authorization words, in any letter case (K80b).
+  - UNVERIFIED (same note): a bare web address start (`https://`) beside a placeholder is not read as a piece. The public authorization words, in any letter case, are not read as a piece either (K80b).
   - UNVERIFIED (same note): one key of the map reads at most 4,096 hits of its first characters (both sides together).
     - A dense hostile text is refused with `mask_budget_exceeded` after about 4,096 lookups, in 0.02 s.
     - The shape is a value `aaaa` followed by 16,380 `c`, beside eight runs of 16,000 `a` and a placeholder.
@@ -197,7 +198,7 @@ Known gaps and fixed findings:
     - On 1,978 ordinary inputs the cap was never reached (UNVERIFIED: no run is on file).
   - UNVERIFIED (same note; no run is on file): the lookups no longer cut a slice before the first-characters test. A 65,536-character value beside 16 placeholders took 1.74 s before and 0.13 s after.
   - UNVERIFIED (same note): long pieces already looked up are kept as a 16-byte digest. The peak memory of the worst shape tried was 367 MB before and 7.1 MB after.
-  - Status: OPEN (the refusal is pinned only by a test named in a development note with no result line). Evidence: MEASURED here (the "leak" answer); UNVERIFIED (the rest). Who acts: the text and masking team records a batch.
+  - Status: OPEN (the refusal is pinned only by a test named in a development note with no result line). Evidence: MEASURED here (the "leak" answer); UNVERIFIED (the rest). Who acts: the text-and-masking maintainer records a batch.
 - **K85a. Decisions not made on K85:** three questions are open. Should a piece need a letter-only minimum? Should this refusal get a code of its own? Does the per-key cap of 4,096 stay? None is built. The cap of 4,096 is a number chosen in the code.
   - Status: OPEN. Evidence: UNVERIFIED (no decision is on file; nothing to test). Who acts: the owner decides.
 
@@ -216,30 +217,30 @@ Known gaps:
   - Example: a throttled call fails before any answer. With no mark, its worst case stays booked.
   - What the store keeps booked after that is the store's behaviour, and its code is not on this branch.
   - The gate cannot check the mark. A connector must set it only when no attempt may have been billed.
-  - Status: WAITING. Evidence: TESTED (an unmarked failure is not settled; a marked one is settled at 0.00 USD); UNVERIFIED (no connector sets the mark, read in the code). Who acts: the connector and store team (written request).
+  - Status: WAITING. Evidence: TESTED (an unmarked failure is not settled; a marked one is settled at 0.00 USD); UNVERIFIED (no connector sets the mark, read in the code). Who acts: the connector-and-store maintainer (written request).
 - **K21. Booked as free:** a reply with an empty cost field. The connectors' reply form fills an empty cost with 0.00 USD, and the gate settles 0.00 USD.
   - Example: a connector forgets to fill in the cost; a 0.80 USD call is booked as 0.00 USD.
-  - Status: WAITING. Evidence: TESTED (the gate's side). UNVERIFIED: that a connector leaves the field empty. Who acts: the connector and store team (written request).
+  - Status: WAITING. Evidence: TESTED (the gate's side). UNVERIFIED: that a connector leaves the field empty. Who acts: the connector-and-store maintainer (written request).
 - **K22. Not settled:** a reply with an unreadable cost. The worst case stays booked, not the real cost.
   - Example: a reply reports its cost as "not a number"; the full 1.00 USD stays booked.
   - Status: PINNED. Evidence: TESTED. Who acts: nobody.
 - **K23. Not counted:** earlier attempts of a call that succeeded after retries. Only the last attempt is settled.
   - Example: attempt 1 times out but was billed 0.40 USD; attempt 2 costs 0.30 USD; only 0.30 USD is booked.
-  - Status: WAITING. Evidence: UNVERIFIED (read from the code). Who acts: the connector and store team (written order).
+  - Status: WAITING. Evidence: UNVERIFIED (read from the code). Who acts: the connector-and-store maintainer (written order).
 - **K24. The gate passes a higher real cost to settle:** a call that costs more than its worst case is passed to settle at the real cost, on purpose.
   - Example: a call reserved at 1.00 USD that costs 1.20 USD is settled at 1.20 USD.
   - How often this happens depends on the worst-case formula, which does not exist yet (K25).
   - Status: PINNED. Evidence: TESTED (the gate's side). Who acts: nobody (as built).
 - **K24a. Not shown:** how the store books a cost above the worst case. The store's code is not on this branch.
-  - Status: OPEN. Evidence: NOT RUN (no test of the store's side ran here). Who acts: the connector and store team, when its store code reaches this branch.
+  - Status: OPEN. Evidence: NOT RUN (no test of the store's side ran here). Who acts: the connector-and-store maintainer, when its store code reaches this branch.
 - **K25. Not written:** the worst-case formula for the gate. The gate takes the function from the installer. It must cover the system prompt, the messages, the tool schemas and the documents, and the attempts. No function in this tree does that.
   - Example: the one worst-case function in the tree prices only the system prompt and the messages, and only the replay command line uses it.
   - The gate accepts a worst case of 0.00 USD, so a faulty function could reserve nothing (UNVERIFIED, read in the code).
-  - Status: WAITING. Evidence: UNVERIFIED (read from the code; nothing to test). Who acts: the connector and store team (written order).
+  - Status: WAITING. Evidence: UNVERIFIED (read from the code; nothing to test). Who acts: the connector-and-store maintainer (written order).
 - **K26. Not enforced by the database:** the runtime login can rewrite the spend counters. On this branch it holds SELECT, INSERT and UPDATE on the tables `spend` and `spend_month`.
   - Example: faulty code could lower the booked amount.
   - Status: OPEN. Evidence: UNVERIFIED (read from the grant map; no database test was run here).
-  - Who acts: the owner decides whether to tighten these rights. Default that applies until the owner decides: they are tightened. Then the connector and store team changes them.
+  - Who acts: the owner decides whether to tighten these rights. If the owner does not decide, the plan is to tighten them. Today they are not tightened. Then the connector-and-store maintainer changes them.
 - **K27. Not refused:** an out-of-date price table.
   - Example: a vendor raises prices; the worst case is computed at the old price.
   - Status: STATED (source: a development note dated 2026-11-20, not shipped with the kit). Evidence: NONE. Who acts: nobody.
@@ -252,7 +253,7 @@ Known gaps:
 Shown by tests, and what is not:
 
 - TESTED (the gate's tests): a refused reservation, including the stop switch's refusal, means no model call.
-- UNVERIFIED: that the store refuses every reservation while the switch is on. This is in the connector and store team's code. No test of it ran on this branch.
+- UNVERIFIED: that the store refuses every reservation while the switch is on. This is in the connector-and-store maintainer's code. No test of it ran on this branch.
 - NOT RUN: any end-to-end stop of a live run.
 
 Known gaps:
@@ -260,7 +261,7 @@ Known gaps:
 - **K29. Not narrowed by the database:** the runtime login can change the stop switch and sign a stop record with any name. On this branch it holds SELECT, INSERT and UPDATE on the table `kill_switch`, and the migrations add no trigger on it.
   - Example: a stop record says "by: operator" when the runtime wrote it. The runtime can also set the flag back to off.
   - Status: OPEN. Evidence: UNVERIFIED (read from the grant map and the migrations; no database test was run here).
-  - Who acts: the owner decides whether to tighten these rights. Default that applies until the owner decides: they are tightened. Then the connector and store team changes them.
+  - Who acts: the owner decides whether to tighten these rights. If the owner does not decide, the plan is to tighten them. Today they are not tightened. Then the connector-and-store maintainer changes them.
 - **K30. Not stopped:** a call already in flight, and the test and replay command lines (they do not read the switch).
   - Example: a 30-second call started before the stop still completes.
   - Status: STATED (source: a development note dated 2026-11-20, not shipped with the kit). Evidence: NONE. Who acts: nobody.
@@ -278,10 +279,10 @@ Known gaps:
 - **K31. Not recorded:** whether anything was masked, and the route.
   - Example: an investigator cannot tell from the row whether a secret was masked.
   - Status: OPEN. Evidence: UNVERIFIED (read from the code: the row's map field covers map use only).
-  - Who acts: the owner decides whether to add a "masked: yes or no" field and the route. Default that applies until the owner decides: both are added.
-- **K32. Not shown on this branch:** whether a login other than the runtime login can add audit rows. Such logins belong to the connector and store team's store code, which is not on this branch.
+  - Who acts: the owner decides whether to add a "masked: yes or no" field and the route. If the owner does not decide, the plan is to add both. Today neither is added.
+- **K32. Not shown on this branch:** whether a login other than the runtime login can add audit rows. Such logins belong to the connector-and-store maintainer's store code, which is not on this branch.
   - On this branch the audit tables are append-only for every login (UNVERIFIED, read from the migrations).
-  - Status: OPEN. Evidence: UNVERIFIED. Who acts: the connector and store team, when its store code reaches this branch.
+  - Status: OPEN. Evidence: UNVERIFIED. Who acts: the connector-and-store maintainer, when its store code reaches this branch.
 - **K33. Not in the record:** the test and replay command lines print their audit lines to the screen only.
   - Example: a replay leaves no row in the store.
   - Status: STATED (source: a development note dated 2026-11-20, not shipped with the kit). Evidence: NONE. Who acts: nobody.
@@ -304,7 +305,7 @@ Known gaps and fixed findings:
 - **K35. Not masked:** a bare number with no label.
   - Example: `ref 55556666 paid` stays as written (MEASURED here). In the released code, 24 of 43 such test lines were not masked (MEASURED in a recorded run on that code).
   - A development note dated 2026-11-20 calls this accepted. No written order for that acceptance is on file, so the acceptance is UNVERIFIED.
-  - Status: OPEN. Evidence: MEASURED (the gap); UNVERIFIED (the acceptance). Who acts: the owner confirms the acceptance, or the text and masking team finds the order.
+  - Status: OPEN. Evidence: MEASURED (the gap); UNVERIFIED (the acceptance). Who acts: the owner confirms the acceptance, or the text-and-masking maintainer finds the order.
 - **K36. Fixed:** host names with no "host" word in front. A name under a private suffix is now masked whole. So is a label after the word `host` or `hostname` that ends in two digits or in a hyphen and a digit. The private suffixes are `.corp`, `.lan`, `.intranet`, `.intra`, `.localdomain`, `.home.arpa`, and `.internal` or `.local` when no label or call follows.
   - Example: `db01.corp.example` becomes `<HOSTNAME_1>` (before: `<HOSTNAME_1>.example`); `host db01 is down` becomes `host <HOSTNAME_1> is down`; `hostname=db01 state=down` becomes `hostname=<HOSTNAME_1> state=down` (MEASURED here).
   - In the released code, 28 of 44 test lines left a label of the name readable (MEASURED in a recorded run on that code).
@@ -333,7 +334,7 @@ Known gaps and fixed findings:
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
 - **K39. Not proven:** that the repeated search finds every value. Each call repeats the patterns and the masking until a round changes no text. A call has 5 rounds in total: the first pass and 4 repeat rounds. A text still changing in round 5 is refused.
   - Example: planted text glues a bank code to a secret, then puts the account after that code elsewhere. This needed a third round and is masked.
-  - Status: OPEN. Evidence: TESTED (the chain; the loop to a fixed point). Who acts: the text and masking team.
+  - Status: OPEN. Evidence: TESTED (the chain; the loop to a fixed point). Who acts: the text-and-masking maintainer.
 - **K40. Fixed:** the last part, up to 7 characters, of a longer token stayed readable in its other copies. This happened when the token was found only after a shorter known secret inside it.
   - Example: `password=ab9x`, then `Bearer ab9xqrstu`. The line `note ab9xqrstuvw end` used to show `note <SECRET_1>qrstuvw end`. It now shows `note <BEARER_1>vw end` (MEASURED here).
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody. See K68.
@@ -342,10 +343,10 @@ Known gaps and fixed findings:
   - The secret finder has no wall-clock limit. A caller that needs one must add it.
   - Example (MEASURED, processor time, on the test machine): the text `curl -u ` repeated up to the size cap took 4.5 to 5.4 seconds against the 6.0-second budget.
   - A machine 12 to 33 percent slower than the test machine refuses that text (worked out from those runs, not run). A real document of that shape is then lost.
-  - Status: OPEN. Evidence: MEASURED. Who acts: the text and masking team.
+  - Status: OPEN. Evidence: MEASURED. Who acts: the text-and-masking maintainer.
 - **K42. Not masked later:** a secret first seen in a tool's error message. It does not enter the run map.
   - Example: a tool fails with "bad password hunter2zz"; later results show `hunter2zz`.
-  - Status: WAITING. Evidence: UNVERIFIED (read in the code: the error text is masked with a throw-away map). Who acts: the connector and store team (written request).
+  - Status: WAITING. Evidence: UNVERIFIED (read in the code: the error text is masked with a throw-away map). Who acts: the connector-and-store maintainer (written request).
 - **K43. Not masked:** a secret spelled like the secret finder's own placeholders. Four shapes stay as typed and get no map entry.
   - A value made only of escaped secret placeholders (`‹SECRET_1›`, with angle quotes), alone or in a run.
   - A value made only of typed secret placeholders (`<SECRET_1> <SECRET_2>`).
@@ -375,7 +376,7 @@ Known gaps and fixed findings:
   - A US Social Security number with a letter glued to it. A host name with a letter, digit or `_` after its private suffix.
   - Example: `x4155550132` and `acct_iban_DE89370400440532013000` go out as written (MEASURED here).
   - Masked more than before (as built): a number of 10 to 16 digits before a full stop and a space is now masked as a phone number (`ref 1234567890. Next`). Later copies of it glued to a dot are then masked too (`1234567890.tar`).
-  - A card number written as one run beside `_` (`card_4242424242424242`) is masked as a phone number and kept in the run's map as one.
+  - UNVERIFIED (read in the code): a card number written as one run beside `_` (`card_4242424242424242`) is masked as a phone number and kept in the run's map as one.
   - A phone number with a country code and spaced groups before a full stop and a letter or digit is masked only in part. `call +44 20 7946 0958.Thanks` becomes `call <PHONE_1> 0958.Thanks`, and `call 0044 20 5550 1234.5` becomes `call <PHONE_1> 1234.5` (MEASURED here). A strict expected failure pins each (the earlier code did the same).
   - Masked more than before (as built): `tok 4155550132.-Ab9 x` becomes `tok <PHONE_1>.-Ab9 x` (MEASURED here); the earlier code left it. A test pins this output and a strict expected failure records the wanted one.
   - Status: PINNED. Evidence: TESTED; MEASURED. Who acts: nobody.
@@ -438,17 +439,19 @@ Known gaps and fixed findings:
   - An extraction function that sends the caller's document unmasked; no code calls it.
   - A demo that sends the question a user typed.
   - The check that every model-calling module is registered works per module, not per call (UNVERIFIED, read).
-  - Status: OPEN. Evidence: UNVERIFIED (read in the code). Who acts: the connector and store team, once a decision on each path is written.
-- **K82. Not decoded by the base64 view:** these base64 texts stay readable even when they hold a secret.
-  - A blob glued to other base64 characters, such as a path (`/v1/blob/` + the blob).
-  - A blob split across fields, or wrapped with a log prefix on each line.
-  - Hex, base32, base85, compressed data and quoted-printable text.
-  - A decoded text in which 10 percent or more of the characters are not printable, such as a blob padded with blank-looking characters.
-  - A blob of capital letters, digits and `_` written between angle brackets.
-  - Base64 whose decoded text holds no shape the secret finder knows (`aHVudGVyMnp6IQ==`, MEASURED here).
-  - Status: PINNED (five of the cases have strict expected failures). Evidence: TESTED. Who acts: nobody.
-- **K82a. Not pinned:** two cases of K82 have no test. One is a blob of capital letters, digits and `_` between angle brackets. The other is base64 whose decoded text holds no known shape.
-  - Status: OPEN. Evidence: UNVERIFIED (read in the code). Who acts: the text and masking team adds a test, or states the limit.
+  - Status: OPEN. Evidence: UNVERIFIED (read in the code). Who acts: the connector-and-store maintainer, once a decision on each path is written.
+- **K82. Not decoded by the base64 view:** these eight base64 cases stay readable even when they hold a secret. Cases 1 to 4 and 6 each have a named test that is a strict expected failure. Cases 5, 7 and 8 have no test (K82a).
+  1. A blob glued to other base64 characters, such as a path (`/v1/blob/` + the blob). Test: `test_limit_glued_prefix`.
+  2. A blob split across fields. Test: `test_limit_split_fields`.
+  3. A wrapped blob with a log prefix on each line. Test: `test_limit_log_prefixed_lines`.
+  4. Base32 and hex. Test: `test_limit_base32_hex`.
+  5. Base85, compressed data and quoted-printable text. No test.
+  6. A decoded text in which 10 percent or more of the characters are not printable, such as a blob padded with blank-looking characters. Test: `test_limit_padded_blob`.
+  7. A blob of capital letters, digits and `_` written between angle brackets. No test.
+  8. Base64 whose decoded text holds no shape the secret finder knows (`aHVudGVyMnp6IQ==`, MEASURED here). No test.
+  - Status: PINNED for cases 1, 2, 3, 4 and 6 (5 of 8). Evidence: TESTED (the tests are in `tests/test_b64_scan.py`). Who acts: nobody.
+- **K82a. Not pinned:** cases 5, 7 and 8 of K82 have no test.
+  - Status: OPEN. Evidence: UNVERIFIED (read in the code). Who acts: the text-and-masking maintainer adds a test, or states the limit.
 - **K84. Not masked:** the plain copy of a password stored with punctuation inside it, or with an escape that is not on the list.
   - Example: `password=hunter22,x and hunter22` leaves the second `hunter22` readable (MEASURED here). The same holds for `hunter22.x` and `hunter22&x=1`.
   - A double-encoded edge stays: `password=hunter22%250A then hunter22` leaves the second `hunter22` readable (MEASURED here).
@@ -457,7 +460,7 @@ Known gaps and fixed findings:
     - a mixed-case cut-short entity (`&QUOT`);
     - a tag longer than 16 characters at an edge.
   - Closed since the last version (see K77): `%0A`, `&quot;` and `<br/>` at an edge, an all-capital value such as `ADMIN_1`, and a value with one stray `‹` or `›`. Still open by design of the fix: a password wrapped in a look-alike token (`‹SECRET_x›`) gets no second entry.
-  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text and masking team; no fix for interior punctuation is built, and whether to accept it as a stated limit is the owner's to decide.
+  - Status: OPEN. Evidence: MEASURED; UNVERIFIED (the not-done list). Who acts: the text-and-masking maintainer; no fix for interior punctuation is built, and whether to accept it as a stated limit is the owner's to decide.
 
 ### 2.6 Text folding (look-alike and hidden characters)
 
@@ -511,7 +514,7 @@ Known gaps and fixed findings:
 - **K55. Not decided:** the same wider matching in Korean, Japanese and Indian scripts, for the grounding check.
   - Example: a Korean name split by a hidden mark now counts as present.
   - Status: OPEN. Evidence: UNVERIFIED (a reviewer's reading).
-  - Who acts: the owner decides whether to accept it. Default that applies until the owner decides: the older rule returns for those scripts. Then the text and masking team changes it.
+  - Who acts: the owner decides whether to accept it. If the owner does not decide, the plan is to bring back the older rule for those scripts. Today the wider matching applies. Then the text-and-masking maintainer changes it.
 - **K56. Fixed:** a secret stored as `Müller` but shown with a separate accent mark was not masked in tool output.
   - Example: `Mu` + combining accent + `ller` is masked again.
   - Status: FIXED. Evidence: TESTED. Who acts: nobody.
@@ -522,8 +525,8 @@ Known gaps and fixed findings:
   - Example: a pilot build on the wrong Python stops before it builds the connection to the secrets vault.
   - Status: FIXED. Evidence: TESTED (one test, on Python 3.13 with the version faked). Who acts: nobody.
   - NOT RUN: a check of other outside services.
-- **K83. Not wired:** 14 public functions of text folding have no caller in the product. They are working code with tests and deliberate code breaks, kept in the security path.
-  - Example: the name-matching scan of K50 is one of them; no masking or approval step calls it.
+- **K83. Not wired:** 14 public functions of text folding have no caller in the product (UNVERIFIED: a search of `src/` found none). They are working code with tests and deliberate code breaks, kept in the security path.
+  - Example (UNVERIFIED, read in the code): the name-matching scan of K50 is one of them; no masking or approval step calls it.
   - The module's own note now also names 8 other public names (`FILLERS`, `key_tag`, `FOLD_VERSION`, `squeeze`, `AllowVerdict`, `fold_views`, `squeeze_views`, `scan_keyset`) as internal helpers, reached only from inside the module.
   - Status: OPEN. Evidence: UNVERIFIED (read in the code). Who acts: the owner decides whether to move or delete them. Until then nothing moves.
 
@@ -544,16 +547,16 @@ Known gaps and fixed findings:
 
 - **K59. Not masked:** the "requested by" line and other id fields.
   - Example (UNVERIFIED: read from the code, not tried on a real chat tool): a requester id such as `chat:U1|<!channel>` could make the chat tool notify everyone in the channel.
-  - Status: WAITING. Evidence: UNVERIFIED. Who acts: the connector and store team (written request).
+  - Status: WAITING. Evidence: UNVERIFIED. Who acts: the connector-and-store maintainer (written request).
 - **K60. Not proven:** that no clickable link remains. The old test used the same patterns as the code it tested. A new test uses its own patterns and also checks against a link-finding library.
   - Example (UNVERIFIED): a link whose end is not in the test's own, finite list of web-address endings could still slip past both.
-  - Status: OPEN. Evidence: TESTED (the independent test); UNVERIFIED (the missed link). Who acts: the text and masking team.
+  - Status: OPEN. Evidence: TESTED (the independent test); UNVERIFIED (the missed link). Who acts: the text-and-masking maintainer.
 - **K61. Fixed:** an e-mail address with a digit or `_` glued behind it was shown whole.
   - Example: `anna.m@example.org9` becomes `<EMAIL_1>9` (MEASURED here).
   - Status: FIXED. Evidence: TESTED; MEASURED. Who acts: nobody.
 - **K62. Not checked:** approval summaries stored before these fixes, as shown on the admin page.
   - Example: a summary stored before the fixes could still show an e-mail address; nobody has looked.
-  - Status: OPEN. Evidence: NOT RUN. Who acts: the text and masking team.
+  - Status: OPEN. Evidence: NOT RUN. Who acts: the text-and-masking maintainer.
 
 MEASURED slowdown of approval-message masking on the joined code (median, on one test machine):
 
@@ -565,18 +568,18 @@ MEASURED slowdown of approval-message masking on the joined code (median, on one
 - **K63. Late failure:** the project file allows installing on Python 3.12. Once the text-folding change ships, by design a pilot or prod install there succeeds and the program refuses to start.
   - Example: an operator installs on 3.12; the program then refuses to start (see README, section "Python version").
   - Status: OPEN. Evidence: NOT RUN (no pilot start on 3.12 was tried). UNVERIFIED (read from the file): that the project file allows 3.12.
-  - Who acts: the connector and store team.
+  - Who acts: the connector-and-store maintainer.
 
 ### 2.9 What was not run (NOT RUN)
 
 - A batch of the whole test suite whose commit is named and is the code this file describes (2.0 has the batches that are on record).
-- Python 3.12 on this code. The whole suite ran on Python 3.12 at an earlier commit.
-- The store's tests on database version 17. The database test files ran on version 17 at an earlier commit, and the store's own tests skipped there.
+- Python 3.12 on this code. UNVERIFIED (a development note says the whole suite ran on Python 3.12 at an earlier commit; no result line is on file).
+- The store's tests on database version 17. UNVERIFIED (a development note says the database test files ran on version 17 at an earlier commit and the store's own tests skipped there; no result line is on file).
 - Any live call to an AI service. Any end-to-end stop of a live run. The gate installed at any call point.
 - The long-token change (not built).
-- The whole files of deliberate code breaks for text folding (268 breaks), the gate (140) and the finder (130) on this code. The files for the base64 and host-name change (58), the glued-text change (43) and the punctuation change (35) ran whole on separate branches before they merged.
+- The whole files of deliberate code breaks for text folding (268 breaks), the gate (140) and the finder (130) on this code. The files for the base64 and host-name change (58), the glued-text change (43) and the punctuation change (35) ran whole on separate branches before they merged. UNVERIFIED (a development note says so; no result line is on file).
 
-### 2.10 Builders' batches on file
+### 2.10 Batches on file (separate copies of the code)
 
 Each row is a batch run on a separate copy of the code. The result lines are in development notes dated 2026-11-20, not shipped with the kit. None of these is a batch of the whole suite.
 
@@ -611,14 +614,14 @@ Status words (one per known gap):
 - FIXED: changed, and a test fails without the change. The change is on the shared branch. A recorded batch that holds that test passed on a separate copy or on the merged code. It is not in the released code.
 - PINNED: not fixed, on purpose. A named test fails if the behaviour changes. This includes a "strict expected failure": a test that records the gap and fails once the gap closes. Whoever closes the gap removes that mark.
 - STATED: written down in a named source, with no test. Each STATED line names the kind of its source and its date. Nobody is asked to act. "Accepted" is used only where a decision is on file; otherwise the line says "not prevented".
-- WAITING: another team must act, and a written request or a written order exists.
+- WAITING: another maintainer must act, and a written request or a written order exists.
 - OPEN: nobody has fixed or decided it yet. The line names who must act.
 
 People and code:
 
 - The owner: the person who owns Hadavin and has the final say. The owner decides the open questions named below.
-- The connector and store team: the team that owns the model connectors, the store, the agent loop and the approval-message code. It must install the gate.
-- The text and masking team: the team that built the gate, the secret finder changes and text folding.
+- The connector-and-store maintainer: whoever owns the model connectors, the store, the agent loop and the approval-message code. It must install the gate.
+- The text-and-masking maintainer: whoever owns the gate, the secret finder and text folding.
 - Reviewer: an independent checker who only reads.
 - Operator: the person who installs and runs the kit for a client.
 - The kit: this software package.

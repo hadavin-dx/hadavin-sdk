@@ -39,7 +39,7 @@ The labels TESTED, MEASURED, UNVERIFIED and NOT RUN are defined once, in [SECURI
 
 ## Text-fold functions that nothing calls yet
 
-UNVERIFIED (read in the code; a search of `src/` found no caller): the protected-value (DENY) side of the text fold in `guard/textnorm.py` is present and tested. The redaction path does not call it. The functions are:
+UNVERIFIED (read in the code; a search of `src/` found no caller): the protected-value side of the text fold in `guard/textnorm.py` (DENY: the side that looks for values that must never be shown) is present, and its tests are in the recorded batches (TESTED, see SECURITY.md 2.10). The redaction path does not call it. The functions are:
 
 - `scan_holds`, `register_value`, `Coverage`, `scan_cache`, `scan_needles` and `scan_views`;
 - `identity_key`, `identity_keys`, `could_be_same_person`, `allow_equal` and `names_equal`;
@@ -112,7 +112,7 @@ What this release does and does not promise, in one place. The labels are define
   - The runtime role appends and reads evidence and has no DELETE. Only the purge role deletes it (`migrate --purge-role`, `backends.store.purge_dsn_secret_name`, required in pilot and prod on Postgres). Its SELECT is limited to the columns its DELETE needs.
   - `migrate` asserts the roles' EFFECTIVE privileges (inherited, PUBLIC, default privileges, relations outside the grant map, ownership, CREATE on the schema, superuser). It rolls the grants back on any excess.
   - The runtime process holds both DSNs and tool bodies run in-process. So the split defends against bugs and mistakes, not a compromised process. Run `purge_evidence` as its own job holding only the purge secret if that matters.
-  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work. OPEN: the owner decides whether to tighten these rights (SECURITY.md, the findings "Not enforced by the database" and "Not narrowed by the database"). Default that applies until the owner decides: they are tightened. Until then this is a waiver whose acceptance is not on file.
+  - **Waiver:** the runtime role also holds the approver-recording and kill-switch write rights (UPDATE `kill_switch`, UPDATE `approval_requests`, INSERT `approval_decisions`). The agent runtime and the approvals recorder are one process today. Separating them is later work. OPEN: the owner decides whether to tighten these rights (SECURITY.md, the findings "Not enforced by the database" and "Not narrowed by the database"). If the owner does not decide, the plan is to tighten them. Today they are not tightened. So this is a waiver whose acceptance is not on file.
 - **Caps are per process, not per run.** `max_concurrent_tool_calls` and `max_tool_calls_per_minute` (and the abandoned-body ceiling) protect the client's systems from the agent.
   - One run making many slow calls, or eight stuck bodies, can refuse tools to every run in the process until they end.
   - A body that never returns holds its slot until restart.
