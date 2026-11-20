@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T05:33:18Z
+UPDATED_UTC: 2026-11-20T05:33:48Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
@@ -6,21 +6,22 @@ BOOT_ID: 70253298
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 7
 PERCENT: 66
-AGENTS_RUNNING: 4
-CAPACITY: load 0.0 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
-DISK: / 60G free, 14% used; git worktrees 2; 424K	/tmp/claude-0;351M	/root/.cache/uv;
+AGENTS_RUNNING: 5
+CAPACITY: load 0.1 of 4 cores, mem 0/15 GB, disk 60G free, 14% used, light agents 5, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 2; 492K	/tmp/claude-0;351M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: none
 NEXT: resolve ticket G review; pick the builders' work into "code F:" and "code G:" commits; then G2, G3
-PUSHED_UTC: 2026-11-20T05:32:54+00:00
+PUSHED_UTC: 2026-11-20T05:33:18+00:00
 
 (11:03 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
+| a9910106 | evidence runner | fable | P1c probe: runs base64, host-name and bare-number inputs against main's redactor from a clean export in /tmp/core-c-p1c; writes evidence/P1c-probe.md | 05:34 | 05:50 | 5 | running | n/a | 0 | ORDER 006 item 1: only gaps proven by a failing input get built |
 | a2bfa183 | builder | fable | code G0 (runmap._scan split + is_masked) and code F (guard/model_gate.py) with their two test files, in the main checkout; ruff and the tests of those files only | 05:32 | 05:55 | 5 | running | n/a | 0 | lead GO BUILD F and G by message 05:29 |
 | a7a352c6 | builder | fable | code G1: folds rebase/P1b-o140 + fix rounds 1 and 2 of core/P1b-fixwip onto main in its OWN git worktree, local branch wip-g1-fold; re-pins; runs the textnorm tests once | 05:32 | 06:30 | 2 | running | n/a | 0 | lead GO BUILD G; separate worktree so two builders never share a checkout; HEAVY (runs tests) |
 | a04f3d03 | reviewer | fable | EGM plan review of tickets/G-text-deltas.md, implementation readiness | 05:32 | 05:40 | 5 | running | 1 of 1 | 0 | review runs alongside the build (lead message 05:29) |
@@ -62,7 +63,7 @@ PUSHED_UTC: 2026-11-20T05:32:54+00:00
 | BUILD G0 + F (check-only function, gate wrapper) | RUNNING | 5 | evidence/F-G0-1.md | 1 | one builder; tests/test_k5_producers.py will be red until SPINE applies requests/1-producers.patch |
 | BUILD G1 fold | RUNNING | 2 | evidence/G1-fold.md | 1 | one builder in a worktree |
 | BUILD G2 P1d-a, G3 P2d-1 port, G6 wording | WAIT G1 | 0 | none | 0 | they stack on the fold; G6 wording waits for the lead's OK of the text |
-| BUILD G4 P1c | BLOCKED | 0 | none | 0 | tickets/P1c.md revision 7 and the hostile corpus are not in this repository (QUESTIONS 1) |
+| BUILD G4 P1c | RUNNING (probe) | 10 | evidence/P1c-probe.md | 1 | ORDER 006: P1c is written new, only for gaps a failing input proves; the probe runs now |
 
 ## RESTARTS
 | time UTC | what | what was running | restarted | still missing |
@@ -80,4 +81,4 @@ PUSHED_UTC: 2026-11-20T05:32:54+00:00
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-E2 in ESCALATIONS.md (the mask check would refuse normal traffic: lead decision). GO BUILD F/G is still not written in ORDERS.md (built on the 05:29 message). 8 questions in QUESTIONS.md. P1c inputs missing. E1 cron denied.
+E2 in ESCALATIONS.md (the mask check would refuse normal traffic: lead decision needed). DECISIONS 05:33: gate takes worst_case= callable, not routes= (confirm). E1 cron denied. 5 agents run on 4 cores: 1 heavy (fold tests), 4 light.
