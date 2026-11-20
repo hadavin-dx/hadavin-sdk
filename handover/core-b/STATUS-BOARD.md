@@ -1,28 +1,31 @@
-UPDATED_UTC: 2026-11-20T05:25:03Z
+UPDATED_UTC: 2026-11-20T05:28:05Z
 SESSION: core-b
-ORDER: 004
+ORDER: 006
 STATE: WORKING
 BOOT_ID: 2ee8a4de
-ITEMS_TOTAL: 6
-ITEMS_OPEN: 3
-PERCENT: 25
-AGENTS_RUNNING: 2
-CAPACITY: load 0.11 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, agents light 2 heavy 0
-DISK: / 60G free, 13% used; worktrees /tmp/core-b-wt 0
+ITEMS_TOTAL: 7
+ITEMS_OPEN: 4
+PERCENT: 30
+AGENTS_RUNNING: 4
+CAPACITY: load 0.03 of 4 cores, mem 0/15 GB, disk 60G free, 13% used, agents light 4 heavy 0
+DISK: / 60G free, 13% used; worktrees /tmp/core-b-wt 5.3M
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: none
 FAILED: E1 session cron refused by permission check; board runs at the end of each tool batch instead (ESCALATIONS.md)
-NEXT: T1 plan read-back, then interface tickets (i) store methods and (ii) reserve/settle API
-PUSHED_UTC: 2026-11-20T05:22:28Z (previous push; this board is pushed right after writing)
-IST: 10:55 IST
+NEXT: interface tickets (i) store methods and (ii) reserve/settle API, then test writer for step A
+PUSHED_UTC: 2026-11-20T05:25:04Z (previous push; this board is pushed right after writing)
+IST: 10:58 IST
 
 ## AGENTS
 | id | role | model | what | started UTC | expected end | % | state | review round | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | a468ce14 | lookup | fable | Q2: reads the package and writes LANE-MAP.md | 05:19 | done | 100 | done | n/a | 0 | tickets need the file and line facts |
+| builder-A | builder | fable | step A source in worktree /tmp/core-b-wt/A, one commit 'code A:' | 05:33 | +15 min | UNVERIFIED | running | none (A has no ticket review) | 0 | lead GO BUILD A; ticket tickets/A-audit-drain.md |
+| ticket-B | lookup | fable | checks the lead draft against the code and writes tickets/B-stop-state.md | 05:33 | +10 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
+| ticket-C | lookup | fable | checks the lead draft and writes tickets/C-price-constraint.md | 05:33 | +8 min | UNVERIFIED | running | 0 of 1 | 0 | ORDER 004 item 3 |
 | ae122278 | lookup | fable | reads input branches P4b1, P4d, P4d-a2, P4a, T1-T2 for what reserve/settle code already exists; writes notes/heads-money.md | 05:27 | +10 min | UNVERIFIED | running | n/a | 0 | interface tickets must reuse, not rebuild |
-| a367057d | lookup | fable | reads main and branches P2a-1, P4a for steps A, B, C facts; writes notes/heads-stop-audit-price.md | 05:27 | +10 min | UNVERIFIED | running | n/a | 0 | tickets A, B, C need file and line facts |
+| a367057d | lookup | fable | facts for steps A, B, C; notes/heads-stop-audit-price.md | 05:22 | done | 100 | done | n/a | 0 | tickets A, B, C need file and line facts |
 | a65b1e8c | reviewer (egm-comprehension) | fable | ORDER 001 dry run | 04:10 | done | 100 | done | 1 of 1 | 0 | proof only |
 | ab7f938c | reviewer (egm-style) | fable | ORDER 001 dry run | 04:10 | done | 100 | done | 1 of 1 | 0 | proof only |
 
@@ -43,7 +46,8 @@ IST: 10:55 IST
 | Q2 lane map | DONE | 100 | LANE-MAP.md | 1 | test names come from a text search, not a run; some modules marked UNVERIFIED in the file |
 | Q3 to Q9 baselines | SKIPPED BY LEAD | 0 | none | 0 | lead runs them on the laptop |
 | T1 plan read-back | DONE | 100 | PLAN-READBACK.md | 1 | 4 conflicts between inputs and 4 questions listed there |
-| T2 tickets (interfaces i, ii first, then A, B, C, F-store) | RUNNING | 5 | interfaces/, tickets/ (not yet) | 1 | waiting for the two lookup notes; I read store code meanwhile |
+| T2 tickets (interfaces i, ii first, then A, B, C, F-store) | RUNNING | 25 | tickets/A-audit-drain.md done; B, C by agents; interfaces (i), (ii) by me now | 1 | core-a and core-c wait for the interfaces |
+| BUILD A audit drain | RUNNING | 10 | none yet | 1 | builder in its own worktree so board pushes never meet half-written code |
 | T3 one EGM review round per ticket | WAIT T2 | 0 | | 0 | |
 | T4 test files for other sessions | WAIT | 0 | | 0 | starts when interfaces are published; owner allowed wip/cloud-core-b/* at 05:21 |
 
