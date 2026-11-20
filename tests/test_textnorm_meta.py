@@ -87,15 +87,15 @@ def _functions(path: Path) -> list[str]:
     return [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
 
 
-def test_a_the_list_has_263_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of_fix6_31_of_fix7_10_of_p1a_fix8_77_of_the_p1b_fix_batch_and_23_of_g10_and_m3_with_unique_names():
+def test_a_the_list_has_268_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of_fix6_31_of_fix7_10_of_p1a_fix8_77_of_the_p1b_fix_batch_and_28_of_g10_m3_and_the_tidy_with_unique_names():
     names = [m.name for m in mm.M]
-    assert len(names) == 263 and len(set(names)) == 263, names
+    assert len(names) == 268 and len(set(names)) == 268, names
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
     assert (
-        len(names[28:]) == 235
-    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 26 of P1b, 14 of fix5, 5 of fix6, 31 of fix7, 77 of the P1b fix batch (30 of the first batch, 33 of order 137, 9 of round 1 and 5 of round 2) and 10 of P1a fix8 (the list order is the merge order, not the date order), and the 23 of G10 and M3 last
+        len(names[28:]) == 240
+    )  # 12 of the first package, 9 of fold2, 3 of fold3, 16 of fold4, 9 of fix4, 26 of P1b, 14 of fix5, 5 of fix6, 31 of fix7, 77 of the P1b fix batch (30 of the first batch, 33 of order 137, 9 of round 1 and 5 of round 2) and 10 of P1a fix8 (the list order is the merge order, not the date order), and the 28 of G10, M3 and the tidy last
     assert names[52:53] == ["fold: case folded before the marks are dropped (the fold2 order)"], (
         "the restored fold2 mutant is the first of the fold4 mutants"
     )
@@ -148,9 +148,9 @@ def test_a_the_list_has_263_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of
         }
         for n in names[163:240]
     ), "the fix batch mutants"
-    assert len(names[240:]) == 23 and all(
+    assert len(names[240:]) == 28 and all(
         n.split(":")[0] in {"deadline", "injection"} for n in names[240:]
-    ), "the 23 of G10 and M3 (the deadline of the fold and its wall clock)"
+    ), "the 28 of G10, M3 and the tidy (the deadline of the fold and its wall clock)"
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -216,7 +216,7 @@ def test_a_the_moved_tests_and_the_new_killers_exist_once_each():
 def test_a_print_the_placement_table():
     rows = [f"{m.name} | {m.test_file} | {m.only_test}" for m in mm.M]
     print("\n".join(rows))
-    assert len(rows) == 263
+    assert len(rows) == 268
 
 
 def test_b_every_xfail_of_the_differential_file_is_strict_and_names_assertion_error():
@@ -379,7 +379,7 @@ def test_the_ci_lint_job_holds_the_two_ban_steps_word_for_word():
 
 def test_the_split_of_the_mutants_into_behaviour_and_wording_only_is_derived_from_the_syntax_trees():
     behaviour, wording = mm.split_counts()
-    assert behaviour + wording == len(mm.M) == 263
+    assert behaviour + wording == len(mm.M) == 268
     new = mm.M[153:163]  # the 10 of P1a fix8
     assert len(new) == 10
     assert [m.name for m in new if mm.is_wording_only(m)] == [
