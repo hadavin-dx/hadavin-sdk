@@ -772,19 +772,6 @@
    "review round n of cap": "1",
    "retries so far": 0,
    "reason": "lead 15:02"
-  },
-  {
-   "id": "rev-lead-tswm",
-   "role": "fresh independent reviewer (codebase-details), read-only",
-   "model": "sonnet",
-   "what exactly it is doing": "lead's wip/lead-b-ts-watermark (stop-year constraints validate step, removed watermark)",
-   "started UTC": "15:08",
-   "expected end": "15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1",
-   "retries so far": 0,
-   "reason": "lead 15:02"
   }
  ],
  "tests": [
@@ -1157,6 +1144,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "15:12 YOUR wip/lead-b-ts-watermark reviewed fresh (handover/core-a/reviews/rev-lead-tswm.md): NO Blocker/Major provable; the stop-year CHECK (2000..2100, NOT VALID then validate only if clean) is race-free; a planted far-future/far-past stop CANNOT defeat the switch (the gate read counts stops vs clears and ignores ts); the watermark removal is clean; DBs with the earlier 0009 are refused with a DROP hint. NOT a full clearance: the reviewer could not read the base migrate.py: PLEASE CONFIRM 0009 is absent from the released manifest on base 8996c3d6d. Nits: test_the_validate_step_gives_up_on_a_locked_table match='locked' is vacuous (use LockNotAvailable); validate_constraints swallows every OperationalError as 'locked'; --validate-constraints silently ignores --reset-draft/--accept-changed-draft; exit 0 'nothing' even when 0009 was never applied; the 'run migrate again' hint may need --reset-draft. Running: merge-c, rev-lead-migrate.",
   "15:08 AGENTS 3 (lead 15:02 list): (1) CRASH-MATRIX part 2 is ALREADY DONE (CRASH-MATRIX.md 'Part 2: paths with a tool call, a proposal and an approval': 171 kill points on PG16 and memory, no invariant broke); (2) ORDER 017 Major B is DONE (502/503/504 and no-status = busy in the template: README l.110/118, JSON; minors earlier); (3) worker.py ALREADY reads core-b's bound reader `App.trigger_secret` (worker.py:647-650); (4) merge-c started: g2/g3 are NOT merged but 12 of their 16 commits are already in core-c by cherry-pick (git cherry): only 4 commits remain (73d624c12 G2 fix defang host token dots; 7de1c4f86, 2be153143, 7d6b5fbff G3 steps 2/4/5): the builder classifies each SUPERSEDED/APPLIES/CONFLICTS and cherry-picks only what is not superseded (a wholesale merge conflicts in 9-10 files because of the add/add of the cherry-picks); (5) reviewers on your wip/lead-b-migrate and wip/lead-b-ts-watermark started. core-c newest merge 53df94aee was already reviewed (rev-c-g8left).",
   "15:00 b-run-1 DONE (evidence/b-run-1.md, raw/b-run-1.log + b-run-1-full.log): core-b ad70e50bf on PostgreSQL 16.15 (superuser DSN): PG-gated set 23 failed, 2074 passed, 2 errors; whole suite 51 failed, 13742 passed, 1 error. 'Money battery not collected' does NOT reproduce here (212 collect). 7 test_stop_state_roles ids + test_no_reference_material match your laptop list; your test_audit_drain/spend_reservations/store_spend_ids_caps/limits_reserve ids do NOT occur on PG16 here. NEW here: 6 money_definer_mutants 'mutant pattern did not match in reserve' (stale anchors), 3 money_guard_mutants CheckViolation spend_usd_range, 2 store_spend_model seed23 expire op=0 ValueError, the writer check refusing the tests' own sb_* roles (2 setup ERRORs + 1), and in the whole suite 24 warden_port/test_audit_chain.py pydantic ValidationError for AuditEvent (not diagnosed: possibly the new field limits). Details appended to handover/core-b/requests/xr-from-core-a-reviews.md. No agents running.",
   "14:56 core-c 53df94aee reviewed (reviews/rev-c-g8left.md, appended to the core-c request file): no Blocker, no Major introduced (redact.py hunks are comments only). Pinned as 'kept' (trade-off): `call +44 20 7946 0958.Thanks` -> `<PHONE_1> 0958.Thanks` (last 4 digits readable when no space follows the full stop); G7-F4 and the ~7 s regex scan from my first review are still open. Running: cb-run1 only.",
@@ -3824,6 +3812,19 @@
    "review round n of cap": "-",
    "retries so far": 0,
    "reason": "b-run-1 at core-b ad70e50bf on PG 16.15: PG-gated 23 failed/2074 passed/2 errors; whole suite 51 failed/13742 passed/1 error; 'money battery not collected' does not reproduce; 7 stop_state_roles ids match the lead's; many of the lead's ids do not occur here; NEW here: money_definer_mutants stale anchors (6), money_guard_mutants spend_usd_range (3), seed23 expire op=0 (2), writer check refusing the tests' own sb_* roles (2 errors + 1), 24 warden_port test_audit_chain AuditEvent ValidationError; evidence/b-run-1.md"
+  },
+  {
+   "id": "rev-lead-tswm",
+   "role": "fresh independent reviewer (codebase-details), read-only",
+   "model": "sonnet",
+   "what exactly it is doing": "lead's wip/lead-b-ts-watermark (stop-year constraints validate step, removed watermark)",
+   "started UTC": "15:08",
+   "expected end": "15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1",
+   "retries so far": 0,
+   "reason": "lead wip/lead-b-ts-watermark: NO Blocker/Major provable (NOT a full clearance: base migrate.py/manifest/runbook unread); stop-year CHECK NOT VALID+validate is race-free, gate read ignores ts (planted row cannot defeat the switch), watermark removal clean, earlier-0009 DBs refused; nits: vacuous match='locked', OperationalError swallowed, --validate-constraints silently ignores --reset-draft, exit 0 when 0009 never applied; confirm 0009 is absent from the released manifest; reviews/rev-lead-tswm.md"
   }
  ]
 }
