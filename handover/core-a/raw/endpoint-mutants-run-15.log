@@ -81,3 +81,22 @@ ok  KILLED       G20h max_waiting of zero is accepted  [test_n15_runner_bounds_a
 ok  KILLED       G20i max_waiting may be a bool  [test_n15_runner_bounds_are_refused[kw5-max_waiting]]
 ok  CRASH        G20j make_app lets a bound of the Runner through as a ValueError  [test_n15_make_app_turns_a_bound_into_a_config_error]
 ok  KILLED       G21a the cap on connection threads is removed (a connection over the cap is not closed)  [test_connections_above_the_cap_are_closed_at_once_unread_and_the_cap_f]
+ok  KILLED       G21b the absolute read deadline is replaced by the pause limit of each recv  [test_a_slow_body_is_cut_at_the_absolute_deadline_not_at_the_pause_limi]
+ok  KILLED       G21c QuietServer.handle_error is deleted (the stdlib prints a traceback)  [test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_]
+ok  KILLED       G21d QuietServer.process_request_thread is deleted (a BaseException reaches the thread hook)  [test_a_fault_in_setup_or_finish_on_a_real_connection_is_one_quiet_log_]
+ok  KILLED       G22 Runner.close does not set the closed flag (the shut-down pool refuses the work instead)  [test_after_close_a_new_key_is_503_at_once_with_no_error_line_and_the_p]
+ok  KILLED       G23a _answer does not compare the agent of the row (T-1)  [test_same_key_and_ref_but_another_agent_or_principal_is_409[agent_id]]
+ok  KILLED       G23b _answer does not compare the principal of the row (T-1)  [test_same_key_and_ref_but_another_agent_or_principal_is_409[principal_]
+ok  KILLED       G24 a 401 carries an extra header X-Reason (the refused() header subset)  [test_t5_8b_removed_old_secret_is_refused]
+ok  KILLED       G25 sender_map accepts a sender id listed twice  [test_make_wsgi_refuses_a_bad_setup]
+ok  KILLED       G26a parse_body takes a duplicate member (no _no_duplicates hook)  [test_parse_body_refuses[duplicate document]]
+ok  KILLED       G26b parse_body does not require exactly key and document  [test_parse_body_refuses[extra NaN]]
+ok  KILLED       G27 _content_length takes a signed, spaced or non-ASCII number (digits-only guard removed)  [test_t5_7b_content_length_missing_or_not_digits_or_zero_is_400[]]
+ok  KILLED       G28 check_bind takes any truthy value as the non-loopback switch  [test_non_loopback_host_needs_the_switch]
+ok  KILLED       G29a check_senders does not refuse an agent that is not qualified  [test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-agent]]
+ok  KILLED       G29b check_senders does not refuse a principal that is unknown  [test_d2_check_senders_refuses_a_bad_agent_or_principal[unknown-princip]
+ok  KILLED       G29c check_senders does not refuse a principal that is not of kind service  [test_d2_check_senders_refuses_a_bad_agent_or_principal[principal-not-s]
+89 killed, 1 crash-accepted (G20j), 0 known survivors
+KNOWN SURVIVORS (missing test): the mutant is not killed by any test; listed, not a pass
+  - (none: every mutant of the list has a killer test)
+90 of 90 run are as expected; problems: []

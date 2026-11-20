@@ -75,4 +75,4 @@ E           assert '3150 seconds (52 minutes)' in ' - The stuck limit: how long 
 tests/triggers/test_n8n_template.py:1713: AssertionError
 =========================== short test summary info ============================
 FAILED tests/triggers/test_n8n_template.py::test_the_state_check_rounds_are_bounded_and_outlast_the_stuck_limit_plus_one_tick_gap
-1 failed, 90 passed in 0.54s
+1 failed, 90 passed in 0.37s

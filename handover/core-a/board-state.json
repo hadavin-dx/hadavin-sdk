@@ -541,7 +541,7 @@
   {
    "item": "n8n-fix-1",
    "what": "n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary)",
-   "state": "3 review rounds done (round 3 clean: 0 Blocker/Major); NOT run in n8n; final evidence run with the batch",
+   "state": "updated to the real n8n run (E6 settled); review 1 of 3 on the new evidence done, fixes in, 91 tests pass; round 2 fresh review if time",
    "percent": 95,
    "evidence file": "raw/n8n-template-tests-5.log (not yet)",
    "tries": 1,
@@ -700,19 +700,6 @@
    "review round n of cap": "fixes after the extra passes",
    "retries so far": 0,
    "reason": "batch6 failures"
-  },
-  {
-   "id": "n8n-fix5",
-   "role": "builder",
-   "model": "sonnet",
-   "what exactly it is doing": "n8n pack: 3 Majors and nits from the review after the real n8n run",
-   "started UTC": "09:04",
-   "expected end": "about 15 min",
-   "percent": 5,
-   "state": "running",
-   "review round n of cap": "1 of 3 (fix)",
-   "retries so far": 0,
-   "reason": "after n8n-rev5"
   }
  ],
  "tests": [
@@ -2295,6 +2282,19 @@
    "review round n of cap": "1 of 3 (new evidence round)",
    "retries so far": 0,
    "reason": "0 Blocker; 3 Major (65 s threshold is a premise of the evidence not seen; 'Respond behaviours seen' too strong: only respondWith json seen; step 12 gives no way to tell nothing is in flight), nits (73 vs 82 s, arithmetic wording, stale comment, step order); arithmetic at 70 s recomputed correct (2280 s limit; min checks 18/33/54)"
+  },
+  {
+   "id": "n8n-fix5",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n pack: 3 Majors and nits from the review after the real n8n run",
+   "started UTC": "09:04",
+   "expected end": "about 15 min",
+   "percent": 100,
+   "state": "done",
+   "review round n of cap": "1 of 3 (fix)",
+   "retries so far": 0,
+   "reason": "3 Majors + nits fixed; I ran the template tests once myself: 91 passed (raw/n8n-template-tests-11.log); 65 s threshold marked as from the lead's brief; still UNVERIFIED: Waiting state in n8n Executions list, 70 s in a restart, noData/202 response, early answer before a long chain"
   }
  ]
 }

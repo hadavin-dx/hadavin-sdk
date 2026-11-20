@@ -75,3 +75,13 @@ Choice (a): wait 70 s (kept the 45 rounds and 45 checks). Arithmetic from the co
 | new tests: wait above 65 and every derived number, restart fact in limits and checklist, Respond then Stop and Error and the guard shape | `tests/triggers/test_n8n_template.py` |
 
 Checks: both JSON files load; ruff check and format clean; pytest log `handover/core-a/raw/n8n-template-tests-9.log` (91 passed; three runs were needed because two of my new test phrases did not match the wording, no code changed between them). Not run: the real loop with 70 s waits.
+
+## n8n-fix5
+
+| Item | Change |
+| --- | --- |
+| Major 1 | The 65 s figure is marked as coming from outside the evidence (the lead's brief; evidence lines 51 and 65 only state it as a premise) in the Wait node note, stated limit 15, set-up step 10, the limits paragraph near README line 516 and checklist item 22; the exact 70 s stays marked as an inference. |
+| Major 2 | README status: the Respond node was seen with respondWith json only; noData, the 202 code and an early answer before a long chain were not seen. |
+| Major 3 | Step 12: the operator's check is "no execution is Running or Waiting" in the n8n Executions list (whether the list shows a Waiting state for a Wait node is UNVERIFIED: the evidence has the word only in database rows); a crash or host reboot has the same effect; 105 minutes is the worst case; step 6's restart happens before any event is sent. |
+| Nits | "at least 70 s, about 73 to 82 s" replaces "82 s" (README, Wait note, test); error-workflow cite is lines 34 to 35; Respond passes the item unchanged except the headers (evidence 104 to 105); "about 52 to 53 minutes" in the prose (the errorMessage text and the "(52 minutes)" phrase the tests pin are unchanged); test variable renamed largest_failing (README: needs at least 18 / 33 / 54 is the same as more than 17 / 32 / 53); stale "45 x 60" comment fixed; steps 2 to 4 reordered (create credentials, edit the JSON, import and check). |
+| Checks | Both JSON files load; ruff clean. Test runs 1 to 3 hit the three-try cap (log n8n-template-tests-10.log is the 3rd run: 90 passed, 1 failed on the "(52 minutes)" phrase). A last text fix to README limit 15 line was made after it and has NOT been run. |
