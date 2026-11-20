@@ -18,6 +18,7 @@ pytest.importorskip("psycopg", reason="needs hadavin-sdk[pg]")
 import psycopg
 from psycopg import errors, sql
 
+from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
     MAX_SPEND_DECIMALS,
@@ -42,7 +43,14 @@ NEEDS_PG = pytest.mark.skipif(
 )
 MF = getattr(mig, "MONEY_FUNCTIONS", ("",) * 7)
 RESERVE, SETTLE, EXPIRE, PURGE, ADD, SET_CAP, CAP_MATCHES = MF
-LIMIT_NAMES = ("max_amount", "max_decimals", "max_id_chars", "max_expiry_age")
+LIMIT_NAMES = (
+    "max_amount",
+    "max_decimals",
+    "max_id_chars",
+    "max_expiry_age",
+    "max_day_skew",
+    "min_expiry_age",
+)
 
 
 # --- the maps (no database) ---------------------------------------------------------------------------------
@@ -160,6 +168,8 @@ def test_the_limits_come_from_the_python_constants_and_nothing_else():
         "max_decimals": MAX_SPEND_DECIMALS,
         "max_id_chars": MAX_RESERVATION_ID_CHARS,
         "max_expiry_age": MAX_EXPIRY_AGE_S,
+        "max_day_skew": defaults.MAX_RESERVE_DAY_SKEW_DAYS,
+        "min_expiry_age": defaults.MIN_EXPIRY_AGE_S,
     }
     assert tuple(mig.money_limits()) == LIMIT_NAMES
 
