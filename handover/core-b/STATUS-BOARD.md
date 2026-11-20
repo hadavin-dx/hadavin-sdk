@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-20T11:05:11Z
+UPDATED_UTC: 2026-11-20T11:06:01Z
 SESSION: core-b
 ORDER: 016 plus 06:40 F-install items
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 17
 ITEMS_OPEN: 8
 PERCENT: 85
 AGENTS_RUNNING: 4
-CAPACITY: load 1.49 of 4 cores, mem 1/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
-DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.4G
+CAPACITY: load 1.60 of 4 cores, mem 1/15 GB, disk 49G free, 30% used, agents light 4 heavy 2
+DISK: / 49G free, 30% used; worktrees /tmp/core-b-wt 3.5G
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 INTERRUPTED: 06:44 UTC the Fable limit cut off 3 agents (random-sequence tests, step A fix round 2 plus mutant re-run, hostile re-read of F-store); their commits recovered and landed; hostile re-read restarted on sonnet
 FAILED: hostile re-read: 1 Blocker and 5 Majors in built step B code, with the lead (E5; B at its 3-try cap); 2 Majors in step A, fix round 3 queued; batch run 2: 13 failed, 1 error (11 mine, fixed); E1 cron refused
 NEXT: agents restarted on sonnet; then F-install section for the lead items 2 to 5, batch run 3
-PUSHED_UTC: 2026-11-20T11:05:09Z (previous push; this board is pushed right after writing)
-IST: 16:35 IST
+PUSHED_UTC: 2026-11-20T11:05:59Z (previous push; this board is pushed right after writing)
+IST: 16:36 IST
 
 ## BACKLOG OF STANDING ORDER 016, state per item (so nobody has to ask again)
 | # | item | state | where |
@@ -227,3 +227,5 @@ F-INSTALL STATUS (what blocks it landing on cloud/core-b): built and tested on w
 11:04Z DEFINER STEPS 1-2 VERIFIED ON THE MERGED TREE: 442 passed, 0 failed (money-definer migrate 64, k2/migration-number/lockin guards, 0009, money guard, owner-first, repo rules; 140 s). STEP 3 STARTED NOW (sonnet): builder D (store/postgres.py calls {schema}.hadavin_* with the OLD grants still in place; interface unchanged; HD/23505/22023 mapping; owns test_spend_reservations_pg.py + reserve_mutants.py; due 11:50Z) and builder C = test writer (a different agent: function-level tests, hostile args, the three bypass attacks refused under the final grants, concurrency, mutants, static tests; due 11:55Z). Then: fresh reviews, step 4 (flip the grants, core-a helper repoint is already being done for batch 9), step 5, step 6 (caps table, folded into 0011). Also RUNNING: batch-9 contract test fixer.
 
 11:05Z FOR CORE-A: request 005 ACCEPTED (lead verdict): field triggers.conflict_events_per_minute (strict int, default 10, range 1..1000) in TriggerSettings, outside config_hash; no audit-kind change needed (the chain stores f'{domain}.{operation}' at audit/chain.py:183); answer file requests/005.answer.md + test coming from builder R5 (started now); the dedicated AuditEvent fields (item 3) are declined for now, only the models.py comments are updated.
+
+11:05Z FOR CORE-A: request 005 DONE and MERGED on cloud/core-b: triggers.conflict_events_per_minute (strict int, default 10, 1..1000) in TriggerSettings; tests/test_trigger_conflict_setting.py; requests/005.answer.md (kind stored at audit/chain.py:287 on this branch, not :183); inputs_hash/output_hash comments in models.py updated for trigger.conflict; item 3 (dedicated AuditEvent fields) declined for now.
