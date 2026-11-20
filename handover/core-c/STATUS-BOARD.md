@@ -1,29 +1,29 @@
-UPDATED_UTC: 2026-11-20T06:39:26Z
+UPDATED_UTC: 2026-11-20T06:42:38Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
 STATE: WORKING
 BOOT_ID: 1e29cf8a
 ITEMS_TOTAL: 26
-ITEMS_OPEN: 12
-PERCENT: 72
-AGENTS_RUNNING: 5
-CAPACITY: load 0.3 of 4 cores, mem 0/15 GB, disk 60G free, 15% used, light agents 5, heavy agents 0
-DISK: / 60G free, 15% used; git worktrees 6; 66M	/tmp/claude-0;397M	/root/.cache/uv;
+ITEMS_OPEN: 11
+PERCENT: 76
+AGENTS_RUNNING: 4
+CAPACITY: load 3.1 of 4 cores, mem 1/15 GB, disk 60G free, 14% used, light agents 4, heavy agents 0
+DISK: / 60G free, 14% used; git worktrees 5; 66M	/tmp/claude-0;397M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restarted at ~06:37 UTC (second interruption of the day); EGM plugin proven reverted (REPORT.md); the same 5 pieces of work were restarted on claude-sonnet-5-5
 FAILED: cloud/core-c: producers registry test only (SPINE patch)
 NEXT: EGM proof pushed; restart gate round 2, integration, grants rework, G7 review on sonnet
-PUSHED_UTC: 2026-11-20T06:38:13+00:00
+PUSHED_UTC: 2026-11-20T06:39:26+00:00
 
-(12:09 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(12:12 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
 |---|---|---|---|---|---|---|---|---|---|---|
 | ad4f8f0a | builder | claude-sonnet-5-5 | restart 2: gate round 2 findings then ORDER 017 (mapping required + NO_MAP, one pre-call exception type, framing protection); progress note after phase 1 | 06:40 | 07:30 | 2 | running | 3 of 3 not used | 0 | restart after the container restart; RESUME-NOTE item 1 + addendum |
 | a5fdac4f | builder | claude-sonnet-5-5 | restart 2: integration of P1d-a + P2d-1 port + G7 in /tmp/core-c-int, then follow-ups, one batch | 06:40 | 07:45 | 2 | running | n/a | 0 | restart after the container restart; RESUME-NOTE item 2 |
-| aaf9fc30 | builder (tests only) | claude-sonnet-5-5 | restart 2: grants negative tests for core-b step B map, local PostgreSQL 16 | 06:40 | 07:15 | 2 | running | n/a | 0 | restart after the container restart; RESUME-NOTE item 3 |
+| aaf9fc30 | builder (tests only) | claude-sonnet-5-5 | restart 2: grants negative tests for core-b step B map, local PostgreSQL 16 | 06:40 | 07:15 | 100 | done | n/a | 0 | finished: grants test green on both trees (core-b code with PostgreSQL 16: 106 passed; main: 37 passed, 2 xfailed); 4 mutants killed; findings about core-b grants (E7). Committed. Not run: PostgreSQL 17, Python 3.12 |
 | (new) rr-g7D | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:41 | 06:56 | 2 | running | 1 of 3 | 0 | no review output exists yet |
 | (new) rr-g7C | reviewer | claude-sonnet-5-5 | restart 2: EGM RESULT review of the G7 change and tests (egm:egm-codebase-details) | 06:41 | 07:00 | 2 | running | 1 of 3 | 0 | no review output exists yet |
 | (new) r-g7D | reviewer | claude-sonnet-5-5 | restart: EGM RESULT review of the G7 redactor change (egm:egm-design) | 06:42 | 06:57 | 5 | INTERRUPTED | 1 of 3 | 0 | stopped by the container restart (BOOT_ID 1e29cf8a) before reporting; see RESUME-NOTE addendum |
@@ -84,6 +84,7 @@ PUSHED_UTC: 2026-11-20T06:38:13+00:00
 | 56 files approvals/redact users (P1d-a after fix) | wip/cloud-core-c/g2-p1d-a a3bae9b | 2 | 7879 passed / 0 failed, 20 skipped | none | done | mutants 48 of 51 good; 3 survived (2 inherited, A43 from the fix) |
 | tests/contracts/test_t1_reserve_cap.py + tests/test_grants_negative_0007.py | core-b code 576f292 (worktree), PostgreSQL 16.15, Python 3.13 | 1 | 49 passed / 0 failed / 0 skipped | none | done | without a DSN: 9 passed, 40 skipped; PostgreSQL 17 NOT RUN |
 | redact users + 3 new G7 files + warden_port | cloud/core-c 4864984 | 1 | 9663 passed / 1 failed, 35 skipped, 3 xfailed | tests/test_k5_producers.py (SPINE patch) | done | 25 perf-marked redactor tests pass serially (70 s); 100,000 characters: 0.206 s before, 0.484 s now |
+| tests/test_grants_negative_roles.py + 0007 file | core-b 576f292 (worktree) and main, PostgreSQL 16.15 | 3 | 106 passed (core-b, DSN); 54 passed 52 skipped (core-b, no DSN); main: 37 passed 2 xfailed (DSN) | none | done | PostgreSQL 17 NOT RUN |
 
 ## QUEUE ITEMS
 | item | state | percent | evidence file | tries | reason |
@@ -112,7 +113,7 @@ PUSHED_UTC: 2026-11-20T06:38:13+00:00
 | Backlog 10: ONE whole-suite batch | WAIT items 1-6 | 0 | none | 0 | runs once when F, G0-G7 are coded and on one tree |
 | Integration of G2 + G3 onto cloud/core-c | RUNNING | 2 | evidence/INT-g2-g3.md | 1 | one builder in a worktree |
 | EGM result review of the gate code (round 1) | DONE | 100 | tickets/F-result-review-1.md | 1 | NOT CLEAN: 1 Blocker, 14 Majors, 14 Nits merged; tickets/F-result-review-1.md; in-file findings with the builder, 6 escalated (E6), per-site install list for core-b written |
-| Rework tests/test_grants_negative_roles.py against core-b's step B grant map | RUNNING | 5 | evidence/B-grants-rework.md | 1 | core-b step B is pushed, so the rework starts now |
+| Rework tests/test_grants_negative_roles.py against core-b's step B grant map | DONE | 100 | evidence/B-grants-rework.md | 1 | committed "code B:"; evidence/B-grants-rework.md; 6 findings about core-b grants in E7 |
 | EGM result review of the G7 redactor change (round 1) | RUNNING (restart) | 5 | tickets/G7-result-review-1.md | 2 | first attempt cut off by the limit; two reviewers on claude-sonnet-5-5 |
 
 ## RESTARTS

@@ -1,5 +1,15 @@
 # ESCALATIONS of core-c (newest on top)
 
+## E7. Findings about core-b's grants (read by the grants test agent on core-b 576f292, migrate.py line numbers; none breaks a test or a guarantee of ticket B or F) (2026-11-20T06:45Z)
+For the lead and core-b to accept or fix; core-c changes none of it:
+1. Line 56: the runtime role holds table-wide UPDATE on `spend_reservations`: it can rewrite `reserved_usd`. The cap rests on code, not on the grant. Recommended: column-level UPDATE (status, settled_usd) or a security-definer function.
+2. Line 56: purge holds table-wide DELETE on `spend_reservations`: it can delete an OPEN reservation (counters stay booked). Only the purge statement's WHERE limits it. Recommended: a row-level policy or a delete limited to closed rows by a function.
+3. Line 61: the reset role holds table-wide UPDATE on `kill_switch`; anything it writes reads as ON (safe side); ticket B accepts it.
+4. Line 62: the runtime role holds table-wide INSERT on `kill_switch_stops`: it can sign a stop with any name.
+5. Line 65: the reset role can INSERT any audit row, not only a reset intent (ticket B names this as a known cost).
+6. Line 73: `redaction_maps` is granted UPDATE although its comment says "no UPDATE" (old, also on main).
+Positive: line 413, `migrate()` refuses a map where another role could clear a stop.
+
 ## E6. Independent EGM design review of the gate (f16d48e): 1 Blocker and 5 Majors need the lead or core-b (2026-11-20T06:30Z)
 Reviewer egm:egm-design, read-only, NOTHING executed: each scenario is derived from reading and is being reproduced where it is in my files. Full record follows in tickets/F-result-review-1.md when the second reviewer reports. What I can fix inside the gate without breaking core-b is already with the gate builder (D1-D9). These six are NOT mine to decide:
 1. BLOCKER, the unsafe mode is the default: `bind(agent_id, run_id)` without `mapping=` skips the enforce step (as ORDER 006 item 3 and ORDER 007 item 4 decided), and core-b's install draft binds the RUN LOOP and the judge exactly that way (inputs/draft-ticket-F-install.md lines 31 and 69): the run's known secrets would then go out raw with an audit row that looks normal. Recommended: `mapping` becomes a required keyword; "no map" is said explicitly (`mapping=NO_MAP`); the run-loop install passes the run's RunMap (agent_loop.py:397) and has a test for it. This changes `bind` for core-b: I write requests/3-bind-mapping-required.md only on the lead's word (ORDER 014: no change of bind without a request file). Meanwhile the gate will mark no-map calls in the audit row.
