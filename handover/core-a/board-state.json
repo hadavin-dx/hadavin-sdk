@@ -464,7 +464,7 @@
    "percent": 5,
    "evidence file": "reviews/E-result-review-2.md (not yet)",
    "tries": 1,
-   "reason": "EGM sequence: repeat until a fresh pass finds no Blocker or Major; cap 3 then ESCALATIONS"
+   "reason": "zoom-out reviewer done: 2 Major, and it recommends deleting what round 1's F4 and F5 added (churn by the egm rule); waiting for the codebase reviewer of round 2, then resolve"
   }
  ],
  "agents": [
@@ -1108,15 +1108,15 @@
   {
    "model": "sonnet",
    "started UTC": "06:55",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "step E round 2 of 3",
    "retries so far": 0,
    "id": "egm-E2-zoomout",
    "role": "reviewer (egm:egm-zoom-out, fresh)",
    "what exactly it is doing": "round 2: is every new capability needed by a named caller, what can be deleted",
-   "expected end": "about 15 min",
-   "reason": "EGM sequence"
+   "expected end": "ended",
+   "reason": "finished, report in hand: 2 Majors (four opt-ins without a caller; test file 1065 lines against about 190 planned), recommends deleting latch, require_claim/expect_fired, flag_taken and trimming tests; this is CHURN against round 1 (F4, F5 added what round 2 asks to delete)"
   }
  ],
  "tests": [
