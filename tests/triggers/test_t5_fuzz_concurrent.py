@@ -373,7 +373,7 @@ def build_jobs(
 def fresh_case(tag: str, n: int) -> Case:
     """A valid request for a key nobody used (the same helpers, a fixed timestamp)."""
     rng = random.Random(n)  # noqa: S311
-    case = hot_case(rng, 10**6 + n, (f"{KEY_MARK}{tag}-{n}",), NOW)
+    case = hot_case(rng, 10**6 + n, (f"{KEY_MARK}{re.sub('[^A-Za-z0-9]', '', tag)}-{n}",), NOW)
     return case
 
 
