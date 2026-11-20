@@ -622,8 +622,8 @@
   {
    "item": "MAINT-1",
    "what": "update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files",
-   "state": "done by builder; evidence re-run RUNNING",
-   "percent": 85,
+   "state": "DONE (one last re-run on core-c's newest head at the final batch)",
+   "percent": 95,
    "evidence file": "raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet)",
    "tries": 1,
    "reason": "found by the rerun"
@@ -1582,11 +1582,11 @@
    "what exactly it is doing": "decides interface change vs finding for the one new core-c gate test failure and fixes the test",
    "started UTC": "07:27",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 1,
-   "reason": "evidence run found a new failure after core-c moved"
+   "reason": "treated as interface change (core-c 613611e25: _NoMap singleton cache _one); guard now accepts an AnnAssign None plus a write to cls._one only inside __new__; ev-c 201 passed 1 skipped (log raw/MAINT-core-c-2.log). Caveats: could not read core-c's decision notes (not in this checkout); verified before ruff format; core-c head moved to dc9a13501"
   }
  ],
  "tests": [
@@ -1959,6 +1959,7 @@
  ],
  "lost": [],
  "lead_actions": [
+  "core-c: I loosened my static guard in the gate contract test to accept your _NoMap singleton cache (_one set in __new__ only) as stateless: tell me if that cache is meant to hold more than the one sentinel, and I will tighten it. Not verified against your decision notes (I cannot read handover/core-c here).",
   "Puzzle answered: 200 vs 88. My own board row M1-template (line 67) says the 193 run was with 2 rule files (test_stage_names.py, test_no_hardcoded_values.py); logs 5 and earlier included them, log 6 is the single file. No test lost (collect-only shows 52 functions; one run: 88 passed). Ticket D lines 299 and 377 are stale against the pack: fixed in d-fix2.",
   "Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.",
   "OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.",

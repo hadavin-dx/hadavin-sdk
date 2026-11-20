@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-20T07:27:30Z
+UPDATED_UTC: 2026-11-20T07:27:41Z
 SESSION: core-a
 ORDER: 020 (002 to 019 standing)
 STATE: WORKING (restart on normal models)
 BOOT_ID: 3f12152f
 ITEMS_TOTAL: 70
-ITEMS_OPEN: 20
+ITEMS_OPEN: 19
 PERCENT: 82
-AGENTS_RUNNING: 3
-CAPACITY: load 1.92 of 4 cores (1-minute average), mem 1.1/15.7 GB, 3 language-model agents running (light), 0 heavy test slots unless TESTS shows one
+AGENTS_RUNNING: 2
+CAPACITY: load 1.69 of 4 cores (1-minute average), mem 1.0/15.7 GB, 2 language-model agents running (light), 0 heavy test slots unless TESTS shows one
 DISK: / size used free 252G 11G 59G 16%; 544M /home/user/hadavin-sdk; 467M /tmp/claude-0; 131M /root/.cache
 INTERRUPTED: Fable limit hit at about 06:33 UTC: 4 agents cut (crash matrix part 2, meter tests, G7 tests, worker fixes), 2 ended on my stop order (server/endpoint fixes, n8n state check), concurrent fuzz asked to stop. Work saved as described in RESUME-NOTE-2026-11-20.md
 FAILED: TREE IS HALF EDITED: at least 14 test failures and 4 ruff errors in my trigger files after two agents were cut off by the Fable limit (RESUME-NOTE section 0). Last tested state about the 06:05 board commit (899 passed, 0 failed). Whole-suite: 1 inherited failure from handover/BRIEF-PREAMBLE.md
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 0
 NEXT: reviewers of step E end: resolve through the Skill tool, fix by a sonnet builder, fresh pass; builders end: evidence run, result reviews of step D code, tests and n8n
-PUSHED_UTC: 2026-11-20T07:27:24Z (the push before this board)
+PUSHED_UTC: 2026-11-20T07:27:33Z (the push before this board)
 NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreSQL port 55433 runs (mine). Left on disk: 3 database folders and scratch trees
 
 ## QUEUE ITEMS
@@ -88,7 +88,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | RERUN-heads | re-run my non-builder tests on the NEWEST heads of core-b and core-c; list findings that now look fixed | DONE; test maintenance started | 100 | TRIAL-RERUN.md, raw/RERUN-core-b.log, raw/RERUN-core-c.log | 1 | newest heads core-b dba4463a5 and core-c 49013c787. Findings that now look FIXED (their strict expected-failure now passes, so my marker must come off): config T1 (4), store F1 (3 memory ids) and F2 (1), meter M1 (3); STILL OPEN: G7-F3 and G7-F4. NEW failures on core-b: a secret name with a slash is now refused; settle('') raises ValueError instead of NotFound. NEW on core-c: ModelGate.bind() now needs a required keyword-only 'mapping' argument (161 of my gate tests fail with TypeError), two no-map cases, two static tests. Not findings: 29 redaction XPASS (a marker flipped when core-c removed a constant) |
 | O19 | ORDER 019: apply the real n8n error-item shapes to the retry loop (evidence-n8n-2.md); then a fresh EGM review of the pack | RUNNING (sent to the n8n fix builder as an addition) | 10 | n8n/, raw/n8n-template-tests-5.log (not yet) | 1 | same files as the n8n fix builder, so it takes the order as an addition, not a second agent |
 | O20 | ORDER 020 (lead review round 3 of endpoint + worker: 0 Blocker, 2 Major, 7 Minor): Major 1 make HADAVIN_REQUIRE_PG also fail the 'trigger config not on this branch' skip and use core-b's fields directly (no getattr fallbacks for fields core-b has); Major 2 a bounded semaphore on connections plus an absolute per-request deadline before the signature check; minors: one shared qualified-agents helper, one sender-map helper, README permanent-fault versus outage text, delete dead 'status < 500 or == 503' asserts, log level on hadavin_sdk loggers only (no root basicConfig), README: worker is for Linux and containers | QUEUED behind D-fix-1 (same files: worker.py, server.py, endpoint.py and their tests) | 0 | inputs/review-code-D-3.md (lead), then raw/D-fix2-tests.log | 0 | no two agents on one file: D-fix-1 is editing them now; the README items wait for the n8n builder too |
-| MAINT-1 | update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files | done by builder; evidence re-run RUNNING | 85 | raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet) | 1 | found by the rerun |
+| MAINT-1 | update my six non-builder test files to the newest heads: remove markers for fixed findings, adapt interface changes, keep or add strict expected-failures for real findings, append 'update' sections to the four findings files | DONE (one last re-run on core-c's newest head at the final batch) | 95 | raw/MAINT-core-b.log, raw/MAINT-core-c.log (not yet) | 1 | found by the rerun |
 | D-fix2 | fixes from D tests review, mutant review (B1 G7a anchor, G21+ mutants, one complete run) and ORDER 020 rest | QUEUED after d-fix1 ends | 0 | reviews/D-tests-result-review-1.md, D-mutants-result-review-1.md | 0 | d-fix1 still edits the same files |
 
 ## AGENTS
@@ -166,24 +166,21 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | n8n-rev3 | fresh reviewer (codebase-details) | sonnet | round 3 (last under the cap) read-only review of the n8n pack against evidence and the endpoint; also explains why an earlier log said 200 passed and now 88 | 07:23 | about 10 min | 100 | done | 3 of 3 | 0 | round 3: 0 Blocker, 0 Major, 8 Nits: CLEAN round under the rule; signing, statuses, state table, retry numbers and evidence line cites checked against endpoint.py/tick.py/evidence |
 | maint-ev2 | evidence runner (never judges) | sonnet | re-runs the six updated test files on newest core-b/core-c heads and our branch | 07:24 | about 10 min | 100 | done | n/a | 0 | core-b a11ab5132: 696 passed 20 skipped; core-c 613611e25: 1 failed 354 passed 1 skipped 8 xfailed (new: static guard 'line 383: module-level call of _NoMap'); our branch 86 passed 455 skipped 75 xfailed; log raw/MAINT-evidence-2.log |
 | n8n-fix3 | builder | sonnet | 8 text nits of round 3 (README, JSON notes) | 07:26 | about 10 min | 100 | done | 3 of 3 (nits only) | 0 | 7 nits done; 88 template tests pass (raw/n8n-template-tests-7.log); builder did not check what round 2 changed in the error json (wording 'rounds 1 and 2 changed only notes' unconfirmed) |
-| maint2 | builder (test, non-builder) | sonnet | decides interface change vs finding for the one new core-c gate test failure and fixes the test | 07:27 | about 10 min | 5 | running | n/a | 1 | evidence run found a new failure after core-c moved |
+| maint2 | builder (test, non-builder) | sonnet | decides interface change vs finding for the one new core-c gate test failure and fixes the test | 07:27 | about 10 min | 100 | done | n/a | 1 | treated as interface change (core-c 613611e25: _NoMap singleton cache _one); guard now accepts an AnnAssign None plus a write to cls._one only inside __new__; ev-c 201 passed 1 skipped (log raw/MAINT-core-c-2.log). Caveats: could not read core-c's decision notes (not in this checkout); verified before ruff format; core-c head moved to dc9a13501 |
 
 ## SHELLS AND PROCESSES
 | pid | command in short | started by | since | state | reason |
 |---|---|---|---|---|---|
-| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 12184 | postgres: checkpointer  | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 12185 | postgres: background writer  | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 12187 | postgres: walwriter  | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4381s ago | running | matched by name in ps |
-| 32183 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 2s ago | running | matched by name in ps |
-| 32217 | uv run --all-extras --group test pytest -q -p no:cacheprovider -rs tes | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 32222 | /home/user/hadavin-sdk/.venv/bin/python /home/user/hadavin-sdk/.venv/b | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 32223 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 32224 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 32225 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 1s ago | running | matched by name in ps |
-| 32233 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 1s ago | running | matched by name in ps |
+| 12183 | /usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/core-a-shar | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 12184 | postgres: checkpointer  | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 12185 | postgres: background writer  | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 12187 | postgres: walwriter  | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 12188 | postgres: autovacuum launcher  | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 12189 | postgres: logical replication launcher  | core-a session or its agent | 4392s ago | running | matched by name in ps |
+| 32223 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 32224 | /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-179515 | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 32225 | uv run --all-extras --group test python tests/endpoint_mutants.py | core-a session or its agent | 12s ago | running | matched by name in ps |
+| 32233 | /home/user/hadavin-sdk/.venv/bin/python3 -m pytest -q -p no:cacheprovi | core-a session or its agent | 12s ago | running | matched by name in ps |
 
 ## TESTS
 | suite or file | branch and SHA | run number | passed / failed / errors | first failing line | state | reason |
@@ -245,6 +242,7 @@ NOTE: models: egm lines 6 opus 66 sonnet 0 fable; all my agents sonnet. PostgreS
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
+- core-c: I loosened my static guard in the gate contract test to accept your _NoMap singleton cache (_one set in __new__ only) as stateless: tell me if that cache is meant to hold more than the one sentinel, and I will tighten it. Not verified against your decision notes (I cannot read handover/core-c here).
 - Puzzle answered: 200 vs 88. My own board row M1-template (line 67) says the 193 run was with 2 rule files (test_stage_names.py, test_no_hardcoded_values.py); logs 5 and earlier included them, log 6 is the single file. No test lost (collect-only shows 52 functions; one run: 88 passed). Ticket D lines 299 and 377 are stale against the pack: fixed in d-fix2.
 - Open puzzle (mine, not yet explained): n8n template test log 5 says 200 passed, log 6 says 88 passed for the same test file (8 changed lines). Round-3 reviewer asked to check git history; I do not claim a lost test or a different selection until that is answered.
 - OWNER ORDER 13:10 IST answered: own session is on claude-sonnet-5-5 (get_session: model, last_served_model, user_switched_model all sonnet-5-5; configured_model fable-5-2 is the creation-time value only). Proof at top of REPORT.md.
