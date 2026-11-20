@@ -1517,11 +1517,24 @@
    "what exactly it is doing": "round 2 read-only review of the n8n pack",
    "started UTC": "07:19",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "2 of 3",
    "retries so far": 0,
-   "reason": "after n8n-fix1"
+   "reason": "0 Blocker, 3 Major, 8 Nit; arithmetic and line citations checked correct"
+  },
+  {
+   "id": "n8n-fix2",
+   "role": "builder",
+   "model": "sonnet",
+   "what exactly it is doing": "n8n pack fixes from review round 2 (3 Major: Header Auth credential recipe, how a person finds the run, error-note UNVERIFIED label; 8 nits)",
+   "started UTC": "07:21",
+   "expected end": "about 15 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3 (fix), round 3 fresh review next",
+   "retries so far": 0,
+   "reason": "review round 2"
   }
  ],
  "tests": [
