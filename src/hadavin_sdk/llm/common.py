@@ -323,6 +323,25 @@ class Answer:
     stop: str | None
 
 
+def priced(routes: dict[str, Any]) -> dict[str, Any]:
+    """The routes, if every price is a finite Decimal above 0 and at most the ceiling. `Route.model_construct` and
+    a hand-built route skip the config check, and a zero price makes every reply cost 0 so no spend cap could fire:
+    a real (non-fake) client refuses them at build. Names route and field, never the price."""
+    for name, route in routes.items():
+        for field in ("input_usd_per_mtok", "output_usd_per_mtok"):
+            v = getattr(route, field, None)
+            if not (
+                isinstance(v, Decimal)
+                and v.is_finite()
+                and 0 < v <= defaults.MAX_ROUTE_PRICE_USD_PER_MTOK
+            ):
+                raise ConfigError(
+                    f"route {name!r}: {field} must be a finite Decimal above 0 and at most "
+                    f"{defaults.MAX_ROUTE_PRICE_USD_PER_MTOK}"
+                )
+    return routes
+
+
 class NetworkLLM:
     """The ``chat`` every network kind shares: the route, the tool list and bounded retries around one request
     and the parse of its answer, so a malformed answer is a ``ProviderError``, never a stray KeyError that
@@ -336,7 +355,7 @@ class NetworkLLM:
         max_attempts: int,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
-        self.routes, self.max_attempts, self._sleep = routes, max_attempts, sleep
+        self.routes, self.max_attempts, self._sleep = priced(routes), max_attempts, sleep
 
     def chat(
         self,
