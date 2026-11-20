@@ -1,22 +1,22 @@
-UPDATED_UTC: 2026-11-20T15:10:35Z
+UPDATED_UTC: 2026-11-20T15:14:31Z
 SESSION: core-c
 ORDER: 004 (with 002 and 003 standing)
-STATE: 15:11Z FREEZE per lead 15:10: load was 9 (over cap). Heavy runs ALIVE (2): (1) G9b pytest settle-loop/g12 batch (/tmp/core-c-g9b), (2) rec pytest -n 3 batch (/tmp/core-c-rec). SIGSTOPped (resumed when load < 3.5): gm gate_mutants tree (/tmp/core-c-gm) and rec's older duplicate -x batch. No new heavy run starts. Timings taken 15:00-15:11 are INVALID-LOAD and are re-run idle. Light work now: reviews, merges, edits. 15:08Z load 8.8. Agents 4: G4c (host patterns), G9b (E23 fixes), gm (gate mutants G13d/G13e/E19g/E19i), rec (g2/g3 leftovers into ONE head; core-c head has priority over core-a merge-c). cloud/core-c head = 7a602867f (contains G13c, G12c, G12b, G13b, G9, G4 P0-3, E9, E14, G8, G10; g2/g3 mostly cherr
+STATE: 15:15Z load 3.8 (was 9). Heavy runs alive (2): rec pytest -n 3 batch, gm gate_mutants (fresh run; its older stopped copies are SIGSTOPped, to be killed). G9b has no heavy run now. cloud/core-c head = c5451c10d (g2/g3 mostly cherry-picked in; 4 leftover commits being reconciled by rec; wip/core-c/rec will be the one head, core-c priority over core-a merge-c). The 8 grant tests vs core-b 0006/0007: NOT STARTED, needs core-b store head from cloud/core-b; queued after rec, light edit work once rec lands. F-install blockers: NO_MAP r3 merged, usd_cap merged, mark on ProviderExhausted merged (inert until core-b retry layer sets it), K5 Q17 with lead. Timings 15:00-15:11 INVALID-LOAD, re-run idle.
 BOOT_ID: 8493e966
 ITEMS_TOTAL: 41
 ITEMS_OPEN: 25
 PERCENT: 78
 AGENTS_RUNNING: 4
-CAPACITY: load 8.4 of 4 cores, mem 2/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
+CAPACITY: load 3.7 of 4 cores, mem 1/15 GB, disk 54G free, 23% used, light agents 4, heavy agents 0
 DISK: / 54G free, 23% used; git worktrees 49; 2.8G	/tmp/claude-0;308M	/root/.cache/uv;
 SESSION_RESTARTS: 0
 CONTAINER_RESTARTS: 1
 INTERRUPTED: container restart at 2026-11-20T09:35:38Z, BOOT_ID changed
 FAILED: none in merged-tree batch 5 (15 files: 2687 passed, 1 skipped, 5 xfailed, c4b087363). Not run: whole suite, perf on this tree, mutants, Python 3.12, PostgreSQL 17.
 NEXT: Wait for load < 3.5, SIGCONT gm; collect G9b/rec/G4c/gm; light work only meanwhile.
-PUSHED_UTC: 2026-11-20T15:08:52+00:00
+PUSHED_UTC: 2026-11-20T15:10:36+00:00
 
-(20:40 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
+(20:44 IST. Header numbers are measured by the board script; table rows are written by the session and can be up to one tool batch old.)
 
 ## AGENTS
 | id | role | model | what exactly it is doing | started UTC | expected end | percent | state | review round n of cap | retries | reason |
