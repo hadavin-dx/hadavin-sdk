@@ -75,7 +75,9 @@ MAX_RUNNING: Final[int] = 1
 MAX_RUNNING_CEILING: Final[int] = getattr(_defaults, "TRIGGER_MAX_RUNNING_CEILING", 64)
 ACK_WAIT_S: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S", 5.0)
 ACK_WAIT_S_CEILING: Final[float] = getattr(_defaults, "TRIGGER_ACK_WAIT_S_CEILING", 30.0)
-MAX_WAITING: Final[int] = 32  # requests inside `start` at one time; one more is answered 503 at once
+# Requests inside `start` at one time (the first store read counts: a store that hangs blocks right there); one
+# more is answered 503 at once. Above 50 so that 50 parallel requests of one key all get their answer.
+MAX_WAITING: Final[int] = 128
 CLOSE_WAIT_S: Final[float] = 30.0  # how long `close` waits for running loops
 SOCKET_SLACK_S: Final[float] = 10.0  # a connection may stay open ack_wait_s plus this
 LOOPBACK: Final[str] = "127.0.0.1"
@@ -355,8 +357,9 @@ def check_bind(host: str, allow_non_loopback: bool) -> None:
 
 def secret_reader(app: Any) -> Callable[[str], str]:
     """The reader of sender secrets the App was built with: `App.trigger_secret`, a callable from a secret NAME
-    to its value that refuses every name no sender lists. `trigger_resolve` is the older name of the same thing
-    (test launchers still pass it). Without one the worker does not start."""
+    to its value that refuses every name no sender lists (PermissionError). `trigger_resolve` is the OLD name:
+    only test launchers still pass it, delete the fallback when they use `trigger_secret`. Without a reader
+    the worker does not start."""
     for name in ("trigger_secret", "trigger_resolve"):
         reader = getattr(app, name, None)
         if callable(reader):

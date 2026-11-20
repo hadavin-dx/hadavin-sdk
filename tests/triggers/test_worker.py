@@ -535,7 +535,7 @@ def _app(rt, settings, secrets=None):
         registry=rt.registry,
         runtime=rt,
         store=rt.store,
-        trigger_resolve=values.__getitem__,
+        trigger_secret=values.__getitem__,
     )
 
 
@@ -552,8 +552,8 @@ def test_main_with_an_unreadable_config_exits_2(tmp_path, capsys):
 
 def test_make_app_refuses_an_app_without_the_secret_reader(rt):
     app = _app(rt, _settings())
-    del app.trigger_resolve
-    with pytest.raises(ConfigError, match="trigger_resolve"):
+    del app.trigger_secret
+    with pytest.raises(ConfigError, match="trigger_secret"):
         worker.make_app(app)
     with pytest.raises(ConfigError, match="triggers block not configured"):
         worker.make_app(_app(rt, None))
