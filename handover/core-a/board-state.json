@@ -541,8 +541,8 @@
   {
    "item": "n8n-fix-1",
    "what": "n8n pack fixes from review round 1 (operator prerequisites, payload example, key = record id + event + rerun, authentication on the webhook, answer nodes in series, refused answer removed, 45 busy rounds, duplicate and approval limits, glossary)",
-   "state": "RUNNING",
-   "percent": 5,
+   "state": "fixed; fresh round-2 review RUNNING",
+   "percent": 80,
    "evidence file": "raw/n8n-template-tests-5.log (not yet)",
    "tries": 1,
    "reason": "EGM sequence"
@@ -1409,15 +1409,15 @@
   {
    "model": "sonnet",
    "started UTC": "07:10",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n8n pack round 1 of 3 (fix pass)",
    "retries so far": 0,
    "id": "n8n-fix1",
    "role": "builder (templates and text)",
    "what exactly it is doing": "applies the n8n review fixes to the two workflow files, the README and the template checks",
    "expected end": "about 30 min",
-   "reason": "resolve of review round 1"
+   "reason": "finished; 200 template tests pass; deviations: timeout 45000 ms, headerAuth placeholder credential (unverified shape), no event reference in Stop node"
   },
   {
    "model": "sonnet",
@@ -1509,6 +1509,19 @@
    "review round n of cap": "n/a",
    "retries so far": 0,
    "reason": "rerun result"
+  },
+  {
+   "id": "n8n-rev2",
+   "role": "fresh reviewer (comprehension)",
+   "model": "sonnet",
+   "what exactly it is doing": "round 2 read-only review of the n8n pack",
+   "started UTC": "07:19",
+   "expected end": "about 10 min",
+   "percent": 5,
+   "state": "running",
+   "review round n of cap": "2 of 3",
+   "retries so far": 0,
+   "reason": "after n8n-fix1"
   }
  ],
  "tests": [
