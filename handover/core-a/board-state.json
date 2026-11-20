@@ -1634,11 +1634,11 @@
    "what exactly it is doing": "ticket D passages about the n8n pack made to match the JSON and README",
    "started UTC": "07:30",
    "expected end": "about 10 min",
-   "percent": 5,
-   "state": "running",
+   "percent": 100,
+   "state": "done",
    "review round n of cap": "n/a",
    "retries so far": 0,
-   "reason": "round 3 nit 7"
+   "reason": "ticket D lines 140, 299, 377-379 now match the pack (one Crypto v2 sign node, Retry off, required state check, 45 rounds, 45000 ms); not run in n8n"
   }
  ],
  "tests": [
