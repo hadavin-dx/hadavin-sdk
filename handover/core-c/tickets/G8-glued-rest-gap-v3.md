@@ -39,6 +39,13 @@ What changed from v2, in one list (each with its finding):
   differences, and v2's design (`v2h`) gives v2's `after` column with 0 differences. So G7 round 6 and E9 change nothing G8
   measures.
 - Line numbers below are those of a5247ac4a.
+- HEAD when this file was finished: 93c0d08ee (E9 fix round 1 c4d68c6ef, the Q9 tests and mutants 4fb0b5154 / 6e8bb9820). It
+  changes redact.py only in the `_OWN_OUTPUT` comment (875-891: every redact.py line after 880 moves down 6: the sweep call is
+  2047, `_ALNUM` 2231, `_replace_standalone` 2234, the `sweep` comment 1992) and appends Q9 tests to tests/test_redact_g3_port.py
+  (G8's lines 56-59 move to 59-62). Run on an archive of 93c0d08ee (section 9): step 0 `0 differ`; fail-before `107 failed, 289
+  passed, 12 deselected, 20 xfailed`; appendix D and E apply with `patch -p1` (offsets 6 and 3, no fuzz); then the G8 file
+  `396 passed, 12 deselected, 20 xfailed`, the g3 port, property, enforce_map and model-gate files `2213 passed`, and the mutants
+  `30 of 30 good`. The tables are unchanged on it.
 - Python: measured on 3.13 only (the repository's `.venv`; pyproject `>=3.12`). The nested look-behind
   `(?<!(?<![A-Za-z])[vV])` is fixed width; on 3.12 by reading only.
 - Dependencies named (section 8.1): G4 v5 (being drafted; G4-P1c-redactor-gaps-v5.md is at this base still a copy of v4, blob
@@ -581,7 +588,8 @@ the three ids of phase 1 (measured).
 Common prefix `uv run --all-extras --group test`; run from the repo root of the builder's worktree. "Green" = exactly the named
 result. Rule for every phase: ANY red id that the phase does not name: STOP and report.
 How to apply the appendices: appendix D and E are unified diffs against a5247ac4a: save each as a file and run `patch -p1 <
-file` from the repo root (no fuzz: a hunk that needs fuzz or fails means the base moved: STOP, re-measure). Appendices A, B, C
+file` from the repo root (a line offset is fine, as on 93c0d08ee; a hunk that needs fuzz or fails means the base moved: STOP,
+re-measure). Appendices A, B, C
 and F are whole files: copy the text between the ```python fence and the closing fence into the named path. All of them are
 already `ruff format`ed (v2's reflowed four files on `ruff format`: redact.py, tests/test_redact_idempotent_property.py,
 tests/test_redact_glued_rest.py and tests/g8_cases.py; v3's appendices are the formatted text, so `ruff format --check` on
@@ -603,12 +611,12 @@ the text the G4 v5 ticket should carry (the coordinator passes it to the G4 v5 d
   lines 56-59 (appendix E). Resolution: when G8 lands first, the G4 v5 ticket lists tests/test_redact_g3_port.py as "must stay
   green, unchanged BY G4 (G8 re-pointed lines 56-59)"; the file is in G4's base, so G4's own rule (no G4 edit) still holds. When
   G4 lands first, G8 makes its edit as written (G8's appendix E applies to any base where lines 53-59 read as at a5247ac4a) and
-  G4's "unchanged" applied to G4's commits only. Measured: the re-pointed test passes on `v3_g4` (G8 + G4 v4's host patterns).
+  G4's "unchanged" applied to G4's commits only. Measured: tests/test_redact_g3_port.py passes on `v3_g4` (G8 + G4 v4's host patterns: `16 passed`).
 Fallback (G4 first): G8 is built on the G4 head with `G4C_MERGED = True` from the start; phase 0 then expects the `after_g4c`
 column for rows 60-62 and 66 in `now` too (the step-0 check prints them as BAD: compare them with 4.5 and go on; any other BAD:
 STOP).
 Other tickets: G7 round 6 is merged (a5247ac4a); E9 is merged; G9 (spelled sweep fixed point, draft v1) edits `_Redactor.sweep`'s
-loop around line 2041, the line G8 changes: whichever lands second re-applies its one-line change (G8: the `_joins(placeholder)`
+loop around the sweep call (2041; 2047 at 93c0d08ee), the line G8 changes: whichever lands second re-applies its one-line change (G8: the `_joins(placeholder)`
 argument); G10 (textfold deadline, draft) touches no G8 line.
 
 Phase 0, no code. (a) Base sha recorded; `git archive <base> | tar -x -C /tmp/g8-base` (no worktree switch). (b) Copy appendix A to
@@ -618,6 +626,8 @@ line `0 differ`. Any `BAD` line: STOP and report (the base moved). (c) Fail-befo
 289 passed, 12 deselected, 20 xfailed`, the failing ids exactly those of section 7. (d) Full suite of the base (`pytest -q -p
 no:cacheprovider -m "not perf and not live" -n 3 tests`), failures recorded. (e) Cost on the base: `uv run --all-extras --group
 test python -m tests.g8_cost run /tmp/g8-cost-base.json` (section 10), on a box with load under 2 (`uptime`); paste the table.
+(f) Record at the base: `python tests/redact_mutants.py`, `python tests/p1d_a_mutants.py`, `python tests/gate_mutants.py`,
+`python tests/stage_mutants.py`, `python tests/textnorm_mutants.py`, each verdict per mutant (phase 4 compares with it).
 Phase 1+2, G8a and G8b in one commit (readiness Major 6: the prototype was run; phase 1 alone is red by design). Apply appendix
 D and E, add appendices A, B, C, F.
 1. `pytest -q -p no:cacheprovider -m "not perf" tests/test_redact_glued_rest.py`. Green: `396 passed, 12 deselected, 20 xfailed`
@@ -678,6 +688,10 @@ output of phases 0-4. Owner: core-c (guard/redact.py, guard/runmap.py, guard/mod
     `30 of 30 good; problems: []`
 - `ruff format --check` on `src` and the eight changed or new test files of `mut`: `118 files already formatted`; `ruff check`:
   `All checks passed!` (ruff 0.17.1, the repository's `.venv`).
+- On an archive of 93c0d08ee (HEAD when the file was finished): step 0 `0 differ`; the G8 file before the patch `107 failed, 289
+  passed, 12 deselected, 20 xfailed`; `patch -p1` of appendix D and E (hunk offsets 6 and 3, no fuzz); after: the G8 file `396
+  passed, 12 deselected, 20 xfailed`; tests/test_redact_g3_port.py, test_redact_idempotent_property.py, test_runmap_enforce_map.py,
+  test_model_gate.py (`-n 3`) `2213 passed in 36.84s`; `python tests/g8_mutants.py` `30 of 30 good; problems: []`.
 - Cost: section 10 (`base` vs `mut`, both calls, `0 rows break the rule`).
 - F1 on 2e3a081ae and on a5247ac4a (2.4): identical.
 - NOT RUN by the drafter (box rule): the whole suite (phase 0 (d) and 3 are the builder's); the perf tests under pytest (the cost
