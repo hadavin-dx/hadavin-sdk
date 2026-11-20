@@ -1,13 +1,49 @@
-# G8 v3: the glued-rest gap of IPv4, phone, IBAN, UUID and card numbers (ORDER 016c item 15, K38 / L33, backlog 10)
+# G8 v4: the glued-rest gap of IPv4, phone, IBAN, UUID and card numbers (ORDER 016c item 15, K38 / L33, backlog 10)
 
-Status: DRAFT v3 for plan review round 3, core-c drafter (opus tier), 2026-11-20. Nothing is built. Rewrites
-G8-glued-rest-gap-v2.md and takes or contests every finding of G8-review-2.md (both reviewers; section 16), keeping what v2
-resolved from G8-review-1.md (section 17). A builder with no other context builds from this file alone: every changed PATTERNS
-tuple is in section 4, the data file, the test file, the mutant file and the cost script are complete in appendices A, B, C and
-F, the source diff is appendix D and the edits of three existing test files are appendix E. Path class: redaction. Lead rule:
-build only a gap that a failing input proves.
+Status: DRAFT v4 for plan review round 4, core-c drafter (opus tier), 2026-11-20. Nothing is built. v4 is v3
+(G8-glued-rest-gap-v3.md) with every finding of G8-review-3-codebase.md resolved (M1-M5, N1-N6; section 18); every changed
+paragraph, row or code line is marked "CHANGED in v4" (in code and data files: a `v4` comment); everything else is v3's text.
+v3 took or contested every finding of G8-review-2.md (section 16) and kept what v2 resolved from G8-review-1.md (section 17). A
+builder with no other context builds from this file alone: every changed PATTERNS tuple is in section 4, the data file, the
+test file, the mutant file and the cost script are complete in appendices A, B, C and F, the source diff is appendix D and the
+edits of four existing test files are appendix E. Path class: redaction. Lead rule: build only a gap that a failing input proves.
 
-What changed from v2, in one list (each with its finding):
+What changed from v3, in one list (CHANGED in v4; each with its finding; evidence labels: MEASURED = run by the v4 drafter on
+`git archive 99787d5b3` copies in its scratch folder, read-only; BY READING; NOT RUN):
+- M1 (IBAN `_` inside base64url tokens): MEASURED with the base64url and the standard base64 alphabets (2.4b). v3's claims "the
+  base's behaviour in every class" and "0 tokens with an IBAN" were false: v3's own measurement drew only from the 62 letters and
+  digits. v3's start/end let an IBAN start or end at `_` inside a token: per 80,000 random base64url tokens after `key`, 22 kept
+  token text readable next to an `<IBAN_n>` (base 9; up to 39 characters), and the map split in 47 (base 17) under `key` and 48
+  (base 21) under `Bearer`. Fix (default, decision L-D15): the IBAN start and end take `_` only in a short-word context
+  (`_IBAN_START`, `_IBAN_END`, section 4.1); MEASURED equal to the base in readable text in all 16 random classes and in map
+  splits in 15 of 16 (one more split in 20,000 Bearer tokens of 129-163 characters). Rows 36, 37, 41, 42, 44 stay closed; two new
+  limit rows 87, 88 (L4); must-keep K83, K84; mutants I4, I5. The row-41 trade-off is offered to the lead (L-D15). Found on the
+  way: the BASE already starts an IBAN after `-`, `+`, `/` inside a token (9 readable per 80,000 base64url, 26 per 80,000
+  base64 `key` tokens): a pre-existing class, not G8's (L12, follow-up L-D16).
+- M2 (`›` on the untrusted path): MEASURED: v3 turns `redact_untrusted("<TENANT_4155550132>")` into `‹TENANT_<PHONE_1>›` with a
+  PHONE map entry. PHONE entry 7's end class gets `›` (`(?![0-9A-Za-z.>›])`); rows U1, U2 and
+  `test_untrusted_placeholder_literal_keeps_its_number`; mutant P13.
+- M3 (G4 v5 reconciled): G4 v5 is its own text (section 0.3, L23, L21), not a copy of v4; its HOSTNAME regex lines equal v4's
+  (MEASURED as text); the differences (oracle line 141, PHONE entries 6-8, `g8_mutants.py` in G4's Phase 5, the `after_g4c` and
+  K60/K66 rules, docstring placement) are reconciled in 8.1 (G4 v5's rules adopted where they are G4's). G4 v6 is being drafted.
+- M4 (G9's read-back): whichever of G8 and G9 lands second changes G9's read-back standalone test from `_ALNUM` to
+  `_joins(placeholder)` (8.1).
+- M5: the phase 1+2 step 2 suite list gets nine more files (section 8).
+- N1: L-D12's over-mask measured and pinned: AT7 `ORD1234-5678-9012-3456` -> `ORD<CREDITCARD_1>` (not storable).
+- N2: the PHONE entries are 6 (`+`-led), 7 (beside `_`), 8 (phone word) everywhere; the main PHONE tuple has no number; the
+  mutant file's constant is `E6`.
+- N3: line numbers at a5247ac4a, 93c0d08ee and 99787d5b3 (section 0, cite table); model_gate.py's bullet is 12-14.
+- N4: PHONE entry 6 gets the date guard right after `+` (`\+(?!\d{4}-\d\d-\d\d)\d...`): MEASURED, v3 masked
+  `x+2026-11-20T10:00:00Z` as `x<PHONE_1>T10:00:00Z` and `t+2026-11-20 1012` as `t<PHONE_1>`; both kept now (K81, K82; mutant
+  P14).
+- N5: the two warden_port UUID-sweep docstrings and the property test's docstring (b) get a G8 sentence (appendix E).
+- N6: non-ASCII glue probed (2.7, MEASURED): no leak class; a non-ASCII digit beside a value is not a guard (`[0-9]`) but can be
+  taken into the value (`\d`), which makes the original non-storable (fail safe). Stated, no code change.
+- Counts: 88 probe rows (+87, +88), 84 must-keep (+K81-K84), 7 at-rest (+AT7), 2 untrusted rows, 34 mutants (+I4, I5, P13,
+  P14), 7 hostile cost texts (+`iban underscore`). Appendix D is now a diff against 99787d5b3 (it applies to a5247ac4a with
+  offsets -31 / -42, no fuzz: MEASURED).
+
+What changed from v2 (v3's list, kept as v3 wrote it except where marked):
 - IBAN start: the fallback `(?<![A-Za-z0-9])` is now the default (F1, measured: the camelCase start left up to 39 characters of
   an opaque token readable; section 2.4). Rows 38, 39, 45 become limits (L4); K24, K25, K66 are kept.
 - PHONE entry 6 (v3 said "entry 5" here; CHANGED in v4, N2): `+`-led numbers only (F6 / L-D9 flipped). K34, K70, K71, K72 are back to the base output; row 75 now changes
@@ -80,6 +116,7 @@ What changed from v2, in one list (each with its finding):
   draft; no G8 line).
 
 ## 1. Goal
+(CHANGED in v4: for IBAN, `_` counts as glue only in a short-word context, M1, section 4.1.)
 A value of kind IPV4, PHONE, IBAN, UUID or CREDITCARD glued straight to a letter or `_` (and for IPV4 / UUID / PHONE in the
 shapes of section 2, a digit) is masked in the first `redact()` / `redact_many()` / `runmap.redact_text` call, as P1d-a did for
 EMAIL (`(?![A-Za-z])`). The glued text stays in the output, outside the placeholder (`<IPV4_1>a`, `node_<IPV4_1>`). Shapes
@@ -105,18 +142,20 @@ in six pattern entries and one sweep rule:
   `_sweep_held`) refuses a copy that an ASCII letter or digit touches, so a clean copy of a contiguous phone number does not
   mask its letter-glued copy (row 31). IBAN is a SECRET kind (`_EVERY_COPY`): its glued copies are already swept (row 43).
 
-### 2.1 Counts (86 probe rows: 81 glued shapes + 5 controls at rows 1, 17, 33, 46, 59)
-| kind | rows | leak today | closed by G8 v3 | output changes, no leak either way | stated limit after G8 | closed by G4c (not G8) | unchanged, no leak |
+### 2.1 Counts (88 probe rows: 83 glued shapes + 5 controls at rows 1, 17, 33, 46, 59; CHANGED in v4: rows 87, 88 added)
+| kind | rows | leak today | closed by G8 v4 | output changes, no leak either way | stated limit after G8 | closed by G4c (not G8) | unchanged, no leak |
 |---|---|---|---|---|---|---|---|
 | IPv4 | 25 | 23 | 19 | 0 | 4 (10, 13, 85, 86) | 0 | 2 |
 | phone | 17 | 13 | 11 | 3 (21, 22: the `+` moves inside; 75: `<PHONE_1><PHONE_2>`) | 2 (25, 27) | 0 | 1 |
-| IBAN | 14 | 10 | 5 | 0 | 5 (38, 39, 40, 45, 76) | 0 | 4 |
+| IBAN | 16 (v4) | 12 (v4) | 5 | 0 | 7 (38, 39, 40, 45, 76, 87, 88; v4) | 0 | 4 |
 | UUID | 14 | 13 | 13 | 0 | 0 | 0 | 1 |
 | host name | 16 | 9 | 0 | 0 | 7 (67-70, 78-80) | 2 (64, 71) | 7 |
-| total | 86 | 68 | 48 | 3 | 18 | 2 | 15 |
-Rows: closed 48, left 20 (18 limits + 2 closed by G4c), limits 18. `redact()`, `redact_many([text, "other line"])` and
+| total | 88 | 70 | 48 | 3 | 20 | 2 | 15 |
+Rows: closed 48, left 22 (20 limits + 2 closed by G4c), limits 20. `redact()`, `redact_many([text, "other line"])` and
 `runmap.redact_text` give the same output in all 86 rows on the base and with v3; `redact_untrusted` equals `redact_text` and a
 second `redact_text` with the same run map changes neither text nor map in all 86 rows with v3 (tests of section 7, run).
+CHANGED in v4: the same five properties hold in all 88 rows on `v4` at 99787d5b3 (MEASURED by the scratch row check, not by
+pytest), and `redact_untrusted` of a placeholder-shaped literal is pinned separately (U1, U2: M2).
 Card numbers are not a probe kind: the two card rows are must-keep rows K36, K74 (and K80), verdict "closed (L-D12)".
 
 ### 2.2 Probe rows (data: appendix A, `ROWS`; values: `V` there, all fake or documentation values built from parts)
@@ -219,6 +258,8 @@ Rows that differ from v2 are marked (v3).
 | 84 (v3) | ipv4 | pod DNS, letter before | `x{IPD}.ns.pod up` | `x{IPD}.ns.pod up` | `x<IPV4_1>.ns.pod up` | same | closed |
 | 85 (v3) | ipv4 | dashed EC2 name, letter before ip- | `node xip-{IPD} up` | `node xip-{IPD} up` | `node xip-{IPD} up` | same | limit |
 | 86 (v3) | ipv4 | pod DNS, digit before | `7{IPD}.ns.pod up` | `7{IPD}.ns.pod up` | `7{IPD}.ns.pod up` | same | limit |
+| 87 (v4) | iban | snake_case key, _ before | `pay acct_iban_{IBAN_DE} now` | `pay acct_iban_{IBAN_DE} now` | `pay acct_iban_{IBAN_DE} now` | same | limit (L4, M1: the word before `_` must start its token) |
+| 88 (v4) | iban | _ + 9 letters after | `pay {IBAN_DE}_reference now` | `pay {IBAN_DE}_reference now` | `pay {IBAN_DE}_reference now` | same | limit (L4, M1: at most 8 characters after `_`) |
 
 ### 2.3 The reviewers' examples and v2's hand traces, run on a5247ac4a (`redact()`; `runmap.redact_text` gave the same text)
 | input | base | v2 design on a5247ac4a | v3 | what is true |

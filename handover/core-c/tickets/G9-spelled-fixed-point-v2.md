@@ -1,10 +1,11 @@
 # G9 v2: the sweep to a fixed point over the text read back (every KEY of the map put back), at most 4 passes; unions register their value only; the gate masks with existing placeholders (ORDER 023, escalation E10)
 
-Status: DRAFT v2 (first complete draft; measurements being filled), core-c drafter, 2026-11-20. Rewrite of G9-spelled-fixed-point.md (v1)
+Status: DRAFT v2 (complete; every number measured unless section 14 says otherwise) for plan review round 2, core-c drafter, 2026-11-20. Rewrite of G9-spelled-fixed-point.md (v1)
 taking or contesting every finding of G9-review-1.md (section 15). Nothing is built. Base of every measurement: cloud/core-c 78a0c8bcf
 (src identical to d8777d5a7: G7 rounds 3-6, E9 `_OWN_OUTPUT` SECRET-only, Q9 merged). Measured on clean `git archive` copies of 78a0c8bcf in
-the drafter's scratchpad (`g9v2/head`, the base; `g9v2/proto`, this design applied by `g9v2/scripts/make_proto2.py`). The shared tree was
-not edited and no test was run in it.
+the drafter's scratchpad (`g9v2/head`, the base; `g9v2/proto`, this design applied by `g9v2/scripts/make_proto2.py`, plus section 7's test
+edits by `g9v2/scripts/edit_tests.py`). The shared tree was not edited and no test was run in it. Scripts (scratch; the builder commits
+the ones of section 8): `g9v2/scripts/{make_proto2,edit_tests,cases2,fuzz2,chain,corpus_diff2,cmp,cost,cost2,bound,rbcost,mut2,diffm}.py`.
 
 ## 0. The finding that shapes the design (kept from v1, re-measured on 78a0c8bcf)
 THE PLAIN LOOP DOES NOT CLOSE E10: iterating today's sweep reaches a fixed point at the second pass with the leak intact. The swallowed
@@ -48,7 +49,9 @@ returned. E10 (a) and (b) are closed for every text a call reads; the two settle
 - src/hadavin_sdk/guard/runmap.py: docstrings only: `enforce_map` (the Trap 3 limit bullet replaced), `held_value_left` (it can now find an
   overlap and can raise `InputTooLarge` through the checker's sweep). No code change: `first` and `checker` are bare `_Redactor`s, so they
   take the gate behaviour (`_may_register` False) by default.
-- src/hadavin_sdk/guard/model_gate.py: no change (L-D1: an optional distinct code is the gate lane's call).
+- src/hadavin_sdk/guard/model_gate.py: the module docstring's overlap bullet only (7.3; `test_d8_every_test_the_module_docstring_names_exists`
+  pins the test names it lists). No code (L-D1b: an optional distinct code is the gate lane's call).
+- tests/test_redact_mutants_meta.py: the pinned mutant count + 15 (section 10).
 - tests/test_redact_settle_loop.py: the two pins replaced, the G9 block (section 7), the two ratio controls (phase 1).
 - tests/test_runmap_enforce_map.py, tests/test_model_gate.py: the two gate pins replaced, three gate tests added (section 7.3; owner of the
   gate lane approves, L-D1).
@@ -384,7 +387,7 @@ already handles a value under two rules at the gate (E5).
   critic's chain needs 3 passes at depth 1, 4 at depth 2, and is REFUSED (`SpelledNotSettled`) at depth 3 and 4, through `redact` and
   `redact_text`.
 - With `derived=False` (this design) the same inputs take 2 passes at every depth, and every random search took at most 2 (section 9.2:
-  80,000 inputs over `abc` and over mixed-case-plus-digit values of 8 to 14 characters, three entry points each).
+  120,000 inputs: 20,000 over `abc` and 20,000 over mixed-case-plus-digit values of 8 to 14 characters, through three entry points each).
 - Why 2 (an argument, not a proof; the bound 4 is a fail-closed margin, as `_SETTLE_ROUNDS` is): pass 1's `_close` replaces each run by ONE
   token whose value is exactly the run's characters in E, so E is unchanged as text; every occurrence that made a run now lies inside one
   token (not an overlap); an occurrence outside the runs that reaches into one covered, in pass 1, either a token character (then it was
@@ -402,7 +405,9 @@ already handles a value under two rules at the gate (E5).
   `_close` (counted: one per character of each run). One shared count: at most `SPELLED_MAX_WORK` = 4,000,000 units for all passes.
   NOT in the count: `_build` (O(map) dict/sort work plus compiling the trie regex; the deadline is read every 512 rules), the literal sweep.
 - Per string per call: at most 1 + `_SETTLE_ROUNDS` (4) = 5 sweeps, so at most 20 bodies, 20 read-backs and at most 20 `_build`s when every
-  pass grows the map; measured worst (section 9.4): [M].
+  pass grows the map; a pass that grows the map is one that found a run, and every measured input needs at most 2 passes (one `_build`
+  more per sweep that found a run). Measured (9.4): forcing every sweep to 4 passes costs 1.9x on the jar shape (0.58 -> 1.12 s), so 5 such
+  sweeps of one string would be about 5.6 s, at the edge of the 6 s budget; past it the call is refused (deadline).
 - With a deadline (every producer path: `redact_text`, `redact_many`, `redact`): the call's `REDACT_BUDGET_S` CPU budget bounds the whole;
   read in `_build`, every 1,024 units of the spelled scan AND of the read-back (`_spend`), every 32nd free segment and before each value
   replaced. Not interrupted: one `finditer` of a finder over E, one `E.find` loop of one slow value, one `str.replace`. With no deadline (a
@@ -428,7 +433,8 @@ already handles a value under two rules at the gate (E5).
 | L-D1 | the gate (a redactor that may not register) | MASK the run with the existing placeholders of the secret values covering its readable part (`<SECRET_1><SECRET_2>`); refuse THAT TEXT (`RedactionError("SpelledOverlap")`, gate code `mask_refused`) only when an identifier alone covers a readable character | Trap 3 closed for secret values with no refusal and no map write; the model sees two tokens where the text had one value; identifier-identifier overlaps refuse the call; the two gate pins become "masked" tests (section 7.3; gate-lane edit) | (b) refuse every overlap (v1's) / (c) skip the check | (b) a planted pair refuses every call carrying it; (c) Trap 3 stays: the tail of a secret readable (see the table below) |
 | L-D1b | a distinct gate code for `SpelledOverlap` | none: it is a RedactionError, so `mask_refused` (already distinct from `mask_budget_exceeded`) | no model_gate change | a new `CODE_OVERLAP_REFUSED` in model_gate | a gate-lane edit; the audit row names the cause |
 | L-D2 | the pass bound | 4 (`SPELLED_MAX_PASSES`) | margin of 2 over the measured need | 2 | no margin; a chain through a G7 union would refuse |
-| L-D3 | work count | shared per `sweep` call | honest worst [M] units | per pass | up to 4 x 4M per sweep |
+| L-D3 | work count | shared per `sweep` call | honest worst 1,029,656 units (cookie shape; 3.9x headroom) | per pass | up to 4 x 4M per sweep |
+| L-D3b | what a read-back unit is | one per character of E as built PLUS one per character per finder pass | honest worst 1.03 M | E as built only (the first finder pass free) | about 0.5 M on the cookie shape; the finder passes over E (3 groups for nested prefixes) uncounted, bounded by the deadline only |
 | L-D5 | an overlap visible only in a decoded view (entities, escapes, folds) | out of G9 (views are G1/G10's) | `&#49;<IPV4_3>`, `ａbcd<SECRET_2>` stay as today | read the views back too | cost per view; not designed |
 The three gate options compared (design M4; values A, B overlap, B swept second so A's token stands and B's tail is readable):
 | option | leak | refusals | map |
@@ -441,38 +447,675 @@ whose text holds the overlap as written (`mask_refused`), and the run keeps the 
 (a host name, an address), not by `key=` planting, so the planted pair costs more than two `password=` lines; stated in 11 and 13.
 
 ## 7. Acceptance tests
-### 7.1 tests/test_redact_settle_loop.py: the G9 block (appended; the file's `R`, `SHORT`, `defaults`, `runmap`, `pytest`, `_stepping_clock`; new imports `tracemalloc` at the top)
-[the full code: section 7.4]
-### 7.2 The two settle-loop pins
-- `test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit` (calls `_spelled_sweep`, stays green
-  in phase 1) is DELETED and replaced by `test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole`.
-- `test_two_overlapping_values_in_raw_text_leave_the_tail_readable_a_stated_limit` (red in phase 1) is DELETED and replaced by
-  `test_g9_two_overlapping_values_in_raw_text_are_masked_whole`; the section comment `# --- M-B (a): ...` becomes `# --- M-B (a), closed by G9 ...`.
-### 7.3 The gate pins (phase 2; tests/test_runmap_enforce_map.py, tests/test_model_gate.py)
-[filled below]
-### 7.4 Code of 7.1
-[filled below]
+### 7.1 What is added, deleted and edited (all measured on `proto`, section 9)
+- tests/test_redact_settle_loop.py: `import tracemalloc` added after `import time`; the two pins DELETED (7.2); the two ratio controls
+  edited (7.2); the G9 block (7.4, 21 tests, appended at the end of the file: it uses the file's `R`, `SHORT`, `defaults`, `runmap`,
+  `pytest`, `re`, `_stepping_clock`, `_best_cpu`, `_cookie_log`, `_copies_of`).
+- tests/test_runmap_enforce_map.py and tests/test_model_gate.py: 7.3. src/hadavin_sdk/guard/model_gate.py: its module docstring names the
+  enforce test of the overlap limit (`E::test_stated_limit_partial_overlap_leaves_a_tail`; pinned by
+  `test_d8_every_test_the_module_docstring_names_exists`, which went red on the prototype until the docstring was edited): that bullet
+  is replaced by the text of 7.3 (a docstring edit in the gate lane's file, no code).
+### 7.2 The pins and the controls
+- DELETED `test_an_overlap_completed_only_in_a_later_round_leaves_the_swallowed_part_readable_a_stated_limit` (calls `_spelled_sweep`
+  directly, so it does not go red; it is replaced by `test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole`), and
+  `test_two_overlapping_values_in_raw_text_leave_the_tail_readable_a_stated_limit` (red on the build; replaced by
+  `test_g9_two_overlapping_values_in_raw_text_are_masked_whole`). The comment `# --- M-B (a): two compound values that overlap as RAW text`
+  becomes `# --- M-B (a), closed by G9 (tests in the G9 block): two compound values that overlap as RAW text`. ESCALATIONS.md E10 names the
+  first pin: replace the name there too.
+- `test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses` takes `monkeypatch`; after its
+  `assert swept.count("copy <SECRET_") == 5000, ...` line insert
+  `monkeypatch.setattr(r, "_overlaps", lambda *a: [])  # G9: both runs time the scan alone (the read-back has its own test)`.
+  (On the build without this line it stays GREEN: the gate-mode redactor masks instead of refusing, and the mask only slows the
+  `without` run; the line keeps the ratio the scan's.)
+- `_swept_cpu` (used by `test_the_scan_does_not_depend_on_how_many_distinct_prefix_lengths_are_registered`): after `r.sweep("")` insert
+  `r._overlaps = lambda *a: []  # G9: the scan alone, in both runs of the ratio (the read-back: test_g9_the_read_back_costs_...)`.
+  Without it the test is RED on the build: `(0.240, 0.045)` (the read-back's finder passes over the 300 nested cookie values; measured
+  on its own by `test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads`).
+### 7.3 The gate tests (exact)
+tests/test_runmap_enforce_map.py: `test_stated_limit_partial_overlap_leaves_a_tail` (lines 179-196 at 78a0c8bcf) is REPLACED by:
+```python
+def test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders():
+    """Trap 3, closed by G9 (E10). `abcd` and `cdef` are both known and the text holds `abcdef`: neither contains the other, so the sweep
+    replaces one and the other's rest stood readable (`<SECRET_1>ef`, `ab<SECRET_2>`: the stated limit pinned here before G9). The text read
+    back with the map's placeholders put back still holds the other value across the placeholder; the gate may not add an entry, so the
+    readable rest is replaced by the EXISTING placeholder of the value that covers it: `<SECRET_1><SECRET_2>` whatever the map order. The map
+    is not written (`_enforce` asserts it) and nothing readable is left. The same for an earlier call's output read with a value learned
+    since. A held-back value is not in the main sweep's map, so its rest stays HERE; the gate's net finds it (`held_value_left`)."""
+    assert _enforce("abcdef", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"}) == "<SECRET_1><SECRET_2>"
+    assert _enforce("abcdef", {"<SECRET_2>": "cdef", "<SECRET_1>": "abcd"}) == "<SECRET_1><SECRET_2>"
+    assert _enforce("abcdefg", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdefg"}) == "<SECRET_1><SECRET_2>"
+    assert _enforce("x <SECRET_1>ef y", {"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"}) == "x <SECRET_1><SECRET_2> y"
+    # two identifiers: each is touched by a letter of the other, so NEITHER is replaced in the overlap, and read back neither stands alone
+    identifiers = {"<TENANT_1>": "abcd", "<TENANT_2>": "cdef"}
+    assert _enforce("abcdef", identifiers) == "abcdef"
+    # ... while each standalone copy still is
+    assert _enforce("abcdef abcd cdef", identifiers) == "abcdef <TENANT_1> <TENANT_2>"
+    # the held-back value `SECRET_1` (8 characters) loses to the shorter `ET_1zz9` (7) in the sweep; the net sees the rest
+    held_back = {"<SECRET_1>": "SECRET_1", "<SECRET_2>": "ET_1zz9"}
+    assert _enforce("SECRET_1zz9", held_back) == "SECR<SECRET_2>"
+    assert runmap.held_value_left("SECR<SECRET_2>", runmap.snapshot(held_back))
+    assert _enforce("SECRET_1 zz9", held_back) == "<SECRET_1> zz9"
 
-## 8. Phases and commands
-[filled below]
 
-## 9. Measurements
-[filled below]
+def test_trap3_an_overlap_an_identifier_must_restore_refuses_the_text():
+    """G9, L-D1: a readable character covered only by an identifier (restored exactly on the way back) has no existing placeholder that can
+    stand for it, so THIS text is refused: RedactionError("SpelledOverlap"), not InputTooLarge (the gate's code is `mask_refused`, not the
+    budget's). The map is not written; a text without the overlap is enforced against the same map."""
+    identifiers = {"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"}
+    with pytest.raises(runmap.RedactionError, match="SpelledOverlap") as caught:
+        runmap.enforce_map("acme-prod-01-eu", identifiers)
+    assert not isinstance(caught.value, runmap.InputTooLarge)
+    assert _enforce("acme-prod-01 and prod-01-eu", identifiers) == "<TENANT_1> and <TENANT_2>"
+```
+tests/test_model_gate.py: `test_b1_stated_limit_a_partial_overlap_leaves_a_tail_in_what_is_sent` (lines 566-573) is REPLACED by:
+```python
+def test_b1_a_partial_overlap_is_masked_with_both_placeholders_in_what_is_sent():
+    """`abcd` and `cdef` known, `abcdef` in the text: `<SECRET_1><SECRET_2>` is sent (G9; before it `<SECRET_1>ef` was sent, a stated limit)."""
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<SECRET_1>": "abcd", "<SECRET_2>": "cdef"})
+    )
+    bound.chat([{"role": "user", "content": "abcdef"}], system="s", route="main")
+    assert client.sent[0]["messages"][0]["content"] == "<SECRET_1><SECRET_2>"
+    assert sink.codes() == [("ok", None)]
 
-## 10. Mutants
-[filled below]
+
+def test_b1_an_overlap_an_identifier_must_restore_refuses_the_call_as_mask_refused():
+    """G9, L-D1: two identifiers that overlap in the text (`acme-prod-01`, `prod-01-eu` in `acme-prod-01-eu`): no existing placeholder can
+    stand for the readable rest, so the call is refused (`mask_refused`); nothing is sent, nothing reserved."""
+    bound, client, meter, sink = build(
+        mapping=runmap.RunMap({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    )
+    with pytest.raises(UnmaskedInput):
+        bound.chat([{"role": "user", "content": "acme-prod-01-eu"}], system="s", route="main")
+    assert client.sent == [] and sink.codes() == [("refused", "mask_refused")]
+
+
+def test_b1_a_held_back_value_cut_by_an_overlap_refuses_the_call_as_held_value_left():
+    """G9: the held-back `SECRET_1` loses to `ET_1zz9` in the sweep (`SECR<SECRET_2>`); the net's checker reads the text back with every
+    secret value and finds `SECRET_1` across the placeholder: the call is refused (`held_value_left`), where `SECR<SECRET_2>` was sent."""
+    from hadavin_sdk.guard.model_gate import HeldValueLeft
+
+    bound, client, _, sink = build(
+        mapping=runmap.RunMap({"<SECRET_1>": "SECRET_1", "<SECRET_2>": "ET_1zz9"})
+    )
+    with pytest.raises(HeldValueLeft):
+        bound.chat([{"role": "user", "content": "SECRET_1zz9"}], system="s", route="main")
+    assert client.sent == [] and sink.codes() == [("refused", "held_value_left")]
+```
+src/hadavin_sdk/guard/model_gate.py, module docstring, the bullet "- Two known values that overlap in the text ..." (4 lines ending
+`E::test_stated_limit_partial_overlap_leaves_a_tail`) is REPLACED by:
+```
+- Two known values that overlap in the text without one containing the other (`abcd` and `cdef` in `abcdef`):
+  since G9 the text read back with the map's placeholders put back is checked, and the readable rest is replaced by
+  the EXISTING placeholder of the secret value that covers it (`<SECRET_1><SECRET_2>`; the map is not written);
+  where only an identifier covers it the call is refused (`mask_refused`). Two identifiers that touch each other
+  there are both left. A value that is a piece of one of the map's placeholders is not in the main sweep: its rest
+  stays and the net (`held_value_left`) refuses the call.
+  E::test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders
+  E::test_trap3_an_overlap_an_identifier_must_restore_refuses_the_text
+```
+runmap.py `enforce_map` docstring: the bullet "- Two known values that overlap in the text without one containing the other ..." is
+replaced by the same text (minus the test names); `held_value_left`'s docstring gains: "Its checker's sweep reads the text back (G9): a
+secret value spelled across a placeholder is found; the sweep can raise `InputTooLarge` (its work count, the deadline,
+`SpelledNotSettled`), which `_chunk` does not catch: `_enforced` reports it as `mask_budget_exceeded`. The checker holds only secret
+values, so it never raises `SpelledOverlap`."
+`held_value_left`'s callers: model_gate `_chunk` only (grep at 78a0c8bcf). An `InputTooLarge` from the checker passes `_chunk`
+(model_gate.py:739, no `try`) up to `_enforced`'s `except runmap.InputTooLarge` (model_gate.py:721): code `mask_budget_exceeded`, the call
+refused, never sent: the behaviour of any other budget refusal of the gate (L-D1, stated in 11).
+### 7.4 The G9 block (exact code, appended to tests/test_redact_settle_loop.py)
+```python
+# --- G9 (ORDER 023, E10): the sweep to a fixed point over the text read back --------------------------------------------------------
+
+_TOKEN = re.compile(r"<[A-Z][A-Z0-9]*_\d+>")
+_A, _B = "abcd" + "efgh", "efgh" + "ijkl"  # two SECRET values that overlap by `efgh`
+
+
+def _registering(mapping: dict[str, str] | None) -> R._Redactor:
+    """A redactor that may register a union, as `redact` and `redact_many` make it."""
+    r = R._Redactor(mapping)
+    r._may_register = True
+    return r
+
+
+def test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole():
+    """E10 (b), REPLACES the round 3 pin: round 2 sweeps `xyz<SECRET_1>ab` to `xyz<F1>`; round 3 registers F2 `xyz<SECRET_1>`. The read-back of
+    `xyz<F1>` is `xyz` + V + `ab`: F2's value covers `xyz` and part of F1, so the run is registered whole and replaced; nothing of it stays
+    readable. Its number is not pinned (it depends on the order of registration); its value and kind are."""
+    r = _registering({"<SECRET_1>": SHORT})
+    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    round2 = r.sweep("xyz<SECRET_1>ab")
+    assert round2 == f"xyz{f1}"
+    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    round3 = r.sweep(round2)
+    assert _TOKEN.fullmatch(round3) and round3 not in (f1, f2), round3
+    assert r.mapping[round3] == "xyz" + SHORT + "ab" and R._kind(round3) == "BEARER"
+    assert r.sweep(round3) == round3
+
+
+def test_g9_two_overlapping_values_in_raw_text_are_masked_whole():
+    """E10 (a), REPLACES the raw pin: `abcdefgh` and `efghijkl` in `abcdefghijkl` (the literal sweep cut the second), and F1 = V+`ab`,
+    F2 = `xyz`+V in a raw `xyz`+V+`ab`. Each run is one new SECRET/BEARER value; the map gains exactly that entry."""
+    plain = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert plain.sweep(_A + "ijkl") == "<SECRET_3>"
+    assert plain.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B, "<SECRET_3>": _A + "ijkl"}
+    r = _registering({"<SECRET_1>": SHORT})
+    f1 = r._place("BEARER", SHORT + "ab", "<SECRET_1>ab")
+    f2 = r._place("BEARER", "xyz" + SHORT, "xyz<SECRET_1>")
+    out = r.sweep("see xyz" + SHORT + "ab end")
+    union = out.removeprefix("see ").removesuffix(" end")
+    assert _TOKEN.fullmatch(union) and union not in (f1, f2), out
+    assert r.mapping[union] == "xyz" + SHORT + "ab"
+
+
+def test_g9_the_raw_overlap_through_redact_redact_many_and_redact_text():
+    """The natural input (no seeded map): two secrets found by their keys, then a raw `abcdefghijkl`. Before G9: `see <SECRET_1>ijkl`."""
+    lines = ["password=" + _A, "token=" + _B, "see " + _A + "ijkl"]
+    text = "\n".join(lines)
+    expected = ["password=<SECRET_1>", "token=<SECRET_2>", "see <SECRET_3>"]
+    result = R.redact(text)
+    assert result.text == "\n".join(expected)
+    assert result.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B, "<SECRET_3>": _A + "ijkl"}
+    assert result.restore(result.text) == text
+    many, mapping = R.redact_many(lines)
+    assert many == expected and mapping["<SECRET_3>"] == _A + "ijkl"
+    assert runmap.redact_text(text, runmap.RunMap()) == "\n".join(expected)
+
+
+def test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else():
+    """The read-back puts back a token that is an exact KEY of the map, whoever wrote it (this redactor, an earlier call, the fold scan
+    reusing a placeholder): `<SECRET_1>` came in with the text. A token that is not a key (`<SECRET_9>`) is a separator: nothing is read
+    across it (mutant G9-7)."""
+    r = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("x <SECRET_1>ijkl y") == "x <SECRET_3> y"
+    assert r.mapping["<SECRET_3>"] == _A + "ijkl"
+    other = _registering({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert other.sweep("x <SECRET_9>ijkl y") == "x <SECRET_9>ijkl y"
+    assert other.sweep("x efgh<SECRET_9>ijkl y") == "x efgh<SECRET_9>ijkl y"
+    assert len(other.mapping) == 2
+    # a value that holds a NUL (the separator's character): its NUL-free alias key is swept by the body, as at the base; no union
+    nul = _registering({"<SECRET_1>": "\0" + "wxyz"})
+    assert nul.sweep("a<SECRET_9>wxyz") == "a<SECRET_9><SECRET_1>" and len(nul.mapping) == 1
+
+
+def test_g9_a_short_run_of_tokens_is_read_back_whole():
+    """Readiness B1: a run whose kept head and tail together reach its length is read back WHOLE (no separator in the middle): the value
+    `abcdefgh` spans `ab`, the whole `<SECRET_1>` (`cdef`) and `gh`."""
+    r = _registering({"<SECRET_1>": "cdef", "<SECRET_2>": _A})
+    assert r.sweep("ab<SECRET_1>gh") == "<SECRET_2>"  # a reverse hit: the run's value is `<SECRET_2>`'s
+    assert len(r.mapping) == 2
+
+
+def test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first():
+    """Design M3 / readiness B3, an input that occurs: `0.5-Xyz9` is a password, `10.100.200.5` an address found by its pattern. The
+    address is replaced first (longer, standalone there) and the secret's tail `-Xyz9` stood readable after `<IPV4_1>`. The run starts with
+    an IPV4 token but holds a secret: its union is a SECRET (swept in every copy, never restored by the gate's side), not an IPV4."""
+    secret = "0.5" + "-Xyz9"
+    text = f"password={secret}\nhost 10.100.200.5-Xyz9 up"
+    result = R.redact(text)
+    assert result.text == "password=<SECRET_1>\nhost <SECRET_2> up"
+    assert result.mapping == {"<SECRET_1>": secret, "<IPV4_1>": "10.100.200.5", "<SECRET_2>": "10.100.200.5-Xyz9"}
+    r = _registering({"<IPV4_1>": "10.100.200.5", "<SECRET_1>": secret})
+    assert r.sweep("10.100.200.5-Xyz9 y") == "<SECRET_2> y"
+
+
+def test_g9_a_union_whose_value_an_identifier_holds_gets_a_secret_placeholder_of_its_own():
+    """Design M3: the run's value `abcdefghijkl` is already held, under TENANT (an identifier: restorable). Reusing it would put two secrets
+    under an identifier; a second placeholder of the SECRET kind is registered instead and written."""
+    r = _registering({"<TENANT_1>": _A + "ijkl", "<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("z" + _A + "ijkl y") == "z<SECRET_3> y"
+    assert r.mapping["<SECRET_3>"] == _A + "ijkl" == r.mapping["<TENANT_1>"]
+
+
+def test_g9_a_union_of_identifiers_only_is_an_identifier():
+    r = _registering({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    assert r.sweep("acme-prod-01-eu") == "<TENANT_3>"
+    assert r.mapping["<TENANT_3>"] == "acme-prod-01-eu"
+
+
+def test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form():
+    """Design M2: a G9 union adds ONE entry (its value): no secret-shaped piece of its readable part, no written form. With pieces, the
+    readable tail `hIjK1mNoPq2R` was registered and a hostile chain needed a pass more per link (measured: 3, 4, refused)."""
+    s1, s2 = "xY7wV6uT5s" + "R4aB3dE5fG9", "G9" + "hIjK1mNoPq2R"
+    r = _registering({"<SECRET_1>": s1, "<SECRET_2>": s2})
+    assert r.sweep(s1 + "hIjK1mNoPq2R end") == "<SECRET_3> end"
+    assert r.mapping == {"<SECRET_1>": s1, "<SECRET_2>": s2, "<SECRET_3>": s1 + "hIjK1mNoPq2R"}
+    assert r._spelled == {}
+
+
+def _chain(depth: int) -> str:
+    """The design critic's chain (M2): S1 ends with `G9`, S2 = `G9hIjK1mNoPq2R`; then `depth` lines `at <the first 12-k characters of
+    hIjK1mNoPq2R><a secret starting with the next one>`: with pieces registered, the piece of pass k straddles line k+1's token."""
+    tail = "hIjK1mNoPq2R"
+    secrets = ["xY7wV6uT5s" + "R4aB3dE5fG9", "G9" + tail]
+    rows = []
+    for k in range(1, depth + 1):
+        x = tail[12 - k] + ["sT7uVw9z", "wQ4eZ5tY", "kL8mN2bV", "pO3iU7yT"][k - 1]
+        secrets.append(x)
+        rows.append(f"at {tail[: 12 - k]}{x} ;")
+    return "\n".join([f"password={s}" for s in secrets] + [f"see {secrets[0]}{tail} end", *rows])
+
+
+def test_g9_the_hostile_chain_settles_in_two_passes(monkeypatch):
+    """Design M2: the chain that needs 3 passes (depth 1), 4 (depth 2) and is refused (depth 3, 4) when unions register pieces settles in
+    2 passes here, every depth: a union adds only its own value, which no other place in the text spells."""
+    calls: list[int] = []
+    real = R._Redactor._overlaps
+
+    def counted(self, out, deadline, work):
+        found = real(self, out, deadline, work)
+        calls.append(len(found))
+        return found
+
+    monkeypatch.setattr(R._Redactor, "_overlaps", counted)
+    for depth in range(5):
+        calls.clear()
+        out = R.redact(_chain(depth)).text
+        assert "hIjK1mNoPq2R" not in out and out.count("see <SECRET_") == 1, out
+        assert max(_sweep_passes(calls)) <= 2, (depth, calls)
+
+
+def _sweep_passes(calls: list[int]) -> list[int]:
+    """Passes per sweep call from the sequence of `_overlaps` results: a sweep ends at the first pass that found nothing."""
+    passes, n = [], 0
+    for found in calls:
+        n += 1
+        if not found:
+            passes.append(n)
+            n = 0
+    return passes
+
+
+def test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders():
+    """The gate's redactor (L-D1 default): it may not add to the map, so the run is masked with the placeholders of the values that cover
+    its readable part (`<SECRET_1><SECRET_2>`): nothing readable, nothing invented, the map untouched."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    assert r.sweep("x " + _A + "ijkl y") == "x <SECRET_1><SECRET_2> y"
+    assert r.sweep("x <SECRET_1>ijkl y") == "x <SECRET_1><SECRET_2> y"  # a placeholder already in the text (an earlier call's)
+    assert r.sweep("x <SECRET_1><SECRET_2> y") == "x <SECRET_1><SECRET_2> y"
+    assert r.mapping == {"<SECRET_1>": _A, "<SECRET_2>": _B}
+
+
+def test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore():
+    """When a readable character of the run is covered only by an identifier (restored exactly by the gate's side), no existing
+    placeholder can stand for it: the text is refused, RedactionError("SpelledOverlap"), NOT an InputTooLarge (a distinct gate code)."""
+    r = R._Redactor({"<TENANT_1>": "acme-prod-01", "<TENANT_2>": "prod-01-eu"})
+    with pytest.raises(runmap.RedactionError, match="SpelledOverlap") as caught:
+        r.sweep("acme-prod-01-eu")
+    assert not isinstance(caught.value, runmap.InputTooLarge)
+    assert len(r.mapping) == 2
+
+
+def test_g9_a_sweep_that_settles_in_the_fourth_pass_is_accepted(monkeypatch):
+    r = _registering({"<SECRET_1>": SHORT})
+    calls: list[str] = []
+
+    def overlaps(out, deadline, work):
+        calls.append(out)
+        return [(0, len(out), "SECRET", None)] if len(calls) < defaults.SPELLED_MAX_PASSES else []
+
+    monkeypatch.setattr(r, "_overlaps", overlaps)
+    monkeypatch.setattr(r, "_close", lambda out, spans, deadline, work: out)
+    assert r.sweep("x <SECRET_1> y") == "x <SECRET_1> y"
+    assert len(calls) == defaults.SPELLED_MAX_PASSES == 4
+
+
+def test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused(monkeypatch):
+    r = _registering({"<SECRET_1>": SHORT})
+    calls: list[str] = []
+
+    def overlaps(out, deadline, work):
+        calls.append(out)
+        return [(0, len(out), "SECRET", None)]
+
+    monkeypatch.setattr(r, "_overlaps", overlaps)
+    monkeypatch.setattr(r, "_close", lambda out, spans, deadline, work: out)
+    with pytest.raises(runmap.InputTooLarge, match="SpelledNotSettled"):
+        r.sweep("x <SECRET_1> y")
+    assert len(calls) == 4
+
+
+def test_g9_a_pass_that_grew_the_map_is_not_the_last(monkeypatch):
+    """Converged means: nothing found AND nothing registered in the pass (a union of written forms in `_spelled_sweep` grows the map
+    after the build the read-back used). Stubbed: the first body registers a value, the read-back finds nothing: a second pass runs."""
+    r = _registering({"<SECRET_1>": SHORT})
+    bodies: list[str] = []
+    real = r._sweep_once
+
+    def body(out, deadline, work):
+        bodies.append(out)
+        if len(bodies) == 1:
+            r._place("SECRET", "qrstuvwx", "qrstuvwx")
+        return real(out, deadline, work)
+
+    monkeypatch.setattr(r, "_sweep_once", body)
+    assert r.sweep("x qrstuvwx y") == "x <SECRET_2> y"
+    assert len(bodies) == 2
+
+
+def test_g9_through_redact_a_refusal_is_raised_not_returned(monkeypatch):
+    """Class-level stubs (every redactor the call makes): a read-back that always finds a run in a text with a `<`."""
+
+    def never(self, out, deadline, work):
+        return [(0, len(out), "SECRET", None)] if "<" in out else []
+
+    monkeypatch.setattr(R._Redactor, "_overlaps", never)
+    monkeypatch.setattr(R._Redactor, "_close", lambda self, out, spans, deadline, work: out)
+    text = "password=" + SHORT + "qrstu"
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        R.redact(text)
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        R.redact_many([text, "clean"])
+    with pytest.raises(runmap.RedactionError, match="SpelledNotSettled"):
+        runmap.redact_text(text, runmap.RunMap())
+
+
+def test_g9_an_honest_text_settles_in_one_pass(monkeypatch):
+    r = _registering(None)
+    out = r.find("password=" + SHORT + "qrstu and token=" + SHORT + " and again " + SHORT)
+    calls: list[int] = []
+    real = r._overlaps
+    monkeypatch.setattr(r, "_overlaps", lambda *a: calls.append(1) or real(*a))
+    swept = r.sweep(out)
+    assert SHORT not in swept and len(calls) == 1, (swept, calls)
+
+
+def test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built(monkeypatch):
+    """Readiness M3: forged copies of a key whose value is long (`x<SECRET_1> ` 20,000 times, a 2,000-character value): read back whole E
+    would be 40 million characters. Every piece is counted BEFORE it is appended: with the limit at 100,000 the read-back is refused after
+    about 50 pieces and never holds more (peak traced memory under 1 MB; the prototype that counted after building peaked at 56 MB)."""
+    long = ("Qz9" * 700)[:2000]
+    r = R._Redactor({"<SECRET_1>": long})
+    r.sweep("")
+    text = "x<SECRET_1> " * 20_000
+    monkeypatch.setattr(defaults, "SPELLED_MAX_WORK", 100_000)
+    tracemalloc.start()
+    try:
+        with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+            r._overlaps(text, None, [0])
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    assert peak < 1_000_000, peak
+    with pytest.raises(runmap.InputTooLarge, match="SpelledWorkTooMuch"):
+        r.sweep(text)
+
+
+def test_g9_the_read_back_reads_the_deadline(monkeypatch):
+    """Readiness M5: the read-back reads the clock each time the work count passes a multiple of 1,024 (the body is stubbed so that it
+    reads none; the gate's redactor registers nothing, so no `_build` reads it either). A spent deadline refuses at the first reading; a
+    future one returns the text masked (mutant G9-14)."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    r.sweep("")
+    text = " ".join(["w<SECRET_1>ijkl"] * 200)  # read back: about 3,400 characters
+    monkeypatch.setattr(r, "_sweep_once", lambda out, deadline, work: out)
+    readings = _stepping_clock(monkeypatch)
+    with pytest.raises(runmap.InputTooLarge, match="InputTooLarge"):
+        r.sweep(text, 0.5)
+    assert readings["n"] == 1
+    assert r.sweep(text, 1e9) == " ".join(["w<SECRET_1><SECRET_2>"] * 200)
+
+
+def test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences():
+    """Design M5: the units of one read-back, exactly: one per character of E (`x abcdefghijkl y`, 16), one per character per finder pass
+    (one finder: 16), one per occurrence found (`abcdefgh`, `efghijkl`: 2). The union's characters are counted by `_close` (mutant G9-16)."""
+    r = R._Redactor({"<SECRET_1>": _A, "<SECRET_2>": _B})
+    r.sweep("")
+    assert len(r._finders) == 1 and not r._slow
+    work = [0]
+    assert [s[:2] for s in r._overlaps("x <SECRET_1>ijkl y", None, work)] == [(2, 16)]
+    assert work == [16 + 16 + 2]
+
+
+def test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads():
+    """Design M5 / readiness M1: the cookie log of 300 prefix lengths, its copies x 4 (the shape the scan's ratio test uses). The read-back
+    of the swept text costs one finder pass per finder group over E, about what a sweep of the raw text it stands for costs (measured 2.1
+    times, 0.21 s against 0.10 s on the test machine); a read-back that walked every token's value again per occurrence is far over it."""
+    log = _cookie_log(300)
+    probe = "\n".join([_copies_of(log)] * 4)
+    r = R._Redactor(None)
+    r.find(log)
+    r.sweep("")
+    swept = r._sweep_once(probe, None, [0])
+    raw = R._PLACEHOLDER.sub(lambda m: r.mapping.get(m.group(1), m.group(1)), swept)
+    read_back = _best_cpu(lambda: r._overlaps(swept, None, [0]))
+    r._overlaps = lambda *a: []
+    plain = _best_cpu(lambda: r.sweep(raw))
+    assert plain > 0.015, plain
+    assert read_back < 4 * plain + 0.01, (read_back, plain)
+```
+### 7.5 Fail-before (measured: the edits of 7.1-7.4 applied to the `head` archive, tests only)
+`uv run --all-extras --group test pytest -q -n 3 -m "not perf" tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py
+tests/test_model_gate.py tests/test_redact_context_after_sweep.py` on `head`+tests: `27 failed, 443 passed`. The 27, with the reason:
+| test | reason on the base |
+|---|---|
+| test_g9_an_overlap_completed_only_in_a_later_round_is_masked_whole | `AssertionError: xyz<BEARER_1>` (round 3 unchanged) |
+| test_g9_two_overlapping_values_in_raw_text_are_masked_whole | `assert '<SECRET_1>ijkl' == '<SECRET_3>'` |
+| test_g9_the_raw_overlap_through_redact_redact_many_and_redact_text | `assert 'password=<SE...SECRET_1>ijkl' == 'password=<SE...ee <SECRET_3>'` |
+| test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else | `assert 'x <SECRET_1>ijkl y' == 'x <SECRET_3> y'` |
+| test_g9_a_short_run_of_tokens_is_read_back_whole | `assert 'ab<SECRET_1>gh' == '<SECRET_2>'` |
+| test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first | `assert 'password=<SE...V4_1>-Xyz9 up' == 'password=<SE...<SECRET_2> up'` |
+| test_g9_a_union_whose_value_an_identifier_holds_gets_a_secret_placeholder_of_its_own | `assert 'z<SECRET_1>ijkl y' == 'z<SECRET_3> y'` |
+| test_g9_a_union_of_identifiers_only_is_an_identifier | `assert '<TENANT_1>-eu' == '<TENANT_3>'` |
+| test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form | `assert '<SECRET_1>hIjK1mNoPq2R end' == '<SECRET_3> end'` |
+| test_g9_the_hostile_chain_settles_in_two_passes | `AttributeError: type object '_Redactor' has no attribute '_overlaps'` |
+| test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders | `assert 'x <SECRET_1>ijkl y' == 'x <SECRET_1><SECRET_2> y'` |
+| test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore | `DID NOT RAISE RedactionError` |
+| test_g9_a_sweep_that_settles_in_the_fourth_pass_is_accepted, ..._has_not_settled_after_four_passes_is_refused, test_g9_an_honest_text_settles_in_one_pass, test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built, test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences | `AttributeError: ... has no attribute '_overlaps'` |
+| test_g9_through_redact_a_refusal_is_raised_not_returned | `AttributeError: type object '_Redactor' has no attribute '_overlaps'` |
+| test_g9_a_pass_that_grew_the_map_is_not_the_last, test_g9_the_read_back_reads_the_deadline, test_g9_the_read_back_costs_about_two_sweeps_of_the_text_it_reads | `AttributeError: ... has no attribute '_sweep_once'` |
+| test_trap3_a_partial_overlap_of_two_secret_values_is_masked_with_their_placeholders | `assert '<SECRET_1>ef' == '<SECRET_1><SECRET_2>'` |
+| test_trap3_an_overlap_an_identifier_must_restore_refuses_the_text | `DID NOT RAISE RedactionError` |
+| test_b1_a_partial_overlap_is_masked_with_both_placeholders_in_what_is_sent | `assert '<SECRET_1>ef' == '<SECRET_1><SECRET_2>'` |
+| test_b1_an_overlap_an_identifier_must_restore_refuses_the_call_as_mask_refused | `DID NOT RAISE UnmaskedInput` |
+| test_b1_a_held_back_value_cut_by_an_overlap_refuses_the_call_as_held_value_left | `DID NOT RAISE HeldValueLeft` |
+| test_5000_compound_secrets_at_the_size_cap_the_trie_walk_is_not_dict_misses | `AttributeError: ... has no attribute '_overlaps'` (the edited control; green on the build) |
+| test_d8_every_test_the_module_docstring_names_exists | the model_gate docstring of the base names the deleted enforce pin (green once 7.3's docstring edit is in) |
+On `proto` (the design + the same test edits): the four files `472 passed` [count re-read at the end of the run, 9.5].
+
+## 8. Phases and commands (one complete command per phase; `uptime` first, wait while the load is over 6; `-n 3` at most)
+Order: L-D1 decided BEFORE phase 1 (the gate tests change in phase 1: the gate lane's owner approves 7.3 and the model_gate docstring).
+- Phase 0 (no code). `git rev-parse HEAD`; derive the anchors by NAME, never by line:
+  `grep -n "    def sweep(\|    def _spelled_sweep(\|    def _place_union(\|    def _place(\|    def _build(\|    def __init__(\|^def redact(\|^def redact_many(\|^_MAX_NESTING = \|^SPELLED_MAX_WORK = " src/hadavin_sdk/guard/redact.py src/hadavin_sdk/defaults.py`.
+  If G7 round 7 has landed: its `settle` and `_spell` edits are kept as they are; `_place`'s `derived` goes on the signature it has then.
+  If G8 has landed: its edit of the line `segment = _replace_standalone(segment, original, placeholder)` is inside `sweep`'s body; it moves
+  with that body into `_sweep_once` unchanged.
+  `uv run --all-extras --group test python handover/core-c/evidence/g9_cases.py .` -> the "base" column of section 0.
+  Copy the tests of 7.1-7.4 in; `uv run --all-extras --group test pytest -q -n 3 -m "not perf" tests/test_redact_settle_loop.py tests/test_runmap_enforce_map.py tests/test_model_gate.py tests/test_redact_context_after_sweep.py`
+  -> expected red EXACTLY the 27 of 7.5 (`27 failed, 443 passed`).
+- Phase 1 (code: section 4 in redact.py, `SPELLED_MAX_PASSES` in defaults.py, the model_gate and runmap docstrings of 7.3; the tests are
+  already in). Command: the phase 0 pytest command -> GREEN: `472 passed`, 0 failed. Phase 1 is one commit; nothing is red at its end.
+  (Measured on `proto` without the test edits: `4 failed` exactly: `test_the_scan_does_not_depend_on_how_many_distinct_prefix_lengths_are_registered`,
+  `test_two_overlapping_values_in_raw_text_leave_the_tail_readable_a_stated_limit`, `test_stated_limit_partial_overlap_leaves_a_tail`,
+  `test_b1_stated_limit_a_partial_overlap_leaves_a_tail_in_what_is_sent`; that is why the edits come with the code.)
+- Phase 2 (the wide redactor and gate list): `uv run --all-extras --group test pytest -q -n 3 -m "not perf and not live" tests/test_redact*.py tests/test_runmap*.py tests/test_model_gate*.py tests/test_k1b*.py tests/test_s6_approvals.py tests/warden_port`
+  -> GREEN, measured on proto [9.5]. Then `uv run --all-extras --group test ruff format src tests && uv run --all-extras --group test ruff check src tests`.
+- Phase 3 (the whole suite, once, at a load under 3): `uv run --all-extras --group test pytest -q -n 3 -m "not perf and not live" tests`
+  -> expected 0 failed (see 9.5 and 14 for what the drafter could and could not run). Perf: `uv run --all-extras --group test pytest -q -p no:xdist -m perf tests/test_redact_settle_loop.py tests/test_k5_perf.py tests/test_redact_fold_budget.py`.
+- Phase 4 (mutants): `uv run --all-extras --group test python tests/redact_mutants.py G9-` -> 16 rows, 15 good and G9-6 not added (section 10);
+  tests/test_redact_mutants_meta.py's pinned count +15; then the whole runner once: no new BAD.
+- Phase 5 (evidence and docs): the scripts below committed under handover/core-c/evidence/ and run once each, raw output in `G9-1.md`;
+  section 13's wording; ESCALATIONS E10 RESOLVED; the G7 ticket's two overlap limits replaced.
+Evidence scripts (from the drafter's scratch, each takes the tree as argv[1]; the builder fixes the import of `cost.py`'s shapes into
+`g9_cost.py` and drops the prototype counters, reading passes by wrapping `_Redactor._overlaps` as the chain test does):
+| script | command | expected (measured on proto, section 9) |
+|---|---|---|
+| g9_cases.py | `uv run --all-extras --group test python handover/core-c/evidence/g9_cases.py .` | the "v2" column of section 0 |
+| g9_corpus_diff.py | `... g9_corpus_diff.py . /tmp/g9_corpus.json` (against the base's dump with `g9_cmp.py`) | 1,836 inputs, 0 rows differ in 4 entry points; restore failures 63 = 63 (the corpus' own); 2-pass sweeps 13 |
+| g9_fuzz.py | `PYTHONHASHSEED=0 ... g9_fuzz.py . 20000 7 {abc,mixed} {redact,natural,gate}` | 0 leaks, 0 refused, every sweep 1 or 2 passes (9.2) |
+| g9_chain.py | `... g9_chain.py .` (and `G9_DERIVED`-style: `_place_union(..., derived=True)` for the comparison) | 2 passes at depths 0-4 |
+| g9_cost.py | `... g9_cost.py .` | 9.4's table within the machine's noise; H1 refused `SpelledWorkTooMuch` at 3 MB traced |
+
+## 9. Measurements (`proto` vs `head`, 78a0c8bcf; 4 cores, load 1 to 5 from other sessions; CPU seconds are best of 2 thread-CPU runs)
+### 9.1 Cases
+Section 0's table (cases2.py), plus: `ab<SECRET_1>gh` (`<SECRET_1>`=`cdef`, `<SECRET_2>`=`abcdefgh`) -> `<SECRET_2>` (the short run read back
+whole; base `ab<SECRET_1>gh`); `zabcdefghijkl y` with `<TENANT_1>`=`abcdefghijkl` -> `z<SECRET_3> y` (second placeholder, secret kind; base
+`z<SECRET_1>ijkl y`); `acme-prod-01-eu` with two TENANTs -> `<TENANT_3>` (base `<TENANT_1>-eu`); gate: the same -> `SpelledOverlap`; gate
+`10.100.200.5-Xyz9 y` -> `<IPV4_1><SECRET_1> y` (base `<IPV4_1>-Xyz9 y`); `held_value_left("SECR<SECRET_2>")` True (base False). v1's D-3
+input `10.0.0.5xqzw` -> `10.0.<SECRET_1>` on both (readiness B3 was right: the identifier is touched by `x`, no overlap exists there; the
+replacement test is the IPV4-first one). Fold view (L-D5): `password=abcdefgh token=efghijkl see ａbcdefghijkl` ->
+`see ａbcd<SECRET_2>` on both: the full-width `ａ` is read as written, so `abcdefgh` does not occur in E.
+### 9.2 Pass distribution and random search (`fuzz2.py`, 20,000 inputs each, seed 7; leak = the oracle of the v1 fuzz)
+| alphabet | entry | head | v2 (passes per sweep call) |
+|---|---|---|---|
+| abc, 4-7 | redact (seeded) | 190 leak | 0 leak, 0 refused; {1: 40,000, 2: 191} |
+| abc | natural (`password=` lines, redact_many) | 191 leak | 0 leak; {1: 90,737, 2: 191} |
+| abc | gate (enforce_map) | 191 leak | 0 leak, 0 refused; {1: 63,819, 2: 190} |
+| mixed case + digits, values 8-14 from a 30-char base | redact | 11,827 leak | 0 leak, 0 refused; {1: 40,000, 2: 11,833} |
+| mixed | natural | 11,830 leak | 0 leak; {1: 133,283, 2: 11,830} |
+| mixed | gate | 11,830 leak | 0 leak, 0 refused; {1: 65,758, 2: 11,830} |
+No sweep took 3 passes in the 120,000 inputs; no restore difference and no change by a second `redact` (redact rows). The script's value set
+was a `list(set)` (order by hash seed), so these counts move by one or two between runs; the committed script sorts it (`PYTHONHASHSEED=0`
+as well). Property corpus (1,836 inputs; `redact`, a second `redact` of the output with its map, `redact_text`, a second `redact_text` of its
+output on the same RunMap): outputs byte-identical to the base in all four, restore failures 63 on both (the corpus' own), 9,262 sweep calls:
+{1: 9,249, 2: 13} (the 13 runs are in second calls whose input holds keys of the map; each resolved to a reverse hit or to a view the
+caller did not choose: no output changed). v1's 9.6 concern (13 hits when every token is read back) is therefore answered without a
+written set: the read-back of keys finds them, and they change nothing.
+### 9.3 The hostile chain (design M2; `chain.py`; the values are mixed case plus digits, 8+ characters)
+S1 = `xY7wV6uT5sR4aB3dE5fG9` (ends with `G9`), S2 = `G9hIjK1mNoPq2R`; line `see S1+hIjK1mNoPq2R end`; then `depth` lines
+`at hIjK1mNoPq2R[:12-k] + X_k` with `X_k` a secret starting with the next character (`RsT7uVw9z`, `2wQ4eZ5tY`, `qkL8mN2bV`, `PpO3iU7yT`).
+| depth | v1-style (G9 unions register pieces and written form) | v2 |
+|---|---|---|
+| 0 | 2 passes | 2 passes |
+| 1 | 3 passes (`at <SECRET_6> ;`) | 2 passes (`at hIjK1mNoPq2<SECRET_3> ;`) |
+| 2 | 4 passes | 2 passes |
+| 3 | REFUSED `SpelledNotSettled` (needs a 5th) | 2 passes |
+| 4 | REFUSED | 2 passes |
+Same through `redact` and `redact_text`; under 3 ms each. So the refusal path IS reachable by a real input when unions register pieces
+(v1's design), and is not reached by any input built or searched under v2.
+### 9.4 Cost (`cost2.py`, `bound.py`; redact_text with a fresh RunMap at the cap; units = the shared count of one sweep call)
+| shape | head s | v2 s | v2 passes | v2 max units per sweep (of 4,000,000) |
+|---|---|---|---|---|
+| curl -u at cap | 2.16-2.28 | 2.24-2.27 | 1 | 1 |
+| password= at cap | 0.86 | 0.93-0.97 | 1 | 550,501 |
+| jar 330x64 + copies | 0.40 | 0.59-0.63 | 1 | 569,785 |
+| jar 275x128 + copies | 0.40-0.41 | 0.52-0.54 | 1 | 511,498 |
+| cookie 300 prefix lengths + copies | 0.26-0.34 | 0.39-0.42 | 1 | 1,029,656 (headroom 3.9x) |
+| signed ids 300 + copies | 0.38-0.40 | 0.41-0.42 | 1 | 527,517 |
+| 5,000 password=uuid.k_i | 0.94-1.12 | 1.13-1.15 | 1 | 514,997 |
+| H1 forged `x<SECRET_1> ` x 30,000, a 2,000-char value | returns, 1.07 s, 3 MB | REFUSED `SpelledWorkTooMuch` after 0.54 s, 3 MB traced (v1: 1.68 s, 56 MB) | - | refused at 4M |
+| H2 overlapping pairs to the cap (6,900 `password=`/`token=` pairs, each overlapping in a `see` line) | 1.74 | 2.71-2.83 | {1: 1, 2: 1} | 1,149,314 |
+Upper bound in time (`bound.py`: every sweep forced to 4 passes, real bodies and read-backs): jar 330x64 0.58 -> 1.12 s; 5,000 uuid 1.13 ->
+1.35 s; H2 forced: refused `SpelledNotSettled` after 2.56 s. Each extra pass costs one body and one read-back of the string (no `_build` when
+the map did not grow). Per string per call at most 5 sweeps x 4 passes: on the jar shape about 5 x 1.12 s = 5.6 s if every settle round swept
+it with 4 passes, under `REDACT_BUDGET_S` = 6 s only just; past the budget the call is refused (`InputTooLarge`, deadline). Units: the
+honest worst is now 1.03 M (cookie: E counted once as built and once per finder pass; 3 finder groups for 300 nested prefixes): L-D3b.
+The read-back alone on the cookie probe: 0.21 s against 0.10 s for a sweep of the raw text it stands for (2.1x; `rbcost.py`), 0.03 s for the
+body over the swept copies: the read-back costs about what the literal sweep cost on the raw text, which is the price of reading it again.
+### 9.5 Suites on `proto` (the design + every test edit of section 7)
+- The four files of phases 0-1: `472 passed` [final re-run, 9.5 note]; before the test edits: `4 failed, 3391 passed, 3 skipped, 4 xfailed`
+  on the phase 2 list (the four of phase 1's note).
+- Phase 2 list after the edits: [M].
+- The whole suite (`-m "not perf and not live" -n 3 tests`): the drafter's single run was cut at 42 % (5,749 passed, 537 skipped, 6 xfailed,
+  1 failed, id not printed: the process was killed when the drafter's shell ended, before pytest's summary); a second run was not made
+  (box rule: the whole suite once). The failing id is NOT known: the builder's phase 3 is the first complete run (section 14).
+### 9.6 Mutants (`mut2.py` against the G9 tests of section 7 on proto): 15 killed, G9-6 survived (equivalent, section 10), G9-15 survived
+and was shown equivalent on 40,000 fuzz inputs (0 output differences; `diffm.py`, `PYTHONHASHSEED=0`).
+
+## 10. Mutants (append at the END of `M` in tests/redact_mutants.py, file `RD`, `test_file="tests/test_redact_settle_loop.py"` unless said; `old` is the text of section 4)
+| name | old | new | killer (`only_test`) |
+|---|---|---|---|
+| G9-1 one pass more than the bound | `for _ in range(defaults.SPELLED_MAX_PASSES):` | `for _ in range(defaults.SPELLED_MAX_PASSES + 1):` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused (`len(calls) == 4`) |
+| G9-2 the read-back removed | `        spans = self._overlaps(out, deadline, work)\n` | `        spans = []\n` | test_g9_two_overlapping_values_in_raw_text_are_masked_whole |
+| G9-3 the refusal returns the text | `    raise InputTooLarge("SpelledNotSettled")` | `    return out` | test_g9_a_sweep_that_has_not_settled_after_four_passes_is_refused (DID NOT RAISE) |
+| G9-4 the gate registers | `        if self._may_register:\n            placeholder = self._place_union` | `        if True:\n            placeholder = self._place_union` | test_g9_a_redactor_that_may_not_register_masks_an_overlap_with_the_existing_placeholders |
+| G9-5 the pieces of the read-back not counted (the count would come only after E is built, from the finder pass) | `        self._spend(work, len(piece), deadline)  # counted before it is held` | `        self._spend(work, 0, deadline)  # counted before it is held` | test_g9_the_read_back_is_counted_per_piece_and_refused_before_it_is_built (the traced peak, `peak < 1_000_000`) |
+| G9-7 the seeded keys not read back | `        if tok in mapping:\n` | `        if tok in mapping and int(tok[:-1].rsplit("_", 1)[1]) > 2:\n` | test_g9_every_key_of_the_map_is_read_back_whoever_wrote_it_and_nothing_else |
+| G9-8 the union takes the first token's kind | `kind = next((k for _, k in met if k in SECRET_KINDS), _kind(toks[0][1]))` | `kind = _kind(toks[0][1])` | test_g9_a_union_that_holds_a_secret_is_a_secret_even_when_an_identifier_comes_first |
+| G9-9 a weaker reverse hit reused | `if have is not None and (_kind(have) in SECRET_KINDS or kind not in SECRET_KINDS):` | `if have is not None:` | test_g9_a_union_whose_value_an_identifier_holds_gets_a_secret_placeholder_of_its_own |
+| G9-10 the union registers pieces and its written form | `self._place_union(out[start:end], kind, derived=False)` | `self._place_union(out[start:end], kind, derived=True)` | test_g9_a_union_registers_its_value_only_no_pieces_and_no_written_form |
+| G9-11 converged ignores map growth | `if not spans and len(self.mapping) == size:` | `if not spans:` | test_g9_a_pass_that_grew_the_map_is_not_the_last |
+| G9-12 a short run cut in the middle | `elif lk + rk >= total:` | `elif False:` | test_g9_a_short_run_of_tokens_is_read_back_whole |
+| G9-13 the gate masks with identifiers too | `secret = [h for h in members if _kind(h[2]) in SECRET_KINDS]` | `secret = members` | test_g9_a_redactor_that_may_not_register_refuses_an_overlap_an_identifier_must_restore |
+| G9-14 the read-back reads no clock | `if deadline is not None and now // _SPELL_CHECK_EVERY != before // _SPELL_CHECK_EVERY:` | `if False:` | test_g9_the_read_back_reads_the_deadline |
+| G9-16 a finder pass not counted | `        self._spend(work, len(E), deadline)  # one finder pass over E\n` | `` | test_g9_the_read_back_counts_its_pieces_its_finder_passes_and_its_occurrences (`work == [16 + 16 + 2]`) |
+NOT added: G9-6 `if any(s[4] == "" for s in covered):` -> `if False:` (a separator crossed): SURVIVED, equivalent: the separator is
+`\0`, and a rule original holding a NUL has a NUL-free alias key that the body sweeps first (`a<SECRET_9>wxyz` -> `a<SECRET_9><SECRET_1>`
+at the base and after G9; pinned in `test_g9_every_key_...`); the check stays as defence. G9-15 (a free-only occurrence counted:
+`if all(s[4] is None ...) or all(s[4] ...)` -> `if all(s[4] ...)`): SURVIVED the tests and gave 0 output differences on 40,000 fuzz
+inputs (abc and mixed, `PYTHONHASHSEED=0`): equivalent by 4.8's argument; not added (readiness minor: proven by measurement, not by reading).
+The `expect` fragment of each row is the failing assertion's text in the killer (the drafter's runner checked KILLED by the exit code and
+named the first failing test; the `expect` fragments were not run through `tools.mutation_runner`: the builder sets each from the first `E`
+line of a phase 4 dry run).
 
 ## 11. Stated limits after G9
-[filled below]
+- `redact_many` across strings: a value whose head ends one string and whose tail starts the next is two texts; neither the old nor the new
+  code reads across the boundary (and the gate's framing-word limit stands: a value split by a fixed framing word is not seen).
+- Decoded views (L-D5): an overlap visible only after decoding (an HTML entity `&#49;<IPV4_3>`, a full-width letter `ａbcd<SECRET_2>`, an
+  escape) is not read back: G9 reads the text as written and the keys' values as stored.
+- Fold and alias spellings (design Nit 1): E holds each key's STORED value; where a token stands for a spelling other than the one written
+  (`_withhold` registers the folded spelling; an alias key maps to the placeholder of its written variant), E holds characters the text did
+  not have. A value matched across them is a false overlap: it over-masks (a union of real text and that token, one entry). Harmless to
+  confidentiality; 0 occurrences in the corpus (outputs identical).
+- A partial copy of a secret glued to another token stays readable when no stored value completes across the token (the chain's
+  `hIjK1mNoPq2<SECRET_3>`): G9 unions register no pieces, as the base masks values, not their substrings.
+- Unions are never rolled back (no journal is open in a sweep); a refused call drops them with its redactor and never writes the RunMap.
+- Cross-call completion: a text RETURNED by an earlier call before the value was known (`<SECRET_1>ijkl`, `efghijkl` learned later) is not
+  changed after the fact. It is closed where it is read again: the gate reads every key of its snapshot back and masks it before the model
+  sees it (`x <SECRET_1><SECRET_2> y`); a later `redact()` over it with the run's map unions it. Where the caller's `neutralise` escapes
+  placeholders (untrusted text through `redact_text`), the input's tokens are look-alikes, not keys, and are not read back.
+- The gate refuses ONE TEXT, hence the call, when a readable character of a run is covered by an identifier alone
+  (`RedactionError("SpelledOverlap")`, code `mask_refused`); a message kept in the run's history refuses every later call that carries it.
+- The gate's net (`held_value_left`) now finds a held-back secret cut by an overlap and refuses the call (`held_value_left`, where
+  `SECR<SECRET_2>` was sent); its checker can raise `InputTooLarge`, reported as `mask_budget_exceeded`.
+- The pass bound: a sweep that needs more than 4 passes is refused (`SpelledNotSettled`); reached only by stubs under this design; a chain
+  through a G7 union of written forms (which still registers pieces) or a rule first built in pass 2 could reach it (not reproduced).
+- With no deadline (a bare `_Redactor.sweep`): 4M units per sweep call, no total bound (as before).
+- A union whose value an identifier already holds gets a second, secret-kind placeholder; the identifier's rule still governs the literal
+  sweep of that value's other copies (the base's order), as runmap's E5 rule does at the gate.
 
 ## 12. Risks
-[filled below]
+- Cost: +0.05 to +0.23 s at the cap on the jar/cookie shapes (+20 to 58 %); the honest worst unit count is 1.03 M of 4 M (headroom 3.9x,
+  down from 11x in v1's accounting, because finder passes over E are now counted).
+- The gate's behaviour changes in a lane that is not core-c's alone (L-D1): what the model sees for an overlap (`<SECRET_1><SECRET_2>` for one
+  value) and a new refusal for identifier overlaps.
+- Order dependence of placeholder numbers: a union takes the next number of its kind when it is found; deterministic per input.
+- Idempotence: a second `redact` of the output changes nothing (measured on 1,836 + 40,000 inputs); `enforce_map` stays idempotent (`_enforce`).
 
-## 13. For SECURITY wording
-[filled below]
+## 13. For SECURITY wording (replaces the two overlap limits of the G7 text)
+"Two stored values that overlap in the text (one ends where the other begins), found in the same pass or in later ones, are masked as ONE
+value: nothing of either stays readable. The check reads the text with every placeholder of the run's map put back, whoever wrote it, at most
+4 times per sweep; a text that does not settle is refused (`SpelledNotSettled`) and nothing of it is shown. At the model gate, which may not
+add values to the run's map, the readable rest is covered by the existing placeholders of the secret values (`<SECRET_1><SECRET_2>`); where
+only an identifier covers it, the call is refused (`mask_refused`), and so is every later call that carries that text. Someone who can plant
+two overlapping identifier values (two host names, two tenant ids) can therefore make the gate refuse every call that holds the overlap as
+written; someone who can plant a document can force a refusal of the whole document (fail closed). Not covered: an overlap visible only in a
+decoded form of the text (an HTML entity, an escape, a full-width letter), a value split across two strings of one batch or by a framing word,
+and a text returned by an earlier call before the second value was known (it is masked when the gate reads it again)."
 
 ## 14. Not verified
-[filled below]
+- The whole suite: one run, cut at 42 % with 1 failure whose id was not printed (9.5); not re-run (box rule). The phase 2 list is the widest
+  set measured green.
+- The mutant `expect` fragments through `tools.mutation_runner` (killers measured with the drafter's runner).
+- The perf-marked files on proto (`-m perf`); the settle-loop generator's pass distribution (v1 measured 86,264 sweeps, all 1 pass, on its
+  design; v2's suite run passes the generator test, the distribution was not printed).
+- G7 round 7 and the E9/Q9 review fixes merged with this design (by reading: no shared lines; `_place`'s signature adjacent).
+- Python 3.12; Windows timings; a slower machine near `REDACT_BUDGET_S` with 4-pass sweeps (9.4: 5.6 s computed, not run).
 
 ## 15. The findings of G9-review-1.md
-[filled below]
+| id | verdict | where / why |
+|---|---|---|
+| R-B1 design prose only, no signatures, tuple shapes, short run, E-to-out map | TAKEN | 4.1-4.6: every function body with signature and return shape; `_overlaps` returns `(start, end, kind, masked)`; the short run read back whole (`lk + rk >= total`, test `..._short_run_...` with the reviewer's `ab<S1>gh`); the segment table is the E-to-`out` map (4.3); refused work raises from `_spend`, nothing returned |
+| R-B2 `_written` sites incomplete | TAKEN (superseded) | no written set: a token is read back when it is an exact key of the map (4.3); one test reads back a key the redactor did not write (`<SECRET_1>` given in the text); the 13 v1 hits are measured to change no output (9.2) |
+| R-B3 the D-3 test is wrong | TAKEN | measured: `10.0.0.5xqzw` -> `10.0.<SECRET_1>` (no overlap exists); replaced by an input that occurs (`host 10.100.200.5-Xyz9`, 9.1) and the reverse-weaker case; kind rule and `_place_union(union, kind, derived)` specified (4.4, 4.6) and built in the prototype |
+| R-M1 phase 1 not green | TAKEN | the test edits come with the code: phase 1 ends `472 passed`; the 4 that would be red without them are named (8) |
+| R-M2 gate edits not specified | TAKEN | 7.3: both replacements, three new tests, the held-back rows kept and extended, names and docstrings, the model_gate docstring (d8 pins it), `held_value_left` through `_chunk` -> `mask_budget_exceeded` |
+| R-M3 hostile memory not tested | TAKEN | the count is per piece in `put` (4.3); test `..._counted_per_piece_and_refused_before_it_is_built` (limit 100,000, peak traced under 1 MB); H1 at the cap: refused at 3 MB (v1 56 MB); mutant G9-5 has a real old text |
+| R-M4 where `_longest` lives | TAKEN | recomputed from `_rules` (alias keys included) in `_build` and on the cached path; the 5-tuple unchanged; consumers listed (4.3) |
+| R-M5 rollback, settle, deadline test | TAKEN | 4.7 (no journal, a refused call drops its unions, the RunMap is written only on success); test `..._reads_the_deadline` |
+| R-M6 no command for "honest = 1 pass" | TAKEN | evidence scripts with commands and expected counts (8); corpus and fuzz re-run on 78a0c8bcf (9.2) |
+| R-M7 test bodies missing | TAKEN | 7.3-7.4 exact code; test 1 pins value and kind, not the number; `redact_many(lines)` with `lines` given; constructors explicit; the class-level stub written out; test 8's `find` given |
+| R-M8 phase commands, full suite | PARTLY TAKEN | one complete command per phase (8); the full suite was run once and cut at 42 % (1 failure, id unknown): stated, not hidden (9.5, 14) |
+| R-minor L-D1 owner and blocking | TAKEN | the gate lane approves 7.3 before phase 1 (8) |
+| R-minor D-3 build order | TAKEN | D-3 is in the build and the prototype (5) |
+| R-minor G9-7 no old/new, no killer | TAKEN | new G9-7 with text and killer (10) |
+| R-minor G9-6 `...` and equivalence by reading | TAKEN | exact text; equivalence shown by reason (the NUL alias) and G9-15's by 40,000 inputs; neither row added |
+| R-minor fail-before ids | TAKEN | 7.5: 27 ids with reasons |
+| R-minor G8b line | TAKEN | `segment = _replace_standalone(segment, original, placeholder)` (3, 8) |
+| R-minor InputTooLarge message | TAKEN | `InputTooLarge(RedactionError(RuntimeError))` keeps its argument as the message; `pytest.raises(match=...)` passed on proto for all three codes |
+| D-M1 the written set is an allow-list | TAKEN | exact keys (4.3); the cross-call case at the gate measured (`x <SECRET_1>ijkl y` -> masked) and stated (11) |
+| D-M2 passes 3+ reachable | TAKEN | the claim deleted; the chain built: 3, 4, refused with pieces; 2 at every depth without (9.3); `derived=False` (4.6); `_build`, finder passes, `_sweep_once` in the bounds (4.9, 9.4) |
+| D-M3 union kind | TAKEN | 4.4, 4.6; second placeholder of the secret kind on a weaker reverse hit; tested with inputs that occur |
+| D-M4 gate default | TAKEN | mask with existing placeholders; refuse one text for identifiers; the three options compared (6); `held_value_left` raising, cache tuple unchanged |
+| D-M5 claims the design does not keep | TAKEN | Goal rewritten to what is built; headroom recomputed with finder passes (3.9x); bodies per string stated; cross-call and `redact_many` limits stated (11) |
+| D-Nit1 false overlaps from fold/alias | TAKEN | stated (11) |
+| D-Nit2 alias keys, one deadline read, E as one string, re-measure, rollback | TAKEN | `_longest` over `_rules`; the deadline read every 1,024 units of the read-back (one `finditer` is still not interrupted: stated in 4.9); E counted per piece and re-measured (9.4 H1); rollback stated (4.7) |
